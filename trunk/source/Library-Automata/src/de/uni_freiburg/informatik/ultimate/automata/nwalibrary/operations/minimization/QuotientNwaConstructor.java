@@ -54,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  * 
  * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class QuotientNwaConstructor<LETTER, STATE>  {
 	
@@ -156,7 +158,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		 * NOTE: there needs not be any block for an empty automaton
 		 */
 		while (blocksIt.hasNext()) {
-			IBlock<STATE> block = blocksIt.next();
+			final IBlock<STATE> block = blocksIt.next();
 			final boolean isRepresentativeIndependent =
 					block.isRepresentativeIndependentInternalsCalls();
 			
@@ -303,12 +305,12 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		private final ConstructionCache<STATE, STATE> mConstructionCache;
 		private final UnionFind<STATE> mUnionFind;
 		
-		public ResultStateConstructorFromUnionFind(UnionFind<STATE> unionFind) {
+		public ResultStateConstructorFromUnionFind(final UnionFind<STATE> unionFind) {
 			mUnionFind = unionFind;
 			final IValueConstruction<STATE, STATE> valueConstruction =
 					new IValueConstruction<STATE, STATE>() {
 				@Override
-				public STATE constructValue(STATE inputState) {
+				public STATE constructValue(final STATE inputState) {
 					final STATE representative = mUnionFind.find(inputState);
 					if (representative != inputState && representative != null) {
 						throw new IllegalArgumentException("must be representative or null");

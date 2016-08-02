@@ -29,18 +29,18 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
 final class UnionFind {
-	private int[] root;
-	private final int[] size;
-	private final int[] stack;
+	private int[] mRoot;
+	private final int[] mSize;
+	private final int[] mStack;
 
 	UnionFind(int numNodes) {
-		root = new int[numNodes];
-		size = new int[numNodes];
-		stack = new int[numNodes];
+		mRoot = new int[numNodes];
+		mSize = new int[numNodes];
+		mStack = new int[numNodes];
 
 		for (int i = 0; i < numNodes; i++) {
-			root[i] = i;
-			size[i] = 1;
+			mRoot[i] = i;
+			mSize[i] = 1;
 		}
 	}
 
@@ -58,42 +58,42 @@ final class UnionFind {
 		updateRoot(n1);
 		updateRoot(n2);
 
-		n1 = root[n1];
-		n2 = root[n2];
+		n1 = mRoot[n1];
+		n2 = mRoot[n2];
 
 		if (n1 == n2) {
 			return;
 		}
 
-		if (size[n1] < size[n2]) {
-			root[n1] = n2;
-			size[n2] += size[n1];
+		if (mSize[n1] < mSize[n2]) {
+			mRoot[n1] = n2;
+			mSize[n2] += mSize[n1];
 		} else {
-			root[n2] = n1;
-			size[n1] += size[n2];
+			mRoot[n2] = n1;
+			mSize[n1] += mSize[n2];
 		}
 	}
 
 	int[] extractRoots() {
-		for (int i = 0; i < root.length; i++) {
+		for (int i = 0; i < mRoot.length; i++) {
 			updateRoot(i);
 		}
 
-		final int[] result = root;
+		final int[] result = mRoot;
 
-		root = null;
+		mRoot = null;
 		return result;
 	}
 
 	private void updateRoot(int node) {
 		int ptr = 0;
 
-		while (node != root[node]) {
-			stack[ptr++] = node;
-			node = root[node];
+		while (node != mRoot[node]) {
+			mStack[ptr++] = node;
+			node = mRoot[node];
 		}
 		while (ptr --> 0) {
-			root[stack[ptr]] = node;
+			mRoot[mStack[ptr]] = node;
 		}
 	}
 }

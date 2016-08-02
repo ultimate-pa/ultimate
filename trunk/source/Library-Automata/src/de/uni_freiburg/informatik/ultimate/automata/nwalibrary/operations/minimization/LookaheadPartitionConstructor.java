@@ -67,6 +67,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * TODO: Extend this to returns by providing a partition of DoubleDeckers.
  * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class LookaheadPartitionConstructor<LETTER, STATE>  {
 
@@ -79,8 +81,8 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 	 * @param services Ultimate services
 	 * @param operand input automaton
 	 */
-	public LookaheadPartitionConstructor(AutomataLibraryServices services,
-			INestedWordAutomaton<LETTER, STATE> operand) {
+	public LookaheadPartitionConstructor(final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER, STATE> operand) {
 		this(services, operand, false);
 	}
 	
@@ -257,7 +259,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 			if (! isNewBlock) {
 				continue;
 			}
-			Map<Set<STATE>, Set<STATE>> oldBlock2newBlock =
+			final Map<Set<STATE>, Set<STATE>> oldBlock2newBlock =
 					new HashMap<>();
 			
 			for (final STATE state : newStates) {

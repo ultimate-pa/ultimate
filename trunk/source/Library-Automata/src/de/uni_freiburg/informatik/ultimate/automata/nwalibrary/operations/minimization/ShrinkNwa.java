@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2013-2015 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2015 Christian Schilling <schillic@informatik.uni-freiburg.de>
  * Copyright (C) 2009-2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -76,14 +75,20 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * For DFAs the algorithm just performs Hopcroft's algorithm.
  * 
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	// TODO<debug>
-	private static final boolean DEBUG = false; // general output
-	private static final boolean DEBUG2 = false; // general return split
-	private static final boolean DEBUG3 = false; // first return split
-	private static final boolean DEBUG4 = false; // naive return split
+	// general output
+	private static final boolean DEBUG = false;
+	// general return split
+	private static final boolean DEBUG2 = false;
+	// first return split
+	private static final boolean DEBUG3 = false;
+	// naive return split
+	private static final boolean DEBUG4 = false;
 
 	// TODO<statistics>
 	private static final boolean STATISTICS = false;
@@ -157,13 +162,6 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 	private final BufferedWriter mWriter2;
 	
 	private static final int HIER_PRED_MAX_SIZE = 150;
-
-	/**
-	 * StateFactory used for the construction of new states. This is _NOT_ the state factory relayed to the new
-	 * automaton. Necessary because the Automizer needs a special StateFactory during abstraction refinement (for
-	 * computation of HoareAnnotation).
-	 */
-	private final StateFactory<STATE> mStateFactory;
 
 	/**
 	 * This constructor creates a copy of the operand.
@@ -267,7 +265,6 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		} else {
 			mDoubleDecker = null;
 		}
-		mStateFactory = (stateFactory == null) ? mOperand.getStateFactory() : stateFactory;
 		mPartition = new Partition();
 		mEquivalenceClassIds = 0;
 		mWorkListIntCall = new WorkListIntCall();
@@ -323,7 +320,6 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		}
 
 		// must be the last part of the constructor
-		mLogger.info(startMessage());
 		minimize(isFiniteAutomaton, equivalenceClasses, includeMapping);
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor = constructAutomaton(includeMapping);
 		mResult = quotientNwaConstructor.getResult();
@@ -411,9 +407,8 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 				// internal split
 				splitInternalOrCallPredecessors(a, internalIterator, true);
 			}
-		}
-		// more complicated splitting
-		else {
+		} else {
+			// more complicated splitting
 			final CallTransitionIterator callIterator = new CallTransitionIterator();
 
 			// iterative refinement
@@ -901,7 +896,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 	 * @param modules
 	 *            modules that must be split
 	 */
-	private void initialize(Iterable<Set<STATE>> modules) {
+	private void initialize(final Iterable<Set<STATE>> modules) {
 		// split final from non-final states
 		if (modules == null) {
 			final HashSet<STATE> finals = new HashSet<STATE>();
@@ -919,9 +914,8 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 
 			if (mSplitOutgoing) {
 				splitOutgoing(finals, nonfinals);
-			}
-			// only separate final and non-final states
-			else {
+			} else {
+				// only separate final and non-final states
 				if (! finals.isEmpty()) {
 					mPartition.addEcInitialization(finals);
 				}
@@ -929,9 +923,8 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 					mPartition.addEcInitialization(nonfinals);
 				}
 			}
-		}
-		// predefined modules are already split with respect to final states
-		else {
+		} else {
+			// predefined modules are already split with respect to final states
 			assert assertStatesSeparation(modules) : "The states in the initial modules are not separated with "
 					+ "respect to their final status.";
 			for (final Set<STATE> module : modules) {
@@ -1058,7 +1051,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 			mLogger.debug("analyzing backwards");
 		}
 		final HashMap<STATE, HashSet<STATE>> lin2hier =
-				new HashMap<STATE, HashSet<STATE>>(computeHashSetCapacity(mPartition.mEquivalenceClasses.size()));
+				new HashMap<STATE, HashSet<STATE>>(computeHashCap(mPartition.mEquivalenceClasses.size()));
 
 		// find all involved linear and hierarchical states
 		while (mWorkListRet.hasNext()) {
@@ -1114,7 +1107,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		}
 
 		final HashMap<EquivalenceClass, HashSet<EquivalenceClass>> linEc2hierEcs =
-				new HashMap<EquivalenceClass, HashSet<EquivalenceClass>>(computeHashSetCapacity(lin2hier.size()));
+				new HashMap<EquivalenceClass, HashSet<EquivalenceClass>>(computeHashCap(lin2hier.size()));
 		for (final Entry<STATE, HashSet<STATE>> entry : lin2hier.entrySet()) {
 			final EquivalenceClass linEc = mPartition.mState2EquivalenceClass.get(entry.getKey());
 			HashSet<EquivalenceClass> hierEcs = linEc2hierEcs.get(linEc);
@@ -1216,9 +1209,8 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 					if (!linEcSingleton) {
 						splitReturnAnalyzeLinear(hier2lin2letter2succ, linEc, relevantRows);
 					}
-				}
-				// hierarchical states analysis
-				else {
+				} else {
+					// hierarchical states analysis
 					if (relevantRows.size() > 1) {
 						splitReturnAnalyzeHierarchical(hier2lin2letter2succ, hierEc, relevantRows);
 					}
@@ -1263,7 +1255,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 				continue;
 			}
 
-			final int size = computeHashSetCapacity(lin2letter2succ.size());
+			final int size = computeHashCap(lin2letter2succ.size());
 			final HashMap<HashMap<LETTER, HashSet<EquivalenceClass>>, HashSet<STATE>> letter2succEc2lin =
 					new HashMap<HashMap<LETTER, HashSet<EquivalenceClass>>, HashSet<STATE>>(size);
 			final HashSet<STATE> noTransitions = new HashSet<STATE>(size);
@@ -1286,13 +1278,13 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 				}
 
 				final HashMap<LETTER, HashSet<EquivalenceClass>> letter2succEc =
-						new HashMap<LETTER, HashSet<EquivalenceClass>>(computeHashSetCapacity(letter2succ.size()));
+						new HashMap<LETTER, HashSet<EquivalenceClass>>(computeHashCap(letter2succ.size()));
 				for (final Entry<LETTER, HashSet<STATE>> innerEntry : letter2succ.entrySet()) {
 					final LETTER letter = innerEntry.getKey();
 					final HashSet<STATE> succs = innerEntry.getValue();
 
 					final HashSet<EquivalenceClass> succEcs =
-							new HashSet<EquivalenceClass>(computeHashSetCapacity(succs.size()));
+							new HashSet<EquivalenceClass>(computeHashCap(succs.size()));
 
 					if (DEBUG2) {
 						mLogger.debug("   letter: " + letter + ", succs: " + succs);
@@ -1374,11 +1366,11 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 			return;
 		}
 
-		final int modSize = computeHashSetCapacity(size);
+		final int modSize = computeHashCap(size);
 		final HashMap<HashMap<LETTER, HashSet<EquivalenceClass>>, HashSet<STATE>> letter2succEc2hier =
 				new HashMap<HashMap<LETTER, HashSet<EquivalenceClass>>, HashSet<STATE>>(modSize);
 		final HashSet<STATE> noTransitions = new HashSet<STATE>(modSize);
-		final int hierEcModSize = computeHashSetCapacity(hierEc.mStates.size());
+		final int hierEcModSize = computeHashCap(hierEc.mStates.size());
 
 		// go through rows (each entry per row behaves the same)
 		for (int i = 0; i < size; ++i) {
@@ -1398,12 +1390,12 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 
 			// translate to map with equivalence class
 			final HashMap<LETTER, HashSet<EquivalenceClass>> letter2succEc =
-					new HashMap<LETTER, HashSet<EquivalenceClass>>(computeHashSetCapacity(letter2succ.size()));
+					new HashMap<LETTER, HashSet<EquivalenceClass>>(computeHashCap(letter2succ.size()));
 			for (final Entry<LETTER, HashSet<STATE>> entry : letter2succ.entrySet()) {
 				final LETTER letter = entry.getKey();
 				final HashSet<STATE> succs = entry.getValue();
 				final HashSet<EquivalenceClass> succEcs =
-						new HashSet<EquivalenceClass>(computeHashSetCapacity(succs.size()));
+						new HashSet<EquivalenceClass>(computeHashCap(succs.size()));
 				for (final STATE succ : succs) {
 					succEcs.add(mPartition.mState2EquivalenceClass.get(succ));
 				}
@@ -1641,11 +1633,11 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 			return;
 		}
 
-		final HashSet<STATE> linsVisited = new HashSet<STATE>(computeHashSetCapacity(linEcSize));
+		final HashSet<STATE> linsVisited = new HashSet<STATE>(computeHashCap(linEcSize));
 		final HashMap<STATE, HashMap<LETTER, HashSet<STATE>>> hier2letters2lins =
-				new HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>(computeHashSetCapacity(transitions.size()));
+				new HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>(computeHashCap(transitions.size()));
 
-		linEc.mState2SeparatedSet = new HashMap<STATE, HashSet<STATE>>(computeHashSetCapacity(linEcSize));
+		linEc.mState2SeparatedSet = new HashMap<STATE, HashSet<STATE>>(computeHashCap(linEcSize));
 
 		// find all linear predecessors
 		for (final IncomingReturnTransition<LETTER, STATE> trans : transitions) {
@@ -1688,7 +1680,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 			}
 
 			// compute sets of DS/no DS states
-			final int modSize = computeHashSetCapacity(linEcSize - linsVisited.size());
+			final int modSize = computeHashCap(linEcSize - linsVisited.size());
 			final HashSet<STATE> noDsStates = new HashSet<STATE>(modSize);
 			final HashSet<STATE> dsStates = new HashSet<STATE>(modSize);
 			for (final STATE lin : linsUnvisited) {
@@ -1842,7 +1834,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 			return;
 		}
 
-		hierEc.mState2SeparatedSet = new HashMap<STATE, HashSet<STATE>>(computeHashSetCapacity(hierEcSize));
+		hierEc.mState2SeparatedSet = new HashMap<STATE, HashSet<STATE>>(computeHashCap(hierEcSize));
 		final HashMap<STATE, EquivalenceClass> state2ec = mPartition.mState2EquivalenceClass;
 
 		for (final EquivalenceClass linEc : linEcs) {
@@ -1851,7 +1843,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 
 			for (final STATE hier : hierStates) {
 				final HashMap<EquivalenceClass, HashSet<LETTER>> succEc2letters =
-						new HashMap<EquivalenceClass, HashSet<LETTER>>(computeHashSetCapacity(hierEcSize));
+						new HashMap<EquivalenceClass, HashSet<LETTER>>(computeHashCap(hierEcSize));
 
 				inner: for (final STATE lin : linEc.mStates) {
 					if (mDoubleDecker.isDoubleDecker(lin, hier)) {
@@ -2063,7 +2055,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 			oldHiers = null;
 		}
 
-		final int modSize = computeHashSetCapacity(lins.size());
+		final int modSize = computeHashCap(lins.size());
 		for (final STATE hier : newHiers) {
 			final HashMap<HashMap<LETTER, HashSet<STATE>>, HashSet<STATE>> trans2lin =
 					new HashMap<HashMap<LETTER, HashSet<STATE>>, HashSet<STATE>>(modSize);
@@ -2131,7 +2123,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 
 			// mapping: state to associated color
 			final HashMap<STATE, Integer> state2color =
-					new HashMap<STATE, Integer>(computeHashSetCapacity(oldEc.mStates.size()));
+					new HashMap<STATE, Integer>(computeHashCap(oldEc.mStates.size()));
 			// current number of colors
 			int colors = 0;
 
@@ -2145,10 +2137,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 				if (colors == 0) {
 					state2color.put(state, 0);
 					++colors;
-				}
-				// find fitting color or use a new one
-				else {
-					final HashSet<Integer> blockedColors = new HashSet<Integer>(computeHashSetCapacity(colors));
+				} else {
+					// find fitting color or use a new one
+					final HashSet<Integer> blockedColors = new HashSet<Integer>(computeHashCap(colors));
 
 					for (final STATE separated : separatedSet) {
 						final Integer color = state2color.get(separated);
@@ -2163,9 +2154,8 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 					// no color available, use a new one
 					if (blockedColors.size() == colors) {
 						state2color.put(state, colors++);
-					}
-					// at least one color available
-					else {
+					} else {
+						// at least one color available
 						assert (blockedColors.size() < colors);
 						int color = 0;
 						while (true) {
@@ -2232,7 +2222,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 	 * @param ec
 	 *            the equivalence class
 	 */
-	private void splitRandom(EquivalenceClass ec) {
+	private void splitRandom(final EquivalenceClass ec) {
 		if (mOperand.callSuccessors(ec.mStates.iterator().next()).iterator().hasNext()) {
 			splitRandomEqual(ec);
 		} else {
@@ -2246,9 +2236,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 	 * @param ec
 	 *            the equivalence class
 	 */
-	private void splitRandomEqual(EquivalenceClass ec) {
+	private void splitRandomEqual(final EquivalenceClass ec) {
 		final Set<STATE> oldStates = ec.mStates;
-		final int size = computeHashSetCapacity(mTreshold);
+		final int size = computeHashCap(mTreshold);
 		while (oldStates.size() > mTreshold) {
 			final HashSet<STATE> newStates = new HashSet<STATE>(size);
 			int i = mTreshold;
@@ -2269,9 +2259,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 	 * @param ec
 	 *            the equivalence class
 	 */
-	private void splitRandomReturns(EquivalenceClass ec) {
+	private void splitRandomReturns(final EquivalenceClass ec) {
 		final Set<STATE> oldStates = ec.mStates;
-		final int size = computeHashSetCapacity(mTreshold);
+		final int size = computeHashCap(mTreshold);
 		final LinkedList<HashSet<STATE>> newClasses = new LinkedList<HashSet<STATE>>();
 
 		HashSet<STATE> returns = new HashSet<STATE>(size);
@@ -2337,20 +2327,6 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 
 	// --- [end] main methods --- //
 
-	// --- [start] helper methods and classes --- //
-
-	/**
-	 * This method computes the size of a hash set to avoid rehashing. This is only reasonable if the maximum size is
-	 * already known. Java standard sets the load factor to 0.75.
-	 * 
-	 * @param size
-	 *            maximum number of elements in the hash set
-	 * @return hash set size
-	 */
-	private int computeHashSetCapacity(final int size) {
-		return (int) (size * 1.5 + 1);
-	}
-
 	// --- [start] framework methods --- //
 
 	@Override
@@ -2400,7 +2376,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 	 * @return true iff each element is contained only once
 	 */
 	private <T> boolean assertSetProperty(final List<T> list) {
-		final HashSet<T> set = new HashSet<T>(computeHashSetCapacity(list.size()));
+		final HashSet<T> set = new HashSet<T>(computeHashCap(list.size()));
 		set.addAll(list);
 		return (set.size() == list.size());
 	}
@@ -2451,7 +2427,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 	private HashMap<Collection<LETTER>, Collection<STATE>> splitOutgoingHelper(final Collection<STATE> states,
 			final IOutgoingHelper<LETTER, STATE> helper) {
 		final HashMap<Collection<LETTER>, Collection<STATE>> letterSet2stateSet =
-				new HashMap<Collection<LETTER>, Collection<STATE>>(computeHashSetCapacity(helper.size()));
+				new HashMap<Collection<LETTER>, Collection<STATE>>(computeHashCap(helper.size()));
 
 		// set up mapping letters to states
 		for (final STATE state : states) {
@@ -2634,7 +2610,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		}
 
 		@Override
-		public Set<LETTER> letters(STATE state) {
+		public Set<LETTER> letters(final STATE state) {
 			assert (assertLetters(state));
 
 			return mOperand.lettersInternal(state);
@@ -2646,10 +2622,10 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		}
 
 		@Override
-		public boolean assertLetters(STATE state) {
+		public boolean assertLetters(final STATE state) {
 			final Collection<LETTER> model = mOperand.lettersInternal(state);
 
-			final HashSet<LETTER> checker = new HashSet<LETTER>(computeHashSetCapacity(model.size()));
+			final HashSet<LETTER> checker = new HashSet<LETTER>(computeHashCap(model.size()));
 			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it =
 					mOperand.internalSuccessors(state).iterator();
 			while (it.hasNext()) {
@@ -2679,7 +2655,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		}
 
 		@Override
-		public Set<LETTER> letters(STATE state) {
+		public Set<LETTER> letters(final STATE state) {
 			assert assertLetters(state);
 
 			return mOperand.lettersCall(state);
@@ -2691,10 +2667,10 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		}
 
 		@Override
-		public boolean assertLetters(STATE state) {
+		public boolean assertLetters(final STATE state) {
 			final Collection<LETTER> model = mOperand.lettersCall(state);
 
-			final HashSet<LETTER> checker = new HashSet<LETTER>(computeHashSetCapacity(model.size()));
+			final HashSet<LETTER> checker = new HashSet<LETTER>(computeHashCap(model.size()));
 			final Iterator<OutgoingCallTransition<LETTER, STATE>> it = mOperand.callSuccessors(state).iterator();
 			while (it.hasNext()) {
 				checker.add(it.next().getLetter());
@@ -2727,7 +2703,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		 */
 		public Matrix(final int size) {
 			mHier2lin2letter2succ =
-					new HashMap<STATE, HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>>(computeHashSetCapacity(size));
+					new HashMap<STATE, HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>>(computeHashCap(size));
 		}
 
 		/**
@@ -2772,8 +2748,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 	/**
 	 * This class is a dummy map. It is currently used for the empty return split matrix row.
 	 */
-	@SuppressWarnings({ "serial", "rawtypes" })
-	private class DummyMap extends HashMap {
+	private class DummyMap extends HashMap<LETTER, HashSet<STATE>> {
+		private static final long serialVersionUID = 1L;
+
 		@Override
 		public HashSet<STATE> get(final Object key) {
 			return null;
@@ -2802,7 +2779,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		 *            the set of blocked states
 		 */
 		public ColorSet(final int size, final STATE state, final HashSet<STATE> blocked) {
-			mContent = new HashSet<STATE>(computeHashSetCapacity(size));
+			mContent = new HashSet<STATE>(computeHashCap(size));
 			mContent.add(state);
 			mBlocked = blocked;
 		}
@@ -2827,7 +2804,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		 */
 		public Partition() {
 			mEquivalenceClasses = new LinkedList<EquivalenceClass>();
-			mState2EquivalenceClass = new HashMap<STATE, EquivalenceClass>(computeHashSetCapacity(mOperand.size()));
+			mState2EquivalenceClass = new HashMap<STATE, EquivalenceClass>(computeHashCap(mOperand.size()));
 		}
 
 		/**
@@ -2959,9 +2936,8 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 						mLogger.info("EC was skipped " + ec);
 					}
 					++mSplitsWithoutChange;
-				}
-				// do a split
-				else {
+				} else {
+					// do a split
 					if (DEBUG) {
 						mLogger.info("EC was split " + ec);
 					}
@@ -3005,7 +2981,8 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		@Override
 		public Iterator<IBlock<STATE>> blocksIterator() {
 			return new Iterator<IBlock<STATE>>() {
-				final Iterator<EquivalenceClass> mIt = mEquivalenceClasses.iterator();
+				private final Iterator<EquivalenceClass> mIt =
+						mEquivalenceClasses.iterator();
 
 				@Override
 				public boolean hasNext() {
@@ -3179,32 +3156,20 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 
 		@Override
 		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + getOuterType().hashCode();
-			result = prime * result + mId;
-			return result;
+			return mId;
 		}
 		
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(final Object obj) {
 			if (this == obj) {
 				return true;
 			}
 			if (obj == null) {
 				return false;
 			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
+			assert (getClass() == obj.getClass());
 			final EquivalenceClass other = (EquivalenceClass) obj;
-			if (!getOuterType().equals(other.getOuterType())) {
-				return false;
-			}
-			if (mId != other.mId) {
-				return false;
-			}
-			return true;
+			return (mId == other.mId);
 		}
 
 		/**
@@ -3215,7 +3180,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		 *            hierarchical predecessor equivalence classes
 		 */
 		@SuppressWarnings("unchecked")
-		public void initializeMatrix(HashSet<EquivalenceClass> hierEcs) {
+		public void initializeMatrix(final HashSet<EquivalenceClass> hierEcs) {
 			if (STATISTICS) {
 				mMatrixTime -= new GregorianCalendar().getTimeInMillis();
 			}
@@ -3230,9 +3195,8 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 						hierEcsUsed.add(hierEc);
 					}
 				}
-			}
-			// add all
-			else {
+			} else {
+				// add all
 				hierEcsUsed = hierEcs;
 			}
 			final int size = hierEcsUsed.size();
@@ -3262,7 +3226,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 			}
 
 			// add entries
-			final int mapSize = computeHashSetCapacity(mStates.size());
+			final int mapSize = computeHashCap(mStates.size());
 
 			for (final EquivalenceClass hierEc : hierEcsUsed) {
 				for (final STATE hier : hierEc.mStates) {
@@ -3371,7 +3335,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 					if (states.contains(lin)) {
 						final HashMap<STATE, HashMap<LETTER, HashSet<STATE>>> newLin2letter2succ =
 								new HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>(
-										computeHashSetCapacity(oldLin2letter2succ.size()));
+										computeHashCap(oldLin2letter2succ.size()));
 						newLin2letter2succ.put(lin, innerEntry.getValue());
 						removeLins.add(lin);
 
@@ -3434,12 +3398,12 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		 * @param splitSets
 		 *            sets of states to be marked for split
 		 */
-		public void markSplit(Collection<HashSet<STATE>> splitSets) {
+		public void markSplit(final Collection<HashSet<STATE>> splitSets) {
 			assert (splitSets.size() > 1) : "Splits with " + splitSets.size()
 					+ " set are not sensible and should be caught beforehand.";
 
 			if (mState2SeparatedSet == null) {
-				mState2SeparatedSet = new HashMap<STATE, HashSet<STATE>>(computeHashSetCapacity(mStates.size()));
+				mState2SeparatedSet = new HashMap<STATE, HashSet<STATE>>(computeHashCap(mStates.size()));
 				mSplitEcsReturn.add(this);
 			} else {
 				assert (mSplitEcsReturn.contains(this));
@@ -3493,7 +3457,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		 * This method resets the intersection set.
 		 */
 		private void reset() {
-			mIntersection = new HashSet<STATE>(computeHashSetCapacity(mStates.size()));
+			mIntersection = new HashSet<STATE>(computeHashCap(mStates.size()));
 			mState2SeparatedSet = null;
 		}
 
@@ -3586,10 +3550,6 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		public boolean isRepresentativeIndependentInternalsCalls() {
 			return true;
 		}
-
-		private ShrinkNwa getOuterType() {
-			return ShrinkNwa.this;
-		}
 	}
 
 	/**
@@ -3606,7 +3566,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 			mQueue = new PriorityQueue<EquivalenceClass>(Math.max(mOperand.size(), 1),
 					new Comparator<EquivalenceClass>() {
 						@Override
-						public int compare(EquivalenceClass ec1, EquivalenceClass ec2) {
+						public int compare(final EquivalenceClass ec1, final EquivalenceClass ec2) {
 							return ec1.mStates.size() - ec2.mStates.size();
 						}
 					});

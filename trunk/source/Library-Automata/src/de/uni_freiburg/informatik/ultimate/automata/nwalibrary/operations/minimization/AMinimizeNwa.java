@@ -49,6 +49,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * subclasses must explicitly call the respective method themselves.
  * 
  * @author Christian Schilling
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public abstract class AMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
@@ -77,6 +79,10 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	/**
 	 * This constructor should be called by all subclasses and only by them.
 	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
 	 * @param name
 	 *            operation name
 	 * @param operand
@@ -89,8 +95,28 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mName = name;
 		mOperand = operand;
-		mStateFactory = stateFactory;
+		
+		mStateFactory = (stateFactory == null)
+				? operand.getStateFactory()
+				: stateFactory;
 		mLogger.info(startMessage());
+	}
+	
+	/**
+	 * This constructor should be called by all subclasses and only by them.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param name
+	 *            operation name
+	 * @param operand
+	 *            input automaton
+	 */
+	protected AMinimizeNwa(
+			final AutomataLibraryServices services,
+			final String name,
+			final INestedWordAutomaton<LETTER, STATE> operand) {
+		this(services, operand.getStateFactory(), name, operand);
 	}
 
 	@Override

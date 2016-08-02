@@ -40,7 +40,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 
 /**
  * @author Björn Hagemeister
+ * @param <LETTER> letter type
+ * @param <STATE> state type
+ * @deprecated 2016-08-02 Christian Schilling: The class is broken. <br>
+ * Only an initial partition is created, nothing else happens.
  */
+@Deprecated
 public class MinimizeDfaHopcroft<LETTER, STATE>
 		extends AMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
@@ -304,6 +309,7 @@ public class MinimizeDfaHopcroft<LETTER, STATE>
 
 		/**
 		 * Constructor. Initialize ArrayList<int[]> with maxSize = nOfStates.
+		 * @param maxSize maximum size
 		 */
 		public Worklist(final int maxSize) {
 			mSetsOfStates = new ArrayList<int[]>(maxSize);
@@ -312,6 +318,7 @@ public class MinimizeDfaHopcroft<LETTER, STATE>
 
 		/**
 		 * Pop last element of worklist.
+		 * @return work list entry (set of states)
 		 */
 		public int[] popFromWorklist() {
 			if (mSetsOfStates.isEmpty()) {
@@ -324,6 +331,7 @@ public class MinimizeDfaHopcroft<LETTER, STATE>
 
 		/**
 		 * Add collection of states to worklist.
+		 * @param set set of states
 		 */
 		public void addToWorklist(final int[] set) {
 			mSetsOfStates.add(set);

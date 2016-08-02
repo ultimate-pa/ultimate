@@ -70,8 +70,6 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 		final ILogger solveLog = services.getLoggingService().getLogger(
 				"Solver");
 
-		mLogger.info(startMessage());
-
 		convertLog.info("starting conversion");
 		final Converter<LETTER, STATE> converter =
 				new Converter<LETTER, STATE>(services, stateFactory, automaton);
@@ -80,13 +78,13 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 		final ArrayList<Hist> history = converter.computeHistoryStates();
 		convertLog.info(
 				"finished conversion. "
-				+ Integer.toString(nwa.numStates) + " states, "
-				+ Integer.toString(nwa.numISyms) + " iSyms, "
-				+ Integer.toString(nwa.numCSyms) + " cSyms, "
-				+ Integer.toString(nwa.numRSyms) + " rSyms, "
-				+ Integer.toString(nwa.iTrans.length) + " iTrans, "
-				+ Integer.toString(nwa.cTrans.length) + " cTrans, "
-				+ Integer.toString(nwa.rTrans.length) + " rTrans."
+				+ Integer.toString(nwa.mNumStates) + " states, "
+				+ Integer.toString(nwa.mNumISyms) + " iSyms, "
+				+ Integer.toString(nwa.mNumCSyms) + " cSyms, "
+				+ Integer.toString(nwa.mNumRSyms) + " rSyms, "
+				+ Integer.toString(nwa.mITrans.length) + " iTrans, "
+				+ Integer.toString(nwa.mCTrans.length) + " cTrans, "
+				+ Integer.toString(nwa.mRTrans.length) + " rTrans."
 		);
 
 		generateLog.info("starting clauses generation");
@@ -99,7 +97,7 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 		solveLog.info("finished Solver");
 
 		generateLog.info("making equivalence classes from assignments");
-		final Partition eqCls = Generator.makeMergeRelation(nwa.numStates, assignments);
+		final Partition eqCls = Generator.makeMergeRelation(nwa.mNumStates, assignments);
 		generateLog.info("finished making equivalence classes");
 
 		mResult = converter.constructMerged(eqCls);

@@ -115,7 +115,7 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 	}
 	
 	@Override
-	protected Boolean getPersistentAssignment(V var) {
+	protected Boolean getPersistentAssignment(final V var) {
 		final Boolean result = mVariablesIrrevocablySet.get(var);
 		assert (result == null) || (! mVariablesTemporarilySet.containsKey(var)) :
 			"Unsynchronized assignment data structures.";
@@ -123,7 +123,7 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 	}
 
 	@Override
-	protected Boolean getTemporaryAssignment(V var) {
+	protected Boolean getTemporaryAssignment(final V var) {
 		final Boolean result = mVariablesTemporarilySet.get(var);
 		assert (result == null) || (! mVariablesIrrevocablySet.containsKey(var)) :
 			"Unsynchronized assignment data structures.";
@@ -153,6 +153,19 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 		}
 		mVariablesTemporarilySet = new HashMap<>();
 	}
+	
+	@Override
+	protected void decideOne() {
+		mDecisions++;
+		final V var = getUnsetVariable();
+		setVariable(var, true);
+		propagateAll();
+		if (mConjunctionEquivalentToFalse) {
+			backtrack(var);
+		} else {
+			makeModificationsPersistent();
+		}
+	}
 
 	@Override
 	protected void backtrack(final V var) {
@@ -161,6 +174,10 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 		final Set<V> variablesIncorrectlySet = mVariablesTemporarilySet.keySet();
 		mVariablesTemporarilySet = new HashMap<>();
 		mConjunctionEquivalentToFalse = false;
+		/*
+		 * TODO some clauses are reevaluated several times
+		 *      (if they contain several reset variables)
+		 */
 		for (final V tmpVar : variablesIncorrectlySet) {
 			reEvaluateStatusOfAllClauses(tmpVar);
 		}

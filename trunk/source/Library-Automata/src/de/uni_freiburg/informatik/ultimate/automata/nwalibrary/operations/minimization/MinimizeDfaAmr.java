@@ -71,6 +71,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * information is then propagated to avoid checking these states later.
  * 
  * @author Christian
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class MinimizeDfaAmr<LETTER, STATE>
 		extends AMinimizeIncremental<LETTER, STATE>
@@ -78,43 +80,44 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	/**
 	 * The result automaton.
 	 */
-	private final INestedWordAutomaton<LETTER, STATE> mresult;
+	private final INestedWordAutomaton<LETTER, STATE> mResult;
 	/**
 	 * The number of states in the input automaton (often used).
 	 */
-	private final int msize;
+	private final int mSize;
 	/**
 	 * The hash capacity for the number of pairs of states (often used).
 	 */
-	private final int mhashCapNoTuples;
+	private final int mHashCapNoTuples;
 	/**
 	 * Map state -> integer index.
 	 */
-	private final HashMap<STATE, Integer> mstate2int;
+	private final HashMap<STATE, Integer> mState2int;
 	/**
 	 * Map integer index -> state.
 	 */
-	private final ArrayList<STATE> mint2state;
+	private final ArrayList<STATE> mInt2state;
+	
 	/**
 	 * Background array for the Union-Find data structure.
 	 */
-	private final int[] munionFind;
+	private final int[] mUnionFind;
 	/**
 	 * Potentially equivalent pairs of states.
 	 */
-	private final SetList mequiv;
+	private final SetList mEquiv;
 	/**
 	 * History of calls to the transition function.
 	 */
-	private final SetList mpath;
+	private final SetList mPath;
 	/**
 	 * Set of pairs of states which are not equivalent.
 	 */
-	private final Set<Tuple> mneq;
+	private final Set<Tuple> mNeq;
 	/**
 	 * Stack for explicit version of recursive procedure.
 	 */
-	private final ArrayDeque<StackElem> mstack;
+	private final ArrayDeque<StackElem> mStack;
 	
 	// ----------------------- options for tweaking ----------------------- //
 	
@@ -130,13 +133,15 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * Furthermore, the method becomes incomplete (i.e., may not find the
 	 * minimum) if dead ends have not been removed beforehand.
 	 */
-	private final boolean moptionNeqTrans = false;
+	private static final boolean OPTION_NEQ_TRANS = false;
 	
 	// --------------------------- class methods --------------------------- //
 	
 	/**
 	 * GUI Constructor.
 	 * 
+	 * @param services Ultimate services
+	 * @param stateFactory state factory
 	 * @param operand input automaton (DFA)
 	 * @throws AutomataOperationCanceledException thrown when execution is cancelled
 	 * @throws AutomataLibraryException thrown by DFA check
@@ -144,13 +149,15 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	public MinimizeDfaAmr(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
-			throws AutomataLibraryException, AutomataLibraryException {
+			throws AutomataLibraryException {
 		this(services, stateFactory, operand, null);
 	}
 	
 	/**
 	 * Constructor.
 	 * 
+	 * @param services Ultimate services
+	 * @param stateFactory state factory
 	 * @param operand input automaton (DFA)
 	 * @param interrupt interrupt
 	 * @throws AutomataOperationCanceledException thrown when execution is cancelled
@@ -160,31 +167,30 @@ public class MinimizeDfaAmr<LETTER, STATE>
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt)
-			throws AutomataLibraryException, AutomataLibraryException {
+			throws AutomataLibraryException {
 		super(services, stateFactory, "MinimizeAMR", operand, interrupt);
 		
 		assert super.checkForDfa() : "The input automaton is no DFA.";
 		
-		msize = operand.size();
-		assert (msize >= 0) : "The automaton size must be nonnegative.";
+		mSize = operand.size();
+		assert (mSize >= 0) : "The automaton size must be nonnegative.";
 		
 		// trivial special cases
-    	if (msize <= 1) {
-    		mstate2int = null;
-    		mint2state = null;
-    		munionFind = null;
-    		mneq = null;
-    		mequiv = null;
-    		mpath = null;
-    		mstack = null;
-    		mhashCapNoTuples = 0;
+    	if (mSize <= 1) {
+    		mState2int = null;
+    		mInt2state = null;
+    		mUnionFind = null;
+    		mNeq = null;
+    		mEquiv = null;
+    		mPath = null;
+    		mStack = null;
+    		mHashCapNoTuples = 0;
     		
-    		mresult = mOperand;
-    	}
-    	else {
-    		mstate2int = new HashMap<STATE, Integer>(msize);
-    		mint2state = new ArrayList<STATE>(msize);
-    		munionFind = new int[msize];
+    		mResult = mOperand;
+    	} else {
+    		mState2int = new HashMap<STATE, Integer>(mSize);
+    		mInt2state = new ArrayList<STATE>(mSize);
+    		mUnionFind = new int[mSize];
     		
     		/*
     		 * The maximum number of pairs of states without considering the
@@ -193,26 +199,24 @@ public class MinimizeDfaAmr<LETTER, STATE>
     		 * This can easily be more than the maximum integer number.
     		 * In that case the constant is set to this bound.
     		 */
-    		int possibleOverflow = (msize * (msize - 1)) / 2;
+    		int possibleOverflow = (mSize * (mSize - 1)) / 2;
     		if (possibleOverflow > 0) {
     			possibleOverflow = computeHashCap(possibleOverflow);
     			if (possibleOverflow > 0) {
-    				mhashCapNoTuples = possibleOverflow;
+    				mHashCapNoTuples = possibleOverflow;
+    			} else {
+    				mHashCapNoTuples = Integer.MAX_VALUE;
     			}
-    			else {
-    				mhashCapNoTuples = Integer.MAX_VALUE;
-    			}
-    		}
-    		else {
-    			mhashCapNoTuples = Integer.MAX_VALUE;
+    		} else {
+    			mHashCapNoTuples = Integer.MAX_VALUE;
     		}
     		
-    		mneq = new HashSet<Tuple>(mhashCapNoTuples);
-    		mequiv = new SetList();
-    		mpath = new SetList();
-    		mstack = new ArrayDeque<StackElem>();
+    		mNeq = new HashSet<Tuple>(mHashCapNoTuples);
+    		mEquiv = new SetList();
+    		mPath = new SetList();
+    		mStack = new ArrayDeque<StackElem>();
     		
-			mresult = minimize();
+			mResult = minimize();
 		}
 		mLogger.info(exitMessage());
 	}
@@ -242,15 +246,15 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	private void preprocess() {
 		int i = -1;
 		for (final STATE state : mOperand.getStates()) {
-			mint2state.add(state);
+			mInt2state.add(state);
 			
-			assert (mstate2int.get(state) == null) :
+			assert (mState2int.get(state) == null) :
 				"The state is already in the map.";
-			mstate2int.put(state, ++i);
+			mState2int.put(state, ++i);
 		}
 		
-		assert ((mstate2int.size() == mint2state.size()) &&
-				(mstate2int.size() == msize)) :
+		assert ((mState2int.size() == mInt2state.size()) &&
+				(mState2int.size() == mSize)) :
 					"The mappings do not have the same size as the input "
 					+ "automaton";
 	}
@@ -262,24 +266,29 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * It terminates automatically, but can also be halted at any time.
 	 * 
 	 * pseudocode name: MIN-INCR
+	 * @throws AutomataOperationCanceledException when execution is cancelled
 	 */
-	private void findEquiv() {
+	private void findEquiv() throws AutomataOperationCanceledException {
 		// initialization
 		initializeUnionFind();
 		intializeTupleSet();
 		
 		// refinement loop
-		for (int p = 0; p < msize; ++p) {
-			for (int q = p + 1; q < msize; ++q) {
+		for (int p = 0; p < mSize; ++p) {
+			for (int q = p + 1; q < mSize; ++q) {
 				// termination signal found
-				if ((minterrupt != null) && (minterrupt.getStatus())) {
+				if ((mInterrupt != null) && (mInterrupt.getStatus())) {
 					return;
+				}
+				
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
+					throw new AutomataOperationCanceledException(this.getClass());
 				}
 				
 				final Tuple tuple = new Tuple(p, q);
 				
 				// tuple was already found to be not equivalent
-				if (mneq.contains(tuple)) {
+				if (mNeq.contains(tuple)) {
 					continue;
 				}
 				
@@ -289,23 +298,22 @@ public class MinimizeDfaAmr<LETTER, STATE>
 				}
 				
 				// clean global sets
-				mequiv.clean();
-				mpath.clean();
+				mEquiv.clean();
+				mPath.clean();
 				
 				// find out whether the states are equivalent or not
 				final Iterator<Tuple> it;
 				// the states are equivalent
 				if (isPairEquiv(tuple)) {
-					it = mequiv.iterator();
+					it = mEquiv.iterator();
 					while (it.hasNext()) {
 						union(it.next());
 					}
-				}
-				// the states are not equivalent
-				else {
-					it = mpath.iterator();
+				} else {
+					// the states are not equivalent
+					it = mPath.iterator();
 					while (it.hasNext()) {
-						mneq.add(it.next());
+						mNeq.add(it.next());
 					}
 				}
 			}
@@ -326,20 +334,19 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	private void intializeTupleSet() {
 		// insert all pairs of states where one is final and one is not
 		// TODO this is naive, think about a faster implementation
-		for (int i = 0; i < msize; ++i) {
-			final STATE state1 = mint2state.get(i);
+		for (int i = 0; i < mSize; ++i) {
+			final STATE state1 = mInt2state.get(i);
 			final boolean isFirstFinal = mOperand.isFinal(state1);
 			
-			for (int j = i + 1; j < msize; ++j) {
-				final STATE state2 = mint2state.get(j);
+			for (int j = i + 1; j < mSize; ++j) {
+				final STATE state2 = mInt2state.get(j);
 				if (mOperand.isFinal(state2) ^ isFirstFinal) {
-					mneq.add(new Tuple(i, j));
-				}
-				/*
-				 * optional separation of states with different outgoing
-				 * transitions
-				 */
-				else if (moptionNeqTrans) {
+					mNeq.add(new Tuple(i, j));
+				} else if (OPTION_NEQ_TRANS) {
+					/*
+					 * optional separation of states with different outgoing
+					 * transitions
+					 */
 					final HashSet<LETTER> letters = new HashSet<LETTER>();
 					for (final OutgoingInternalTransition<LETTER, STATE> out :
 							mOperand.internalSuccessors(state1)) {
@@ -349,13 +356,13 @@ public class MinimizeDfaAmr<LETTER, STATE>
 					for (final OutgoingInternalTransition<LETTER, STATE> out :
     						mOperand.internalSuccessors(state2)) {
 						if (! letters.remove(out.getLetter())) {
-							mneq.add(new Tuple(i, j));
+							mNeq.add(new Tuple(i, j));
 							broken = true;
 							break;
 						}
 					}
 					if (! (broken || letters.isEmpty())) {
-						mneq.add(new Tuple(i, j));
+						mNeq.add(new Tuple(i, j));
 					}
 				}
 			}
@@ -376,34 +383,33 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * @param origTuple tuple to check equivalence of
 	 * @return true iff the pair of states is equivalent
 	 */
-	private boolean isPairEquiv(Tuple origTuple) {
-		assert (mstack.size() == 0) : "The stack must be empty.";
-		mstack.add(new StackElem(origTuple));
+	private boolean isPairEquiv(final Tuple origTuple) {
+		assert (mStack.isEmpty()) : "The stack must be empty.";
+		mStack.add(new StackElem(origTuple));
 		
 		// NOTE: This line was moved here for faster termination.
-		mequiv.add(origTuple);
+		mEquiv.add(origTuple);
 		
-		assert (! mstack.isEmpty()) : "The stack must not be empty.";
+		assert (! mStack.isEmpty()) : "The stack must not be empty.";
 		do {
-			final StackElem elem = mstack.peekLast();
-			final Tuple eTuple = elem.mtuple;
+			final StackElem elem = mStack.peekLast();
+			final Tuple eTuple = elem.mTuple;
 			
 			// already expanded: end of (explicit) recursion
-			if (elem.mexpanded) {
+			if (elem.mExpanded) {
 				// take element from stack
-				mstack.pollLast();
+				mStack.pollLast();
 				
 				// all successors and hence also this pair of states equivalent
-				mpath.remove(eTuple);
+				mPath.remove(eTuple);
 				continue;
-			}
-			// not yet expanded: continue (explicit) recursion
-			else {
-				elem.mexpanded = true;
+			} else {
+				// not yet expanded: continue (explicit) recursion
+				elem.mExpanded = true;
 				
 				// tuple was already found to be not equivalent
-				if (mneq.contains(eTuple)) {
-					mstack.clear();
+				if (mNeq.contains(eTuple)) {
+					mStack.clear();
 					return false;
 				}
 				
@@ -411,19 +417,19 @@ public class MinimizeDfaAmr<LETTER, STATE>
 				 * tuple was already visited on the path, so the states are
 				 * equivalent
 				 */
-				if (mpath.contains(eTuple)) {
+				if (mPath.contains(eTuple)) {
 					continue;
 				}
 				
-				mpath.add(eTuple);
+				mPath.add(eTuple);
 				
 				if (! putSuccOnStack(eTuple)) {
 					// one transition is only possible from one state
-					mstack.clear();
+					mStack.clear();
 					return false;
 				}
 			}
-		} while (! mstack.isEmpty());
+		} while (! mStack.isEmpty());
 		
 		// no witness was found why the states should not be equivalent
 		// mequiv.add(origTuple); // NOTE: This line was moved upwards.
@@ -444,8 +450,8 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * @return true iff no reason for non-equivalence was found
 	 */
 	private boolean putSuccOnStack(final Tuple tuple) {
-		final STATE firstState = mint2state.get(tuple.mfirst);
-		final STATE secondState = mint2state.get(tuple.msecond);
+		final STATE firstState = mInt2state.get(tuple.mFirst);
+		final STATE secondState = mInt2state.get(tuple.mSecond);
 		
 		/*
 		 * NOTE: This could be problematic with nondeterministic automata.
@@ -456,30 +462,27 @@ public class MinimizeDfaAmr<LETTER, STATE>
 			assert (mOperand.internalSuccessors(secondState,
 					letter) != null);
 			
-			int succP = find(mstate2int.get(out.getSucc()));
 			int succQ;
-			
-			if (moptionNeqTrans) {
+			if (OPTION_NEQ_TRANS) {
 				assert (mOperand.internalSuccessors(secondState,
 							letter).iterator().hasNext()) :
 					"States with different outgoing transitions " +
 					"should have been marked as not equivalent.";
 				
-				succQ = find(mstate2int.get(mOperand.internalSuccessors(
+				succQ = find(mState2int.get(mOperand.internalSuccessors(
 						secondState, letter).iterator().next().getSucc()));
-			}
-			else {
+			} else {
 				final Iterator<OutgoingInternalTransition<LETTER, STATE>> out2
 						= mOperand.internalSuccessors(
 								secondState, letter).iterator();
 				if (out2.hasNext()) {
-					succQ = find(mstate2int.get(out2.next().getSucc()));
-				}
-				else {
+					succQ = find(mState2int.get(out2.next().getSucc()));
+				} else {
 					return false;
 				}
 			}
-			
+
+			int succP = find(mState2int.get(out.getSucc()));
 			if (succP != succQ) {
 				if (succP > succQ) {
 					final int tmp = succP;
@@ -488,16 +491,16 @@ public class MinimizeDfaAmr<LETTER, STATE>
 				}
 				final Tuple successorTuple = new Tuple(succP, succQ);
 				
-				if (! mequiv.contains(successorTuple)) {
-					mequiv.add(successorTuple);
+				if (! mEquiv.contains(successorTuple)) {
+					mEquiv.add(successorTuple);
 					
 					// break recursion: add to stack
-					mstack.add(new StackElem(successorTuple));
+					mStack.add(new StackElem(successorTuple));
 				}
 			}
 		}
 		
-		if (! moptionNeqTrans) {
+		if (! OPTION_NEQ_TRANS) {
 			for (final OutgoingInternalTransition<LETTER, STATE> out :
 				mOperand.internalSuccessors(secondState)) {
 				if (! mOperand.internalSuccessors(
@@ -522,14 +525,13 @@ public class MinimizeDfaAmr<LETTER, STATE>
 				computeMapState2Equiv();
 		
 		// construct result
-		final StateFactory<STATE> stateFactory = mOperand.getStateFactory();
 		final NestedWordAutomaton<LETTER, STATE> result =
 				new NestedWordAutomaton<LETTER, STATE>(
 						mServices, 
 						mOperand.getInternalAlphabet(),
 						mOperand.getCallAlphabet(),
 						mOperand.getReturnAlphabet(),
-						stateFactory);
+						mStateFactory);
 		
 		// mapping from old state to new state
 		final HashMap<Integer, STATE> oldState2newState =
@@ -539,14 +541,14 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		// add states
 		assert (mOperand.getInitialStates().iterator().hasNext()) :
 			"There is no initial state in the automaton.";
-		final int initRepresentative = find(mstate2int.get(
+		final int initRepresentative = find(mState2int.get(
 				mOperand.getInitialStates().iterator().next()));
 		for (final Entry<Integer, ? extends Collection<STATE>> entry :
 				state2equivStates.entrySet()) {
 			final int representative = entry.getKey();
 			final Collection<STATE> equivStates = entry.getValue();
 			
-			final STATE newSTate = stateFactory.minimize(equivStates);
+			final STATE newSTate = mStateFactory.minimize(equivStates);
 			oldState2newState.put(representative, newSTate);
 			
 			assert (equivStates.iterator().hasNext()) :
@@ -564,12 +566,12 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		for (final Integer oldStateInt : state2equivStates.keySet()) {
 			for (final OutgoingInternalTransition<LETTER, STATE> out :
 					mOperand.internalSuccessors(
-							mint2state.get(oldStateInt))) {
+							mInt2state.get(oldStateInt))) {
 				result.addInternalTransition(
 						oldState2newState.get(oldStateInt),
 						out.getLetter(),
 						oldState2newState.get(
-								find(mstate2int.get(out.getSucc()))));
+								find(mState2int.get(out.getSucc()))));
 			}
 		}
 		
@@ -585,8 +587,8 @@ public class MinimizeDfaAmr<LETTER, STATE>
 			computeMapState2Equiv() {
 		final HashMap<Integer, LinkedList<STATE>> state2equivStates =
 				new HashMap<Integer, LinkedList<STATE>>(
-						computeHashCap(msize));
-        for (int i = msize - 1; i >= 0; --i) {
+						computeHashCap(mSize));
+        for (int i = mSize - 1; i >= 0; --i) {
         	final int representative = find(i);
         	LinkedList<STATE> equivStates =
         			state2equivStates.get(representative);
@@ -594,14 +596,14 @@ public class MinimizeDfaAmr<LETTER, STATE>
         		equivStates = new LinkedList<STATE>();
         		state2equivStates.put(representative, equivStates);
         	}
-        	equivStates.add(mint2state.get(i));
+        	equivStates.add(mInt2state.get(i));
         }
 		return state2equivStates;
 	}
 	
 	@Override
 	public INestedWordAutomatonSimple<LETTER, STATE> getResult() {
-		return mresult;
+		return mResult;
 	}
 	
 	// --------------------- Union-Find data structure --------------------- //
@@ -614,8 +616,8 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * pseudocode name: MAKE in for-loop
 	 */
 	private void initializeUnionFind() {
-		for (int i = munionFind.length - 1; i >= 0; --i) {
-			munionFind[i] = i;
+		for (int i = mUnionFind.length - 1; i >= 0; --i) {
+			mUnionFind[i] = i;
 		}
 	}
 	
@@ -636,18 +638,17 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		final LinkedList<Integer> path = new LinkedList<Integer>();
 		
 		while (true) {
-			final int newRepresentative = munionFind[oldRepresentative];
+			final int newRepresentative = mUnionFind[oldRepresentative];
 			
 			// found the representative
 			if (oldRepresentative == newRepresentative) {
 				// update representative on the path
 				for (final int i : path) {
-					munionFind[i] = newRepresentative;
+					mUnionFind[i] = newRepresentative;
 				}
 				
 				return newRepresentative;
-			}
-			else {
+			} else {
 				path.add(oldRepresentative);
 				oldRepresentative = newRepresentative;
 			}
@@ -670,7 +671,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * @param tuple pair of states that shall be united  
 	 */
 	private void union(final Tuple tuple) {
-		munionFind[find(tuple.msecond)] = find(tuple.mfirst);
+		mUnionFind[find(tuple.mSecond)] = find(tuple.mFirst);
 	}
 	
 	// ------------------- auxiliary classes and methods ------------------- //
@@ -682,11 +683,11 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		/**
 		 * The first integer.
 		 */
-		final int mfirst;
+		private final int mFirst;
 		/**
 		 * The second integer.
 		 */
-		final int msecond;
+		private final int mSecond;
 		
 		/**
 		 * Constructor.
@@ -696,33 +697,33 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		 */
 		public Tuple(final int first, final int second) {
 			assert (first < second) : "The first entry must be the smaller one";
-			mfirst = first;
-			msecond = second;
+			mFirst = first;
+			mSecond = second;
 		}
 		
 		// TODO: What is a good hash function?
 		@Override
 		public int hashCode() {
-			return mfirst + 17 * msecond;
+			return mFirst + 17 * mSecond;
 		}
 		
 		@SuppressWarnings("unchecked")
 		@Override
-		public boolean equals(Object other) {
+		public boolean equals(final Object other) {
 			if (! (other instanceof MinimizeDfaAmr.Tuple)) {
 				return false;
 			}
 			final Tuple o = (Tuple)other;
-			return (o.mfirst == this.mfirst) && (o.msecond == this.msecond);
+			return (o.mFirst == this.mFirst) && (o.mSecond == this.mSecond);
 		}
 		
 		@Override
 		public String toString() {
 			final StringBuilder builder = new StringBuilder();
 			builder.append("(");
-			builder.append(mfirst);
+			builder.append(mFirst);
 			builder.append(", ");
-			builder.append(msecond);
+			builder.append(mSecond);
 			builder.append(")");
 			return builder.toString();
 		}
@@ -747,21 +748,21 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		/**
 		 * Map from state to list node.
 		 */
-		HashMap<Tuple, ListNode> mmap;
+		private HashMap<Tuple, ListNode> mMap;
 		/**
 		 * Doubly-linked list of states.
 		 */
-		DoublyLinkedList mlist;
+		private DoublyLinkedList mList;
 		/**
 		 * Flag that determines whether the map and list have been initialized.
 		 */
-		boolean misInitialized;
+		private boolean mIsInitialized;
 		
 		/**
 		 * Constructor.
 		 */
 		public SetList() {
-			misInitialized = false;
+			mIsInitialized = false;
 		}
 		
 		/**
@@ -776,11 +777,11 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		 * @param tuple pair of states
 		 */
 		void add(final Tuple tuple) {
-			assert (! mmap.containsKey(tuple)) :
+			assert (! mMap.containsKey(tuple)) :
 				"Elements should not be contained twice.";
 			
 			// insert new pair of states
-			mmap.put(tuple, mlist.add(tuple));
+			mMap.put(tuple, mList.add(tuple));
 		}
 		
 		/**
@@ -794,11 +795,11 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		 * @param tuple pair of states
 		 */
 		void remove(final Tuple tuple) {
-			assert (mmap.containsKey(tuple)) :
+			assert (mMap.containsKey(tuple)) :
 				"Only elements contained should be removed.";
 			
 			// remove pair of states
-			mlist.remove(mmap.remove(tuple));
+			mList.remove(mMap.remove(tuple));
 		}
 		
 		/**
@@ -810,7 +811,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		 * @return true iff pair of states is contained
 		 */
 		boolean contains(final Tuple tuple) {
-			return mmap.containsKey(tuple);
+			return mMap.containsKey(tuple);
 		}
 		
 		/**
@@ -821,7 +822,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		 * @return iterator
 		 */
 		Iterator<Tuple> iterator() {
-			return mlist.iterator(mmap.size());
+			return mList.iterator(mMap.size());
 		}
 		
 		/**
@@ -832,33 +833,32 @@ public class MinimizeDfaAmr<LETTER, STATE>
     	 * pseudocode name: SET-MAKE
 		 */
 		void clean() {
-			if (misInitialized) {
-				final Iterator<Tuple> it = mlist.iterator(mmap.size());
+			if (mIsInitialized) {
+				final Iterator<Tuple> it = mList.iterator(mMap.size());
 				while (it.hasNext()) {
 					final Tuple t = it.next();
-					assert (mmap.containsKey(t)) :
+					assert (mMap.containsKey(t)) :
 						"The element was not in the map: " + t.toString();
-					mmap.remove(t);
+					mMap.remove(t);
 				}
-				assert (mmap.size() == 0) :
+				assert (mMap.size() == 0) :
 					"There are elements left in the map after cleaning.";
+			} else {
+				mIsInitialized = true;
+				mMap = new HashMap<Tuple, ListNode>(mHashCapNoTuples);
 			}
-			else {
-				misInitialized = true;
-				mmap = new HashMap<Tuple, ListNode>(mhashCapNoTuples);
-			}
-			mlist = new DoublyLinkedList();
+			mList = new DoublyLinkedList();
 		}
 		
 		@Override
 		public String toString() {
 			final StringBuilder builder = new StringBuilder();
 			builder.append("(");
-			builder.append(mmap);
+			builder.append(mMap);
 			builder.append(", ");
-			builder.append(mlist);
+			builder.append(mList);
 			builder.append(", ");
-			builder.append(misInitialized);
+			builder.append(mIsInitialized);
 			builder.append(")");
 			return builder.toString();
 		}
@@ -870,15 +870,15 @@ public class MinimizeDfaAmr<LETTER, STATE>
 			/**
 			 * The contained pair of states.
 			 */
-			final Tuple mtuple;
+			private final Tuple mTuple;
 			/**
 			 * Next list node.
 			 */
-			ListNode mnext;
+			private ListNode mNext;
 			/**
 			 * Previous list node.
 			 */
-			ListNode mprev;
+			private ListNode mPrev;
 			
 			/**
 			 * Constructor.
@@ -887,14 +887,14 @@ public class MinimizeDfaAmr<LETTER, STATE>
 			 */
 			public ListNode(final Tuple tuple, final ListNode prev,
 					final ListNode next) {
-				mtuple = tuple;
-				mprev = prev;
-				mnext = next;
+				mTuple = tuple;
+				mPrev = prev;
+				mNext = next;
 			}
 			
 			@Override
 			public String toString() {
-				return mtuple.toString();
+				return mTuple.toString();
 			}
 		}
 		
@@ -907,18 +907,18 @@ public class MinimizeDfaAmr<LETTER, STATE>
 			/**
 			 * First list node.
 			 */
-			ListNode mfirst;
+			private ListNode mFirst;
 			/**
 			 * Last list node.
 			 */
-			ListNode mlast;
+			private ListNode mLast;
 			
 			/**
 			 * Constructor.
 			 */
 			public DoublyLinkedList() {
-				mfirst = null;
-				mlast = null;
+				mFirst = null;
+				mLast = null;
 			}
 			
 			/**
@@ -933,28 +933,27 @@ public class MinimizeDfaAmr<LETTER, STATE>
 					"null should not be inserted in the list.";
 				
 				// first node
-				if (mlast == null) {
-					assert (mfirst == null) :
+				if (mLast == null) {
+					assert (mFirst == null) :
 						"The last list element is null unexpectedly.";
 					
-					mfirst = new ListNode(tuple, null, null);
-					mfirst.mprev = mfirst;
-					mfirst.mnext = mfirst;
-					mlast = mfirst;
-				}
-				// further node
-				else {
-					assert (mfirst != null) :
+					mFirst = new ListNode(tuple, null, null);
+					mFirst.mPrev = mFirst;
+					mFirst.mNext = mFirst;
+					mLast = mFirst;
+				} else {
+					// further node
+					assert (mFirst != null) :
 						"The first list element is null unexpectedly.";
 					
-					final ListNode prev = mlast;
-					mlast = new ListNode(tuple, prev, mfirst);
-					prev.mnext = mlast;
-					mfirst.mprev = mlast;
+					final ListNode prev = mLast;
+					mLast = new ListNode(tuple, prev, mFirst);
+					prev.mNext = mLast;
+					mFirst.mPrev = mLast;
 				}
 				
 				// return new node
-				return mlast;
+				return mLast;
 			}
 			
 			/**
@@ -967,25 +966,23 @@ public class MinimizeDfaAmr<LETTER, STATE>
 					"null cannot not be removed from the list.";
 				
 				// only node
-				if (listNode.mnext == listNode) {
-					mfirst = null;
-					mlast = null;
-				}
-				// further node
-				else {
-    				final ListNode prev = listNode.mprev;
-    				final ListNode next = listNode.mnext;
-    				prev.mnext = next;
-    				next.mprev = prev;
+				if (listNode.mNext == listNode) {
+					mFirst = null;
+					mLast = null;
+				} else {
+					// further node
+    				final ListNode prev = listNode.mPrev;
+    				final ListNode next = listNode.mNext;
+    				prev.mNext = next;
+    				next.mPrev = prev;
     				
-    				if (listNode == mfirst) {
-    					mfirst = next;
+    				if (listNode == mFirst) {
+    					mFirst = next;
     					
-    					assert (listNode != mlast) :
+    					assert (listNode != mLast) :
     						"The node must not be first and last element.";
-    				}
-    				else if (listNode == mlast) {
-    					mlast = prev;
+    				} else if (listNode == mLast) {
+    					mLast = prev;
     				}
 				}
 			}
@@ -1004,30 +1001,30 @@ public class MinimizeDfaAmr<LETTER, STATE>
 					/**
 					 * Number of elements.
 					 */
-					int mitSize = size;
+					private int mItSize = size;
 					/**
 					 * Next element.
 					 */
-					ListNode mitNext = mlast;
+					private ListNode mItNext = mLast;
 					
 					@Override
 					public boolean hasNext() {
-						return (mitSize > 0);
+						return (mItSize > 0);
 					}
 
 					@Override
 					public Tuple next() {
-						assert (mitSize > 0) :
+						assert (mItSize > 0) :
 							"The next method must not be called when finished.";
-						--mitSize;
-						assert (mitNext != null) :
+						--mItSize;
+						assert (mItNext != null) :
 							"An empty list should not be asked for the next " +
 								"element.";
-						mitNext = mitNext.mnext;
-						assert (mitNext != null) :
+						mItNext = mItNext.mNext;
+						assert (mItNext != null) :
 							"An empty list should not be asked for the next " +
 								"element.";
-						return mitNext.mtuple;
+						return mItNext.mTuple;
 					}
 
 					@Override
@@ -1042,13 +1039,13 @@ public class MinimizeDfaAmr<LETTER, STATE>
 			public String toString() {
 				final StringBuilder builder = new StringBuilder();
 				builder.append("{");
-				if (mfirst != null) {
-					builder.append(mfirst.toString());
-    				ListNode node = mfirst.mnext;
-    				while (node != mfirst) {
+				if (mFirst != null) {
+					builder.append(mFirst.toString());
+    				ListNode node = mFirst.mNext;
+    				while (node != mFirst) {
         				builder.append(", ");
         				builder.append(node.toString());
-        				node = node.mnext;
+        				node = node.mNext;
     				}
 				}
 				builder.append("}");
@@ -1068,29 +1065,29 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		/**
 		 * Pair of states.
 		 */
-		final Tuple mtuple;
+		private final Tuple mTuple;
 		/**
 		 * True iff already visited.
 		 */
-		boolean mexpanded;
+		private boolean mExpanded;
 		
 		/**
 		 * Constructor.
 		 * 
 		 * @param tuple pair of states
 		 */
-		public StackElem(Tuple tuple) {
-			mtuple = tuple;
-			mexpanded = false;
+		public StackElem(final Tuple tuple) {
+			mTuple = tuple;
+			mExpanded = false;
 		}
 		
 		@Override
 		public String toString() {
 			final StringBuilder builder = new StringBuilder();
 			builder.append("(");
-			builder.append(mtuple);
+			builder.append(mTuple);
 			builder.append(", ");
-			builder.append(mexpanded);
+			builder.append(mExpanded);
 			builder.append(")");
 			return builder.toString();
 		}

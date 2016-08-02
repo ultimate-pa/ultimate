@@ -27,8 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.parallel;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-
 /**
  * A tuple class for integers.
  * @author Layla Franke
@@ -37,13 +35,11 @@ public final class Tuple {
 	/**
 	 * The first integer.
 	 */
-	final int mfirst;
+	public final int mFirst;
 	/**
 	 * The second integer.
 	 */
-	final int msecond;
-	public IPredicate x;
-	public IPredicate y;
+	public final int mSecond;
 
 	/**
 	 * Constructor.
@@ -55,31 +51,31 @@ public final class Tuple {
 	 */
 	public Tuple(final int first, final int second) {
 		assert (first < second) : "The first entry must be the smaller one";
-		mfirst = first;
-		msecond = second;
+		mFirst = first;
+		mSecond = second;
 	}
 
 	@Override
 	public int hashCode() {
-		return mfirst + 17 * msecond;
+		return mFirst + 17 * mSecond;
 	}
 
 	@Override
-	public boolean equals(Object other) {
+	public boolean equals(final Object other) {
 		if (!(other instanceof Tuple)) {
 			return false;
 		}
 		final Tuple o = (Tuple) other;
-		return (o.mfirst == mfirst) && (o.msecond == msecond);
+		return (o.mFirst == mFirst) && (o.mSecond == mSecond);
 	}
 
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
 		builder.append("(");
-		builder.append(mfirst);
+		builder.append(mFirst);
 		builder.append(", ");
-		builder.append(msecond);
+		builder.append(mSecond);
 		builder.append(")");
 		return builder.toString();
 	}

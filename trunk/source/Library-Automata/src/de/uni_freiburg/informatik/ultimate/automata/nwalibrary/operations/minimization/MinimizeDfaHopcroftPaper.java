@@ -36,79 +36,82 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * @author Björn Hagemeister
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	private final AutomataLibraryServices mServices;
-	// ILogger for debug - information.
-	private final ILogger mLogger;
+public class MinimizeDfaHopcroftPaper<LETTER, STATE>
+		extends AMinimizeNwa<LETTER, STATE>
+		implements IOperation<LETTER, STATE> {
 	// Result automaton.
 	private NestedWordAutomaton<LETTER, STATE> mResult;
-	// Input automaton.
-	private INestedWordAutomaton<LETTER, STATE> moperand;
-	// state factory
-	private StateFactory<STATE> mstateFactory;
 	// ArrayList and HashMap for mapping STATE to int and vice versa.
-	private ArrayList<STATE> mint2state;
-	private HashMap<STATE, Integer> mstate2int;
+	private ArrayList<STATE> mInt2state;
+	private HashMap<STATE, Integer> mState2int;
 	// ArrayList and HashMap for mapping LETTER to int and vice versa.
-	private ArrayList<LETTER> mint2letter;
-	private HashMap<LETTER, Integer> mletter2int;
+	private ArrayList<LETTER> mInt2letter;
+	private HashMap<LETTER, Integer> mLetter2int;
 	
-	private HashMap<STATE, STATE> moldState2newState;
+	private HashMap<STATE, STATE> mOldState2newState;
 	
 	/*******************************************************************//**
 	 * necessary data elements for the minimization algorithm.
 	 */
-	private int[] 
-			mlabels,			// labels of transitions.
-			mlabelTails,		// tails of transitions.
-			mlabelHeads,		// heads of transitions.
-			mnOfMarkedElemInSet,		// # of marked elements in set.
-			msetsWithMarkedElements,	// sets with marked elements in it.
-			mF,
-			madjacent,
-			mfinalStates;
+	// labels of transitions.
+	private int[] mLabels;
+	// tails of transitions.
+	private int[] mLabelTails;
+	// heads of transitions.
+	private int[] mLabelHeads;
+	// # of marked elements in set.
+	private int[] mNumberOfMarkedElemInSet;
+	// sets with marked elements in it.
+	private int[] mSetsWithMarkedElements;
+	private int[] mF;
+	private int[] mAdjacent;
+	private int[] mFinalStates;
 	
-	private int 
-			mnOfTransitions,	// number of transitions.
-			mnOfStates,		// number of states.
-			mnOfFinalStates,	// number of final states.
-			minitialState,     // initial state.
-			mnOfLetters,		// number of letters in alphabet.
-			mw = 0;			// index for msetsWithMarkedElements.
-	private Partition 
-			mblocks,			// blocks (consist of states).
-			mcords;			// cords (consist of transitions).
+	// number of transitions.
+	private int mNumberOfTransitions;
+	// number of states.
+	private int mNumberOfStates;
+	// number of final states.
+	private int mNumberOfFinalStates;
+	// initial state.
+	private int mInitialState;
+	// number of letters in alphabet.
+	private int mNumberOfLetters;
+	// index for msetsWithMarkedElements.
+	private int mw = 0;
+	// blocks (consist of states).
+	private Partition mBlocks;
+	// cords (consist of transitions).
+	private Partition mCords;
 	/**********************************************************************/	
 
 	/*******************************************************************//**
 	 * Constructor.
 	 */
-	public MinimizeDfaHopcroftPaper(AutomataLibraryServices services, 
-			INestedWordAutomaton<LETTER, STATE> operand,
-			StateFactory<STATE> stateFactoryConstruction,
-			boolean addMapping) {
-		this(services, operand, stateFactoryConstruction, null, addMapping);
+	public MinimizeDfaHopcroftPaper(final AutomataLibraryServices services, 
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final StateFactory<STATE> stateFactory,
+			final boolean addMapping) {
+		this(services, operand, stateFactory, null, addMapping);
 	}
 	
-	public MinimizeDfaHopcroftPaper(AutomataLibraryServices services, 
-			INestedWordAutomaton<LETTER, STATE> operand,
-			StateFactory<STATE> stateFactoryConstruction,
-			Collection<Set<STATE>> initialPartition, boolean addMapping) {
+	public MinimizeDfaHopcroftPaper(final AutomataLibraryServices services, 
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final StateFactory<STATE> stateFactory,
+			final Collection<Set<STATE>> initialPartition, final boolean addMapping) {
+		super(services, stateFactory, "MinimizeDfaHopcroftPaper", operand);
 		
 		// added by Christian
 		if ((operand.getCallAlphabet().size() > 0) ||
@@ -117,27 +120,22 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 				"This class only supports minimization of finite automata.");
 		}
 		
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		this.moperand = operand;
-		this.mstateFactory = stateFactoryConstruction;
 		if (addMapping) {
-			this.moldState2newState = null;
+			this.mOldState2newState = null;
 		} else {
-			moldState2newState = new HashMap<STATE, STATE>(
-					computeHashMapCapacity(moperand.size()));
+			mOldState2newState = new HashMap<STATE, STATE>(
+					computeHashCap(mOperand.size()));
 		}
 
-		mLogger.info(startMessage());
-		if (moperand.size() > 0) {
+		if (mOperand.size() > 0) {
 			// Start minimization.
 			minimizeDfaHopcroft(initialPartition);
 		} else {
 			// Special case: empty automaton.
 			mResult = new NestedWordAutomaton<LETTER, STATE>(
 					mServices, 
-					moperand.getInternalAlphabet(), null,
-					null, mstateFactory);
+					mOperand.getInternalAlphabet(), null,
+					null, mStateFactory);
 		}
 		mLogger.info(exitMessage());
 	}
@@ -145,8 +143,8 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 	/**
 	 * Constructor without state factory.
 	 */
-	public MinimizeDfaHopcroftPaper(AutomataLibraryServices services, 
-			INestedWordAutomaton<LETTER, STATE> operand) {
+	public MinimizeDfaHopcroftPaper(final AutomataLibraryServices services, 
+			final INestedWordAutomaton<LETTER, STATE> operand) {
 		this(services, operand, operand.getStateFactory(), false);
 	}
 	
@@ -159,12 +157,12 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 		mLogger.info("Start preprocessing data ... ");
 		preprocessingData();
 		// Create Object partition for mblocks and mcords.
-		mblocks = new Partition();
-		mcords = new Partition();
+		mBlocks = new Partition();
+		mCords = new Partition();
 		mLogger.info("completed preprocessing data.");
 		
 		mLogger.info("Start intitializing partitions ... ");
-		mblocks.init(mnOfStates);
+		mBlocks.init(mNumberOfStates);
 		
 		// Make initial partition.
 		makeInitialPartition(initialPartition);
@@ -173,51 +171,53 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 		makeTransitionPartition();
 		mLogger.info("completed initialization of partitions.");
 		
-		madjacent = new int[mnOfTransitions];
-		mF = new int[mnOfStates + 1];
+		mAdjacent = new int[mNumberOfTransitions];
+		mF = new int[mNumberOfStates + 1];
 		
 		// Make adjacent.
-		makeAdjacent(mlabelHeads);
+		makeAdjacent(mLabelHeads);
 		
 		/***************************************************************//**
 		 * The core of the Hopcroft - algorithm.
 		 */
 		mLogger.info("Start with Hopcroft - algorithm");
-		int blockIterator = 1, cordsIterator = 0;
-		int i, j;
+		int blockIterator = 1;
+		int cordsIterator = 0;
+		int i;
+		int j;
 		// Iterate over blocks of transitions with same labels.
 		// --> pick each letter of alphabet (see Hopcroft algorithm).
-		while (cordsIterator < mcords.mnOfSets) {
+		while (cordsIterator < mCords.mNumberOfSets) {
 			// Iterate over transitions of each block.
-			for (i = mcords.mfirst[cordsIterator];
-					i < mcords.mpast[cordsIterator];
+			for (i = mCords.mFirst[cordsIterator];
+					i < mCords.mPast[cordsIterator];
 					++i) {
 				// Mark all states, which are tails of the transitions with
 				// the same letter. --> Getting path to current state.
-				mblocks.mark(mlabelTails[mcords.mElements[i]]);
+				mBlocks.mark(mLabelTails[mCords.mElements[i]]);
 			}
 			// Split all blocks with marked elements into blocks of marked
 			// and non-marked states. --> new blocks are created.
-			mblocks.split();
+			mBlocks.split();
 
 			cordsIterator++;
 			// Iterate over all blocks of states.
-			while (blockIterator < mblocks.mnOfSets) {
+			while (blockIterator < mBlocks.mNumberOfSets) {
 				// Iterate over all states of each block.
-				for (i = mblocks.mfirst[blockIterator];
-						i < mblocks.mpast[blockIterator];
+				for (i = mBlocks.mFirst[blockIterator];
+						i < mBlocks.mPast[blockIterator];
 						++i) {
 					// Get all outgoing transitions of each state and mark
 					// them in the transition partition.
-					for (j = mF[mblocks.mElements[i]];
-							j < mF[mblocks.mElements[i] + 1];
+					for (j = mF[mBlocks.mElements[i]];
+							j < mF[mBlocks.mElements[i] + 1];
 							++j) {
-						mcords.mark(madjacent[j]);
+						mCords.mark(mAdjacent[j]);
 					}
 				}
 				// Split all sets of marked transitions into sets of marked
 				// and non-marked transitions.
-				mcords.split();
+				mCords.split();
 				++blockIterator;
 			}
 		}
@@ -231,19 +231,19 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 	 * initializeLables.
 	 */
 	private void preprocessingData() {
-		mnOfFinalStates = moperand.getFinalStates().size();
-		mfinalStates = new int[mnOfFinalStates];
-		mnOfStates = moperand.getStates().size();
-		mnOfLetters = moperand.getInternalAlphabet().size();			
+		mNumberOfFinalStates = mOperand.getFinalStates().size();
+		mFinalStates = new int[mNumberOfFinalStates];
+		mNumberOfStates = mOperand.getStates().size();
+		mNumberOfLetters = mOperand.getInternalAlphabet().size();			
 		
 		initializeMappings();
 		initializeLables();
 		
-		minitialState = mstate2int.get(moperand.getInitialStates().iterator().next());
-		final Iterator<STATE> it = moperand.getFinalStates().iterator();
+		mInitialState = mState2int.get(mOperand.getInitialStates().iterator().next());
+		final Iterator<STATE> it = mOperand.getFinalStates().iterator();
 		int index = -1;
 		while (it.hasNext()) {
-			mfinalStates[++index] = mstate2int.get(it.next());
+			mFinalStates[++index] = mState2int.get(it.next());
 		}
 
 	}
@@ -253,22 +253,22 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 	 */
 	private void initializeMappings() {
 		// Allocate the finite space in ArrayList and HashMap.
-		mint2state = new ArrayList<STATE>(mnOfStates);
-		mstate2int = new HashMap<STATE, Integer>(
-				computeHashMapCapacity(mnOfStates));
-		mint2letter = new ArrayList<LETTER>(mnOfLetters);
-		mletter2int = new HashMap<LETTER, Integer>(
-				computeHashMapCapacity(mnOfLetters));
+		mInt2state = new ArrayList<STATE>(mNumberOfStates);
+		mState2int = new HashMap<STATE, Integer>(
+				computeHashCap(mNumberOfStates));
+		mInt2letter = new ArrayList<LETTER>(mNumberOfLetters);
+		mLetter2int = new HashMap<LETTER, Integer>(
+				computeHashCap(mNumberOfLetters));
 
 		int index = -1;
-		for (final STATE state : moperand.getStates()) {
-			mint2state.add(state);
-			mstate2int.put(state, ++index);
+		for (final STATE state : mOperand.getStates()) {
+			mInt2state.add(state);
+			mState2int.put(state, ++index);
 		}
 		index = -1;
-		for (final LETTER letter : moperand.getAlphabet()) {
-			mint2letter.add(letter);
-			mletter2int.put(letter, ++index);
+		for (final LETTER letter : mOperand.getAlphabet()) {
+			mInt2letter.add(letter);
+			mLetter2int.put(letter, ++index);
 		}
 	}
 
@@ -285,31 +285,31 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 		
 		// Iterate over all states in mint2state.
 		int index = 0;
-		for (int i = 0; i < mint2state.size(); ++i) {
-			final STATE st = mint2state.get(i);
+		for (int i = 0; i < mInt2state.size(); ++i) {
+			final STATE st = mInt2state.get(i);
 			// Get outgoing transition.
 			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it = 
-					moperand.internalSuccessors(st).iterator();
+					mOperand.internalSuccessors(st).iterator();
 			// hasNext? --> add to labels.
 			while (it.hasNext()) {
 				final OutgoingInternalTransition< LETTER, STATE> oit = it.next();
-				labels.add(mletter2int.get(oit.getLetter()));
-				tails.add(mstate2int.get(st));
-				heads.add(mstate2int.get(oit.getSucc()));
+				labels.add(mLetter2int.get(oit.getLetter()));
+				tails.add(mState2int.get(st));
+				heads.add(mState2int.get(oit.getSucc()));
 				index++;
 			}
 		}
-		mnOfTransitions = index;
+		mNumberOfTransitions = index;
 		// resize arrays to used size for saving memory
 		// Maybe too much computing time?
-		mlabels = new int[mnOfTransitions];
-		mlabelHeads = new int[mnOfTransitions];
-		mlabelTails = new int[mnOfTransitions];
+		mLabels = new int[mNumberOfTransitions];
+		mLabelHeads = new int[mNumberOfTransitions];
+		mLabelTails = new int[mNumberOfTransitions];
 		
-		for (int i = 0; i < mnOfTransitions; ++i) {
-			mlabels[i] = labels.get(i);
-			mlabelHeads[i] = heads.get(i);
-			mlabelTails[i] = tails.get(i);
+		for (int i = 0; i < mNumberOfTransitions; ++i) {
+			mLabels[i] = labels.get(i);
+			mLabelHeads[i] = heads.get(i);
+			mLabelTails[i] = tails.get(i);
 		}
 	}
 
@@ -318,27 +318,27 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 	 * and set number of final states as marked states.
 	 */
 	private void makeInitialPartition(final Collection<Set<STATE>> initialPartition) {
-		msetsWithMarkedElements = new int[mnOfTransitions + 1];
-		mnOfMarkedElemInSet = new int[mnOfTransitions + 1];
+		mSetsWithMarkedElements = new int[mNumberOfTransitions + 1];
+		mNumberOfMarkedElemInSet = new int[mNumberOfTransitions + 1];
 		if (initialPartition == null || initialPartition.isEmpty()) {
 			// no initial partition, only separate final states
 			
 			// Is there any finalState?
-			if (mnOfFinalStates > 0) {
+			if (mNumberOfFinalStates > 0) {
 				// Before splitting mark final state for splitting final states 
 				// and non - final states.
-				for (int i = 0; i < mfinalStates.length; ++i) {
-					mblocks.mark(mfinalStates[i]);
+				for (int i = 0; i < mFinalStates.length; ++i) {
+					mBlocks.mark(mFinalStates[i]);
 				}
-				mblocks.split();
+				mBlocks.split();
 			}
 		} else {
 			// consider an initial partition
 			for (final Set<STATE> states : initialPartition) {
 				for (final STATE state : states) {
-					mblocks.mark(mstate2int.get(state));
+					mBlocks.mark(mState2int.get(state));
 				}
-				mblocks.split();
+				mBlocks.split();
 			}
 		}
 	}
@@ -347,42 +347,42 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 	 * Create transition partition mcords.
 	 */
 	private void makeTransitionPartition() {
-		mcords.init(mnOfTransitions);
-		if (mnOfTransitions > 0) {
-			final Integer[] test = new Integer[mcords.mElements.length];
+		mCords.init(mNumberOfTransitions);
+		if (mNumberOfTransitions > 0) {
+			final Integer[] test = new Integer[mCords.mElements.length];
 			for (int i = 0; i < test.length; ++i) {
-				test[i] = mcords.mElements[i];
+				test[i] = mCords.mElements[i];
 			}
 			Arrays.sort(test, new Comparator<Integer>() {
 				
 				@Override
-				public int compare(Integer x, Integer y) {
-					return Integer.compare(mlabels[x], mlabels[y]);
+				public int compare(final Integer x, final Integer y) {
+					return Integer.compare(mLabels[x], mLabels[y]);
 				}
 			});
 			
 			for (int i = 0; i < test.length; ++i) {
-				mcords.mElements[i] = test[i];
+				mCords.mElements[i] = test[i];
 			}
 			
-			mcords.mnOfSets = mnOfMarkedElemInSet[0] = 0;
-			int a = mlabels[mcords.mElements[0]];
+			mCords.mNumberOfSets = mNumberOfMarkedElemInSet[0] = 0;
+			int a = mLabels[mCords.mElements[0]];
 			// Put transitions with same label into same block.
 			// --> we get blocks of transitions with same label, which is
 			// equivalent for sorting transitions after alphabet.
 			// --> possible to iterate over alphabet (see Hopcroft algorithm).
-			for (int i = 0; i < mnOfTransitions; ++i) {
-				final int t = mcords.mElements[i];
-				if (mlabels[t] != a) {
-					a = mlabels[t];
-					mcords.mpast[mcords.mnOfSets++] = i;
-					mcords.mfirst[mcords.mnOfSets] = i;
-					mnOfMarkedElemInSet[mcords.mnOfSets] = 0;
+			for (int i = 0; i < mNumberOfTransitions; ++i) {
+				final int t = mCords.mElements[i];
+				if (mLabels[t] != a) {
+					a = mLabels[t];
+					mCords.mPast[mCords.mNumberOfSets++] = i;
+					mCords.mFirst[mCords.mNumberOfSets] = i;
+					mNumberOfMarkedElemInSet[mCords.mNumberOfSets] = 0;
 				}
-				mcords.msetElemBelongsTo[t] = mcords.mnOfSets;
-				mcords.mLocationOfElem[t] = i;
+				mCords.mSetElemBelongsTo[t] = mCords.mNumberOfSets;
+				mCords.mLocationOfElem[t] = i;
 			}
-			mcords.mpast[mcords.mnOfSets++] = mnOfTransitions;
+			mCords.mPast[mCords.mNumberOfSets++] = mNumberOfTransitions;
 		}
 	}
 	
@@ -393,15 +393,22 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 	 * Using labelTails[] as K[] --> computes outgoing transitions.
 	 * Adjacent transitions of state q are:
 	 * madjacent[mF[q]], madjacent[mF[q] + 1], ... , madjacent[mF[q+1] - 1]
-	 * @param K
+	 * @param arrayK
 	 */
-	private void makeAdjacent(int K[]) {
-		int q, t;
-		for (q = 0; q <= mnOfStates; ++q) { mF[q] = 0; }
-		for (t = 0; t < mnOfTransitions; ++t) { ++mF[K[t]]; }
-		for (q = 0; q < mnOfStates; ++q) { mF[q + 1] += mF[q]; }
-		for (t = mnOfTransitions - 1; t >= 0; t--) {
-			madjacent[--mF[K[t]]] = t;
+	private void makeAdjacent(final int[] arrayK) {
+		int q;
+		int t;
+		for (q = 0; q <= mNumberOfStates; ++q) {
+			mF[q] = 0;
+		}
+		for (t = 0; t < mNumberOfTransitions; ++t) {
+			++mF[arrayK[t]];
+		}
+		for (q = 0; q < mNumberOfStates; ++q) {
+			mF[q + 1] += mF[q];
+		}
+		for (t = mNumberOfTransitions - 1; t >= 0; t--) {
+			mAdjacent[--mF[arrayK[t]]] = t;
 		}
 	}
 	
@@ -410,39 +417,47 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 	 * "Fast brief practical DFA minimization".
 	 */
 	public class Partition {
-		private int mnOfSets;
-		private int[] mElements, mLocationOfElem, msetElemBelongsTo,
-					mfirst, mpast;
+		private int mNumberOfSets;
+		private int[] mElements;
+		private int[] mLocationOfElem;
+		private int[] mSetElemBelongsTo;
+		private int[] mFirst;
+		private int[] mPast;
 		/***************************************************************//**
 		 * Method for initializing partition.
 		 * @param nOfStates
 		 */
-		public void init(int nOfStates) {
+		public void init(final int nOfStates) {
 			// After initialization, partition contains either one
 			// or none block of states.
-			this.mnOfSets = (nOfStates > 0 ? 1 : 0);
+			this.mNumberOfSets = (nOfStates > 0 ? 1 : 0);
 			// all states of the automaton.
 			this.mElements = new int[nOfStates];
 			// location in mElements of a state
 			this.mLocationOfElem = new int[nOfStates];
 			// # of block an element e belongs to
-			this.msetElemBelongsTo = new int[nOfStates];
+			this.mSetElemBelongsTo = new int[nOfStates];
 			
 			// Elements e of block b are stored in an unspecified order in
 			// E[f], E[f + 1], ... , E[p - 1] where f = F[b], p = P[b]
-			this.mfirst = new int[nOfStates]; // first element e of block.
-			this.mpast = new int[nOfStates];  // first element e of next block
+			
+			 // first element e of block.
+			this.mFirst = new int[nOfStates];
+			// first element e of next block
+			this.mPast = new int[nOfStates];
 			
 			for (int i = 0; i < nOfStates; ++i) {
 				// After initialization elements are sorted.
 				this.mElements[i] = this.mLocationOfElem[i] = i;
 				// Each element belongs to block number 0.
-				this.msetElemBelongsTo[i] = 0;
+				this.mSetElemBelongsTo[i] = 0;
 			}
 			
-			if (this.mnOfSets == 1) {
-				this.mfirst[0] = 0;			// first element of block 0 = 0.
-				this.mpast[0] = nOfStates;	// first element of not existing block 1 = nOfStates.
+			if (this.mNumberOfSets == 1) {
+				// first element of block 0 = 0.
+				this.mFirst[0] = 0;
+				// first element of not existing block 1 = nOfStates.
+				this.mPast[0] = nOfStates;
 			}
 			
 			// Now we got an array mElements = [0, 1, 2, ... , #states - 1]
@@ -454,13 +469,13 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 		 * Method for marking an element e.
 		 * @param element
 		 */
-		public void mark(int element) {
+		public void mark(final int element) {
 			// # block, element e belongs to.
-			final int set = msetElemBelongsTo[element];
+			final int set = mSetElemBelongsTo[element];
 			// location of element e in mElements.
 			final int location = mLocationOfElem[element];
 			// first unmarked element of block, the element belongs to.
-			final int firstUnmarked = mfirst[set] + mnOfMarkedElemInSet[set];
+			final int firstUnmarked = mFirst[set] + mNumberOfMarkedElemInSet[set];
 			
 			// Switching element e with first unmarked element in melements.
 			this.mElements[location] = this.mElements[firstUnmarked];
@@ -470,11 +485,11 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 			
 			// If no element was marked in this block before, add this block
 			// to list of blocks with marked elements.
-			if (mnOfMarkedElemInSet[set] == 0) {
-				msetsWithMarkedElements[mw++] = set;
+			if (mNumberOfMarkedElemInSet[set] == 0) {
+				mSetsWithMarkedElements[mw++] = set;
 			}
 			// Increment marked elements in block, element e belongs to.
-			mnOfMarkedElemInSet[set]++;
+			mNumberOfMarkedElemInSet[set]++;
 			
 		}
 		
@@ -484,35 +499,37 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 		public void split() {
 			while (mw > 0) {
 				// set with marked elements.
-				final int set = msetsWithMarkedElements[--mw];
+				final int set = mSetsWithMarkedElements[--mw];
 				// first unmarked element of set.
-				final int firstUnmarked = this.mfirst[set] + mnOfMarkedElemInSet[set];
+				final int firstUnmarked = this.mFirst[set] + mNumberOfMarkedElemInSet[set];
 				
-				if (firstUnmarked == this.mpast[set]) {
-					mnOfMarkedElemInSet[set] = 0;
+				if (firstUnmarked == this.mPast[set]) {
+					mNumberOfMarkedElemInSet[set] = 0;
 					continue;
 				}
 				
 				// Split block into two blocks with marked and non-marked
 				// elements. Take the smaller one as new block and remain
 				// the bigger one as the old block.
-				if (mnOfMarkedElemInSet[set] <= (mpast[set] - firstUnmarked)) {
+				if (mNumberOfMarkedElemInSet[set] <= (mPast[set] - firstUnmarked)) {
 					// block with marked elements is smaller --> new block
-					this.mfirst[this.mnOfSets] = this.mfirst[set];
-					this.mpast[this.mnOfSets ] = this.mfirst[set] = firstUnmarked;
+					this.mFirst[this.mNumberOfSets] = this.mFirst[set];
+					this.mPast[this.mNumberOfSets ] = this.mFirst[set] = firstUnmarked;
 				} else {
 					// block with marked elements is bigger --> remain as old block.
 					// --> new one consists of non-marked elements.
-					this.mpast[this.mnOfSets] = this.mpast[set];	// TODO: Index out of bounds, why?
-					this.mfirst[this.mnOfSets] = this.mpast[set] = firstUnmarked;
+					
+					// TODO: Index out of bounds, why?
+					this.mPast[this.mNumberOfSets] = this.mPast[set];
+					this.mFirst[this.mNumberOfSets] = this.mPast[set] = firstUnmarked;
 				}
 				
 				// Adapt the number of new block, the elements belong to.
-				for (int i = this.mfirst[this.mnOfSets]; i < this.mpast[this.mnOfSets]; ++i) {
-					this.msetElemBelongsTo[this.mElements[i]] = this.mnOfSets;
+				for (int i = this.mFirst[this.mNumberOfSets]; i < this.mPast[this.mNumberOfSets]; ++i) {
+					this.mSetElemBelongsTo[this.mElements[i]] = this.mNumberOfSets;
 				}
 				// Set changed block and new block as blocks with non-marked elements.
-				mnOfMarkedElemInSet[set] = mnOfMarkedElemInSet[this.mnOfSets++] = 0;
+				mNumberOfMarkedElemInSet[set] = mNumberOfMarkedElemInSet[this.mNumberOfSets++] = 0;
 			}
 
 		}
@@ -525,22 +542,22 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 	private void buildResult() {
 		mResult = new NestedWordAutomaton<LETTER, STATE>(
 				mServices, 
-				moperand.getInternalAlphabet(), null,
-				null, mstateFactory);
+				mOperand.getInternalAlphabet(), null,
+				null, mStateFactory);
 		
 		final ArrayList<STATE> newStates =
-				new ArrayList<STATE>(mblocks.mnOfSets);
-		final int blockOfInitState = mblocks.msetElemBelongsTo[minitialState];
-		final int[] blockOfFinalStates = new int[mnOfFinalStates];
-		for (int i = 0; i < mnOfFinalStates; ++i) {
-			blockOfFinalStates[i] = mblocks.msetElemBelongsTo[mfinalStates[i]];
+				new ArrayList<STATE>(mBlocks.mNumberOfSets);
+		final int blockOfInitState = mBlocks.mSetElemBelongsTo[mInitialState];
+		final int[] blockOfFinalStates = new int[mNumberOfFinalStates];
+		for (int i = 0; i < mNumberOfFinalStates; ++i) {
+			blockOfFinalStates[i] = mBlocks.mSetElemBelongsTo[mFinalStates[i]];
 		}
 		// Iterate over number of blocks for getting every first element.
-		for (int i = 0; i < mblocks.mnOfSets; ++i) {
+		for (int i = 0; i < mBlocks.mNumberOfSets; ++i) {
 			// Get index in melements of the first element in block.
-			final int firstOfBlockIndex = mblocks.mfirst[i];
+			final int firstOfBlockIndex = mBlocks.mFirst[i];
 			// Get index in melements of the last element in block.
-			final int lastOfBlockIndex = mblocks.mpast[i];
+			final int lastOfBlockIndex = mBlocks.mPast[i];
 			// For intersecting all STATEs belonging to one block,
 			// build collection of all States.
 			final Collection<STATE> tmp = new ArrayList<STATE>(
@@ -548,16 +565,16 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 			// Iterate in melements over all States belonging to one block
 			// and adding them to the collection created before.
 			for (int j = firstOfBlockIndex; j < lastOfBlockIndex; ++j) {
-				final int elem = mblocks.mElements[j];
-				tmp.add(mint2state.get(elem));
+				final int elem = mBlocks.mElements[j];
+				tmp.add(mInt2state.get(elem));
 			}
 			// Build the new state by using the minimize - function of StateFactory.
-			final STATE newState = mstateFactory.minimize(tmp);
+			final STATE newState = mStateFactory.minimize(tmp);
 			
 			// update mapping 'old state -> new state'
-			if (moldState2newState != null) {
+			if (mOldState2newState != null) {
 				for (final STATE oldState : tmp) {
-					moldState2newState.put(oldState, newState);
+					mOldState2newState.put(oldState, newState);
 				}
 			}
 			
@@ -569,35 +586,33 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 					isFinalState = true;
 				}
 			}
-			mResult.addState(
-					(i == blockOfInitState), // is initial state?
-					isFinalState, // is final state?
-					newState);
+			final boolean isInitialState = (i == blockOfInitState);
+			mResult.addState(isInitialState, isFinalState, newState);
 		}
 		
 		// Iterate over each block to get the outgoing transitions of every
 		// first element of block.
-		for (int i = 0; i < mblocks.mnOfSets; ++i) {
+		for (int i = 0; i < mBlocks.mNumberOfSets; ++i) {
 			// Get the index in melements of the first element.
-			final int firstOfBlockIndex = mblocks.mfirst[i];
+			final int firstOfBlockIndex = mBlocks.mFirst[i];
 			// Get the belonging STATE - object out of Map.
-			final STATE st = mint2state.get(mblocks.mElements[firstOfBlockIndex]);
+			final STATE st = mInt2state.get(mBlocks.mElements[firstOfBlockIndex]);
 			// Take the before created new State as predecessor
 			// for the new transition.
 			final STATE newPred = newStates.get(i);
 			// Get the outgoing transitions of the STATE st.
 			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it = 
-					moperand.internalSuccessors(st).iterator();
+					mOperand.internalSuccessors(st).iterator();
 			// Iterate over outgoing transitions of each block and add the
 			// transition to the new automaton.
 			while (it.hasNext()) {
 				// Get the next outgoing transition.
 				final OutgoingInternalTransition<LETTER, STATE> next = it.next();
 				// Get the successor of the transition.
-				final int succ = mstate2int.get(next.getSucc());
+				final int succ = mState2int.get(next.getSucc());
 				// For finding the equivalent state in the new states,
 				// get the number of the block the successor belongs to.
-				final int blockOfSucc = mblocks.msetElemBelongsTo[succ];
+				final int blockOfSucc = mBlocks.mSetElemBelongsTo[succ];
 				final STATE newSucc = newStates.get(blockOfSucc);
 				// Add the new transition to the result automaton.
 				mResult.addInternalTransition(newPred, next.getLetter(), newSucc);
@@ -605,88 +620,11 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 		}	
 	}
 	
-	/*******************************************************************//**
-	 * computes the size of a hash Map to avoid rehashing this is only 
-	 * sensible if the maximum size is already known Java standard sets
-	 * the load factor to 0.75.
-	 * 
-	 * @param size
-	 * @return hash map size
-	 */
-	private int computeHashMapCapacity(int size) {
-		return (int) (size / 0.75 + 1);
-	}
-	
 	@Override
-	public String operationName() {
-		return "minimizeDfaHopcroft";
-	}
-
-	@Override
-	public String startMessage() {
-		return "Starting MinimizeDfaHopcroftPaper";
-	}
-
-	@Override
-	public String exitMessage() {
-		return "Finished MinimizeDfaHopcroftPaper";
-	}
-
-	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult()
-			throws AutomataLibraryException {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public final boolean checkResult(final StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		mLogger.info("Start testing correctness of " + operationName());
-		final String message;
-		
-		if (checkInclusion(moperand, getResult(), stateFactory)) {
-			if (checkInclusion(getResult(), moperand, stateFactory)) {
-				mLogger.info("Finished testing correctness of " +
-						operationName());
-				return true;
-			}
-			else {
-				message = "The result recognizes less words than before.";
-			}
-		}
-		else {
-			message = "The result recognizes more words than before.";
-		}
-		
-		ResultChecker.writeToFileIfPreferred(mServices,
-				operationName() + " failed",
-				message,
-				moperand);
-		return false;
-	}
-	
-	/*******************************************************************//**
-	 * This method checks language inclusion of the first automaton with the
-	 * second automaton.
-	 *  
-	 * @param subset automaton describing the subset language
-	 * @param superset automaton describing the superset language
-	 * @param stateFactory state factory
-	 * @return true iff language is included
-	 * @throws AutomataLibraryException thrown by inclusion check
-	 */
-	private final boolean checkInclusion(
-			final INestedWordAutomatonSimple<LETTER, STATE> subset,
-			final INestedWordAutomatonSimple<LETTER, STATE> superset,
-			final StateFactory<STATE> stateFactory)
-				throws AutomataLibraryException {
-		return ResultChecker.nwaLanguageInclusion(mServices,
-				ResultChecker.getOldApiNwa(mServices,subset),
-				ResultChecker.getOldApiNwa(mServices,superset),
-				stateFactory) == null;
-	}
-	
 	/**
 	 * Returns a Map from states of the input automaton to states of the output
 	 * automaton. The image of a state oldState is the representative of 
@@ -694,6 +632,6 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 	 * This method can only be used if the minimization is finished.
 	 */
 	public Map<STATE,STATE> getOldState2newState() {
-		return moldState2newState;
+		return mOldState2newState;
 	}
 }

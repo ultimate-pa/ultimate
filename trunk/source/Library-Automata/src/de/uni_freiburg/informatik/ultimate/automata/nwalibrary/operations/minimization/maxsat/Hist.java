@@ -38,40 +38,40 @@ import java.util.ArrayList;
  */
 final class Hist {
 	/** linear state */
-	int lin;
+	int mLin;
 
 	/** hierarchical (history) state */
-	int hier;
+	int mHier;
 
 
 	Hist() {}
 
-	Hist(int lin, int hier) {
-		this.lin = lin;
-		this.hier = hier;
+	Hist(final int lin, final int hier) {
+		this.mLin = lin;
+		this.mHier = hier;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (!(obj instanceof Hist)) {
 			return false;
 		}
 
 		final Hist b = (Hist) obj;
 
-		return lin == b.lin && hier == b.hier;
+		return mLin == b.mLin && mHier == b.mHier;
 	}
 
 	@Override
 	public int hashCode() {
-		return 31 * lin + hier;
+		return 31 * mLin + mHier;
 	}
 
-	static int compareLinHier(Hist a, Hist b) {
-		if (a.lin != b.lin) {
-			return a.lin - b.lin;
+	static int compareLinHier(final Hist a, final Hist b) {
+		if (a.mLin != b.mLin) {
+			return a.mLin - b.mLin;
 		}
-		return a.hier - b.hier;
+		return a.mHier - b.mHier;
 	}
 
 	/**
@@ -79,12 +79,12 @@ final class Hist {
 	 *         NOTE: history states can be -1. This means "bottom-of-stack"
 	 *         state.
 	 */
-	static boolean checkConsistency(NWA nwa, ArrayList<Hist> hist) {
+	static boolean checkConsistency(final NWA nwa, final ArrayList<Hist> hist) {
 		for (int i = 0; i < hist.size(); i++) {
-			if (hist.get(i).lin < 0 || hist.get(i).lin >= nwa.numStates) {
+			if (hist.get(i).mLin < 0 || hist.get(i).mLin >= nwa.mNumStates) {
 				return false;
 			}
-			if (hist.get(i).hier < -1 || hist.get(i).hier >= nwa.numStates) {
+			if (hist.get(i).mHier < -1 || hist.get(i).mHier >= nwa.mNumStates) {
 				return false;
 			}
 		}

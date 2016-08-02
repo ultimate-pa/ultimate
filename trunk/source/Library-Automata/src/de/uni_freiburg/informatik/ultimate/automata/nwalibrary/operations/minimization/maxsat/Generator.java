@@ -42,11 +42,15 @@ import java.util.HashSet;
  * @author stimpflj
  */
 final class Generator {
+	
+	private Generator() {
+		// no public constructor
+	}
 
 	/**
 	 * Convert a solved instance to a merge relation
 	 */
-	static Partition makeMergeRelation(int numStates, char[] assigned) {
+	static Partition makeMergeRelation(final int numStates, final char[] assigned) {
 		final UnionFind unionFind = new UnionFind(numStates);
 		final EqVarCalc calc = new EqVarCalc(numStates);
 
@@ -78,7 +82,7 @@ final class Generator {
 	 * @return A (consistent) Partition which represents the minimized
 	 *         automaton.
 	 */
-	static Horn3Array generateClauses(NWA inNWA, ArrayList<Hist> history) {
+	static Horn3Array generateClauses(final NWA inNWA, ArrayList<Hist> history) {
 		assert Hist.checkConsistency(inNWA, history);
 
 		// "assert" that there are no transitions which are never taken
@@ -87,25 +91,25 @@ final class Generator {
 			for (final Hist h : history) {
 				hs.add(h);
 			}
-			for (final RTrans x : inNWA.rTrans) {
-				assert hs.contains(new Hist(x.src, x.top));
+			for (final RTrans x : inNWA.mRTrans) {
+				assert hs.contains(new Hist(x.mSrc, x.mTop));
 			}
 		}
 
 		// some "namespace imports"
-		final int numStates = inNWA.numStates;
+		final int numStates = inNWA.mNumStates;
 		//@SuppressWarnings("unused") int numISyms = inNWA.numISyms;
 		//@SuppressWarnings("unused") int numCSyms = inNWA.numCSyms;
 		//@SuppressWarnings("unused") int numRSyms = inNWA.numRSyms;
 		//@SuppressWarnings("unused") boolean[] isInitial = inNWA.isInitial;
-		final boolean[] isFinal = inNWA.isFinal;
-		final int numITrans = inNWA.iTrans.length;
-		final int numCTrans = inNWA.cTrans.length;
-		final int numRTrans = inNWA.rTrans.length;
-		final ITrans[] iTrans = inNWA.iTrans.clone();
-		final CTrans[] cTrans = inNWA.cTrans.clone();
-		final RTrans[] rTrans = inNWA.rTrans.clone();
-		final RTrans[] rTransTop = inNWA.rTrans.clone();
+		final boolean[] isFinal = inNWA.mIsFinal;
+		final int numITrans = inNWA.mITrans.length;
+		final int numCTrans = inNWA.mCTrans.length;
+		final int numRTrans = inNWA.mRTrans.length;
+		final ITrans[] iTrans = inNWA.mITrans.clone();
+		final CTrans[] cTrans = inNWA.mCTrans.clone();
+		final RTrans[] rTrans = inNWA.mRTrans.clone();
+		final RTrans[] rTransTop = inNWA.mRTrans.clone();
 
 		history = new ArrayList<Hist>(history);
 
@@ -133,13 +137,13 @@ final class Generator {
 		}
 
 		for (int i = 0; i < numITrans; i++) {
-			iTransOut.get(iTrans[i].src).add(iTrans[i]);
+			iTransOut.get(iTrans[i].mSrc).add(iTrans[i]);
 		}
 		for (int i = 0; i < numCTrans; i++) {
-			cTransOut.get(cTrans[i].src).add(cTrans[i]);
+			cTransOut.get(cTrans[i].mSrc).add(cTrans[i]);
 		}
 		for (int i = 0; i < numRTrans; i++) {
-			rTransOut.get(rTrans[i].src).add(rTrans[i]);
+			rTransOut.get(rTrans[i].mSrc).add(rTrans[i]);
 		}
 
 		final IntArray[] iSet = new IntArray[numStates];
@@ -165,23 +169,23 @@ final class Generator {
 		}
 
 		for (int i = 0; i < numITrans; i++) {
-			if (i == 0 || iTrans[i-1].src != iTrans[i].src || iTrans[i-1].sym != iTrans[i].sym) {
-				iSet[iTrans[i].src].add(iTrans[i].sym);
+			if (i == 0 || iTrans[i-1].mSrc != iTrans[i].mSrc || iTrans[i-1].mSym != iTrans[i].mSym) {
+				iSet[iTrans[i].mSrc].add(iTrans[i].mSym);
 			}
 		}
 		for (int i = 0; i < numCTrans; i++) {
-			if (i == 0 || cTrans[i-1].src != cTrans[i].src || cTrans[i-1].sym != cTrans[i].sym) {
-				cSet[cTrans[i].src].add(cTrans[i].sym);
+			if (i == 0 || cTrans[i-1].mSrc != cTrans[i].mSrc || cTrans[i-1].mSym != cTrans[i].mSym) {
+				cSet[cTrans[i].mSrc].add(cTrans[i].mSym);
 			}
 		}
 		for (int i = 0; i < numRTrans; i++) {
-			if (i == 0 || rTrans[i-1].src != rTrans[i].src || rTrans[i-1].sym != rTrans[i].sym) {
-				rSet[rTrans[i].src].add(rTrans[i].sym);
+			if (i == 0 || rTrans[i-1].mSrc != rTrans[i].mSrc || rTrans[i-1].mSym != rTrans[i].mSym) {
+				rSet[rTrans[i].mSrc].add(rTrans[i].mSym);
 			}
 		}
 		for (int i = 0; i < numRTrans; i++) {
-			if (i == 0 || rTransTop[i-1].src != rTransTop[i].src || rTransTop[i-1].top != rTransTop[i].top) {
-				rTop[rTransTop[i].src].add(rTransTop[i].top);
+			if (i == 0 || rTransTop[i-1].mSrc != rTransTop[i].mSrc || rTransTop[i-1].mTop != rTransTop[i].mTop) {
+				rTop[rTransTop[i].mSrc].add(rTransTop[i].mTop);
 			}
 		}
 
@@ -192,16 +196,16 @@ final class Generator {
 			int i = 0;
 			for (final Hist h : history) {
 				for (; i < numRTrans; i++) {
-					if (h.lin < rTransTop[i].src
-							|| (h.lin == rTransTop[i].src && h.hier <= rTransTop[i].top)) {
+					if (h.mLin < rTransTop[i].mSrc
+							|| (h.mLin == rTransTop[i].mSrc && h.mHier <= rTransTop[i].mTop)) {
 						break;
 					}
 				}
 				if (i == numRTrans
-						|| h.lin < rTransTop[i].src
-						|| (h.lin == rTransTop[i].src && h.hier < rTransTop[i].top)) {
-					if (h.hier >= 0) {
-						hSet[h.lin].add(h.hier);
+						|| h.mLin < rTransTop[i].mSrc
+						|| (h.mLin == rTransTop[i].mSrc && h.mHier < rTransTop[i].mTop)) {
+					if (h.mHier >= 0) {
+						hSet[h.mLin].add(h.mHier);
 					}
 				}
 			}
@@ -237,7 +241,7 @@ final class Generator {
 		final HashMap<SrcSym, ArrayList<RTrans>> bySrcSym = new HashMap<SrcSym, ArrayList<RTrans>>();
 
 		for (final RTrans x : rTrans) {
-			final SrcSym srcsym = new SrcSym(x.src, x.sym);
+			final SrcSym srcsym = new SrcSym(x.mSrc, x.mSym);
 			ArrayList<RTrans> a = bySrcSym.get(srcsym);
 			if (a == null) {
 				a = new ArrayList<RTrans>();
@@ -284,12 +288,12 @@ final class Generator {
 					for (int x = 0, y = 0; x < iTransOut.get(i).size() && y < iTransOut.get(j).size();) {
 						final ITrans t1 = iTransOut.get(i).get(x);
 						final ITrans t2 = iTransOut.get(j).get(y);
-						if (t1.sym < t2.sym) {
+						if (t1.mSym < t2.mSym) {
 							x++;
-						} else if (t1.sym > t2.sym) {
+						} else if (t1.mSym > t2.mSym) {
 							y++;
 						} else {
-							final int eq2 = calc.eqVar(t1.dst, t2.dst);
+							final int eq2 = calc.eqVar(t1.mDst, t2.mDst);
 							builder.addClauseFT(eq1, eq2);
 							x++;
 							y++;
@@ -299,12 +303,12 @@ final class Generator {
 					for (int x = 0, y = 0; x < cTransOut.get(i).size() && y < cTransOut.get(j).size();) {
 						final CTrans t1 = cTransOut.get(i).get(x);
 						final CTrans t2 = cTransOut.get(j).get(y);
-						if (t1.sym < t2.sym) {
+						if (t1.mSym < t2.mSym) {
 							x++;
-						} else if (t1.sym > t2.sym) {
+						} else if (t1.mSym > t2.mSym) {
 							y++;
 						} else {
-							final int eq2 = calc.eqVar(t1.dst, t2.dst);
+							final int eq2 = calc.eqVar(t1.mDst, t2.mDst);
 							builder.addClauseFT(eq1, eq2);
 							x++;
 							y++;
@@ -328,8 +332,8 @@ final class Generator {
 					for (final int s2 : rSet[j]) {
 						for (final RTrans t1 : bySrcSym.get(new SrcSym(i, s1))) {
 							for (final RTrans t2 : bySrcSym.get(new SrcSym(j, s2))) {
-								final int eq2 = calc.eqVar(t1.top, t2.top);
-								final int eq3 = calc.eqVar(t1.dst, t2.dst);
+								final int eq2 = calc.eqVar(t1.mTop, t2.mTop);
+								final int eq3 = calc.eqVar(t1.mDst, t2.mDst);
 								builder.addClauseFFT(eq1, eq2, eq3);
 							}
 						}
@@ -383,51 +387,51 @@ final class Generator {
 	 * representation of the equivalence variables as integers
 	 */
 	private static final class EqVarCalc {
-		private final int n;
+		private final int mN;
 
-		EqVarCalc(int numStates) {
-			n = numStates;
+		EqVarCalc(final int numStates) {
+			mN = numStates;
 		}
 
 		int getNumEqVars() {
 			// add 2 because 0 and 1 are reserved for const false / const true
-			return 2 + n*(n+1)/2;
+			return 2 + mN*(mN+1)/2;
 		}
 
-		int eqVar(int a, int b) {
-			assert 0 <= a && a < n;
-			assert 0 <= b && b < n;
+		int eqVar(final int a, final int b) {
+			assert 0 <= a && a < mN;
+			assert 0 <= b && b < mN;
 			if (a > b) {
 				return eqVar(b, a);
 			}
 			// add 2 because 0 and 1 are reserved for const false / const true
-			return 2 + (n*(n+1)/2)-((n-a)*(n-a+1)/2) + b-a;
+			return 2 + (mN*(mN+1)/2)-((mN-a)*(mN-a+1)/2) + b-a;
 		}
 	}
 
 	private static final class SrcSym {
-		private final int src;
-		private final int sym;
+		private final int mSrc;
+		private final int mSym;
 
-		SrcSym(int src, int sym) {
-			this.src = src;
-			this.sym = sym;
+		SrcSym(final int src, final int sym) {
+			this.mSrc = src;
+			this.mSym = sym;
 		}
 
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(final Object obj) {
 			if (obj == null || !(obj instanceof SrcSym)) {
 				return false;
 			}
 
 			final SrcSym b = (SrcSym) obj;
 
-			return src == b.src && sym == b.sym;
+			return mSrc == b.mSrc && mSym == b.mSym;
 		}
 
 		@Override
 		public int hashCode() {
-			return src * 31 + sym;
+			return mSrc * 31 + mSym;
 		}
 	}
 }

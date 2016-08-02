@@ -43,14 +43,14 @@ import java.io.Writer;
  */
 final class Partition {
 	/** Number of equivalence classes */
-	int numClasses;
+	int mNumClasses;
 
 	/** For each old state, to what equivalence class it belongs */
-	int[] classOf;
+	int[] mClassOf;
 
 	Partition(int numClasses, int[] classOf) {
-		this.numClasses = numClasses;
-		this.classOf = classOf;
+		this.mNumClasses = numClasses;
+		this.mClassOf = classOf;
 	}
 
 	/**
@@ -70,19 +70,19 @@ final class Partition {
 	 * @return <code>true</code> iff the input Classes is consistent
 	 */
 	public static boolean checkConsistency(Partition eq) {
-		if (eq.numClasses < 0) {
+		if (eq.mNumClasses < 0) {
 			return false;
 		}
 
-		for (final int x : eq.classOf) {
-			if (x < 0 || x >= eq.numClasses) {
+		for (final int x : eq.mClassOf) {
+			if (x < 0 || x >= eq.mNumClasses) {
 				return false;
 			}
 		}
 
-		final boolean[] hasMembers = new boolean[eq.numClasses];
+		final boolean[] hasMembers = new boolean[eq.mNumClasses];
 
-		for (final int x : eq.classOf) {
+		for (final int x : eq.mClassOf) {
 			hasMembers[x] = true;
 		}
 
@@ -147,19 +147,19 @@ final class Partition {
 
 		partition = Partition.compress(new int[] { 1, 1, 0, 5, 0, 0 });
 		Print.printPartition(writer, partition);
-		assert partition.numClasses == 3;
-		assert partition.classOf[0] == partition.classOf[1];
-		assert partition.classOf[2] == partition.classOf[4];
-		assert partition.classOf[2] == partition.classOf[5];
-		for (int i = 0; i < partition.classOf.length; i++) {
-			assert(i == 3 || partition.classOf[i] != partition.classOf[3]);
+		assert partition.mNumClasses == 3;
+		assert partition.mClassOf[0] == partition.mClassOf[1];
+		assert partition.mClassOf[2] == partition.mClassOf[4];
+		assert partition.mClassOf[2] == partition.mClassOf[5];
+		for (int i = 0; i < partition.mClassOf.length; i++) {
+			assert(i == 3 || partition.mClassOf[i] != partition.mClassOf[3]);
 		}
 
 		partition = Partition.compress(new int[] { 1, 1, 1, 1 });
 		Print.printPartition(writer, partition);
-		assert partition.numClasses == 1;
-		assert partition.classOf.length == 4;
-		for (final int c : partition.classOf) {
+		assert partition.mNumClasses == 1;
+		assert partition.mClassOf.length == 4;
+		for (final int c : partition.mClassOf) {
 			assert c == 0;
 		}
 	}

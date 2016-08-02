@@ -43,40 +43,30 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.HasUnreachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * @author Markus Lindenmann
  * @author Oleksii Saukh
  * @date 13.11.2011
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
-	private final AutomataLibraryServices mServices;
+public class MinimizeDfa<LETTER,STATE>
+		extends AMinimizeNwa<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
     /*_______________________________________________________________________*\
     \* FIELDS / ATTRIBUTES                                                   */
     
     /**
-     * The jLogger instance.
-     */
-	private final ILogger mLogger;
-    /**
      * The resulting automaton.
      */
     private NestedWordAutomaton<LETTER,STATE> mResult;
-    /**
-     * The input automaton.
-     */
-    private final INestedWordAutomaton<LETTER,STATE> mOperand;
 
 	private final boolean mIsDeterministic;
 
@@ -86,21 +76,21 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	/**
 	 * Constructor.
 	 * 
+	 * @param services Ultimate services
 	 * @param operand
 	 *            the input automaton
 	 * @throws AutomataOperationCanceledException 
 	 */
     public MinimizeDfa(final AutomataLibraryServices services, final INestedWordAutomatonOldApi<LETTER,STATE> operand)
             throws AutomataLibraryException {
-    	mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+    	super(services, operand.getStateFactory(), "minimizeDFA", operand);
+    	
         if (new HasUnreachableStates<LETTER,STATE>(mServices, operand)
 				.result()) {
 			throw new IllegalArgumentException("No unreachalbe states allowed");
 		}
-		mOperand = operand;
 		mIsDeterministic = new IsDeterministic<>(mServices, mOperand).getResult();
-		mLogger.info(startMessage());
+		startMessageDebug();
 
 		final ArrayList<STATE> states = new ArrayList<STATE>();
 		states.addAll(mOperand.getStates());
@@ -112,6 +102,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 		generateResultAutomaton(states, table);
 
+		exitMessageDebug();
 		mLogger.info(exitMessage());
 	}
 
@@ -238,11 +229,9 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		final boolean[] marker = new boolean[states.size()];
 		final Set<STATE> temp = new HashSet<STATE>();
 		final HashMap<STATE,STATE> oldSNames2newSNames = new HashMap<STATE,STATE>();
-		final
-		StateFactory<STATE> snf = mOperand.getStateFactory();
         mResult = new NestedWordAutomaton<LETTER,STATE>(
         		mServices, 
-                mOperand.getInternalAlphabet(), null, null, snf);
+                mOperand.getInternalAlphabet(), null, null, mStateFactory);
 
 		for (int i = 0; i < states.size(); i++) {
 			if (marker[i]) {
@@ -264,7 +253,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
                     }
 				}
 			}
-			final STATE minimizedStateName = snf.minimize(temp);
+			final STATE minimizedStateName = mStateFactory.minimize(temp);
 			for (final STATE c : temp) {
 				oldSNames2newSNames.put(c, minimizedStateName);
 			}
@@ -365,14 +354,8 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
     /*_______________________________________________________________________*\
     \* OVERRIDDEN METHODS                                                    */
     
-    @Override
-    public String operationName() {
-        return "minimizeDFA";
-    }
 
-    @Override
-    public String startMessage() {
-    	mLogger.info("Starting DFA Minimizer");
+    private void startMessageDebug() {
         final StringBuilder msg = new StringBuilder("Start ");
 		msg.append(operationName()).append(" Operand ")
 				.append(mOperand.sizeInformation());
@@ -387,11 +370,10 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
             mLogger.info("Automaton will not be minimized, but only reduced.");
         }
         
-        return "Starting to minimize...";
+        mLogger.info("Starting to minimize...");
     }
     
-    @Override
-    public String exitMessage() {
+    private void exitMessageDebug() {
         if (mLogger.isDebugEnabled()) {
         	printTransitions(mResult);
         }
@@ -399,8 +381,6 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
         msg.append("Finished ").append(operationName()).append(" Result ")
                 .append(mResult.sizeInformation());
         mLogger.info(msg.toString());
-
-        return "Exiting DFA minimization";
     }
 
     @Override
@@ -408,21 +388,6 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
         return mResult;
     }
 
-	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		mLogger.info("Start testing correctness of " + operationName());
-		boolean correct = true;
-		
-		correct &= new IsIncluded<>(mServices, stateFactory, mOperand, mResult).getResult();
-		correct &= new IsIncluded<>(mServices, stateFactory, mResult, mOperand).getResult();
-		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);
-		}
-		mLogger.info("Finished testing correctness of " + operationName());
-		return correct;
-	}
-    
     /*_______________________________________________________________________*\
     \* GETTERS AND SETTERS                                                   */
 }

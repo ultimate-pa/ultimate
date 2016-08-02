@@ -40,13 +40,11 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Utility class for minimizing incomplete DFAs (Deterministic Finite
@@ -64,8 +62,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            Class of the states from the automata
  */
-public final class MinimizeIncompleteDfa<LETTER, STATE> extends
-		AMinimizeNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public final class MinimizeIncompleteDfa<LETTER, STATE>
+		extends AMinimizeNwa<LETTER, STATE>
+		implements IOperation<LETTER, STATE> {
 	/**
 	 * Initial amount of blocks.
 	 */
@@ -73,53 +72,45 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 	/**
 	 * Next usable unique id for a block.
 	 */
-	private int blockId = 0;
+	private int mBlockId = 0;
 	/**
 	 * List of all blocks the automata currently has. (Also known as "Q").
 	 */
-	private final LinkedList<LinkedHashSet<Integer>> blocks =
+	private final LinkedList<LinkedHashSet<Integer>> mBlocks =
 			new LinkedList<LinkedHashSet<Integer>>();
 	/**
 	 * Mapping for block to a unique id.
 	 */
-	private final HashMap<LinkedHashSet<Integer>, Integer> blockToId;
+	private final HashMap<LinkedHashSet<Integer>, Integer> mBlockToId;
 	/**
 	 * Mapping for a unique id to block.
 	 */
-	private final HashMap<Integer, LinkedHashSet<Integer>> idToBlock;
+	private final HashMap<Integer, LinkedHashSet<Integer>> mIdToBlock;
 	/**
 	 * Mapping for a unique id to state.
 	 */
-	private final HashMap<Integer, STATE> idToState;
+	private final HashMap<Integer, STATE> mIdToState;
 	/**
 	 * Mapping for a letter to unique id.
 	 */
-	private final HashMap<LETTER, Integer> letterToId;
-	/**
-	 * Input automaton that should be minimized.
-	 */
-	private final INestedWordAutomaton<LETTER, STATE> moperand;
+	private final HashMap<LETTER, Integer> mLetterToId;
 	/**
 	 * Resulting minimized automaton.
 	 */
-	private final NestedWordAutomaton<LETTER, STATE> mresult;
-	/**
-	 * Service provider.
-	 */
-	private final AutomataLibraryServices mservices;
+	private final NestedWordAutomaton<LETTER, STATE> mResult;
 	/**
 	 * Mapping for state to the block number where it is contained.
 	 */
-	private final HashMap<Integer, Integer> stateToBlockId;
+	private final HashMap<Integer, Integer> mStateToBlockId;
 	/**
 	 * Mapping for a state to unique id.
 	 */
-	private final HashMap<STATE, Integer> stateToId;
+	private final HashMap<STATE, Integer> mStateToId;
 	/**
 	 * Mapping for state to incoming edges.
 	 */
 	private final HashMap<Integer, Iterable<
-		IncomingInternalTransition<LETTER, STATE>>> stateToIncomingEdges;
+		IncomingInternalTransition<LETTER, STATE>>> mStateToIncomingEdges;
 //	/**
 //	 * Mapping for state to outgoing edges.
 //	 * Christian: not used anymore
@@ -128,8 +119,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 //		OutgoingInternalTransition<LETTER, STATE>>> stateToOutgoingEdges;
 	
 	// added by Christian
-	private final StateFactory<STATE> mstateFactory;
-	private HashMap<STATE, STATE> moldState2newState;
+	private HashMap<STATE, STATE> mOldState2newState;
 	
 	/**
 	 * Minimizes a given incomplete DFAs (Deterministic Finite Automaton).<br/>
@@ -139,13 +129,13 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 	 * where 'n' is the number of states, 'm' the number of edges and 'k' the
 	 * size of the alphabet.
 	 */
-	public MinimizeIncompleteDfa(final AutomataLibraryServices services,
+	public MinimizeIncompleteDfa(
+			final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand,
-			final StateFactory<STATE> stateFactoryConstruction,
+			final StateFactory<STATE> stateFactory,
 			final Collection<Set<STATE>> initialPartition,
 			final boolean addMapping) {
-		super(services, operand.getStateFactory(), "minimizeIncompleteDFA",
-				operand);
+		super(services, stateFactory, "minimizeIncompleteDFA", operand);
 		
 		// added by Christian
 		if ((operand.getCallAlphabet().size() > 0) ||
@@ -153,24 +143,21 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 			throw new UnsupportedOperationException(
 				"This class only supports minimization of finite automata.");
 		}
-		mstateFactory = stateFactoryConstruction;
 		if (addMapping) {
-			this.moldState2newState = null;
+			this.mOldState2newState = null;
 		} else {
-			moldState2newState = new HashMap<STATE, STATE>();
+			mOldState2newState = new HashMap<STATE, STATE>();
 		}
 		
-		mservices = services;
-		moperand = operand;
-		blockToId = new HashMap<LinkedHashSet<Integer>, Integer>(
+		mBlockToId = new HashMap<LinkedHashSet<Integer>, Integer>(
 				INITIAL_BLOCK_AMOUNT);
-		idToBlock = new HashMap<Integer, LinkedHashSet<Integer>>(
+		mIdToBlock = new HashMap<Integer, LinkedHashSet<Integer>>(
 				INITIAL_BLOCK_AMOUNT);
 		final int stateAmount = operand.getStates().size();
-		idToState = new HashMap<Integer, STATE>(stateAmount);
-		stateToId = new HashMap<STATE, Integer>(stateAmount);
-		stateToBlockId = new HashMap<Integer, Integer>(stateAmount);
-		stateToIncomingEdges =
+		mIdToState = new HashMap<Integer, STATE>(stateAmount);
+		mStateToId = new HashMap<STATE, Integer>(stateAmount);
+		mStateToBlockId = new HashMap<Integer, Integer>(stateAmount);
+		mStateToIncomingEdges =
 				new HashMap<Integer,
 				Iterable<IncomingInternalTransition<LETTER, STATE>>>(
 				stateAmount);
@@ -179,13 +166,12 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 //				Iterable<OutgoingInternalTransition<LETTER, STATE>>>(
 //				stateAmount);
 		final int letterAmount = operand.getInternalAlphabet().size();
-		letterToId = new HashMap<LETTER, Integer>(letterAmount);
+		mLetterToId = new HashMap<LETTER, Integer>(letterAmount);
 
 		init(stateAmount, letterAmount);
 		
-		mresult = minimizeICDFA(moperand, initialPartition);
-		final ILogger logger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		logger.info(exitMessage());
+		mResult = minimizeICDFA(mOperand, initialPartition);
+		mLogger.info(exitMessage());
 	}
 
 	/**
@@ -214,11 +200,11 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 	 */
 	private NestedWordAutomaton<LETTER, STATE> buildMinimizedAutomaton() {
 		final NestedWordAutomaton<LETTER, STATE> result =
-				new NestedWordAutomaton<LETTER, STATE>(mservices,
-						moperand.getInternalAlphabet(),
-						moperand.getCallAlphabet(),
-						moperand.getReturnAlphabet(),
-						moperand.getStateFactory());
+				new NestedWordAutomaton<LETTER, STATE>(mServices,
+						mOperand.getInternalAlphabet(),
+						mOperand.getCallAlphabet(),
+						mOperand.getReturnAlphabet(),
+						mStateFactory);
 		
 		// Select a representative state for every block
 		final LinkedList<STATE> representatives = new LinkedList<STATE>();
@@ -229,10 +215,10 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		
 		// Christian: edited for proper state factory usage
 		final HashSet<Integer> initialBlocks = new HashSet<Integer>();
-		for (final STATE initialState : moperand.getInitialStates()) {
-			initialBlocks.add(stateToBlockId.get(stateToId.get(initialState)));
+		for (final STATE initialState : mOperand.getInitialStates()) {
+			initialBlocks.add(mStateToBlockId.get(mStateToId.get(initialState)));
 		}
-		for (final LinkedHashSet<Integer> block : blocks) {
+		for (final LinkedHashSet<Integer> block : mBlocks) {
 			if (block == null || block.isEmpty()) {
 				continue;
 			}
@@ -240,40 +226,40 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 			final ArrayList<STATE> allStates = new ArrayList<STATE>(block.size());
 			final Iterator<Integer> blockIt = block.iterator();
 			final int representativeId = blockIt.next();
-			final int blockId = blockToId.get(block);
-			final STATE representative = idToState.get(representativeId);
+			final int blockId = mBlockToId.get(block);
+			final STATE representative = mIdToState.get(representativeId);
 			representatives.add(representative);
 			allStates.add(representative);
 			
 			while (blockIt.hasNext()) {
-				allStates.add(idToState.get(blockIt.next()));
+				allStates.add(mIdToState.get(blockIt.next()));
 			}
 			
-			final STATE newState = mstateFactory.minimize(allStates);
+			final STATE newState = mStateFactory.minimize(allStates);
 			blockToNewState.put(blockId, newState);
 			result.addState(initialBlocks.contains(blockId),
-					moperand.isFinal(representative), newState);
+					mOperand.isFinal(representative), newState);
 			
 			// update mapping 'old state -> new state'
-			if (moldState2newState != null) {
+			if (mOldState2newState != null) {
 				for (final STATE oldState : allStates) {
-					moldState2newState.put(oldState, newState);
+					mOldState2newState.put(oldState, newState);
 				}
 			}
 		}
 		//Add adjusted outgoing transitions of every representative
 		for (final STATE oldSrcState : representatives) {
 			for (final OutgoingInternalTransition<LETTER, STATE> trans :
-				moperand.internalSuccessors(oldSrcState)) {
+				mOperand.internalSuccessors(oldSrcState)) {
 				//Redirect the destination to the representative of the block
-				final int oldSrc = stateToId.get(oldSrcState);
-				final int oldDest = stateToId.get(trans.getSucc());
+				final int oldSrc = mStateToId.get(oldSrcState);
+				final int oldDest = mStateToId.get(trans.getSucc());
 				
 				final STATE predState = blockToNewState.get(
-						stateToBlockId.get(oldSrc));
+						mStateToBlockId.get(oldSrc));
 				final LETTER letter = trans.getLetter();
 				final STATE succState = blockToNewState.get(
-						stateToBlockId.get(oldDest));
+						mStateToBlockId.get(oldDest));
 				result.addInternalTransition(predState, letter, succState);
 			}
 		}
@@ -325,7 +311,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
-		return mresult;
+		return mResult;
 	}
 
 	/**
@@ -334,8 +320,8 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 	 * @return Usable unique id for a block
 	 */
 	private int getUniqueBlocKId() {
-		final int curId = blockId;
-		blockId++;
+		final int curId = mBlockId;
+		mBlockId++;
 		return curId;
 	}
 
@@ -353,17 +339,17 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		if (stateAmount < letterAmount) {
 			maxAmount = letterAmount;
 		}
-		final Iterator<STATE> states = moperand.getStates().iterator();
-		final Iterator<LETTER> letters = moperand.getInternalAlphabet().iterator();
+		final Iterator<STATE> states = mOperand.getStates().iterator();
+		final Iterator<LETTER> letters = mOperand.getInternalAlphabet().iterator();
 		
 		for (int i = 0; i < maxAmount; i++) {
 			if (states.hasNext()) {
 				final STATE state = states.next();
 				
-				idToState.put(i, state);
-				stateToId.put(state, i);
-				stateToIncomingEdges.put(i,
-						moperand.internalPredecessors(state));
+				mIdToState.put(i, state);
+				mStateToId.put(state, i);
+				mStateToIncomingEdges.put(i,
+						mOperand.internalPredecessors(state));
 				// Christian: not needed anymore
 //				stateToOutgoingEdges
 //						.put(i, moperand.internalSuccessors(state));
@@ -371,7 +357,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 			if (letters.hasNext()) {
 				final LETTER letter = letters.next();
 				
-				letterToId.put(letter, i);
+				mLetterToId.put(letter, i);
 			}
 		}
 	}
@@ -396,7 +382,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		// Initial blocks
 		final LinkedList<Integer> finalStates = new LinkedList<Integer>();
 		final LinkedList<Integer> otherStates = new LinkedList<Integer>();
-		final Set<STATE> allStates = stateToId.keySet();
+		final Set<STATE> allStates = mStateToId.keySet();
 		
 		// List also known as "L"
 		final LinkedHashSet<LinkedHashSet<Integer>> splitCandidates =
@@ -405,9 +391,9 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		if (initialPartition == null) {
 			for (final STATE state : allStates) {
 				if (incdfa.isFinal(state)) {
-					finalStates.add(stateToId.get(state));
+					finalStates.add(mStateToId.get(state));
 				} else {
-					otherStates.add(stateToId.get(state));
+					otherStates.add(mStateToId.get(state));
 				}
 			}
 			//Add block only if there are final states
@@ -418,8 +404,8 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 				finalStatesBlockId = getUniqueBlocKId();
 				finalStatesBlock = new LinkedHashSet<Integer>(
 						finalStates);
-				blockToId.put(finalStatesBlock, finalStatesBlockId);
-				idToBlock.put(finalStatesBlockId, finalStatesBlock);
+				mBlockToId.put(finalStatesBlock, finalStatesBlockId);
+				mIdToBlock.put(finalStatesBlockId, finalStatesBlock);
 			}
 			//Add block only if there are remaining states
 			int otherStatesBlockId = -1;
@@ -429,22 +415,22 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 				otherStatesBlockId = getUniqueBlocKId();
 				otherStatesBlock = new LinkedHashSet<Integer>(
 						otherStates);
-				blockToId.put(otherStatesBlock, otherStatesBlockId);
-				idToBlock.put(otherStatesBlockId, otherStatesBlock);
+				mBlockToId.put(otherStatesBlock, otherStatesBlockId);
+				mIdToBlock.put(otherStatesBlockId, otherStatesBlock);
 			}
 	
 			for (final STATE state : allStates) {
 				if (incdfa.isFinal(state)) {
-					stateToBlockId.put(stateToId.get(state), finalStatesBlockId);
+					mStateToBlockId.put(mStateToId.get(state), finalStatesBlockId);
 				} else {
-					stateToBlockId.put(stateToId.get(state), otherStatesBlockId);
+					mStateToBlockId.put(mStateToId.get(state), otherStatesBlockId);
 				}
 			}
 			if (existsFinal) {
-				blocks.add(finalStatesBlock);
+				mBlocks.add(finalStatesBlock);
 			}
 			if (existsOther) {
-				blocks.add(otherStatesBlock);
+				mBlocks.add(otherStatesBlock);
 			}
 
 			// Initial split candidates
@@ -460,14 +446,14 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 				final LinkedList<Integer> newBlockStates = new LinkedList<Integer>();
 				final int blockId = getUniqueBlocKId();
 				for (final STATE state : block) {
-					final int stateId = stateToId.get(state);
+					final int stateId = mStateToId.get(state);
 					newBlockStates.add(stateId);
-					stateToBlockId.put(stateId, blockId);
+					mStateToBlockId.put(stateId, blockId);
 				}
 				final LinkedHashSet<Integer> newBlock = new LinkedHashSet<Integer>(
 						newBlockStates);
-				blockToId.put(newBlock, blockId);
-				idToBlock.put(blockId, newBlock);
+				mBlockToId.put(newBlock, blockId);
+				mIdToBlock.put(blockId, newBlock);
 				splitCandidates.add(newBlock);
 			}
 		}
@@ -480,7 +466,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 
 			// If splitter block was deleted during a previous split, skip it
 			boolean noElementWithContentLeft = false;
-			while (splitter == null || blockToId.get(splitter) == null) {
+			while (splitter == null || mBlockToId.get(splitter) == null) {
 				if (splitCandidatesIter.hasNext()) {
 					splitCandidates.remove(splitter);
 					splitCandidatesIter = splitCandidates.iterator();
@@ -556,13 +542,13 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		// and setup some data structures
 		for (final int stateInSplitter : splitter) {
 			final Iterator<IncomingInternalTransition<LETTER, STATE>> incomingTransitions =
-					stateToIncomingEdges.get(stateInSplitter).iterator();
+					mStateToIncomingEdges.get(stateInSplitter).iterator();
 
 			while (incomingTransitions.hasNext()) {
 				final IncomingInternalTransition<LETTER, STATE> incomingTrans =
 						incomingTransitions.next();
-				final int incomingState = stateToId.get(incomingTrans.getPred());
-				final int incomingLetter = letterToId.get(incomingTrans.getLetter());
+				final int incomingState = mStateToId.get(incomingTrans.getPred());
+				final int incomingLetter = mLetterToId.get(incomingTrans.getLetter());
 
 				// Incoming edges, accessible by incoming letter
 				if (!stateListByLetter.containsKey(incomingLetter)) {
@@ -606,7 +592,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		// Step 3
 		// Discriminate the states
 		for (final Integer state : splitStates) {
-			final int blockNumber = stateToBlockId.get(state);
+			final int blockNumber = mStateToBlockId.get(state);
 			if (!blockStateMap.containsKey(blockNumber)) {
 				blockStateMap.put(blockNumber, new LinkedList<Integer>());
 				// Remember blocks that are used
@@ -676,12 +662,12 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		// where the content is separated by blocks.
 		// Also remove duplicate content by using a set.
 		final LinkedHashMap<Integer, LinkedHashSet<Integer>> splitStatesBlockWrapper =
-				new LinkedHashMap<Integer, LinkedHashSet<Integer>>(blocks.size());
+				new LinkedHashMap<Integer, LinkedHashSet<Integer>>(mBlocks.size());
 		LinkedHashSet<Integer> curBlockContent = new LinkedHashSet<Integer>();
 		int lastBlockNumber = -1;
 		int curBlockNumber = -1;
 		for (final int state : splitStates) {
-			curBlockNumber = stateToBlockId.get(state);
+			curBlockNumber = mStateToBlockId.get(state);
 			// If next block begins save old content and create a new list
 			if (curBlockNumber != lastBlockNumber) {
 				if (!curBlockContent.isEmpty()) {
@@ -724,7 +710,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		// information once per block
 
 		// Save blockNumber of current splitter (before it gets removed)
-		final int splitterBlockNumber = blockToId.get(splitter);
+		final int splitterBlockNumber = mBlockToId.get(splitter);
 		final LinkedList<LinkedHashSet<Integer>> splitCandidatesToAppend =
 				new LinkedList<LinkedHashSet<Integer>>();
 
@@ -753,7 +739,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 			curSplit = null;
 
 			// If there are missing states also add them as separate split
-			LinkedHashSet<Integer> originalBlock = idToBlock.get(stateToBlockId
+			LinkedHashSet<Integer> originalBlock = mIdToBlock.get(mStateToBlockId
 					.get(blockContent.iterator().next()));
 			if (!blockContent.equals(originalBlock)) {
 				final HashSet<Integer> missingStates = new HashSet<Integer>();
@@ -771,10 +757,10 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 			if (splittings.size() > 1) {
 				
 				// Remove old block
-				final int oldBlockId = blockToId.get(originalBlock);
-				idToBlock.remove(oldBlockId);
-				blockToId.remove(originalBlock);
-				blocks.remove(originalBlock);
+				final int oldBlockId = mBlockToId.get(originalBlock);
+				mIdToBlock.remove(oldBlockId);
+				mBlockToId.remove(originalBlock);
+				mBlocks.remove(originalBlock);
 				originalBlock = null;
 
 				// Track maximal size of split parts to not add the
@@ -785,11 +771,11 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 				// Create new blocks
 				for (final LinkedHashSet<Integer> splitBlockPart : splittings) {
 					final int nextBlockId = getUniqueBlocKId();
-					idToBlock.put(nextBlockId, splitBlockPart);
-					blockToId.put(splitBlockPart, nextBlockId);
-					blocks.add(splitBlockPart);
+					mIdToBlock.put(nextBlockId, splitBlockPart);
+					mBlockToId.put(splitBlockPart, nextBlockId);
+					mBlocks.add(splitBlockPart);
 					for (final int state : splitBlockPart) {
-						stateToBlockId.put(state, nextBlockId);
+						mStateToBlockId.put(state, nextBlockId);
 					}
 
 					// Append block to candidate list
@@ -816,6 +802,6 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 	 * This method can only be used if the minimization is finished.
 	 */
 	public Map<STATE,STATE> getOldState2newState() {
-		return moldState2newState;
+		return mOldState2newState;
 	}
 }

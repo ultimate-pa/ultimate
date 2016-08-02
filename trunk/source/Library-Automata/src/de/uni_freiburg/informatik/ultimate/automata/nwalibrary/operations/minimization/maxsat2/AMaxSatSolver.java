@@ -138,6 +138,7 @@ public abstract class AMaxSatSolver<V> {
 	 * @return true iff the given set of Horn clauses is satisfiable.
 	 */
 	public boolean solve() throws AutomataOperationCanceledException {
+		mLogger.info("starting solver");
 		propagateAll();
 		makeModificationsPersistent();
 		while(!mUnsetVariables.isEmpty()) {
@@ -149,6 +150,7 @@ public abstract class AMaxSatSolver<V> {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
+		mLogger.info("finished solver");
 		log();
 		return true;
 	}
@@ -248,6 +250,7 @@ public abstract class AMaxSatSolver<V> {
 	protected abstract void setVariable(final V var, final boolean newStatus);
 
 	protected void reEvaluateStatusOfAllClauses(final V var) {
+		// TODO improvement: interrupt if clause equivalent to false was found
 		for (final Clause<V> clause : mOccursPositive.getImage(var)) {
 			reEvaluateClauseStatus(clause);
 		}
@@ -300,7 +303,7 @@ public abstract class AMaxSatSolver<V> {
 	 * 
 	 * @return unset variable
 	 */
-	private V getUnsetVariable() {
+	protected V getUnsetVariable() {
 		final Iterator<V> it = mUnsetVariables.iterator();
 		final V var = it.next();
 		it.remove();

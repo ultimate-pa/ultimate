@@ -134,8 +134,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public MinimizeNwaMaxSat2(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
-			IDoubleDeckerAutomaton<LETTER, STATE> operand,
+	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final boolean addMapOldState2newState,
 			final boolean useFinalStateConstraints,
 			final boolean useTransitionHornClauses,
@@ -171,11 +171,15 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 		generateVariables();
 		generateTransitionConstraints();
 		generateTransitivityConstraints();
-		mLogger.info("Number of clauses for acceptance: " + mNumberClauses_Acceptance
-				+ " Number of clauses for transitions: " + mNumberClauses_Transitions
-				+ " Number of clauses for nondeterministic transitions: "
+		mLogger.info(
+				"Number of clauses for: -> acceptance: "
+					+ mNumberClauses_Acceptance
+				+ ", -> transitions: "
+					+ mNumberClauses_Transitions
+				+ ", -> nondeterministic transitions: "
 					+ mNumberClauses_Transitions_Nondeterministic
-				+ " Number of clauses for transitivity: " + mNumberClauses_Transitivity);
+				+ ", -> transitivity: "
+					+ mNumberClauses_Transitivity);
 		final boolean satisfiable = mSolver.solve();
 		if (!satisfiable) {
 			throw new AssertionError("Constructed constraints were unsatisfiable");
@@ -200,8 +204,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public MinimizeNwaMaxSat2(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
-			IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, true,
 				new LookaheadPartitionConstructor<LETTER, STATE>(services, operand).getResult());
 	}
@@ -237,15 +241,15 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 		 * TODO change last flag to 'false' to use the more general solver
 		 */
 		this(services, stateFactory, operand, false, useFinalStateConstraints,
-				true, true, initialEquivalenceClasses);
+				false, false, initialEquivalenceClasses);
 	}
 
 	@SuppressWarnings("squid:S1698")
-	private boolean haveSimilarEquivalenceClass(STATE inputState1, STATE inputState2) {
+	private boolean haveSimilarEquivalenceClass(final STATE inputState1, final STATE inputState2) {
 		return mState2EquivalenceClass.get(inputState1) == mState2EquivalenceClass.get(inputState2);
 	}
 
-	private STATE[] constructStateArray(Collection<STATE> states) {
+	private STATE[] constructStateArray(final Collection<STATE> states) {
 		return states.toArray((STATE[]) new Object[states.size()]);
 	}
 
@@ -572,7 +576,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	@SuppressWarnings("unchecked")
 	private void generateNaryTransitionConstraint(
 			final Doubleton<STATE> linPredDoubleton,
-			final Doubleton<STATE> hierPredDoubleton, STATE succState1,
+			final Doubleton<STATE> hierPredDoubleton, final STATE succState1,
 			final List<STATE> succStates2) {
 		final List<Doubleton<STATE>> succDoubletons = new ArrayList<>();
 		for (final STATE succState2 : succStates2) {
@@ -626,7 +630,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 		}
 	}
 
-	private void addTwoLiteralHornClause(Doubleton<STATE> negativeAtom, Doubleton<STATE> positiveAtom) {
+	private void addTwoLiteralHornClause(final Doubleton<STATE> negativeAtom, final Doubleton<STATE> positiveAtom) {
 		if (negativeAtom == null) {
 			if (positiveAtom == null) {
 				throw new AssertionError("clause must not be empty");
@@ -640,8 +644,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 		}
 	}
 
-	private void addThreeLiteralHornClause(Doubleton<STATE> negativeAtom1, Doubleton<STATE> negativeAtom2,
-			Doubleton<STATE> positiveAtom) {
+	private void addThreeLiteralHornClause(final Doubleton<STATE> negativeAtom1, final Doubleton<STATE> negativeAtom2,
+			final Doubleton<STATE> positiveAtom) {
 		if (negativeAtom1 == null) {
 			addTwoLiteralHornClause(negativeAtom2, positiveAtom);
 		} else if (negativeAtom2 == null) {
@@ -678,7 +682,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	 * @return true iff two states have the same outgoing return symbols wrt.
 	 *         hierarchical predecessors
 	 */
-	private boolean haveSameOutgoingReturnSymbols(STATE up1, STATE down1, STATE up2, STATE down2) {
+	private boolean haveSameOutgoingReturnSymbols(final STATE up1, final STATE down1, final STATE up2, final STATE down2) {
 		final Set<LETTER> returnLetters1 = new HashSet<>();
 		for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessorsGivenHier(up1, down1)) {
 			returnLetters1.add(trans.getLetter());
@@ -699,15 +703,15 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 		return mSolver.getValue(doubleton);
 	}
 
-	private boolean solverSaysDifferent(STATE inputState1, STATE inputState2) {
+	private boolean solverSaysDifferent(final STATE inputState1, final STATE inputState2) {
 		return resultFromSolver(inputState1, inputState2) == EVariableStatus.FALSE;
 	}
 
-	private boolean solverSaysSimilar(STATE inputState1, STATE inputState2) {
+	private boolean solverSaysSimilar(final STATE inputState1, final STATE inputState2) {
 		return resultFromSolver(inputState1, inputState2) == EVariableStatus.TRUE;
 	}
 
-	private boolean knownToBeSimilar(STATE inputState1, STATE inputState2) {
+	private boolean knownToBeSimilar(final STATE inputState1, final STATE inputState2) {
 		if (inputState1.equals(inputState2)) {
 			return true;
 		} else {
@@ -719,7 +723,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 		}
 	}
 
-	private boolean knownToBeDifferent(STATE inputState1, STATE inputState2) {
+	private boolean knownToBeDifferent(final STATE inputState1, final STATE inputState2) {
 		if (haveSimilarEquivalenceClass(inputState1, inputState2)) {
 			return solverSaysDifferent(inputState1, inputState2);
 		} else {
@@ -750,15 +754,15 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 		}
 	}
 
-	private Doubleton<STATE>[] consArr(Doubleton<STATE>... doubletons) {
+	private Doubleton<STATE>[] consArr(final Doubleton<STATE>... doubletons) {
 		return doubletons;
 	}
 
-	private Doubleton<STATE>[] consArr(Collection<Doubleton<STATE>> doubletons) {
+	private Doubleton<STATE>[] consArr(final Collection<Doubleton<STATE>> doubletons) {
 		return doubletons.toArray(new Doubleton[doubletons.size()]);
 	}
 
-	private <T> boolean voidOfNull(T[] positiveAtoms) {
+	private <T> boolean voidOfNull(final T[] positiveAtoms) {
 		for (final T elem : positiveAtoms) {
 			if (elem == null) {
 				return false;

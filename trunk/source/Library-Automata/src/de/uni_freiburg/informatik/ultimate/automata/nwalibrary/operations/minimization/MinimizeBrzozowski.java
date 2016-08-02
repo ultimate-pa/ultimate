@@ -55,7 +55,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * created after each operation and the reversal and determinization do not
  * know each other (potentially they may .
  * 
- * @author Christian
+ * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class MinimizeBrzozowski<LETTER, STATE>
 		extends AMinimizeNwa<LETTER, STATE>
@@ -65,24 +67,26 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 * 
 	 * NOTE: All intermediate results are also stored here.
 	 */
-	private final INestedWordAutomaton<LETTER, STATE> mresult;
+	private final INestedWordAutomaton<LETTER, STATE> mResult;
 	
 	/**
 	 * Constructor.
 	 * 
+	 * @param services Ultimate services
+	 * @param stateFactory state factory
 	 * @param operand input (finite, possibly nondeterministic) automaton
 	 * @throws AutomataOperationCanceledException thrown when execution is cancelled
 	 */
-	public MinimizeBrzozowski(AutomataLibraryServices services,
-			StateFactory<STATE> stateFactory, 
-			INestedWordAutomaton<LETTER, STATE> operand)
+	public MinimizeBrzozowski(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory, 
+			final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataLibraryException {
 		super(services, stateFactory, "MinimizeBrzozowski", operand);
 		
 		assert super.checkForFiniteAutomaton() :
 			"The input automaton contains call or return transitions.";
 		
-		mresult = minimize();
+		mResult = minimize();
 		mLogger.info(exitMessage());
 	}
 	
@@ -154,9 +158,8 @@ public class MinimizeBrzozowski<LETTER, STATE>
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
 		try {
 			return new Determinize<LETTER, STATE>(mServices, mStateFactory, automaton).getResult();
-		}
-		// this case cannot occur
-		catch (final AutomataLibraryException e) {
+		} catch (final AutomataLibraryException e) {
+			// this case cannot occur
 			e.printStackTrace();
 			return automaton;
 		}
@@ -164,6 +167,6 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	
 	@Override
 	public INestedWordAutomatonSimple<LETTER, STATE> getResult() {
-		return mresult;
+		return mResult;
 	}
 }

@@ -43,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * constructs the result from the information it has gathered so far.
  * 
  * @author Christian Schilling
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public abstract class AMinimizeIncremental<LETTER, STATE>
 		extends AMinimizeNwa<LETTER, STATE> {
@@ -50,7 +52,7 @@ public abstract class AMinimizeIncremental<LETTER, STATE>
 	/**
 	 * The interrupt.
 	 */
-	protected final Interrupt minterrupt;
+	protected final Interrupt mInterrupt;
 	
 	/**
 	 * This constructor should be called by all subclasses and only by them.
@@ -59,14 +61,14 @@ public abstract class AMinimizeIncremental<LETTER, STATE>
 	 * @param operand input automaton
 	 * @param interrupt interrupt
 	 */
-	protected AMinimizeIncremental(AutomataLibraryServices services,
+	protected AMinimizeIncremental(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt) {
 		super(services, stateFactory, name, operand);
-		minterrupt = interrupt;
-		assert ((minterrupt == null) || (! minterrupt.getStatus())) :
+		mInterrupt = interrupt;
+		assert ((mInterrupt == null) || (! mInterrupt.getStatus())) :
 			"The interrupt tells to terminate right at the beginning.";
 	}
 }

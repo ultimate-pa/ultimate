@@ -34,13 +34,13 @@ import java.util.Iterator;
  * Helper Task for processing information from the Incremental algorithm for the
  * Hopcroft algorithm
  * 
- * @author layla
+ * @author Layla Franke
  *
  */
 public class HelpHopcroft implements Runnable {
-	private final MinimizeDfaAmrParallel<?, ?> mincrementalAlgorithm;
-	private final MinimizeDfaHopcroftParallel<?, ?> mhopcroftAlgorithm;
-	private final int mstate1;
+	private final MinimizeDfaAmrParallel<?, ?> mIncrementalAlgorithm;
+	private final MinimizeDfaHopcroftParallel<?, ?> mHopcroftAlgorithm;
+	private final int mState1;
 
 	/**
 	 * The incremental algorithm determined, that state1 and state2 are of the
@@ -56,9 +56,9 @@ public class HelpHopcroft implements Runnable {
 	public HelpHopcroft(final MinimizeDfaAmrParallel<?, ?> incremental,
 			final MinimizeDfaHopcroftParallel<?, ?> hopcroft, final int state1,
 			final int state2) {
-		mincrementalAlgorithm = incremental;
-		mhopcroftAlgorithm = hopcroft;
-		mstate1 = state1;
+		mIncrementalAlgorithm = incremental;
+		mHopcroftAlgorithm = hopcroft;
+		mState1 = state1;
 	}
 
 	@Override
@@ -67,7 +67,7 @@ public class HelpHopcroft implements Runnable {
 		// whether all states in that set are equivalent.
 		HashSet<Integer> set = null;
 		try {
-			set = mhopcroftAlgorithm.getBlock(mstate1);
+			set = mHopcroftAlgorithm.getBlock(mState1);
 		} catch (final NullPointerException e) {
 			return;
 		}
@@ -81,15 +81,15 @@ public class HelpHopcroft implements Runnable {
 			for (final Iterator<Integer> iter = set.iterator(); iter.hasNext();) {
 				final int elem = iter.next();
 
-				final int state1rep = mincrementalAlgorithm.find(mstate1);
-				if (mincrementalAlgorithm.find(elem) != state1rep) {
+				final int state1rep = mIncrementalAlgorithm.find(mState1);
+				if (mIncrementalAlgorithm.find(elem) != state1rep) {
 					eq = false;
 				}
 			}
 		}
 		if (eq) {
 			for (final int state : set) {
-				mhopcroftAlgorithm.removePartition(state);
+				mHopcroftAlgorithm.removePartition(state);
 			}
 		}
 	}
