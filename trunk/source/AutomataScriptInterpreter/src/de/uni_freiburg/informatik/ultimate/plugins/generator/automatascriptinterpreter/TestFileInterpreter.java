@@ -1114,7 +1114,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				}
 				mLastPrintedAutomaton = (IAutomaton<?, ?>) arguments.get(0);
 				text = (new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices),
-						"automaton", format, arguments.get(0)))
+						"automaton", format, mLastPrintedAutomaton))
 								.getDefinitionAsString();
 			} else {
 				if (arguments.size() > 1) {

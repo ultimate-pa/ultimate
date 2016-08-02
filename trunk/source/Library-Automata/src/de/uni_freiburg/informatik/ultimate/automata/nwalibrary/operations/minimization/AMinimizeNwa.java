@@ -132,7 +132,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 		}
 
 		ResultChecker.writeToFileIfPreferred(mServices,
-				operationName() + " failed",
+				operationName() + "_Failed",
 				message,
 				mOperand);
 		return false;

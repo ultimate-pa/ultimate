@@ -55,28 +55,31 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJuli
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 @Deprecated
-public class ResultChecker<LETTER, STATE> {
-
-	// private static ILogger logger;
-
-	private static int resultCheckStackHeight = 0;
-	public static final int maxResultCheckStackHeight = 1;
-
-	public final static boolean mInvariantCheck_DetComplementBuchi = false;
-
-	public static boolean doingInvariantCheck() {
-		return resultCheckStackHeight > 0;
+public final class ResultChecker {
+	private static int sResultCheckStackHeight = 0;
+	public static final int MAX_RESULT_CHECK_STACK_HEIGHT = 1;
+	public static final boolean INVARIANT_CHECK_DET_COMPLEMENT_BUCHI = false;
+	
+	private ResultChecker() {
+		// empty private constructor
 	}
 
-	public static boolean reduceBuchi(final AutomataLibraryServices services, final INestedWordAutomaton operand,
-			final INestedWordAutomaton result) throws AutomataLibraryException {
-		final ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+	public static boolean doingInvariantCheck() {
+		return sResultCheckStackHeight > 0;
+	}
 
-		final StateFactory stateFactory = operand.getStateFactory();
-		if (resultCheckStackHeight >= maxResultCheckStackHeight) {
+	public static <LETTER, STATE> boolean reduceBuchi(
+			final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final INestedWordAutomaton<LETTER, STATE> result)
+					throws AutomataLibraryException {
+		final ILogger logger =
+				services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+
+		if (sResultCheckStackHeight >= MAX_RESULT_CHECK_STACK_HEIGHT) {
 			return true;
 		}
-		resultCheckStackHeight++;
+		sResultCheckStackHeight++;
 		logger.debug("Testing correctness of reduceBuchi");
 
 		/*
@@ -84,20 +87,23 @@ public class ResultChecker<LETTER, STATE> {
 		 *      API inclusion; also, it is not reasonable to use this old
 		 *      minimization here.
 		 */
-		final INestedWordAutomaton minimizedOperand = 
+		final INestedWordAutomaton<LETTER, STATE> minimizedOperand = 
 //				(new MinimizeDfa(services, operand)).getResult();
 				operand;
 
 		boolean correct = true;
-		final NestedLassoRun inOperandButNotInResultBuchi = nwaBuchiLanguageInclusion(services, stateFactory,
-				minimizedOperand, result);
+		final StateFactory<STATE> stateFactory = operand.getStateFactory();
+		final NestedLassoRun<LETTER, STATE> inOperandButNotInResultBuchi =
+				nwaBuchiLanguageInclusion(services, stateFactory,
+						minimizedOperand, result);
 		if (inOperandButNotInResultBuchi != null) {
 			logger.error("Lasso word accepted by operand, but not by result: "
 					+ inOperandButNotInResultBuchi.getNestedLassoWord());
 			correct = false;
 		}
-		final NestedLassoRun inResultButNotInOperatndBuchi = nwaBuchiLanguageInclusion(services, stateFactory, result,
-				minimizedOperand);
+		final NestedLassoRun<LETTER, STATE> inResultButNotInOperatndBuchi =
+				nwaBuchiLanguageInclusion(services, stateFactory, result,
+						minimizedOperand);
 		if (inResultButNotInOperatndBuchi != null) {
 			logger.error("Lasso word accepted by result, but not by operand: "
 					+ inResultButNotInOperatndBuchi.getNestedLassoWord());
@@ -105,7 +111,7 @@ public class ResultChecker<LETTER, STATE> {
 		}
 
 		logger.debug("Finished testing correctness of reduceBuchi");
-		resultCheckStackHeight--;
+		sResultCheckStackHeight--;
 		return correct;
 	}
 
@@ -127,41 +133,58 @@ public class ResultChecker<LETTER, STATE> {
 	// return correct;
 	// }
 
-	public static boolean buchiIntersect(final AutomataLibraryServices services, final INestedWordAutomaton operand1,
-			final INestedWordAutomaton operand2, final INestedWordAutomaton result) {
-		final ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+	/**
+	 * TODO not correctly implemented yet
+	 */
+	public static <LETTER, STATE> boolean buchiIntersect(
+			final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER, STATE> operand1,
+			final INestedWordAutomaton<LETTER, STATE> operand2,
+			final INestedWordAutomaton<LETTER, STATE> result) {
+		final ILogger logger =
+				services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 
-		if (resultCheckStackHeight >= maxResultCheckStackHeight) {
+		if (sResultCheckStackHeight >= MAX_RESULT_CHECK_STACK_HEIGHT) {
 			return true;
 		}
-		resultCheckStackHeight++;
+		sResultCheckStackHeight++;
 		logger.info("Testing correctness of buchiIntersect");
 
 		final boolean correct = true;
 		logger.warn("No test for buchiIntersection available yet");
 
 		logger.info("Finished testing correctness of buchiIntersect");
-		resultCheckStackHeight--;
+		sResultCheckStackHeight--;
 		return correct;
 	}
 
-	public static boolean buchiComplement(final AutomataLibraryServices services, final INestedWordAutomatonOldApi operand,
-			final INestedWordAutomatonOldApi result) throws AutomataLibraryException {
-		final ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		if (resultCheckStackHeight >= maxResultCheckStackHeight) {
+	public static <LETTER, STATE> boolean buchiComplement(
+			final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final INestedWordAutomaton<LETTER, STATE> result)
+					throws AutomataLibraryException {
+		final ILogger logger =
+				services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		if (sResultCheckStackHeight >= MAX_RESULT_CHECK_STACK_HEIGHT) {
 			return true;
 		}
-		resultCheckStackHeight++;
-		logger.info("Testing correctness of complementBuchi");
+		sResultCheckStackHeight++;
+		logger.info("Testing correctness of buchiComplement");
 
-		final int maxNumberOfStates = Math.max(operand.size(), result.size());
+		final int maxLength = Math.max(operand.size(), result.size());
+		final int numberOfSamples = 10;
 		boolean correct = true;
-		for (int i = 0; i < 10; i++) {
-			final NestedWord stem = (new GetRandomNestedWord(operand, maxNumberOfStates)).getResult();
-			final NestedWord loop = (new GetRandomNestedWord(operand, maxNumberOfStates)).getResult();
-			final NestedLassoWord lasso = new NestedLassoWord(stem, loop);
-			final boolean operandAccepts = (new BuchiAccepts(services, operand, lasso)).getResult();
-			final boolean resultAccepts = (new BuchiAccepts(services, result, lasso)).getResult();
+		for (int i = 0; i < numberOfSamples; i++) {
+			final NestedWord<LETTER> stem =
+					(new GetRandomNestedWord<LETTER, STATE>(operand, maxLength)).getResult();
+			final NestedWord<LETTER> loop =
+					(new GetRandomNestedWord<LETTER, STATE>(operand, maxLength)).getResult();
+			final NestedLassoWord<LETTER> lasso =
+					new NestedLassoWord<LETTER>(stem, loop);
+			final boolean operandAccepts = 
+					(new BuchiAccepts<LETTER, STATE>(services, operand, lasso)).getResult();
+			final boolean resultAccepts =
+					(new BuchiAccepts<LETTER, STATE>(services, result, lasso)).getResult();
 			if (operandAccepts ^ resultAccepts) {
 				// check passed
 			} else {
@@ -178,29 +201,38 @@ public class ResultChecker<LETTER, STATE> {
 		// assert (correct);
 
 		logger.info("Finished testing correctness of complementBuchi");
-		resultCheckStackHeight--;
+		sResultCheckStackHeight--;
 		return correct;
 	}
 
-	public static boolean buchiComplementSVW(final AutomataLibraryServices services, final INestedWordAutomatonOldApi operand,
-			final INestedWordAutomatonOldApi result) throws AutomataLibraryException {
-		final ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+	public static <LETTER, STATE> boolean buchiComplementSVW(
+			final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final INestedWordAutomaton<LETTER, STATE> result)
+					throws AutomataLibraryException {
+		final ILogger logger =
+				services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 
-		if (resultCheckStackHeight >= maxResultCheckStackHeight) {
+		if (sResultCheckStackHeight >= MAX_RESULT_CHECK_STACK_HEIGHT) {
 			return true;
 		}
-		resultCheckStackHeight++;
+		sResultCheckStackHeight++;
 		logger.info("Testing correctness of complementBuchiSVW");
 
 		final int maxNumberOfStates = Math.max(operand.size(), result.size());
 		boolean correct = true;
 		for (int i = 0; i < 10; i++) {
-			final NestedWord stem = (new GetRandomNestedWord(operand, maxNumberOfStates)).getResult();
-			final NestedWord loop = (new GetRandomNestedWord(operand, maxNumberOfStates)).getResult();
-			final NestedLassoWord lasso = new NestedLassoWord(stem, loop);
+			final NestedWord<LETTER> stem =
+					(new GetRandomNestedWord<LETTER, STATE>(operand, maxNumberOfStates)).getResult();
+			final NestedWord<LETTER> loop =
+					(new GetRandomNestedWord<LETTER, STATE>(operand, maxNumberOfStates)).getResult();
+			final NestedLassoWord<LETTER> lasso =
+					new NestedLassoWord<LETTER>(stem, loop);
 
-			final boolean operandAccepts = (new BuchiAccepts(services, operand, lasso)).getResult();
-			final boolean resultAccepts = (new BuchiAccepts(services, operand, lasso)).getResult();
+			final boolean operandAccepts =
+					(new BuchiAccepts<LETTER, STATE>(services, operand, lasso)).getResult();
+			final boolean resultAccepts =
+					(new BuchiAccepts<LETTER, STATE>(services, operand, lasso)).getResult();
 			if (operandAccepts ^ resultAccepts) {
 				// ok
 			} else {
@@ -227,54 +259,67 @@ public class ResultChecker<LETTER, STATE> {
 		// }
 
 		logger.info("Finished testing correctness of complementBuchiSVW");
-		resultCheckStackHeight--;
+		sResultCheckStackHeight--;
 		return correct;
 	}
 
-	public static boolean petriNetJulian(final AutomataLibraryServices services, final INestedWordAutomatonOldApi op,
-			final PetriNetJulian result) throws AutomataLibraryException {
-		final ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+	public static <LETTER, STATE> boolean petriNetJulian(
+			final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER, STATE> op,
+			final PetriNetJulian<LETTER, STATE> result)
+					throws AutomataLibraryException {
+		final ILogger logger =
+				services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 
-		if (resultCheckStackHeight >= maxResultCheckStackHeight) {
+		if (sResultCheckStackHeight >= MAX_RESULT_CHECK_STACK_HEIGHT) {
 			return true;
 		}
-		resultCheckStackHeight++;
+		sResultCheckStackHeight++;
 		logger.info("Testing correctness of PetriNetJulian constructor");
 
-		final INestedWordAutomatonOldApi resultAutomata = (new PetriNet2FiniteAutomaton(services, result)).getResult();
+		final INestedWordAutomaton<LETTER, STATE> resultAutomata =
+				(new PetriNet2FiniteAutomaton<LETTER, STATE>(services, result)).getResult();
 		boolean correct = true;
-		correct &= (nwaLanguageInclusion(services, resultAutomata, op, op.getStateFactory()) == null);
-		correct &= (nwaLanguageInclusion(services, op, resultAutomata, op.getStateFactory()) == null);
+		correct &= (nwaLanguageInclusionNew(services, resultAutomata, op, op.getStateFactory()) == null);
+		correct &= (nwaLanguageInclusionNew(services, op, resultAutomata, op.getStateFactory()) == null);
 
 		logger.info("Finished testing correctness of PetriNetJulian constructor");
-		resultCheckStackHeight--;
+		sResultCheckStackHeight--;
 		return correct;
 	}
 
-	public static boolean petriNetLanguageEquivalence(final AutomataLibraryServices services, final PetriNetJulian net1,
-			final PetriNetJulian net2) throws AutomataLibraryException {
-		final ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+	public static <LETTER, STATE> boolean petriNetLanguageEquivalence(
+			final AutomataLibraryServices services,
+			final PetriNetJulian<LETTER, STATE> net1,
+			final PetriNetJulian<LETTER, STATE> net2)
+					throws AutomataLibraryException {
+		final ILogger logger =
+				services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 
-		if (resultCheckStackHeight >= maxResultCheckStackHeight) {
+		if (sResultCheckStackHeight >= MAX_RESULT_CHECK_STACK_HEIGHT) {
 			return true;
 		}
-		resultCheckStackHeight++;
+		sResultCheckStackHeight++;
 		logger.info("Testing Petri net language equivalence");
-		final INestedWordAutomatonOldApi finAuto1 = (new PetriNet2FiniteAutomaton(services, net1)).getResult();
-		final INestedWordAutomatonOldApi finAuto2 = (new PetriNet2FiniteAutomaton(services, net2)).getResult();
-		final NestedRun subsetCounterex = nwaLanguageInclusion(services, finAuto1, finAuto2, net1.getStateFactory());
+		final INestedWordAutomaton<LETTER, STATE> finAuto1 =
+				(new PetriNet2FiniteAutomaton<LETTER, STATE>(services, net1)).getResult();
+		final INestedWordAutomaton<LETTER, STATE> finAuto2 =
+				(new PetriNet2FiniteAutomaton<LETTER, STATE>(services, net2)).getResult();
+		final NestedRun<LETTER, STATE> subsetCounterex =
+				nwaLanguageInclusionNew(services, finAuto1, finAuto2, net1.getStateFactory());
 		final boolean subset = subsetCounterex == null;
 		if (!subset) {
 			logger.error("Only accepted by first: " + subsetCounterex.getWord());
 		}
-		final NestedRun supersetCounterex = nwaLanguageInclusion(services, finAuto2, finAuto1, net1.getStateFactory());
+		final NestedRun<LETTER, STATE> supersetCounterex =
+				nwaLanguageInclusionNew(services, finAuto2, finAuto1, net1.getStateFactory());
 		final boolean superset = supersetCounterex == null;
 		if (!superset) {
 			logger.error("Only accepted by second: " + supersetCounterex.getWord());
 		}
 		final boolean result = subset && superset;
 		logger.info("Finished Petri net language equivalence");
-		resultCheckStackHeight--;
+		sResultCheckStackHeight--;
 		return result;
 	}
 
@@ -287,13 +332,19 @@ public class ResultChecker<LETTER, STATE> {
 		return true;
 	}
 
-	public static <LETTER, STATE> NestedRun nwaLanguageInclusion(final AutomataLibraryServices services,
-			final INestedWordAutomatonOldApi nwa1, final INestedWordAutomatonOldApi nwa2, final StateFactory stateFactory)
+	public static <LETTER, STATE> NestedRun<LETTER, STATE> nwaLanguageInclusion(
+			final AutomataLibraryServices services,
+			final INestedWordAutomatonOldApi<LETTER, STATE> nwa1,
+			final INestedWordAutomatonOldApi<LETTER, STATE> nwa2,
+			final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		final IStateDeterminizer stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(nwa2, true, stateFactory);
-		final INestedWordAutomatonOldApi nwa1MinusNwa2 = (new DifferenceDD(services, nwa1, nwa2, stateDeterminizer,
-				stateFactory, false, false)).getResult();
-		final NestedRun inNwa1ButNotInNwa2 = (new IsEmpty(services, nwa1MinusNwa2)).getNestedRun();
+		final IStateDeterminizer<LETTER, STATE> stateDeterminizer =
+				new PowersetDeterminizer<LETTER, STATE>(nwa2, true, stateFactory);
+		final INestedWordAutomaton<LETTER, STATE> nwa1MinusNwa2 =
+				(new DifferenceDD<LETTER, STATE>(services, nwa1, nwa2, stateDeterminizer,
+						stateFactory, false, false)).getResult();
+		final NestedRun<LETTER, STATE> inNwa1ButNotInNwa2 =
+				(new IsEmpty<LETTER, STATE>(services, nwa1MinusNwa2)).getNestedRun();
 		return inNwa1ButNotInNwa2;
 		// if (inNwa1ButNotInNwa2 != null) {
 		// logger.error("Word accepted by nwa1, but not by nwa2: " +
@@ -306,13 +357,14 @@ public class ResultChecker<LETTER, STATE> {
 			final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> nwa1,
 			final INestedWordAutomaton<LETTER, STATE> nwa2,
-			final StateFactory stateFactory)
+			final StateFactory<STATE> stateFactory)
 					throws AutomataLibraryException {
 		return new IsIncluded<>(services, stateFactory, nwa1, nwa2).getCounterexample();
 	}
 
 	public static <LETTER, STATE> INestedWordAutomatonOldApi<LETTER, STATE> getOldApiNwa(
-			final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> nwa)
+			final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa)
 			throws AutomataLibraryException {
 		if (nwa instanceof INestedWordAutomatonOldApi) {
 			return (INestedWordAutomatonOldApi<LETTER, STATE>) nwa;
@@ -321,9 +373,13 @@ public class ResultChecker<LETTER, STATE> {
 		}
 	}
 
-	private static NestedLassoRun nwaBuchiLanguageInclusion(final AutomataLibraryServices services, final StateFactory stateFactory,
-			final INestedWordAutomaton nwa1, final INestedWordAutomaton nwa2) throws AutomataLibraryException {
-		return (new BuchiIsIncluded(services, stateFactory, nwa1, nwa2)).getCounterexample();
+	private static <LETTER, STATE> NestedLassoRun<LETTER, STATE> nwaBuchiLanguageInclusion(
+			final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> nwa1,
+			final INestedWordAutomaton<LETTER, STATE> nwa2)
+					throws AutomataLibraryException {
+		return (new BuchiIsIncluded<LETTER, STATE>(services, stateFactory, nwa1, nwa2)).getCounterexample();
 	}
 
 	private static String getDateTime() {
@@ -332,18 +388,26 @@ public class ResultChecker<LETTER, STATE> {
 		return dateFormat.format(date);
 	}
 
-	public static void writeToFileIfPreferred(final AutomataLibraryServices services, final String filenamePrefix, final String message,
-			final IAutomaton... automata) {
+	public static <LETTER, STATE> void writeToFileIfPreferred(
+			final AutomataLibraryServices services,
+			final String filenamePrefix,
+			final String message,
+			final IAutomaton<LETTER, STATE>... automata) {
 		final String workingDirectory = System.getProperty("user.dir");
-		final String filename = workingDirectory + File.separator + filenamePrefix + getDateTime() + ".ats";
-		new AutomatonDefinitionPrinter(services, filenamePrefix, filename, Format.ATS_NUMERATE, message, automata);
+		final String filename = workingDirectory + File.separator
+				+ filenamePrefix + getDateTime() + ".ats";
+		new AutomatonDefinitionPrinter<LETTER, STATE>(services, filenamePrefix,
+				filename, Format.ATS_NUMERATE, message, automata);
 	}
 
 	public static <LETTER, STATE> NestedLassoWord<LETTER> getRandomNestedLassoWord(
-			final INestedWordAutomatonSimple<LETTER, STATE> automaton, final int size) throws AutomataLibraryException {
-		final NestedWord<LETTER> stem = (new GetRandomNestedWord<LETTER, STATE>(automaton, size)).getResult();
-		final NestedWord<LETTER> loop = (new GetRandomNestedWord<LETTER, STATE>(automaton, size)).getResult();
+			final INestedWordAutomatonSimple<LETTER, STATE> automaton,
+			final int size)
+					throws AutomataLibraryException {
+		final NestedWord<LETTER> stem =
+				(new GetRandomNestedWord<LETTER, STATE>(automaton, size)).getResult();
+		final NestedWord<LETTER> loop =
+				(new GetRandomNestedWord<LETTER, STATE>(automaton, size)).getResult();
 		return new NestedLassoWord<LETTER>(stem, loop);
 	}
-
 }
