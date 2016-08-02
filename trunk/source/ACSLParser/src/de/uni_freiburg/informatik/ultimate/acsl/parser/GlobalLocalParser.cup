@@ -773,7 +773,7 @@ tabs::=
 | LSQUARE constant_option RSQUARE tabs
 ;
 
-/* TODO: Vorerst String bessere L�sung? */
+/* TODO: Vorerst String bessere Lösung? */
 type_spec::=
  INTEGER:i {: RESULT = i; :}         
 | REAL:r {: RESULT = r; :}           
