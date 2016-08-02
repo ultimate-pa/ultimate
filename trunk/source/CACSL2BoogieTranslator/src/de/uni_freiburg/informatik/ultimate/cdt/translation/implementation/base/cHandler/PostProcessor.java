@@ -627,8 +627,11 @@ public class PostProcessor {
 					// declare floating point constructors here because we might 
 					// always need them for our backtranslation
 					bt.declareFloatingPointConstructors(loc, new CPrimitive(cPrimitive));
-					bt.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_inf, new CPrimitive(cPrimitive));
+					bt.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_MINUS_INF, new CPrimitive(cPrimitive));
+					bt.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_PLUS_INF, new CPrimitive(cPrimitive));
 					bt.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_NAN, new CPrimitive(cPrimitive));
+					bt.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_MINUS_ZERO, new CPrimitive(cPrimitive));
+					bt.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_PLUS_ZERO, new CPrimitive(cPrimitive));
 				}
 
 				final Attribute[] attributes;

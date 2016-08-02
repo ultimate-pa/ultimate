@@ -48,16 +48,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes.FloatingPointSize;
@@ -82,6 +78,12 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	public static final String BOOGIE_ROUNDING_MODE_IDENTIFIER = "FloatRoundingMode";
 	public static final String BOOGIE_ROUNDING_MODE_RNE = "RoundingMode_RNE";
 	public static final String BOOGIE_ROUNDING_MODE_RTZ = "RoundingMode_RTZ";
+	
+	public static final String SMT_LIB_NAN = "NaN";
+	public static final String SMT_LIB_PLUS_INF = "+oo";
+	public static final String SMT_LIB_MINUS_INF = "-oo";
+	public static final String SMT_LIB_PLUS_ZERO = "+zero";
+	public static final String SMT_LIB_MINUS_ZERO = "-zero";
 
 	public BitvectorTranslation(final TypeSizes mTypeSizeConstants, final ITypeHandler typeHandler,
 			final PointerIntegerConversion pointerIntegerConversion,
@@ -120,21 +122,10 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		if (mOverapproximateFloatingPointOperations) {
 			return super.constructOverapproximationFloatLiteral(loc, value.toString(), type);
 		} else {
-
-			final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type);
 			final Expression[] arguments;
 			final String smtFunctionName;
 			if (value.compareTo(BigDecimal.ZERO) == 0) {
-				smtFunctionName = "+zero";
-				final IntegerLiteral eb = new IntegerLiteral(loc, Integer.toString(fps.getExponent()));
-				final IntegerLiteral sb = new IntegerLiteral(loc, Integer.toString(fps.getSignificant()));
-				final Expression[] indices = new Expression[] { eb, sb };
-				final Attribute[] attributes = new Attribute[] {
-						new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
-								new Expression[] { new StringLiteral(loc, smtFunctionName) }),
-						new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices) };
-				mFunctionDeclarations.declareFunction(loc, SFO.getBoogieFunctionName(smtFunctionName, type), attributes,
-						false, type);
+				smtFunctionName = SMT_LIB_PLUS_ZERO;
 				arguments = new Expression[] {};
 			} else {
 				smtFunctionName = "to_fp";
@@ -730,7 +721,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		final String smtFunctionName;
 		final CPrimitive type;
 		if (name.equals("INFINITY") || name.equals("inf") || name.equals("inff")) {
-			smtFunctionName = SMT_LIB_inf;
+			smtFunctionName = SMT_LIB_PLUS_INF;
 			type = new CPrimitive(CPrimitives.DOUBLE);
 		} else if (name.equals("NAN") || name.equals("nan")) {
 			smtFunctionName = SMT_LIB_NAN;
@@ -749,9 +740,6 @@ public class BitvectorTranslation extends AExpressionTranslation {
 				new FunctionApplication(loc, SFO.getBoogieFunctionName(smtFunctionName, type), new Expression[] {});
 		return new ExpressionResult(new RValue(func, type));
 	}
-
-	public static final String SMT_LIB_NAN = "NaN";
-	public static final String SMT_LIB_inf = "+oo";
 
 	public void declareFloatConstant(final ILocation loc, final String smtFunctionName, final CPrimitive type) {
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type);
