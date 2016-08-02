@@ -250,9 +250,9 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Testing correctness of determinization");
 			final INestedWordAutomatonOldApi<LETTER, STATE> operandOld = (new RemoveUnreachable(mServices, mOperand)).getResult();
-			final INestedWordAutomatonOldApi<LETTER,STATE> resultSadd = (new DeterminizeSadd<LETTER,STATE>(mServices, operandOld)).getResult();
-			correct &= (ResultChecker.nwaLanguageInclusion(mServices, resultSadd,mTraversedNwa, stateFactory) == null);
-			correct &= (ResultChecker.nwaLanguageInclusion(mServices, mTraversedNwa,resultSadd, stateFactory) == null);
+			final INestedWordAutomaton<LETTER,STATE> resultSadd = (new DeterminizeSadd<LETTER,STATE>(mServices, operandOld)).getResult();
+			correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, resultSadd,mTraversedNwa, stateFactory) == null);
+			correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, mTraversedNwa,resultSadd, stateFactory) == null);
 			mLogger.info("Finished testing correctness of determinization");
 		
 		}

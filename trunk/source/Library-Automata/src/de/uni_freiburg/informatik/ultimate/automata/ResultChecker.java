@@ -332,6 +332,10 @@ public final class ResultChecker {
 		return true;
 	}
 
+	/**
+	 * @deprecated unused legacy code
+	 */
+	@Deprecated
 	public static <LETTER, STATE> NestedRun<LETTER, STATE> nwaLanguageInclusion(
 			final AutomataLibraryServices services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> nwa1,

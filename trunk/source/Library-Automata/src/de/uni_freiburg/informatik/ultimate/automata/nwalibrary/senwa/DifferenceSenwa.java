@@ -115,9 +115,9 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	
 	
 	
-	public DifferenceSenwa(AutomataLibraryServices services,
-			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
-			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend)
+	public DifferenceSenwa(final AutomataLibraryServices services,
+			final INestedWordAutomatonOldApi<LETTER,STATE> minuend,
+			final INestedWordAutomatonOldApi<LETTER,STATE> subtrahend)
 					throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -139,11 +139,11 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	
 	
 	public DifferenceSenwa(
-			AutomataLibraryServices services,
-			INestedWordAutomaton<LETTER,STATE> minuend,
-			INestedWordAutomaton<LETTER,STATE> subtrahend,
-			IStateDeterminizer<LETTER,STATE> stateDeterminizer,
-			boolean removeDeadEndsImmediately)
+			final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER,STATE> minuend,
+			final INestedWordAutomaton<LETTER,STATE> subtrahend,
+			final IStateDeterminizer<LETTER,STATE> stateDeterminizer,
+			final boolean removeDeadEndsImmediately)
 					throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -176,8 +176,8 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	
 	
 	private STATE getOrConstructResultState(
-			DifferenceState<LETTER,STATE> diffEntry, 
-			DifferenceState<LETTER,STATE> diffState, boolean isInitial) {
+			final DifferenceState<LETTER,STATE> diffEntry, 
+			final DifferenceState<LETTER,STATE> diffState, final boolean isInitial) {
 		assert minuend.getStates().contains(diffState.getMinuendState());
 		assert minuend.getStates().contains(diffEntry.getMinuendState());
 		Map<DifferenceState<LETTER,STATE>, STATE> op2res = mEntry2Operand2Result.get(diffEntry);
@@ -200,7 +200,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 		return resState;
 	}
 	
-	private DifferenceState<LETTER,STATE> getOperandState(STATE resState) {
+	private DifferenceState<LETTER,STATE> getOperandState(final STATE resState) {
 		assert mSenwa.getStates().contains(resState);
 		final DifferenceState<LETTER,STATE> opState = mResult2Operand.get(resState);
 		assert opState != null;
@@ -226,7 +226,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	}
 
 	@Override
-	public Iterable<STATE> visitAndGetInternalSuccessors(STATE resState) {
+	public Iterable<STATE> visitAndGetInternalSuccessors(final STATE resState) {
 		final STATE resEntry = mSenwa.getEntry(resState);
 		final DifferenceState<LETTER,STATE> diffEntry = getOperandState(resEntry);
 		final Set<STATE> resSuccs = new HashSet<STATE>();
@@ -249,7 +249,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	}
 
 	@Override
-	public Iterable<STATE> visitAndGetCallSuccessors(STATE resState) {
+	public Iterable<STATE> visitAndGetCallSuccessors(final STATE resState) {
 		final Set<STATE> resSuccs = new HashSet<STATE>();
 		final DifferenceState<LETTER,STATE> diffState = getOperandState(resState);
 		final STATE minuState = diffState.getMinuendState();
@@ -272,8 +272,8 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	}
 
 	@Override
-	public Iterable<STATE> visitAndGetReturnSuccessors(STATE resState,
-			STATE resHier) {
+	public Iterable<STATE> visitAndGetReturnSuccessors(final STATE resState,
+			final STATE resHier) {
 		final Set<STATE> resSuccs = new HashSet<STATE>();
 		final DifferenceState<LETTER,STATE> diffState = getOperandState(resState);
 		final STATE minuState = diffState.getMinuendState();
@@ -310,7 +310,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	
 //FIXME: Remove this
 	public boolean removeStatesThatCanNotReachFinal(
-			boolean computeRemovedDoubleDeckersAndCallSuccessors) {
+			final boolean computeRemovedDoubleDeckersAndCallSuccessors) {
 		return mSenwaWalker.removeStatesThatCanNotReachFinal(
 								computeRemovedDoubleDeckersAndCallSuccessors);
 	}
@@ -334,15 +334,15 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		boolean correct = true;
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
 
-			final INestedWordAutomatonOldApi<LETTER,STATE> resultSadd = (new DifferenceSadd<LETTER,STATE>(mServices, stateFactory, minuend, subtrahend)).getResult();
-			correct &= (ResultChecker.nwaLanguageInclusion(mServices, resultSadd, mSenwa, stateFactory) == null);
-			correct &= (ResultChecker.nwaLanguageInclusion(mServices, mSenwa, resultSadd, stateFactory) == null);
+			final INestedWordAutomaton<LETTER,STATE> resultSadd = (new DifferenceSadd<LETTER,STATE>(mServices, stateFactory, minuend, subtrahend)).getResult();
+			correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, resultSadd, mSenwa, stateFactory) == null);
+			correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, mSenwa, resultSadd, stateFactory) == null);
 			if (!correct) {
 			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", minuend,subtrahend);
 			}

@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -96,9 +97,9 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 			" Result " + mResult.sizeInformation();
 	}
 	
-	public DifferenceBlackAndWhite(AutomataLibraryServices services,
-									PetriNetJulian<S,C> net, 
-								   NestedWordAutomaton<S,C> nwa) {
+	public DifferenceBlackAndWhite(final AutomataLibraryServices services,
+									final PetriNetJulian<S,C> net, 
+								   final NestedWordAutomaton<S,C> nwa) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mNet = net;
@@ -344,7 +345,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 	
 	
 	
-	private boolean isPreSuccPlaceInNet(PetriNetJulian<S,C> net) {
+	private boolean isPreSuccPlaceInNet(final PetriNetJulian<S,C> net) {
 		for (final ITransition<S,C> trans : net.getTransitions()) {
 			for (final Place<S,C> place : trans.getPredecessors()) {
 				if(!net.getPlaces().contains(place)) {
@@ -362,7 +363,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 	
 	
 	
-	private boolean isPreSuccTransitionInNet(PetriNetJulian<S,C> net) {
+	private boolean isPreSuccTransitionInNet(final PetriNetJulian<S,C> net) {
 		for (final Place<S,C> place : net.getPlaces()) {
 			for (final ITransition<S,C> trans : place.getPredecessors()) {
 				if(!net.getTransitions().contains(trans)) {
@@ -379,16 +380,16 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<C> stateFactory)
+	public boolean checkResult(final StateFactory<C> stateFactory)
 			throws AutomataLibraryException {
 		mLogger.info("Testing correctness of differenceBlackAndWhite");
 
 		final INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(mServices, mNet)).getResult();
-		final INestedWordAutomatonOldApi rcResult = (new DifferenceDD(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
-		final INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(mServices, mResult)).getResult();
+		final INestedWordAutomaton rcResult = (new DifferenceDD(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
+		final INestedWordAutomaton resultAsNwa = (new PetriNet2FiniteAutomaton(mServices, mResult)).getResult();
 		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(mServices, resultAsNwa,rcResult,stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(mServices, rcResult,resultAsNwa,stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, resultAsNwa,rcResult,stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusionNew(mServices, rcResult,resultAsNwa,stateFactory) == null);
 
 		mLogger.info("Finished testing correctness of differenceBlackAndWhite");
 		return correct;
