@@ -24,25 +24,30 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
-
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
 /**
- * Classes that implement this interface represent an {@link IAction} which
- * <ul>
- * <li> does not change the context/procedure, or
- * <li> does change the context/procedure but all information about the 
- * context switch are encoded in a single {@link TransFormula}.
- * </ul> 
- * 
+ * Abstract superclass of Basic*Action. 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public interface IInternalAction extends IAction {
-	/**
-	 * @return Transformula which defines how the system/program's variables 
-	 * are modified while executing this action.
-	 */
-	public TransFormula getTransformula();
+public abstract class AbstractBasicAction implements IAction {
+	private final String mPreceedingProcedure;
+	private final String mSucceedingProcedure;
+	
+	public AbstractBasicAction(String preceedingProcedure, String succeedingProcedure) {
+		super();
+		mPreceedingProcedure = preceedingProcedure;
+		mSucceedingProcedure = succeedingProcedure;
+	}
+
+	@Override
+	public String getPreceedingProcedure() {
+		return mPreceedingProcedure;
+	}
+
+	@Override
+	public String getSucceedingProcedure() {
+		return mSucceedingProcedure;
+	}
 }

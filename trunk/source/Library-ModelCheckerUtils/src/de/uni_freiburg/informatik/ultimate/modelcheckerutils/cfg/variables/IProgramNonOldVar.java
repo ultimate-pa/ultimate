@@ -24,25 +24,10 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+public interface IProgramNonOldVar extends IProgramVar {
 
-/**
- * Default implementation of {@link ICallAction}. 
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
- */
-public class BasicCallAction extends AbstractBasicAction implements ICallAction {
-	private final TransFormula mLocalVarsAssignment;
-	
-	public BasicCallAction(String preceedingProcedure, String succeedingProcedure, TransFormula localVarsAssignment) {
-		super(preceedingProcedure, succeedingProcedure);
-		mLocalVarsAssignment = localVarsAssignment;
-	}
+	IProgramOldVar getOldVar();
 
-	@Override
-	public TransFormula getLocalVarsAssignment() {
-		return mLocalVarsAssignment;
-	}
 }

@@ -24,26 +24,25 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
+
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 
 /**
- * Classes that implement this interface represent an action in an 
- * interprocedural control flow (i.e., a labeling of an edge that defines
- * the operational semantics of the edge).
+ * Classes that implement this interface represent an {@link IAction} which
+ * <ul>
+ * <li> does not change the context/procedure, or
+ * <li> does change the context/procedure but all information about the 
+ * context switch are encoded in a single {@link TransFormula}.
+ * </ul> 
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public interface IAction {
+public interface IInternalAction extends IAction {
 	/**
-	 * @return Identifier of the procedure in which the system/program is
-	 * before this action is executed.
+	 * @return Transformula which defines how the system/program's variables 
+	 * are modified while executing this action.
 	 */
-	public String getPreceedingProcedure();
-	
-	/**
-	 * @return Identifier of the procedure in which the system/program is
-	 * after this action is executed.
-	 */
-	public String getSucceedingProcedure();
-
+	public TransFormula getTransformula();
 }

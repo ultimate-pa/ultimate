@@ -24,30 +24,25 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
+
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 
 /**
- * Abstract superclass of Basic*Action. 
+ * Default implementation of {@link IInternalAction}. 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public abstract class AbstractBasicAction implements IAction {
-	private final String mPreceedingProcedure;
-	private final String mSucceedingProcedure;
+public class BasicInternalAction extends AbstractBasicAction implements IInternalAction {
+	private final TransFormula mTransFormula;
 	
-	public AbstractBasicAction(String preceedingProcedure, String succeedingProcedure) {
-		super();
-		mPreceedingProcedure = preceedingProcedure;
-		mSucceedingProcedure = succeedingProcedure;
+	public BasicInternalAction(String preceedingProcedure, String succeedingProcedure, TransFormula transFormula) {
+		super(preceedingProcedure, succeedingProcedure);
+		mTransFormula = transFormula;
 	}
 
 	@Override
-	public String getPreceedingProcedure() {
-		return mPreceedingProcedure;
-	}
-
-	@Override
-	public String getSucceedingProcedure() {
-		return mSucceedingProcedure;
+	public TransFormula getTransformula() {
+		return mTransFormula;
 	}
 }

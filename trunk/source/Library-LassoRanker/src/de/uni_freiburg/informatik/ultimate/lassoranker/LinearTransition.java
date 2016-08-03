@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * the TransFormula.
  * 
  * @author Jan Leike
- * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
+ * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula
  */
 public class LinearTransition implements Serializable {
 	private static final long serialVersionUID = 8925538198614759883L;

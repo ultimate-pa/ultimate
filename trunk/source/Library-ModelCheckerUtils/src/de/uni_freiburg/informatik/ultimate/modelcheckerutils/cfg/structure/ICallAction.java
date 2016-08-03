@@ -24,33 +24,21 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 
 /**
  * Classes that implement this interface represent an {@link IAction} which
- * labels a return edge in an interprocedural control flow graph. 
+ * labels a call edge in an interprocedural control flow graph. 
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public interface IReturnAction extends IAction {
-	
-	/**
-	 * @return Transformula which defines how the variables that are 
-	 * explicitly mentioned in the call are updated on the return
-	 * (this does not include information about modifiable global variables
-	 * that are implicitly modified). 
-	 */
-	public TransFormula getAssignmentOfReturn();
-	
-
+public interface ICallAction extends IAction {
 	/**
 	 * @return Transformula which defines how the local variables of the
-	 * called procedure are modified while executing the corresponding call
-	 * action.
+	 * called procedure are modified while executing this action.
 	 */
-	public TransFormula getLocalVarsAssignmentOfCall();
-	
+	public TransFormula getLocalVarsAssignment();
 }

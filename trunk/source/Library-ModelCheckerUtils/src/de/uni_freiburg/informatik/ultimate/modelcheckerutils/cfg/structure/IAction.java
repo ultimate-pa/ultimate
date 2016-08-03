@@ -24,33 +24,26 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
-
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
 /**
- * Default implementation of {@link IReturnAction}. 
+ * Classes that implement this interface represent an action in an 
+ * interprocedural control flow (i.e., a labeling of an edge that defines
+ * the operational semantics of the edge).
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class BasicReturnAction extends AbstractBasicAction implements IReturnAction {
-	private final TransFormula mAssignmentOfReturn;
-	private final TransFormula mLocalVarsAssignment;
+public interface IAction {
+	/**
+	 * @return Identifier of the procedure in which the system/program is
+	 * before this action is executed.
+	 */
+	public String getPreceedingProcedure();
 	
-	public BasicReturnAction(String preceedingProcedure, String succeedingProcedure, 
-			TransFormula assignmentOfReturn, TransFormula localVarsAssignmentOfCall) {
-		super(preceedingProcedure, succeedingProcedure);
-		mAssignmentOfReturn = assignmentOfReturn;
-		mLocalVarsAssignment = localVarsAssignmentOfCall;
-	}
+	/**
+	 * @return Identifier of the procedure in which the system/program is
+	 * after this action is executed.
+	 */
+	public String getSucceedingProcedure();
 
-	@Override
-	public TransFormula getAssignmentOfReturn() {
-		return mAssignmentOfReturn;
-	}
-
-	@Override
-	public TransFormula getLocalVarsAssignmentOfCall() {
-		return mLocalVarsAssignment;
-	}
 }

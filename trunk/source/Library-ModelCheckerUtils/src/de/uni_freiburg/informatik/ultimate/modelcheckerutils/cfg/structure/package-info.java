@@ -24,34 +24,10 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.variables;
-
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-
-public interface IProgramVar {
-
-	String getIdentifier();
-
-	/**
-	 * Returns the procedure in which this variable was declared. If this a global variable, then null is returned.
-	 */
-	String getProcedure();
-
-	boolean isGlobal();
-
-	boolean isOldvar();
-
-	TermVariable getTermVariable();
-
-	ApplicationTerm getDefaultConstant();
-
-	ApplicationTerm getPrimedConstant();
-
-	/**
-	 * Returns an identifier that is globally unique. If this is global non-old we return the identifier, if this is
-	 * global oldvar we add old(.), if this is local we add the procedure name as prefix.
-	 */
-	String getGloballyUniqueId();
-
-}
+/**
+ * Packages contains classes and interfaces that represent the graph structure 
+ * of a control flow graph (CFG).
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ */
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;

@@ -24,25 +24,34 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-/**
- * Default implementation of {@link IInternalAction}. 
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
- */
-public class BasicInternalAction extends AbstractBasicAction implements IInternalAction {
-	private final TransFormula mTransFormula;
-	
-	public BasicInternalAction(String preceedingProcedure, String succeedingProcedure, TransFormula transFormula) {
-		super(preceedingProcedure, succeedingProcedure);
-		mTransFormula = transFormula;
-	}
+public interface IProgramVar {
 
-	@Override
-	public TransFormula getTransformula() {
-		return mTransFormula;
-	}
+	String getIdentifier();
+
+	/**
+	 * Returns the procedure in which this variable was declared. If this a global variable, then null is returned.
+	 */
+	String getProcedure();
+
+	boolean isGlobal();
+
+	boolean isOldvar();
+
+	TermVariable getTermVariable();
+
+	ApplicationTerm getDefaultConstant();
+
+	ApplicationTerm getPrimedConstant();
+
+	/**
+	 * Returns an identifier that is globally unique. If this is global non-old we return the identifier, if this is
+	 * global oldvar we add old(.), if this is local we add the procedure name as prefix.
+	 */
+	String getGloballyUniqueId();
+
 }

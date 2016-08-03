@@ -24,10 +24,10 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.variables;
-
-public interface IProgramNonOldVar extends IProgramVar {
-
-	IProgramOldVar getOldVar();
-
-}
+/**
+ * Packages contains classes and interfaces of objects that represent variables
+ * in a control flow graph (CFG).
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ */
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables;
