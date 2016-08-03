@@ -243,7 +243,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					addDuplicatorVertex(v0e);
 					// V1 -> V0 edges [paper ref 11]
 					for (final IncomingInternalTransition<LETTER, STATE> trans :
-							mBuechi.internalPredecessors(s, q0)) {
+							mBuechi.internalPredecessors(q0, s)) {
 						final STATE pred0 = trans.getPred();
 						// Only add edge if duplicator does not directly loose
 						if (!mBuechi.isFinal(pred0) || mBuechi.isFinal(q1)) {

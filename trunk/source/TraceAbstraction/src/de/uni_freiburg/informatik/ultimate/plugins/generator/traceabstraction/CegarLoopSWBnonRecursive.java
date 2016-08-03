@@ -570,7 +570,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 			final IPredicate target = mActualPath.get(pos + 1);
 			final IPredicate source = mActualPath.get(pos);
 			for (final IncomingReturnTransition<CodeBlock, IPredicate> irt : mNestedAbstraction
-					.returnPredecessors(word.getSymbolAt(pos), target)) {
+					.returnPredecessors(target, word.getSymbolAt(pos))) {
 				if (irt.getLinPred() == source) {
 					final IPredicate interp = mEpimorphism.getMapping(irt.getHierPred());
 					// assert (interp != null);

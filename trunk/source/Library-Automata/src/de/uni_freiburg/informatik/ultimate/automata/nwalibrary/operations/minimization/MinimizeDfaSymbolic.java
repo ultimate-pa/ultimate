@@ -401,7 +401,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE>
 	 * @return if incoming transition labeled with letter exists.
 	 */
 	private boolean hasIncomingTransitionWithLetter(final STATE state, final LETTER letter) {
-		return mOperand.internalPredecessors(letter, state).iterator().hasNext();
+		return mOperand.internalPredecessors(state, letter).iterator().hasNext();
 	}
 
 	/**
@@ -414,7 +414,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE>
 	 */
 	private LinkedList<STATE> getPredecessor(final STATE state, final LETTER letter) {
 		final LinkedList<STATE> ret = new LinkedList<STATE>();
-		final Iterator<IncomingInternalTransition<LETTER, STATE>> it = mOperand.internalPredecessors(letter, state)
+		final Iterator<IncomingInternalTransition<LETTER, STATE>> it = mOperand.internalPredecessors(state, letter)
 				.iterator();
 		while (it.hasNext()) {
 			ret.add(it.next().getPred());

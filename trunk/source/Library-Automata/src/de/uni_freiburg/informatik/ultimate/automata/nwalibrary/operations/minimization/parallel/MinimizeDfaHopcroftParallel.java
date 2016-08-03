@@ -340,8 +340,8 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE>
 				final Set<Integer> x = new HashSet<Integer>();
 				for (final int state : elem) {
 					for (final IncomingInternalTransition<LETTER, STATE> transition : mOperand
-							.internalPredecessors(letter,
-									mInt2state.get(state))) {
+							.internalPredecessors(mInt2state.get(state),
+									letter)) {
 						x.add(mState2int.get(transition.getPred()));
 					}
 				}

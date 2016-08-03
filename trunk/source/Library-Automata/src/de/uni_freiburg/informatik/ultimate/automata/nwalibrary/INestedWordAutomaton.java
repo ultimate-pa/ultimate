@@ -97,7 +97,7 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomato
 	public abstract Iterable<STATE> hierPred(STATE state, LETTER letter);
 
 	public abstract Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
-			final LETTER letter, final STATE hier);
+			final STATE hier, final LETTER letter);
 	
 	public abstract Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
 			final STATE hier);
@@ -106,19 +106,19 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomato
 			final STATE succ);
 	
 	public abstract Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
-			final LETTER letter, final STATE succ);
+			final STATE succ, final LETTER letter);
 
 	public abstract Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
-			final LETTER letter, final STATE succ);
+			final STATE succ, final LETTER letter);
 
 	public abstract Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
 			final STATE succ);
 
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
-			final STATE hier, final LETTER letter, final STATE succ);
+			final STATE succ, final STATE hier, final LETTER letter);
 	
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
-			final LETTER letter, final STATE succ);
+			final STATE succ, final LETTER letter);
 	
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			final STATE succ);

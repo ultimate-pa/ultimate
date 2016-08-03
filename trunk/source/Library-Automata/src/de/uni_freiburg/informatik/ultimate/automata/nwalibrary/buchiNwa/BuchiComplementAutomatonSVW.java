@@ -495,7 +495,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	}
 
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(final LETTER letter, final STATE hier) {
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(final STATE hier, final LETTER letter) {
 		throw new UnsupportedOperationException(UnsupportedOperationMessage);
 	}
 
@@ -896,7 +896,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	}
 
 	@Override
-	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final LETTER letter, final STATE succ) {
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ, final LETTER letter) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -908,7 +908,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	}
 
 	@Override
-	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final LETTER letter, final STATE succ) {
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ, final LETTER letter) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -950,13 +950,13 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	}
 
 	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE hier, final LETTER letter, final STATE succ) {
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final STATE hier, final LETTER letter) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final LETTER letter, final STATE succ) {
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final LETTER letter) {
 		// TODO Auto-generated method stub
 		return null;
 	}

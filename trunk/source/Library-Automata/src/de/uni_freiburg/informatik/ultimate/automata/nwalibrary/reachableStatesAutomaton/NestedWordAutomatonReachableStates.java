@@ -433,7 +433,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	}
 
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(LETTER letter, STATE hier) {
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(STATE hier, LETTER letter) {
 		final Set<SummaryReturnTransition<LETTER, STATE>> result = new HashSet<SummaryReturnTransition<LETTER, STATE>>();
 		final Map<LETTER, Map<STATE, Set<STATE>>> letter2pred2succ = mReturnSummary.get(hier);
 		if (letter2pred2succ == null) {
@@ -476,7 +476,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 						if (mLetterIterator.hasNext()) {
 							do {
 								mCurrentLetter = mLetterIterator.next();
-								mCurrentIterator = returnSummarySuccessor(mCurrentLetter, hier).iterator();
+								mCurrentIterator = returnSummarySuccessor(hier, mCurrentLetter).iterator();
 							} while (!mCurrentIterator.hasNext() && mLetterIterator.hasNext());
 							if (!mCurrentIterator.hasNext()) {
 								mCurrentLetter = null;
@@ -517,7 +517,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	}
 
 	@Override
-	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(LETTER letter, STATE succ) {
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(STATE succ, LETTER letter) {
 		return mStates.get(succ).internalPredecessors(letter);
 	}
 
@@ -527,7 +527,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	}
 
 	@Override
-	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(LETTER letter, STATE succ) {
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(STATE succ, LETTER letter) {
 		return mStates.get(succ).callPredecessors(letter);
 	}
 
@@ -557,12 +557,12 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	}
 
 	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(STATE hier, LETTER letter, STATE succ) {
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(STATE succ, STATE hier, LETTER letter) {
 		return mStates.get(succ).returnPredecessors(hier, letter);
 	}
 
 	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(LETTER letter, STATE succ) {
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(STATE succ, LETTER letter) {
 		return mStates.get(succ).returnPredecessors(letter);
 	}
 
@@ -1605,7 +1605,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	}
 
 	protected boolean containsSummaryReturnTransition(STATE lin, STATE hier, LETTER letter, STATE succ) {
-		for (final SummaryReturnTransition<LETTER, STATE> trans : returnSummarySuccessor(letter, hier)) {
+		for (final SummaryReturnTransition<LETTER, STATE> trans : returnSummarySuccessor(hier, letter)) {
 			if (succ.equals(trans.getSucc()) && lin.equals(trans.getLinPred())) {
 				return true;
 			}

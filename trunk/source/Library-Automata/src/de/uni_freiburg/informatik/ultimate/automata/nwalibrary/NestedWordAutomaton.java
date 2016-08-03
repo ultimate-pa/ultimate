@@ -376,7 +376,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 	}
 
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(final LETTER letter, final STATE hier) {
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(final STATE hier, final LETTER letter) {
 		final Set<SummaryReturnTransition<LETTER, STATE>> result = new HashSet<SummaryReturnTransition<LETTER, STATE>>();
 		final Map<LETTER, Map<STATE, Set<STATE>>> letter2pred2succ = mReturnSummary.get(hier);
 		if (letter2pred2succ == null) {
@@ -419,7 +419,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 						if (mLetterIterator.hasNext()) {
 							do {
 								mCurrentLetter = mLetterIterator.next();
-								mCurrentIterator = returnSummarySuccessor(mCurrentLetter, hier).iterator();
+								mCurrentIterator = returnSummarySuccessor(hier, mCurrentLetter).iterator();
 							} while (!mCurrentIterator.hasNext() && mLetterIterator.hasNext());
 							if (!mCurrentIterator.hasNext()) {
 								mCurrentLetter = null;
@@ -460,8 +460,8 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 	}
 
 	@Override
-	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final LETTER letter,
-			final STATE succ) {
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ,
+			final LETTER letter) {
 		return new Iterable<IncomingInternalTransition<LETTER, STATE>>() {
 			@Override
 			public Iterator<IncomingInternalTransition<LETTER, STATE>> iterator() {
@@ -528,7 +528,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 						if (mLetterIterator.hasNext()) {
 							do {
 								mCurrentLetter = mLetterIterator.next();
-								mCurrentIterator = internalPredecessors(mCurrentLetter, succ).iterator();
+								mCurrentIterator = internalPredecessors(succ, mCurrentLetter).iterator();
 							} while (!mCurrentIterator.hasNext() && mLetterIterator.hasNext());
 							if (!mCurrentIterator.hasNext()) {
 								mCurrentLetter = null;
@@ -569,7 +569,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 	}
 
 	@Override
-	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final LETTER letter, final STATE succ) {
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ, final LETTER letter) {
 		return new Iterable<IncomingCallTransition<LETTER, STATE>>() {
 			@Override
 			public Iterator<IncomingCallTransition<LETTER, STATE>> iterator() {
@@ -636,7 +636,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 						if (mLetterIterator.hasNext()) {
 							do {
 								mCurrentLetter = mLetterIterator.next();
-								mCurrentIterator = callPredecessors(mCurrentLetter, succ).iterator();
+								mCurrentIterator = callPredecessors(succ, mCurrentLetter).iterator();
 							} while (!mCurrentIterator.hasNext() && mLetterIterator.hasNext());
 							if (!mCurrentIterator.hasNext()) {
 								mCurrentLetter = null;
@@ -677,8 +677,8 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 	}
 
 	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE hier, final LETTER letter,
-			final STATE succ) {
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final STATE hier,
+			final LETTER letter) {
 		return new Iterable<IncomingReturnTransition<LETTER, STATE>>() {
 			@Override
 			public Iterator<IncomingReturnTransition<LETTER, STATE>> iterator() {
@@ -728,7 +728,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 	}
 
 	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final LETTER letter, final STATE succ) {
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final LETTER letter) {
 		return new Iterable<IncomingReturnTransition<LETTER, STATE>>() {
 			/**
 			 * Iterates over all IncomingReturnTransition of succ. Iterates over
@@ -750,7 +750,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 						if (mHierIterator.hasNext()) {
 							do {
 								mCurrentHier = mHierIterator.next();
-								mCurrentIterator = returnPredecessors(mCurrentHier, letter, succ).iterator();
+								mCurrentIterator = returnPredecessors(succ, mCurrentHier, letter).iterator();
 							} while (!mCurrentIterator.hasNext() && mHierIterator.hasNext());
 							if (!mCurrentIterator.hasNext()) {
 								mCurrentHier = null;
@@ -813,7 +813,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 						if (mLetterIterator.hasNext()) {
 							do {
 								mCurrentLetter = mLetterIterator.next();
-								mCurrentIterator = returnPredecessors(mCurrentLetter, succ).iterator();
+								mCurrentIterator = returnPredecessors(succ, mCurrentLetter).iterator();
 							} while (!mCurrentIterator.hasNext() && mLetterIterator.hasNext());
 							if (!mCurrentIterator.hasNext()) {
 								mCurrentLetter = null;

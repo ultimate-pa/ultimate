@@ -1780,7 +1780,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 					final Iterable<SummaryReturnTransition<LETTER, STATE>>
 					succs =
 					mParentOperand.returnSummarySuccessor(
-							letter, state);
+							state, letter);
 					for (final SummaryReturnTransition<LETTER, STATE> t :
 						succs) {
 						final EquivalenceClass ec = getEquivalenceClass(
@@ -1842,11 +1842,11 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 		}
 		Iterable<IncomingReturnTransition<LETTER, STATE>> linPredIncoming(
 				final STATE state, final STATE hier, final LETTER letter) {
-			return mParentOperand.returnPredecessors(hier, letter, state);
+			return mParentOperand.returnPredecessors(state, hier, letter);
 		}
 		Iterable<IncomingReturnTransition<LETTER, STATE>> hierPredIncoming(
 				final STATE state, final LETTER letter) {
-			return mParentOperand.returnPredecessors(letter, state);
+			return mParentOperand.returnPredecessors(state, letter);
 		}
 		
 		/**
@@ -1897,20 +1897,20 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 		
 		void addPredInternal(final STATE state, final LETTER letter, final PredecessorSet x) {
 				addNeighborsEfficient(new InternalTransitionIterator(
-						mParentOperand.internalPredecessors(letter, state)), x);
+						mParentOperand.internalPredecessors(state, letter)), x);
 		}
 		void addPredCall(final STATE state, final LETTER letter, final PredecessorSet x) {
 				addNeighborsEfficient(new CallTransitionIterator(
-						mParentOperand.callPredecessors(letter, state)), x);
+						mParentOperand.callPredecessors(state, letter)), x);
 		}
 		void addPredReturnLin(final STATE state, final LETTER letter,
 				final STATE hier, final PredecessorSet x) {
 				addNeighborsEfficientLin(mParentOperand.returnPredecessors(
-						hier, letter, state), x);
+						state, hier, letter), x);
 		}
 		void addPredReturnHier(final STATE state, final LETTER letter, final PredecessorSet x) {
 				addNeighborsEfficientHier(
-						mParentOperand.returnPredecessors(letter, state), x);
+						mParentOperand.returnPredecessors(state, letter), x);
 		}
 		void addSuccReturnHier(final STATE state, final LETTER letter, final PredecessorSet x) {
 			final HashSet<STATE> hierSet = new HashSet<STATE>();

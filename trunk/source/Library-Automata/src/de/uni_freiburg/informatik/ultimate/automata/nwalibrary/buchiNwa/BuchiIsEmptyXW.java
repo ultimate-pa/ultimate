@@ -532,7 +532,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		final Collection<STATE> callPredStates = new HashSet<STATE>();	
 		for (final LETTER symbol : callAlphabet) {
 			for (final IncomingCallTransition<LETTER, STATE> trans :
-				mnwa.callPredecessors(symbol, callSuccState)) {
+				mnwa.callPredecessors(callSuccState, symbol)) {
 				callPredStates.add(trans.getPred());
 			}
 		}

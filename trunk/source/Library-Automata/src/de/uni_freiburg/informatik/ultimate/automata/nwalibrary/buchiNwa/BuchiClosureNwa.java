@@ -281,8 +281,8 @@ public class BuchiClosureNwa<LETTER, STATE>
 
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
-			final LETTER letter, final STATE hier) {
-		return mOperand.returnSummarySuccessor(letter, hier);
+			final STATE hier, final LETTER letter) {
+		return mOperand.returnSummarySuccessor(hier, letter);
 	}
 
 
@@ -308,8 +308,8 @@ public class BuchiClosureNwa<LETTER, STATE>
 
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
-			final LETTER letter, final STATE succ) {
-		return mOperand.internalPredecessors(letter, succ);
+			final STATE succ, final LETTER letter) {
+		return mOperand.internalPredecessors(succ, letter);
 	}
 
 
@@ -321,8 +321,8 @@ public class BuchiClosureNwa<LETTER, STATE>
 
 	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
-			final LETTER letter, final STATE succ) {
-		return mOperand.callPredecessors(letter, succ);
+			final STATE succ, final LETTER letter) {
+		return mOperand.callPredecessors(succ, letter);
 	}
 
 
@@ -341,8 +341,8 @@ public class BuchiClosureNwa<LETTER, STATE>
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
-			final STATE hier, final LETTER letter, final STATE succ) {
-		return mOperand.returnPredecessors(hier, letter, succ);
+			final STATE succ, final STATE hier, final LETTER letter) {
+		return mOperand.returnPredecessors(succ, hier, letter);
 	}
 
 
@@ -354,8 +354,8 @@ public class BuchiClosureNwa<LETTER, STATE>
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
-			final LETTER letter, final STATE succ) {
-		return mOperand.returnPredecessors(letter, succ);
+			final STATE succ, final LETTER letter) {
+		return mOperand.returnPredecessors(succ, letter);
 	}
 
 

@@ -265,7 +265,7 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 			for (final STATE q1 : mBuechi.getStates()) {
 				for (final LETTER s : mBuechi.lettersInternalIncoming(q0)) {
-					if (mBuechi.internalPredecessors(s, q0).iterator().hasNext()) {
+					if (mBuechi.internalPredecessors(q0, s).iterator().hasNext()) {
 						DuplicatorVertex<LETTER, STATE> v0e = new DuplicatorVertex<>(2, false, q0, q1, s);
 						addDuplicatorVertex(v0e);
 						// V0 -> V1 edges [paper ref 11]
@@ -276,7 +276,7 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 						}
 						// V1 -> V0 edges [paper ref 11]
 						for (final IncomingInternalTransition<LETTER, STATE> trans :
-								mBuechi.internalPredecessors(s, q0)) {
+								mBuechi.internalPredecessors(q0, s)) {
 							final STATE q2 = trans.getPred();
 							if (!mBuechi.isFinal(q0)) {
 								addEdge(getSpoilerVertex(q2, q1, false), v0e);
@@ -296,7 +296,7 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 						}
 						// V1 -> V0 edges [paper ref 11]
 						for (final IncomingInternalTransition<LETTER, STATE> trans :
-								mBuechi.internalPredecessors(s, q0)) {
+								mBuechi.internalPredecessors(q0, s)) {
 							final STATE q2 = trans.getPred();
 							if (getAmountOfBitsForSpoilerVertices(q2, q1) > 1) {
 								addEdge(getSpoilerVertex(q2, q1, true), v0e);

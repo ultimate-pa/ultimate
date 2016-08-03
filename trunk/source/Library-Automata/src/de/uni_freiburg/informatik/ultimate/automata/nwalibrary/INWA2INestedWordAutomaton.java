@@ -138,8 +138,8 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
-			final LETTER letter, final STATE hier) {
-		return mNwa.returnSummarySuccessor(letter, hier);
+			final STATE hier, final LETTER letter) {
+		return mNwa.returnSummarySuccessor(hier, letter);
 	}
 	
 	@Override
@@ -150,8 +150,8 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
-			final LETTER letter, final STATE succ) {
-		return mNwa.internalPredecessors(letter, succ);
+			final STATE succ, final LETTER letter) {
+		return mNwa.internalPredecessors(succ, letter);
 	}
 
 	@Override
@@ -162,8 +162,8 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 
 	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
-			final LETTER letter, final STATE succ) {
-		return mNwa.callPredecessors(letter, succ);
+			final STATE succ, final LETTER letter) {
+		return mNwa.callPredecessors(succ, letter);
 	}
 
 	@Override
@@ -198,14 +198,14 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
-			final STATE hier, final LETTER letter, final STATE succ) {
-		return mNwa.returnPredecessors(hier, letter, succ);
+			final STATE succ, final STATE hier, final LETTER letter) {
+		return mNwa.returnPredecessors(succ, hier, letter);
 	}
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
-			final LETTER letter, final STATE succ) {
-		return mNwa.returnPredecessors(letter, succ);
+			final STATE succ, final LETTER letter) {
+		return mNwa.returnPredecessors(succ, letter);
 	}
 
 	@Override

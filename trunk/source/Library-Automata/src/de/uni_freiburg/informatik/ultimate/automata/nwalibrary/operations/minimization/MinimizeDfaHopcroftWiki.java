@@ -376,7 +376,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 	private boolean hasIncomingTransitionWithLetter(final int state, final int letter) {
 		final STATE st = mInt2state.get(state);
 		final LETTER let = mInt2letter.get(letter);
-		return mOperand.internalPredecessors(let, st).iterator().hasNext();
+		return mOperand.internalPredecessors(st, let).iterator().hasNext();
 	}
 
 	/**
@@ -405,7 +405,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 	private int getPredecessor(final int state, final int letter) {
 		final STATE st = mInt2state.get(state);
 		final LETTER let = mInt2letter.get(letter);
-		final STATE pred = mOperand.internalPredecessors(let, st).iterator().next()
+		final STATE pred = mOperand.internalPredecessors(st, let).iterator().next()
 				.getPred();
 		return mState2int.get(pred);
 	}

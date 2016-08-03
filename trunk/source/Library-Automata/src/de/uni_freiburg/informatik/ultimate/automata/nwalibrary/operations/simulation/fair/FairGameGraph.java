@@ -535,7 +535,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		final Map<STATE, EGameGraphChangeType> changedPreds = mChangedBuechiTransitionsInverse.get(dest, a);
 		// First iterate over original transitions
 		final Iterator<IncomingInternalTransition<LETTER, STATE>> iter =
-				mBuechi.internalPredecessors(a, dest).iterator();
+				mBuechi.internalPredecessors(dest, a).iterator();
 		while (iter.hasNext()) {
 			final STATE pred = iter.next().getPred();
 			// Ignore transition if it was removed before
