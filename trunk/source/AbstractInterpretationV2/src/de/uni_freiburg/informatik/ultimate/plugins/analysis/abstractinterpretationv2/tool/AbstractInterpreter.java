@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
@@ -128,7 +128,7 @@ public final class AbstractInterpreter {
 	@SuppressWarnings("squid:S1166")
 	public static IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> runOnPathProgram(
 			final NestedRun<CodeBlock, ?> counterexample,
-			final INestedWordAutomatonOldApi<CodeBlock, ?> currentAutomata, final RootNode root,
+			final INestedWordAutomaton<CodeBlock, ?> currentAutomata, final RootNode root,
 			final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
 		assert counterexample != null && counterexample.getLength() > 0 : "Invalid counterexample";
 		assert currentAutomata != null;
@@ -309,7 +309,7 @@ public final class AbstractInterpreter {
 		return pa.getSymbolTable();
 	}
 
-	private static IAbstractDomain<?, CodeBlock, IBoogieVar, Expression> selectDomain(RootNode root,
+	private static IAbstractDomain<?, CodeBlock, IBoogieVar, Expression> selectDomain(final RootNode root,
 			final LiteralCollectorFactory literalCollector, final BoogieSymbolTable symbolTable,
 			final IUltimateServiceProvider services, final RootAnnot rootAnnotation) {
 		final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);

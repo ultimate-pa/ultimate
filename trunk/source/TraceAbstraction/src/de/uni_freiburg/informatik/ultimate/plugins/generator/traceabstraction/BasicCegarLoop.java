@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -259,8 +258,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	@Override
 	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
-		final INestedWordAutomatonOldApi<CodeBlock, IPredicate> abstraction =
-				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) mAbstraction;
+		final INestedWordAutomaton<CodeBlock, IPredicate> abstraction =
+				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
 		try {
 			mCounterexample = (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), abstraction))
 					.getNestedRun();
@@ -476,8 +475,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		final boolean explointSigmaStarConcatOfIA = !mComputeHoareAnnotation;
 
-		final INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldAbstraction =
-				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) mAbstraction;
+		final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction =
+				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
 		// Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
 		// Map<IPredicate, IPredicate> context2entry = null;
 
@@ -730,7 +729,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// +a.numberOfIncomingInternalTransitions(p);
 		// }
 		final boolean stillAccepted = (new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) mAbstraction,
+				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction,
 				(NestedWord<CodeBlock>) mCounterexample.getWord())).getResult();
 		if (stillAccepted) {
 			return false;
@@ -779,10 +778,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
 		// long startTime = System.currentTimeMillis();
 		final int oldSize = mAbstraction.size();
-		final INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction =
-				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) mAbstraction;
+		final INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction =
+				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
 		final Collection<Set<IPredicate>> partition = computePartition(newAbstraction);
-		INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized;
+		INestedWordAutomaton<CodeBlock, IPredicate> minimized;
 		try {
 			switch (minimization) {
 			case MINIMIZE_SEVPA: {
@@ -889,7 +888,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			}
 
 			case NONE:
-				minimized = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) mAbstraction;
+				minimized = (INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
 				break;
 			default:
 				throw new AssertionError();
@@ -938,7 +937,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	// }
 
 	protected Collection<Set<IPredicate>>
-			computePartition(final INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
+			computePartition(final INestedWordAutomaton<CodeBlock, IPredicate> automaton) {
 		mLogger.info("Start computation of initial partition.");
 		final Collection<IPredicate> states = automaton.getStates();
 		final Map<ProgramPoint, Set<IPredicate>> pp2p = new HashMap<ProgramPoint, Set<IPredicate>>();
@@ -1027,8 +1026,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		if (mSmtManager.isLocked()) {
 			throw new AssertionError("SMTManager must not be locked at the beginning of Hoare annotation computation");
 		}
-		final INestedWordAutomatonOldApi<CodeBlock, IPredicate> abstraction =
-				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) mAbstraction;
+		final INestedWordAutomaton<CodeBlock, IPredicate> abstraction =
+				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
 		new HoareAnnotationExtractor(mServices, abstraction, mHaf);
 		(new HoareAnnotationWriter(mRootNode.getRootAnnot(), mSmtManager, mHaf, mServices, mSimplificationTechnique,
 				mXnfConversionTechnique)).addHoareAnnotationToCFG();

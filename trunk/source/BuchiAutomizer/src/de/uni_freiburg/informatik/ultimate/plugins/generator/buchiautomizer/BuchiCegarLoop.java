@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -659,7 +658,7 @@ public class BuchiCegarLoop {
 					new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) mAbstraction);
 			assert minimizeOp.checkResult(mPredicateFactoryResultChecking);
-			result = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) minimizeOp.getResult();
+			result = (INestedWordAutomaton<CodeBlock, IPredicate>) minimizeOp.getResult();
 			break;
 		}
 		case MinimizeNwaMaxSat: {

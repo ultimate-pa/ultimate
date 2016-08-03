@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -87,7 +86,7 @@ public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE
 	}
 
 	@Override
-	public INestedWordAutomatonOldApi<LETTER,STATE> getResult()
+	public INestedWordAutomaton<LETTER,STATE> getResult()
 			throws AutomataLibraryException {
 		return mResult;
 	}
