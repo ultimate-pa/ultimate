@@ -25,6 +25,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.mapelimination;
 
+import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils.allVariablesAreInVars;
+import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils.allVariablesAreOutVars;
+import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils.allVariablesAreVisible;
+import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils.translateTermVariablesToDefinitions;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
@@ -64,11 +69,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
-import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils.allVariablesAreInVars;
-import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils.allVariablesAreOutVars;
-import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils.allVariablesAreVisible;
-import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils.translateTermVariablesToDefinitions;
-
 /**
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
@@ -76,7 +76,7 @@ import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFor
 public class MapEliminator {
 	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
-	private final VariableManager mVariableManager;
+	private final IFreshTermVariableConstructor mFreshVarConstructor;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final ILogger mLogger;
 	private final Boogie2SmtSymbolTable mSymbolTable;
@@ -114,7 +114,7 @@ public class MapEliminator {
 	 * Creates a new map eliminator and preprocesses (stores the indices and arrays used in the {@code transformulas})
 	 */
 	public MapEliminator(final IUltimateServiceProvider services, final Script script,
-			final Boogie2SmtSymbolTable symbolTable, final VariableManager variableManager,
+			final Boogie2SmtSymbolTable symbolTable, final IFreshTermVariableConstructor freshVarConstructor,
 			final ReplacementVarFactory replacementVarFactory, final SimplicationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final Collection<TransFormulaLR> transformulas) {
 		super();
@@ -122,7 +122,7 @@ public class MapEliminator {
 		mServices = services;
 		mScript = script;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		mVariableManager = variableManager;
+		mFreshVarConstructor = freshVarConstructor;
 		mReplacementVarFactory = replacementVarFactory;
 		mSymbolTable = symbolTable;
 		mSimplificationTechnique = simplificationTechnique;
@@ -300,7 +300,7 @@ public class MapEliminator {
 			}
 		}
 		final IndexAnalyzer indexAnalyzer = new IndexAnalyzer(originalTerm, localIndices, mSymbolTable, newTF,
-				equalityAnalysisBefore, equalityAnalysisAfter, mLogger, mReplacementVarFactory, mVariableManager);
+				equalityAnalysisBefore, equalityAnalysisAfter, mLogger, mReplacementVarFactory);
 		final EqualityAnalysisResult invariants = indexAnalyzer.getResult();
 		// Handle array reads and writes
 		final List<Term> conjuncts = new ArrayList<Term>();
@@ -358,14 +358,14 @@ public class MapEliminator {
 			conjuncts.addAll(mAuxVarTerms);
 			final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, mAuxVars,
 					SmtUtils.and(mScript, conjuncts));
-			newTerm = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, mVariableManager,
+			newTerm = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, mFreshVarConstructor,
 					quantified, mSimplificationTechnique, mXnfConversionTechnique);
 			mAuxVars.clear();
 			mSelectToAuxVars.clear();
 			mAuxVarTerms.clear();
 		}
 		transformula.setFormula(SmtUtils.simplify(mScript, newTerm, mServices, mSimplificationTechnique,
-				mVariableManager));
+				mFreshVarConstructor));
 		clearTransFormula(transformula);
 	}
 
@@ -479,7 +479,7 @@ public class MapEliminator {
 		if (SmtUtils.isFunctionApplication(array, "store")) {
 			final ArrayWrite arrayWrite = new ArrayWrite(array);
 			final Set<ArrayIndex> processedIndices = new HashSet<>();
-			final TermVariable auxVar = mVariableManager.constructFreshTermVariable("aux", term.getSort());
+			final TermVariable auxVar = mFreshVarConstructor.constructFreshTermVariable("aux", term.getSort());
 			mAuxVars.add(auxVar);
 			for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
 				final ArrayIndex assignedIndex = processArrayIndex(store.getIndex(), transformula, assignedVars,
@@ -502,7 +502,7 @@ public class MapEliminator {
 		} else {
 			if (!allVariablesAreVisible(term, transformula)) {
 				// If the array-read contains an aux-var, just return a new aux-var as replacement
-				final TermVariable auxVar = mVariableManager.constructFreshTermVariable("aux", term.getSort());
+				final TermVariable auxVar = mFreshVarConstructor.constructFreshTermVariable("aux", term.getSort());
 				mAuxVars.add(auxVar);
 				return auxVar;
 			}
@@ -515,7 +515,7 @@ public class MapEliminator {
 			}
 			// If the term contains "mixed" vars, aux-vars are introduced
 			if (!mSelectToAuxVars.containsKey(term)) {
-				final TermVariable auxVar = mVariableManager.constructFreshTermVariable("aux", term.getSort());
+				final TermVariable auxVar = mFreshVarConstructor.constructFreshTermVariable("aux", term.getSort());
 				mAuxVars.add(auxVar);
 				mSelectToAuxVars.put(term, auxVar);
 				final ArrayIndex globalIndex = new ArrayIndex(translateTermVariablesToDefinitions(mScript, transformula, index));
@@ -717,7 +717,7 @@ public class MapEliminator {
 
 	// Returns a fresh TermVariable with term as definition (with a nicer name for select-terms)
 	private TermVariable getFreshTermVar(final Term term) {
-		return mVariableManager.constructFreshTermVariable(niceTermString(term), term.getSort());
+		return mFreshVarConstructor.constructFreshTermVariable(niceTermString(term), term.getSort());
 	}
 
 	private String niceTermString(final Term term) {

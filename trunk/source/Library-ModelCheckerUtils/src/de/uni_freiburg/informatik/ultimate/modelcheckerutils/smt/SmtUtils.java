@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.bdd.SimplifyBdd;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
@@ -522,14 +521,11 @@ public class SmtUtils {
 		return result;
 	}
 
-	public static Map<Term, Term> termVariables2Constants(final Script script, final VariableManager variableManager,
+	public static Map<Term, Term> termVariables2Constants(final Script script,
 			final Collection<TermVariable> termVariables) {
 		final Map<Term, Term> mapping = new HashMap<Term, Term>();
 		for (final TermVariable tv : termVariables) {
-			Term constant = variableManager.constructFreshConstant(tv);
-			if (constant == null) {
-				constant = termVariable2constant(script, tv);
-			}
+			final Term constant = termVariable2constant(script, tv);
 			mapping.put(tv, constant);
 		}
 		return mapping;

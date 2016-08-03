@@ -167,7 +167,7 @@ public class TransFormulaLRWithArrayCells {
 			
 			final IndexAnalyzer ia = new IndexAnalyzer(mResult.getFormula(), mFirstGeneration2Indices, 
 					boogie2smt.getBoogie2SmtSymbolTable(), mResult, invariantEqualitiesBefore, 
-					invariantEqualitiesAfter, mLogger, mReplacementVarFactory, boogie2smt.getVariableManager());
+					invariantEqualitiesAfter, mLogger, mReplacementVarFactory);
 			mIndexAnalysisResult = ia.getResult();
 			final CellVariableBuilder cvb = new CellVariableBuilder(mResult, this, replacementVarFactory, mLogger, mFirstGeneration2Indices, mArrayCellInVars, mArrayCellOutVars);
 			mVariablesThatOccurInFormula = computeVarsThatOccurInFormula();			

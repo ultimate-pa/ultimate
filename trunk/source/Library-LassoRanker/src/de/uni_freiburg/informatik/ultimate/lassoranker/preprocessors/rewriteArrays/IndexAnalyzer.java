@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -69,7 +68,6 @@ public class IndexAnalyzer {
 	private final Script mScript;
 	private final Boogie2SmtSymbolTable mSymbolTable;
 	private final ReplacementVarFactory mRepvarFactory;
-	private final VariableManager mVariableManager;
 	private final TransFormulaLR mTransFormula;
 	
 	private final Set<Doubleton<Term>> mDistinctDoubletons = new LinkedHashSet<>();
@@ -90,14 +88,12 @@ public class IndexAnalyzer {
 			final EqualityAnalysisResult invariantEqualitiesBefore, 
 			final EqualityAnalysisResult invariantEqualitiesAfter,
 			final ILogger logger, 
-			final ReplacementVarFactory replacementVarFactory,
-			final VariableManager varManager) {
+			final ReplacementVarFactory replacementVarFactory) {
 		super();
 		mLogger = logger;
 		mTerm = term;
 		mSymbolTable = symbolTable;
 		mRepvarFactory = replacementVarFactory;
-		mVariableManager = varManager;
 		mScript = symbolTable.getScript();
 		mTransFormula = tf;
 		mInvariantEqualitiesBefore = invariantEqualitiesBefore;
@@ -241,7 +237,7 @@ public class IndexAnalyzer {
 		final Set<TermVariable> allTvs = new HashSet<>(Arrays.asList(termWithAdditionalInvariants.getFreeVars()));
 		allTvs.addAll(Utils.filter(mTransFormula.getInVarsReverseMapping().keySet(), TermVariable.class));
 		allTvs.addAll(Utils.filter(mTransFormula.getOutVarsReverseMapping().keySet(), TermVariable.class));
-		final Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(mScript, mVariableManager, allTvs);
+		final Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(mScript, allTvs);
 		final SafeSubstitution subst = new SafeSubstitution(mScript, substitutionMapping);
 		mScript.assertTerm(subst.transform(termWithAdditionalInvariants));
 		for (final Doubleton<Term> doubleton : doubletons) {
