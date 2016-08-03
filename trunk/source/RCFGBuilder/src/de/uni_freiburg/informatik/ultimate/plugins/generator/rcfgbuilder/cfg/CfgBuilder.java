@@ -86,7 +86,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Weakest
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -116,7 +116,7 @@ public class CfgBuilder {
 
 	private final Boogie2SMT mBoogie2smt;
 	private final BoogieDeclarations mBoogieDeclarations;
-	TransFormulaBuilder tfb;
+	TransFormulaAdder tfb;
 
 	Collection<Summary> mImplementationSummarys = new ArrayList<Summary>();
 
@@ -203,7 +203,7 @@ public class CfgBuilder {
 	 */
 	public RootNode getRootNode(final Unit unit) {
 
-		tfb = new TransFormulaBuilder(mBoogie2smt, mServices);
+		tfb = new TransFormulaAdder(mBoogie2smt, mServices);
 
 		// Initialize the root node.
 		mGraphroot = new RootNode(unit.getLocation(), mRootAnnot);

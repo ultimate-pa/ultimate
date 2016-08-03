@@ -79,7 +79,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
 
 /**
  * This special visitor class is responsible for the conversion from MinimizedEdges and MinimizedNodes, back to
@@ -104,7 +104,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 
 	private final Boogie2SMT mBoogie2SMT;
 
-	private final TransFormulaBuilder mTransFormBuilder;
+	private final TransFormulaAdder mTransFormBuilder;
 
 	private final ModifiableGlobalVariableManager mModGlobalVarManager;
 
@@ -150,7 +150,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		mVisitedEdges = new HashSet<IMinimizedEdge>();
 		mBoogie2SMT = boogie2smt;
 		mCheckForMultipleFormula = new HashMap<IMinimizedEdge, Integer>();
-		mTransFormBuilder = new TransFormulaBuilder(boogie2smt, mServices);
+		mTransFormBuilder = new TransFormulaAdder(boogie2smt, mServices);
 		mModGlobalVarManager = root.getRootAnnot().getModGlobVarManager();
 		mCbf = root.getRootAnnot().getCodeBlockFactory();
 		mSeqComposedBlocks = new Stack<ArrayList<CodeBlock>>();

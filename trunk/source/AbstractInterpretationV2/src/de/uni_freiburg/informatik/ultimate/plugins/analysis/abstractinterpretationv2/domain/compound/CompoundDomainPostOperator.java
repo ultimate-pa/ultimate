@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
 
 /**
  * Post operator of the {@link CompoundDomain}.
@@ -80,7 +80,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	private final Script mScript;
 	private final CodeBlockFactory mCodeBlockFactory;
 	private final RcfgStatementExtractor mStatementExtractor;
-	private final TransFormulaBuilder mTransformulaBuilder;
+	private final TransFormulaAdder mTransformulaBuilder;
 	private final IUltimateServiceProvider mServices;
 
 	/**
@@ -97,7 +97,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		mScript = rootAnnotation.getScript();
 		mCodeBlockFactory = rootAnnotation.getCodeBlockFactory();
 		mStatementExtractor = new RcfgStatementExtractor();
-		mTransformulaBuilder = new TransFormulaBuilder(mBoogie2Smt, services);
+		mTransformulaBuilder = new TransFormulaAdder(mBoogie2Smt, services);
 		mServices = services;
 
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);

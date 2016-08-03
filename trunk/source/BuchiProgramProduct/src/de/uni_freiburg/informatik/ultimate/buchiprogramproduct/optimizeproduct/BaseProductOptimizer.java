@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
 
 public abstract class BaseProductOptimizer {
 	protected final IUltimateServiceProvider mServices;
@@ -131,7 +131,7 @@ public abstract class BaseProductOptimizer {
 
 	protected void generateTransFormula(final RootNode root, final StatementSequence ss) {
 		final Boogie2SMT b2smt = root.getRootAnnot().getBoogie2SMT();
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt, mServices);
+		final TransFormulaAdder tfb = new TransFormulaAdder(b2smt, mServices);
 		tfb.addTransitionFormulas(ss, ((ProgramPoint) ss.getSource()).getProcedure(), mXnfConversionTechnique, mSimplificationTechnique);
 		assert ss.getTransitionFormula() != null;
 	}

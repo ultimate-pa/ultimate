@@ -48,13 +48,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 
 /**
- * Provides methods to build TransitionsFormulas for the nodes and edges of a
+ * Provides methods to add TransitionsFormulas to the edges of a
  * recursive control flow graph.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * 
  */
-public class TransFormulaBuilder {
+public class TransFormulaAdder {
 
 	// We use Boogie2SMT to translate boogie Statements to SMT formulas
 	private final Boogie2SMT mBoogie2smt;
@@ -62,7 +62,7 @@ public class TransFormulaBuilder {
 
 	private final IUltimateServiceProvider mServices;
 
-	public TransFormulaBuilder(final Boogie2SMT boogie2smt, final IUltimateServiceProvider services) {
+	public TransFormulaAdder(final Boogie2SMT boogie2smt, final IUltimateServiceProvider services) {
 		mServices = services;
 		mBoogie2smt = boogie2smt;
 		mSimplifyCodeBlocks = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))

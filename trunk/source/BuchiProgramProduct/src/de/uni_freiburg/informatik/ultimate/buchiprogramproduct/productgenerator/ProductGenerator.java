@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
 
 /**
  * This class is implementing the Buchi program product, i.e. interleaving a BuchiAutomaton with the CFG.
@@ -621,7 +621,7 @@ public class ProductGenerator {
 	private void generateTransFormula() {
 		final RootAnnot rootAnnot = mProductRoot.getRootAnnot();
 		final Boogie2SMT b2smt = rootAnnot.getBoogie2SMT();
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt, mServices);
+		final TransFormulaAdder tfb = new TransFormulaAdder(b2smt, mServices);
 
 		for (final Entry<String, Map<String, ProgramPoint>> pairs : rootAnnot.getProgramPoints().entrySet()) {
 			for (final ProgramPoint loc : pairs.getValue().values()) {
@@ -703,7 +703,7 @@ public class ProductGenerator {
 		// inserted in the new NWA (happens automatically during construction)
 
 		final Boogie2SMT b2smt = mProductRoot.getRootAnnot().getBoogie2SMT();
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt, mServices);
+		final TransFormulaAdder tfb = new TransFormulaAdder(b2smt, mServices);
 
 		ProgramPoint targetpp;
 		for (final OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaLoc)) {
