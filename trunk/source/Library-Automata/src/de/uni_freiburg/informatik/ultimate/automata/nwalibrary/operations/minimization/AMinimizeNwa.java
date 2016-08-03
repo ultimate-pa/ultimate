@@ -27,6 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
+import java.util.Collection;
+import java.util.NoSuchElementException;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -35,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
@@ -75,6 +79,14 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 * StateFactory for the construction of states of the resulting automaton.
 	 */
 	protected final StateFactory<STATE> mStateFactory;
+	/**
+	 * The result automaton.
+	 */
+	private INestedWordAutomaton<LETTER, STATE> mResult;
+	/**
+	 * A temporary automaton for result construction.
+	 */
+	private NestedWordAutomaton<LETTER, STATE> mTemporaryResult;
 
 	/**
 	 * This constructor should be called by all subclasses and only by them.
@@ -95,6 +107,8 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mName = name;
 		mOperand = operand;
+		mResult = null;
+		mTemporaryResult = null;
 		
 		mStateFactory = (stateFactory == null)
 				? operand.getStateFactory()
@@ -118,6 +132,8 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		this(services, operand.getStateFactory(), name, operand);
 	}
+	
+	/* ------ interface methods ------ */
 
 	@Override
 	public final String operationName() {
@@ -137,7 +153,12 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	}
 
 	@Override
-	public abstract INestedWordAutomatonSimple<LETTER, STATE> getResult();
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
+		if (mResult == null) {
+			throw new NoSuchElementException("The result is not ready yet.");
+		}
+		return mResult;
+	}
 
 	@Override
 	public final boolean checkResult(final StateFactory<STATE> stateFactory)
@@ -163,6 +184,116 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 				mOperand);
 		return false;
 	}
+	
+	/* ------ result construction ------ */
+	
+	/**
+	 * pass the result directly
+	 * 
+	 * @param result result automaton
+	 */
+	protected final void directResultConstruction(
+			final INestedWordAutomaton<LETTER, STATE> result) {
+		if (mResult != null) {
+			throw new AssertionError(
+					"The result has already been constructed.");
+		} else if (mTemporaryResult != null) {
+			throw new AssertionError(
+					"The result construction has already been started.");
+		}
+		mResult = result;
+	}
+	
+	/**
+	 * start construction of result (must be called first)
+	 */
+	protected final void startResultConstruction() {
+		if (mResult != null) {
+			throw new AssertionError(
+					"The result has already been constructed.");
+		}
+		mTemporaryResult = new NestedWordAutomaton<LETTER, STATE>(
+				mServices,
+				mOperand.getInternalAlphabet(),
+				mOperand.getCallAlphabet(),
+				mOperand.getReturnAlphabet(),
+				mStateFactory);
+	}
+	
+	/**
+	 * adds a state
+	 * 
+	 * @param isInitial is the state initial?
+	 * @param isFinal is the state accepting?
+	 * @param state state
+	 */
+	protected final void addState(final boolean isInitial,
+			final boolean isFinal, final STATE state) {
+		mTemporaryResult.addState(isInitial, isFinal, state);
+	}
+	
+	/**
+	 * adds a state from a collection of states
+	 * 
+	 * @param isInitial is the state initial?
+	 * @param isFinal is the state accepting?
+	 * @param oldStates collection of states
+	 * @return new state (automatically added to the result)
+	 */
+	protected final STATE addState(final boolean isInitial,
+			final boolean isFinal, final Collection<STATE> oldStates) {
+		assert !oldStates.isEmpty();
+		final STATE newState = mStateFactory.minimize(oldStates);
+		mTemporaryResult.addState(isInitial, isFinal, newState);
+		return newState;
+	}
+	
+	/**
+	 * adds an internal transition
+	 * 
+	 * @param pred predecessor
+	 * @param letter letter
+	 * @param succ successor
+	 */
+	protected final void addInternalTransition(final STATE pred,
+			final LETTER letter, final STATE succ) {
+		mTemporaryResult.addInternalTransition(pred, letter, succ);
+	}
+	
+	/**
+	 * adds a call transition
+	 * 
+	 * @param pred predecessor
+	 * @param letter letter
+	 * @param succ successor
+	 */
+	protected final void addCallTransition(final STATE pred,
+			final LETTER letter, final STATE succ) {
+		mTemporaryResult.addCallTransition(pred, letter, succ);
+	}
+	
+	/**
+	 * adds a return transition
+	 * 
+	 * @param pred predecessor
+	 * @param hier hierarchical predecessor
+	 * @param letter letter
+	 * @param succ successor
+	 */
+	protected final void addReturnTransition(final STATE pred,
+			final STATE hier, final LETTER letter, final STATE succ) {
+		mTemporaryResult.addReturnTransition(pred, hier, letter, succ);
+	}
+	
+	/**
+	 * finish construction of result (must be called last)
+	 */
+	protected final void finishResultConstruction() {
+		mResult = mTemporaryResult;
+		mTemporaryResult = null;
+	}
+	
+	/* ------ other helper methods ------ */
 
 	/**
 	 * This method checks language inclusion of the first automaton wrt. the second automaton.
@@ -182,7 +313,8 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 			final INestedWordAutomatonSimple<LETTER, STATE> superset,
 			final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		final boolean result = new IsIncluded<>(mServices, stateFactory, subset, superset).getResult();
+		final boolean result = new IsIncluded<>(
+				mServices, stateFactory, subset, superset).getResult();
 		return result;
 	}
 
@@ -232,7 +364,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 *             thrown to enforce termination.
 	 */
 	protected final void checkForContinuation()
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}

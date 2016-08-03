@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 /**
@@ -150,7 +149,7 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getResult() {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		switch (mPattern[mCounter]) {
 			case MINIMIZE_SEVPA:
 				return ((MinimizeSevpa<LETTER, STATE>) mCurrent).getResult();
@@ -159,7 +158,7 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 				return ((ShrinkNwa<LETTER, STATE>) mCurrent).getResult();
 				
 			case NONE:
-				return (INestedWordAutomatonSimple<LETTER, STATE>) mCurrent;
+				return (INestedWordAutomaton<LETTER, STATE>) mCurrent;
 				
 			default:
 				throw new IllegalArgumentException("Undefined enum state.");

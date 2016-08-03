@@ -41,8 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 
@@ -77,10 +75,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 public class MinimizeDfaAmr<LETTER, STATE>
 		extends AMinimizeIncremental<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
-	/**
-	 * The result automaton.
-	 */
-	private final INestedWordAutomaton<LETTER, STATE> mResult;
 	/**
 	 * The number of states in the input automaton (often used).
 	 */
@@ -186,7 +180,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
     		mStack = null;
     		mHashCapNoTuples = 0;
     		
-    		mResult = mOperand;
+    		directResultConstruction(mOperand);
     	} else {
     		mState2int = new HashMap<STATE, Integer>(mSize);
     		mInt2state = new ArrayList<STATE>(mSize);
@@ -216,7 +210,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
     		mPath = new SetList();
     		mStack = new ArrayDeque<StackElem>();
     		
-			mResult = minimize();
+    		minimize();
 		}
 		mLogger.info(exitMessage());
 	}
@@ -224,11 +218,9 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	/**
 	 * This method invokes the minimization process.
 	 * 
-	 * @return the minimal DFA
 	 * @throws AutomataOperationCanceledException thrown when execution is cancelled
 	 */
-	private INestedWordAutomaton<LETTER, STATE> minimize()
-			throws AutomataLibraryException {
+	private void minimize() throws AutomataOperationCanceledException {
 		// initialize data structures
 		preprocess();
 		
@@ -236,7 +228,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		findEquiv();
 		
 		// construct result
-		return constructResult();
+		constructResult();
 	}
 	
 	/**
@@ -516,22 +508,11 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	/**
 	 * This method constructs the resulting automaton from the set of
 	 * equivalent states.
-	 * 
-	 * @return resulting automaton where equivalent states are merged
 	 */
-	private INestedWordAutomaton<LETTER, STATE> constructResult() {
+	private void constructResult() {
 		// mapping from states to their representative
 		final HashMap<Integer, ? extends Collection<STATE>> state2equivStates =
 				computeMapState2Equiv();
-		
-		// construct result
-		final NestedWordAutomaton<LETTER, STATE> result =
-				new NestedWordAutomaton<LETTER, STATE>(
-						mServices, 
-						mOperand.getInternalAlphabet(),
-						mOperand.getCallAlphabet(),
-						mOperand.getReturnAlphabet(),
-						mStateFactory);
 		
 		// mapping from old state to new state
 		final HashMap<Integer, STATE> oldState2newState =
@@ -543,19 +524,18 @@ public class MinimizeDfaAmr<LETTER, STATE>
 			"There is no initial state in the automaton.";
 		final int initRepresentative = find(mState2int.get(
 				mOperand.getInitialStates().iterator().next()));
+		startResultConstruction();
 		for (final Entry<Integer, ? extends Collection<STATE>> entry :
 				state2equivStates.entrySet()) {
 			final int representative = entry.getKey();
 			final Collection<STATE> equivStates = entry.getValue();
-			
-			final STATE newSTate = mStateFactory.minimize(equivStates);
-			oldState2newState.put(representative, newSTate);
-			
+			final boolean isInitial = (representative == initRepresentative);
 			assert (equivStates.iterator().hasNext()) :
 				"There is no equivalent state in the collection.";
-			result.addState((representative == initRepresentative),
-					mOperand.isFinal(equivStates.iterator().next()),
-					newSTate);
+			final boolean isFinal =
+					mOperand.isFinal(equivStates.iterator().next());
+			final STATE newSTate = addState(isInitial, isFinal, equivStates);
+			oldState2newState.put(representative, newSTate);
 		}
 		
 		/*
@@ -567,15 +547,14 @@ public class MinimizeDfaAmr<LETTER, STATE>
 			for (final OutgoingInternalTransition<LETTER, STATE> out :
 					mOperand.internalSuccessors(
 							mInt2state.get(oldStateInt))) {
-				result.addInternalTransition(
+				addInternalTransition(
 						oldState2newState.get(oldStateInt),
 						out.getLetter(),
 						oldState2newState.get(
 								find(mState2int.get(out.getSucc()))));
 			}
 		}
-		
-		return result;
+		finishResultConstruction();
 	}
 	
 	/**
@@ -599,11 +578,6 @@ public class MinimizeDfaAmr<LETTER, STATE>
         	equivStates.add(mInt2state.get(i));
         }
 		return state2equivStates;
-	}
-	
-	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getResult() {
-		return mResult;
 	}
 	
 	// --------------------- Union-Find data structure --------------------- //

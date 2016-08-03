@@ -39,7 +39,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 
@@ -51,8 +50,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 		extends AMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
-	// Result automaton.
-	private NestedWordAutomaton<LETTER, STATE> mResult;
 	// ArrayList and HashMap for mapping STATE to int and vice versa.
 	private ArrayList<STATE> mInt2state;
 	private HashMap<STATE, Integer> mState2int;
@@ -132,10 +129,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 			minimizeDfaHopcroft(initialPartition);
 		} else {
 			// Special case: empty automaton.
-			mResult = new NestedWordAutomaton<LETTER, STATE>(
-					mServices, 
-					mOperand.getInternalAlphabet(), null,
-					null, mStateFactory);
+			directResultConstruction(mOperand);
 		}
 		mLogger.info(exitMessage());
 	}
@@ -540,11 +534,6 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 	 * and transitions.
 	 */
 	private void buildResult() {
-		mResult = new NestedWordAutomaton<LETTER, STATE>(
-				mServices, 
-				mOperand.getInternalAlphabet(), null,
-				null, mStateFactory);
-		
 		final ArrayList<STATE> newStates =
 				new ArrayList<STATE>(mBlocks.mNumberOfSets);
 		final int blockOfInitState = mBlocks.mSetElemBelongsTo[mInitialState];
@@ -552,6 +541,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 		for (int i = 0; i < mNumberOfFinalStates; ++i) {
 			blockOfFinalStates[i] = mBlocks.mSetElemBelongsTo[mFinalStates[i]];
 		}
+		startResultConstruction();
 		// Iterate over number of blocks for getting every first element.
 		for (int i = 0; i < mBlocks.mNumberOfSets; ++i) {
 			// Get index in melements of the first element in block.
@@ -587,7 +577,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 				}
 			}
 			final boolean isInitialState = (i == blockOfInitState);
-			mResult.addState(isInitialState, isFinalState, newState);
+			addState(isInitialState, isFinalState, newState);
 		}
 		
 		// Iterate over each block to get the outgoing transitions of every
@@ -615,14 +605,10 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 				final int blockOfSucc = mBlocks.mSetElemBelongsTo[succ];
 				final STATE newSucc = newStates.get(blockOfSucc);
 				// Add the new transition to the result automaton.
-				mResult.addInternalTransition(newPred, next.getLetter(), newSucc);
+				addInternalTransition(newPred, next.getLetter(), newSucc);
 			}
+			finishResultConstruction();
 		}	
-	}
-	
-	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() {
-		return mResult;
 	}
 
 	/**

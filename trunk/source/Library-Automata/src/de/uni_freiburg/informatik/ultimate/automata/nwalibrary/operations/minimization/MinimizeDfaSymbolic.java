@@ -36,7 +36,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -55,8 +54,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 public class MinimizeDfaSymbolic<LETTER, STATE>
 		extends AMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
-	// Result automaton.
-	private NestedWordAutomaton<LETTER, STATE> mResult;
 
 	/***********************************************************************/
 	/**
@@ -611,9 +608,6 @@ public class MinimizeDfaSymbolic<LETTER, STATE>
 	 * transitions.
 	 */
 	private void buildResult() {
-		mResult = new NestedWordAutomaton<LETTER, STATE>(
-				mServices, mOperand.getInternalAlphabet(), null, null, mStateFactory);
-
 		// Store new states in ArrayList with size = # blocks in partition.
 		final HashMap<Block, STATE> blockToNewStates = new HashMap<Block, STATE>(computeHashCap(mPartition.size()));
 
@@ -623,6 +617,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE>
 		final Collection<Block> blocksInPartition = mPartition.values();
 		Iterator<Block> it = blocksInPartition.iterator();
 		final HashSet<Block> alreadyLookedUp = new HashSet<Block>(blocksInPartition.size());
+		startResultConstruction();
 		while (it.hasNext()) {
 			final Block blockOfPartition = it.next();
 			if (alreadyLookedUp.contains(blockOfPartition)) {
@@ -638,7 +633,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE>
 			// Add new state to the new result automaton.
 			final STATE firstOfBlock = blockOfPartition.iterator().next();
 			blockToNewStates.put(blockOfPartition, newState);
-			mResult.addState(blockOfPartition == blockWithinInitialState, mOperand.isFinal(firstOfBlock), newState);
+			addState(blockOfPartition == blockWithinInitialState, mOperand.isFinal(firstOfBlock), newState);
 		}
 
 		// Iterate over each block to get the outgoing transitions of every
@@ -667,17 +662,9 @@ public class MinimizeDfaSymbolic<LETTER, STATE>
 				// Get new successor out of new states created above.
 				final STATE newSucc = blockToNewStates.get(blockOfSucc);
 				// Add the new transition to the result automaton.
-				mResult.addInternalTransition(newPred, next.getLetter(), newSucc);
+				addInternalTransition(newPred, next.getLetter(), newSucc);
 			}
 		}
-	}
-
-	/***********************************************************************/
-	/**
-	 * Overridden method.
-	 */
-	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() {
-		return mResult;
+		finishResultConstruction();
 	}
 }

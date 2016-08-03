@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.AMinimizeNwa;
@@ -63,9 +62,9 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE>
 		extends AMinimizeNwa<LETTER, STATE>
 		implements IMinimize, IOperation<LETTER, STATE> {
 	/**
-	 * Result automaton.
+	 * Is the result constructed yet?
 	 */
-	private INestedWordAutomaton<LETTER, STATE> mResult;
+	private boolean mResultConstructed = false;
 	/**
 	 * ArrayList and HashMap for mapping STATE to integer and vice versa.
 	 */
@@ -219,8 +218,8 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE>
 		assert ((mInterrupt == null) || (!mInterrupt.getStatus())) : "HOP: The interrupt tells to terminate right at the beginning.";
 		initialize();
 		minimizeDfaHopcroft();
-		if (mResult == null) {
-			mResult = constructResult();
+		if (! mResultConstructed) {
+			constructResult();
 		}
 		// Do time measurement
 		// ThreadMXBean bean = ManagementFactory.getThreadMXBean();
@@ -418,10 +417,10 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE>
 	/**
 	 * This method constructs the resulting automaton from the set of equivalent
 	 * states.
-	 * 
-	 * @return resulting automaton where equivalent states are merged
 	 */
-	private INestedWordAutomaton<LETTER, STATE> constructResult() {
+	private void constructResult() {
+		assert (! mResultConstructed);
+		
 		// mapping from states to their representative
 		final HashMap<Integer, ? extends Collection<STATE>> state2equivStates = computeMapState2Equiv();
 
@@ -440,17 +439,16 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE>
 
 		final int initRepresentative = mState2representative[mState2int
 				.get(mOperand.getInitialStates().iterator().next())];
+		startResultConstruction();
 		for (final Entry<Integer, ? extends Collection<STATE>> entry : state2equivStates
 				.entrySet()) {
 			final int representative = entry.getKey();
 			final Collection<STATE> equivStates = entry.getValue();
-
-			final STATE newSTate = mStateFactory.minimize(equivStates);
+			final boolean isInitial = (representative == initRepresentative);
+			assert equivStates.iterator().hasNext() : "There is no equivalent state in the collection.";
+			final boolean isFinal = mOperand.isFinal(equivStates.iterator().next());
+			final STATE newSTate = addState(isInitial, isFinal, equivStates);
 			oldState2newState.put(representative, newSTate);
-
-			assert (equivStates.iterator().hasNext()) : "There is no equivalent state in the collection.";
-			result.addState((representative == initRepresentative),
-					mOperand.isFinal(equivStates.iterator().next()), newSTate);
 		}
 
 		/*
@@ -461,15 +459,15 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE>
 		for (final Integer oldStateInt : state2equivStates.keySet()) {
 			for (final OutgoingInternalTransition<LETTER, STATE> out : mOperand
 					.internalSuccessors(mInt2state.get(oldStateInt))) {
-				result.addInternalTransition(
+				addInternalTransition(
 						oldState2newState.get(oldStateInt), out.getLetter(),
 						oldState2newState
 								.get(mState2representative[mState2int.get(out
 										.getSucc())]));
 			}
 		}
-
-		return result;
+		finishResultConstruction();
+		mResultConstructed = true;
 	}
 
 	/**
@@ -512,13 +510,13 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE>
 	}
 
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getResult() {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		if (sParallel) {
-			if (mResult == null) {
-				mResult = constructResult();
+			if (! mResultConstructed) {
+				constructResult();
 			}
 		}
-		return mResult;
+		return super.getResult();
 	}
 
 	/**

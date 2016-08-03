@@ -67,7 +67,7 @@ public interface IBlock<STATE> {
 	 * operations, they are handled the same way.
 	 * 
 	 * NOTE: We assume here that return transitions are more complicated and
-	 * cannot be handled independent of the representative.
+	 * cannot be handled in a way independent of the representative.
 	 * 
 	 * @return true iff all states have the same outgoing transitions
 	 */

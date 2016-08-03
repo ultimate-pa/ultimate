@@ -39,8 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2.AMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2.EVariableStatus;
@@ -79,7 +77,6 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 
 	private final NestedMap2<STATE, STATE, Doubleton<STATE>> mStatePairs = new NestedMap2<>();
 	private final AMaxSatSolver<Doubleton<STATE>> mSolver;
-	private final INestedWordAutomaton<LETTER, STATE> mResult;
 	private final Collection<Set<STATE>> mInitialEquivalenceClasses;
 	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
@@ -103,6 +100,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	 * flag.
 	 */
 	private final boolean mUseHornSolver;
+	private final Map<STATE, STATE> mOldState2newState;
 
 	/**
 	 * Constructor that can be called by other classes of the automata library.
@@ -129,10 +127,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	 *            use Horn clauses for transitions (preliminary results good for
 	 *            nondeterministic automata)
 	 * @param useHornSolver
-	 *             use old Horn solver
+	 *            use old Horn solver
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *            thrown by cancel request
 	 */
 	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
@@ -188,7 +185,10 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
 				new QuotientNwaConstructor<>(mServices, mStateFactory, mOperand,
 						resultingEquivalenceClasses, addMapOldState2newState);
-		mResult = quotientNwaConstructor.getResult();
+		directResultConstruction(quotientNwaConstructor.getResult());
+		mOldState2newState = (addMapOldState2newState
+				? quotientNwaConstructor.getOldState2newState()
+				: null);
 	}
 
 	/**
@@ -201,8 +201,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	 * @param operand
 	 *            input nested word automaton
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *            thrown by cancel request
 	 */
 	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
@@ -226,22 +225,20 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	 *            We only try to merge states that are in one of the equivalence
 	 *            classes
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *            thrown by cancel request
 	 */
 	public MinimizeNwaMaxSat2(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final boolean useFinalStateConstraints,
-			final Collection<Set<STATE>> initialEquivalenceClasses)
-					throws AutomataOperationCanceledException {
+			final Collection<Set<STATE>> initialEquivalenceClasses) throws AutomataOperationCanceledException {
 		/*
 		 * TODO change second to last flag to 'false' to use the more general
 		 * transition clauses
 		 * TODO change last flag to 'false' to use the more general solver
 		 */
 		this(services, stateFactory, operand, false, useFinalStateConstraints,
-				false, false, initialEquivalenceClasses);
+				true, true, initialEquivalenceClasses);
 	}
 
 	@SuppressWarnings("squid:S1698")
@@ -771,15 +768,16 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 		return true;
 	}
 
-	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getResult() {
-		return mResult;
-	}
-
 	private void checkTimeout() throws AutomataOperationCanceledException {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 	}
-
+	
+	/**
+	 * @return map from input automaton states to output automaton states
+	 */
+	public Map<STATE, STATE> getOldState2newState() {
+		return mOldState2newState;
+	}
 }

@@ -49,8 +49,6 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 		extends AMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 
-	private final INestedWordAutomaton<LETTER, STATE> mResult;
-
 	/**
 	 * @param services Ultimate services
 	 * @param stateFactory state factory
@@ -99,14 +97,9 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 		final Partition eqCls = Generator.makeMergeRelation(nwa.mNumStates, assignments);
 		generateLog.info("finished making equivalence classes");
 
-		mResult = converter.constructMerged(eqCls);
+		directResultConstruction(converter.constructMerged(eqCls));
 		convertLog.info("constructed minimized automaton");
 
 		mLogger.info(exitMessage());
-	}
-
-	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() {
-		return mResult;
 	}
 }

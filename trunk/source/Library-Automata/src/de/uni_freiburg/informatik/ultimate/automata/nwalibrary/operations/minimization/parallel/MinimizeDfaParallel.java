@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.AMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.Interrupt;
@@ -54,9 +53,9 @@ public class MinimizeDfaParallel<LETTER, STATE>
 		extends AMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 	/**
-	 * Result automaton.
+	 * Is the result constructed yet?
 	 */
-	private INestedWordAutomaton<LETTER, STATE> mResult;
+	private boolean mResultConstructed = false;
 	/**
 	 * Getter for result.
 	 */
@@ -167,7 +166,7 @@ public class MinimizeDfaParallel<LETTER, STATE>
 		mHopcroftThread.start();
 
 		synchronized (this) {
-			if (mResult == null) {
+			if (! mResultConstructed) {
 				try {
 					this.wait();
 				} catch (final InterruptedException e) {
@@ -197,7 +196,8 @@ public class MinimizeDfaParallel<LETTER, STATE>
 
 		mLogger.info("MAIN: Start postprocessing result.");
 		try {
-			mResult = mResultGetter.call();
+			directResultConstruction(mResultGetter.call());
+			mResultConstructed = true;
 		} catch (final Exception e) {
 			//e.printStackTrace();
 		}
@@ -523,10 +523,5 @@ public class MinimizeDfaParallel<LETTER, STATE>
 	 */
 	private enum Algorithm {
 		HOPCROFT, INCREMENTAL
-	}
-
-	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getResult() {
-		return mResult;
 	}
 }

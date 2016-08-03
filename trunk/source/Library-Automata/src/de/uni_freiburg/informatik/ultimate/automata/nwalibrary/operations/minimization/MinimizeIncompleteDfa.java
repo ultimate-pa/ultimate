@@ -41,7 +41,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
@@ -94,10 +93,6 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 	 * Mapping for a letter to unique id.
 	 */
 	private final HashMap<LETTER, Integer> mLetterToId;
-	/**
-	 * Resulting minimized automaton.
-	 */
-	private final INestedWordAutomaton<LETTER, STATE> mResult;
 	/**
 	 * Mapping for state to the block number where it is contained.
 	 */
@@ -170,7 +165,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 
 		init(stateAmount, letterAmount);
 		
-		mResult = minimizeICDFA(mOperand, initialPartition);
+		minimizeICDFA(mOperand, initialPartition);
 		mLogger.info(exitMessage());
 	}
 
@@ -195,17 +190,8 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 	/**
 	 * Builds the minimized automaton using the block
 	 * representation of all nodes.
-	 * 
-	 * @return The minimized automaton
 	 */
-	private INestedWordAutomaton<LETTER, STATE> buildMinimizedAutomaton() {
-		final NestedWordAutomaton<LETTER, STATE> result =
-				new NestedWordAutomaton<LETTER, STATE>(mServices,
-						mOperand.getInternalAlphabet(),
-						mOperand.getCallAlphabet(),
-						mOperand.getReturnAlphabet(),
-						mStateFactory);
-		
+	private void buildMinimizedAutomaton() {
 		// Select a representative state for every block
 		final LinkedList<STATE> representatives = new LinkedList<STATE>();
 		final HashMap<Integer, STATE> blockToNewState =
@@ -218,6 +204,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 		for (final STATE initialState : mOperand.getInitialStates()) {
 			initialBlocks.add(mStateToBlockId.get(mStateToId.get(initialState)));
 		}
+		startResultConstruction();
 		for (final LinkedHashSet<Integer> block : mBlocks) {
 			if (block == null || block.isEmpty()) {
 				continue;
@@ -237,7 +224,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 			
 			final STATE newState = mStateFactory.minimize(allStates);
 			blockToNewState.put(blockId, newState);
-			result.addState(initialBlocks.contains(blockId),
+			addState(initialBlocks.contains(blockId),
 					mOperand.isFinal(representative), newState);
 			
 			// update mapping 'old state -> new state'
@@ -260,7 +247,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 				final LETTER letter = trans.getLetter();
 				final STATE succState = blockToNewState.get(
 						mStateToBlockId.get(oldDest));
-				result.addInternalTransition(predState, letter, succState);
+				addInternalTransition(predState, letter, succState);
 			}
 		}
 		
@@ -305,13 +292,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 //                result.addInternalTransition(predState, letter, succState);
 //            }
 //        }
-		
-		return result;
-	}
-
-	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() {
-		return mResult;
+		finishResultConstruction();
 	}
 
 	/**
@@ -374,9 +355,8 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 	 *            Automaton to minimize
 	 * @param initialPartition
 	 *            Initial partition of states 
-	 * @return Minimized automaton
 	 */
-	private INestedWordAutomaton<LETTER, STATE> minimizeICDFA(
+	private void minimizeICDFA(
 			final INestedWordAutomaton<LETTER, STATE> incdfa,
 			final Collection<Set<STATE>> initialPartition) {
 		// Initial blocks
@@ -489,7 +469,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 			splitCandidates.addAll(splitCandidatesToAppend);
 		}
 		
-		return buildMinimizedAutomaton();
+		buildMinimizedAutomaton();
 	}
 
 	/**

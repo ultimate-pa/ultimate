@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.HasUnreachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
@@ -62,11 +61,6 @@ public class MinimizeDfa<LETTER,STATE>
     /*_______________________________________________________________________*\
     \* FIELDS / ATTRIBUTES                                                   */
     
-    /**
-     * The resulting automaton.
-     */
-    private NestedWordAutomaton<LETTER,STATE> mResult;
-
 	private final boolean mIsDeterministic;
 
     /*_______________________________________________________________________*\
@@ -228,10 +222,7 @@ public class MinimizeDfa<LETTER,STATE>
 		final boolean[] marker = new boolean[states.size()];
 		final Set<STATE> temp = new HashSet<STATE>();
 		final HashMap<STATE,STATE> oldSNames2newSNames = new HashMap<STATE,STATE>();
-        mResult = new NestedWordAutomaton<LETTER,STATE>(
-        		mServices, 
-                mOperand.getInternalAlphabet(), null, null, mStateFactory);
-
+		startResultConstruction();
 		for (int i = 0; i < states.size(); i++) {
 			if (marker[i]) {
 				continue;
@@ -256,7 +247,7 @@ public class MinimizeDfa<LETTER,STATE>
 			for (final STATE c : temp) {
 				oldSNames2newSNames.put(c, minimizedStateName);
 			}
-			mResult.addState(isInitial, isFinal, minimizedStateName);
+			addState(isInitial, isFinal, minimizedStateName);
 			marker[i] = true;
 		}
 
@@ -267,10 +258,11 @@ public class MinimizeDfa<LETTER,STATE>
 						mOperand.internalSuccessors(c, s)) {
 					final STATE newPred = oldSNames2newSNames.get(c);
 					final STATE newSucc = oldSNames2newSNames.get(trans.getSucc());
-					mResult.addInternalTransition(newPred, s, newSucc);
+					addInternalTransition(newPred, s, newSucc);
 				}
 			}
 		}
+		finishResultConstruction();
 	}
 
 	/**
@@ -374,17 +366,12 @@ public class MinimizeDfa<LETTER,STATE>
     
     private void exitMessageDebug() {
         if (mLogger.isDebugEnabled()) {
-        	printTransitions(mResult);
+        	printTransitions(getResult());
         }
         final StringBuilder msg = new StringBuilder();
         msg.append("Finished ").append(operationName()).append(" Result ")
-                .append(mResult.sizeInformation());
+                .append(getResult().sizeInformation());
         mLogger.info(msg.toString());
-    }
-
-    @Override
-    public  INestedWordAutomaton<LETTER,STATE> getResult() {
-        return mResult;
     }
 
     /*_______________________________________________________________________*\

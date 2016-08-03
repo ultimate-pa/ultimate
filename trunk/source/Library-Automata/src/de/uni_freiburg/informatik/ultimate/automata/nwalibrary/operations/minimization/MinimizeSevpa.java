@@ -75,8 +75,6 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
 	// old automaton
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;
-	// new (minimized) automaton
-	private INestedWordAutomaton<LETTER,STATE> mNwa;
 	// ID for equivalence classes
 	private int mEquivalenceClassId;
 	// Partition of states into equivalence classes
@@ -149,7 +147,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 		// must be the last part of the constructor
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
 				minimize(equivalenceClasses, addMapOldState2newState);
-		mNwa = quotientNwaConstructor.getResult();
+		directResultConstruction(quotientNwaConstructor.getResult());
 		mOldState2newState = (addMapOldState2newState
 				? quotientNwaConstructor.getOldState2newState()
 				: null);
@@ -2690,10 +2688,5 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 	 */
 	public Map<STATE, STATE> getOldState2newState() {
 		return mOldState2newState;
-	}
-	
-	@Override
-	public INestedWordAutomaton<LETTER,STATE> getResult() {
-		return mNwa;
 	}
 }
