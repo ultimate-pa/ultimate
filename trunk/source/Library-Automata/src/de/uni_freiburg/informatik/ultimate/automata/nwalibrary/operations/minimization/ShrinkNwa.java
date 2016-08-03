@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IBlock;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IPartition;
@@ -118,7 +117,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 	private final OutgoingHelperInternal mOutInternal;
 	private final OutgoingHelperCall mOutCall;
 	// output automaton
-	private final NestedWordAutomaton<LETTER, STATE> mResult;
+	private final INestedWordAutomaton<LETTER, STATE> mResult;
 	// map old state -> new state
 	private final Map<STATE, STATE> mOldState2NewState;
 

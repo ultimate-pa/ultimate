@@ -42,6 +42,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
@@ -179,7 +180,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	/**
 	 * Resulting automaton of generator.
 	 */
-	private final NestedWordAutomaton<String, String> mresult;
+	private final INestedWordAutomaton<String, String> mresult;
 	/**
 	 * Service provider.
 	 */
@@ -436,7 +437,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            that should be deleted
 	 * @return Set of states that should be accepting
 	 */
-	private Set<Integer> calcAccStates(final int[] dfa, Set<Integer> transToDelete) {
+	private Set<Integer> calcAccStates(final int[] dfa, final Set<Integer> transToDelete) {
 		final LinkedHashSet<Integer> finalStates = new LinkedHashSet<Integer>(
 				mnumOfAccStates);
 		// Initialize list
@@ -638,7 +639,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * Extracts a DFA that is packed into the int[] array format specified by
 	 * {@link #generatePackedRandomDFA(int, int, int, boolean, boolean)
 	 * generatePackedRandomDFA(...)} and returns it as
-	 * {@link NestedWordAutomaton}.<br />
+	 * {@link INestedWordAutomaton}.<br />
 	 * Runtime is in <b>O(size * alphabetSize)</b>.
 	 * 
 	 * @param dfa
@@ -650,9 +651,9 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * @param transToDelete
 	 *            Set that contains indexes in the DFA sequence of all transitions
 	 *            that should be deleted
-	 * @return As {@link NestedWordAutomaton} extracted DFA
+	 * @return As {@link INestedWordAutomaton} extracted DFA
 	 */
-	private NestedWordAutomaton<String, String> extractPackedDFA(
+	private INestedWordAutomaton<String, String> extractPackedDFA(
 			final int[] dfa, final Set<Integer> accStates,
 			final Set<Integer> transToDelete) {
 		final List<String> num2State = new ArrayList<String>(msize);
@@ -852,7 +853,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	}
 
 	@Override
-	public NestedWordAutomaton<String, String> getResult() {
+	public INestedWordAutomaton<String, String> getResult() {
 		return mresult;
 	}
 

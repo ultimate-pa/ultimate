@@ -97,7 +97,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 	/**
 	 * Resulting minimized automaton.
 	 */
-	private final NestedWordAutomaton<LETTER, STATE> mResult;
+	private final INestedWordAutomaton<LETTER, STATE> mResult;
 	/**
 	 * Mapping for state to the block number where it is contained.
 	 */
@@ -198,7 +198,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 	 * 
 	 * @return The minimized automaton
 	 */
-	private NestedWordAutomaton<LETTER, STATE> buildMinimizedAutomaton() {
+	private INestedWordAutomaton<LETTER, STATE> buildMinimizedAutomaton() {
 		final NestedWordAutomaton<LETTER, STATE> result =
 				new NestedWordAutomaton<LETTER, STATE>(mServices,
 						mOperand.getInternalAlphabet(),
@@ -376,7 +376,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 	 *            Initial partition of states 
 	 * @return Minimized automaton
 	 */
-	private NestedWordAutomaton<LETTER, STATE> minimizeICDFA(
+	private INestedWordAutomaton<LETTER, STATE> minimizeICDFA(
 			final INestedWordAutomaton<LETTER, STATE> incdfa,
 			final Collection<Set<STATE>> initialPartition) {
 		// Initial blocks

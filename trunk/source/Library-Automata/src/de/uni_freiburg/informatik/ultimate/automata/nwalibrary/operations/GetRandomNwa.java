@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
@@ -57,7 +58,7 @@ public class GetRandomNwa implements IOperation<String,String> {
 	private final ILogger mLogger;
 	
 	private final Random mRandom;
-	private final NestedWordAutomaton<String,String> mResult;
+	private final INestedWordAutomaton<String,String> mResult;
 	
 	int malphabetSize; 
 	int msize;
@@ -75,12 +76,12 @@ public class GetRandomNwa implements IOperation<String,String> {
 	 * @param returnTransitionProbability
 	 * @param acceptanceDensity
 	 */
-	public GetRandomNwa(AutomataLibraryServices services,
-			int alphabetSize, int size, 
-			double internalTransitionDensity,
-			double callTransitionProbability,
-			double returnTransitionProbability,
-			double acceptanceDensity) {
+	public GetRandomNwa(final AutomataLibraryServices services,
+			final int alphabetSize, final int size, 
+			final double internalTransitionDensity,
+			final double callTransitionProbability,
+			final double returnTransitionProbability,
+			final double acceptanceDensity) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mRandom = new Random();
@@ -107,12 +108,12 @@ public class GetRandomNwa implements IOperation<String,String> {
 	 * @param returnTransitionProbability
 	 * @param acceptanceDensity
 	 */
-	public GetRandomNwa(AutomataLibraryServices services,
-			int alphabetSize, int size, 
-			int internalTransitionDensity,
-			int callTransitionProbability,
-			int returnTransitionProbability,
-			int acceptanceDensity) {
+	public GetRandomNwa(final AutomataLibraryServices services,
+			final int alphabetSize, final int size, 
+			final int internalTransitionDensity,
+			final int callTransitionProbability,
+			final int returnTransitionProbability,
+			final int acceptanceDensity) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mRandom = new Random();
@@ -153,7 +154,7 @@ public class GetRandomNwa implements IOperation<String,String> {
 	}
 	
 	@Override
-	public NestedWordAutomaton<String, String> getResult() {
+	public INestedWordAutomaton<String, String> getResult() {
 		return mResult;
 	}
 	
@@ -171,12 +172,12 @@ public class GetRandomNwa implements IOperation<String,String> {
 	 *            fraction of states that are accepting (number between 0 and 1)
 	 * @return a randomly generated NFA that fulfills the given specification
 	 */
-	public NestedWordAutomaton<String,String> generateAutomaton(
-							int alphabetSize, int size, 
-							double internalTransitionDensity,
-							double callTransitionProbability,
-							double returnTransitionProbability,
-							double acceptanceDensity)
+	public INestedWordAutomaton<String,String> generateAutomaton(
+							final int alphabetSize, final int size, 
+							final double internalTransitionDensity,
+							final double callTransitionProbability,
+							final double returnTransitionProbability,
+							final double acceptanceDensity)
 				throws IllegalArgumentException {
 		
 		final boolean isFiniteAutomaton = (callTransitionProbability == 0 
@@ -381,7 +382,7 @@ public class GetRandomNwa implements IOperation<String,String> {
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<String> stateFactory)
+	public boolean checkResult(final StateFactory<String> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}	

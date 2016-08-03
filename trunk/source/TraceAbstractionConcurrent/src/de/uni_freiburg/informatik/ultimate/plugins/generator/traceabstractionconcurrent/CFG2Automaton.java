@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -68,7 +69,7 @@ public abstract class CFG2Automaton {
 	private final RootAnnot mRootAnnot;
 	private final SmtManager mSmtManager;
 	private final StateFactory<IPredicate> mContentFactory;
-	protected ArrayList<NestedWordAutomaton<CodeBlock, IPredicate>> mAutomata;
+	protected ArrayList<INestedWordAutomaton<CodeBlock, IPredicate>> mAutomata;
 
 	private CodeBlock mSharedVarsInit;
 	private static final String mInitProcedure = "~init";
@@ -109,7 +110,7 @@ public abstract class CFG2Automaton {
 		}
 		mLogger.debug("Found " + numberOfProcedures + "Procedures");
 
-		mAutomata = new ArrayList<NestedWordAutomaton<CodeBlock, IPredicate>>(numberOfProcedures);
+		mAutomata = new ArrayList<INestedWordAutomaton<CodeBlock, IPredicate>>(numberOfProcedures);
 
 		mSharedVarsInit = extractPrecondition();
 
@@ -146,7 +147,7 @@ public abstract class CFG2Automaton {
 	 * Build NestedWordAutomaton for all code reachable from initial Node which is in the same procedure as initial
 	 * Node. Initial Node does not have to be the enty Node of a procedure.
 	 */
-	private NestedWordAutomaton<CodeBlock, IPredicate> getNestedWordAutomaton(final ProgramPoint initialNode) {
+	private INestedWordAutomaton<CodeBlock, IPredicate> getNestedWordAutomaton(final ProgramPoint initialNode) {
 
 		mLogger.debug("Step: Collect all LocNodes corresponding to" + " this procedure");
 

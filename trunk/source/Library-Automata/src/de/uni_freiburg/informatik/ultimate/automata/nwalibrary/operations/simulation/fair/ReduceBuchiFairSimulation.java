@@ -85,7 +85,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		final Set<String> alphabet = new HashSet<>();
 		alphabet.add("a");
 		alphabet.add("b");
-		NestedWordAutomaton<String, String> buechi = new NestedWordAutomaton<>(new AutomataLibraryServices(services),
+		INestedWordAutomaton<String, String> buechi = new NestedWordAutomaton<>(new AutomataLibraryServices(services),
 				alphabet, null, null, snf);
 
 		// Big example from Matthias cardboard

@@ -94,30 +94,6 @@ public class DifferenceSenwa<LETTER, STATE> implements
 			new HashMap<DifferenceState<LETTER,STATE>,Map<DifferenceState<LETTER,STATE>,STATE>>();
 	
 	
-	
-	
-	@Override
-	public String operationName() {
-		return "differenceSenwa";
-	}
-	
-	@Override
-	public String startMessage() {
-			return "Start " + operationName() + ". Minuend " + 
-			mMinuend.sizeInformation() + ". Subtrahend " + 
-			mSubtrahend.sizeInformation();	
-	}
-
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + 
-		mSenwa.sizeInformation() + ". Max degree of Nondeterminism is " + 
-		mStateDeterminizer.getMaxDegreeOfNondeterminism();
-	}
-	
-	
-	
-	
 	public DifferenceSenwa(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER,STATE> minuend,
 			final INestedWordAutomaton<LETTER,STATE> subtrahend)
@@ -345,6 +321,25 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	public boolean removeDeadEnds() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+	
+	@Override
+	public String operationName() {
+		return "differenceSenwa";
+	}
+	
+	@Override
+	public String startMessage() {
+			return "Start " + operationName() + ". Minuend " + 
+			mMinuend.sizeInformation() + ". Subtrahend " + 
+			mSubtrahend.sizeInformation();	
+	}
+
+	@Override
+	public String exitMessage() {
+		return "Finished " + operationName() + " Result " + 
+		mSenwa.sizeInformation() + ". Max degree of Nondeterminism is " + 
+		mStateDeterminizer.getMaxDegreeOfNondeterminism();
 	}
 
 	@Override

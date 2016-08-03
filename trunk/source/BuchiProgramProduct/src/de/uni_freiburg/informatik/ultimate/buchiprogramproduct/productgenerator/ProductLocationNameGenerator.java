@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.productgenerator;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
@@ -39,16 +39,16 @@ public final class ProductLocationNameGenerator {
 
 	private static final String HELPER_STATE_PREFIX = "crhelper";
 	private int mHelperUnifique;
-	private final NestedWordAutomaton<CodeBlock, String> mNWA;
+	private final INestedWordAutomaton<CodeBlock, String> mNWA;
 	
-	protected ProductLocationNameGenerator(NestedWordAutomaton<CodeBlock, String> nwa) {
+	protected ProductLocationNameGenerator(final INestedWordAutomaton<CodeBlock, String> nwa) {
 		assert nwa != null;
 		
 		mHelperUnifique = 0;
 		mNWA = nwa;
 	}
 	
-	protected String generateStateName(ProgramPoint loc) {
+	protected String generateStateName(final ProgramPoint loc) {
 		return generateStateName(loc, null);
 	}
 
@@ -61,11 +61,11 @@ public final class ProductLocationNameGenerator {
 	 *            Name of the state in the BA / NWA
 	 * @return a String representing the name of this location in the product 
 	 */
-	protected String generateStateName(ProgramPoint loc, String nwaName) {
+	protected String generateStateName(final ProgramPoint loc, final String nwaName) {
 		return generateStateName(String.valueOf(loc.hashCode()) + "_" + loc.getPosition(), nwaName);
 	}
 
-	private String generateStateName(String rcfgName, String nwaName) {
+	private String generateStateName(final String rcfgName, final String nwaName) {
 		assert nwaName == null || !nwaName.isEmpty();
 		if (nwaName == null) {
 			return "NP" + "__" + rcfgName;
@@ -76,12 +76,12 @@ public final class ProductLocationNameGenerator {
 		}
 	}
 
-	protected String generateHelperStateName(String location) {
+	protected String generateHelperStateName(final String location) {
 		mHelperUnifique++;
 		return HELPER_STATE_PREFIX + Integer.toString(mHelperUnifique) + "__" + location;
 	}
 	
-	protected boolean isHelperState(ProgramPoint loc){
+	protected boolean isHelperState(final ProgramPoint loc){
 		if(loc == null){
 			return false;
 		}

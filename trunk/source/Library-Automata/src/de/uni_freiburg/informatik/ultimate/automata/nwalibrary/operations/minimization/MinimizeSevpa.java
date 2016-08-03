@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IBlock;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IPartition;
@@ -77,7 +76,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 	// old automaton
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;
 	// new (minimized) automaton
-	private NestedWordAutomaton<LETTER,STATE> mNwa;
+	private INestedWordAutomaton<LETTER,STATE> mNwa;
 	// ID for equivalence classes
 	private int mEquivalenceClassId;
 	// Partition of states into equivalence classes
@@ -2694,7 +2693,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 	}
 	
 	@Override
-	public NestedWordAutomaton<LETTER,STATE> getResult() {
+	public INestedWordAutomaton<LETTER,STATE> getResult() {
 		return mNwa;
 	}
 }

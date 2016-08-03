@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2.AMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2.EVariableStatus;
@@ -79,7 +79,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 
 	private final NestedMap2<STATE, STATE, Doubleton<STATE>> mStatePairs = new NestedMap2<>();
 	private final AMaxSatSolver<Doubleton<STATE>> mSolver;
-	private final NestedWordAutomaton<LETTER, STATE> mResult;
+	private final INestedWordAutomaton<LETTER, STATE> mResult;
 	private final Collection<Set<STATE>> mInitialEquivalenceClasses;
 	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;

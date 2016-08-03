@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.AMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -50,7 +49,7 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 		extends AMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 
-	private final NestedWordAutomaton<LETTER, STATE> mResult;
+	private final INestedWordAutomaton<LETTER, STATE> mResult;
 
 	/**
 	 * @param services Ultimate services
@@ -107,7 +106,7 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 	}
 
 	@Override
-	public NestedWordAutomaton<LETTER, STATE> getResult() {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 }

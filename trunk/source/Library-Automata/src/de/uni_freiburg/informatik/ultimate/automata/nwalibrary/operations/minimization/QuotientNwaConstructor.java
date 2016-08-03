@@ -35,6 +35,7 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IBlock;
@@ -277,7 +278,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	/**
 	 * @return quotient automaton
 	 */
-	public NestedWordAutomaton<LETTER, STATE> getResult() {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 	

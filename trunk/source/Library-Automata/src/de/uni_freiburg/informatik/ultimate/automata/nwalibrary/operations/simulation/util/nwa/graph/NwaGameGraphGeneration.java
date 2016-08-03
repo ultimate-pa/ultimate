@@ -1372,7 +1372,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			mLogger.debug("Generating summarize edges.");
 		}
 		// Create the game automaton, we will use it for summarize computation
-		final NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton = createGameAutomaton();
+		final INestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton = createGameAutomaton();
 		final NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonWithSummaries = new RemoveUnreachable<>(
 				mServices, gameAutomaton).getResult();
 
@@ -2350,7 +2350,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	private NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> createGameAutomaton()
+	private INestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> createGameAutomaton()
 			throws AutomataOperationCanceledException {
 		final Set<GameLetter<LETTER, STATE>> internalGameAlphabet = new HashSet<>();
 		final Set<GameLetter<LETTER, STATE>> callGameAlphabet = new HashSet<>();

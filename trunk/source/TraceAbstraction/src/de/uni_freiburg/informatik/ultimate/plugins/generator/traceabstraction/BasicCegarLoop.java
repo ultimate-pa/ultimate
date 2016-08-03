@@ -154,7 +154,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	protected final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
 
-	private NestedWordAutomaton<WitnessEdge, WitnessNode> mWitnessAutomaton;
+	private INestedWordAutomaton<WitnessEdge, WitnessNode> mWitnessAutomaton;
 	private final IFreshTermVariableConstructor mFreshVarConstructor;
 
 	private final boolean mDoFaultLocalization_NonFlowSensitive;
@@ -408,7 +408,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					&& feasibility == LBool.SAT) {
 				final CFG2NestedWordAutomaton cFG2NestedWordAutomaton =
 						new CFG2NestedWordAutomaton(mServices, mPref.interprocedural(), super.mSmtManager, mLogger);
-				final NestedWordAutomaton<CodeBlock, IPredicate> cfg = cFG2NestedWordAutomaton
+				final INestedWordAutomaton<CodeBlock, IPredicate> cfg = cFG2NestedWordAutomaton
 						.getNestedWordAutomaton(super.mRootNode, mStateFactoryForRefinement, super.mErrorLocs);
 				final FlowSensitiveFaultLocalizer a = new FlowSensitiveFaultLocalizer(mCounterexample, cfg, mServices,
 						mSmtManager, mModGlobVarManager, predicateUnifier, mDoFaultLocalization_NonFlowSensitive,
@@ -1098,7 +1098,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// do nothing
 	}
 
-	public void setWitnessAutomaton(final NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
+	public void setWitnessAutomaton(final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		mWitnessAutomaton = witnessAutomaton;
 
 	}

@@ -32,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomNwa;
@@ -102,7 +101,7 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> implements IOpera
 		final int totalityReturnInPerc = 1;
 		final int logEvery = 50;
 		final int amount = 1000;
-		NestedWordAutomaton<String, String> nwa;
+		INestedWordAutomaton<String, String> nwa;
 
 		for (int i = 1; i <= amount; i++) {
 			if (i % logEvery == 0) {

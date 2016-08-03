@@ -219,7 +219,7 @@ final class Converter<LETTER, STATE> {
 	 *         from the data which was remembered from the input
 	 *         INestedWordAutomaton at construction time.
 	 */
-	NestedWordAutomaton<LETTER, STATE> constructMerged(final Partition partition) {
+	INestedWordAutomaton<LETTER, STATE> constructMerged(final Partition partition) {
 		assert partition.mClassOf.length == mOldState.size();
 
 		final int numclasses = partition.mNumClasses;

@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -90,7 +90,7 @@ public class ProductGenerator {
 	private final BuchiProgramAcceptingStateAnnotation mAcceptingNodeAnnotation;
 	private final RootNode mRcfgRoot;
 	private final RootNode mProductRoot;
-	private final NestedWordAutomaton<CodeBlock, String> mNWA;
+	private final INestedWordAutomaton<CodeBlock, String> mNWA;
 	private final CodeBlockFactory mCodeblockFactory;
 	private final ProductLocationNameGenerator mNameGenerator;
 
@@ -101,7 +101,7 @@ public class ProductGenerator {
 	private final Map<String, ProgramPoint> mProductLocations;
 	private final Map<ProgramPoint, List<Call>> mOrigRcfgCallLocs2CallEdges;
 
-	public ProductGenerator(final NestedWordAutomaton<CodeBlock, String> nwa, final RootNode rcfg, final LTLPropertyCheck ltlAnnot,
+	public ProductGenerator(final INestedWordAutomaton<CodeBlock, String> nwa, final RootNode rcfg, final LTLPropertyCheck ltlAnnot,
 			final IUltimateServiceProvider services, final ProductBacktranslator backtrans) {
 		// services and logger
 		mServices = services;

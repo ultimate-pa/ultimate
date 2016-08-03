@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa;
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
@@ -21,7 +21,7 @@ final class NWAVisualizationNode<NWAVertex, NWAEdge>
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -42,12 +42,12 @@ final class NWAVisualizationNode<NWAVertex, NWAEdge>
 		return true;
 	}
 
-	private final NestedWordAutomaton<NWAEdge, NWAVertex> mVisNWA;
+	private final INestedWordAutomaton<NWAEdge, NWAVertex> mVisNWA;
 	private final NWAVertex mBacking;
 	private static final long serialVersionUID = 1L;
 	private boolean mInitialized;
 
-	public NWAVisualizationNode(NestedWordAutomaton<NWAEdge, NWAVertex> nwa, NWAVertex state) {
+	public NWAVisualizationNode(final INestedWordAutomaton<NWAEdge, NWAVertex> nwa, final NWAVertex state) {
 		super();
 		mVisNWA = nwa;
 		mBacking = state;

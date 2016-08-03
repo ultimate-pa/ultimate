@@ -105,7 +105,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	 *         <b>Use with caution!</b> The automaton has to be computed
 	 *         entirely.
 	 */
-	public NestedWordAutomaton<LETTER, STATE> toNestedWordAutomaton() throws AutomataLibraryException {
+	public INestedWordAutomaton<LETTER, STATE> toNestedWordAutomaton() throws AutomataLibraryException {
 		final NestedWordAutomaton<LETTER, STATE> result = 
 				new NestedWordAutomaton<LETTER, STATE>(mServices, mAlphabet, null, null,
 				mStateFactory);

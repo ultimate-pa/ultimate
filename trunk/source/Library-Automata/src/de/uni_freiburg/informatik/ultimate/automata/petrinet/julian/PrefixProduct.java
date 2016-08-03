@@ -38,10 +38,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ConcurrentProduct;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
@@ -53,7 +53,7 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 	private final ILogger mLogger;
 	
 	private final PetriNetJulian<S,C> mNet;
-	private final NestedWordAutomaton<S,C> mNwa;
+	private final INestedWordAutomaton<S,C> mNwa;
 	private PetriNetJulian<S,C> mResult;
 	
 	private HashSet<S> mNetOnlyAlphabet;
@@ -119,7 +119,7 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 
 	
 	public PrefixProduct(final AutomataLibraryServices services,
-			final PetriNetJulian<S, C> net, final NestedWordAutomaton<S, C> nwa) {
+			final PetriNetJulian<S, C> net, final INestedWordAutomaton<S, C> nwa) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.mNet = net;
@@ -176,17 +176,18 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 		}
 		
 		for (final C state : mNwa.getStates()) {
-			for (final S letter : mNwa.lettersInternal(state)) {
-				for (final C succ : mNwa.succInternal(state, letter)) {
-					Collection<AutomatonTransition> automatonTransitions = 
-							symbol2nwaTransitions.get(letter);
-					if (automatonTransitions == null) {
-						automatonTransitions = new HashSet<AutomatonTransition>();
-						symbol2nwaTransitions.put(letter, automatonTransitions);
-					}
-					automatonTransitions.add(
-							new AutomatonTransition(state, letter, succ));
+			for (final OutgoingInternalTransition<S, C> trans :
+					mNwa.internalSuccessors(state)) {
+				final S letter = trans.getLetter();
+				final C succ = trans.getSucc();
+				Collection<AutomatonTransition> automatonTransitions = 
+						symbol2nwaTransitions.get(letter);
+				if (automatonTransitions == null) {
+					automatonTransitions = new HashSet<AutomatonTransition>();
+					symbol2nwaTransitions.put(letter, automatonTransitions);
 				}
+				automatonTransitions.add(
+						new AutomatonTransition(state, letter, succ));
 			}
 		}
 		
