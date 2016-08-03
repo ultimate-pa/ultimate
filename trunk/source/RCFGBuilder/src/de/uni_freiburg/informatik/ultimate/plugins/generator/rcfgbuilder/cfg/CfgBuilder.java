@@ -79,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.WeakestPrecondition;
@@ -113,7 +114,6 @@ public class CfgBuilder {
 
 	private final RootAnnot mRootAnnot;
 
-	private final Script mScript;
 	private final Boogie2SMT mBoogie2smt;
 	private final BoogieDeclarations mBoogieDeclarations;
 	TransFormulaBuilder tfb;
@@ -146,13 +146,14 @@ public class CfgBuilder {
 
 		final String pathAndFilename = unit.getPayload().getLocation().getFileName();
 		final String filename = (new File(pathAndFilename)).getName();
-		mScript = constructAndInitializeSolver(services, storage, filename);
+		final Script script = constructAndInitializeSolver(services, storage, filename);
+		final ManagedScript maScript = new ManagedScript(mServices, script);
 
 		mBoogieDeclarations = new BoogieDeclarations(unit, mLogger);
 		final boolean blackHolesArrays = false;
 		final boolean bitvectorInsteadInt = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_BitvectorWorkaround);
-		mBoogie2smt = new Boogie2SMT(mScript, mBoogieDeclarations, blackHolesArrays, bitvectorInsteadInt, mServices);
+		mBoogie2smt = new Boogie2SMT(maScript, mBoogieDeclarations, blackHolesArrays, bitvectorInsteadInt, mServices);
 		mRootAnnot = new RootAnnot(mServices, mBoogieDeclarations, mBoogie2smt, mBacktranslator);
 		mCbf = mRootAnnot.getCodeBlockFactory();
 		storage.putStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage, mCbf);
