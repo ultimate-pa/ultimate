@@ -166,6 +166,7 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 	}
 	
 	@SuppressWarnings("unchecked")
+	@Override
 	public Map<STATE, STATE> getOldState2newState() {
 		switch (mPattern[mCounter]) {
 			case MINIMIZE_SEVPA:

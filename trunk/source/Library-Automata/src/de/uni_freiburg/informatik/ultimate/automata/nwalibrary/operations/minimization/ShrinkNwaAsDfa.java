@@ -34,7 +34,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -75,8 +74,6 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 	private int mIds;
 	// work lists
 	private WorkList mWorkList;
-	// map old state -> new state
-	private Map<STATE, STATE> mOldState2newState;
 	
 	/**
 	 * This constructor creates a copy of the operand.
@@ -330,14 +327,13 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 		final QuotientNwaConstructor<LETTER, STATE> constructor =
 				new QuotientNwaConstructor<LETTER, STATE>(mServices,
 						mStateFactory, mDoubleDecker, mPartition, includeMapping);
-		directResultConstruction(constructor.getResult());
-		mOldState2newState = constructor.getOldState2newState();
+		directResultConstruction(constructor);
 		
 		// clean up
 		mPartition = null;
 		mWorkList = null;
 	}
-	
+
 	// --- [end] main methods --- //
 	
 	// --- [start] helper methods and classes --- //
@@ -528,16 +524,6 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 			}
 		}
 		return true;
-	}
-	
-	/**
-	 * Returns a Map from states of the input automaton to states of the output
-	 * automaton. The image of a state oldState is the representative of
-	 * oldStates equivalence class. This method can only be used if the
-	 * minimization is finished.
-	 */
-	public Map<STATE, STATE> getOldState2newState() {
-		return mOldState2newState;
 	}
 	
 	// --- [end] helper methods and classes --- //

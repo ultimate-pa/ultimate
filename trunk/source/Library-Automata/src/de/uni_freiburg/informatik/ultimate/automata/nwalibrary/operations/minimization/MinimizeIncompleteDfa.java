@@ -113,9 +113,6 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 //	private final HashMap<Integer, Iterable<
 //		OutgoingInternalTransition<LETTER, STATE>>> stateToOutgoingEdges;
 	
-	// added by Christian
-	private HashMap<STATE, STATE> mOldState2newState;
-	
 	/**
 	 * Minimizes a given incomplete DFAs (Deterministic Finite Automaton).<br/>
 	 * Runtime is in:<br/>
@@ -137,11 +134,6 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 				(operand.getReturnAlphabet().size() > 0)) {
 			throw new UnsupportedOperationException(
 				"This class only supports minimization of finite automata.");
-		}
-		if (addMapping) {
-			this.mOldState2newState = null;
-		} else {
-			mOldState2newState = new HashMap<STATE, STATE>();
 		}
 		
 		mBlockToId = new HashMap<LinkedHashSet<Integer>, Integer>(
@@ -165,7 +157,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 
 		init(stateAmount, letterAmount);
 		
-		minimizeICDFA(mOperand, initialPartition);
+		minimizeICDFA(mOperand, initialPartition, addMapping);
 		mLogger.info(exitMessage());
 	}
 
@@ -190,8 +182,10 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 	/**
 	 * Builds the minimized automaton using the block
 	 * representation of all nodes.
+	 * @param addMapping
+	 *           true iff mapping old state -> new state should be included
 	 */
-	private void buildMinimizedAutomaton() {
+	private void buildMinimizedAutomaton(final boolean addMapping) {
 		// Select a representative state for every block
 		final LinkedList<STATE> representatives = new LinkedList<STATE>();
 		final HashMap<Integer, STATE> blockToNewState =
@@ -200,6 +194,9 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 //				new HashMap<Integer, STATE>();
 		
 		// Christian: edited for proper state factory usage
+		final Map<STATE, STATE> oldState2newState = addMapping
+				? new HashMap<STATE, STATE>()
+				: null;
 		final HashSet<Integer> initialBlocks = new HashSet<Integer>();
 		for (final STATE initialState : mOperand.getInitialStates()) {
 			initialBlocks.add(mStateToBlockId.get(mStateToId.get(initialState)));
@@ -228,9 +225,9 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 					mOperand.isFinal(representative), newState);
 			
 			// update mapping 'old state -> new state'
-			if (mOldState2newState != null) {
+			if (addMapping) {
 				for (final STATE oldState : allStates) {
-					mOldState2newState.put(oldState, newState);
+					oldState2newState.put(oldState, newState);
 				}
 			}
 		}
@@ -292,7 +289,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 //                result.addInternalTransition(predState, letter, succState);
 //            }
 //        }
-		finishResultConstruction();
+		finishResultConstruction(oldState2newState);
 	}
 
 	/**
@@ -355,10 +352,13 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 	 *            Automaton to minimize
 	 * @param initialPartition
 	 *            Initial partition of states 
+	 * @param addMapping
+	 *            true iff mapping old state -> new state should be included
 	 */
 	private void minimizeICDFA(
 			final INestedWordAutomaton<LETTER, STATE> incdfa,
-			final Collection<Set<STATE>> initialPartition) {
+			final Collection<Set<STATE>> initialPartition,
+			final boolean addMapping) {
 		// Initial blocks
 		final LinkedList<Integer> finalStates = new LinkedList<Integer>();
 		final LinkedList<Integer> otherStates = new LinkedList<Integer>();
@@ -469,7 +469,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 			splitCandidates.addAll(splitCandidatesToAppend);
 		}
 		
-		buildMinimizedAutomaton();
+		buildMinimizedAutomaton(addMapping);
 	}
 
 	/**
@@ -773,15 +773,5 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 			}
 		}
 		return splitCandidatesToAppend;
-	}
-	
-	/**
-	 * Returns a Map from states of the input automaton to states of the output
-	 * automaton. The image of a state oldState is the representative of 
-	 * oldStates equivalence class.
-	 * This method can only be used if the minimization is finished.
-	 */
-	public Map<STATE,STATE> getOldState2newState() {
-		return mOldState2newState;
 	}
 }

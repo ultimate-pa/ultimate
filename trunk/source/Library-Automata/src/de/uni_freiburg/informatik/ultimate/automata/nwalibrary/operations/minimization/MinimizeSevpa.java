@@ -35,7 +35,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
@@ -79,8 +78,6 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 	private int mEquivalenceClassId;
 	// Partition of states into equivalence classes
 	private Partition mPartition;
-	// map old state -> new state
-	private final Map<STATE, STATE> mOldState2newState;
 	
 	/*
 	 * EXPERIMENTAL
@@ -147,10 +144,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 		// must be the last part of the constructor
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
 				minimize(equivalenceClasses, addMapOldState2newState);
-		directResultConstruction(quotientNwaConstructor.getResult());
-		mOldState2newState = (addMapOldState2newState
-				? quotientNwaConstructor.getOldState2newState()
-				: null);
+		directResultConstruction(quotientNwaConstructor);
 		mLogger.info(exitMessage());
 
 		if (STATISTICS) {
@@ -2681,12 +2675,5 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 		 * directly passes the states from the original automaton
 		 */
 		NONE;
-	}
-	
-	/**
-	 * @return map from input automaton states to output automaton states
-	 */
-	public Map<STATE, STATE> getOldState2newState() {
-		return mOldState2newState;
 	}
 }

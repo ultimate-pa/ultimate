@@ -100,7 +100,6 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	 * flag.
 	 */
 	private final boolean mUseHornSolver;
-	private final Map<STATE, STATE> mOldState2newState;
 
 	/**
 	 * Constructor that can be called by other classes of the automata library.
@@ -185,10 +184,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
 				new QuotientNwaConstructor<>(mServices, mStateFactory, mOperand,
 						resultingEquivalenceClasses, addMapOldState2newState);
-		directResultConstruction(quotientNwaConstructor.getResult());
-		mOldState2newState = (addMapOldState2newState
-				? quotientNwaConstructor.getOldState2newState()
-				: null);
+		directResultConstruction(quotientNwaConstructor);
 	}
 
 	/**
@@ -772,12 +768,5 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
-	}
-	
-	/**
-	 * @return map from input automaton states to output automaton states
-	 */
-	public Map<STATE, STATE> getOldState2newState() {
-		return mOldState2newState;
 	}
 }

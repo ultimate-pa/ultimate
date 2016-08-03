@@ -41,7 +41,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -115,8 +114,6 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 	private final boolean mSplitOutgoing;
 	private final OutgoingHelperInternal mOutInternal;
 	private final OutgoingHelperCall mOutCall;
-	// map old state -> new state
-	private final Map<STATE, STATE> mOldState2NewState;
 
 	/* optional random splits before the return split to keep matrices small */
 	// true iff before the first return split some random splits are executed
@@ -317,9 +314,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 
 		// must be the last part of the constructor
 		minimize(isFiniteAutomaton, equivalenceClasses, includeMapping);
-		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor = constructAutomaton(includeMapping);
-		directResultConstruction(quotientNwaConstructor.getResult());
-		mOldState2NewState = (includeMapping ? quotientNwaConstructor.getOldState2newState() : null);
+		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
+				constructAutomaton(includeMapping);
+		directResultConstruction(quotientNwaConstructor);
 
 		mLogger.info(exitMessage());
 
@@ -2322,17 +2319,6 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 	}
 
 	// --- [end] main methods --- //
-
-	// --- [start] framework methods --- //
-
-	/**
-	 * @return map from input automaton states to output automaton states
-	 */
-	public Map<STATE, STATE> getOldState2newState() {
-		return mOldState2NewState;
-	}
-
-	// --- [end] framework methods --- //
 
 	/**
 	 * This method checks that the states in each equivalence class initially passed in the constructor are all either

@@ -704,7 +704,7 @@ public class MinimizeDfaAmrParallel<LETTER, STATE>
 								.getSucc()))));
 			}
 		}
-		finishResultConstruction();
+		finishResultConstruction(null);
 	}
 
 	/**

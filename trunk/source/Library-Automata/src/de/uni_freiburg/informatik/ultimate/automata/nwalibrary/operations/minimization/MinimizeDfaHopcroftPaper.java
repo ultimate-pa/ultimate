@@ -57,8 +57,6 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 	private ArrayList<LETTER> mInt2letter;
 	private HashMap<LETTER, Integer> mLetter2int;
 	
-	private HashMap<STATE, STATE> mOldState2newState;
-	
 	/*******************************************************************//**
 	 * necessary data elements for the minimization algorithm.
 	 */
@@ -116,17 +114,10 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 			throw new UnsupportedOperationException(
 				"This class only supports minimization of finite automata.");
 		}
-		
-		if (addMapping) {
-			this.mOldState2newState = null;
-		} else {
-			mOldState2newState = new HashMap<STATE, STATE>(
-					computeHashCap(mOperand.size()));
-		}
 
 		if (mOperand.size() > 0) {
 			// Start minimization.
-			minimizeDfaHopcroft(initialPartition);
+			minimizeDfaHopcroft(initialPartition, addMapping);
 		} else {
 			// Special case: empty automaton.
 			directResultConstruction(mOperand);
@@ -144,9 +135,9 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 	
 	/*******************************************************************//**
 	 * Step by Step implementation of minimizing finite automaton by Hopcroft.
-	 * @param initialPartition 
 	 */
-	private void minimizeDfaHopcroft(final Collection<Set<STATE>> initialPartition) {
+	private void minimizeDfaHopcroft(final Collection<Set<STATE>> initialPartition,
+			final boolean addMapping) {
 		// First make preprocessing on given automata.
 		mLogger.info("Start preprocessing data ... ");
 		preprocessingData();
@@ -217,7 +208,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 		}
 		/******************************************************************/
 		// New automaton should be ready. Build result automaton.
-		buildResult();
+		buildResult(addMapping);
 	}
 
 	/*******************************************************************//**
@@ -533,7 +524,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 	 * Method for building the result automaton with reduced states
 	 * and transitions.
 	 */
-	private void buildResult() {
+	private void buildResult(final boolean addMapping) {
 		final ArrayList<STATE> newStates =
 				new ArrayList<STATE>(mBlocks.mNumberOfSets);
 		final int blockOfInitState = mBlocks.mSetElemBelongsTo[mInitialState];
@@ -541,6 +532,11 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 		for (int i = 0; i < mNumberOfFinalStates; ++i) {
 			blockOfFinalStates[i] = mBlocks.mSetElemBelongsTo[mFinalStates[i]];
 		}
+		
+		final Map<STATE, STATE> mOldState2newState = addMapping
+				? new HashMap<STATE, STATE>(computeHashCap(mOperand.size()))
+				: null;
+		
 		startResultConstruction();
 		// Iterate over number of blocks for getting every first element.
 		for (int i = 0; i < mBlocks.mNumberOfSets; ++i) {
@@ -607,17 +603,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 				// Add the new transition to the result automaton.
 				addInternalTransition(newPred, next.getLetter(), newSucc);
 			}
-			finishResultConstruction();
+			finishResultConstruction(mOldState2newState);
 		}	
-	}
-
-	/**
-	 * Returns a Map from states of the input automaton to states of the output
-	 * automaton. The image of a state oldState is the representative of 
-	 * oldStates equivalence class.
-	 * This method can only be used if the minimization is finished.
-	 */
-	public Map<STATE,STATE> getOldState2newState() {
-		return mOldState2newState;
 	}
 }

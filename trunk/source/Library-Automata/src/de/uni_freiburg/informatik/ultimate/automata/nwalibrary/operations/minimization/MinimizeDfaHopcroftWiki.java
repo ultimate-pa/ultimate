@@ -321,7 +321,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 										.getSucc())]));
 			}
 		}
-		finishResultConstruction();
+		finishResultConstruction(null);
 	}
 
 	/**

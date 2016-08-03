@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -87,6 +88,10 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 * A temporary automaton for result construction.
 	 */
 	private NestedWordAutomaton<LETTER, STATE> mTemporaryResult;
+	/**
+	 * map 'old state -> new state'
+	 */
+	private Map<STATE, STATE> mOldState2NewState;
 
 	/**
 	 * This constructor should be called by all subclasses and only by them.
@@ -109,6 +114,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 		mOperand = operand;
 		mResult = null;
 		mTemporaryResult = null;
+		mOldState2NewState = null;
 		
 		mStateFactory = (stateFactory == null)
 				? operand.getStateFactory()
@@ -185,6 +191,22 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 		return false;
 	}
 	
+	/**
+	 * Returns a Map from states of the input automaton to states of the output
+	 * automaton. The output results from merging states. The image of a state
+	 * <i>oldState</i> is the block of merged states containing <i>oldState</i>.
+	 * This method can only be used when the minimization has finished.
+	 * 
+	 * @return map from input automaton states to output automaton states
+	 */
+	public Map<STATE, STATE> getOldState2newState() {
+		if (mOldState2NewState == null) {
+			throw new NoSuchElementException(
+					"No map from old states to new states was added.");
+		}
+		return mOldState2NewState;
+	}
+	
 	/* ------ result construction ------ */
 	
 	/**
@@ -202,6 +224,21 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 					"The result construction has already been started.");
 		}
 		mResult = result;
+	}
+	
+	/**
+	 * pass the result directly from a
+	 * #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.QuotientNwaConstructor}
+	 * 
+	 * @param constructor quotient constructor
+	 */
+	protected void directResultConstruction(
+			final QuotientNwaConstructor<LETTER, STATE> constructor) {
+		directResultConstruction(constructor.getResult());
+		final Map<STATE, STATE> map = constructor.getOldState2newState();
+		if (map != null) {
+			setOld2NewStateMap(map);
+		}
 	}
 	
 	/**
@@ -287,10 +324,31 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	
 	/**
 	 * finish construction of result (must be called last)
+	 * 
+	 * @param oldState2newState map 'old state -> new state'
 	 */
-	protected final void finishResultConstruction() {
+	protected final void finishResultConstruction(
+			final Map<STATE, STATE> oldState2newState) {
 		mResult = mTemporaryResult;
 		mTemporaryResult = null;
+		if (oldState2newState != null) {
+			setOld2NewStateMap(oldState2newState);
+		}
+	}
+	
+	/**
+	 * @param oldState2newState map 'old state -> new state'
+	 */
+	protected final void setOld2NewStateMap(
+			final Map<STATE, STATE> oldState2newState) {
+		if (oldState2newState == null) {
+			throw new AssertionError(
+					"The map must not be set to null.");
+		} else if (mOldState2NewState != null) {
+			throw new AssertionError(
+					"The map has already been set.");
+		}
+		mOldState2NewState = oldState2newState;
 	}
 	
 	/* ------ other helper methods ------ */

@@ -665,6 +665,6 @@ public class MinimizeDfaSymbolic<LETTER, STATE>
 				addInternalTransition(newPred, next.getLetter(), newSucc);
 			}
 		}
-		finishResultConstruction();
+		finishResultConstruction(null);
 	}
 }
