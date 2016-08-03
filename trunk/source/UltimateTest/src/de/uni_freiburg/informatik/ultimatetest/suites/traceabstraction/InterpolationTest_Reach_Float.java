@@ -48,14 +48,15 @@ public class InterpolationTest_Reach_Float extends AbstractTraceAbstractionTestS
 //	private static int mFilesPerDirectoryLimit = 20;
 	
 	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs = {
-			/*** Category 11. Floats ***/
-			new DirectoryFileEndingsPair("examples/svcomp/floats-cdfpl/", new String[]{ ".i", }, mFilesPerDirectoryLimit) ,
+//			/*** Category 11. Floats ***/
+//			new DirectoryFileEndingsPair("examples/svcomp/floats-cdfpl/", new String[]{ ".i", }, mFilesPerDirectoryLimit) ,
 			new DirectoryFileEndingsPair("examples/svcomp/floats-cbmc-regression/", new String[]{ ".i", }, mFilesPerDirectoryLimit) ,
-			new DirectoryFileEndingsPair("examples/svcomp/float-benchs/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//			new DirectoryFileEndingsPair("examples/svcomp/float-benchs/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
 	};
 	
 	
-	private static final String[] mCurrentBugs = {
+	private static final String[] mUltimateRepository = {
+			"examples/programs/FloatingPoint/"
 	};
 	
 	
@@ -72,6 +73,7 @@ public class InterpolationTest_Reach_Float extends AbstractTraceAbstractionTestS
 		"automizer/interpolation/float/Reach-32bit-Z3-IcWpLv-Float.epf",
 		"automizer/interpolation/float/Reach-32bit-MathSAT-IcSpLv-Float.epf",
 		"automizer/interpolation/float/Reach-32bit-MathSAT-IcWpLv-Float.epf",
+		"automizer/FloatTranslationWithOverapproximation.epf"
 	};
 	
 	private static final String[] mCToolchains = {
@@ -84,7 +86,7 @@ public class InterpolationTest_Reach_Float extends AbstractTraceAbstractionTestS
 		for (final String setting : mSettings) {
 			for (final String toolchain : mCToolchains) {
 				addTestCase(toolchain, setting, mDirectoryFileEndingsPairs);
-				addTestCase(toolchain, setting, mCurrentBugs, new String[] {".c", ".i"});
+				addTestCase(toolchain, setting, mUltimateRepository, new String[] {".c", ".i"});
 			}
 		}
 		return super.createTestCases();
