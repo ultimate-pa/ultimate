@@ -302,9 +302,8 @@ public class LassoAnalysis {
 	 */
 	protected LassoPreprocessor[] getPreProcessors(final LassoBuilder lassoBuilder,
 			final boolean overapproximateArrayIndexConnection) {
-		final boolean useOldMapElimination = true;
 		final LassoPreprocessor mapElimination;
-		if (useOldMapElimination) {
+		if (mPreferences.useOldMapElimination) {
 			mapElimination = new RewriteArrays2(true, mStemTransition, mLoopTransition, mModifiableGlobalsAtHonda,
 					mServices, mArrayIndexSupportingInvariants, mBoogie2SMT, lassoBuilder.getReplacementVarFactory(),
 					mSimplificationTechnique, mXnfConversionTechnique);

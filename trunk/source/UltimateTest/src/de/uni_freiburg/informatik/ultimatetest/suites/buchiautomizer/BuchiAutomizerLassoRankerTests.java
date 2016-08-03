@@ -117,7 +117,8 @@ public class BuchiAutomizerLassoRankerTests extends AbstractBuchiAutomizerTestSu
 	 *
 	 */
 	private static final String[] SETTINGS = {
-		"buchiAutomizer/ForwardPredicatesNonlinearLbeNotasimp.epf",
+		"buchiAutomizer/ForwardPredicatesNonlinearLbeNotasimpOldMapElim.epf",
+		"buchiAutomizer/ForwardPredicatesNonlinearLbeNotasimpNewMapElim.epf",
 	};
 
 
