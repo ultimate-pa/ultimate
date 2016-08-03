@@ -39,9 +39,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
@@ -68,7 +69,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 	NestedWord<LETTER> mLoop;
 	
 	
-	private final INestedWordAutomatonOldApi<LETTER,STATE> mNwa;
+	private final INestedWordAutomaton<LETTER,STATE> mNwa;
 	private final NestedLassoWord<LETTER> mNlw;
 	private boolean mAccepted;
 
@@ -112,7 +113,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 	 *  always rejected its loop contains pending returns.  
 	 */
 	public BuchiAcceptsRecursive(final AutomataLibraryServices services,
-			final INestedWordAutomatonOldApi<LETTER,STATE> nwa, final NestedLassoWord<LETTER> nlw){
+			final INestedWordAutomaton<LETTER,STATE> nwa, final NestedLassoWord<LETTER> nlw){
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mNwa = nwa;
@@ -202,32 +203,32 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 		else {
 			final LETTER currentSymbol = mStem.getSymbolAt(currentPosition);
 
-			Iterable<STATE> succStatesCollection;
+			final Iterable<? extends OutgoingTransitionlet<LETTER, STATE>> outgoingTransitions;
 			if (mStem.isInternalPosition(currentPosition)) {
-				succStatesCollection = mNwa.succInternal(currentState, currentSymbol);
+				outgoingTransitions = mNwa.internalSuccessors(currentState, currentSymbol);
 			}
 			else if (mStem.isCallPosition(currentPosition)) {
 				callStack.add(currentState);
-				succStatesCollection = mNwa.succCall(currentState, currentSymbol);
+				outgoingTransitions = mNwa.callSuccessors(currentState, currentSymbol);
 			}
 			else if (mStem.isReturnPosition(currentPosition)) {
 				assert (!callStack.isEmpty()) : "restricted to stem without pending return";
 				//pop the top element from the callStack
 				final STATE linearPred = callStack.remove(callStack.size()-1);
-				succStatesCollection = mNwa.succReturn(currentState, linearPred, currentSymbol);
+				outgoingTransitions = mNwa.returnSuccessors(currentState, linearPred, currentSymbol);
 			}
 			else {
 				throw new IllegalArgumentException();
 			}
 
-			if (!succStatesCollection.iterator().hasNext()) {
+			if (!outgoingTransitions.iterator().hasNext()) {
 				return new HashSet<STATE>();
 			}
 
 			else{
 				final List<STATE> succStates = new ArrayList<STATE>();
-				for (final STATE succ : succStatesCollection) {
-					succStates.add(succ);
+				for (final OutgoingTransitionlet<LETTER, STATE> outgoingTransition : outgoingTransitions) {
+					succStates.add(outgoingTransition.getSucc());
 				}
 				final Set<STATE> result = new HashSet<STATE>();
 				for (int i=0; i<succStates.size(); i++) {
@@ -306,33 +307,33 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 
 		final LETTER currentSymbol = mLoop.getSymbolAt(currentPosition);
 
-		Iterable<STATE> succStatesCollection;
+		final Iterable<? extends OutgoingTransitionlet<LETTER, STATE>> outgoingTransitions;
 		if (mLoop.isInternalPosition(currentPosition)) {
-			succStatesCollection = mNwa.succInternal(currentState, currentSymbol);
+			outgoingTransitions = mNwa.internalSuccessors(currentState, currentSymbol);
 		}
 		else if (mLoop.isCallPosition(currentPosition)) {
 			callStack.add(currentState);
-			succStatesCollection = mNwa.succCall(currentState, currentSymbol);
+			outgoingTransitions = mNwa.callSuccessors(currentState, currentSymbol);
 		}
 		else if (mLoop.isReturnPosition(currentPosition)) {
 			assert (!callStack.isEmpty()) : "restricted to loop without pending return";
 			//pop the top element from the callStack
 			final STATE linearPred = callStack.remove(callStack.size()-1);
-			succStatesCollection = mNwa.succReturn(currentState, linearPred, currentSymbol);
+			outgoingTransitions = mNwa.returnSuccessors(currentState, linearPred, currentSymbol);
 		}
 		else {
 			throw new IllegalArgumentException();
 		}
 
-		if (!succStatesCollection.iterator().hasNext()) {
+		if (!outgoingTransitions.iterator().hasNext()) {
 			return false;
 		}
 		else{
 			@SuppressWarnings("unchecked")
 			final
 			List<STATE> succStates = new ArrayList<STATE>();
-			for (final STATE succ : succStatesCollection) {
-				succStates.add(succ);
+			for (final OutgoingTransitionlet<LETTER, STATE> outgoingTransition : outgoingTransitions) {
+				succStates.add(outgoingTransition.getSucc());
 			}
 			boolean result = false;
 			for (int i=0; i<succStates.size(); i++) {
