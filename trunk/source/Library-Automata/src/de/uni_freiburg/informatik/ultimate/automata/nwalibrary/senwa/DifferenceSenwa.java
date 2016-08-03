@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.StateDeterminizerCache;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceSadd;
@@ -94,26 +93,15 @@ public class DifferenceSenwa<LETTER, STATE> implements
 			new HashMap<DifferenceState<LETTER,STATE>,Map<DifferenceState<LETTER,STATE>,STATE>>();
 	
 	
-	public DifferenceSenwa(final AutomataLibraryServices services,
+	public DifferenceSenwa(
+			final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER,STATE> minuend,
 			final INestedWordAutomaton<LETTER,STATE> subtrahend)
 					throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mContentFactory = minuend.getStateFactory();
-		this.mMinuend = minuend;
-		this.mSubtrahend = subtrahend;
-		mLogger.info(startMessage());
-		
-		
-		this.mStateDeterminizer = new StateDeterminizerCache<LETTER, STATE>(
-							new PowersetDeterminizer<LETTER,STATE>(subtrahend, true, mContentFactory)); 
-		
-		mSenwa = new Senwa<LETTER, STATE>(mServices, 
-				minuend.getInternalAlphabet(), minuend.getCallAlphabet(), 
-				minuend.getReturnAlphabet(), minuend.getStateFactory());
-		mSenwaWalker = new SenwaWalker<LETTER, STATE>(mServices, mSenwa, this, true);
-		mLogger.info(exitMessage());
+		this(services, minuend, subtrahend,
+				new PowersetDeterminizer<LETTER,STATE>(
+						subtrahend, true, minuend.getStateFactory()),
+				true);
 	}
 	
 	
@@ -128,20 +116,8 @@ public class DifferenceSenwa<LETTER, STATE> implements
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mContentFactory = minuend.getStateFactory();
 		
-		/*
-		 * TODO Christian: 2016-08-03: remove this now obsolete case
-		 *                             subtrahend is not used -> bug???
-		 */
-		if (minuend instanceof INestedWordAutomaton) {
-			this.mMinuend = (INestedWordAutomaton<LETTER, STATE>) minuend;
-		} else {
-			this.mMinuend = (new RemoveUnreachable<LETTER,STATE>(mServices, minuend)).getResult();
-		}
-		if (subtrahend instanceof INestedWordAutomaton) {
-			this.mSubtrahend = (INestedWordAutomaton<LETTER, STATE>) minuend;
-		} else {
-			this.mSubtrahend = (new RemoveUnreachable<LETTER,STATE>(mServices, minuend)).getResult();
-		}
+		this.mMinuend = (INestedWordAutomaton<LETTER, STATE>) minuend;
+		this.mSubtrahend = (INestedWordAutomaton<LETTER, STATE>) subtrahend;
 		mLogger.info(startMessage());
 		
 		
