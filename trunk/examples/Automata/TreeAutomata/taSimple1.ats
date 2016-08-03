@@ -19,3 +19,16 @@ TreeAutomaton ta1 = ( //We call a bottom-up tree automaton "TreeAutomaton"
     ((q1 q1) g q2)
   }
 );
+
+TreeAutomaton ta2 = ( //We call a bottom-up tree automaton "TreeAutomaton"
+  alphabet = { a b f g},
+  states = {q0 q1 q2},
+  initialStates = {q0},
+  finalStates = {q2},
+  transitionTable = { //note that nullary rules are not allowed! (we have initial states for that)
+    ((q0) a q1)
+    ((q0) b q1)
+    ((q1) f q1)
+    ((q1 q1) g q2)
+  }
+);

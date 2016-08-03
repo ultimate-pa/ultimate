@@ -4,30 +4,25 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class TreeAutomatonAST extends AutomatonAST {
+public class TreeAutomatonRankedAST extends AutomatonAST {
 	
 //	String mId;
-	List<String> mAlphabet;
+	List<RankedAlphabetEntryAST> mRankedAlphabet;
 	List<String> mStates;
-	List<String> mInitialStates;
 	List<String> mFinalStates;
 	List<TreeAutomatonTransitionAST> mTransitions;
 	
-	public TreeAutomatonAST(ILocation loc, String id) {
+	public TreeAutomatonRankedAST(ILocation loc, String id) {
 		super(loc, id);
 	}
 	
 
-	public void setAlphabet(List<String> entryList) {
-		mAlphabet = entryList;
+	public void setAlphabet(List<RankedAlphabetEntryAST> entryList) {
+		mRankedAlphabet = entryList;
 	}
 
 	public void setStates(List<String> identifierList) {
 		mStates = identifierList;
-	}
-
-	public void setInitialStates(List<String> identifierList) {
-		mInitialStates = identifierList;
 	}
 
 	public void setFinalStates(List<String> identifierList) {
@@ -38,16 +33,16 @@ public class TreeAutomatonAST extends AutomatonAST {
 		mTransitions = transitions;
 	}
 
-	public List<String> getAlphabet() {
-		return mAlphabet;
+//	public String getmId() {
+//		return mId;
+//	}
+
+	public List<RankedAlphabetEntryAST> getRankedAlphabet() {
+		return mRankedAlphabet;
 	}
 
 	public List<String> getStates() {
 		return mStates;
-	}
-
-	public List<String> getInitialStates() {
-		return mInitialStates;
 	}
 
 	public List<String> getFinalStates() {

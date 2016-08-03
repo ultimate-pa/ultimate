@@ -302,6 +302,7 @@ non terminal RankedAlphabetEntryListAST ta_ranked_alphabet,
 non terminal RankedAlphabetEntryAST ta_ranked_alphabet_entry;
 non terminal TreeAutomatonTransitionListAST ta_transitions,ta_transition_list_opt,ta_transition_list;
 non terminal TreeAutomatonTransitionAST ta_transition;
+non terminal AutomatonAST ta_definition_ranked, ta_definition_implicit;
 
 
 
@@ -1200,14 +1201,40 @@ aa_is_reversed ::= IS_REVERSED EQ BOOLEAN_LITERAL:bool
                 {: RESULT = bool; :} ; 
 
 /* rules specific to tree automata */
-ta_definition ::=  variable_identifier:id EQ 
+ta_definition ::= ta_definition_ranked:tadr
+                  {: RESULT = tadr; :}
+                | ta_definition_implicit:tadi
+                  {: RESULT = tadi; :}
+                  ;
+                  
+ta_definition_implicit ::=  variable_identifier:id EQ 
+                       LPAREN:l
+                          alphabet:alpha COMMA
+                          states:states COMMA
+                          initial_states:initial COMMA
+                          final_states:fin_states COMMA
+                          ta_transitions:transitions 
+                        RPAREN:r
+                        {: TreeAutomatonAST ta = new TreeAutomatonAST(getLocation(l$, r$), id);
+                          ta.setAlphabet(alpha.getIdentifierList());
+                          ta.setStates(states.getIdentifierList());
+                          ta.setInitialStates(initial.getIdentifierList());
+                          ta.setFinalStates(fin_states.getIdentifierList());
+                          ta.setTransitions(transitions.getTransitions());
+                          m_varDeclarations.put(id, TreeAutomatonAST.class);
+                          RESULT = ta;
+                         :} ;
+                 
+                  
+
+ta_definition_ranked ::=  variable_identifier:id EQ 
                        LPAREN:l
                           ta_ranked_alphabet:alpha COMMA
                           states:states COMMA
                           final_states:fin_states COMMA
                           ta_transitions:transitions 
                         RPAREN:r
-                        {: TreeAutomatonAST ta = new TreeAutomatonAST(getLocation(l$, r$), id);
+                        {: TreeAutomatonRankedAST ta = new TreeAutomatonRankedAST(getLocation(l$, r$), id);
                           ta.setAlphabet(alpha.getEntryList());
                           ta.setStates(states.getIdentifierList());
                           ta.setFinalStates(fin_states.getIdentifierList());

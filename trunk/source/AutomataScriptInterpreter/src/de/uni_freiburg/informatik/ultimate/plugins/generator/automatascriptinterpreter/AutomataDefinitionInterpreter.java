@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.RankedAlphabetEntryAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionListAST.Pair;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAutomatonAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAutomatonRankedAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAutomatonTransitionAST;
 
 /**
@@ -136,7 +137,16 @@ public class AutomataDefinitionInterpreter {
 							+ System.getProperty("line.separator") + e.getStackTrace(), 
 							"Exception thrown", n);
 				}
+			} else if (n instanceof TreeAutomatonRankedAST){
+				try {
+					interpret((TreeAutomatonRankedAST) n);
+				} catch (final Exception e) {
+					mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
+							+ System.getProperty("line.separator") + e.getStackTrace(), 
+							"Exception thrown", n);
+				}
 			}
+
 		}
 		
 	}
@@ -172,6 +182,35 @@ public class AutomataDefinitionInterpreter {
 	}
 
 	public void interpret(TreeAutomatonAST astNode) throws IllegalArgumentException{
+		mErrorLocation = astNode.getLocation();
+		
+		TreeAutomatonBU<String, String> treeAutomaton = new TreeAutomatonBU<>();
+
+		for (String ltr : astNode.getAlphabet())
+			treeAutomaton.addFinalState(ltr);
+		
+		for (String s : astNode.getStates())
+			treeAutomaton.addState(s);
+
+		for (String is : astNode.getInitialStates())
+			treeAutomaton.addInitialState(is);
+
+		for (String fs : astNode.getFinalStates())
+			treeAutomaton.addFinalState(fs);
+		
+		for (TreeAutomatonTransitionAST trans : astNode.getTransitions()) {
+			if (trans.getSourceStates().size() == 0) {
+				throw new UnsupportedOperationException("The TreeAutomaton format with initial states "
+						+ "(and implicit symbol ranks) does not allow nullary rules, i.e.,"
+						+ "rules where the source state list is empty");
+			} else {
+				treeAutomaton.addRule(trans.getSymbol(), trans.getSourceStates(), trans.getTargetState());
+			}
+		}
+		mAutomata.put(astNode.getName(), treeAutomaton);
+	}
+
+	public void interpret(TreeAutomatonRankedAST astNode) throws IllegalArgumentException{
 		mErrorLocation = astNode.getLocation();
 		
 		TreeAutomatonBU<String, String> treeAutomaton = new TreeAutomatonBU<>();

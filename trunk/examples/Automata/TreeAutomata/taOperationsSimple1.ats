@@ -34,5 +34,5 @@ TreeAutomaton ta2 = (
   }
 );
 
-TreeAutomaton taIntersect = Intersect(ta2, ta2);
+TreeAutomaton taIntersect = Intersect(ta1, ta2);
 print(taIntersect);
