@@ -174,7 +174,7 @@ public class TransFormulaLRWithArrayInformation {
 				mArrayReads.add(extractArrayReads(sunfts[i].getArrayUpdates(), sunfts[i].getRemainderTerm()));
 				mArrayGenealogy[i] = new ArrayGenealogy(mTransFormulaLR, mArrayEqualities.get(i), mArrayUpdates.get(i), mArrayReads.get(i));
 			}
-			assert !RewriteArrays2.s_AdditionalChecksIfAssertionsEnabled || checkSunftranformation(
+			assert !RewriteArrays2.ADDITIONAL_CHECKS_IF_ASSERTIONS_ENABLED || checkSunftranformation(
 					services, mLogger, mFreshTermVariableConstructor, boogie2smt, mArrayEqualities, sunfts) 
 					: "error in sunftransformation";
 			constructSubstitutions();

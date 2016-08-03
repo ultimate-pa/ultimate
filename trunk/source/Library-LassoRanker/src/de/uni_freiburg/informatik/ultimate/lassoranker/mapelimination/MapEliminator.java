@@ -72,7 +72,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
-
 public class MapEliminator {
 	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
@@ -189,8 +188,10 @@ public class MapEliminator {
 	/**
 	 * A recursive method that finds arrays / indices in the given {@code term} and stores it in the maps
 	 *
-	 * @param term A SMT-Term
-	 * @param transformula A TransFormulaLR (needed to get the global definitions of the term)
+	 * @param term
+	 *            A SMT-Term
+	 * @param transformula
+	 *            A TransFormulaLR (needed to get the global definitions of the term)
 	 */
 	private void findIndices(final Term term, final TransFormulaLR transformula) {
 		if (term instanceof ApplicationTerm) {
@@ -242,7 +243,8 @@ public class MapEliminator {
 	 */
 	private void addToRelation(final Term array, final ArrayIndex index, final TransFormulaLR transformula) {
 		if (allVariablesAreVisible(array, transformula) && allVariablesAreVisible(index, transformula)) {
-			final ArrayIndex globalIndex = new ArrayIndex(translateTermVariablesToDefinitions(mScript, transformula, index));
+			final ArrayIndex globalIndex =
+					new ArrayIndex(translateTermVariablesToDefinitions(mScript, transformula, index));
 			final Term globalArray = translateTermVariablesToDefinitions(mScript, transformula, array);
 			for (final Term t : globalIndex) {
 				mTermsToIndices.addPair(t, globalIndex);
@@ -260,7 +262,8 @@ public class MapEliminator {
 	 * <p>
 	 * This method ignores the index analysis
 	 *
-	 * @param transformula The old TransFormulaLR, which might contain arrays accesses
+	 * @param transformula
+	 *            The old TransFormulaLR, which might contain arrays accesses
 	 * @return A TransFormulaLR, where array accesses are replaced by ReplacementVars
 	 */
 	public TransFormulaLR getArrayFreeTransFormula(final TransFormulaLR transformula) {
@@ -274,9 +277,12 @@ public class MapEliminator {
 	 * <p>
 	 * The given TransFormula has to be in the collection given to the constructor
 	 *
-	 * @param transformula The old TransFormulaLR, which might contain arrays accesses
-	 * @param equalityAnalysisBefore The invariants that are valid before the transformula
-	 * @param equalityAnalysisAfter The invariants that are valid after the transformula
+	 * @param transformula
+	 *            The old TransFormulaLR, which might contain arrays accesses
+	 * @param equalityAnalysisBefore
+	 *            The invariants that are valid before the transformula
+	 * @param equalityAnalysisAfter
+	 *            The invariants that are valid after the transformula
 	 * @return A TransFormulaLR, where array accesses are replaced by ReplacementVars
 	 */
 	public TransFormulaLR getArrayFreeTransFormula(final TransFormulaLR transformula,
@@ -356,16 +362,16 @@ public class MapEliminator {
 		} else {
 			// If aux-vars have been created, eliminate them
 			conjuncts.addAll(mAuxVarTerms);
-			final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, mAuxVars,
-					SmtUtils.and(mScript, conjuncts));
+			final Term quantified =
+					SmtUtils.quantifier(mScript, Script.EXISTS, mAuxVars, SmtUtils.and(mScript, conjuncts));
 			newTerm = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, mFreshVarConstructor,
 					quantified, mSimplificationTechnique, mXnfConversionTechnique);
 			mAuxVars.clear();
 			mSelectToAuxVars.clear();
 			mAuxVarTerms.clear();
 		}
-		transformula.setFormula(SmtUtils.simplify(mScript, newTerm, mServices, mSimplificationTechnique,
-				mFreshVarConstructor));
+		transformula.setFormula(
+				SmtUtils.simplify(mScript, newTerm, mServices, mSimplificationTechnique, mFreshVarConstructor));
 		clearTransFormula(transformula);
 	}
 
@@ -430,9 +436,12 @@ public class MapEliminator {
 	 * A recursive method, that returns an array-free term, which replaces {@code term} and adds the neeeded
 	 * in-/out-vars to {@code transformula}
 	 *
-	 * @param term The term to be replaced
-	 * @param transformula The new TransFormulaLR (in-/out-vars are added)
-	 * @param assignedVars A set of vars, that have been assigned
+	 * @param term
+	 *            The term to be replaced
+	 * @param transformula
+	 *            The new TransFormulaLR (in-/out-vars are added)
+	 * @param assignedVars
+	 *            A set of vars, that have been assigned
 	 * @param invariants
 	 * @return A new array-free term
 	 */
@@ -482,8 +491,8 @@ public class MapEliminator {
 			final TermVariable auxVar = mFreshVarConstructor.constructFreshTermVariable("aux", term.getSort());
 			mAuxVars.add(auxVar);
 			for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
-				final ArrayIndex assignedIndex = processArrayIndex(store.getIndex(), transformula, assignedVars,
-						invariants);
+				final ArrayIndex assignedIndex =
+						processArrayIndex(store.getIndex(), transformula, assignedVars, invariants);
 				if (processedIndices.contains(assignedIndex)) {
 					continue;
 				}
@@ -518,19 +527,20 @@ public class MapEliminator {
 				final TermVariable auxVar = mFreshVarConstructor.constructFreshTermVariable("aux", term.getSort());
 				mAuxVars.add(auxVar);
 				mSelectToAuxVars.put(term, auxVar);
-				final ArrayIndex globalIndex = new ArrayIndex(translateTermVariablesToDefinitions(mScript, transformula, index));
+				final ArrayIndex globalIndex =
+						new ArrayIndex(translateTermVariablesToDefinitions(mScript, transformula, index));
 				if (transformula.getInVarsReverseMapping().containsKey(array)) {
 					final ArrayIndex inVarIndex = getLocalIndex(globalIndex, transformula, assignedVars, true);
 					final Term inVarCell = getLocalTerm(globalTerm, transformula, assignedVars, true);
-					final Term newTerm = SmtUtils.indexEqualityImpliesValueEquality(mScript, index, inVarIndex, auxVar,
-							inVarCell);
+					final Term newTerm =
+							SmtUtils.indexEqualityImpliesValueEquality(mScript, index, inVarIndex, auxVar, inVarCell);
 					mAuxVarTerms.add(newTerm);
 				}
 				if (transformula.getOutVarsReverseMapping().containsKey(array)) {
 					final ArrayIndex outVarIndex = getLocalIndex(globalIndex, transformula, assignedVars, false);
 					final Term outVarCell = getLocalTerm(globalTerm, transformula, assignedVars, false);
-					final Term newTerm = SmtUtils.indexEqualityImpliesValueEquality(mScript, index, outVarIndex, auxVar,
-							outVarCell);
+					final Term newTerm =
+							SmtUtils.indexEqualityImpliesValueEquality(mScript, index, outVarIndex, auxVar, outVarCell);
 					mAuxVarTerms.add(newTerm);
 				}
 			}
@@ -552,8 +562,8 @@ public class MapEliminator {
 		final Term globalNewArray = translateTermVariablesToDefinitions(mScript, transformula, newArray);
 		final Set<ArrayIndex> assignedIndices = new HashSet<>();
 		for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
-			final ArrayIndex assignedIndex = processArrayIndex(store.getIndex(), transformula, assignedVars,
-					invariants);
+			final ArrayIndex assignedIndex =
+					processArrayIndex(store.getIndex(), transformula, assignedVars, invariants);
 			if (assignedIndices.contains(assignedIndex)) {
 				continue;
 			}
@@ -648,10 +658,14 @@ public class MapEliminator {
 	 * Given a global term (=definition), adds the in- and out-vars to the transformula and returns the term with in- or
 	 * out-vars
 	 *
-	 * @param term A SMT-Term wit
-	 * @param transformula A TransFormulaLR
-	 * @param assignedVars The set of global vars which have been assigend
-	 * @param returnInVar Switch between in- and out-vars
+	 * @param term
+	 *            A SMT-Term wit
+	 * @param transformula
+	 *            A TransFormulaLR
+	 * @param assignedVars
+	 *            The set of global vars which have been assigend
+	 * @param returnInVar
+	 *            Switch between in- and out-vars
 	 * @return The local term (with in- or out-vars) for the given global term
 	 */
 	private Term getLocalTerm(final Term term, final TransFormulaLR transformula, final Set<Term> assignedVars,
