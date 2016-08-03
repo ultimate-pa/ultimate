@@ -39,28 +39,36 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MultiElementCounter;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 
 /**
  * Wrapper for an {@link Script} with additional locking mechanism.
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class ManagedScript {
+public class ManagedScript implements IFreshTermVariableConstructor {
 	
 	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
 	private final ILogger mLogger;
 	
+	/**
+	 * Counter for the construction of fresh variables.
+	 */
+	private final MultiElementCounter<String> mTvForBasenameCounter = 
+			new MultiElementCounter<String>();
+	
 	private Object mLockOwner = null;
 	
-	public ManagedScript(IUltimateServiceProvider services, Script script) {
+	public ManagedScript(final IUltimateServiceProvider services, final Script script) {
 		super();
 		mServices = services;
 		mScript = script;
 		mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 	}
 	
-	public void lock(Object lockOwner) {
+	public void lock(final Object lockOwner) {
 		if (lockOwner == null) {
 			throw new NullPointerException("cannot be locked by null");
 		} else {
@@ -73,7 +81,7 @@ public class ManagedScript {
 		}
 	}
 	
-	public void unlock(Object lockOwner) {
+	public void unlock(final Object lockOwner) {
 		if (mLockOwner == null) {
 			throw new IllegalStateException("ManagedScript not locked");
 		} else {
@@ -104,7 +112,7 @@ public class ManagedScript {
 		}
 	}
 	
-	public boolean isLockOwner(Object allegedLockOwner) {
+	public boolean isLockOwner(final Object allegedLockOwner) {
 		return allegedLockOwner == mLockOwner;
 	}
 	
@@ -112,58 +120,73 @@ public class ManagedScript {
 		public void releaseLock();
 	}
 	
-	public void push(Object lockOwner, int levels) throws SMTLIBException {
+	public void push(final Object lockOwner, final int levels) throws SMTLIBException {
 		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
 		mScript.push(levels);
 	}
-	public void pop(Object lockOwner, int levels) throws SMTLIBException {
+	public void pop(final Object lockOwner, final int levels) throws SMTLIBException {
 		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
 		mScript.pop(levels);
 	}
-	public LBool assertTerm(Object lockOwner, Term term) throws SMTLIBException {
+	public LBool assertTerm(final Object lockOwner, final Term term) throws SMTLIBException {
 		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
 		return mScript.assertTerm(term);
 	}
-	public LBool checkSat(Object lockOwner) throws SMTLIBException {
+	public LBool checkSat(final Object lockOwner) throws SMTLIBException {
 		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
 		return mScript.checkSat();
 	}
-	public Term[] getUnsatCore(Object lockOwner) throws SMTLIBException, UnsupportedOperationException {
+	public Term[] getUnsatCore(final Object lockOwner) throws SMTLIBException, UnsupportedOperationException {
 		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
 		return mScript.getUnsatCore();
 	}
-	public Term annotate(Object lockOwner, Term t, Annotation... annotations) throws SMTLIBException {
+	public Term annotate(final Object lockOwner, final Term t, final Annotation... annotations) throws SMTLIBException {
 		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
 		return mScript.annotate(t, annotations);
 	}
 
-	public Term term(Object lockOwner, String funcname, Term... params) throws SMTLIBException {
+	public Term term(final Object lockOwner, final String funcname, final Term... params) throws SMTLIBException {
 		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
 		return mScript.term(funcname, params);
 	}
 
-	public Term term(Object lockOwner, String funcname, BigInteger[] indices, Sort returnSort, Term... params) throws SMTLIBException {
+	public Term term(final Object lockOwner, final String funcname, final BigInteger[] indices, final Sort returnSort, final Term... params) throws SMTLIBException {
 		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
 		return mScript.term(funcname, indices, returnSort, params);
 	}
 
-	public Term let(Object lockOwner, TermVariable[] vars, Term[] values, Term body) throws SMTLIBException {
+	public Term let(final Object lockOwner, final TermVariable[] vars, final Term[] values, final Term body) throws SMTLIBException {
 		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
 		return mScript.let(vars, values, body);
 	}
 
-	public void declareFun(Object lockOwner, String fun, Sort[] paramSorts, Sort resultSort) throws SMTLIBException {
+	public void declareFun(final Object lockOwner, final String fun, final Sort[] paramSorts, final Sort resultSort) throws SMTLIBException {
 		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
 		mScript.declareFun(fun, paramSorts, resultSort);
 	}
 
-	public QuotedObject echo(Object lockOwner, QuotedObject msg) {
+	public QuotedObject echo(final Object lockOwner, final QuotedObject msg) {
 		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
 		return mScript.echo(msg);
 	}
 
 	public Script getScript() {
 		return mScript;
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ITermVariableConstructor#constructFreshTermVariable(java.lang.String, de.uni_freiburg.informatik.ultimate.logic.Sort)
+	 */
+	@Override
+	public TermVariable constructFreshTermVariable(final String name, final Sort sort) {
+		if (name.contains("\\|")) {
+			throw new IllegalArgumentException("Name contains SMT quote characters " + name);
+		}
+		final Integer newIndex = mTvForBasenameCounter.increase(name);
+		final TermVariable result = mScript.variable(
+				"v_" + name + "_" + newIndex, sort);
+		return result;
 	}
 	
 }
