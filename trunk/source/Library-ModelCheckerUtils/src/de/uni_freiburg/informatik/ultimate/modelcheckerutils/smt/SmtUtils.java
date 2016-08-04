@@ -496,10 +496,17 @@ public class SmtUtils {
 		}
 		final ConstantTerm fstConst = (ConstantTerm) fst;
 		final ConstantTerm sndConst = (ConstantTerm) snd;
-		final Object fstValue = fstConst.getValue();
-		final Object sndValue = sndConst.getValue();
+		Object fstValue = fstConst.getValue();
+		Object sndValue = sndConst.getValue();
+		if (fstValue instanceof BigInteger && sndValue instanceof Rational) {
+			fstValue = Rational.valueOf((BigInteger) fstValue, BigInteger.ONE);
+		} else if (fstValue instanceof Rational && sndValue instanceof BigInteger) {
+			sndValue = Rational.valueOf((BigInteger) sndValue, BigInteger.ONE);
+		}
 		if (fstValue.getClass() != sndValue.getClass()) {
-			return false;
+			throw new UnsupportedOperationException(
+					"First value is " + fstValue.getClass().getSimpleName() + 
+					" second value is " + sndValue.getClass().getSimpleName());
 		}
 		return !fstConst.getValue().equals(sndConst.getValue());
 	}
