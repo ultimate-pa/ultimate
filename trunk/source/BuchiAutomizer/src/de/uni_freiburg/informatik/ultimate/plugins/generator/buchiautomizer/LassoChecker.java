@@ -883,8 +883,7 @@ public class LassoChecker {
 		final Map<TermVariable, Term> auxVars = Collections.emptyMap();
 		final Set<TermVariable> branchEncoders = new HashSet<TermVariable>();
 		final Infeasibility infeasibility = Infeasibility.UNPROVEABLE;
-		final Term closedFormula = term;
-		return new TransFormula(term, inVars, outVars, auxVars, branchEncoders, infeasibility, closedFormula);
+		return new TransFormula(term, inVars, outVars, auxVars, branchEncoders, infeasibility, mSmtManager.getScript());
 	}
 
 	// private class LassoRankerParam {

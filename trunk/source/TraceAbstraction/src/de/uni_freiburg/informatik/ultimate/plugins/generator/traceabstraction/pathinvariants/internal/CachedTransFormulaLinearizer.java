@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Class linearizing {@link TransFormula}s. For improved performance and
@@ -74,7 +74,7 @@ public class CachedTransFormulaLinearizer {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final Term[] mAxioms;
 	private final ReplacementVarFactory mReplacementVarFactory;
-	private final SmtManager mSmtManager;
+	private final ManagedScript mPredicateScript;
 	private final Map<TransFormula, LinearTransition> mCache;
 
 
@@ -90,17 +90,15 @@ public class CachedTransFormulaLinearizer {
 	 * @author Matthias Heizmann
 	 */
 	public CachedTransFormulaLinearizer(final IUltimateServiceProvider services,
-			final SmtManager smtManager, final IToolchainStorage storage, 
+			final ManagedScript smtManager, final Collection<Term> axioms, final IToolchainStorage storage, 
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
 		mStorage = storage;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
-		mSmtManager = smtManager;
-		mReplacementVarFactory = new ReplacementVarFactory(mSmtManager
-				.getBoogie2Smt().getVariableManager());
-		final Collection<Term> axioms = mSmtManager.getBoogie2Smt().getAxioms();
+		mPredicateScript = smtManager;
+		mReplacementVarFactory = new ReplacementVarFactory(mPredicateScript);
 		mAxioms = axioms.toArray(new Term[axioms.size()]);
 
 		mCache = new HashMap<TransFormula, LinearTransition>();
@@ -160,7 +158,7 @@ public class CachedTransFormulaLinearizer {
 
 		for (final TransitionPreprocessor tpp : getPreprocessors()) {
 			try {
-				tflr = tpp.process(mSmtManager.getScript(), tflr);
+				tflr = tpp.process(mPredicateScript.getScript(), tflr);
 			} catch (final TermException e) {
 				throw new RuntimeException(e);
 			}
@@ -181,16 +179,16 @@ public class CachedTransFormulaLinearizer {
 	 */
 	private TransitionPreprocessor[] getPreprocessors() {
 		return new TransitionPreprocessor[] {
-				new MatchInOutVars(mSmtManager.getBoogie2Smt().getVariableManager()),
+				new MatchInOutVars(mPredicateScript),
 				new AddAxioms(mReplacementVarFactory, mAxioms),
 				new RewriteDivision(mReplacementVarFactory),
-				new RewriteBooleans(mReplacementVarFactory, mSmtManager.getScript()), 
+				new RewriteBooleans(mReplacementVarFactory, mPredicateScript.getScript()), 
 				new RewriteIte(),
-				new RewriteUserDefinedTypes(mReplacementVarFactory, mSmtManager.getScript()),
+				new RewriteUserDefinedTypes(mReplacementVarFactory, mPredicateScript.getScript()),
 				new RewriteEquality(), 
-				new SimplifyPreprocessor(mServices, mStorage, mSmtManager.getVariableManager(), mSimplificationTechnique),
-				new DNF(mServices, mSmtManager.getVariableManager(), mXnfConversionTechnique), 
-				new SimplifyPreprocessor(mServices, mStorage, mSmtManager.getVariableManager(), mSimplificationTechnique),
+				new SimplifyPreprocessor(mServices, mStorage, mPredicateScript, mSimplificationTechnique),
+				new DNF(mServices, mPredicateScript, mXnfConversionTechnique), 
+				new SimplifyPreprocessor(mServices, mStorage, mPredicateScript, mSimplificationTechnique),
 				new RewriteTrueFalse(), 
 				new RemoveNegation(),
 				new RewriteStrictInequalities(), };

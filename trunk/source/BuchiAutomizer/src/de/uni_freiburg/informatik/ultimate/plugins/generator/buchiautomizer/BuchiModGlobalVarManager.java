@@ -53,9 +53,9 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 	private final Map<String, TransFormula> mProc2OldVarsAssignment;
 	private final Map<String, TransFormula> mProc2GlobalVarsAssignment;
 
-	public BuchiModGlobalVarManager(IProgramNonOldVar unseeded, IProgramNonOldVar[] oldRank,
-			ModifiableGlobalVariableManager modifiableGlobalVariableManager, 
-			Boogie2SMT boogie2Smt) {
+	public BuchiModGlobalVarManager(final IProgramNonOldVar unseeded, final IProgramNonOldVar[] oldRank,
+			final ModifiableGlobalVariableManager modifiableGlobalVariableManager, 
+			final Boogie2SMT boogie2Smt) {
 		super(modifiableGlobalVariableManager);
 		mBoogie2smt = boogie2Smt;
 		mUnseeded = unseeded;
@@ -74,7 +74,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 
 	
 	@Override
-	public TransFormula getOldVarsAssignment(String proc) {
+	public TransFormula getOldVarsAssignment(final String proc) {
 		TransFormula oldVarsAssignment = mProc2OldVarsAssignment.get(proc);
 		if (oldVarsAssignment == null) {
 			oldVarsAssignment = constructOldVarsAssignment(proc);
@@ -86,7 +86,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 	
 
 	@Override
-	public TransFormula getGlobalVarsAssignment(String proc) {
+	public TransFormula getGlobalVarsAssignment(final String proc) {
 		TransFormula globalVarsAssignment = mProc2GlobalVarsAssignment.get(proc);
 		if (globalVarsAssignment == null) {
 			globalVarsAssignment = constructGlobalVarsAssignment(proc);
@@ -96,7 +96,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 	}
 	
 	
-	private TransFormula constructOldVarsAssignment(String proc) {
+	private TransFormula constructOldVarsAssignment(final String proc) {
 		final TransFormula without = super.getOldVarsAssignment(proc);
 		
 		Term formula = without.getFormula();
@@ -119,15 +119,13 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 			outVars.put(mOldRank[i], mOldRank[i].getTermVariable());
 			outVars.put(mOldRankOldVar[i], mOldRankOldVar[i].getTermVariable());
 		}
-		final Term closedFormula = TransFormula.computeClosedFormula(
-				formula, inVars, outVars, auxVars, mBoogie2smt);
 		final TransFormula result = new TransFormula(formula, inVars, outVars, 
-				auxVars, branchEncoders, infeasibility, closedFormula);
+				auxVars, branchEncoders, infeasibility, mBoogie2smt.getScript());
 		return result;
 	}
 	
 	
-	private TransFormula constructGlobalVarsAssignment(String proc) {
+	private TransFormula constructGlobalVarsAssignment(final String proc) {
 		final TransFormula without = super.getGlobalVarsAssignment(proc);
 		
 		Term formula = without.getFormula();
@@ -150,16 +148,14 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 			outVars.put(mOldRankOldVar[i], mOldRankOldVar[i].getTermVariable());
 			outVars.put(mOldRank[i], mOldRank[i].getTermVariable());
 		}
-		final Term closedFormula = TransFormula.computeClosedFormula(
-				formula, inVars, outVars, auxVars, mBoogie2smt);
 		final TransFormula result = new TransFormula(formula, inVars, outVars, 
-				auxVars, branchEncoders, infeasibility, closedFormula);
+				auxVars, branchEncoders, infeasibility, mBoogie2smt.getScript());
 		return result;
 	}
 
 
 	
-	public Term oldVarEquality(IProgramVar var, IProgramVar oldVar) {
+	public Term oldVarEquality(final IProgramVar var, final IProgramVar oldVar) {
 		return mScript.term("=", var.getTermVariable(), oldVar.getTermVariable());
 	}
 

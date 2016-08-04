@@ -67,15 +67,15 @@ public class ModifiableGlobalVariableManager {
 	
 	
 	public ModifiableGlobalVariableManager(
-			Map<String, Set<String>> modifiedVars,
-			Boogie2SMT boogie2smt) {
+			final Map<String, Set<String>> modifiedVars,
+			final Boogie2SMT boogie2smt) {
 		mModifiedVars = modifiedVars;
 		mBoogie2smt = boogie2smt;
 		mProc2OldVarsAssignment = new HashMap<String, TransFormula>();
 		mProc2GlobalVarsAssignment = new HashMap<String, TransFormula>();
 	}
 	
-	protected ModifiableGlobalVariableManager(ModifiableGlobalVariableManager modifiableGlobalVariableManager) {
+	protected ModifiableGlobalVariableManager(final ModifiableGlobalVariableManager modifiableGlobalVariableManager) {
 		mModifiedVars = modifiableGlobalVariableManager.mModifiedVars;
 		mBoogie2smt = modifiableGlobalVariableManager.mBoogie2smt;
 		mProc2OldVarsAssignment = modifiableGlobalVariableManager.mProc2OldVarsAssignment;
@@ -86,7 +86,7 @@ public class ModifiableGlobalVariableManager {
 	 * Return the set of all global BoogieVars that may be modified by procedure
 	 * proc.
 	 */
-	public Set<IProgramVar> getModifiedBoogieVars(String proc) {
+	public Set<IProgramVar> getModifiedBoogieVars(final String proc) {
 		return getOldVarsAssignment(proc).getInVars().keySet();
 	}
 
@@ -94,7 +94,7 @@ public class ModifiableGlobalVariableManager {
 	 * Returns true iff the corresponding non-oldVar of bv is modifiable by
 	 * procedure proc.
 	 */
-	public boolean isModifiable(IProgramOldVar bv, String proc) {
+	public boolean isModifiable(final IProgramOldVar bv, final String proc) {
 		final IProgramNonOldVar bnov = bv.getNonOldVar();
 		return getModifiedBoogieVars(proc).contains(bnov);
 	}
@@ -102,7 +102,7 @@ public class ModifiableGlobalVariableManager {
 	/**
 	 * Returns true iff the variable bv is modifiable by procedure proc.
 	 */
-	public boolean isModifiable(IProgramNonOldVar bnov, String proc) {
+	public boolean isModifiable(final IProgramNonOldVar bnov, final String proc) {
 		return getModifiedBoogieVars(proc).contains(bnov);
 	}
 
@@ -112,7 +112,7 @@ public class ModifiableGlobalVariableManager {
 	 * where g_1,...,g_n are the global variables that can be modified by
 	 * procedure proc and gOld_1,...,gOld_n are the corresponding oldvars.
 	 */
-	public TransFormula getOldVarsAssignment(String proc) {
+	public TransFormula getOldVarsAssignment(final String proc) {
 		TransFormula oldVarsAssignment = mProc2OldVarsAssignment.get(proc);
 		if (oldVarsAssignment == null) {
 			oldVarsAssignment = constructOldVarsAssignment(proc);
@@ -128,7 +128,7 @@ public class ModifiableGlobalVariableManager {
 	 * where g_1,...,g_n are the global variables that can be modified by
 	 * procedure proc and gOld_1,...,gOld_n are the corresponding oldvars.
 	 */
-	public TransFormula getGlobalVarsAssignment(String proc) {
+	public TransFormula getGlobalVarsAssignment(final String proc) {
 		TransFormula globalVarsAssignment = mProc2GlobalVarsAssignment.get(proc);
 		if (globalVarsAssignment == null) {
 			globalVarsAssignment = constructGlobalVarsAssignment(proc);
@@ -139,7 +139,7 @@ public class ModifiableGlobalVariableManager {
 	
 	
 
-	private TransFormula constructOldVarsAssignment(String proc) {
+	private TransFormula constructOldVarsAssignment(final String proc) {
 		Set<String> vars = mModifiedVars.get(proc);
 		if (vars == null) {
 			//no global var modified
@@ -172,17 +172,15 @@ public class ModifiableGlobalVariableManager {
 		}
 		final Map<TermVariable, Term> auxVars = Collections.emptyMap(); 
 		final Set<TermVariable> branchEncoders = Collections.emptySet();
-		final Term closedFormula = TransFormula.computeClosedFormula(
-				glob2oldFormula, glob2oldInVars, glob2oldOutVars, auxVars, mBoogie2smt);
 		final TransFormula result = new TransFormula(glob2oldFormula, glob2oldInVars,glob2oldOutVars,
 				auxVars, branchEncoders,
-				TransFormula.Infeasibility.UNPROVEABLE, closedFormula);
+				TransFormula.Infeasibility.UNPROVEABLE, mBoogie2smt.getScript());
 		return result;
 	}
 
 
 	
-	private TransFormula constructGlobalVarsAssignment(String proc) {
+	private TransFormula constructGlobalVarsAssignment(final String proc) {
 		Set<String> vars = mModifiedVars.get(proc);
 		if (vars == null) {
 			//no global var modified
@@ -215,10 +213,8 @@ public class ModifiableGlobalVariableManager {
 		}
 		final Map<TermVariable, Term> auxVars = Collections.emptyMap(); 
 		final Set<TermVariable> branchEncoders = Collections.emptySet();
-		final Term closedFormula = TransFormula.computeClosedFormula(
-				old2globFormula, old2globInVars, old2globOutVars, auxVars, mBoogie2smt);
 		final TransFormula result = new TransFormula(old2globFormula, old2globInVars, old2globOutVars,
-				auxVars, branchEncoders, TransFormula.Infeasibility.UNPROVEABLE,closedFormula);
+				auxVars, branchEncoders, TransFormula.Infeasibility.UNPROVEABLE,mBoogie2smt.getScript());
 		return result;
 	}
 	
@@ -234,7 +230,7 @@ public class ModifiableGlobalVariableManager {
 	 * @return true iff pred contains an oldvar that is not modifiable by
 	 * procedure proc.
 	 */
-	public boolean containsNonModifiableOldVars(IPredicate pred, String proc) {
+	public boolean containsNonModifiableOldVars(final IPredicate pred, final String proc) {
 		final Set<String> modiableGlobals = mModifiedVars.get(proc);
 		for (final IProgramVar bv : pred.getVars()) {
 			if (bv.isOldvar()) {
@@ -252,7 +248,7 @@ public class ModifiableGlobalVariableManager {
 	 * oldVar. If primed is true, we return the primed constant instead of
 	 * the default constant.
 	 */
-	public static Term constructConstantOldVarEquality(IProgramNonOldVar bv, boolean primed, Script script) {
+	public static Term constructConstantOldVarEquality(final IProgramNonOldVar bv, final boolean primed, final Script script) {
 		final IProgramOldVar oldVar = bv.getOldVar();
 		final Term nonOldConstant = (primed ? bv.getPrimedConstant() : bv.getDefaultConstant());
 		final Term oldConstant = (primed ? oldVar.getPrimedConstant() : oldVar.getDefaultConstant());

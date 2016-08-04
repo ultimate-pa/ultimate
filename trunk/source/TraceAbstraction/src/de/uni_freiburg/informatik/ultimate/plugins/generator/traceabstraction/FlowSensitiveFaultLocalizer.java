@@ -436,7 +436,7 @@ public class FlowSensitiveFaultLocalizer {
 			}
 		}
 		final TransFormula markhor = TransFormula.computeMarkhorTransFormula(combinedTransitionFormula, 
-				smtManager.getBoogie2Smt(), mServices, mLogger, mXnfConversionTechnique, mSimplificationTechnique);
+				smtManager.getManagedScript(), mServices, mLogger, mXnfConversionTechnique, mSimplificationTechnique);
 		return markhor;
 	}
 	

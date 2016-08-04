@@ -347,10 +347,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					localVarAssignmentAtCallInUnsatCore, oldVarAssignmentAtCallInUnsatCore);
 			rtf = new RelevantTransFormulas(mTrace, mPrecondition, mPostcondition, mPendingContexts,
 					codeBlocksInUnsatCore, mModifiedGlobals, localVarAssignmentAtCallInUnsatCore,
-					oldVarAssignmentAtCallInUnsatCore, mSmtManager.getBoogie2Smt());
+					oldVarAssignmentAtCallInUnsatCore, mSmtManager.getScript());
 		} else if (mUnsatCores == UnsatCores.CONJUNCT_LEVEL) {
 			rtf = new RelevantTransFormulas(mTrace, mPrecondition, mPostcondition, mPendingContexts,
-					unsatCore, mModifiedGlobals, mSmtManager.getBoogie2Smt(), mAAA, mAnnotateAndAsserterConjuncts);
+					unsatCore, mModifiedGlobals, mSmtManager.getScript(), mAAA, mAnnotateAndAsserterConjuncts);
 		} else {
 			throw new AssertionError("unknown case:" + mUnsatCores);
 		}

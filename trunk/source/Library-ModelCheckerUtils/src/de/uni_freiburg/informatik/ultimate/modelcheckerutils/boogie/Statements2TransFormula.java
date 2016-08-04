@@ -197,11 +197,9 @@ public class Statements2TransFormula {
 		}
 		TransFormula.removeSuperfluousVars(formula, mInVars, mOutVars, auxVars);
 		final HashSet<TermVariable> branchEncoders = new HashSet<TermVariable>(0);
-		final Map<TermVariable, Term> auxVar2Const = TransFormula.constructAuxVarMapping(auxVars, mBoogie2SMT.getVariableManager());
-		final Term closedFormula = TransFormula.computeClosedFormula(formula, mInVars, mOutVars, auxVar2Const, 
-				mBoogie2SMT);
+		final Map<TermVariable, Term> auxVar2Const = TransFormula.constructAuxVarMapping(auxVars, mBoogie2SMT.getScript());
 		final TransFormula tf = new TransFormula(formula, mInVars, mOutVars, auxVar2Const, branchEncoders, infeasibility,
-				closedFormula);
+				mBoogie2SMT.getScript());
 		return tf;
 	}
 

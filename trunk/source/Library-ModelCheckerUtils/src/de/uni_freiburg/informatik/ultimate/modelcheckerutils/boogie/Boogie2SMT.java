@@ -120,6 +120,10 @@ public class Boogie2SMT {
 	public Script getScript() {
 		return mScript.getScript();
 	}
+	
+	public ManagedScript getManagedScript() {
+		return mScript;
+	}
 
 	public Term2Expression getTerm2Expression() {
 		return mTerm2Expression;

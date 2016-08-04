@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 public class TermVariableRenamer {
 	private final Script mScript;
 	
-	public TermVariableRenamer(Script script) {
+	public TermVariableRenamer(final Script script) {
 		mScript = script;
 	}
 	
@@ -62,7 +62,7 @@ public class TermVariableRenamer {
 	 * </ul>
 	 * Otherwise x_n is not replaced.
 	 */
-	public TransFormula renameVars(TransFormula transFormula, String prefix) {
+	public TransFormula renameVars(final TransFormula transFormula, final String prefix) {
 		Term formula = transFormula.getFormula();
 		final Map<IProgramVar, TermVariable> inVars = transFormula.getInVars();
 		final Map<IProgramVar, TermVariable> outVars = transFormula.getOutVars();
@@ -100,7 +100,7 @@ public class TermVariableRenamer {
 		formula = new FormulaUnLet().unlet(formula);
 		return new TransFormula(formula, newInVars, newOutVars,
 				transFormula.getAuxVars(), transFormula.getBranchEncoders(), 
-				transFormula.isInfeasible(), transFormula.getClosedFormula());
+				transFormula.isInfeasible(), mScript);
 	}
 	
 	/**
@@ -114,11 +114,11 @@ public class TermVariableRenamer {
 	 * <li> add tv_new to allVars
 	 * </ul>
 	 */
-	private Term renameVars(Collection<IProgramVar> boogieVars,
+	private Term renameVars(final Collection<IProgramVar> boogieVars,
 						Term formula,
-						Map<IProgramVar, TermVariable> variableMapping, 
-						Map<IProgramVar, TermVariable> newVariableMapping, 
-						String prefix) {
+						final Map<IProgramVar, TermVariable> variableMapping, 
+						final Map<IProgramVar, TermVariable> newVariableMapping, 
+						final String prefix) {
 		final TermVariable[] vars = new TermVariable[boogieVars.size()];
 		final TermVariable[] newVars= new TermVariable[boogieVars.size()];
 		int i=0;
@@ -138,7 +138,7 @@ public class TermVariableRenamer {
 	}
 	
 	
-	private TermVariable getNewTermVariable(IProgramVar var, TermVariable tv, String prefix) {
+	private TermVariable getNewTermVariable(final IProgramVar var, final TermVariable tv, final String prefix) {
 		TermVariable result = null;
 		try {
 			result =  mScript.variable(prefix +"_" +var.getIdentifier(), tv.getSort());

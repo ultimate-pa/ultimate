@@ -33,12 +33,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ScriptWithTermConstructionChecks;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -55,10 +57,11 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	private final SimplicationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	protected final PredicateUnifier predUnifier;
-	protected final SmtManager smtManager;
+	protected final ManagedScript smtManager;
 	protected final ILinearInequalityInvariantPatternStrategy strategy;
 	private final boolean mUseNonlinearConstraints;
 	private final Settings mSolverSettings;
+	private final Collection<Term> mAxioms;
 
 	/**
 	 * Constructs a new factory for
@@ -87,7 +90,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		this.predUnifier = predUnifier;
-		this.smtManager = smtManager;
+		this.smtManager = smtManager.getManagedScript();
+		this.mAxioms = smtManager.getBoogie2Smt().getAxioms();
 		this.strategy = strategy;
 		mUseNonlinearConstraints = useNonlinerConstraints;
 		mSolverSettings = solverSettings;
@@ -101,7 +105,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final ControlFlowGraph cfg, final IPredicate precondition,
 			final IPredicate postcondition) {
 		return new LinearInequalityInvariantPatternProcessor(services,
-				storage, predUnifier, smtManager, produceSmtSolver(), cfg, precondition,
+				storage, predUnifier, smtManager, mAxioms, produceSmtSolver(), cfg, precondition,
 				postcondition, strategy, mUseNonlinearConstraints, mSimplificationTechnique, mXnfConversionTechnique);
 	}
 

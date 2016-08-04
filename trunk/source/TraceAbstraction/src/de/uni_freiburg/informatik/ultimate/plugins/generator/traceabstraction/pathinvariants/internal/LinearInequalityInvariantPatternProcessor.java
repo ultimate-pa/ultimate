@@ -57,16 +57,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Transition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 /**
@@ -125,7 +124,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 *            Service provider to use, for example for logging and timeouts
 	 * @param predicateUnifier
 	 *            the predicate unifier to unify final predicates with
-	 * @param smtManager
+	 * @param predicateScript
 	 *            the smt manager to use with the predicateUnifier
 	 * @param solver
 	 *            SMT solver to use
@@ -143,18 +142,21 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @param storage 
 	 * @param simplicationTechnique 
 	 * @param xnfConversionTechnique 
+	 * @param axioms 
 	 */
 	public LinearInequalityInvariantPatternProcessor(
 			final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
 			final PredicateUnifier predicateUnifier,
-			final SmtManager smtManager, final Script solver,
+			final ManagedScript predicateScript, final Collection<Term> axioms, 
+			final Script solver,
 			final ControlFlowGraph cfg, final IPredicate precondition,
 			final IPredicate postcondition,
 			final ILinearInequalityInvariantPatternStrategy strategy,
 			final boolean useNonlinearConstraints, 
-			final SimplicationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
-		super(predicateUnifier, smtManager);
+			final SimplicationTechnique simplicationTechnique, 
+			final XnfConversionTechnique xnfConversionTechnique) {
+		super(predicateUnifier, predicateScript);
 		this.services = services;
 		logger = services.getLoggingService().getLogger(
 				Activator.PLUGIN_ID);
@@ -165,12 +167,11 @@ public final class LinearInequalityInvariantPatternProcessor
 		patternVariables = new ArrayList<>();
 		patternCoefficients = new HashSet<>();
 
-		linearizer = new CachedTransFormulaLinearizer(services, smtManager, storage, simplicationTechnique, xnfConversionTechnique);
-		final Boogie2SMT boogie2smt = smtManager.getBoogie2Smt();
+		linearizer = new CachedTransFormulaLinearizer(services, predicateScript, axioms, storage, simplicationTechnique, xnfConversionTechnique);
 		this.precondition = linearizer.linearize(new TransFormula(precondition,
-				boogie2smt));
+				predicateScript));
 		this.postcondition = linearizer.linearize(new TransFormula(
-				postcondition, boogie2smt));
+				postcondition, predicateScript));
 		
 		currentRound = -1;
 		maxRounds = strategy.getMaxRounds();
@@ -757,7 +758,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	protected Term getValuatedTermForPattern(
 			final Collection<Collection<LinearPatternBase>> pattern) {
-		final Script script = smtManager.getScript();
+		final Script script = mScript.getScript();
 		final Collection<Term> conjunctions = new ArrayList<Term>(
 				pattern.size());
 		for (final Collection<LinearPatternBase> conjunct : pattern) {
@@ -776,10 +777,9 @@ public final class LinearInequalityInvariantPatternProcessor
 							affineFunctionTerm));
 				}
 			}
-			conjunctions
-					.add(SmtUtils.and(smtManager.getScript(), inequalities));
+			conjunctions.add(SmtUtils.and(mScript.getScript(), inequalities));
 		}
-		return SmtUtils.or(smtManager.getScript(), conjunctions);
+		return SmtUtils.or(mScript.getScript(), conjunctions);
 	}
 	
 	private static Term constructZero(final Script script, final Sort sort) {
