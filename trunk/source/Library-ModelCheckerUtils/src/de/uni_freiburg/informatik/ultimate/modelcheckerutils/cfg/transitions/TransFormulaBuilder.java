@@ -53,9 +53,18 @@ public class TransFormulaBuilder {
 	private final Set<TermVariable> mBranchEncoders;
 	private Infeasibility mInfeasibility = null;
 	private Term mFormula = null;
-	private final boolean mConstructionFinished = false;
+	private boolean mConstructionFinished = false;
 	
 
+	/**
+	 * Specify inVars, outVars, auxVars, and branchEncoders that are used
+	 * initially while constructing a new {@link TransFormula}.
+	 * For each of these arguments we do not use the Map/Set but construct
+	 * a copy. Each of these arguments my be null, and if this is the case
+	 * we start with an empty Map/Set.
+	 * If emptyAuxVars or emptyBranchEncoders is "true" we use an
+	 * emptyMap/emptySet for the respective Map/Set.
+	 */
 	public TransFormulaBuilder(final Map<IProgramVar, TermVariable> inVars, 
 			final Map<IProgramVar, TermVariable> outVars,
 			final boolean emptyAuxVars, final Map<TermVariable, Term> auxVars,
@@ -210,6 +219,7 @@ public class TransFormulaBuilder {
 	}
 	
 	public TransFormula finishConstruction(final Script script) {
+		mConstructionFinished = true;
 		return new TransFormula(mFormula, mInVars, mOutVars, mAuxVars, mBranchEncoders, mInfeasibility, script);
 	}
 }
