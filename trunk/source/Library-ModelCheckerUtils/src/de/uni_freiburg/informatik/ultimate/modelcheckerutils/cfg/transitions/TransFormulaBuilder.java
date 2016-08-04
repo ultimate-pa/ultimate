@@ -82,7 +82,7 @@ public class TransFormulaBuilder {
 		}
 		if (emptyAuxVars) {
 			mAuxVars = Collections.emptyMap();
-			if (auxVars != null) {
+			if (auxVars != null && !auxVars.isEmpty()) {
 				throw new IllegalArgumentException("if emptyAuxVars=true, you cannot provide aux vars");
 			}
 		} else {
@@ -94,7 +94,7 @@ public class TransFormulaBuilder {
 		}
 		if (emptyBranchEncoders) {
 			mBranchEncoders = Collections.emptySet();
-			if (branchEncoders != null) {
+			if (branchEncoders != null && !branchEncoders.isEmpty()) {
 				throw new IllegalArgumentException("if emptyBranchEncoders=true, you cannot provide branchEncoders");
 			}
 		} else {
@@ -178,6 +178,10 @@ public class TransFormulaBuilder {
 		}
 	}
 	
+	public boolean containsOutVar(final IProgramVar arg0) {
+		return mOutVars.containsKey(arg0);
+	}
+	
 	public TermVariable getOutVar(final IProgramVar key) {
 		return mOutVars.get(key);
 	}
@@ -203,6 +207,14 @@ public class TransFormulaBuilder {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
 		} else {
 			return mOutVars.remove(key);
+		}
+	}
+	
+	public void clearOutVars() {
+		if (mConstructionFinished) {
+			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
+		} else {
+			mOutVars.clear();
 		}
 	}
 
@@ -231,8 +243,25 @@ public class TransFormulaBuilder {
 	}
 	
 	public TransFormula finishConstruction(final Script script) {
+		if (mFormula == null) {
+			throw new IllegalStateException("cannot finish without formula");
+		}
+		if (mInfeasibility == null) {
+			throw new IllegalStateException("cannot finish without feasibility status");
+		}
 		mConstructionFinished = true;
 		TransFormula.removeSuperfluousVars(mFormula, mInVars, mOutVars, mAuxVars.keySet());
 		return new TransFormula(mFormula, mInVars, mOutVars, mAuxVars, mBranchEncoders, mInfeasibility, script);
+	}
+	
+	
+	/**
+	 * Construct TransFormula with "true" formula and no variables.
+	 */
+	public static TransFormula getTrivialTransFormula(final Script script) {
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null);
+		tfb.setFormula(script.term("true"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		return tfb.finishConstruction(script);
 	}
 }

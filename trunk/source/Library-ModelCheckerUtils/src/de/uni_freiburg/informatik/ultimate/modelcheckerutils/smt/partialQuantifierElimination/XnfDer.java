@@ -55,8 +55,8 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 
 	private final IFreshTermVariableConstructor mFreshVarConstructor;
 
-	public XnfDer(Script script, IUltimateServiceProvider services, 
-			IFreshTermVariableConstructor freshVarConstructor) {
+	public XnfDer(final Script script, final IUltimateServiceProvider services, 
+			final IFreshTermVariableConstructor freshVarConstructor) {
 		super(script, services);
 		mFreshVarConstructor = freshVarConstructor;
 	}
@@ -78,8 +78,8 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 
 
 	@Override
-	public Term[] tryToEliminate(int quantifier, Term[] inputAtoms,
-			Set<TermVariable> eliminatees) {
+	public Term[] tryToEliminate(final int quantifier, final Term[] inputAtoms,
+			final Set<TermVariable> eliminatees) {
 		Term[] resultAtoms = inputAtoms;
 		boolean someVariableWasEliminated;
 		// an elimination may allow further eliminations
@@ -120,7 +120,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	 * 
 	 * @param logger
 	 */
-	public Term[] derSimple(Script script, int quantifier, Term[] inputAtoms, TermVariable tv, ILogger logger) {
+	public Term[] derSimple(final Script script, final int quantifier, final Term[] inputAtoms, final TermVariable tv, final ILogger logger) {
 		final Term[] resultAtoms;
 		final EqualityInformation eqInfo = EqualityInformation.getEqinfo(script, tv, inputAtoms, null, quantifier, logger);
 		if (eqInfo == null) {
@@ -145,8 +145,8 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	/**
 	 * Apply substitution to term and normalize afterwards if the substitution modified the term.
 	 */
-	private Term substituteAndNormalize(SafeSubstitution substitution, Term term) {
-		Term result =  substitution.transform(term);
+	private Term substituteAndNormalize(final SafeSubstitution substitution, final Term term) {
+		Term result = substitution.transform(term);
 		if (term != result) {
 			try {
 				final AffineRelation afr = new AffineRelation(mScript, result);
