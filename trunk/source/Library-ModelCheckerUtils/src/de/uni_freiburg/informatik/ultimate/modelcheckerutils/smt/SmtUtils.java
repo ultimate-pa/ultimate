@@ -508,7 +508,7 @@ public class SmtUtils {
 					"First value is " + fstValue.getClass().getSimpleName() + 
 					" second value is " + sndValue.getClass().getSimpleName());
 		}
-		return !fstConst.getValue().equals(sndConst.getValue());
+		return !fstValue.equals(sndValue);
 	}
 
 	public static List<Term> substitutionElementwise(final List<Term> subtituents, final SafeSubstitution subst) {
