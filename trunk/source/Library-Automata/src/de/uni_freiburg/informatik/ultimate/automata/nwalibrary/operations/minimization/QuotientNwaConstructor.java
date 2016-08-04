@@ -34,12 +34,12 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IBlock;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IPartition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor.ReachFinal;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
@@ -63,8 +63,11 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	private final AutomataLibraryServices mServices;
 	private final StateFactory<STATE> mStateFactory;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
-	private final NestedWordAutomaton<LETTER, STATE> mResult;
+	private final DoubleDeckerAutomaton<LETTER, STATE> mResult;
 	private final Map<STATE, STATE> mOldState2newState;
+	private final Map<STATE, Map<STATE, ReachFinal>> mUp2Down;
+	private final STATE mOldEmptyStackState;
+	private final STATE mNewEmptyStackState;
 	
 	/**
 	 * private constructor for common parts
@@ -73,18 +76,22 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 * @param stateFactory state factory
 	 * @param operand operand automaton
 	 * @param addMapOldState2newState add a map from old to new states?
+	 * @param newSize size of new (to be constructed) automaton
 	 */
 	private QuotientNwaConstructor(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final boolean addMapOldState2newState) {
+			final boolean addMapOldState2newState,
+			final int newSize) {
 		mServices = services;
 		mStateFactory = stateFactory;
 		mOperand = operand;
-		mResult = new NestedWordAutomaton<>(mServices, 
+		mResult = new DoubleDeckerAutomaton<>(mServices, 
 				mOperand.getInternalAlphabet(), mOperand.getCallAlphabet(), 
 				mOperand.getReturnAlphabet(), mStateFactory);
-		
+		mUp2Down = new HashMap<>(newSize);
+		mOldEmptyStackState = mOperand.getEmptyStackState();
+		mNewEmptyStackState = mStateFactory.createEmptyStackState();
 		mOldState2newState = (addMapOldState2newState
 				? new HashMap<STATE, STATE>(mOperand.size())
 				: null);
@@ -104,11 +111,30 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final IPartition<STATE> partition,
 			final boolean addMapOldState2newState) {
-		this(services, stateFactory, operand, addMapOldState2newState);
+		this(services, stateFactory, operand, addMapOldState2newState,
+				partition.size());
 		
 		final ResultStateConstructorFromPartition resStateConstructor =
 				new ResultStateConstructorFromPartition(partition);
 		constructResultPartition(resStateConstructor, partition);
+		
+		// TODO can be removed after testing
+//		for (final STATE state : mOperand.getStates()) {
+//			System.err.print(state);
+//			System.err.print(": ");
+//			System.err.print(mOperand.getDownStates(state));
+//			System.err.print(", ");
+//		}
+//		System.err.println();
+//		for (final Entry<STATE, Map<STATE, ReachFinal>> entry : mUp2Down.entrySet()) {
+//			System.err.print(entry.getKey());
+//			System.err.print(": ");
+//			for (final STATE down : entry.getValue().keySet()) {
+//				System.err.print(down);
+//				System.err.print(", ");
+//			}
+//		}
+//		System.err.println();
 	}
 	
 	/**
@@ -125,7 +151,8 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final UnionFind<STATE> unionFind,
 			final boolean addMapOldState2newState) {
-		this(services, stateFactory, operand, addMapOldState2newState);
+		this(services, stateFactory, operand, addMapOldState2newState,
+				unionFind.size());
 		
 		final ResultStateConstructorFromUnionFind resStateConstructor =
 				new ResultStateConstructorFromUnionFind(unionFind);
@@ -188,7 +215,8 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 */
 	private void constructStateAndSuccessors(
 			final IResultStateConstructor<STATE> resStateConstructor,
-			final STATE inputState, final boolean skipInternalsCalls) {
+			final STATE inputState,
+			final boolean skipInternalsCalls) {
 		// new state
 		final STATE resultState =
 				resStateConstructor.getOrConstructResultState(inputState);
@@ -196,6 +224,26 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		// add to map
 		if (mOldState2newState != null) {
 			mOldState2newState.put(inputState, resultState);
+		}
+		
+		// add down states
+		final Map<STATE, ReachFinal> downStateMap = new HashMap<>();
+		mUp2Down.put(resultState, downStateMap);
+		for (final STATE oldDownState : mOperand.getDownStates(inputState)) {
+			// new state
+			final STATE resultDownState;
+			
+			if (oldDownState == mOldEmptyStackState) {
+				// empty stack symbol
+				resultDownState = mNewEmptyStackState;
+			} else {
+				// "normal" stack symbol
+				resultDownState = resStateConstructor.getOrConstructResultState(
+						oldDownState);
+			}
+			
+			// update map
+			downStateMap.put(resultDownState, ReachFinal.UNKNOWN);
 		}
 		
 		// new outgoing transitions
@@ -226,7 +274,6 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 			mResult.addInternalTransition(
 					resultState, trans.getLetter(), resultSucc);
 		}
-		
 	}
 	
 	/**
@@ -278,7 +325,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	/**
 	 * @return quotient automaton
 	 */
-	public INestedWordAutomaton<LETTER, STATE> getResult() {
+	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 	
