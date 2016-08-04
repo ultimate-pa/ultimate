@@ -403,6 +403,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * Checks whether the trace consisting of only relevant statements is still
 	 * infeasible. This check is desired, when we use unsatisfiable cores of
 	 * finer granularity.
+	 * @return true iff result of infeasiblity check is unsat or unknown
 	 */
 	private boolean stillInfeasible(final NestedFormulas<TransFormula, IPredicate> rv) {
 		final TraceChecker tc = new TraceChecker(rv.getPrecondition(), rv.getPostcondition(),
@@ -411,7 +412,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (tc.getToolchainCancelledExpection() != null) {
 			throw tc.getToolchainCancelledExpection();
 		}
-		final boolean result = (tc.isCorrect() == LBool.UNSAT);
+		final boolean result = (tc.isCorrect() != LBool.SAT);
 		return result;
 	}
 
