@@ -130,7 +130,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	 * @throws AutomataOperationCanceledException
 	 *            thrown by cancel request
 	 */
-	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+	public MinimizeNwaMaxSat2(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final boolean addMapOldState2newState,
 			final boolean useFinalStateConstraints,
@@ -180,11 +181,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 		if (!satisfiable) {
 			throw new AssertionError("Constructed constraints were unsatisfiable");
 		}
-		final UnionFind<STATE> resultingEquivalenceClasses = constructEquivalenceClasses();
-		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-				new QuotientNwaConstructor<>(mServices, mStateFactory, mOperand,
-						resultingEquivalenceClasses, addMapOldState2newState);
-		directResultConstruction(quotientNwaConstructor);
+		final UnionFind<STATE> resultingEquivalenceClasses =
+				constructEquivalenceClasses();
+		constructResultFromUnionFind(resultingEquivalenceClasses, addMapOldState2newState);
 	}
 
 	/**

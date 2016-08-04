@@ -99,7 +99,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 	 *        and unreachable states/transitions removed
 	 * @param equivalenceClasses represent initial equivalence classes
 	 * @param stateFactory used for Hoare annotation
-	 * @param includeMapping true iff mapping old to new state is needed
+	 * @param addMapping true iff mapping old to new state is needed
 	 * @param considerNeutralStates true iff neutral states should be considered
 	 * @throws AutomataOperationCanceledException if cancel signal is received
 	 */
@@ -107,7 +107,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Collection<Set<STATE>> equivalenceClasses,
-			final boolean includeMapping, final boolean considerNeutralStates)
+			final boolean addMapping, final boolean considerNeutralStates)
 					throws AutomataLibraryException {
 		super(services, stateFactory, "shrinkNwaAsDfa", operand);
 		
@@ -119,7 +119,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 		mWorkList = new WorkList();
 		
 		// must be the last part of the constructor
-		minimize(equivalenceClasses, includeMapping);
+		minimize(equivalenceClasses, addMapping);
 		mLogger.info(exitMessage());
 	}
 	
@@ -131,11 +131,11 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 	 * 
 	 * @param isFiniteAutomaton true iff automaton is a finite automaton
 	 * @param modules predefined modules that must be split
-	 * @param includeMapping true iff mapping old to new state is needed
+	 * @param addMapping true iff mapping old to new state is needed
 	 * @throws AutomataOperationCanceledException if cancel signal is received
 	 */
 	private void minimize(final Iterable<Set<STATE>> modules,
-			final boolean includeMapping) throws AutomataLibraryException {
+			final boolean addMapping) throws AutomataLibraryException {
 		// initialize the partition object
 		initialize(modules);
 		
@@ -184,7 +184,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 				mPartition.mEquivalenceClasses.size());
 				
 		// automaton construction
-		constructAutomaton(includeMapping);
+		constructAutomaton(addMapping);
 	}
 	
 	/**
@@ -313,10 +313,10 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 	 * For each remaining equivalence class create a new state. Also remove all
 	 * other objects references.
 	 * 
-	 * @param includeMapping true iff mapping old to new state is needed
+	 * @param addMapping true iff mapping old to new state is needed
 	 * @throws AutomataLibraryException thrown by superclass
 	 */
-	private void constructAutomaton(final boolean includeMapping)
+	private void constructAutomaton(final boolean addMapping)
 			throws AutomataLibraryException {
 		// marks all respective equivalence classes as initial
 		for (final STATE state : mOperand.getInitialStates()) {
@@ -324,10 +324,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 			ec.markAsInitial();
 		}
 		
-		final QuotientNwaConstructor<LETTER, STATE> constructor =
-				new QuotientNwaConstructor<LETTER, STATE>(mServices,
-						mStateFactory, mDoubleDecker, mPartition, includeMapping);
-		directResultConstruction(constructor);
+		constructResultFromPartition(mPartition, addMapping);
 		
 		// clean up
 		mPartition = null;

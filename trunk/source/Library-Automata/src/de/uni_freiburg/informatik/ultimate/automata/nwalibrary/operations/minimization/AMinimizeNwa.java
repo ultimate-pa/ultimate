@@ -37,13 +37,16 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IPartition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 /**
  * This is the superclass of all minimization classes. It provides a correctness check for all subclasses and an
@@ -227,12 +230,47 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	}
 	
 	/**
+	 * construct the result from a partition
+	 * 
+	 * @param partition partition data structure
+	 * @param addMapping true iff mapping 'old state -> new state' is added
+	 */
+	protected void constructResultFromPartition(
+			final IPartition<STATE> partition, final boolean addMapping) {
+		assert (mOperand instanceof IDoubleDeckerAutomaton) :
+			"Operand must be an IDoubleDeckerAutomaton.";
+		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
+				new QuotientNwaConstructor<>(mServices, mStateFactory,
+						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand,
+						partition, addMapping);
+		constructResultFromQuotientConstructor(quotientNwaConstructor);
+	}
+	
+	/**
+	 * construct the result from a partition
+	 * 
+	 * @param unionFind union-find data structure
+	 * @param addMapping true iff mapping 'old state -> new state' is added
+	 */
+	protected void constructResultFromUnionFind(
+			final UnionFind<STATE> unionFind,
+			final boolean addMapping) {
+		assert (mOperand instanceof IDoubleDeckerAutomaton) :
+			"Operand must be an IDoubleDeckerAutomaton.";
+		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
+				new QuotientNwaConstructor<>(mServices, mStateFactory,
+						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand,
+						unionFind, addMapping);
+		constructResultFromQuotientConstructor(quotientNwaConstructor);
+	}
+	
+	/**
 	 * pass the result directly from a
 	 * #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.QuotientNwaConstructor}
 	 * 
 	 * @param constructor quotient constructor
 	 */
-	protected void directResultConstruction(
+	private void constructResultFromQuotientConstructor(
 			final QuotientNwaConstructor<LETTER, STATE> constructor) {
 		directResultConstruction(constructor.getResult());
 		final Map<STATE, STATE> map = constructor.getOldState2newState();

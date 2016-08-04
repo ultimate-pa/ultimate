@@ -216,7 +216,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 	 *            represent initial equivalence classes
 	 * @param stateFactory
 	 *            state factory
-	 * @param includeMapping
+	 * @param addMapOldState2newState
 	 *            true iff mapping old to new state is needed
 	 * @param isFiniteAutomaton
 	 *            true iff automaton is a finite automaton
@@ -235,11 +235,20 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 	 * @throws AutomataOperationCanceledException
 	 *             if cancel signal is received
 	 */
-	public ShrinkNwa(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> equivalenceClasses,
-			final boolean includeMapping, final boolean isFiniteAutomaton, final boolean splitOutgoing,
-			final int splitRandomSize, final boolean firstReturnSplit, final int firstReturnSplitAlternative,
-			final boolean splitAllCallPreds, final boolean returnSplitNaive) throws AutomataLibraryException {
+	public ShrinkNwa(
+			final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final Collection<Set<STATE>> equivalenceClasses,
+			final boolean addMapOldState2newState,
+			final boolean isFiniteAutomaton,
+			final boolean splitOutgoing,
+			final int splitRandomSize,
+			final boolean firstReturnSplit,
+			final int firstReturnSplitAlternative,
+			final boolean splitAllCallPreds,
+			final boolean returnSplitNaive)
+					throws AutomataLibraryException {
 		super(services, stateFactory, "shrinkNwa", operand);
 		if (STAT_RETURN_SIZE) {
 			try {
@@ -313,10 +322,8 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		}
 
 		// must be the last part of the constructor
-		minimize(isFiniteAutomaton, equivalenceClasses, includeMapping);
-		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-				constructAutomaton(includeMapping);
-		directResultConstruction(quotientNwaConstructor);
+		minimize(isFiniteAutomaton, equivalenceClasses, addMapOldState2newState);
+		constructAutomaton(addMapOldState2newState);
 
 		mLogger.info(exitMessage());
 
@@ -2290,11 +2297,10 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 	/**
 	 * For each remaining equivalence class create a new state. Also remove all other objects references.
 	 * 
-	 * @param includeMapping
+	 * @param addMapping
 	 *            true iff mapping old to new state is needed
-	 * @return quotient automaton
 	 */
-	private QuotientNwaConstructor<LETTER, STATE> constructAutomaton(final boolean includeMapping) {
+	private void constructAutomaton(final boolean addMapping) {
 		if (DEBUG) {
 			mLogger.info("finished splitting, constructing result");
 		}
@@ -2302,9 +2308,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		mPartition.markInitials();
 
 		// construct result with library method
-		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-				new QuotientNwaConstructor<>(mServices, mStateFactory,
-						mDoubleDecker, mPartition, includeMapping);
+		constructResultFromPartition(mPartition, addMapping);
 
 		// clean up
 		if (DEBUG) {
@@ -2314,8 +2318,6 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implem
 		mPartition = null;
 		mWorkListIntCall = null;
 		mWorkListRet = null;
-
-		return quotientNwaConstructor;
 	}
 
 	// --- [end] main methods --- //

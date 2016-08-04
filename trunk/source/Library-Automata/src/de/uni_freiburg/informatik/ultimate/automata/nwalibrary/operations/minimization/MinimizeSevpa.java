@@ -141,10 +141,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 					"Operand must be an IDoubleDeckerAutomaton.");
 		}
 		
-		// must be the last part of the constructor
-		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-				minimize(equivalenceClasses, addMapOldState2newState);
-		directResultConstruction(quotientNwaConstructor);
+		minimize(equivalenceClasses, addMapOldState2newState);
 		mLogger.info(exitMessage());
 
 		if (STATISTICS) {
@@ -160,13 +157,12 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * (http://en.wikipedia.org/wiki/DFA_minimization)
 	 * 
 	 * @param equivalenceClasses initial partition of the states
-	 * @param addMapOldState2newState add map old state 2 new state?
-	 * @return quotient automaton
+	 * @param addMapping add map old state 2 new state?
 	 * @throws AutomataOperationCanceledException iff cancel signal is received
 	 */
-	private QuotientNwaConstructor<LETTER, STATE> minimize(
+	private void minimize(
 			final Collection<Set<STATE>> equivalenceClasses,
-			final boolean addMapOldState2newState)
+			final boolean addMapping)
 					throws AutomataOperationCanceledException {
 		
 		// cancel if signal is received
@@ -178,9 +174,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 		final StatesContainer states = new StatesContainer(mOperand);
 		
 		// merge non-distinguishable states
-		final QuotientNwaConstructor<LETTER, STATE> result =
-				mergeStates(states, equivalenceClasses, addMapOldState2newState);
-		return result;
+		mergeStates(states, equivalenceClasses, addMapping);
 	}
 	
 	/**
@@ -189,14 +183,13 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * 
 	 * @param states container with reachable states (gets deleted)
 	 * @param equivalenceClasses initial partition of the states
-	 * @param addMapOldState2newState add map old state 2 new state?
-	 * @return quotient automaton
+	 * @param addMapping add map old state 2 new state?
 	 * @throws AutomataOperationCanceledException iff cancel signal is received
 	 */
-	private QuotientNwaConstructor<LETTER, STATE> mergeStates(
+	private void mergeStates(
 			StatesContainer states,
 			final Collection<Set<STATE>> equivalenceClasses,
-			final boolean addMapOldState2newState)
+			final boolean addMapping)
 					throws AutomataOperationCanceledException {
 		
 		if (equivalenceClasses == null) {
@@ -228,7 +221,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 		refinePartition();
 		
 		// merge states from partition
-		return merge(addMapOldState2newState);
+		constructAutomaton(addMapping);
 	}
 	
 	/**
@@ -923,11 +916,9 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 	/**
 	 * merges states from computed equivalence classes
 	 * 
-	 * @param addMapOldState2newState add map old state 2 new state?
-	 * @return quotient automaton
+	 * @param addMapping add map old state 2 new state?
 	 */
-	private QuotientNwaConstructor<LETTER, STATE> merge(
-			final boolean addMapOldState2newState) {
+	private void constructAutomaton(final boolean addMapping) {
 		// make sure initial equivalence classes are marked
 		mPartition.markInitials();
 		
@@ -943,14 +934,9 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
 		}
 		
 		// construct result with library method
-		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-				new QuotientNwaConstructor<>(mServices,
-						mStateFactory, mDoubleDecker, mPartition,
-						addMapOldState2newState);
-		
-		return quotientNwaConstructor;
+		constructResultFromPartition(mPartition, addMapping);
 	}
-	
+
 	/**
 	 * represents a return transition without the letter
 	 */
