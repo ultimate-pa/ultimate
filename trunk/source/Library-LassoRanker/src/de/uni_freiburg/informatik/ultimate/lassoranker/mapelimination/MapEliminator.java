@@ -431,9 +431,9 @@ public class MapEliminator {
 		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(transformula.getFormula().getFreeVars()));
 		for (final ApplicationTermTemplate template : mFunctionsToIndices.getDomain()) {
 			if (template instanceof SelectTemplate) {
-				final Term array = ((SelectTemplate) template).getArray();
-				assert array instanceof TermVariable;
-				final IProgramVar boogieVar = mSymbolTable.getBoogieVar((TermVariable) array);
+				assert template.getIdentifier() instanceof TermVariable;
+				final TermVariable array = (TermVariable) template.getIdentifier();
+				final IProgramVar boogieVar = mSymbolTable.getBoogieVar(array);
 				final RankVar rankVar = mReplacementVarFactory.getOrConstuctBoogieVarWrapper(boogieVar);
 				final Term inVar = transformula.getInVars().get(rankVar);
 				final Term outVar = transformula.getOutVars().get(rankVar);
@@ -660,7 +660,7 @@ public class MapEliminator {
 					final Term readOut = getLocalTerm(read, transformula, assignedVars, false);
 					final ArrayIndex indexReadIn = getLocalIndex(globalIndexRead, transformula, assignedVars, true);
 					final ArrayIndex indexReadOut = getLocalIndex(globalIndexRead, transformula, assignedVars, false);
-					if (!assignedVars.contains(template)) {
+					if (!assignedVars.contains(template.getIdentifier())) {
 						final Term assignmentIn = indexEqualityImpliesValueEquality(indexWrittenOut, indexReadIn,
 								writtenOut, readIn, invariants);
 						result.add(assignmentIn);
@@ -671,7 +671,7 @@ public class MapEliminator {
 				}
 				// If it is not written to the array, add the unchanged property if the index didn't change
 				// (If written to the array, there is a stronger unchanged-condition)
-				if (!assignedVars.contains(template)) {
+				if (!assignedVars.contains(template.getIdentifier())) {
 					final Term unchanged = indexEqualityImpliesValueEquality(indexWrittenOut, indexWrittenIn,
 							writtenOut, writtenIn, invariants);
 					result.add(unchanged);

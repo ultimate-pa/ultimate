@@ -7,6 +7,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayInd
 
 public interface ApplicationTermTemplate {
 	public Term getTerm(final ArrayIndex arguments);
+
+	public Object getIdentifier();
 }
 
 class SelectTemplate implements ApplicationTermTemplate {
@@ -18,7 +20,8 @@ class SelectTemplate implements ApplicationTermTemplate {
 		mScript = script;
 	}
 
-	public Term getArray() {
+	@Override
+	public Object getIdentifier() {
 		return mArray;
 	}
 
@@ -29,8 +32,11 @@ class SelectTemplate implements ApplicationTermTemplate {
 
 	@Override
 	public boolean equals(final Object other) {
-		final SelectTemplate template = (SelectTemplate) other;
-		return template != null && mArray.equals(template.mArray);
+		if (other instanceof SelectTemplate) {
+			final SelectTemplate template = (SelectTemplate) other;
+			return mArray.equals(template.mArray);
+		}
+		return false;
 	}
 
 	@Override
@@ -61,8 +67,11 @@ class FunctionTemplate implements ApplicationTermTemplate {
 
 	@Override
 	public boolean equals(final Object other) {
-		final FunctionTemplate template = (FunctionTemplate) other;
-		return template != null && mFunctionName.equals(template.mFunctionName);
+		if (other instanceof FunctionTemplate) {
+			final FunctionTemplate template = (FunctionTemplate) other;
+			return mFunctionName.equals(template.mFunctionName);
+		}
+		return false;
 	}
 
 	@Override
@@ -73,5 +82,10 @@ class FunctionTemplate implements ApplicationTermTemplate {
 	@Override
 	public String toString() {
 		return "(" + mFunctionName + " ...)";
+	}
+
+	@Override
+	public Object getIdentifier() {
+		return mFunctionName;
 	}
 }
