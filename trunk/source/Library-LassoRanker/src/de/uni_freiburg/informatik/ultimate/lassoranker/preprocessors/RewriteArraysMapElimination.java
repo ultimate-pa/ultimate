@@ -110,9 +110,9 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 		final EqualityAnalysisResult equalityAnalysisLoop = esia.getEqualityAnalysisResult();
 		mArrayIndexSupportingInvariants.addAll(equalityAnalysisLoop.constructListOfEqualities(mScript));
 		mArrayIndexSupportingInvariants.addAll(equalityAnalysisLoop.constructListOfNotEquals(mScript));
-		final TransFormulaLR newStem = elim.getArrayFreeTransFormula(lasso.getStem(), equalityAnalysisStem,
+		final TransFormulaLR newStem = elim.getReplacedTransFormula(lasso.getStem(), equalityAnalysisStem,
 				equalityAnalysisLoop);
-		final TransFormulaLR newLoop = elim.getArrayFreeTransFormula(lasso.getLoop(), equalityAnalysisLoop,
+		final TransFormulaLR newLoop = elim.getReplacedTransFormula(lasso.getLoop(), equalityAnalysisLoop,
 				equalityAnalysisLoop);
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
 		return Collections.singleton(newLasso);
