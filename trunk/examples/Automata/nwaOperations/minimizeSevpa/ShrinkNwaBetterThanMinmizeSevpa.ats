@@ -8,9 +8,9 @@ int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
 print(minimizeSevpaSize);
 assert(minimizeSevpaSize == 4);
 int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
-print(shrinkNwaSize);
+// print(shrinkNwaSize);
 assert(shrinkNwaSize == 3);
-print(shrinkNwa(removeDeadEnds(nwa)));
+// print(shrinkNwa(removeDeadEnds(nwa)));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c"},
