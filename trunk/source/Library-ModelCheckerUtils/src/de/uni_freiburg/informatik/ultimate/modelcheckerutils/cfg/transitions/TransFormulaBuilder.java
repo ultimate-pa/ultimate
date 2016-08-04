@@ -68,7 +68,7 @@ public class TransFormulaBuilder {
 	public TransFormulaBuilder(final Map<IProgramVar, TermVariable> inVars, 
 			final Map<IProgramVar, TermVariable> outVars,
 			final boolean emptyAuxVars, final Map<TermVariable, Term> auxVars,
-			final boolean emptyBranchEncoders, final Set<TermVariable> branchEncoders) {
+			final boolean emptyBranchEncoders, final Collection<TermVariable> branchEncoders) {
 		super();
 		if (inVars == null) {
 			mInVars = new HashMap<>();
@@ -108,118 +108,131 @@ public class TransFormulaBuilder {
 	
 	public Term addAuxVar(final TermVariable arg0, final Term arg1) {
 		if (mConstructionFinished) {
-			return mAuxVars.put(arg0, arg1);
-		} else {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
+		} else {
+			return mAuxVars.put(arg0, arg1);
 		}
 	}
 
 	public void addAuxVars(final Map<? extends TermVariable, ? extends Term> arg0) {
 		if (mConstructionFinished) {
-			mAuxVars.putAll(arg0);
-		} else {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
+		} else {
+			mAuxVars.putAll(arg0);
 		}
 	}
 
 	public Term removeAuxVar(final TermVariable arg0) {
 		if (mConstructionFinished) {
-			return mAuxVars.remove(arg0);
-		} else {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
+		} else {
+			return mAuxVars.remove(arg0);
 		}
 	}
 
 	public boolean addBranchEncoder(final TermVariable arg0) {
 		if (mConstructionFinished) {
-			return mBranchEncoders.add(arg0);
-		} else {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
+		} else {
+			return mBranchEncoders.add(arg0);
 		}
 	}
 
 	public boolean addBranchEncoders(final Collection<? extends TermVariable> arg0) {
 		if (mConstructionFinished) {
-			return mBranchEncoders.addAll(arg0);
-		} else {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
+		} else {
+			return mBranchEncoders.addAll(arg0);
 		}
+	}
+	
+	public boolean containsInVar(final IProgramVar arg0) {
+		return mInVars.containsKey(arg0);
+	}
+
+	public TermVariable getInVar(final IProgramVar key) {
+		return mInVars.get(key);
 	}
 
 	public TermVariable addInVar(final IProgramVar key, final TermVariable value) {
 		if (mConstructionFinished) {
-			return mInVars.put(key, value);
-		} else {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
+		} else {
+			return mInVars.put(key, value);
 		}
 	}
 
 	public void addInVars(final Map<? extends IProgramVar, ? extends TermVariable> m) {
 		if (mConstructionFinished) {
-			mInVars.putAll(m);
-		} else {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
+		} else {
+			mInVars.putAll(m);
 		}
 	}
 
 	public TermVariable removeInVar(final IProgramVar key) {
 		if (mConstructionFinished) {
-			return mInVars.remove(key);
-		} else {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
+		} else {
+			return mInVars.remove(key);
 		}
+	}
+	
+	public TermVariable getOutVar(final IProgramVar key) {
+		return mOutVars.get(key);
 	}
 
 	public TermVariable addOutVar(final IProgramVar key, final TermVariable value) {
 		if (mConstructionFinished) {
-			return mOutVars.put(key, value);
-		} else {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
+		} else {
+			return mOutVars.put(key, value);
 		}
 	}
 
 	public void addOutVars(final Map<? extends IProgramVar, ? extends TermVariable> m) {
 		if (mConstructionFinished) {
-			mOutVars.putAll(m);
-		} else {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
+		} else {
+			mOutVars.putAll(m);
 		}
 	}
 
 	public TermVariable removeOutVar(final IProgramVar key) {
 		if (mConstructionFinished) {
-			return mOutVars.remove(key);
-		} else {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
+		} else {
+			return mOutVars.remove(key);
 		}
 	}
 
 	public void setInfeasibility(final Infeasibility infeasibility) {
 		if (mConstructionFinished) {
+			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
+		} else {
 			if (mInfeasibility == null) {
 				mInfeasibility = infeasibility;
 			} else {
 				throw new IllegalStateException("Infeasibility already set.");
 			}
-		} else {
-			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
 		}
 	}
 
 	public void setFormula(final Term formula) {
 		if (mConstructionFinished) {
+			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
+		} else {
 			if (mFormula == null) {
 				mFormula = formula;
 			} else {
 				throw new IllegalStateException("Formula already set.");
 			}
-		} else {
-			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
 		}
 	}
 	
 	public TransFormula finishConstruction(final Script script) {
 		mConstructionFinished = true;
+		TransFormula.removeSuperfluousVars(mFormula, mInVars, mOutVars, mAuxVars.keySet());
 		return new TransFormula(mFormula, mInVars, mOutVars, mAuxVars, mBranchEncoders, mInfeasibility, script);
 	}
 }
