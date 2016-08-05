@@ -262,7 +262,7 @@ public class MinimizeDfa<LETTER,STATE>
 				}
 			}
 		}
-		finishResultConstruction(null);
+		finishResultConstruction(null, false);
 	}
 
 	/**

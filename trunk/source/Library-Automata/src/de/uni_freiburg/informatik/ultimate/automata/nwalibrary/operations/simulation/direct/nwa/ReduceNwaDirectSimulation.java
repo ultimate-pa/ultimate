@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAcc
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.LassoExtractor;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.IMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.MinimizeDfaSimulation;
 
@@ -64,8 +65,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaSimulation<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public final class ReduceNwaDirectSimulation<LETTER, STATE>
+		extends MinimizeDfaSimulation<LETTER, STATE>
+		implements IMinimizeNwa<LETTER, STATE>, IOperation<LETTER, STATE> {
 
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa

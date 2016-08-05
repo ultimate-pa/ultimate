@@ -34,7 +34,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 /**
@@ -46,8 +46,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class MinimizeNwaCombinator<LETTER, STATE> extends
-		AMinimizeNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class MinimizeNwaCombinator<LETTER, STATE>
+		extends AMinimizeNwaDD<LETTER, STATE>
+		implements IOperation<LETTER, STATE> {
 	/**
 	 * Possible minimization algorithms.
 	 */
@@ -74,7 +75,7 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 	 */
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand)
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 					throws AutomataLibraryException {
 		this(services, stateFactory, operand, null, false, 0);
 	}
@@ -92,7 +93,7 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 	 */
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final Collection<Set<STATE>> partition,
 			final boolean addMapOldState2newState,
 			final int iteration)
@@ -118,7 +119,7 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 	 */
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final Collection<Set<STATE>> partition,
 			final boolean addMapOldState2newState,
 			final EMinimizations[] pattern, final int iteration)
@@ -149,7 +150,7 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() {
+	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
 		switch (mPattern[mCounter]) {
 			case MINIMIZE_SEVPA:
 				return ((MinimizeSevpa<LETTER, STATE>) mCurrent).getResult();
@@ -158,7 +159,7 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 				return ((ShrinkNwa<LETTER, STATE>) mCurrent).getResult();
 				
 			case NONE:
-				return (INestedWordAutomaton<LETTER, STATE>) mCurrent;
+				return (IDoubleDeckerAutomaton<LETTER, STATE>) mCurrent;
 				
 			default:
 				throw new IllegalArgumentException("Undefined enum state.");
@@ -181,23 +182,6 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 				throw new IllegalArgumentException(
 						"Do not ask for Hoare annotation if no minimization was used.");
 						
-			default:
-				throw new IllegalArgumentException("Undefined enum state.");
-		}
-	}
-	
-	/**
-	 * @return true iff backing minimization method supports Hoare annotation
-	 */
-	public boolean supportHoareAnnotation() {
-		switch (mPattern[mCounter]) {
-			case MINIMIZE_SEVPA:
-			case SHRINK_NWA:
-				return true;
-				
-			case NONE:
-				return false;
-				
 			default:
 				throw new IllegalArgumentException("Undefined enum state.");
 		}

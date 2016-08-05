@@ -554,7 +554,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 								find(mState2int.get(out.getSucc()))));
 			}
 		}
-		finishResultConstruction(null);
+		finishResultConstruction(null, false);
 	}
 	
 	/**

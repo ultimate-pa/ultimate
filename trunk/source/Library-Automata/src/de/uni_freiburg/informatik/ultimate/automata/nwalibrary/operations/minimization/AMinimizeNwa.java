@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -37,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -45,23 +47,25 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IPartition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor.ReachFinal;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 /**
- * This is the superclass of all minimization classes. It provides a correctness check for all subclasses and an
- * optional DFA check for subclasses that only work for DFAs.
+ * This is the superclass of most minimization classes.
+ * It provides a correctness check for all subclasses and an optional DFA check
+ * for subclasses that only work for DFAs.
  * 
- * Since the classes of the <code>NwaLibrary.Operations</code> package must automatically execute their operations from
- * within the constructor call, the correctness check cannot be inherited automatically. Hence all implementing
- * subclasses must explicitly call the respective method themselves.
+ * All subclasses must implement the
+ * #{@link de.uni_freiburg.informatik.ultimate.automata.IOperation} interface
+ * in order to be found by the <code>AutomataScriptInterpreter</code>.
  * 
  * @author Christian Schilling
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
 public abstract class AMinimizeNwa<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+		implements IMinimizeNwa<LETTER, STATE>, IOperation<LETTER, STATE> {
 
 	protected final AutomataLibraryServices mServices;
 	/**
@@ -287,7 +291,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 			throw new AssertionError(
 					"The result has already been constructed.");
 		}
-		mTemporaryResult = new NestedWordAutomaton<LETTER, STATE>(
+		mTemporaryResult = new DoubleDeckerAutomaton<LETTER, STATE>(
 				mServices,
 				mOperand.getInternalAlphabet(),
 				mOperand.getCallAlphabet(),
@@ -366,11 +370,72 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 * @param oldState2newState map 'old state -> new state'
 	 */
 	protected final void finishResultConstruction(
-			final Map<STATE, STATE> oldState2newState) {
-		mResult = mTemporaryResult;
-		mTemporaryResult = null;
+			final Map<STATE, STATE> oldState2newState,
+			final boolean constructDoubleDeckerInformation) {
 		if (oldState2newState != null) {
 			setOld2NewStateMap(oldState2newState);
+			
+			// double decker can only be constructed if mapping is provided
+			if (constructDoubleDeckerInformation) {
+				constructDoubleDeckerInformation();
+			}
+		}
+		
+		mResult = mTemporaryResult;
+		mTemporaryResult = null;
+	}
+	
+	/**
+	 * adds double decker information to the result
+	 */
+	@SuppressWarnings("squid:S1698")
+	private void constructDoubleDeckerInformation() {
+		assert (mTemporaryResult instanceof DoubleDeckerAutomaton) :
+			"The result must be a DoubleDeckerAutomaton.";
+		final DoubleDeckerAutomaton<LETTER, STATE> result =
+				(DoubleDeckerAutomaton<LETTER, STATE>) mTemporaryResult;
+		assert (mOperand instanceof IDoubleDeckerAutomaton) :
+			"The operand must be an IDoubleDeckerAutomaton.";
+		final IDoubleDeckerAutomaton<LETTER, STATE> operand =
+				(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand;
+		assert (! result.up2DownIsSet()) :
+			"The down state map was already set.";
+		assert (mOldState2NewState != null) :
+			"Need the mapping for construction.";
+		
+		final Map<STATE, Map<STATE, ReachFinal>> up2Down = new HashMap<>();
+		result.setUp2Down(up2Down);
+		
+		final STATE oldEmptyStackState = mOperand.getEmptyStackState();
+		final STATE newEmptyStackState = mStateFactory.createEmptyStackState();
+		
+		for (final STATE oldState : mOperand.getStates()) {
+			final STATE newState = mOldState2NewState.get(oldState);
+			
+			// get down state map
+			Map<STATE, ReachFinal> downStateMap = up2Down.get(newState);
+			if (downStateMap == null) {
+				downStateMap = new HashMap<>();
+				up2Down.put(newState, downStateMap);
+			}
+			
+			// add down states
+			for (final STATE oldDownState : operand.getDownStates(oldState)) {
+				// new state
+				final STATE resultDownState;
+				
+				// equals() not necessary here
+				if (oldDownState == oldEmptyStackState) {
+					// empty stack symbol
+					resultDownState = newEmptyStackState;
+				} else {
+					// "normal" stack symbol
+					resultDownState = mOldState2NewState.get(oldDownState);
+				}
+				
+				// update map
+				downStateMap.put(resultDownState, ReachFinal.UNKNOWN);
+			}
 		}
 	}
 	

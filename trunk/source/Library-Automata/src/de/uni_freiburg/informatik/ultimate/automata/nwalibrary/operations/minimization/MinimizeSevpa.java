@@ -70,7 +70,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Summa
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE>
+public class MinimizeSevpa<LETTER,STATE>
+		extends AMinimizeNwaDD<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
 	// old automaton
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;

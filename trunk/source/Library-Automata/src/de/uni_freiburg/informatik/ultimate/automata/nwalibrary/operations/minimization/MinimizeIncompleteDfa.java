@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  *            Class of the states from the automata
  */
 public final class MinimizeIncompleteDfa<LETTER, STATE>
-		extends AMinimizeNwa<LETTER, STATE>
+		extends AMinimizeNwaDD<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 	/**
 	 * Initial amount of blocks.
@@ -289,7 +289,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 //                result.addInternalTransition(predState, letter, succState);
 //            }
 //        }
-		finishResultConstruction(oldState2newState);
+		finishResultConstruction(oldState2newState, true);
 	}
 
 	/**

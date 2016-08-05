@@ -75,7 +75,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class ShrinkNwa<LETTER, STATE>
+		extends AMinimizeNwaDD<LETTER, STATE>
+		implements IOperation<LETTER, STATE> {
 
 	// TODO<debug>
 	// general output

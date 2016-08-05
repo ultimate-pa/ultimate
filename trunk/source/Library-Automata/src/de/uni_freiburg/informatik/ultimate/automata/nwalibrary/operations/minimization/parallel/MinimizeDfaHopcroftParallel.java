@@ -466,7 +466,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE>
 										.getSucc())]));
 			}
 		}
-		finishResultConstruction(null);
+		finishResultConstruction(null, false);
 		mResultConstructed = true;
 	}
 

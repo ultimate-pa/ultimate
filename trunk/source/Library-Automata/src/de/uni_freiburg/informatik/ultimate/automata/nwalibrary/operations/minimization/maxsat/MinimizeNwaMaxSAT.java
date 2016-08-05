@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.AMinimizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.IMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -47,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class MinimizeNwaMaxSAT<LETTER, STATE>
 		extends AMinimizeNwa<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+		implements IMinimizeNwa<LETTER, STATE>, IOperation<LETTER, STATE> {
 
 	/**
 	 * @param services Ultimate services

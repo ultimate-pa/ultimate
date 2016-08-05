@@ -53,6 +53,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.AMinimizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.IMinimizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.IMinimizeNwaDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeDfaHopcroftPaper;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeIncompleteDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaCombinator;
@@ -777,128 +780,134 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
 		// long startTime = System.currentTimeMillis();
-		final int oldSize = mAbstraction.size();
-		final INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction =
+		final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction =
 				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
-		final Collection<Set<IPredicate>> partition = computePartition(newAbstraction);
-		INestedWordAutomaton<CodeBlock, IPredicate> minimized;
+		final Collection<Set<IPredicate>> partition = computePartition(oldAbstraction);
 		try {
+			// output of minimization
+			final IMinimizeNwa<CodeBlock, IPredicate> newAbstractionRaw;
+			final boolean wasMinimized;
 			switch (minimization) {
 			case MINIMIZE_SEVPA: {
-				final MinimizeSevpa<CodeBlock, IPredicate> minimizeOp =
-						new MinimizeSevpa<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), newAbstraction,
-								partition, predicateFactoryRefinement, mComputeHoareAnnotation);
-				assert minimizeOp.checkResult(resultCheckPredFac);
-				minimized = minimizeOp.getResult();
-				if (mComputeHoareAnnotation) {
-					final Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
-					mHaf.updateOnMinimization(oldState2newState, minimized);
-				}
+				newAbstractionRaw = new MinimizeSevpa<CodeBlock, IPredicate>(
+						new AutomataLibraryServices(mServices), oldAbstraction,
+								partition, predicateFactoryRefinement,
+								mComputeHoareAnnotation);
+				wasMinimized = true;
 				break;
 			}
 			case SHRINK_NWA: {
-				final ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(
-						new AutomataLibraryServices(mServices), predicateFactoryRefinement, newAbstraction, partition,
-						mComputeHoareAnnotation, false, false, 200, false, 0, false, false);
-				assert minimizeOp.checkResult(resultCheckPredFac);
-				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-						minimizeOp.getResult())).getResult();
-				if (mComputeHoareAnnotation) {
-					final Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
-					mHaf.updateOnMinimization(oldState2newState, minimized);
-				}
+				newAbstractionRaw = new ShrinkNwa<CodeBlock, IPredicate>(
+						new AutomataLibraryServices(mServices),
+						predicateFactoryRefinement, oldAbstraction, partition,
+						mComputeHoareAnnotation, false, false, 200, false, 0,
+						false, false);
+				wasMinimized = true;
 				break;
 			}
 			case NWA_COMBINATOR: {
-				final MinimizeNwaCombinator<CodeBlock, IPredicate> minimizeOp =
-						new MinimizeNwaCombinator<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-								predicateFactoryRefinement, newAbstraction, partition, mComputeHoareAnnotation,
-								mIteration);
-				assert minimizeOp.checkResult(resultCheckPredFac);
-				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-						minimizeOp.getResult())).getResult();
-				if (mComputeHoareAnnotation && minimizeOp.supportHoareAnnotation()) {
-					final Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
-					mHaf.updateOnMinimization(oldState2newState, minimized);
-				}
+				newAbstractionRaw = new MinimizeNwaCombinator<CodeBlock, IPredicate>(
+						new AutomataLibraryServices(mServices),
+						predicateFactoryRefinement,
+						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction,
+						partition, mComputeHoareAnnotation, mIteration);
+				// it can happen that no minimization took place
+				wasMinimized = (newAbstractionRaw == oldAbstraction);
 				break;
 			}
 			case DFA_HOPCROFT_ARRAYS: {
-				final MinimizeDfaHopcroftPaper<CodeBlock, IPredicate> minimizeOp =
-						new MinimizeDfaHopcroftPaper<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-								newAbstraction, predicateFactoryRefinement, partition, mComputeHoareAnnotation);
-				assert minimizeOp.checkResult(resultCheckPredFac);
-				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-						minimizeOp.getResult())).getResult();
-				if (mComputeHoareAnnotation) {
-					final Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
-					mHaf.updateOnMinimization(oldState2newState, minimized);
-				}
+				newAbstractionRaw = new MinimizeDfaHopcroftPaper<CodeBlock, IPredicate>(
+						new AutomataLibraryServices(mServices), oldAbstraction,
+						predicateFactoryRefinement, partition,
+						mComputeHoareAnnotation);
+				wasMinimized = true;
 				break;
 			}
 			case DFA_HOPCROFT_LISTS: {
-				final MinimizeIncompleteDfa<CodeBlock, IPredicate> minimizeOp =
-						new MinimizeIncompleteDfa<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-								newAbstraction, predicateFactoryRefinement, partition, mComputeHoareAnnotation);
-				assert minimizeOp.checkResult(resultCheckPredFac);
-				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-						minimizeOp.getResult())).getResult();
-				if (mComputeHoareAnnotation) {
-					final Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
-					mHaf.updateOnMinimization(oldState2newState, minimized);
-				}
+				newAbstractionRaw = new MinimizeIncompleteDfa<CodeBlock, IPredicate>(
+						new AutomataLibraryServices(mServices), oldAbstraction,
+						predicateFactoryRefinement, partition,
+						mComputeHoareAnnotation);
+				wasMinimized = true;
 				break;
 			}
 			case NWA_MAX_SAT: {
-				final MinimizeNwaMaxSAT<CodeBlock, IPredicate> minimizeOp =
-						new MinimizeNwaMaxSAT<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-								predicateFactoryRefinement, newAbstraction);
-				assert minimizeOp.checkResult(resultCheckPredFac);
-				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-						minimizeOp.getResult())).getResult();
-				if (mComputeHoareAnnotation) {
-					throw new AssertionError("Hoare annotation and NWA_MAX_SAT incompatible");
-				}
+				newAbstractionRaw = new MinimizeNwaMaxSAT<CodeBlock, IPredicate>(
+						new AutomataLibraryServices(mServices),
+						predicateFactoryRefinement, oldAbstraction);
+				wasMinimized = true;
 				break;
 			}
 			case NWA_MAX_SAT2: {
-				final MinimizeNwaMaxSat2<CodeBlock, IPredicate> minimizeOp =
-						new MinimizeNwaMaxSat2<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-								predicateFactoryRefinement,
-								(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) newAbstraction);
-				assert minimizeOp.checkResult(resultCheckPredFac);
-				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-						minimizeOp.getResult())).getResult();
-				if (mComputeHoareAnnotation) {
-					throw new AssertionError("Hoare annotation and NWA_MAX_SAT2 incompatible");
-				}
+				newAbstractionRaw = new MinimizeNwaMaxSat2<CodeBlock, IPredicate>(
+						new AutomataLibraryServices(mServices),
+						predicateFactoryRefinement,
+						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction,
+						mComputeHoareAnnotation, partition);
+				wasMinimized = true;
 				break;
 			}
 			case RAQ_DIRECT_SIMULATION: {
-				final ReduceNwaDirectSimulation<CodeBlock, IPredicate> minimizeOp =
-						new ReduceNwaDirectSimulation<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-								predicateFactoryRefinement, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) newAbstraction);
-				assert minimizeOp.checkResult(resultCheckPredFac);
-				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-						minimizeOp.getResult())).getResult();
-				if (mComputeHoareAnnotation) {
-					throw new AssertionError("Hoare annotation and RAQ_DIRECT_SIMULATION incompatible");
-				}
+				/**
+				 * TODO Christian 2016-08-05: add initial partition
+				 */
+				newAbstractionRaw = new ReduceNwaDirectSimulation<CodeBlock, IPredicate>(
+						new AutomataLibraryServices(mServices),
+						predicateFactoryRefinement,
+						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction);
+				wasMinimized = true;
 				break;
 			}
-
 			case NONE:
-				minimized = (INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
-				break;
+				throw new IllegalArgumentException(
+						"No minimization method specified.");
 			default:
-				throw new AssertionError();
+				throw new AssertionError("Unknown minimization method.");
 			}
-			final int newSize = minimized.size();
-			mAbstraction = minimized;
-			if (oldSize != 0 && oldSize < newSize) {
-				throw new AssertionError("Minimization increased state space");
+			// postprocessing after minimization
+			final IDoubleDeckerAutomaton<CodeBlock, IPredicate> newAbstraction;
+			if (wasMinimized) {
+				// extract result
+				assert newAbstractionRaw.checkResult(resultCheckPredFac);
+				if (newAbstractionRaw instanceof IMinimizeNwaDD) {
+					/**
+					 * TODO Christian 2016-08-05: remove RemoveUnreachable() call
+					 *      (test thoroughly first!)
+					 */
+					// DoubleDecker information already present in output
+					newAbstraction = (new RemoveUnreachable<CodeBlock, IPredicate>(
+							new AutomataLibraryServices(mServices),
+							newAbstractionRaw.getResult())).getResult();
+				} else {
+					// compute DoubleDecker information
+					newAbstraction = (new RemoveUnreachable<CodeBlock, IPredicate>(
+							new AutomataLibraryServices(mServices),
+							newAbstractionRaw.getResult())).getResult();
+				}
+				
+				// extract Hoare annotation
+				if (mComputeHoareAnnotation) {
+					if (! (newAbstractionRaw instanceof AMinimizeNwa)) {
+						throw new AssertionError("Hoare annotation and " +
+								minimization + " incompatible");
+					}
+					final AMinimizeNwa<CodeBlock, IPredicate> minimizeOpCast =
+							(AMinimizeNwa<CodeBlock, IPredicate>)newAbstractionRaw;
+					final Map<IPredicate, IPredicate> oldState2newState =
+							minimizeOpCast.getOldState2newState();
+					mHaf.updateOnMinimization(oldState2newState, newAbstraction);
+				}
+				
+				// use result
+				mAbstraction = newAbstraction;
+				
+				// statistics
+				final int oldSize = oldAbstraction.size();
+				final int newSize = newAbstraction.size();
+				assert(oldSize == 0 || oldSize >= newSize) :
+						"Minimization increased state space";
+				mCegarLoopBenchmark.announceStatesRemovedByMinimization(oldSize - newSize);
 			}
-			mCegarLoopBenchmark.announceStatesRemovedByMinimization(oldSize - newSize);
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
 		}

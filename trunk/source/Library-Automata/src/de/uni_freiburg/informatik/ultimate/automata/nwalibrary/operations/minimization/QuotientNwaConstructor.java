@@ -64,7 +64,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	private final StateFactory<STATE> mStateFactory;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final DoubleDeckerAutomaton<LETTER, STATE> mResult;
-	private final Map<STATE, STATE> mOldState2newState;
+	private final Map<STATE, STATE> mOldState2NewState;
 	private final Map<STATE, Map<STATE, ReachFinal>> mUp2Down;
 	private final STATE mOldEmptyStackState;
 	private final STATE mNewEmptyStackState;
@@ -90,9 +90,10 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 				mOperand.getInternalAlphabet(), mOperand.getCallAlphabet(), 
 				mOperand.getReturnAlphabet(), mStateFactory);
 		mUp2Down = new HashMap<>(newSize);
+		mResult.setUp2Down(mUp2Down);
 		mOldEmptyStackState = mOperand.getEmptyStackState();
 		mNewEmptyStackState = mStateFactory.createEmptyStackState();
-		mOldState2newState = (addMapOldState2newState
+		mOldState2NewState = (addMapOldState2newState
 				? new HashMap<STATE, STATE>(mOperand.size())
 				: null);
 	}
@@ -222,13 +223,18 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 				resStateConstructor.getOrConstructResultState(inputState);
 		
 		// add to map
-		if (mOldState2newState != null) {
-			mOldState2newState.put(inputState, resultState);
+		if (mOldState2NewState != null) {
+			mOldState2NewState.put(inputState, resultState);
+		}
+		
+		// get down state map
+		Map<STATE, ReachFinal> downStateMap = mUp2Down.get(resultState);
+		if (downStateMap == null) {
+			downStateMap = new HashMap<>();
+			mUp2Down.put(resultState, downStateMap);
 		}
 		
 		// add down states
-		final Map<STATE, ReachFinal> downStateMap = new HashMap<>();
-		mUp2Down.put(resultState, downStateMap);
 		for (final STATE oldDownState : mOperand.getDownStates(inputState)) {
 			// new state
 			final STATE resultDownState;
@@ -333,7 +339,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 * @return map from input automaton states to output automaton states
 	 */
 	public Map<STATE, STATE> getOldState2newState() {
-		return mOldState2newState;
+		return mOldState2NewState;
 	}
 	
 	/**

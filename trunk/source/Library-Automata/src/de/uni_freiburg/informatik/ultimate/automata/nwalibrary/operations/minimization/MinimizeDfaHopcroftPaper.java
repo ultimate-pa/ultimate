@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * @param <STATE> state type
  */
 public class MinimizeDfaHopcroftPaper<LETTER, STATE>
-		extends AMinimizeNwa<LETTER, STATE>
+		extends AMinimizeNwaDD<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 	// ArrayList and HashMap for mapping STATE to int and vice versa.
 	private ArrayList<STATE> mInt2state;
@@ -603,7 +603,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 				// Add the new transition to the result automaton.
 				addInternalTransition(newPred, next.getLetter(), newSucc);
 			}
-			finishResultConstruction(mOldState2newState);
+			finishResultConstruction(mOldState2newState, true);
 		}	
 	}
 }

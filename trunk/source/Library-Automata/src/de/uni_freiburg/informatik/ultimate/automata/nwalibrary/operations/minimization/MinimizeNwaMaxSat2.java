@@ -72,7 +72,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
+public class MinimizeNwaMaxSat2<LETTER, STATE>
+		extends AMinimizeNwaDD<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 
 	private final NestedMap2<STATE, STATE, Doubleton<STATE>> mStatePairs = new NestedMap2<>();
@@ -102,14 +103,66 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	private final boolean mUseHornSolver;
 
 	/**
+	 * Constructor that should be called by the automata script interpreter.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            input nested word automaton
+	 * @throws AutomataOperationCanceledException
+	 *            thrown by cancel request
+	 */
+	public MinimizeNwaMaxSat2(
+			final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand)
+					throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand, true,
+				new LookaheadPartitionConstructor<LETTER, STATE>(services, operand).getResult());
+	}
+
+	/**
+	 * Constructor with an initial partition and option for backmapping.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            input nested word automaton
+	 * @param addMapOldState2newState
+	 *            add map 'old state -> new state'
+	 * @param initialEquivalenceClasses
+	 *            We only try to merge states that are in one of the equivalence
+	 *            classes
+	 * @throws AutomataOperationCanceledException
+	 *            thrown by cancel request
+	 */
+	public MinimizeNwaMaxSat2(
+			final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final boolean addMapOldState2newState,
+			final Collection<Set<STATE>> initialEquivalenceClasses)
+					throws AutomataOperationCanceledException {
+		/*
+		 * TODO change second to last flag to 'false' to use the more general
+		 * transition clauses
+		 * TODO change last flag to 'false' to use the more general solver
+		 */
+		this(services, stateFactory, operand, addMapOldState2newState,
+				initialEquivalenceClasses, true, true, true);
+	}
+
+	/**
 	 * Constructor that can be called by other classes of the automata library.
 	 * It is not intended to be called by the automata script interpreter
 	 * because there is too much input required.
 	 * 
 	 * @param addMapOldState2newState
-	 *            Let the class that constructs the quotient NWA also construct
-	 *            a map that maps states of the operand to the corresponding
-	 *            state of the result.
+	 *            add map 'old state -> new state'
 	 * @param useFinalStateConstraints
 	 *            add constraints that final and non-final states cannot be
 	 *            merged
@@ -130,14 +183,15 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 	 * @throws AutomataOperationCanceledException
 	 *            thrown by cancel request
 	 */
-	public MinimizeNwaMaxSat2(final AutomataLibraryServices services,
+	public MinimizeNwaMaxSat2(
+			final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final boolean addMapOldState2newState,
+			final Collection<Set<STATE>> initialEquivalenceClasses,
 			final boolean useFinalStateConstraints,
 			final boolean useTransitionHornClauses,
-			final boolean useHornSolver,
-			final Collection<Set<STATE>> initialEquivalenceClasses)
+			final boolean useHornSolver)
 					throws AutomataOperationCanceledException {
 		super(services, stateFactory, "minimizeNwaMaxSat2", operand);
 		mOperand = operand;
@@ -184,56 +238,6 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AMinimizeNwa<LETTER, STAT
 		final UnionFind<STATE> resultingEquivalenceClasses =
 				constructEquivalenceClasses();
 		constructResultFromUnionFind(resultingEquivalenceClasses, addMapOldState2newState);
-	}
-
-	/**
-	 * Constructor that should be called by the automata script interpreter.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param stateFactory
-	 *            state factory
-	 * @param operand
-	 *            input nested word automaton
-	 * @throws AutomataOperationCanceledException
-	 *            thrown by cancel request
-	 */
-	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, true,
-				new LookaheadPartitionConstructor<LETTER, STATE>(services, operand).getResult());
-	}
-
-	/**
-	 * Constructor with an initial partition.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param stateFactory
-	 *            state factory
-	 * @param operand
-	 *            input nested word automaton
-	 * @param useFinalStateConstraints
-	 *            add constraints that final and non-final states cannot be
-	 *            merged
-	 * @param initialEquivalenceClasses
-	 *            We only try to merge states that are in one of the equivalence
-	 *            classes
-	 * @throws AutomataOperationCanceledException
-	 *            thrown by cancel request
-	 */
-	public MinimizeNwaMaxSat2(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final boolean useFinalStateConstraints,
-			final Collection<Set<STATE>> initialEquivalenceClasses) throws AutomataOperationCanceledException {
-		/*
-		 * TODO change second to last flag to 'false' to use the more general
-		 * transition clauses
-		 * TODO change last flag to 'false' to use the more general solver
-		 */
-		this(services, stateFactory, operand, false, useFinalStateConstraints,
-				true, true, initialEquivalenceClasses);
 	}
 
 	@SuppressWarnings("squid:S1698")
