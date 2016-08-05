@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -451,7 +452,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 			throw new AssertionError(
 					"The map has already been set.");
 		}
-		mOldState2NewState = oldState2newState;
+		mOldState2NewState = Collections.unmodifiableMap(oldState2newState);
 	}
 	
 	/* ------ other helper methods ------ */
