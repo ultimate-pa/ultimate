@@ -200,7 +200,7 @@ public class FunctionHandler {
 	 * @param loc
 	 *            the location of the FunctionDeclarator
 	 */
-	public Result handleFunctionDeclarator(Dispatcher main, ILocation loc, List<ACSLNode> contract, CDeclaration cDec) {
+	public Result handleFunctionDeclarator(final Dispatcher main, final ILocation loc, final List<ACSLNode> contract, final CDeclaration cDec) {
 		final String methodName = cDec.getName();
 		final CFunction funcType = (CFunction) cDec.getType();
 
@@ -225,8 +225,8 @@ public class FunctionHandler {
 	 * @param contract
 	 * @return the translation result.
 	 */
-	public Result handleFunctionDefinition(Dispatcher main, MemoryHandler memoryHandler, IASTFunctionDefinition node,
-			CDeclaration cDec, List<ACSLNode> contract) {
+	public Result handleFunctionDefinition(final Dispatcher main, final MemoryHandler memoryHandler, final IASTFunctionDefinition node,
+			final CDeclaration cDec, final List<ACSLNode> contract) {
 		main.mCHandler.beginScope();
 
 		final ILocation loc = LocationFactory.createCLocation(node);
@@ -382,9 +382,9 @@ public class FunctionHandler {
 	 *            the node to translate.
 	 * @return the translation result.
 	 */
-	public Result handleFunctionCallExpression(Dispatcher main, MemoryHandler memoryHandler,
-			StructHandler structHandler, ILocation loc, IASTExpression functionName,
-			IASTInitializerClause[] arguments) {
+	public Result handleFunctionCallExpression(final Dispatcher main, final MemoryHandler memoryHandler,
+			final StructHandler structHandler, final ILocation loc, final IASTExpression functionName,
+			final IASTInitializerClause[] arguments) {
 		if (!(functionName instanceof IASTIdExpression)) {
 			return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, arguments);
 		}
@@ -406,8 +406,8 @@ public class FunctionHandler {
 	 *            the node to translate.
 	 * @return the translation result.
 	 */
-	public Result handleReturnStatement(Dispatcher main, MemoryHandler memoryHandler, StructHandler structHandler,
-			IASTReturnStatement node) {
+	public Result handleReturnStatement(final Dispatcher main, final MemoryHandler memoryHandler, final StructHandler structHandler,
+			final IASTReturnStatement node) {
 		final ArrayList<Statement> stmt = new ArrayList<Statement>();
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
@@ -492,7 +492,7 @@ public class FunctionHandler {
 	 *            a reference to the main dispatcher.
 	 * @return procedure declarations
 	 */
-	public ArrayList<Declaration> calculateTransitiveModifiesClause(Dispatcher main, MemoryHandler memoryHandler) {
+	public ArrayList<Declaration> calculateTransitiveModifiesClause(final Dispatcher main, final MemoryHandler memoryHandler) {
 		assert isEveryCalledProcedureDeclared() == null;
 		// calculate SCCs and a mapping for each methodId to its SCC
 		// O(|edges| + |calls|)
@@ -651,8 +651,8 @@ public class FunctionHandler {
 		return declarations;
 	}
 
-	private boolean containsOneHeapDataArray(LinkedHashSet<String> modifySet,
-			Collection<HeapDataArray> heapDataArrays) {
+	private boolean containsOneHeapDataArray(final LinkedHashSet<String> modifySet,
+			final Collection<HeapDataArray> heapDataArrays) {
 		for (final HeapDataArray hda : heapDataArrays) {
 			if (modifySet.contains(hda.getVariableName())) {
 				return true;
@@ -661,8 +661,8 @@ public class FunctionHandler {
 		return false;
 	}
 
-	private Result handleFunctionCallGivenNameAndArguments(Dispatcher main, MemoryHandler memoryHandler,
-			StructHandler structHandler, ILocation loc, String methodName, IASTInitializerClause[] arguments) {
+	private Result handleFunctionCallGivenNameAndArguments(final Dispatcher main, final MemoryHandler memoryHandler,
+			final StructHandler structHandler, final ILocation loc, final String methodName, final IASTInitializerClause[] arguments) {
 
 		final ArrayList<Statement> stmt = new ArrayList<Statement>();
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
@@ -803,8 +803,8 @@ public class FunctionHandler {
 	 * @param arguments
 	 * @return
 	 */
-	public Result handleStandardFunctions(Dispatcher main, MemoryHandler memoryHandler, StructHandler structHandler,
-			ILocation loc, String methodName, IASTInitializerClause[] arguments) {
+	public Result handleStandardFunctions(final Dispatcher main, final MemoryHandler memoryHandler, final StructHandler structHandler,
+			final ILocation loc, final String methodName, final IASTInitializerClause[] arguments) {
 		if (methodName.equals("malloc") || methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {
 			assert arguments.length == 1;
 			ExpressionResult exprRes = (ExpressionResult) main.dispatch(arguments[0]);
@@ -973,8 +973,8 @@ public class FunctionHandler {
 	 * @param arguments
 	 * @return
 	 */
-	private Result handleFunctionPointerCall(ILocation loc, Dispatcher main, MemoryHandler memoryHandler,
-			StructHandler structHandler, IASTExpression functionName, IASTInitializerClause[] arguments) {
+	private Result handleFunctionPointerCall(final ILocation loc, final Dispatcher main, final MemoryHandler memoryHandler,
+			final StructHandler structHandler, final IASTExpression functionName, final IASTInitializerClause[] arguments) {
 
 		assert (main instanceof PRDispatcher) || ((MainDispatcher) main).getFunctionToIndex().size() > 0;
 		final ExpressionResult funcNameRex = (ExpressionResult) main.dispatch(functionName);
@@ -1038,8 +1038,8 @@ public class FunctionHandler {
 	 * @param methodName
 	 * @return
 	 */
-	private Specification[] makeBoogieSpecFromACSLContract(Dispatcher main, List<ACSLNode> contract,
-			String methodName) {
+	private Specification[] makeBoogieSpecFromACSLContract(final Dispatcher main, final List<ACSLNode> contract,
+			final String methodName) {
 		Specification[] spec;
 		if (contract == null) {
 			spec = new Specification[0];
@@ -1079,7 +1079,7 @@ public class FunctionHandler {
 	 * 
 	 * @return
 	 */
-	private VarList[] processInParams(Dispatcher main, ILocation loc, CFunction cFun, String methodName) {
+	private VarList[] processInParams(final Dispatcher main, final ILocation loc, final CFunction cFun, final String methodName) {
 		final CDeclaration[] paramDecs = cFun.getParameterTypes();
 		final VarList[] in = new VarList[paramDecs.length];
 		for (int i = 0; i < paramDecs.length; ++i) {
@@ -1117,8 +1117,8 @@ public class FunctionHandler {
 	 *            the statement list to append to.
 	 * @param parent
 	 */
-	private void handleFunctionsInParams(Dispatcher main, ILocation loc, MemoryHandler memoryHandler,
-			ArrayList<Declaration> decl, ArrayList<Statement> stmt, IASTFunctionDefinition parent) {
+	private void handleFunctionsInParams(final Dispatcher main, final ILocation loc, final MemoryHandler memoryHandler,
+			final ArrayList<Declaration> decl, final ArrayList<Statement> stmt, final IASTFunctionDefinition parent) {
 		final VarList[] varListArray = mCurrentProcedure.getInParams();
 		IASTParameterDeclaration[] paramDecs;
 		if (varListArray.length == 0) {
@@ -1206,8 +1206,8 @@ public class FunctionHandler {
 	 * Update the map procedureToCFunctionType according to the given arguments If a parameter is null, the
 	 * corresponding value will not be changed. (for takesVarArgs, use "false" to change nothing).
 	 */
-	private void updateCFunction(String methodName, CType returnType, CDeclaration[] allParamDecs,
-			CDeclaration oneParamDec, boolean takesVarArgs) {
+	private void updateCFunction(final String methodName, final CType returnType, final CDeclaration[] allParamDecs,
+			final CDeclaration oneParamDec, final boolean takesVarArgs) {
 		final CFunction oldCFunction = mProcedureToCFunctionType.get(methodName);
 
 		final CType oldRetType = oldCFunction == null ? null : oldCFunction.getResultType();
@@ -1239,8 +1239,8 @@ public class FunctionHandler {
 	/**
 	 * Add a procedure to procedures according to a given CFunction. I.e. do a procedure declaration.
 	 */
-	private void addAProcedure(Dispatcher main, ILocation loc, List<ACSLNode> contract, String methodName,
-			CFunction funcType) {
+	private void addAProcedure(final Dispatcher main, final ILocation loc, final List<ACSLNode> contract, final String methodName,
+			final CFunction funcType) {
 		// begin new scope for retranslation of ACSL specification
 		main.mCHandler.beginScope();
 
@@ -1306,7 +1306,7 @@ public class FunctionHandler {
 	 * @param errLoc
 	 *            the location for possible errors!
 	 */
-	public void checkIfModifiedGlobal(SymbolTable symbTab, String searchString, ILocation errLoc) {
+	public void checkIfModifiedGlobal(final SymbolTable symbTab, final String searchString, final ILocation errLoc) {
 		String cName;
 		if (!symbTab.containsBoogieSymbol(searchString)) {
 			return; // temp variable!
@@ -1355,7 +1355,7 @@ public class FunctionHandler {
 		return null;
 	}
 
-	void beginUltimateInit(Dispatcher main, ILocation loc, String startOrInit) {
+	void beginUltimateInit(final Dispatcher main, final ILocation loc, final String startOrInit) {
 		main.mCHandler.beginScope();
 		mCallGraph.put(startOrInit, new LinkedHashSet<String>());
 		mCurrentProcedure = new Procedure(loc, new Attribute[0], startOrInit, new String[0], new VarList[0],
@@ -1364,12 +1364,12 @@ public class FunctionHandler {
 		mModifiedGlobals.put(mCurrentProcedure.getIdentifier(), new LinkedHashSet<String>());
 	}
 
-	void endUltimateInit(Dispatcher main, Procedure initDecl, String startOrInit) {
+	void endUltimateInit(final Dispatcher main, final Procedure initDecl, final String startOrInit) {
 		mProcedures.put(startOrInit, initDecl);
 		main.mCHandler.endScope();
 	}
 
-	public CFunction addFPParamToCFunction(CFunction calledFuncCFunction) {
+	public CFunction addFPParamToCFunction(final CFunction calledFuncCFunction) {
 		final CDeclaration[] newCDecs = new CDeclaration[calledFuncCFunction.getParameterTypes().length + 1];
 		for (int i = 0; i < newCDecs.length - 1; i++) {
 			newCDecs[i] = calledFuncCFunction.getParameterTypes()[i];
@@ -1382,11 +1382,11 @@ public class FunctionHandler {
 		return cFuncWithFP;
 	}
 
-	public Body getFunctionPointerFunctionBody(ILocation loc, Dispatcher main, MemoryHandler memoryHandler,
+	public Body getFunctionPointerFunctionBody(final ILocation loc, final Dispatcher main, final MemoryHandler memoryHandler,
 			// StructHandler structHandler, String fpfName, CFunction funcSignature, VarList[] inParams, VarList[]
 			// outParam) {
-			StructHandler structHandler, String fpfName, ProcedureSignature funcSignature, VarList[] inParams,
-			VarList[] outParam) {
+			final StructHandler structHandler, final String fpfName, final ProcedureSignature funcSignature, final VarList[] inParams,
+			final VarList[] outParam) {
 		// CFunction calledFuncType = funcSignature;
 
 		// boolean resultTypeIsVoid = calledFuncType.getResultType() instanceof CPrimitive
@@ -1535,9 +1535,9 @@ public class FunctionHandler {
 		}
 	}
 
-	public Result makeTheFunctionCallItself(Dispatcher main, ILocation loc, String methodName,
-			ArrayList<Statement> stmt, ArrayList<Declaration> decl, Map<VariableDeclaration, ILocation> auxVars,
-			ArrayList<Overapprox> overappr, ArrayList<Expression> args) {
+	public Result makeTheFunctionCallItself(final Dispatcher main, final ILocation loc, final String methodName,
+			final ArrayList<Statement> stmt, final ArrayList<Declaration> decl, final Map<VariableDeclaration, ILocation> auxVars,
+			final ArrayList<Overapprox> overappr, final ArrayList<Expression> args) {
 		Expression expr = null;
 		Statement call;
 		if (mProcedures.containsKey(methodName)) {
@@ -1596,7 +1596,7 @@ public class FunctionHandler {
 	 *            the methods in-parameter list.
 	 * @return true iff in represents void.
 	 */
-	private static final boolean isInParamVoid(VarList[] in) {
+	private static final boolean isInParamVoid(final VarList[] in) {
 		if (in.length > 0 && in[0] == null) {
 			throw new IllegalArgumentException("In-param cannot be null!");
 		}
@@ -1650,7 +1650,7 @@ public class FunctionHandler {
 		return mCallGraph;
 	}
 
-	public CFunction getCFunctionType(String function) {
+	public CFunction getCFunctionType(final String function) {
 		return mProcedureToCFunctionType.get(function);
 	}
 

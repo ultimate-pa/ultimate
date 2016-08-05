@@ -171,10 +171,10 @@ public class MemoryHandler {
 	 * @param bitvectorTranslation
 	 * @param nameHandler
 	 */
-	public MemoryHandler(ITypeHandler typeHandler, FunctionHandler functionHandler, boolean checkPointerValidity,
-			TypeSizeAndOffsetComputer typeSizeComputer, TypeSizes typeSizes,
-			AExpressionTranslation expressionTranslation, boolean bitvectorTranslation, INameHandler nameHandler,
-			boolean smtBoolArrayWorkaround, IPreferenceProvider prefs) {
+	public MemoryHandler(final ITypeHandler typeHandler, final FunctionHandler functionHandler, final boolean checkPointerValidity,
+			final TypeSizeAndOffsetComputer typeSizeComputer, final TypeSizes typeSizes,
+			final AExpressionTranslation expressionTranslation, final boolean bitvectorTranslation, final INameHandler nameHandler,
+			final boolean smtBoolArrayWorkaround, final IPreferenceProvider prefs) {
 		mTypeHandler = typeHandler;
 		mTypeSizes = typeSizes;
 		mFunctionHandler = functionHandler;
@@ -210,7 +210,7 @@ public class MemoryHandler {
 		mTypeSizeAndOffsetComputer = typeSizeComputer;
 	}
 
-	private AMemoryModel getMemoryModel(boolean bitvectorTranslation, final MemoryModel memoryModelPreference)
+	private AMemoryModel getMemoryModel(final boolean bitvectorTranslation, final MemoryModel memoryModelPreference)
 			throws AssertionError {
 		final AMemoryModel memoryModel;
 		if (bitvectorTranslation) {
@@ -263,7 +263,7 @@ public class MemoryHandler {
 		return mMemoryModel;
 	}
 
-	public Expression calculateSizeOf(ILocation loc, CType cType) {
+	public Expression calculateSizeOf(final ILocation loc, final CType cType) {
 		return mTypeSizeAndOffsetComputer.constructBytesizeExpression(loc, cType);
 	}
 
@@ -359,7 +359,7 @@ public class MemoryHandler {
 		return result;
 	}
 
-	private List<Declaration> declareUltimateMeminit(Dispatcher main, Collection<HeapDataArray> heapDataArrays) {
+	private List<Declaration> declareUltimateMeminit(final Dispatcher main, final Collection<HeapDataArray> heapDataArrays) {
 		final ArrayList<Declaration> decls = new ArrayList<>();
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
@@ -430,8 +430,8 @@ public class MemoryHandler {
 		return decls;
 	}
 
-	public CallStatement constructUltimateMeminitCall(ILocation loc, Expression amountOfFields, Expression sizeOfFields,
-			Expression product, Expression pointer) {
+	public CallStatement constructUltimateMeminitCall(final ILocation loc, final Expression amountOfFields, final Expression sizeOfFields,
+			final Expression product, final Expression pointer) {
 		mRequiredMemoryModelFeatures.require(MemoryModelDeclarations.Ultimate_MemInit);
 		return new CallStatement(loc, false, new VariableLHS[0], MemoryModelDeclarations.Ultimate_MemInit.getName(),
 				new Expression[] { pointer, amountOfFields, sizeOfFields, product });
@@ -440,7 +440,7 @@ public class MemoryHandler {
 	/**
 	 * Tell mFunctionHandler that procedure proc modifies all heapDataArrays. Retruns modifies specification.
 	 */
-	private ModifiesSpecification announceModifiedGlobals(String proc, Collection<HeapDataArray> heapDataArrays) {
+	private ModifiesSpecification announceModifiedGlobals(final String proc, final Collection<HeapDataArray> heapDataArrays) {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final ArrayList<VariableLHS> modifiesLHSs = new ArrayList<>();
 		for (final HeapDataArray hda : heapDataArrays) {
@@ -466,7 +466,7 @@ public class MemoryHandler {
 	 * @param heapDataArrays
 	 * @return
 	 */
-	private List<Declaration> declareMemcpy(Dispatcher main, Collection<HeapDataArray> heapDataArrays) {
+	private List<Declaration> declareMemcpy(final Dispatcher main, final Collection<HeapDataArray> heapDataArrays) {
 		final ArrayList<Declaration> memCpyDecl = new ArrayList<>();
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
@@ -550,8 +550,8 @@ public class MemoryHandler {
 	/**
 	 * Returns call to our memcpy procedure and announces that memcpy is required by our memory model.
 	 */
-	public CallStatement constructMemcpyCall(ILocation loc, Expression dest, Expression src, Expression size,
-			String resVarId) {
+	public CallStatement constructMemcpyCall(final ILocation loc, final Expression dest, final Expression src, final Expression size,
+			final String resVarId) {
 		mRequiredMemoryModelFeatures.require(MemoryModelDeclarations.C_Memcpy);
 		return new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, resVarId) },
 				MemoryModelDeclarations.C_Memcpy.getName(), new Expression[] { dest, src, size });
@@ -569,8 +569,8 @@ public class MemoryHandler {
 	 * @param loopBody
 	 * @return
 	 */
-	private ArrayList<Statement> constructCountingLoop(Expression loopBoundVariableExpr, String loopCounterVariableId,
-			Expression loopCounterIncrementExpr, List<Statement> loopBody) {
+	private ArrayList<Statement> constructCountingLoop(final Expression loopBoundVariableExpr, final String loopCounterVariableId,
+			final Expression loopCounterIncrementExpr, final List<Statement> loopBody) {
 		final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final ArrayList<Statement> stmt = new ArrayList<>();
 
@@ -618,8 +618,8 @@ public class MemoryHandler {
 	 * @param srcPtr
 	 * @return
 	 */
-	private ArrayList<Statement> constructMemcpyLoopBody(Collection<HeapDataArray> heapDataArrays, String loopCtr,
-			String destPtr, String srcPtr) {
+	private ArrayList<Statement> constructMemcpyLoopBody(final Collection<HeapDataArray> heapDataArrays, final String loopCtr,
+			final String destPtr, final String srcPtr) {
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final ArrayList<Statement> result = new ArrayList<>();
@@ -646,8 +646,8 @@ public class MemoryHandler {
 		return result;
 	}
 
-	private ArrayList<Statement> constructMemsetLoopBody(Collection<HeapDataArray> heapDataArrays, String loopCtr,
-			String ptr, Expression valueExpr) {
+	private ArrayList<Statement> constructMemsetLoopBody(final Collection<HeapDataArray> heapDataArrays, final String loopCtr,
+			final String ptr, final Expression valueExpr) {
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final ArrayList<Statement> result = new ArrayList<>();
@@ -690,7 +690,7 @@ public class MemoryHandler {
 	/**
 	 * Returns an CPrimitive which is unsigned, integer and not bool that has the smallest bytesize.
 	 */
-	private CPrimitives getCprimitiveThatFitsBest(List<ReadWriteDefinition> test) {
+	private CPrimitives getCprimitiveThatFitsBest(final List<ReadWriteDefinition> test) {
 		int smallestBytesize = Integer.MAX_VALUE;
 		for (final ReadWriteDefinition rwd : test) {
 			if (rwd.getBytesize() < smallestBytesize) {
@@ -713,7 +713,7 @@ public class MemoryHandler {
 	/**
 	 * Returns an CPrimitive which is unsigned, integer and not bool that has the smallest bytesize.
 	 */
-	private CPrimitives getCprimitiveThatFitsBest(int byteSize) {
+	private CPrimitives getCprimitiveThatFitsBest(final int byteSize) {
 		if (byteSize == 0) {
 			// we only have unbounded data types
 			return CPrimitives.UCHAR;
@@ -735,7 +735,7 @@ public class MemoryHandler {
 	 * @param heapDataArrays
 	 * @return
 	 */
-	private List<Declaration> declareMemset(Dispatcher main, Collection<HeapDataArray> heapDataArrays) {
+	private List<Declaration> declareMemset(final Dispatcher main, final Collection<HeapDataArray> heapDataArrays) {
 		final ArrayList<Declaration> decls = new ArrayList<>();
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
@@ -817,8 +817,8 @@ public class MemoryHandler {
 	/**
 	 * Returns call to our memset procedure and announces that memset is required by our memory model.
 	 */
-	public CallStatement constructUltimateMemsetCall(ILocation loc, Expression pointer, Expression value,
-			Expression amount, String resVarId) {
+	public CallStatement constructUltimateMemsetCall(final ILocation loc, final Expression pointer, final Expression value,
+			final Expression amount, final String resVarId) {
 		mRequiredMemoryModelFeatures.require(MemoryModelDeclarations.C_Memset);
 		return new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, resVarId) },
 				MemoryModelDeclarations.C_Memset.getName(), new Expression[] { pointer, value, amount });
@@ -832,8 +832,8 @@ public class MemoryHandler {
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { varList });
 	}
 
-	private List<Declaration> constructWriteProcedures(ILocation loc, Collection<HeapDataArray> heapDataArrays,
-			HeapDataArray heapDataArray) {
+	private List<Declaration> constructWriteProcedures(final ILocation loc, final Collection<HeapDataArray> heapDataArrays,
+			final HeapDataArray heapDataArray) {
 		final List<Declaration> result = new ArrayList<>();
 		for (final ReadWriteDefinition rda : mMemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray,
 				mRequiredMemoryModelFeatures)) {
@@ -842,7 +842,7 @@ public class MemoryHandler {
 		return result;
 	}
 
-	private List<Declaration> constructReadProcedures(ILocation loc, HeapDataArray heapDataArray) {
+	private List<Declaration> constructReadProcedures(final ILocation loc, final HeapDataArray heapDataArray) {
 		final List<Declaration> result = new ArrayList<>();
 		for (final ReadWriteDefinition rda : mMemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray,
 				mRequiredMemoryModelFeatures)) {
@@ -852,7 +852,7 @@ public class MemoryHandler {
 	}
 
 	private Procedure constructWriteProcedure(final ILocation loc, final Collection<HeapDataArray> heapDataArrays,
-			final HeapDataArray heapDataArray, ReadWriteDefinition rda) {
+			final HeapDataArray heapDataArray, final ReadWriteDefinition rda) {
 		final String value = "#value";
 		final ASTType valueAstType = rda.getASTType();
 		final String inPtr = "#ptr";
@@ -906,8 +906,8 @@ public class MemoryHandler {
 	}
 
 	private void addWriteEnsuresSpecification(final ILocation loc, final Collection<HeapDataArray> heapDataArrays,
-			final HeapDataArray heapDataArray, String value, Function<Expression, Expression> valueModification,
-			String inPtr, Function<Expression, Expression> ptrModification, ArrayList<Specification> swrite) {
+			final HeapDataArray heapDataArray, final String value, final Function<Expression, Expression> valueModification,
+			final String inPtr, final Function<Expression, Expression> ptrModification, final ArrayList<Specification> swrite) {
 		for (final HeapDataArray other : heapDataArrays) {
 			if (heapDataArray == other) {
 				swrite.add(ensuresHeapArrayUpdate(loc, value, valueModification, inPtr, ptrModification, other));
@@ -918,7 +918,7 @@ public class MemoryHandler {
 		}
 	}
 
-	private Procedure constructReadProcedure(final ILocation loc, HeapDataArray hda, ReadWriteDefinition rda) {
+	private Procedure constructReadProcedure(final ILocation loc, final HeapDataArray hda, final ReadWriteDefinition rda) {
 		// specification for memory reads
 		final String value = "#value";
 		final ASTType valueAstType = rda.getASTType();
@@ -967,7 +967,7 @@ public class MemoryHandler {
 		return result;
 	}
 
-	private Expression addIntegerConstantToPointer(ILocation loc, Expression ptrExpr, BigInteger integerConstant) {
+	private Expression addIntegerConstantToPointer(final ILocation loc, final Expression ptrExpr, final BigInteger integerConstant) {
 		final Expression base = getPointerBaseAddress(ptrExpr, loc);
 		final Expression offset = getPointerOffset(ptrExpr, loc);
 		final Expression addition = mExpressionTranslation.constructLiteralForIntegerType(loc,
@@ -978,21 +978,21 @@ public class MemoryHandler {
 		return constructPointerFromBaseAndOffset(base, offsetPlus, loc);
 	}
 
-	private Expression constructOneDimensionalArrayAccess(final ILocation loc, Expression arr, Expression index) {
+	private Expression constructOneDimensionalArrayAccess(final ILocation loc, final Expression arr, final Expression index) {
 		final Expression[] singletonIndex = new Expression[] { index };
 		return new ArrayAccessExpression(loc, arr, singletonIndex);
 	}
 
-	private Expression constructOneDimensionalArrayStore(final ILocation loc, Expression arr, Expression index,
-			Expression newValue) {
+	private Expression constructOneDimensionalArrayStore(final ILocation loc, final Expression arr, final Expression index,
+			final Expression newValue) {
 		final Expression[] singletonIndex = new Expression[] { index };
 		return new ArrayStoreExpression(loc, arr, singletonIndex, newValue);
 	}
 
 	// ensures #memory_X == old(#memory_X)[#ptr := #value];
 	private EnsuresSpecification ensuresHeapArrayUpdate(final ILocation loc, final String valueId,
-			Function<Expression, Expression> valueModification, final String ptrId,
-			Function<Expression, Expression> ptrModification, final HeapDataArray hda) {
+			final Function<Expression, Expression> valueModification, final String ptrId,
+			final Function<Expression, Expression> ptrModification, final HeapDataArray hda) {
 		final Expression valueExpr = new IdentifierExpression(loc, valueId);
 		final Expression memArray = new IdentifierExpression(loc, hda.getVariableName());
 		final Expression ptrExpr = new IdentifierExpression(loc, ptrId);
@@ -1001,7 +1001,7 @@ public class MemoryHandler {
 
 	// #memory_$Pointer$ == old(#memory_X)[#ptr := #memory_X[#ptr]];
 	private EnsuresSpecification ensuresHeapArrayHardlyModified(final ILocation loc, final String ptrId,
-			Function<Expression, Expression> ptrModification, final HeapDataArray hda) {
+			final Function<Expression, Expression> ptrModification, final HeapDataArray hda) {
 		final Expression memArray = new IdentifierExpression(loc, hda.getVariableName());
 		final Expression ptrExpr = new IdentifierExpression(loc, ptrId);
 		final Expression aae = constructOneDimensionalArrayAccess(loc, memArray, ptrExpr);
@@ -1053,8 +1053,8 @@ public class MemoryHandler {
 	 * @param specList
 	 *            list to which the specification is added
 	 */
-	private void checkPointerTargetFullyAllocated(final ILocation loc, Expression size, String ptrName,
-			ArrayList<Specification> specList) {
+	private void checkPointerTargetFullyAllocated(final ILocation loc, final Expression size, final String ptrName,
+			final ArrayList<Specification> specList) {
 		if (mPointerBaseValidity == PointerCheckMode.IGNORE) {
 			// add nothing
 			return;
@@ -1136,13 +1136,13 @@ public class MemoryHandler {
 		return new IdentifierExpression(loc, SFO.VALID);
 	}
 
-	private Expression constructPointerComponentAddition(ILocation loc, Expression left, Expression right) {
+	private Expression constructPointerComponentAddition(final ILocation loc, final Expression left, final Expression right) {
 		return mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, left,
 				mExpressionTranslation.getCTypeOfPointerComponents(), right,
 				mExpressionTranslation.getCTypeOfPointerComponents());
 	}
 
-	private Expression constructPointerComponentLessEqual(ILocation loc, Expression left, Expression right) {
+	private Expression constructPointerComponentLessEqual(final ILocation loc, final Expression left, final Expression right) {
 		return mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, left,
 				mExpressionTranslation.getCTypeOfPointerComponents(), right,
 				mExpressionTranslation.getCTypeOfPointerComponents());
@@ -1155,7 +1155,7 @@ public class MemoryHandler {
 	 *            the location for the new nodes.
 	 * @return declaration and implementation of procedure <code>~free</code>
 	 */
-	private ArrayList<Declaration> declareFree(Dispatcher main, final ILocation tuLoc) {
+	private ArrayList<Declaration> declareFree(final Dispatcher main, final ILocation tuLoc) {
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		// procedure ~free(~addr:$Pointer$) returns();
 		// requires #valid[~addr!base];
@@ -1243,7 +1243,7 @@ public class MemoryHandler {
 	 *            the location for the new nodes.
 	 * @return declaration and implementation of procedure <code>~free</code>
 	 */
-	private ArrayList<Declaration> declareDeallocation(Dispatcher main, final ILocation tuLoc) {
+	private ArrayList<Declaration> declareDeallocation(final Dispatcher main, final ILocation tuLoc) {
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		// ensures #valid = old(valid)[~addr!base := false];
 		final Expression bLFalse = mBooleanArrayHelper.constructFalse();
@@ -1278,7 +1278,7 @@ public class MemoryHandler {
 	 *            the location for the new nodes.
 	 * @return declaration and implementation of procedure <code>~malloc</code>
 	 */
-	private ArrayList<Declaration> declareMalloc(ITypeHandler typeHandler, final ILocation tuLoc) {
+	private ArrayList<Declaration> declareMalloc(final ITypeHandler typeHandler, final ILocation tuLoc) {
 		final ASTType intType = typeHandler.ctype2asttype(tuLoc, mExpressionTranslation.getCTypeOfPointerComponents());
 		final Expression nr0 = mExpressionTranslation.constructLiteralForIntegerType(tuLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
@@ -1379,7 +1379,7 @@ public class MemoryHandler {
 	 *            Location for errors and new nodes in the AST.
 	 * @return a function call expression for ~free(e).
 	 */
-	public CallStatement getFreeCall(Dispatcher main, FunctionHandler fh, LRValue lrVal, ILocation loc) {
+	public CallStatement getFreeCall(final Dispatcher main, final FunctionHandler fh, final LRValue lrVal, final ILocation loc) {
 		assert lrVal instanceof RValue || lrVal instanceof LocalLValue;
 		// assert lrVal.cType instanceof CPointer;//TODO -> must be a pointer or onHeap -- add a complicated assertion
 		// or let it be??
@@ -1404,7 +1404,7 @@ public class MemoryHandler {
 	/*
 	 * 2015-11-07 Matthias: This is copy&paste from getFreeCall
 	 */
-	public CallStatement getDeallocCall(Dispatcher main, FunctionHandler fh, LRValue lrVal, ILocation loc) {
+	public CallStatement getDeallocCall(final Dispatcher main, final FunctionHandler fh, final LRValue lrVal, final ILocation loc) {
 		assert lrVal instanceof RValue || lrVal instanceof LocalLValue;
 		// assert lrVal.cType instanceof CPointer;//TODO -> must be a pointer or onHeap -- add a complicated assertion
 		// or let it be??
@@ -1459,12 +1459,12 @@ public class MemoryHandler {
 	// return mallocRex;
 	// }
 
-	public CallStatement getMallocCall(Dispatcher main, FunctionHandler fh, LocalLValue resultPointer, ILocation loc) {
+	public CallStatement getMallocCall(final Dispatcher main, final FunctionHandler fh, final LocalLValue resultPointer, final ILocation loc) {
 		return getMallocCall(calculateSizeOf(loc, resultPointer.getCType()),
 				((VariableLHS) resultPointer.getLHS()).getIdentifier(), loc);
 	}
 
-	public CallStatement getMallocCall(Expression size, String resultVarId, ILocation loc) {
+	public CallStatement getMallocCall(final Expression size, final String resultVarId, final ILocation loc) {
 		mRequiredMemoryModelFeatures.require(MemoryModelDeclarations.Ultimate_Alloc);
 		final CallStatement result = new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, resultVarId) },
 				MemoryModelDeclarations.Ultimate_Alloc.getName(), new Expression[] { size });
@@ -1499,7 +1499,7 @@ public class MemoryHandler {
 	 *         read value.
 	 */
 	// 2015-10
-	public ExpressionResult getReadCall(Expression address, CType resultType) {
+	public ExpressionResult getReadCall(final Expression address, final CType resultType) {
 		final ILocation loc = address.getLocation();
 		// if (((CHandler) main.cHandler).getExpressionTranslation() instanceof BitvectorTranslation
 		// && (resultType.getUnderlyingType() instanceof CPrimitive)) {
@@ -1607,7 +1607,7 @@ public class MemoryHandler {
 	 * 
 	 * @return the required Statements to perform the write.
 	 */
-	public ArrayList<Statement> getWriteCall(ILocation loc, HeapLValue hlv, Expression value, CType valueType) {
+	public ArrayList<Statement> getWriteCall(final ILocation loc, final HeapLValue hlv, final Expression value, CType valueType) {
 		// if (((CHandler) main.cHandler).getExpressionTranslation() instanceof BitvectorTranslation
 		// && (valueType.getUnderlyingType() instanceof CPrimitive)) {
 		// CPrimitive cPrimitive = (CPrimitive) valueType.getUnderlyingType();
@@ -1765,7 +1765,7 @@ public class MemoryHandler {
 	 * 
 	 * @param pointer
 	 */
-	public static Expression getPointerBaseAddress(Expression pointer, ILocation loc) {
+	public static Expression getPointerBaseAddress(final Expression pointer, final ILocation loc) {
 		if (pointer instanceof StructConstructor) {
 			return ((StructConstructor) pointer).getFieldValues()[0];
 		}
@@ -1778,22 +1778,22 @@ public class MemoryHandler {
 	 * 
 	 * @param pointer
 	 */
-	public static Expression getPointerOffset(Expression pointer, ILocation loc) {
+	public static Expression getPointerOffset(final Expression pointer, final ILocation loc) {
 		if (pointer instanceof StructConstructor) {
 			return ((StructConstructor) pointer).getFieldValues()[1];
 		}
 		return new StructAccessExpression(loc, pointer, "offset");
 	}
 
-	public static StructConstructor constructPointerFromBaseAndOffset(Expression base, Expression offset,
-			ILocation loc) {
+	public static StructConstructor constructPointerFromBaseAndOffset(final Expression base, final Expression offset,
+			final ILocation loc) {
 		return new StructConstructor(loc, new String[] { "base", "offset" }, new Expression[] { base, offset });
 	}
 
 	/**
 	 * Takes a loop or function body and inserts mallocs and frees for all the identifiers in this.mallocedAuxPointers
 	 */
-	public ArrayList<Statement> insertMallocs(Dispatcher main, ArrayList<Statement> block) {
+	public ArrayList<Statement> insertMallocs(final Dispatcher main, final ArrayList<Statement> block) {
 		final ArrayList<Statement> mallocs = new ArrayList<Statement>();
 		for (final LocalLValueILocationPair llvp : mVariablesToBeMalloced.currentScopeKeys()) {
 			mallocs.add(this.getMallocCall(main, mFunctionHandler, llvp.llv, llvp.loc));
@@ -1811,7 +1811,7 @@ public class MemoryHandler {
 		return newBlockAL;
 	}
 
-	public void addVariableToBeFreed(Dispatcher main, LocalLValueILocationPair llvp) {
+	public void addVariableToBeFreed(final Dispatcher main, final LocalLValueILocationPair llvp) {
 		mVariablesToBeFreed.put(llvp, mVariablesToBeFreed.getActiveScopeNum());
 	}
 
@@ -1847,8 +1847,8 @@ public class MemoryHandler {
 	 * 
 	 * @return a pointer of the form: {base: ptr.base, offset: ptr.offset + integer * sizeof(valueType)}
 	 */
-	public Expression doPointerArithmetic(int operator, ILocation loc, Expression ptrAddress, RValue integer,
-			CType valueType) {
+	public Expression doPointerArithmetic(final int operator, final ILocation loc, final Expression ptrAddress, final RValue integer,
+			final CType valueType) {
 		if (mTypeSizes.getSize(((CPrimitive) integer.getCType()).getType()) != mTypeSizes
 				.getSize(mExpressionTranslation.getCTypeOfPointerComponents().getType())) {
 			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
@@ -1871,8 +1871,8 @@ public class MemoryHandler {
 	 *            {@link CType} whose translation is the Boogie type of integerExpression and the result.
 	 * @return An {@link Expression} that represents <i>integerExpression * sizeof(valueType)</i>
 	 */
-	public Expression multiplyWithSizeOfAnotherType(ILocation loc, CType valueType, Expression integerExpression,
-			CPrimitive integerExpresionType) {
+	public Expression multiplyWithSizeOfAnotherType(final ILocation loc, final CType valueType, final Expression integerExpression,
+			final CPrimitive integerExpresionType) {
 		final Expression timesSizeOf;
 		timesSizeOf = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_multiply,
 				integerExpression, integerExpresionType, calculateSizeOf(loc, valueType), integerExpresionType);
@@ -1910,7 +1910,7 @@ public class MemoryHandler {
 		}
 
 		@Override
-		public Expression compareWithTrue(Expression expr) {
+		public Expression compareWithTrue(final Expression expr) {
 			return expr;
 		}
 
@@ -1937,7 +1937,7 @@ public class MemoryHandler {
 		}
 
 		@Override
-		public Expression compareWithTrue(Expression expr) {
+		public Expression compareWithTrue(final Expression expr) {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 			return ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ, expr, constructTrue());
 		}
@@ -1965,7 +1965,7 @@ public class MemoryHandler {
 		}
 
 		@Override
-		public Expression compareWithTrue(Expression expr) {
+		public Expression compareWithTrue(final Expression expr) {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 			return ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ, expr, constructTrue());
 		}
@@ -1981,7 +1981,7 @@ public class MemoryHandler {
 			mPointerOnHeapRequired = true;
 		}
 
-		public void reportDataOnHeapRequired(CPrimitives primitive) {
+		public void reportDataOnHeapRequired(final CPrimitives primitive) {
 			mDataOnHeapRequired.add(primitive);
 		}
 
@@ -1994,10 +1994,10 @@ public class MemoryHandler {
 		}
 
 		public boolean isMemoryModelInfrastructureRequired() {
-			return isPointerOnHeapRequired() || !getDataOnHeapRequired().isEmpty();
+			return isPointerOnHeapRequired() || !getDataOnHeapRequired().isEmpty() || !getRequiredMemoryModelDeclarations().isEmpty();
 		}
 
-		public boolean require(MemoryModelDeclarations mmdecl) {
+		public boolean require(final MemoryModelDeclarations mmdecl) {
 			return mRequiredMemoryModelDeclarations.add(mmdecl);
 		}
 
@@ -2012,7 +2012,7 @@ public class MemoryHandler {
 
 		private final String mName;
 
-		MemoryModelDeclarations(String name) {
+		MemoryModelDeclarations(final String name) {
 			mName = name;
 		}
 
