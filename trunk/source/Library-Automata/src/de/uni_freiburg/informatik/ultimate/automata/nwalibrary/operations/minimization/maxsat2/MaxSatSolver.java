@@ -87,6 +87,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 		}
 		
 		final Clause<V> clause = new Clause<V>(this, positiveAtoms, negativeAtoms);
+		mLogger.debug("creating clause: " + clause);
 		
 		if (clause.isEquivalentToTrue()) {
 			mClauses++;
@@ -101,6 +102,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 				throw new UnsupportedOperationException(
 						"clause set is equivalent to false");
 			} else  {
+				mLogger.debug("adding clause");
 				assert clause.getUnsetAtoms() > 0;
 				for (final V var :clause.getNegativeAtoms()) {
 					mOccursNegative.addPair(var, clause);
@@ -141,6 +143,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 			if (result != null) {
 				assert (! mVariablesIrrevocablySet.containsKey(var)) :
 					"Unsynchronized assignment data structures.";
+				// TODO cache result 
 				return result;
 			}
 		}
@@ -217,6 +220,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 		mConjunctionEquivalentToFalse = false;
 		reEvaluateStatusOfAllClauses(variablesIncorrectlySet);
 		setVariable(var, false);
+		propagateAll();
 	}
 
 	@Override
@@ -258,7 +262,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 
 	private boolean hasOnlyHornClauses() {
 		// TODO implement for optimization
-		return false;
+		return mNumberOfNonHornClauses == 0;
 	}
 	
 	/* --- decision level stack (auxiliary data structure) --- */
