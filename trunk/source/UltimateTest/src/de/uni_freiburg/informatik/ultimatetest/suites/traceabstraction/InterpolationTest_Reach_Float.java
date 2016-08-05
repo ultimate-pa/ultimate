@@ -49,9 +49,9 @@ public class InterpolationTest_Reach_Float extends AbstractTraceAbstractionTestS
 	
 	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs = {
 //			/*** Category 11. Floats ***/
-//			new DirectoryFileEndingsPair("examples/svcomp/floats-cdfpl/", new String[]{ ".i", }, mFilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/floats-cdfpl/", new String[]{ ".i", }, mFilesPerDirectoryLimit) ,
 			new DirectoryFileEndingsPair("examples/svcomp/floats-cbmc-regression/", new String[]{ ".i", }, mFilesPerDirectoryLimit) ,
-//			new DirectoryFileEndingsPair("examples/svcomp/float-benchs/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/float-benchs/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
 	};
 	
 	
