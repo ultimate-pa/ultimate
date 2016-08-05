@@ -138,8 +138,8 @@ public class IntegerTranslation extends AExpressionTranslation {
 		}
 		Expression leftExpr = exp1;
 		Expression rightExpr = exp2;
-		if (mUnsignedTreatment == UnsignedTreatment.WRAPAROUND && type1.isUnsigned()) {
-			assert type2.isUnsigned();
+		if (mUnsignedTreatment == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(type1)) {
+			assert mTypeSizes.isUnsigned(type2);
 			leftExpr = applyWraparound(loc, mTypeSizes, type1, leftExpr);
 			rightExpr = applyWraparound(loc, mTypeSizes, type2, rightExpr);
 		}
@@ -173,7 +173,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	public static Expression applyWraparound(final ILocation loc, final TypeSizes typeSizes, final CPrimitive cPrimitive,
 			final Expression operand) {
 		if (cPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE) {
-			if (cPrimitive.isUnsigned()) {
+			if (typeSizes.isUnsigned(cPrimitive)) {
 				final BigInteger maxValuePlusOne = typeSizes.getMaxValueOfPrimitiveType(cPrimitive).add(BigInteger.ONE);
 				return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, operand,
 						new IntegerLiteral(loc, maxValuePlusOne.toString()));
@@ -270,8 +270,8 @@ public class IntegerTranslation extends AExpressionTranslation {
 
 		Expression leftExpr = leftExp;
 		Expression rightExpr = rightExp;
-		if (leftType.isIntegerType() && leftType.isUnsigned()) {
-			assert rightType.isIntegerType() && rightType.isUnsigned() : "incompatible types";
+		if (leftType.isIntegerType() && mTypeSizes.isUnsigned(leftType)) {
+			assert rightType.isIntegerType() && mTypeSizes.isUnsigned(rightType) : "incompatible types";
 			if (nodeOperator == IASTBinaryExpression.op_divide || nodeOperator == IASTBinaryExpression.op_divideAssign
 					|| nodeOperator == IASTBinaryExpression.op_modulo
 					|| nodeOperator == IASTBinaryExpression.op_moduloAssign) {
@@ -467,9 +467,9 @@ public class IntegerTranslation extends AExpressionTranslation {
 		final CPrimitive oldType = (CPrimitive) operand.lrVal.getCType();
 		if (oldType.isIntegerType()) {
 			final Expression newExpression;
-			if (resultType.isUnsigned()) {
+			if (mTypeSizes.isUnsigned(resultType)) {
 				final Expression oldWrappedIfNeeded;
-				if (oldType.isUnsigned()
+				if (mTypeSizes.isUnsigned(oldType)
 						&& mTypeSizes.getSize(resultType.getType()) > mTypeSizes.getSize(oldType.getType())) {
 					// required for sound Nutz transformation
 					// (see examples/programs/regression/c/NutzTransformation03.c)
@@ -494,9 +494,9 @@ public class IntegerTranslation extends AExpressionTranslation {
 				}
 				newExpression = oldWrappedIfNeeded;
 			} else {
-				assert !resultType.isUnsigned();
+				assert !mTypeSizes.isUnsigned(resultType);
 				final Expression oldWrappedIfUnsigned;
-				if (oldType.isUnsigned()) {
+				if (mTypeSizes.isUnsigned(oldType)) {
 					// required for sound Nutz transformation
 					// (see examples/programs/regression/c/NutzTransformation01.c)
 					oldWrappedIfUnsigned = applyWraparound(loc, mTypeSizes, oldType, operand.lrVal.getValue());
@@ -505,7 +505,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 				}
 				if (mTypeSizes.getSize(resultType.getType()) > mTypeSizes.getSize(oldType.getType())
 						|| (mTypeSizes.getSize(resultType.getType()).equals(mTypeSizes.getSize(oldType.getType()))
-								&& !oldType.isUnsigned())) {
+								&& !mTypeSizes.isUnsigned(oldType))) {
 					newExpression = oldWrappedIfUnsigned;
 				} else {
 					// According to C11 6.3.1.3.3 the result is implementation-defined
@@ -516,7 +516,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 					// data range (which is 2*(MAX_VALUE+1) for signed )
 					// If the number is strictly larger than MAX_VALUE we
 					// subtract the cardinality of the data range.
-					final CPrimitive correspondingUnsignedType = resultType.getCorrespondingUnsignedType();
+					final CPrimitive correspondingUnsignedType = mTypeSizes.getCorrespondingUnsignedType(resultType);
 					final Expression wrapped =
 							applyWraparound(loc, mTypeSizes, correspondingUnsignedType, oldWrappedIfUnsigned);
 					final Expression maxValue = constructLiteralForIntegerType(loc, oldType,
@@ -591,7 +591,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 		if (cType.isIntegerType()) {
 			if (expr instanceof IntegerLiteral) {
 				final BigInteger value = new BigInteger(((IntegerLiteral) expr).getValue());
-				if (((CPrimitive) cType).isUnsigned()) {
+				if (mTypeSizes.isUnsigned(((CPrimitive) cType))) {
 					final BigInteger maxValue = mTypeSizes.getMaxValueOfPrimitiveType((CPrimitive) cType);
 					final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
 					return value.mod(maxValuePlusOne);
@@ -615,7 +615,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType cType, final List<Statement> stmt) {
 		if (mAssumeThatSignedValuesAreInRange && cType.getUnderlyingType().isIntegerType()) {
 			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
-			if (!cPrimitive.isUnsigned()) {
+			if (!mTypeSizes.isUnsigned(cPrimitive)) {
 				stmt.add(constructAssumeInRangeStatement(mTypeSizes, loc, expr, cPrimitive));
 			}
 		}
@@ -787,8 +787,8 @@ public class IntegerTranslation extends AExpressionTranslation {
 		if ((type1 instanceof CPrimitive) && (type2 instanceof CPrimitive)) {
 			final CPrimitive primitive1 = (CPrimitive) type1;
 			final CPrimitive primitive2 = (CPrimitive) type2;
-			if (mUnsignedTreatment == UnsignedTreatment.WRAPAROUND && primitive1.isUnsigned()) {
-				assert primitive2.isUnsigned();
+			if (mUnsignedTreatment == UnsignedTreatment.WRAPAROUND && mTypeSizes.isUnsigned(primitive1)) {
+				assert mTypeSizes.isUnsigned(primitive2);
 				leftExpr = applyWraparound(loc, mTypeSizes, primitive1, leftExpr);
 				rightExpr = applyWraparound(loc, mTypeSizes, primitive2, rightExpr);
 			}

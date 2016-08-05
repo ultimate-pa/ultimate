@@ -175,27 +175,27 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		final String functionName;
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_greaterEqual:
-			if (type1.isUnsigned() && type2.isUnsigned()) {
+			if (mTypeSizes.isUnsigned(type1) && mTypeSizes.isUnsigned(type2)) {
 				functionName = "bvuge";
-			} else if (!type1.isUnsigned() && !type2.isUnsigned()) {
+			} else if (!mTypeSizes.isUnsigned(type1) && !mTypeSizes.isUnsigned(type2)) {
 				functionName = "bvsge";
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned arguments");
 			}
 			break;
 		case IASTBinaryExpression.op_greaterThan:
-			if (type1.isUnsigned() && type2.isUnsigned()) {
+			if (mTypeSizes.isUnsigned(type1) && mTypeSizes.isUnsigned(type2)) {
 				functionName = "bvugt";
-			} else if (!type1.isUnsigned() && !type2.isUnsigned()) {
+			} else if (!mTypeSizes.isUnsigned(type1) && !mTypeSizes.isUnsigned(type2)) {
 				functionName = "bvsgt";
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned arguments");
 			}
 			break;
 		case IASTBinaryExpression.op_lessEqual:
-			if (type1.isUnsigned() && type2.isUnsigned()) {
+			if (mTypeSizes.isUnsigned(type1) && mTypeSizes.isUnsigned(type2)) {
 				functionName = "bvule";
-			} else if (!type1.isUnsigned() && !type2.isUnsigned()) {
+			} else if (!mTypeSizes.isUnsigned(type1) && !mTypeSizes.isUnsigned(type2)) {
 				functionName = "bvsle";
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned arguments");
@@ -203,9 +203,9 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			break;
 		case IASTBinaryExpression.op_lessThan:
 
-			if (type1.isUnsigned() && type2.isUnsigned()) {
+			if (mTypeSizes.isUnsigned(type1) && mTypeSizes.isUnsigned(type2)) {
 				functionName = "bvult";
-			} else if (!type1.isUnsigned() && !type2.isUnsigned()) {
+			} else if (!mTypeSizes.isUnsigned(type1) && !mTypeSizes.isUnsigned(type2)) {
 				functionName = "bvslt";
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned arguments");
@@ -250,7 +250,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			break;
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftRightAssign:
-			if (typeLeft.isUnsigned()) {
+			if (mTypeSizes.isUnsigned(typeLeft)) {
 				funcname = "bvlshr";
 			} else {
 				funcname = "bvashr";
@@ -312,9 +312,9 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			break;
 		case IASTBinaryExpression.op_divideAssign:
 		case IASTBinaryExpression.op_divide:
-			if (type1.isUnsigned() && type2.isUnsigned()) {
+			if (mTypeSizes.isUnsigned(type1) && mTypeSizes.isUnsigned(type2)) {
 				funcname = "bvudiv";
-			} else if (!type1.isUnsigned() && !type2.isUnsigned()) {
+			} else if (!mTypeSizes.isUnsigned(type1) && !mTypeSizes.isUnsigned(type2)) {
 				funcname = "bvsdiv";
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned");
@@ -322,9 +322,9 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			break;
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_modulo:
-			if (type1.isUnsigned() && type2.isUnsigned()) {
+			if (mTypeSizes.isUnsigned(type1) && mTypeSizes.isUnsigned(type2)) {
 				funcname = "bvurem";
-			} else if (!type1.isUnsigned() && !type2.isUnsigned()) {
+			} else if (!mTypeSizes.isUnsigned(type1) && !mTypeSizes.isUnsigned(type2)) {
 				funcname = "bvsrem";
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned");
@@ -459,7 +459,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			final CPrimitive resultPrimitive, final int resultLength, final int operandLength) {
 		final int[] indices = new int[] { resultLength - operandLength };
 		final String smtFunctionName;
-		if (((CPrimitive) operand.lrVal.getCType()).isUnsigned()) {
+		if (mTypeSizes.isUnsigned(((CPrimitive) operand.lrVal.getCType()))) {
 			smtFunctionName = "zero_extend";
 		} else {
 			smtFunctionName = "sign_extend";
@@ -481,7 +481,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			cType = CEnum.replaceEnumWithInt(cType);
 			if (expr instanceof BitvecLiteral) {
 				final BigInteger value = new BigInteger(((BitvecLiteral) expr).getValue());
-				if (((CPrimitive) cType).isUnsigned()) {
+				if (mTypeSizes.isUnsigned(((CPrimitive) cType))) {
 					if (value.signum() < 0) {
 						throw new UnsupportedOperationException("negative value");
 					}
@@ -690,14 +690,14 @@ public class BitvectorTranslation extends AExpressionTranslation {
 				final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(newType);
 				indices[0] = fps.getExponent();
 				indices[1] = fps.getSignificant();
-				if (oldType.isUnsigned()) {
+				if (mTypeSizes.isUnsigned(oldType)) {
 					attributes = generateAttributes(loc, "to_fp_unsigned", indices);
 				} else {
 					attributes = generateAttributes(loc, "to_fp", indices);
 				}
 			} else if (newType.isIntegerType()) {
 				final String conversionFunction;
-				if (newType.isUnsigned()) {
+				if (mTypeSizes.isUnsigned(newType)) {
 					conversionFunction = "fp.to_ubv";
 				} else {
 					conversionFunction = "fp.to_sbv";

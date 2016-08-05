@@ -225,7 +225,7 @@ public abstract class AExpressionTranslation {
 		
 		if (typeLeft.equals(typeRight)) {
 			return typeLeft;
-		} else if ((typeLeft.isUnsigned() && typeRight.isUnsigned()) || (!typeLeft.isUnsigned() && !typeRight.isUnsigned())) {
+		} else if ((mTypeSizes.isUnsigned(typeLeft) && mTypeSizes.isUnsigned(typeRight)) || (!mTypeSizes.isUnsigned(typeLeft) && !mTypeSizes.isUnsigned(typeRight))) {
 			final Integer sizeLeft = mTypeSizes.getSize(typeLeft.getType());
 			final Integer sizeRight = mTypeSizes.getSize(typeRight.getType());
 			
@@ -238,7 +238,7 @@ public abstract class AExpressionTranslation {
 			CPrimitive unsignedType;
 			CPrimitive signedType;
 			
-			if (typeLeft.isUnsigned()) {
+			if (mTypeSizes.isUnsigned(typeLeft)) {
 				unsignedType = typeLeft;
 				signedType = typeRight;
 			} else {
@@ -421,7 +421,7 @@ public abstract class AExpressionTranslation {
 		final int sizeOfArgument = mTypeSizes.getSize(cPrimitive.getType());
 		final int sizeofInt = mTypeSizes.getSize(CPrimitive.CPrimitives.INT);
 		
-		if (sizeOfArgument < sizeofInt || !cPrimitive.isUnsigned()) {
+		if (sizeOfArgument < sizeofInt || !mTypeSizes.isUnsigned(cPrimitive)) {
 			return new CPrimitive(CPrimitives.INT);
 		} else {
 			return new CPrimitive(CPrimitives.UINT);

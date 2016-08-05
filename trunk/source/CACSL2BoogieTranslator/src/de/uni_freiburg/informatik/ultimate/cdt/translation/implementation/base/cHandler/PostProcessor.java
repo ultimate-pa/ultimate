@@ -559,7 +559,7 @@ public class PostProcessor {
 			if (cPrimitiveO.getGeneralType() == CPrimitiveCategory.INTTYPE) {
 				final Attribute[] attributes = new Attribute[2];
 				attributes[0] = new NamedAttribute(loc, "isUnsigned", 
-						new Expression[]{ new BooleanLiteral(loc, cPrimitiveO.isUnsigned())});
+						new Expression[]{ new BooleanLiteral(loc, typeSizes.isUnsigned(cPrimitiveO))});
 				final int bytesize = typeSizes.getSize(cPrimitive);
 				final int bitsize = bytesize * 8;
 				attributes[1] = new NamedAttribute(loc, "bitsize", 

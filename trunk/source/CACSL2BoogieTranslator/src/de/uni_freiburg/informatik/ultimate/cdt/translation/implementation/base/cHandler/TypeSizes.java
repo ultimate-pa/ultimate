@@ -55,7 +55,7 @@ public class TypeSizes {
 	private final int sizeOfFloatType;
 	private final int sizeOfDoubleType;
 	private final int sizeOfLongDoubleType;
-	public final int sizeOfPointerType;
+	private final int sizeOfPointerType;
 	
 //	private final int sizeOfWCharType;
 //	private final int sizeOfChar16Type;
@@ -64,17 +64,16 @@ public class TypeSizes {
 //	for pointer arithmetic on a void pointer -- c standard disallows that, but gcc does not..
 	private final int sizeOfVoidType; 
 
-
 	/**
 	 * is char (without modifier) schar or uchar?
 	 */
-	private static final boolean charIsSigned = true;
+	private final Signedness mSignednessOfChar;
 
 	private final LinkedHashMap<CPrimitive.CPrimitives, Integer> CPrimitiveToTypeSizeConstant = 
 			new LinkedHashMap<>();
 	
 
-	public TypeSizes(IPreferenceProvider ups) {
+	public TypeSizes(final IPreferenceProvider ups) {
 		mUseFixedTypeSizes = 
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
 		sizeOfVoidType = 1;
@@ -98,10 +97,7 @@ public class TypeSizes {
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE);
 		sizeOfPointerType = 
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_POINTER);
-		final Signedness signednessOfChar = ups.getEnum(CACSLPreferenceInitializer.LABEL_SIGNEDNESS_CHAR, Signedness.class);
-		if (signednessOfChar == Signedness.UNSIGNED) {
-			throw new UnsupportedOperationException("char == uchar is not supported yet");
-		}
+		mSignednessOfChar = ups.getEnum(CACSLPreferenceInitializer.LABEL_SIGNEDNESS_CHAR, Signedness.class);
 //		this.sizeOfChar16Type = 
 //				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR16);
 //		this.sizeOfChar32Type = 
@@ -139,7 +135,7 @@ public class TypeSizes {
 	}
 	
 	
-	public Integer getSize(CPrimitives cPrimitive) {
+	public Integer getSize(final CPrimitives cPrimitive) {
 		final Integer result = CPrimitiveToTypeSizeConstant.get(cPrimitive);
 		if (result == null) {
 			throw new IllegalArgumentException("unknown type " + cPrimitive);
@@ -152,18 +148,58 @@ public class TypeSizes {
 		return sizeOfPointerType;
 	}
 	
-	/**
-	 * The result is fixed to true. This is a workaround.
-	 * If you want so solve this you have to implement a factory for CTypes.
-	 */
-	public static boolean isCharSigned() {
-		return charIsSigned;
+	public boolean isUnsigned(final CPrimitive type) {
+		return isUnsigned(type.getType());
 	}
 	
-	public BigInteger getMaxValueOfPrimitiveType(CPrimitive cPrimitive) {
+	public boolean isUnsigned(final CPrimitives type) throws AssertionError {
+		switch (type) {
+		case BOOL:
+		case UCHAR:
+		case UINT:
+		case ULONG:
+		case ULONGLONG:
+		case USHORT:
+			return true;
+		case CHAR:
+			return (mSignednessOfChar == Signedness.UNSIGNED);
+		case INT:
+		case LONG:
+		case LONGLONG:
+		case SCHAR:
+		case SHORT:
+			return false;
+		case COMPLEX_FLOAT:
+		case COMPLEX_DOUBLE:
+		case COMPLEX_LONGDOUBLE:
+		case FLOAT:
+		case DOUBLE:
+		case LONGDOUBLE:
+			// case CHAR16:
+			// case CHAR32:
+			// case WCHAR:
+		case VOID:
+			throw new IllegalArgumentException("attribute signedness not applicable to " + type);
+		default:
+			throw new AssertionError("case missing");
+		}
+	}
+
+	private boolean isComplex(final CPrimitives type) {
+		switch (type) {
+		case COMPLEX_FLOAT:
+		case COMPLEX_DOUBLE:
+		case COMPLEX_LONGDOUBLE:
+			return true;
+		default:
+			return false;
+		}
+	}
+	
+	public BigInteger getMaxValueOfPrimitiveType(final CPrimitive cPrimitive) {
 		final int byteSize = getSize(cPrimitive.getType());
 		BigInteger maxValue;
-		if (cPrimitive.isUnsigned()) {
+		if (isUnsigned(cPrimitive)) {
 			maxValue = new BigInteger("2").pow(byteSize * 8);
 		} else {
 			maxValue = new BigInteger("2").pow(byteSize * 8 - 1);
@@ -172,10 +208,10 @@ public class TypeSizes {
 		return maxValue;
 	}
 	
-	public BigInteger getMinValueOfPrimitiveType(CPrimitive cPrimitive) {
+	public BigInteger getMinValueOfPrimitiveType(final CPrimitive cPrimitive) {
 		final int byteSize = getSize(cPrimitive.getType());
 		BigInteger minValue;
-		if (cPrimitive.isUnsigned()) {
+		if (isUnsigned(cPrimitive)) {
 			minValue = BigInteger.ZERO;
 		} else {
 			minValue = (new BigInteger("2").pow(byteSize * 8 - 1)).negate();
@@ -193,7 +229,7 @@ public class TypeSizes {
 	/**
 	 * @return FloatingPointSize of a float, double, or long double.
 	 */
-	public FloatingPointSize getFloatingPointSize(CPrimitive cPrimitive) {
+	public FloatingPointSize getFloatingPointSize(final CPrimitive cPrimitive) {
 		final FloatingPointSize result;
 		switch (cPrimitive.getType()) {
 		case FLOAT: {
@@ -236,7 +272,7 @@ public class TypeSizes {
 	public class FloatingPointSize {
 		final int mSignificant;
 		final int mExponent;
-		public FloatingPointSize(int significant, int exponent) {
+		public FloatingPointSize(final int significant, final int exponent) {
 			super();
 			mSignificant = significant;
 			mExponent = exponent;
@@ -247,7 +283,35 @@ public class TypeSizes {
 		public int getExponent() {
 			return mExponent;
 		}
-		
-		
+	}
+	
+	public CPrimitive getCorrespondingUnsignedType(final CPrimitive type) {
+		if (!type.isIntegerType()) {
+			throw new IllegalArgumentException("no integer type " + this);
+		}
+		if (isUnsigned(type)) {
+			throw new IllegalArgumentException("already unsigned " + this);
+		}
+		switch (type.getType()) {
+		case CHAR:
+			if (mSignednessOfChar == Signedness.SIGNED) {
+				return new CPrimitive(CPrimitives.UCHAR);
+			} else {
+				throw new UnsupportedOperationException("according to your settings, char is already unsigned");
+			}
+		case INT:
+			return new CPrimitive(CPrimitives.UINT);
+		case LONG:
+			return new CPrimitive(CPrimitives.ULONG);
+		case LONGLONG:
+			return new CPrimitive(CPrimitives.ULONGLONG);
+		case SCHAR:
+			return new CPrimitive(CPrimitives.UCHAR);
+		case SHORT:
+			return new CPrimitive(CPrimitives.USHORT);
+		default:
+			throw new IllegalArgumentException("unsupported type " + this);
+		}
+
 	}
 }

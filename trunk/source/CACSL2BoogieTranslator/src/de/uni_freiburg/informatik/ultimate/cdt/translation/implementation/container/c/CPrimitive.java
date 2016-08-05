@@ -33,7 +33,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -98,7 +97,7 @@ public class CPrimitive extends CType {
 		 */
 		VOID(CPrimitiveCategory.VOID);
 
-		CPrimitives(CPrimitiveCategory generalprimitive) {
+		CPrimitives(final CPrimitiveCategory generalprimitive) {
 			mGeneralprimitive = generalprimitive;
 		}
 
@@ -117,8 +116,6 @@ public class CPrimitive extends CType {
 		INTTYPE, FLOATTYPE, VOID
 	}
 
-	private final boolean isUnsigned;
-
 	/**
 	 * The C type of the variable.
 	 */
@@ -129,14 +126,13 @@ public class CPrimitive extends CType {
 	 */
 	private final CPrimitiveCategory mGeneralType;
 
-	public CPrimitive(CPrimitives type) {
+	public CPrimitive(final CPrimitives type) {
 		super(false, false, false, false); // FIXME: integrate those flags
 		mType = type;
 		mGeneralType = getGeneralType(type);
-		isUnsigned = isUnsigned(type);
 	}
 
-	private CPrimitiveCategory getGeneralType(CPrimitives type) throws AssertionError {
+	private CPrimitiveCategory getGeneralType(final CPrimitives type) throws AssertionError {
 		final CPrimitiveCategory generalType;
 		switch (type) {
 		case COMPLEX_FLOAT:
@@ -175,39 +171,7 @@ public class CPrimitive extends CType {
 		return generalType;
 	}
 
-	private boolean isUnsigned(CPrimitives type) throws AssertionError {
-		switch (type) {
-		case BOOL:
-		case UCHAR:
-		case UINT:
-		case ULONG:
-		case ULONGLONG:
-		case USHORT:
-			return true;
-		case CHAR:
-			return !TypeSizes.isCharSigned();
-		case COMPLEX_FLOAT:
-		case COMPLEX_DOUBLE:
-		case COMPLEX_LONGDOUBLE:
-		case FLOAT:
-		case DOUBLE:
-		case LONGDOUBLE:
-			// case CHAR16:
-			// case CHAR32:
-		case INT:
-		case LONG:
-		case LONGLONG:
-		case SCHAR:
-		case SHORT:
-			// case WCHAR:
-		case VOID:
-			return false;
-		default:
-			throw new AssertionError("case missing");
-		}
-	}
-
-	private boolean isComplex(CPrimitives type) {
+	private boolean isComplex(final CPrimitives type) {
 		switch (type) {
 		case COMPLEX_FLOAT:
 		case COMPLEX_DOUBLE:
@@ -224,7 +188,7 @@ public class CPrimitive extends CType {
 	 * @param cDeclSpec
 	 *            the C declaration specifier.
 	 */
-	public CPrimitive(IASTDeclSpecifier cDeclSpec) {
+	public CPrimitive(final IASTDeclSpecifier cDeclSpec) {
 		super(false, false, false, false); // FIXME: integrate those flags
 		if (cDeclSpec instanceof IASTSimpleDeclSpecifier) {
 			final IASTSimpleDeclSpecifier sds = (IASTSimpleDeclSpecifier) cDeclSpec;
@@ -324,11 +288,6 @@ public class CPrimitive extends CType {
 			throw new IllegalArgumentException("Unknown C Declaration!");
 		}
 		mGeneralType = getGeneralType(mType);
-		isUnsigned = isUnsigned(mType);
-	}
-
-	public boolean isUnsigned() {
-		return isUnsigned;
 	}
 
 	public CPrimitives getType() {
@@ -345,7 +304,7 @@ public class CPrimitive extends CType {
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 		if (!(o instanceof CType)) {
 			return false;
 		}
@@ -363,7 +322,7 @@ public class CPrimitive extends CType {
 	}
 
 	@Override
-	public boolean isCompatibleWith(CType o) {
+	public boolean isCompatibleWith(final CType o) {
 		// if (this.type == PRIMITIVE.VOID)
 		// return true;
 		final CType oType = o.getUnderlyingType();
@@ -379,33 +338,4 @@ public class CPrimitive extends CType {
 		}
 	}
 
-	public CPrimitive getCorrespondingUnsignedType() {
-		if (!isIntegerType()) {
-			throw new IllegalArgumentException("no integer type " + this);
-		}
-		if (this.isUnsigned()) {
-			throw new IllegalArgumentException("already unsigned " + this);
-		}
-		switch (getType()) {
-		case CHAR:
-			if (TypeSizes.isCharSigned()) {
-				return new CPrimitive(CPrimitives.UCHAR);
-			} else {
-				throw new UnsupportedOperationException("according to your settings, char is already unsigned");
-			}
-		case INT:
-			return new CPrimitive(CPrimitives.UINT);
-		case LONG:
-			return new CPrimitive(CPrimitives.ULONG);
-		case LONGLONG:
-			return new CPrimitive(CPrimitives.ULONGLONG);
-		case SCHAR:
-			return new CPrimitive(CPrimitives.UCHAR);
-		case SHORT:
-			return new CPrimitive(CPrimitives.USHORT);
-		default:
-			throw new IllegalArgumentException("unsupported type " + this);
-		}
-
-	}
 }

@@ -159,6 +159,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.PostProcessor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizeAndOffsetComputer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IntegerTranslation;
@@ -2203,7 +2204,7 @@ public class CHandler implements ICHandler {
 	private void addIntegerBoundsCheck(final Dispatcher main, final ILocation loc, final ExpressionResult rex, final CPrimitive resultType,
 			final int operation, final Expression... operands) {
 		if (main.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SIGNED_INTEGER_BOUNDS)
-				&& resultType.isIntegerType() && !resultType.isUnsigned()) {
+				&& resultType.isIntegerType() && !main.getTypeSizes().isUnsigned(resultType)) {
 			final Check check = new Check(Spec.INTEGER_OVERFLOW);
 			final Expression operationResult;
 			if (operands.length == 1) {
@@ -2737,9 +2738,10 @@ public class CHandler implements ICHandler {
 			if (newPointsToType instanceof CPrimitive && exprPointsToType instanceof CPrimitive) {
 				if (((CPrimitive) newPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE
 						&& ((CPrimitive) exprPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE) {
-					if ((((CPrimitive) newPointsToType).isUnsigned() && !((CPrimitive) exprPointsToType).isUnsigned())
-							|| !(((CPrimitive) newPointsToType).isUnsigned()
-									&& ((CPrimitive) exprPointsToType).isUnsigned())) {
+					final TypeSizes typeSizes = main.getTypeSizes();
+					if ((typeSizes.isUnsigned(((CPrimitive) newPointsToType)) && !typeSizes.isUnsigned(((CPrimitive) exprPointsToType)))
+							|| !(typeSizes.isUnsigned(((CPrimitive) newPointsToType))
+									&& typeSizes.isUnsigned(((CPrimitive) exprPointsToType)))) {
 						throw new UnsupportedSyntaxException(loc, "unsupported cast: " + exprPointsToType
 								+ " pointer  to " + newPointsToType + " pointer");
 					}
