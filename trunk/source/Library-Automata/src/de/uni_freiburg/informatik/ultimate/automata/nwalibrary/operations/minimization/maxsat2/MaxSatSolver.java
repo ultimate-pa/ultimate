@@ -28,11 +28,11 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2;
 
 import java.util.ArrayDeque;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 
@@ -41,21 +41,17 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
  * The satisfying assignment returned by this solver is a locally optimal 
  * solution in the following sense. If you replace one false-assignment to
  * a variable by a true-assignment then the resulting mapping is not a valid
- * assignment anymore.
+ * assignment anymore. <br>
  * There is no guarantee that this locally optimal solution does not have to
  * be a globally optimal solution (which is a solution in which the number
- * of true-assigned variables is maximal).  
+ * of true-assigned variables is maximal).
+ * 
  * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
- * @param <V> Kind of objects that are used as variables.
+ * @param <V> variable type
  */
 public class MaxSatSolver<V> extends AMaxSatSolver<V> {
-	// TODO<backtracking> move back to superclass
-	private final Map<V, Boolean> mVariablesIrrevocablySet =
-			new HashMap<V, Boolean>();
-	private final ArrayDeque<HashMap<V, Boolean>> mVariablesTemporarilySetStack;
-	private HashMap<V, Boolean> mVariablesTemporarilySet;
-	private final ArrayDeque<V> mVariableDecisionStack = new ArrayDeque<>();
+	private final ArrayDeque<StackContent> mStack;
 	
 	/**
 	 * @param services Ultimate services
@@ -63,9 +59,8 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 	public MaxSatSolver(final AutomataLibraryServices services) {
 		super(services);
 		
-		mVariablesTemporarilySetStack = new ArrayDeque<HashMap<V, Boolean>>();
-		mVariablesTemporarilySet = new HashMap<>();
-		mVariablesTemporarilySetStack.push(mVariablesTemporarilySet);
+		mStack = new ArrayDeque<>();
+		initializeStack();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -120,60 +115,60 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 	}
 
 	@Override
-	public Map<V, Boolean> getValues() {
-		// TODO<backtracking>
-		return Collections.unmodifiableMap(mVariablesIrrevocablySet);
-	}
-	
-	@Override
 	protected Boolean getPersistentAssignment(final V var) {
-		// TODO<backtracking>
 		final Boolean result = mVariablesIrrevocablySet.get(var);
-		assert (result == null) || (! mVariablesTemporarilySet.containsKey(var)) :
+		assert (result == null) || (! getVarTempSet().containsKey(var)) :
 				"Unsynchronized assignment data structures.";
 		return result;
 	}
 
 	@Override
 	protected Boolean getTemporaryAssignment(final V var) {
-		// TODO<backtracking>
-		final Boolean result = mVariablesTemporarilySet.get(var);
-		assert (result == null) || (! mVariablesIrrevocablySet.containsKey(var)) :
-			"Unsynchronized assignment data structures.";
-		return result;
+		final Iterator<StackContent> it = mStack.iterator();
+		while (it.hasNext()) {
+			final HashMap<V, Boolean> map = it.next().mVariablesTemporarilySet;
+			final Boolean result = map.get(var);
+			if (result != null) {
+				assert (! mVariablesIrrevocablySet.containsKey(var)) :
+					"Unsynchronized assignment data structures.";
+				return result;
+			}
+		}
+		return null;
 	}
 
 	@Override
 	protected void decideOne() {
-		mDecisions++;
-		if (! mVariableDecisionStack.isEmpty()) {
-			mVariablesTemporarilySet = new HashMap<>();
-			mVariablesTemporarilySetStack.push(mVariablesTemporarilySet);
-		}
 		final V var = getUnsetVariable();
-		mVariableDecisionStack.push(var);
+		
+		// new decision level
+		pushStack(var);
+		mDecisions++;
+		
 		setVariable(var, true);
 		propagateAll();
 		if (mConjunctionEquivalentToFalse) {
+			// first backtracking attempt
 			backtrack(var);
 			
-			while (mConjunctionEquivalentToFalse &&
-					! mVariableDecisionStack.isEmpty()) {
+			if (mConjunctionEquivalentToFalse) {
 				// resetting variable did not help, backtrack further
-				backtrackPrevious(); // TODO<backtracking> correct?
+				backtrackFurther(var);
 			}
-		} else {
-			makeModificationsPersistent();
 		}
+		if (! mConjunctionEquivalentToFalse) {
+			makeModificationsPersistentIfAllowed();
+		}	
 	}
 
-	@Override
+		@Override
 	protected void setVariable(final V var, final boolean newStatus) {
-		// TODO<backtracking>
+		mLogger.debug("setting variable " + var + " to " + newStatus);
 		assert mVariables.contains(var) : "unknown variable";
 		assert !mVariablesIrrevocablySet.containsKey(var) : "variable already set";
+		mUnsetVariables.remove(var);
 //		assert checkClausesConsistent() : "clauses inconsistent";
-		final Boolean oldStatus = mVariablesTemporarilySet.put(var, newStatus);
+		final Boolean oldStatus = getVarTempSet().put(var, newStatus);
 		if (oldStatus != null) {
 			throw new IllegalArgumentException("variable already set " + var);
 		}
@@ -183,55 +178,35 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 
 	@Override
 	protected void makeModificationsPersistent() {
-		// TODO<backtracking>
-		// true iff backtracking past this point is never necessary
-		final boolean unbacktrackable = mVariableDecisionStack.isEmpty();
-		
-		if (unbacktrackable) {
-			removeClauses(mClausesMarkedForRemoval);
-			mClausesMarkedForRemoval = new LinkedHashSet<>();
-			for (final HashMap<V, Boolean> map : mVariablesTemporarilySetStack) {
-				for (final Entry<V, Boolean> entry : map.entrySet()) {
-					mVariablesIrrevocablySet.put(entry.getKey(), entry.getValue());
-					final boolean wasUnset = mUnsetVariables.remove(entry.getKey());
-					assert wasUnset;
-				}
+		mLogger.debug("making current solver state persistent");
+		while (true) {
+			assert (! mStack.isEmpty());
+			// make variable assignment persistent
+			for (final Entry<V, Boolean> entry : getVarTempSet().entrySet()) {
+				mVariablesIrrevocablySet.put(entry.getKey(), entry.getValue());
 			}
-			mVariablesTemporarilySetStack.clear();
+			
+			// remove clauses which were evaluated to true
+			removeMarkedClauses();
+			
+			// pop current level from stack
+			final boolean poppedLastFrame = popStack();
+			if (poppedLastFrame) {
+				break;
+			}
 		}
-		
-		mVariablesTemporarilySet = new HashMap<>();
-		mVariablesTemporarilySetStack.push(mVariablesTemporarilySet);
+		mLogger.debug("finished making solver state persistent");
 	}
 
 	@Override
 	protected void backtrack(final V var) {
 		mWrongDecisions ++;
-		final V var2 = mVariableDecisionStack.pop();
-		assert (var.equals(var2)) : "illegal first-level backtracking";
-		mClausesMarkedForRemoval = new LinkedHashSet<>();
-		final HashMap<V, Boolean> variablesIncorrectlySet =
-				mVariablesTemporarilySetStack.pop();
-		mVariablesTemporarilySet = mVariablesTemporarilySetStack.peek();
-		if (mVariablesTemporarilySet == null) {
-			mVariablesTemporarilySet = new HashMap<>();
-			mVariablesTemporarilySetStack.push(mVariablesTemporarilySet);
-		}
+		final Set<V> variablesIncorrectlySet = getVarTempSet().keySet();
+		popStack();
+		
 		mConjunctionEquivalentToFalse = false;
-		for (final V tmpVar : variablesIncorrectlySet.keySet()) {
-			/*
-			 * TODO some clauses are reevaluated several times
-			 *      (if they contain several reset variables)
-			 */
-			reEvaluateStatusOfAllClauses(tmpVar);
-		}
+		reEvaluateStatusOfAllClauses(variablesIncorrectlySet);
 		setVariable(var, false);
-	}
-
-	private void backtrackPrevious() {
-		assert (! mVariableDecisionStack.isEmpty());
-		final V var = mVariableDecisionStack.peek();
-		backtrack(var);
 	}
 
 	@Override
@@ -243,5 +218,129 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 		sb.append(" Decisions : ").append(mDecisions);
 		sb.append(" (thereof " + mWrongDecisions + " wrong decisions)");
 		mLogger.info(sb.toString());
+	}
+
+	private void makeModificationsPersistentIfAllowed() {
+		// true iff backtracking past this point is never necessary
+		final boolean makeReallyPersistent =
+				(isLowestStackLevel() || hasOnlyHornClauses());
+		if (makeReallyPersistent) {
+			makeModificationsPersistent();
+		}
+	}
+
+	private void backtrackFurther(final V var) {
+		assert (var != null);
+		V nextVar = var;
+		do {
+			// unassign the variable
+			final boolean wasSet = mUnsetVariables.add(nextVar);
+			assert wasSet : "The variable should have been set before backtracking.";
+			
+			// resetting variable did not help, backtrack further
+			nextVar = getDecision();
+			assert (nextVar != null);
+			backtrack(nextVar);
+		} while (mConjunctionEquivalentToFalse && (! isLowestStackLevel()));
+	}
+
+	private boolean hasOnlyHornClauses() {
+		// TODO implement for optimization
+		return false;
+	}
+	
+	/* --- decision level stack (auxiliary data structure) --- */
+	
+	private boolean isLowestStackLevel() {
+		return (mStack.size() == 1);
+	}
+	
+	private void initializeStack() {
+		// add lowest-level content
+		mStack.push(new StackContent());
+		
+		// synchronize information with superclass
+		mClausesMarkedForRemoval = getMarkedClauses();
+	}
+	
+	private void pushStack(final V var) {
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("+A stack level " + mStack.size() + ": " + mStack.peek());
+		}
+		mStack.push(new StackContent(var));
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("+B stack level " + mStack.size() + ": " + mStack.peek());
+		}
+	}
+	
+	private boolean popStack() {
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("-A stack level " + mStack.size() + ": " + mStack.peek());
+		}
+		mStack.pop();
+		
+		final boolean result = mStack.isEmpty();
+		if (result) {
+			// add lowest level again
+			initializeStack();
+		} else {
+			// only synchronize information with superclass
+			mClausesMarkedForRemoval = getMarkedClauses();
+		}
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("-B stack level " + mStack.size() + ": " + mStack.peek());
+		}
+		return result;
+	}
+	
+	private HashMap<V, Boolean> getVarTempSet() {
+		return mStack.peek().mVariablesTemporarilySet;
+	}
+	
+	private V getDecision() {
+		return mStack.peek().mVariableDecision;
+	}
+	
+	private Set<Clause<V>> getMarkedClauses() {
+		return mStack.peek().mClausesMarkedForRemoval;
+	}
+	
+	private class StackContent {
+		private final V mVariableDecision;
+		private final HashMap<V, Boolean> mVariablesTemporarilySet;
+		private final Set<Clause<V>> mClausesMarkedForRemoval;
+		
+		public StackContent() {
+			this(null, false);
+		}
+		
+		public StackContent(final V variable) {
+			this(variable, false);
+			assert (variable != null) : "Do not set the variable to null!";
+		}
+		
+		@SuppressWarnings("squid:S1172")
+		private StackContent(final V variable, final boolean dummy) {
+			this.mVariableDecision = variable;
+			this.mVariablesTemporarilySet = new HashMap<>();
+			this.mClausesMarkedForRemoval = new LinkedHashSet<Clause<V>>();
+		}
+		
+		@Override
+		public String toString() {
+			final StringBuilder b = new StringBuilder();
+			b.append("<");
+			if (mVariableDecision == null) {
+				b.append("lowest level, ");
+			} else {
+				b.append(mVariableDecision);
+				b.append(" = current decision, ");
+			}
+			b.append(mVariablesTemporarilySet.size());
+			b.append(" variables temporarily assigned, ");
+			b.append(this.mClausesMarkedForRemoval.size());
+			b.append(" clauses temporarily satisfied>");
+			return b.toString();
+		}
 	}
 }

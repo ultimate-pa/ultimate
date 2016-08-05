@@ -102,7 +102,7 @@ class Clause<V> {
 		return new ClauseCondition(clauseStatus, unsetAtoms);
 	}
 	
-	private EVariableStatus getCurrentVariableStatus(final V var, AMaxSatSolver<V> solver) {
+	private EVariableStatus getCurrentVariableStatus(final V var, final AMaxSatSolver<V> solver) {
 		assert solver.mVariables.contains(var);
 		final Boolean irr = solver.getPersistentAssignment(var);
 		if (irr != null) {
@@ -193,7 +193,7 @@ class Clause<V> {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		final Iterator<V> it = Arrays.asList(mNegativeAtoms).iterator();
+		Iterator<V> it = Arrays.asList(mNegativeAtoms).iterator();
 		while(it.hasNext()) {
 			sb.append(it.next());
 			if (it.hasNext()) {
@@ -203,13 +203,12 @@ class Clause<V> {
 		if (mNegativeAtoms.length > 0 && mPositiveAtoms.length > 0) {
 			sb.append(" --> ");
 		}
-		if (mPositiveAtoms.length == 0) {
-			// do nothing
-		} else if (mPositiveAtoms.length == 1) {
-			sb.append(mPositiveAtoms[0]);
-		} else {
-			throw new UnsupportedOperationException(
-					"more than one positive literal is not supported at the moment");
+		it = Arrays.asList(mPositiveAtoms).iterator();
+		while(it.hasNext()) {
+			sb.append(it.next());
+			if (it.hasNext()) {
+				sb.append(" \\/ ");
+			}
 		}
 		return sb.toString();
 	}

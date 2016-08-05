@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -48,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
  * @param <V> Kind of objects that are used as variables.
  */
 public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
-	private final Map<V, Boolean> mVariablesIrrevocablySet = new HashMap<V, Boolean>();
 	protected Map<V, Boolean> mVariablesTemporarilySet = new HashMap<V, Boolean>();
 	
 	/**
@@ -110,11 +108,6 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 	}
 	
 	@Override
-	public Map<V, Boolean> getValues() {
-		return Collections.unmodifiableMap(mVariablesIrrevocablySet);
-	}
-	
-	@Override
 	protected Boolean getPersistentAssignment(final V var) {
 		final Boolean result = mVariablesIrrevocablySet.get(var);
 		assert (result == null) || (! mVariablesTemporarilySet.containsKey(var)) :
@@ -145,8 +138,7 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 
 	@Override
 	protected void makeModificationsPersistent() {
-		removeClauses(mClausesMarkedForRemoval);
-		mClausesMarkedForRemoval = new LinkedHashSet<>();
+		removeMarkedClauses();
 		for (final Entry<V, Boolean> entry : mVariablesTemporarilySet.entrySet()) {
 			mVariablesIrrevocablySet.put(entry.getKey(), entry.getValue());
 			mUnsetVariables.remove(entry.getKey());
@@ -174,13 +166,7 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 		final Set<V> variablesIncorrectlySet = mVariablesTemporarilySet.keySet();
 		mVariablesTemporarilySet = new HashMap<>();
 		mConjunctionEquivalentToFalse = false;
-		/*
-		 * TODO some clauses are reevaluated several times
-		 *      (if they contain several reset variables)
-		 */
-		for (final V tmpVar : variablesIncorrectlySet) {
-			reEvaluateStatusOfAllClauses(tmpVar);
-		}
+		reEvaluateStatusOfAllClauses(variablesIncorrectlySet);
 		setVariable(var, false);
 		assert ! mConjunctionEquivalentToFalse : "resetting variable did not help";
 	}

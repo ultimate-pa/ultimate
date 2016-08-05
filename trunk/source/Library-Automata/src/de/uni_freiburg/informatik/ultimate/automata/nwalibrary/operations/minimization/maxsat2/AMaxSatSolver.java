@@ -27,7 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2;
 
-import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -55,7 +56,9 @@ public abstract class AMaxSatSolver<V> {
 	
 	// TODO remove this data structure which is only used for assertions in the long term
 	protected final Set<V> mVariables = new HashSet<V>();
-	
+
+	protected final Map<V, Boolean> mVariablesIrrevocablySet =
+			new HashMap<V, Boolean>();
 	protected final Set<V> mUnsetVariables = new HashSet<V>();
 	/**
 	 * A clause is a propagatee if it has exactly one unset literal and is not
@@ -159,11 +162,13 @@ public abstract class AMaxSatSolver<V> {
 	 * prints the log message
 	 */
 	protected abstract void log();
-
+	
 	/**
 	 * @return The locally optimal satisfying assignment.
 	 */
-	public abstract Map<V, Boolean> getValues();
+	public Map<V, Boolean> getValues() {
+		return Collections.unmodifiableMap(mVariablesIrrevocablySet);
+	}
 
 	/**
 	 * @param var variable
@@ -248,6 +253,17 @@ public abstract class AMaxSatSolver<V> {
 	 * @param newStatus new status
 	 */
 	protected abstract void setVariable(final V var, final boolean newStatus);
+	
+	protected void reEvaluateStatusOfAllClauses(final Iterable<V> vars) {
+		for (final V var : vars) {
+			mUnsetVariables.add(var);
+			/*
+			 * TODO some clauses are reevaluated several times
+			 *      (if they contain several reset variables)
+			 */
+			reEvaluateStatusOfAllClauses(var);
+		}
+	}
 
 	protected void reEvaluateStatusOfAllClauses(final V var) {
 		// TODO improvement: interrupt if clause equivalent to false was found
@@ -284,17 +300,7 @@ public abstract class AMaxSatSolver<V> {
 		}
 	}
 
-	protected void decideOne() {
-		mDecisions++;
-		final V var = getUnsetVariable();
-		setVariable(var, true);
-		propagateAll();
-		if (mConjunctionEquivalentToFalse) {
-			backtrack(var);
-		} else {
-			makeModificationsPersistent();
-		}
-	}
+	protected abstract void decideOne();
 
 	/**
 	 * current policy: just return the next variable from the set
@@ -310,11 +316,13 @@ public abstract class AMaxSatSolver<V> {
 		return var;
 	}
 
-	protected void removeClauses(final Collection<Clause<V>> clauses) {
-		for (final Clause<V> clause : clauses) {
+	protected void removeMarkedClauses() {
+		for (final Clause<V> clause : mClausesMarkedForRemoval) {
 			removeClause(clause);
 		}
-		mCurrentLiveClauses = mCurrentLiveClauses - clauses.size();
+		mCurrentLiveClauses =
+				mCurrentLiveClauses - mClausesMarkedForRemoval.size();
+		mClausesMarkedForRemoval = new LinkedHashSet<>();
 	}
 
 	private void removeClause(final Clause<V> clause) {
