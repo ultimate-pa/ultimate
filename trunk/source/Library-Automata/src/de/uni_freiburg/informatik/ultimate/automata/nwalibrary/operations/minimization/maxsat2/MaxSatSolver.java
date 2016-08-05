@@ -50,8 +50,12 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  * @param <V> variable type
  */
+@SuppressWarnings("squid:UselessParenthesesCheck")
 public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 	private final ArrayDeque<StackContent> mStack;
+	
+	// TODO temporary improvement, should become more sophisticated
+	private int mNumberOfNonHornClauses;
 	
 	/**
 	 * @param services Ultimate services
@@ -78,7 +82,8 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 	@Override
 	public void addClause(final V[] negativeAtoms, final V[] positiveAtoms) {
 		if (mDecisions > 0) {
-			throw new UnsupportedOperationException("only legal before decisions were made");
+			throw new UnsupportedOperationException(
+					"only legal before decisions were made");
 		}
 		
 		final Clause<V> clause = new Clause<V>(this, positiveAtoms, negativeAtoms);
@@ -93,7 +98,8 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 			mMaxLiveClauses = Math.max(mMaxLiveClauses, mCurrentLiveClauses);
 			if (clause.isEquivalentToFalse()) {
 				mConjunctionEquivalentToFalse = true;
-				throw new UnsupportedOperationException("clause set is equivalent to false");
+				throw new UnsupportedOperationException(
+						"clause set is equivalent to false");
 			} else  {
 				assert clause.getUnsetAtoms() > 0;
 				for (final V var :clause.getNegativeAtoms()) {
@@ -109,6 +115,9 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 				} else {
 					assert !clause.isPropagatee();
 					assert mPropagatees.isEmpty();
+					if (! clause.isHorn(this)) {
+						mNumberOfNonHornClauses++;
+					}
 				}
 			}
 		}
@@ -122,6 +131,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 		return result;
 	}
 
+	@SuppressWarnings("squid:S2447")
 	@Override
 	protected Boolean getTemporaryAssignment(final V var) {
 		final Iterator<StackContent> it = mStack.iterator();
@@ -230,6 +240,8 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 	}
 
 	private void backtrackFurther(final V var) {
+		assert (mNumberOfNonHornClauses > 0) :
+			"For Horn clauses backtracking should not be necessary for more than one level.";
 		assert (var != null);
 		V nextVar = var;
 		do {

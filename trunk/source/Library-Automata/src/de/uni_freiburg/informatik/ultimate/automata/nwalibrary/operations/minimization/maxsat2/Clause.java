@@ -212,5 +212,29 @@ class Clause<V> {
 		}
 		return sb.toString();
 	}
+
+	/**
+	 * @return true iff the clause is a Horn clause under the current assignment
+	 */
+	public boolean isHorn(final AMaxSatSolver<V> solver) {
+		boolean foundFirst = false;
+		for (final V var : mPositiveAtoms) {
+			final EVariableStatus status = getCurrentVariableStatus(var, solver);
+			switch (status) {
+				case TRUE:
+					if (foundFirst) {
+						return false;
+					}
+					foundFirst = true;
+					break;
+				case FALSE:
+				case UNSET:
+					break;
+				default:
+					throw new AssertionError();
+			}
+		}
+		return true;
+	}
 	
 }
