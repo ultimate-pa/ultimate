@@ -38,6 +38,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * An object of this class allows one to construct a {@link TransFormula}.
@@ -263,5 +267,36 @@ public class TransFormulaBuilder {
 		tfb.setFormula(script.term("true"));
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
 		return tfb.finishConstruction(script);
+	}
+	
+	/**
+	 * Construct TransFormula that represents the identity relation restricted
+	 * to the predicate pred, i.e., if x is the vector of variables occurring
+	 * in pred, the result represents a formula φ(x,x') such that the following
+	 * holds.
+	 * <ul>
+	 * <li> φ(x,x') implies x=x'
+	 * <li> ∃x' φ(x,x') is equivalent to pred
+	 * </ul>
+	 */
+	public static TransFormula constructTransFormulaFromPredicate(final IPredicate pred, final ManagedScript script) {
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null);
+		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		for (final IProgramVar bv : pred.getVars()) {
+			final TermVariable freshTv = script.constructFreshTermVariable(bv.getGloballyUniqueId(), bv.getTermVariable().getSort());
+			substitutionMapping.put(bv.getTermVariable(), freshTv);
+			tfb.addInVar(bv, freshTv);
+			tfb.addOutVar(bv, freshTv);
+		}
+		final Term formula = (new SafeSubstitution(script.getScript(), substitutionMapping)).transform(pred.getFormula());
+		final Infeasibility infeasibility;
+		if (SmtUtils.isFalse(pred.getFormula())) {
+			infeasibility = Infeasibility.INFEASIBLE;
+		} else {
+			infeasibility = Infeasibility.NOT_DETERMINED;
+		}
+		tfb.setFormula(formula);
+		tfb.setInfeasibility(infeasibility);
+		return tfb.finishConstruction(script.getScript());
 	}
 }

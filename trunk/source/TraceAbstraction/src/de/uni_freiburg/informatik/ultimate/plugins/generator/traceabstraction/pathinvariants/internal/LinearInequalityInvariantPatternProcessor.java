@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -167,11 +167,12 @@ public final class LinearInequalityInvariantPatternProcessor
 		patternVariables = new ArrayList<>();
 		patternCoefficients = new HashSet<>();
 
-		linearizer = new CachedTransFormulaLinearizer(services, predicateScript, axioms, storage, simplicationTechnique, xnfConversionTechnique);
-		this.precondition = linearizer.linearize(new TransFormula(precondition,
-				predicateScript));
-		this.postcondition = linearizer.linearize(new TransFormula(
-				postcondition, predicateScript));
+		linearizer = new CachedTransFormulaLinearizer(services, 
+				predicateScript, axioms, storage, simplicationTechnique, xnfConversionTechnique);
+		this.precondition = linearizer.linearize(
+				TransFormulaBuilder.constructTransFormulaFromPredicate(precondition, predicateScript));
+		this.postcondition = linearizer.linearize(
+				TransFormulaBuilder.constructTransFormulaFromPredicate(postcondition, predicateScript));
 		
 		currentRound = -1;
 		maxRounds = strategy.getMaxRounds();
