@@ -60,13 +60,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
@@ -121,9 +120,14 @@ public class TransFormula implements Serializable {
 		INFEASIBLE, UNPROVEABLE, NOT_DETERMINED
 	}
 
-	public TransFormula(final Term formula, final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars,
-			final Map<TermVariable, Term> auxVars, final Set<TermVariable> branchEncoders, final Infeasibility infeasibility,
-			final boolean allowSuperflousInVars, final Script script) {
+	/**
+	 * This constructor is package-private use {@link TransFormulaBuilder}
+	 * to construct TransFormulas. 
+	 */
+	TransFormula(final Term formula, 
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars,
+			final Map<TermVariable, Term> auxVars, final Set<TermVariable> branchEncoders, 
+			final Infeasibility infeasibility, final Script script) {
 		mFormula = formula;
 		mInVars = inVars;
 		mOutVars = outVars;
@@ -137,7 +141,7 @@ public class TransFormula implements Serializable {
 		// mVars = new
 		// HashSet<TermVariable>(Arrays.asList(mFormula.getFreeVars()));
 		assert allSubsetInOutAuxBranch() : "unexpected vars in TransFormula";
-		assert inAuxSubsetAll(allowSuperflousInVars) : "superfluous vars in TransFormula";
+		assert inAuxSubsetAll(false) : "superfluous vars in TransFormula";
 		// assert mOutVars.keySet().containsAll(mInVars.keySet()) :
 		// " strange inVar";
 
@@ -173,44 +177,6 @@ public class TransFormula implements Serializable {
 		return assignedVars;
 	}
 
-	public TransFormula(final Term formula, final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars,
-			final Map<TermVariable, Term> auxVars, final Set<TermVariable> branchEncoders, final Infeasibility infeasibility, final Script script) {
-		this(formula, inVars, outVars, auxVars, branchEncoders, infeasibility, false, script);
-	}
-	
-	/**
-	 * Construct TransFormula that represents the identity relation restricted
-	 * to the predicate pred, i.e., if x is the vector of variables occurring
-	 * in pred, the result represents a formula φ(x,x') such that the following
-	 * holds.
-	 * <ul>
-	 * <li> φ(x,x') implies x=x'
-	 * <li> ∃x' φ(x,x') is equivalent to pred
-	 * </ul>
-	 */
-	public TransFormula(final IPredicate pred, final ManagedScript script) {
-		
-		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-		final Map<IProgramVar, TermVariable> boogieVar2TermVariable = new HashMap<IProgramVar, TermVariable>();
-		for (final IProgramVar bv : pred.getVars()) {
-			final TermVariable freshTv = script.constructFreshTermVariable(bv.getGloballyUniqueId(), bv.getTermVariable().getSort());
-			substitutionMapping.put(bv.getTermVariable(), freshTv);
-			boogieVar2TermVariable.put(bv, freshTv);
-		}
-		mInVars = boogieVar2TermVariable;
-		mOutVars = boogieVar2TermVariable;
-		mFormula = (new SafeSubstitution(script.getScript(), substitutionMapping)).transform(pred.getFormula());
-		if (SmtUtils.isFalse(pred.getFormula())) {
-			mInfeasibility = Infeasibility.INFEASIBLE;
-		} else {
-			mInfeasibility = Infeasibility.NOT_DETERMINED;
-		}
-		mBranchEncoders = Collections.emptySet();
-		mAuxVars = Collections.emptyMap();
-		mConstants = (new ConstantFinder()).findConstants(mFormula);
-		mAssignedVars = computeAssignedVars(mInVars, mOutVars);
-		mClosedFormula = computeClosedFormula(mFormula, mInVars, mOutVars, mAuxVars, script.getScript());
-	}
 
 	/**
 	 * Construct formula where
@@ -472,29 +438,6 @@ public class TransFormula implements Serializable {
 		}
 	}
 
-	// public static TermVariable getFreshAuxVariable(Boogie2SMT boogie2smt,
-	// String id, Sort sort) {
-	// String name = id + "_" + s_FreshVarNumber++;
-	// TermVariable newVar = boogie2smt.getScript().variable(name, sort);
-	// return newVar;
-	// }
-
-	// public static TermVariable getFreshVariable(Boogie2SMT boogie2smt,
-	// BoogieVar var, Sort sort) {
-	// String name;
-	// if (var.isGlobal()) {
-	// if (var.isOldvar()) {
-	// name = "old(" + var.getIdentifier() + ")";
-	// } else {
-	// name = var.getIdentifier();
-	// }
-	// } else {
-	// name = var.getProcedure() + "_" + var.getIdentifier();
-	// }
-	// name += "_" + s_FreshVarNumber++;
-	// return boogie2smt.getScript().variable(name, sort);
-	// }
-
 	/**
 	 * @param services
 	 * @return the relational composition (concatenation) of transformula1 und
@@ -506,46 +449,44 @@ public class TransFormula implements Serializable {
 			final TransFormula... transFormula) {
 		logger.debug("sequential composition with" + (simplify ? "" : "out") + " formula simplification");
 		final Script script = boogie2smt.getScript();
-		final Map<IProgramVar, TermVariable> inVars = new HashMap<IProgramVar, TermVariable>();
-		final Map<IProgramVar, TermVariable> outVars = new HashMap<IProgramVar, TermVariable>();
 		final Set<TermVariable> auxVars = new HashSet<TermVariable>();
-		final Set<TermVariable> newBranchEncoders = new HashSet<TermVariable>();
 		Term formula = boogie2smt.getScript().term("true");
+		
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, false, null);
 
-		final Map<TermVariable, Term> subsitutionMapping = new HashMap<TermVariable, Term>();
+		final Map<Term, Term> subsitutionMapping = new HashMap<Term, Term>();
 		for (int i = transFormula.length - 1; i >= 0; i--) {
 			for (final IProgramVar var : transFormula[i].getOutVars().keySet()) {
 
 				final TermVariable outVar = transFormula[i].getOutVars().get(var);
 				TermVariable newOutVar;
-				if (inVars.containsKey(var)) {
-					newOutVar = inVars.get(var);
+				if (tfb.containsInVar(var)) {
+					newOutVar = tfb.getInVar(var);
 				} else {
 					newOutVar = boogie2smt.getVariableManager().constructFreshTermVariable(var);
 				}
 				subsitutionMapping.put(outVar, newOutVar);
 				// add to outvars if var is not outvar
-				if (!outVars.containsKey(var)) {
-					outVars.put(var, newOutVar);
+				if (!tfb.containsOutVar(var)) {
+					tfb.addOutVar(var, newOutVar);
 				}
 				final TermVariable inVar = transFormula[i].getInVars().get(var);
 				if (inVar == null) {
 					// case: var is assigned without reading or havoced
-					if (outVars.get(var) != newOutVar) {
+					if (tfb.getOutVar(var) != newOutVar) {
 						// add to auxVars if not already outVar
 						auxVars.add(newOutVar);
 					}
-					inVars.remove(var);
+					tfb.removeInVar(var);
 				} else if (inVar == outVar) {
 					// case: var is not modified
-					inVars.put(var, newOutVar);
+					tfb.addInVar(var, newOutVar);
 				} else {
 					// case: var is read and written
-					final Sort sort = outVar.getSort();
 					final TermVariable newInVar = boogie2smt.getVariableManager().constructFreshTermVariable(var);
 					subsitutionMapping.put(inVar, newInVar);
-					inVars.put(var, newInVar);
-					if (outVars.get(var) != newOutVar) {
+					tfb.addInVar(var, newInVar);
+					if (tfb.getOutVar(var) != newOutVar) {
 						// add to auxVars if not already outVar
 						auxVars.add(newOutVar);
 					}
@@ -556,7 +497,7 @@ public class TransFormula implements Serializable {
 				subsitutionMapping.put(auxVar, newAuxVar);
 				auxVars.add(newAuxVar);
 			}
-			newBranchEncoders.addAll(transFormula[i].getBranchEncoders());
+			tfb.addBranchEncoders(transFormula[i].getBranchEncoders());
 
 			for (final IProgramVar var : transFormula[i].getInVars().keySet()) {
 				if (transFormula[i].getOutVars().containsKey(var)) {
@@ -565,21 +506,18 @@ public class TransFormula implements Serializable {
 					// case var occurs only as inVar: var is not modfied.
 					final TermVariable inVar = transFormula[i].getInVars().get(var);
 					TermVariable newInVar;
-					if (inVars.containsKey(var)) {
-						newInVar = inVars.get(var);
+					if (tfb.containsInVar(var)) {
+						newInVar = tfb.getInVar(var);
 					} else {
-						final Sort sort = inVar.getSort();
 						newInVar = boogie2smt.getVariableManager().constructFreshTermVariable(var);
-						inVars.put(var, newInVar);
+						tfb.addInVar(var, newInVar);
 					}
 					subsitutionMapping.put(inVar, newInVar);
 				}
 			}
 			final Term originalFormula = transFormula[i].getFormula();
-			final Term updatedFormula = (new Substitution(subsitutionMapping, script)).transform(originalFormula);
+			final Term updatedFormula = (new SafeSubstitutionWithLocalSimplification(script, subsitutionMapping)).transform(originalFormula);
 			formula = Util.and(script, formula, updatedFormula);
-			// formula = new FormulaUnLet().unlet(formula);
-
 		}
 
 		formula = new FormulaUnLet().unlet(formula);
@@ -592,7 +530,6 @@ public class TransFormula implements Serializable {
 						" while doing sequential composition of " + transFormula.length + " TransFormulas");
 			}
 		}
-		removesuperfluousVariables(inVars, outVars, auxVars, formula);
 
 		if (extPqe) {
 			final Term eliminated = PartialQuantifierElimination.elim(script, QuantifiedFormula.EXISTS, auxVars, formula,
@@ -613,7 +550,6 @@ public class TransFormula implements Serializable {
 				formula = script.term("false");
 			}
 		}
-		removesuperfluousVariables(inVars, outVars, auxVars, formula);
 
 		Infeasibility infeasibility;
 		if (formula == script.term("false")) {
@@ -625,16 +561,13 @@ public class TransFormula implements Serializable {
 		if (tranformToCNF) {
 			final Term cnf = SmtUtils.toCnf(services, script, boogie2smt.getVariableManager(), formula, xnfConversionTechnique);
 			formula = cnf;
-			removesuperfluousVariables(inVars, outVars, auxVars, formula);
 		}
 
 		final Map<TermVariable, Term> auxVar2Const = TransFormula.constructAuxVarMapping(auxVars, boogie2smt.getScript());
-		final TransFormula result = new TransFormula(formula, inVars, outVars, auxVar2Const, newBranchEncoders, infeasibility, script);
-
-		// assert allVarsContainsFreeVars(allVars, formula);
-		assert freeVarsSubsetInOutAuxBranch(formula, inVars, outVars, auxVars, newBranchEncoders, logger);
-		return result;
-
+		tfb.addAuxVars(auxVar2Const);
+		tfb.setFormula(formula);
+		tfb.setInfeasibility(infeasibility);
+		return tfb.finishConstruction(script);
 	}
 
 	private static void reportTimeoutResult(final IUltimateServiceProvider services) {
@@ -643,251 +576,7 @@ public class TransFormula implements Serializable {
 		services.getResultService().reportResult(ModelCheckerUtils.PLUGIN_ID, timeOutRes);
 	}
 
-	@Deprecated
-	// there is also a probably similar methods with a similar name
-	private static void removesuperfluousVariables(final Map<IProgramVar, TermVariable> inVars,
-			final Map<IProgramVar, TermVariable> outVars, final Set<TermVariable> auxVars, final Term formula) {
-		final Set<TermVariable> occuringVars = new HashSet<TermVariable>(Arrays.asList(formula.getFreeVars()));
-		{
-			final List<IProgramVar> superfluousInVars = new ArrayList<IProgramVar>();
-			for (final Entry<IProgramVar, TermVariable> entry : inVars.entrySet()) {
-				if (!occuringVars.contains(entry.getValue())) {
-					superfluousInVars.add(entry.getKey());
-				}
-			}
-			for (final IProgramVar bv : superfluousInVars) {
-				final TermVariable inVar = inVars.get(bv);
-				final TermVariable outVar = outVars.get(bv);
-				if (inVar == outVar) {
-					assert inVar != null;
-					outVars.remove(bv);
-				}
-				inVars.remove(bv);
-			}
-		}
-		// we may not remove outVars e.g., if x is outvar and formula is true
-		// this means that x is havoced.
-		{
-			final List<TermVariable> superfluousAuxVars = new ArrayList<TermVariable>();
-			for (final TermVariable tv : auxVars) {
-				if (!occuringVars.contains(tv)) {
-					superfluousAuxVars.add(tv);
-				}
-			}
-			for (final TermVariable tv : superfluousAuxVars) {
-				auxVars.remove(tv);
-			}
-		}
-	}
 
-	// /**
-	// * @return the relational composition (concatenation) of transformula1 und
-	// * transformula2
-	// */
-	// public static TransFormula sequentialComposition(TransFormula
-	// transFormula1,
-	// TransFormula transFormula2, Boogie2SMT boogie2smt, int serialNumber) {
-	// Script script = boogie2smt.getScript();
-	// Term formula1 = transFormula1.getFormula();
-	// Map<BoogieVar, TermVariable> inVars1 = transFormula1.getInVars();
-	// Map<BoogieVar, TermVariable> outVars1 = transFormula1.getOutVars();
-	// Set<TermVariable> vars1 = transFormula1.getVars();
-	//
-	// Term formula2 = transFormula2.getFormula();
-	// Map<BoogieVar, TermVariable> inVars2 = transFormula2.getInVars();
-	// Map<BoogieVar, TermVariable> outVars2 = transFormula2.getOutVars();
-	// Set<TermVariable> vars2 = transFormula2.getVars();
-	//
-	// Map<BoogieVar, TermVariable> inVars = new HashMap<BoogieVar,
-	// TermVariable>();
-	// Map<BoogieVar, TermVariable> outVars = new HashMap<BoogieVar,
-	// TermVariable>();
-	// Set<TermVariable> allVars = new HashSet<TermVariable>();
-	// Set<TermVariable> newAuxVars = new HashSet<TermVariable>();
-	// Set<TermVariable> newBranchEncoders = new HashSet<TermVariable>();
-	//
-	// inVars.putAll(inVars2);
-	// outVars.putAll(outVars2);
-	// newAuxVars.addAll(transFormula1.getAuxVars());
-	// newAuxVars.addAll(transFormula2.getAuxVars());
-	// newBranchEncoders.addAll(transFormula1.getBranchEncoders());
-	// newBranchEncoders.addAll(transFormula2.getBranchEncoders());
-	// allVars.addAll(vars1);
-	// allVars.addAll(vars2);
-	// ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-	// ArrayList<Term> replacers = new ArrayList<Term>();
-	//
-	// for (BoogieVar var :outVars1.keySet()) {
-	// TermVariable outVar2 = outVars2.get(var);
-	// TermVariable inVar2 = inVars2.get(var);
-	// TermVariable outVar1 = outVars1.get(var);
-	// TermVariable inVar1 = inVars1.get(var);
-	//
-	// if (inVar2 == null) {
-	// if (outVar2 == null) {
-	// //var does not occur in transFormula2
-	// if (outVar1 != null) {
-	// outVars.put(var, outVar1);
-	// }
-	// if (inVar1 != null) {
-	// inVars.put(var, inVar1);
-	// }
-	// } else {
-	// assert (outVar1 != outVar2 && inVar1 != outVar2) :
-	// "accidently same tv is used twice, ask Matthias" +
-	// "to implement this case";
-	// //var is written but not read in transFormula2
-	// if (inVar1 != null) {
-	// inVars.put(var, inVar1);
-	// }
-	// if (inVar1 != outVar1) {
-	// newAuxVars.add(outVar1);
-	// }
-	// }
-	// } else {
-	// TermVariable newOutVar1 = inVar2;
-	// inVars.put(var, newOutVar1);
-	// replacees.add(outVar1);
-	// replacers.add(newOutVar1);
-	// if (inVar1 == null) {
-	// //var is written but not read in transFormula1
-	// inVars.remove(var);
-	// if (outVar2 != inVar2) {
-	// //var modified by both formulas
-	// newAuxVars.add(newOutVar1);
-	// }
-	// assert (outVar1 != inVar2 && outVar1 != outVar2) :
-	// "accidently same tv is used twice, ask Matthias" +
-	// "to implement this case";
-	// } else if (inVar1 == outVar1) {
-	// //var not modified in transFormula1
-	// assert (outVar1 != inVar2 && outVar1 != outVar2) :
-	// "accidently same tv is used twice, ask Matthias" +
-	// "to implement this case";
-	// } else {
-	// if (outVar2 != inVar2) {
-	// //var modified by both formulas
-	// newAuxVars.add(newOutVar1);
-	// }
-	// String name = var.getIdentifier() + "_In" + serialNumber;
-	// TermVariable newInVar = script.variable(
-	// name, outVar1.getSort());
-	// allVars.add(newInVar);
-	// allVars.add(newInVar);
-	// inVars.put(var, newInVar);
-	// replacees.add(inVar1);
-	// replacers.add(newInVar);
-	// }
-	//
-	// }
-	// }
-	//
-	// for (BoogieVar var : inVars1.keySet()) {
-	// if (outVars1.containsKey(var)) {
-	// // nothing do to, this var was already considered above
-	// } else {
-	// TermVariable outVar2 = outVars2.get(var);
-	// TermVariable inVar2 = inVars2.get(var);
-	// TermVariable inVar1 = inVars1.get(var);
-	// assert (inVar1 != inVar2) :
-	// "accidently same tv is used twice, ask Matthias" +
-	// "to implement this case";
-	// assert (inVar1 != outVar2) :
-	// "accidently same tv is used twice, ask Matthias" +
-	// "to implement this case";
-	// if (inVar2 == null) {
-	// if (outVar2 == null) {
-	// //var does not occur in transFormula2
-	// inVars.put(var, inVar1);
-	// } else {
-	// //var is written but not read in transFormula2
-	// inVars.put(var, inVar1);
-	// }
-	// } else {
-	// if (outVar2 == inVar2) {
-	// //var not modified in transFormula2
-	// inVars.put(var, inVar1);
-	// } else {
-	// //var modified in transFormula2
-	// inVars.put(var, inVar1);
-	// newAuxVars.add(inVar2);
-	// }
-	// }
-	// }
-	// }
-	//
-	// TermVariable[] vars = replacees.toArray(new
-	// TermVariable[replacees.size()]);
-	// Term[] values = replacers.toArray(new Term[replacers.size()]);
-	// Term formula = script.let( vars , values, formula1);
-	//
-	// formula = Util.and(script, formula, formula2);
-	// formula = new FormulaUnLet().unlet(formula);
-	// NaiveDestructiveEqualityResolution der =
-	// new NaiveDestructiveEqualityResolution(script);
-	// //remove auxVars that do not occur in the formula
-	// {
-	// Set<TermVariable> varsOccurInTerm = new HashSet<TermVariable>(
-	// Arrays.asList(formula.getFreeVars()));
-	// List<TermVariable> superfluousAuxVars = new ArrayList<TermVariable>();
-	// for (TermVariable tv : newAuxVars) {
-	// if (!varsOccurInTerm.contains(tv)) {
-	// superfluousAuxVars.add(tv);
-	// }
-	// }
-	// newAuxVars.removeAll(superfluousAuxVars);
-	// }
-	// formula = der.eliminate(newAuxVars, formula);
-	// // formula = (new SimplifyDDA(script,
-	// s_Logger)).getSimplifiedTerm(formula);
-	// LBool isSat = Util.checkSat(script, formula);
-	// if (isSat == LBool.UNSAT) {
-	// s_Logger.warn("CodeBlock already infeasible");
-	// formula = script.term("false");
-	// }
-	// Infeasibility infeasibility;
-	// if (formula == script.term("false")) {
-	// infeasibility = Infeasibility.INFEASIBLE;
-	// } else {
-	// infeasibility = Infeasibility.UNPROVEABLE;
-	// }
-	// Set<TermVariable> occuringVars = new HashSet<TermVariable>(
-	// Arrays.asList(formula.getFreeVars()));
-	// {
-	// List<BoogieVar> superfluousInVars = new ArrayList<BoogieVar>();
-	// for (Entry<BoogieVar, TermVariable> entry : inVars.entrySet()) {
-	// if (!occuringVars.contains(entry.getValue())) {
-	// superfluousInVars.add(entry.getKey());
-	// }
-	// }
-	// for (BoogieVar bv : superfluousInVars) {
-	// inVars.remove(bv);
-	// }
-	// }
-	// // we may not remove outVars e.g., if x is outvar and formula is true
-	// // this means that x is havoced.
-	// {
-	// List<TermVariable> superfluousAuxVars = new ArrayList<TermVariable>();
-	// for (TermVariable tv : newAuxVars) {
-	// if (!occuringVars.contains(tv)) {
-	// superfluousAuxVars.add(tv);
-	// }
-	// }
-	// for (TermVariable tv : superfluousAuxVars) {
-	// newAuxVars.remove(tv);
-	// }
-	// }
-	// Term closedFormula = computeClosedFormula(formula,
-	// inVars, outVars, newAuxVars, boogie2smt);
-	// TransFormula result = new TransFormula(formula, inVars, outVars,
-	// newAuxVars, newBranchEncoders, infeasibility, closedFormula);
-	// result.getAuxVars().addAll(newAuxVars);
-	// assert allVarsContainsFreeVars(allVars, formula);
-	// assert freeVarsSubsetInOutAuxBranch(formula, inVars, outVars, newAuxVars,
-	// newBranchEncoders);
-	// return result;
-	//
-	// }
 
 	/**
 	 * The parallel composition of transFormulas is the disjunction of the
@@ -924,10 +613,6 @@ public class TransFormula implements Serializable {
 		}
 
 		final Term[] renamedFormulas = new Term[transFormulas.length];
-//		final Map<IProgramVar, TermVariable> newInVars = new HashMap<IProgramVar, TermVariable>();
-//		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<IProgramVar, TermVariable>();
-//		final Set<TermVariable> auxVars = new HashSet<TermVariable>();
-//		final Set<TermVariable> branchEncoders = new HashSet<TermVariable>();
 		final TransFormulaBuilder tfb; 
 		if (useBranchEncoders) {
 			tfb = new TransFormulaBuilder(null, null, false, null, false, Arrays.asList(branchIndicators));
@@ -981,7 +666,7 @@ public class TransFormula implements Serializable {
 		for (int i = 0; i < transFormulas.length; i++) {
 			tfb.addBranchEncoders(transFormulas[i].getBranchEncoders());
 			auxVars.addAll(transFormulas[i].getAuxVars().keySet());
-			final Map<TermVariable, Term> subsitutionMapping = new HashMap<TermVariable, Term>();
+			final Map<Term, Term> subsitutionMapping = new HashMap<Term, Term>();
 			for (final IProgramVar bv : transFormulas[i].getInVars().keySet()) {
 				final TermVariable inVar = transFormulas[i].getInVars().get(bv);
 				subsitutionMapping.put(inVar, tfb.getInVar(bv));
@@ -999,7 +684,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			final Term originalFormula = transFormulas[i].getFormula();
-			renamedFormulas[i] = (new Substitution(subsitutionMapping, script)).transform(originalFormula);
+			renamedFormulas[i] = (new SafeSubstitutionWithLocalSimplification(script, subsitutionMapping)).transform(originalFormula);
 
 			for (final IProgramVar bv : assignedInSomeBranch.keySet()) {
 				final TermVariable inVar = transFormulas[i].getInVars().get(bv);
@@ -1061,158 +746,6 @@ public class TransFormula implements Serializable {
 		return true;
 	}
 
-	// /**
-	// * Returns a Transformula that can be seen as procedure summary of the
-	// input
-	// * transformula with respect to inParams and outParams.
-	// * We obtain the result by
-	// * - removing all inVars that are not global or not in inParams
-	// * - removing all outVars that are not global or not in outParams
-	// * - considering all oldVars as non-old inVars.
-	// */
-	// public static TransFormula procedureSummary(Boogie2SMT boogie2smt,
-	// TransFormula transFormula, Set<BoogieVar> inArgument, Set<BoogieVar>
-	// outResult) {
-	// Script script = boogie2smt.getScript();
-	// Map<BoogieVar, TermVariable> inVars = new HashMap<BoogieVar,
-	// TermVariable>();
-	// Map<BoogieVar, TermVariable> outVars = new HashMap<BoogieVar,
-	// TermVariable>();
-	// Set<TermVariable> allVars = new HashSet<TermVariable>();
-	// Set<TermVariable> auxVars = new HashSet<TermVariable>();
-	// Set<TermVariable> newBranchEncoders = new HashSet<TermVariable>();
-	//
-	// ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-	// ArrayList<Term> replacers = new ArrayList<Term>();
-	//
-	// Set<BoogieVar> inAndOutVars = new HashSet<BoogieVar>();
-	// inAndOutVars.addAll(transFormula.getOutVars().keySet());
-	// inAndOutVars.addAll(transFormula.getInVars().keySet());
-	//
-	// for (BoogieVar var : inAndOutVars) {
-	// TermVariable outVar = transFormula.getOutVars().get(var);
-	// TermVariable inVar = transFormula.getInVars().get(var);
-	//
-	// if (var.isGlobal()) {
-	// if (var.isOldvar()) {
-	// BoogieVar nonOldVar = boogie2smt.getSmt2Boogie().
-	// getGlobals().get(var.getIdentifier());
-	// TermVariable nonOldVarTv;
-	// // We use the TermVariable of the nonOld invar.
-	// // If the nonOld BoogieVar does not occur we use a fresh
-	// // TermVariable
-	// if (inVars.containsKey(nonOldVar)) {
-	// nonOldVarTv = inVar;
-	// } else {
-	// nonOldVarTv = getFreshVariable(boogie2smt,var, outVar.getSort());
-	// }
-	// if (transFormula.getInVars().containsKey(var)) {
-	// replacees.add(inVar);
-	// replacers.add(nonOldVarTv);
-	// assert (outVar == null || outVar == inVar) :
-	// "oldvar can not be modified";
-	// } else {
-	// assert transFormula.getOutVars().containsKey(var);
-	// replacees.add(outVar);
-	// replacers.add(nonOldVarTv);
-	// }
-	// // Since oldvars may not be modified it is safe to add the
-	// // TermVariable only as inVar.
-	// assert (!inVars.containsKey(nonOldVar) ||
-	// inVars.get(nonOldVarTv) == nonOldVarTv) :
-	// "oldVar should have been replaced by nonOldVar";
-	// inVars.put(var, nonOldVarTv);
-	// } else {
-	// if (transFormula.getInVars().containsKey(var)) {
-	// inVars.put(var, inVar);
-	// }
-	// if (transFormula.getOutVars().containsKey(var)) {
-	// outVars.put(var, outVar);
-	// }
-	// }
-	// } else {
-	// if (outVar != null) {
-	// if (outResult.contains(var)) {
-	// assert (transFormula.getOutVars().containsKey(var));
-	// outVars.put(var, outVar);
-	// } else {
-	// if (outVar == inVar && inArgument.contains(var)) {
-	// // do nothing. special case where outVar does not
-	// // become auxVar
-	// } else {
-	// auxVars.add(outVar);
-	// }
-	// }
-	// }
-	// if (inVar != null) {
-	// if (inArgument.contains(var) && inVar != null) {
-	// assert (transFormula.getInVars().containsKey(var));
-	// inVars.put(var, inVar);
-	// } else {
-	// if (inVar == outVar && outResult.contains(var)) {
-	// // do nothing. special case where inVar does not
-	// // become
-	// // auxVar
-	// } else {
-	// auxVars.add(inVar);
-	// }
-	// }
-	// }
-	// }
-	// }
-	//
-	// for (TermVariable auxVar : transFormula.getAuxVars()) {
-	// TermVariable newAuxVar = getFreshAuxVariable(boogie2smt,
-	// auxVar.getName(), auxVar.getSort());
-	// replacees.add(auxVar);
-	// replacers.add(newAuxVar);
-	// auxVars.add(newAuxVar);
-	// }
-	// //TODO: These have to be renamed?!?
-	// //newBranchEncoders.addAll(transFormula.getBranchEncoders());
-	//
-	//
-	// TermVariable[] vars = replacees.toArray(new
-	// TermVariable[replacees.size()]);
-	// Term[] values = replacers.toArray(new Term[replacers.size()]);
-	// Term formula = script.let( vars , values, transFormula.getFormula());
-	// //formula = new FormulaUnLet().unlet(formula);
-	//
-	//
-	// formula = new FormulaUnLet().unlet(formula);
-	// formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
-	// removesuperfluousVariables(inVars, outVars, auxVars, formula);
-	//
-	// NaiveDestructiveEqualityResolution der =
-	// new NaiveDestructiveEqualityResolution(script);
-	// formula = der.eliminate(auxVars, formula);
-	// formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
-	// removesuperfluousVariables(inVars, outVars, auxVars, formula);
-	//
-	// LBool isSat = Util.checkSat(script, formula);
-	// if (isSat == LBool.UNSAT) {
-	// s_Logger.warn("CodeBlock already infeasible");
-	// formula = script.term("false");
-	// }
-	// Infeasibility infeasibility;
-	// if (formula == script.term("false")) {
-	// infeasibility = Infeasibility.INFEASIBLE;
-	// } else {
-	// infeasibility = Infeasibility.UNPROVEABLE;
-	// }
-	//
-	// Term closedFormula = computeClosedFormula(formula,
-	// inVars, outVars, auxVars, boogie2smt);
-	// TransFormula result = new TransFormula(formula, inVars, outVars,
-	// auxVars, newBranchEncoders, infeasibility, closedFormula);
-	//
-	// // assert allVarsContainsFreeVars(allVars, formula);
-	// assert freeVarsSubsetInOutAuxBranch(formula, inVars, outVars, auxVars,
-	// newBranchEncoders);
-	// return result;
-	//
-	// }
-	//
 
 	private void removeOutVar(final IProgramVar var, final VariableManager variableManager) {
 		assert mOutVars.containsKey(var) : "illegal to remove variable not that is contained";
@@ -1250,58 +783,6 @@ public class TransFormula implements Serializable {
 		}
 	}
 
-	// /**
-	// * Replace all oldVars that occur in inVars or outVars by corresponding
-	// * non-old global Var. The corresponding non-old Var is the one that
-	// * occurs in the inVars. If inVars does not contain such a variable
-	// * we construct it.
-	// */
-	// private static Term replaceOldVarsByInVars(Boogie2SMT boogie2smt,
-	// Map<BoogieVar,TermVariable> inVars, Map<BoogieVar,TermVariable> outVars,
-	// Term formula) {
-	// ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-	// ArrayList<Term> replacers = new ArrayList<Term>();
-	//
-	// Set<BoogieVar> inAndOutVars = new HashSet<BoogieVar>();
-	// inAndOutVars.addAll(outVars.keySet());
-	// inAndOutVars.addAll(inVars.keySet());
-	//
-	// for (BoogieVar var : inAndOutVars) {
-	// if (var.isGlobal()) {
-	// if (var.isOldvar()) {
-	// TermVariable outVar = outVars.get(var);
-	// TermVariable inVar = inVars.get(var);
-	// BoogieVar nonOldVar = boogie2smt.getSmt2Boogie()
-	// .getGlobals().get(var.getIdentifier());
-	// TermVariable nonOldVarTv;
-	// // We use the TermVariable of the nonOld invar.
-	// // If the nonOld BoogieVar does not occur we use a fresh
-	// // TermVariable
-	// if (inVars.containsKey(nonOldVar)) {
-	// nonOldVarTv = inVar;
-	// } else {
-	// nonOldVarTv = getFreshVariable(boogie2smt, var,
-	// outVar.getSort());
-	// }
-	// if (inVars.containsKey(var)) {
-	// replacees.add(inVar);
-	// replacers.add(nonOldVarTv);
-	// assert (outVar == null || outVar == inVar) :
-	// "oldvar can not be modified";
-	// } else {
-	// assert outVars.containsKey(var);
-	// replacees.add(outVar);
-	// replacers.add(nonOldVarTv);
-	// }
-	// }
-	// }
-	// }
-	// TermVariable[] vars = replacees.toArray(new
-	// TermVariable[replacees.size()]);
-	// Term[] values = replacers.toArray(new Term[replacers.size()]);
-	// Term result = boogie2smt.getScript().let( vars , values, formula);
-	// return result;
-	// }
 
 	/**
 	 * Returns TransFormula that describes a sequence of code blocks that
@@ -1483,28 +964,6 @@ public class TransFormula implements Serializable {
 				}
 			}
 		}
-		// // Add all inVars (bv,tv) of the call to outVars of the result except
-		// // if there already an outVar (bv,tv').
-		// // (Because in this case the variable bv was reassigned by the
-		// summary,
-		// // e.g. in the case where bv is a global variable that can be
-		// modified
-		// // by the procedure or is bv is a variable that is assigned by the
-		// // call.
-		// {
-		// for (BoogieVar bv : callTf.getInVars().keySet()) {
-		// if (!result.getOutVars().containsKey(bv)) {
-		// TermVariable inVar = result.getInVars().get(bv);
-		// if (inVar == null) {
-		// // do nothing,
-		// // this inVar was removed by a simplification
-		// } else {
-		// result.mOutVars.put(bv, inVar);
-		// }
-		// }
-		//
-		// }
-		// }
 		assert SmtUtils.neitherKeyNorValueIsNull(result.mOutVars) : "sequentialCompositionWithCallAndReturn introduced null entries";
 		assert (isIntraprocedural(result));
 		return result;
