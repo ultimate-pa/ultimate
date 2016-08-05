@@ -153,11 +153,12 @@ public abstract class AMaxSatSolver<V> {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
+		makeModificationsPersistent();
 		mLogger.info("finished solver");
 		log();
 		return true;
 	}
-	
+
 	/**
 	 * prints the log message
 	 */
