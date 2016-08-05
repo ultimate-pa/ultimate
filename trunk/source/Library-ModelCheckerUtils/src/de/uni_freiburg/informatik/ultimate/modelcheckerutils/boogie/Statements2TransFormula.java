@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2T
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.SingleTermResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
@@ -100,15 +101,8 @@ public class Statements2TransFormula {
 
 	private String mCurrentProcedure;
 
-	private HashMap<IProgramVar, TermVariable> mOutVars;
-	private HashMap<IProgramVar, TermVariable> mInVars;
-
-	/**
-	 * Auxiliary variables. TermVariables that occur neither as inVar nor as
-	 * outVar. If you use the assumes or asserts to encode a transition the
-	 * auxiliary variables are existentially quantified.
-	 */
-	private HashSet<TermVariable> mAuxVars;
+	private TransFormulaBuilder mTransFormulaBuilder;
+	private Set<TermVariable> mAuxVars;
 
 	private Term mAssumes;
 	private Term mAsserts;
@@ -133,16 +127,14 @@ public class Statements2TransFormula {
 	 */
 	private void initialize(final String procId) {
 		assert mCurrentProcedure == null;
-		assert mOutVars == null;
-		assert mInVars == null;
+		assert mTransFormulaBuilder == null;
 		assert mAuxVars == null;
 		assert mAssumes == null;
-
+		
 		mOverapproximations = new HashMap<>();
 		mCurrentProcedure = procId;
-		mOutVars = new HashMap<IProgramVar, TermVariable>();
-		mInVars = new HashMap<IProgramVar, TermVariable>();
-		mAuxVars = new HashSet<TermVariable>();
+		mTransFormulaBuilder = new TransFormulaBuilder(null, null, false, null, true, null);
+		mAuxVars = new HashSet<>();
 		mAssumes = mScript.term("true");
 		if (s_ComputeAsserts) {
 			mAsserts = mScript.term("true");
@@ -154,8 +146,7 @@ public class Statements2TransFormula {
 		try {
 			tf = constructTransFormula(simplify, feasibilityKnown, simplicationTechnique);
 			mCurrentProcedure = null;
-			mOutVars = null;
-			mInVars = null;
+			mTransFormulaBuilder = null;
 			mAuxVars = null;
 			mAssumes = null;
 		} catch (final ToolchainCanceledException tce) {
@@ -195,12 +186,11 @@ public class Statements2TransFormula {
 
 			}
 		}
-		TransFormula.removeSuperfluousVars(formula, mInVars, mOutVars, auxVars);
-		final HashSet<TermVariable> branchEncoders = new HashSet<TermVariable>(0);
 		final Map<TermVariable, Term> auxVar2Const = TransFormula.constructAuxVarMapping(auxVars, mBoogie2SMT.getScript());
-		final TransFormula tf = new TransFormula(formula, mInVars, mOutVars, auxVar2Const, branchEncoders, infeasibility,
-				mBoogie2SMT.getScript());
-		return tf;
+		mTransFormulaBuilder.addAuxVars(auxVar2Const);
+		mTransFormulaBuilder.setFormula(formula);
+		mTransFormulaBuilder.setInfeasibility(infeasibility);
+		return mTransFormulaBuilder.finishConstruction(mScript);
 	}
 
 	private IProgramVar getModifiableBoogieVar(final String id, final DeclarationInformation declInfo) {
@@ -251,8 +241,8 @@ public class Statements2TransFormula {
 			final IProgramVar boogieVar = getModifiableBoogieVar(name, declInfo);
 			assert (boogieVar != null);
 			getOrConstuctCurrentRepresentative(boogieVar);
-			if (mInVars.containsKey(boogieVar)) {
-				final TermVariable tv = mInVars.get(boogieVar);
+			if (mTransFormulaBuilder.containsInVar(boogieVar)) {
+				final TermVariable tv = mTransFormulaBuilder.getInVar(boogieVar);
 				addedEqualities.put(tv, rhs[i]);
 				removeInVar(boogieVar);
 			}
@@ -282,7 +272,7 @@ public class Statements2TransFormula {
 			final IProgramVar boogieVar = getModifiableBoogieVar(name, declInfo);
 			assert (boogieVar != null);
 			getOrConstuctCurrentRepresentative(boogieVar);
-			if (mInVars.containsKey(boogieVar)) {
+			if (mTransFormulaBuilder.containsInVar(boogieVar)) {
 				removeInVar(boogieVar);
 			}
 		}
@@ -362,7 +352,7 @@ public class Statements2TransFormula {
 					removeInVar(boogieVar);
 
 					final TermVariable tvBefore = mVariableManager.constructFreshTermVariable(boogieVar);
-					mInVars.put(boogieVar, tvBefore);
+					mTransFormulaBuilder.addInVar(boogieVar, tvBefore);
 					ensuresSubstitution.put(boogieVar, tvAfter);
 					ensuresSubstitution.put(boogieOldVar, tvBefore);
 					requiresSubstitution.put(boogieVar, tvBefore);
@@ -442,8 +432,8 @@ public class Statements2TransFormula {
 	 * it to he auxilliary variables auxVar.
 	 */
 	private void removeInVar(final IProgramVar boogieVar) {
-		final TermVariable tv = mInVars.remove(boogieVar);
-		if (mOutVars.get(boogieVar) != tv) {
+		final TermVariable tv = mTransFormulaBuilder.removeInVar(boogieVar);
+		if (mTransFormulaBuilder.getOutVar(boogieVar) != tv) {
 			mAuxVars.add(tv);
 		}
 	}
@@ -455,11 +445,11 @@ public class Statements2TransFormula {
 	 * already an outvar.
 	 */
 	private TermVariable getOrConstuctCurrentRepresentative(final IProgramVar bv) {
-		TermVariable tv = mInVars.get(bv);
+		TermVariable tv = mTransFormulaBuilder.getInVar(bv);
 		if (tv == null) {
 			tv = createInVar(bv);
-			if (!mOutVars.containsKey(bv)) {
-				mOutVars.put(bv, tv);
+			if (!mTransFormulaBuilder.containsOutVar(bv)) {
+				mTransFormulaBuilder.addOutVar(bv, tv);
 			}
 		}
 		return tv;
@@ -477,7 +467,7 @@ public class Statements2TransFormula {
 		} else {
 			tv = mVariableManager.constructFreshTermVariable(bv);
 		}
-		mInVars.put(bv, tv);
+		mTransFormulaBuilder.addInVar(bv, tv);
 		return tv;
 	}
 
@@ -672,7 +662,7 @@ public class Statements2TransFormula {
 		mOverapproximations.putAll(tlres.getOverappoximations()); 
 		final Term[] argTerms = tlres.getTerms();
 		
-		mOutVars.clear();
+		mTransFormulaBuilder.clearOutVars();
 
 		final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, callee);
 		final Term[] assignments = new Term[st.getArguments().length];
@@ -683,7 +673,7 @@ public class Statements2TransFormula {
 				assert boogieVar != null;
 				final String suffix = "InParam";
 				final TermVariable tv = mVariableManager.constructTermVariableWithSuffix(boogieVar, suffix);
-				mOutVars.put(boogieVar, tv);
+				mTransFormulaBuilder.addOutVar(boogieVar, tv);
 				assignments[offset] = mScript.term("=", tv, argTerms[offset]);
 				offset++;
 			}
@@ -713,13 +703,13 @@ public class Statements2TransFormula {
 				final IProgramVar outParamBv = mBoogie2SmtSymbolTable.getBoogieVar(outParamId, declInfo, false);
 				final String suffix = "OutParam";
 				final TermVariable outParamTv = mVariableManager.constructTermVariableWithSuffix(outParamBv, suffix);
-				mInVars.put(outParamBv, outParamTv);
+				mTransFormulaBuilder.addInVar(outParamBv, outParamTv);
 				final String callLhsId = st.getLhs()[offset].getIdentifier();
 				final DeclarationInformation callLhsDeclInfo = st.getLhs()[offset]
 						.getDeclarationInformation();
 				final IProgramVar callLhsBv = mBoogie2SmtSymbolTable.getBoogieVar(callLhsId, callLhsDeclInfo, false);
 				final TermVariable callLhsTv = mVariableManager.constructFreshTermVariable(callLhsBv);
-				mOutVars.put(callLhsBv, callLhsTv);
+				mTransFormulaBuilder.addOutVar(callLhsBv, callLhsTv);
 				assignments[offset] = mScript.term("=", callLhsTv, outParamTv);
 				offset++;
 			}

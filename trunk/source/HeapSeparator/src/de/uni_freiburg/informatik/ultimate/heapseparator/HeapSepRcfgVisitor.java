@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -119,18 +119,13 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		
 
 		final ArraySplitter as = new ArraySplitter(mscript, moldArrayToPointerToNewArray, marrayToPartitions, tf.getInVars(), tf.getOutVars());
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(
+				as.getUpdatedInVars(), as.getUpdatedOutVars(), 
+				false, tf.getAuxVars(), false, tf.getBranchEncoders());
 		final Term newFormula = as.transform(tf.getFormula());
-		final Map<IProgramVar, TermVariable> newInVars = as.getUpdatedInVars();
-		final Map<IProgramVar, TermVariable> newOutVars = as.getUpdatedOutVars();
-	
-		
-		final Map<TermVariable, Term> newAuxVars = tf.getAuxVars();
-		final Set<TermVariable> newBranchEncoders = tf.getBranchEncoders();
-		final Infeasibility newInfeasibility = tf.isInfeasible();
-
-		final TransFormula result = new TransFormula(newFormula, newInVars, newOutVars, newAuxVars, newBranchEncoders, newInfeasibility, mscript);
-		
-		return result;
+		tfb.setFormula(newFormula);
+		tfb.setInfeasibility(tf.isInfeasible());
+		return tfb.finishConstruction(mscript);
 	}
 
 	public static TermVariable getSplitTermVariable(final String arrayName, final int splitIndex, final Sort sort, final Script script) {

@@ -44,6 +44,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -263,38 +265,36 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	}
 	
 	private TransFormula buildTransFormulaForStmtNotInUnsatCore(final TransFormula tf) {
-		final Map<IProgramVar, TermVariable> outvars = new HashMap<IProgramVar, TermVariable>();
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, 
+				true, null, tf.getBranchEncoders().isEmpty(), tf.getBranchEncoders());
 		for (final IProgramVar bv : tf.getAssignedVars()) {
 			if (tf.getOutVars().containsKey(bv)) {
-				outvars.put(bv, tf.getOutVars().get(bv));
+				tfb.addOutVar(bv, tf.getOutVars().get(bv));
 			}
 		}
-		
-		return new TransFormula(mScript.term("true"),
-				new HashMap<IProgramVar, TermVariable>(),
-				outvars,
-				Collections.emptyMap(), 
-				tf.getBranchEncoders(),
-				tf.isInfeasible(),
-				mScript);
+		tfb.setFormula(mScript.term("true"));
+		tfb.setInfeasibility(Infeasibility.INFEASIBLE.UNPROVEABLE);
+		return tfb.finishConstruction(mScript);
 	}
 	
-	private TransFormula buildTransFormulaWithRelevantConjuncts(final TransFormula tf, final Term[] conjunctsInUnsatCore) {
+	private TransFormula buildTransFormulaWithRelevantConjuncts(
+			final TransFormula tf, final Term[] conjunctsInUnsatCore) {
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(
+				null, null, false, null, false, null);
+		
 		final Term formula = Util.and(mScript, conjunctsInUnsatCore);
 		final Set<TermVariable> freeVars = new HashSet<TermVariable>();
 		Collections.addAll(freeVars, formula.getFreeVars());
-		final Map<IProgramVar, TermVariable> invars = new HashMap<IProgramVar, TermVariable>();
-		final Map<IProgramVar, TermVariable> outvars = new HashMap<IProgramVar, TermVariable>();
 		for (final IProgramVar bv : tf.getInVars().keySet()) {
 			if (freeVars.contains(tf.getInVars().get(bv))) {
-				invars.put(bv, tf.getInVars().get(bv));
+				tfb.addInVar(bv, tf.getInVars().get(bv));
 			}
 		}
 		for (final IProgramVar bv : tf.getOutVars().keySet()) {
 			if (tf.getOutVars().get(bv) != tf.getInVars().get(bv)) {
-				outvars.put(bv, tf.getOutVars().get(bv));
+				tfb.addOutVar(bv, tf.getOutVars().get(bv));
 			} else if (freeVars.contains(tf.getOutVars().get(bv))) {
-				outvars.put(bv, tf.getOutVars().get(bv));
+				tfb.addOutVar(bv, tf.getOutVars().get(bv));
 			}
 		}
 		final Map<TermVariable, Term> auxVars = new HashMap<TermVariable, Term>();
@@ -303,13 +303,10 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 				auxVars.put(entry.getKey(), entry.getValue());
 			}
 		}
-		return new TransFormula(formula,
-				invars,
-				outvars,
-				auxVars, 
-				tf.getBranchEncoders(),
-				tf.isInfeasible(),
-				mScript);
+		tfb.addAuxVars(auxVars);
+		tfb.setFormula(formula);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return tfb.finishConstruction(mScript);
 	}
 
 	@Override

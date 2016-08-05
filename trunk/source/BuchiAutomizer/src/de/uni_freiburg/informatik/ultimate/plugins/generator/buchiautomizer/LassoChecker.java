@@ -30,11 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -70,10 +66,9 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConve
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
@@ -676,7 +671,7 @@ public class LassoChecker {
 				((ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure());
 
 		if (!withStem) {
-			stemTF = getDummyTF();
+			stemTF = TransFormulaBuilder.getTrivialTransFormula(mSmtManager.getScript());
 		}
 		// TODO: present this somewhere else
 		// int loopVars = loopTF.getFormula().getFreeVars().length;
@@ -876,15 +871,7 @@ public class LassoChecker {
 	// return lassoRankerParams;
 	// }
 
-	private TransFormula getDummyTF() {
-		final Term term = mSmtManager.getScript().term("true");
-		final Map<IProgramVar, TermVariable> inVars = new HashMap<IProgramVar, TermVariable>();
-		final Map<IProgramVar, TermVariable> outVars = new HashMap<IProgramVar, TermVariable>();
-		final Map<TermVariable, Term> auxVars = Collections.emptyMap();
-		final Set<TermVariable> branchEncoders = new HashSet<TermVariable>();
-		final Infeasibility infeasibility = Infeasibility.UNPROVEABLE;
-		return new TransFormula(term, inVars, outVars, auxVars, branchEncoders, infeasibility, mSmtManager.getScript());
-	}
+
 
 	// private class LassoRankerParam {
 	// private final RankingFunctionTemplate mRankingFunctionTemplate;

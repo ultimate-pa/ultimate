@@ -924,21 +924,24 @@ public class TransFormula implements Serializable {
 		}
 
 		final Term[] renamedFormulas = new Term[transFormulas.length];
-		final Map<IProgramVar, TermVariable> newInVars = new HashMap<IProgramVar, TermVariable>();
-		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<IProgramVar, TermVariable>();
-		final Set<TermVariable> auxVars = new HashSet<TermVariable>();
-		final Set<TermVariable> branchEncoders = new HashSet<TermVariable>();
+//		final Map<IProgramVar, TermVariable> newInVars = new HashMap<IProgramVar, TermVariable>();
+//		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<IProgramVar, TermVariable>();
+//		final Set<TermVariable> auxVars = new HashSet<TermVariable>();
+//		final Set<TermVariable> branchEncoders = new HashSet<TermVariable>();
+		final TransFormulaBuilder tfb; 
 		if (useBranchEncoders) {
-			branchEncoders.addAll(Arrays.asList(branchIndicators));
+			tfb = new TransFormulaBuilder(null, null, false, null, false, Arrays.asList(branchIndicators));
+		} else {
+			tfb = new TransFormulaBuilder(null, null, false, null, true, null);
 		}
 
 		final Map<IProgramVar, Sort> assignedInSomeBranch = new HashMap<IProgramVar, Sort>();
 		for (final TransFormula tf : transFormulas) {
 			for (final IProgramVar bv : tf.getInVars().keySet()) {
-				if (!newInVars.containsKey(bv)) {
+				if (!tfb.containsInVar(bv)) {
 					final Sort sort = tf.getInVars().get(bv).getSort();
 					final String inVarName = bv.getIdentifier() + "_In" + serialNumber;
-					newInVars.put(bv, script.variable(inVarName, sort));
+					tfb.addInVar(bv, script.variable(inVarName, sort));
 				}
 			}
 			for (final IProgramVar bv : tf.getOutVars().keySet()) {
@@ -947,10 +950,10 @@ public class TransFormula implements Serializable {
 				// also occur as inVar
 				// We can omit this step in the special case where the
 				// variable is assigned in all branches.
-				if (!newInVars.containsKey(bv) && !assignedInAll(bv, transFormulas)) {
+				if (!tfb.containsInVar(bv) && !assignedInAll(bv, transFormulas)) {
 					final Sort sort = tf.getOutVars().get(bv).getSort();
 					final String inVarName = bv.getIdentifier() + "_In" + serialNumber;
-					newInVars.put(bv, script.variable(inVarName, sort));
+					tfb.addInVar(bv, script.variable(inVarName, sort));
 				}
 
 				final TermVariable outVar = tf.getOutVars().get(bv);
@@ -962,7 +965,7 @@ public class TransFormula implements Serializable {
 				}
 				// auxilliary step, add all invars. Some will be overwritten by
 				// outvars
-				newOutVars.put(bv, newInVars.get(bv));
+				tfb.addOutVar(bv, tfb.getInVar(bv));
 			}
 		}
 
@@ -971,16 +974,17 @@ public class TransFormula implements Serializable {
 		for (final IProgramVar bv : assignedInSomeBranch.keySet()) {
 			final Sort sort = assignedInSomeBranch.get(bv);
 			final String outVarName = bv.getIdentifier() + "_Out" + serialNumber;
-			newOutVars.put(bv, script.variable(outVarName, sort));
+			tfb.addOutVar(bv, script.variable(outVarName, sort));
 		}
 
+		final Set<TermVariable> auxVars = new HashSet<>();
 		for (int i = 0; i < transFormulas.length; i++) {
-			branchEncoders.addAll(transFormulas[i].getBranchEncoders());
+			tfb.addBranchEncoders(transFormulas[i].getBranchEncoders());
 			auxVars.addAll(transFormulas[i].getAuxVars().keySet());
 			final Map<TermVariable, Term> subsitutionMapping = new HashMap<TermVariable, Term>();
 			for (final IProgramVar bv : transFormulas[i].getInVars().keySet()) {
 				final TermVariable inVar = transFormulas[i].getInVars().get(bv);
-				subsitutionMapping.put(inVar, newInVars.get(bv));
+				subsitutionMapping.put(inVar, tfb.getInVar(bv));
 			}
 			for (final IProgramVar bv : transFormulas[i].getOutVars().keySet()) {
 				final TermVariable outVar = transFormulas[i].getOutVars().get(bv);
@@ -988,10 +992,10 @@ public class TransFormula implements Serializable {
 
 				final boolean isAssignedVar = (inVar != outVar);
 				if (isAssignedVar) {
-					subsitutionMapping.put(outVar, newOutVars.get(bv));
+					subsitutionMapping.put(outVar, tfb.getOutVar(bv));
 				} else {
 					assert subsitutionMapping.containsKey(outVar);
-					assert subsitutionMapping.containsValue(newInVars.get(bv));
+					assert subsitutionMapping.containsValue(tfb.getInVar(bv));
 				}
 			}
 			final Term originalFormula = transFormulas[i].getFormula();
@@ -1002,15 +1006,15 @@ public class TransFormula implements Serializable {
 				final TermVariable outVar = transFormulas[i].getOutVars().get(bv);
 				if (inVar == null && outVar == null) {
 					// bv does not occur in transFormula
-					assert newInVars.get(bv) != null;
-					assert newOutVars.get(bv) != null;
-					final Term equality = script.term("=", newInVars.get(bv), newOutVars.get(bv));
+					assert tfb.getInVar(bv) != null;
+					assert tfb.getOutVar(bv) != null;
+					final Term equality = script.term("=", tfb.getInVar(bv), tfb.getOutVar(bv));
 					renamedFormulas[i] = Util.and(script, renamedFormulas[i], equality);
 				} else if (inVar == outVar) {
 					// bv is not modified in transFormula
-					assert newInVars.get(bv) != null;
-					assert newOutVars.get(bv) != null;
-					final Term equality = script.term("=", newInVars.get(bv), newOutVars.get(bv));
+					assert tfb.getInVar(bv) != null;
+					assert tfb.getOutVar(bv) != null;
+					final Term equality = script.term("=", tfb.getInVar(bv), tfb.getOutVar(bv));
 					renamedFormulas[i] = Util.and(script, renamedFormulas[i], equality);
 				}
 			}
@@ -1038,10 +1042,11 @@ public class TransFormula implements Serializable {
 		if (tranformToCNF) {
 			resultFormula = SmtUtils.toCnf(services, script, maScript, resultFormula, xnfConversionTechnique);
 		}
-		TransFormula.removeSuperfluousVars(resultFormula, newInVars, newOutVars, auxVars);
 		final Map<TermVariable, Term> auxVar2Const = TransFormula.constructAuxVarMapping(auxVars, script);
-		return new TransFormula(resultFormula, newInVars, newOutVars, auxVar2Const, branchEncoders, inFeasibility,
-				script);
+		tfb.addAuxVars(auxVar2Const);
+		tfb.setFormula(resultFormula);
+		tfb.setInfeasibility(inFeasibility);
+		return tfb.finishConstruction(script);
 	}
 
 	/**
@@ -1525,8 +1530,6 @@ public class TransFormula implements Serializable {
 	
 	
 	private static TransFormula computeGuard(final TransFormula tf, final Script script) {
-		final Map<IProgramVar, TermVariable> inVars = tf.getInVars();
-		final Map<IProgramVar, TermVariable> outVars = tf.getInVars(); // yes! outVars are inVars of input
 		final Set<TermVariable> auxVars = new HashSet<TermVariable>();
 		auxVars.addAll(tf.getAuxVars().keySet());
 		for (final IProgramVar bv : tf.getAssignedVars()) {
@@ -1538,12 +1541,12 @@ public class TransFormula implements Serializable {
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new AssertionError("I think this does not make sense with branch enconders");
 		}
-		final Set<TermVariable> branchEncoders = tf.getBranchEncoders();
-		final Infeasibility infeasibility = tf.isInfeasible();
-		final Term formula = tf.getFormula();
 		final Map<TermVariable, Term> auxVar2Const = TransFormula.constructAuxVarMapping(auxVars, script);
-		final TransFormula result = new TransFormula(formula, inVars, outVars, auxVar2Const, branchEncoders, infeasibility, script);
-		return result;
+		// yes! outVars of result are indeed the inVars of input
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getInVars(), false, auxVar2Const, true, null);
+		tfb.setFormula(tf.getFormula());
+		tfb.setInfeasibility(tf.isInfeasible());
+		return tfb.finishConstruction(script);
 	}
 	
 	private static TransFormula negate(final TransFormula tf, final ManagedScript maScript, final IUltimateServiceProvider services, 
@@ -1551,8 +1554,6 @@ public class TransFormula implements Serializable {
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new AssertionError("I think this does not make sense with branch enconders");
 		}
-		final Set<TermVariable> branchEncoders = tf.getBranchEncoders();
-		final Infeasibility infeasibility = tf.isInfeasible();
 		Term formula = tf.getFormula();
 		formula = PartialQuantifierElimination.quantifier(services, logger, 
 				maScript.getScript(), maScript, simplificationTechnique, xnfConversionTechnique, QuantifiedFormula.EXISTS, 
@@ -1563,17 +1564,12 @@ public class TransFormula implements Serializable {
 			throw new UnsupportedOperationException("cannot negate if there are auxVars");
 		}
 		formula = SmtUtils.not(maScript.getScript(), formula);
-		final Map<TermVariable, Term> auxVars = Collections.emptyMap();
 		
-		final Map<IProgramVar, TermVariable> inVars = new HashMap<>(tf.getInVars());
-		final Map<IProgramVar, TermVariable> outVars = new HashMap<>(tf.getOutVars());
-		TransFormula.removeSuperfluousVars(formula, inVars, outVars, auxVars.keySet());
-		
-
-		//FIXME: Filter inVars and outVars to tv that occur in formula
-//		formula = SmtUtils.quantifier(boogie2smt.getScript(), QuantifiedFormula.EXISTS, tf.getAuxVars(), formula);
-		final TransFormula result = new TransFormula(formula, inVars, outVars, auxVars, branchEncoders, infeasibility, maScript.getScript());
-		return result;
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), 
+				true, null, false, tf.getBranchEncoders());
+		tfb.setFormula(formula);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return tfb.finishConstruction(maScript.getScript());
 	}
 	
 	public static TransFormula computeMarkhorTransFormula(final TransFormula tf, 
