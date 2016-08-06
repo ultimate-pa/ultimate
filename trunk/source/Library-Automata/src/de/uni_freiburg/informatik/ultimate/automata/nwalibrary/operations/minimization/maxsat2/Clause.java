@@ -200,20 +200,25 @@ class Clause<V> {
 				sb.append(" /\\ ");
 			}
 		}
-		if (mNegativeAtoms.length > 0 && mPositiveAtoms.length > 0) {
+		if (mNegativeAtoms.length > 0) {
 			sb.append(" --> ");
 		}
-		it = Arrays.asList(mPositiveAtoms).iterator();
-		while(it.hasNext()) {
-			sb.append(it.next());
-			if (it.hasNext()) {
-				sb.append(" \\/ ");
+		if (mPositiveAtoms.length == 0) {
+			sb.append("true");
+		} else {
+			it = Arrays.asList(mPositiveAtoms).iterator();
+			while(it.hasNext()) {
+				sb.append(it.next());
+				if (it.hasNext()) {
+					sb.append(" \\/ ");
+				}
 			}
 		}
 		return sb.toString();
 	}
 
 	/**
+	 * @param solver solver
 	 * @return true iff the clause is a Horn clause under the current assignment
 	 */
 	public boolean isHorn(final AMaxSatSolver<V> solver) {
@@ -237,4 +242,49 @@ class Clause<V> {
 		return true;
 	}
 	
+	@Override
+	public int hashCode() {
+		return mPositiveAtoms.hashCode() + mNegativeAtoms.hashCode();
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		/*
+		 * We assume that there are no two instances of equal clauses.
+		 * 
+		 * This is asserted here.
+		 */
+		assert (! this.equalsExpensive(obj)) : "Clause duplicate detected.";
+		return false;
+	}
+
+	private boolean equalsExpensive(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final Clause other = (Clause) obj;
+		if (mClauseCondition == null) {
+			if (other.mClauseCondition != null) {
+				return false;
+			}
+		} else if (!mClauseCondition.equals(other.mClauseCondition)) {
+			return false;
+		}
+		if (!Arrays.equals(mNegativeAtoms, other.mNegativeAtoms)) {
+			return false;
+		}
+		if (!Arrays.equals(mPositiveAtoms, other.mPositiveAtoms)) {
+			return false;
+		}
+		return true;
+	}
 }
