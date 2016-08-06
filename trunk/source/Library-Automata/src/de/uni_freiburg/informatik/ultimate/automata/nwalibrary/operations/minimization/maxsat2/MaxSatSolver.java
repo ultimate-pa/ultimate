@@ -87,9 +87,9 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 		}
 		
 		final Clause<V> clause = new Clause<V>(this, positiveAtoms, negativeAtoms);
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("creating clause: " + clause);
-		}
+//		if (mLogger.isDebugEnabled()) {
+//			mLogger.debug("creating clause: " + clause);
+//		}
 		
 		if (clause.isEquivalentToTrue()) {
 			mClauses++;
@@ -104,15 +104,18 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 				throw new UnsupportedOperationException(
 						"clause set is equivalent to false");
 			} else  {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("adding clause");
-				}
+//				if (mLogger.isDebugEnabled()) {
+//					mLogger.debug("adding clause");
+//				}
 				assert clause.getUnsetAtoms() > 0;
 				for (final V var :clause.getNegativeAtoms()) {
+//					mLogger.debug("ONC " + mOccursNegative);
 					mOccursNegative.addPair(var, clause);
+//					mLogger.debug("ONC " + mOccursNegative);
 				}
 				for (final V var :clause.getPositiveAtoms()) {
 					mOccursPositive.addPair(var, clause);
+//					mLogger.debug("OPC " + mOccursPositive);
 				}
 				if (clause.getUnsetAtoms() == 1) {
 					mPropagatees.add(clause);
@@ -163,6 +166,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 		mDecisions++;
 		
 		setVariable(var, true);
+//		mLogger.debug("Propagatees: " + mPropagatees);
 		propagateAll();
 		if (mConjunctionEquivalentToFalse) {
 			// first backtracking attempt
@@ -219,7 +223,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 				break;
 			}
 		}
-		mLogger.debug("finished making solver state persistent");
+//		mLogger.debug("finished making solver state persistent");
 	}
 
 	@Override
@@ -302,19 +306,22 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 	}
 	
 	private void pushStack(final V var) {
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("+A stack level " + mStack.size() + ": " + mStack.peek());
-		}
+//		if (mLogger.isDebugEnabled()) {
+//			mLogger.debug("+A stack level " + mStack.size() + ": " + mStack.peek());
+//		}
 		mStack.push(new StackContent(var));
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("+B stack level " + mStack.size() + ": " + mStack.peek());
-		}
+		
+		// synchronize information with superclass
+		mClausesMarkedForRemoval = getMarkedClauses();
+//		if (mLogger.isDebugEnabled()) {
+//			mLogger.debug("+B stack level " + mStack.size() + ": " + mStack.peek());
+//		}
 	}
 	
 	private boolean popStack() {
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("-A stack level " + mStack.size() + ": " + mStack.peek());
-		}
+//		if (mLogger.isDebugEnabled()) {
+//			mLogger.debug("-A stack level " + mStack.size() + ": " + mStack.peek());
+//		}
 		mStack.pop();
 		
 		final boolean result = mStack.isEmpty();
@@ -325,9 +332,9 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 			// only synchronize information with superclass
 			mClausesMarkedForRemoval = getMarkedClauses();
 		}
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("-B stack level " + mStack.size() + ": " + mStack.peek());
-		}
+//		if (mLogger.isDebugEnabled()) {
+//			mLogger.debug("-B stack level " + mStack.size() + ": " + mStack.peek());
+//		}
 		return result;
 	}
 	
