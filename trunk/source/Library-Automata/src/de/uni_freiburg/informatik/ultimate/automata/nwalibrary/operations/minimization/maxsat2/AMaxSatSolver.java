@@ -55,11 +55,18 @@ public abstract class AMaxSatSolver<V> {
 	protected final ILogger mLogger;
 	
 	// TODO remove this data structure which is only used for assertions in the long term
-	protected final Set<V> mVariables = new HashSet<V>();
+	protected final Set<V> mVariables = new HashSet<>();
 
-	protected final Map<V, Boolean> mVariablesIrrevocablySet =
-			new HashMap<V, Boolean>();
-	protected final Set<V> mUnsetVariables = new HashSet<V>();
+	protected final Map<V, Boolean> mVariablesIrrevocablySet = new HashMap<>();
+	
+	/*
+	 * NOTE: The semantics of this variable differ for different solvers.
+	 *       In the old solver, this variable is not always synchronized, which
+	 *       only happens after a successful assignment.
+	 *       In the new solver, this variable is synchronized more often, namely
+	 *       also during backtracking.
+	 */
+	protected final Set<V> mUnsetVariables = new HashSet<>();
 	/**
 	 * A clause is a propagatee if it has exactly one unset literal and is not
 	 * equivalent to true at the moment.
@@ -116,11 +123,13 @@ public abstract class AMaxSatSolver<V> {
 	 * atom. 
 	 * @param negativeAtoms array of non-null variables
 	 * @param positiveAtom variable that may be null. If the variable is null
-	 * it considered as true. If you want to assert only a negative atom, you
-	 * have to use null as positive Atom
+	 *  it considered as true. If you want to assert only a negative atom, you
+	 *  have to use null as positive Atom
 	 * @deprecated This method is only present for legacy reasons and just
-	 *  converts the Horn clause to a general clause. The caller should instead
-	 *  directly call the general <code>addClause()</code> method.
+	 *  converts the Horn clause to a general clause in the general solver.
+	 *  The caller should instead directly call the general
+	 *  <code>addClause()</code> method.
+	 *  For the old solver, this method is still needed.
 	 */
 	@Deprecated
 	public abstract void addHornClause(final V[] negativeAtoms, final V positiveAtom);
@@ -255,9 +264,20 @@ public abstract class AMaxSatSolver<V> {
 	 */
 	protected abstract void setVariable(final V var, final boolean newStatus);
 	
-	protected void reEvaluateStatusOfAllClauses(final Iterable<V> vars) {
-		for (final V var : vars) {
-			mUnsetVariables.add(var);
+	/**
+	 * NOTE: must be called from backtracking, as we modify the set
+	 * 
+	 * @param variablesIncorrectlySet variables to be unset (modified here)
+	 * @param varToBeSetFalse variable which is going to be set to false soon
+	 */
+	protected void reEvaluateStatusOfAllClauses(
+			final Set<V> variablesIncorrectlySet,
+			final V varToBeSetFalse) {
+		// exclude the one variable which is going to be set to false soon
+		final boolean wasInSet = variablesIncorrectlySet.remove(varToBeSetFalse);
+		assert wasInSet;
+		for (final V var : variablesIncorrectlySet) {
+			undoAssignment(var);
 			/*
 			 * TODO some clauses are reevaluated several times
 			 *      (if they contain several reset variables)
@@ -301,6 +321,10 @@ public abstract class AMaxSatSolver<V> {
 		}
 	}
 
+	protected void undoAssignment(final V var) {
+		// do nothing in the general case
+	}
+	
 	protected abstract void decideOne();
 
 	/**

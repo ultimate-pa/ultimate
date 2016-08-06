@@ -87,7 +87,9 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 		}
 		
 		final Clause<V> clause = new Clause<V>(this, positiveAtoms, negativeAtoms);
-		mLogger.debug("creating clause: " + clause);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("creating clause: " + clause);
+		}
 		
 		if (clause.isEquivalentToTrue()) {
 			mClauses++;
@@ -102,7 +104,9 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 				throw new UnsupportedOperationException(
 						"clause set is equivalent to false");
 			} else  {
-				mLogger.debug("adding clause");
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("adding clause");
+				}
 				assert clause.getUnsetAtoms() > 0;
 				for (final V var :clause.getNegativeAtoms()) {
 					mOccursNegative.addPair(var, clause);
@@ -176,10 +180,11 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 
 		@Override
 	protected void setVariable(final V var, final boolean newStatus) {
-		mLogger.debug("setting variable " + var + " to " + newStatus);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("setting variable " + var + " to " + newStatus);
+		}
 		assert mVariables.contains(var) : "unknown variable";
 		assert !mVariablesIrrevocablySet.containsKey(var) : "variable already set";
-		mUnsetVariables.remove(var);
 //		assert checkClausesConsistent() : "clauses inconsistent";
 		final Boolean oldStatus = getVarTempSet().put(var, newStatus);
 		if (oldStatus != null) {
@@ -196,7 +201,13 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 			assert (! mStack.isEmpty());
 			// make variable assignment persistent
 			for (final Entry<V, Boolean> entry : getVarTempSet().entrySet()) {
-				mVariablesIrrevocablySet.put(entry.getKey(), entry.getValue());
+				final V var = entry.getKey();
+				
+				// make assignment persistent
+				mVariablesIrrevocablySet.put(var, entry.getValue());
+				
+				// mark variable as set
+				mUnsetVariables.remove(var);
 			}
 			
 			// remove clauses which were evaluated to true
@@ -218,9 +229,15 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 		popStack();
 		
 		mConjunctionEquivalentToFalse = false;
-		reEvaluateStatusOfAllClauses(variablesIncorrectlySet);
+		reEvaluateStatusOfAllClauses(variablesIncorrectlySet, var);
 		setVariable(var, false);
 		propagateAll();
+	}
+	
+	@Override
+	protected void undoAssignment(final V var) {
+		// this solver treats the unset variables more carefully
+		mUnsetVariables.add(var);
 	}
 
 	@Override
@@ -240,6 +257,11 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 				(isLowestStackLevel() || hasOnlyHornClauses());
 		if (makeReallyPersistent) {
 			makeModificationsPersistent();
+		} else {
+			// only mark temporarily assigned variables as unset
+			for (final Entry<V, Boolean> entry : getVarTempSet().entrySet()) {
+				mUnsetVariables.add(entry.getKey());
+			}
 		}
 	}
 

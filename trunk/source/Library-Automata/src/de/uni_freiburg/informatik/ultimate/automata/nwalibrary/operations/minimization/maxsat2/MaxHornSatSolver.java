@@ -125,6 +125,9 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 	
 	@Override
 	protected void setVariable(final V var, final boolean newStatus) {
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("setting variable " + var + " to " + newStatus);
+		}
 		assert mVariables.contains(var) : "unknown variable";
 		assert !mVariablesIrrevocablySet.containsKey(var) : "variable already set";
 //		assert checkClausesConsistent() : "clauses inconsistent";
@@ -166,7 +169,7 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 		final Set<V> variablesIncorrectlySet = mVariablesTemporarilySet.keySet();
 		mVariablesTemporarilySet = new HashMap<>();
 		mConjunctionEquivalentToFalse = false;
-		reEvaluateStatusOfAllClauses(variablesIncorrectlySet);
+		reEvaluateStatusOfAllClauses(variablesIncorrectlySet, var);
 		setVariable(var, false);
 		assert ! mConjunctionEquivalentToFalse : "resetting variable did not help";
 	}
