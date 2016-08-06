@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -747,7 +746,7 @@ public class TransFormula implements Serializable {
 	}
 
 
-	private void removeOutVar(final IProgramVar var, final VariableManager variableManager) {
+	private void removeOutVar(final IProgramVar var, final Script script) {
 		assert mOutVars.containsKey(var) : "illegal to remove variable not that is contained";
 		final TermVariable inVar = mInVars.get(var);
 		final TermVariable outVar = mOutVars.get(var);
@@ -755,7 +754,7 @@ public class TransFormula implements Serializable {
 		if (inVar != outVar) {
 			// outVar does not occurs already as inVar, we have to add outVar
 			// to auxVars
-			final Term newAuxVarConst = variableManager.constructFreshConstant(outVar); 
+			final Term newAuxVarConst = SmtUtils.termVariable2constant(script, outVar); 
 			mAuxVars.put(outVar, newAuxVarConst);
 			final boolean removed = mAssignedVars.remove(var);
 			assert (removed);
@@ -764,7 +763,7 @@ public class TransFormula implements Serializable {
 		}
 	}
 
-	private void removeInVar(final IProgramVar var, final VariableManager variableManager) {
+	private void removeInVar(final IProgramVar var, final Script script) {
 		assert mInVars.containsKey(var) : "illegal to remove variable not that is contained";
 		final TermVariable inVar = mInVars.get(var);
 		final TermVariable outVar = mOutVars.get(var);
@@ -772,7 +771,7 @@ public class TransFormula implements Serializable {
 		if (inVar != outVar) {
 			// inVar does not occurs already as outVar, we have to add inVar
 			// to auxVars
-			final Term newAuxVarConst = variableManager.constructFreshConstant(inVar); 
+			final Term newAuxVarConst = SmtUtils.termVariable2constant(script, inVar); 
 			mAuxVars.put(inVar, newAuxVarConst);
 			assert outVar == null || mAssignedVars.contains(var);
 		} else {
@@ -838,7 +837,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (final IProgramVar bv : varsToRemove) {
-				callAndBeforeTF.removeOutVar(bv, boogie2smt.getVariableManager());
+				callAndBeforeTF.removeOutVar(bv, boogie2smt.getScript());
 			}
 		}
 
@@ -867,7 +866,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (final IProgramVar bv : inVarsToRemove) {
-				oldAssignAndAfterTF.removeInVar(bv, boogie2smt.getVariableManager());
+				oldAssignAndAfterTF.removeInVar(bv, boogie2smt.getScript());
 			}
 			
 			final List<IProgramVar> outVarsToRemove = new ArrayList<IProgramVar>();
@@ -882,7 +881,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (final IProgramVar bv : outVarsToRemove) {
-				oldAssignAndAfterTF.removeOutVar(bv, boogie2smt.getVariableManager());
+				oldAssignAndAfterTF.removeOutVar(bv, boogie2smt.getScript());
 			}
 		}
 
@@ -931,7 +930,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (final IProgramVar bv : inVarsToRemove) {
-				result.removeInVar(bv, boogie2smt.getVariableManager());
+				result.removeInVar(bv, boogie2smt.getScript());
 			}
 		}
 		{
@@ -949,7 +948,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (final IProgramVar bv : outVarsToRemove) {
-				result.removeOutVar(bv, boogie2smt.getVariableManager());
+				result.removeOutVar(bv, boogie2smt.getScript());
 			}
 		}
 		{

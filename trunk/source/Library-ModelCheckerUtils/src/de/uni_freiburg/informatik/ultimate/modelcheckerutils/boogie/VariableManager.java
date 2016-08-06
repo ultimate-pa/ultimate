@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -53,8 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 public class VariableManager implements IFreshTermVariableConstructor {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final MultiElementCounter<TermVariable> mConstForTvCounter = 
-			new MultiElementCounter<TermVariable>();
+
 	/**
 	 * Whenever we construct a TermVariable we store its basename.
 	 * This is either the name of the BoogieVar for which it was constructed
@@ -97,13 +95,7 @@ public class VariableManager implements IFreshTermVariableConstructor {
 	}
 	
 
-	public Term constructFreshConstant(final TermVariable tv) {
-		final Integer newIndex = mConstForTvCounter.increase(tv);
-		final String name = SmtUtils.removeSmtQuoteCharacters(tv.getName()) + "_fresh_" + newIndex;
-		final Sort resultSort = tv.getSort();
-		mScript.getScript().declareFun(name, new Sort[0], resultSort);
-		return mScript.getScript().term(name);
-	}
+
 	
 
 	
