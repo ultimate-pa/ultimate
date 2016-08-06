@@ -463,7 +463,7 @@ public class TransFormula implements Serializable {
 				if (tfb.containsInVar(var)) {
 					newOutVar = tfb.getInVar(var);
 				} else {
-					newOutVar = boogie2smt.getVariableManager().constructFreshTermVariable(var);
+					newOutVar = boogie2smt.getVariableManager().constructFreshTermVariable(var.getGloballyUniqueId(), var.getTermVariable().getSort());
 				}
 				subsitutionMapping.put(outVar, newOutVar);
 				// add to outvars if var is not outvar
@@ -483,7 +483,7 @@ public class TransFormula implements Serializable {
 					tfb.addInVar(var, newOutVar);
 				} else {
 					// case: var is read and written
-					final TermVariable newInVar = boogie2smt.getVariableManager().constructFreshTermVariable(var);
+					final TermVariable newInVar = boogie2smt.getVariableManager().constructFreshTermVariable(var.getGloballyUniqueId(), var.getTermVariable().getSort());
 					subsitutionMapping.put(inVar, newInVar);
 					tfb.addInVar(var, newInVar);
 					if (tfb.getOutVar(var) != newOutVar) {
@@ -509,7 +509,7 @@ public class TransFormula implements Serializable {
 					if (tfb.containsInVar(var)) {
 						newInVar = tfb.getInVar(var);
 					} else {
-						newInVar = boogie2smt.getVariableManager().constructFreshTermVariable(var);
+						newInVar = boogie2smt.getVariableManager().constructFreshTermVariable(var.getGloballyUniqueId(), var.getTermVariable().getSort());
 						tfb.addInVar(var, newInVar);
 					}
 					subsitutionMapping.put(inVar, newInVar);

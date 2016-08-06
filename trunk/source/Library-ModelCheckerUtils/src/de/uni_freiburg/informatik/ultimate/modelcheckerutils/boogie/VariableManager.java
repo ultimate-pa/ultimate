@@ -74,14 +74,6 @@ public class VariableManager implements IFreshTermVariableConstructor {
 		mScript = script;
 	}
 	
-	public TermVariable constructFreshTermVariable(final IProgramVar bv) {
-		final String basename = bv.toString();
-		final Sort sort = bv.getTermVariable().getSort();
-		final TermVariable result = mScript.constructFreshTermVariable(basename, sort);
-		mTv2Basename.put(result, basename);
-		return result;
-	}
-	
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ITermVariableConstructor#constructFreshTermVariable(java.lang.String, de.uni_freiburg.informatik.ultimate.logic.Sort)
 	 */

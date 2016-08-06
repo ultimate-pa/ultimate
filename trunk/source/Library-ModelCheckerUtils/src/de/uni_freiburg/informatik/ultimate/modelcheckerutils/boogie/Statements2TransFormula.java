@@ -351,7 +351,7 @@ public class Statements2TransFormula {
 					final TermVariable tvAfter = getOrConstuctCurrentRepresentative(boogieVar);
 					removeInVar(boogieVar);
 
-					final TermVariable tvBefore = mVariableManager.constructFreshTermVariable(boogieVar);
+					final TermVariable tvBefore = mVariableManager.constructFreshTermVariable(boogieVar.getGloballyUniqueId(), boogieVar.getTermVariable().getSort());
 					mTransFormulaBuilder.addInVar(boogieVar, tvBefore);
 					ensuresSubstitution.put(boogieVar, tvAfter);
 					ensuresSubstitution.put(boogieOldVar, tvBefore);
@@ -465,7 +465,7 @@ public class Statements2TransFormula {
 		if (bv.isOldvar()) {
 			tv = bv.getTermVariable();
 		} else {
-			tv = mVariableManager.constructFreshTermVariable(bv);
+			tv = mVariableManager.constructFreshTermVariable(bv.getGloballyUniqueId(), bv.getTermVariable().getSort());
 		}
 		mTransFormulaBuilder.addInVar(bv, tv);
 		return tv;
@@ -708,7 +708,7 @@ public class Statements2TransFormula {
 				final DeclarationInformation callLhsDeclInfo = st.getLhs()[offset]
 						.getDeclarationInformation();
 				final IProgramVar callLhsBv = mBoogie2SmtSymbolTable.getBoogieVar(callLhsId, callLhsDeclInfo, false);
-				final TermVariable callLhsTv = mVariableManager.constructFreshTermVariable(callLhsBv);
+				final TermVariable callLhsTv = mVariableManager.constructFreshTermVariable(callLhsBv.getGloballyUniqueId(), callLhsBv.getTermVariable().getSort());
 				mTransFormulaBuilder.addOutVar(callLhsBv, callLhsTv);
 				assignments[offset] = mScript.term("=", callLhsTv, outParamTv);
 				offset++;
