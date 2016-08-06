@@ -64,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
@@ -283,7 +282,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			final HashMap<Term,IProgramVar> constantsToBoogieVar) {
 		final TransFormula transFormula = nodeLabel.getBlock().getTransitionFormula();
 	
-		final Map<TermVariable, Term> substitutionMapping = new HashMap<TermVariable, Term>();
+		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 
 		for (final Entry<IProgramVar, TermVariable> entry : transFormula.getInVars().entrySet()) {
             final Term t = varToSsaVarNew.get(entry.getKey());
@@ -316,7 +315,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			}
 		}
 		
-		final Term substitutedTerm = (new Substitution(substitutionMapping, mSmtManager.getScript()))
+		final Term substitutedTerm = (new SafeSubstitution(mSmtManager.getScript(), substitutionMapping))
 				.transform(nodeLabel.getBlock().getTransitionFormula().getFormula());
 		return substitutedTerm;
 	}
