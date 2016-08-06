@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -672,7 +673,7 @@ public class Statements2TransFormula {
 				final IProgramVar boogieVar = mBoogie2SMT.getBoogie2SmtSymbolTable().getBoogieVar(var, declInfo, false);
 				assert boogieVar != null;
 				final String suffix = "InParam";
-				final TermVariable tv = mVariableManager.constructTermVariableWithSuffix(boogieVar, suffix);
+				final TermVariable tv = constructTermVariableWithSuffix(boogieVar, suffix);
 				mTransFormulaBuilder.addOutVar(boogieVar, tv);
 				assignments[offset] = mScript.term("=", tv, argTerms[offset]);
 				offset++;
@@ -702,7 +703,7 @@ public class Statements2TransFormula {
 			for (final String outParamId : ourParamVarList.getIdentifiers()) {
 				final IProgramVar outParamBv = mBoogie2SmtSymbolTable.getBoogieVar(outParamId, declInfo, false);
 				final String suffix = "OutParam";
-				final TermVariable outParamTv = mVariableManager.constructTermVariableWithSuffix(outParamBv, suffix);
+				final TermVariable outParamTv = constructTermVariableWithSuffix(outParamBv, suffix);
 				mTransFormulaBuilder.addInVar(outParamBv, outParamTv);
 				final String callLhsId = st.getLhs()[offset].getIdentifier();
 				final DeclarationInformation callLhsDeclInfo = st.getLhs()[offset]
@@ -717,6 +718,19 @@ public class Statements2TransFormula {
 		assert (st.getLhs().length == offset);
 		mAssumes = Util.and(mScript, assignments);
 		return getTransFormula(false, true, simplicationTechnique);
+	}
+	
+	/**
+	 * Construct a TermVariable whose name is given by the BoogieVar bv and
+	 * and additional suffix. This TermVariable is not unified.
+	 * If you use this method make sure that you do not call it twice for the
+	 * same combination of bv and suffix.
+	 */
+	public TermVariable constructTermVariableWithSuffix(final IProgramVar bv, final String suffix) {
+		final String name = bv.getGloballyUniqueId() + SmtUtils.removeSmtQuoteCharacters(suffix);
+		final Sort sort = bv.getTermVariable().getSort();
+		final TermVariable result = mBoogie2SMT.getManagedScript().constructFreshTermVariable(name, sort);
+		return result;
 	}
 	
 	

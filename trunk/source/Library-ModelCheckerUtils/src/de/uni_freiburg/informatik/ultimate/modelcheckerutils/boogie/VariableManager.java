@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -106,19 +105,7 @@ public class VariableManager implements IFreshTermVariableConstructor {
 		return mScript.getScript().term(name);
 	}
 	
-	/**
-	 * Construct a TermVariable whose name is given by the BoogieVar bv and
-	 * and additional suffix. This TermVariable is not unified.
-	 * If you use this method make sure that you do not call it twice for the
-	 * same combination of bv and suffix.
-	 */
-	public TermVariable constructTermVariableWithSuffix(final IProgramVar bv, final String suffix) {
-		final String basename = bv.toString() + SmtUtils.removeSmtQuoteCharacters(suffix);
-		final Sort sort = bv.getTermVariable().getSort();
-		final TermVariable result = mScript.constructFreshTermVariable(basename, sort);
-		mTv2Basename.put(result, basename);
-		return result;
-	}
+
 	
 	
 
