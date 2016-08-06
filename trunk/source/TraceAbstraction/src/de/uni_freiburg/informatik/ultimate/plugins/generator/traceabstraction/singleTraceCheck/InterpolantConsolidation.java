@@ -249,7 +249,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 		assert TraceCheckerUtils.checkInterpolantsInductivityBackward(Arrays.asList(mConsolidatedInterpolants), 
 				mTrace, mPrecondition, mPostcondition, mPendingContexts, "CP", 
-				mModifiedGlobals, mLogger, mSmtManager.getManagedScript(), mSmtManager.getVariableManager()) : "invalid Hoare triple in consolidated interpolants";
+				mModifiedGlobals, mLogger, mSmtManager.getManagedScript()) : "invalid Hoare triple in consolidated interpolants";
 		final int numOfDisjunctionsGreaterOne = (int) mInterpolantConsolidationBenchmarkGenerator.getValue(InterpolantConsolidationBenchmarkType.s_DisjunctionsGreaterOneCounter);
 		// InterpolantConsolidation was successful only if there was at least one consolidation with at least two predicates.
 		if (numOfDisjunctionsGreaterOne	> 0) {

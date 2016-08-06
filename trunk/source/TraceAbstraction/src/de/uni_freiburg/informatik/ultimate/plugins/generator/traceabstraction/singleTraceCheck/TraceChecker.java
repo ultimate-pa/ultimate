@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -122,7 +121,6 @@ public class TraceChecker {
 	 * Interface for query the SMT solver.
 	 */
 	protected final SmtManager mSmtManager;
-	protected final VariableManager mVariableManager;
 	protected final ManagedScript mManagedScript;
 	protected final Script mScript;
 	protected final SmtManager mTcSmtManager;
@@ -408,7 +406,6 @@ public class TraceChecker {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSmtManager = smtManager;
-		mVariableManager = smtManager.getVariableManager();
 		mManagedScript = smtManager.getManagedScript();
 		mScript = smtManager.getScript();
 		mTcSmtManager = tcSmtManager;

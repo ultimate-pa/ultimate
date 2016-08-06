@@ -81,17 +81,17 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock>, LOC
 
 		if (result != Validity.VALID) {
 			mLogger.fatal("Soundness check failed for the following triple:");
-			final String simplePre = SmtUtils.simplify(mScript, precond.getFormula(), mServices, mSimplificationTechnique, mBoogie2Smt.getVariableManager()).toStringDirect();
+			final String simplePre = SmtUtils.simplify(mScript, precond.getFormula(), mServices, mSimplificationTechnique, mBoogie2Smt.getManagedScript()).toStringDirect();
 			if (precondHier == null) {
 				mLogger.fatal("Pre: {" + simplePre + "}");
 			} else {
 				mLogger.fatal("PreBefore: {" + simplePre + "}");
 				mLogger.fatal("PreAfter: {"
-						+ SmtUtils.simplify(mScript, precondHier.getFormula(), mServices, mSimplificationTechnique, mBoogie2Smt.getVariableManager()).toStringDirect() + "}");
+						+ SmtUtils.simplify(mScript, precondHier.getFormula(), mServices, mSimplificationTechnique, mBoogie2Smt.getManagedScript()).toStringDirect() + "}");
 			}
 			mLogger.fatal(transition.getTransitionFormula().getFormula().toStringDirect());
 			mLogger.fatal(
-					"Post: {" + SmtUtils.simplify(mScript, postcond.getFormula(), mServices, mSimplificationTechnique, mBoogie2Smt.getVariableManager()).toStringDirect() + "}");
+					"Post: {" + SmtUtils.simplify(mScript, postcond.getFormula(), mServices, mSimplificationTechnique, mBoogie2Smt.getManagedScript()).toStringDirect() + "}");
 		}
 		return result != Validity.INVALID;
 	}

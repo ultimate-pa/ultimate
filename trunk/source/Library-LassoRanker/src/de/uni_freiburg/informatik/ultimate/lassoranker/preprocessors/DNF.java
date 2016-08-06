@@ -34,9 +34,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
 /**
@@ -51,14 +51,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
  */
 public class DNF extends TransitionPreprocessor {
 	private final IUltimateServiceProvider mServices;
-	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
+	private final ManagedScript mFreshTermVariableConstructor;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	
 	public static final String s_Description = 
 			"Transform into disjunctive normal form";
 	
 	public DNF(final IUltimateServiceProvider services, 
-			final IFreshTermVariableConstructor freshTermVariableConstructor, 
+			final ManagedScript freshTermVariableConstructor, 
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;

@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -143,7 +142,7 @@ public class SmtManager {
 		mScript = script;
 		mManagedScript = managedScript;
 		mModifiableGlobals = modifiableGlobals;
-		mPredicateFactory = new PredicateFactory(services, boogie2smt, simplificationTechnique, xnfConversionTechnique);
+		mPredicateFactory = new PredicateFactory(services, boogie2smt.getManagedScript(), boogie2smt.getBoogie2SmtSymbolTable(), simplificationTechnique, xnfConversionTechnique);
 	}
 	
 	
@@ -253,10 +252,6 @@ public class SmtManager {
 		return msatProbNumber;
 	}
 
-	public VariableManager getVariableManager() {
-		return mBoogie2Smt.getVariableManager();
-	}
-	
 
 
 	/**
@@ -713,8 +708,8 @@ public class SmtManager {
 				substitutionMapping.put(globalBoogieVar.getTermVariable(), oldBoogieVar.getTermVariable());
 			}
 		}
-		Term renamedFormula = (new SafeSubstitution(mScript, getVariableManager(), substitutionMapping)).transform(ps.getFormula());
-		renamedFormula = SmtUtils.simplify(mScript, renamedFormula, mServices, mSimplificationTechnique, mBoogie2Smt.getVariableManager());
+		Term renamedFormula = (new SafeSubstitution(mScript, getManagedScript(), substitutionMapping)).transform(ps.getFormula());
+		renamedFormula = SmtUtils.simplify(mScript, renamedFormula, mServices, mSimplificationTechnique, mBoogie2Smt.getManagedScript());
 		final IPredicate result = getPredicateFactory().newPredicate(renamedFormula);
 		return result;
 	}

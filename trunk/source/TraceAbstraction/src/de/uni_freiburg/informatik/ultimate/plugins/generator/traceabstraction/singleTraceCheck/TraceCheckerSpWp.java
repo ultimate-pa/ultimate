@@ -245,11 +245,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					postprocs.add(new LiveVariablesPostprocessor_Forward(liveVariables));
 				}
 				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(
-						mServices, mLogger, mSmtManager.getBoogie2Smt(), mSmtManager.getPredicateFactory(), mSimplificationTechnique, mXnfConversionTechnique));
+						mServices, mLogger, mSmtManager.getManagedScript(), mSmtManager.getPredicateFactory(), mSimplificationTechnique, mXnfConversionTechnique));
 				postprocs.add(new UnifyPostprocessor());
 				final IterativePredicateTransformer spt = new IterativePredicateTransformer(
-						mSmtManager.getPredicateFactory(), mSmtManager.getVariableManager(), 
-						mSmtManager.getScript(), mSmtManager.getBoogie2Smt(), mModifiedGlobals, mServices, mTrace, 
+						mSmtManager.getPredicateFactory(), mSmtManager.getScript(), mSmtManager.getManagedScript(), mModifiedGlobals, mServices, mTrace, 
 						mPrecondition, mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique);
 				mInterpolantsFp = spt.computeStrongestPostconditionSequence(rtf, postprocs).getInterpolants();
 			} catch (final ToolchainCanceledException tce) {
@@ -257,7 +256,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			}
 			assert TraceCheckerUtils.checkInterpolantsInductivityForward(mInterpolantsFp, 
 					mTrace, mPrecondition, mPostcondition, mPendingContexts, "FP", 
-					mModifiedGlobals, mLogger, mManagedScript, mVariableManager) : "invalid Hoare triple in FP";
+					mModifiedGlobals, mLogger, mManagedScript) : "invalid Hoare triple in FP";
 			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsFp);
 			if (mCollectInformationAboutSizeOfPredicates) {
 				sizeOfPredicatesFP = PredicateUtils.computeDagSizeOfPredicates(mInterpolantsFp);
@@ -272,11 +271,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					postprocs.add(new LiveVariablesPostprocessor_Backward(liveVariables));
 				}
 				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(
-						mServices, mLogger, mSmtManager.getBoogie2Smt(), mSmtManager.getPredicateFactory(), mSimplificationTechnique, mXnfConversionTechnique));
+						mServices, mLogger, mSmtManager.getManagedScript(), mSmtManager.getPredicateFactory(), mSimplificationTechnique, mXnfConversionTechnique));
 				postprocs.add(new UnifyPostprocessor());
 				final IterativePredicateTransformer spt = new IterativePredicateTransformer(
-						mSmtManager.getPredicateFactory(), mSmtManager.getVariableManager(), 
-						mSmtManager.getScript(), mSmtManager.getBoogie2Smt(), mModifiedGlobals, mServices, mTrace, 
+						mSmtManager.getPredicateFactory(), mSmtManager.getScript(), mSmtManager.getManagedScript(), mModifiedGlobals, mServices, mTrace, 
 						mPrecondition, mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique);
 				mInterpolantsBp = spt.computeWeakestPreconditionSequence(rtf, postprocs, false).getInterpolants();
 			} catch (final ToolchainCanceledException tce) {
@@ -284,7 +282,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			}
 			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, 
 					mTrace, mPrecondition, mPostcondition, mPendingContexts, "BP", 
-					mModifiedGlobals, mLogger, mManagedScript, mVariableManager) : "invalid Hoare triple in BP";
+					mModifiedGlobals, mLogger, mManagedScript) : "invalid Hoare triple in BP";
 			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsBp);
 			if (mCollectInformationAboutSizeOfPredicates) {
 				sizeOfPredicatesBP = PredicateUtils.computeDagSizeOfPredicates(mInterpolantsBp);
@@ -474,7 +472,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			final Term projectedT = SmtUtils.quantifier(mSmtManager.getScript(), 
 					QuantifiedFormula.EXISTS, nonLiveVars, pred.getFormula());
 			final Term pushed = new QuantifierPusher(mSmtManager.getScript(), mServices, 
-					mSmtManager.getVariableManager()).transform(projectedT);
+					mSmtManager.getManagedScript()).transform(projectedT);
 			final IPredicate projected = mSmtManager.getPredicateFactory().newPredicate(pushed);
 			mNonLiveVariablesFp += nonLiveVars.size();
 			return projected;
@@ -504,7 +502,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			final Term projectedT = SmtUtils.quantifier(mSmtManager.getScript(), 
 					QuantifiedFormula.FORALL, nonLiveVars, pred.getFormula());
 			final Term pushed = new QuantifierPusher(mSmtManager.getScript(), mServices, 
-					mSmtManager.getVariableManager()).transform(projectedT);
+					mSmtManager.getManagedScript()).transform(projectedT);
 			final IPredicate projected = mSmtManager.getPredicateFactory().newPredicate(pushed);
 			mNonLiveVariablesBp += nonLiveVars.size();
 			return projected;

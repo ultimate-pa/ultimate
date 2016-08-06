@@ -418,7 +418,7 @@ public class PredicateUnifier {
 			simplifiedTerm = commuNF;
 		} else {
 			try {
-				final Term tmp = SmtUtils.simplify(mScript, commuNF, mServices, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getVariableManager());
+				final Term tmp = SmtUtils.simplify(mScript, commuNF, mServices, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getManagedScript());
 				simplifiedTerm  = (new CommuhashNormalForm(mServices, mScript)).transform(tmp);
 			} catch (final ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while unifying predicates");
@@ -786,7 +786,7 @@ public class PredicateUnifier {
 
 		private String generateQuantifierInformation(final Term closedTerm) {
 			final String result;
-			final Term pnf = new PrenexNormalForm(mScript, mSmtManager.getVariableManager()).transform(closedTerm);
+			final Term pnf = new PrenexNormalForm(mScript, mSmtManager.getManagedScript()).transform(closedTerm);
 			if (pnf instanceof QuantifiedFormula) {
 				final QuantifierSequence qs = new QuantifierSequence(mScript, pnf);
 				result = "quantified with " + (qs.getNumberOfQuantifierBlocks()-1) + "quantifier alternations";
@@ -840,7 +840,7 @@ public class PredicateUnifier {
 	 */
 	public Set<IPredicate> cannibalize(final boolean splitNumericEqualities, final Term term) {
 		final Set<IPredicate> result = new HashSet<IPredicate>();
-		final Term cnf = (new Cnf(mScript, mServices, mSmtManager.getVariableManager())).transform(term);
+		final Term cnf = (new Cnf(mScript, mServices, mSmtManager.getManagedScript())).transform(term);
 		Term[] conjuncts;
 		if (splitNumericEqualities) {
 			conjuncts = splitNumericEqualities(SmtUtils.getConjuncts(cnf));

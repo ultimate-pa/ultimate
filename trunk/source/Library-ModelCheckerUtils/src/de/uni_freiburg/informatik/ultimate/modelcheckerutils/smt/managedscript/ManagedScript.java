@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -40,25 +42,22 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MultiElementCounter;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Wrapper for an {@link Script} with additional locking mechanism.
+ * Additionally this class provides a mechanism to construct fresh variables.
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class ManagedScript implements IFreshTermVariableConstructor {
+public class ManagedScript {
 	
 	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
 	private final ILogger mLogger;
+	private final VariableManager mVariableManager;
 	
-	/**
-	 * Counter for the construction of fresh variables.
-	 */
-	private final MultiElementCounter<String> mTvForBasenameCounter = 
-			new MultiElementCounter<String>();
-	
+
 	private Object mLockOwner = null;
 	
 	public ManagedScript(final IUltimateServiceProvider services, final Script script) {
@@ -66,6 +65,7 @@ public class ManagedScript implements IFreshTermVariableConstructor {
 		mServices = services;
 		mScript = script;
 		mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
+		mVariableManager = new VariableManager();
 	}
 	
 	public void lock(final Object lockOwner) {
@@ -175,18 +175,109 @@ public class ManagedScript implements IFreshTermVariableConstructor {
 	}
 	
 	
+	
+	
+	/**
+	 * @param name
+	 * @param sort
+	 * @return
+	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript.VariableManager#constructFreshTermVariable(java.lang.String, de.uni_freiburg.informatik.ultimate.logic.Sort)
+	 */
+	public TermVariable constructFreshTermVariable(final String name, final Sort sort) {
+		return mVariableManager.constructFreshTermVariable(name, sort);
+	}
+
+	/**
+	 * @param tv
+	 * @return
+	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript.VariableManager#constructFreshCopy(de.uni_freiburg.informatik.ultimate.logic.TermVariable)
+	 */
+	public TermVariable constructFreshCopy(final TermVariable tv) {
+		return mVariableManager.constructFreshCopy(tv);
+	}
+
+	/**
+	 * Constructs fresh TermVariables (i.e., TermVariables that have not been used
+	 * before). Each constructed TermVariable is named as follows.
+	 * The name start with the prefix "v_".
+	 * Next follows the "basename" which is a
+	 * name given by the caller of the VariableManager.
+	 * The name ends with the suffix "_n" where n is number that we use to ensure
+	 * that each variable is unique.
+	 * 
+	 * @author Matthias Heizmann
+	 *
+	 */
+	private class VariableManager {
+		
+		/**
+		 * Counter for the construction of fresh variables.
+		 */
+		private final MultiElementCounter<String> mTvForBasenameCounter = 
+				new MultiElementCounter<String>();
+
+		/**
+		 * Whenever we construct a TermVariable we store its basename.
+		 * This is the name for that the TermVariable was constructed.
+		 * Whenever we have to construct a fresh copy of a TermVariable
+		 * we use the basename of this TermVariable to obtain a unique but very
+		 * similar name for the new copy.
+		 */
+		private final Map<TermVariable, String> mTv2Basename = 
+				new HashMap<TermVariable, String>();
+		
+		/**
+		 * Construct "fresh" TermVariables.
+		 * In mathematical logics a variable is called "fresh" if the variable has not
+		 * occurred in the same context.
+		 * TermVariables constructed by objects that implement this interface are 
+		 * guaranteed to have a name which is different form all other TermVariables 
+		 * constructed by this object. There is no guarantee that a similar variable
+		 * was not constructed with the same Script.
+		 * @param name String that will occur as substring of the resulting 
+		 * TermVariable.
+		 * @param sort Sort of the resulting TermVariable.
+		 * @return TermVariable whose name is different from the names
+		 * of all other TermVariable that have been constructed by this object.
+		 */
+		public TermVariable constructFreshTermVariable(final String name, final Sort sort) {
+			if (name.contains("\\|")) {
+				throw new IllegalArgumentException("Name contains SMT quote characters " + name);
+			}
+			final Integer newIndex = mTvForBasenameCounter.increase(name);
+			final TermVariable result = mScript.variable("v_" + name + "_" + newIndex, sort);
+			mTv2Basename.put(result, name);
+			return result;
+		}
+		
+		/**
+		 * Construct a copy of an existing {@link TermVariable} that is fresh
+		 * but has a very similar name.
+		 * @see mTv2Basename
+		 */
+		public TermVariable constructFreshCopy(final TermVariable tv) {
+			String basename = mTv2Basename.get(tv);
+			if (basename == null) {
+				mLogger.warn("TermVariabe " + tv + 
+						" not constructed by VariableManager. Cannot ensure absence of name clashes.");
+				basename = SmtUtils.removeSmtQuoteCharacters(tv.getName());
+			}
+			final TermVariable result = constructFreshTermVariable(basename, tv.getSort());
+			return result;
+		}
+		
+
+
+		
+
+		
+		
+
+	}
+	
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ITermVariableConstructor#constructFreshTermVariable(java.lang.String, de.uni_freiburg.informatik.ultimate.logic.Sort)
 	 */
-	@Override
-	public TermVariable constructFreshTermVariable(final String name, final Sort sort) {
-		if (name.contains("\\|")) {
-			throw new IllegalArgumentException("Name contains SMT quote characters " + name);
-		}
-		final Integer newIndex = mTvForBasenameCounter.increase(name);
-		final TermVariable result = mScript.variable(
-				"v_" + name + "_" + newIndex, sort);
-		return result;
-	}
+
 	
 }

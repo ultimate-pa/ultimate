@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Literal.Polarity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.XJunction.AtomAndNegationException;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 public abstract class Xnf extends Nnf {
 	
 	public Xnf(Script script, IUltimateServiceProvider services, 
-			IFreshTermVariableConstructor freshTermVariableConstructor) {
+			ManagedScript freshTermVariableConstructor) {
 		super(script, services, freshTermVariableConstructor, QuantifierHandling.IS_ATOM);
 	}
 	

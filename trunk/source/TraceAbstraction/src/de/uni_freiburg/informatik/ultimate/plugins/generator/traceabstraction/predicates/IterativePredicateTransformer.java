@@ -41,9 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -51,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -70,7 +69,7 @@ public class IterativePredicateTransformer {
 	private final ILogger mLogger;
 	private final SimplicationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-	private final Boogie2SMT mBoogie2SMT;
+	private final ManagedScript mMgdScript;
 	
 	private final PredicateTransformer mPredicateTransformer;
 	private final PredicateFactory mPredicateFactory;
@@ -82,9 +81,9 @@ public class IterativePredicateTransformer {
 	
 	private static final boolean s_TransformSummaryToCNF = true;
 
-	public IterativePredicateTransformer(final PredicateFactory predicateFactory, 
-			final VariableManager variableManager, final Script script,
-			final Boogie2SMT boogie2smt,
+	public IterativePredicateTransformer(final PredicateFactory predicateFactory,
+			final Script script,
+			final ManagedScript boogie2smt,
 			final ModifiableGlobalVariableManager modifiableGlobalVariableManager,
 			final IUltimateServiceProvider services, final NestedWord<? extends IAction> trace, 
 			final IPredicate precondition, final IPredicate postcondition, 
@@ -95,9 +94,9 @@ public class IterativePredicateTransformer {
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
-		mBoogie2SMT = boogie2smt;
+		mMgdScript = boogie2smt;
 		mModifiedGlobals = modifiableGlobalVariableManager;
-		mPredicateTransformer = new PredicateTransformer(variableManager, 
+		mPredicateTransformer = new PredicateTransformer(boogie2smt, 
 				script, modifiableGlobalVariableManager, services, simplificationTechnique, xnfConversionTechnique);
 		mPredicateFactory = predicateFactory;
 		mTrace = trace;
@@ -205,7 +204,7 @@ public class IterativePredicateTransformer {
 		
 		private final IUltimateServiceProvider mServices; 
 		private final ILogger mLogger; 
-		private final Boogie2SMT mBoogie2SMT;
+		private final ManagedScript mMgdScript;
 		private final PredicateFactory mPredicateFactory;
 		private final SimplicationTechnique mSimplificationTechnique;
 		private final XnfConversionTechnique mXnfConversionTechnique;
@@ -213,13 +212,13 @@ public class IterativePredicateTransformer {
 
 		public QuantifierEliminationPostprocessor(
 				final IUltimateServiceProvider services, 
-				final ILogger logger, final Boogie2SMT boogie2smt, 
+				final ILogger logger, final ManagedScript boogie2smt, 
 				final PredicateFactory predicateFactory, 
 				final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 			super();
 			mServices = services;
 			mLogger = logger;
-			mBoogie2SMT = boogie2smt;
+			mMgdScript = boogie2smt;
 			mPredicateFactory = predicateFactory;
 			mSimplificationTechnique = simplificationTechnique;
 			mXnfConversionTechnique = xnfConversionTechnique;
@@ -228,8 +227,8 @@ public class IterativePredicateTransformer {
 		@Override
 		public IPredicate postprocess(final IPredicate pred, final int i) {
 			final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(
-					mServices, mLogger, mBoogie2SMT.getScript(), 
-					mBoogie2SMT.getVariableManager(), pred.getFormula(), mSimplificationTechnique, mXnfConversionTechnique);
+					mServices, mLogger, mMgdScript, 
+					pred.getFormula(), mSimplificationTechnique, mXnfConversionTechnique);
 			final Term resultTerm;
 			{
 				// 2016-05-14 Matthias: Which structure of the resulting 
@@ -240,8 +239,8 @@ public class IterativePredicateTransformer {
 				// However, SimplifyDDA may waste a lot of time.
 				// A small evaluation that I did today (using Z3) shows that 
 				// there is not much difference between both variants. 
-				resultTerm = new QuantifierPusher(mBoogie2SMT.getScript(), 
-						mServices, mBoogie2SMT.getVariableManager()).transform(lessQuantifier);
+				resultTerm = new QuantifierPusher(mMgdScript.getScript(), 
+						mServices, mMgdScript).transform(lessQuantifier);
 //				resultTerm = new PrenexNormalForm(mBoogie2SMT.getScript(), 
 //									mBoogie2SMT.getVariableManager()).transform(lessQuantifier);
 			}
@@ -508,7 +507,7 @@ public class IterativePredicateTransformer {
 		final TransFormula summaryOfInnerStatements = computeSummaryForInterproceduralTrace(
 				trace, rv, call_pos + 1, return_pos);
 		final TransFormula summaryWithCallAndReturn = TransFormula.sequentialCompositionWithCallAndReturn(
-				mBoogie2SMT, true, false, s_TransformSummaryToCNF, Call, 
+				mMgdScript, true, false, s_TransformSummaryToCNF, Call, 
 				oldVarsAssignment, globalVarsAssignment,
 				summaryOfInnerStatements, Return, mLogger, mServices, mXnfConversionTechnique, mSimplificationTechnique);
 		return new ProcedureSummary(summaryWithCallAndReturn, summaryOfInnerStatements);
@@ -543,7 +542,7 @@ public class IterativePredicateTransformer {
 								i + 1, returnPosition);
 						final TransFormula returnTf = rv.getFormulaFromNonCallPos(returnPosition);
 						transformulasToComputeSummaryFor.addLast(TransFormula.sequentialCompositionWithCallAndReturn(
-								mBoogie2SMT, true, false, s_TransformSummaryToCNF, callTf, oldVarsAssignment,
+								mMgdScript, true, false, s_TransformSummaryToCNF, callTf, oldVarsAssignment,
 								globalVarsAssignment, summaryBetweenCallAndReturn, returnTf,
 								mLogger, mServices, mXnfConversionTechnique, mSimplificationTechnique));
 						i = returnPosition;
@@ -554,7 +553,7 @@ public class IterativePredicateTransformer {
 						final TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
 						final String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
 						final Set<IProgramVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
-						return TransFormula.sequentialCompositionWithPendingCall(mBoogie2SMT, true,
+						return TransFormula.sequentialCompositionWithPendingCall(mMgdScript, true,
 								false, s_TransformSummaryToCNF, transformulasToComputeSummaryFor,
 								callTf, oldVarsAssignment, summaryAfterPendingCall,
 								mLogger, mServices, modifiableGlobalsOfEndProcedure, mXnfConversionTechnique, mSimplificationTechnique);
@@ -563,7 +562,7 @@ public class IterativePredicateTransformer {
 					final TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
 					final String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
 					final Set<IProgramVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
-					return TransFormula.sequentialCompositionWithPendingCall(mBoogie2SMT, true, false,
+					return TransFormula.sequentialCompositionWithPendingCall(mMgdScript, true, false,
 							s_TransformSummaryToCNF, transformulasToComputeSummaryFor,
 							callTf, oldVarsAssignment, summaryAfterPendingCall, mLogger,
 							mServices, modifiableGlobalsOfEndProcedure, mXnfConversionTechnique, mSimplificationTechnique);
@@ -574,7 +573,7 @@ public class IterativePredicateTransformer {
 				transformulasToComputeSummaryFor.addLast(rv.getFormulaFromNonCallPos(i));
 			}
 		}
-		return TransFormula.sequentialComposition(mLogger, mServices, mBoogie2SMT, true, false,
+		return TransFormula.sequentialComposition(mLogger, mServices, mMgdScript, true, false,
 				s_TransformSummaryToCNF, mXnfConversionTechnique, mSimplificationTechnique, transformulasToComputeSummaryFor.toArray(new TransFormula[transformulasToComputeSummaryFor.size()]));
 
 	}

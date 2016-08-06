@@ -39,9 +39,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -55,10 +55,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class QuantifierPusher extends TermTransformer {
 	private final Script mScript;
 	private final IUltimateServiceProvider mServices;
-	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
+	private final ManagedScript mFreshTermVariableConstructor;
 
 	public QuantifierPusher(Script script, IUltimateServiceProvider services, 
-			IFreshTermVariableConstructor freshTermVariableConstructor) {
+			ManagedScript freshTermVariableConstructor) {
 		mScript = script;
 		mServices = services;
 		mFreshTermVariableConstructor = freshTermVariableConstructor;

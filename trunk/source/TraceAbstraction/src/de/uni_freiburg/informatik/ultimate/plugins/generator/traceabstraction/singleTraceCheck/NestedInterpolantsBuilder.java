@@ -560,9 +560,9 @@ public class NestedInterpolantsBuilder {
 						withoutIndices = instantiateArrayExt(withoutIndices);
 					}
 					final Term lessQuantifiers = PartialQuantifierElimination.tryToEliminate(
-							mServices, mLogger, mSmtManagerPredicates.getScript(), 
-							mSmtManagerPredicates.getVariableManager(),
-							withoutIndices, mSimplificationTechnique, mXnfConversionTechnique);
+							mServices, mLogger, mSmtManagerPredicates.getManagedScript(), 
+							withoutIndices,
+							mSimplificationTechnique, mXnfConversionTechnique);
 					result[resultPos] = mPredicateBuilder.getOrConstructPredicate(lessQuantifiers);
 					withIndices2Predicate.put(withIndices, result[resultPos]);
 				}
@@ -591,7 +591,7 @@ public class NestedInterpolantsBuilder {
 	 */
 	private Term instantiateArrayExt(final Term interpolantWithoutIndices) {
 		final Term nnf = (new Nnf(mSmtManagerPredicates.getScript(), mServices, 
-				mSmtManagerPredicates.getVariableManager(), QuantifierHandling.PULL)).transform(interpolantWithoutIndices);
+				mSmtManagerPredicates.getManagedScript(), QuantifierHandling.PULL)).transform(interpolantWithoutIndices);
 //		not needed, at the moment our NNF transformation also produces 		
 //		Term prenex = (new PrenexNormalForm(mSmtManagerPredicates.getScript(), mSmtManagerPredicates.getVariableManager())).transform(nnf);
 		final QuantifierSequence qs = new QuantifierSequence(mSmtManagerPredicates.getScript(), nnf);

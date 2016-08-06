@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate.ArrayUpdateExtractor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
@@ -68,14 +69,14 @@ public class ElimStore3 {
 
 	private int mQuantifier;
 	private final Script mScript;
-	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
+	private final ManagedScript mFreshTermVariableConstructor;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final SimplicationTechnique mSimplificationTechnique;
 	private final static String s_FreshVariableString = "arrayElim";
 
 	public ElimStore3(final Script script, 
-			final IFreshTermVariableConstructor freshTermVariableConstructor, 
+			final ManagedScript freshTermVariableConstructor, 
 			final IUltimateServiceProvider services, 
 			final SimplicationTechnique simplificationTechnique) {
 		super();

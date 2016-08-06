@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
@@ -187,7 +186,7 @@ public class TraceCheckerUtils {
 			final IPredicate precondition, final IPredicate postcondition, 
 			final SortedMap<Integer, IPredicate> pendingContexts, final String computation, 
 			final ModifiableGlobalVariableManager mgvManager,
-			final ILogger logger, final ManagedScript managedScript, final VariableManager variableManager) {
+			final ILogger logger, final ManagedScript managedScript) {
 		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(managedScript, mgvManager);
 		final InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(precondition, postcondition, interpolants);
@@ -215,7 +214,7 @@ public class TraceCheckerUtils {
 			final IPredicate precondition, final IPredicate postcondition, 
 			final SortedMap<Integer, IPredicate> pendingContexts, final String computation, 
 			final ModifiableGlobalVariableManager mgvManager,
-			final ILogger logger, final ManagedScript managedScript, final VariableManager variableManager) {
+			final ILogger logger, final ManagedScript managedScript) {
 		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(managedScript, mgvManager);
 		final InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(precondition, postcondition, interpolants);

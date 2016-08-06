@@ -31,6 +31,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Subclass of {@link SafeSubstitution} were we apply a local simplification
@@ -46,7 +47,7 @@ public class SafeSubstitutionWithLocalSimplification extends SafeSubstitution {
 	}
 	
 	public SafeSubstitutionWithLocalSimplification(Script script, 
-			IFreshTermVariableConstructor freshTermVariableConstructor,
+			ManagedScript freshTermVariableConstructor,
 			Map<Term, Term> substitutionMapping) {
 		super(script, freshTermVariableConstructor, substitutionMapping);
 	}

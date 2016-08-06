@@ -27,7 +27,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.bdd;
 
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.junit.Assert;
@@ -39,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateServiceProviderMock;
 
@@ -62,7 +61,7 @@ public class SimplifyBddTest {
 	public void setUP(){
 		services = new UltimateServiceProviderMock();
 		script = new SMTInterpol();
-		final IFreshTermVariableConstructor freshTermVariableConstructor = null;
+		final ManagedScript freshTermVariableConstructor = null;
 		simplifyBdd = new SimplifyBdd(services, script, freshTermVariableConstructor);
 
 		script.setLogic(Logics.QF_IDL);

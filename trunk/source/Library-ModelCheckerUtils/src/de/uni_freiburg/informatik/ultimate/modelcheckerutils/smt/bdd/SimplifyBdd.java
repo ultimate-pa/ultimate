@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import net.sf.javabdd.BDD;
 
@@ -53,10 +53,10 @@ public class SimplifyBdd {
 	private final Script mScript;
 	private final ILogger mLogger;
 	//TODO: 2016-05-09 Matthias: The following field might be be useless
-	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
+	private final ManagedScript mFreshTermVariableConstructor;
 	
 	public SimplifyBdd(final IUltimateServiceProvider services, final Script script,
-			final IFreshTermVariableConstructor freshTermVariableConstructor) {
+			final ManagedScript freshTermVariableConstructor) {
 		super();
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);

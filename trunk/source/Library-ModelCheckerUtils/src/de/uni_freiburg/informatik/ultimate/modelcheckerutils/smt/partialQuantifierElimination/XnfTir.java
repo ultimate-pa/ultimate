@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -50,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Aff
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -58,11 +58,11 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  */
 public class XnfTir extends XjunctPartialQuantifierElimination {
 	
-	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
+	private final ManagedScript mFreshTermVariableConstructor;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	public XnfTir(final Script script, final IUltimateServiceProvider services, 
-			final IFreshTermVariableConstructor freshTermVariableConstructor, 
+			final ManagedScript freshTermVariableConstructor, 
 			final XnfConversionTechnique XnfConversionTechnique) {
 		super(script, services);
 		mFreshTermVariableConstructor = freshTermVariableConstructor;

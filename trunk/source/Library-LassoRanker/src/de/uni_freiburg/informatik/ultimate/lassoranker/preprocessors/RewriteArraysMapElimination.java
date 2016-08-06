@@ -38,15 +38,14 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArra
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Replace term with arrays by term without arrays by introducing replacement variables for all "important" array values
@@ -58,9 +57,8 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 	public static final String s_Description = "Removes arrays by introducing new variables for each relevant array cell";
 
 	private final IUltimateServiceProvider mServices;
-	private final Script mScript;
+	private final ManagedScript mMgdScript;
 	private final Boogie2SmtSymbolTable mSymbolTable;
-	private final VariableManager mVariableManager;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final TransFormula mOriginalStem;
 	private final TransFormula mOriginalLoop;
@@ -69,16 +67,15 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final Set<Term> mArrayIndexSupportingInvariants;
 
-	public RewriteArraysMapElimination(final IUltimateServiceProvider services, final Script script,
-			final Boogie2SmtSymbolTable symbolTable, final VariableManager variableManager,
+	public RewriteArraysMapElimination(final IUltimateServiceProvider services, final ManagedScript script,
+			final Boogie2SmtSymbolTable symbolTable,
 			final ReplacementVarFactory replacementVarFactory, final TransFormula originalStem,
 			final TransFormula originalLoop, final Set<IProgramVar> modifiableGlobalsAtHonda,
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Set<Term> arrayIndexSupportingInvariants) {
 		mServices = services;
-		mScript = script;
+		mMgdScript = script;
 		mSymbolTable = symbolTable;
-		mVariableManager = variableManager;
 		mReplacementVarFactory = replacementVarFactory;
 		mOriginalStem = originalStem;
 		mOriginalLoop = originalLoop;
@@ -101,15 +98,15 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 
 	@Override
 	public Collection<LassoUnderConstruction> process(final LassoUnderConstruction lasso) throws TermException {
-		final MapEliminator elim = new MapEliminator(mServices, mScript, mSymbolTable, mVariableManager,
+		final MapEliminator elim = new MapEliminator(mServices, mMgdScript.getScript(), mSymbolTable, mMgdScript,
 				mReplacementVarFactory, mSimplificationTechnique, mXnfConversionTechnique,
 				Arrays.asList(lasso.getStem(), lasso.getLoop()));
 		final EqualityAnalysisResult equalityAnalysisStem = new EqualityAnalysisResult(elim.getDoubletons());
 		final EqualitySupportingInvariantAnalysis esia = new EqualitySupportingInvariantAnalysis(elim.getDoubletons(),
-				mSymbolTable, mScript, mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
+				mSymbolTable, mMgdScript.getScript(), mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
 		final EqualityAnalysisResult equalityAnalysisLoop = esia.getEqualityAnalysisResult();
-		mArrayIndexSupportingInvariants.addAll(equalityAnalysisLoop.constructListOfEqualities(mScript));
-		mArrayIndexSupportingInvariants.addAll(equalityAnalysisLoop.constructListOfNotEquals(mScript));
+		mArrayIndexSupportingInvariants.addAll(equalityAnalysisLoop.constructListOfEqualities(mMgdScript.getScript()));
+		mArrayIndexSupportingInvariants.addAll(equalityAnalysisLoop.constructListOfNotEquals(mMgdScript.getScript()));
 		final TransFormulaLR newStem = elim.getReplacedTransFormula(lasso.getStem(), equalityAnalysisStem,
 				equalityAnalysisLoop);
 		final TransFormulaLR newLoop = elim.getReplacedTransFormula(lasso.getLoop(), equalityAnalysisLoop,

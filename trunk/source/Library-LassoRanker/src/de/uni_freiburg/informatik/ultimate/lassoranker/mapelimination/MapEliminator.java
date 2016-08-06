@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
@@ -66,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayInd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -76,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class MapEliminator {
 	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
-	private final IFreshTermVariableConstructor mFreshVarConstructor;
+	private final ManagedScript mFreshVarConstructor;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final ILogger mLogger;
 	private final Boogie2SmtSymbolTable mSymbolTable;
@@ -114,7 +114,7 @@ public class MapEliminator {
 	 * Creates a new map eliminator and preprocesses (stores the indices and arrays used in the {@code transformulas})
 	 */
 	public MapEliminator(final IUltimateServiceProvider services, final Script script,
-			final Boogie2SmtSymbolTable symbolTable, final IFreshTermVariableConstructor freshVarConstructor,
+			final Boogie2SmtSymbolTable symbolTable, final ManagedScript freshVarConstructor,
 			final ReplacementVarFactory replacementVarFactory, final SimplicationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final Collection<TransFormulaLR> transformulas) {
 		super();
@@ -379,8 +379,8 @@ public class MapEliminator {
 			conjuncts.addAll(mAuxVarTerms);
 			final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, mAuxVars,
 					SmtUtils.and(mScript, conjuncts));
-			newTerm = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, mFreshVarConstructor,
-					quantified, mSimplificationTechnique, mXnfConversionTechnique);
+			newTerm = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mFreshVarConstructor, quantified,
+					mSimplificationTechnique, mXnfConversionTechnique);
 			mAuxVars.clear();
 			mSelectToAuxVars.clear();
 			mAuxVarTerms.clear();

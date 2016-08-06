@@ -34,8 +34,8 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoPartitioneer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Split lasso into independent components.
@@ -47,7 +47,7 @@ public class LassoPartitioneerPreprocessor extends LassoPreprocessor {
 	public static final String s_Description = "LassoPartitioneer";
 	
 	private final IUltimateServiceProvider mServices;
-	private final IFreshTermVariableConstructor mFreshVarConstructor;
+	private final ManagedScript mFreshVarConstructor;
 	
 	private final Script mScript;
 
@@ -55,7 +55,7 @@ public class LassoPartitioneerPreprocessor extends LassoPreprocessor {
 
 	public LassoPartitioneerPreprocessor(final Script script, 
 			final IUltimateServiceProvider services, 
-			final IFreshTermVariableConstructor freshVarConstructor,
+			final ManagedScript freshVarConstructor,
 			final XnfConversionTechnique xnfConversionTechniqe) {
 		mServices = services;
 		mScript = script;

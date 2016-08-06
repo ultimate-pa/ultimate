@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
@@ -59,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 public class SafeSubstitution extends TermTransformer {
 	
 	protected final Script mScript;
-	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
+	private final ManagedScript mFreshTermVariableConstructor;
 	private final ScopedHashMap<Term,Term> mScopedSubstitutionMapping;
 	
 	public SafeSubstitution(Script script, 
@@ -68,7 +69,7 @@ public class SafeSubstitution extends TermTransformer {
 	}
 	
 	public SafeSubstitution(Script script, 
-			IFreshTermVariableConstructor freshTermVariableConstructor,
+			ManagedScript freshTermVariableConstructor,
 			Map<Term, Term> substitutionMapping) {
 		super();
 		mScript = script;

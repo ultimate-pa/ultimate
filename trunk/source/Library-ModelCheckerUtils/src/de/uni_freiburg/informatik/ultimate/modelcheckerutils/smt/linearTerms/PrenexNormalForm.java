@@ -39,9 +39,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonCoreBooleanSubTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Transform a Term into prenex normal form (quantifiers outside).
@@ -52,10 +52,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 public class PrenexNormalForm extends TermTransformer {
 	
 	private final Script mScript;
-	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
+	private final ManagedScript mFreshTermVariableConstructor;
 
 	public PrenexNormalForm(Script script, 
-			IFreshTermVariableConstructor freshTermVariableConstructor) {
+			ManagedScript freshTermVariableConstructor) {
 		mScript = script;
 		mFreshTermVariableConstructor = freshTermVariableConstructor;
 	}

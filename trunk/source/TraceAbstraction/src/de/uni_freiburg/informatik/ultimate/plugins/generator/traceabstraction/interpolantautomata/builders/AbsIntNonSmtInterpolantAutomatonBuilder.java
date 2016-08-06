@@ -12,16 +12,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
@@ -31,18 +31,18 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAuto
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
 	private final IRun<CodeBlock, IPredicate> mCurrentCounterExample;
 	private final PredicateFactory mPredicateFactory;
-	private final Boogie2SMT mBoogie2Smt;
+	private final ManagedScript mBoogie2Smt;
 
 	public AbsIntNonSmtInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predUnifier,
-			final SmtManager smtManager, final IRun<CodeBlock, IPredicate> currentCounterexample,
+			final ManagedScript smtManager, final Boogie2SmtSymbolTable symbolTable, final IRun<CodeBlock, IPredicate> currentCounterexample,
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCurrentCounterExample = currentCounterexample;
-		mBoogie2Smt = smtManager.getBoogie2Smt();
+		mBoogie2Smt = smtManager;
 		mPredicateFactory =
-				new PredicateFactory(services, mBoogie2Smt, simplificationTechnique, xnfConversionTechnique);
+				new PredicateFactory(services, mBoogie2Smt, symbolTable, simplificationTechnique, xnfConversionTechnique);
 
 		mResult = getPathProgramAutomaton(oldAbstraction, predUnifier);
 	}

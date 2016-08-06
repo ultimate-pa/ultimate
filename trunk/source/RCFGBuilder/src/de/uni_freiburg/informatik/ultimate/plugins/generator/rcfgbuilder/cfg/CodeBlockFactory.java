@@ -33,10 +33,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 
@@ -51,19 +51,19 @@ public class CodeBlockFactory implements IStorable {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final Boogie2SMT mBoogie2smt;
+	private final ManagedScript mMgdScript;
 	private final ModifiableGlobalVariableManager mMgvManager;
 
 	public final static String s_CodeBlockFactoryKeyInToolchainStorage = "CodeBlockFactory";
 
 	private int mSerialNumberCounter = 0;
 
-	public CodeBlockFactory(final IUltimateServiceProvider services, final Boogie2SMT boogie2smt,
+	public CodeBlockFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final ModifiableGlobalVariableManager mgvManager) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mBoogie2smt = boogie2smt;
+		mMgdScript = mgdScript;
 		mMgvManager = mgvManager;
 	}
 
@@ -73,7 +73,7 @@ public class CodeBlockFactory implements IStorable {
 
 	public InterproceduralSequentialComposition constuctInterproceduralSequentialComposition(final ProgramPoint source,
 			final ProgramPoint target, final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks,final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
-		return new InterproceduralSequentialComposition(mSerialNumberCounter++, source, target, mBoogie2smt,
+		return new InterproceduralSequentialComposition(mSerialNumberCounter++, source, target, mMgdScript,
 				mMgvManager, simplify, extPqe, codeBlocks, mLogger, mServices, xnfConversionTechnique, simplificationTechnique);
 	}
 
@@ -83,7 +83,7 @@ public class CodeBlockFactory implements IStorable {
 
 	public ParallelComposition constructParallelComposition(final ProgramPoint source, final ProgramPoint target,
 			final List<CodeBlock> codeBlocks,final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
-		return new ParallelComposition(mSerialNumberCounter++, source, target, mBoogie2smt, mServices, codeBlocks, xnfConversionTechnique);
+		return new ParallelComposition(mSerialNumberCounter++, source, target, mMgdScript, mServices, codeBlocks, xnfConversionTechnique);
 	}
 
 	public Return constructReturn(final ProgramPoint source, final ProgramPoint target, final Call correspondingCall) {
@@ -92,7 +92,7 @@ public class CodeBlockFactory implements IStorable {
 
 	public SequentialComposition constructSequentialComposition(final ProgramPoint source, final ProgramPoint target,
 			final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks,final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
-		return new SequentialComposition(mSerialNumberCounter++, source, target, mBoogie2smt, mMgvManager, simplify,
+		return new SequentialComposition(mSerialNumberCounter++, source, target, mMgdScript, mMgvManager, simplify,
 				extPqe, mServices, codeBlocks, xnfConversionTechnique, simplificationTechnique);
 	}
 

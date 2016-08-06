@@ -39,10 +39,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class LassoPartitioneer {
 	
 	private final IUltimateServiceProvider mServices;
-	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
+	private final ManagedScript mFreshTermVariableConstructor;
 	
 	private final LassoUnderConstruction mLasso;
 	
@@ -86,7 +86,7 @@ public class LassoPartitioneer {
 	
 	
 	public LassoPartitioneer(final IUltimateServiceProvider services, 
-			final IFreshTermVariableConstructor freshVarConstructor, 
+			final ManagedScript freshVarConstructor, 
 			final Script script, final LassoUnderConstruction lasso, 
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;

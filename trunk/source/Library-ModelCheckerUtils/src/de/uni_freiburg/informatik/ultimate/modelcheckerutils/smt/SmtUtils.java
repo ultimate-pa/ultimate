@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Aff
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -84,7 +85,7 @@ public class SmtUtils {
 	private static final boolean BINARY_BITVECTOR_SUM_WORKAROUND = false;
 
 	public static Term simplify(final Script script, final Term formula, final IUltimateServiceProvider services,
-			final SimplicationTechnique simplificationTechnique, final IFreshTermVariableConstructor freshTermVariableConstructor) {
+			final SimplicationTechnique simplificationTechnique, final ManagedScript freshTermVariableConstructor) {
 		final ILogger logger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
@@ -1090,7 +1091,7 @@ public class SmtUtils {
 	 * @param freshVarPrefix prefix of the fresh variables
 	 */
 	public static Term renameQuantifiedVariables(final Script script, 
-			final IFreshTermVariableConstructor freshVarConstructor, 
+			final ManagedScript freshVarConstructor, 
 			final QuantifiedFormula qFormula, final Set<TermVariable> toRename, 
 			final String freshVarPrefix) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
@@ -1134,7 +1135,7 @@ public class SmtUtils {
 	 * @return logically equivalent term in disjunctive normal form (DNF)
 	 */
 	public static Term toDnf(final IUltimateServiceProvider services, final Script script,
-			final IFreshTermVariableConstructor freshTermVariableConstructor, final Term term,
+			final ManagedScript freshTermVariableConstructor, final Term term,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		final Term result;
 		switch (xnfConversionTechnique) {
@@ -1154,7 +1155,7 @@ public class SmtUtils {
 	 * @return logically equivalent term in conjunctive normal form (CNF)
 	 */
 	public static Term toCnf(final IUltimateServiceProvider services, final Script script,
-			final IFreshTermVariableConstructor freshTermVariableConstructor, final Term term,
+			final ManagedScript freshTermVariableConstructor, final Term term,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		final Term result;
 		switch (xnfConversionTechnique) {

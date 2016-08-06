@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -443,7 +442,7 @@ public class TransFormula implements Serializable {
 	 *         transformula2
 	 */
 	public static TransFormula sequentialComposition(final ILogger logger, final IUltimateServiceProvider services,
-			final Boogie2SMT boogie2smt, final boolean simplify, final boolean extPqe, final boolean tranformToCNF, 
+			final ManagedScript boogie2smt, final boolean simplify, final boolean extPqe, final boolean tranformToCNF, 
 			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique,
 			final TransFormula... transFormula) {
 		logger.debug("sequential composition with" + (simplify ? "" : "out") + " formula simplification");
@@ -462,7 +461,7 @@ public class TransFormula implements Serializable {
 				if (tfb.containsInVar(var)) {
 					newOutVar = tfb.getInVar(var);
 				} else {
-					newOutVar = boogie2smt.getVariableManager().constructFreshTermVariable(var.getGloballyUniqueId(), var.getTermVariable().getSort());
+					newOutVar = boogie2smt.constructFreshTermVariable(var.getGloballyUniqueId(), var.getTermVariable().getSort());
 				}
 				subsitutionMapping.put(outVar, newOutVar);
 				// add to outvars if var is not outvar
@@ -482,7 +481,7 @@ public class TransFormula implements Serializable {
 					tfb.addInVar(var, newOutVar);
 				} else {
 					// case: var is read and written
-					final TermVariable newInVar = boogie2smt.getVariableManager().constructFreshTermVariable(var.getGloballyUniqueId(), var.getTermVariable().getSort());
+					final TermVariable newInVar = boogie2smt.constructFreshTermVariable(var.getGloballyUniqueId(), var.getTermVariable().getSort());
 					subsitutionMapping.put(inVar, newInVar);
 					tfb.addInVar(var, newInVar);
 					if (tfb.getOutVar(var) != newOutVar) {
@@ -492,7 +491,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (final TermVariable auxVar : transFormula[i].getAuxVars().keySet()) {
-				final TermVariable newAuxVar = boogie2smt.getVariableManager().constructFreshCopy(auxVar);
+				final TermVariable newAuxVar = boogie2smt.constructFreshCopy(auxVar);
 				subsitutionMapping.put(auxVar, newAuxVar);
 				auxVars.add(newAuxVar);
 			}
@@ -508,7 +507,7 @@ public class TransFormula implements Serializable {
 					if (tfb.containsInVar(var)) {
 						newInVar = tfb.getInVar(var);
 					} else {
-						newInVar = boogie2smt.getVariableManager().constructFreshTermVariable(var.getGloballyUniqueId(), var.getTermVariable().getSort());
+						newInVar = boogie2smt.constructFreshTermVariable(var.getGloballyUniqueId(), var.getTermVariable().getSort());
 						tfb.addInVar(var, newInVar);
 					}
 					subsitutionMapping.put(inVar, newInVar);
@@ -522,7 +521,7 @@ public class TransFormula implements Serializable {
 		formula = new FormulaUnLet().unlet(formula);
 		if (simplify) {
 			try {
-				final Term simplified = SmtUtils.simplify(script, formula, services, simplificationTechnique, boogie2smt.getVariableManager());
+				final Term simplified = SmtUtils.simplify(script, formula, services, simplificationTechnique, boogie2smt);
 				formula = simplified;
 			} catch (final ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(TransFormula.class, tce.getRunningTaskInfo() + 
@@ -532,16 +531,16 @@ public class TransFormula implements Serializable {
 
 		if (extPqe) {
 			final Term eliminated = PartialQuantifierElimination.elim(script, QuantifiedFormula.EXISTS, auxVars, formula,
-					services, logger, boogie2smt.getVariableManager(), simplificationTechnique, xnfConversionTechnique);
+					services, logger, boogie2smt, simplificationTechnique, xnfConversionTechnique);
 			logger.debug(new DebugMessage("DAG size before PQE {0}, DAG size after PQE {1}",
 					new DagSizePrinter(formula), new DagSizePrinter(eliminated)));
 			formula = eliminated;
 		} else {
-			final XnfDer xnfDer = new XnfDer(script, services, boogie2smt.getVariableManager());
+			final XnfDer xnfDer = new XnfDer(script, services, boogie2smt);
 			formula = Util.and(script, xnfDer.tryToEliminate(QuantifiedFormula.EXISTS, SmtUtils.getConjuncts(formula), auxVars));
 		}
 		if (simplify) {
-			formula = SmtUtils.simplify(script, formula, services, simplificationTechnique, boogie2smt.getVariableManager());
+			formula = SmtUtils.simplify(script, formula, services, simplificationTechnique, boogie2smt);
 		} else {
 			final LBool isSat = Util.checkSat(script, formula);
 			if (isSat == LBool.UNSAT) {
@@ -558,7 +557,7 @@ public class TransFormula implements Serializable {
 		}
 
 		if (tranformToCNF) {
-			final Term cnf = SmtUtils.toCnf(services, script, boogie2smt.getVariableManager(), formula, xnfConversionTechnique);
+			final Term cnf = SmtUtils.toCnf(services, script, boogie2smt, formula, xnfConversionTechnique);
 			formula = cnf;
 		}
 
@@ -806,7 +805,7 @@ public class TransFormula implements Serializable {
 	 * 			  Set of variables that are modifiable globals in the procedure
 	 * 	          in which the afterCall TransFormula ends. 
 	 */
-	public static TransFormula sequentialCompositionWithPendingCall(final Boogie2SMT boogie2smt, final boolean simplify,
+	public static TransFormula sequentialCompositionWithPendingCall(final ManagedScript mgdScript, final boolean simplify,
 			final boolean extPqe, final boolean transformToCNF, final List<TransFormula> beforeCall, final TransFormula callTf,
 			final TransFormula oldVarsAssignment, final TransFormula afterCall, final ILogger logger, final IUltimateServiceProvider services, 
 			final Set<IProgramVar> modifiableGlobalsOfEndProcedure, 
@@ -817,7 +816,7 @@ public class TransFormula implements Serializable {
 			final List<TransFormula> callAndBeforeList = new ArrayList<TransFormula>(beforeCall);
 			callAndBeforeList.add(callTf);
 			final TransFormula[] callAndBeforeArray = callAndBeforeList.toArray(new TransFormula[callAndBeforeList.size()]);
-			callAndBeforeTF = sequentialComposition(logger, services, boogie2smt, simplify, extPqe, transformToCNF,
+			callAndBeforeTF = sequentialComposition(logger, services, mgdScript, simplify, extPqe, transformToCNF,
 					xnfConversionTechnique, simplificationTechnique, callAndBeforeArray);
 
 			// remove outVars that relate to scope of caller
@@ -837,7 +836,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (final IProgramVar bv : varsToRemove) {
-				callAndBeforeTF.removeOutVar(bv, boogie2smt.getScript());
+				callAndBeforeTF.removeOutVar(bv, mgdScript.getScript());
 			}
 		}
 
@@ -846,7 +845,7 @@ public class TransFormula implements Serializable {
 			final List<TransFormula> oldAssignAndAfterList = new ArrayList<TransFormula>(Arrays.asList(afterCall));
 			oldAssignAndAfterList.add(0, oldVarsAssignment);
 			final TransFormula[] oldAssignAndAfterArray = oldAssignAndAfterList.toArray(new TransFormula[0]);
-			oldAssignAndAfterTF = sequentialComposition(logger, services, boogie2smt, simplify, extPqe, transformToCNF,
+			oldAssignAndAfterTF = sequentialComposition(logger, services, mgdScript, simplify, extPqe, transformToCNF,
 					xnfConversionTechnique, simplificationTechnique, oldAssignAndAfterArray);
 
 			// remove inVars that relate to scope of callee
@@ -866,7 +865,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (final IProgramVar bv : inVarsToRemove) {
-				oldAssignAndAfterTF.removeInVar(bv, boogie2smt.getScript());
+				oldAssignAndAfterTF.removeInVar(bv, mgdScript.getScript());
 			}
 			
 			final List<IProgramVar> outVarsToRemove = new ArrayList<IProgramVar>();
@@ -881,11 +880,11 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (final IProgramVar bv : outVarsToRemove) {
-				oldAssignAndAfterTF.removeOutVar(bv, boogie2smt.getScript());
+				oldAssignAndAfterTF.removeOutVar(bv, mgdScript.getScript());
 			}
 		}
 
-		final TransFormula result = sequentialComposition(logger, services, boogie2smt, simplify, 
+		final TransFormula result = sequentialComposition(logger, services, mgdScript, simplify, 
 				extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique,
 				callAndBeforeTF, oldAssignAndAfterTF);
 		return result;
@@ -906,13 +905,13 @@ public class TransFormula implements Serializable {
 	 * @param logger
 	 * @param services
 	 */
-	public static TransFormula sequentialCompositionWithCallAndReturn(final Boogie2SMT boogie2smt, final boolean simplify,
+	public static TransFormula sequentialCompositionWithCallAndReturn(final ManagedScript mgdScript, final boolean simplify,
 			final boolean extPqe, final boolean transformToCNF, final TransFormula callTf, 
 			final TransFormula oldVarsAssignment, final TransFormula globalVarsAssignment,
 			final TransFormula procedureTf, final TransFormula returnTf, final ILogger logger, 
 			final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
 		logger.debug("sequential composition (call/return) with" + (simplify ? "" : "out") + " formula simplification");
-		final TransFormula result = sequentialComposition(logger, services, boogie2smt, 
+		final TransFormula result = sequentialComposition(logger, services, mgdScript, 
 				simplify, extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique,
 				callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf);
 		{
@@ -930,7 +929,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (final IProgramVar bv : inVarsToRemove) {
-				result.removeInVar(bv, boogie2smt.getScript());
+				result.removeInVar(bv, mgdScript.getScript());
 			}
 		}
 		{
@@ -948,7 +947,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (final IProgramVar bv : outVarsToRemove) {
-				result.removeOutVar(bv, boogie2smt.getScript());
+				result.removeOutVar(bv, mgdScript.getScript());
 			}
 		}
 		{

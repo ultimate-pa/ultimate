@@ -243,7 +243,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		}
 
 		if (mSimplifyAssumption) {
-			assumeTerm = SmtUtils.simplify(mScript, assumeTerm, mServices, mSimplificationTechnique, mBoogie2Smt.getVariableManager());
+			assumeTerm = SmtUtils.simplify(mScript, assumeTerm, mServices, mSimplificationTechnique, mBoogie2Smt.getManagedScript());
 		}
 
 		final Expression assumeExpression = mBoogie2Smt.getTerm2Expression().translate(assumeTerm);

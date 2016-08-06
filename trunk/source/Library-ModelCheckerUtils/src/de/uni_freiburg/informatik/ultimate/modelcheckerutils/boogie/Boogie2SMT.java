@@ -64,7 +64,6 @@ public class Boogie2SMT {
 	private final TypeSortTranslator mTypeSortTranslator;
 	private final IOperationTranslator mOperationTranslator;
 	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
-	private final VariableManager mVariableManager;
 	private final Expression2Term mExpression2Term;
 	private final Term2Expression mTerm2Expression;
 
@@ -82,7 +81,6 @@ public class Boogie2SMT {
 		mBlackHoleArrays = blackHoleArrays;
 		mBoogieDeclarations = boogieDeclarations;
 		mScript = maScript;
-		mVariableManager = new VariableManager(mScript, mServices);
 
 		if (bitvectorInsteadOfInt) {
 			mTypeSortTranslator = new TypeSortTranslatorBitvectorWorkaround(boogieDeclarations.getTypeDeclarations(),
@@ -91,7 +89,7 @@ public class Boogie2SMT {
 			mConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
 			mOperationTranslator = new BitvectorWorkaroundOperationTranslator(mBoogie2SmtSymbolTable, mScript.getScript());
 			mExpression2Term = new Expression2Term(mServices, mScript.getScript(), mTypeSortTranslator, mBoogie2SmtSymbolTable,
-					mOperationTranslator, mVariableManager);
+					mOperationTranslator, mScript);
 		} else {
 			mTypeSortTranslator = new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), mScript.getScript(),
 					mBlackHoleArrays, mServices);
@@ -100,7 +98,7 @@ public class Boogie2SMT {
 			mConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
 			mOperationTranslator = new DefaultOperationTranslator(mBoogie2SmtSymbolTable, mScript.getScript());
 			mExpression2Term = new Expression2Term(mServices, mScript.getScript(), mTypeSortTranslator, mBoogie2SmtSymbolTable,
-					mOperationTranslator, mVariableManager);
+					mOperationTranslator, mScript);
 		}
 
 		mAxioms = new ArrayList<Term>(boogieDeclarations.getAxioms().size());
@@ -111,10 +109,6 @@ public class Boogie2SMT {
 		mStatements2TransFormula = new Statements2TransFormula(this, mServices, mExpression2Term);
 		mTerm2Expression = new Term2Expression(mTypeSortTranslator, mBoogie2SmtSymbolTable);
 
-	}
-
-	public VariableManager getVariableManager() {
-		return mVariableManager;
 	}
 
 	public Script getScript() {

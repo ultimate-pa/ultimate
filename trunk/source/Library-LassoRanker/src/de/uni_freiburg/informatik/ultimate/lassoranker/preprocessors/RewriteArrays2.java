@@ -44,18 +44,17 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArra
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -82,7 +81,7 @@ public class RewriteArrays2 extends LassoPreprocessor {
 	/**
 	 * The script used to transform the formula
 	 */
-	private final Script mScript;
+	private final ManagedScript mScript;
 
 	// private final boolean mSearchAdditionalSupportingInvariants;
 	private final TransFormula mOriginalStem;
@@ -91,15 +90,15 @@ public class RewriteArrays2 extends LassoPreprocessor {
 	private final Set<IProgramVar> mModifiableGlobalsAtHonda;
 
 	private final ReplacementVarFactory mReplacementVarFactory;
-	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
-	private final Boogie2SMT mBoogie2Smt;
+	private final ManagedScript mFreshTermVariableConstructor;
+	private final Boogie2SmtSymbolTable mBoogie2Smt;
 
 	private final boolean mOverapproximateByOmmitingDisjointIndices;
 
 	public RewriteArrays2(final boolean overapproximateByOmmitingDisjointIndices, final TransFormula originalStem,
 			final TransFormula originalLoop, final Set<IProgramVar> modifiableGlobalsAtHonda,
 			final IUltimateServiceProvider services, final Set<Term> arrayIndexSupportingInvariants,
-			final Boogie2SMT boogie2smt, final ReplacementVarFactory ReplacementVarFactory,
+			final Boogie2SmtSymbolTable boogie2smt, final ManagedScript mgdScript, final ReplacementVarFactory ReplacementVarFactory,
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
@@ -111,9 +110,9 @@ public class RewriteArrays2 extends LassoPreprocessor {
 		mArrayIndexSupportingInvariants = arrayIndexSupportingInvariants;
 		mOverapproximateByOmmitingDisjointIndices = overapproximateByOmmitingDisjointIndices;
 		mBoogie2Smt = boogie2smt;
-		mScript = boogie2smt.getScript();
+		mScript = mgdScript;
 		mReplacementVarFactory = ReplacementVarFactory;
-		mFreshTermVariableConstructor = mBoogie2Smt.getVariableManager();
+		mFreshTermVariableConstructor = mScript;
 	}
 
 	@Override
@@ -225,16 +224,16 @@ public class RewriteArrays2 extends LassoPreprocessor {
 				new TransFormulaLRWithArrayInformation(mServices, lasso.getLoop(), mReplacementVarFactory, mScript,
 						mBoogie2Smt, stemTfwai, mSimplificationTechnique, mXnfConversionTechnique);
 		final ArrayCellRepVarConstructor acrvc =
-				new ArrayCellRepVarConstructor(mReplacementVarFactory, mScript, stemTfwai, loopTfwai);
+				new ArrayCellRepVarConstructor(mReplacementVarFactory, mScript.getScript(), stemTfwai, loopTfwai);
 		final EqualityAnalysisResult equalityAnalysisAtHonda;
 		{
 			final EqualitySupportingInvariantAnalysis isia = new EqualitySupportingInvariantAnalysis(
-					computeDoubletons(acrvc), mBoogie2Smt.getBoogie2SmtSymbolTable(), mScript, mOriginalStem,
+					computeDoubletons(acrvc), mBoogie2Smt, mScript.getScript(), mOriginalStem,
 					mOriginalLoop, mModifiableGlobalsAtHonda);
 			equalityAnalysisAtHonda = isia.getEqualityAnalysisResult();
 		}
-		mArrayIndexSupportingInvariants.addAll(equalityAnalysisAtHonda.constructListOfEqualities(mScript));
-		mArrayIndexSupportingInvariants.addAll(equalityAnalysisAtHonda.constructListOfNotEquals(mScript));
+		mArrayIndexSupportingInvariants.addAll(equalityAnalysisAtHonda.constructListOfEqualities(mScript.getScript()));
+		mArrayIndexSupportingInvariants.addAll(equalityAnalysisAtHonda.constructListOfNotEquals(mScript.getScript()));
 		final TransFormulaLRWithArrayCells stem = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory,
 				mScript, stemTfwai, equalityAnalysisAtHonda, mBoogie2Smt, null, overapproximate, true,
 				mSimplificationTechnique, mXnfConversionTechnique);
@@ -270,9 +269,9 @@ public class RewriteArrays2 extends LassoPreprocessor {
 	}
 
 	private boolean checkStemImplication(final IUltimateServiceProvider services, final ILogger logger,
-			final LassoUnderConstruction oldLasso, final LassoUnderConstruction newLasso, final Boogie2SMT boogie2smt) {
+			final LassoUnderConstruction oldLasso, final LassoUnderConstruction newLasso, final Boogie2SmtSymbolTable boogie2smt) {
 		final LBool implies = TransFormulaUtils.implies(mServices, mLogger, oldLasso.getStem(), newLasso.getStem(),
-				mScript, boogie2smt.getBoogie2SmtSymbolTable());
+				mScript.getScript(), boogie2smt);
 		if (implies != LBool.SAT && implies != LBool.UNSAT) {
 			logger.warn("result of RewriteArrays check is " + implies);
 		}

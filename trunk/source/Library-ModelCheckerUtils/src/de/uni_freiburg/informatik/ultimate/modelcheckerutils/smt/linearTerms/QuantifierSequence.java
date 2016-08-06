@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Data structure that represents a quantified formula but allows one to
@@ -109,7 +109,7 @@ public class QuantifierSequence {
 	}
 	
 	public void replace(final Set<TermVariable> forbiddenVariables, 
-			final IFreshTermVariableConstructor freshVarConstructor,
+			final ManagedScript freshVarConstructor,
 			final String replacementName) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final QuantifiedVariables qv : mQuantifierBlocks) {
@@ -127,7 +127,7 @@ public class QuantifierSequence {
 	}
 	
 	public static Term mergeQuantifierSequences(final Script script, 
-			final IFreshTermVariableConstructor freshVarConstructor, 
+			final ManagedScript freshVarConstructor, 
 			final String functionSymbolName, 
 			final QuantifierSequence[] quantifierSequences, 
 			final HashSet<TermVariable> freeVariables) {

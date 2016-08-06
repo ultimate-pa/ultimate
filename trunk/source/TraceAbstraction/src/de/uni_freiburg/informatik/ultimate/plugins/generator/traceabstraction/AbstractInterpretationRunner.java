@@ -200,7 +200,8 @@ public class AbstractInterpretationRunner {
 				throw new AssertionError("Mode should have been checked earlier");
 			case USE_PATH_PROGRAM:
 				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder(mServices, abstraction,
-						interpolGenerator.getPredicateUnifier(), mSmtManager, currentCex, mSimplificationTechnique,
+						interpolGenerator.getPredicateUnifier(), mSmtManager.getManagedScript(), 
+						mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), currentCex, mSimplificationTechnique,
 						mXnfConversionTechnique);
 				break;
 			case USE_PREDICATES:
@@ -293,7 +294,7 @@ public class AbstractInterpretationRunner {
 
 	private String simplify(final Term term) {
 		return SmtUtils.simplify(mRoot.getRootAnnot().getScript(), term, mServices, mSimplificationTechnique,
-				mRoot.getRootAnnot().getBoogie2SMT().getVariableManager()).toStringDirect();
+				mRoot.getRootAnnot().getBoogie2SMT().getManagedScript()).toStringDirect();
 	}
 
 	@FunctionalInterface

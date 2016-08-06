@@ -419,7 +419,7 @@ public class BinaryStatePredicateManager {
 		final Term conjunction = SmtUtils.and(mScript, siTerms);
 		final Term si;
 		if (false) {
-			final Term simplified = SmtUtils.simplify(mSmtManager.getScript(), conjunction, mServices, mSimplificationTechnique, mSmtManager.getVariableManager());   
+			final Term simplified = SmtUtils.simplify(mSmtManager.getScript(), conjunction, mServices, mSimplificationTechnique, mSmtManager.getManagedScript());   
 			final Term normalized = (new AffineSubtermNormalizer(mSmtManager.getScript(), mLogger)).transform(simplified);
 			si = normalized;
 		} else {
@@ -467,7 +467,7 @@ public class BinaryStatePredicateManager {
 
 	public IPredicate supportingInvariant2Predicate(final SupportingInvariant si) {
 		Term formula = si.asTerm(mSmtManager.getScript());
-		formula = SmtUtils.simplify(mSmtManager.getScript(), formula, mServices, mSimplificationTechnique, mSmtManager.getVariableManager());
+		formula = SmtUtils.simplify(mSmtManager.getScript(), formula, mServices, mSimplificationTechnique, mSmtManager.getManagedScript());
 		return term2Predicate(formula);
 	}
 

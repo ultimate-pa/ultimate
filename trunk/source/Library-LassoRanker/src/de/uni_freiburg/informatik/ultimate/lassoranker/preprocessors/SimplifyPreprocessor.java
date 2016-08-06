@@ -33,12 +33,12 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
 /**
@@ -50,13 +50,13 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 	private final boolean mUseSMTInterpolForSimplification = !true;
-	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
+	private final ManagedScript mFreshTermVariableConstructor;
 	private final SimplicationTechnique mXnfConversionTechnique;
 	
 	public static final String s_Description = "Simplify formula using SimplifyDDA";
 	
 	public SimplifyPreprocessor(final IUltimateServiceProvider services, final IToolchainStorage storage, 
-			final IFreshTermVariableConstructor freshTermVariableConstructor, final SimplicationTechnique xnfConversionTechnique) {
+			final ManagedScript freshTermVariableConstructor, final SimplicationTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
 		mStorage = storage;

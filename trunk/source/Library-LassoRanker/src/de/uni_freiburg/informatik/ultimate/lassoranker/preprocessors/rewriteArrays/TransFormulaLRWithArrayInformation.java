@@ -52,8 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -64,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEqu
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -93,8 +93,7 @@ public class TransFormulaLRWithArrayInformation {
 	/**
 	 * The script used to transform the formula
 	 */
-	private final Script mScript;
-	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
+	private final ManagedScript mScript;
 
 	/**
 	 * Mapping from the first generation of an array to all indices that
@@ -129,8 +128,8 @@ public class TransFormulaLRWithArrayInformation {
 	public TransFormulaLRWithArrayInformation(
 			final IUltimateServiceProvider services, 
 			final TransFormulaLR transFormulaLR, 
-			final ReplacementVarFactory replacementVarFactory, final Script script, 
-			final Boogie2SMT boogie2smt, 
+			final ReplacementVarFactory replacementVarFactory, final ManagedScript script, 
+			final Boogie2SmtSymbolTable boogie2smt, 
 			final TransFormulaLRWithArrayInformation stem, 
 			final SimplicationTechnique simplificationTechnique, 
 			final XnfConversionTechnique xnfConversionTechnique) {
@@ -140,7 +139,6 @@ public class TransFormulaLRWithArrayInformation {
 		mXnfConversionTechnique = xnfConversionTechnique;
  		mTransFormulaLR = transFormulaLR;
  		mScript = script;
-		mFreshTermVariableConstructor = boogie2smt.getVariableManager();
 		mReplacementVarFactory = replacementVarFactory;
 		if (!SmtUtils.containsArrayVariables(mTransFormulaLR.getFormula())) {
 			mContainsArrays = false;
@@ -152,9 +150,9 @@ public class TransFormulaLRWithArrayInformation {
 			mArrayFirstGeneration2Instances = null;
 		} else {
 			mContainsArrays = true;
-			final Term term = SmtUtils.simplify(mScript, mTransFormulaLR.getFormula(), mServices, simplificationTechnique, mFreshTermVariableConstructor);
-			Term dnf = SmtUtils.toDnf(mServices, mScript, mFreshTermVariableConstructor, term, xnfConversionTechnique);
-			dnf = SmtUtils.simplify(mScript, dnf, mServices, simplificationTechnique, mFreshTermVariableConstructor);
+			final Term term = SmtUtils.simplify(mScript.getScript(), mTransFormulaLR.getFormula(), mServices, simplificationTechnique, mScript);
+			Term dnf = SmtUtils.toDnf(mServices, mScript.getScript(), mScript, term, xnfConversionTechnique);
+			dnf = SmtUtils.simplify(mScript.getScript(), dnf, mServices, simplificationTechnique, mScript);
 			final Term[] disjuncts = SmtUtils.getDisjuncts(dnf);
 			sunnf = new Term[disjuncts.length];
 			mArrayUpdates = new ArrayList<List<ArrayUpdate>>(disjuncts.length);
@@ -167,15 +165,15 @@ public class TransFormulaLRWithArrayInformation {
 				final Term[] conjuncts = SmtUtils.getConjuncts(disjuncts[i]);
 				final ArrayEqualityExtractor aee = new ArrayEqualityExtractor(conjuncts);
 				mArrayEqualities.add(aee.getArrayEqualities());
-				sunfts[i] = new SingleUpdateNormalFormTransformer(Util.and(mScript, aee
-						.getRemainingTerms().toArray(new Term[0])), mScript, favg);
+				sunfts[i] = new SingleUpdateNormalFormTransformer(Util.and(mScript.getScript(), aee
+						.getRemainingTerms().toArray(new Term[0])), mScript.getScript(), favg);
 				mArrayUpdates.add(sunfts[i].getArrayUpdates());
 				sunnf[i] = sunfts[i].getRemainderTerm();
 				mArrayReads.add(extractArrayReads(sunfts[i].getArrayUpdates(), sunfts[i].getRemainderTerm()));
 				mArrayGenealogy[i] = new ArrayGenealogy(mTransFormulaLR, mArrayEqualities.get(i), mArrayUpdates.get(i), mArrayReads.get(i));
 			}
 			assert !RewriteArrays2.ADDITIONAL_CHECKS_IF_ASSERTIONS_ENABLED || checkSunftranformation(
-					services, mLogger, mFreshTermVariableConstructor, boogie2smt, mArrayEqualities, sunfts) 
+					services, mLogger, mScript, boogie2smt, mArrayEqualities, sunfts) 
 					: "error in sunftransformation";
 			constructSubstitutions();
 			final HashRelation<TermVariable, ArrayIndex> foreignIndices;
@@ -193,15 +191,15 @@ public class TransFormulaLRWithArrayInformation {
 	
 	
 	private boolean checkSunftranformation(final IUltimateServiceProvider services, 
-			final ILogger logger, final IFreshTermVariableConstructor ftvc, 
-			final Boogie2SMT boogie2smt, final List<List<ArrayEquality>> arrayEqualities, final SingleUpdateNormalFormTransformer[] sunfts) {
-		final TransFormulaLR afterSunft = constructTransFormulaLRWInSunf(services, mXnfConversionTechnique, mSimplificationTechnique, logger, ftvc, mReplacementVarFactory, mScript, mTransFormulaLR, arrayEqualities, sunfts);
-		final LBool notStronger = TransFormulaUtils.implies(mServices, mLogger, mTransFormulaLR, afterSunft, mScript, boogie2smt.getBoogie2SmtSymbolTable());
+			final ILogger logger, final ManagedScript ftvc, 
+			final Boogie2SmtSymbolTable boogie2smt, final List<List<ArrayEquality>> arrayEqualities, final SingleUpdateNormalFormTransformer[] sunfts) {
+		final TransFormulaLR afterSunft = constructTransFormulaLRWInSunf(services, mXnfConversionTechnique, mSimplificationTechnique, logger, ftvc, mReplacementVarFactory, mScript.getScript(), mTransFormulaLR, arrayEqualities, sunfts);
+		final LBool notStronger = TransFormulaUtils.implies(mServices, mLogger, mTransFormulaLR, afterSunft, mScript.getScript(), boogie2smt);
 		if (notStronger != LBool.SAT && notStronger != LBool.UNSAT) {
 			logger.warn("result of sunf transformation notStronger check is " + notStronger);
 		}
 		assert (notStronger != LBool.SAT) : "result of sunf transformation too strong";
-		final LBool notWeaker = TransFormulaUtils.implies(mServices, mLogger, afterSunft, mTransFormulaLR, mScript, boogie2smt.getBoogie2SmtSymbolTable());
+		final LBool notWeaker = TransFormulaUtils.implies(mServices, mLogger, afterSunft, mTransFormulaLR, mScript.getScript(), boogie2smt);
 		if (notWeaker != LBool.SAT && notWeaker != LBool.UNSAT) {
 			logger.warn("result of sunf transformation notWeaker check is " + notWeaker);
 		}
@@ -243,7 +241,7 @@ public class TransFormulaLRWithArrayInformation {
 			final TermVariable ourInVar = (TermVariable) mTransFormulaLR.getInVars().get(foreigntv2rv.getValue());
 			substitutionMapping.put(foreigntv2rv.getKey(), ourInVar);
 		}
-		final List<Term> translatedIndex = (new SafeSubstitution(mScript, substitutionMapping)).transform(index);
+		final List<Term> translatedIndex = (new SafeSubstitution(mScript.getScript(), substitutionMapping)).transform(index);
 		final ArrayIndex foreignIndex = new ArrayIndex(translatedIndex);
 		return foreignIndex;
 	}
@@ -253,7 +251,7 @@ public class TransFormulaLRWithArrayInformation {
 	private void addForeignInVarAndOutVar(final RankVar value) {
 		final String name = value.getGloballyUniqueId() + "_ForeignInOutVar";
 		final Sort sort = value.getDefinition().getSort();
-		final TermVariable inOutVar = mFreshTermVariableConstructor.constructFreshTermVariable(name, sort);
+		final TermVariable inOutVar = mScript.constructFreshTermVariable(name, sort);
 		assert !mTransFormulaLR.getInVars().containsKey(value);
 		mTransFormulaLR.addInVar(value, inOutVar);
 		assert !mTransFormulaLR.getOutVars().containsKey(value);
@@ -318,7 +316,7 @@ public class TransFormulaLRWithArrayInformation {
 	public ArrayIndex getOrConstructIndexRepresentative(final ArrayIndex indexInstance) {
 		ArrayIndex indexRepresentative = mIndexInstance2IndexRepresentative.get(indexInstance);
 		if (indexRepresentative == null) {
-			indexRepresentative = new ArrayIndex(TransFormulaUtils.translateTermVariablesToDefinitions(mScript, mTransFormulaLR, indexInstance));
+			indexRepresentative = new ArrayIndex(TransFormulaUtils.translateTermVariablesToDefinitions(mScript.getScript(), mTransFormulaLR, indexInstance));
 			mIndexInstance2IndexRepresentative.put(indexInstance, indexRepresentative);
 		}
 		return indexRepresentative;
@@ -536,8 +534,8 @@ public class TransFormulaLRWithArrayInformation {
 			in2outMapping.put(inVar, outVar);
 			out2inMapping.put(outVar, inVar);
 		}
-		mInVars2OutVars = new SafeSubstitution(mScript, in2outMapping);
-		mOutVars2InVars = new SafeSubstitution(mScript, out2inMapping);
+		mInVars2OutVars = new SafeSubstitution(mScript.getScript(), in2outMapping);
+		mOutVars2InVars = new SafeSubstitution(mScript.getScript(), out2inMapping);
 	}
 
 	private class IndexCollector {
@@ -790,7 +788,7 @@ public class TransFormulaLRWithArrayInformation {
 
 	private static TransFormulaLR constructTransFormulaLRWInSunf(final IUltimateServiceProvider services, 
 			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique, 
-			final ILogger logger, final IFreshTermVariableConstructor ftvc, final ReplacementVarFactory repVarFactory, 
+			final ILogger logger, final ManagedScript ftvc, final ReplacementVarFactory repVarFactory, 
 			final Script script, final TransFormulaLR tf, 
 			final List<List<ArrayEquality>> arrayEqualities, final SingleUpdateNormalFormTransformer... sunfts) {
 		final TransFormulaLR result = new TransFormulaLR(tf);

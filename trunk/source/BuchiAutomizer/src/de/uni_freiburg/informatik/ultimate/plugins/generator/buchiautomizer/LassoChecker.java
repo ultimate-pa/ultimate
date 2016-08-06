@@ -574,7 +574,7 @@ public class LassoChecker {
 	private TransFormula computeTF(final NestedWord<CodeBlock> word, final boolean simplify,
 			final boolean extendedPartialQuantifierElimination, final boolean withBranchEncoders) {
 		final boolean toCNF = false;
-		final TransFormula tf = SequentialComposition.getInterproceduralTransFormula(mSmtManager.getBoogie2Smt(),
+		final TransFormula tf = SequentialComposition.getInterproceduralTransFormula(mSmtManager.getBoogie2Smt().getManagedScript(),
 				mModifiableGlobalVariableManager, simplify, extendedPartialQuantifierElimination, toCNF,
 				withBranchEncoders, mLogger, mServices, word.asList(), mXnfConversionTechnique,
 				mSimplificationTechnique);

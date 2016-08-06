@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 
@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruc
  */
 public class ReplacementVarFactory {
 	
-	private final IFreshTermVariableConstructor mVariableManager;
+	private final ManagedScript mVariableManager;
 	private final Map<Term, ReplacementVar> mRepVarMapping = 
 			new HashMap<Term, ReplacementVar>();
 	private final Map<Term, Map<Object, LocalReplacementVar>> mLocalRepVarMapping = 
@@ -60,7 +60,7 @@ public class ReplacementVarFactory {
 	private final Map<IProgramVar, BoogieVarWrapper> mBoogieVarWrappers
 		= new HashMap<IProgramVar, BoogieVarWrapper>();
 
-	public ReplacementVarFactory(IFreshTermVariableConstructor variableManager) {
+	public ReplacementVarFactory(ManagedScript variableManager) {
 		super();
 		mVariableManager = variableManager;
 		

@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPrepro
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 
@@ -60,7 +60,7 @@ public class LassoBuilder {
 	/**
 	 * The Boogie2SMT object
 	 */
-	private final Boogie2SMT mboogie2smt;
+	private final ManagedScript mboogie2smt;
 	
 	/**
 	 * Collection of all generated replacement TermVariables
@@ -100,8 +100,8 @@ public class LassoBuilder {
 	 * @param stem the stem transition
 	 * @param loop the loop transition
 	 */
-	public LassoBuilder(ILogger logger, Script script, Boogie2SMT boogie2smt, TransFormula stem,
-			TransFormula loop, NlaHandling nlaHandling) {
+	public LassoBuilder(final ILogger logger, final Script script, final ManagedScript boogie2smt, final TransFormula stem,
+			final TransFormula loop, final NlaHandling nlaHandling) {
 		assert script != null;
 		assert boogie2smt != null;
 		mLogger = logger;
@@ -110,8 +110,7 @@ public class LassoBuilder {
 		mNlaHandling = nlaHandling;
 		mtermVariables = new ArrayList<TermVariable>();
 		
-		mReplacementVarFactory =
-				new ReplacementVarFactory(mboogie2smt.getVariableManager());
+		mReplacementVarFactory = new ReplacementVarFactory(mboogie2smt);
 		
 		mLassosUC = new ArrayList<>();
 		mLassosUC.add(new LassoUnderConstruction(
@@ -125,13 +124,6 @@ public class LassoBuilder {
 	 */
 	public Script getScript() {
 		return mScript;
-	}
-	
-	/**
-	 * @return the associated Boogie2SMT object
-	 */
-	public Boogie2SMT getBoogie2SMT() {
-		return mboogie2smt;
 	}
 	
 	public ReplacementVarFactory getReplacementVarFactory() {
@@ -169,7 +161,7 @@ public class LassoBuilder {
 	}
 	
 	
-	public void applyPreprocessor(LassoPreprocessor preprocessor) throws TermException {
+	public void applyPreprocessor(final LassoPreprocessor preprocessor) throws TermException {
 		final ArrayList<LassoUnderConstruction> newLassos = new ArrayList<LassoUnderConstruction>();
 		for (final LassoUnderConstruction lasso : mLassosUC) {
 			try {
@@ -255,7 +247,7 @@ public class LassoBuilder {
 		return sb.toString();
 	}
 	
-	public static int computeMaxDagSize(List<LassoUnderConstruction> lassos) {
+	public static int computeMaxDagSize(final List<LassoUnderConstruction> lassos) {
 		if (lassos.isEmpty()) {
 			return 0;
 		} else {
@@ -272,7 +264,7 @@ public class LassoBuilder {
 		return computeMaxDagSize(mLassosUC);
 	}
 
-	public void preprocess(LassoPreprocessor[] preProcessorsTermination, LassoPreprocessor[] preProcessorsNontermination) throws TermException {
+	public void preprocess(final LassoPreprocessor[] preProcessorsTermination, final LassoPreprocessor[] preProcessorsNontermination) throws TermException {
 		mPreprocessingBenchmark = new PreprocessingBenchmark(
 				computeMaxDagSize());
 		// Apply preprocessors

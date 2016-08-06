@@ -50,11 +50,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSy
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -89,7 +89,7 @@ public class HoareAnnotation extends SPredicate {
 
 	private final Script mScript;
 	private final Boogie2SmtSymbolTable mSymbolTable;
-	private final IFreshTermVariableConstructor mFreshVariableConstructor;
+	private final ManagedScript mFreshVariableConstructor;
 	private final PredicateFactory mPredicateFactory;
 	private final ModifiableGlobalVariableManager mModifiableGlobals;
 
@@ -104,7 +104,7 @@ public class HoareAnnotation extends SPredicate {
 	public HoareAnnotation(final ProgramPoint programPoint, final int serialNumber, 
 			final Boogie2SmtSymbolTable symbolTable, final PredicateFactory predicateFactory, 
 			final ModifiableGlobalVariableManager modifiableGlobals,
-			final IFreshTermVariableConstructor freshVariableConstructor,
+			final ManagedScript freshVariableConstructor,
 			final Script script,
 			final IUltimateServiceProvider services, 
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {

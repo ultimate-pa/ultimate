@@ -80,11 +80,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -158,7 +158,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
 
 	private INestedWordAutomaton<WitnessEdge, WitnessNode> mWitnessAutomaton;
-	private final IFreshTermVariableConstructor mFreshVarConstructor;
+	private final ManagedScript mFreshVarConstructor;
 
 	private final boolean mDoFaultLocalization_NonFlowSensitive;
 	private final boolean mDoFaultLocalization_FlowSensitive;
@@ -201,7 +201,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mStateFactoryForRefinement = new PredicateFactoryRefinement(mRootNode.getRootAnnot().getProgramPoints(),
 				super.mSmtManager, mPref, REMOVE_DEAD_ENDS && mComputeHoareAnnotation, mHaf, mHoareAnnotationPositions);
 		mPredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(super.mSmtManager, mPref);
-		mFreshVarConstructor = super.mSmtManager.getVariableManager();
+		mFreshVarConstructor = super.mSmtManager.getManagedScript();
 
 		mAssertCodeBlocksIncrementally = (mServices.getPreferenceProvider(Activator.PLUGIN_ID)).getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,

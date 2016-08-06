@@ -44,14 +44,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BuchiPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -74,7 +73,7 @@ public class PredicateFactory {
 	private static final String[] NO_PROCEDURE = new String[0];
 
 	private final IUltimateServiceProvider mServices;
-	private final IFreshTermVariableConstructor mFreshVariableConstructor;
+	private final ManagedScript mFreshVariableConstructor;
 	private final ILogger mLogger;
 	
 	protected Term mDontCareTerm;
@@ -86,13 +85,13 @@ public class PredicateFactory {
 		return mDontCareTerm;
 	}
 
-	public PredicateFactory(final IUltimateServiceProvider services, final Boogie2SMT boogie2smt, final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+	public PredicateFactory(final IUltimateServiceProvider services, final ManagedScript boogie2smt, final Boogie2SmtSymbolTable symbolTable, final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mDontCareTerm = new AuxilliaryTerm("don't care");
 		mEmptyStackTerm = new AuxilliaryTerm("emptyStack");
-		mSymbolTable = boogie2smt.getBoogie2SmtSymbolTable();
-		mFreshVariableConstructor = boogie2smt.getVariableManager();
+		mSymbolTable = symbolTable;
+		mFreshVariableConstructor = boogie2smt;
 		mScript = boogie2smt.getScript();
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;

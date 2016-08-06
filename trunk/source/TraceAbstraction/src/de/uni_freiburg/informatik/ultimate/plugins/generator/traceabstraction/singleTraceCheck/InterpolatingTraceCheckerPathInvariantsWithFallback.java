@@ -104,7 +104,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 		}
 		assert TraceCheckerUtils.checkInterpolantsInductivityForward(Arrays.asList(interpolants), 
 				mTrace, mPrecondition, mPostcondition, mPendingContexts, "invariant map", 
-				mModifiedGlobals, mLogger, mManagedScript, mVariableManager)
+				mModifiedGlobals, mLogger, mManagedScript)
 			: "invalid Hoare triple in invariant map";
 		mInterpolants = interpolants;
 	}

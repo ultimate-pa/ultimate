@@ -38,12 +38,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
@@ -53,10 +53,10 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  */
 public class XnfDer extends XjunctPartialQuantifierElimination {
 
-	private final IFreshTermVariableConstructor mFreshVarConstructor;
+	private final ManagedScript mFreshVarConstructor;
 
 	public XnfDer(final Script script, final IUltimateServiceProvider services, 
-			final IFreshTermVariableConstructor freshVarConstructor) {
+			final ManagedScript freshVarConstructor) {
 		super(script, services);
 		mFreshVarConstructor = freshVarConstructor;
 	}

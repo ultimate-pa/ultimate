@@ -1,5 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.bdd;
 
+import java.util.Arrays;
+import java.util.List;
+
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -7,18 +12,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateServiceProviderMock;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
-
-import java.util.Arrays;
-import java.util.List;
-
-import org.junit.Assert;
-import org.junit.Before;
 
 
 public class BddBuilderTest {
@@ -32,7 +31,7 @@ public class BddBuilderTest {
 	public void setUP(){
 		services = new UltimateServiceProviderMock();
 		script = new SMTInterpol();
-		final IFreshTermVariableConstructor freshTermVariableConstructor = null;
+		final ManagedScript freshTermVariableConstructor = null;
 		simplifyBdd = new SimplifyBdd(services, script, freshTermVariableConstructor);
 
 		script.setLogic(Logics.CORE);
