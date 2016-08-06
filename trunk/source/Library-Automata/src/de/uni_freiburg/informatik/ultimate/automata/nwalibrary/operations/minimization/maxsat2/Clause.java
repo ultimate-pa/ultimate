@@ -265,33 +265,13 @@ class Clause<V> {
 		if (this == obj) {
 			return true;
 		}
-		/*
-		 * We assume that there are no two instances of equal clauses.
-		 * 
-		 * This is asserted here.
-		 */
-		assert (! this.equalsExpensive(obj)) : "Clause duplicate detected.";
-		return false;
-	}
-
-	private boolean equalsExpensive(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
 		if (obj == null) {
 			return false;
 		}
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final Clause other = (Clause) obj;
-		if (mClauseCondition == null) {
-			if (other.mClauseCondition != null) {
-				return false;
-			}
-		} else if (!mClauseCondition.equals(other.mClauseCondition)) {
-			return false;
-		}
+		final Clause<?> other = (Clause<?>) obj;
 		if (!Arrays.equals(mNegativeAtoms, other.mNegativeAtoms)) {
 			return false;
 		}
