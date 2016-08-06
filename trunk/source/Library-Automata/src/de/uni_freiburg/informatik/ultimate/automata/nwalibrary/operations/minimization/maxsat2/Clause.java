@@ -43,13 +43,20 @@ class Clause<V> {
 	protected final V[] mPositiveAtoms;
 	protected final V[] mNegativeAtoms;
 	protected ClauseCondition mClauseCondition;
+	private final int mHashCode;
 	
 	public Clause(final AMaxSatSolver<V> solver, final V[] positiveAtoms, final V[] negativeAtoms) {
 		mPositiveAtoms = positiveAtoms;
 		mNegativeAtoms = negativeAtoms;
+		mHashCode = computeHashCode();
 		updateClauseCondition(solver);
 	}
 	
+	private int computeHashCode() {
+		final int prime = 31;
+		return Arrays.hashCode(mPositiveAtoms) + prime * Arrays.hashCode(mNegativeAtoms);
+	}
+
 	void updateClauseCondition(final AMaxSatSolver<V> solver) {
 		mClauseCondition = computeClauseCondition(solver);
 	}
@@ -135,10 +142,16 @@ class Clause<V> {
 		return mClauseCondition.getUnsetAtoms();
 	}
 
+	/**
+	 * @return positive atoms; DO NOT EDIT THE ARRAY!
+	 */
 	public V[] getPositiveAtoms() {
 		return mPositiveAtoms;
 	}
 
+	/**
+	 * @return negative atoms; DO NOT EDIT THE ARRAY!
+	 */
 	public V[] getNegativeAtoms() {
 		return mNegativeAtoms;
 	}
@@ -244,7 +257,7 @@ class Clause<V> {
 	
 	@Override
 	public int hashCode() {
-		return mPositiveAtoms.hashCode() + mNegativeAtoms.hashCode();
+		return mHashCode;
 	}
 	
 	@Override
