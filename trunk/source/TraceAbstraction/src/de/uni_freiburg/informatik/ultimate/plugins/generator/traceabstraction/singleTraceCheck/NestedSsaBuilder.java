@@ -136,7 +136,7 @@ public class NestedSsaBuilder {
 	protected final NestedFormulas<TransFormula, IPredicate> mFormulas;
 
 	protected final ModifiableNestedFormulas<Term, Term> mSsa;
-	protected final ModifiableNestedFormulas<Map<TermVariable, Term>, Map<TermVariable, Term>> mVariable2Constant;
+	protected final ModifiableNestedFormulas<Map<Term, Term>, Map<Term, Term>> mVariable2Constant;
 
 	private final ModifiableGlobalVariableManager mModGlobVarManager;
 
@@ -146,7 +146,7 @@ public class NestedSsaBuilder {
 		return mSsa;
 	}
 
-	public ModifiableNestedFormulas<Map<TermVariable, Term>, Map<TermVariable, Term>> getVariable2Constant() {
+	public ModifiableNestedFormulas<Map<Term, Term>, Map<Term, Term>> getVariable2Constant() {
 		return mVariable2Constant;
 	}
 
@@ -184,8 +184,8 @@ public class NestedSsaBuilder {
 		mFormulas = nestedTransFormulas;
 		mModGlobVarManager = globModVarManager;
 		mSsa = new ModifiableNestedFormulas<Term, Term>(trace, new TreeMap<Integer, Term>());
-		mVariable2Constant = new ModifiableNestedFormulas<Map<TermVariable, Term>, Map<TermVariable, Term>>(trace,
-				new TreeMap<Integer, Map<TermVariable, Term>>());
+		mVariable2Constant = new ModifiableNestedFormulas<Map<Term, Term>, Map<Term, Term>>(trace,
+				new TreeMap<Integer, Map<Term, Term>>());
 		mTransferToScriptNeeded = transferToScriptNeeded;
 		if (mTransferToScriptNeeded) {
 			mTermTransferrer = new TermTransferrer(mScript);

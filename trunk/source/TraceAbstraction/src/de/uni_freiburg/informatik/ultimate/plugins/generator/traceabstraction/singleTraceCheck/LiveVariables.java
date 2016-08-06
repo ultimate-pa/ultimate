@@ -34,7 +34,6 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -62,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashSet;
  */
 public class LiveVariables {
 	private final Map<Term,IProgramVar> mConstants2BoogieVar;
-	private final ModifiableNestedFormulas<Map<TermVariable,Term>, Map<TermVariable,Term>> mTraceWithConstants;
+	private final ModifiableNestedFormulas<Map<Term,Term>, Map<Term,Term>> mTraceWithConstants;
 	private final Map<IProgramVar, TreeMap<Integer, Term>> mIndexedVarRepresentative;
 
 	
@@ -73,11 +72,11 @@ public class LiveVariables {
 
 	
 	
-	public LiveVariables(ModifiableNestedFormulas<Map<TermVariable,Term>, 
-			Map<TermVariable,Term>> traceWithConstants,
-			Map<Term,IProgramVar> constants2BoogieVar,
-			Map<IProgramVar, TreeMap<Integer, Term>> indexedVarRepresentative,
-			SmtManager smtManager, ModifiableGlobalVariableManager modifiedGlobals) {
+	public LiveVariables(final ModifiableNestedFormulas<Map<Term,Term>, 
+			Map<Term,Term>> traceWithConstants,
+			final Map<Term,IProgramVar> constants2BoogieVar,
+			final Map<IProgramVar, TreeMap<Integer, Term>> indexedVarRepresentative,
+			final SmtManager smtManager, final ModifiableGlobalVariableManager modifiedGlobals) {
 		mConstants2BoogieVar = constants2BoogieVar;
 		mTraceWithConstants = traceWithConstants;
 		mIndexedVarRepresentative = indexedVarRepresentative;
@@ -163,7 +162,7 @@ public class LiveVariables {
 	 * auxVars)
 	 */
 	@SafeVarargs
-	private final Set<Term> extractVarConstants(Collection<Term>... collections) {
+	private final Set<Term> extractVarConstants(final Collection<Term>... collections) {
 		final Set<Term> result = new HashSet<Term>();
 		for (final Collection<Term> terms : collections) {
 			for (final Term term : terms) {
@@ -240,7 +239,7 @@ public class LiveVariables {
 	 * Add to writeSet all constants from readCollection that correspond to
 	 * global BoogieVars.
 	 */
-	private void addGlobals(HashSet<Term> writeSet, Collection<Term> readCollection) {
+	private void addGlobals(final HashSet<Term> writeSet, final Collection<Term> readCollection) {
 		for (final Term term : readCollection) {
 			final IProgramVar bv = mConstants2BoogieVar.get(term);
 			if (bv.isGlobal()) {
@@ -253,7 +252,7 @@ public class LiveVariables {
 	 * Add to writeSet all constants from readCollection that correspond to
 	 * local BoogieVars of procedure proc
 	 */
-	private void addLocals(String proc, HashSet<Term> writeSet, Collection<Term> readCollection) {
+	private void addLocals(final String proc, final HashSet<Term> writeSet, final Collection<Term> readCollection) {
 		for (final Term term : readCollection) {
 			final IProgramVar bv = mConstants2BoogieVar.get(term);
 			if (!bv.isGlobal()) {
@@ -267,7 +266,7 @@ public class LiveVariables {
 	/**
 	 * Remove from set all constants whose index is i.
 	 */
-	private void removeConstantsWithIndex_i(HashSet<Term> set, int i) {
+	private void removeConstantsWithIndex_i(final HashSet<Term> set, final int i) {
 		final Iterator<Term> it = set.iterator();
 		while (it.hasNext()) {
 			final Term term = it.next();
