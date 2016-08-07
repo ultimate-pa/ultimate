@@ -257,7 +257,7 @@ public class ManagedScript {
 		 * of all other TermVariable that have been constructed by this object.
 		 */
 		public TermVariable constructFreshTermVariable(final String name, final Sort sort) {
-			if (name.contains("\\|")) {
+			if (name.contains("|")) {
 				throw new IllegalArgumentException("Name contains SMT quote characters " + name);
 			}
 			final Integer newIndex = mTvForBasenameCounter.increase(name);
