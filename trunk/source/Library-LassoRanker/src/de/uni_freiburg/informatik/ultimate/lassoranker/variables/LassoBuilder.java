@@ -96,17 +96,16 @@ public class LassoBuilder {
 	 * Create a new LassoBuilder object from components
 	 * 
 	 * @param script the script that created the transition formulae
-	 * @param boogie2smt the boogie smt translator
 	 * @param stem the stem transition
 	 * @param loop the loop transition
 	 */
-	public LassoBuilder(final ILogger logger, final Script script, final ManagedScript boogie2smt, final TransFormula stem,
+	public LassoBuilder(final ILogger logger, final Script script, final ManagedScript mgdScript, final TransFormula stem,
 			final TransFormula loop, final NlaHandling nlaHandling) {
 		assert script != null;
-		assert boogie2smt != null;
+		assert mgdScript != null;
 		mLogger = logger;
 		mScript = script;
-		mboogie2smt = boogie2smt;
+		mboogie2smt = mgdScript;
 		mNlaHandling = nlaHandling;
 		mtermVariables = new ArrayList<TermVariable>();
 		
@@ -114,8 +113,8 @@ public class LassoBuilder {
 		
 		mLassosUC = new ArrayList<>();
 		mLassosUC.add(new LassoUnderConstruction(
-				TransFormulaLR.buildTransFormula(stem, mReplacementVarFactory),
-				TransFormulaLR.buildTransFormula(loop, mReplacementVarFactory)
+				TransFormulaLR.buildTransFormula(stem, mReplacementVarFactory, mgdScript),
+				TransFormulaLR.buildTransFormula(loop, mReplacementVarFactory, mgdScript)
 			));
 	}
 	

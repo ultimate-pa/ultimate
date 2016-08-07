@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -40,6 +41,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
 /**
@@ -102,33 +105,42 @@ public class TransFormulaLR implements Serializable {
 	/**
 	 * Construct a TransFormulaLR from a TransFormula, adding and translating
 	 * all existing in- and outVars in the process.
-	 * @param transition the TransFormula
+	 * @param oldTf the TransFormula
 	 */
-	public static TransFormulaLR buildTransFormula(final TransFormula transition,
-			final ReplacementVarFactory replacementVarFactory) {
-		final TransFormulaLR tf = new TransFormulaLR(transition.getFormula());
+	public static TransFormulaLR buildTransFormula(final TransFormula oldTf,
+			final ReplacementVarFactory replacementVarFactory, final ManagedScript mgdScript) {
+		// construct copies of auxVars
+		final Set<TermVariable> auxVars = new HashSet<>();
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final TermVariable auxVar : oldTf.getAuxVars()) {
+			final TermVariable newAuxVar = mgdScript.constructFreshCopy(auxVar);
+			auxVars.add(newAuxVar);
+			substitutionMapping.put(auxVar, newAuxVar);
+		}
+		final TransFormulaLR newTf = new TransFormulaLR(
+				(new Substitution(mgdScript, substitutionMapping).transform(oldTf.getFormula())));
 		
 		// Add existing in- and outVars
 		for (final Map.Entry<IProgramVar, TermVariable> entry
-				: transition.getInVars().entrySet()) {
-			tf.addInVar(replacementVarFactory.getOrConstuctBoogieVarWrapper(
+				: oldTf.getInVars().entrySet()) {
+			newTf.addInVar(replacementVarFactory.getOrConstuctBoogieVarWrapper(
 					entry.getKey()), entry.getValue());
 		}
 		for (final Map.Entry<IProgramVar, TermVariable> entry
-				: transition.getOutVars().entrySet()) {
-			tf.addOutVar(replacementVarFactory.getOrConstuctBoogieVarWrapper(
+				: oldTf.getOutVars().entrySet()) {
+			newTf.addOutVar(replacementVarFactory.getOrConstuctBoogieVarWrapper(
 					entry.getKey()), entry.getValue());
 		}
-		tf.addAuxVars(transition.getAuxVars());
+		newTf.addAuxVars(auxVars);
 		
 		// Add constant variables as in- and outVars
-		for (final ApplicationTerm constVar : transition.getConstants()) {
+		for (final ApplicationTerm constVar : oldTf.getConstants()) {
 			final ReplacementVar repVar = 
 					replacementVarFactory.getOrConstuctReplacementVar(constVar); 
-			tf.addInVar(repVar, constVar);
-			tf.addOutVar(repVar, constVar);
+			newTf.addInVar(repVar, constVar);
+			newTf.addOutVar(repVar, constVar);
 		}
-		return tf;
+		return newTf;
 	}
 	
 	/**
