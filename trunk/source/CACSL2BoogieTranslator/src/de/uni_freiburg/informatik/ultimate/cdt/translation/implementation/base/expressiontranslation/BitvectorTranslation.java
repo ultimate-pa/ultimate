@@ -690,7 +690,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 				final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(newType);
 				indices[0] = fps.getExponent();
 				indices[1] = fps.getSignificant();
-				if (mTypeSizes.isUnsigned(oldType)) {
+				if (oldType.isIntegerType() && mTypeSizes.isUnsigned(oldType)) {
 					attributes = generateAttributes(loc, "to_fp_unsigned", indices);
 				} else {
 					attributes = generateAttributes(loc, "to_fp", indices);
