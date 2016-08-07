@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
@@ -114,7 +115,7 @@ public class ReplacementVarFactory {
 	public TermVariable getOrConstructAuxVar(final String name, final Sort sort) {
 		TermVariable auxVar = mAuxVarMapping.get(name);
 		if (auxVar == null) {
-			auxVar = mVariableManager.constructFreshTermVariable(name, sort);
+			auxVar = mVariableManager.constructFreshTermVariable(SmtUtils.removeSmtQuoteCharacters(name), sort);
 			mAuxVarMapping.put(name, auxVar);
 		} else {
 			if (sort != auxVar.getSort()) {
