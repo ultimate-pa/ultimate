@@ -786,7 +786,7 @@ public class PredicateUnifier {
 
 		private String generateQuantifierInformation(final Term closedTerm) {
 			final String result;
-			final Term pnf = new PrenexNormalForm(mScript, mSmtManager.getManagedScript()).transform(closedTerm);
+			final Term pnf = new PrenexNormalForm(mSmtManager.getManagedScript()).transform(closedTerm);
 			if (pnf instanceof QuantifiedFormula) {
 				final QuantifierSequence qs = new QuantifierSequence(mScript, pnf);
 				result = "quantified with " + (qs.getNumberOfQuantifierBlocks()-1) + "quantifier alternations";

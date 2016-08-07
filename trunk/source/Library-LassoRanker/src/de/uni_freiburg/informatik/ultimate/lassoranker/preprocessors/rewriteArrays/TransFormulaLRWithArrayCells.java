@@ -219,7 +219,7 @@ public class TransFormulaLRWithArrayCells {
 			final HashSet<TermVariable> auxVars = new HashSet<TermVariable>(cvb.getAuxVars());
 
 			Term result = //resultDisjuntion;
-					PartialQuantifierElimination.elim(mScript.getScript(), QuantifiedFormula.EXISTS, auxVars, resultDisjuntion, mServices, mLogger, mScript, mSimplificationTechnique, mXnfConversionTechnique);
+					PartialQuantifierElimination.elim(mScript, QuantifiedFormula.EXISTS, auxVars, resultDisjuntion, mServices, mLogger, mSimplificationTechnique, mXnfConversionTechnique);
 			
 			assert SmtUtils.isArrayFree(result) : "Result contains still arrays!";
 			result = SmtUtils.simplify(mScript, result, mServices, mSimplificationTechnique);

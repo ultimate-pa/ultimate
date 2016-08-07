@@ -88,8 +88,8 @@ public class QuantifierSequence {
 	/**
 	 * Prepend a sequence of quantifiers to a term.
 	 */
-	public static Term prependQuantifierSequence(Script script, 
-			List<QuantifiedVariables> quantifierSequence, final Term term) {
+	public static Term prependQuantifierSequence(final Script script, 
+			final List<QuantifiedVariables> quantifierSequence, final Term term) {
 		Term result = term;
 		for (int i = quantifierSequence.size()-1; i>=0; i--) {
 			final QuantifiedVariables quantifiedVars = quantifierSequence.get(i);
@@ -126,8 +126,7 @@ public class QuantifierSequence {
 		mInnerTerm = (new SafeSubstitution(mScript, substitutionMapping)).transform(mInnerTerm);
 	}
 	
-	public static Term mergeQuantifierSequences(final Script script, 
-			final ManagedScript freshVarConstructor, 
+	public static Term mergeQuantifierSequences(final ManagedScript mgdScript, 
 			final String functionSymbolName, 
 			final QuantifierSequence[] quantifierSequences, 
 			final HashSet<TermVariable> freeVariables) {
@@ -149,7 +148,7 @@ public class QuantifierSequence {
 		
 		final Set<TermVariable> occurredVariables = new HashSet<>(freeVariables);
 		for (int i=0; i<quantifierSequences.length; i++) {
-			quantifierSequences[i].replace(occurredVariables, freshVarConstructor, "prenex");
+			quantifierSequences[i].replace(occurredVariables, mgdScript, "prenex");
 			innerTerms[i] = quantifierSequences[i].getInnerTerm();
 			if (quantifierSequences[i].getNumberOfQuantifierBlocks() > 0) {
 				integrateQuantifierBlocks(resultQuantifierBlocks, quantifierSequences[i].getQuantifierBlocks());
@@ -157,21 +156,21 @@ public class QuantifierSequence {
 		}
 		final Term resultInnerTerm;
 		if (functionSymbolName.equals("and")) {
-			resultInnerTerm = Util.and(script, innerTerms);
+			resultInnerTerm = Util.and(mgdScript.getScript(), innerTerms);
 		} else if (functionSymbolName.equals("or")) {
-			resultInnerTerm = Util.or(script, innerTerms);
+			resultInnerTerm = Util.or(mgdScript.getScript(), innerTerms);
 		} else {
 			throw new IllegalArgumentException("unsupported " + functionSymbolName);
 		}
-		final Term result = prependQuantifierSequence(script, 
+		final Term result = prependQuantifierSequence(mgdScript.getScript(), 
 				resultQuantifierBlocks, resultInnerTerm);
 		return result; 
 	}
 	
 	
 	
-	private static void integrateQuantifierBlocks(List<QuantifiedVariables> resultQuantifierBlocks,
-			List<QuantifiedVariables> quantifierBlocks) {
+	private static void integrateQuantifierBlocks(final List<QuantifiedVariables> resultQuantifierBlocks,
+			final List<QuantifiedVariables> quantifierBlocks) {
 		final int offset;
 		{
 			final int lastQuantifierResult = resultQuantifierBlocks.get(resultQuantifierBlocks.size()-1).getQuantifier();
@@ -215,7 +214,7 @@ public class QuantifierSequence {
 	public static class QuantifiedVariables {
 		private final int mQuantifier;
 		private final Set<TermVariable> mVariables;
-		public QuantifiedVariables(int quantifier, Set<TermVariable> variables) {
+		public QuantifiedVariables(final int quantifier, final Set<TermVariable> variables) {
 			super();
 			mQuantifier = quantifier;
 			mVariables = variables;

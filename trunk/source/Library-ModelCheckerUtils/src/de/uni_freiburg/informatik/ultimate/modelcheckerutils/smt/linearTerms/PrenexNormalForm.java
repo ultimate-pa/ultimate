@@ -52,16 +52,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 public class PrenexNormalForm extends TermTransformer {
 	
 	private final Script mScript;
-	private final ManagedScript mFreshTermVariableConstructor;
+	private final ManagedScript mMgdScript;
 
-	public PrenexNormalForm(Script script, 
-			ManagedScript freshTermVariableConstructor) {
-		mScript = script;
-		mFreshTermVariableConstructor = freshTermVariableConstructor;
+	public PrenexNormalForm(final ManagedScript mgdScript) {
+		mScript = mgdScript.getScript();
+		mMgdScript = mgdScript;
 	}
 
 	@Override
-	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
+	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		if (NonCoreBooleanSubTermTransformer.isCoreBoolean(appTerm)) {
 			final String fun = appTerm.getFunction().getName();
 			if (fun.equals("=")) {
@@ -91,7 +90,7 @@ public class PrenexNormalForm extends TermTransformer {
 		}
 	}
 
-	private Term pullQuantifiersNot(Term[] newArgs) {
+	private Term pullQuantifiersNot(final Term[] newArgs) {
 		assert newArgs.length == 1 : "no not";
 		final Term notArg = newArgs[0];
 		final QuantifierSequence quantifierSequence = new QuantifierSequence(mScript, notArg);
@@ -107,28 +106,28 @@ public class PrenexNormalForm extends TermTransformer {
 		return result;
 	}
 
-	private Term pullQuantifiers(ApplicationTerm appTerm, Term[] newArgs) {
+	private Term pullQuantifiers(final ApplicationTerm appTerm, final Term[] newArgs) {
 		final QuantifierSequence[] quantifierSequences = new QuantifierSequence[newArgs.length];
 		final HashSet<TermVariable> freeVariables = new HashSet<>();
 		for (int i=0; i<newArgs.length; i++) {
 			freeVariables.addAll(Arrays.asList(newArgs[i].getFreeVars()));
 			quantifierSequences[i] = new QuantifierSequence(mScript, newArgs[i]);
 		}
-		final Term result = QuantifierSequence.mergeQuantifierSequences(mScript, 
-				mFreshTermVariableConstructor, appTerm.getFunction().getName(), 
-				quantifierSequences, freeVariables);
+		final Term result = QuantifierSequence.mergeQuantifierSequences(mMgdScript, 
+				appTerm.getFunction().getName(), quantifierSequences, 
+				freeVariables);
 		return result;
 	}
 
 	@Override
-	public void postConvertLet(LetTerm oldLet, Term[] newValues, Term newBody) {
+	public void postConvertLet(final LetTerm oldLet, final Term[] newValues, final Term newBody) {
 		throw new UnsupportedOperationException("not yet implemented, we need term without let");
 	}
 	
 	
 
 	@Override
-	public void postConvertQuantifier(QuantifiedFormula old, Term newBody) {
+	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
 		if (SmtUtils.isQuantifiedFormulaWithSameQuantifier(old.getQuantifier(), newBody) != null) {
 			final Term result = SmtUtils.quantifier(mScript, old.getQuantifier(), 
 					Arrays.asList(old.getVariables()), newBody);
@@ -139,7 +138,7 @@ public class PrenexNormalForm extends TermTransformer {
 	}
 
 	@Override
-	public void postConvertAnnotation(AnnotatedTerm old, Annotation[] newAnnots, Term newBody) {
+	public void postConvertAnnotation(final AnnotatedTerm old, final Annotation[] newAnnots, final Term newBody) {
 		setResult(newBody);
 //		Term result = mScript.annotate(newBody, newAnnots);
 //		setResult(result);

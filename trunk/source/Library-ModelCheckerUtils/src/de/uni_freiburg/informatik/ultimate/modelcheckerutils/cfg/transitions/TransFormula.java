@@ -525,8 +525,8 @@ public class TransFormula implements Serializable {
 		}
 
 		if (extPqe) {
-			final Term eliminated = PartialQuantifierElimination.elim(script, QuantifiedFormula.EXISTS, auxVars, formula,
-					services, logger, mgdScript, simplificationTechnique, xnfConversionTechnique);
+			final Term eliminated = PartialQuantifierElimination.elim(mgdScript, QuantifiedFormula.EXISTS, auxVars, formula,
+					services, logger, simplificationTechnique, xnfConversionTechnique);
 			logger.debug(new DebugMessage("DAG size before PQE {0}, DAG size after PQE {1}",
 					new DagSizePrinter(formula), new DagSizePrinter(eliminated)));
 			formula = eliminated;
@@ -1004,8 +1004,8 @@ public class TransFormula implements Serializable {
 		}
 		Term formula = tf.getFormula();
 		formula = PartialQuantifierElimination.quantifier(services, logger, 
-				maScript.getScript(), maScript, simplificationTechnique, xnfConversionTechnique, QuantifiedFormula.EXISTS, 
-				tf.getAuxVars(), formula, new Term[0]);
+				maScript, simplificationTechnique, xnfConversionTechnique, QuantifiedFormula.EXISTS, tf.getAuxVars(), 
+				formula, new Term[0]);
 		final Set<TermVariable> freeVars = new HashSet<TermVariable>(Arrays.asList(formula.getFreeVars()));
 		freeVars.retainAll(tf.getAuxVars());
 		if (!freeVars.isEmpty()) {

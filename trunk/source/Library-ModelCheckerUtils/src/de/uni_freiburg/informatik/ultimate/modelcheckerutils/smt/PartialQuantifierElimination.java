@@ -83,7 +83,7 @@ public class PartialQuantifierElimination {
 		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
 		final Term nnf = new Nnf(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte); 
 		final Term pushed = new QuantifierPusher(mgdScript, services).transform(nnf);
-		final Term pnf = new PrenexNormalForm(mgdScript.getScript(), mgdScript).transform(pushed);
+		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
 		final QuantifierSequence qs = new QuantifierSequence(mgdScript.getScript(), pnf);
 		final Term matrix = qs.getInnerTerm();
 		final List<QuantifiedVariables> qvs = qs.getQuantifierBlocks();
@@ -94,8 +94,8 @@ public class PartialQuantifierElimination {
 		for (int i=qvs.size()-1; i >= 0; i--) {
 			final QuantifiedVariables qv = qvs.get(i);
 			final Set<TermVariable> eliminatees = new HashSet<>(qv.getVariables());
-			result = elim(mgdScript.getScript(), qv.getQuantifier(), eliminatees, result, services, logger, 
-					mgdScript, simplificationTechnique, xnfConversionTechnique);
+			result = elim(mgdScript, qv.getQuantifier(), eliminatees, result, services, logger, 
+					simplificationTechnique, xnfConversionTechnique);
 			result = SmtUtils.quantifier(mgdScript.getScript(), qv.getQuantifier(), eliminatees, result);
 			result = new QuantifierPusher(mgdScript, services).transform(result);
 		}
@@ -182,11 +182,11 @@ public class PartialQuantifierElimination {
 	 * @param services
 	 * @param logger
 	 */
-	public static Term quantifier(final IUltimateServiceProvider services, final ILogger logger, final Script script, 
-			final ManagedScript freshTermVariableConstructor, 
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
-			final int quantifier,
-			final Collection<TermVariable> vars, final Term body, final Term[]... patterns) {
+	public static Term quantifier(final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript, 
+			final SimplicationTechnique simplificationTechnique, 
+			final XnfConversionTechnique xnfConversionTechnique, final int quantifier, 
+			final Collection<TermVariable> vars,
+			final Term body, final Term[]... patterns) {
 		Set<TermVariable> varSet = constructIntersectionWithFreeVars(vars, body);
 		if (varSet.isEmpty()) {
 			return body;
@@ -195,7 +195,7 @@ public class PartialQuantifierElimination {
 		if (mPushPull ) {
 			final int quantBefore = varSet.size();
 			//		Set<TermVariable> varSet = new HashSet<TermVariable>(Arrays.asList(vars));
-			elim = elimPushPull(script, quantifier, varSet, elim, services, logger, freshTermVariableConstructor);
+			elim = elimPushPull(mgdScript, quantifier, varSet, elim, services, logger);
 //			return elim;
 			if (elim instanceof QuantifiedFormula) {
 				final QuantifiedFormula qf = (QuantifiedFormula) elim;
@@ -209,7 +209,7 @@ public class PartialQuantifierElimination {
 			}
 		}
 		try {
-			elim = elim(script, quantifier, varSet, elim, services, logger, freshTermVariableConstructor, simplificationTechnique, xnfConversionTechnique);
+			elim = elim(mgdScript, quantifier, varSet, elim, services, logger, simplificationTechnique, xnfConversionTechnique);
 		} catch (final ToolchainCanceledException tce) {
 			throw new ToolchainCanceledException(PartialQuantifierElimination.class,
 						tce.getRunningTaskInfo() + " during partial quantifier elimination");
@@ -217,7 +217,7 @@ public class PartialQuantifierElimination {
 		if (varSet.isEmpty()) {
 			return elim;
 		} else {
-			return script.quantifier(quantifier, varSet.toArray(new TermVariable[varSet.size()]), elim, patterns);
+			return mgdScript.getScript().quantifier(quantifier, varSet.toArray(new TermVariable[varSet.size()]), elim, patterns);
 		}
 	}
 	
@@ -232,24 +232,24 @@ public class PartialQuantifierElimination {
 		return occurringVars;
 	}
 
-	public static Term elimPushPull(final Script script, final int quantifier, final Set<TermVariable> eliminatees, final Term term,
-			final IUltimateServiceProvider services, final ILogger logger, 
-			final ManagedScript freshTermVariableConstructor) {
-		final Term withoutIte = (new IteRemover(freshTermVariableConstructor)).transform(term);
-		final Term nnf = new Nnf(freshTermVariableConstructor, services, QuantifierHandling.KEEP).transform(withoutIte); 
-		final Term quantified = script.quantifier(quantifier, eliminatees.toArray(new TermVariable[eliminatees.size()]), nnf);
-		final Term pushed = new QuantifierPusher(freshTermVariableConstructor, services).transform(quantified);
-		final Term commu = new CommuhashNormalForm(services, script).transform(pushed);
+	public static Term elimPushPull(final ManagedScript mgdScript, final int quantifier, final Set<TermVariable> eliminatees, final Term term,
+			final IUltimateServiceProvider services, final ILogger logger) {
+		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
+		final Term nnf = new Nnf(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte); 
+		final Term quantified = mgdScript.getScript().quantifier(quantifier, eliminatees.toArray(new TermVariable[eliminatees.size()]), nnf);
+		final Term pushed = new QuantifierPusher(mgdScript, services).transform(quantified);
+		final Term commu = new CommuhashNormalForm(services, mgdScript.getScript()).transform(pushed);
 //		final Term pnf = new Nnf(script, services, freshTermVariableConstructor, QuantifierHandling.PULL).transform(pushed);
-		final Term pnf = new PrenexNormalForm(script, freshTermVariableConstructor).transform(pushed);
+		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
 		return pnf;
 	}
 
 	
 
-	public static Term elim(final Script script, final int quantifier, final Set<TermVariable> eliminatees, final Term term,
+	public static Term elim(final ManagedScript mgdScript, final int quantifier, final Set<TermVariable> eliminatees, final Term term,
 			final IUltimateServiceProvider services, final ILogger logger, 
-			final ManagedScript freshTermVariableConstructor, final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+		final Script script = mgdScript.getScript();
 		final Set<TermVariable> occuringVars = new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
 		final Iterator<TermVariable> it = eliminatees.iterator();
 		while (it.hasNext()) {
@@ -264,8 +264,8 @@ public class PartialQuantifierElimination {
 		Term result;
 
 		// transform to DNF (resp. CNF)
-		result = (new IteRemover(freshTermVariableConstructor)).transform(term);
-		result = transformToXnf(services, script, quantifier, freshTermVariableConstructor, result, xnfConversionTechnique);
+		result = (new IteRemover(mgdScript)).transform(term);
+		result = transformToXnf(services, script, quantifier, mgdScript, result, xnfConversionTechnique);
 //		if (result instanceof QuantifiedFormula) {
 //			QuantifiedFormula qf = (QuantifiedFormula) result;
 //			if (qf.getQuantifier() != quantifier) {
@@ -278,7 +278,7 @@ public class PartialQuantifierElimination {
 		// apply Destructive Equality Resolution
 		Term termAfterDER;
 		{
-			final XnfDer xnfDer = new XnfDer(freshTermVariableConstructor, services);
+			final XnfDer xnfDer = new XnfDer(mgdScript, services);
 			final Term[] oldParams = getXjunctsOuter(quantifier, result);
 			final Term[] newParams = new Term[oldParams.length];
 			for (int i = 0; i < oldParams.length; i++) {
@@ -301,7 +301,7 @@ public class PartialQuantifierElimination {
 		// apply Infinity Restrictor Drop
 		Term termAfterIRD;
 		if (USE_IRD) {
-			final XnfIrd xnfIRD = new XnfIrd(freshTermVariableConstructor, services);
+			final XnfIrd xnfIRD = new XnfIrd(mgdScript, services);
 			final Term[] oldParams = getXjunctsOuter(quantifier, result);
 			final Term[] newParams = new Term[oldParams.length];
 			for (int i = 0; i < oldParams.length; i++) {
@@ -325,8 +325,8 @@ public class PartialQuantifierElimination {
 		// apply TIR
 		Term termAfterTIR;
 		if (USE_TIR) {
-			final XnfTir xnfTir = new XnfTir(freshTermVariableConstructor, services, xnfConversionTechnique);
-			termAfterTIR = applyEliminationOuter(script, quantifier, eliminatees, result, xnfTir, services, freshTermVariableConstructor, xnfConversionTechnique);
+			final XnfTir xnfTir = new XnfTir(mgdScript, services, xnfConversionTechnique);
+			termAfterTIR = applyEliminationOuter(script, quantifier, eliminatees, result, xnfTir, services, mgdScript, xnfConversionTechnique);
 			result = termAfterTIR;
 			
 		}
@@ -339,9 +339,9 @@ public class PartialQuantifierElimination {
 		// apply Unconnected Parameter Deletion
 		Term termAfterUPD = null;
 		if (USE_UPD) {
-			final XnfUpd xnfUpd = new XnfUpd(freshTermVariableConstructor, services);
+			final XnfUpd xnfUpd = new XnfUpd(mgdScript, services);
 			termAfterUPD = applyEliminationOuter(script, quantifier, eliminatees, 
-					result, xnfUpd, services, freshTermVariableConstructor, xnfConversionTechnique);
+					result, xnfUpd, services, mgdScript, xnfConversionTechnique);
 			result = termAfterUPD;
 		}
 
@@ -357,7 +357,7 @@ public class PartialQuantifierElimination {
 			final Term[] newParams = new Term[oldParams.length];
 			for (int i = 0; i < oldParams.length; i++) {
 				final Set<TermVariable> eliminateesSOS = new HashSet<TermVariable>(eliminatees);
-				newParams[i] = sos(script, quantifier, oldParams[i], eliminateesSOS, logger, services, freshTermVariableConstructor, simplificationTechnique);
+				newParams[i] = sos(script, quantifier, oldParams[i], eliminateesSOS, logger, services, mgdScript, simplificationTechnique);
 				remainingAndNewAfterSOS.addAll(eliminateesSOS);
 			}
 			termAfterSOS = composeXjunctsOuter(script, quantifier, newParams);
@@ -374,7 +374,7 @@ public class PartialQuantifierElimination {
 		}
 
 		// simplification
-		result = SmtUtils.simplify(freshTermVariableConstructor, result, services, simplificationTechnique);
+		result = SmtUtils.simplify(mgdScript, result, services, simplificationTechnique);
 
 		// (new SimplifyDDA(script)).getSimplifiedTerm(result);
 		eliminatees.retainAll(Arrays.asList(result.getFreeVars()));
@@ -385,7 +385,7 @@ public class PartialQuantifierElimination {
 			// if term was changed by SOS new elimination might be possible
 			// Before the implementation of IRD we only retried elimination
 			// if SOS introduced more quantified variables.
-			result = elim(script, quantifier, eliminatees, result, services, logger, freshTermVariableConstructor, simplificationTechnique, xnfConversionTechnique);
+			result = elim(mgdScript, quantifier, eliminatees, result, services, logger, simplificationTechnique, xnfConversionTechnique);
 		}
 		
 		if (eliminatees.isEmpty()) {
@@ -395,7 +395,7 @@ public class PartialQuantifierElimination {
 		assert Arrays.asList(result.getFreeVars()).containsAll(eliminatees) : "superficial variables";
 		
 		if (USE_USR) {
-			final XnfUsr xnfUsr = new XnfUsr(freshTermVariableConstructor, services);
+			final XnfUsr xnfUsr = new XnfUsr(mgdScript, services);
 			final Term[] oldParams = getXjunctsOuter(quantifier, result);
 			final Term[] newParams = new Term[oldParams.length];
 			for (int i = 0; i < oldParams.length; i++) {
@@ -407,7 +407,7 @@ public class PartialQuantifierElimination {
 			final Term termAfterUsr = composeXjunctsOuter(script, quantifier, newParams);
 			result = termAfterUsr;
 			if (!xnfUsr.getAffectedEliminatees().isEmpty()) {
-				result = elim(script, quantifier, eliminatees, result, services, logger, freshTermVariableConstructor, simplificationTechnique, xnfConversionTechnique);
+				result = elim(mgdScript, quantifier, eliminatees, result, services, logger, simplificationTechnique, xnfConversionTechnique);
 			}
 		}
 		
