@@ -154,7 +154,7 @@ public class CachedTransFormulaLinearizer {
 	 */
 	private LinearTransition makeLinear(final TransFormula tf) {
 		TransFormulaLR tflr = TransFormulaLR.buildTransFormula(tf,
-				mReplacementVarFactory);
+				mReplacementVarFactory, mPredicateScript);
 
 		for (final TransitionPreprocessor tpp : getPreprocessors()) {
 			try {
