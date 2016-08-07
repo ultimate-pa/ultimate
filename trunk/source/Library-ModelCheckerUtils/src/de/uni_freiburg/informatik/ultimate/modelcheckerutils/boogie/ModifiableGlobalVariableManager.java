@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -59,7 +60,8 @@ public class ModifiableGlobalVariableManager {
 	 * variable. 
 	 */
 	private final Map<String,Set<String>> mModifiedVars;
-	private final Boogie2SMT mBoogie2smt;
+	protected final ManagedScript mMgdScript;
+	protected final Boogie2SmtSymbolTable mSymbolTable;
 	
 	private final Map<String, TransFormula> mProc2OldVarsAssignment;
 	private final Map<String, TransFormula> mProc2GlobalVarsAssignment;
@@ -69,16 +71,18 @@ public class ModifiableGlobalVariableManager {
 	
 	public ModifiableGlobalVariableManager(
 			final Map<String, Set<String>> modifiedVars,
-			final Boogie2SMT boogie2smt) {
+			final ManagedScript mgdScript, final Boogie2SmtSymbolTable symbolTable) {
 		mModifiedVars = modifiedVars;
-		mBoogie2smt = boogie2smt;
+		mMgdScript = mgdScript;
+		mSymbolTable = symbolTable;
 		mProc2OldVarsAssignment = new HashMap<String, TransFormula>();
 		mProc2GlobalVarsAssignment = new HashMap<String, TransFormula>();
 	}
 	
 	protected ModifiableGlobalVariableManager(final ModifiableGlobalVariableManager modifiableGlobalVariableManager) {
 		mModifiedVars = modifiableGlobalVariableManager.mModifiedVars;
-		mBoogie2smt = modifiableGlobalVariableManager.mBoogie2smt;
+		mMgdScript = modifiableGlobalVariableManager.mMgdScript;
+		mSymbolTable = modifiableGlobalVariableManager.mSymbolTable;
 		mProc2OldVarsAssignment = modifiableGlobalVariableManager.mProc2OldVarsAssignment;
 		mProc2GlobalVarsAssignment = modifiableGlobalVariableManager.mProc2GlobalVarsAssignment;
 	}
@@ -147,26 +151,26 @@ public class ModifiableGlobalVariableManager {
 			vars = Collections.emptySet();
 		}
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true);
-		Term glob2oldFormula = mBoogie2smt.getScript().term("true");
-		final Map<String, IProgramNonOldVar> globals = mBoogie2smt.getBoogie2SmtSymbolTable().getGlobals();
+		Term glob2oldFormula = mMgdScript.getScript().term("true");
+		final Map<String, IProgramNonOldVar> globals = mSymbolTable.getGlobals();
 		for (final String modVar : vars) {
 			final IProgramNonOldVar boogieVar = globals.get(modVar);
 			final IProgramVar boogieOldVar = boogieVar.getOldVar();
 			final Sort sort = boogieVar.getDefaultConstant().getSort();
 			
 			final String nameIn = modVar + "_In";
-			final TermVariable tvIn = mBoogie2smt.getScript().variable(nameIn, sort);
+			final TermVariable tvIn = mMgdScript.getScript().variable(nameIn, sort);
 			final String nameOut = "old(" + modVar + ")" + "_Out";
-			final TermVariable tvOut = mBoogie2smt.getScript().variable(nameOut, sort);
+			final TermVariable tvOut = mMgdScript.getScript().variable(nameOut, sort);
 			tfb.addInVar(boogieVar, tvIn);
 			tfb.addOutVar(boogieVar, tvIn);
 			tfb.addOutVar(boogieOldVar, tvOut);
-			final Term assignment = mBoogie2smt.getScript().term("=", tvOut, tvIn);
-			glob2oldFormula = Util.and(mBoogie2smt.getScript(), glob2oldFormula, assignment);
+			final Term assignment = mMgdScript.getScript().term("=", tvOut, tvIn);
+			glob2oldFormula = Util.and(mMgdScript.getScript(), glob2oldFormula, assignment);
 		}
 		tfb.setFormula(glob2oldFormula);
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
-		return tfb.finishConstruction(mBoogie2smt.getScript());
+		return tfb.finishConstruction(mMgdScript);
 	}
 
 
@@ -178,34 +182,34 @@ public class ModifiableGlobalVariableManager {
 			vars = Collections.emptySet();
 		}
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true);
-		Term old2globFormula = mBoogie2smt.getScript().term("true");
-		final Map<String, IProgramNonOldVar> globals = mBoogie2smt.getBoogie2SmtSymbolTable().getGlobals();
+		Term old2globFormula = mMgdScript.getScript().term("true");
+		final Map<String, IProgramNonOldVar> globals = mSymbolTable.getGlobals();
 		for (final String modVar : vars) {
 			final IProgramNonOldVar boogieVar = globals.get(modVar);
 			final IProgramVar boogieOldVar = boogieVar.getOldVar();
 			final Sort sort = boogieVar.getDefaultConstant().getSort();
 			{
 				final String nameIn = "old(" + modVar + ")" + "_In";
-				final TermVariable tvIn = mBoogie2smt.getScript().variable(nameIn, sort);
+				final TermVariable tvIn = mMgdScript.getScript().variable(nameIn, sort);
 				final String nameOut = modVar + "_Out";
-				final TermVariable tvOut = mBoogie2smt.getScript().variable(nameOut, sort);
+				final TermVariable tvOut = mMgdScript.getScript().variable(nameOut, sort);
 				tfb.addInVar(boogieOldVar, tvIn);
 				tfb.addOutVar(boogieOldVar, tvIn);
 				tfb.addOutVar(boogieVar, tvOut);
-				final Term assignment = mBoogie2smt.getScript().term("=", tvOut, tvIn);
-				old2globFormula = Util.and(mBoogie2smt.getScript(), old2globFormula, assignment);
+				final Term assignment = mMgdScript.getScript().term("=", tvOut, tvIn);
+				old2globFormula = Util.and(mMgdScript.getScript(), old2globFormula, assignment);
 			}			
 		}
 		tfb.setFormula(old2globFormula);
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
-		return tfb.finishConstruction(mBoogie2smt.getScript());
+		return tfb.finishConstruction(mMgdScript);
 	}
 	
 	/**
 	 * Return global variables;
 	 */
 	public Map<String, IProgramNonOldVar> getGlobals() {
-		return mBoogie2smt.getBoogie2SmtSymbolTable().getGlobals();
+		return mSymbolTable.getGlobals();
 	}
 	
 	

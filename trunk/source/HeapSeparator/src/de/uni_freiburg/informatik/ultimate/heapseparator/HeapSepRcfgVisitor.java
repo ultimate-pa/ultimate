@@ -127,7 +127,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		tfb.setFormula(newFormula);
 		tfb.setInfeasibility(tf.isInfeasible());
 		tfb.addAuxVarsButRenameToFreshCopies(tf.getAuxVars(), mScript);
-		return tfb.finishConstruction(mScript.getScript());
+		return tfb.finishConstruction(mScript);
 	}
 
 	public static TermVariable getSplitTermVariable(final String arrayName, final int splitIndex, final Sort sort, final Script script) {

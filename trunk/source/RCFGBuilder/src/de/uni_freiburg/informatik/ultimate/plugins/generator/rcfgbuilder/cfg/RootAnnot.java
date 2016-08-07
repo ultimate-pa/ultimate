@@ -122,7 +122,7 @@ public class RootAnnot extends AbstractAnnotations {
 		mBoogie2SMT = mBoogie2smt;
 		mManagedScript = new ManagedScript(services, mBoogie2smt.getScript());
 		mModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(mBoogieDeclarations.getModifiedVars(),
-				mBoogie2smt);
+				mManagedScript, mBoogie2smt.getBoogie2SmtSymbolTable());
 		mCodeBlockFactory = new CodeBlockFactory(services, mManagedScript, mModifiableGlobalVariableManager);
 	}
 

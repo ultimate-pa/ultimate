@@ -671,7 +671,7 @@ public class LassoChecker {
 				((ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure());
 
 		if (!withStem) {
-			stemTF = TransFormulaBuilder.getTrivialTransFormula(mSmtManager.getScript());
+			stemTF = TransFormulaBuilder.getTrivialTransFormula(mSmtManager.getManagedScript());
 		}
 		// TODO: present this somewhere else
 		// int loopVars = loopTF.getFormula().getFreeVars().length;

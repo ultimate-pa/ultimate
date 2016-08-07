@@ -192,7 +192,7 @@ public class Statements2TransFormula {
 		mTransFormulaBuilder.setFormula(formula);
 		mTransFormulaBuilder.setInfeasibility(infeasibility);
 		mTransFormulaBuilder.addAuxVarsButRenameToFreshCopies(auxVars, mMgdScript);
-		return mTransFormulaBuilder.finishConstruction(mScript);
+		return mTransFormulaBuilder.finishConstruction(mMgdScript);
 	}
 
 	private IProgramVar getModifiableBoogieVar(final String id, final DeclarationInformation declInfo) {

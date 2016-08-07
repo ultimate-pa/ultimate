@@ -98,7 +98,7 @@ public class TermVariableRenamer {
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(tf.isInfeasible());
 		tfb.addAuxVarsButRenameToFreshCopies(tf.getAuxVars(), mScript);
-		return tfb.finishConstruction(mScript.getScript());
+		return tfb.finishConstruction(mScript);
 	}
 	
 	/**

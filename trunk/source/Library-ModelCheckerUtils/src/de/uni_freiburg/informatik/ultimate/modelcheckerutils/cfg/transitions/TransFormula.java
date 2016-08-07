@@ -57,11 +57,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -125,7 +125,7 @@ public class TransFormula implements Serializable {
 	TransFormula(final Term formula, 
 			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars,
 			final Set<TermVariable> auxVars, final Set<TermVariable> branchEncoders, 
-			final Infeasibility infeasibility, final Script script) {
+			final Infeasibility infeasibility, final ManagedScript script) {
 		mFormula = formula;
 		mInVars = inVars;
 		mOutVars = outVars;
@@ -195,7 +195,7 @@ public class TransFormula implements Serializable {
 	 */
 	public static Term computeClosedFormula(final Term formula, final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars, final Set<TermVariable> auxVars,
-			final Script script) {
+			final ManagedScript script) {
 		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (final IProgramVar bv : inVars.keySet()) {
 			assert !substitutionMapping.containsKey(inVars.get(bv));
@@ -209,7 +209,7 @@ public class TransFormula implements Serializable {
 			substitutionMapping.put(outVars.get(bv), bv.getPrimedConstant());
 		}
 		for (final TermVariable auxVarTv : auxVars) {
-			final Term auxVarConst = SmtUtils.termVariable2constant(script, auxVarTv, true);
+			final Term auxVarConst = SmtUtils.termVariable2constant(script.getScript(), auxVarTv, true);
 			substitutionMapping.put(auxVarTv, auxVarConst);
 		}
 		final Term closedTerm = (new Substitution(script, substitutionMapping)).transform(formula);
@@ -559,7 +559,7 @@ public class TransFormula implements Serializable {
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(infeasibility);
 		tfb.addAuxVarsButRenameToFreshCopies(auxVars, mgdScript);
-		return tfb.finishConstruction(script);
+		return tfb.finishConstruction(mgdScript);
 	}
 
 	private static void reportTimeoutResult(final IUltimateServiceProvider services) {
@@ -722,7 +722,7 @@ public class TransFormula implements Serializable {
 		tfb.setFormula(resultFormula);
 		tfb.setInfeasibility(inFeasibility);
 		tfb.addAuxVarsButRenameToFreshCopies(auxVars, mgdScript);
-		return tfb.finishConstruction(mgdScript.getScript());
+		return tfb.finishConstruction(mgdScript);
 	}
 
 	/**
@@ -994,7 +994,7 @@ public class TransFormula implements Serializable {
 		tfb.setFormula(tf.getFormula());
 		tfb.setInfeasibility(tf.isInfeasible());
 		tfb.addAuxVarsButRenameToFreshCopies(auxVars, script);
-		return tfb.finishConstruction(script.getScript());
+		return tfb.finishConstruction(script);
 	}
 	
 	private static TransFormula negate(final TransFormula tf, final ManagedScript maScript, final IUltimateServiceProvider services, 
@@ -1017,7 +1017,7 @@ public class TransFormula implements Serializable {
 				false, tf.getBranchEncoders(), true);
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		return tfb.finishConstruction(maScript.getScript());
+		return tfb.finishConstruction(maScript);
 	}
 	
 	public static TransFormula computeMarkhorTransFormula(final TransFormula tf, 

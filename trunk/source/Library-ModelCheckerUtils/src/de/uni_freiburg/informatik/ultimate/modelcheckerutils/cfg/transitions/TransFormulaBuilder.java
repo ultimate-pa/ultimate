@@ -33,13 +33,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
@@ -130,7 +129,7 @@ public class TransFormulaBuilder {
 					this.addAuxVar(newAuxVar);
 					substitutionMapping.put(auxVar, newAuxVar);
 				}
-				mFormula = (new Substitution(script.getScript(), substitutionMapping).transform(mFormula));
+				mFormula = (new Substitution(script, substitutionMapping).transform(mFormula));
 			}
 		}
 	}
@@ -255,7 +254,7 @@ public class TransFormulaBuilder {
 		}
 	}
 	
-	public TransFormula finishConstruction(final Script script) {
+	public TransFormula finishConstruction(final ManagedScript script) {
 		if (mFormula == null) {
 			throw new IllegalStateException("cannot finish without formula");
 		}
@@ -271,9 +270,9 @@ public class TransFormulaBuilder {
 	/**
 	 * Construct TransFormula with "true" formula and no variables.
 	 */
-	public static TransFormula getTrivialTransFormula(final Script script) {
+	public static TransFormula getTrivialTransFormula(final ManagedScript script) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true);
-		tfb.setFormula(script.term("true"));
+		tfb.setFormula(script.getScript().term("true"));
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
 		return tfb.finishConstruction(script);
 	}
@@ -306,6 +305,6 @@ public class TransFormulaBuilder {
 		}
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(infeasibility);
-		return tfb.finishConstruction(script.getScript());
+		return tfb.finishConstruction(script);
 	}
 }

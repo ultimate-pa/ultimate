@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -46,8 +45,6 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 	private final IProgramNonOldVar[] mOldRank;
 	private final IProgramOldVar mUnseededOldVar;
 	private final IProgramOldVar[] mOldRankOldVar;
-	private final Boogie2SMT mBoogie2smt;
-	private final Script mScript;
 	
 	private final Map<String, TransFormula> mProc2OldVarsAssignment;
 	private final Map<String, TransFormula> mProc2GlobalVarsAssignment;
@@ -56,7 +53,6 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 			final ModifiableGlobalVariableManager modifiableGlobalVariableManager, 
 			final Boogie2SMT boogie2Smt) {
 		super(modifiableGlobalVariableManager);
-		mBoogie2smt = boogie2Smt;
 		mUnseeded = unseeded;
 		mUnseededOldVar = unseeded.getOldVar();
 		assert mUnseededOldVar != null : "oldVar missing";
@@ -66,7 +62,6 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 			mOldRankOldVar[i] = oldRank[i].getOldVar();
 			assert mOldRankOldVar[i] != null : "oldVar missing";
 		}
-		mScript  = boogie2Smt.getScript();
 		mProc2OldVarsAssignment = new HashMap<String, TransFormula>();
 		mProc2GlobalVarsAssignment = new HashMap<String, TransFormula>();
 	}
@@ -104,19 +99,19 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(
 				without.getInVars(), without.getOutVars(), true, null, true);
 		Term formula = without.getFormula();
-		formula = Util.and(mScript, formula, oldVarEquality(mUnseeded, mUnseededOldVar));
+		formula = Util.and(mMgdScript.getScript(), formula, oldVarEquality(mUnseeded, mUnseededOldVar));
 		tfb.addInVar(mUnseeded, mUnseeded.getTermVariable());
 		tfb.addOutVar(mUnseeded, mUnseeded.getTermVariable());
 		tfb.addOutVar(mUnseededOldVar, mUnseededOldVar.getTermVariable());
 		for (int i=0; i<mOldRank.length; i++) {
-			formula = Util.and(mScript, formula, oldVarEquality(mOldRank[i], mOldRankOldVar[i]));
+			formula = Util.and(mMgdScript.getScript(), formula, oldVarEquality(mOldRank[i], mOldRankOldVar[i]));
 			tfb.addInVar(mOldRank[i], mOldRank[i].getTermVariable());
 			tfb.addOutVar(mOldRank[i], mOldRank[i].getTermVariable());
 			tfb.addOutVar(mOldRankOldVar[i], mOldRankOldVar[i].getTermVariable());
 		}
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
-		return tfb.finishConstruction(mBoogie2smt.getScript());
+		return tfb.finishConstruction(mMgdScript);
 	}
 	
 	
@@ -129,25 +124,25 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(
 				without.getInVars(), without.getOutVars(), true, null, true);
 		Term formula = without.getFormula();
-		formula = Util.and(mScript, formula, oldVarEquality(mUnseeded, mUnseededOldVar));
+		formula = Util.and(mMgdScript.getScript(), formula, oldVarEquality(mUnseeded, mUnseededOldVar));
 		tfb.addInVar(mUnseededOldVar, mUnseededOldVar.getTermVariable());
 		tfb.addOutVar(mUnseededOldVar, mUnseededOldVar.getTermVariable());
 		tfb.addOutVar(mUnseeded, mUnseeded.getTermVariable());
 		for (int i=0; i<mOldRank.length; i++) {
-			formula = Util.and(mScript, formula, oldVarEquality(mOldRank[i], mOldRankOldVar[i]));
+			formula = Util.and(mMgdScript.getScript(), formula, oldVarEquality(mOldRank[i], mOldRankOldVar[i]));
 			tfb.addInVar(mOldRankOldVar[i], mOldRankOldVar[i].getTermVariable());
 			tfb.addOutVar(mOldRankOldVar[i], mOldRankOldVar[i].getTermVariable());
 			tfb.addOutVar(mOldRank[i], mOldRank[i].getTermVariable());
 		}
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
-		return tfb.finishConstruction(mBoogie2smt.getScript());
+		return tfb.finishConstruction(mMgdScript);
 	}
 
 
 	
 	public Term oldVarEquality(final IProgramVar var, final IProgramVar oldVar) {
-		return mScript.term("=", var.getTermVariable(), oldVar.getTermVariable());
+		return mMgdScript.getScript().term("=", var.getTermVariable(), oldVar.getTermVariable());
 	}
 
 

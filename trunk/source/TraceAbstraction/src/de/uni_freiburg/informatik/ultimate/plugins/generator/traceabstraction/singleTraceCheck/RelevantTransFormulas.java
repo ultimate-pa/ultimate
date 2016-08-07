@@ -273,7 +273,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 		}
 		tfb.setFormula(mScript.getScript().term("true"));
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
-		return tfb.finishConstruction(mScript.getScript());
+		return tfb.finishConstruction(mScript);
 	}
 	
 	private TransFormula buildTransFormulaWithRelevantConjuncts(
@@ -305,7 +305,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		tfb.addAuxVarsButRenameToFreshCopies(auxVars, mScript);
-		return tfb.finishConstruction(mScript.getScript());
+		return tfb.finishConstruction(mScript);
 	}
 
 	@Override
