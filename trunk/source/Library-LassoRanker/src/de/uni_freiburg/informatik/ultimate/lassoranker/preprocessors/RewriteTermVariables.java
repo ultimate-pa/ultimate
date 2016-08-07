@@ -103,7 +103,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 	private final ReplacementVarFactory mVarFactory;
 	protected final Script mScript;
 
-	public RewriteTermVariables(ReplacementVarFactory varFactory, Script script) {
+	public RewriteTermVariables(final ReplacementVarFactory varFactory, final Script script) {
 		mVarFactory = varFactory;
 		mScript = script;
 		mrepVarSort = mScript.sort(getRepVarSortName());
@@ -114,7 +114,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 	 * Get the new ReplacementVar for a given RankVar.
 	 * Constructs a new replacement variable, if needed.
 	 */
-	private final ReplacementVar getOrConstructReplacementVar(RankVar rankVar) {
+	private final ReplacementVar getOrConstructReplacementVar(final RankVar rankVar) {
 		final Term definition = constructNewDefinitionForRankVar(rankVar);
 		final ReplacementVar repVar = mVarFactory.
 				getOrConstuctReplacementVar(definition);
@@ -126,7 +126,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 	 * ReplacementVars and replacing Terms (and put them into the substitution
 	 * mapping).
 	 */
-	private final void generateRepAndAuxVars(TransFormulaLR tf) {
+	private final void generateRepAndAuxVars(final TransFormulaLR tf) {
 		final ArrayList<RankVar> rankVarsWithDistinctInVar = new ArrayList<>();
 		final ArrayList<RankVar> rankVarsWithDistinctOutVar = new ArrayList<>();
 		final ArrayList<RankVar> rankVarsWithCommonInVarOutVar = new ArrayList<>();
@@ -184,20 +184,19 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 			tf.addOutVar(repVar, newOutVar);
 		}
 		
-		final Set<TermVariable> auxVars = tf.getAuxVars().keySet();
+		final Set<TermVariable> auxVars = tf.getAuxVars();
 		for (final TermVariable tv : auxVars) {
 			if (hasToBeReplaced(tv)) {
 				final TermVariable newAuxVar = mVarFactory.getOrConstructAuxVar(
 						computeTermVariableName(tv.getName(), false, false),
 						mrepVarSort);
-				final Term newAuxVarConst = mVarFactory.getOrConstructConstForAuxVar(newAuxVar);
 				tf.removeAuxVar(tv);
-				tf.addAuxVars(Collections.singletonMap(newAuxVar, newAuxVarConst));
+				tf.addAuxVars(Collections.singleton(newAuxVar));
 			}
 		}
 	}
 	
-	private final String computeTermVariableName(String baseName, boolean isInVar, boolean isOutVar) {
+	private final String computeTermVariableName(final String baseName, final boolean isInVar, final boolean isOutVar) {
 		final String result;
 		if (isInVar) {
 			if (isOutVar) {
@@ -216,7 +215,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 	}
 
 	@Override
-	public final TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
+	public final TransFormulaLR process(final Script script, final TransFormulaLR tf) throws TermException {
 		generateRepAndAuxVars(tf);
 		final TransFormulaLR newTf = new TransFormulaLR(tf);
 		final Term newFormula = (new SafeSubstitutionWithLocalSimplification(

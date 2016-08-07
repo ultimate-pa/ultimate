@@ -437,7 +437,7 @@ public class NestedSsaBuilder {
 		}
 
 		public void replaceAuxVars() {
-			for (TermVariable tv : mTF.getAuxVars().keySet()) {
+			for (TermVariable tv : mTF.getAuxVars()) {
 				tv = transferToCurrentScriptIfNecessary(tv);
 				// construct constant only after variable was translated
 				// in order to use the Sort of the right Script for the

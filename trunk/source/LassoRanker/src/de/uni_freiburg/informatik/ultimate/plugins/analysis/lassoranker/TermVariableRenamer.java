@@ -32,22 +32,22 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
 /**
  * @author Matthias Heizmann
  */
 public class TermVariableRenamer {
-	private final Script mScript;
+	private final ManagedScript mScript;
 	
-	public TermVariableRenamer(final Script script) {
+	public TermVariableRenamer(final ManagedScript script) {
 		mScript = script;
 	}
 	
@@ -62,12 +62,11 @@ public class TermVariableRenamer {
 	 * </ul>
 	 * Otherwise x_n is not replaced.
 	 */
-	public TransFormula renameVars(final TransFormula transFormula, final String prefix) {
+	public TransFormula renameVars(final TransFormula tf, final String prefix) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, 
-				false, transFormula.getAuxVars(), false, transFormula.getBranchEncoders());
-		
-		final Map<IProgramVar, TermVariable> inVars = transFormula.getInVars();
-		final Map<IProgramVar, TermVariable> outVars = transFormula.getOutVars();
+				false, tf.getBranchEncoders(), false);
+		final Map<IProgramVar, TermVariable> inVars = tf.getInVars();
+		final Map<IProgramVar, TermVariable> outVars = tf.getOutVars();
 		
 		final Collection<IProgramVar> hasInOnlyVar = new ArrayList<IProgramVar>();
 		final Collection<IProgramVar> hasOutOnlyVar = new ArrayList<IProgramVar>();
@@ -90,14 +89,22 @@ public class TermVariableRenamer {
 				hasOutOnlyVar.add(var);
 			}
 		}
-		Term formula = transFormula.getFormula();
+		Term formula = tf.getFormula();
 		formula = renameVars(hasInOnlyVar, formula, inVars, tfb::addInVar, prefix+"In");
 		formula = renameVars(commonInOutVar, formula, inVars, tfb::addInVar, prefix+"InOut");
 		formula = renameVars(commonInOutVar, formula, outVars, tfb::addOutVar, prefix+"InOut");
 		formula = renameVars(hasOutOnlyVar, formula, outVars, tfb::addOutVar, prefix+"Out");
-		tfb.setFormula(formula);
-		tfb.setInfeasibility(transFormula.isInfeasible());
-		return tfb.finishConstruction(mScript);
+		
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final TermVariable auxVar : tf.getAuxVars()) {
+			final TermVariable newAuxVar = mScript.constructFreshCopy(auxVar);
+			tfb.addAuxVar(newAuxVar);
+			substitutionMapping.put(auxVar, newAuxVar);
+		}
+		
+		tfb.setFormula(new SafeSubstitution(mScript.getScript(), substitutionMapping).transform(formula));
+		tfb.setInfeasibility(tf.isInfeasible());
+		return tfb.finishConstruction(mScript.getScript());
 	}
 	
 	/**
@@ -123,13 +130,13 @@ public class TermVariableRenamer {
 			final TermVariable newVar = getNewTermVariable(var, oldVar, prefix);
 			varAdder.addVar(var, newVar);
 		}
-		formula = (new SafeSubstitution(mScript, null, substitutionMapping)).transform(formula);
+		formula = (new SafeSubstitution(mScript.getScript(), null, substitutionMapping)).transform(formula);
 		return formula;
 	}
 	
 	
 	private TermVariable getNewTermVariable(final IProgramVar var, final TermVariable tv, final String prefix) {
-		final TermVariable result = mScript.variable(prefix +"_" +var.getIdentifier(), tv.getSort());
+		final TermVariable result = mScript.getScript().variable(prefix +"_" +var.getIdentifier(), tv.getSort());
 		return result;
 	}
 	

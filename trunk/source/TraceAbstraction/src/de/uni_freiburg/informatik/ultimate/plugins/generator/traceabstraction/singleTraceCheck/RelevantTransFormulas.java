@@ -31,12 +31,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -47,7 +45,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -86,7 +86,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	private final Map<Integer, TransFormula> mOldVarsAssignmentTransFormulasAtCall;
 	
 	
-	private final Script mScript;
+	private final ManagedScript mScript;
 	
 	private final static boolean s_ComputeSumSizeFormulasInUnsatCore = false;
 	
@@ -103,7 +103,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 			final ModifiableGlobalVariableManager modGlobalVarManager,
 			final boolean[] localVarAssignmentsAtCallInUnsatCore,
 			final boolean[] oldVarAssignmentAtCallInUnsatCore,
-			final Script script) {
+			final ManagedScript script) {
 		super(nestedTrace, pendingContexts);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
@@ -121,7 +121,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 			final SortedMap<Integer, IPredicate> pendingContexts,
 			final Set<Term> unsat_core,
 			final ModifiableGlobalVariableManager modGlobalVarManager,
-			final Script script,
+			final ManagedScript script,
 			final AnnotateAndAsserter aaa,
 			final AnnotateAndAssertConjunctsOfCodeBlocks aac) {
 		super(nestedTrace, pendingContexts);
@@ -266,23 +266,23 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	
 	private TransFormula buildTransFormulaForStmtNotInUnsatCore(final TransFormula tf) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, 
-				true, null, tf.getBranchEncoders().isEmpty(), tf.getBranchEncoders());
+				tf.getBranchEncoders().isEmpty(), tf.getBranchEncoders(), true);
 		for (final IProgramVar bv : tf.getAssignedVars()) {
 			if (tf.getOutVars().containsKey(bv)) {
 				tfb.addOutVar(bv, tf.getOutVars().get(bv));
 			}
 		}
-		tfb.setFormula(mScript.term("true"));
-		tfb.setInfeasibility(Infeasibility.INFEASIBLE.UNPROVEABLE);
-		return tfb.finishConstruction(mScript);
+		tfb.setFormula(mScript.getScript().term("true"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		return tfb.finishConstruction(mScript.getScript());
 	}
 	
 	private TransFormula buildTransFormulaWithRelevantConjuncts(
 			final TransFormula tf, final Term[] conjunctsInUnsatCore) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(
-				null, null, false, null, false, null);
+				null, null, false, null, false);
 		
-		final Term formula = Util.and(mScript, conjunctsInUnsatCore);
+		final Term formula = Util.and(mScript.getScript(), conjunctsInUnsatCore);
 		final Set<TermVariable> freeVars = new HashSet<TermVariable>();
 		Collections.addAll(freeVars, formula.getFreeVars());
 		for (final IProgramVar bv : tf.getInVars().keySet()) {
@@ -297,16 +297,17 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 				tfb.addOutVar(bv, tf.getOutVars().get(bv));
 			}
 		}
-		final Map<TermVariable, Term> auxVars = new HashMap<TermVariable, Term>();
-		for (final Entry<TermVariable, Term> entry : tf.getAuxVars().entrySet()) {
-			if (freeVars.contains(entry.getKey())) {
-				auxVars.put(entry.getKey(), entry.getValue());
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final TermVariable auxVar : tf.getAuxVars()) {
+			if (freeVars.contains(auxVar)) {
+				final TermVariable newAuxVar = mScript.constructFreshCopy(auxVar);
+				tfb.addAuxVar(newAuxVar);
+				substitutionMapping.put(auxVar, newAuxVar);
 			}
 		}
-		tfb.addAuxVars(auxVars);
-		tfb.setFormula(formula);
+		tfb.setFormula(new SafeSubstitution(mScript.getScript(), substitutionMapping).transform(formula));
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		return tfb.finishConstruction(mScript);
+		return tfb.finishConstruction(mScript.getScript());
 	}
 
 	@Override

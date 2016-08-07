@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -759,14 +758,14 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		return mManagedScript.let(this, vars , values, formula);
 	}
 	
-	private Term renameAuxVarsToCorrespondingConstants(final Map<TermVariable, Term> auxVars,
+	private Term renameAuxVarsToCorrespondingConstants(final Set<TermVariable> auxVars,
 			final Term formula) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
-		for (final Entry<TermVariable, Term> entry : auxVars.entrySet()) {
-			final TermVariable auxVarTv = entry.getKey();
+		for (final TermVariable auxVarTv : auxVars) {
 			replacees.add(auxVarTv);
-			final Term correspondingConstant = entry.getValue();
+			final Term correspondingConstant = 
+					SmtUtils.termVariable2constant(mManagedScript.getScript(), auxVarTv, false);
 			replacers.add(correspondingConstant);
 		}
 		final TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);

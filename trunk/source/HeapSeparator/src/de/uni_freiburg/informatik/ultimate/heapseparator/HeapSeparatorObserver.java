@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcher;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcherSequential;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.RCFGWalkerBreadthFirst;
@@ -55,9 +55,9 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	 */
 	HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> mOldArrayToPointerToNewArray;
 	
-	private Script mScript;
+	private ManagedScript mScript;
 
-	public HeapSeparatorObserver(IUltimateServiceProvider services) {
+	public HeapSeparatorObserver(final IUltimateServiceProvider services) {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
@@ -76,15 +76,15 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) throws Throwable {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public boolean process(IElement root) throws Throwable {
+	public boolean process(final IElement root) throws Throwable {
 		
-		mScript = ((RootNode) root).getRootAnnot().getScript();
+		mScript = ((RootNode) root).getRootAnnot().getManagedScript();
 //		testSetup(((RootNode) root).getOutgoingEdges().get(0).getTarget());
 		testSetup(((RootNode) root).getRootAnnot());
 		
@@ -101,7 +101,7 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	}
 	
 	
-	void testSetup(RootAnnot ra) {
+	void testSetup(final RootAnnot ra) {
 		
 		final IProgramVar m = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
 				"m", 

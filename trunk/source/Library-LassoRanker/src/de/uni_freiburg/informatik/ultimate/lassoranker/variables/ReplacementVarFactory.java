@@ -60,13 +60,13 @@ public class ReplacementVarFactory {
 	private final Map<IProgramVar, BoogieVarWrapper> mBoogieVarWrappers
 		= new HashMap<IProgramVar, BoogieVarWrapper>();
 
-	public ReplacementVarFactory(ManagedScript variableManager) {
+	public ReplacementVarFactory(final ManagedScript variableManager) {
 		super();
 		mVariableManager = variableManager;
 		
 		final IValueConstruction<TermVariable, Term> valueConstruction = new IValueConstruction<TermVariable, Term>() {
 			@Override
-			public Term constructValue(TermVariable key) {
+			public Term constructValue(final TermVariable key) {
 				final Term auxVarConst = mVariableManager.constructFreshTermVariable(key.getName(), key.getSort());
 				return auxVarConst;
 			}
@@ -79,7 +79,7 @@ public class ReplacementVarFactory {
 	 * Get the ReplacementVar that is used as a replacement for the Term
 	 * definition. Construct this ReplacementVar if it does not exist yet.
 	 */
-	public ReplacementVar getOrConstuctReplacementVar(Term definition) {
+	public ReplacementVar getOrConstuctReplacementVar(final Term definition) {
 		ReplacementVar repVar = mRepVarMapping.get(definition);
 		if (repVar == null) {
 			repVar = new ReplacementVar(definition.toString(), definition);
@@ -93,7 +93,7 @@ public class ReplacementVarFactory {
 	 * definition at the ProgramPoint location. 
 	 * Construct this LocalReplacementVar if it does not exist yet.
 	 */
-	public ReplacementVar getOrConstuctLocalReplacementVar(Term definition, Object location) {
+	public ReplacementVar getOrConstuctLocalReplacementVar(final Term definition, final Object location) {
 		Map<Object, LocalReplacementVar> locToRepVar = mLocalRepVarMapping.get(definition);
 		if (definition == null) {
 			locToRepVar = new HashMap<Object, LocalReplacementVar>();
@@ -111,7 +111,7 @@ public class ReplacementVarFactory {
 	/**
 	 * Construct and return a unique TermVariable with the given name.
 	 */
-	public TermVariable getOrConstructAuxVar(String name, Sort sort) {
+	public TermVariable getOrConstructAuxVar(final String name, final Sort sort) {
 		TermVariable auxVar = mAuxVarMapping.get(name);
 		if (auxVar == null) {
 			auxVar = mVariableManager.constructFreshTermVariable(name, sort);
@@ -127,7 +127,8 @@ public class ReplacementVarFactory {
 	/**
 	 * Construct constant (0-ary function) for an auxVar. 
 	 */
-	public Term getOrConstructConstForAuxVar(TermVariable tv) {
+	@Deprecated
+	public Term getOrConstructConstForAuxVar(final TermVariable tv) {
 		final Term auxVarConst = mAuxVarConstants.getOrConstuct(tv);
 		return auxVarConst;
 	}
@@ -149,7 +150,7 @@ public class ReplacementVarFactory {
 	/**
 	 * Get unique BoogieVarWrapper for a given BoogieVar.
 	 */
-	public RankVar getOrConstuctBoogieVarWrapper(IProgramVar boogieVar) {
+	public RankVar getOrConstuctBoogieVarWrapper(final IProgramVar boogieVar) {
 		if (mBoogieVarWrappers.containsKey(boogieVar)) {
 			return mBoogieVarWrappers.get(boogieVar);
 		} else {

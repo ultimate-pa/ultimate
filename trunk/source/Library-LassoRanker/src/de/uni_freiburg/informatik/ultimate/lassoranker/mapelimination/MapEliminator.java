@@ -410,7 +410,7 @@ public class MapEliminator {
 				outVarsToRemove.add(entry.getKey());
 			}
 		}
-		for (final TermVariable tv : transformula.getAuxVars().keySet()) {
+		for (final TermVariable tv : transformula.getAuxVars()) {
 			if (!freeVars.contains(tv)) {
 				auxVarsToRemove.add(tv);
 			}

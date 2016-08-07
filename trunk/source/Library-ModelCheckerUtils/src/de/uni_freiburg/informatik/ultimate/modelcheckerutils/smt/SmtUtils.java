@@ -530,19 +530,23 @@ public class SmtUtils {
 	}
 
 	public static Map<Term, Term> termVariables2Constants(final Script script,
-			final Collection<TermVariable> termVariables) {
+			final Collection<TermVariable> termVariables,
+			final boolean declareConstants) {
 		final Map<Term, Term> mapping = new HashMap<Term, Term>();
 		for (final TermVariable tv : termVariables) {
-			final Term constant = termVariable2constant(script, tv);
+			final Term constant = termVariable2constant(script, tv, declareConstants);
 			mapping.put(tv, constant);
 		}
 		return mapping;
 	}
 
-	public static Term termVariable2constant(final Script script, final TermVariable tv) {
+	public static Term termVariable2constant(
+			final Script script, final TermVariable tv, final boolean declareConstant) {
 		final String name = removeSmtQuoteCharacters(tv.getName());
-		final Sort resultSort = tv.getSort();
-		script.declareFun(name, new Sort[0], resultSort);
+		if (declareConstant) {
+			final Sort resultSort = tv.getSort();
+			script.declareFun(name, new Sort[0], resultSort);
+		}
 		return script.term(name);
 	}
 

@@ -154,7 +154,7 @@ public class LassoRankerStarter {
 		mLoop = lassoExtractor.getLoop();
 		mHonda = lassoExtractor.getHonda();
 
-		final Script script = mRootAnnot.getScript();
+		final ManagedScript script = mRootAnnot.getManagedScript();
 
 		final TermVariableRenamer tvr = new TermVariableRenamer(script);
 		TransFormula stemTF;
@@ -174,7 +174,7 @@ public class LassoRankerStarter {
 		// Construct LassoAnalysis for nontermination
 		LassoAnalysis laNT = null;
 		try {
-			laNT = new LassoAnalysis(script, mRootAnnot.getBoogie2SMT(), stemTF, loopTf, modifiableGlobalsAtHonda,
+			laNT = new LassoAnalysis(script.getScript(), mRootAnnot.getBoogie2SMT(), stemTF, loopTf, modifiableGlobalsAtHonda,
 					axioms, preferences, mServices, storage, mSimplificationTechnique, mXnfConversionTechnique);
 		} catch (final TermException e) {
 			reportUnuspportedSyntax(mHonda, e.getMessage());
@@ -208,7 +208,7 @@ public class LassoRankerStarter {
 		// Construct LassoAnalysis for nontermination
 		LassoAnalysis laT = null;
 		try {
-			laT = new LassoAnalysis(script, mRootAnnot.getBoogie2SMT(), stemTF, loopTf, modifiableGlobalsAtHonda,
+			laT = new LassoAnalysis(script.getScript(), mRootAnnot.getBoogie2SMT(), stemTF, loopTf, modifiableGlobalsAtHonda,
 					axioms, preferences, mServices, storage, mSimplificationTechnique, mXnfConversionTechnique);
 		} catch (final TermException e) {
 			reportUnuspportedSyntax(mHonda, e.getMessage());

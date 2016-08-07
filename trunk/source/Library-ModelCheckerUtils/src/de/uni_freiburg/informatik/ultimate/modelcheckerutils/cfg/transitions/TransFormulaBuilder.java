@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 public class TransFormulaBuilder {
 	private final Map<IProgramVar, TermVariable> mInVars;
 	private final Map<IProgramVar, TermVariable> mOutVars;
-	private final Map<TermVariable, Term> mAuxVars;
+	private final Set<TermVariable> mAuxVars;
 	private final Set<TermVariable> mBranchEncoders;
 	private Infeasibility mInfeasibility = null;
 	private Term mFormula = null;
@@ -71,8 +71,8 @@ public class TransFormulaBuilder {
 	 */
 	public TransFormulaBuilder(final Map<IProgramVar, TermVariable> inVars, 
 			final Map<IProgramVar, TermVariable> outVars,
-			final boolean emptyAuxVars, final Map<TermVariable, Term> auxVars,
-			final boolean emptyBranchEncoders, final Collection<TermVariable> branchEncoders) {
+			final boolean emptyBranchEncoders, final Collection<TermVariable> branchEncoders,
+			final boolean emptyAuxVars) {
 		super();
 		if (inVars == null) {
 			mInVars = new HashMap<>();
@@ -85,16 +85,9 @@ public class TransFormulaBuilder {
 			mOutVars = new HashMap<>(outVars);
 		}
 		if (emptyAuxVars) {
-			mAuxVars = Collections.emptyMap();
-			if (auxVars != null && !auxVars.isEmpty()) {
-				throw new IllegalArgumentException("if emptyAuxVars=true, you cannot provide aux vars");
-			}
+			mAuxVars = Collections.emptySet();
 		} else {
-			if (auxVars == null) {
-				mAuxVars = new HashMap<>();
-			} else {
-				mAuxVars = new HashMap<>(auxVars);
-			}
+			mAuxVars = new HashSet<>();
 		}
 		if (emptyBranchEncoders) {
 			mBranchEncoders = Collections.emptySet();
@@ -110,23 +103,23 @@ public class TransFormulaBuilder {
 		}
 	}
 	
-	public Term addAuxVar(final TermVariable arg0, final Term arg1) {
+	public boolean addAuxVar(final TermVariable arg0) {
 		if (mConstructionFinished) {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
 		} else {
-			return mAuxVars.put(arg0, arg1);
+			return mAuxVars.add(arg0);
 		}
 	}
 
-	public void addAuxVars(final Map<? extends TermVariable, ? extends Term> arg0) {
+	public void addAuxVars(final Set<? extends TermVariable> arg0) {
 		if (mConstructionFinished) {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
 		} else {
-			mAuxVars.putAll(arg0);
+			mAuxVars.addAll(arg0);
 		}
 	}
 
-	public Term removeAuxVar(final TermVariable arg0) {
+	public boolean removeAuxVar(final TermVariable arg0) {
 		if (mConstructionFinished) {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
 		} else {
@@ -254,7 +247,7 @@ public class TransFormulaBuilder {
 			throw new IllegalStateException("cannot finish without feasibility status");
 		}
 		mConstructionFinished = true;
-		TransFormula.removeSuperfluousVars(mFormula, mInVars, mOutVars, mAuxVars.keySet());
+		TransFormula.removeSuperfluousVars(mFormula, mInVars, mOutVars, mAuxVars);
 		return new TransFormula(mFormula, mInVars, mOutVars, mAuxVars, mBranchEncoders, mInfeasibility, script);
 	}
 	
@@ -263,7 +256,7 @@ public class TransFormulaBuilder {
 	 * Construct TransFormula with "true" formula and no variables.
 	 */
 	public static TransFormula getTrivialTransFormula(final Script script) {
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true);
 		tfb.setFormula(script.term("true"));
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
 		return tfb.finishConstruction(script);
@@ -280,7 +273,7 @@ public class TransFormulaBuilder {
 	 * </ul>
 	 */
 	public static TransFormula constructTransFormulaFromPredicate(final IPredicate pred, final ManagedScript script) {
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true);
 		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (final IProgramVar bv : pred.getVars()) {
 			final TermVariable freshTv = script.constructFreshTermVariable(bv.getGloballyUniqueId(), bv.getTermVariable().getSort());

@@ -17,6 +17,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -32,13 +34,13 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	 *  arrayId before separation --> arrayId after separation--> Set of pointerIds
 	 */
 	HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> marrayToPartitions;
-	Script mscript;
+	ManagedScript mScript;
 
-	public HeapSepRcfgVisitor(final ILogger logger, final HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> map, final Script script) {
+	public HeapSepRcfgVisitor(final ILogger logger, final HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> map, final ManagedScript script) {
 		super(logger);
 		moldArrayToPointerToNewArray = map;
 		marrayToPartitions = reverseInnerMap(moldArrayToPointerToNewArray);
-		mscript = script;
+		mScript = script;
 	}
 
 
@@ -118,14 +120,22 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		//   
 		
 
-		final ArraySplitter as = new ArraySplitter(mscript, moldArrayToPointerToNewArray, marrayToPartitions, tf.getInVars(), tf.getOutVars());
+		final ArraySplitter as = new ArraySplitter(mScript.getScript(), moldArrayToPointerToNewArray, marrayToPartitions, tf.getInVars(), tf.getOutVars());
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(
 				as.getUpdatedInVars(), as.getUpdatedOutVars(), 
-				false, tf.getAuxVars(), false, tf.getBranchEncoders());
+				false, tf.getBranchEncoders(), false);
 		final Term newFormula = as.transform(tf.getFormula());
-		tfb.setFormula(newFormula);
+		
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final TermVariable auxVar : tf.getAuxVars()) {
+			final TermVariable newAuxVar = mScript.constructFreshCopy(auxVar);
+			tfb.addAuxVar(newAuxVar);
+			substitutionMapping.put(auxVar, newAuxVar);
+		}
+		
+		tfb.setFormula(new SafeSubstitution(mScript.getScript(), substitutionMapping).transform(newFormula));
 		tfb.setInfeasibility(tf.isInfeasible());
-		return tfb.finishConstruction(mscript);
+		return tfb.finishConstruction(mScript.getScript());
 	}
 
 	public static TermVariable getSplitTermVariable(final String arrayName, final int splitIndex, final Sort sort, final Script script) {

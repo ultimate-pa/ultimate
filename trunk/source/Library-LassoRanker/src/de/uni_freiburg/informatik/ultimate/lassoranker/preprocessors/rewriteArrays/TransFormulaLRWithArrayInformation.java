@@ -807,8 +807,7 @@ public class TransFormulaLRWithArrayInformation {
 			final Set<TermVariable> auxVars = new HashSet<>(sunfts[i].getAuxVars());
 			disjunct = PartialQuantifierElimination.elim(script, QuantifiedFormula.EXISTS, auxVars, disjunct, services, logger, ftvc, simplificationTechnique, xnfConversionTechnique); 
 			disjuncts.add(disjunct);
-			final Map<TermVariable, Term> auxVar2Const = repVarFactory.constructAuxVarMapping(auxVars);
-			result.addAuxVars(auxVar2Const);
+			result.addAuxVars(auxVars);
 		}
 		final Term resultTerm = SmtUtils.or(script, disjuncts);
 		result.setFormula(resultTerm);

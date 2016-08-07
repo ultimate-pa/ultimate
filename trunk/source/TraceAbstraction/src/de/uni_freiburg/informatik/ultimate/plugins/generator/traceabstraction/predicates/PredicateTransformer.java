@@ -149,7 +149,7 @@ public class PredicateTransformer {
 		final Term result = Util.and(mScript, renamedTransFormula, renamedPredecessor);
 
 		// Add aux vars to varsToQuantify
-		varsToQuantify.addAll(tf.getAuxVars().keySet());
+		varsToQuantify.addAll(tf.getAuxVars());
 		final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantify, result);
 		final Term pushed = new QuantifierPusher(mScript, mServices, mManagedScript).transform(quantified);
 		return pushed;
@@ -329,9 +329,9 @@ public class PredicateTransformer {
 		final Map<Term, Term> varsToRenameInPredInBoth = new HashMap<Term, Term>();
 		// Union Set of auxvars occurring in each transformula
 		final Set<TermVariable> allAuxVars = new HashSet<TermVariable>();
-		allAuxVars.addAll(localVarAssignments.getAuxVars().keySet());
-		allAuxVars.addAll(globalVarAssignments.getAuxVars().keySet());
-		allAuxVars.addAll(oldVarAssignments.getAuxVars().keySet());
+		allAuxVars.addAll(localVarAssignments.getAuxVars());
+		allAuxVars.addAll(globalVarAssignments.getAuxVars());
+		allAuxVars.addAll(oldVarAssignments.getAuxVars());
 
 		final Map<Term, Term> varsToRenameInPredPendingCall = new HashMap<Term, Term>();
 		final Map<Term, Term> varsToRenameInPredNonPendingCall = new HashMap<Term, Term>();
@@ -484,9 +484,9 @@ public class PredicateTransformer {
 		final Map<Term, Term> outVarsToRenameInCallTF = new HashMap<Term, Term>();
 		final Map<Term, Term> inVarsToRenameInReturnTF = new HashMap<Term, Term>();
 		final Set<TermVariable> allAuxVars = new HashSet<TermVariable>();
-		allAuxVars.addAll(ret_TF.getAuxVars().keySet());
-		allAuxVars.addAll(callTF.getAuxVars().keySet());
-		allAuxVars.addAll(globalVarsAssignment.getAuxVars().keySet());
+		allAuxVars.addAll(ret_TF.getAuxVars());
+		allAuxVars.addAll(callTF.getAuxVars());
+		allAuxVars.addAll(globalVarsAssignment.getAuxVars());
 
 		// Substitute oldvars of modifiable global vars by fresh vars in
 		// calleePred
@@ -692,7 +692,7 @@ public class PredicateTransformer {
 			
 		final Term result = Util.or(mScript, SmtUtils.not(mScript, renamedTransFormula), renamedSuccessor);
 		// Add aux vars to varsToQuantify
-		varsToQuantify.addAll(tf.getAuxVars().keySet());
+		varsToQuantify.addAll(tf.getAuxVars());
 		final Term quantified = SmtUtils.quantifier(mScript, Script.FORALL, varsToQuantify, result);
 		final Term pushed = new QuantifierPusher(mScript, mServices, mManagedScript).transform(quantified);
 		return pushed;
@@ -774,7 +774,7 @@ public class PredicateTransformer {
 		final Term result = Util.or(mScript,
 				SmtUtils.not(mScript, Util.and(mScript, call_TFrenamed, globalVarsAssignmentsRenamed, oldVarsAssignmentsRenamed)),
 				calleePredRenamed);
-		varsToQuantify.addAll(call_TF.getAuxVars().keySet());
+		varsToQuantify.addAll(call_TF.getAuxVars());
 		final Term quantified = SmtUtils.quantifier(mScript, Script.FORALL, varsToQuantify, result);
 		final Term pushed = new QuantifierPusher(mScript, mServices, mManagedScript).transform(quantified);
 		return pushed;

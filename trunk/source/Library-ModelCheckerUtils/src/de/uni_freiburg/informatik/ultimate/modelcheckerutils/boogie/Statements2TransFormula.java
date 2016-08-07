@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
@@ -94,6 +95,7 @@ public class Statements2TransFormula {
 	private final static String s_ComputeAssertsNotAvailable = "computation of asserts not available";
 
 	private final Script mScript;
+	private final ManagedScript mMgdScript;
 	private final BoogieDeclarations mBoogieDeclarations;
 	private final Boogie2SMT mBoogie2SMT;
 	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
@@ -114,6 +116,7 @@ public class Statements2TransFormula {
 		mServices = services;
 		mBoogie2SMT = boogie2smt;
 		mScript = boogie2smt.getScript();
+		mMgdScript = boogie2smt.getManagedScript();
 		mExpression2Term = expression2Term;
 		mBoogie2SmtSymbolTable = mBoogie2SMT.getBoogie2SmtSymbolTable();
 		mBoogieDeclarations = mBoogie2SMT.getBoogieDeclarations();
@@ -132,7 +135,7 @@ public class Statements2TransFormula {
 		
 		mOverapproximations = new HashMap<>();
 		mCurrentProcedure = procId;
-		mTransFormulaBuilder = new TransFormulaBuilder(null, null, false, null, true, null);
+		mTransFormulaBuilder = new TransFormulaBuilder(null, null, true, null, false);
 		mAuxVars = new HashSet<>();
 		mAssumes = mScript.term("true");
 		if (s_ComputeAsserts) {
@@ -185,8 +188,13 @@ public class Statements2TransFormula {
 
 			}
 		}
-		final Map<TermVariable, Term> auxVar2Const = TransFormula.constructAuxVarMapping(auxVars, mBoogie2SMT.getScript());
-		mTransFormulaBuilder.addAuxVars(auxVar2Const);
+		
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final TermVariable auxVar : auxVars) {
+			final TermVariable newAuxVar = mMgdScript.constructFreshCopy(auxVar);
+			mTransFormulaBuilder.addAuxVar(newAuxVar);
+			substitutionMapping.put(auxVar, newAuxVar);
+		}
 		mTransFormulaBuilder.setFormula(formula);
 		mTransFormulaBuilder.setInfeasibility(infeasibility);
 		return mTransFormulaBuilder.finishConstruction(mScript);

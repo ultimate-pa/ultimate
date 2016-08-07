@@ -102,7 +102,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 		assert without.isInfeasible() == Infeasibility.UNPROVEABLE;
 		
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(
-				without.getInVars(), without.getOutVars(), true, null, true, null);
+				without.getInVars(), without.getOutVars(), true, null, true);
 		Term formula = without.getFormula();
 		formula = Util.and(mScript, formula, oldVarEquality(mUnseeded, mUnseededOldVar));
 		tfb.addInVar(mUnseeded, mUnseeded.getTermVariable());
@@ -127,7 +127,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 		assert without.isInfeasible() == Infeasibility.UNPROVEABLE;
 		
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(
-				without.getInVars(), without.getOutVars(), true, null, true, null);
+				without.getInVars(), without.getOutVars(), true, null, true);
 		Term formula = without.getFormula();
 		formula = Util.and(mScript, formula, oldVarEquality(mUnseeded, mUnseededOldVar));
 		tfb.addInVar(mUnseededOldVar, mUnseededOldVar.getTermVariable());
