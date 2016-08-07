@@ -1103,7 +1103,7 @@ public class SmtUtils {
 					constructFreshTermVariable(freshVarPrefix, var.getSort());
 			substitutionMapping.put(var, freshVariable);
 		}
-		final Term newBody = (new SafeSubstitution(mgdScript.getScript(), mgdScript, 
+		final Term newBody = (new SafeSubstitution(mgdScript, 
 					substitutionMapping)).transform(qFormula.getSubformula());
 		
 		final TermVariable[] vars = new TermVariable[qFormula.getVariables().length];

@@ -42,7 +42,7 @@ public class SafeSubstitutionWithLocalSimplification extends SafeSubstitution {
 	
 	public SafeSubstitutionWithLocalSimplification(final ManagedScript mgdScript, 
 			final Map<Term, Term> substitutionMapping) {
-		super(mgdScript.getScript(), mgdScript, substitutionMapping);
+		super(mgdScript, substitutionMapping);
 	}
 	
 	@Override

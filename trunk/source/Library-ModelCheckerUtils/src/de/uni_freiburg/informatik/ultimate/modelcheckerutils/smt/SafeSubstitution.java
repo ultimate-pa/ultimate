@@ -72,8 +72,7 @@ public class SafeSubstitution extends TermTransformer {
 		mScopedSubstitutionMapping.putAll(substitutionMapping);
 	}
 	
-	public SafeSubstitution(final Script script, 
-			final ManagedScript mgdScript,
+	public SafeSubstitution(final ManagedScript mgdScript, 
 			final Map<Term, Term> substitutionMapping) {
 		super();
 		mMgdScript = mgdScript;

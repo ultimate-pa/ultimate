@@ -124,7 +124,7 @@ public class TermVariableRenamer {
 			final TermVariable newVar = getNewTermVariable(var, oldVar, prefix);
 			varAdder.addVar(var, newVar);
 		}
-		formula = (new SafeSubstitution(mScript.getScript(), null, substitutionMapping)).transform(formula);
+		formula = (new SafeSubstitution(mScript, substitutionMapping)).transform(formula);
 		return formula;
 	}
 	

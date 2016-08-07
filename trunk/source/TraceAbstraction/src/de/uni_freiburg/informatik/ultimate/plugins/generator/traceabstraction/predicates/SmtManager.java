@@ -708,7 +708,7 @@ public class SmtManager {
 				substitutionMapping.put(globalBoogieVar.getTermVariable(), oldBoogieVar.getTermVariable());
 			}
 		}
-		Term renamedFormula = (new SafeSubstitution(mScript, getManagedScript(), substitutionMapping)).transform(ps.getFormula());
+		Term renamedFormula = (new SafeSubstitution(getManagedScript(), substitutionMapping)).transform(ps.getFormula());
 		renamedFormula = SmtUtils.simplify(getManagedScript(), renamedFormula, mServices, mSimplificationTechnique);
 		final IPredicate result = getPredicateFactory().newPredicate(renamedFormula);
 		return result;
