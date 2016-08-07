@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
@@ -90,6 +91,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 public class PredicateUnifier {
 	
 	private final SmtManager mSmtManager;
+	private final PredicateFactory mPredicateFactory;
 	private final Map<Term, IPredicate> mTerm2Predicates;
 	private final List<IPredicate> mKnownPredicates = new ArrayList<IPredicate>();
 	private final Map<IPredicate, IPredicate> mDeprecatedPredicates = new HashMap<>();
@@ -113,6 +115,7 @@ public class PredicateUnifier {
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mSmtManager = smtManager;
+		mPredicateFactory = smtManager.getPredicateFactory();
 		mScript = smtManager.getScript();
 		mSymbolTable = smtManager.getBoogie2Smt().getBoogie2SmtSymbolTable();
 		mServices = services;
@@ -130,12 +133,12 @@ public class PredicateUnifier {
 			}
 		}
 		if (truePredicate == null) {
-			mTruePredicate = mSmtManager.getPredicateFactory().newPredicate(mScript.term("true"));
+			mTruePredicate = mPredicateFactory.newPredicate(mScript.term("true"));
 		} else {
 			mTruePredicate = truePredicate;
 		}
 		if (falsePredicate == null) {
-			mFalsePredicate = mSmtManager.getPredicateFactory().newPredicate(mScript.term("false"));
+			mFalsePredicate = mPredicateFactory.newPredicate(mScript.term("false"));
 		} else {
 			mFalsePredicate = falsePredicate;
 		}
@@ -229,7 +232,7 @@ public class PredicateUnifier {
 					}
 				}
 			}
-			final Term term = mSmtManager.getPredicateFactory().and(minimalSubset);
+			final Term term = mPredicateFactory.and(minimalSubset);
 			return getOrConstructPredicate(term, 
 					impliedPredicates, expliedPredicates);
 		}
@@ -266,7 +269,7 @@ public class PredicateUnifier {
 					}
 				}
 			}
-			final Term term = mSmtManager.getPredicateFactory().or(false, minimalSubset);
+			final Term term = mPredicateFactory.or(false, minimalSubset);
 			return getOrConstructPredicate(term, 
 					impliedPredicates, expliedPredicates);
 		}
@@ -424,7 +427,7 @@ public class PredicateUnifier {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while unifying predicates");
 			}
 		}
-		result = mSmtManager.getPredicateFactory().newPredicate(simplifiedTerm);
+		result = mPredicateFactory.newPredicate(simplifiedTerm);
 		if (pc.isEquivalentToExistingPredicateWithGtQuantifiers()) {
 			mDeprecatedPredicates.put(pc.getEquivalantGtQuantifiedPredicate(), result);
 			mPredicateUnifierBenchmarkGenerator.incrementDeprecatedPredicates();
