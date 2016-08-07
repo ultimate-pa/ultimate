@@ -59,21 +59,25 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
  */
 public class SafeSubstitution extends TermTransformer {
 	
-	protected final Script mScript;
-	private final ManagedScript mFreshTermVariableConstructor;
+	private final Script mScript;
+	protected final ManagedScript mMgdScript;
 	private final ScopedHashMap<Term,Term> mScopedSubstitutionMapping;
 	
-	public SafeSubstitution(Script script, 
-			Map<Term, Term> substitutionMapping) {
-		this(script, null, substitutionMapping);
+	public SafeSubstitution(final Script script, 
+			final Map<Term, Term> substitutionMapping) {
+		super();
+		mMgdScript = null;
+		mScript = script;
+		mScopedSubstitutionMapping = new ScopedHashMap<Term, Term>();
+		mScopedSubstitutionMapping.putAll(substitutionMapping);
 	}
 	
-	public SafeSubstitution(Script script, 
-			ManagedScript freshTermVariableConstructor,
-			Map<Term, Term> substitutionMapping) {
+	public SafeSubstitution(final Script script, 
+			final ManagedScript mgdScript,
+			final Map<Term, Term> substitutionMapping) {
 		super();
-		mScript = script;
-		mFreshTermVariableConstructor = freshTermVariableConstructor;
+		mMgdScript = mgdScript;
+		mScript = mgdScript.getScript();
 		mScopedSubstitutionMapping = new ScopedHashMap<Term, Term>();
 		mScopedSubstitutionMapping.putAll(substitutionMapping);
 	}
@@ -103,21 +107,21 @@ public class SafeSubstitution extends TermTransformer {
 	 * subterm is "accidently" captured by a quantifier.
 	 * @return 
 	 */
-	private Term renameQuantifiedVarsThatOccurInValues(QuantifiedFormula qFormula) {
+	private Term renameQuantifiedVarsThatOccurInValues(final QuantifiedFormula qFormula) {
 		final Set<TermVariable> toRename = 
 				varsOccuringInValues(qFormula.getVariables(), mScopedSubstitutionMapping);
 		if (toRename.isEmpty()) {
 			return qFormula;
 		} else {
-			if (mFreshTermVariableConstructor == null) {
+			if (mMgdScript == null) {
 				throw new UnsupportedOperationException(
 						"Substitution in quantified formula such that substitute "
 						+ "containes quantified variable. This (rare) case is "
 						+ "only supported if you call substitution with fresh "
 						+ "variable construction.");
 			} else {
-				final Term result = SmtUtils.renameQuantifiedVariables(mScript, 
-						mFreshTermVariableConstructor, qFormula, toRename, "subst");
+				final Term result = SmtUtils.renameQuantifiedVariables(mMgdScript, 
+						qFormula, toRename, "subst");
 				return result;
 			}
 		}
@@ -133,7 +137,7 @@ public class SafeSubstitution extends TermTransformer {
 	 * quantified in this scope.
 	 * 
 	 */
-	private void removeQuantifiedVarContainingKeys(QuantifiedFormula qFormula) {
+	private void removeQuantifiedVarContainingKeys(final QuantifiedFormula qFormula) {
 
 		final Iterator<Entry<Term, Term>> it = 
 				mScopedSubstitutionMapping.entrySet().iterator();
@@ -151,7 +155,7 @@ public class SafeSubstitution extends TermTransformer {
 	 * Returns the subset of vars that occur as free variables in the values of
 	 * map.
 	 */
-	private static Set<TermVariable> varsOccuringInValues(TermVariable vars[], Map<?,Term> map) {
+	private static Set<TermVariable> varsOccuringInValues(final TermVariable vars[], final Map<?,Term> map) {
 		Set<TermVariable> result = null;
 		for (final Term term  : map.values()) {
 			for (final TermVariable tv : term.getFreeVars()) {
@@ -170,7 +174,7 @@ public class SafeSubstitution extends TermTransformer {
 	/**
 	 * Add tv to set and return set. Construct HashSet if set is null.
 	 */
-	private static Set<TermVariable> addToSet(TermVariable tv, Set<TermVariable> set) {
+	private static Set<TermVariable> addToSet(final TermVariable tv, Set<TermVariable> set) {
 		if (set == null) {
 			set = new HashSet<TermVariable>();
 		}
@@ -179,7 +183,7 @@ public class SafeSubstitution extends TermTransformer {
 	}
 
 	@Override
-	public void postConvertQuantifier(QuantifiedFormula old, Term newBody) {
+	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
 		Term result;
 		// to avoid capturing of variables we had to rename quantified vars
 		// to fresh vars in subterms. Now we have to construct the appropriate
@@ -222,7 +226,7 @@ public class SafeSubstitution extends TermTransformer {
 	 * @return A new List that contains (in the same order) the results of the
 	 * substitutions applied to each input Term. 
 	 */
-	public List<Term> transform(List<Term> terms) {
+	public List<Term> transform(final List<Term> terms) {
 		final ArrayList<Term> result = new ArrayList<Term>();
 		for (final Term term : terms) {
 			result.add(this.transform(term));

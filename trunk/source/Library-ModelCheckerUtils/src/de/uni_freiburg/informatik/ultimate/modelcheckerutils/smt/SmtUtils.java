@@ -1094,17 +1094,16 @@ public class SmtUtils {
 	 * the quantifier and occur in the set toRename to fresh variables.
 	 * @param freshVarPrefix prefix of the fresh variables
 	 */
-	public static Term renameQuantifiedVariables(final Script script, 
-			final ManagedScript freshVarConstructor, 
-			final QuantifiedFormula qFormula, final Set<TermVariable> toRename, 
-			final String freshVarPrefix) {
+	public static Term renameQuantifiedVariables(final ManagedScript mgdScript, 
+			final QuantifiedFormula qFormula, 
+			final Set<TermVariable> toRename, final String freshVarPrefix) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final TermVariable var : toRename) {
-			final TermVariable freshVariable = freshVarConstructor.
+			final TermVariable freshVariable = mgdScript.
 					constructFreshTermVariable(freshVarPrefix, var.getSort());
 			substitutionMapping.put(var, freshVariable);
 		}
-		final Term newBody = (new SafeSubstitution(script, freshVarConstructor, 
+		final Term newBody = (new SafeSubstitution(mgdScript.getScript(), mgdScript, 
 					substitutionMapping)).transform(qFormula.getSubformula());
 		
 		final TermVariable[] vars = new TermVariable[qFormula.getVariables().length];
@@ -1116,7 +1115,7 @@ public class SmtUtils {
 				vars[i] = qFormula.getVariables()[i];
 			}
 		}
-		final Term result = script.quantifier(qFormula.getQuantifier(), vars, newBody);
+		final Term result = mgdScript.getScript().quantifier(qFormula.getQuantifier(), vars, newBody);
 		return result;
 	}
 	

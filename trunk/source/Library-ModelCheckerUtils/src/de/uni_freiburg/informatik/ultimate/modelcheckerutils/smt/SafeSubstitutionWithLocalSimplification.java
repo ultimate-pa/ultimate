@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -41,19 +40,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public class SafeSubstitutionWithLocalSimplification extends SafeSubstitution {
 	
-	public SafeSubstitutionWithLocalSimplification(Script script, 
-			Map<Term, Term> substitutionMapping) {
-		this(script, null, substitutionMapping);
-	}
-	
-	public SafeSubstitutionWithLocalSimplification(Script script, 
-			ManagedScript freshTermVariableConstructor,
-			Map<Term, Term> substitutionMapping) {
-		super(script, freshTermVariableConstructor, substitutionMapping);
+	public SafeSubstitutionWithLocalSimplification(final ManagedScript mgdScript, 
+			final Map<Term, Term> substitutionMapping) {
+		super(mgdScript.getScript(), mgdScript, substitutionMapping);
 	}
 	
 	@Override
-	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
+	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		final Term result;
 		final Term[] oldArgs = appTerm.getParameters();
 		if (oldArgs == newArgs) {
@@ -61,7 +54,7 @@ public class SafeSubstitutionWithLocalSimplification extends SafeSubstitution {
 			result = appTerm;
 		} else {
 			final String funcname = appTerm.getFunction().getName();
-			result = SmtUtils.termWithLocalSimplification(mScript, 
+			result = SmtUtils.termWithLocalSimplification(mMgdScript.getScript(), 
 					funcname, appTerm.getFunction().getIndices(), newArgs);
 		}
 		setResult(result);

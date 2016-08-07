@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Abstract superclass for preprocessors that replace TermVariables.
@@ -101,12 +102,12 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 	 * Factory for construction of auxVars.
 	 */
 	private final ReplacementVarFactory mVarFactory;
-	protected final Script mScript;
+	protected final ManagedScript mScript;
 
-	public RewriteTermVariables(final ReplacementVarFactory varFactory, final Script script) {
+	public RewriteTermVariables(final ReplacementVarFactory varFactory, final ManagedScript script) {
 		mVarFactory = varFactory;
 		mScript = script;
-		mrepVarSort = mScript.sort(getRepVarSortName());
+		mrepVarSort = mScript.getScript().sort(getRepVarSortName());
 		mSubstitutionMapping = new LinkedHashMap<Term, Term>();
 	}
 

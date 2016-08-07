@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
 /**
@@ -61,24 +61,24 @@ public class RewriteUserDefinedTypes extends RewriteTermVariables {
 	 * @param rankVarCollector collecting the new in- and outVars
 	 * @param script the Script for creating new variables
 	 */
-	public RewriteUserDefinedTypes(ReplacementVarFactory varFactory, Script script) {
+	public RewriteUserDefinedTypes(final ReplacementVarFactory varFactory, final ManagedScript script) {
 		super(varFactory, script);
 	}
 	
 	@Override
-	protected boolean hasToBeReplaced(Term term) {
+	protected boolean hasToBeReplaced(final Term term) {
 		return hasNonInternalSort(term);
 	}
 
 	/**
 	 * return true iff sort of term is not an internal sort
 	 */
-	private static final boolean hasNonInternalSort(Term term) {
+	private static final boolean hasNonInternalSort(final Term term) {
 		return !term.getSort().getRealSort().isInternal();
 	}
 	
 	@Override
-	protected Term constructReplacementTerm(TermVariable newTv) {
+	protected Term constructReplacementTerm(final TermVariable newTv) {
 		// return the new Tv
 		return newTv;
 	}
@@ -97,7 +97,7 @@ public class RewriteUserDefinedTypes extends RewriteTermVariables {
 	 * 
 	 */
 	@Override
-	protected Term constructNewDefinitionForRankVar(RankVar oldRankVar) {
+	protected Term constructNewDefinitionForRankVar(final RankVar oldRankVar) {
 		final Term definition = oldRankVar.getDefinition();
 		return definition;
 	}

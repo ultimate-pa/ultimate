@@ -509,7 +509,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			final Term originalFormula = transFormula[i].getFormula();
-			final Term updatedFormula = (new SafeSubstitutionWithLocalSimplification(script, subsitutionMapping)).transform(originalFormula);
+			final Term updatedFormula = (new SafeSubstitutionWithLocalSimplification(mgdScript, subsitutionMapping)).transform(originalFormula);
 			formula = Util.and(script, formula, updatedFormula);
 		}
 
@@ -675,7 +675,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			final Term originalFormula = transFormulas[i].getFormula();
-			renamedFormulas[i] = (new SafeSubstitutionWithLocalSimplification(mgdScript.getScript(), subsitutionMapping)).transform(originalFormula);
+			renamedFormulas[i] = (new SafeSubstitutionWithLocalSimplification(mgdScript, subsitutionMapping)).transform(originalFormula);
 
 			for (final IProgramVar bv : assignedInSomeBranch.keySet()) {
 				final TermVariable inVar = transFormulas[i].getInVars().get(bv);

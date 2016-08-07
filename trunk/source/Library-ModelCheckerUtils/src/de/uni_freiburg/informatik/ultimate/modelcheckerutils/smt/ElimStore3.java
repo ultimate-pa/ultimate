@@ -212,7 +212,7 @@ public class ElimStore3 {
 					store = update.getMultiDimensionalStore();
 				}
 				final Map<Term, Term> auxMap = Collections.singletonMap((Term) store.getStoreTerm(), (Term) auxArray);
-				final SafeSubstitution subst = new SafeSubstitutionWithLocalSimplification(mScript, auxMap);
+				final SafeSubstitution subst = new SafeSubstitutionWithLocalSimplification(mMgdScript, auxMap);
 				Term auxTerm = subst.transform(term);
 				final Term auxVarDef = mScript.term("=", auxArray, store.getStoreTerm());
 				if (quantifier == QuantifiedFormula.EXISTS) {
@@ -242,13 +242,13 @@ public class ElimStore3 {
 			// we replace all occurrences of (store oldArr idx val) by newArr.
 			final Map<Term, Term> mapping = Collections.singletonMap(
 					(Term) writeInto.getMultiDimensionalStore().getStoreTerm(), (Term) writeInto.getNewArray());
-			final SafeSubstitution substStoreTerm = new SafeSubstitutionWithLocalSimplification(script, mapping);
+			final SafeSubstitution substStoreTerm = new SafeSubstitutionWithLocalSimplification(mMgdScript, mapping);
 			intermediateResult = substStoreTerm.transform(intermediateResult);
 		}
 		
 		// Indices and corresponding values of a_elim 
 		final IndicesAndValues iav = new IndicesAndValues(eliminatee, conjuncts);
-		final SafeSubstitution subst = new SafeSubstitutionWithLocalSimplification(script, iav.getMapping());
+		final SafeSubstitution subst = new SafeSubstitutionWithLocalSimplification(mMgdScript, iav.getMapping());
 
 		final ArrayList<Term> additionalConjuncs = new ArrayList<Term>();
 		intermediateResult = subst.transform(intermediateResult);
@@ -295,7 +295,7 @@ public class ElimStore3 {
 			if (writtenFrom != null) {
 				final Term storeRenamed = SmtUtils.multiDimensionalStore(script, a_heir, idx_writeRenamed, dataRenamed);
 				final Map<Term, Term> mapping = Collections.singletonMap((Term) eliminatee, storeRenamed);
-				writtenFromSubst = new SafeSubstitutionWithLocalSimplification(script, mapping);
+				writtenFromSubst = new SafeSubstitutionWithLocalSimplification(mMgdScript, mapping);
 			} else {
 				writtenFromSubst = null;
 			}

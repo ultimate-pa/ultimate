@@ -127,7 +127,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 			resultAtoms = new Term[inputAtoms.length - 1];
 			final Map<Term, Term> substitutionMapping = Collections.singletonMap(eqInfo.getVariable(), eqInfo.getTerm());
 			final SafeSubstitution substitution = new SafeSubstitutionWithLocalSimplification(
-					script, mMgdScript, substitutionMapping);
+					mMgdScript, substitutionMapping);
 			for (int i = 0; i < eqInfo.getIndex(); i++) {
 				resultAtoms[i] = substituteAndNormalize(substitution, inputAtoms[i]);
 			}

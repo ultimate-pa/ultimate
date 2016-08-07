@@ -31,9 +31,9 @@ import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
 /**
@@ -63,26 +63,26 @@ public class RewriteBooleans extends RewriteTermVariables {
 	 * @param rankVarCollector collecting the new in- and outVars
 	 * @param script the Script for creating new variables
 	 */
-	public RewriteBooleans(ReplacementVarFactory varFactory, Script script) {
+	public RewriteBooleans(final ReplacementVarFactory varFactory, final ManagedScript script) {
 		super(varFactory, script);
 	}
 	
 	@Override
-	protected boolean hasToBeReplaced(Term term) {
+	protected boolean hasToBeReplaced(final Term term) {
 		return isBool(term);
 	}
 
 	/**
 	 * return true iff sort of term is Bool.
 	 */
-	private static final boolean isBool(Term term) {
+	private static final boolean isBool(final Term term) {
 		return term.getSort().getName().equals("Bool");
 	}
 	
 	@Override
-	protected Term constructReplacementTerm(TermVariable tv) {
-		final Term one = mScript.numeral(BigInteger.ONE);
-		final Term repTerm = mScript.term(">=", tv, one);
+	protected Term constructReplacementTerm(final TermVariable tv) {
+		final Term one = mScript.getScript().numeral(BigInteger.ONE);
+		final Term repTerm = mScript.getScript().term(">=", tv, one);
 		return repTerm;
 	}
 
@@ -97,12 +97,12 @@ public class RewriteBooleans extends RewriteTermVariables {
 	 * (ite booleanTerm one zero)
 	 */
 	@Override
-	protected Term constructNewDefinitionForRankVar(RankVar oldRankVar) {
+	protected Term constructNewDefinitionForRankVar(final RankVar oldRankVar) {
 		final Term booleanTerm = oldRankVar.getDefinition();
 		assert booleanTerm.getSort().getName().equals("Bool");
-		final Term one = mScript.numeral(BigInteger.ONE);
-		final Term zero = mScript.numeral(BigInteger.ZERO);
-		return mScript.term("ite", booleanTerm, one, zero);
+		final Term one = mScript.getScript().numeral(BigInteger.ONE);
+		final Term zero = mScript.getScript().numeral(BigInteger.ZERO);
+		return mScript.getScript().term("ite", booleanTerm, one, zero);
 	}
 	
 

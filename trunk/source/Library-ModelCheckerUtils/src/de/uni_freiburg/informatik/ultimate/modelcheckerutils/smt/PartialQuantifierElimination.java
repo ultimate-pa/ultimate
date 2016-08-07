@@ -80,7 +80,7 @@ public class PartialQuantifierElimination {
 	public static Term tryToEliminate(final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript, 
 			final Term term, final SimplicationTechnique simplificationTechnique, 
 			final XnfConversionTechnique xnfConversionTechnique) {
-		final Term withoutIte = (new IteRemover(mgdScript.getScript())).transform(term);
+		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
 		final Term nnf = new Nnf(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte); 
 		final Term pushed = new QuantifierPusher(mgdScript, services).transform(nnf);
 		final Term pnf = new PrenexNormalForm(mgdScript.getScript(), mgdScript).transform(pushed);
@@ -235,7 +235,7 @@ public class PartialQuantifierElimination {
 	public static Term elimPushPull(final Script script, final int quantifier, final Set<TermVariable> eliminatees, final Term term,
 			final IUltimateServiceProvider services, final ILogger logger, 
 			final ManagedScript freshTermVariableConstructor) {
-		final Term withoutIte = (new IteRemover(script)).transform(term);
+		final Term withoutIte = (new IteRemover(freshTermVariableConstructor)).transform(term);
 		final Term nnf = new Nnf(freshTermVariableConstructor, services, QuantifierHandling.KEEP).transform(withoutIte); 
 		final Term quantified = script.quantifier(quantifier, eliminatees.toArray(new TermVariable[eliminatees.size()]), nnf);
 		final Term pushed = new QuantifierPusher(freshTermVariableConstructor, services).transform(quantified);
@@ -264,7 +264,7 @@ public class PartialQuantifierElimination {
 		Term result;
 
 		// transform to DNF (resp. CNF)
-		result = (new IteRemover(script)).transform(term);
+		result = (new IteRemover(freshTermVariableConstructor)).transform(term);
 		result = transformToXnf(services, script, quantifier, freshTermVariableConstructor, result, xnfConversionTechnique);
 //		if (result instanceof QuantifiedFormula) {
 //			QuantifiedFormula qf = (QuantifiedFormula) result;
