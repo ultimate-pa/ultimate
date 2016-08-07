@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class LassoPartitioneer {
 	
 	private final IUltimateServiceProvider mServices;
-	private final ManagedScript mFreshTermVariableConstructor;
+	private final ManagedScript mMgdScript;
 	
 	private final LassoUnderConstruction mLasso;
 	
@@ -90,8 +90,8 @@ public class LassoPartitioneer {
 			final Script script, final LassoUnderConstruction lasso, 
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
-		mFreshTermVariableConstructor = freshVarConstructor;
-		mScript = script;
+		mMgdScript = freshVarConstructor;
+		mScript = freshVarConstructor.getScript();
 		mLasso = lasso;
 		this.mXnfConversionTechnique = xnfConversionTechnique;
 		doPartition();
@@ -265,7 +265,7 @@ public class LassoPartitioneer {
 		mAllRankVars.addAll(tf.getInVars().keySet());
 		mAllRankVars.addAll(tf.getOutVars().keySet());
 		//FIXME CNF conversion should be done in advance if desired
-		final Term cnf = SmtUtils.toCnf(mServices, mScript, mFreshTermVariableConstructor, tf.getFormula(), mXnfConversionTechnique);
+		final Term cnf = SmtUtils.toCnf(mServices, mMgdScript, tf.getFormula(), mXnfConversionTechnique);
 		final Term[] conjuncts = SmtUtils.getConjuncts(cnf);
 		for (final Term conjunct : conjuncts) {
 			final Set<NonTheorySymbol<?>> allSymbolsOfConjunct = NonTheorySymbol.extractNonTheorySymbols(conjunct);

@@ -110,12 +110,28 @@ public class TransFormulaBuilder {
 			return mAuxVars.add(arg0);
 		}
 	}
-
-	public void addAuxVars(final Set<? extends TermVariable> arg0) {
+	
+	/**
+	 * Add a set of aux vars but rename each of them to a fresh constant.
+	 * Requires that the formula is already set, since we also have to do
+	 * the renaming in the formula.
+	 * @param arg0
+	 */
+	public void addAuxVarsButRenameToFreshCopies(final Set<? extends TermVariable> arg0, final ManagedScript script) {
 		if (mConstructionFinished) {
 			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
 		} else {
-			mAuxVars.addAll(arg0);
+			if (mFormula == null) {
+				throw new IllegalStateException("Formula not yet set, cannot rename.");
+			} else {
+				final Map<Term, Term> substitutionMapping = new HashMap<>();
+				for (final TermVariable auxVar : arg0) {
+					final TermVariable newAuxVar = script.constructFreshCopy(auxVar);
+					this.addAuxVar(newAuxVar);
+					substitutionMapping.put(auxVar, newAuxVar);
+				}
+				mFormula = (new SafeSubstitution(script.getScript(), substitutionMapping).transform(mFormula));
+			}
 		}
 	}
 

@@ -81,8 +81,8 @@ public class PartialQuantifierElimination {
 			final Term term, final SimplicationTechnique simplificationTechnique, 
 			final XnfConversionTechnique xnfConversionTechnique) {
 		final Term withoutIte = (new IteRemover(mgdScript.getScript())).transform(term);
-		final Term nnf = new Nnf(mgdScript.getScript(), services, mgdScript, QuantifierHandling.KEEP).transform(withoutIte); 
-		final Term pushed = new QuantifierPusher(mgdScript.getScript(), services, mgdScript).transform(nnf);
+		final Term nnf = new Nnf(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte); 
+		final Term pushed = new QuantifierPusher(mgdScript, services).transform(nnf);
 		final Term pnf = new PrenexNormalForm(mgdScript.getScript(), mgdScript).transform(pushed);
 		final QuantifierSequence qs = new QuantifierSequence(mgdScript.getScript(), pnf);
 		final Term matrix = qs.getInnerTerm();
@@ -97,7 +97,7 @@ public class PartialQuantifierElimination {
 			result = elim(mgdScript.getScript(), qv.getQuantifier(), eliminatees, result, services, logger, 
 					mgdScript, simplificationTechnique, xnfConversionTechnique);
 			result = SmtUtils.quantifier(mgdScript.getScript(), qv.getQuantifier(), eliminatees, result);
-			result = new QuantifierPusher(mgdScript.getScript(), services, mgdScript).transform(result);
+			result = new QuantifierPusher(mgdScript, services).transform(result);
 		}
 		return result;
 	}
@@ -236,9 +236,9 @@ public class PartialQuantifierElimination {
 			final IUltimateServiceProvider services, final ILogger logger, 
 			final ManagedScript freshTermVariableConstructor) {
 		final Term withoutIte = (new IteRemover(script)).transform(term);
-		final Term nnf = new Nnf(script, services, freshTermVariableConstructor, QuantifierHandling.KEEP).transform(withoutIte); 
+		final Term nnf = new Nnf(freshTermVariableConstructor, services, QuantifierHandling.KEEP).transform(withoutIte); 
 		final Term quantified = script.quantifier(quantifier, eliminatees.toArray(new TermVariable[eliminatees.size()]), nnf);
-		final Term pushed = new QuantifierPusher(script, services, freshTermVariableConstructor).transform(quantified);
+		final Term pushed = new QuantifierPusher(freshTermVariableConstructor, services).transform(quantified);
 		final Term commu = new CommuhashNormalForm(services, script).transform(pushed);
 //		final Term pnf = new Nnf(script, services, freshTermVariableConstructor, QuantifierHandling.PULL).transform(pushed);
 		final Term pnf = new PrenexNormalForm(script, freshTermVariableConstructor).transform(pushed);
@@ -278,7 +278,7 @@ public class PartialQuantifierElimination {
 		// apply Destructive Equality Resolution
 		Term termAfterDER;
 		{
-			final XnfDer xnfDer = new XnfDer(script, services, freshTermVariableConstructor);
+			final XnfDer xnfDer = new XnfDer(freshTermVariableConstructor, services);
 			final Term[] oldParams = getXjunctsOuter(quantifier, result);
 			final Term[] newParams = new Term[oldParams.length];
 			for (int i = 0; i < oldParams.length; i++) {
@@ -301,7 +301,7 @@ public class PartialQuantifierElimination {
 		// apply Infinity Restrictor Drop
 		Term termAfterIRD;
 		if (USE_IRD) {
-			final XnfIrd xnfIRD = new XnfIrd(script, services);
+			final XnfIrd xnfIRD = new XnfIrd(freshTermVariableConstructor, services);
 			final Term[] oldParams = getXjunctsOuter(quantifier, result);
 			final Term[] newParams = new Term[oldParams.length];
 			for (int i = 0; i < oldParams.length; i++) {
@@ -325,7 +325,7 @@ public class PartialQuantifierElimination {
 		// apply TIR
 		Term termAfterTIR;
 		if (USE_TIR) {
-			final XnfTir xnfTir = new XnfTir(script, services, freshTermVariableConstructor, xnfConversionTechnique);
+			final XnfTir xnfTir = new XnfTir(freshTermVariableConstructor, services, xnfConversionTechnique);
 			termAfterTIR = applyEliminationOuter(script, quantifier, eliminatees, result, xnfTir, services, freshTermVariableConstructor, xnfConversionTechnique);
 			result = termAfterTIR;
 			
@@ -339,7 +339,7 @@ public class PartialQuantifierElimination {
 		// apply Unconnected Parameter Deletion
 		Term termAfterUPD = null;
 		if (USE_UPD) {
-			final XnfUpd xnfUpd = new XnfUpd(script, services);
+			final XnfUpd xnfUpd = new XnfUpd(freshTermVariableConstructor, services);
 			termAfterUPD = applyEliminationOuter(script, quantifier, eliminatees, 
 					result, xnfUpd, services, freshTermVariableConstructor, xnfConversionTechnique);
 			result = termAfterUPD;
@@ -374,7 +374,7 @@ public class PartialQuantifierElimination {
 		}
 
 		// simplification
-		result = SmtUtils.simplify(script, result, services, simplificationTechnique, freshTermVariableConstructor);
+		result = SmtUtils.simplify(freshTermVariableConstructor, result, services, simplificationTechnique);
 
 		// (new SimplifyDDA(script)).getSimplifiedTerm(result);
 		eliminatees.retainAll(Arrays.asList(result.getFreeVars()));
@@ -395,7 +395,7 @@ public class PartialQuantifierElimination {
 		assert Arrays.asList(result.getFreeVars()).containsAll(eliminatees) : "superficial variables";
 		
 		if (USE_USR) {
-			final XnfUsr xnfUsr = new XnfUsr(script, services);
+			final XnfUsr xnfUsr = new XnfUsr(freshTermVariableConstructor, services);
 			final Term[] oldParams = getXjunctsOuter(quantifier, result);
 			final Term[] newParams = new Term[oldParams.length];
 			for (int i = 0; i < oldParams.length; i++) {
@@ -418,9 +418,9 @@ public class PartialQuantifierElimination {
 			final ManagedScript freshTermVariableConstructor, Term term, 
 			final XnfConversionTechnique xnfConversionTechnique) throws AssertionError {
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			term = SmtUtils.toDnf(services, script, freshTermVariableConstructor, term, xnfConversionTechnique);
+			term = SmtUtils.toDnf(services, freshTermVariableConstructor, term, xnfConversionTechnique);
 		} else if (quantifier == QuantifiedFormula.FORALL) {
-			term = SmtUtils.toCnf(services, script, freshTermVariableConstructor, term, xnfConversionTechnique);
+			term = SmtUtils.toCnf(services, freshTermVariableConstructor, term, xnfConversionTechnique);
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}

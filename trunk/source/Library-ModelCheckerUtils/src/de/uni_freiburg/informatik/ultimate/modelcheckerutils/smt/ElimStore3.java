@@ -69,20 +69,20 @@ public class ElimStore3 {
 
 	private int mQuantifier;
 	private final Script mScript;
-	private final ManagedScript mFreshTermVariableConstructor;
+	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final SimplicationTechnique mSimplificationTechnique;
 	private final static String s_FreshVariableString = "arrayElim";
 
 	public ElimStore3(final Script script, 
-			final ManagedScript freshTermVariableConstructor, 
+			final ManagedScript mgdScript, 
 			final IUltimateServiceProvider services, 
 			final SimplicationTechnique simplificationTechnique) {
 		super();
 		mQuantifier = QuantifiedFormula.EXISTS;
 		mScript = script;
-		mFreshTermVariableConstructor = freshTermVariableConstructor;
+		mMgdScript = mgdScript;
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
@@ -207,7 +207,7 @@ public class ElimStore3 {
 
 
 			if ((store != null || update != null) && (writeInto == null && writtenFrom == null)) {
-				final TermVariable auxArray = mFreshTermVariableConstructor.constructFreshTermVariable(s_FreshVariableString, eliminatee.getSort()); 
+				final TermVariable auxArray = mMgdScript.constructFreshTermVariable(s_FreshVariableString, eliminatee.getSort()); 
 				if (store == null) {
 					store = update.getMultiDimensionalStore();
 				}
@@ -357,7 +357,7 @@ public class ElimStore3 {
 			result = Util.or(script, intermediateResult, newConjunctsFromSelect);
 		}
 
-		result = SmtUtils.simplify(script, result, mServices, mSimplificationTechnique, mFreshTermVariableConstructor);
+		result = SmtUtils.simplify(mMgdScript, result, mServices, mSimplificationTechnique);
 		newAuxVars.addAll(iav.getNewAuxVars());
 
 		return result;
@@ -469,7 +469,7 @@ public class ElimStore3 {
 						arrayReads[i].getSelectTerm(), conjuncts, array, mQuantifier, mLogger);
 				if (eqInfo == null) {
 					final Term select = arrayReads[i].getSelectTerm();
-					final TermVariable auxVar = mFreshTermVariableConstructor.
+					final TermVariable auxVar = mMgdScript.
 							constructFreshTermVariable(s_FreshVariableString, select.getSort());
 					mNewAuxVars.add(auxVar);
 					mValues[i] = auxVar;

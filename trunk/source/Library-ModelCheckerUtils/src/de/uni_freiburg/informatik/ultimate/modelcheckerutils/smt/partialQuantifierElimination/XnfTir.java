@@ -36,7 +36,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -58,14 +57,11 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  */
 public class XnfTir extends XjunctPartialQuantifierElimination {
 	
-	private final ManagedScript mFreshTermVariableConstructor;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
-	public XnfTir(final Script script, final IUltimateServiceProvider services, 
-			final ManagedScript freshTermVariableConstructor, 
+	public XnfTir(final ManagedScript script, final IUltimateServiceProvider services, 
 			final XnfConversionTechnique XnfConversionTechnique) {
 		super(script, services);
-		mFreshTermVariableConstructor = freshTermVariableConstructor;
 		mXnfConversionTechnique = XnfConversionTechnique;
 	}
 
@@ -242,9 +238,9 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			final Term tmp = PartialQuantifierElimination.composeXjunctsInner(mScript, quantifier, resultAtoms.toArray(new Term[resultAtoms.size()]));
 			Term disjunction;
 			if (quantifier == QuantifiedFormula.EXISTS) {
-				disjunction = SmtUtils.toDnf(mServices, mScript, mFreshTermVariableConstructor, tmp, mXnfConversionTechnique);
+				disjunction = SmtUtils.toDnf(mServices, mMgdScript, tmp, mXnfConversionTechnique);
 			} else if (quantifier == QuantifiedFormula.FORALL) {
-				disjunction = SmtUtils.toCnf(mServices, mScript, mFreshTermVariableConstructor, tmp, mXnfConversionTechnique);
+				disjunction = SmtUtils.toCnf(mServices, mMgdScript, tmp, mXnfConversionTechnique);
 			} else {
 				throw new AssertionError("unknown quantifier");
 			}

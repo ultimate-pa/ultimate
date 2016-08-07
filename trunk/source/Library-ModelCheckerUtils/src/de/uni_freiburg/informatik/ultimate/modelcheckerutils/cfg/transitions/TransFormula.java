@@ -441,13 +441,13 @@ public class TransFormula implements Serializable {
 	 *         transformula2
 	 */
 	public static TransFormula sequentialComposition(final ILogger logger, final IUltimateServiceProvider services,
-			final ManagedScript boogie2smt, final boolean simplify, final boolean extPqe, final boolean tranformToCNF, 
+			final ManagedScript mgdScript, final boolean simplify, final boolean extPqe, final boolean tranformToCNF, 
 			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique,
 			final TransFormula... transFormula) {
 		logger.debug("sequential composition with" + (simplify ? "" : "out") + " formula simplification");
-		final Script script = boogie2smt.getScript();
+		final Script script = mgdScript.getScript();
 		final Set<TermVariable> auxVars = new HashSet<TermVariable>();
-		Term formula = boogie2smt.getScript().term("true");
+		Term formula = mgdScript.getScript().term("true");
 		
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, false);
 
@@ -460,7 +460,7 @@ public class TransFormula implements Serializable {
 				if (tfb.containsInVar(var)) {
 					newOutVar = tfb.getInVar(var);
 				} else {
-					newOutVar = boogie2smt.constructFreshTermVariable(var.getGloballyUniqueId(), var.getTermVariable().getSort());
+					newOutVar = mgdScript.constructFreshTermVariable(var.getGloballyUniqueId(), var.getTermVariable().getSort());
 				}
 				subsitutionMapping.put(outVar, newOutVar);
 				// add to outvars if var is not outvar
@@ -480,7 +480,7 @@ public class TransFormula implements Serializable {
 					tfb.addInVar(var, newOutVar);
 				} else {
 					// case: var is read and written
-					final TermVariable newInVar = boogie2smt.constructFreshTermVariable(var.getGloballyUniqueId(), var.getTermVariable().getSort());
+					final TermVariable newInVar = mgdScript.constructFreshTermVariable(var.getGloballyUniqueId(), var.getTermVariable().getSort());
 					subsitutionMapping.put(inVar, newInVar);
 					tfb.addInVar(var, newInVar);
 					if (tfb.getOutVar(var) != newOutVar) {
@@ -489,11 +489,7 @@ public class TransFormula implements Serializable {
 					}
 				}
 			}
-			for (final TermVariable auxVar : transFormula[i].getAuxVars()) {
-				final TermVariable newAuxVar = boogie2smt.constructFreshCopy(auxVar);
-				subsitutionMapping.put(auxVar, newAuxVar);
-				auxVars.add(newAuxVar);
-			}
+			auxVars.addAll(transFormula[i].getAuxVars());
 			tfb.addBranchEncoders(transFormula[i].getBranchEncoders());
 
 			for (final IProgramVar var : transFormula[i].getInVars().keySet()) {
@@ -506,7 +502,7 @@ public class TransFormula implements Serializable {
 					if (tfb.containsInVar(var)) {
 						newInVar = tfb.getInVar(var);
 					} else {
-						newInVar = boogie2smt.constructFreshTermVariable(var.getGloballyUniqueId(), var.getTermVariable().getSort());
+						newInVar = mgdScript.constructFreshTermVariable(var.getGloballyUniqueId(), var.getTermVariable().getSort());
 						tfb.addInVar(var, newInVar);
 					}
 					subsitutionMapping.put(inVar, newInVar);
@@ -520,7 +516,7 @@ public class TransFormula implements Serializable {
 		formula = new FormulaUnLet().unlet(formula);
 		if (simplify) {
 			try {
-				final Term simplified = SmtUtils.simplify(script, formula, services, simplificationTechnique, boogie2smt);
+				final Term simplified = SmtUtils.simplify(mgdScript, formula, services, simplificationTechnique);
 				formula = simplified;
 			} catch (final ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(TransFormula.class, tce.getRunningTaskInfo() + 
@@ -530,16 +526,16 @@ public class TransFormula implements Serializable {
 
 		if (extPqe) {
 			final Term eliminated = PartialQuantifierElimination.elim(script, QuantifiedFormula.EXISTS, auxVars, formula,
-					services, logger, boogie2smt, simplificationTechnique, xnfConversionTechnique);
+					services, logger, mgdScript, simplificationTechnique, xnfConversionTechnique);
 			logger.debug(new DebugMessage("DAG size before PQE {0}, DAG size after PQE {1}",
 					new DagSizePrinter(formula), new DagSizePrinter(eliminated)));
 			formula = eliminated;
 		} else {
-			final XnfDer xnfDer = new XnfDer(script, services, boogie2smt);
+			final XnfDer xnfDer = new XnfDer(mgdScript, services);
 			formula = Util.and(script, xnfDer.tryToEliminate(QuantifiedFormula.EXISTS, SmtUtils.getConjuncts(formula), auxVars));
 		}
 		if (simplify) {
-			formula = SmtUtils.simplify(script, formula, services, simplificationTechnique, boogie2smt);
+			formula = SmtUtils.simplify(mgdScript, formula, services, simplificationTechnique);
 		} else {
 			final LBool isSat = Util.checkSat(script, formula);
 			if (isSat == LBool.UNSAT) {
@@ -556,13 +552,13 @@ public class TransFormula implements Serializable {
 		}
 
 		if (tranformToCNF) {
-			final Term cnf = SmtUtils.toCnf(services, script, boogie2smt, formula, xnfConversionTechnique);
+			final Term cnf = SmtUtils.toCnf(services, mgdScript, formula, xnfConversionTechnique);
 			formula = cnf;
 		}
 
-		tfb.addAuxVars(auxVars);
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(infeasibility);
+		tfb.addAuxVarsButRenameToFreshCopies(auxVars, mgdScript);
 		return tfb.finishConstruction(script);
 	}
 
@@ -593,10 +589,9 @@ public class TransFormula implements Serializable {
 	 * @param xnfConversionTechnique 
 	 */
 	public static TransFormula parallelComposition(final ILogger logger, final IUltimateServiceProvider services, final int serialNumber,
-			final ManagedScript maScript, final TermVariable[] branchIndicators, final boolean tranformToCNF, final XnfConversionTechnique xnfConversionTechnique,
+			final ManagedScript mgdScript, final TermVariable[] branchIndicators, final boolean tranformToCNF, final XnfConversionTechnique xnfConversionTechnique,
 			final TransFormula... transFormulas) {
 		logger.debug("parallel composition");
-		final Script script = maScript.getScript();
 		boolean useBranchEncoders;
 		if (branchIndicators == null) {
 			useBranchEncoders = false;
@@ -622,7 +617,7 @@ public class TransFormula implements Serializable {
 				if (!tfb.containsInVar(bv)) {
 					final Sort sort = tf.getInVars().get(bv).getSort();
 					final String inVarName = bv.getIdentifier() + "_In" + serialNumber;
-					tfb.addInVar(bv, script.variable(inVarName, sort));
+					tfb.addInVar(bv, mgdScript.variable(inVarName, sort));
 				}
 			}
 			for (final IProgramVar bv : tf.getOutVars().keySet()) {
@@ -634,7 +629,7 @@ public class TransFormula implements Serializable {
 				if (!tfb.containsInVar(bv) && !assignedInAll(bv, transFormulas)) {
 					final Sort sort = tf.getOutVars().get(bv).getSort();
 					final String inVarName = bv.getIdentifier() + "_In" + serialNumber;
-					tfb.addInVar(bv, script.variable(inVarName, sort));
+					tfb.addInVar(bv, mgdScript.variable(inVarName, sort));
 				}
 
 				final TermVariable outVar = tf.getOutVars().get(bv);
@@ -655,7 +650,7 @@ public class TransFormula implements Serializable {
 		for (final IProgramVar bv : assignedInSomeBranch.keySet()) {
 			final Sort sort = assignedInSomeBranch.get(bv);
 			final String outVarName = bv.getIdentifier() + "_Out" + serialNumber;
-			tfb.addOutVar(bv, script.variable(outVarName, sort));
+			tfb.addOutVar(bv, mgdScript.variable(outVarName, sort));
 		}
 
 		final Set<TermVariable> auxVars = new HashSet<>();
@@ -680,7 +675,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			final Term originalFormula = transFormulas[i].getFormula();
-			renamedFormulas[i] = (new SafeSubstitutionWithLocalSimplification(script, subsitutionMapping)).transform(originalFormula);
+			renamedFormulas[i] = (new SafeSubstitutionWithLocalSimplification(mgdScript.getScript(), subsitutionMapping)).transform(originalFormula);
 
 			for (final IProgramVar bv : assignedInSomeBranch.keySet()) {
 				final TermVariable inVar = transFormulas[i].getInVars().get(bv);
@@ -689,31 +684,31 @@ public class TransFormula implements Serializable {
 					// bv does not occur in transFormula
 					assert tfb.getInVar(bv) != null;
 					assert tfb.getOutVar(bv) != null;
-					final Term equality = script.term("=", tfb.getInVar(bv), tfb.getOutVar(bv));
-					renamedFormulas[i] = Util.and(script, renamedFormulas[i], equality);
+					final Term equality = mgdScript.getScript().term("=", tfb.getInVar(bv), tfb.getOutVar(bv));
+					renamedFormulas[i] = Util.and(mgdScript.getScript(), renamedFormulas[i], equality);
 				} else if (inVar == outVar) {
 					// bv is not modified in transFormula
 					assert tfb.getInVar(bv) != null;
 					assert tfb.getOutVar(bv) != null;
-					final Term equality = script.term("=", tfb.getInVar(bv), tfb.getOutVar(bv));
-					renamedFormulas[i] = Util.and(script, renamedFormulas[i], equality);
+					final Term equality = mgdScript.getScript().term("=", tfb.getInVar(bv), tfb.getOutVar(bv));
+					renamedFormulas[i] = Util.and(mgdScript.getScript(), renamedFormulas[i], equality);
 				}
 			}
 
 			if (useBranchEncoders) {
-				renamedFormulas[i] = Util.implies(script, branchIndicators[i], renamedFormulas[i]);
+				renamedFormulas[i] = Util.implies(mgdScript.getScript(), branchIndicators[i], renamedFormulas[i]);
 			}
 		}
 
 		Term resultFormula;
 		if (useBranchEncoders) {
-			resultFormula = Util.and(script, renamedFormulas);
-			final Term atLeastOneBranchTaken = Util.or(script, branchIndicators);
-			resultFormula = Util.and(script, resultFormula, atLeastOneBranchTaken);
+			resultFormula = Util.and(mgdScript.getScript(), renamedFormulas);
+			final Term atLeastOneBranchTaken = Util.or(mgdScript.getScript(), branchIndicators);
+			resultFormula = Util.and(mgdScript.getScript(), resultFormula, atLeastOneBranchTaken);
 		} else {
-			resultFormula = Util.or(script, renamedFormulas);
+			resultFormula = Util.or(mgdScript.getScript(), renamedFormulas);
 		}
-		final LBool termSat = Util.checkSat(script, resultFormula);
+		final LBool termSat = Util.checkSat(mgdScript.getScript(), resultFormula);
 		Infeasibility inFeasibility;
 		if (termSat == LBool.UNSAT) {
 			inFeasibility = Infeasibility.INFEASIBLE;
@@ -721,12 +716,13 @@ public class TransFormula implements Serializable {
 			inFeasibility = Infeasibility.UNPROVEABLE;
 		}
 		if (tranformToCNF) {
-			resultFormula = SmtUtils.toCnf(services, script, maScript, resultFormula, xnfConversionTechnique);
+			resultFormula = SmtUtils.toCnf(services, mgdScript, resultFormula, xnfConversionTechnique);
 		}
-		tfb.addAuxVars(auxVars);
+
 		tfb.setFormula(resultFormula);
 		tfb.setInfeasibility(inFeasibility);
-		return tfb.finishConstruction(script);
+		tfb.addAuxVarsButRenameToFreshCopies(auxVars, mgdScript);
+		return tfb.finishConstruction(mgdScript.getScript());
 	}
 
 	/**
@@ -983,18 +979,11 @@ public class TransFormula implements Serializable {
 	
 	private static TransFormula computeGuard(final TransFormula tf, final ManagedScript script) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getInVars(), true, null, false);
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final TermVariable oldAuxVar : tf.getAuxVars()) {
-			final TermVariable newAuxVar = script.constructFreshCopy(oldAuxVar);
-			tfb.addAuxVar(newAuxVar);
-			substitutionMapping.put(oldAuxVar, newAuxVar);
-		}
+		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
 		for (final IProgramVar bv : tf.getAssignedVars()) {
 			final TermVariable outVar = tf.getOutVars().get(bv);
 			if (Arrays.asList(tf.getFormula().getFreeVars()).contains(outVar)) {
-				final TermVariable newAuxVar = script.constructFreshCopy(outVar);
-				tfb.addAuxVar(newAuxVar);
-				substitutionMapping.put(outVar, newAuxVar);
+				auxVars.add(outVar);
 			}
 		}
 		if (!tf.getBranchEncoders().isEmpty()) {
@@ -1002,8 +991,9 @@ public class TransFormula implements Serializable {
 		}
 		// yes! outVars of result are indeed the inVars of input
 
-		tfb.setFormula(new SafeSubstitution(script.getScript(), substitutionMapping).transform(tf.getFormula()));
+		tfb.setFormula(tf.getFormula());
 		tfb.setInfeasibility(tf.isInfeasible());
+		tfb.addAuxVarsButRenameToFreshCopies(auxVars, script);
 		return tfb.finishConstruction(script.getScript());
 	}
 	

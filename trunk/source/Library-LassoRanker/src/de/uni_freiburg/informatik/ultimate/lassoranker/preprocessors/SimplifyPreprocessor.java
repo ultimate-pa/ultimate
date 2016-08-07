@@ -50,17 +50,17 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 	private final boolean mUseSMTInterpolForSimplification = !true;
-	private final ManagedScript mFreshTermVariableConstructor;
+	private final ManagedScript mMgdScript;
 	private final SimplicationTechnique mXnfConversionTechnique;
 	
 	public static final String s_Description = "Simplify formula using SimplifyDDA";
 	
 	public SimplifyPreprocessor(final IUltimateServiceProvider services, final IToolchainStorage storage, 
-			final ManagedScript freshTermVariableConstructor, final SimplicationTechnique xnfConversionTechnique) {
+			final ManagedScript mgdScript, final SimplicationTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
 		mStorage = storage;
-		mFreshTermVariableConstructor = freshTermVariableConstructor;
+		mMgdScript = mgdScript;
 		mXnfConversionTechnique = xnfConversionTechnique;
 	}
 	
@@ -84,13 +84,13 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 			simplificationScript.setLogic(Logics.QF_UFLIRA);
 			final TermTransferrer towards = new TermTransferrer(simplificationScript);
 			final Term foreign = towards.transform(tf.getFormula());
-			final Term foreignsimplified = SmtUtils.simplify(simplificationScript, foreign, 
-					mServices, mXnfConversionTechnique, mFreshTermVariableConstructor);
+			final Term foreignsimplified = SmtUtils.simplify(mMgdScript, foreign, 
+					mServices, mXnfConversionTechnique);
 			simplificationScript.exit();
 			final TermTransferrer back = new TermTransferrer(script);
 			simplified = back.transform(foreignsimplified);
 		} else {
-			simplified = SmtUtils.simplify(script, tf.getFormula(), mServices, mXnfConversionTechnique, mFreshTermVariableConstructor);
+			simplified = SmtUtils.simplify(mMgdScript, tf.getFormula(), mServices, mXnfConversionTechnique);
 		}
 		tf.setFormula(simplified);
 		return tf;

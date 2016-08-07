@@ -95,15 +95,9 @@ public class TermVariableRenamer {
 		formula = renameVars(commonInOutVar, formula, outVars, tfb::addOutVar, prefix+"InOut");
 		formula = renameVars(hasOutOnlyVar, formula, outVars, tfb::addOutVar, prefix+"Out");
 		
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final TermVariable auxVar : tf.getAuxVars()) {
-			final TermVariable newAuxVar = mScript.constructFreshCopy(auxVar);
-			tfb.addAuxVar(newAuxVar);
-			substitutionMapping.put(auxVar, newAuxVar);
-		}
-		
-		tfb.setFormula(new SafeSubstitution(mScript.getScript(), substitutionMapping).transform(formula));
+		tfb.setFormula(formula);
 		tfb.setInfeasibility(tf.isInfeasible());
+		tfb.addAuxVarsButRenameToFreshCopies(tf.getAuxVars(), mScript);
 		return tfb.finishConstruction(mScript.getScript());
 	}
 	

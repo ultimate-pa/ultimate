@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -115,6 +116,7 @@ public class EqualitySupportingInvariantAnalysis {
 		mModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
 		mAllDoubletons = doubletons;
 
+		mScript.echo(new QuotedObject("starting equality analysis for array indices of a lasso"));
 		for (final Doubleton<Term> doubleton : mAllDoubletons) {
 			final boolean equalityIsInvariant = isInVariant(doubleton, true);
 			if (equalityIsInvariant) {
@@ -128,6 +130,7 @@ public class EqualitySupportingInvariantAnalysis {
 				}
 			} 
 		}
+		mScript.echo(new QuotedObject("finished equality analysis for array indices of a lasso"));
 	}
 	
 	

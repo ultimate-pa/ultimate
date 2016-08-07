@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript;
 
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -195,6 +197,18 @@ public class ManagedScript {
 	public TermVariable constructFreshCopy(final TermVariable tv) {
 		return mVariableManager.constructFreshCopy(tv);
 	}
+	
+	
+
+	/**
+	 * @param varname
+	 * @param sort
+	 * @return
+	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript.VariableManager#variable(java.lang.String, de.uni_freiburg.informatik.ultimate.logic.Sort)
+	 */
+	public TermVariable variable(final String varname, final Sort sort) {
+		return mVariableManager.variable(varname, sort);
+	}
 
 	/**
 	 * Constructs fresh TermVariables (i.e., TermVariables that have not been used
@@ -225,6 +239,8 @@ public class ManagedScript {
 		 */
 		private final Map<TermVariable, String> mTv2Basename = 
 				new HashMap<TermVariable, String>();
+		
+		private final Set<String> mVariableNames = new HashSet<>();
 		
 		/**
 		 * Construct "fresh" TermVariables.
@@ -266,18 +282,18 @@ public class ManagedScript {
 			return result;
 		}
 		
-
-
-		
-
-		
-		
-
+		/**
+		 * Construct variable but check if variable with this name was
+		 * already constructed.
+		 */
+		public TermVariable variable(final String varname, final Sort sort) {
+			if (mVariableNames.contains(varname)) {
+				throw new IllegalArgumentException("A variable with that name was already constructed: " + varname);
+			} else {
+				return mScript.variable(varname, sort);
+			}
+		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ITermVariableConstructor#constructFreshTermVariable(java.lang.String, de.uni_freiburg.informatik.ultimate.logic.Sort)
-	 */
-
 	
 }

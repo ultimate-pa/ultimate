@@ -76,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class MapEliminator {
 	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
-	private final ManagedScript mFreshVarConstructor;
+	private final ManagedScript mMgdScript;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final ILogger mLogger;
 	private final Boogie2SmtSymbolTable mSymbolTable;
@@ -122,7 +122,7 @@ public class MapEliminator {
 		mServices = services;
 		mScript = script;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		mFreshVarConstructor = freshVarConstructor;
+		mMgdScript = freshVarConstructor;
 		mReplacementVarFactory = replacementVarFactory;
 		mSymbolTable = symbolTable;
 		mSimplificationTechnique = simplificationTechnique;
@@ -379,14 +379,14 @@ public class MapEliminator {
 			conjuncts.addAll(mAuxVarTerms);
 			final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, mAuxVars,
 					SmtUtils.and(mScript, conjuncts));
-			newTerm = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mFreshVarConstructor, quantified,
+			newTerm = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, quantified,
 					mSimplificationTechnique, mXnfConversionTechnique);
 			mAuxVars.clear();
 			mSelectToAuxVars.clear();
 			mAuxVarTerms.clear();
 		}
 		transformula.setFormula(
-				SmtUtils.simplify(mScript, newTerm, mServices, mSimplificationTechnique, mFreshVarConstructor));
+				SmtUtils.simplify(mMgdScript, newTerm, mServices, mSimplificationTechnique));
 		clearTransFormula(transformula);
 	}
 
@@ -513,7 +513,7 @@ public class MapEliminator {
 		if (isSelectStore) {
 			final ArrayWrite arrayWrite = new ArrayWrite(array);
 			final Set<ArrayIndex> processedIndices = new HashSet<>();
-			final TermVariable auxVar = mFreshVarConstructor.constructFreshTermVariable("aux", term.getSort());
+			final TermVariable auxVar = mMgdScript.constructFreshTermVariable("aux", term.getSort());
 			mAuxVars.add(auxVar);
 			for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
 				final ArrayIndex assignedIndex = processArrayIndex(store.getIndex(), transformula, assignedVars,
@@ -536,7 +536,7 @@ public class MapEliminator {
 		} else {
 			if (!allVariablesAreVisible(term, transformula)) {
 				// If the array-read contains an aux-var, just return a new aux-var as replacement
-				final TermVariable auxVar = mFreshVarConstructor.constructFreshTermVariable("aux", term.getSort());
+				final TermVariable auxVar = mMgdScript.constructFreshTermVariable("aux", term.getSort());
 				mAuxVars.add(auxVar);
 				return auxVar;
 			}
@@ -549,7 +549,7 @@ public class MapEliminator {
 			}
 			// If the term contains "mixed" vars, aux-vars are introduced
 			if (!mSelectToAuxVars.containsKey(term)) {
-				final TermVariable auxVar = mFreshVarConstructor.constructFreshTermVariable("aux", term.getSort());
+				final TermVariable auxVar = mMgdScript.constructFreshTermVariable("aux", term.getSort());
 				mAuxVars.add(auxVar);
 				mSelectToAuxVars.put(term, auxVar);
 				final ArrayIndex globalIndex = new ArrayIndex(
@@ -756,7 +756,7 @@ public class MapEliminator {
 
 	// Returns a fresh TermVariable with term as definition (with a nicer name for select-terms)
 	private TermVariable getFreshTermVar(final Term term) {
-		return mFreshVarConstructor.constructFreshTermVariable(niceTermString(term), term.getSort());
+		return mMgdScript.constructFreshTermVariable(niceTermString(term), term.getSort());
 	}
 
 	private String niceTermString(final Term term) {

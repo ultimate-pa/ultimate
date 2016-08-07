@@ -590,8 +590,8 @@ public class NestedInterpolantsBuilder {
 	 * it for each occurrence.
 	 */
 	private Term instantiateArrayExt(final Term interpolantWithoutIndices) {
-		final Term nnf = (new Nnf(mSmtManagerPredicates.getScript(), mServices, 
-				mSmtManagerPredicates.getManagedScript(), QuantifierHandling.PULL)).transform(interpolantWithoutIndices);
+		final Term nnf = (new Nnf(mSmtManagerPredicates.getManagedScript(), 
+				mServices, QuantifierHandling.PULL)).transform(interpolantWithoutIndices);
 //		not needed, at the moment our NNF transformation also produces 		
 //		Term prenex = (new PrenexNormalForm(mSmtManagerPredicates.getScript(), mSmtManagerPredicates.getVariableManager())).transform(nnf);
 		final QuantifierSequence qs = new QuantifierSequence(mSmtManagerPredicates.getScript(), nnf);

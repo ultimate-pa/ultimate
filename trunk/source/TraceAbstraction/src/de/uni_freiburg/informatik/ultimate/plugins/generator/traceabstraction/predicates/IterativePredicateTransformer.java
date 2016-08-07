@@ -239,8 +239,8 @@ public class IterativePredicateTransformer {
 				// However, SimplifyDDA may waste a lot of time.
 				// A small evaluation that I did today (using Z3) shows that 
 				// there is not much difference between both variants. 
-				resultTerm = new QuantifierPusher(mMgdScript.getScript(), 
-						mServices, mMgdScript).transform(lessQuantifier);
+				resultTerm = new QuantifierPusher(mMgdScript, 
+						mServices).transform(lessQuantifier);
 //				resultTerm = new PrenexNormalForm(mBoogie2SMT.getScript(), 
 //									mBoogie2SMT.getVariableManager()).transform(lessQuantifier);
 			}

@@ -84,8 +84,8 @@ public class SmtUtils {
 	 */
 	private static final boolean BINARY_BITVECTOR_SUM_WORKAROUND = false;
 
-	public static Term simplify(final Script script, final Term formula, final IUltimateServiceProvider services,
-			final SimplicationTechnique simplificationTechnique, final ManagedScript freshTermVariableConstructor) {
+	public static Term simplify(final ManagedScript script, final Term formula, final IUltimateServiceProvider services,
+			final SimplicationTechnique simplificationTechnique) {
 		final ILogger logger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
@@ -93,16 +93,16 @@ public class SmtUtils {
 		final Term simplified;
 		switch (simplificationTechnique) {
 		case SIMPLIFY_BDD_PROP:
-			simplified = (new SimplifyBdd(services, script, freshTermVariableConstructor)).transform(formula);
+			simplified = (new SimplifyBdd(services, script)).transform(formula);
 			break;
 		case SIMPLIFY_BDD_FIRST_ORDER:
-			simplified = (new SimplifyBdd(services, script, freshTermVariableConstructor)).transformWithImplications(formula);
+			simplified = (new SimplifyBdd(services, script)).transformWithImplications(formula);
 			break;
 		case SIMPLIFY_DDA:
-			simplified = (new SimplifyDDAWithTimeout(script, services)).getSimplifiedTerm(formula);
+			simplified = (new SimplifyDDAWithTimeout(script.getScript(), services)).getSimplifiedTerm(formula);
 			break;
 		case SIMPLIFY_QUICK:
-			simplified = (new SimplifyQuick(script, services)).getSimplifiedTerm(formula);
+			simplified = (new SimplifyQuick(script.getScript(), services)).getSimplifiedTerm(formula);
 			break;
 		default:
 			throw new AssertionError("unknown enum constant");
@@ -1138,16 +1138,16 @@ public class SmtUtils {
 	/**
 	 * @return logically equivalent term in disjunctive normal form (DNF)
 	 */
-	public static Term toDnf(final IUltimateServiceProvider services, final Script script,
-			final ManagedScript freshTermVariableConstructor, final Term term,
+	public static Term toDnf(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final Term term,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		final Term result;
 		switch (xnfConversionTechnique) {
 		case BDD_BASED:
-			result = (new SimplifyBdd(services, script, freshTermVariableConstructor)).transformToDNF(term);
+			result = (new SimplifyBdd(services, mgdScript)).transformToDNF(term);
 			break;
 		case BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION:
-			result = (new Dnf(script, services, freshTermVariableConstructor)).transform(term);
+			result = (new Dnf(mgdScript, services)).transform(term);
 			break;
 		default:
 			throw new AssertionError("unknown enum constant");
@@ -1158,16 +1158,16 @@ public class SmtUtils {
 	/**
 	 * @return logically equivalent term in conjunctive normal form (CNF)
 	 */
-	public static Term toCnf(final IUltimateServiceProvider services, final Script script,
-			final ManagedScript freshTermVariableConstructor, final Term term,
+	public static Term toCnf(final IUltimateServiceProvider services, 
+			final ManagedScript mgdScript, final Term term,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		final Term result;
 		switch (xnfConversionTechnique) {
 		case BDD_BASED:
-			result = (new SimplifyBdd(services, script, freshTermVariableConstructor)).transformToCNF(term);
+			result = (new SimplifyBdd(services, mgdScript)).transformToCNF(term);
 			break;
 		case BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION:
-			result = (new Cnf(script, services, freshTermVariableConstructor)).transform(term);
+			result = (new Cnf(mgdScript, services)).transform(term);
 			break;
 		default:
 			throw new AssertionError("unknown enum constant");

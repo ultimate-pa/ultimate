@@ -58,7 +58,7 @@ public class Nnf {
 	
 	protected final Script mScript;
 	private static final String s_FreshVariableString = "nnf";
-	private final ManagedScript mFreshTermVariableConstructor;
+	private final ManagedScript mMgdScript;
 	protected final ILogger mLogger;
 	private final NnfTransformerHelper mNnfTransformerHelper;
 	private List<List<TermVariable>> mQuantifiedVariables;
@@ -66,13 +66,12 @@ public class Nnf {
 	public enum QuantifierHandling { CRASH, PULL, KEEP, IS_ATOM }
 	protected final QuantifierHandling mQuantifierHandling;
 	
-	public Nnf(final Script script, final IUltimateServiceProvider services, 
-			final ManagedScript freshTermVariableConstructor,
+	public Nnf(final ManagedScript mgdScript, final IUltimateServiceProvider services, 
 			final QuantifierHandling quantifierHandling) {
 		super();
 		mQuantifierHandling = quantifierHandling;
-		mScript = script;
-		mFreshTermVariableConstructor = freshTermVariableConstructor;
+		mScript = mgdScript.getScript();
+		mMgdScript = mgdScript;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mNnfTransformerHelper = getNnfTransformerHelper(services);
 	}
@@ -235,7 +234,7 @@ public class Nnf {
 					}
 					final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 					for (final TermVariable oldTv : qf.getVariables()) {
-						final TermVariable freshTv = mFreshTermVariableConstructor.
+						final TermVariable freshTv = mMgdScript.
 								constructFreshTermVariable(s_FreshVariableString, oldTv.getSort()); 
 						substitutionMapping.put(oldTv, freshTv);
 						variables.add(freshTv);

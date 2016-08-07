@@ -40,12 +40,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class XnfUpd extends XjunctPartialQuantifierElimination {
 	
 
-	public XnfUpd(Script script, IUltimateServiceProvider services) {
+	public XnfUpd(final ManagedScript script, final IUltimateServiceProvider services) {
 		super(script, services);
 	}
 
@@ -65,8 +66,8 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 	};
 
 	@Override
-	public Term[] tryToEliminate(int quantifier, Term[] parameters,
-			Set<TermVariable> eliminatees) {
+	public Term[] tryToEliminate(final int quantifier, final Term[] parameters,
+			final Set<TermVariable> eliminatees) {
 		final Set<TermVariable> occuringVars = new HashSet<TermVariable>();
 		for (final Term param : parameters) {
 			occuringVars.addAll(Arrays.asList(param.getFreeVars()));
@@ -174,8 +175,8 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 	 * conjunction of terms is not satisfiable.
 	 * Return null otherwise
 	 */
-	public static Term isSuperfluousConjunction(Script script, Set<Term> terms, Set<TermVariable> connectedVars,
-			Set<TermVariable> quantifiedVars) {
+	public static Term isSuperfluousConjunction(final Script script, final Set<Term> terms, final Set<TermVariable> connectedVars,
+			final Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
 			final Term conjunction = Util.and(script, terms.toArray(new Term[terms.size()]));
 			final LBool isSat = Util.checkSat(script, conjunction);
@@ -195,8 +196,8 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 	 * conjunction of terms is valid.
 	 * Return null otherwise
 	 */
-	public static Term isSuperfluousDisjunction(Script script, Set<Term> terms, Set<TermVariable> connectedVars,
-			Set<TermVariable> quantifiedVars) {
+	public static Term isSuperfluousDisjunction(final Script script, final Set<Term> terms, final Set<TermVariable> connectedVars,
+			final Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
 			final Term disjunction = Util.or(script, terms.toArray(new Term[terms.size()]));
 			final LBool isSat = Util.checkSat(script, SmtUtils.not(script, disjunction));

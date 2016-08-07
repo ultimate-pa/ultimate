@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public class DNF extends TransitionPreprocessor {
 	private final IUltimateServiceProvider mServices;
-	private final ManagedScript mFreshTermVariableConstructor;
+	private final ManagedScript mMgdScript;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	
 	public static final String s_Description = 
@@ -62,7 +62,7 @@ public class DNF extends TransitionPreprocessor {
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
-		mFreshTermVariableConstructor = freshTermVariableConstructor;
+		mMgdScript = freshTermVariableConstructor;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		
 	}
@@ -83,7 +83,7 @@ public class DNF extends TransitionPreprocessor {
 	
 	@Override
 	public TransFormulaLR process(final Script script, final TransFormulaLR tf) throws TermException {
-		final Term dnf = SmtUtils.toDnf(mServices, script, mFreshTermVariableConstructor, tf.getFormula(), mXnfConversionTechnique);
+		final Term dnf = SmtUtils.toDnf(mServices, mMgdScript, tf.getFormula(), mXnfConversionTechnique);
 		tf.setFormula(dnf);
 		return tf;
 	}

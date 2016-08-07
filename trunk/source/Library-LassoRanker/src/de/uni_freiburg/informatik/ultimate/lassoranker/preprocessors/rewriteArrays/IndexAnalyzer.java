@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -238,11 +239,12 @@ public class IndexAnalyzer {
 
 	private void processDoubletonsWithOwnAnalysis(final Set<Doubleton<Term>> doubletons,
 			final Term termWithAdditionalInvariants) {
+		mScript.echo(new QuotedObject("starting index analysis for TransFormula"));
 		mScript.push(1);
 		final Set<TermVariable> allTvs = new HashSet<>(Arrays.asList(termWithAdditionalInvariants.getFreeVars()));
 		allTvs.addAll(Utils.filter(mTransFormula.getInVarsReverseMapping().keySet(), TermVariable.class));
 		allTvs.addAll(Utils.filter(mTransFormula.getOutVarsReverseMapping().keySet(), TermVariable.class));
-		final Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(mScript, allTvs, false);
+		final Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(mScript, allTvs, true);
 		final SafeSubstitution subst = new SafeSubstitution(mScript, substitutionMapping);
 		mScript.assertTerm(subst.transform(termWithAdditionalInvariants));
 		for (final Doubleton<Term> doubleton : doubletons) {
@@ -273,6 +275,7 @@ public class IndexAnalyzer {
 			}
 		}
 		mScript.pop(1);
+		mScript.echo(new QuotedObject("finished index analysis for TransFormula"));
 	}
 
 	private boolean allVarsOccurInFormula(final Doubleton<Term> doubleton, final Term termWithAdditionalInvariants) {

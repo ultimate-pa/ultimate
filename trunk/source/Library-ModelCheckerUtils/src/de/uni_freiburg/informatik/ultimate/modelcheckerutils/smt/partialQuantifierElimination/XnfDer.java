@@ -53,12 +53,8 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  */
 public class XnfDer extends XjunctPartialQuantifierElimination {
 
-	private final ManagedScript mFreshVarConstructor;
-
-	public XnfDer(final Script script, final IUltimateServiceProvider services, 
-			final ManagedScript freshVarConstructor) {
+	public XnfDer(final ManagedScript script, final IUltimateServiceProvider services) {
 		super(script, services);
-		mFreshVarConstructor = freshVarConstructor;
 	}
 
 	@Override
@@ -131,7 +127,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 			resultAtoms = new Term[inputAtoms.length - 1];
 			final Map<Term, Term> substitutionMapping = Collections.singletonMap(eqInfo.getVariable(), eqInfo.getTerm());
 			final SafeSubstitution substitution = new SafeSubstitutionWithLocalSimplification(
-					script, mFreshVarConstructor, substitutionMapping);
+					script, mMgdScript, substitutionMapping);
 			for (int i = 0; i < eqInfo.getIndex(); i++) {
 				resultAtoms[i] = substituteAndNormalize(substitution, inputAtoms[i]);
 			}

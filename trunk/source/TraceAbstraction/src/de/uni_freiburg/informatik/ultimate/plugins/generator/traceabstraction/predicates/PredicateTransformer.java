@@ -151,7 +151,7 @@ public class PredicateTransformer {
 		// Add aux vars to varsToQuantify
 		varsToQuantify.addAll(tf.getAuxVars());
 		final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantify, result);
-		final Term pushed = new QuantifierPusher(mScript, mServices, mManagedScript).transform(quantified);
+		final Term pushed = new QuantifierPusher(mManagedScript, mServices).transform(quantified);
 		return pushed;
 	}
 
@@ -214,7 +214,7 @@ public class PredicateTransformer {
 		}
 		final Term sucessorTerm = Util.and(mScript, renamedPredicate, renamedOldVarsAssignment);
 		final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantify, sucessorTerm);
-		final Term pushed = new QuantifierPusher(mScript, mServices, mManagedScript).transform(quantified);
+		final Term pushed = new QuantifierPusher(mManagedScript, mServices).transform(quantified);
 		return pushed;
 
 	}
@@ -302,7 +302,7 @@ public class PredicateTransformer {
 		final Term sucessorTerm = Util.and(mScript, renamedPredicate, renamedLocalVarsAssignment, renamedOldVarsAssignment,
 				renamedGlobalVarAssignment);
 		final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantify, sucessorTerm);
-		final Term pushed = new QuantifierPusher(mScript, mServices, mManagedScript).transform(quantified);
+		final Term pushed = new QuantifierPusher(mManagedScript, mServices).transform(quantified);
 		return pushed;
 
 	}
@@ -459,7 +459,7 @@ public class PredicateTransformer {
 			final Term result = Util.and(mScript, predRenamed, globalVarsInVarsRenamedOutVarsRenamed);
 			quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantifyNonPendingCall, result);
 		}
-		final Term pushed = new QuantifierPusher(mScript, mServices, mManagedScript).transform(quantified);
+		final Term pushed = new QuantifierPusher(mManagedScript, mServices).transform(quantified);
 		return pushed;
 
 	}
@@ -639,7 +639,7 @@ public class PredicateTransformer {
 
 		final Term result = Util.and(mScript, calleePredRenamedQuantified, retTermRenamed, calleRPredANDCallTFRenamedQuantified);
 		final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantifyOverAll, result);
-		final Term pushed = new QuantifierPusher(mScript, mServices, mManagedScript).transform(quantified);
+		final Term pushed = new QuantifierPusher(mManagedScript, mServices).transform(quantified);
 		return pushed;
 
 	}
@@ -694,7 +694,7 @@ public class PredicateTransformer {
 		// Add aux vars to varsToQuantify
 		varsToQuantify.addAll(tf.getAuxVars());
 		final Term quantified = SmtUtils.quantifier(mScript, Script.FORALL, varsToQuantify, result);
-		final Term pushed = new QuantifierPusher(mScript, mServices, mManagedScript).transform(quantified);
+		final Term pushed = new QuantifierPusher(mManagedScript, mServices).transform(quantified);
 		return pushed;
 	}
 
@@ -776,7 +776,7 @@ public class PredicateTransformer {
 				calleePredRenamed);
 		varsToQuantify.addAll(call_TF.getAuxVars());
 		final Term quantified = SmtUtils.quantifier(mScript, Script.FORALL, varsToQuantify, result);
-		final Term pushed = new QuantifierPusher(mScript, mServices, mManagedScript).transform(quantified);
+		final Term pushed = new QuantifierPusher(mManagedScript, mServices).transform(quantified);
 		return pushed;
 
 	}

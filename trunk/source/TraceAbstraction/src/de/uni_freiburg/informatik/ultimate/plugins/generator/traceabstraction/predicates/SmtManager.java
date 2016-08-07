@@ -709,7 +709,7 @@ public class SmtManager {
 			}
 		}
 		Term renamedFormula = (new SafeSubstitution(mScript, getManagedScript(), substitutionMapping)).transform(ps.getFormula());
-		renamedFormula = SmtUtils.simplify(mScript, renamedFormula, mServices, mSimplificationTechnique, mBoogie2Smt.getManagedScript());
+		renamedFormula = SmtUtils.simplify(getManagedScript(), renamedFormula, mServices, mSimplificationTechnique);
 		final IPredicate result = getPredicateFactory().newPredicate(renamedFormula);
 		return result;
 	}

@@ -53,15 +53,14 @@ public class SimplifyBdd {
 	private final Script mScript;
 	private final ILogger mLogger;
 	//TODO: 2016-05-09 Matthias: The following field might be be useless
-	private final ManagedScript mFreshTermVariableConstructor;
+	private final ManagedScript mMgdScript;
 	
-	public SimplifyBdd(final IUltimateServiceProvider services, final Script script,
-			final ManagedScript freshTermVariableConstructor) {
+	public SimplifyBdd(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		super();
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mScript = script;
-		mFreshTermVariableConstructor = freshTermVariableConstructor;
+		mScript = mgdScript.getScript();
+		mMgdScript = mgdScript;
 	}
 	
 	/**

@@ -418,7 +418,7 @@ public class PredicateUnifier {
 			simplifiedTerm = commuNF;
 		} else {
 			try {
-				final Term tmp = SmtUtils.simplify(mScript, commuNF, mServices, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getManagedScript());
+				final Term tmp = SmtUtils.simplify(mSmtManager.getManagedScript(), commuNF, mServices, mSimplificationTechnique);
 				simplifiedTerm  = (new CommuhashNormalForm(mServices, mScript)).transform(tmp);
 			} catch (final ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while unifying predicates");
@@ -840,7 +840,7 @@ public class PredicateUnifier {
 	 */
 	public Set<IPredicate> cannibalize(final boolean splitNumericEqualities, final Term term) {
 		final Set<IPredicate> result = new HashSet<IPredicate>();
-		final Term cnf = (new Cnf(mScript, mServices, mSmtManager.getManagedScript())).transform(term);
+		final Term cnf = (new Cnf(mSmtManager.getManagedScript(), mServices)).transform(term);
 		Term[] conjuncts;
 		if (splitNumericEqualities) {
 			conjuncts = splitNumericEqualities(SmtUtils.getConjuncts(cnf));

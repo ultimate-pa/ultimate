@@ -41,9 +41,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 
 public class Dnf extends Xnf {
 	
-	public Dnf(final Script script, final IUltimateServiceProvider services, 
-			final ManagedScript freshTermVariableConstructor) {
-		super(script, services, freshTermVariableConstructor);
+	public Dnf(final ManagedScript script, final IUltimateServiceProvider services) {
+		super(script, services);
 	}
 	
 	

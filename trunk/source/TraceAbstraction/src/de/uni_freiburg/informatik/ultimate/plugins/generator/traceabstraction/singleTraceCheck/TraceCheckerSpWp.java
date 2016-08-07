@@ -471,8 +471,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(mRelevantVars[i], pred);
 			final Term projectedT = SmtUtils.quantifier(mSmtManager.getScript(), 
 					QuantifiedFormula.EXISTS, nonLiveVars, pred.getFormula());
-			final Term pushed = new QuantifierPusher(mSmtManager.getScript(), mServices, 
-					mSmtManager.getManagedScript()).transform(projectedT);
+			final Term pushed = new QuantifierPusher(mSmtManager.getManagedScript(), mServices).transform(projectedT);
 			final IPredicate projected = mSmtManager.getPredicateFactory().newPredicate(pushed);
 			mNonLiveVariablesFp += nonLiveVars.size();
 			return projected;
@@ -501,8 +500,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(mRelevantVars[i], pred);
 			final Term projectedT = SmtUtils.quantifier(mSmtManager.getScript(), 
 					QuantifiedFormula.FORALL, nonLiveVars, pred.getFormula());
-			final Term pushed = new QuantifierPusher(mSmtManager.getScript(), mServices, 
-					mSmtManager.getManagedScript()).transform(projectedT);
+			final Term pushed = new QuantifierPusher(mSmtManager.getManagedScript(), mServices).transform(projectedT);
 			final IPredicate projected = mSmtManager.getPredicateFactory().newPredicate(pushed);
 			mNonLiveVariablesBp += nonLiveVars.size();
 			return projected;

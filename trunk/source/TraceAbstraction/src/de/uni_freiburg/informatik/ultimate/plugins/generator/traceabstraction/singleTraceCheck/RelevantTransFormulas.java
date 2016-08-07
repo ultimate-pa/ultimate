@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -297,16 +296,15 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 				tfb.addOutVar(bv, tf.getOutVars().get(bv));
 			}
 		}
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		final Set<TermVariable> auxVars = new HashSet<>();
 		for (final TermVariable auxVar : tf.getAuxVars()) {
 			if (freeVars.contains(auxVar)) {
-				final TermVariable newAuxVar = mScript.constructFreshCopy(auxVar);
-				tfb.addAuxVar(newAuxVar);
-				substitutionMapping.put(auxVar, newAuxVar);
+				auxVars.add(auxVar);
 			}
 		}
-		tfb.setFormula(new SafeSubstitution(mScript.getScript(), substitutionMapping).transform(formula));
+		tfb.setFormula(formula);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		tfb.addAuxVarsButRenameToFreshCopies(auxVars, mScript);
 		return tfb.finishConstruction(mScript.getScript());
 	}
 

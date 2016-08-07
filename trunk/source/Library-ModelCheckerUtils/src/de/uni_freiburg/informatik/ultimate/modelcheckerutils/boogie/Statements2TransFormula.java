@@ -164,7 +164,7 @@ public class Statements2TransFormula {
 
 		Infeasibility infeasibility = null;
 		if (simplify) {
-			formula = SmtUtils.simplify(mScript, formula, mServices, simplicationTechnique, mBoogie2SMT.getManagedScript());
+			formula = SmtUtils.simplify(mMgdScript, formula, mServices, simplicationTechnique);
 			if (formula == mScript.term("false")) {
 				infeasibility = Infeasibility.INFEASIBLE;
 			}
@@ -189,14 +189,9 @@ public class Statements2TransFormula {
 			}
 		}
 		
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final TermVariable auxVar : auxVars) {
-			final TermVariable newAuxVar = mMgdScript.constructFreshCopy(auxVar);
-			mTransFormulaBuilder.addAuxVar(newAuxVar);
-			substitutionMapping.put(auxVar, newAuxVar);
-		}
 		mTransFormulaBuilder.setFormula(formula);
 		mTransFormulaBuilder.setInfeasibility(infeasibility);
+		mTransFormulaBuilder.addAuxVarsButRenameToFreshCopies(auxVars, mMgdScript);
 		return mTransFormulaBuilder.finishConstruction(mScript);
 	}
 
@@ -626,7 +621,7 @@ public class Statements2TransFormula {
 	 * @return
 	 */
 	private Term eliminateAuxVars(final Term input, final Set<TermVariable> auxVars) {
-		final XnfDer xnfDer = new XnfDer(mScript, mServices, mBoogie2SMT.getManagedScript());
+		final XnfDer xnfDer = new XnfDer(mMgdScript, mServices);
 		final Term result = Util.and(mScript, xnfDer.tryToEliminate(QuantifiedFormula.EXISTS, SmtUtils.getConjuncts(input), auxVars));
 		return result;
 	}

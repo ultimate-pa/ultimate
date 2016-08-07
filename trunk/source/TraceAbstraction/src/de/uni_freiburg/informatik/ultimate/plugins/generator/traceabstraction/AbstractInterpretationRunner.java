@@ -293,8 +293,7 @@ public class AbstractInterpretationRunner {
 	}
 
 	private String simplify(final Term term) {
-		return SmtUtils.simplify(mRoot.getRootAnnot().getScript(), term, mServices, mSimplificationTechnique,
-				mRoot.getRootAnnot().getBoogie2SMT().getManagedScript()).toStringDirect();
+		return SmtUtils.simplify(mRoot.getRootAnnot().getManagedScript(), term, mServices, mSimplificationTechnique).toStringDirect();
 	}
 
 	@FunctionalInterface

@@ -73,7 +73,7 @@ public class PredicateFactory {
 	private static final String[] NO_PROCEDURE = new String[0];
 
 	private final IUltimateServiceProvider mServices;
-	private final ManagedScript mFreshVariableConstructor;
+	private final ManagedScript mMgdScript;
 	private final ILogger mLogger;
 	
 	protected Term mDontCareTerm;
@@ -85,14 +85,14 @@ public class PredicateFactory {
 		return mDontCareTerm;
 	}
 
-	public PredicateFactory(final IUltimateServiceProvider services, final ManagedScript boogie2smt, final Boogie2SmtSymbolTable symbolTable, final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+	public PredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Boogie2SmtSymbolTable symbolTable, final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mDontCareTerm = new AuxilliaryTerm("don't care");
 		mEmptyStackTerm = new AuxilliaryTerm("emptyStack");
 		mSymbolTable = symbolTable;
-		mFreshVariableConstructor = boogie2smt;
-		mScript = boogie2smt.getScript();
+		mMgdScript = mgdScript;
+		mScript = mgdScript.getScript();
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 	}
@@ -202,7 +202,7 @@ public class PredicateFactory {
 	}
 
 	public HoareAnnotation getNewHoareAnnotation(final ProgramPoint pp, final ModifiableGlobalVariableManager modifiableGlobals) {
-		return new HoareAnnotation(pp, mSerialNumber++, mSymbolTable, this, modifiableGlobals, mFreshVariableConstructor, mScript, mServices, mSimplificationTechnique, mXnfConversionTechnique);
+		return new HoareAnnotation(pp, mSerialNumber++, mSymbolTable, this, modifiableGlobals, mMgdScript, mScript, mServices, mSimplificationTechnique, mXnfConversionTechnique);
 	}
 
 	public IPredicate newBuchiPredicate(final Set<IPredicate> inputPreds) {
@@ -243,7 +243,7 @@ public class PredicateFactory {
 			term = Util.or(mScript, term, p.getFormula());
 		}
 		if (withSimplifyDDA) {
-			term = SmtUtils.simplify(mScript, term, mServices, mSimplificationTechnique, mFreshVariableConstructor);
+			term = SmtUtils.simplify(mMgdScript, term, mServices, mSimplificationTechnique);
 		}
 		return term;
 	}

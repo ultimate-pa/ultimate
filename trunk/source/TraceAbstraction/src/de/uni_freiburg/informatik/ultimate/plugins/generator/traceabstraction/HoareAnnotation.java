@@ -89,7 +89,7 @@ public class HoareAnnotation extends SPredicate {
 
 	private final Script mScript;
 	private final Boogie2SmtSymbolTable mSymbolTable;
-	private final ManagedScript mFreshVariableConstructor;
+	private final ManagedScript mMgdScript;
 	private final PredicateFactory mPredicateFactory;
 	private final ModifiableGlobalVariableManager mModifiableGlobals;
 
@@ -104,7 +104,7 @@ public class HoareAnnotation extends SPredicate {
 	public HoareAnnotation(final ProgramPoint programPoint, final int serialNumber, 
 			final Boogie2SmtSymbolTable symbolTable, final PredicateFactory predicateFactory, 
 			final ModifiableGlobalVariableManager modifiableGlobals,
-			final ManagedScript freshVariableConstructor,
+			final ManagedScript mgdScript,
 			final Script script,
 			final IUltimateServiceProvider services, 
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
@@ -115,7 +115,7 @@ public class HoareAnnotation extends SPredicate {
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mSymbolTable = symbolTable;
-		mFreshVariableConstructor = freshVariableConstructor;
+		mMgdScript = mgdScript;
 		mPredicateFactory = predicateFactory;
 		mScript = script;
 		mModifiableGlobals = modifiableGlobals;
@@ -195,17 +195,17 @@ public class HoareAnnotation extends SPredicate {
 	private void computeFormula() {
 		for (final Term precond : getPrecondition2Invariant().keySet()) {
 			Term invariant = getPrecondition2Invariant().get(precond);
-			invariant = SmtUtils.simplify(mScript, invariant, mServices, mSimplificationTechnique, mFreshVariableConstructor); 
+			invariant = SmtUtils.simplify(mMgdScript, invariant, mServices, mSimplificationTechnique); 
 			Term precondTerm = Util.implies(mScript, precond, invariant);
 			if (s_AvoidImplications) {
-				precondTerm = (new Nnf(mScript, mServices, mFreshVariableConstructor, QuantifierHandling.KEEP)).transform(precondTerm);
+				precondTerm = (new Nnf(mMgdScript, mServices, QuantifierHandling.KEEP)).transform(precondTerm);
 			}
 			mLogger.debug("In " + this + " holds " + invariant + " for precond " + precond);
 			mFormula = Util.and(mScript, mFormula, precondTerm);
 		}
 		mFormula = substituteOldVarsOfNonModifiableGlobals(getProgramPoint().getProcedure(), mVars,
 				mFormula);
-		mFormula = SmtUtils.simplify(mScript, mFormula, mServices, mSimplificationTechnique, mFreshVariableConstructor); 
+		mFormula = SmtUtils.simplify(mMgdScript, mFormula, mServices, mSimplificationTechnique); 
 		mFormula = getPositiveNormalForm(mFormula);
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(mFormula, mScript, mSymbolTable);
 		mClosedFormula = PredicateUtils.computeClosedFormula(tvp.getFormula(), tvp.getVars(), mScript);

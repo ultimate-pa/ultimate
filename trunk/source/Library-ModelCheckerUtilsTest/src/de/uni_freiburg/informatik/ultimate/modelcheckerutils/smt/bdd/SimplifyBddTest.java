@@ -61,8 +61,8 @@ public class SimplifyBddTest {
 	public void setUP(){
 		services = new UltimateServiceProviderMock();
 		script = new SMTInterpol();
-		final ManagedScript freshTermVariableConstructor = null;
-		simplifyBdd = new SimplifyBdd(services, script, freshTermVariableConstructor);
+		final ManagedScript mgdScript = new ManagedScript(services, script);
+		simplifyBdd = new SimplifyBdd(services, mgdScript);
 
 		script.setLogic(Logics.QF_IDL);
 		bool = ((SMTInterpol)script).getTheory().getBooleanSort();
@@ -72,13 +72,13 @@ public class SimplifyBddTest {
 	
 	@Test
 	public void testAtomCollection() {
-		Term x1 = script.variable("x1", bool);
-		Term x2 = script.variable("x2", bool);
-		Term x3 = script.variable("x3", bool);
-		Term t = SmtUtils.or(script, Arrays.asList(SmtUtils.and(script, Arrays.asList(x1,x2,x3)), x1));
+		final Term x1 = script.variable("x1", bool);
+		final Term x2 = script.variable("x2", bool);
+		final Term x3 = script.variable("x3", bool);
+		final Term t = SmtUtils.or(script, Arrays.asList(SmtUtils.and(script, Arrays.asList(x1,x2,x3)), x1));
 		
-		CollectAtoms ca = new CollectAtoms();
-		List<Term> atoms = ca.getTerms(t);
+		final CollectAtoms ca = new CollectAtoms();
+		final List<Term> atoms = ca.getTerms(t);
 		Assert.assertTrue(atoms.contains(x1));
 		Assert.assertTrue(atoms.contains(x2));
 		Assert.assertTrue(atoms.contains(x3));
@@ -87,47 +87,47 @@ public class SimplifyBddTest {
 	
 	@Test
 	public void testTransform() {
-		Term x1 = script.variable("x1", bool);
-		Term x2 = script.variable("x2", bool);
-		Term x3 = script.variable("x3", bool);
-		Term t = SmtUtils.or(script, Arrays.asList(SmtUtils.and(script, Arrays.asList(x1,x2,x3)), x1));
-		Term out = simplifyBdd.transform(t); 
+		final Term x1 = script.variable("x1", bool);
+		final Term x2 = script.variable("x2", bool);
+		final Term x3 = script.variable("x3", bool);
+		final Term t = SmtUtils.or(script, Arrays.asList(SmtUtils.and(script, Arrays.asList(x1,x2,x3)), x1));
+		final Term out = simplifyBdd.transform(t); 
 		Assert.assertEquals(x1, out);
 	}
 
 	
 	@Test
 	public void testCNF() {
-		Term x1 = script.variable("x1", bool);
-		Term x2 = script.variable("x2", bool);
-		Term x3 = script.variable("x3", bool);
-		Term t = SmtUtils.or(script, Arrays.asList(SmtUtils.and(script, Arrays.asList(x1,x2,x3)), x1));
-		Term out = simplifyBdd.transformToCNF(t);
+		final Term x1 = script.variable("x1", bool);
+		final Term x2 = script.variable("x2", bool);
+		final Term x3 = script.variable("x3", bool);
+		final Term t = SmtUtils.or(script, Arrays.asList(SmtUtils.and(script, Arrays.asList(x1,x2,x3)), x1));
+		final Term out = simplifyBdd.transformToCNF(t);
 		Assert.assertEquals(x1, out);
 	}
 	
 	@Test
 	public void testDNF() {
-		Term x1 = script.variable("x1", bool);
-		Term x2 = script.variable("x2", bool);
-		Term x3 = script.variable("x3", bool);
-		Term t = SmtUtils.or(script, Arrays.asList(SmtUtils.and(script, Arrays.asList(x1,x2,x3)), x1));
-		Term out = simplifyBdd.transformToDNF(t);
+		final Term x1 = script.variable("x1", bool);
+		final Term x2 = script.variable("x2", bool);
+		final Term x3 = script.variable("x3", bool);
+		final Term t = SmtUtils.or(script, Arrays.asList(SmtUtils.and(script, Arrays.asList(x1,x2,x3)), x1));
+		final Term out = simplifyBdd.transformToDNF(t);
 		Assert.assertEquals(x1, out);
 	}
 	
 	@Test
 	public void testAssozImp(){
-		Term x1 = script.variable("x1", bool);
-		Term x2 = script.variable("x2", bool);
-		Term x3 = script.variable("x3", bool);
-		Term t1 = script.term("=>", x1, x2, x3);
-		Term t2 = script.term("=>", x1, script.term("=>", x2, x3));
-		Term t3 = script.term("=>", script.term("=>", x1, x2), x3) ;
+		final Term x1 = script.variable("x1", bool);
+		final Term x2 = script.variable("x2", bool);
+		final Term x3 = script.variable("x3", bool);
+		final Term t1 = script.term("=>", x1, x2, x3);
+		final Term t2 = script.term("=>", x1, script.term("=>", x2, x3));
+		final Term t3 = script.term("=>", script.term("=>", x1, x2), x3) ;
 
-		Term out1 = simplifyBdd.transform(t1);
-		Term out2 = simplifyBdd.transform(t2);
-		Term out3 = simplifyBdd.transform(t3);
+		final Term out1 = simplifyBdd.transform(t1);
+		final Term out2 = simplifyBdd.transform(t2);
+		final Term out3 = simplifyBdd.transform(t3);
 		Assert.assertEquals(out2, out1);
 		Assert.assertNotEquals(out3, out1);
 	}
@@ -136,8 +136,8 @@ public class SimplifyBddTest {
 	public void testPairImp(){
 		//Term t1 = script.term("<", script.variable("x", ints), script.numeral("2"));
 		//Term t2 = script.term("<", script.variable("x", ints), script.numeral("3"));
-		Term t1 = script.term("<", script.numeral("1"), script.numeral("2"));
-		Term t2 = script.term("<", script.numeral("1"), script.numeral("3"));
+		final Term t1 = script.term("<", script.numeral("1"), script.numeral("2"));
+		final Term t2 = script.term("<", script.numeral("1"), script.numeral("3"));
 		simplifyBdd.impliesPairwise(Arrays.asList(t1,t2));	
 	}
 	
