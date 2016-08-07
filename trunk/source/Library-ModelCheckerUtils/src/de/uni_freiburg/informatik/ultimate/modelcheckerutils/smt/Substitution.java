@@ -57,13 +57,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
  * rename quantified variable but remove substitution in the current scope.
  * @author Matthias Heizmann
  */
-public class SafeSubstitution extends TermTransformer {
+public class Substitution extends TermTransformer {
 	
 	private final Script mScript;
 	protected final ManagedScript mMgdScript;
 	private final ScopedHashMap<Term,Term> mScopedSubstitutionMapping;
 	
-	public SafeSubstitution(final Script script, 
+	public Substitution(final Script script, 
 			final Map<Term, Term> substitutionMapping) {
 		super();
 		mMgdScript = null;
@@ -72,7 +72,7 @@ public class SafeSubstitution extends TermTransformer {
 		mScopedSubstitutionMapping.putAll(substitutionMapping);
 	}
 	
-	public SafeSubstitution(final ManagedScript mgdScript, 
+	public Substitution(final ManagedScript mgdScript, 
 			final Map<Term, Term> substitutionMapping) {
 		super();
 		mMgdScript = mgdScript;

@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -239,7 +239,7 @@ public class Nnf {
 						substitutionMapping.put(oldTv, freshTv);
 						variables.add(freshTv);
 					}
-					final Term newBody = (new SafeSubstitution(mScript, substitutionMapping)).transform(qf.getSubformula());
+					final Term newBody = (new Substitution(mScript, substitutionMapping)).transform(qf.getSubformula());
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"

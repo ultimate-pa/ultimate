@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
@@ -151,7 +151,7 @@ public class TransFormulaUtils {
 			}
 			substitutionMapping.put(tv, bv.getDefaultConstant());
 		}
-		final Term result = (new SafeSubstitution(script, substitutionMapping)).transform(term);
+		final Term result = (new Substitution(script, substitutionMapping)).transform(term);
 		return result;
 	}
 	public static Term renameToPrimedConstants(final Script script, final Boogie2SmtSymbolTable symbTab, final TransFormulaLR tf, final Term term) {
@@ -163,7 +163,7 @@ public class TransFormulaUtils {
 			}
 			substitutionMapping.put(tv, bv.getPrimedConstant());
 		}
-		final Term result = (new SafeSubstitution(script, substitutionMapping)).transform(term);
+		final Term result = (new Substitution(script, substitutionMapping)).transform(term);
 		return result;
 	}
 
@@ -215,7 +215,7 @@ public class TransFormulaUtils {
 				throw new UnsupportedOperationException("Unknown RankVar " + entry.getKey().getClass().getSimpleName());
 			}
 		}
-		Term result = (new SafeSubstitution(script, substitutionMapping)).transform(tf.getFormula());
+		Term result = (new Substitution(script, substitutionMapping)).transform(tf.getFormula());
 		result = Util.and(script, result, constructEqualitiesForCoinciding(script, tf));
 		if (!tf.getAuxVars().isEmpty()) {
 			logger.warn(tf.getAuxVars().size() + " quantified variables");
@@ -257,7 +257,7 @@ public class TransFormulaUtils {
 			}
 			substitutionMapping.put(tv, definition);
 		}
-		return (new SafeSubstitution(script, substitutionMapping)).transform(term);
+		return (new Substitution(script, substitutionMapping)).transform(term);
 	}
 
 
@@ -283,7 +283,7 @@ public class TransFormulaUtils {
 			final Term inVar = tf.getInVars().get(rv); 
 			substitutionMapping.put(tv, inVar);
 		}
-		return (new SafeSubstitution(script, substitutionMapping)).transform(term);
+		return (new Substitution(script, substitutionMapping)).transform(term);
 	}
 	
 	

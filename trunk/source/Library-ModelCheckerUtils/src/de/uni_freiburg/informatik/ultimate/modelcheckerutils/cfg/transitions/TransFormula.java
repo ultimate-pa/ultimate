@@ -57,8 +57,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -212,7 +212,7 @@ public class TransFormula implements Serializable {
 			final Term auxVarConst = SmtUtils.termVariable2constant(script, auxVarTv, true);
 			substitutionMapping.put(auxVarTv, auxVarConst);
 		}
-		final Term closedTerm = (new SafeSubstitution(script, substitutionMapping)).transform(formula);
+		final Term closedTerm = (new Substitution(script, substitutionMapping)).transform(formula);
 		return closedTerm;
 	}
 
@@ -509,7 +509,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			final Term originalFormula = transFormula[i].getFormula();
-			final Term updatedFormula = (new SafeSubstitutionWithLocalSimplification(mgdScript, subsitutionMapping)).transform(originalFormula);
+			final Term updatedFormula = (new SubstitutionWithLocalSimplification(mgdScript, subsitutionMapping)).transform(originalFormula);
 			formula = Util.and(script, formula, updatedFormula);
 		}
 
@@ -675,7 +675,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			final Term originalFormula = transFormulas[i].getFormula();
-			renamedFormulas[i] = (new SafeSubstitutionWithLocalSimplification(mgdScript, subsitutionMapping)).transform(originalFormula);
+			renamedFormulas[i] = (new SubstitutionWithLocalSimplification(mgdScript, subsitutionMapping)).transform(originalFormula);
 
 			for (final IProgramVar bv : assignedInSomeBranch.keySet()) {
 				final TermVariable inVar = transFormulas[i].getInVars().get(bv);

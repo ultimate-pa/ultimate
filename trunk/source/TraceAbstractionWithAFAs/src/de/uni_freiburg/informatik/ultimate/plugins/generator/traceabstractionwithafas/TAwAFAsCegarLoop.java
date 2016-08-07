@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
@@ -315,7 +315,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			}
 		}
 		
-		final Term substitutedTerm = (new SafeSubstitution(mSmtManager.getScript(), substitutionMapping))
+		final Term substitutedTerm = (new Substitution(mSmtManager.getScript(), substitutionMapping))
 				.transform(nodeLabel.getBlock().getTransitionFormula().getFormula());
 		return substitutedTerm;
 	}
@@ -368,14 +368,14 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		final IPredicate[] result = new IPredicate[interpolants.length];
 		final PredicateConstructionVisitor msfmv = new PredicateConstructionVisitor(constants2BoogieVar);
 
-		SafeSubstitution const2RepTvSubst;
+		Substitution const2RepTvSubst;
 
 		final HashMap<Term, Term> const2RepTv = new HashMap<Term, Term>();
 		for (final Entry<Term, IProgramVar> entry : constants2BoogieVar.entrySet()) {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
 
-		const2RepTvSubst = new SafeSubstitution(mSmtManager.getScript(), const2RepTv);
+		const2RepTvSubst = new Substitution(mSmtManager.getScript(), const2RepTv);
 		final Map<Term, IPredicate> withIndices2Predicate = new HashMap<Term, IPredicate>();
 
 		int craigInterpolPos = 0;

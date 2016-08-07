@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
@@ -76,7 +76,7 @@ public class PredicateUtils {
 		for (final IProgramVar bv : boogieVars) {
 			substitutionMapping.put(bv.getTermVariable(), bv.getDefaultConstant());
 		}
-		final Term closedTerm = (new SafeSubstitution(script, substitutionMapping)).transform(formula);
+		final Term closedTerm = (new Substitution(script, substitutionMapping)).transform(formula);
 		assert closedTerm.getFreeVars().length == 0;
 		return closedTerm;
 	}
@@ -367,7 +367,7 @@ public class PredicateUtils {
 			}
 			substitutionMapping.put(bv.getTermVariable(), constant);
 		}
-		final Term result = (new SafeSubstitution(script, substitutionMapping)).transform(postcond.getFormula());
+		final Term result = (new Substitution(script, substitutionMapping)).transform(postcond.getFormula());
 		assert result.getFreeVars().length == 0 : "there are free vars";
 		return result;
 	}

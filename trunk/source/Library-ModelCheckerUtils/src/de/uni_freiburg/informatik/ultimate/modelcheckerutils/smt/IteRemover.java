@@ -87,14 +87,14 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 		{
 			final Map<Term, Term> substitutionMapping = 
 					Collections.singletonMap((Term) iteTerm, ifTerm);
-			replacedWithIf = (new SafeSubstitutionWithLocalSimplification(
+			replacedWithIf = (new SubstitutionWithLocalSimplification(
 					mScript, substitutionMapping)).transform(term);
 		}
 		Term replacedWithElse;
 		{
 			final Map<Term, Term> substitutionMapping = 
 					Collections.singletonMap((Term) iteTerm, elseTerm);
-			replacedWithElse = (new SafeSubstitutionWithLocalSimplification(
+			replacedWithElse = (new SubstitutionWithLocalSimplification(
 					mScript, substitutionMapping)).transform(term);
 		}
 		final Term withoutThisIte = Util.or(mScript.getScript(), 

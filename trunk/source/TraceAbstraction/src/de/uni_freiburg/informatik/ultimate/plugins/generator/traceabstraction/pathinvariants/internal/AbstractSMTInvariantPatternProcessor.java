@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
@@ -93,7 +93,7 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements
 	 * {@link #getTermForPattern(Object)} into a {@link Term} representing the
 	 * program states covered by the pattern under the given configuration.
 	 * 
-	 * @see SafeSubstitution
+	 * @see Substitution
 	 * @return transformer replacing pattern variables
 	 * 
 	 */

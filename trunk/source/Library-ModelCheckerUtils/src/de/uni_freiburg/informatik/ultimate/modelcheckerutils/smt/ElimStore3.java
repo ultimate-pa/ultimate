@@ -212,7 +212,7 @@ public class ElimStore3 {
 					store = update.getMultiDimensionalStore();
 				}
 				final Map<Term, Term> auxMap = Collections.singletonMap((Term) store.getStoreTerm(), (Term) auxArray);
-				final SafeSubstitution subst = new SafeSubstitutionWithLocalSimplification(mMgdScript, auxMap);
+				final Substitution subst = new SubstitutionWithLocalSimplification(mMgdScript, auxMap);
 				Term auxTerm = subst.transform(term);
 				final Term auxVarDef = mScript.term("=", auxArray, store.getStoreTerm());
 				if (quantifier == QuantifiedFormula.EXISTS) {
@@ -242,13 +242,13 @@ public class ElimStore3 {
 			// we replace all occurrences of (store oldArr idx val) by newArr.
 			final Map<Term, Term> mapping = Collections.singletonMap(
 					(Term) writeInto.getMultiDimensionalStore().getStoreTerm(), (Term) writeInto.getNewArray());
-			final SafeSubstitution substStoreTerm = new SafeSubstitutionWithLocalSimplification(mMgdScript, mapping);
+			final Substitution substStoreTerm = new SubstitutionWithLocalSimplification(mMgdScript, mapping);
 			intermediateResult = substStoreTerm.transform(intermediateResult);
 		}
 		
 		// Indices and corresponding values of a_elim 
 		final IndicesAndValues iav = new IndicesAndValues(eliminatee, conjuncts);
-		final SafeSubstitution subst = new SafeSubstitutionWithLocalSimplification(mMgdScript, iav.getMapping());
+		final Substitution subst = new SubstitutionWithLocalSimplification(mMgdScript, iav.getMapping());
 
 		final ArrayList<Term> additionalConjuncs = new ArrayList<Term>();
 		intermediateResult = subst.transform(intermediateResult);
@@ -291,11 +291,11 @@ public class ElimStore3 {
 			 * select term). Maybe we can avoid this if we eliminate variables
 			 * in a certain order. 
 			 */
-			final SafeSubstitution writtenFromSubst;
+			final Substitution writtenFromSubst;
 			if (writtenFrom != null) {
 				final Term storeRenamed = SmtUtils.multiDimensionalStore(script, a_heir, idx_writeRenamed, dataRenamed);
 				final Map<Term, Term> mapping = Collections.singletonMap((Term) eliminatee, storeRenamed);
-				writtenFromSubst = new SafeSubstitutionWithLocalSimplification(mMgdScript, mapping);
+				writtenFromSubst = new SubstitutionWithLocalSimplification(mMgdScript, mapping);
 			} else {
 				writtenFromSubst = null;
 			}
@@ -379,7 +379,7 @@ public class ElimStore3 {
 	 * @param eliminatee 
 	 */
 	private ArrayList<Term> disjointIndexImpliesValueEquality(final int quantifier,
-			final Term a_heir, final ArrayIndex idx_write, final IndicesAndValues iav, final SafeSubstitution subst, final TermVariable eliminatee) {
+			final Term a_heir, final ArrayIndex idx_write, final IndicesAndValues iav, final Substitution subst, final TermVariable eliminatee) {
 		final ArrayList<Term> result = new ArrayList<Term>();
 		for (int i = 0; i < iav.getIndices().length; i++) {
 			// select term that represents the array cell a[]
@@ -623,7 +623,7 @@ public class ElimStore3 {
 	 * conjunctions subst(first_1) == subst(second_1), ... ,subst(first_n) ==
 	 * subst(second_n) if subst is null we use the identity function.
 	 */
-	private static Term[] buildPairwiseEquality(final ArrayIndex first, final ArrayIndex second, final SafeSubstitution subst, final Script script) {
+	private static Term[] buildPairwiseEquality(final ArrayIndex first, final ArrayIndex second, final Substitution subst, final Script script) {
 		assert first.size() == second.size();
 		final Term[] equivalent = new Term[first.size()];
 		for (int i = 0; i < first.size(); i++) {
@@ -654,7 +654,7 @@ public class ElimStore3 {
 				mapping.put(tv, constant);
 			}
 		}
-		final Term renamed = (new SafeSubstitution(script, mapping)).transform(term);
+		final Term renamed = (new Substitution(script, mapping)).transform(term);
 		mScript.assertTerm(renamed);
 	}
 

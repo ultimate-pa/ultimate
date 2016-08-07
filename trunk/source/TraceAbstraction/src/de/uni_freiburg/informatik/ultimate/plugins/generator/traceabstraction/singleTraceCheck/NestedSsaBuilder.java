@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -465,7 +465,7 @@ public class NestedSsaBuilder {
 		}
 
 		public Term getVersioneeredTerm() {
-			final SafeSubstitution subst = new SafeSubstitution(mScript, mSubstitutionMapping);
+			final Substitution subst = new Substitution(mScript, mSubstitutionMapping);
 			final Term result = subst.transform(mformula);
 			assert result.getFreeVars().length == 0 : "free vars in versioneered term: " + String.valueOf(result.getFreeVars());
 			return result;

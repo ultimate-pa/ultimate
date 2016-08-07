@@ -33,14 +33,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Subclass of {@link SafeSubstitution} were we apply a local simplification
+ * Subclass of {@link Substitution} were we apply a local simplification
  * when constructing new terms.
  * @author Matthias Heizmann
  *
  */
-public class SafeSubstitutionWithLocalSimplification extends SafeSubstitution {
+public class SubstitutionWithLocalSimplification extends Substitution {
 	
-	public SafeSubstitutionWithLocalSimplification(final ManagedScript mgdScript, 
+	public SubstitutionWithLocalSimplification(final ManagedScript mgdScript, 
 			final Map<Term, Term> substitutionMapping) {
 		super(mgdScript, substitutionMapping);
 	}

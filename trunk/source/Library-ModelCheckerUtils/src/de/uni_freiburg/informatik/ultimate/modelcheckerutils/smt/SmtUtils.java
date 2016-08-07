@@ -512,7 +512,7 @@ public class SmtUtils {
 		return !fstValue.equals(sndValue);
 	}
 
-	public static List<Term> substitutionElementwise(final List<Term> subtituents, final SafeSubstitution subst) {
+	public static List<Term> substitutionElementwise(final List<Term> subtituents, final Substitution subst) {
 		final List<Term> result = new ArrayList<Term>();
 		for (int i = 0; i < subtituents.size(); i++) {
 			result.add(subst.transform(subtituents.get(i)));
@@ -939,7 +939,7 @@ public class SmtUtils {
 			final Map<Term, Term> ucMapping = new HashMap<>();
 			final Term[] conjuncts = getConjuncts(term);
 			for (int i = 0; i < conjuncts.length; i++) {
-				final Term conjunct = (new SafeSubstitution(script, substitutionMapping)).transform(conjuncts[i]);
+				final Term conjunct = (new Substitution(script, substitutionMapping)).transform(conjuncts[i]);
 				final String name = "conjunct" + i;
 				final Annotation annot = new Annotation(":named", name);
 				final Term annotTerm = script.annotate(conjunct, annot);
@@ -1103,7 +1103,7 @@ public class SmtUtils {
 					constructFreshTermVariable(freshVarPrefix, var.getSort());
 			substitutionMapping.put(var, freshVariable);
 		}
-		final Term newBody = (new SafeSubstitution(mgdScript, 
+		final Term newBody = (new Substitution(mgdScript, 
 					substitutionMapping)).transform(qFormula.getSubformula());
 		
 		final TermVariable[] vars = new TermVariable[qFormula.getVariables().length];

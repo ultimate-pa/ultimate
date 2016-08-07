@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
@@ -245,7 +245,7 @@ public class IndexAnalyzer {
 		allTvs.addAll(Utils.filter(mTransFormula.getInVarsReverseMapping().keySet(), TermVariable.class));
 		allTvs.addAll(Utils.filter(mTransFormula.getOutVarsReverseMapping().keySet(), TermVariable.class));
 		final Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(mScript, allTvs, true);
-		final SafeSubstitution subst = new SafeSubstitution(mScript, substitutionMapping);
+		final Substitution subst = new Substitution(mScript, substitutionMapping);
 		mScript.assertTerm(subst.transform(termWithAdditionalInvariants));
 		for (final Doubleton<Term> doubleton : doubletons) {
 			if (allVarsOccurInFormula(doubleton, termWithAdditionalInvariants)) {

@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -123,7 +123,7 @@ public class QuantifierSequence {
 				}
 			}
 		}
-		mInnerTerm = (new SafeSubstitution(mScript, substitutionMapping)).transform(mInnerTerm);
+		mInnerTerm = (new Substitution(mScript, substitutionMapping)).transform(mInnerTerm);
 	}
 	
 	public static Term mergeQuantifierSequences(final ManagedScript mgdScript, 

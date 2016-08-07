@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSy
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 
 public class TermVarsProc {
 	private final Term mTerm;
@@ -142,7 +142,7 @@ public class TermVarsProc {
 				final IProgramNonOldVar nonOld = oldVar.getNonOldVar();
 				substitutionMapping.put(oldVar.getTermVariable(), nonOld.getTermVariable());
 			}
-			term = (new SafeSubstitution(boogie2smt.getScript(), substitutionMapping)).transform(term);
+			term = (new Substitution(boogie2smt.getScript(), substitutionMapping)).transform(term);
 		}
 		final Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, boogie2smt.getScript());
 		return new TermVarsProc(term, vars, procs.toArray(new String[procs.size()]), closedTerm);

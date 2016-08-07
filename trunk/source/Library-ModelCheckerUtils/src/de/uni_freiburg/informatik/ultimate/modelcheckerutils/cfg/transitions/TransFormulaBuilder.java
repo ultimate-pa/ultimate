@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -130,7 +130,7 @@ public class TransFormulaBuilder {
 					this.addAuxVar(newAuxVar);
 					substitutionMapping.put(auxVar, newAuxVar);
 				}
-				mFormula = (new SafeSubstitution(script.getScript(), substitutionMapping).transform(mFormula));
+				mFormula = (new Substitution(script.getScript(), substitutionMapping).transform(mFormula));
 			}
 		}
 	}
@@ -297,7 +297,7 @@ public class TransFormulaBuilder {
 			tfb.addInVar(bv, freshTv);
 			tfb.addOutVar(bv, freshTv);
 		}
-		final Term formula = (new SafeSubstitution(script.getScript(), substitutionMapping)).transform(pred.getFormula());
+		final Term formula = (new Substitution(script.getScript(), substitutionMapping)).transform(pred.getFormula());
 		final Infeasibility infeasibility;
 		if (SmtUtils.isFalse(pred.getFormula())) {
 			infeasibility = Infeasibility.INFEASIBLE;

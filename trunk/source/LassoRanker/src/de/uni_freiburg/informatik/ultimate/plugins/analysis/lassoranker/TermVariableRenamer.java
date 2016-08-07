@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
@@ -124,7 +124,7 @@ public class TermVariableRenamer {
 			final TermVariable newVar = getNewTermVariable(var, oldVar, prefix);
 			varAdder.addVar(var, newVar);
 		}
-		formula = (new SafeSubstitution(mScript, substitutionMapping)).transform(formula);
+		formula = (new Substitution(mScript, substitutionMapping)).transform(formula);
 		return formula;
 	}
 	

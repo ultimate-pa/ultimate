@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -143,8 +143,8 @@ public class PredicateTransformer {
 			}
 		}
 		
-		final Term renamedTransFormula = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitutionForTransFormula).transform(tf.getFormula());
-		final Term renamedPredecessor = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitutionForPredecessor).transform(p.getFormula());
+		final Term renamedTransFormula = new SubstitutionWithLocalSimplification(mMgdScript, substitutionForTransFormula).transform(tf.getFormula());
+		final Term renamedPredecessor = new SubstitutionWithLocalSimplification(mMgdScript, substitutionForPredecessor).transform(p.getFormula());
 			
 		final Term result = Util.and(mScript, renamedTransFormula, renamedPredecessor);
 
@@ -182,7 +182,7 @@ public class PredicateTransformer {
 				assert (entry.getKey() instanceof IProgramOldVar);
 				substitutionMapping.put(entry.getValue(), entry.getKey().getTermVariable());
 			}
-			renamedOldVarsAssignment = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(globalVarAssignments.getFormula());
+			renamedOldVarsAssignment = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(globalVarAssignments.getFormula());
 		}
 
 		final Term renamedPredicate;
@@ -210,7 +210,7 @@ public class PredicateTransformer {
 					throw new AssertionError();
 				}
 			}
-			renamedPredicate = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(p.getFormula());
+			renamedPredicate = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(p.getFormula());
 		}
 		final Term sucessorTerm = Util.and(mScript, renamedPredicate, renamedOldVarsAssignment);
 		final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantify, sucessorTerm);
@@ -261,7 +261,7 @@ public class PredicateTransformer {
 				assert (entry.getKey() instanceof IProgramOldVar);
 				substitutionMapping.put(entry.getValue(), entry.getKey().getTermVariable());
 			}
-			renamedGlobalVarAssignment = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(globalVarAssignments.getFormula());
+			renamedGlobalVarAssignment = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(globalVarAssignments.getFormula());
 		}
 		
 		final Term renamedOldVarsAssignment;
@@ -275,7 +275,7 @@ public class PredicateTransformer {
 				assert (entry.getKey() instanceof IProgramNonOldVar);
 				substitutionMapping.put(entry.getValue(), termVariablesForPredecessor.getOrConstuct(entry.getKey()));
 			}
-			renamedOldVarsAssignment = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(oldVarAssignments.getFormula());
+			renamedOldVarsAssignment = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(oldVarAssignments.getFormula());
 		}
 		
 		final Term renamedLocalVarsAssignment;
@@ -288,7 +288,7 @@ public class PredicateTransformer {
 			for (final Entry<IProgramVar, TermVariable> entry : localVarAssignments.getInVars().entrySet()) {
 				substitutionMapping.put(entry.getValue(), termVariablesForPredecessor.getOrConstuct(entry.getKey()));
 			}
-			renamedLocalVarsAssignment = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(localVarAssignments.getFormula());
+			renamedLocalVarsAssignment = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(localVarAssignments.getFormula());
 		}
 		
 		final Term renamedPredicate;
@@ -297,7 +297,7 @@ public class PredicateTransformer {
 			for (final IProgramVar pv : p.getVars()) {
 				substitutionMapping.put(pv.getTermVariable(), termVariablesForPredecessor.getOrConstuct(pv));
 			}
-			renamedPredicate = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(p.getFormula());
+			renamedPredicate = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(p.getFormula());
 		}
 		final Term sucessorTerm = Util.and(mScript, renamedPredicate, renamedLocalVarsAssignment, renamedOldVarsAssignment,
 				renamedGlobalVarAssignment);
@@ -354,7 +354,7 @@ public class PredicateTransformer {
 				varsToQuantifyNonPendingCall.add(freshVar);
 				varsToRenameInPredNonPendingCall.put(pv.getTermVariable(), freshVar);
 			}
-			globalVarsInvarsRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitution)
+			globalVarsInvarsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution)
 					.transform(oldVarAssignments.getFormula());
 			substitution.clear();
 
@@ -368,7 +368,7 @@ public class PredicateTransformer {
 					varsToQuantifyNonPendingCall.add(freshVar);
 				}
 			}
-			globalVarsInVarsRenamedOutVarsRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitution)
+			globalVarsInVarsRenamedOutVarsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution)
 					.transform(globalVarsInvarsRenamed);
 		}
 		// Collect the local and the non-modifiable global variables of the
@@ -426,11 +426,11 @@ public class PredicateTransformer {
 				varsToQuantifyNonPendingCall.add(pv.getTermVariable());
 			}
 		}
-		final Term call_TermInVarsRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitution).transform(localVarAssignments
+		final Term call_TermInVarsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(localVarAssignments
 				.getFormula());
 		substitution.clear();
 
-		final Term predNonModOldVarsRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, varsToRenameInPredInBoth).transform(p.getFormula());
+		final Term predNonModOldVarsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, varsToRenameInPredInBoth).transform(p.getFormula());
 
 		final Term quantified;
 		if (isPendingCall) {
@@ -438,11 +438,11 @@ public class PredicateTransformer {
 			for (final IProgramVar pv : localVarAssignments.getOutVars().keySet()) {
 				substitution.put(localVarAssignments.getOutVars().get(pv), pv.getTermVariable());
 			}
-			final Term callTermInvarsRenamedOutVarsRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitution)
+			final Term callTermInvarsRenamedOutVarsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution)
 					.transform(call_TermInVarsRenamed);
 			// Rename the invars of CAll, local Vars and old version of global
 			// variables.
-			final Term predRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, varsToRenameInPredPendingCall)
+			final Term predRenamed = new SubstitutionWithLocalSimplification(mMgdScript, varsToRenameInPredPendingCall)
 					.transform(predNonModOldVarsRenamed);
 			final Term predANDCallANDGlobalVars = Util.and(mScript, predRenamed, callTermInvarsRenamedOutVarsRenamed,
 					globalVarsInVarsRenamedOutVarsRenamed);
@@ -451,7 +451,7 @@ public class PredicateTransformer {
 
 			quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantifyNonPendingCall, predANDCallANDGlobalVars);
 		} else {
-			final Term predRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, varsToRenameInPredNonPendingCall)
+			final Term predRenamed = new SubstitutionWithLocalSimplification(mMgdScript, varsToRenameInPredNonPendingCall)
 					.transform(predNonModOldVarsRenamed);
 			varsToQuantifyNonPendingCall.addAll(varsToQuantifyNonModOldVars);
 			varsToQuantifyNonPendingCall.addAll(allAuxVars);
@@ -577,8 +577,8 @@ public class PredicateTransformer {
 			substitution.put(ret_TF.getOutVars().get(pv), pv.getTermVariable());
 			varsToQuantifyInCallerPredAndCallTF.add(pv.getTermVariable());
 		}
-		Term retTermRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, inVarsToRenameInReturnTF).transform(ret_TF.getFormula());
-		retTermRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitution).transform(retTermRenamed);
+		Term retTermRenamed = new SubstitutionWithLocalSimplification(mMgdScript, inVarsToRenameInReturnTF).transform(ret_TF.getFormula());
+		retTermRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(retTermRenamed);
 		// 2.1 Rename invars of TransFormula of corresponding Call statement
 		substitution.clear();
 		for (final IProgramVar pv : callTF.getInVars().keySet()) {
@@ -595,8 +595,8 @@ public class PredicateTransformer {
 				substitution.put(callTF.getInVars().get(pv), pv.getTermVariable());
 			}
 		}
-		Term callTermRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, outVarsToRenameInCallTF).transform(callTF.getFormula());
-		callTermRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitution).transform(callTermRenamed);
+		Term callTermRenamed = new SubstitutionWithLocalSimplification(mMgdScript, outVarsToRenameInCallTF).transform(callTF.getFormula());
+		callTermRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(callTermRenamed);
 		// 2.2 We doesn't rename the outvars, because the outvars are the
 		// localvars
 		// of the called procedure, therefore we want to quantify them out.
@@ -613,16 +613,16 @@ public class PredicateTransformer {
 		// which occur as an invar in the TransFormula of the corresponding Call
 		// statement.
 		// This substitution is only necessary, if we have a recursive call.
-		final Term calleePredVarsRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, varsToRenameInCalleePred).transform(calleePred
+		final Term calleePredVarsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, varsToRenameInCalleePred).transform(calleePred
 				.getFormula());
 
 		// 5. Substitute oldvars through fresh variables in calleePredicate.
-		final Term calleePredVarsRenamedOldVarsToFreshVars = new SafeSubstitutionWithLocalSimplification(mMgdScript, varsToRenameInCalleePred)
+		final Term calleePredVarsRenamedOldVarsToFreshVars = new SubstitutionWithLocalSimplification(mMgdScript, varsToRenameInCalleePred)
 				.transform(calleePredVarsRenamed);
 
 		// 6. Substitute the global variables in callerPred through the fresh
 		// Vars computed in (4).
-		final Term callerPredVarsRenamedToFreshVars = new SafeSubstitutionWithLocalSimplification(mMgdScript, varsToRenameInCallerPred)
+		final Term callerPredVarsRenamedToFreshVars = new SubstitutionWithLocalSimplification(mMgdScript, varsToRenameInCallerPred)
 				.transform(callerPred.getFormula());
 
 		// 1. CalleePredRenamed and loc vars quantified
@@ -687,8 +687,8 @@ public class PredicateTransformer {
 			}
 		}
 		
-		final Term renamedTransFormula = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitutionForTransFormula).transform(tf.getFormula());
-		final Term renamedSuccessor = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitutionForSuccessor).transform(p.getFormula());
+		final Term renamedTransFormula = new SubstitutionWithLocalSimplification(mMgdScript, substitutionForTransFormula).transform(tf.getFormula());
+		final Term renamedSuccessor = new SubstitutionWithLocalSimplification(mMgdScript, substitutionForSuccessor).transform(p.getFormula());
 			
 		final Term result = Util.or(mScript, SmtUtils.not(mScript, renamedTransFormula), renamedSuccessor);
 		// Add aux vars to varsToQuantify
@@ -714,7 +714,7 @@ public class PredicateTransformer {
 			for (final IProgramVar pv : calleePred.getVars()) {
 				substitution.put(pv.getTermVariable(), ip.getOrConstuctAfterCallInstance(pv));
 			}
-			calleePredRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitution).transform(calleePred.getFormula());
+			calleePredRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(calleePred.getFormula());
 		}
 		
 		final Term call_TFrenamed;
@@ -728,7 +728,7 @@ public class PredicateTransformer {
 				final TermVariable afterCallInstance = ip.getOrConstuctAfterCallInstance(entry.getKey()); 
 				substitution.put(entry.getValue(), afterCallInstance);
 			}
-			call_TFrenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitution).transform(call_TF.getFormula());
+			call_TFrenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(call_TF.getFormula());
 		}
 		
 		final Term globalVarsAssignmentsRenamed;
@@ -748,7 +748,7 @@ public class PredicateTransformer {
 					substitution.put(entry.getValue(), afterCallInstance);
 				}
 			}
-			globalVarsAssignmentsRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitution).transform(globalVarsAssignments.getFormula());
+			globalVarsAssignmentsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(globalVarsAssignments.getFormula());
 		}
 		
 		final Term oldVarsAssignmentsRenamed;
@@ -767,7 +767,7 @@ public class PredicateTransformer {
 					// do nothing
 				}
 			}
-			oldVarsAssignmentsRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitution).transform(oldVarsAssignments.getFormula());
+			oldVarsAssignmentsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(oldVarsAssignments.getFormula());
 		}
 
 		final Set<TermVariable> varsToQuantify = new HashSet<TermVariable>(ip.getFreshTermVariables());
@@ -815,7 +815,7 @@ public class PredicateTransformer {
 						assert (entry.getKey() instanceof IProgramOldVar);
 					}
 				}
-				globalVarsRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitution).transform(globalVarsAssignments.getFormula());
+				globalVarsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(globalVarsAssignments.getFormula());
 			} else {
 				for (final Entry<IProgramVar, TermVariable> entry : oldVarAssignments.getOutVars().entrySet()) {
 					final IProgramOldVar oldVar = (IProgramOldVar) entry.getKey(); 
@@ -830,7 +830,7 @@ public class PredicateTransformer {
 						assert (entry.getKey() instanceof IProgramOldVar);
 					}
 				}
-				globalVarsRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitution).transform(oldVarAssignments.getFormula());
+				globalVarsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(oldVarAssignments.getFormula());
 			}
 		}
 		
@@ -847,7 +847,7 @@ public class PredicateTransformer {
 						ir.getOrConstuctAfterReturnInstance(entry.getKey());
 				substitution.put(entry.getValue(), afterReturnInstance);
 			}
-			returnTermRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitution).transform(returnTF.getFormula());
+			returnTermRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(returnTF.getFormula());
 		}
 		
 		final Term callTermRenamed;
@@ -863,7 +863,7 @@ public class PredicateTransformer {
 						ir.getOrConstuctBeforeReturnInstance(entry.getKey());
 				substitution.put(entry.getValue(), beforeReturnInstance);
 			}
-			callTermRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitution).transform(callTF.getFormula());
+			callTermRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(callTF.getFormula());
 		}
 		
 		Term callerPredRenamed;
@@ -872,7 +872,7 @@ public class PredicateTransformer {
 			for (final IProgramVar pv : callerPred.getVars()) {
 				substitution.put(pv.getTermVariable(), ir.getOrConstuctBeforeCallInstance(pv));
 			}
-			callerPredRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitution).transform(callerPred.getFormula());
+			callerPredRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(callerPred.getFormula());
 		}
 		
 		Term returnPredRenamed;
@@ -881,7 +881,7 @@ public class PredicateTransformer {
 			for (final IProgramVar pv : returnerPred.getVars()) {
 				substitution.put(pv.getTermVariable(), ir.getOrConstuctAfterReturnInstance(pv));
 			}
-			returnPredRenamed = new SafeSubstitutionWithLocalSimplification(mMgdScript, substitution).transform(returnerPred.getFormula());
+			returnPredRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(returnerPred.getFormula());
 		}
 
 		final Set<TermVariable> varsToQuantify = new HashSet<TermVariable>(ir.getFreshTermVariables());
@@ -1169,7 +1169,7 @@ public class PredicateTransformer {
 				varsToQuantify.add(freshVar);
 			}
 		}
-		return new SafeSubstitutionWithLocalSimplification(mMgdScript, substitution).transform(formulaToBeSubstituted);
+		return new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(formulaToBeSubstituted);
 	}
 
 	/**
@@ -1205,6 +1205,6 @@ public class PredicateTransformer {
 				varsToQuantify.add(freshVar);
 			}
 		}
-		return new SafeSubstitutionWithLocalSimplification(mMgdScript, substitution).transform(formulaToBeSubstituted);
+		return new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(formulaToBeSubstituted);
 	}
 }

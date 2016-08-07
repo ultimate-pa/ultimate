@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -708,7 +708,7 @@ public class SmtManager {
 				substitutionMapping.put(globalBoogieVar.getTermVariable(), oldBoogieVar.getTermVariable());
 			}
 		}
-		Term renamedFormula = (new SafeSubstitution(getManagedScript(), substitutionMapping)).transform(ps.getFormula());
+		Term renamedFormula = (new Substitution(getManagedScript(), substitutionMapping)).transform(ps.getFormula());
 		renamedFormula = SmtUtils.simplify(getManagedScript(), renamedFormula, mServices, mSimplificationTechnique);
 		final IPredicate result = getPredicateFactory().newPredicate(renamedFormula);
 		return result;

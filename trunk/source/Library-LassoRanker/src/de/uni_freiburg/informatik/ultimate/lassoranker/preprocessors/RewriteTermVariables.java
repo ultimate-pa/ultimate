@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -219,7 +219,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 	public final TransFormulaLR process(final Script script, final TransFormulaLR tf) throws TermException {
 		generateRepAndAuxVars(tf);
 		final TransFormulaLR newTf = new TransFormulaLR(tf);
-		final Term newFormula = (new SafeSubstitutionWithLocalSimplification(
+		final Term newFormula = (new SubstitutionWithLocalSimplification(
 				mScript, mSubstitutionMapping)).transform(tf.getFormula());
 		newTf.setFormula(newFormula);
 		return newTf;
