@@ -124,7 +124,7 @@
 		<!-- use -XX:+HeapDumpOnOutOfMemoryError if you want to generate dumps 
 			on OutOfMemory exceptions -->
 		<manualtest-argline>-Xmx4g </manualtest-argline>
-		<coverage-argline>-Xmx4g</coverage-argline>
+		<coverage-argline>-Xmx4g -ea</coverage-argline>
 
 	</properties>
 
