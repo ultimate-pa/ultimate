@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 public class PredicateUtils {
@@ -56,14 +55,14 @@ public class PredicateUtils {
 	 * Returns the DAG size of the predicate's formula. 
 	 * (DAG size means that similar sub-formulas are counted only once.)
 	 */
-	public static int computeDagSizeOfPredicate(IPredicate p) {
+	public static int computeDagSizeOfPredicate(final IPredicate p) {
 		return (new DAGSize()).size(p.getFormula());
 	}
 	
 	/**
 	 * Computes DAG size for an array of predicates.
 	 */
-	public static int[] computeDagSizeOfPredicates(List<IPredicate> predicates) {
+	public static int[] computeDagSizeOfPredicates(final List<IPredicate> predicates) {
 		final int[] sizeOfPredicates = new int[predicates.size()];
 		for (int i = 0; i < predicates.size(); i++) {
 			sizeOfPredicates[i] = computeDagSizeOfPredicate(predicates.get(i));
@@ -72,12 +71,12 @@ public class PredicateUtils {
 	}
 	
 
-	public static Term computeClosedFormula(Term formula, Set<IProgramVar> boogieVars, Script script) {
-		final Map<TermVariable, Term> substitutionMapping = new HashMap<TermVariable, Term>();
+	public static Term computeClosedFormula(final Term formula, final Set<IProgramVar> boogieVars, final Script script) {
+		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (final IProgramVar bv : boogieVars) {
 			substitutionMapping.put(bv.getTermVariable(), bv.getDefaultConstant());
 		}
-		final Term closedTerm = (new Substitution(substitutionMapping, script)).transform(formula);
+		final Term closedTerm = (new SafeSubstitution(script, substitutionMapping)).transform(formula);
 		assert closedTerm.getFreeVars().length == 0;
 		return closedTerm;
 	}
@@ -135,9 +134,9 @@ public class PredicateUtils {
 	 * non-oldVar! If oldVar is Integer.MIN_VALUE, we check
 	 * </ul>
 	 */
-	public static Term formulaWithIndexedVars(IPredicate ps, Set<IProgramVar> varsWithSpecialIdx, int specialIdx,
-			int defaultIdx, int oldVarIdx, Set<IProgramVar> globalsWithSpecialIdx, int globSpecialIdx, int globDefaultIdx,
-			Map<String, Term> indexedConstants, Script script, Set<IProgramVar> modifiableGlobals) {
+	public static Term formulaWithIndexedVars(final IPredicate ps, final Set<IProgramVar> varsWithSpecialIdx, final int specialIdx,
+			final int defaultIdx, final int oldVarIdx, final Set<IProgramVar> globalsWithSpecialIdx, final int globSpecialIdx, final int globDefaultIdx,
+			final Map<String, Term> indexedConstants, final Script script, final Set<IProgramVar> modifiableGlobals) {
 		final Term psTerm = ps.getFormula();
 		if (ps.getVars() == null) {
 			return psTerm;
@@ -197,8 +196,8 @@ public class PredicateUtils {
 	 * <li>Each oldVar v is renamed to v_OLD.
 	 * </ul>
 	 */
-	public static Term formulaWithIndexedVars(TransFormula tf, int idxInVar, int idxOutVar, Set<IProgramVar> assignedVars,
-			Map<String, Term> indexedConstants, Script script) {
+	public static Term formulaWithIndexedVars(final TransFormula tf, final int idxInVar, final int idxOutVar, final Set<IProgramVar> assignedVars,
+			final Map<String, Term> indexedConstants, final Script script) {
 		assert (assignedVars != null && assignedVars.isEmpty());
 		final Set<TermVariable> notYetSubst = new HashSet<TermVariable>();
 		notYetSubst.addAll(Arrays.asList(tf.getFormula().getFreeVars()));
@@ -249,13 +248,13 @@ public class PredicateUtils {
 		return fTrans;
 	}
 
-	public static Term getIndexedConstant(IProgramVar bv, int index, Map<String, Term> indexedConstants, Script script) {
+	public static Term getIndexedConstant(final IProgramVar bv, final int index, final Map<String, Term> indexedConstants, final Script script) {
 		return getIndexedConstant(bv.getGloballyUniqueId(), bv.getTermVariable().getSort(), index, indexedConstants,
 				script);
 	}
 
-	public static Term getIndexedConstant(String id, Sort sort, int index, Map<String, Term> indexedConstants,
-			Script script) {
+	public static Term getIndexedConstant(final String id, final Sort sort, final int index, final Map<String, Term> indexedConstants,
+			final Script script) {
 		final String indexString = String.valueOf(index);
 		final String name = id + "_" + indexString;
 		Term constant = indexedConstants.get(name);
@@ -269,8 +268,8 @@ public class PredicateUtils {
 		return constant;
 	}
 
-	public static LBool isInductiveHelper(Script script, IPredicate precond, IPredicate postcond,
-			TransFormula tf, Set<IProgramVar> modifiableGlobalsBefore, Set<IProgramVar> modifiableGlobalsAfter) {
+	public static LBool isInductiveHelper(final Script script, final IPredicate precond, final IPredicate postcond,
+			final TransFormula tf, final Set<IProgramVar> modifiableGlobalsBefore, final Set<IProgramVar> modifiableGlobalsAfter) {
 		script.push(1);
 
 		final Set<IProgramVar> empty = Collections.emptySet();
@@ -338,9 +337,9 @@ public class PredicateUtils {
 	 * @param nonModifiableGlobalsUnprimed
 	 * @param nonModifiableGlobalsPrimed
 	 */
-	private static void findNonModifiablesGlobals(Set<IProgramVar> vars, Set<IProgramVar> modifiables,
-			Set<IProgramVar> primedRequired, Set<IProgramNonOldVar> nonModifiableGlobalsUnprimed,
-			Set<IProgramNonOldVar> nonModifiableGlobalsPrimed) {
+	private static void findNonModifiablesGlobals(final Set<IProgramVar> vars, final Set<IProgramVar> modifiables,
+			final Set<IProgramVar> primedRequired, final Set<IProgramNonOldVar> nonModifiableGlobalsUnprimed,
+			final Set<IProgramNonOldVar> nonModifiableGlobalsPrimed) {
 		for (final IProgramVar bv : vars) {
 			if (bv instanceof IProgramOldVar) {
 				final IProgramNonOldVar nonOldVar = ((IProgramOldVar) bv).getNonOldVar();
@@ -357,7 +356,7 @@ public class PredicateUtils {
 		}
 	}
 
-	private static Term rename(Script script, IPredicate postcond, Set<IProgramVar> assignedVars) {
+	private static Term rename(final Script script, final IPredicate postcond, final Set<IProgramVar> assignedVars) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final IProgramVar bv : postcond.getVars()) {
 			Term constant;

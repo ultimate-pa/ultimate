@@ -645,7 +645,7 @@ public class ElimStore3 {
 	 * constants defined by mapping, if no constant defined by mapping declare
 	 * constant and add to mapping
 	 */
-	private void assertTermWithTvs(final Map<TermVariable, Term> mapping, final Script script, final Term term) {
+	private void assertTermWithTvs(final Map<Term, Term> mapping, final Script script, final Term term) {
 		for (final TermVariable tv : term.getFreeVars()) {
 			if (!mapping.containsKey(tv)) {
 				final String name = "arrayElim_" + tv.getName();
@@ -654,7 +654,7 @@ public class ElimStore3 {
 				mapping.put(tv, constant);
 			}
 		}
-		final Term renamed = (new Substitution(mapping, script)).transform(term);
+		final Term renamed = (new SafeSubstitution(script, mapping)).transform(term);
 		mScript.assertTerm(renamed);
 	}
 
