@@ -338,7 +338,7 @@ public class BoogiePreprocessorBacktranslator
 		final IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode, ?> oldTarget = oldEdge.getTarget();
 		Multigraph<VL, BoogieASTNode> newTarget = cache.get(oldTarget);
 		if (newTarget == null) {
-			newTarget = createWitnessNode(oldTarget);
+			newTarget = createLabeledWitnessNode(oldTarget);
 			cache.put(oldTarget, newTarget);
 		}
 		final MultigraphEdge<VL, BoogieASTNode> newEdge =

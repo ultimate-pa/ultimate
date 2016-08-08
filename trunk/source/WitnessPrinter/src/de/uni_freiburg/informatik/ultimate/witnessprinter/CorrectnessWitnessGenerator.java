@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE WitnessPrinter plug-in.
- * 
+ *
  * The ULTIMATE WitnessPrinter plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE WitnessPrinter plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE WitnessPrinter plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE WitnessPrinter plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE WitnessPrinter plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE WitnessPrinter plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -41,6 +41,8 @@ import org.apache.commons.collections15.Transformer;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -56,7 +58,7 @@ import edu.uci.ics.jung.graph.DirectedOrderedSparseMultigraph;
 import edu.uci.ics.jung.graph.Hypergraph;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -76,19 +78,18 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 
 	@Override
 	public String makeGraphMLString() {
-		final UltimateGraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> graphWriter = new UltimateGraphMLWriter<>();
-		final String filename = StringEscapeUtils.escapeXml10(mTranslatedCFG.getFilename());
-
+		final UltimateGraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> graphWriter =
+				new UltimateGraphMLWriter<>();
 		graphWriter.setEdgeIDs(new Transformer<GeneratedWitnessEdge<TTE, TE>, String>() {
 			@Override
-			public String transform(GeneratedWitnessEdge<TTE, TE> arg0) {
+			public String transform(final GeneratedWitnessEdge<TTE, TE> arg0) {
 				return arg0.getName();
 			}
 		});
 
 		graphWriter.setVertexIDs(new Transformer<GeneratedWitnessNode, String>() {
 			@Override
-			public String transform(GeneratedWitnessNode arg0) {
+			public String transform(final GeneratedWitnessNode arg0) {
 				return arg0.getName();
 			}
 		});
@@ -102,9 +103,11 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 		addEdgeData(graphWriter, "control", null, edge -> edge.getControl());
 		addEdgeData(graphWriter, "startline", null, edge -> edge.getStartLineNumber());
 		addEdgeData(graphWriter, "endline", null, edge -> edge.getEndLineNumber());
-		addEdgeData(graphWriter, "originfile", filename, edge -> null);
+		addEdgeData(graphWriter, "originfile", StringEscapeUtils.escapeXml10(mTranslatedCFG.getFilename()),
+				edge -> null);
 		addEdgeData(graphWriter, "enterFunction", null, edge -> null);
 		addEdgeData(graphWriter, "returnFrom", null, edge -> null);
+		addEdgeData(graphWriter, "enterLoopHead", "false", edge -> edge.isEnteringLoopHead());
 
 		addVertexData(graphWriter, "nodetype", "path", vertex -> null);
 		addVertexData(graphWriter, "entry", "false", vertex -> vertex.isEntry() ? "true" : null);
@@ -132,10 +135,11 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 	}
 
 	private Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> getGraph() {
-		final DirectedOrderedSparseMultigraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> graph = new DirectedOrderedSparseMultigraph<>();
+		final DirectedOrderedSparseMultigraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> graph =
+				new DirectedOrderedSparseMultigraph<>();
 
-		final GeneratedWitnessNodeEdgeFactory<TTE, TE> fac = new GeneratedWitnessNodeEdgeFactory<TTE, TE>(
-				mStringProvider);
+		final GeneratedWitnessNodeEdgeFactory<TTE, TE> fac =
+				new GeneratedWitnessNodeEdgeFactory<TTE, TE>(mStringProvider);
 
 		final List<IExplicitEdgesMultigraph<?, ?, String, TTE, ?>> roots = mTranslatedCFG.getCFGs();
 		if (roots.size() != 1) {
@@ -158,7 +162,6 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 
 			for (final IMultigraphEdge<?, ?, String, TTE, ?> outgoing : sourceNode.getOutgoingEdges()) {
 				if (!closed.add(outgoing)) {
-					// mLogger.info("Ignoring " + outgoing);
 					continue;
 				}
 				final TTE label = outgoing.getLabel();
@@ -167,21 +170,24 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 					edge = fac.createDummyWitnessEdge();
 				} else {
 					final ConditionAnnotation coan = ConditionAnnotation.getAnnotation(outgoing);
-					if (coan != null) {
-						edge = fac.createWitnessEdge(new AtomicTraceElement<>(label, label,
-								coan.isNegated() ? StepInfo.CONDITION_EVAL_FALSE : StepInfo.CONDITION_EVAL_TRUE, null));
-					} else {
-						edge = fac.createWitnessEdge(new AtomicTraceElement<>(label, null));
-					}
+					final LoopEntryAnnotation lean = LoopEntryAnnotation.getAnnotation(outgoing.getTarget());
+
+					final StepInfo stepInfo = coan != null
+							? (coan.isNegated() ? StepInfo.CONDITION_EVAL_FALSE : StepInfo.CONDITION_EVAL_TRUE)
+							: StepInfo.NONE;
+					final boolean isEnteringLoopHead =
+							lean != null ? lean.getLoopEntryType() == LoopEntryType.WHILE : false;
+
+					edge = fac.createWitnessEdge(new AtomicTraceElement<>(label, label, stepInfo, null),
+							isEnteringLoopHead);
+
 				}
-				final GeneratedWitnessNode targetWNode = getWitnessNode(outgoing.getTarget(), mStringProvider, fac,
-						nodecache);
-				// mLogger.info("Adding edge from " + sourceWNode + " to " + targetWNode);
+				final GeneratedWitnessNode targetWNode =
+						getWitnessNode(outgoing.getTarget(), mStringProvider, fac, nodecache);
 				graph.addEdge(edge, sourceWNode, targetWNode);
 				worklist.add(outgoing.getTarget());
 			}
 		}
-
 		return graph;
 	}
 

@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin;
@@ -64,11 +64,11 @@ import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 /**
- * 
+ *
  * The {@link ToolchainManager} controls the livecycle of all toolchains and the associated plugins.
- * 
+ *
  * @author dietsch
- * 
+ *
  */
 public class ToolchainManager {
 
@@ -79,7 +79,8 @@ public class ToolchainManager {
 	private final ConcurrentHashMap<Long, Toolchain> mActiveToolchains;
 	private final Log4JLoggingService mLoggingService;
 
-	public ToolchainManager(Log4JLoggingService loggingService, PluginFactory factory, IController<ToolchainListType> controller) {
+	public ToolchainManager(final Log4JLoggingService loggingService, final PluginFactory factory,
+			final IController<ToolchainListType> controller) {
 		mLoggingService = loggingService;
 		mLogger = mLoggingService.getLogger(Activator.PLUGIN_ID);
 		mPluginFactory = factory;
@@ -88,7 +89,7 @@ public class ToolchainManager {
 		mActiveToolchains = new ConcurrentHashMap<>();
 	}
 
-	public void releaseToolchain(IToolchain<ToolchainListType> toolchain) {
+	public void releaseToolchain(final IToolchain<ToolchainListType> toolchain) {
 		if (!mActiveToolchains.remove(toolchain.getId(), toolchain)) {
 			mLogger.warn("An concurrency error occured: Toolchain ID has changed during livecycle");
 		}
@@ -139,7 +140,7 @@ public class ToolchainManager {
 		private File[] mInputFiles;
 		private ToolchainWalker mToolchainWalker;
 
-		private Toolchain(long id, IModelManager modelManager) {
+		private Toolchain(final long id, final IModelManager modelManager) {
 			mId = id;
 			mModelManager = modelManager;
 			mBenchmark = new Benchmark();
@@ -149,7 +150,7 @@ public class ToolchainManager {
 		/*************************** IToolchain<ToolchainListType> Implementation ****************************/
 
 		@Override
-		public void init(IToolchainProgressMonitor monitor) {
+		public void init(final IToolchainProgressMonitor monitor) {
 			if (mToolchainData == null) {
 				return;
 			}
@@ -166,13 +167,14 @@ public class ToolchainManager {
 					new GenericServiceProvider(mPluginFactory));
 
 			// install new ProgressMonitorService
-			final ProgressMonitorService monitorService = new ProgressMonitorService(monitor, mLogger, mToolchainWalker);
+			final ProgressMonitorService monitorService =
+					new ProgressMonitorService(monitor, mLogger, mToolchainWalker);
 			mToolchainData.getStorage().putStorable(ProgressMonitorService.getServiceKey(), monitorService);
 
 		}
 
 		@Override
-		public void setInputFiles(File[] files) {
+		public void setInputFiles(final File[] files) {
 			mInputFiles = files;
 		}
 
@@ -191,7 +193,8 @@ public class ToolchainManager {
 		}
 
 		@Override
-		public IToolchainData<ToolchainListType> setToolSelection(final IToolchainProgressMonitor monitor, final IToolchainData<ToolchainListType> data) {
+		public IToolchainData<ToolchainListType> setToolSelection(final IToolchainProgressMonitor monitor,
+				final IToolchainData<ToolchainListType> data) {
 			if (data == null) {
 				/* dialog was aborted */
 				mLogger.warn(getLogPrefix() + ": Dialog was aborted, returning null tools.");
@@ -249,7 +252,7 @@ public class ToolchainManager {
 		}
 
 		@Override
-		public ReturnCode processToolchain(IToolchainProgressMonitor monitor) throws Throwable {
+		public ReturnCode processToolchain(final IToolchainProgressMonitor monitor) throws Throwable {
 			mLogger.info("####################### " + getLogPrefix() + " #######################");
 			final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 			final boolean useBenchmark = ups.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
@@ -297,7 +300,7 @@ public class ToolchainManager {
 		}
 
 		@Override
-		public void addAST(IElement root, ModelType outputDefinition) {
+		public void addAST(final IElement root, final ModelType outputDefinition) {
 			if (mModelManager.addItem(root, outputDefinition)) {
 				mLogger.debug(getLogPrefix() + ": Successfully added AST to model manager");
 			} else {
@@ -319,12 +322,12 @@ public class ToolchainManager {
 
 		/**
 		 * Checks whether all plugins in the toolchain are present.
-		 * 
+		 *
 		 * @param chain
 		 *            Toolchain description to check.
 		 * @return <code>true</code> if and only if every plugin in the chain exists.
 		 */
-		private boolean checkToolchain(List<Object> chain) {
+		private boolean checkToolchain(final List<Object> chain) {
 			for (final Object o : chain) {
 				if (o instanceof PluginType) {
 					final PluginType plugin = (PluginType) o;
@@ -349,7 +352,7 @@ public class ToolchainManager {
 			return true;
 		}
 
-		private final IElement runParser(final File file, ISource parser) throws Exception {
+		private final IElement runParser(final File file, final ISource parser) throws Exception {
 			final boolean useBenchmark = new RcpPreferenceProvider(Activator.PLUGIN_ID)
 					.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
 			IElement root = null;
@@ -376,6 +379,7 @@ public class ToolchainManager {
 			} catch (final Exception e) {
 				mLogger.fatal(getLogPrefix() + ": Exception during parsing: " + e.getMessage());
 				resetModelManager();
+				throw e;
 			} finally {
 				parser.finish();
 			}

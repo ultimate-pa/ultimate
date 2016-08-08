@@ -546,7 +546,7 @@ public class CACSL2BoogieBacktranslator
 
 		Multigraph<TVL, CACSLLocation> lastTarget = cache.get(oldTarget);
 		if (lastTarget == null) {
-			lastTarget = (Multigraph<TVL, CACSLLocation>) createWitnessNode(oldTarget);
+			lastTarget = (Multigraph<TVL, CACSLLocation>) createLabeledWitnessNode(oldTarget);
 			cache.put(oldTarget, lastTarget);
 		}
 		final BoogieASTNode label = oldEdge.getLabel();
