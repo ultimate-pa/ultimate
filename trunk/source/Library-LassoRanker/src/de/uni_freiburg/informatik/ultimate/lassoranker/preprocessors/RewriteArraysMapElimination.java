@@ -57,7 +57,7 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 	public static final String s_Description = "Removes arrays by introducing new variables for each relevant array cell";
 
 	private final IUltimateServiceProvider mServices;
-	private final ManagedScript mMgdScript;
+	private final ManagedScript mManagedScript;
 	private final Boogie2SmtSymbolTable mSymbolTable;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final TransFormula mOriginalStem;
@@ -67,14 +67,13 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final Set<Term> mArrayIndexSupportingInvariants;
 
-	public RewriteArraysMapElimination(final IUltimateServiceProvider services, final ManagedScript script,
-			final Boogie2SmtSymbolTable symbolTable,
-			final ReplacementVarFactory replacementVarFactory, final TransFormula originalStem,
-			final TransFormula originalLoop, final Set<IProgramVar> modifiableGlobalsAtHonda,
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final Set<Term> arrayIndexSupportingInvariants) {
+	public RewriteArraysMapElimination(final IUltimateServiceProvider services, final ManagedScript managedScript,
+			final Boogie2SmtSymbolTable symbolTable, final ReplacementVarFactory replacementVarFactory,
+			final TransFormula originalStem, final TransFormula originalLoop,
+			final Set<IProgramVar> modifiableGlobalsAtHonda, final SimplicationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final Set<Term> arrayIndexSupportingInvariants) {
 		mServices = services;
-		mMgdScript = script;
+		mManagedScript = managedScript;
 		mSymbolTable = symbolTable;
 		mReplacementVarFactory = replacementVarFactory;
 		mOriginalStem = originalStem;
@@ -98,18 +97,17 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 
 	@Override
 	public Collection<LassoUnderConstruction> process(final LassoUnderConstruction lasso) throws TermException {
-		final MapEliminator elim = new MapEliminator(mServices, mMgdScript.getScript(), mSymbolTable, mMgdScript,
-				mReplacementVarFactory, mSimplificationTechnique, mXnfConversionTechnique,
-				Arrays.asList(lasso.getStem(), lasso.getLoop()));
+		final MapEliminator elim = new MapEliminator(mServices, mManagedScript, mSymbolTable, mReplacementVarFactory,
+				mSimplificationTechnique, mXnfConversionTechnique, Arrays.asList(lasso.getStem(), lasso.getLoop()));
 		final EqualityAnalysisResult equalityAnalysisStem = new EqualityAnalysisResult(elim.getDoubletons());
 		final EqualitySupportingInvariantAnalysis esia = new EqualitySupportingInvariantAnalysis(elim.getDoubletons(),
-				mSymbolTable, mMgdScript.getScript(), mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
+				mSymbolTable, mManagedScript.getScript(), mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
 		final EqualityAnalysisResult equalityAnalysisLoop = esia.getEqualityAnalysisResult();
-		mArrayIndexSupportingInvariants.addAll(equalityAnalysisLoop.constructListOfEqualities(mMgdScript.getScript()));
-		mArrayIndexSupportingInvariants.addAll(equalityAnalysisLoop.constructListOfNotEquals(mMgdScript.getScript()));
-		final TransFormulaLR newStem = elim.getReplacedTransFormula(lasso.getStem(), equalityAnalysisStem,
+		mArrayIndexSupportingInvariants.addAll(equalityAnalysisLoop.constructListOfEqualities(mManagedScript.getScript()));
+		mArrayIndexSupportingInvariants.addAll(equalityAnalysisLoop.constructListOfNotEquals(mManagedScript.getScript()));
+		final TransFormulaLR newStem = elim.getRewrittenTransFormula(lasso.getStem(), equalityAnalysisStem,
 				equalityAnalysisLoop);
-		final TransFormulaLR newLoop = elim.getReplacedTransFormula(lasso.getLoop(), equalityAnalysisLoop,
+		final TransFormulaLR newLoop = elim.getRewrittenTransFormula(lasso.getLoop(), equalityAnalysisLoop,
 				equalityAnalysisLoop);
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
 		return Collections.singleton(newLasso);
