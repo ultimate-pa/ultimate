@@ -115,8 +115,9 @@ public class CorrectnessWitnessExtractor {
 			mLogger.warn("Cannot extract witness if there is no witness");
 			return null;
 		}
-		final Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>> rtr = new Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>>(
-				new HashMap<>(), new HashMap<>());
+		final Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>> rtr =
+				new Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>>(new HashMap<>(),
+						new HashMap<>());
 
 		final Deque<WitnessNode> worklist = new ArrayDeque<>();
 		final Set<WitnessNode> closed = new HashSet<>();
@@ -218,16 +219,16 @@ public class CorrectnessWitnessExtractor {
 	}
 
 	private Pair<List<IASTNode>, List<IASTNode>> matchASTNodes(final WitnessNode wnode) {
-		final Set<Integer> afterLines = wnode.getIncomingEdges().stream().map(a -> a.getLocation().getEndLine())
-				.collect(Collectors.toSet());
-		final Set<Integer> beforeLines = wnode.getOutgoingEdges().stream().map(a -> a.getLocation().getStartLine())
-				.collect(Collectors.toSet());
+		final Set<Integer> afterLines =
+				wnode.getIncomingEdges().stream().map(a -> a.getLocation().getEndLine()).collect(Collectors.toSet());
+		final Set<Integer> beforeLines =
+				wnode.getOutgoingEdges().stream().map(a -> a.getLocation().getStartLine()).collect(Collectors.toSet());
 
-		// remove the line number that is used for "no line number"
+		// remove the line number that is used to mark "no line number"
 		afterLines.remove(-1);
 		beforeLines.remove(-1);
 
-		if (afterLines.size() == 0 && beforeLines.size() == 0) {
+		if (afterLines.isEmpty() && beforeLines.isEmpty()) {
 			mLogger.error("No line numbers found for " + wnode);
 			return null;
 		}
@@ -318,7 +319,7 @@ public class CorrectnessWitnessExtractor {
 		return toLogStringCNode(prefix, node, invariant.toString());
 	}
 
-	private final static class LineMatchingVisitor extends ASTGenericVisitor {
+	private static final class LineMatchingVisitor extends ASTGenericVisitor {
 
 		private final Set<Integer> mBeforeLines;
 		private final Set<Integer> mAfterLines;
@@ -388,7 +389,7 @@ public class CorrectnessWitnessExtractor {
 			return sc.isContainedInSubtree();
 		}
 
-		private final static class SubtreeChecker extends ASTGenericVisitor {
+		private static final class SubtreeChecker extends ASTGenericVisitor {
 
 			private final IASTNode mCandidate;
 			private boolean mIsContainedInSubtree;
@@ -406,11 +407,11 @@ public class CorrectnessWitnessExtractor {
 			@Override
 			protected int genericVisit(IASTNode child) {
 				if (mIsContainedInSubtree) {
-					return PROCESS_SKIP;
+					return PROCESS_ABORT;
 				}
 				if (child == mCandidate) {
 					mIsContainedInSubtree = true;
-					return PROCESS_SKIP;
+					return PROCESS_ABORT;
 				}
 				return PROCESS_CONTINUE;
 			}
