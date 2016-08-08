@@ -307,14 +307,11 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 				final IExplicitEdgesMultigraph<?, ?, SVL, STE, ?> oldSourceNode = current.getFirst();
 				final Multigraph<TVL, TTE> newSourceNode = current.getSecond();
 				if (!closed.add(oldSourceNode)) {
-					// System.out.println(getClass().getSimpleName()+": skipping new source " + newSourceNode );
 					continue;
 				}
 
 				for (final IMultigraphEdge<?, ?, SVL, STE, ?> edge : oldSourceNode.getOutgoingEdges()) {
 					final Multigraph<TVL, TTE> newTargetNode = funTranslateEdge.create(nodeCache, edge, newSourceNode);
-					// System.out.println(getClass().getSimpleName()+": new edge from " + newSourceNode + " to " +
-					// newTargetNode);
 					if (newTargetNode != null) {
 						worklist.add(new Pair<>(edge.getTarget(), newTargetNode));
 					}

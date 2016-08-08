@@ -41,8 +41,6 @@ import org.apache.commons.collections15.Transformer;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -166,24 +164,26 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 				}
 				final TTE label = outgoing.getLabel();
 				final GeneratedWitnessEdge<TTE, TE> edge;
+
+				final GeneratedWitnessNode targetWNode =
+						getWitnessNode(outgoing.getTarget(), mStringProvider, fac, nodecache);
+
 				if (label == null) {
 					edge = fac.createDummyWitnessEdge();
 				} else {
 					final ConditionAnnotation coan = ConditionAnnotation.getAnnotation(outgoing);
-					final LoopEntryAnnotation lean = LoopEntryAnnotation.getAnnotation(outgoing.getTarget());
 
 					final StepInfo stepInfo = coan != null
 							? (coan.isNegated() ? StepInfo.CONDITION_EVAL_FALSE : StepInfo.CONDITION_EVAL_TRUE)
 							: StepInfo.NONE;
-					final boolean isEnteringLoopHead =
-							lean != null ? lean.getLoopEntryType() == LoopEntryType.WHILE : false;
-
+					// it is a dirty hack that we say whenever our targetnode has an invariant the edge is a
+					// enterLoopHead edge
+					final boolean isEnteringLoopHead = targetWNode.getInvariant() != null;
 					edge = fac.createWitnessEdge(new AtomicTraceElement<>(label, label, stepInfo, null),
 							isEnteringLoopHead);
 
 				}
-				final GeneratedWitnessNode targetWNode =
-						getWitnessNode(outgoing.getTarget(), mStringProvider, fac, nodecache);
+
 				graph.addEdge(edge, sourceWNode, targetWNode);
 				worklist.add(outgoing.getTarget());
 			}

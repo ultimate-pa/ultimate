@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.MultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
@@ -325,6 +326,9 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 
 	private Multigraph<String, BoogieASTNode> createWitnessNode(final RCFGNode old) {
 		final WitnessInvariant inv = WitnessInvariant.getAnnotation(old);
-		return new Multigraph<String, BoogieASTNode>(inv == null ? null : inv.getInvariant());
+		final Multigraph<String, BoogieASTNode> rtr =
+				new Multigraph<String, BoogieASTNode>(inv == null ? null : inv.getInvariant());
+		ModelUtils.copyAnnotations(old, rtr);
+		return rtr;
 	}
 }
