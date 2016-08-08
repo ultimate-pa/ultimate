@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -65,9 +64,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	private final StateFactory<STATE> mStateFactory;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final DoubleDeckerAutomaton<LETTER, STATE> mResult;
-//	private final Map<STATE, STATE> mOldState2NewState;
-	private GetOnlyMap mOldState2NewState;
-	
+	private final Map<STATE, STATE> mOldState2NewState;
 	private final Map<STATE, Map<STATE, ReachFinal>> mUp2Down;
 	private final STATE mOldEmptyStackState;
 	private final STATE mNewEmptyStackState;
@@ -96,9 +93,9 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		mResult.setUp2Down(mUp2Down);
 		mOldEmptyStackState = mOperand.getEmptyStackState();
 		mNewEmptyStackState = mStateFactory.createEmptyStackState();
-//		mOldState2NewState = (addMapOldState2newState
-//				? new HashMap<STATE, STATE>(mOperand.size())
-//				: null);
+		mOldState2NewState = (addMapOldState2newState
+				? new HashMap<STATE, STATE>(mOperand.size())
+				: null);
 	}
 	
 	/**
@@ -121,9 +118,6 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		final ResultStateConstructorFromPartition resStateConstructor =
 				new ResultStateConstructorFromPartition(partition);
 		constructResultPartition(resStateConstructor, partition);
-		mOldState2NewState = addMapOldState2newState
-				? new GetOnlyMap(resStateConstructor)
-				: null;
 		
 		// TODO can be removed after testing
 //		for (final STATE state : mOperand.getStates()) {
@@ -164,9 +158,6 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		final ResultStateConstructorFromUnionFind resStateConstructor =
 				new ResultStateConstructorFromUnionFind(unionFind);
 		constructResultUnionFind(resStateConstructor);
-		mOldState2NewState = addMapOldState2newState
-				? new GetOnlyMap(resStateConstructor)
-				: null;
 	}
 	
 	/**
@@ -185,7 +176,6 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 * constructs the result automaton from a partition data structure
 	 * 
 	 * @param resStateConstructor state constructor
-	 * @param partition partition
 	 */
 	private void constructResultPartition(
 			final IResultStateConstructor<STATE> resStateConstructor,
@@ -232,10 +222,10 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		final STATE resultState =
 				resStateConstructor.getOrConstructResultState(inputState);
 		
-//		// add to map
-//		if (mOldState2NewState != null) {
-//			mOldState2NewState.put(inputState, resultState);
-//		}
+		// add to map
+		if (mOldState2NewState != null) {
+			mOldState2NewState.put(inputState, resultState);
+		}
 		
 		// get down state map
 		Map<STATE, ReachFinal> downStateMap = mUp2Down.get(resultState);
@@ -442,83 +432,6 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		public STATE getOrConstructResultState(final STATE inputState) {
 			final IBlock<STATE> block = mPartition.getBlock(inputState);
 			return mConstructionCache.getOrConstruct(block);
-		}
-	}
-	
-	/**
-	 * This map only supports the <code>get()</code> method.
-	 * 
-	 * We use it here for the map 'old state -> new state' as this is the only
-	 * operation used later on.
-	 * The reason why we use this map instead of a fresh one is that we create
-	 * the backing data structure already during construction time.
-	 */
-	private class GetOnlyMap implements Map<STATE, STATE> {
-		private final IResultStateConstructor<STATE> mResStateConstructor;
-		
-		public GetOnlyMap(final IResultStateConstructor<STATE> mResCons) {
-			this.mResStateConstructor = mResCons;
-		}
-
-		@Override
-		public int size() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean isEmpty() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean containsKey(final Object key) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean containsValue(final Object value) {
-			throw new UnsupportedOperationException();
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public STATE get(final Object key) {
-			return mResStateConstructor.getOrConstructResultState((STATE)key);
-		}
-
-		@Override
-		public STATE put(final STATE key, final STATE value) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public STATE remove(final Object key) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void putAll(final Map<? extends STATE, ? extends STATE> m) {
-			throw new UnsupportedOperationException();				
-		}
-
-		@Override
-		public void clear() {
-			throw new UnsupportedOperationException();				
-		}
-
-		@Override
-		public Set<STATE> keySet() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Collection<STATE> values() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Set<java.util.Map.Entry<STATE, STATE>> entrySet() {
-			throw new UnsupportedOperationException();
 		}
 	}
 }
