@@ -229,15 +229,6 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		final IPredicate oldPrecondition = mPrecondition;
 		final IPredicate oldPostcondition = mPostcondition;
 
-		// forget trace - endTraceCheck already called
-		if (mInterpolants != null) {
-			assert TraceCheckerUtils.checkInterpolantsInductivityForward(
-					Arrays.asList(mInterpolants), mTrace, mPrecondition, mPostcondition, 
-					mPendingContexts, "Craig", mModifiedGlobals, mLogger,
-					mManagedScript) : 
-						"invalid Hoare triple in nested interpolants";
-		}
-
 		for (final Integer nonPendingCall : nonPendingCallPositions) {
 			// compute subtrace from to call to corresponding return
 			final int returnPosition = mTrace.getReturnPosition(nonPendingCall);
@@ -304,6 +295,14 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 				mInterpolants[nonPendingCall + 1 + i] = interpolantSubsequence[i];
 			}
 		}
+		
+//		if (mInterpolants != null) {
+			assert TraceCheckerUtils.checkInterpolantsInductivityForward(
+					Arrays.asList(mInterpolants), mTrace, mPrecondition, mPostcondition, 
+					mPendingContexts, "Craig", mModifiedGlobals, mLogger,
+					mManagedScript) : 
+						"invalid Hoare triple in nested interpolants";
+//		}
 	}
 
 	/**
