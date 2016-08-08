@@ -130,7 +130,7 @@ public class ReplacementVarFactory {
 	 */
 	@Deprecated
 	public Term getOrConstructConstForAuxVar(final TermVariable tv) {
-		final Term auxVarConst = mAuxVarConstants.getOrConstuct(tv);
+		final Term auxVarConst = mAuxVarConstants.getOrConstruct(tv);
 		return auxVarConst;
 	}
 	

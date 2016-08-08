@@ -398,7 +398,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 			if (inputRepresentative == null) {
 				inputRepresentative = inputState;
 			}
-			return mConstructionCache.getOrConstuct(inputRepresentative);
+			return mConstructionCache.getOrConstruct(inputRepresentative);
 		}
 	}
 	
@@ -431,7 +431,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		@Override
 		public STATE getOrConstructResultState(final STATE inputState) {
 			final IBlock<STATE> block = mPartition.getBlock(inputState);
-			return mConstructionCache.getOrConstuct(block);
+			return mConstructionCache.getOrConstruct(block);
 		}
 	}
 }

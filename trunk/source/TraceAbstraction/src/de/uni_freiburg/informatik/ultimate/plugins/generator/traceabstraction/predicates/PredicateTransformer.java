@@ -127,7 +127,7 @@ public class PredicateTransformer {
 				// special case, variable unchanged will be renamed when
 				// considering outVars
 			} else {
-				final TermVariable substituent = termVariablesForPredecessor.getOrConstuct(pv);
+				final TermVariable substituent = termVariablesForPredecessor.getOrConstruct(pv);
 				substitutionForTransFormula.put(entry.getValue(), substituent);
 				if (p.getVars().contains(pv)) {
 					substitutionForPredecessor.put(pv.getTermVariable(), substituent);
@@ -138,7 +138,7 @@ public class PredicateTransformer {
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 			substitutionForTransFormula.put(entry.getValue(), entry.getKey().getTermVariable());
 			if (!tf.getInVars().containsKey(entry.getKey()) && p.getVars().contains(entry.getKey())) {
-				final TermVariable substituent = termVariablesForPredecessor.getOrConstuct(entry.getKey());
+				final TermVariable substituent = termVariablesForPredecessor.getOrConstruct(entry.getKey());
 				substitutionForPredecessor.put(entry.getKey().getTermVariable(), substituent);
 			}
 		}
@@ -273,7 +273,7 @@ public class PredicateTransformer {
 			}
 			for (final Entry<IProgramVar, TermVariable> entry : oldVarAssignments.getInVars().entrySet()) {
 				assert (entry.getKey() instanceof IProgramNonOldVar);
-				substitutionMapping.put(entry.getValue(), termVariablesForPredecessor.getOrConstuct(entry.getKey()));
+				substitutionMapping.put(entry.getValue(), termVariablesForPredecessor.getOrConstruct(entry.getKey()));
 			}
 			renamedOldVarsAssignment = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(oldVarAssignments.getFormula());
 		}
@@ -286,7 +286,7 @@ public class PredicateTransformer {
 				substitutionMapping.put(localVarAssignments.getOutVars().get(pv), pv.getTermVariable());
 			}
 			for (final Entry<IProgramVar, TermVariable> entry : localVarAssignments.getInVars().entrySet()) {
-				substitutionMapping.put(entry.getValue(), termVariablesForPredecessor.getOrConstuct(entry.getKey()));
+				substitutionMapping.put(entry.getValue(), termVariablesForPredecessor.getOrConstruct(entry.getKey()));
 			}
 			renamedLocalVarsAssignment = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(localVarAssignments.getFormula());
 		}
@@ -295,7 +295,7 @@ public class PredicateTransformer {
 		{
 			final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 			for (final IProgramVar pv : p.getVars()) {
-				substitutionMapping.put(pv.getTermVariable(), termVariablesForPredecessor.getOrConstuct(pv));
+				substitutionMapping.put(pv.getTermVariable(), termVariablesForPredecessor.getOrConstruct(pv));
 			}
 			renamedPredicate = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(p.getFormula());
 		}
@@ -671,7 +671,7 @@ public class PredicateTransformer {
 				// special case, variable unchanged will be renamed when
 				// considering outVars
 			} else {
-				final TermVariable substituent = termVariablesForSuccessor.getOrConstuct(pv);
+				final TermVariable substituent = termVariablesForSuccessor.getOrConstruct(pv);
 				substitutionForTransFormula.put(entry.getValue(), substituent);
 				if (p.getVars().contains(pv)) {
 					substitutionForSuccessor.put(pv.getTermVariable(), substituent);
@@ -682,7 +682,7 @@ public class PredicateTransformer {
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
 			substitutionForTransFormula.put(entry.getValue(), entry.getKey().getTermVariable());
 			if (!tf.getOutVars().containsKey(entry.getKey()) && p.getVars().contains(entry.getKey())) {
-				final TermVariable substituent = termVariablesForSuccessor.getOrConstuct(entry.getKey());
+				final TermVariable substituent = termVariablesForSuccessor.getOrConstruct(entry.getKey());
 				substitutionForSuccessor.put(entry.getKey().getTermVariable(), substituent);
 			}
 		}
@@ -968,16 +968,16 @@ public class PredicateTransformer {
 		public TermVariable getOrConstuctAfterCallInstance(final IProgramVar pv) {
 			if (pv.isGlobal()) {
 				if (pv.isOldvar()) {
-					return mFreshVariables.getOrConstuct(pv);
+					return mFreshVariables.getOrConstruct(pv);
 				} else {
 					if (mModifiableGlobals.contains(pv)) {
-						return mFreshVariables.getOrConstuct(pv);
+						return mFreshVariables.getOrConstruct(pv);
 					} else {
 						return pv.getTermVariable();
 					}
 				}
 			} else {
-				return mFreshVariables.getOrConstuct(pv);
+				return mFreshVariables.getOrConstruct(pv);
 			}
 		}
 		

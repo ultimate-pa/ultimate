@@ -65,7 +65,7 @@ public class ConstructionCache<K, V> {
 	/**
 	 * Get value stored for key. Construct value if not already constructed.
 	 */
-	public V getOrConstuct(K key) {
+	public V getOrConstruct(K key) {
 		V value = mMap.get(key);
 		if (value == null) {
 			value = mValueComputation.constructValue(key);
