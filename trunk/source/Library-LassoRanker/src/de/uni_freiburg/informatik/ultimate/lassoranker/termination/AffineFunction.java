@@ -89,7 +89,7 @@ public class AffineFunction implements Serializable {
 	/**
 	 * @param c set the constant to c
 	 */
-	public void setConstant(BigInteger c) {
+	public void setConstant(final BigInteger c) {
 		mconstant = c;
 	}
 	
@@ -118,7 +118,7 @@ public class AffineFunction implements Serializable {
 	 * @param var a RankVar variable
 	 * @return the coefficient of to this variable
 	 */
-	public BigInteger get(RankVar var) {
+	public BigInteger get(final RankVar var) {
 		return mcoefficients.get(var);
 	}
 	
@@ -127,7 +127,7 @@ public class AffineFunction implements Serializable {
 	 * @param var a Boogie variable
 	 * @param coeff the coefficient of this variable
 	 */
-	public void put(RankVar var, BigInteger coeff) {
+	public void put(final RankVar var, final BigInteger coeff) {
 		if (coeff.equals(BigInteger.ZERO)) {
 			mcoefficients.remove(var);
 		} else {
@@ -165,8 +165,8 @@ public class AffineFunction implements Serializable {
 		return sb.toString();
 	}
 	
-	private static Term constructSummand(Script script, Term t,
-			BigInteger coefficient) {
+	private static Term constructSummand(final Script script, final Term t,
+			final BigInteger coefficient) {
 		if (coefficient.equals(BigInteger.ONE)) {
 			return t; 
 		} else {
@@ -180,11 +180,11 @@ public class AffineFunction implements Serializable {
 	 * @return the generated term
 	 * @throws SMTLIBException
 	 */
-	public Term asTerm(Script script) throws SMTLIBException {
+	public Term asTerm(final Script script) throws SMTLIBException {
 		final ArrayList<Term> summands = new ArrayList<Term>();
 		for (final Map.Entry<RankVar, BigInteger> entry : mcoefficients.entrySet()) {
-			summands.add(constructSummand(script,
-					entry.getKey().getDefinition(), entry.getValue()));
+			final Term definition = entry.getKey().getDefinition();
+			summands.add(constructSummand(script, definition, entry.getValue()));
 		}
 		summands.add(script.numeral(mconstant));
 		return SmtUtils.sum(script, script.sort("Real"),
@@ -197,7 +197,7 @@ public class AffineFunction implements Serializable {
 	 * @param smt2boogie the variable translation
 	 * @return the generated expression
 	 */
-	public Expression asExpression(Script script, Term2Expression smt2boogie) {
+	public Expression asExpression(final Script script, final Term2Expression smt2boogie) {
 		final Term formula = asTerm(script);
 		return smt2boogie.translate(formula);
 	}
@@ -207,7 +207,7 @@ public class AffineFunction implements Serializable {
 	 * @param assignment the assignment to the variables
 	 * @return the value of the function
 	 */
-	public Rational evaluate(Map<RankVar, Rational> assignment) {
+	public Rational evaluate(final Map<RankVar, Rational> assignment) {
 		final Rational r = Rational.ZERO;
 		for (final Map.Entry<RankVar, BigInteger> entry
 				: mcoefficients.entrySet()) {

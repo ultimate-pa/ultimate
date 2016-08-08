@@ -77,8 +77,8 @@ public class LinearTransition implements Serializable {
 	 * @param inVars input variables
 	 * @param outVars output variables
 	 */
-	public LinearTransition(List<List<LinearInequality>> polyhedra,
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+	public LinearTransition(final List<List<LinearInequality>> polyhedra,
+			final Map<RankVar, Term> inVars, final Map<RankVar, Term> outVars) {
 		assert(polyhedra != null);
 		assert(inVars != null);
 		assert(outVars != null);
@@ -96,9 +96,10 @@ public class LinearTransition implements Serializable {
 	 * @return true iff varSet contain one or more variables of {@link Sort} 
 	 * sortname.
 	 */
-	private boolean checkIfContainsSort(Set<RankVar> varSet, String sortname) {
+	private boolean checkIfContainsSort(final Set<RankVar> varSet, final String sortname) {
 		for (final RankVar rv : varSet) {
-			if (rv.getDefinition().getSort().getName().equals(sortname)) {
+			final Sort sort = rv.getDefinition().getSort(); 
+			if (sort.getName().equals(sortname)) {
 				return true;
 			}
 		}
@@ -169,7 +170,7 @@ public class LinearTransition implements Serializable {
 	 * @param term a term in disjunctive normal form
 	 * @return list of clauses
 	 */
-	private static List<Term> toClauses(Term term) {
+	private static List<Term> toClauses(final Term term) {
 		final List<Term> l = new ArrayList<Term>();
 		if (!(term instanceof ApplicationTerm)) {
 			l.add(term);
@@ -199,8 +200,8 @@ public class LinearTransition implements Serializable {
 	 * @param nlaHandling 
 	 * @throws TermException if the supplied term does not have the correct form
 	 */
-	public static LinearTransition fromTransFormulaLR(TransFormulaLR tf, 
-			NlaHandling nlaHandling)
+	public static LinearTransition fromTransFormulaLR(final TransFormulaLR tf, 
+			final NlaHandling nlaHandling)
 			throws TermException {
 		final List<List<LinearInequality>> polyhedra =
 				new ArrayList<List<LinearInequality>>();

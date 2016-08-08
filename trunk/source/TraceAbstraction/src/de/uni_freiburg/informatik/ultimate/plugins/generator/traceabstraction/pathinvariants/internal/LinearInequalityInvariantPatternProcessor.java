@@ -733,7 +733,8 @@ public final class LinearInequalityInvariantPatternProcessor
 		final Map<RankVar, Term> definitionMap = new HashMap<RankVar, Term>(
 				patternCoefficients.size());
 		for (final RankVar coefficient : patternCoefficients) {
-			definitionMap.put(coefficient, coefficient.getDefinition());
+			final Term definition = coefficient.getDefinition();
+			definitionMap.put(coefficient, definition);
 		}
 
 		final Collection<Term> conjunctions = new ArrayList<Term>(
@@ -754,7 +755,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * Takes a pattern and generates a term with the smtManager.getScript()
 	 * script where the variables are valuated with the values in this.valuation
 	 * @param pattern the pattern for which the term is generated
-	 * @return a term correspondending to the cnf of LinearInequalites of
+	 * @return a term corresponding to the cnf of LinearInequalites of
 	 * the pattern, valueted with the values from this.valuation
 	 */
 	protected Term getValuatedTermForPattern(
