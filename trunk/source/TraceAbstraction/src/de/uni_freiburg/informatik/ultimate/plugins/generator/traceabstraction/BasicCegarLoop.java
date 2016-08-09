@@ -2,27 +2,27 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
@@ -84,7 +84,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -126,9 +125,9 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 /**
  * Subclass of AbstractCegarLoop which provides all algorithms for checking safety (not termination).
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
- * 
+ *
  */
 public class BasicCegarLoop extends AbstractCegarLoop {
 
@@ -158,10 +157,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
 
 	private INestedWordAutomaton<WitnessEdge, WitnessNode> mWitnessAutomaton;
-	private final ManagedScript mFreshVarConstructor;
 
-	private final boolean mDoFaultLocalization_NonFlowSensitive;
-	private final boolean mDoFaultLocalization_FlowSensitive;
+	private final boolean mDoFaultLocalizationNonFlowSensitive;
+	private final boolean mDoFaultLocalizationFlowSensitive;
 	private HashSet<ProgramPoint> mHoareAnnotationPositions;
 
 	public BasicCegarLoop(final String name, final RootNode rootNode, final SmtManager smtManager,
@@ -201,7 +199,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mStateFactoryForRefinement = new PredicateFactoryRefinement(mRootNode.getRootAnnot().getProgramPoints(),
 				super.mSmtManager, mPref, REMOVE_DEAD_ENDS && mComputeHoareAnnotation, mHaf, mHoareAnnotationPositions);
 		mPredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(super.mSmtManager, mPref);
-		mFreshVarConstructor = super.mSmtManager.getManagedScript();
 
 		mAssertCodeBlocksIncrementally = (mServices.getPreferenceProvider(Activator.PLUGIN_ID)).getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
@@ -215,9 +212,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		final IPreferenceProvider mPrefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mUnsatCores = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class);
 		mUseLiveVariables = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LIVE_VARIABLES);
-		mDoFaultLocalization_NonFlowSensitive = mPrefs.getBoolean(
+		mDoFaultLocalizationNonFlowSensitive = mPrefs.getBoolean(
 				TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive);
-		mDoFaultLocalization_FlowSensitive = mPrefs
+		mDoFaultLocalizationFlowSensitive = mPrefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive);
 
 		mAbsIntRunner = new AbstractInterpretationRunner(services, mCegarLoopBenchmark, rootNode,
@@ -407,15 +404,15 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				}
 			}
 			mRcfgProgramExecution = interpolatingTraceChecker.getRcfgProgramExecution();
-			if ((mDoFaultLocalization_NonFlowSensitive || mDoFaultLocalization_FlowSensitive)
+			if ((mDoFaultLocalizationNonFlowSensitive || mDoFaultLocalizationFlowSensitive)
 					&& feasibility == LBool.SAT) {
 				final CFG2NestedWordAutomaton cFG2NestedWordAutomaton =
 						new CFG2NestedWordAutomaton(mServices, mPref.interprocedural(), super.mSmtManager, mLogger);
 				final INestedWordAutomaton<CodeBlock, IPredicate> cfg = cFG2NestedWordAutomaton
 						.getNestedWordAutomaton(super.mRootNode, mStateFactoryForRefinement, super.mErrorLocs);
 				final FlowSensitiveFaultLocalizer a = new FlowSensitiveFaultLocalizer(mCounterexample, cfg, mServices,
-						mSmtManager, mModGlobVarManager, predicateUnifier, mDoFaultLocalization_NonFlowSensitive,
-						mDoFaultLocalization_FlowSensitive, mSimplificationTechnique, mXnfConversionTechnique);
+						mSmtManager, mModGlobVarManager, predicateUnifier, mDoFaultLocalizationNonFlowSensitive,
+						mDoFaultLocalizationFlowSensitive, mSimplificationTechnique, mXnfConversionTechnique);
 				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
 			}
 			// s_Logger.info("Trace with values");
@@ -451,10 +448,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mInterpolAutomaton = builder.getResult();
 
 		assert (accepts(mServices, mInterpolAutomaton, mCounterexample.getWord())) : "Interpolant automaton broken!";
-		assert (new InductivityCheck(mServices,
-				mInterpolAutomaton, false, true, new IncrementalHoareTripleChecker(
-						mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager)))
-								.getResult();
+		assert (new InductivityCheck(mServices, mInterpolAutomaton, false, true,
+				new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager)))
+						.getResult();
 	}
 
 	@Override
@@ -594,9 +590,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 										+ " not accepted");
 							}
 						}
-						assert (new InductivityCheck(mServices, test, false, true,
-								new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(),
-										mModGlobVarManager))).getResult();
+						assert (new InductivityCheck(mServices, test, false, true, new IncrementalHoareTripleChecker(
+								mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager))).getResult();
 					}
 					break;
 				case EAGER:
@@ -630,9 +625,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						throw new AssertionError("enhanced interpolant automaton in iteration " + mIteration
 								+ " broken: counterexample of length " + mCounterexample.getLength() + " not accepted");
 					}
-					assert (new InductivityCheck(mServices, test, false, true,
-							new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(),
-									mModGlobVarManager))).getResult();
+					assert (new InductivityCheck(mServices, test, false, true, new IncrementalHoareTripleChecker(
+							mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager))).getResult();
 				}
 					break;
 				default:
@@ -764,7 +758,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	/**
 	 * Automata theoretic minimization of the automaton stored in mAbstraction. Expects that mAbstraction does not have
 	 * dead ends.
-	 * 
+	 *
 	 * @param predicateFactoryRefinement
 	 *            PredicateFactory for the construction of the new (minimized) abstraction.
 	 * @param resultCheckPredFac
@@ -789,61 +783,52 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			final boolean wasMinimized;
 			switch (minimization) {
 			case MINIMIZE_SEVPA: {
-				newAbstractionRaw = new MinimizeSevpa<CodeBlock, IPredicate>(
-						new AutomataLibraryServices(mServices), oldAbstraction,
-								partition, predicateFactoryRefinement,
-								mComputeHoareAnnotation);
+				newAbstractionRaw = new MinimizeSevpa<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+						oldAbstraction, partition, predicateFactoryRefinement, mComputeHoareAnnotation);
 				wasMinimized = true;
 				break;
 			}
 			case SHRINK_NWA: {
-				newAbstractionRaw = new ShrinkNwa<CodeBlock, IPredicate>(
-						new AutomataLibraryServices(mServices),
-						predicateFactoryRefinement, oldAbstraction, partition,
-						mComputeHoareAnnotation, false, false, 200, false, 0,
-						false, false);
+				newAbstractionRaw = new ShrinkNwa<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+						predicateFactoryRefinement, oldAbstraction, partition, mComputeHoareAnnotation, false, false,
+						200, false, 0, false, false);
 				wasMinimized = true;
 				break;
 			}
 			case NWA_COMBINATOR: {
 				newAbstractionRaw = new MinimizeNwaCombinator<CodeBlock, IPredicate>(
-						new AutomataLibraryServices(mServices),
-						predicateFactoryRefinement,
-						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction,
-						partition, mComputeHoareAnnotation, mIteration);
+						new AutomataLibraryServices(mServices), predicateFactoryRefinement,
+						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction, partition,
+						mComputeHoareAnnotation, mIteration);
 				// it can happen that no minimization took place
 				wasMinimized = (newAbstractionRaw == oldAbstraction);
 				break;
 			}
 			case DFA_HOPCROFT_ARRAYS: {
-				newAbstractionRaw = new MinimizeDfaHopcroftPaper<CodeBlock, IPredicate>(
-						new AutomataLibraryServices(mServices), oldAbstraction,
-						predicateFactoryRefinement, partition,
-						mComputeHoareAnnotation);
+				newAbstractionRaw =
+						new MinimizeDfaHopcroftPaper<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+								oldAbstraction, predicateFactoryRefinement, partition, mComputeHoareAnnotation);
 				wasMinimized = true;
 				break;
 			}
 			case DFA_HOPCROFT_LISTS: {
-				newAbstractionRaw = new MinimizeIncompleteDfa<CodeBlock, IPredicate>(
-						new AutomataLibraryServices(mServices), oldAbstraction,
-						predicateFactoryRefinement, partition,
-						mComputeHoareAnnotation);
+				newAbstractionRaw =
+						new MinimizeIncompleteDfa<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+								oldAbstraction, predicateFactoryRefinement, partition, mComputeHoareAnnotation);
 				wasMinimized = true;
 				break;
 			}
 			case NWA_MAX_SAT: {
-				newAbstractionRaw = new MinimizeNwaMaxSAT<CodeBlock, IPredicate>(
-						new AutomataLibraryServices(mServices),
+				newAbstractionRaw = new MinimizeNwaMaxSAT<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 						predicateFactoryRefinement, oldAbstraction);
 				wasMinimized = true;
 				break;
 			}
 			case NWA_MAX_SAT2: {
 				newAbstractionRaw = new MinimizeNwaMaxSat2<CodeBlock, IPredicate>(
-						new AutomataLibraryServices(mServices),
-						predicateFactoryRefinement,
-						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction,
-						mComputeHoareAnnotation, partition);
+						new AutomataLibraryServices(mServices), predicateFactoryRefinement,
+						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction, mComputeHoareAnnotation,
+						partition);
 				wasMinimized = true;
 				break;
 			}
@@ -852,15 +837,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				 * TODO Christian 2016-08-05: add initial partition
 				 */
 				newAbstractionRaw = new ReduceNwaDirectSimulation<CodeBlock, IPredicate>(
-						new AutomataLibraryServices(mServices),
-						predicateFactoryRefinement,
+						new AutomataLibraryServices(mServices), predicateFactoryRefinement,
 						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction);
 				wasMinimized = true;
 				break;
 			}
 			case NONE:
-				throw new IllegalArgumentException(
-						"No minimization method specified.");
+				throw new IllegalArgumentException("No minimization method specified.");
 			default:
 				throw new AssertionError("Unknown minimization method.");
 			}
@@ -871,41 +854,37 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				assert newAbstractionRaw.checkResult(resultCheckPredFac);
 				if (newAbstractionRaw instanceof IMinimizeNwaDD) {
 					/**
-					 * TODO Christian 2016-08-05: remove RemoveUnreachable() call
-					 *      (test thoroughly first!)
+					 * TODO Christian 2016-08-05: remove RemoveUnreachable() call (test thoroughly first!)
 					 */
 					// DoubleDecker information already present in output
-					newAbstraction = (new RemoveUnreachable<CodeBlock, IPredicate>(
-							new AutomataLibraryServices(mServices),
-							newAbstractionRaw.getResult())).getResult();
+					newAbstraction =
+							(new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+									newAbstractionRaw.getResult())).getResult();
 				} else {
 					// compute DoubleDecker information
-					newAbstraction = (new RemoveUnreachable<CodeBlock, IPredicate>(
-							new AutomataLibraryServices(mServices),
-							newAbstractionRaw.getResult())).getResult();
+					newAbstraction =
+							(new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+									newAbstractionRaw.getResult())).getResult();
 				}
-				
+
 				// extract Hoare annotation
 				if (mComputeHoareAnnotation) {
-					if (! (newAbstractionRaw instanceof AMinimizeNwa)) {
-						throw new AssertionError("Hoare annotation and " +
-								minimization + " incompatible");
+					if (!(newAbstractionRaw instanceof AMinimizeNwa)) {
+						throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
 					}
 					final AMinimizeNwa<CodeBlock, IPredicate> minimizeOpCast =
-							(AMinimizeNwa<CodeBlock, IPredicate>)newAbstractionRaw;
-					final Map<IPredicate, IPredicate> oldState2newState =
-							minimizeOpCast.getOldState2newState();
+							(AMinimizeNwa<CodeBlock, IPredicate>) newAbstractionRaw;
+					final Map<IPredicate, IPredicate> oldState2newState = minimizeOpCast.getOldState2newState();
 					mHaf.updateOnMinimization(oldState2newState, newAbstraction);
 				}
-				
+
 				// use result
 				mAbstraction = newAbstraction;
-				
+
 				// statistics
 				final int oldSize = oldAbstraction.size();
 				final int newSize = newAbstraction.size();
-				assert(oldSize == 0 || oldSize >= newSize) :
-						"Minimization increased state space";
+				assert (oldSize == 0 || oldSize >= newSize) : "Minimization increased state space";
 				mCegarLoopBenchmark.announceStatesRemovedByMinimization(oldSize - newSize);
 			}
 		} finally {
@@ -1017,8 +996,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 
 		if (mComputeHoareAnnotation) {
-			assert (new InductivityCheck(mServices, dia, false, true, new IncrementalHoareTripleChecker(
-					mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager)))
+			assert (new InductivityCheck(mServices, dia, false, true,
+					new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager)))
 							.getResult() : "Not inductive";
 		}
 		if (mPref.dumpAutomata()) {
