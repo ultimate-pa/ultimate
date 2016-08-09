@@ -133,20 +133,17 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 	}
 
 	private Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> getGraph() {
-		final DirectedOrderedSparseMultigraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> graph =
-				new DirectedOrderedSparseMultigraph<>();
-
-		final GeneratedWitnessNodeEdgeFactory<TTE, TE> fac =
-				new GeneratedWitnessNodeEdgeFactory<TTE, TE>(mStringProvider);
-
 		final List<IExplicitEdgesMultigraph<?, ?, String, TTE, ?>> roots = mTranslatedCFG.getCFGs();
 		if (roots.size() != 1) {
 			throw new UnsupportedOperationException("Cannot generate correctness witnesses in library mode");
 		}
 		final IExplicitEdgesMultigraph<?, ?, String, TTE, ?> root = roots.get(0);
-
 		final Deque<IExplicitEdgesMultigraph<?, ?, String, TTE, ?>> worklist = new ArrayDeque<>();
 		final Map<IExplicitEdgesMultigraph<?, ?, String, TTE, ?>, GeneratedWitnessNode> nodecache = new HashMap<>();
+		final DirectedOrderedSparseMultigraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> graph =
+				new DirectedOrderedSparseMultigraph<>();
+		final GeneratedWitnessNodeEdgeFactory<TTE, TE> fac =
+				new GeneratedWitnessNodeEdgeFactory<TTE, TE>(mStringProvider);
 
 		// add initial node to nodecache s.t. it will always be initial
 		nodecache.put(root, annotateInvariant(root, fac.createInitialWitnessNode()));
@@ -181,7 +178,6 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 					final boolean isEnteringLoopHead = targetWNode.getInvariant() != null;
 					edge = fac.createWitnessEdge(new AtomicTraceElement<>(label, label, stepInfo, null),
 							isEnteringLoopHead);
-
 				}
 
 				graph.addEdge(edge, sourceWNode, targetWNode);
