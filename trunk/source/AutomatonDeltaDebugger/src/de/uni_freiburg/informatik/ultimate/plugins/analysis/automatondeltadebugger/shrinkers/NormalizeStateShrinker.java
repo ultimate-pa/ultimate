@@ -133,17 +133,17 @@ public class NormalizeStateShrinker<LETTER, STATE>
 					do {
 						++initials;
 						newStateCandidate = (STATE) ("qI_" + initials);
-					} while (oldStates.contains(newStateCandidate));
+					} while (isUsedName(newStateCandidate, oldState, oldStates));
 				} else if (isFinal) {
 					do {
 						++finals;
 						newStateCandidate = (STATE) ("qF_" + finals);
-					} while (oldStates.contains(newStateCandidate));
+					} while (isUsedName(newStateCandidate, oldState, oldStates));
 				} else {
 					do {
 						++normals;
 						newStateCandidate = (STATE) ("q_" + normals);
-					} while (oldStates.contains(newStateCandidate));
+					} while (isUsedName(newStateCandidate, oldState, oldStates));
 				}
 				newState = newStateCandidate;
 			}
@@ -159,6 +159,14 @@ public class NormalizeStateShrinker<LETTER, STATE>
 		return old2new;
 	}
 	
+	private boolean isUsedName(final STATE newStateCandidate,
+			final STATE oldState, final Set<STATE> oldStates) {
+		if (oldStates.contains(newStateCandidate)) {
+			return (! oldState.equals(newStateCandidate));
+		}
+		return false;
+	}
+
 	/**
 	 * preprocessing: filters states into initial and non-initial states
 	 * and returns the set of states not in the list
