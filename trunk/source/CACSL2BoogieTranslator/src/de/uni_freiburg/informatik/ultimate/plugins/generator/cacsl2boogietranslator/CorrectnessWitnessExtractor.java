@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnotation;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -204,7 +204,8 @@ public class CorrectnessWitnessExtractor {
 
 		WitnessInvariant oldInvariant = rtr.get(node);
 		if (oldInvariant == null) {
-			oldInvariant = new WitnessInvariant(invariant, current.getName());
+			oldInvariant = new WitnessInvariant(invariant, current.getName(),
+					node.getFileLocation().getStartingLineNumber(), node.getFileLocation().getEndingLineNumber());
 			rtr.put(node, oldInvariant);
 		} else {
 			final String newInvariant = "(" + invariant + ") || (" + oldInvariant.getInvariant() + ")";
@@ -214,7 +215,8 @@ public class CorrectnessWitnessExtractor {
 			mLogger.warn("  Replacing invariant " + oldInvariant + " with invariant " + newInvariant);
 			final Set<String> labels = new HashSet<>(oldInvariant.getNodeLabels());
 			labels.add(current.getName());
-			rtr.put(node, new WitnessInvariant(newInvariant, labels));
+			rtr.put(node, new WitnessInvariant(newInvariant, labels, node.getFileLocation().getStartingLineNumber(),
+					node.getFileLocation().getEndingLineNumber()));
 		}
 	}
 
@@ -285,7 +287,7 @@ public class CorrectnessWitnessExtractor {
 		}
 	}
 
-	private String toLogString(IASTNode bScope, IASTNode aScope) {
+	private String toLogString(final IASTNode bScope, final IASTNode aScope) {
 		final String bScopeId = bScope == null ? "Global" : "L" + bScope.getFileLocation().getStartingLineNumber();
 		final String aScopeId = aScope == null ? "Global" : "L" + aScope.getFileLocation().getStartingLineNumber();
 		return "B=" + bScopeId + ", A=" + aScopeId;
@@ -332,7 +334,7 @@ public class CorrectnessWitnessExtractor {
 			mMatchedNodes = new Pair<List<IASTNode>, List<IASTNode>>(new ArrayList<>(), new ArrayList<>());
 		}
 
-		public void run(IASTTranslationUnit translationUnit) {
+		public void run(final IASTTranslationUnit translationUnit) {
 			translationUnit.accept(this);
 			removeSubtreeMatches(mMatchedNodes.getFirst());
 			removeSubtreeMatches(mMatchedNodes.getSecond());
@@ -343,14 +345,14 @@ public class CorrectnessWitnessExtractor {
 		}
 
 		@Override
-		protected int genericVisit(IASTNode node) {
+		protected int genericVisit(final IASTNode node) {
 			if (match(node)) {
 				return PROCESS_SKIP;
 			}
 			return PROCESS_CONTINUE;
 		}
 
-		private boolean match(IASTNode node) {
+		private boolean match(final IASTNode node) {
 			final IASTFileLocation loc = node.getFileLocation();
 			if (loc == null) {
 				return false;
@@ -405,7 +407,7 @@ public class CorrectnessWitnessExtractor {
 			}
 
 			@Override
-			protected int genericVisit(IASTNode child) {
+			protected int genericVisit(final IASTNode child) {
 				if (mIsContainedInSubtree) {
 					return PROCESS_ABORT;
 				}

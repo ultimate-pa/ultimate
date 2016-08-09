@@ -5,27 +5,27 @@
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -280,14 +280,14 @@ public class MainDispatcher extends Dispatcher {
 		return mIndexToFunction;
 	}
 
-	void addBoogieDeclarationOfVariableOnHeap(VariableDeclaration vd) {
+	void addBoogieDeclarationOfVariableOnHeap(final VariableDeclaration vd) {
 		if (mBoogieDeclarationsOfVariablesOnHeap == null) {
 			mBoogieDeclarationsOfVariablesOnHeap = new LinkedHashSet<VariableDeclaration>();
 		}
 		mBoogieDeclarationsOfVariablesOnHeap.add(vd);
 	}
 
-	boolean getBoogieDeclarationsOfVariablesOnHeapContains(VariableDeclaration vd) {
+	boolean getBoogieDeclarationsOfVariablesOnHeapContains(final VariableDeclaration vd) {
 		if (mBoogieDeclarationsOfVariablesOnHeap == null) {
 			return false;
 		}
@@ -312,7 +312,7 @@ public class MainDispatcher extends Dispatcher {
 
 	/**
 	 * Returns a set of variables, that have to be handled using the memory model.
-	 * 
+	 *
 	 * @return a set of variables, that have to be handled using the memory model.
 	 */
 	public LinkedHashSet<IASTNode> getVariablesForHeap() {
@@ -320,7 +320,7 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	@Override
-	protected void preRun(DecoratorNode node) {
+	protected void preRun(final DecoratorNode node) {
 		assert node.getCNode() != null;
 		assert node.getCNode() instanceof IASTTranslationUnit;
 
@@ -377,7 +377,7 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public Result dispatch(IASTNode n) {
+	public Result dispatch(final IASTNode n) {
 		final List<AssertStatement> witnessInvariantsBefore;
 		WitnessInvariant invariantBefore;
 		if (mWitnessInvariants != null) {
@@ -529,7 +529,7 @@ public class MainDispatcher extends Dispatcher {
 				|| n instanceof IASTPreprocessorMacroExpansion || n instanceof IASTTypeId
 				|| n instanceof IASTCompositeTypeSpecifier || n instanceof IASTPreprocessorMacroDefinition
 				|| n instanceof IASTImplicitName || n instanceof IASTPreprocessorObjectStyleMacroDefinition) {
-			//no specific handling for those types 
+			// no specific handling for those types
 			result = mCHandler.visit(this, n);
 		} else {
 			final String msg = "MainDispatcher: AST node type unknown: " + n.getClass();
@@ -601,8 +601,8 @@ public class MainDispatcher extends Dispatcher {
 		if (invariantBefore != null) {
 			ACSLNode acslNode = null;
 			try {
-				acslNode =
-						Parser.parseComment("lstart\n assert " + invariantBefore.getInvariant() + ";", 0, 0, mLogger);
+				acslNode = Parser.parseComment("lstart\n assert " + invariantBefore.getInvariant() + ";",
+						invariantBefore.getStartline(), invariantBefore.getEndline(), mLogger);
 			} catch (final Exception e) {
 				throw new IllegalArgumentException(e);
 			}
@@ -636,7 +636,7 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public Result dispatch(ACSLNode n) {
+	public Result dispatch(final ACSLNode n) {
 		if (n instanceof CodeAnnot) {
 			return mAcslHandler.visit(this, (CodeAnnot) n);
 		}
@@ -836,7 +836,7 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public Result dispatch(DecoratorNode node) {
+	public Result dispatch(final DecoratorNode node) {
 		mDecoratorTree = node;
 		mDecoratorTreeIterator = node.iterator();
 		if (node.getCNode() != null) {
@@ -918,11 +918,11 @@ public class MainDispatcher extends Dispatcher {
 	 * Parent node of an ACSL node should be a decorator node containing C. The C node should be instance of
 	 * IASTCompoundStatement or IASTTranslationUnit.<br>
 	 * <b>ACSL is unexpected in other locations.</b>
-	 * 
+	 *
 	 * @param acslNode
 	 *            the ACSL holding decorator node that should be checked.
 	 */
-	private static void checkACSLLocation(DecoratorNode acslNode) {
+	private static void checkACSLLocation(final DecoratorNode acslNode) {
 		if (acslNode.getAcslNode() == null) {
 			throw new IllegalArgumentException(
 					"The given decorator node is not holding ACSL" + acslNode.getCNode().getRawSignature());
@@ -938,7 +938,7 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public InferredType dispatch(IType type) {
+	public InferredType dispatch(final IType type) {
 		// All Known Subinterfaces:
 		// IArrayType, IBasicType, ICArrayType, ICBasicType, ICompositeType,
 		// ICPointerType, ICPPBasicType, ICPPClassSpecialization,
@@ -963,7 +963,7 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public Result dispatch(IASTPreprocessorStatement n) {
+	public Result dispatch(final IASTPreprocessorStatement n) {
 		if (n instanceof IASTPreprocessorElifStatement) {
 			return mPreprocessorHandler.visit(this, (IASTPreprocessorElifStatement) n);
 		}
