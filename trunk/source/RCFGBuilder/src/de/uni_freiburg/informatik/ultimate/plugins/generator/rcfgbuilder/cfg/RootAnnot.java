@@ -120,7 +120,7 @@ public class RootAnnot extends AbstractAnnotations {
 			final RCFGBacktranslator backtranslator) {
 		mBoogieDeclarations = boogieDeclarations;
 		mBoogie2SMT = mBoogie2smt;
-		mManagedScript = new ManagedScript(services, mBoogie2smt.getScript());
+		mManagedScript = mBoogie2smt.getManagedScript();
 		mModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(mBoogieDeclarations.getModifiedVars(),
 				mManagedScript, mBoogie2smt.getBoogie2SmtSymbolTable());
 		mCodeBlockFactory = new CodeBlockFactory(services, mManagedScript, mModifiableGlobalVariableManager);
