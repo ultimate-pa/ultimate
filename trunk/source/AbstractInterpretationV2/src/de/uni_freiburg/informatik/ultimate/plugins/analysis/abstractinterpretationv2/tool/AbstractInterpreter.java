@@ -2,27 +2,27 @@
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -89,17 +89,17 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Should be used by other tools to run abstract interpretation on various parts of the RCFG.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public final class AbstractInterpreter {
 
 	/**
 	 * Run abstract interpretation on the whole RCFG.
-	 * 
+	 *
 	 * Suppress all exceptions except {@link OutOfMemoryError}, {@link ToolchainCanceledException},
 	 * {@link IllegalArgumentException}. Produce no results.
-	 * 
+	 *
 	 */
 	@SuppressWarnings("squid:S1166")
 	public static IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ProgramPoint> runSilently(final RootNode root,
@@ -123,13 +123,12 @@ public final class AbstractInterpreter {
 
 	/**
 	 * Run abstract interpretation on a path program constructed from a counterexample.
-	 * 
+	 *
 	 */
 	@SuppressWarnings("squid:S1166")
 	public static IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> runOnPathProgram(
-			final NestedRun<CodeBlock, ?> counterexample,
-			final INestedWordAutomaton<CodeBlock, ?> currentAutomata, final RootNode root,
-			final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
+			final NestedRun<CodeBlock, ?> counterexample, final INestedWordAutomaton<CodeBlock, ?> currentAutomata,
+			final RootNode root, final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
 		assert counterexample != null && counterexample.getLength() > 0 : "Invalid counterexample";
 		assert currentAutomata != null;
 		assert root != null;
@@ -150,7 +149,7 @@ public final class AbstractInterpreter {
 
 	/**
 	 * Run abstract interpretation on the whole RCFG.
-	 * 
+	 *
 	 */
 	public static IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ProgramPoint> run(final RootNode root,
 			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
@@ -175,7 +174,7 @@ public final class AbstractInterpreter {
 		final ILoopDetector<CodeBlock> loopDetector =
 				new RcfgLoopDetector<>(rootAnnot.getLoopLocations().keySet(), transitionProvider);
 
-		final IAbstractDomain<?, CodeBlock, IBoogieVar, Expression> domain =
+		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain =
 				selectDomain(root, () -> new RCFGLiteralCollector(root), symbolTable, services, rootAnnot);
 
 		return run(initials, timer, services, symbolTable, bpl2smt, script, boogieVarTable, loopDetector, domain,
@@ -196,7 +195,7 @@ public final class AbstractInterpreter {
 		final Script script = rootAnnot.getScript();
 		final Boogie2SmtSymbolTable boogieVarTable = bpl2smt.getBoogie2SmtSymbolTable();
 
-		final IAbstractDomain<?, CodeBlock, IBoogieVar, Expression> domain =
+		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain =
 				selectDomain(root, () -> new RCFGLiteralCollector(root), symbolTable, services, rootAnnot);
 
 		return runSilentlyOnNWA(initial, timer, services, symbolTable, bpl2smt, script, boogieVarTable, domain,
@@ -208,7 +207,7 @@ public final class AbstractInterpreter {
 					final IProgressAwareTimer timer, final IUltimateServiceProvider services,
 					final BoogieSymbolTable symbolTable, final Boogie2SMT bpl2smt, final Script script,
 					final Boogie2SmtSymbolTable boogieVarTable,
-					final IAbstractDomain<STATE, CodeBlock, IBoogieVar, Expression> domain,
+					final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain,
 					final ITransitionProvider<CodeBlock, LOC> transitionProvider,
 					final ILoopDetector<CodeBlock> loopDetector, final RootAnnot rootAnnot) {
 
@@ -250,7 +249,7 @@ public final class AbstractInterpreter {
 					final IUltimateServiceProvider services, final BoogieSymbolTable symbolTable,
 					final Boogie2SMT bpl2smt, final Script script, final Boogie2SmtSymbolTable boogieVarTable,
 					final ILoopDetector<CodeBlock> loopDetector,
-					final IAbstractDomain<STATE, CodeBlock, IBoogieVar, Expression> domain,
+					final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain,
 					final ITransitionProvider<CodeBlock, ProgramPoint> transitionProvider, final RootAnnot rootAnnot,
 					final boolean isSilent) {
 		final Collection<CodeBlock> filteredInitialElements = transitionProvider.filterInitialElements(initials);
@@ -309,7 +308,7 @@ public final class AbstractInterpreter {
 		return pa.getSymbolTable();
 	}
 
-	private static IAbstractDomain<?, CodeBlock, IBoogieVar, Expression> selectDomain(final RootNode root,
+	private static IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain(final RootNode root,
 			final LiteralCollectorFactory literalCollector, final BoogieSymbolTable symbolTable,
 			final IUltimateServiceProvider services, final RootAnnot rootAnnotation) {
 		final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);

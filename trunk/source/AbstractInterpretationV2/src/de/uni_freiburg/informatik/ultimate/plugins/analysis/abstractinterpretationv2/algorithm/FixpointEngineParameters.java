@@ -20,7 +20,7 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, ACTION
 	private final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mStorage;
 	private final IVariableProvider<STATE, ACTION, VARDECL> mVarProvider;
 	private final ILoopDetector<ACTION> mLoopDetector;
-	private final IAbstractDomain<STATE, ACTION, VARDECL, EXPRESSION> mDomain;
+	private final IAbstractDomain<STATE, ACTION, VARDECL>mDomain;
 	private final IDebugHelper<STATE, ACTION, VARDECL, LOCATION> mDebugHelper;
 	private final IProgressAwareTimer mTimer;
 	private final int mMaxUnwindings;
@@ -34,7 +34,7 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, ACTION
 	private FixpointEngineParameters(final ITransitionProvider<ACTION, LOCATION> transitionProvider,
 			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> storage,
 			final IVariableProvider<STATE, ACTION, VARDECL> varProvider,
-			final ILoopDetector<ACTION> loopDetector, final IAbstractDomain<STATE, ACTION, VARDECL, EXPRESSION> domain,
+			final ILoopDetector<ACTION> loopDetector, final IAbstractDomain<STATE, ACTION, VARDECL>domain,
 			final IDebugHelper<STATE, ACTION, VARDECL, LOCATION> debugHelper, final IUltimateServiceProvider services) {
 		if (services == null) {
 			throw new IllegalArgumentException("services may not be null");
@@ -58,7 +58,7 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, ACTION
 	private FixpointEngineParameters(final ITransitionProvider<ACTION, LOCATION> transitionProvider,
 			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> storage,
 			final IVariableProvider<STATE, ACTION, VARDECL> varProvider,
-			final ILoopDetector<ACTION> loopDetector, final IAbstractDomain<STATE, ACTION, VARDECL, EXPRESSION> domain,
+			final ILoopDetector<ACTION> loopDetector, final IAbstractDomain<STATE, ACTION, VARDECL>domain,
 			final IDebugHelper<STATE, ACTION, VARDECL, LOCATION> debugHelper, final IProgressAwareTimer timer,
 			final ILogger logger, final int maxUnwindings, final int maxParallelStates) {
 		mTransitionProvider = transitionProvider;
@@ -120,7 +120,7 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, ACTION
 	}
 
 	public FixpointEngineParameters<STATE, ACTION, VARDECL, LOCATION, EXPRESSION>
-			setDomain(final IAbstractDomain<STATE, ACTION, VARDECL, EXPRESSION> domain) {
+			setDomain(final IAbstractDomain<STATE, ACTION, VARDECL>domain) {
 		if (domain == null) {
 			throw new IllegalArgumentException("domain may not be null");
 		}
@@ -186,7 +186,7 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE, ACTION
 		return mLoopDetector;
 	}
 
-	public IAbstractDomain<STATE, ACTION, VARDECL, EXPRESSION> getAbstractDomain() {
+	public IAbstractDomain<STATE, ACTION, VARDECL>getAbstractDomain() {
 		return mDomain;
 	}
 

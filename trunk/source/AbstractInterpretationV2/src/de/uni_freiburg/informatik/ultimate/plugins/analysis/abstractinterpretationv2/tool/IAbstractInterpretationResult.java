@@ -6,13 +6,15 @@ import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 
 /**
  * The result of an abstract interpretation analysis run.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public interface IAbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> {
+public interface IAbstractInterpretationResult<STATE extends IAbstractState<STATE, ACTION>, ACTION, VARDECL, LOCATION> {
 
 	/**
 	 * @return a {@link Map} mapping to each location that was reachable during the analysis the computed fixpoint as
@@ -47,4 +49,9 @@ public interface IAbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION>
 	 * @return A string representing this result.
 	 */
 	String toSimplifiedString(Function<Term, String> funSimplify);
+
+	/**
+	 * @return The {@link IAbstractDomain} used during the analysis.
+	 */
+	IAbstractDomain<STATE, ACTION, VARDECL> getUsedDomain();
 }

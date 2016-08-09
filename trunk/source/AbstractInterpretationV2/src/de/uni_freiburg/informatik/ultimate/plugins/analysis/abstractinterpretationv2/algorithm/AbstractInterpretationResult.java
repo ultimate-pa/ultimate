@@ -13,13 +13,14 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -60,8 +61,8 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 				.add(new AbstractCounterexample<>(post, transitionProvider.getSource(transition), abstractExecution));
 	}
 
-	protected void saveTerms(IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> rootStateStorage, ACTION start,
-			Script script, Boogie2SMT bpl2smt) {
+	protected void saveTerms(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> rootStateStorage,
+			final ACTION start, final Script script, final Boogie2SMT bpl2smt) {
 		mLoc2Term.putAll(rootStateStorage.getLoc2Term(start, script, bpl2smt));
 		mTerms.addAll(rootStateStorage.getTerms(start, script, bpl2smt));
 	}
@@ -96,7 +97,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	}
 
 	@Override
-	public String toSimplifiedString(Function<Term, String> funSimplify) {
+	public String toSimplifiedString(final Function<Term, String> funSimplify) {
 		final StringBuilder sb = new StringBuilder();
 		if (hasReachedError()) {
 			sb.append("AI reached error location.");
@@ -105,8 +106,14 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		}
 		if (getTerms() != null) {
 			sb.append(" Found terms ");
-			sb.append(String.join(", ", getTerms().stream().map(a -> funSimplify.apply(a)).collect(Collectors.toList())));
+			sb.append(
+					String.join(", ", getTerms().stream().map(a -> funSimplify.apply(a)).collect(Collectors.toList())));
 		}
 		return sb.toString();
+	}
+
+	@Override
+	public IAbstractDomain<STATE, ACTION, VARDECL> getUsedDomain() {
+		throw new UnsupportedOperationException();
 	}
 }

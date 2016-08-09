@@ -65,7 +65,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION>, ACTION,
 
 	private final ITransitionProvider<ACTION, LOCATION> mTransitionProvider;
 	private final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mStateStorage;
-	private final IAbstractDomain<STATE, ACTION, VARDECL, EXPRESSION> mDomain;
+	private final IAbstractDomain<STATE, ACTION, VARDECL>mDomain;
 	private final IVariableProvider<STATE, ACTION, VARDECL> mVarProvider;
 	private final ILoopDetector<ACTION> mLoopDetector;
 	private final IDebugHelper<STATE, ACTION, VARDECL, LOCATION> mDebugHelper;
