@@ -54,8 +54,10 @@ public class WitnessBugs extends AbstractEvalTestSuite {
 		// rtr.addAll(produceWitnessSV("locks"));
 		// rtr.addAll(produceWitnessSV("loops/veris.c_NetBSD-libc__loop_true-unreach-call.c"));
 		// rtr.addAll(verifyWitnessSV("loops/veris.c_NetBSD-libc__loop_true-unreach-call.c"));
+		// rtr.addAll(produceWitnessSV("locks/test_locks_5_true-unreach-call_false-termination.c"));
+		rtr.addAll(verifyWitnessSV("locks/test_locks_5_true-unreach-call_false-termination.c"));
 		// rtr.addAll(produceWitnessSV("loop-acceleration/multivar_true-unreach-call1.i"));
-		rtr.addAll(verifyWitnessSV("loop-acceleration/multivar_true-unreach-call1.i"));
+		// rtr.addAll(verifyWitnessSV("loop-acceleration/multivar_true-unreach-call1.i"));
 		// rtr.addAll(produceWitnessSV("loop-acceleration"));
 		// rtr.addAll(verifyWitnessSV("product-lines"));
 		// rtr.addAll(verifyWitnessSV("loops/array_true-unreach-call.i"));
