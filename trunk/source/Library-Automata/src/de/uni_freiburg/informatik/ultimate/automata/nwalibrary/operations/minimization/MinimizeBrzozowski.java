@@ -74,7 +74,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 					throws AutomataOperationCanceledException {
 		super(services, stateFactory, "MinimizeBrzozowski", operand);
 		
-		assert super.checkForFiniteAutomaton() :
+		assert super.isFiniteAutomaton() :
 			"The input automaton contains call or return transitions.";
 		
 		minimize();

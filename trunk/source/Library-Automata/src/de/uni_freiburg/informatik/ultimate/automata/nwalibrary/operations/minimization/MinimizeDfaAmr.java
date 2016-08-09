@@ -164,7 +164,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 			throws AutomataLibraryException {
 		super(services, stateFactory, "MinimizeAMR", operand, interrupt);
 		
-		assert super.checkForDfa() : "The input automaton is no DFA.";
+		assert super.isDfa() : "The input automaton is no DFA.";
 		
 		mSize = operand.size();
 		assert (mSize >= 0) : "The automaton size must be nonnegative.";

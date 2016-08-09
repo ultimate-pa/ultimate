@@ -267,6 +267,10 @@ public class ShrinkNwa<LETTER, STATE>
 		if (mOperand instanceof IDoubleDeckerAutomaton) {
 			mDoubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>) mOperand;
 		} else {
+			if (! isFiniteAutomaton()) {
+				throw new IllegalArgumentException(
+					"The input must either be a finite automaton or an IDoubleDeckerAutomaton.");
+			}
 			mDoubleDecker = null;
 		}
 		mPartition = new Partition();

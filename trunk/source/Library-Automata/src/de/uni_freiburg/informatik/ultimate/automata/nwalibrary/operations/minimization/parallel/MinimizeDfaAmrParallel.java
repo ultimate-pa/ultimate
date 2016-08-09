@@ -301,7 +301,7 @@ public class MinimizeDfaAmrParallel<LETTER, STATE>
 
 	private void initialize() throws AutomataLibraryException {
 
-		assert super.checkForDfa() : "The input automaton is no DFA.";
+		assert super.isDfa() : "The input automaton is no DFA.";
 
 		mSize = mOperand.size();
 		assert (mSize >= 0) : "The automaton size must be nonnegative.";

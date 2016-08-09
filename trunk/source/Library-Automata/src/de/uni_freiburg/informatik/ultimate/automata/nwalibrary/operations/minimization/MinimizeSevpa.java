@@ -135,11 +135,14 @@ public class MinimizeSevpa<LETTER,STATE>
 			final boolean addMapOldState2newState)
 					throws AutomataOperationCanceledException {
 		super(services, stateFactory, "minimizeSevpa", operand);
-		if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
-			mDoubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>)operand;
+		if (mOperand instanceof IDoubleDeckerAutomaton) {
+			mDoubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>) mOperand;
 		} else {
-			throw new IllegalArgumentException(
-					"Operand must be an IDoubleDeckerAutomaton.");
+			if (! isFiniteAutomaton()) {
+				throw new IllegalArgumentException(
+					"The input must either be a finite automaton or an IDoubleDeckerAutomaton.");
+			}
+			mDoubleDecker = null;
 		}
 		
 		minimize(equivalenceClasses, addMapOldState2newState);

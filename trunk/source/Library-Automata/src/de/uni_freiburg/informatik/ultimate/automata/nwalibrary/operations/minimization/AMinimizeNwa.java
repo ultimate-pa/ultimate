@@ -493,8 +493,8 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 * @throws AutomataLibraryException
 	 *             thrown by determinism check
 	 */
-	protected final boolean checkForDfa() throws AutomataLibraryException {
-		return (checkForDeterminism() && checkForFiniteAutomaton());
+	protected final boolean isDfa() throws AutomataLibraryException {
+		return (isDeterministic() && isFiniteAutomaton());
 	}
 
 	/**
@@ -504,7 +504,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 * @throws AutomataLibraryException
 	 *             thrown by determinism check
 	 */
-	protected final boolean checkForDeterminism()
+	protected final boolean isDeterministic()
 			throws AutomataLibraryException {
 		return new IsDeterministic<LETTER, STATE>(mServices, mOperand).checkResult(mOperand.getStateFactory());
 	}
@@ -518,7 +518,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 * 
 	 * @return true iff automaton contains no call and return letters
 	 */
-	protected final boolean checkForFiniteAutomaton() {
+	protected final boolean isFiniteAutomaton() {
 		return ((mOperand.getCallAlphabet().size() == 0) &&
 				(mOperand.getReturnAlphabet().size() == 0));
 	}
