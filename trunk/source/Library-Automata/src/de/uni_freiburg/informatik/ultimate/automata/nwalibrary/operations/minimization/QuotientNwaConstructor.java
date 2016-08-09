@@ -360,9 +360,15 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	private interface IResultStateConstructor<STATE> {
 		/**
 		 * @param inputState input state
-		 * @return new state in quotient automaton
+		 * @return new state in quotient automaton (constructed if not existent)
 		 */
 		STATE getOrConstructResultState(final STATE inputState);
+		
+		/**
+		 * @param inputState input state
+		 * @return new state in quotient automaton
+		 */
+		STATE get(final STATE inputState);
 	}
 	
 	private class ResultStateConstructorFromUnionFind
@@ -405,17 +411,20 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		
 		@Override
 		public STATE getOrConstructResultState(final STATE inputState) {
-			final STATE inputRepresentative = mUnionFind.find(inputState);
+			STATE inputRepresentative = mUnionFind.find(inputState);
 			if (inputRepresentative == null) {
-				// Christian 2016-08-09: removed this, it does not make sense
-//				inputRepresentative = inputState;
-				/*
-				 * NOTE: a caller may call this with an unknown state, in which
-				 *       case 'null' is expected
-				 */
-				return null;
+				inputRepresentative = inputState;
 			}
 			return mConstructionCache.getOrConstruct(inputRepresentative);
+		}
+		
+		@Override
+		public STATE get(final STATE inputState) {
+			STATE inputRepresentative = mUnionFind.find(inputState);
+			if (inputRepresentative == null) {
+				inputRepresentative = inputState;
+			}
+			return mConstructionCache.getMap().get(inputRepresentative);
 		}
 	}
 	
@@ -448,14 +457,14 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		@Override
 		public STATE getOrConstructResultState(final STATE inputState) {
 			final IBlock<STATE> block = mPartition.getBlock(inputState);
-			if (block == null) {
-				/*
-				 * NOTE: a caller may call this with an unknown state, in which
-				 *       case 'null' is expected
-				 */
-				return null;
-			}
+			assert (block != null) : "Block is not known.";
 			return mConstructionCache.getOrConstruct(block);
+		}
+		
+		@Override
+		public STATE get(final STATE inputState) {
+			final IBlock<STATE> block = mPartition.getBlock(inputState);
+			return mConstructionCache.getMap().get(block);
 		}
 	}
 	
@@ -497,7 +506,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		@SuppressWarnings("unchecked")
 		@Override
 		public STATE get(final Object key) {
-			return mResStateConstructor.getOrConstructResultState((STATE)key);
+			return mResStateConstructor.get((STATE)key);
 		}
 
 		@Override
