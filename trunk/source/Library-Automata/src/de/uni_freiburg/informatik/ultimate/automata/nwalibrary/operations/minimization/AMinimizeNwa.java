@@ -205,6 +205,10 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 * <i>oldState</i> is the block of merged states containing <i>oldState</i>.
 	 * This method can only be used when the minimization has finished.
 	 * 
+	 * NOTE: The map must be robust against queries for states which did not
+	 *       exist in the input automaton. The expected value is 'null', but
+	 *       not, e.g., a NullPointerException.
+	 * 
 	 * @return map from input automaton states to output automaton states
 	 */
 	public Map<STATE, STATE> getOldState2newState() {
