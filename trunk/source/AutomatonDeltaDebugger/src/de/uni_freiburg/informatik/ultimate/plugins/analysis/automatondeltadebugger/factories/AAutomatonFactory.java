@@ -59,10 +59,13 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	}
 	
 	/**
+	 * @param automaton automaton to use the alphabet of
 	 * @return new {@link INestedWordAutomaton} object
 	 */
-	public INestedWordAutomaton<LETTER, STATE> create() {
-		return create(null, null, null);
+	public INestedWordAutomaton<LETTER, STATE>
+			create(final INestedWordAutomaton<LETTER, STATE> automaton) {
+		return create(automaton.getInternalAlphabet(),
+				automaton.getCallAlphabet(), automaton.getReturnAlphabet());
 	}
 	
 	/**
@@ -72,10 +75,10 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	 * @return new {@link INestedWordAutomaton} object with specified alphabets
 	 */
 	public INestedWordAutomaton<LETTER, STATE> create(
-			Set<LETTER> internalAlphabet, Set<LETTER> callAlphabet,
-			Set<LETTER> returnAlphabet) {
+			final Set<LETTER> internalAlphabet, final Set<LETTER> callAlphabet,
+			final Set<LETTER> returnAlphabet) {
 		final Set<LETTER> internalAlphabetRes = (internalAlphabet == null)
-				? mAutomaton.getAlphabet()
+				? mAutomaton.getInternalAlphabet()
 				: internalAlphabet;
 		final Set<LETTER> callAlphabetRes = (callAlphabet == null)
 				? mAutomaton.getCallAlphabet()

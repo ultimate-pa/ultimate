@@ -60,7 +60,8 @@ public class NormalizeStateShrinker<LETTER, STATE>
 	public INestedWordAutomaton<LETTER, STATE>
 			createAutomaton(final List<STATE> list) {
 		// create fresh automaton
-		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create();
+		final INestedWordAutomaton<LETTER, STATE> automaton =
+				mFactory.create(mAutomaton);
 		
 		// rename states
 		final HashMap<STATE, STATE> old2new = renameStates(automaton, list);
