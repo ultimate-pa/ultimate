@@ -19,8 +19,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 /**
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class AbsIntCanonicalInterpolantAutomatonBuilder implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
 
