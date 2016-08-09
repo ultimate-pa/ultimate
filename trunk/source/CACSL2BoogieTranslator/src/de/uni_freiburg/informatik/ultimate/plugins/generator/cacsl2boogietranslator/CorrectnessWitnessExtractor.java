@@ -50,8 +50,10 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnotation;
+import de.uni_freiburg.informatik.ultimate.witnessparser.preferences.WitnessParserPreferences;
 
 /**
  *
@@ -62,6 +64,7 @@ public class CorrectnessWitnessExtractor {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
+	private final boolean mCheckOnlyLoopInvariants;
 	private WitnessNode mWitnessNode;
 	private IASTTranslationUnit mTranslationUnit;
 	private Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>> mAST2Invariant;
@@ -69,6 +72,8 @@ public class CorrectnessWitnessExtractor {
 	public CorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
 		mServices = service;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mCheckOnlyLoopInvariants = WitnessParserPreferences.getPrefs(service)
+				.getBoolean(WitnessParserPreferences.LABEL_CW_USE_ONLY_LOOPINVARIANTS);
 	}
 
 	public void setWitness(final WitnessNode wnode) {
@@ -114,6 +119,11 @@ public class CorrectnessWitnessExtractor {
 		if (!isReady()) {
 			mLogger.warn("Cannot extract witness if there is no witness");
 			return null;
+		}
+		if (mCheckOnlyLoopInvariants) {
+			mLogger.info("Only extracting loop invariants from correctness witness");
+		} else {
+			mLogger.info("Extracting all invariants from correctness witness");
 		}
 		final Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>> rtr =
 				new Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>>(new HashMap<>(),
@@ -221,10 +231,21 @@ public class CorrectnessWitnessExtractor {
 	}
 
 	private Pair<List<IASTNode>, List<IASTNode>> matchASTNodes(final WitnessNode wnode) {
-		final Set<Integer> afterLines =
-				wnode.getIncomingEdges().stream().map(a -> a.getLocation().getEndLine()).collect(Collectors.toSet());
-		final Set<Integer> beforeLines =
-				wnode.getOutgoingEdges().stream().map(a -> a.getLocation().getStartLine()).collect(Collectors.toSet());
+		final Set<Integer> afterLines;
+		final Set<Integer> beforeLines;
+		if (mCheckOnlyLoopInvariants) {
+			afterLines = wnode.getIncomingEdges().stream()
+					.filter(a -> WitnessEdgeAnnotation.getAnnotation(a).getEnterLoopHead())
+					.map(a -> a.getLocation().getEndLine()).collect(Collectors.toSet());
+			beforeLines = wnode.getOutgoingEdges().stream()
+					.filter(a -> WitnessEdgeAnnotation.getAnnotation(a).getEnterLoopHead())
+					.map(a -> a.getLocation().getStartLine()).collect(Collectors.toSet());
+		} else {
+			afterLines = wnode.getIncomingEdges().stream().map(a -> a.getLocation().getEndLine())
+					.collect(Collectors.toSet());
+			beforeLines = wnode.getOutgoingEdges().stream().map(a -> a.getLocation().getStartLine())
+					.collect(Collectors.toSet());
+		}
 
 		// remove the line number that is used to mark "no line number"
 		afterLines.remove(-1);

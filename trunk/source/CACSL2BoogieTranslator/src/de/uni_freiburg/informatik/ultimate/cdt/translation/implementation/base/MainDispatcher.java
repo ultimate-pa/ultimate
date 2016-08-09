@@ -555,13 +555,13 @@ public class MainDispatcher extends Dispatcher {
 				if (invariantBefore != null && !mNodeLabelsOfAddedWitnesses.contains(invariantBefore.getNodeLabels())) {
 					stmt.addAll(0, witnessInvariantsBefore);
 					mNodeLabelsOfAddedWitnesses.add(invariantBefore.getNodeLabels());
-					mLogger.warn("Checking witness invariant " + invariantBefore
+					mLogger.info("Checking witness invariant " + invariantBefore
 							+ " directly before the following code " + loc);
 				}
 				if (invariantAfter != null && !mNodeLabelsOfAddedWitnesses.contains(invariantAfter.getNodeLabels())) {
 					stmt.addAll(witnessInvariantsAfter);
 					mNodeLabelsOfAddedWitnesses.add(invariantAfter.getNodeLabels());
-					mLogger.warn("Checking witness invariant " + invariantAfter + " directly after the following code "
+					mLogger.info("Checking witness invariant " + invariantAfter + " directly after the following code "
 							+ loc);
 				}
 			} else if (result instanceof ExpressionListResult) {
