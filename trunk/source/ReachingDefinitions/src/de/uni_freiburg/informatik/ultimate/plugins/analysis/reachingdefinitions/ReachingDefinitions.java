@@ -103,7 +103,7 @@ public class ReachingDefinitions implements IAnalysis {
 			
 			if (mServices.getPreferenceProvider(this.getPluginID())
 					.getBoolean(ReachingDefinitionsPreferenceInitializer.LABEL_COMPUTE_PARRALLEL_DFG)) {
-				rtr.add(new ParallelDfgGeneratorObserver());
+				rtr.add(new ParallelDfgGeneratorObserver(logger));
 			}
 			
 			return rtr;
