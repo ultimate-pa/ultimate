@@ -171,7 +171,7 @@ public class InitializationHandler {
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 		final ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
-		LRValue lrVal = null;
+		
 
 		//if (f.i.) the initializer comes from a function call, it has statements and declarations that we need to
 		//carry over
@@ -186,7 +186,7 @@ public class InitializationHandler {
 		}
 
 
-
+		final LRValue lrVal;
 		Expression rhs = null;
 		if (lCType instanceof CPrimitive) {
 			switch (((CPrimitive) lCType).getGeneralType()) {
@@ -281,6 +281,7 @@ public class InitializationHandler {
 			}
 			//			}
 			assert lhs != null;
+			lrVal = null;
 		} else if (lCType instanceof CStruct) {
 			final CStruct structType = (CStruct) lCType;
 
