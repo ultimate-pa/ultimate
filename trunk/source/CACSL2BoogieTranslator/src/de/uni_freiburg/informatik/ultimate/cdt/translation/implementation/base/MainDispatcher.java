@@ -596,13 +596,14 @@ public class MainDispatcher extends Dispatcher {
 		return result;
 	}
 
-	private List<AssertStatement> translateWitnessInvariant(final WitnessInvariant invariantBefore)
+	private List<AssertStatement> translateWitnessInvariant(final WitnessInvariant invariant)
 			throws AssertionError {
-		if (invariantBefore != null) {
+		if (invariant != null) {
 			ACSLNode acslNode = null;
 			try {
-				acslNode = Parser.parseComment("lstart\n assert " + invariantBefore.getInvariant() + ";",
-						invariantBefore.getStartline(), invariantBefore.getEndline(), mLogger);
+				checkForQuantifiers(invariant.getInvariant());
+				acslNode = Parser.parseComment("lstart\n assert " + invariant.getInvariant() + ";",
+						invariant.getStartline(), invariant.getEndline(), mLogger);
 			} catch (final Exception e) {
 				throw new IllegalArgumentException(e);
 			}
@@ -633,6 +634,19 @@ public class MainDispatcher extends Dispatcher {
 		} else {
 			return Collections.emptyList();
 		}
+	}
+
+	/**
+	 * Throw Exception if invariant contains quantifiers.
+	 * It seems like our parser does not support quantifiers yet,
+	 * For the moment it seems to be better to crash here in order to get
+	 * a meaningful error message.
+	 */
+	private void checkForQuantifiers(final String invariant) {
+		if (invariant.contains("exists") || invariant.contains("forall")) {
+			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "invariant contains quantifiers");
+		}
+		
 	}
 
 	@Override
