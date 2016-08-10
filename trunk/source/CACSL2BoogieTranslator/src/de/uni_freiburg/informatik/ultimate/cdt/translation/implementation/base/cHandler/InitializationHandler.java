@@ -87,8 +87,8 @@ public class InitializationHandler {
 	private final AExpressionTranslation mExpressionTranslation;	
 
 	public InitializationHandler(
-			FunctionHandler functionHandler, StructHandler structHandler,
-			MemoryHandler memoryHandler, AExpressionTranslation expressionTranslation) {
+			final FunctionHandler functionHandler, final StructHandler structHandler,
+			final MemoryHandler memoryHandler, final AExpressionTranslation expressionTranslation) {
 		super();
 		mFunctionHandler = functionHandler;
 		mStructHandler = structHandler;
@@ -133,8 +133,8 @@ public class InitializationHandler {
 	 * 
 	 * @return 
 	 */
-	public ExpressionResult initVar(ILocation loc, Dispatcher main,
-			LeftHandSide lhs, CType cType, ExpressionResult initializerRaw) {
+	public ExpressionResult initVar(final ILocation loc, final Dispatcher main,
+			final LeftHandSide lhs, final CType cType, final ExpressionResult initializerRaw) {
 
 		boolean onHeap = false;
 		if (lhs != null && lhs instanceof VariableLHS) {
@@ -163,8 +163,8 @@ public class InitializationHandler {
 	 * variable as an argument but instead returns a ResultExpression with an lrValue that can be 
 	 * stored in such a variable.
 	 */
-	private ExpressionResult initVar(ILocation loc, Dispatcher main,
-			CType cType, ExpressionResult initializerRaw) {
+	private ExpressionResult initVar(final ILocation loc, final Dispatcher main,
+			final CType cType, final ExpressionResult initializerRaw) {
 		final CType lCType = cType.getUnderlyingType();
 
 		final ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -185,7 +185,7 @@ public class InitializationHandler {
 			auxVars.putAll(initializer.auxVars);
 		}
 
-		final VariableLHS lhs = null;
+
 
 		Expression rhs = null;
 		if (lCType instanceof CPrimitive) {
@@ -258,6 +258,7 @@ public class InitializationHandler {
 
 			lrVal = new RValue(rhs, lCType);
 		} else if (lCType instanceof CArray) {
+			final VariableLHS lhs = null;
 
 			if (initializer == null) {
 				final ExpressionResult aInit = initBoogieArray(main, loc,
@@ -317,8 +318,8 @@ public class InitializationHandler {
 	 * if var is a HeapLValue, something on Heap is initialized, 
 	 * if it is a LocalLValue something off the Heap is initialized
 	 */
-	private ExpressionResult initVar(ILocation loc, Dispatcher main,
-			LRValue var, CType cType, ExpressionResult initializerRaw) {
+	private ExpressionResult initVar(final ILocation loc, final Dispatcher main,
+			final LRValue var, final CType cType, final ExpressionResult initializerRaw) {
 		assert var != null;
 
 		final boolean onHeap = var instanceof HeapLValue;
@@ -546,8 +547,8 @@ public class InitializationHandler {
 	}
 
 
-	public static void addOverApprToStatementAnnots(ArrayList<Overapprox> overappr,
-			Statement stm) {
+	public static void addOverApprToStatementAnnots(final ArrayList<Overapprox> overappr,
+			final Statement stm) {
 		final Map<String, IAnnotations> annots = stm.getPayload().getAnnotations();
 		for (final Overapprox overapprItem : overappr) {
 			annots.put(Overapprox.getIdentifier(), overapprItem);
@@ -561,9 +562,9 @@ public class InitializationHandler {
 	 * @param arrayType The type of the array (containing its size and value type)
 	 * @return a list of statements that do the initialization
 	 */
-	private ExpressionResult initArrayOnHeap(Dispatcher main, ILocation loc, 
-			ArrayList<ExpressionListRecResult> list, Expression startAddress,
-			CArray arrayType) {
+	private ExpressionResult initArrayOnHeap(final Dispatcher main, final ILocation loc, 
+			final ArrayList<ExpressionListRecResult> list, final Expression startAddress,
+			final CArray arrayType) {
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
@@ -698,9 +699,9 @@ public class InitializationHandler {
 	 * @param arrayType The type of the array (containing its size and value type)
 	 * @return a list of statements that do the initialization
 	 */
-	private ExpressionResult initBoogieArray(Dispatcher main, ILocation loc, 
-			ArrayList<ExpressionListRecResult> list, LeftHandSide innerArrayAccessLHS,
-			CArray arrayType) {
+	private ExpressionResult initBoogieArray(final Dispatcher main, final ILocation loc, 
+			final ArrayList<ExpressionListRecResult> list, final LeftHandSide innerArrayAccessLHS,
+			final CArray arrayType) {
 		final ArrayList<Statement> stmt = new ArrayList<Statement>();
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
@@ -821,9 +822,9 @@ public class InitializationHandler {
 	/**
 	 * Generate the write calls for the initialization of the struct onHeap.
 	 */
-	private ExpressionResult initStructOnHeapFromRERL(Dispatcher main, ILocation loc, 
-			Expression startAddress, 
-			ExpressionListRecResult rerlIn, CStruct structType) {
+	private ExpressionResult initStructOnHeapFromRERL(final Dispatcher main, final ILocation loc, 
+			final Expression startAddress, 
+			final ExpressionListRecResult rerlIn, final CStruct structType) {
 		ExpressionListRecResult rerl = null;
 		if (rerlIn == null) {
 			rerl = new ExpressionListRecResult();
@@ -973,8 +974,8 @@ public class InitializationHandler {
 	 * nesting structure from the CStruct and the values from the RERL.
 	 * If the RERL is null, the default initialization (int: 0, Ptr: NULL, ...) is used for each entry.
 	 */
-	private ExpressionResult makeStructConstructorFromRERL(Dispatcher main, ILocation loc, 
-			ExpressionListRecResult rerlIn, CStruct structType) {
+	private ExpressionResult makeStructConstructorFromRERL(final Dispatcher main, final ILocation loc, 
+			final ExpressionListRecResult rerlIn, final CStruct structType) {
 		ExpressionListRecResult rerl = null;
 		if (rerlIn == null) {
 			rerl = new ExpressionListRecResult();
