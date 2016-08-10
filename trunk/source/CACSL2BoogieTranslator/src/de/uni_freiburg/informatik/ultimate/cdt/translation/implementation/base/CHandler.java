@@ -34,6 +34,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.ParseException;
 import java.util.ArrayDeque;
@@ -1281,7 +1282,7 @@ public class CHandler implements ICHandler {
 					
 			final Expression one;
 			if (ctype.isFloatingType()) {
-				one = mExpressionTranslation.translateFloatingLiteral(loc, "1.0").value;
+				one = mExpressionTranslation.constructLiteralForFloatingType(loc, cPrimitive, BigDecimal.ONE);
 			} else {			
 				one = mExpressionTranslation.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
 			}
