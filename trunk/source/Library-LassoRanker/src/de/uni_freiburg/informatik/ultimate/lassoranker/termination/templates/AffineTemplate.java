@@ -138,8 +138,8 @@ public class AffineTemplate extends ComposableTemplate {
 	}
 
 	@Override
-	public Collection<Term> getVariables() {
-		final Collection<Term> list = mfgen.getVariables();
+	public Collection<Term> getCoefficients() {
+		final Collection<Term> list = mfgen.getCoefficients();
 		list.add(mdelta);
 		return list;
 	}

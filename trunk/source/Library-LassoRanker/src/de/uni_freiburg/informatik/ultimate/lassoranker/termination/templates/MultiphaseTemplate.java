@@ -123,10 +123,10 @@ public class MultiphaseTemplate extends ComposableTemplate {
 	}
 
 	@Override
-	public Collection<Term> getVariables() {
+	public Collection<Term> getCoefficients() {
 		final Collection<Term> list = new ArrayList<Term>();
 		for (int i = 0; i < size; ++i) {
-			list.addAll(mfgens[i].getVariables());
+			list.addAll(mfgens[i].getCoefficients());
 			list.add(mdeltas[i]);
 		}
 		return list;
