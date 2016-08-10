@@ -188,11 +188,11 @@ public class InitializationHandler {
 
 
 		final LRValue lrVal;
-		Expression rhs = null;
+		final Expression rhs;
 		if (lCType instanceof CPrimitive) {
 			if (initializer == null) {
 				final CPrimitive lCPrimitive = (CPrimitive) lCType;
-				switch ((lCPrimitive).getGeneralType()) {
+				switch (lCPrimitive.getGeneralType()) {
 				case INTTYPE:
 					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, lCPrimitive, BigInteger.ZERO);
 					break;
@@ -272,7 +272,7 @@ public class InitializationHandler {
 			decl.addAll(scRex.decl);
 			overappr.addAll(scRex.overappr);
 			auxVars.putAll(scRex.auxVars);
-
+			rhs = null;
 			lrVal = new RValue(rhs, lCType);
 		} else if (lCType instanceof CEnum) {
 			if (initializer == null) {
