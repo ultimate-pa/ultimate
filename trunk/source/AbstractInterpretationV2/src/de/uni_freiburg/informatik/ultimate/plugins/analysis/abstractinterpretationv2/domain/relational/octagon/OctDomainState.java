@@ -71,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
-public final class OctDomainState implements IAbstractState<OctDomainState, CodeBlock> {
+public final class OctDomainState implements IAbstractState<OctDomainState, CodeBlock, IBoogieVar> {
 
 	/** Counter for created objects. Used to set {@link #mId}. */
 	private static int sId;

@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <ACTION>
  *            Any action type.
  */
-public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION>, ACTION> {
+public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, IBoogieVar>, ACTION> {
 
 	/**
 	 * Evaluates the evaluator with all its sub-evaluators according to the given state.

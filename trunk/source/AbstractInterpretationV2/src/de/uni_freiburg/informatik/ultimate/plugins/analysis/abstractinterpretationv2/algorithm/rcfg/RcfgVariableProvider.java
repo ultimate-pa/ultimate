@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  *
  * @param <STATE>
  */
-public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock>>
+public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
 		implements IVariableProvider<STATE, CodeBlock, IBoogieVar> {
 
 	private static final StorageClass[] LOCAL_STORAGE_CLASSES = new StorageClass[] { StorageClass.LOCAL,

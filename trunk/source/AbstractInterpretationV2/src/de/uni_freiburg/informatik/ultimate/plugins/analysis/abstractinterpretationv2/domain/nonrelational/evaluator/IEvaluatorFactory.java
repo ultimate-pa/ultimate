@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <VARDECL>
  *            Any declaration type.
  */
-public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, ACTION>, ACTION> {
+public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, ACTION, IBoogieVar>, ACTION> {
 
 	/**
 	 * Creates an n-ary evaluator for n-ary expressions.

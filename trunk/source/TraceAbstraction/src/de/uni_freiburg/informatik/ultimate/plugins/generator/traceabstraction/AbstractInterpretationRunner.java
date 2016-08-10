@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -101,7 +101,7 @@ public class AbstractInterpretationRunner {
 	/**
 	 * Generate fixpoints for each program location of a path program represented by the current counterexample in the
 	 * current abstraction.
-	 * 
+	 *
 	 * Do not run if
 	 * <ul>
 	 * <li>We have already analyzed the exact same path program.
@@ -165,7 +165,7 @@ public class AbstractInterpretationRunner {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return true iff abstract interpretation was strong enough to prove infeasibility of the current counterexample.
 	 */
 	public boolean hasShownInfeasibility() {
@@ -200,7 +200,7 @@ public class AbstractInterpretationRunner {
 				throw new AssertionError("Mode should have been checked earlier");
 			case USE_PATH_PROGRAM:
 				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder(mServices, abstraction,
-						interpolGenerator.getPredicateUnifier(), mSmtManager.getManagedScript(), 
+						interpolGenerator.getPredicateUnifier(), mSmtManager.getManagedScript(),
 						mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), currentCex, mSimplificationTechnique,
 						mXnfConversionTechnique);
 				break;
@@ -230,7 +230,7 @@ public class AbstractInterpretationRunner {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return true iff abstract interpretation was strong enough to prove infeasibility of the current counterexample.
 	 */
 	public boolean refine(final PredicateUnifier predUnifier,
@@ -293,7 +293,8 @@ public class AbstractInterpretationRunner {
 	}
 
 	private String simplify(final Term term) {
-		return SmtUtils.simplify(mRoot.getRootAnnot().getManagedScript(), term, mServices, mSimplificationTechnique).toStringDirect();
+		return SmtUtils.simplify(mRoot.getRootAnnot().getManagedScript(), term, mServices, mSimplificationTechnique)
+				.toStringDirect();
 	}
 
 	@FunctionalInterface

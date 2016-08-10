@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
@@ -41,8 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <VARDECL>
  *            Any variable declaration.
  */
-public class EmptyDomain<ACTION, VARDECL, EXPRESSION>
-		implements IAbstractDomain<EmptyDomainState<ACTION>, ACTION, VARDECL> {
+public class EmptyDomain<ACTION, VARDECL> implements IAbstractDomain<EmptyDomainState<ACTION>, ACTION, IBoogieVar> {
 
 	@Override
 	public EmptyDomainState<ACTION> createFreshState() {
@@ -60,7 +60,7 @@ public class EmptyDomain<ACTION, VARDECL, EXPRESSION>
 	}
 
 	@Override
-	public IAbstractPostOperator<EmptyDomainState<ACTION>, ACTION, VARDECL> getPostOperator() {
+	public IAbstractPostOperator<EmptyDomainState<ACTION>, ACTION, IBoogieVar> getPostOperator() {
 		return new EmptyPostOperator<>();
 	}
 

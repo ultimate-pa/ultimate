@@ -54,13 +54,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public class CompoundDomainState implements IAbstractState<CompoundDomainState, CodeBlock> {
+public class CompoundDomainState implements IAbstractState<CompoundDomainState, CodeBlock, IBoogieVar> {
 
 	private static int sId;
 
 	private final IUltimateServiceProvider mServices;
 
-	private final List<IAbstractState<?, CodeBlock>> mAbstractStates;
+	private final List<IAbstractState<?, CodeBlock, IBoogieVar>> mAbstractStates;
 	private final List<IAbstractDomain> mDomainList;
 	private final int mId;
 
@@ -76,7 +76,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	public CompoundDomainState(final IUltimateServiceProvider services, final List<IAbstractDomain> domainList,
-			final List<IAbstractState<?, CodeBlock>> abstractStateList) {
+			final List<IAbstractState<?, CodeBlock, IBoogieVar>> abstractStateList) {
 		sId++;
 		mId = sId;
 		if (domainList.size() != abstractStateList.size()) {
@@ -122,7 +122,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	public CompoundDomainState patch(CompoundDomainState dominator) {
 		assert mAbstractStates.size() == dominator.mAbstractStates.size();
 
-		final List<IAbstractState<?, CodeBlock>> returnList = new ArrayList<>();
+		final List<IAbstractState<?, CodeBlock, IBoogieVar>> returnList = new ArrayList<>();
 		for (int i = 0; i < mAbstractStates.size(); i++) {
 			returnList.add(patchInternally(mAbstractStates.get(i), dominator.mAbstractStates.get(i)));
 		}
@@ -175,7 +175,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
 
-		for (final IAbstractState<?, CodeBlock> state : mAbstractStates) {
+		for (final IAbstractState<?, CodeBlock, IBoogieVar> state : mAbstractStates) {
 			sb.append(getShortName(state.getClass())).append(": ").append(state.toLogString()).append(", ");
 		}
 
@@ -191,7 +191,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	private CompoundDomainState performStateOperation(
-			Function<IAbstractState<?, CodeBlock>, IAbstractState<?, CodeBlock>> state) {
+			Function<IAbstractState<?, CodeBlock, IBoogieVar>, IAbstractState<?, CodeBlock, IBoogieVar>> state) {
 		return new CompoundDomainState(mServices, mDomainList,
 				mAbstractStates.stream().map(state).collect(Collectors.toList()));
 	}
@@ -200,7 +200,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		return mDomainList;
 	}
 
-	protected List<IAbstractState<?, CodeBlock>> getAbstractStatesList() {
+	protected List<IAbstractState<?, CodeBlock, IBoogieVar>> getAbstractStatesList() {
 		return mAbstractStates;
 	}
 
@@ -222,8 +222,8 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	private SubsetResult isStrictSubsetOf(final SubsetResult current,
-			final IAbstractState<?, CodeBlock> aState,
-			final IAbstractState<?, CodeBlock> bState) {
+			final IAbstractState<?, CodeBlock, IBoogieVar> aState,
+			final IAbstractState<?, CodeBlock, IBoogieVar> bState) {
 		final SubsetResult result = isSubsetOfInternally(aState, bState);
 		switch (current) {
 		case EQUAL:

@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  * @param <STATE>
  * @param <LOCATION>
  */
-public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock>, LOCATION>
+public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOCATION>
 		implements IDebugHelper<STATE, CodeBlock, IBoogieVar, LOCATION> {
 
 	private final ILogger mLogger;

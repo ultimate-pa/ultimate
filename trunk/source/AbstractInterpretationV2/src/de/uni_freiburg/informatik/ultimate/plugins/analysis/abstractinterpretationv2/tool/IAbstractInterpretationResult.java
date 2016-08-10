@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public interface IAbstractInterpretationResult<STATE extends IAbstractState<STATE, ACTION>, ACTION, VARDECL, LOCATION> {
+public interface IAbstractInterpretationResult<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
 
 	/**
 	 * @return a {@link Map} mapping to each location that was reachable during the analysis the computed fixpoint as

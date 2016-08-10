@@ -2,27 +2,27 @@
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -53,19 +53,19 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION>, ACTION, VARDECL, LOCATION, EXPRESSION> {
+public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION, EXPRESSION> {
 
 	private final int mMaxUnwindings;
 	private final int mMaxParallelStates;
 
 	private final ITransitionProvider<ACTION, LOCATION> mTransitionProvider;
 	private final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mStateStorage;
-	private final IAbstractDomain<STATE, ACTION, VARDECL>mDomain;
+	private final IAbstractDomain<STATE, ACTION, VARDECL> mDomain;
 	private final IVariableProvider<STATE, ACTION, VARDECL> mVarProvider;
 	private final ILoopDetector<ACTION> mLoopDetector;
 	private final IDebugHelper<STATE, ACTION, VARDECL, LOCATION> mDebugHelper;
@@ -202,7 +202,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION>, ACTION,
 	/**
 	 * Preprocess a pending post state before it is saved to the current location. This includes checking for validity
 	 * and checking whether a loop is entered or left.
-	 * 
+	 *
 	 * @param currentItem
 	 *            The worklist item for which we calculate a post state.
 	 * @param pendingPostState
@@ -427,7 +427,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION>, ACTION,
 
 	/**
 	 * Check if we are entering or leaving a scope and if so, create or delete it.
-	 * 
+	 *
 	 * @param postStates
 	 * @param mergeOp
 	 */
@@ -565,7 +565,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION>, ACTION,
 		}
 	}
 
-	private StringBuilder getLogMessageWarnTooManyPostStates(List<STATE> postStates) {
+	private StringBuilder getLogMessageWarnTooManyPostStates(final List<STATE> postStates) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Domain ")
 				.append(mDomain.getClass().getSimpleName()).append(" produced too many abstract states during post: ")
 				.append(mMaxParallelStates).append(" allowed, ").append(postStates.size()).append(" received.");
@@ -639,19 +639,19 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION>, ACTION,
 				.append(successorItem.getCallStackDepth()).append(")");
 	}
 
-	private StringBuilder getLogMessageFixpointFound(STATE oldPostState, final STATE newPostState) {
+	private StringBuilder getLogMessageFixpointFound(final STATE oldPostState, final STATE newPostState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" State [")
 				.append(oldPostState.hashCode()).append("] ").append(oldPostState.toLogString())
 				.append(" is equal to [").append(newPostState.hashCode()).append("]");
 	}
 
-	private StringBuilder getLogMessageMergeResult(STATE newPostState) {
+	private StringBuilder getLogMessageMergeResult(final STATE newPostState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Merging resulted in [")
 				.append(newPostState.hashCode()).append("] ").append(newPostState.toLogString());
 	}
 
 	private StringBuilder getLogMessageMergeStates(final int availablePostStatesCount,
-			Collection<STATE> availablePostStates) {
+			final Collection<STATE> availablePostStates) {
 		final List<String> postStates = availablePostStates.stream().map(a -> "[" + String.valueOf(a.hashCode()) + "]")
 				.collect(Collectors.toList());
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Merging ")
@@ -659,7 +659,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION>, ACTION,
 				.append(String.join(",", postStates));
 	}
 
-	private StringBuilder getLogMessageNewPostState(STATE newPostState) {
+	private StringBuilder getLogMessageNewPostState(final STATE newPostState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Adding post state [")
 				.append(newPostState.hashCode()).append("] ").append(newPostState.toLogString());
 	}

@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
  * @param <STATE>
  *            The type of the abstract states handled by the equality provider.
  */
-public class DefaultEqualityProvider<STATE extends IAbstractState<STATE, CodeBlock>>
+public class DefaultEqualityProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
         implements IEqualityProvider<STATE, CodeBlock, IBoogieVar, Expression> {
 
 	private final IAbstractPostOperator<STATE, CodeBlock, IBoogieVar> mPostOperator;

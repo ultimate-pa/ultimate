@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @param <IBoogieVar>
  *            Any variable declaration.
  */
-public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock> {
+public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, IBoogieVar> {
 
 	private static int sId;
 	private final int mId;

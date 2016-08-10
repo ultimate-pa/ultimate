@@ -202,7 +202,7 @@ public final class AbstractInterpreter {
 				transProvider, transProvider, rootAnnot);
 	}
 
-	private static <STATE extends IAbstractState<STATE, CodeBlock>, LOC>
+	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOC>
 			AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, LOC> runSilentlyOnNWA(final CodeBlock initial,
 					final IProgressAwareTimer timer, final IUltimateServiceProvider services,
 					final BoogieSymbolTable symbolTable, final Boogie2SMT bpl2smt, final Script script,
@@ -215,8 +215,8 @@ public final class AbstractInterpreter {
 		final FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, LOC, Expression> params =
 				new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, LOC, Expression>(services).setDomain(domain)
 						.setLoopDetector(loopDetector)
-						.setStorage(new RcfgAbstractStateStorageProvider<STATE, LOC>(domain.getMergeOperator(),
-								services, transitionProvider))
+						.setStorage(new RcfgAbstractStateStorageProvider<STATE, LOC, IBoogieVar>(
+								domain.getMergeOperator(), services, transitionProvider))
 						.setTransitionProvider(transitionProvider)
 						.setVariableProvider(new RcfgVariableProvider<>(symbolTable, boogieVarTable, services))
 						.setDebugHelper(debugHelper).setTimer(timer);
@@ -243,7 +243,7 @@ public final class AbstractInterpreter {
 		}
 	}
 
-	private static <STATE extends IAbstractState<STATE, CodeBlock>>
+	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
 			AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, ProgramPoint>
 			run(final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
 					final IUltimateServiceProvider services, final BoogieSymbolTable symbolTable,
@@ -271,7 +271,7 @@ public final class AbstractInterpreter {
 			final FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression> params =
 					new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression>(services)
 							.setDomain(domain).setLoopDetector(loopDetector)
-							.setStorage(new RcfgAbstractStateStorageProvider<STATE, ProgramPoint>(
+							.setStorage(new RcfgAbstractStateStorageProvider<STATE, ProgramPoint, IBoogieVar>(
 									domain.getMergeOperator(), services, transitionProvider))
 							.setTransitionProvider(transitionProvider)
 							.setVariableProvider(new RcfgVariableProvider<>(symbolTable, boogieVarTable, services))
@@ -376,16 +376,16 @@ public final class AbstractInterpreter {
 		}
 	}
 
-	private static <STATE extends IAbstractState<STATE, CodeBlock>, VARDECL>
-			IResultReporter<STATE, CodeBlock, VARDECL, ProgramPoint>
+	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, VARDECL>
+			IResultReporter<STATE, CodeBlock, IBoogieVar, ProgramPoint>
 			getReporter(final IUltimateServiceProvider services, final boolean isLibrary, final boolean isSilent) {
 		if (isSilent) {
 			return new SilentReporter<>();
 		}
 		if (isLibrary) {
-			return new RcfgLibraryModeResultReporter<STATE, VARDECL>(services);
+			return new RcfgLibraryModeResultReporter<>(services);
 		} else {
-			return new RcfgResultReporter<STATE, VARDECL>(services);
+			return new RcfgResultReporter<>(services);
 		}
 	}
 

@@ -15,11 +15,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-final class SummaryMap<STATE extends IAbstractState<STATE, ACTION>, ACTION, VARDECL, LOCATION> {
+final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
 
 	private final Map<ACTION, Set<Pair<STATE, STATE>>> mSummaries;
 	private final IAbstractStateBinaryOperator<STATE> mMergeOp;
@@ -37,7 +37,7 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION>, ACTION, VARD
 	}
 
 	/**
-	 * 
+	 *
 	 * @param preCallState
 	 * @param postCallState
 	 * @param current
@@ -84,7 +84,7 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION>, ACTION, VARD
 		return succActions.stream().filter(a -> mTransProvider.isSummaryForCall(a, current)).findAny().get();
 	}
 
-	private void mergeIfNecessary(Set<Pair<STATE, STATE>> summaries) {
+	private void mergeIfNecessary(final Set<Pair<STATE, STATE>> summaries) {
 		if (summaries.size() <= mMaxParallelStates) {
 			return;
 		}
@@ -123,7 +123,7 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION>, ACTION, VARD
 		return new Pair<>(newPre, newPost);
 	}
 
-	private Set<Pair<STATE, STATE>> getOrCreateSummaries(ACTION current) {
+	private Set<Pair<STATE, STATE>> getOrCreateSummaries(final ACTION current) {
 		Set<Pair<STATE, STATE>> rtr = mSummaries.get(current);
 		if (rtr == null) {
 			rtr = new HashSet<>();
