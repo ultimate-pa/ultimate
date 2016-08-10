@@ -116,11 +116,11 @@ public class NestedTemplate extends ComposableTemplate {
 	}
 	
 	@Override
-	public Collection<Term> getVariables() {
+	public Collection<Term> getCoefficients() {
 		final Collection<Term> list = new ArrayList<Term>();
 		list.add(mdelta);
 		for (int i = 0; i < mSize; ++i) {
-			list.addAll(mfgens[i].getVariables());
+			list.addAll(mfgens[i].getCoefficients());
 		}
 		return list;
 	}

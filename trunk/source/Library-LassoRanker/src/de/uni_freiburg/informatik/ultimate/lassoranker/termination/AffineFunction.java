@@ -35,6 +35,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -183,7 +184,7 @@ public class AffineFunction implements Serializable {
 	public Term asTerm(final Script script) throws SMTLIBException {
 		final ArrayList<Term> summands = new ArrayList<Term>();
 		for (final Map.Entry<RankVar, BigInteger> entry : mcoefficients.entrySet()) {
-			final Term definition = entry.getKey().getDefinition();
+			final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
 			summands.add(constructSummand(script, definition, entry.getValue()));
 		}
 		summands.add(script.numeral(mconstant));

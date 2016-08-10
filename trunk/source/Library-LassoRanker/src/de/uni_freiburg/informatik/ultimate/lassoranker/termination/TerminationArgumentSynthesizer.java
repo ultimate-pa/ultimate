@@ -397,19 +397,19 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		final LBool sat = mscript.checkSat();
 		if (sat == LBool.SAT) {
 			// Get all relevant variables
-			final ArrayList<Term> variables = new ArrayList<Term>();
-			variables.addAll(mtemplate.getVariables());
+			final ArrayList<Term> coefficients = new ArrayList<Term>();
+			coefficients.addAll(mtemplate.getCoefficients());
 			for (final SupportingInvariantGenerator sig : msi_generators) {
-				variables.addAll(sig.getVariables());
+				coefficients.addAll(sig.getCoefficients());
 			}
 
 			// Get valuation for the variables
 			Map<Term, Rational> val;
 			if (msettings.simplify_termination_argument) {
 				mLogger.info("Found a termination argument, trying to simplify.");
-				val = ModelExtractionUtils.getSimplifiedAssignment_TwoMode(mscript, variables, mLogger, mservices);
+				val = ModelExtractionUtils.getSimplifiedAssignment_TwoMode(mscript, coefficients, mLogger, mservices);
 			} else {
-				val = ModelExtractionUtils.getValuation(mscript, variables);
+				val = ModelExtractionUtils.getValuation(mscript, coefficients);
 			}
 
 			// Extract ranking function and supporting invariants

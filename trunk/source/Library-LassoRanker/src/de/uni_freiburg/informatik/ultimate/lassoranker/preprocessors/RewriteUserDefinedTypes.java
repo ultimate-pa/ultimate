@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -98,7 +99,7 @@ public class RewriteUserDefinedTypes extends RewriteTermVariables {
 	 */
 	@Override
 	protected Term constructNewDefinitionForRankVar(final RankVar oldRankVar) {
-		final Term definition = oldRankVar.getDefinition();
+		final Term definition = ReplacementVarUtils.getDefinition(oldRankVar);
 		return definition;
 	}
 	

@@ -72,7 +72,7 @@ public abstract class RankingTemplate extends InstanceCounting {
 	 * 
 	 * @param tas the parent TerminationArgumentSynthesizer
 	 */
-	public final void init(TerminationArgumentSynthesizer tas) {
+	public final void init(final TerminationArgumentSynthesizer tas) {
 		mtas = tas;
 		mscript = tas.getScript();
 		mvariables = tas.getRankVars();
@@ -128,9 +128,10 @@ public abstract class RankingTemplate extends InstanceCounting {
 	public abstract List<String> getAnnotations();
 	
 	/**
-	 * Return all SMT variables used by this template
+	 * Return the coefficients of this template. (These are all SMT variables 
+	 * used by this template)
 	 */
-	public abstract Collection<Term> getVariables();
+	public abstract Collection<Term> getCoefficients();
 	
 	/**
 	 * Returns the degree of the template, i.e, the number of Motzkin
@@ -153,7 +154,7 @@ public abstract class RankingTemplate extends InstanceCounting {
 	 * @param name the new variable's name
 	 * @return the new variable as a term
 	 */
-	protected Term newDelta(String name) {
+	protected Term newDelta(final String name) {
 		final Term delta = mtas.newConstant(name, "Real");
 		final Term t = mscript.term(">", delta, mscript.decimal("0"));
 		mscript.assertTerm(t);

@@ -98,18 +98,26 @@ public class CPrimitive extends CType {
 		VOID(CPrimitiveCategory.VOID);
 
 		CPrimitives(final CPrimitiveCategory generalprimitive) {
-			mGeneralprimitive = generalprimitive;
+			mPrimitiveCategory = generalprimitive;
 		}
 
-		private final CPrimitiveCategory mGeneralprimitive;
+		private final CPrimitiveCategory mPrimitiveCategory;
 
 		public boolean isIntegertype() {
-			return mGeneralprimitive == CPrimitiveCategory.INTTYPE;
+			return mPrimitiveCategory == CPrimitiveCategory.INTTYPE;
 		}
 
 		public boolean isFloatingtype() {
-			return mGeneralprimitive == CPrimitiveCategory.FLOATTYPE;
+			return mPrimitiveCategory == CPrimitiveCategory.FLOATTYPE;
 		}
+
+		public CPrimitiveCategory getPrimitiveCategory() {
+			return mPrimitiveCategory;
+		}
+		
+		
+		
+		
 	}
 
 	public enum CPrimitiveCategory {

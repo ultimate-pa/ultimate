@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.IndexAnalyzer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -313,7 +314,7 @@ public class MapEliminator {
 		final Set<Term> assignedVars = new HashSet<>();
 		final Set<Term> assignedIndices = new HashSet<>();
 		for (final RankVar rv : transformula.getAssignedVars()) {
-			final Term term = rv.getDefinition();
+			final Term term = ReplacementVarUtils.getDefinition(rv);
 			assignedVars.add(term);
 			assignedIndices.addAll(mVariablesToIndexTerms.getImage(term));
 		}

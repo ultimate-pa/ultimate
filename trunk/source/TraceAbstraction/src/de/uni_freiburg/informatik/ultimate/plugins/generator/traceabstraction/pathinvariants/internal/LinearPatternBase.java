@@ -78,7 +78,7 @@ public final class LinearPatternBase {
 	 * @return collection of all variables
 	 */
 	public Collection<Term> getVariables() {
-		return function.getVariables();
+		return function.getCoefficients();
 	}
 
 	/**

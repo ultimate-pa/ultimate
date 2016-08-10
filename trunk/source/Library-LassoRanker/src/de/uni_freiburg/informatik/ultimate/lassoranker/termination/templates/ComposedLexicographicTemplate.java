@@ -195,10 +195,10 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	}
 	
 	@Override
-	public Collection<Term> getVariables() {
+	public Collection<Term> getCoefficients() {
 		final List<Term> variables = new ArrayList<Term>();
 		for (final ComposableTemplate t : mParts) {
-			variables.addAll(t.getVariables());
+			variables.addAll(t.getCoefficients());
 		}
 		return variables;
 	}
