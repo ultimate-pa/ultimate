@@ -53,7 +53,7 @@ public class CollectAtoms extends NonRecursive{
 					walker.enqueueWalker(new AtomCollector(t));
 				}
 			}else if(fName.equals("true") || fName.equals("false")){
-				//do nothing, it's a leaf, but not an atom
+				if(!(cnr.mAtoms.contains(term))) cnr.mAtoms.add(term); //macht scheinbar probleme wenn mans ignoriert
 			}else{
 				if(!(cnr.mAtoms.contains(term))) cnr.mAtoms.add(term);
 			}

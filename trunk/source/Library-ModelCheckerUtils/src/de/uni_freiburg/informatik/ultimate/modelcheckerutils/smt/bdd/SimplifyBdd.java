@@ -120,6 +120,7 @@ public class SimplifyBdd {
 	public Term transformToDNF(final Term input) {
 		final CollectAtoms ca = new CollectAtoms();
 		final List<Term> atoms = ca.getTerms(input);
+		assert atoms.size()!=0 : "How did I not find any atoms? " + input;
 		
 		final BddBuilder bb = new BddBuilder();
 		final BDD d = bb.buildBDD(input, atoms);
