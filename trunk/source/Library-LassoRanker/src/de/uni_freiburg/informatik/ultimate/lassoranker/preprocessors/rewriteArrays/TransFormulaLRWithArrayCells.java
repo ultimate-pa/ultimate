@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -250,7 +251,7 @@ public class TransFormulaLRWithArrayCells {
 	private Collection<RankVar> filterArrays(final Set<RankVar> keySet) {
 		final List<RankVar> result = new ArrayList<RankVar>();
 		for (final RankVar rv : keySet) {
-			final Sort sort = rv.getDefinition().getSort();
+			final Sort sort = ReplacementVarUtils.getDefinition(rv).getSort();
 			if (sort.isArraySort()) {
 				result.add(rv);
 			}
@@ -347,7 +348,7 @@ public class TransFormulaLRWithArrayCells {
 
 	private void addRankVar(final RankVar rv) {
 		final String name = SmtUtils.removeSmtQuoteCharacters(rv.getGloballyUniqueId() + "_InOut");
-		final Sort sort = rv.getDefinition().getSort();
+		final Sort sort = ReplacementVarUtils.getDefinition(rv).getSort();
 		final TermVariable tv = mReplacementVarFactory.getOrConstructAuxVar(name, sort);
 		mResult.addInVar(rv, tv);
 		mResult.addOutVar(rv, tv);

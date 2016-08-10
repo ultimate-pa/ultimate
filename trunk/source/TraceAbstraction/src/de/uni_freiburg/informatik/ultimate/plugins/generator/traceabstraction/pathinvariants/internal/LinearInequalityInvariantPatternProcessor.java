@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.ModelExtractionUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.MotzkinTransformation;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -733,7 +734,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		final Map<RankVar, Term> definitionMap = new HashMap<RankVar, Term>(
 				patternCoefficients.size());
 		for (final RankVar coefficient : patternCoefficients) {
-			final Term definition = coefficient.getDefinition();
+			final Term definition = ReplacementVarUtils.getDefinition(coefficient);
 			definitionMap.put(coefficient, definition);
 		}
 

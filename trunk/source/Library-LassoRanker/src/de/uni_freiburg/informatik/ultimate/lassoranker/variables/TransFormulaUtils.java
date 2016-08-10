@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 
 /**
  * Some static methods for TransFormulaLR 
@@ -193,7 +193,7 @@ public class TransFormulaUtils {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
 			if (entry.getKey() instanceof ReplacementVar) {
-				final Term definition = entry.getKey().getDefinition();
+				final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
 				final Term renamedDefinition = renameToDefaultConstants(script, symbTab, tf, definition);
 				substitutionMapping.put(entry.getValue(), renamedDefinition);
 			} else if (entry.getKey() instanceof BoogieVarWrapper) {
@@ -205,7 +205,7 @@ public class TransFormulaUtils {
 		}
 		for (final Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
 			if (entry.getKey() instanceof ReplacementVar) {
-				final Term definition = entry.getKey().getDefinition();
+				final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
 				final Term renamedDefinition = renameToPrimedConstants(script, symbTab, tf, definition);
 				substitutionMapping.put(entry.getValue(), renamedDefinition);
 			} else if (entry.getKey() instanceof BoogieVarWrapper) {
@@ -237,7 +237,7 @@ public class TransFormulaUtils {
 		if (rv == null) {
 			return null;
 		}
-		return rv.getDefinition();
+		return ReplacementVarUtils.getDefinition(rv);
 	}
 	
 	/**

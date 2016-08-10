@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.IntegralHul
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -98,7 +99,7 @@ public class LinearTransition implements Serializable {
 	 */
 	private boolean checkIfContainsSort(final Set<RankVar> varSet, final String sortname) {
 		for (final RankVar rv : varSet) {
-			final Sort sort = rv.getDefinition().getSort(); 
+			final Sort sort = ReplacementVarUtils.getDefinition(rv).getSort(); 
 			if (sort.getName().equals(sortname)) {
 				return true;
 			}

@@ -31,6 +31,7 @@ import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -98,7 +99,7 @@ public class RewriteBooleans extends RewriteTermVariables {
 	 */
 	@Override
 	protected Term constructNewDefinitionForRankVar(final RankVar oldRankVar) {
-		final Term booleanTerm = oldRankVar.getDefinition();
+		final Term booleanTerm = ReplacementVarUtils.getDefinition(oldRankVar);
 		assert booleanTerm.getSort().getName().equals("Bool");
 		final Term one = mScript.getScript().numeral(BigInteger.ONE);
 		final Term zero = mScript.getScript().numeral(BigInteger.ZERO);
