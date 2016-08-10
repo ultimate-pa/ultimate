@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -189,47 +190,25 @@ public class InitializationHandler {
 		final LRValue lrVal;
 		Expression rhs = null;
 		if (lCType instanceof CPrimitive) {
-			switch (((CPrimitive) lCType).getGeneralType()) {
-			case INTTYPE:
-				if (initializer == null) {
-					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
-				} else {
-					initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-					main.mCHandler.convert(loc, initializer, lCType);
-					rhs = initializer.lrVal.getValue();
+			if (initializer == null) {
+				final CPrimitive lCPrimitive = (CPrimitive) lCType;
+				switch ((lCPrimitive).getGeneralType()) {
+				case INTTYPE:
+					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, lCPrimitive, BigInteger.ZERO);
+					break;
+				case FLOATTYPE:
+					rhs = mExpressionTranslation.constructLiteralForFloatingType(loc, lCPrimitive, BigDecimal.ONE);
+					break;
+				case VOID:
+					throw new AssertionError("cannot initialize something that has type void");
+				default:
+					throw new AssertionError("unknown category of type");
 				}
-				break;
-			case FLOATTYPE:
-				if (mExpressionTranslation instanceof BitvectorTranslation) {
-					if (initializer == null) {
-						if (((CPrimitive) lCType).getType().equals(CPrimitives.FLOAT)) {
-							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0f").getValue();
-						} else if (((CPrimitive) lCType).getType().equals(CPrimitives.DOUBLE)) {
-							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0").getValue();
-						} else if (((CPrimitive) lCType).getType().equals(CPrimitives.LONGDOUBLE)) {
-							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0l").getValue();
-						}
-						
-					} else {
-						initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-						main.mCHandler.convert(loc, initializer, lCType);
-						rhs = initializer.lrVal.getValue();
-					}
-				} else {
-					if (initializer == null) {
-						rhs = new RealLiteral(loc, SFO.NR0F);
-					} else {
-						initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-						main.mCHandler.convert(loc, initializer, lCType);
-						rhs = initializer.lrVal.getValue();
-					}
-				}
-				break;
-			case VOID:
-			default:
-				throw new AssertionError("unknown type to init");
+			} else {
+				initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+				main.mCHandler.convert(loc, initializer, lCType);
+				rhs = initializer.lrVal.getValue();
 			}
-
 			lrVal = new RValue(rhs, lCType);
 		} else if (lCType instanceof CPointer) {
 			if (initializer == null) {
