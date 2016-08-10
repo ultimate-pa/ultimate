@@ -49,39 +49,49 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class MemoryModel_MultiBitprecise extends AMemoryModel {
 
-	private final Map<Integer, HeapDataArray> mSize2HeapDataArray = new HashMap<>();
+	private final Map<Integer, HeapDataArray> mSize2HeapIntegerArray = new HashMap<>();
+	private final Map<Integer, HeapDataArray> mSize2HeapFloatingArray = new HashMap<>();
 
-	public MemoryModel_MultiBitprecise(TypeSizes typeSizes, ITypeHandler typeHandler,
-			AExpressionTranslation expressionTranslation) {
+	public MemoryModel_MultiBitprecise(final TypeSizes typeSizes, final ITypeHandler typeHandler,
+			final AExpressionTranslation expressionTranslation) {
 		super(typeSizes, typeHandler, expressionTranslation);
 	}
 
 	@Override
-	public HeapDataArray getDataHeapArray(CPrimitives primitive) {
+	public HeapDataArray getDataHeapArray(final CPrimitives primitive) {
+		switch (primitive.getPrimitiveCategory()) {
+		case FLOATTYPE:
+			return getDataHeapArrayForGivenGeneralType(primitive, mSize2HeapFloatingArray);
+		case INTTYPE:
+			return getDataHeapArrayForGivenGeneralType(primitive, mSize2HeapIntegerArray);
+		case VOID:
+			throw new AssertionError("void on the heap???");
+		default:
+			throw new AssertionError("unknown primitive category");
+		}
+	}
+	
+	private HeapDataArray getDataHeapArrayForGivenGeneralType(final CPrimitives primitive, final Map<Integer, HeapDataArray> size2HeapdataArray) {
 		final int bytesize = mTypeSizes.getSize(primitive);
-		HeapDataArray result = mSize2HeapDataArray.get(bytesize);
+		HeapDataArray result = size2HeapdataArray.get(bytesize);
 		if (result == null) {
-			final String name = "data" + bytesize;
+			final String name = primitive.getPrimitiveCategory().toString() + bytesize;
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 			final ASTType astType = mTypeHandler.ctype2asttype(ignoreLoc, new CPrimitive(primitive));
 			result = new HeapDataArray(name, astType, bytesize);
-			mSize2HeapDataArray.put(bytesize, result);
+			size2HeapdataArray.put(bytesize, result);
 		}
 		return result;
 	}
 
 	@Override
-	public String getProcedureSuffix(CPrimitives primitive) {
-		if (primitive.isFloatingtype()) {
-			throw new UnsupportedOperationException(
-					"Floating types are not yet supported in " + this.getClass().getSimpleName());
-		}
+	public String getProcedureSuffix(final CPrimitives primitive) {
 		return getDataHeapArray(primitive).getName();
 	}
 
 	@Override
-	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda,
-			RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(final HeapDataArray hda,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
 		final HashRelation<Integer, CPrimitives> bytesizes2primitives = new HashRelation<>();
 		for (final CPrimitives primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
 			final int bytesize = mTypeSizes.getSize(primitive);
