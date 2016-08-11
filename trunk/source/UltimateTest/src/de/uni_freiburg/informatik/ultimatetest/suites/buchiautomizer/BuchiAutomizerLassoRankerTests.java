@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 public class BuchiAutomizerLassoRankerTests extends AbstractBuchiAutomizerTestSuite {
 
 	private static final int FILES_PER_DIR_LIMIT = Integer.MAX_VALUE;
+//	private static final int FILES_PER_DIR_LIMIT = 5;
 
 	//@formatter:off
 	private static final DirectoryFileEndingsPair[] SVCOMP_EXAMPLES = {
