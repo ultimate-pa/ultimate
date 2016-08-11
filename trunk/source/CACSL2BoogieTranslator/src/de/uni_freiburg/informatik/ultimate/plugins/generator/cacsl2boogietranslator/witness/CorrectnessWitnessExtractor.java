@@ -46,7 +46,9 @@ import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
+import org.eclipse.cdt.core.dom.ast.IASTGotoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -166,12 +168,10 @@ public class CorrectnessWitnessExtractor {
 			final ExtractionStatistics stats) {
 		final WitnessNodeAnnotation annot = WitnessNodeAnnotation.getAnnotation(current);
 		if (annot == null) {
-			stats.ignore();
 			return Collections.emptyMap();
 		}
 		final String invariant = annot.getInvariant();
 		if (invariant == null || invariant.equalsIgnoreCase("true")) {
-			stats.ignore();
 			return Collections.emptyMap();
 		}
 		final Map<IASTNode, ExtractedWitnessInvariant> ast2invariant = matchWitnessToAstNode(current);
@@ -212,12 +212,13 @@ public class CorrectnessWitnessExtractor {
 		if (printlabel) {
 			mLogger.warn("  Witness node label is " + wnode.getLabel());
 		}
-		final Map<IASTNode, ExtractedWitnessInvariant> possibleMatches = extractInvariants(wnode, beforeNodes, afterNodes);
+		final Map<IASTNode, ExtractedWitnessInvariant> possibleMatches =
+				extractInvariants(wnode, beforeNodes, afterNodes);
 		return possibleMatches;
 	}
 
-	private Map<IASTNode, ExtractedWitnessInvariant> extractInvariants(final WitnessNode wnode, final Set<IASTNode> beforeNodes,
-			final Set<IASTNode> afterNodes) {
+	private Map<IASTNode, ExtractedWitnessInvariant> extractInvariants(final WitnessNode wnode,
+			final Set<IASTNode> beforeNodes, final Set<IASTNode> afterNodes) {
 		final String invariant = WitnessNodeAnnotation.getAnnotation(wnode).getInvariant();
 		// new WitnessInvariant(invariant, wnode.getLabel(), match, isBefore, isAfter, isAt)
 		final Set<IASTNode> beforeMatches =
@@ -228,24 +229,52 @@ public class CorrectnessWitnessExtractor {
 		final Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>();
 		if (mCheckOnlyLoopInvariants) {
 			if (!beforeMatches.isEmpty() || !afterMatches.isEmpty()) {
-				// if there is some match in the difference, we did not match a loop invariant with 100% certainity.
+				// if there is some match in the difference, we did not match a loop invariant with 100% certainty.
+				// we know that we should match loop heads, so we can search for goto-statements and match directly to
+				// them (somewhat hacky)
+
+				final Set<IASTNode> gotos = new HashSet<>();
+				for (final IASTNode node : beforeMatches) {
+					gotos.addAll(new GotoExtractor().run(node));
+				}
+				for (final IASTNode node : afterMatches) {
+					gotos.addAll(new GotoExtractor().run(node));
+				}
+				if (!gotos.isEmpty()) {
+					// we found some gotos, hooray
+					return extractInvariants(wnode, gotos, gotos);
+				}
+
 				mLogger.warn("Ignoring possible match because exact match is not possible ");
+				mLogger.warn("Before-Matches:");
+				beforeMatches
+						.stream().map(a -> new ExtractedWitnessInvariant(invariant,
+								Collections.singletonList(wnode.getName()), a, true, false, false))
+						.forEach(a -> mLogger.warn(a.toStringWithCNode()));
+				mLogger.warn("After-Matches:");
+				afterMatches
+						.stream().map(a -> new ExtractedWitnessInvariant(invariant,
+								Collections.singletonList(wnode.getName()), a, true, false, false))
+						.forEach(a -> mLogger.warn(a.toStringWithCNode()));
 				return rtr;
 			}
 		} else {
-			beforeMatches.stream().map(a -> new ExtractedWitnessInvariant(invariant, Collections.singletonList(wnode.getName()),
-					a, true, false, false)).forEach(a -> rtr.put(a.getRelatedAstNode(), a));
-			afterMatches.stream().map(a -> new ExtractedWitnessInvariant(invariant, Collections.singletonList(wnode.getName()),
-					a, false, false, true)).forEach(a -> rtr.put(a.getRelatedAstNode(), a));
+			beforeMatches
+					.stream().map(a -> new ExtractedWitnessInvariant(invariant,
+							Collections.singletonList(wnode.getName()), a, true, false, false))
+					.forEach(a -> rtr.put(a.getRelatedAstNode(), a));
+			afterMatches
+					.stream().map(a -> new ExtractedWitnessInvariant(invariant,
+							Collections.singletonList(wnode.getName()), a, false, false, true))
+					.forEach(a -> rtr.put(a.getRelatedAstNode(), a));
 		}
-		atMatches.stream().map(
-				a -> new ExtractedWitnessInvariant(invariant, Collections.singletonList(wnode.getName()), a, true, true, true))
-				.forEach(a -> rtr.put(a.getRelatedAstNode(), a));
+		atMatches.stream().map(a -> new ExtractedWitnessInvariant(invariant, Collections.singletonList(wnode.getName()),
+				a, true, true, true)).forEach(a -> rtr.put(a.getRelatedAstNode(), a));
 		return rtr;
 	}
 
-	private Map<IASTNode, ExtractedWitnessInvariant> mergeMatchesIfNecessary(final Map<IASTNode, ExtractedWitnessInvariant> mapA,
-			final Map<IASTNode, ExtractedWitnessInvariant> mapB) {
+	private Map<IASTNode, ExtractedWitnessInvariant> mergeMatchesIfNecessary(
+			final Map<IASTNode, ExtractedWitnessInvariant> mapA, final Map<IASTNode, ExtractedWitnessInvariant> mapB) {
 		if (mapA == null || mapA.isEmpty()) {
 			return mapB;
 		}
@@ -348,6 +377,29 @@ public class CorrectnessWitnessExtractor {
 		return String.join(", ", lines.stream().map(a -> String.valueOf(a)).collect(Collectors.toList()));
 	}
 
+	private static final class GotoExtractor extends ASTGenericVisitor {
+		private Set<IASTGotoStatement> mGotoStatements;
+
+		public GotoExtractor() {
+			super(true);
+		}
+
+		public Set<IASTGotoStatement> run(final IASTNode subtreeRoot) {
+			mGotoStatements = new HashSet<>();
+			subtreeRoot.accept(this);
+			return mGotoStatements;
+		}
+
+		@Override
+		public int visit(final IASTStatement statement) {
+			if (statement instanceof IASTGotoStatement) {
+				mGotoStatements.add((IASTGotoStatement) statement);
+				return PROCESS_SKIP;
+			}
+			return PROCESS_CONTINUE;
+		}
+	}
+
 	private static final class LineMatchingVisitor extends ASTGenericVisitor {
 
 		private final Set<Integer> mBeforeLines;
@@ -443,12 +495,10 @@ public class CorrectnessWitnessExtractor {
 	private static final class ExtractionStatistics {
 		private int mSuccess;
 		private int mFailure;
-		private int mIgnored;
 
 		private ExtractionStatistics() {
 			mSuccess = 0;
 			mFailure = 0;
-			mIgnored = 0;
 		}
 
 		private void success() {
@@ -459,10 +509,6 @@ public class CorrectnessWitnessExtractor {
 			mFailure++;
 		}
 
-		private void ignore() {
-			mIgnored++;
-		}
-
 		public int getSuccess() {
 			return mSuccess;
 		}
@@ -471,12 +517,8 @@ public class CorrectnessWitnessExtractor {
 			return mFailure;
 		}
 
-		public int getIgnored() {
-			return mIgnored;
-		}
-
 		public int getTotal() {
-			return mSuccess + mFailure + mIgnored;
+			return mSuccess + mFailure;
 		}
 	}
 }
