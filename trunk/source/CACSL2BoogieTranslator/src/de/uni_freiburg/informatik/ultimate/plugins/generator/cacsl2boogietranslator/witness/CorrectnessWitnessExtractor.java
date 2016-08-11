@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
@@ -47,9 +48,12 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnotation;
@@ -231,25 +235,8 @@ public class CorrectnessWitnessExtractor {
 	}
 
 	private Pair<List<IASTNode>, List<IASTNode>> matchASTNodes(final WitnessNode wnode) {
-		final Set<Integer> afterLines;
-		final Set<Integer> beforeLines;
-		if (mCheckOnlyLoopInvariants) {
-			afterLines = wnode.getIncomingEdges().stream()
-					.filter(a -> WitnessEdgeAnnotation.getAnnotation(a).getEnterLoopHead())
-					.map(a -> a.getLocation().getEndLine()).collect(Collectors.toSet());
-			beforeLines = wnode.getOutgoingEdges().stream()
-					.filter(a -> WitnessEdgeAnnotation.getAnnotation(a).getEnterLoopHead())
-					.map(a -> a.getLocation().getStartLine()).collect(Collectors.toSet());
-		} else {
-			afterLines = wnode.getIncomingEdges().stream().map(a -> a.getLocation().getEndLine())
-					.collect(Collectors.toSet());
-			beforeLines = wnode.getOutgoingEdges().stream().map(a -> a.getLocation().getStartLine())
-					.collect(Collectors.toSet());
-		}
-
-		// remove the line number that is used to mark "no line number"
-		afterLines.remove(-1);
-		beforeLines.remove(-1);
+		final Set<Integer> afterLines = collectLineNumbers(wnode.getIncomingEdges(), a -> a.getEndLine());
+		final Set<Integer> beforeLines = collectLineNumbers(wnode.getOutgoingEdges(), a -> a.getStartLine());
 
 		if (afterLines.isEmpty() && beforeLines.isEmpty()) {
 			mLogger.error("No line numbers found for " + wnode);
@@ -279,6 +266,20 @@ public class CorrectnessWitnessExtractor {
 		}
 
 		return matchedNodes;
+	}
+
+	private Set<Integer> collectLineNumbers(final List<WitnessEdge> edges,
+			final Function<ILocation, Integer> loc2linenumber) {
+		final Set<Integer> lines;
+		if (mCheckOnlyLoopInvariants) {
+			lines = edges.stream().filter(a -> WitnessEdgeAnnotation.getAnnotation(a).getEnterLoopHead())
+					.map(a -> loc2linenumber.apply(a.getLocation())).collect(Collectors.toSet());
+		} else {
+			lines = edges.stream().map(a -> loc2linenumber.apply(a.getLocation())).collect(Collectors.toSet());
+		}
+		// remove the line number that is used to mark "no line number"
+		lines.remove(-1);
+		return lines;
 	}
 
 	private void filterBeforeMatches(final WitnessNode wnode, final Pair<List<IASTNode>, List<IASTNode>> matchedNodes) {
@@ -454,6 +455,36 @@ public class CorrectnessWitnessExtractor {
 		 * We could not extract a relevant invariant.
 		 */
 		NOT_EXTRACTED
+	}
 
+	private static final class ExtractedWitnessInvariant {
+		private final boolean mIsBefore;
+		private final boolean mIsAfter;
+		private final boolean mIsAt;
+		private final IASTNode mRelatedAstNode;
+
+		public ExtractedWitnessInvariant(final boolean isBefore, final boolean isAfter, final boolean isAt,
+				final IASTNode relatedAstNode) {
+			mIsBefore = isBefore;
+			mIsAfter = isAfter;
+			mIsAt = isAt;
+			mRelatedAstNode = relatedAstNode;
+		}
+
+		public boolean isBefore() {
+			return mIsBefore;
+		}
+
+		public boolean isAfter() {
+			return mIsAfter;
+		}
+
+		public boolean isAt() {
+			return mIsAt;
+		}
+
+		public IASTNode getRelatedAstNode() {
+			return mRelatedAstNode;
+		}
 	}
 }

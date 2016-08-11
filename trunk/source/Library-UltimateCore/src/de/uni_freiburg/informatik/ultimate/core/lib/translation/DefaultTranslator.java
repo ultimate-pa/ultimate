@@ -284,8 +284,8 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	}
 
 	protected <TVL, SVL> IBacktranslatedCFG<TVL, TTE> translateCFG(final IBacktranslatedCFG<SVL, STE> cfg,
-			final Function<Map<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>>, IMultigraphEdge<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>, Multigraph<TVL, TTE>> funTranslateEdge,
-			final Function<String, List<Multigraph<TVL, TTE>>, Class<TTE>, IBacktranslatedCFG<TVL, TTE>> funCreateBCFG) {
+			final IFunction<Map<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>>, IMultigraphEdge<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>, Multigraph<TVL, TTE>> funTranslateEdge,
+			final IFunction<String, List<Multigraph<TVL, TTE>>, Class<TTE>, IBacktranslatedCFG<TVL, TTE>> funCreateBCFG) {
 
 		final List<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>> oldRoots = cfg.getCFGs();
 		final List<Multigraph<TVL, TTE>> newRoots = new ArrayList<>();
@@ -335,7 +335,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	 * @return A backtranslated CFG.
 	 */
 	protected <TVL, SVL> IBacktranslatedCFG<TVL, TTE> translateCFG(final IBacktranslatedCFG<SVL, STE> cfg,
-			final Function<Map<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>>, IMultigraphEdge<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>, Multigraph<TVL, TTE>> funTranslateEdge) {
+			final IFunction<Map<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>>, IMultigraphEdge<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>, Multigraph<TVL, TTE>> funTranslateEdge) {
 		return translateCFG(cfg, funTranslateEdge, (a, b, c) -> new BacktranslatedCFG<>(a, b, c));
 	}
 
@@ -403,7 +403,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	}
 
 	@FunctionalInterface
-	public interface Function<P1, P2, P3, R> {
+	public interface IFunction<P1, P2, P3, R> {
 		R create(P1 p1, P2 p2, P3 p3);
 	}
 }
