@@ -124,7 +124,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 * labels for the different preferencess
 	 */
 	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
-	public static final String LABEL_ALL_ERRORS_AT_ONCE = "Check all specifiacations at once";
+	public static final String LABEL_ALL_ERRORS_AT_ONCE = "Stop after first violation was found";
 	public static final String LABEL_ITERATIONS = "Iterations until the model checker surrenders";
 	public static final String LABEL_ARTIFACT = "Kind of artifact that is visualized";
 	public static final String LABEL_WATCHITERATION = "Number of iteration whose artifact is visualized";
