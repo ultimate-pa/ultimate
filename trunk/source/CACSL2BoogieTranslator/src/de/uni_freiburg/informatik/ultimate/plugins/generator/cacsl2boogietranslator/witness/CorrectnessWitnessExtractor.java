@@ -28,8 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -52,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
@@ -69,9 +69,10 @@ public class CorrectnessWitnessExtractor {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final boolean mCheckOnlyLoopInvariants;
+
 	private WitnessNode mWitnessNode;
 	private IASTTranslationUnit mTranslationUnit;
-	private Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>> mAST2Invariant;
+	private Map<IASTNode, ExtractedWitnessInvariant> mAST2Invariant;
 
 	public CorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
 		mServices = service;
@@ -98,28 +99,18 @@ public class CorrectnessWitnessExtractor {
 	}
 
 	/**
-	 * @return a map from {@link IASTNode} to a String that represents a witness invariant which has to hold before
-	 *         whatever is represented by this node.
+	 * @return a map from {@link IASTNode} to an {@link ExtractedWitnessInvariant}. The
+	 *         {@link ExtractedWitnessInvariant} represents a witness invariant which has to hold before, at, or after
+	 *         the {@link IASTNode}.
 	 */
-	public Map<IASTNode, WitnessInvariant> getBeforeAST2Invariants() {
+	public Map<IASTNode, ExtractedWitnessInvariant> getCorrectnessWitnessInvariants() {
 		if (mAST2Invariant == null) {
 			mAST2Invariant = extract();
 		}
-		return mAST2Invariant.getFirst();
+		return mAST2Invariant;
 	}
 
-	/**
-	 * @return a map from {@link IASTNode} to a String that represents a witness invariant which has to hold after
-	 *         whatever is represented by this node.
-	 */
-	public Map<IASTNode, WitnessInvariant> getAfterAST2Invariants() {
-		if (mAST2Invariant == null) {
-			mAST2Invariant = extract();
-		}
-		return mAST2Invariant.getSecond();
-	}
-
-	private Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>> extract() {
+	private Map<IASTNode, ExtractedWitnessInvariant> extract() {
 		if (!isReady()) {
 			mLogger.warn("Cannot extract witness if there is no witness");
 			return null;
@@ -129,38 +120,28 @@ public class CorrectnessWitnessExtractor {
 		} else {
 			mLogger.info("Extracting all invariants from correctness witness");
 		}
-		final Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>> rtr =
-				new Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>>(new HashMap<>(),
-						new HashMap<>());
 
+		Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>();
+
+		final ExtractionStatistics stats = new ExtractionStatistics();
 		final Deque<WitnessNode> worklist = new ArrayDeque<>();
 		final Set<WitnessNode> closed = new HashSet<>();
 		worklist.add(mWitnessNode);
-		int successCounter = 0;
-		int failCounter = 0;
 		while (!worklist.isEmpty()) {
 			final WitnessNode current = worklist.remove();
 			if (!closed.add(current)) {
 				continue;
 			}
 			worklist.addAll(current.getOutgoingNodes());
-			switch (extractNode(current, rtr)) {
-			case EXTRACTED:
-				++successCounter;
-				break;
-			case NOT_EXTRACTED:
-				++failCounter;
-				break;
-			default:
-				break;
-			}
+			final Map<IASTNode, ExtractedWitnessInvariant> match = matchWitnessToAstNode(current, stats);
+			rtr = mergeMatchesIfNecessary(rtr, match);
 		}
 
 		mLogger.info("Processed " + closed.size() + " nodes");
-		mLogger.info("WitnessExtracted=" + successCounter);
-		mLogger.info("WitnessTotal=" + (successCounter + failCounter));
-		if (failCounter > 0) {
-			mLogger.info("Could not extract " + failCounter + " invariants");
+		mLogger.info("WitnessExtracted=" + stats.getSuccess());
+		mLogger.info("WitnessTotal=" + stats.getTotal());
+		if (stats.getFailure() > 0) {
+			mLogger.info("Could not extract " + stats.getFailure() + " invariants");
 		} else {
 			mLogger.info("Extracted all invariants");
 		}
@@ -169,72 +150,41 @@ public class CorrectnessWitnessExtractor {
 		return rtr;
 	}
 
-	private void printResults(final Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>> rtr) {
-		final Map<IASTNode, WitnessInvariant> before = rtr.getFirst();
-		final Map<IASTNode, WitnessInvariant> after = rtr.getSecond();
-		if (before.isEmpty() && after.isEmpty()) {
+	private void printResults(final Map<IASTNode, ExtractedWitnessInvariant> result) {
+		if (result.isEmpty()) {
 			mLogger.info("Witness did not contain any usable invariants.");
 			return;
 		}
 		mLogger.info("Found the following invariants in the witness:");
-		for (final Entry<IASTNode, WitnessInvariant> entry : before.entrySet()) {
-			mLogger.info(toLogStringCNode("Before", entry.getKey(), entry.getValue()));
-		}
-		for (final Entry<IASTNode, WitnessInvariant> entry : after.entrySet()) {
-			mLogger.info(toLogStringCNode("After", entry.getKey(), entry.getValue()));
+		for (final Entry<IASTNode, ExtractedWitnessInvariant> entry : result.entrySet()) {
+			assert entry.getKey() == entry.getValue().getRelatedAstNode();
+			mLogger.info(entry.getValue().toStringWithCNode());
 		}
 	}
 
-	/**
-	 * @return true iff an invariant was extracted, false otherwise.
-	 */
-	private ExtractionResult extractNode(final WitnessNode current,
-			final Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>> rtr) {
+	private Map<IASTNode, ExtractedWitnessInvariant> matchWitnessToAstNode(final WitnessNode current,
+			final ExtractionStatistics stats) {
 		final WitnessNodeAnnotation annot = WitnessNodeAnnotation.getAnnotation(current);
 		if (annot == null) {
-			return ExtractionResult.NOT_RELEVANT;
+			stats.ignore();
+			return Collections.emptyMap();
 		}
 		final String invariant = annot.getInvariant();
 		if (invariant == null || invariant.equalsIgnoreCase("true")) {
-			return ExtractionResult.NOT_RELEVANT;
+			stats.ignore();
+			return Collections.emptyMap();
 		}
-		final Pair<List<IASTNode>, List<IASTNode>> nodes = matchASTNodes(current);
-		if (nodes == null || (nodes.getFirst().isEmpty() && nodes.getSecond().isEmpty())) {
+		final Map<IASTNode, ExtractedWitnessInvariant> ast2invariant = matchWitnessToAstNode(current);
+		if (ast2invariant == null || ast2invariant.isEmpty()) {
 			mLogger.error("Could not match witness node to AST node: " + current);
-			return ExtractionResult.NOT_EXTRACTED;
+			stats.fail();
+			return Collections.emptyMap();
 		}
-
-		for (final IASTNode node : nodes.getFirst()) {
-			addInvariants(rtr.getFirst(), invariant, node, current);
-		}
-		for (final IASTNode node : nodes.getSecond()) {
-			addInvariants(rtr.getSecond(), invariant, node, current);
-		}
-		return ExtractionResult.EXTRACTED;
+		stats.success();
+		return ast2invariant;
 	}
 
-	private void addInvariants(final Map<IASTNode, WitnessInvariant> rtr, final String invariant, final IASTNode node,
-			final WitnessNode current) {
-
-		WitnessInvariant oldInvariant = rtr.get(node);
-		if (oldInvariant == null) {
-			oldInvariant = new WitnessInvariant(invariant, current.getName(),
-					node.getFileLocation().getStartingLineNumber(), node.getFileLocation().getEndingLineNumber());
-			rtr.put(node, oldInvariant);
-		} else {
-			final String newInvariant = "(" + invariant + ") || (" + oldInvariant.getInvariant() + ")";
-			mLogger.warn("Already matched invariant to C node [" + node.getFileLocation().getStartingLineNumber() + "] "
-					+ node.getRawSignature());
-			mLogger.warn("  Witness node label is " + current);
-			mLogger.warn("  Replacing invariant " + oldInvariant + " with invariant " + newInvariant);
-			final Set<String> labels = new HashSet<>(oldInvariant.getNodeLabels());
-			labels.add(current.getName());
-			rtr.put(node, new WitnessInvariant(newInvariant, labels, node.getFileLocation().getStartingLineNumber(),
-					node.getFileLocation().getEndingLineNumber()));
-		}
-	}
-
-	private Pair<List<IASTNode>, List<IASTNode>> matchASTNodes(final WitnessNode wnode) {
+	private Map<IASTNode, ExtractedWitnessInvariant> matchWitnessToAstNode(final WitnessNode wnode) {
 		final Set<Integer> afterLines = collectLineNumbers(wnode.getIncomingEdges(), a -> a.getEndLine());
 		final Set<Integer> beforeLines = collectLineNumbers(wnode.getOutgoingEdges(), a -> a.getStartLine());
 
@@ -243,29 +193,91 @@ public class CorrectnessWitnessExtractor {
 			return null;
 		}
 
-		final LineMatchingVisitor matcher = new LineMatchingVisitor(beforeLines, afterLines);
-		matcher.run(mTranslationUnit);
-
-		final Pair<List<IASTNode>, List<IASTNode>> matchedNodes = matcher.getMatchedNodes();
+		final Set<IASTNode> beforeNodes = matchLines(beforeLines, a -> a.getStartingLineNumber());
+		final Set<IASTNode> afterNodes = matchLines(afterLines, a -> a.getEndingLineNumber());
 
 		// filter matches s.t. edges that cross procedure boundaries are eliminated
-		filterBeforeMatches(wnode, matchedNodes);
+		filterScopeChanges(wnode, beforeNodes, afterNodes);
 
 		boolean printlabel = false;
-		if (matchedNodes.getFirst().isEmpty() && !beforeLines.isEmpty()) {
+		if (beforeNodes.isEmpty() && !beforeLines.isEmpty()) {
 			mLogger.warn(
 					"Could not match AST node to invariant before witness lines " + toStringCollection(beforeLines));
 			printlabel = true;
 		}
-		if (matchedNodes.getSecond().isEmpty() && !afterLines.isEmpty()) {
+		if (afterNodes.isEmpty() && !afterLines.isEmpty()) {
 			mLogger.warn("Could not match AST node to invariant after witness lines " + toStringCollection(afterLines));
 			printlabel = true;
 		}
 		if (printlabel) {
 			mLogger.warn("  Witness node label is " + wnode.getLabel());
 		}
+		final Map<IASTNode, ExtractedWitnessInvariant> possibleMatches = extractInvariants(wnode, beforeNodes, afterNodes);
+		return possibleMatches;
+	}
 
-		return matchedNodes;
+	private Map<IASTNode, ExtractedWitnessInvariant> extractInvariants(final WitnessNode wnode, final Set<IASTNode> beforeNodes,
+			final Set<IASTNode> afterNodes) {
+		final String invariant = WitnessNodeAnnotation.getAnnotation(wnode).getInvariant();
+		// new WitnessInvariant(invariant, wnode.getLabel(), match, isBefore, isAfter, isAt)
+		final Set<IASTNode> beforeMatches =
+				beforeNodes.stream().filter(a -> !afterNodes.contains(a)).collect(Collectors.toSet());
+		final Set<IASTNode> atMatches = beforeNodes.stream().filter(afterNodes::contains).collect(Collectors.toSet());
+		final Set<IASTNode> afterMatches =
+				afterNodes.stream().filter(a -> !beforeNodes.contains(a)).collect(Collectors.toSet());
+		final Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>();
+		if (mCheckOnlyLoopInvariants) {
+			if (!beforeMatches.isEmpty() || !afterMatches.isEmpty()) {
+				// if there is some match in the difference, we did not match a loop invariant with 100% certainity.
+				mLogger.warn("Ignoring possible match because exact match is not possible ");
+				return rtr;
+			}
+		} else {
+			beforeMatches.stream().map(a -> new ExtractedWitnessInvariant(invariant, Collections.singletonList(wnode.getName()),
+					a, true, false, false)).forEach(a -> rtr.put(a.getRelatedAstNode(), a));
+			afterMatches.stream().map(a -> new ExtractedWitnessInvariant(invariant, Collections.singletonList(wnode.getName()),
+					a, false, false, true)).forEach(a -> rtr.put(a.getRelatedAstNode(), a));
+		}
+		atMatches.stream().map(
+				a -> new ExtractedWitnessInvariant(invariant, Collections.singletonList(wnode.getName()), a, true, true, true))
+				.forEach(a -> rtr.put(a.getRelatedAstNode(), a));
+		return rtr;
+	}
+
+	private Map<IASTNode, ExtractedWitnessInvariant> mergeMatchesIfNecessary(final Map<IASTNode, ExtractedWitnessInvariant> mapA,
+			final Map<IASTNode, ExtractedWitnessInvariant> mapB) {
+		if (mapA == null || mapA.isEmpty()) {
+			return mapB;
+		}
+		if (mapB == null || mapB.isEmpty()) {
+			return mapA;
+		}
+		if (mapA.size() < mapB.size()) {
+			return mergeMatchesIfNecessary(mapB, mapA);
+		}
+
+		final Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>(mapA.size());
+		for (final Entry<IASTNode, ExtractedWitnessInvariant> entryB : mapB.entrySet()) {
+			final ExtractedWitnessInvariant aWitnessInvariant = mapA.get(entryB.getKey());
+			if (aWitnessInvariant == null) {
+				rtr.put(entryB.getKey(), entryB.getValue());
+			} else {
+				final ExtractedWitnessInvariant bWitnessInvariant = entryB.getValue();
+				final ExtractedWitnessInvariant newInvariant = bWitnessInvariant.merge(aWitnessInvariant);
+				mLogger.warn("Merging invariants");
+				mLogger.warn("  Invariant A is " + aWitnessInvariant.toString());
+				mLogger.warn("  Invariant B is " + bWitnessInvariant.toString());
+				mLogger.warn("  New match: " + newInvariant.toStringWithCNode());
+				rtr.put(entryB.getKey(), newInvariant);
+			}
+		}
+		return rtr;
+	}
+
+	private Set<IASTNode> matchLines(final Set<Integer> lines, final Function<IASTFileLocation, Integer> funGetLine) {
+		final LineMatchingVisitor matcher = new LineMatchingVisitor(lines, funGetLine);
+		matcher.run(mTranslationUnit);
+		return matcher.getMatchedNodes();
 	}
 
 	private Set<Integer> collectLineNumbers(final List<WitnessEdge> edges,
@@ -282,8 +294,18 @@ public class CorrectnessWitnessExtractor {
 		return lines;
 	}
 
-	private void filterBeforeMatches(final WitnessNode wnode, final Pair<List<IASTNode>, List<IASTNode>> matchedNodes) {
-		final Iterator<IASTNode> beforeIter = matchedNodes.getFirst().iterator();
+	/**
+	 * Remove all {@link IASTNode}s from the <code>before</code> list if there is a node in the <code>after</code> list
+	 * that has a different scope, except if the "before" node is in the global scope.
+	 */
+	private void filterScopeChanges(final WitnessNode wnode, final Collection<IASTNode> before,
+			final Collection<IASTNode> after) {
+		// collect all scopes from the after list
+		final Set<IASTDeclaration> afterScopes =
+				after.stream().map(a -> determineScope(a)).filter(a -> a != null).collect(Collectors.toSet());
+
+		// iterate over before list and remove all matches that would lead to a scope change
+		final Iterator<IASTNode> beforeIter = before.iterator();
 		while (beforeIter.hasNext()) {
 			final IASTNode beforeCurrent = beforeIter.next();
 			final IASTDeclaration beforeScope = determineScope(beforeCurrent);
@@ -291,28 +313,14 @@ public class CorrectnessWitnessExtractor {
 				// its the global scope
 				continue;
 			}
-			for (final IASTNode afterCurrent : matchedNodes.getSecond()) {
-				final IASTDeclaration afterScope = determineScope(afterCurrent);
-				if (afterScope == null) {
-					// its the global scope
-					continue;
-				}
-				if (beforeScope != afterScope) {
-					mLogger.warn("Removing invariant match "
-							+ toLogStringCNode("Before", beforeCurrent,
-									WitnessNodeAnnotation.getAnnotation(wnode).getInvariant())
-							+ " because scopes differ: " + toLogString(beforeScope, afterScope));
-					beforeIter.remove();
-					break;
-				}
+			final Optional<IASTDeclaration> scopeChange = afterScopes.stream().filter(a -> a != beforeScope).findAny();
+			if (scopeChange.isPresent()) {
+				mLogger.warn("Removing invariant match " + wnode.getLabel() + ": "
+						+ WitnessNodeAnnotation.getAnnotation(wnode).getInvariant() + " because scopes differ: "
+						+ toLogString(beforeScope, scopeChange.get()));
+				beforeIter.remove();
 			}
 		}
-	}
-
-	private String toLogString(final IASTNode bScope, final IASTNode aScope) {
-		final String bScopeId = bScope == null ? "Global" : "L" + bScope.getFileLocation().getStartingLineNumber();
-		final String aScopeId = aScope == null ? "Global" : "L" + aScope.getFileLocation().getStartingLineNumber();
-		return "B=" + bScopeId + ", A=" + aScopeId;
 	}
 
 	private IASTDeclaration determineScope(final IASTNode current) {
@@ -330,45 +338,42 @@ public class CorrectnessWitnessExtractor {
 		return null;
 	}
 
+	private String toLogString(final IASTNode bScope, final IASTNode aScope) {
+		final String bScopeId = bScope == null ? "Global" : ("L" + bScope.getFileLocation().getStartingLineNumber());
+		final String aScopeId = aScope == null ? "Global" : ("L" + aScope.getFileLocation().getStartingLineNumber());
+		return "B=" + bScopeId + ", A=" + aScopeId;
+	}
+
 	private String toStringCollection(final Collection<?> lines) {
 		return String.join(", ", lines.stream().map(a -> String.valueOf(a)).collect(Collectors.toList()));
-	}
-
-	private String toLogStringCNode(final String prefix, final IASTNode node, final String invariant) {
-		return prefix + " [L" + node.getFileLocation().getStartingLineNumber() + "] " + node.getRawSignature()
-				+ " invariant is " + invariant;
-	}
-
-	private String toLogStringCNode(final String prefix, final IASTNode node, final WitnessInvariant invariant) {
-		return toLogStringCNode(prefix, node, invariant.toString());
 	}
 
 	private static final class LineMatchingVisitor extends ASTGenericVisitor {
 
 		private final Set<Integer> mBeforeLines;
-		private final Set<Integer> mAfterLines;
-		private final Pair<List<IASTNode>, List<IASTNode>> mMatchedNodes;
+		private final Set<IASTNode> mMatchedNodes;
+		private final Function<IASTFileLocation, Integer> mFunGetLine;
 
-		public LineMatchingVisitor(final Set<Integer> beforeLines, final Set<Integer> afterLines) {
+		public LineMatchingVisitor(final Set<Integer> lines, final Function<IASTFileLocation, Integer> funGetLine) {
 			super(true);
-			mBeforeLines = beforeLines;
-			mAfterLines = afterLines;
-			mMatchedNodes = new Pair<List<IASTNode>, List<IASTNode>>(new ArrayList<>(), new ArrayList<>());
+			mBeforeLines = lines;
+			mMatchedNodes = new HashSet<>();
+			mFunGetLine = funGetLine;
 		}
 
 		public void run(final IASTTranslationUnit translationUnit) {
 			translationUnit.accept(this);
-			removeSubtreeMatches(mMatchedNodes.getFirst());
-			removeSubtreeMatches(mMatchedNodes.getSecond());
+			removeSubtreeMatches(mMatchedNodes);
 		}
 
-		private Pair<List<IASTNode>, List<IASTNode>> getMatchedNodes() {
+		private Set<IASTNode> getMatchedNodes() {
 			return mMatchedNodes;
 		}
 
 		@Override
 		protected int genericVisit(final IASTNode node) {
 			if (match(node)) {
+				// skip the subtree if a match occurred, but continue with siblings.
 				return PROCESS_SKIP;
 			}
 			return PROCESS_CONTINUE;
@@ -379,25 +384,18 @@ public class CorrectnessWitnessExtractor {
 			if (loc == null) {
 				return false;
 			}
-			final int startLine = loc.getStartingLineNumber();
-			final int endLine = loc.getEndingLineNumber();
-
-			boolean matched = false;
-			if (mBeforeLines.contains(startLine)) {
-				mMatchedNodes.getFirst().add(node);
-				matched = true;
+			final int line = mFunGetLine.apply(loc);
+			if (mBeforeLines.contains(line)) {
+				mMatchedNodes.add(node);
+				return true;
 			}
-			if (mAfterLines.contains(endLine)) {
-				mMatchedNodes.getSecond().add(node);
-				matched = true;
-			}
-			return matched;
+			return false;
 		}
 
 		/**
 		 * Remove all nodes from a list of {@link IASTNode}s where the parent of a node is also in the list.
 		 */
-		private void removeSubtreeMatches(final List<IASTNode> list) {
+		private void removeSubtreeMatches(final Collection<IASTNode> list) {
 			final Iterator<IASTNode> iter = list.iterator();
 			while (iter.hasNext()) {
 				final IASTNode current = iter.next();
@@ -412,79 +410,73 @@ public class CorrectnessWitnessExtractor {
 			possibleParent.accept(sc);
 			return sc.isContainedInSubtree();
 		}
+	}
 
-		private static final class SubtreeChecker extends ASTGenericVisitor {
+	private static final class SubtreeChecker extends ASTGenericVisitor {
 
-			private final IASTNode mCandidate;
-			private boolean mIsContainedInSubtree;
+		private final IASTNode mCandidate;
+		private boolean mIsContainedInSubtree;
 
-			public SubtreeChecker(final IASTNode candidate) {
-				super(true);
-				mCandidate = candidate;
-				mIsContainedInSubtree = false;
+		public SubtreeChecker(final IASTNode candidate) {
+			super(true);
+			mCandidate = candidate;
+			mIsContainedInSubtree = false;
+		}
+
+		public boolean isContainedInSubtree() {
+			return mIsContainedInSubtree;
+		}
+
+		@Override
+		protected int genericVisit(final IASTNode child) {
+			if (mIsContainedInSubtree) {
+				return PROCESS_ABORT;
 			}
-
-			public boolean isContainedInSubtree() {
-				return mIsContainedInSubtree;
+			if (child == mCandidate) {
+				mIsContainedInSubtree = true;
+				return PROCESS_ABORT;
 			}
-
-			@Override
-			protected int genericVisit(final IASTNode child) {
-				if (mIsContainedInSubtree) {
-					return PROCESS_ABORT;
-				}
-				if (child == mCandidate) {
-					mIsContainedInSubtree = true;
-					return PROCESS_ABORT;
-				}
-				return PROCESS_CONTINUE;
-			}
+			return PROCESS_CONTINUE;
 		}
 	}
 
-	private enum ExtractionResult {
-		/**
-		 * The invariant was true and is therefore not relevant.
-		 */
-		NOT_RELEVANT,
-		/**
-		 * We could extract a relevant invariant.
-		 */
-		EXTRACTED,
-		/**
-		 * We could not extract a relevant invariant.
-		 */
-		NOT_EXTRACTED
-	}
+	private static final class ExtractionStatistics {
+		private int mSuccess;
+		private int mFailure;
+		private int mIgnored;
 
-	private static final class ExtractedWitnessInvariant {
-		private final boolean mIsBefore;
-		private final boolean mIsAfter;
-		private final boolean mIsAt;
-		private final IASTNode mRelatedAstNode;
-
-		public ExtractedWitnessInvariant(final boolean isBefore, final boolean isAfter, final boolean isAt,
-				final IASTNode relatedAstNode) {
-			mIsBefore = isBefore;
-			mIsAfter = isAfter;
-			mIsAt = isAt;
-			mRelatedAstNode = relatedAstNode;
+		private ExtractionStatistics() {
+			mSuccess = 0;
+			mFailure = 0;
+			mIgnored = 0;
 		}
 
-		public boolean isBefore() {
-			return mIsBefore;
+		private void success() {
+			mSuccess++;
 		}
 
-		public boolean isAfter() {
-			return mIsAfter;
+		private void fail() {
+			mFailure++;
 		}
 
-		public boolean isAt() {
-			return mIsAt;
+		private void ignore() {
+			mIgnored++;
 		}
 
-		public IASTNode getRelatedAstNode() {
-			return mRelatedAstNode;
+		public int getSuccess() {
+			return mSuccess;
+		}
+
+		public int getFailure() {
+			return mFailure;
+		}
+
+		public int getIgnored() {
+			return mIgnored;
+		}
+
+		public int getTotal() {
+			return mSuccess + mFailure + mIgnored;
 		}
 	}
 }

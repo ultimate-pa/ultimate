@@ -4,27 +4,27 @@
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -69,9 +69,8 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.LTLPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.BeforeAfterWitnessInvariantsMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.CorrectnessWitnessExtractor;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.WitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessGraphAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -101,9 +100,9 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	private final CorrectnessWitnessExtractor mWitnessExtractor;
 	private IASTTranslationUnit inputTU;
 	private boolean mLastModel;
-	private BeforeAfterWitnessInvariantsMapping mWitnessInvariants;
+	private Map<IASTNode, ExtractedWitnessInvariant> mWitnessInvariants;
 
-	public CACSL2BoogieTranslatorObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
+	public CACSL2BoogieTranslatorObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		assert storage != null;
 		assert services != null;
 		mStorage = storage;
@@ -190,13 +189,9 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	@Override
 	public void finish() {
 		if (mWitnessExtractor.isReady()) {
-
-			final Map<IASTNode, WitnessInvariant> bInvariants = mWitnessExtractor.getBeforeAST2Invariants();
-			final Map<IASTNode, WitnessInvariant> aInvariants = mWitnessExtractor.getAfterAST2Invariants();
-			mWitnessInvariants = new BeforeAfterWitnessInvariantsMapping(bInvariants, aInvariants);
-
+			mWitnessInvariants = mWitnessExtractor.getCorrectnessWitnessInvariants();
 			// clear witness extractor to make him loose unused references
-			//mWitnessExtractor.clear();
+			// mWitnessExtractor.clear();
 		}
 		if (mLastModel) {
 			doTranslation();
@@ -272,8 +267,8 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
-		if (currentModelIndex == numberOfModels -1) {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
+		if (currentModelIndex == numberOfModels - 1) {
 			mLastModel = true;
 		}
 	}
@@ -285,7 +280,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 
 	/**
 	 * Getter for the root node.
-	 * 
+	 *
 	 * @return the root node of the translated Boogie tree
 	 */
 	public IElement getRoot() {

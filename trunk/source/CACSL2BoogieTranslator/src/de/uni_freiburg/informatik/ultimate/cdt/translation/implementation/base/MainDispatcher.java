@@ -41,6 +41,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -216,8 +217,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.BeforeAfterWitnessInvariantsMapping;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.WitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
 
 /**
  * @author Markus Lindenmann
@@ -259,10 +259,10 @@ public class MainDispatcher extends Dispatcher {
 
 	protected boolean mBitvectorTranslation;
 	protected boolean mOverapproximateFloatingPointOperations;
-	protected BeforeAfterWitnessInvariantsMapping mWitnessInvariants;
+	protected Map<IASTNode, ExtractedWitnessInvariant> mWitnessInvariants;
 
 	public MainDispatcher(final CACSL2BoogieBacktranslator backtranslator,
-			final BeforeAfterWitnessInvariantsMapping witnessInvariants, final IUltimateServiceProvider services,
+			final Map<IASTNode, ExtractedWitnessInvariant> witnessInvariants, final IUltimateServiceProvider services,
 			final ILogger logger) {
 		super(backtranslator, services, logger);
 		mBitvectorTranslation = getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
@@ -379,10 +379,10 @@ public class MainDispatcher extends Dispatcher {
 	@Override
 	public Result dispatch(final IASTNode n) {
 		final List<AssertStatement> witnessInvariantsBefore;
-		WitnessInvariant invariantBefore;
+		ExtractedWitnessInvariant invariantBefore;
 		if (mWitnessInvariants != null) {
-			invariantBefore = mWitnessInvariants.getInvariantsBefore().get(n);
-			witnessInvariantsBefore = translateWitnessInvariant(invariantBefore);
+			invariantBefore = mWitnessInvariants.get(n);
+			witnessInvariantsBefore = translateWitnessInvariant(invariantBefore, a -> a.isBefore());
 		} else {
 			invariantBefore = null;
 			witnessInvariantsBefore = Collections.emptyList();
@@ -537,11 +537,11 @@ public class MainDispatcher extends Dispatcher {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		final List<AssertStatement> witnessInvariantsAfter;
-		WitnessInvariant invariantAfter;
+		ExtractedWitnessInvariant invariantAfter;
 		if (mWitnessInvariants != null) {
 			// TODO: Use the new information as you see fit
-			invariantAfter = mWitnessInvariants.getInvariantsAfter().get(n);
-			witnessInvariantsAfter = translateWitnessInvariant(invariantAfter);
+			invariantAfter = mWitnessInvariants.get(n);
+			witnessInvariantsAfter = translateWitnessInvariant(invariantAfter, a -> a.isAfter());
 		} else {
 			invariantAfter = null;
 			witnessInvariantsAfter = Collections.emptyList();
@@ -596,9 +596,12 @@ public class MainDispatcher extends Dispatcher {
 		return result;
 	}
 
-	private List<AssertStatement> translateWitnessInvariant(final WitnessInvariant invariant)
-			throws AssertionError {
+	private List<AssertStatement> translateWitnessInvariant(final ExtractedWitnessInvariant invariant,
+			final java.util.function.Predicate<ExtractedWitnessInvariant> funHasCorrectPosition) throws AssertionError {
 		if (invariant != null) {
+			if (!funHasCorrectPosition.test(invariant)) {
+				return Collections.emptyList();
+			}
 			ACSLNode acslNode = null;
 			try {
 				checkForQuantifiers(invariant.getInvariant());
@@ -637,16 +640,15 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	/**
-	 * Throw Exception if invariant contains quantifiers.
-	 * It seems like our parser does not support quantifiers yet,
-	 * For the moment it seems to be better to crash here in order to get
-	 * a meaningful error message.
+	 * Throw Exception if invariant contains quantifiers. It seems like our parser does not support quantifiers yet, For
+	 * the moment it seems to be better to crash here in order to get a meaningful error message.
 	 */
 	private void checkForQuantifiers(final String invariant) {
 		if (invariant.contains("exists") || invariant.contains("forall")) {
-			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "invariant contains quantifiers");
+			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(),
+					"invariant contains quantifiers");
 		}
-		
+
 	}
 
 	@Override
