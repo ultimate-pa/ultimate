@@ -313,6 +313,7 @@ public class CorrectnessWitnessExtractor {
 			final Function<ILocation, Integer> loc2linenumber) {
 		final Set<Integer> lines;
 		if (mCheckOnlyLoopInvariants) {
+			// consider only edges that enter a loop head
 			lines = edges.stream().filter(a -> WitnessEdgeAnnotation.getAnnotation(a).getEnterLoopHead())
 					.map(a -> loc2linenumber.apply(a.getLocation())).collect(Collectors.toSet());
 		} else {
