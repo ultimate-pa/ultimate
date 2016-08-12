@@ -138,7 +138,10 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 			mLogger.info("Subtrahend was not deterministic. Recomputing result with determinization.");
 			}
 		}
-		mSndDeterminized = new DeterminizeNwa<LETTER,STATE>(mServices, mSndOperand,mStateDeterminizer,mStateFactory, null, true);
+		// computation of Hoare annotation in Trace Abstration is incorrect if
+		// automaton is not total
+		final boolean makeAutomatonTotal = true;
+		mSndDeterminized = new DeterminizeNwa<LETTER,STATE>(mServices, mSndOperand,mStateDeterminizer,mStateFactory, null, makeAutomatonTotal);
 		mSndComplemented = new ComplementDeterministicNwa<LETTER, STATE>(mSndDeterminized);
 		mIntersect = new IntersectNwa<LETTER, STATE>(mFstOperand, mSndComplemented, mStateFactory, finalIsTrap);
 		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mIntersect);
