@@ -315,12 +315,6 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 
 	private void createNewEdge(final Multigraph<String, BoogieASTNode> source,
 			final Multigraph<String, BoogieASTNode> target, final BoogieASTNode label) {
-		// mLogger.info("new edge: " + source + " --" + label + "--> " + target);
-		// if (label != null) {
-		// mLogger.info(" label loc " + label.getPayload().getLocation().getStartLine() + "-"
-		// + label.getPayload().getLocation().getEndLine());
-		// }
-		// ConditionAnnotation coan = ConditionAnnotation.getAnnotation(label);
 		new MultigraphEdge<>(source, label, target);
 	}
 

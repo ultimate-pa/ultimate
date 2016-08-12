@@ -2,27 +2,27 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
@@ -109,7 +109,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Translation from Boogie to C for traces and expressions.
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
  */
 public class CACSL2BoogieBacktranslator
@@ -285,7 +285,7 @@ public class CACSL2BoogieBacktranslator
 	 * This method converts condition eval false to condition eval true and vice versa. It is used because we translate
 	 * C loop conditions to if(!cond) break; in Boogie, i.e., while in Boogie, the condition was true, in C it is false
 	 * and vice versa.
-	 * 
+	 *
 	 * @param oldSiSet
 	 * @return
 	 */
@@ -356,9 +356,9 @@ public class CACSL2BoogieBacktranslator
 	/**
 	 * Starts from some point in the programExecution i and finds a j >= i && j < programExecution.length s.t. all
 	 * elements [i..j] have the same location.
-	 * 
+	 *
 	 * If i is invalid (outside of [0..programExecution.length-1]), this method throws an IllegalArgumentException.
-	 * 
+	 *
 	 * @param programExecution
 	 * @param i
 	 * @param loc
@@ -404,7 +404,8 @@ public class CACSL2BoogieBacktranslator
 
 	}
 
-	private void translateProgramStateEntry(final Expression varName, final ProgramState<Expression> compressedProgramState,
+	private void translateProgramStateEntry(final Expression varName,
+			final ProgramState<Expression> compressedProgramState,
 			final Map<IASTExpression, Collection<IASTExpression>> translatedStateMap) {
 		// first, translate name
 		final IASTExpression newVarName = translateExpression(varName);
@@ -439,7 +440,7 @@ public class CACSL2BoogieBacktranslator
 
 	/**
 	 * Replace base and offset with one {@link TemporaryPointerExpression}
-	 * 
+	 *
 	 * @param programState
 	 *            May not be null
 	 */
@@ -525,7 +526,7 @@ public class CACSL2BoogieBacktranslator
 		// printCFG(cfg, mLogger::info);
 		mGenerateBacktranslationWarnings = false;
 		IBacktranslatedCFG<String, CACSLLocation> translated = translateCFG(cfg, (a, b, c) -> translateCFGEdge(a, b, c),
-				(a, b, c) -> new CACSLBacktranslatedCFG(a, b, c, mLogger));
+				(a, b, c) -> new CACSLBacktranslatedCFG(a, b, c, mLogger, mServices));
 		translated = reduceCFGs(translated);
 		// mLogger.info("################# Output: " + translated.getClass().getSimpleName());
 		// printHondas(translated, mLogger::info);
@@ -561,8 +562,8 @@ public class CACSL2BoogieBacktranslator
 		return lastTarget;
 	}
 
-	private <TVL, SVL> void createCFGMultigraphEdge(final Multigraph<TVL, CACSLLocation> currentSource, final ILocation loc,
-			final Multigraph<TVL, CACSLLocation> lastTarget, final boolean isNegated) {
+	private <TVL, SVL> void createCFGMultigraphEdge(final Multigraph<TVL, CACSLLocation> currentSource,
+			final ILocation loc, final Multigraph<TVL, CACSLLocation> lastTarget, final boolean isNegated) {
 		final MultigraphEdge<TVL, CACSLLocation> edge;
 		if (loc instanceof CLocation) {
 			final CLocation cloc = (CLocation) loc;
@@ -623,7 +624,8 @@ public class CACSL2BoogieBacktranslator
 		return (CLocation) LocationFactory.createCLocation(condExpr);
 	}
 
-	private IBacktranslatedCFG<String, CACSLLocation> reduceCFGs(final IBacktranslatedCFG<String, CACSLLocation> translated) {
+	private IBacktranslatedCFG<String, CACSLLocation>
+			reduceCFGs(final IBacktranslatedCFG<String, CACSLLocation> translated) {
 		for (final IExplicitEdgesMultigraph<?, ?, String, CACSLLocation, ?> root : translated.getCFGs()) {
 			reduceCFG(root);
 		}
@@ -792,8 +794,10 @@ public class CACSL2BoogieBacktranslator
 				String translatedString = BoogiePrettyPrinter.print(translated);
 				// its ugly, but the easiest way to backtranslate a synthesized boogie expression
 				// we just replace operators that "look" different in C
-				translatedString =
-						translatedString.replaceAll("old\\(", "\\\\old\\(").replaceAll("(\\\\)*old", "\\\\old");
+				// TODO: We need a new BoogiePrettyPrinter for "FakeC" that takes care of quantifiers and such things
+				// (using ACSL).
+				translatedString = translatedString.replaceAll("old\\(", "\\\\old\\(")
+						.replaceAll("(\\\\)*old", "\\\\old").replaceAll("exists", "\\\\exists");
 
 				return new FakeExpression(translatedString);
 			}
@@ -1014,7 +1018,8 @@ public class CACSL2BoogieBacktranslator
 		return String.valueOf(decimalValue);
 	}
 
-	private IASTExpression handleExpressionCASTSimpleDeclaration(final Expression expression, final CASTSimpleDeclaration decls) {
+	private IASTExpression handleExpressionCASTSimpleDeclaration(final Expression expression,
+			final CASTSimpleDeclaration decls) {
 		// this should only happen for IdentifierExpressions
 		if (!(expression instanceof IdentifierExpression)) {
 			reportUnfinishedBacktranslation(
@@ -1136,14 +1141,14 @@ public class CACSL2BoogieBacktranslator
 
 	/**
 	 * A subtree check that sacrifices memory consumption for speed. It is about 20x faster, but uses a lookup table.
-	 * 
+	 *
 	 * A subtree check is used to determine if a trace element is actually a nesting of some later trace element in the
 	 * error path (like in x = x++ + ++x, were x++ and ++x are nestings of +, and + is a nesting of the assignment).
-	 * 
+	 *
 	 * There may be a better solution to this (its rather expensive).
-	 * 
+	 *
 	 * @author dietsch@informatik.uni-freiburg.de
-	 * 
+	 *
 	 */
 	private class CheckForSubtreeInclusion {
 
@@ -1275,11 +1280,11 @@ public class CACSL2BoogieBacktranslator
 
 	/**
 	 * Translates Boogie identifiers of variables and functions back to the identifiers of variables and operators in C.
-	 * 
+	 *
 	 * This class is in an immature state and translates Strings to Strings.
-	 * 
+	 *
 	 * @author heizmann@informatik.uni-freiburg.de
-	 * 
+	 *
 	 */
 	private static final class Boogie2C {
 

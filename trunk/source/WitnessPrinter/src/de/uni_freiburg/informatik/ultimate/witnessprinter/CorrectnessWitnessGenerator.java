@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.witnessprinter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionA
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
@@ -52,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitne
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNodeEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.UltimateGraphMLWriter;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 import edu.uci.ics.jung.graph.DirectedOrderedSparseMultigraph;
 import edu.uci.ics.jung.graph.Hypergraph;
 
@@ -62,16 +65,22 @@ import edu.uci.ics.jung.graph.Hypergraph;
  */
 public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<TTE, TE> {
 
+	private static final String[] ACSL_SUBSTRING = new String[] { "\\old", "\\result", "\\exists" };
+
 	private final ILogger mLogger;
 	private final IBacktranslationValueProvider<TTE, TE> mStringProvider;
 	private final IBacktranslatedCFG<String, TTE> mTranslatedCFG;
+	private final boolean mIsACSLForbidden;
 
 	public CorrectnessWitnessGenerator(final IBacktranslatedCFG<String, TTE> translatedCFG,
-			final IBacktranslationValueProvider<TTE, TE> provider, final ILogger logger) {
+			final IBacktranslationValueProvider<TTE, TE> provider, final ILogger logger,
+			final IUltimateServiceProvider services) {
 		super();
 		mLogger = logger;
 		mStringProvider = provider;
 		mTranslatedCFG = translatedCFG;
+		mIsACSLForbidden =
+				PreferenceInitializer.getPreferences(services).getBoolean(PreferenceInitializer.LABEL_DO_NOT_USE_ACSL);
 	}
 
 	@Override
@@ -202,10 +211,18 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 
 	private GeneratedWitnessNode annotateInvariant(final IExplicitEdgesMultigraph<?, ?, String, TTE, ?> node,
 			final GeneratedWitnessNode wnode) {
-		final String invariant = node.getLabel();
+		final String invariant = filterInvariant(node.getLabel());
 		if (invariant != null) {
 			wnode.setInvariant(invariant);
 		}
 		return wnode;
+	}
+
+	private String filterInvariant(final String label) {
+		if (mIsACSLForbidden && label != null && Arrays.stream(ACSL_SUBSTRING).anyMatch(label::contains)) {
+			mLogger.warn("Not writing invariant because ACSL is forbidden: " + label);
+			return null;
+		}
+		return label;
 	}
 }
