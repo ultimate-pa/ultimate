@@ -36,6 +36,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class ReplacementVarUtils {
 
 	public static Term getDefinition(final RankVar pv) {
-		return pv.getDefinition();
+		final Term result; 
+		if (pv instanceof ReplacementVar) {
+			result = pv.getDefinition();
+		} else {
+			result = ((BoogieVarWrapper) pv).getBoogieVar().getTermVariable();
+		}
+		return result;
 	}
 }
