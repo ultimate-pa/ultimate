@@ -83,8 +83,8 @@ public final class ExtractedWitnessInvariant {
 		newNodeLabels.addAll(mNodeLabels);
 		newNodeLabels.addAll(other.mNodeLabels);
 
-		return new ExtractedWitnessInvariant(newInvariant.toString(), newNodeLabels, mMatchedAstNode, isBefore(), isAfter(),
-				isAt());
+		return new ExtractedWitnessInvariant(newInvariant.toString(), newNodeLabels, mMatchedAstNode, isBefore(),
+				isAfter(), isAt());
 	}
 
 	@Override
@@ -93,7 +93,7 @@ public final class ExtractedWitnessInvariant {
 	}
 
 	public String toStringWithCNode() {
-		return toString() + " at " + getRelatedAstNode().getRawSignature();
+		return toString() + " --- " + getRelatedAstNode().getRawSignature();
 	}
 
 	/**
