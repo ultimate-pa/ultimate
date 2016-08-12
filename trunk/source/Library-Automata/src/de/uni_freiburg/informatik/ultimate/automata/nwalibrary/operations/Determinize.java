@@ -51,9 +51,42 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
 	private final DeterminizeNwa<LETTER, STATE> mDeterminized;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
-	private final IStateDeterminizer<LETTER,STATE> stateDeterminizer;
+	private final IStateDeterminizer<LETTER,STATE> mStateDeterminizer;
 	private final StateFactory<STATE> mStateFactory;
 	
+	
+	public Determinize(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory, 
+			final INestedWordAutomatonSimple<LETTER,STATE> input)
+					throws AutomataOperationCanceledException {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		this.mStateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
+		this.mStateFactory = stateFactory;
+		this.mOperand = input;
+		mLogger.info(startMessage());
+		mDeterminized = new DeterminizeNwa<LETTER, STATE>(mServices, input, mStateDeterminizer, mStateFactory);
+		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mDeterminized);
+		mLogger.info(exitMessage());
+	}
+	
+	public Determinize(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory, 
+			final INestedWordAutomatonSimple<LETTER,STATE> input,
+			final Set<STATE> predefinedInitials)
+					throws AutomataOperationCanceledException {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		this.mStateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
+		this.mStateFactory = stateFactory;
+		this.mOperand = input;
+		mLogger.info(startMessage());
+		mDeterminized = new DeterminizeNwa<LETTER, STATE>(
+				mServices, input, mStateDeterminizer, mStateFactory,
+				predefinedInitials, false);
+		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mDeterminized);
+		mLogger.info(exitMessage());
+	}
 	
 	@Override
 	public String operationName() {
@@ -73,37 +106,6 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		return "Finished " + operationName() + " Result " + 
 				mResult.sizeInformation();
 	}
-	
-	
-	public Determinize(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory, 
-			final INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
-		this.mStateFactory = stateFactory;
-		this.mOperand = input;
-		mLogger.info(startMessage());
-		mDeterminized = new DeterminizeNwa<LETTER, STATE>(mServices, input, stateDeterminizer, mStateFactory);
-		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mDeterminized);
-		mLogger.info(exitMessage());
-	}
-	
-	public Determinize(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory, 
-			final INestedWordAutomatonSimple<LETTER,STATE> input, final Set<STATE> predefinedInitials) throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
-		this.mStateFactory = stateFactory;
-		this.mOperand = input;
-		mLogger.info(startMessage());
-		mDeterminized = new DeterminizeNwa<LETTER, STATE>(mServices, input, stateDeterminizer, mStateFactory, predefinedInitials, false);
-		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mDeterminized);
-		mLogger.info(exitMessage());
-	}
-	
-
 
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
@@ -114,25 +116,21 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
 		boolean correct = true;
-		if (stateDeterminizer instanceof PowersetDeterminizer) {
+		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
-			final INestedWordAutomaton<LETTER, STATE> operandOldApi = ResultChecker.getNormalNwa(mServices, mOperand);
 
 			final INestedWordAutomaton<LETTER, STATE> resultDD = 
-					(new DeterminizeDD<LETTER, STATE>(mServices, sf, operandOldApi)).getResult();
+					(new DeterminizeDD<LETTER, STATE>(mServices, sf, mOperand)).getResult();
 			// should recognize same language as old computation
 			correct &= new IsIncluded<>(mServices, sf, resultDD, mResult).getResult();
 			correct &= new IsIncluded<>(mServices, sf, mResult, resultDD).getResult();
 			if (!correct) {
 				ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);
 			}
-		mLogger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + operationName());
 		} else {
 			mLogger.warn("result was not tested");
 		}
 		return correct;
 	}
-	
-	
 }
-

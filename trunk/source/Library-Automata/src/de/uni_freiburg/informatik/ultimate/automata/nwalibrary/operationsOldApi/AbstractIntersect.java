@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
@@ -50,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 							implements IOperation<LETTER, STATE> {
 
-	private final INestedWordAutomaton<LETTER,STATE> mFstNwa;
-	private final INestedWordAutomaton<LETTER,STATE> mSndNwa;
+	private final INestedWordAutomatonSimple<LETTER,STATE> mFstNwa;
+	private final INestedWordAutomatonSimple<LETTER,STATE> mSndNwa;
 	private final NestedWordAutomaton<LETTER,STATE> mResultNwa;
 	private final StateFactory<STATE> mContentFactory;
 	
@@ -105,8 +105,9 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 
 	public AbstractIntersect(final AutomataLibraryServices services,
 			final boolean buchiIntersection, final boolean minimizeResult,
-					 final INestedWordAutomaton<LETTER,STATE> fstNwa,
-					 final INestedWordAutomaton<LETTER,STATE> sndNwa) throws AutomataLibraryException {
+			 final INestedWordAutomatonSimple<LETTER,STATE> fstNwa,
+			 final INestedWordAutomatonSimple<LETTER,STATE> sndNwa)
+					 throws AutomataLibraryException {
 		super(services);
 	
 		mBuchi = buchiIntersection;
@@ -234,9 +235,10 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 	
 	@Override
 	protected Collection<STATE> getInitialStates() {
-		final int amount = mFstNwa.getInitialStates().size() *
-										mSndNwa.getInitialStates().size();
-		final Collection<STATE> resInits = new ArrayList<STATE>(amount);
+//		final int amount = mFstNwa.getInitialStates().size() *
+//										mSndNwa.getInitialStates().size();
+//		final Collection<STATE> resInits = new ArrayList<STATE>(amount);
+		final Collection<STATE> resInits = new ArrayList<STATE>();
 		for (final STATE fstInit : mFstNwa.getInitialStates()) {
 			for (final STATE sndInit : mSndNwa.getInitialStates()) {
 				final STATE resInit = getOrConstructOnTrack1(fstInit, sndInit, true);

@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
@@ -53,7 +54,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	private final Map<STATE,STATE> mold2new = new HashMap<STATE,STATE>();
 	private final Map<STATE,STATE> mnew2old = new HashMap<STATE,STATE>();
 
-	private final INestedWordAutomaton<LETTER,STATE> mInput;
+	private final INestedWordAutomatonSimple<LETTER,STATE> mInput;
 	private final boolean mComplement;
 
 	/**
@@ -66,7 +67,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	 * @throws AutomataOperationCanceledException
 	 */
 	public ReachableStatesCopy(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER,STATE> nwa,
+			final INestedWordAutomatonSimple<LETTER,STATE> nwa,
 			final boolean totalize, final boolean complement,
 			final boolean removeDeadEnds, final boolean removeNonLiveStates)
 			throws AutomataOperationCanceledException {
@@ -85,7 +86,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 		super.mRemoveNonLiveStates = removeNonLiveStates;
 		traverseDoubleDeckerGraph();
 		((DoubleDeckerAutomaton<LETTER,STATE>) super.mTraversedNwa).setUp2Down(getUp2DownMapping());
-		if (totalize || mInput.getInitialStates().isEmpty()) {
+		if (totalize || (! mInput.getInitialStates().iterator().hasNext())) {
 			makeAutomatonTotal();
 		}
 		mLogger.info(exitMessage());
@@ -160,7 +161,8 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 
 	@Override
 	protected Collection<STATE> getInitialStates() {
-		final Collection<STATE> newInitialStates = new ArrayList<STATE>(mInput.getInitialStates().size());
+//		final Collection<STATE> newInitialStates = new ArrayList<STATE>(mInput.getInitialStates().size());
+		final Collection<STATE> newInitialStates = new ArrayList<STATE>();
 		for (final STATE oldUpState : mInput.getInitialStates()) {
 			final STATE newState = constructOrGetResState(oldUpState, true);
 			newInitialStates.add(newState);

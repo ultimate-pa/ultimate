@@ -51,6 +51,24 @@ public class Intersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final StateFactory<STATE> mStateFactory;
 	
 	
+	
+	
+	public Intersect(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand
+			) throws AutomataLibraryException {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mFstOperand = fstOperand;
+		mSndOperand = sndOperand;
+		mStateFactory = mFstOperand.getStateFactory();
+		mLogger.info(startMessage());
+		mIntersect = new IntersectNwa<LETTER, STATE>(mFstOperand, mSndOperand, mStateFactory, false);
+		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mIntersect);
+		mLogger.info(exitMessage());
+	}
+	
+	
 	@Override
 	public String operationName() {
 		return "intersect";
@@ -71,29 +89,6 @@ public class Intersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				mResult.sizeInformation();
 	}
 	
-	
-	
-	
-	public Intersect(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand
-			) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mFstOperand = fstOperand;
-		mSndOperand = sndOperand;
-		mStateFactory = mFstOperand.getStateFactory();
-		mLogger.info(startMessage());
-		mIntersect = new IntersectNwa<LETTER, STATE>(mFstOperand, mSndOperand, mStateFactory, false);
-		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mIntersect);
-		mLogger.info(exitMessage());
-	}
-	
-
-
-
-
-
 
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult()
@@ -101,14 +96,12 @@ public class Intersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		return mResult;
 	}
 
-
 	
 	@Override
 	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
-		final INestedWordAutomaton<LETTER, STATE> fstOperandOldApi = ResultChecker.getNormalNwa(mServices, mFstOperand);
-		final INestedWordAutomaton<LETTER, STATE> sndOperandOldApi = ResultChecker.getNormalNwa(mServices, mSndOperand);
-		final INestedWordAutomaton<LETTER, STATE> resultDD = (new IntersectDD<LETTER, STATE>(mServices, fstOperandOldApi,sndOperandOldApi)).getResult();
+		final INestedWordAutomaton<LETTER, STATE> resultDD =
+				(new IntersectDD<LETTER, STATE>(mServices, mFstOperand, mSndOperand)).getResult();
 		boolean correct = true;
 		correct &= (resultDD.size() == mResult.size());
 		assert correct;
@@ -122,8 +115,4 @@ public class Intersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
-	
-	
-	
 }
-

@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
@@ -41,8 +42,8 @@ public class ComplementDD<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
-	protected INestedWordAutomaton<LETTER, STATE> mOperand;
-	protected INestedWordAutomaton<LETTER, STATE> mDeterminizedOperand;
+	protected INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	protected INestedWordAutomatonSimple<LETTER, STATE> mDeterminizedOperand;
 	protected INestedWordAutomaton<LETTER, STATE> mResult;
 
 	@Override
@@ -70,7 +71,7 @@ public class ComplementDD<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	public ComplementDD(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand)
+			final INestedWordAutomatonSimple<LETTER, STATE> operand)
 			throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);

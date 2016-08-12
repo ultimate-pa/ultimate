@@ -391,6 +391,12 @@ public final class ResultChecker {
 		}
 	}
 
+	/**
+	 * @deprecated unused legacy code; operations should support
+	 * #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple}
+	 * directly
+	 */
+	@Deprecated
 	public static <LETTER, STATE> INestedWordAutomaton<LETTER, STATE> getNormalNwa(
 			final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa)

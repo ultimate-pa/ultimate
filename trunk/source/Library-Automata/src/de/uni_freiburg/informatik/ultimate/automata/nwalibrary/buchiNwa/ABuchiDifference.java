@@ -124,7 +124,7 @@ public abstract class ABuchiDifference<LETTER, STATE>
 				lassoWords.add(fstOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 			}
 			final BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness =
-					new BuchiIsEmpty<LETTER, STATE>(mServices, mFstOperand);
+					new BuchiIsEmpty<LETTER, STATE>(mServices, mSndOperand);
 			final boolean sndOperandEmpty = sndOperandEmptiness.getResult();
 			if (!sndOperandEmpty) {
 				lassoWords.add(sndOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());

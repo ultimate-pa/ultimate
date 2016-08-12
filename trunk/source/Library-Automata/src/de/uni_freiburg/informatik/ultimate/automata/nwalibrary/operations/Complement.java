@@ -53,26 +53,6 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final StateFactory<STATE> mStateFactory;
 	
 	
-	@Override
-	public String operationName() {
-		return "complement";
-	}
-	
-	
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + " Operand " + 
-			mOperand.sizeInformation();
-	}
-	
-	
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + 
-				mResult.sizeInformation();
-	}
-	
-	
 	public Complement(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER,STATE> operand, 
 			final IStateDeterminizer<LETTER,STATE> stateDeterminizer, 
@@ -136,7 +116,24 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 
-
+	@Override
+	public String operationName() {
+		return "complement";
+	}
+	
+	
+	@Override
+	public String startMessage() {
+		return "Start " + operationName() + " Operand " + 
+			mOperand.sizeInformation();
+	}
+	
+	
+	@Override
+	public String exitMessage() {
+		return "Finished " + operationName() + " Result " + 
+				mResult.sizeInformation();
+	}
 
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult()
@@ -151,14 +148,13 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
-			final INestedWordAutomaton<LETTER, STATE> operandOldApi = ResultChecker.getNormalNwa(mServices, mOperand);
 
 			// intersection of operand and result should be empty
-			final INestedWordAutomaton<LETTER, STATE> intersectionOperandResult = 
-					(new IntersectDD<LETTER, STATE>(mServices, operandOldApi, mResult)).getResult();
+			final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult = 
+					(new IntersectDD<LETTER, STATE>(mServices, mOperand, mResult)).getResult();
 			correct &= (new IsEmpty<LETTER, STATE>(mServices, intersectionOperandResult)).getResult();
-			final INestedWordAutomaton<LETTER, STATE> resultDD = 
-					(new ComplementDD<LETTER, STATE>(mServices, sf, operandOldApi)).getResult();
+			final INestedWordAutomatonSimple<LETTER, STATE> resultDD = 
+					(new ComplementDD<LETTER, STATE>(mServices, sf, mOperand)).getResult();
 			// should have same number of states as old complementation
 			// does not hold, resultDD sometimes has additional sink state
 			//		correct &= (resultDD.size() == mResult.size());

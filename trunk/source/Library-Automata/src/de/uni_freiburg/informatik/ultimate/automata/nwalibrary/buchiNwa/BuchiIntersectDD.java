@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.AbstractIntersect;
 
@@ -37,15 +37,15 @@ public class BuchiIntersectDD<LETTER, STATE> extends
 		AbstractIntersect<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
 	public BuchiIntersectDD(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> fstNwa,
-			final INestedWordAutomaton<LETTER, STATE> sndNwa)
+			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa)
 			throws AutomataLibraryException {
 		super(services, true, false, fstNwa, sndNwa);
 	}
 
 	public BuchiIntersectDD(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> fstNwa,
-			final INestedWordAutomaton<LETTER, STATE> sndNwa,
+			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa,
 			final boolean minimizeResult)
 			throws AutomataLibraryException {
 		super(services, true, minimizeResult, fstNwa, sndNwa);

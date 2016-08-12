@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Remove
 public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE> 
 							  implements IOperation<LETTER,STATE>  {
 
-	protected INestedWordAutomaton<LETTER,STATE> mOperand;
+	protected INestedWordAutomatonSimple<LETTER,STATE> mOperand;
 	protected IStateDeterminizer<LETTER,STATE> mStateDeterminizer;
 	protected StateFactory<STATE> mContentFactory;
 	
@@ -93,7 +93,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 	
 	
 	public DeterminizeDD(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER,STATE> input, 
+			final INestedWordAutomatonSimple<LETTER,STATE> input, 
 			final IStateDeterminizer<LETTER,STATE> stateDeterminizer) 
 											throws AutomataOperationCanceledException {
 		super(services);
@@ -115,7 +115,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 	
 	public DeterminizeDD(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory, 
-			final INestedWordAutomaton<LETTER,STATE> input) 
+			final INestedWordAutomatonSimple<LETTER,STATE> input) 
 											throws AutomataLibraryException {
 		this(services, input,
 				new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory));
@@ -126,8 +126,9 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 	
 	@Override
 	protected Collection<STATE> getInitialStates() {
-		final ArrayList<STATE> resInitials = 
-			new ArrayList<STATE>(mOperand.getInitialStates().size());
+//		final ArrayList<STATE> resInitials = 
+//				new ArrayList<>(mOperand.getInitialStates().size());
+		final ArrayList<STATE> resInitials = new ArrayList<>();
 		final DeterminizedState<LETTER,STATE> detState = mStateDeterminizer.initialState();
 		final STATE resState = mStateDeterminizer.getState(detState);
 		((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(true, detState.containsFinal(), resState);
@@ -228,9 +229,9 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Testing correctness of determinization");
-			final INestedWordAutomaton<LETTER, STATE> operandOld =
+			final INestedWordAutomatonSimple<LETTER, STATE> operandOld =
 					(new RemoveUnreachable(mServices, mOperand)).getResult();
-			final INestedWordAutomaton<LETTER,STATE> resultSadd =
+			final INestedWordAutomatonSimple<LETTER,STATE> resultSadd =
 					(new DeterminizeSadd<LETTER,STATE>(mServices, operandOld)).getResult();
 			correct &= new IsIncluded<>(mServices, stateFactory, resultSadd, mTraversedNwa).getResult();
 			correct &= new IsIncluded<>(mServices, stateFactory, mTraversedNwa, resultSadd).getResult();

@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IState
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 
 public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, STATE> {
@@ -68,8 +68,9 @@ public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, S
 	 */
 	@Override
 	protected Collection<STATE> getInitialStates() {
-		final ArrayList<STATE> resInitials = 
-			new ArrayList<STATE>(mOperand.getInitialStates().size());
+//		final ArrayList<STATE> resInitials = 
+//				new ArrayList<>(mOperand.getInitialStates().size());
+		final ArrayList<STATE> resInitials = new ArrayList<>();
 		final DeterminizedState<LETTER,STATE> detState = mStateDeterminizer.initialState();
 		final STATE resState = mStateDeterminizer.getState(detState);
 		((NestedWordAutomaton<LETTER,STATE>) mTraversedNwa).addState(true, detState.allFinal(mOperand), resState);
@@ -92,8 +93,7 @@ public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, S
 	protected STATE getResState(final DeterminizedState<LETTER,STATE> detState) {
 		if (mDet2res.containsKey(detState)) {
 			return mDet2res.get(detState);
-		}
-		else {
+		} else {
 			final STATE resState = mStateDeterminizer.getState(detState);
 			((NestedWordAutomaton<LETTER,STATE>) mTraversedNwa).addState(false, detState.allFinal(mOperand), resState);
 			mDet2res.put(detState,resState);

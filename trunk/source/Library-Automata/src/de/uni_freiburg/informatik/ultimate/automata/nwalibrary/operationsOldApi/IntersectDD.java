@@ -29,15 +29,15 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 
 	public IntersectDD(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> fstNwa,
-			final INestedWordAutomaton<LETTER, STATE> sndNwa)
+			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa)
 			throws AutomataLibraryException {
 		super(services, false, false, fstNwa, sndNwa);
 	}
@@ -45,8 +45,8 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 	public IntersectDD(
 			final AutomataLibraryServices services,
 			final boolean minimizeResult,
-			final INestedWordAutomaton<LETTER, STATE> fstNwa,
-			final INestedWordAutomaton<LETTER, STATE> sndNwa)
+			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa)
 			throws AutomataLibraryException {
 		super(services, false, minimizeResult, fstNwa, sndNwa);
 	}
