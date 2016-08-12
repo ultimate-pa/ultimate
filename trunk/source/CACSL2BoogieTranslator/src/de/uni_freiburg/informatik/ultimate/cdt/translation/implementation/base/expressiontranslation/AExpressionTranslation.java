@@ -698,9 +698,9 @@ public abstract class AExpressionTranslation {
 	 * - translate to the desired SMT functions, or 
 	 * - let Ultimate overapproximate 
 	 */
-	protected Attribute[] generateAttributes(final ILocation loc, final String smtlibFunctionName, final int[] indices) {
+	protected Attribute[] generateAttributes(final ILocation loc, final boolean overapproximate, final String smtlibFunctionName, final int[] indices) {
 		Attribute[] attributes;
-		if (mOverapproximateFloatingPointOperations) {
+		if (overapproximate) {
 			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName ) });
 			attributes = new Attribute[] { attribute };
 		} else {

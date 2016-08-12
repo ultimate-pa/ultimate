@@ -848,9 +848,9 @@ public class IntegerTranslation extends AExpressionTranslation {
 			final Attribute[] attributes;
 			final ASTType paramASTType = mTypeHandler.ctype2asttype(loc, oldType);
 			if (newType.isFloatingType()) {
-				attributes = generateAttributes(loc, "to_real", null);
+				attributes = generateAttributes(loc, mOverapproximateFloatingPointOperations, "to_real", null);
 			} else if (newType.isIntegerType()) {
-				attributes = generateAttributes(loc, "to_int", null);
+				attributes = generateAttributes(loc, mOverapproximateFloatingPointOperations, "to_int", null);
 			} else {
 				throw new AssertionError("unhandled case");
 			}
