@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.AbstractAcceptance;
@@ -63,7 +63,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	NestedWord<LETTER> mLoop;
 	
 	
-	private final INestedWordAutomaton<LETTER,STATE> mNwa;
+	private final INestedWordAutomatonSimple<LETTER,STATE> mNwa;
 	private boolean mAccepted;
 
 	
@@ -107,7 +107,9 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 *  always rejected its loop contains pending returns.  
 	 * @throws AutomataLibraryException 
 	 */
-	public BuchiAccepts(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER,STATE> nwa, final NestedLassoWord<LETTER> nlw) throws AutomataLibraryException{
+	public BuchiAccepts(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER,STATE> nwa,
+			final NestedLassoWord<LETTER> nlw) throws AutomataLibraryException{
 		super(services);
 		mNwa = nwa;
 		mStem = nlw.getStem();
@@ -269,7 +271,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 * configurations which were accepting.
 	 */
 	private Set<Stack<STATE>> removeAcceptingConfigurations(final Set<Stack<STATE>> configurations,
-			final INestedWordAutomaton<LETTER,STATE> nwa) {
+			final INestedWordAutomatonSimple<LETTER,STATE> nwa) {
 		final Set<Stack<STATE>> acceptingConfigurations = new HashSet<Stack<STATE>>();
 		for (final Stack<STATE> config : configurations) {
 			final STATE state = config.peek();

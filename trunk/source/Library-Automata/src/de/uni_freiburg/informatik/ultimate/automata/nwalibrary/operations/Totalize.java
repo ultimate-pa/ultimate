@@ -38,6 +38,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
+/**
+ * Totalizes an NWA, i.e., makes every state have an outgoing transition
+ * for every letter.
+ * 
+ * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
+ *
+ * @param <LETTER> letter type
+ * @param <STATE> state type
+ */
 public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private final AutomataLibraryServices mServices;
@@ -45,14 +54,34 @@ public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final ILogger mLogger;
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
-	private final TotalizeNwa<LETTER, STATE> mTotalized;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
 	private final StateFactory<STATE> mStateFactory;
 	
 	
+	/**
+	 * @param services Ultimate services
+	 * @param operand operand
+	 * @throws AutomataLibraryException if NWA construction fails
+	 */
+	public Totalize(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER,STATE> operand)
+					throws AutomataLibraryException {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mStateFactory = operand.getStateFactory();
+		mOperand = operand;
+		mLogger.info(startMessage());
+		final TotalizeNwa<LETTER, STATE> totalized =
+				new TotalizeNwa<LETTER, STATE>(operand, mStateFactory);
+		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(
+				mServices, totalized);
+		mLogger.info(exitMessage());
+	}
+	
+	
 	@Override
 	public String operationName() {
-		return "determinize";
+		return "totalize";
 	}
 	
 	
@@ -69,19 +98,6 @@ public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				mResult.sizeInformation();
 	}
 	
-	
-	public Totalize(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		this.mStateFactory = input.getStateFactory();
-		this.mOperand = input;
-		mLogger.info(startMessage());
-		mTotalized = new TotalizeNwa<LETTER, STATE>(input, mStateFactory);
-		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mTotalized);
-		mLogger.info(exitMessage());
-	}
-	
 
 
 	@Override
@@ -93,19 +109,19 @@ public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
 		boolean correct = true;
-			mLogger.info("Start testing correctness of " + operationName());
-			final INestedWordAutomaton<LETTER, STATE> operandOldApi = ResultChecker.getNormalNwa(mServices, mOperand);
+		mLogger.info("Start testing correctness of " + operationName());
 
-			// should recognize same language imput
-			correct &= new IsIncluded<>(mServices, sf, operandOldApi, mResult).getResult();
-			correct &= new IsIncluded<>(mServices, sf, mResult, operandOldApi).getResult();
-			if (!correct) {
-				ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);
-			}
+		// check for same language
+		correct &= new IsIncluded<>(mServices, sf, mOperand, mResult).getResult();
+		correct &= new IsIncluded<>(mServices, sf, mResult, mOperand).getResult();
+		
+		if (!correct) {
+			ResultChecker.writeToFileIfPreferred(mServices,
+					operationName() + "Failed", "language is different",
+					mOperand);
+		}
+		
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
-	
-	
 }
-

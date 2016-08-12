@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -45,6 +44,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
@@ -53,6 +54,21 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	private final INestedWordAutomaton<LETTER,STATE> mOperand;
 	private final INestedWordAutomaton<LETTER, STATE> mResult;
+	
+
+	/**
+	 * @param services Ultimate services
+	 * @param operand operand
+	 */
+	public BuchiClosure(final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER,STATE> operand) {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand = operand;
+		mLogger.info(startMessage());
+		mResult = new BuchiClosureNwa<LETTER, STATE>(mServices, mOperand);
+		mLogger.info(exitMessage());
+	}
 	
 	
 	
@@ -76,22 +92,6 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				mResult.sizeInformation() + " thereof " + 
 				mResult.getFinalStates().size() + " accepting";
 	}
-
-
-
-
-	public BuchiClosure(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER,STATE> input) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		this.mOperand = input;
-		mLogger.info(startMessage());
-		mResult = new BuchiClosureNwa<LETTER, STATE>(mServices, mOperand);
-		mLogger.info(exitMessage());
-	}
-	
-	
-	
 	
 
 
@@ -100,15 +100,17 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			throws AutomataLibraryException {
 		boolean correct = true;
 		mLogger.info("Start testing correctness of " + operationName());
-		final INestedWordAutomaton<LETTER, STATE> operandOldApi = 
-				ResultChecker.getNormalNwa(mServices, mOperand);
-		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
-		final BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, operandOldApi);
+		
+		final List<NestedLassoWord<LETTER>> lassoWords =
+				new ArrayList<NestedLassoWord<LETTER>>();
+		final BuchiIsEmpty<LETTER, STATE> operandEmptiness =
+				new BuchiIsEmpty<LETTER, STATE>(mServices, mOperand);
 		final boolean operandEmpty = operandEmptiness.getResult();
 		if (!operandEmpty) {
 			lassoWords.add(operandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		final BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
+		final BuchiIsEmpty<LETTER, STATE> resultEmptiness =
+				new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
 		final boolean resultEmpty = resultEmptiness.getResult();
 		if (!resultEmpty) {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
@@ -126,20 +128,4 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public INestedWordAutomaton<LETTER, STATE> getResult() throws AutomataLibraryException {
 		return mResult;
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
