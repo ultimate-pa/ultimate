@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,14 +71,12 @@ public class BacktranslationUtil {
 			final List<Map<RankVar, Rational>> states) {
 		final List<Map<Expression, Rational>> result =
 				new ArrayList<Map<Expression, Rational>>(states.size());
-		final Map<Term, Expression> rankVar2Expression =
-				new HashMap<Term, Expression>();
 		for (final Map<RankVar, Rational> state : states) {
 			final Map<Expression, Rational> expression2rational =
 					new LinkedHashMap<Expression, Rational>();
 			for (final Map.Entry<RankVar, Rational> entry : state.entrySet()) {
 				final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
-				final Expression e = rankVar2Expression.get(definition);
+				final Expression e = term2expression.translate(definition);
 				Rational r = entry.getValue();
 				// Replace Rational for boolean RankVars
 				if (definition.getSort().getName().equals("Bool")) {
