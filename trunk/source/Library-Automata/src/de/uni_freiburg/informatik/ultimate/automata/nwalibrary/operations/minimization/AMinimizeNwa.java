@@ -506,7 +506,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 */
 	protected final boolean isDeterministic()
 			throws AutomataLibraryException {
-		return new IsDeterministic<LETTER, STATE>(mServices, mOperand).checkResult(mOperand.getStateFactory());
+		return new IsDeterministic<LETTER, STATE>(mServices, mOperand).getResult();
 	}
 
 	/**
