@@ -29,9 +29,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
@@ -113,7 +113,7 @@ public class IsDeterministic<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			correct &= new IsIncluded<>(mServices, sf, mReach, mOperand).getResult();
 			assert correct;
 			if (!correct) {
-				ResultChecker.writeToFileIfPreferred(mServices,
+				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
 						operationName() + "Failed", "language is different",
 						mOperand);
 			}

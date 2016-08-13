@@ -31,6 +31,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -49,7 +50,7 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 	
 	private final AutomataLibraryServices mServices;
 	
-	private final INestedWordAutomatonSimple<LETTER,STATE> mInput;
+	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
 
 	private final ILogger mLogger;
@@ -68,9 +69,9 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 			throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mInput = nwa;
+		mOperand = nwa;
 		mLogger.info(startMessage());
-		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mInput);
+		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mOperand);
 		mLogger.info(exitMessage());
 	}
 	
@@ -83,7 +84,7 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Input "
-				+ mInput.sizeInformation();
+				+ mOperand.sizeInformation();
 	}
 
 	@Override
@@ -102,7 +103,7 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
-		if (mInput instanceof INestedWordAutomaton) {
+		if (mOperand instanceof INestedWordAutomaton) {
 			mLogger.info("Start testing correctness of " + operationName());
 			// correct &= (ResultChecker.nwaLanguageInclusion(mInput, mResult)
 			// == null);
@@ -111,7 +112,7 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 			assert correct;
 			final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy = 
 					(DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy(
-					mServices, (INestedWordAutomaton<LETTER, STATE>) mInput, false, false, false,
+					mServices, (INestedWordAutomaton<LETTER, STATE>) mOperand, false, false, false,
 					false)).getResult();
 			correct &=
 			ResultChecker.isSubset(reachableStatesCopy.getStates(),mResult.getStates());
@@ -153,8 +154,9 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 				assert correct;
 			}
 			if (!correct) {
-				ResultChecker.writeToFileIfPreferred(mServices, 
-						operationName() + "Failed", "", mInput);
+				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, 
+						operationName() + "Failed", "language is different",
+						mOperand);
 			}
 			mLogger.info("Finished testing correctness of " + operationName());
 		}

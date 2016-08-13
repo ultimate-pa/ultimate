@@ -35,9 +35,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Senwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -330,8 +330,9 @@ public class DifferenceSenwa<LETTER, STATE> implements
 			correct &= new IsIncluded<>(mServices, stateFactory, resultSadd, mSenwa).getResult();
 			correct &= new IsIncluded<>(mServices, stateFactory, mSenwa, resultSadd).getResult();
 			if (!correct) {
-				ResultChecker.writeToFileIfPreferred(mServices, operationName()
-						+ "Failed", "", mMinuend,mSubtrahend);
+				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
+						operationName() + "Failed", "language is different",
+						mMinuend,mSubtrahend);
 			}
 			mLogger.info("Finished testing correctness of " + operationName());
 		} else {

@@ -32,6 +32,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -115,43 +116,44 @@ public abstract class ABuchiDifference<LETTER, STATE>
 			throws AutomataLibraryException {
 		final boolean underApproximationOfComplement = false;
 		boolean correct = true;
-			mLogger.info("Start testing correctness of " + operationName());
-			final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<>();
-			final BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness =
-					new BuchiIsEmpty<LETTER, STATE>(mServices, mFstOperand);
-			final boolean fstOperandEmpty = fstOperandEmptiness.getResult();
-			if (!fstOperandEmpty) {
-				lassoWords.add(fstOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
-			}
-			final BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness =
-					new BuchiIsEmpty<LETTER, STATE>(mServices, mSndOperand);
-			final boolean sndOperandEmpty = sndOperandEmptiness.getResult();
-			if (!sndOperandEmpty) {
-				lassoWords.add(sndOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
-			}
-			final BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
-			final boolean resultEmpty = resultEmptiness.getResult();
-			if (!resultEmpty) {
-				lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
-			}
-			correct &= (!fstOperandEmpty || resultEmpty);
-			assert correct;
-			lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
-			lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mFstOperand.size()));
-			lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mSndOperand.size()));
-			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mFstOperand)).getResult());
-			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mSndOperand)).getResult());
-			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mResult)).getResult());
+		mLogger.info("Start testing correctness of " + operationName());
+		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<>();
+		final BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness =
+				new BuchiIsEmpty<LETTER, STATE>(mServices, mFstOperand);
+		final boolean fstOperandEmpty = fstOperandEmptiness.getResult();
+		if (!fstOperandEmpty) {
+			lassoWords.add(fstOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
+		}
+		final BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness =
+				new BuchiIsEmpty<LETTER, STATE>(mServices, mSndOperand);
+		final boolean sndOperandEmpty = sndOperandEmptiness.getResult();
+		if (!sndOperandEmpty) {
+			lassoWords.add(sndOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
+		}
+		final BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
+		final boolean resultEmpty = resultEmptiness.getResult();
+		if (!resultEmpty) {
+			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
+		}
+		correct &= (!fstOperandEmpty || resultEmpty);
+		assert correct;
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mFstOperand.size()));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mSndOperand.size()));
+		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mFstOperand)).getResult());
+		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mSndOperand)).getResult());
+		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mResult)).getResult());
 
-			for (final NestedLassoWord<LETTER> nlw : lassoWords) {
-				correct &= checkAcceptance(nlw, mFstOperand, mSndOperand, underApproximationOfComplement);
-				assert correct;
-			}
-			if (!correct) {
-				ResultChecker.writeToFileIfPreferred(mServices,
-						operationName() + "Failed", "", mFstOperand, mSndOperand);
-			}
-			mLogger.info("Finished testing correctness of " + operationName());
+		for (final NestedLassoWord<LETTER> nlw : lassoWords) {
+			correct &= checkAcceptance(nlw, mFstOperand, mSndOperand, underApproximationOfComplement);
+			assert correct;
+		}
+		if (!correct) {
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
+					operationName() + "Failed", "language is different",
+					mFstOperand, mSndOperand);
+		}
+		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 	

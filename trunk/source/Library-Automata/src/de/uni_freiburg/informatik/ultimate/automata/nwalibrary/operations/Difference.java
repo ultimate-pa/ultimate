@@ -31,9 +31,9 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonFilteredStates;
@@ -173,8 +173,9 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
 		final INestedWordAutomaton<LETTER, STATE> resultDD = 
-				(new DifferenceDD<LETTER, STATE>(mServices, mFstOperand,mSndOperand, 
-						new PowersetDeterminizer<LETTER, STATE>(mSndOperand,true, sf),sf,false,false)).getResult();
+				(new DifferenceDD<LETTER, STATE>(mServices, mFstOperand, mSndOperand, 
+						new PowersetDeterminizer<LETTER, STATE>(mSndOperand,true, sf),
+						sf, false, false)).getResult();
 		boolean correct = true;
 //		correct &= (resultDD.size() == mResult.size());
 //		assert correct;
@@ -183,7 +184,9 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 		correct &= new IsIncluded<>(mServices, sf, mResult, resultDD).getResult();
 		assert correct;
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mFstOperand,mSndOperand);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
+					operationName() + "Failed", "language is different",
+					mFstOperand,mSndOperand);
 		}
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;

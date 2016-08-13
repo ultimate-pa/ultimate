@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -116,7 +116,7 @@ public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		correct &= new IsIncluded<>(mServices, sf, mResult, mOperand).getResult();
 		
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(mServices,
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
 					operationName() + "Failed", "language is different",
 					mOperand);
 		}

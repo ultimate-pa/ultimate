@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -155,18 +155,22 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			correct &= (new IsEmpty<LETTER, STATE>(mServices, intersectionOperandResult)).getResult();
 			final INestedWordAutomatonSimple<LETTER, STATE> resultDD = 
 					(new ComplementDD<LETTER, STATE>(mServices, sf, mOperand)).getResult();
+			
 			// should have same number of states as old complementation
 			// does not hold, resultDD sometimes has additional sink state
 			//		correct &= (resultDD.size() == mResult.size());
+			
 			// should recognize same language as old computation
 			correct &= new IsIncluded<>(mServices, sf, resultDD, mResult).getResult();
 			correct &= new IsIncluded<>(mServices, sf, mResult, resultDD).getResult();
-			if (!correct) {
-				ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);
-			}
 			mLogger.info("Finished testing correctness of " + operationName());
 		} else {
 			mLogger.warn("operation not tested");
+		}
+		if (!correct) {
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
+					operationName() + "Failed", "language is different",
+					mOperand);
 		}
 		return correct;
 	}

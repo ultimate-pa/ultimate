@@ -31,6 +31,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -51,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private final AutomataLibraryServices mServices;
-	private final INestedWordAutomatonSimple<LETTER,STATE> mInput;
+	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> mReach;
 	private final IDoubleDeckerAutomaton<LETTER,STATE> mResult;
 
@@ -65,18 +66,19 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * Each state of the result also occurred in the input. Only the auxiliary
 	 * empty stack state of the result is different. 
 	 * 
-	 * @param nwa
+	 * @param services Ultimate services
+	 * @param operand operand
 	 * @throws AutomataOperationCanceledException
 	 */
 	public RemoveDeadEnds(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER,STATE> nwa)
+			final INestedWordAutomatonSimple<LETTER,STATE> operand)
 			throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mInput = nwa;
+		mOperand = operand;
 		mLogger.info(startMessage());
 		try {
-			mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mInput);
+			mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mOperand);
 			mReach.computeDeadEnds();
 			mResult = new NestedWordAutomatonFilteredStates<LETTER, STATE>(mServices, mReach, mReach.getWithOutDeadEnds());
 		} catch (final AutomataOperationCanceledException oce) {
@@ -95,13 +97,13 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Input "
-				+ mInput.sizeInformation();
+				+ mOperand.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Reduced from " 
-				+ mInput.sizeInformation() + " to "
+				+ mOperand.sizeInformation() + " to "
 				+ mResult.sizeInformation();
 	}
 
@@ -119,10 +121,10 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 //		correct &= (ResultChecker.nwaLanguageInclusion(mResult, mInput) == null);
 		assert correct;
 		INestedWordAutomaton<LETTER, STATE> input;
-		if (mInput instanceof INestedWordAutomaton) {
-			input = (INestedWordAutomaton<LETTER, STATE>) mInput;
+		if (mOperand instanceof INestedWordAutomaton) {
+			input = (INestedWordAutomaton<LETTER, STATE>) mOperand;
 		} else {
-			input = (new RemoveUnreachable<LETTER, STATE>(mServices, mInput)).getResult(); 
+			input = (new RemoveUnreachable<LETTER, STATE>(mServices, mOperand)).getResult(); 
 		}
 		final ReachableStatesCopy<LETTER, STATE> rsc = 
 				(new ReachableStatesCopy<LETTER, STATE>(mServices, input, false, false, false, false));
@@ -187,11 +189,11 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			assert correct;
 		}
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mInput);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
+					operationName() + "Failed", "language is different",
+					mOperand);
 		}
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
-
-
 }

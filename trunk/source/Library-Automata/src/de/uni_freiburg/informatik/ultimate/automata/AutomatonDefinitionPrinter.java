@@ -67,6 +67,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * a0, ..., an.
  * 
  * @author heizmann@informatik.uni-freiburg.de
+ * 
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 
 public class AutomatonDefinitionPrinter<LETTER,STATE> {
@@ -125,6 +128,9 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 	
 	private StringWriter mStringWriter;
 	
+	// enable writing automata, e.g., when an error occurs
+	private static boolean sIsDumpAutomaton = false;
+	
 	
 	public AutomatonDefinitionPrinter(
 			final AutomataLibraryServices services,
@@ -141,7 +147,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 		case ATS:
 		case ATS_NUMERATE:
 		case ATS_QUOTED:
-			mPrintWriter.println("// Testfile dumped by Ultimate at "+getDateTime());
+			mPrintWriter.println("// Testfile dumped by Ultimate at "+getDateTimeNice());
 			mPrintWriter.println("//");
 			mPrintWriter.println("// " + message);
 			mPrintWriter.println("");
@@ -173,6 +179,35 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 		mStringWriter = new StringWriter();
 		mPrintWriter = new PrintWriter(mStringWriter);
 		printAutomaton(name, automaton, format);
+	}
+
+	/**
+	 * Writes the passed automata to files if the option is enabled.
+	 * Does nothing otherwise. <br>
+	 * 
+	 * This method is intended to be used for dumping automata when an error
+	 * occurs in an operation, e.g., when the <code>checkResult()</code> method
+	 * fails.
+	 * 
+	 * @param services Ultimate services
+	 * @param filenamePrefix prefix of the file name (e.g., operation name)
+	 * @param message message to be printed in the file
+	 * @param automata sequence of automata to be printed
+	 */
+	@SafeVarargs
+	public static <LETTER, STATE> void writeToFileIfPreferred(
+			final AutomataLibraryServices services,
+			final String filenamePrefix,
+			final String message,
+			final IAutomaton<?, ?>... automata) {
+		if (! sIsDumpAutomaton) {
+			return;
+		}
+		final String workingDirectory = System.getProperty("user.dir");
+		final String filename = workingDirectory + File.separator
+				+ filenamePrefix + getDateTimeFileName() + ".ats";
+		new AutomatonDefinitionPrinter<LETTER, STATE>(services, filenamePrefix,
+				filename, Format.ATS_NUMERATE, message, automata);
 	}
 	
 	private void initializePrintWriter(final String filename, final Format format) {
@@ -210,7 +245,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 					throw new AssertionError("Timeout while preparing automaton for printing.");
 				}
 			}
-				
+			
 			if (format == Format.ATS) {
 				new NwaTestFileWriterToString(name, nwa);
 			} else if (format == Format.ATS_QUOTED) {
@@ -245,12 +280,26 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 		mPrintWriter.close();
 	}
 	
-    private String getDateTime() {
-        final DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        final Date date = new Date();
-        return dateFormat.format(date);
-    }
+	/**
+	 * @return date/time string used inside files
+	 */
+	private String getDateTimeNice() {
+	    return getDateTimeFromFormat("yyyy/MM/dd HH:mm:ss");
+	}
 	
+	/**
+	 * @return date/time string used for file names (no special characters)
+	 */
+	private static String getDateTimeFileName() {
+		return getDateTimeFromFormat("yyyyMMddHHmmss");
+	}
+    
+	private static String getDateTimeFromFormat(final String format) {
+		final DateFormat dateFormat = new SimpleDateFormat(format);
+		final Date date = new Date();
+		return dateFormat.format(date);
+	}
+    
     /**
      * common methods of test file writers
      * 

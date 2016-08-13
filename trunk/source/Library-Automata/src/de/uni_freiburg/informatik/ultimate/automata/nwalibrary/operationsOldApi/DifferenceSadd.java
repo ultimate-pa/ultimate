@@ -35,9 +35,9 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -546,11 +546,13 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			correct &= new IsIncluded<>(mServices, stateFactory, resultDD, mDifference).getResult();
 			correct &= new IsIncluded<>(mServices, stateFactory, mDifference, resultDD).getResult();
 			if (!correct) {
-			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mMinuend,mSubtrahend);
-			}
 			mLogger.info("Finished testing correctness of " + operationName());
 		} else {
-			mLogger.warn("Unable to test correctness if state determinzier is not the PowersetDeterminizer.");
+			mLogger.warn("Unable to test correctness if state determinizer is not the PowersetDeterminizer.");
+		}
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
+				operationName() + "Failed", "language is different",
+				mMinuend, mSubtrahend);
 		}
 		return correct;
 	}

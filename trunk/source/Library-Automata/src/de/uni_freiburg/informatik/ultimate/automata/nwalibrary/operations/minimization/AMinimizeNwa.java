@@ -36,9 +36,9 @@ import java.util.NoSuchElementException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -192,8 +192,8 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 			message = "The result recognizes more words than before.";
 		}
 
-		ResultChecker.writeToFileIfPreferred(mServices,
-				operationName() + "_Failed",
+		AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
+				operationName() + "Failed",
 				message,
 				mOperand);
 		return false;

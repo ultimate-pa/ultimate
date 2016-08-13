@@ -26,13 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import java.io.File;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.Date;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -190,7 +185,8 @@ public final class ResultChecker {
 			} else {
 				correct = false;
 				final String message = "// Problem with lasso " + lasso.toString();
-				writeToFileIfPreferred(services, "FailedBuchiComplementCheck", message, operand);
+				AutomatonDefinitionPrinter.writeToFileIfPreferred(services,
+						"FailedBuchiComplementCheck", message, operand);
 				break;
 			}
 		}
@@ -417,23 +413,7 @@ public final class ResultChecker {
 		return (new BuchiIsIncluded<LETTER, STATE>(services, stateFactory, nwa1, nwa2)).getCounterexample();
 	}
 
-	private static String getDateTime() {
-		final DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-		final Date date = new Date();
-		return dateFormat.format(date);
-	}
-
-	public static <LETTER, STATE> void writeToFileIfPreferred(
-			final AutomataLibraryServices services,
-			final String filenamePrefix,
-			final String message,
-			final IAutomaton<LETTER, STATE>... automata) {
-		final String workingDirectory = System.getProperty("user.dir");
-		final String filename = workingDirectory + File.separator
-				+ filenamePrefix + getDateTime() + ".ats";
-		new AutomatonDefinitionPrinter<LETTER, STATE>(services, filenamePrefix,
-				filename, Format.ATS_NUMERATE, message, automata);
-	}
+	
 
 	public static <LETTER, STATE> NestedLassoWord<LETTER> getRandomNestedLassoWord(
 			final INestedWordAutomatonSimple<LETTER, STATE> automaton,
