@@ -230,8 +230,8 @@ public class CorrectnessWitnessExtractor {
 
 		if (mCheckOnlyLoopInvariants) {
 			// we already extracted all the loop invariants
-			mLogger.warn("Ignoring the following possible matches for " + dwnode
-					+ " because we are only considering loop invariants:");
+			mLogger.warn("The following possible matches for " + dwnode
+					+ " were ignored because we could not match them to a loop:");
 			candidateNodes.stream().forEach(a -> mLogger.warn("  " + a.toStringSimple()));
 			return rtr;
 		}
@@ -241,36 +241,75 @@ public class CorrectnessWitnessExtractor {
 
 	private Map<IASTNode, ExtractedWitnessInvariant> extractLoopInvariants(final DecoratedWitnessNode dwnode,
 			final Set<MatchedASTNode> candidateNodes) {
-		final Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>();
 		final Set<MatchedASTNode> loopHeads =
 				candidateNodes.stream().filter(a -> a.isLoopHead()).collect(Collectors.toSet());
+		candidateNodes.removeAll(loopHeads);
 
-		// if all the loop heads have a common parent, we can just use this and match precisely
-		final IASTNode commonParent = findCommonParentStatement(loopHeads);
-		if (commonParent != null) {
-			final Set<IASTStatement> loopStatements = new LoopStatementExtractor().run(commonParent);
-			loopStatements.stream()
-					.map(a -> new ExtractedWitnessInvariant(dwnode.getInvariant(),
-							Collections.singletonList(dwnode.getName()), a, false, false, true))
-					.forEach(a -> rtr.put(a.getRelatedAstNode(), a));
-			candidateNodes.removeAll(loopHeads);
-			return rtr;
+		final Map<IASTNode, ExtractedWitnessInvariant> down = tryMatchLoopInvariantsDownwards(dwnode, loopHeads);
+		if (loopHeads.isEmpty()) {
+			// downward matching matched everything, nothing more to do.
+			return down;
 		}
+		// try to match the remaining loop heads upwards
+		final Map<IASTNode, ExtractedWitnessInvariant> up = tryMatchLoopInvariantsUpwards(dwnode, loopHeads);
+		if (!loopHeads.isEmpty()) {
+			mLogger.warn("Could not match the following loop heads:");
+			loopHeads.stream().forEach(a -> mLogger.warn("  " + a.toStringSimple()));
+			candidateNodes.addAll(loopHeads);
+		}
+		return mergeMatchesIfNecessary(down, up);
+	}
 
-		// if not, we have to assume that one of the statements encapsulates the real loop (perhaps a goto or something
-		// else) and use an alternative approach
-		for (final MatchedASTNode loopHead : loopHeads) {
+	private Map<IASTNode, ExtractedWitnessInvariant> tryMatchLoopInvariantsDownwards(final DecoratedWitnessNode dwnode,
+			final Set<MatchedASTNode> loopHeads) {
+		final Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>();
+		final Iterator<MatchedASTNode> iter = loopHeads.iterator();
+		while (iter.hasNext()) {
+			final MatchedASTNode loopHead = iter.next();
 			final Set<IASTStatement> loopStatements = new LoopStatementExtractor().run(loopHead.getNode());
 			if (loopStatements.isEmpty()) {
-				mLogger.warn("Could not find a loop statement for the matched AST node " + loopHead);
+				continue;
 			} else {
+				mLogger.info("Matched downward: " + loopHead.toStringSimple());
 				loopStatements.stream()
 						.map(a -> new ExtractedWitnessInvariant(dwnode.getInvariant(),
 								Collections.singletonList(dwnode.getName()), a, false, false, true))
 						.forEach(a -> rtr.put(a.getRelatedAstNode(), a));
-				candidateNodes.remove(loopHead);
+				iter.remove();
 			}
 		}
+		return rtr;
+	}
+
+	private Map<IASTNode, ExtractedWitnessInvariant> tryMatchLoopInvariantsUpwards(final DecoratedWitnessNode dwnode,
+			final Set<MatchedASTNode> loopHeads) {
+		final Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>();
+		final IASTNode commonParent = findCommonParentStatement(loopHeads);
+		if (commonParent == null) {
+			// if there is no common parent, we cannot match upwards
+			return rtr;
+		}
+		mLogger.info("Matched remaining loop heads upward to common parent of type "
+				+ commonParent.getClass().getSimpleName());
+
+		// check if the common parent or a parent of the common parent is a loop
+		IASTNode currentParent = commonParent;
+		Set<IASTStatement> loopStatements = Collections.emptySet();
+		while (currentParent != null && currentParent instanceof IASTStatement) {
+			loopStatements = new LoopStatementExtractor().run(currentParent);
+			if (!loopStatements.isEmpty()) {
+				break;
+			}
+			currentParent = currentParent.getParent();
+		}
+		if (loopStatements.isEmpty()) {
+			return rtr;
+		}
+		loopStatements.stream()
+				.map(a -> new ExtractedWitnessInvariant(dwnode.getInvariant(),
+						Collections.singletonList(dwnode.getName()), a, false, false, true))
+				.forEach(a -> rtr.put(a.getRelatedAstNode(), a));
+		loopHeads.clear();
 		return rtr;
 	}
 
@@ -321,7 +360,7 @@ public class CorrectnessWitnessExtractor {
 		mLogger.warn("Merging invariants");
 		mLogger.warn("  Invariant A is " + invA.toString());
 		mLogger.warn("  Invariant B is " + invB.toString());
-		mLogger.warn("  New match: " + newInvariant.toStringWithCNode());
+		mLogger.warn("  New match: " + newInvariant.toString());
 		return newInvariant;
 	}
 
