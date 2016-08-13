@@ -36,9 +36,8 @@ import java.util.NoSuchElementException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AUnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -49,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDete
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IPartition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor.ReachFinal;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 /**
@@ -66,23 +64,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  * @param <STATE> state type
  */
 public abstract class AMinimizeNwa<LETTER, STATE>
+		extends AUnaryNwaOperation<LETTER, STATE>
 		implements IMinimizeNwa<LETTER, STATE>, IOperation<LETTER, STATE> {
-
-	protected final AutomataLibraryServices mServices;
 	/**
-	 * The logger.
+	 * The operand as more specific interface.
+	 * It shadows the superclass field with the same name.
 	 */
-	protected final ILogger mLogger;
-
+	protected final INestedWordAutomaton<LETTER, STATE> mOperand;
 	/**
 	 * The operation name.
 	 */
 	protected final String mName;
-
-	/**
-	 * The input automaton.
-	 */
-	protected final INestedWordAutomaton<LETTER, STATE> mOperand;
 
 	/**
 	 * StateFactory for the construction of states of the resulting automaton.
@@ -116,10 +108,9 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	protected AMinimizeNwa(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory, final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mName = name;
+		super(services, operand);
 		mOperand = operand;
+		mName = name;
 		mResult = null;
 		mTemporaryResult = null;
 		mOldState2NewState = null;
@@ -155,12 +146,6 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	}
 
 	@Override
-	public final String startMessage() {
-		return "Start " + operationName() + ". Operand has " +
-				mOperand.sizeInformation();
-	}
-
-	@Override
 	public final String exitMessage() {
 		return "Finished " + operationName() + ". Reduced states from " +
 				mOperand.size() + " to " + getResult().size() + ".";
@@ -174,31 +159,6 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 		return mResult;
 	}
 
-	@Override
-	public final boolean checkResult(final StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		mLogger.info("Start testing correctness of " + operationName());
-		final String message;
-
-		if (checkInclusion(mOperand, getResult(), stateFactory)) {
-			if (checkInclusion(getResult(), mOperand, stateFactory)) {
-				mLogger.info("Finished testing correctness of " +
-						operationName());
-				return true;
-			} else {
-				message = "The result recognizes less words than before.";
-			}
-		} else {
-			message = "The result recognizes more words than before.";
-		}
-
-		AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
-				operationName() + "Failed",
-				message,
-				mOperand);
-		return false;
-	}
-	
 	/**
 	 * Returns a Map from states of the input automaton to states of the output
 	 * automaton. The output results from merging states. The image of a state
