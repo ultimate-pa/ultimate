@@ -86,7 +86,7 @@ public interface IOperation<LETTER, STATE> {
 	
 	/**
 	 * @return Return the result of the operation.
-	 * @throws AutomataOperationCanceledException 
+	 * @throws AutomataLibraryException 
 	 */
 	Object getResult() throws AutomataLibraryException;
 	
