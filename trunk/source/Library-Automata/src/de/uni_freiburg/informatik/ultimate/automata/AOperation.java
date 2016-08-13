@@ -56,6 +56,12 @@ public abstract class AOperation<LETTER, STATE>
 	}
 	
 	@Override
+	public String operationName() {
+		// use runtime class name by default
+		return getClass().getSimpleName();
+	}
+	
+	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ".";
 	}
