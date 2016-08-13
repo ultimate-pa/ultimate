@@ -101,7 +101,7 @@ public abstract class BoogieTransformer {
 	 *            the declaration to process.
 	 * @return the processed declaration.
 	 */
-	protected Declaration processDeclaration(Declaration decl) {
+	protected Declaration processDeclaration(final Declaration decl) {
 		final Attribute[] attrs = decl.getAttributes();
 		final Attribute[] newAttrs = processAttributes(attrs);
 		Declaration newDecl = null;
@@ -176,7 +176,7 @@ public abstract class BoogieTransformer {
 	 *            the types to process.
 	 * @return the processed types.
 	 */
-	protected ASTType[] processTypes(ASTType[] types) {
+	protected ASTType[] processTypes(final ASTType[] types) {
 		boolean changed = false;
 		final ASTType[] newTypes = new ASTType[types.length];
 		for (int i = 0; i < types.length; i++) {
@@ -195,7 +195,7 @@ public abstract class BoogieTransformer {
 	 *            the type to process.
 	 * @return the processed type.
 	 */
-	protected ASTType processType(ASTType type) {
+	protected ASTType processType(final ASTType type) {
 		ASTType newType = null;
 		if (type instanceof ArrayType) {
 			final ArrayType arrtype = (ArrayType) type;
@@ -231,7 +231,7 @@ public abstract class BoogieTransformer {
 	 *            the variable lists
 	 * @return the processed variable lists.
 	 */
-	protected VarList[] processVarLists(VarList[] vls) {
+	protected VarList[] processVarLists(final VarList[] vls) {
 		boolean changed = false;
 		final VarList[] newVls = new VarList[vls.length];
 		for (int i = 0; i < vls.length; i++) {
@@ -251,7 +251,7 @@ public abstract class BoogieTransformer {
 	 *            the variable list
 	 * @return the processed variable list.
 	 */
-	protected VarList processVarList(VarList vl) {
+	protected VarList processVarList(final VarList vl) {
 		final ASTType type = vl.getType();
 		final ASTType newType = processType(type);
 		final Expression where = vl.getWhereClause();
@@ -271,7 +271,7 @@ public abstract class BoogieTransformer {
 	 *            the implementation body.
 	 * @return the processed body.
 	 */
-	protected Body processBody(Body body) {
+	protected Body processBody(final Body body) {
 		final VariableDeclaration[] locals = body.getLocalVars();
 		final VariableDeclaration[] newLocals = processLocalVariableDeclarations(locals);
 
@@ -292,7 +292,7 @@ public abstract class BoogieTransformer {
 	 *            The local variable declaration.
 	 * @return the processed declaration.
 	 */
-	protected VariableDeclaration processLocalVariableDeclaration(VariableDeclaration local) {
+	protected VariableDeclaration processLocalVariableDeclaration(final VariableDeclaration local) {
 		final Attribute[] attrs = local.getAttributes();
 		final Attribute[] newAttrs = processAttributes(attrs);
 		final VarList[] vl = local.getVariables();
@@ -312,7 +312,7 @@ public abstract class BoogieTransformer {
 	 *            the array of variable declarations
 	 * @return the processed declarations.
 	 */
-	protected VariableDeclaration[] processLocalVariableDeclarations(VariableDeclaration[] locals) {
+	protected VariableDeclaration[] processLocalVariableDeclarations(final VariableDeclaration[] locals) {
 		boolean changed = false;
 		final VariableDeclaration[] newLocals = new VariableDeclaration[locals.length];
 		for (int i = 0; i < locals.length; i++) {
@@ -331,7 +331,7 @@ public abstract class BoogieTransformer {
 	 *            the statement to process.
 	 * @return processed statements.
 	 */
-	protected Statement[] processStatements(Statement[] statements) {
+	protected Statement[] processStatements(final Statement[] statements) {
 		boolean changed = false;
 		final Statement[] newStatements = new Statement[statements.length];
 		for (int i = 0; i < statements.length; i++) {
@@ -351,7 +351,7 @@ public abstract class BoogieTransformer {
 	 *            the statement to process.
 	 * @return processed statement.
 	 */
-	protected Statement processStatement(Statement statement) {
+	protected Statement processStatement(final Statement statement) {
 		Statement newStatement = null;
 		if (statement instanceof AssertStatement) {
 			final Expression expr = ((AssertStatement) statement).getFormula();
@@ -430,7 +430,7 @@ public abstract class BoogieTransformer {
 	 *            the invariant specifications to process.
 	 * @return processed specifications.
 	 */
-	protected LoopInvariantSpecification[] processLoopSpecifications(LoopInvariantSpecification[] specs) {
+	protected LoopInvariantSpecification[] processLoopSpecifications(final LoopInvariantSpecification[] specs) {
 		boolean changed = false;
 		final LoopInvariantSpecification[] newSpecs = new LoopInvariantSpecification[specs.length];
 		for (int i = 0; i < newSpecs.length; i++) {
@@ -439,6 +439,7 @@ public abstract class BoogieTransformer {
 			if (expr != newExpr) {
 				changed = true;
 				newSpecs[i] = new LoopInvariantSpecification(specs[i].getLocation(), specs[i].isFree(), newExpr);
+				ModelUtils.copyAnnotations(specs[i], newSpecs[i]);
 			} else {
 				newSpecs[i] = specs[i];
 			}
@@ -454,7 +455,7 @@ public abstract class BoogieTransformer {
 	 *            the left hand side to process.
 	 * @return processed left hand side.
 	 */
-	protected LeftHandSide processLeftHandSide(LeftHandSide lhs) {
+	protected LeftHandSide processLeftHandSide(final LeftHandSide lhs) {
 		if (lhs instanceof ArrayLHS) {
 			final ArrayLHS alhs = (ArrayLHS) lhs;
 			final LeftHandSide array = alhs.getArray();
@@ -477,7 +478,7 @@ public abstract class BoogieTransformer {
 	 *            the left hand sides to process.
 	 * @return processed left hand sides.
 	 */
-	protected LeftHandSide[] processLeftHandSides(LeftHandSide[] lhs) {
+	protected LeftHandSide[] processLeftHandSides(final LeftHandSide[] lhs) {
 		boolean changed = false;
 		final LeftHandSide[] newLhs = new LeftHandSide[lhs.length];
 		for (int i = 0; i < newLhs.length; i++) {
@@ -497,7 +498,7 @@ public abstract class BoogieTransformer {
 	 *            the left hand sides to process.
 	 * @return processed left hand sides.
 	 */
-	protected VariableLHS[] processVariableLHSs(VariableLHS[] lhs) {
+	protected VariableLHS[] processVariableLHSs(final VariableLHS[] lhs) {
 		final LeftHandSide[] newLhs = processLeftHandSides(lhs);
 		if (newLhs == lhs) {
 			return lhs;
@@ -515,7 +516,7 @@ public abstract class BoogieTransformer {
 	 *            the specification to process.
 	 * @return processed specification.
 	 */
-	protected Specification processSpecification(Specification spec) {
+	protected Specification processSpecification(final Specification spec) {
 		Specification newSpec = null;
 		if (spec instanceof EnsuresSpecification) {
 			final Expression expr = ((EnsuresSpecification) spec).getFormula();
@@ -552,7 +553,7 @@ public abstract class BoogieTransformer {
 	 *            the specifications to process.
 	 * @return processed specifications.
 	 */
-	protected Specification[] processSpecifications(Specification[] specs) {
+	protected Specification[] processSpecifications(final Specification[] specs) {
 		boolean changed = false;
 		final Specification[] newSpecs = new Specification[specs.length];
 		for (int i = 0; i < newSpecs.length; i++) {
@@ -572,7 +573,7 @@ public abstract class BoogieTransformer {
 	 *            the attribute to process.
 	 * @return processed attribute.
 	 */
-	protected Attribute processAttribute(Attribute attr) {
+	protected Attribute processAttribute(final Attribute attr) {
 		Attribute newAttr = null;
 		if (attr instanceof Trigger) {
 			final Expression[] exprs = ((Trigger) attr).getTriggers();
@@ -603,7 +604,7 @@ public abstract class BoogieTransformer {
 	 *            the attributes to process.
 	 * @return processed attributes.
 	 */
-	protected Attribute[] processAttributes(Attribute[] attributes) {
+	protected Attribute[] processAttributes(final Attribute[] attributes) {
 		boolean changed = false;
 		final Attribute[] newAttrs = new Attribute[attributes.length];
 		for (int i = 0; i < attributes.length; i++) {
@@ -622,7 +623,7 @@ public abstract class BoogieTransformer {
 	 *            the expression to process.
 	 * @return processed expressions.
 	 */
-	protected Expression[] processExpressions(Expression[] exprs) {
+	protected Expression[] processExpressions(final Expression[] exprs) {
 		final Expression[] newExprs = new Expression[exprs.length];
 		boolean changed = false;
 		for (int j = 0; j < exprs.length; j++) {
@@ -641,7 +642,7 @@ public abstract class BoogieTransformer {
 	 *            the expression to process.
 	 * @return processed expression.
 	 */
-	protected Expression processExpression(Expression expr) {
+	protected Expression processExpression(final Expression expr) {
 		Expression newExpr = null;
 		if (expr instanceof BinaryExpression) {
 			final BinaryExpression binexp = (BinaryExpression) expr;
