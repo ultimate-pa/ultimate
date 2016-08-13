@@ -297,7 +297,7 @@ public class MinimizeDfaParallel<LETTER, STATE>
 	 * Initialize mappings from state to int.
 	 */
 	private void initialize() {
-		final int nOfStates = mOperand.getStates().size();
+		final int nOfStates = mOperand.size();
 		// Allocate the finite space in ArrayList and HashMap.
 		mInt2state = new ArrayList<STATE>(nOfStates);
 		mState2int = new HashMap<STATE, Integer>(nOfStates);

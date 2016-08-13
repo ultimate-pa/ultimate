@@ -128,7 +128,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE>
 	 * initializeLables.
 	 */
 	private void preprocessingData() {
-		mNumberOfStates = mOperand.getStates().size();
+		mNumberOfStates = mOperand.size();
 
 		// There is only one initial state in a DFA.
 		mInitialState = mOperand.getInitialStates().iterator().next();

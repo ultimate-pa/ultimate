@@ -100,7 +100,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 	 * initializeLables.
 	 */
 	private void initializeData() {
-		final int nOfStates = mOperand.getStates().size();
+		final int nOfStates = mOperand.size();
 		final int nOfLables = mOperand.getInternalAlphabet().size();
 		initializeMappings(nOfStates, nOfLables);
 		initializeLables();

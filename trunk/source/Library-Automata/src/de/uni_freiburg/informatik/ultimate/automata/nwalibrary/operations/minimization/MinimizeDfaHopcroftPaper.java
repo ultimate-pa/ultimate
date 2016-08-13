@@ -218,7 +218,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 	private void preprocessingData() {
 		mNumberOfFinalStates = mOperand.getFinalStates().size();
 		mFinalStates = new int[mNumberOfFinalStates];
-		mNumberOfStates = mOperand.getStates().size();
+		mNumberOfStates = mOperand.size();
 		mNumberOfLetters = mOperand.getInternalAlphabet().size();			
 		
 		initializeMappings();

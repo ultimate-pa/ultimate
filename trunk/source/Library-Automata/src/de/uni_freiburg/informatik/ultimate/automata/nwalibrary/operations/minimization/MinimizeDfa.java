@@ -198,8 +198,8 @@ public class MinimizeDfa<LETTER,STATE>
 		for (int r = 0; r < states.size(); r++) {
 			for (int c = 0; c < r; c++) {
 				if (!table[r][c]
-						&& (mOperand.getFinalStates().contains(states.get(r)) !=
-						mOperand.getFinalStates().contains(states.get(c)))) {
+						&& (mOperand.isFinal(states.get(r)) !=
+						mOperand.isFinal(states.get(c)))) {
 					mark(table, r, c);
 				}
 			}

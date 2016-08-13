@@ -157,7 +157,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 
 		init(stateAmount, letterAmount);
 		
-		minimizeICDFA(mOperand, initialPartition, addMapping);
+		minimizeICDFA(initialPartition, addMapping);
 		mLogger.info(exitMessage());
 	}
 
@@ -348,15 +348,12 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 	 * where 'n' is the number of states, 'm' the number of edges and 'k' the
 	 * size of the alphabet.
 	 * 
-	 * @param incdfa
-	 *            Automaton to minimize
 	 * @param initialPartition
 	 *            Initial partition of states 
 	 * @param addMapping
 	 *            true iff mapping old state -> new state should be included
 	 */
 	private void minimizeICDFA(
-			final INestedWordAutomaton<LETTER, STATE> incdfa,
 			final Collection<Set<STATE>> initialPartition,
 			final boolean addMapping) {
 		// Initial blocks
@@ -370,7 +367,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 		
 		if (initialPartition == null) {
 			for (final STATE state : allStates) {
-				if (incdfa.isFinal(state)) {
+				if (mOperand.isFinal(state)) {
 					finalStates.add(mStateToId.get(state));
 				} else {
 					otherStates.add(mStateToId.get(state));
@@ -400,7 +397,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 			}
 	
 			for (final STATE state : allStates) {
-				if (incdfa.isFinal(state)) {
+				if (mOperand.isFinal(state)) {
 					mStateToBlockId.put(mStateToId.get(state), finalStatesBlockId);
 				} else {
 					mStateToBlockId.put(mStateToId.get(state), otherStatesBlockId);
@@ -464,7 +461,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 			splitCandidates.remove(splitter);
 			
 			final LinkedList<LinkedHashSet<Integer>> splitCandidatesToAppend =
-					split(splitter, incdfa.getInternalAlphabet().size());
+					split(splitter, mOperand.getInternalAlphabet().size());
 			
 			splitCandidates.addAll(splitCandidatesToAppend);
 		}

@@ -3111,15 +3111,15 @@ public class ShrinkNwa<LETTER, STATE>
 			if (mReturnSplitCorrectnessEcs != null) {
 				// own predecessors
 				for (final STATE state : mStates) {
-					for (final IncomingReturnTransition<LETTER, STATE> transition : mOperand
-							.returnPredecessors(state)) {
+					for (final IncomingReturnTransition<LETTER, STATE> transition :
+							mOperand.returnPredecessors(state)) {
 						mReturnSplitCorrectnessEcs.add(mPartition.mState2EquivalenceClass.get(transition.getLinPred()));
 					}
 				}
 				// parent predecessors
 				for (final STATE state : parent.mStates) {
-					for (final IncomingReturnTransition<LETTER, STATE> transition : mOperand
-							.returnPredecessors(state)) {
+					for (final IncomingReturnTransition<LETTER, STATE> transition :
+							mOperand.returnPredecessors(state)) {
 						mReturnSplitCorrectnessEcs.add(mPartition.mState2EquivalenceClass.get(transition.getLinPred()));
 					}
 				}

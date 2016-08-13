@@ -451,8 +451,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		for (final OutgoingInternalTransition<LETTER, STATE> out :
 				mOperand.internalSuccessors(firstState)) {
 			final LETTER letter = out.getLetter();
-			assert (mOperand.internalSuccessors(secondState,
-					letter) != null);
+			assert (mOperand.internalSuccessors(secondState, letter) != null);
 			
 			int succQ;
 			if (OPTION_NEQ_TRANS) {
@@ -494,7 +493,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		
 		if (! OPTION_NEQ_TRANS) {
 			for (final OutgoingInternalTransition<LETTER, STATE> out :
-				mOperand.internalSuccessors(secondState)) {
+					mOperand.internalSuccessors(secondState)) {
 				if (! mOperand.internalSuccessors(
 						firstState, out.getLetter()).iterator().hasNext()) {
 					return false;
