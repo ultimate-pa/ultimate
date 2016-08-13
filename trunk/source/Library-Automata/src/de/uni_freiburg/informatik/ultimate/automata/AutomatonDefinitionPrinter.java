@@ -129,7 +129,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 	private StringWriter mStringWriter;
 	
 	// enable writing automata, e.g., when an error occurs
-	private static boolean sIsDumpAutomaton = false;
+	private static final boolean DUMP_AUTOMATON = false;
 	
 	
 	public AutomatonDefinitionPrinter(
@@ -200,7 +200,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			final String filenamePrefix,
 			final String message,
 			final IAutomaton<?, ?>... automata) {
-		if (! sIsDumpAutomaton) {
+		if (!DUMP_AUTOMATON) {
 			return;
 		}
 		final String workingDirectory = System.getProperty("user.dir");
