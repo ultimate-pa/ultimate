@@ -2366,13 +2366,25 @@ public class CHandler implements ICHandler {
 		mInnerMostLoopLabel.push(loopLabel);
 		final Result bodyResult = main.dispatch(node.getBody());
 		mInnerMostLoopLabel.pop();
-		return handleLoops(main, node, bodyResult, condResult, loopLabel);
+		final LoopInvariantSpecification witnessInvariant = fetchWitnessInvariantAtLoop(main, node);
+		return handleLoops(main, node, bodyResult, condResult, loopLabel, witnessInvariant);
+	}
+
+	private LoopInvariantSpecification fetchWitnessInvariantAtLoop(final Dispatcher main, final IASTStatement node) {
+		final LoopInvariantSpecification witnessInvariant;
+		if (main instanceof MainDispatcher) {
+			witnessInvariant = ((MainDispatcher) main).fetchInvariantAtLoop(node);
+		} else {
+			witnessInvariant = null;
+		}
+		return witnessInvariant;
 	}
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTForStatement node) {
 		final String loopLabel = mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
-		return handleLoops(main, node, null, null, loopLabel);
+		final LoopInvariantSpecification witnessInvariant = fetchWitnessInvariantAtLoop(main, node);
+		return handleLoops(main, node, null, null, loopLabel, witnessInvariant);
 	}
 
 	@Override
@@ -2382,7 +2394,8 @@ public class CHandler implements ICHandler {
 		mInnerMostLoopLabel.push(loopLabel);
 		final Result bodyResult = main.dispatch(node.getBody());
 		mInnerMostLoopLabel.pop();
-		return handleLoops(main, node, bodyResult, condResult, loopLabel);
+		final LoopInvariantSpecification witnessInvariant = fetchWitnessInvariantAtLoop(main, node);
+		return handleLoops(main, node, bodyResult, condResult, loopLabel, witnessInvariant);
 	}
 
 	@Override
@@ -2700,6 +2713,12 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTGotoStatement node) {
 		final ArrayList<Statement> stmt = new ArrayList<Statement>();
+		if (main instanceof MainDispatcher) {
+			final AssertStatement assertWitnessInvariant = ((MainDispatcher) main).fetchInvariantAtGoto(node);
+			if (assertWitnessInvariant != null) {
+				stmt.add(assertWitnessInvariant);
+			}
+		} 
 		final String[] name = new String[] { node.getName().toString() };
 		stmt.add(new GotoStatement(LocationFactory.createCLocation(node), name));
 		return new ExpressionResult(stmt, null);
@@ -3351,10 +3370,11 @@ public class CHandler implements ICHandler {
 	 * @param condResult
 	 *            the condition of the loop
 	 * @param loopLabel
+	 * @param witnessInvariant 
 	 * @return a result object holding the translated loop (i.e. a while loop)
 	 */
 	private Result handleLoops(final Dispatcher main, final IASTStatement node, Result bodyResult, ExpressionResult condResult,
-			final String loopLabel) {
+			final String loopLabel, final LoopInvariantSpecification witnessInvariant) {
 		final int scopeDepth = mSymbolTable.getActiveScopeNum();
 		assert node instanceof IASTWhileStatement || node instanceof IASTDoStatement
 				|| node instanceof IASTForStatement;
@@ -3485,6 +3505,9 @@ public class CHandler implements ICHandler {
 			spec = new LoopInvariantSpecification[0];
 		} else {
 			final List<LoopInvariantSpecification> specList = new ArrayList<LoopInvariantSpecification>();
+			if (witnessInvariant != null) {
+				specList.add(witnessInvariant);
+			}
 			if (node instanceof IASTForStatement) {
 				for (int i = 0; i < mContract.size(); i++) {
 					// retranslate ACSL specification needed e.g., in cases
@@ -3502,7 +3525,7 @@ public class CHandler implements ICHandler {
 					}
 				}
 			}
-			spec = specList.toArray(new LoopInvariantSpecification[0]);
+			spec = specList.toArray(new LoopInvariantSpecification[specList.size()]);
 			clearContract(); // take care for behavior and completeness
 		}
 

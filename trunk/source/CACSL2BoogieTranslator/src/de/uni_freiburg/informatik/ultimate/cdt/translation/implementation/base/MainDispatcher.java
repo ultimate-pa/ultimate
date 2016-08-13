@@ -136,6 +136,7 @@ import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
 
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
@@ -146,6 +147,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -1015,4 +1017,49 @@ public class MainDispatcher extends Dispatcher {
 		}
 		return mPreprocessorHandler.visit(this, n);
 	}
+
+	/**
+	 * @return the witnessInvariants
+	 */
+	public Map<IASTNode, ExtractedWitnessInvariant> getWitnessInvariants() {
+		return mWitnessInvariants;
+	}
+	
+	public LoopInvariantSpecification fetchInvariantAtLoop(final IASTNode node) {
+		final AssertStatement as = fetchInvariantAt(node);
+		LoopInvariantSpecification result;
+		if (as == null) {
+			result = null;
+		} else {
+			final ILocation loc = LocationFactory.createCLocation(node);
+			result = new LoopInvariantSpecification(loc, false, as.getFormula());
+			final Check check = new Check(Check.Spec.WITNESS_INVARIANT);
+			check.addToNodeAnnot(result);
+		}
+		return result;
+	}
+	
+	public AssertStatement fetchInvariantAtGoto(final IASTGotoStatement node) {
+		return fetchInvariantAt(node);
+	}
+	
+	private AssertStatement fetchInvariantAt(final IASTNode node) {
+		AssertStatement result;
+		if (mWitnessInvariants == null) {
+			result = null;
+		} else {
+			final ExtractedWitnessInvariant invariants = mWitnessInvariants.get(node);
+			final List<AssertStatement> list = translateWitnessInvariant(invariants, (x -> x.isAt()));
+			if (list.isEmpty()) {
+				result = null;
+			} else {
+				assert list.size() == 1;
+				result = list.get(0);
+			}
+		}
+		return result;
+	}
+
+	
+	
 }
