@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
  * Stores a single row of a CSV as a key-value map.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  */
 public class AutomataOperationBenchmark implements ICsvProviderProvider<Object> {
 	
@@ -60,8 +59,13 @@ public class AutomataOperationBenchmark implements ICsvProviderProvider<Object> 
 		return result;
 	}
 	
-	public Object addKeyValuePair(String key, Object value) {
+	/**
+	 * @param key key with which the specified value is to be associated
+	 * @param value value to be associated with the specified key
+	 * @return the previous value associated with key, or null if there was no
+	 *         mapping for key.
+	 */
+	public Object addKeyValuePair(final String key, final Object value) {
 		return mKeyValueMap.put(key, value);
 	}
-
 }

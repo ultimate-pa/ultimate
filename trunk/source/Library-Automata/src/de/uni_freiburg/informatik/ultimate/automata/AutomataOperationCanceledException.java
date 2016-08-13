@@ -31,19 +31,16 @@ package de.uni_freiburg.informatik.ultimate.automata;
  * operation (e.g., because a timeout was reached).
  * 
  * @author Matthias Heizmann
- *
  */
 public class AutomataOperationCanceledException extends AutomataLibraryException {
 	private static final long serialVersionUID = -1713238821191695165L;
 	
 	private static final String MESSAGE_CANCELLED = "Timeout or cancelled by user.";
 
+	/**
+	 * @param thrower thrower
+	 */
 	public AutomataOperationCanceledException(final Class<?> thrower) {
 		super(thrower, MESSAGE_CANCELLED);
-	}
-
-	@Override
-	public String getMessage() {
-		return super.getMessage();
 	}
 }

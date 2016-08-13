@@ -225,11 +225,11 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final Map<Integer, ProgramState<Expression>> partialProgramStateMapping = Collections.emptyMap();
 			@SuppressWarnings("unchecked")
 			final
-			RcfgProgramExecution stemPE = new RcfgProgramExecution(counterexample.getStem().getWord().lettersAsList(),
+			RcfgProgramExecution stemPE = new RcfgProgramExecution(counterexample.getStem().getWord().asList(),
 					partialProgramStateMapping, new Map[counterexample.getStem().getLength()]);
 			@SuppressWarnings("unchecked")
 			final
-			RcfgProgramExecution loopPE = new RcfgProgramExecution(counterexample.getLoop().getWord().lettersAsList(),
+			RcfgProgramExecution loopPE = new RcfgProgramExecution(counterexample.getLoop().getWord().asList(),
 					partialProgramStateMapping, new Map[counterexample.getLoop().getLength()]);
 			final IResult ntreportRes = new NonterminatingLassoResult<RcfgElement, RCFGEdge, Expression>(honda,
 					Activator.PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE,
@@ -251,8 +251,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		final ProgramPoint position = ((ISLPredicate) counterexample.getLoop().getStateAtPosition(0)).getProgramPoint();
 		// first, check if the counter example is really infinite or not
 
-		final List<CodeBlock> stem = counterexample.getStem().getWord().lettersAsList();
-		final List<CodeBlock> loop = counterexample.getLoop().getWord().lettersAsList();
+		final List<CodeBlock> stem = counterexample.getStem().getWord().asList();
+		final List<CodeBlock> loop = counterexample.getLoop().getWord().asList();
 
 		final boolean isFinite = isLTLCounterExampleFinite(loop);
 

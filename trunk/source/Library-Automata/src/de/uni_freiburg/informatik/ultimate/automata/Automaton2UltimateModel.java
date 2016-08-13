@@ -39,11 +39,16 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.Petri
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
+public final class Automaton2UltimateModel {
+	private Automaton2UltimateModel() {
+		// private constructor
+	}
 
-public class Automaton2UltimateModel<LETTER,STATE> {
-	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static IElement ultimateModel(AutomataLibraryServices services, IAutomaton automaton) throws AutomataOperationCanceledException {
+	public static IElement ultimateModel(
+			final AutomataLibraryServices services,
+			final IAutomaton automaton)
+					throws AutomataOperationCanceledException {
 		if (automaton instanceof INestedWordAutomatonSimple) {
 			final INestedWordAutomatonSimple nwa = (INestedWordAutomatonSimple) automaton;
 			final NwaToUltimateModel transformer = new NwaToUltimateModel(services);
@@ -54,7 +59,8 @@ public class Automaton2UltimateModel<LETTER,STATE> {
 			return transformer.getUltimateModelOfPetriNet(net);
 		} else if (automaton instanceof BranchingProcess) {
 			final BranchingProcess bp = (BranchingProcess) automaton;
-			final BranchingProcessToUltimateModel transformer = new BranchingProcessToUltimateModel();
+			final BranchingProcessToUltimateModel transformer =
+					new BranchingProcessToUltimateModel();
 			return transformer.getUltimateModelOfBranchingProcess(bp);
 		} else if (automaton instanceof AlternatingAutomaton) {
 			final AlternatingAutomaton aa = (AlternatingAutomaton) automaton;
@@ -65,7 +71,8 @@ public class Automaton2UltimateModel<LETTER,STATE> {
 			final TreeAutomatonToUltimateModel transformer = new TreeAutomatonToUltimateModel<>();
 			return transformer.getUltimateModelOfAA(ta);
 		} else {
-			throw new IllegalArgumentException("Only nwa, aa, tree automaton, and net supported");
+			throw new IllegalArgumentException(
+					"Only nwa, aa, tree automaton, and net supported");
 		}
 	}
 }

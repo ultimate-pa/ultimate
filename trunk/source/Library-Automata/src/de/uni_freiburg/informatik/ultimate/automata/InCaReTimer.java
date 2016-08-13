@@ -33,12 +33,11 @@ public class InCaReTimer {
 	private final long mReturn;
 	
 	private long mStartTime;
-	
-	
-	
 
+	/**
+	 * constructor
+	 */
 	public InCaReTimer() {
-		super();
 		mInternal = 0;
 		mCall = 0;
 		mReturn = 0;
@@ -89,7 +88,7 @@ public class InCaReTimer {
 		return mReturn;
 	}
 	
-	public static String prettyprintNanoseconds(long time) {
+	public static String prettyprintNanoseconds(final long time) {
 		final long seconds = time/1000000000;
 		final long tenthDigit = (time/100000000) % 10;
 		return seconds + "." + tenthDigit + "s";

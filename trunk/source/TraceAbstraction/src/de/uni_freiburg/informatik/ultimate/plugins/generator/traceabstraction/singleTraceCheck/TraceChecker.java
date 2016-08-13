@@ -544,7 +544,9 @@ public class TraceChecker {
 		Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
 		unlockSmtManager();
 		mTraceCheckFinished = true;
-		return new RcfgProgramExecution((List<? extends RCFGEdge>) mNestedFormulas.getTrace().lettersAsList(), emptyMap, branchEncoders);
+		return new RcfgProgramExecution(
+				(List<? extends RCFGEdge>) mNestedFormulas.getTrace().asList(),
+				emptyMap, branchEncoders);
 	}
 
 	/**

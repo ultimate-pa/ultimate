@@ -326,7 +326,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		mLogger.info("Added paths   : " + mnofAdditionalPaths);
 		mLogger.info("Declined paths: " + mnofDeclinedPaths);
 		mLogger.debug("Epimorphism:");
-		mEpimorphism.Print();
+		mEpimorphism.print();
 
 		assert (new InductivityCheck(mServices,
 				mInterpolAutomaton, false, true, new IncrementalHoareTripleChecker(

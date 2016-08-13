@@ -41,7 +41,7 @@ import java.util.Map;
  * The array is sorted wrt. to a descending order. 
  * @author Matthias Heizmann
  *
- * @param <E>
+ * @param <E> element type
  */
 public class HistogramOfIterable<E> {
 	private final Iterable<E> mIterable;
@@ -49,15 +49,18 @@ public class HistogramOfIterable<E> {
 	private final Integer[] mVisualizationArray;
 	
 	
-	public HistogramOfIterable(Iterable<E> iterable) {
-		super();
+	/**
+	 * @param iterable iterable
+	 */
+	public HistogramOfIterable(final Iterable<E> iterable) {
 		mIterable = iterable;
 		mHistogramMap = generateHistogramMap(mIterable);
 		mVisualizationArray = generateVisualizationArray(mHistogramMap);
 	}
 
-	private Integer[] generateVisualizationArray(Map<E, Integer> histogramMap) {
-		final Integer[] result = histogramMap.values().toArray(new Integer[histogramMap.size()]);
+	private Integer[] generateVisualizationArray(final Map<E, Integer> histogramMap) {
+		final Integer[] result =
+				histogramMap.values().toArray(new Integer[histogramMap.size()]);
 		Arrays.sort(result, Collections.reverseOrder());
 		return result;
 	}
@@ -71,7 +74,8 @@ public class HistogramOfIterable<E> {
 		return mVisualizationArray;
 	}
 
-	public static <E> Map<E, Integer> generateHistogramMap(Iterable<E> iterable) {
+	public static <E> Map<E, Integer> generateHistogramMap(
+			final Iterable<E> iterable) {
 		final Map<E, Integer> result = new HashMap<E, Integer>();
 		for (final E e : iterable) {
 			if (result.containsKey(e)) {

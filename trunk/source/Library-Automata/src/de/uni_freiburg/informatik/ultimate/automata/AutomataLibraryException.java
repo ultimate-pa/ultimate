@@ -26,18 +26,24 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
+/**
+ * Exception for the automata library.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ */
 public class AutomataLibraryException extends Exception {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1643349110083991967L;
 	
 	private final String mMessage;
 
 	protected final Class<?> mClassOfThrower;
-	
-	public AutomataLibraryException(Class<?> thrower, String message) {
+
+	/**
+	 * @param thrower thrower
+	 * @param message message
+	 */
+	public AutomataLibraryException(final Class<?> thrower, final String message) {
 		mMessage = message;
 		mClassOfThrower = thrower;
 	}
@@ -48,8 +54,7 @@ public class AutomataLibraryException extends Exception {
 	}
 
 	/**
-	 * Get the class of the object that has thrown this Exception.
-	 * @return
+	 * @return the class of the object that has thrown this exception
 	 */
 	public Class<?> getClassOfThrower() {
 		return mClassOfThrower;

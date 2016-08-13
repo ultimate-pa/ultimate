@@ -191,7 +191,7 @@ public class RcfgProgramExecutionBuilder {
 			final ProgramState<Expression> pps = new ProgramState<Expression>(variable2Values);
 			partialProgramStateMapping.put(i, pps);
 		}
-		return new RcfgProgramExecution(mTrace.lettersAsList(), partialProgramStateMapping, mBranchEncoders);
+		return new RcfgProgramExecution(mTrace.asList(), partialProgramStateMapping, mBranchEncoders);
 	}
 	
 

@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.automata;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
-
 /**
  * Interface for operations for automata.
  * If possible,
@@ -58,44 +57,46 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * </ul>
  * 
  * @author heizmann@informatik.uni-freiburg.de
- *
+ * 
+ * @param <LETTER> Type of objects that are contained in the alphabet.
+ * @param <STATE> Type of objects that are used to label states (resp. places
+ * for PetriNet)
  */
-public interface IOperation<LETTER,STATE> {
+public interface IOperation<LETTER, STATE> {
 	
 	/**
-	 * Name of the operation..
-	 * This name should also be used in the test grammar. 
+	 * @return Name of the operation.
+	 * This name should also be used in the test grammar.
 	 */
 	String operationName();
 	
 	/**
-	 * Message that should be logged when the operation is stated.
+	 * @return Message that should be logged when the operation is stated.
 	 * Use some information like: "starting operation intersection. First
 	 * operand has 2394 states, second operand has 9374 states" 
 	 */
 	String startMessage();
 	
 	/**
-	 * Message that should be logged when the operation is finished.
+	 * @return Message that should be logged when the operation is finished.
 	 * Use some information like: "finished operation intersection result has
 	 * 345 states"
 	 */
 	String exitMessage();
 	
 	/**
-	 * Return the result of the operation. 
+	 * @return Return the result of the operation.
 	 * @throws AutomataOperationCanceledException 
 	 */
 	Object getResult() throws AutomataLibraryException;
 	
-	
 	/**
-	 * Run some checks to test correctness of the result. If therefore new
-	 * automata have to be build use stateFactory.
+	 * Run some checks to test correctness of the result.
+	 * @param stateFactory If new automata have to be built, use this state
+	 *        factory.
 	 * @return true iff all tests succeeded.
-	 * @throws AutomataLibraryException 
+	 * @throws AutomataLibraryException when checks fails
 	 */
 	boolean checkResult(StateFactory<STATE> stateFactory) 
 			throws AutomataLibraryException;
-
 }
