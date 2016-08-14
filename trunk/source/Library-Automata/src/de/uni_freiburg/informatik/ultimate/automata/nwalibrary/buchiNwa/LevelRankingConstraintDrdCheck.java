@@ -67,7 +67,7 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 	}
 
 	@Override
-	protected void addConstaint(StateWithRankInfo<STATE> down, STATE up, Integer predecessorRank, boolean predecessorIsInO,
+	protected void addConstraint(StateWithRankInfo<STATE> down, STATE up, Integer predecessorRank, boolean predecessorIsInO,
 			boolean predecessorIsAccepting) {
 		if (!predecessorIsAccepting) {
 			mRanksOfPredecessorsNonAcceptingPredecessors.addTriple(down, up, predecessorRank);
@@ -75,7 +75,7 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 				mRanksOfPredecessorsNonAcceptingPredecessorsEven.addTriple(down, up, predecessorRank);
 			}
 		}
-		super.addConstaint(down, up, predecessorRank, predecessorIsInO, predecessorIsAccepting);
+		super.addConstraint(down, up, predecessorRank, predecessorIsInO, predecessorIsAccepting);
 	}
 	
 	

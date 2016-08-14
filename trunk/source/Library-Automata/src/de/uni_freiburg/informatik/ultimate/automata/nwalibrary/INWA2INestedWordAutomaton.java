@@ -37,12 +37,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
 
-public class INWA2INestedWordAutomaton<LETTER, STATE> implements
-		INestedWordAutomaton<LETTER, STATE> {
+public class INWA2INestedWordAutomaton<LETTER, STATE>
+		implements INestedWordAutomaton<LETTER, STATE> {
 	
 	private final INestedWordAutomaton<LETTER, STATE> mNwa;
 	
-	public INWA2INestedWordAutomaton(final INestedWordAutomaton<LETTER, STATE> inwa) {
+	/**
+	 * @param inwa nested word automaton
+	 */
+	public INWA2INestedWordAutomaton(
+			final INestedWordAutomaton<LETTER, STATE> inwa) {
 		mNwa = inwa;
 	}
 

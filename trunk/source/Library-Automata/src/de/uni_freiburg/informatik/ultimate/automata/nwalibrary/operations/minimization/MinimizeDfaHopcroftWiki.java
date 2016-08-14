@@ -445,9 +445,6 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 		 * Initialize Partition. Transfer collection of finalStates and states
 		 * to int[] mfinalStates and int[] mnonfinalStates and create
 		 * workList.
-		 * 
-		 * @param finalStates
-		 * @param states
 		 */
 		public void init() {
 			final Collection<STATE> finalStates = mOperand.getFinalStates();

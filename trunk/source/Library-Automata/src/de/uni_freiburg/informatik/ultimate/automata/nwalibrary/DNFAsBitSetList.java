@@ -33,40 +33,43 @@ import java.util.HashMap;
 /**
  * Salomaa style representation of a DNF as a list of conjunctions.
  * Each conjunction is stored as two ints.
- * alpha says whiche state variables appear in the conjunction.
- * beta says whether the appearing ones appera positive or negative.
+ * alpha says which state variables appear in the conjunction.
+ * beta says whether the appearing ones appear positive or negative.
  */
 public class DNFAsBitSetList {
-	BitSet alpha;
-	BitSet beta;
-	DNFAsBitSetList next;
+	private BitSet mAlpha;
+	private final BitSet mBeta;
+	private DNFAsBitSetList mNext;
 
-	public DNFAsBitSetList(BitSet alpha, BitSet beta, DNFAsBitSetList next) {
-		super();
-		this.alpha = alpha;
-		this.beta = beta;
-		this.next = next;
+	/**
+	 * @param alpha which state variables appear in the conjunction
+	 * @param beta whether the appearing variables appear positive or negative
+	 * @param next next
+	 */
+	public DNFAsBitSetList(final BitSet alpha, final BitSet beta, final DNFAsBitSetList next) {
+		this.mAlpha = alpha;
+		this.mBeta = beta;
+		this.mNext = next;
 	}
 
 	/**
 	 * copy constructor, yields another linked list of DNFAsInts, with new objects ("deep copy")
-	 * @param daa
-	 * @param next
+	 * @param daa next
 	 */
-	public DNFAsBitSetList(DNFAsBitSetList daa) {
-		this((BitSet) daa.alpha.clone(), (BitSet) daa.beta.clone(), null);
-		DNFAsBitSetList nextEl = next;
+	public DNFAsBitSetList(final DNFAsBitSetList daa) {
+		this((BitSet) daa.mAlpha.clone(), (BitSet) daa.mBeta.clone(), null);
+		DNFAsBitSetList nextEl = mNext;
 		while (nextEl != null) {
-			insert(new DNFAsBitSetList((BitSet) nextEl.alpha.clone(), (BitSet) nextEl.beta.clone(), null));
-			nextEl = nextEl.next;
+			insert(new DNFAsBitSetList((BitSet) nextEl.mAlpha.clone(), (BitSet) nextEl.mBeta.clone(), null));
+			nextEl = nextEl.mNext;
 		}
 	}
 	
-	public void insert(DNFAsBitSetList dai) {
-		if (next == null) {
-			next = dai;
+	public void insert(final DNFAsBitSetList dai) {
+		if (mNext == null) {
+			mNext = dai;
 		} else {
-			next.insert(dai);
+			mNext.insert(dai);
 		}
 	}
 	
@@ -75,14 +78,15 @@ public class DNFAsBitSetList {
 	 * yields a DNF whose indexes refer to the predicates as given by newStateToIndex.
 	 * @param oldStateList List indicating the old (predicate -> index) mapping
 	 * @param newStateToIndex HashMap indicating the new (predicate -> index) mapping
-	 * @return
 	 */
-	public <STATE> DNFAsBitSetList rewriteWithNewStateList(ArrayList<STATE> oldStateList, HashMap<STATE, Integer> newStateToIndex) {
+	public <STATE> DNFAsBitSetList rewriteWithNewStateList(
+			final ArrayList<STATE> oldStateList,
+			final HashMap<STATE, Integer> newStateToIndex) {
 		final DNFAsBitSetList newDNF = new DNFAsBitSetList(this);
 		DNFAsBitSetList current = newDNF;
 		while (current != null) {
-			current.alpha = rewriteBitSet(alpha, oldStateList, newStateToIndex);
-			current = current.next;
+			current.mAlpha = rewriteBitSet(mAlpha, oldStateList, newStateToIndex);
+			current = current.mNext;
 		}
 		return null;
 	}
@@ -90,8 +94,8 @@ public class DNFAsBitSetList {
 	/**
 	 * Helper method for rewriteWithNewStateList.
 	 */
-	private <STATE> BitSet rewriteBitSet(BitSet bs, ArrayList<STATE> oldStateList, 
-			HashMap<STATE, Integer> newStateToIndex) {
+	private <STATE> BitSet rewriteBitSet(final BitSet bs, final ArrayList<STATE> oldStateList, 
+			final HashMap<STATE, Integer> newStateToIndex) {
 		final BitSet newBs = new BitSet();
 		int setBit = bs.nextSetBit(0);
 		while (setBit != -1) {
@@ -101,18 +105,18 @@ public class DNFAsBitSetList {
 		return newBs;
 	}
 	
-	public void prettyPrintDNF(StringBuilder sb, ArrayList stateList) {
+	public void prettyPrintDNF(final StringBuilder sb, final ArrayList stateList) {
 		if (sb.toString().equals("")) {
 			sb.append(" \\/ (");
 		}
 		
 		String comma = "";
 		for (int i = 0; i < stateList.size(); i++) {
-			if (!alpha.isEmpty() && i == 0) {
+			if (!mAlpha.isEmpty() && i == 0) {
 				sb.append(" /\\ {");
 			}
-			final boolean isStateVariablePresent = alpha.get(i);
-			final boolean isStateVariablePositive = beta.get(i);
+			final boolean isStateVariablePresent = mAlpha.get(i);
+			final boolean isStateVariablePositive = mBeta.get(i);
 			if (isStateVariablePresent) {
 				if (!isStateVariablePositive) {
 					sb.append(" not");
@@ -120,28 +124,28 @@ public class DNFAsBitSetList {
 				sb.append(comma + stateList.get(i)); // or put the state here?
 				comma = ", ";
 			}
-			if (!alpha.isEmpty() && i == stateList.size() - 1) {
+			if (!mAlpha.isEmpty() && i == stateList.size() - 1) {
 				sb.append("}, ");
 			}
 		}
-		if (next != null) {
-			next.prettyPrintDNF(sb, stateList);
+		if (mNext != null) {
+			mNext.prettyPrintDNF(sb, stateList);
 		} else {
 			sb.append(")\n");
 		}
 	}
 
-	public boolean applyTo(BitSet u) {
-		final BitSet alphaAndUXorBeta = (BitSet) alpha.clone();
+	public boolean applyTo(final BitSet u) {
+		final BitSet alphaAndUXorBeta = (BitSet) mAlpha.clone();
 		alphaAndUXorBeta.and(u);
-		alphaAndUXorBeta.xor(beta);
+		alphaAndUXorBeta.xor(mBeta);
 //		Salomaa(2010): f(u) = 1 <-> (alpha & u) xor beta == 0
 		if (alphaAndUXorBeta.isEmpty()) {
 			return true;
-		} else if (next == null) {
+		} else if (mNext == null) {
 			return false;
 		} else {
-			return next.applyTo(u);
+			return mNext.applyTo(u);
 		}
 	}
 }

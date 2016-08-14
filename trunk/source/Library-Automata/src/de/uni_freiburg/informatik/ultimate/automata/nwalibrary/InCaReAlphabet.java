@@ -34,8 +34,9 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 /**
  * Alphabet consisting of three not necessarily disjoint sets.
  * For visibly pushdown automata a (disjoint) partition into internal, call, and
- * return alphabet is necessary. For our NestedWordAutomata this segmentation
+ * return alphabets is necessary. For our NestedWordAutomata this segmentation
  * can increase the performance of operations but is not necessary.
+ * 
  * @author Matthias Heizmann
  *
  * @param <LETTER> Type of the Objects that can be used as letters.
@@ -44,15 +45,24 @@ public class InCaReAlphabet<LETTER> {
 	private final Set<LETTER> mInternalAlphabet;
 	private final Set<LETTER> mCallAlphabet;
 	private final Set<LETTER> mReturnAlphabet;
-	public InCaReAlphabet(Set<LETTER> internalAlphabet,
-			Set<LETTER> callAlphabet, Set<LETTER> returnAlphabet) {
+	
+	/**
+	 * @param internalAlphabet internal alphabet
+	 * @param callAlphabet call alphabet
+	 * @param returnAlphabet return alphabet
+	 */
+	public InCaReAlphabet(final Set<LETTER> internalAlphabet,
+			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet) {
 		super();
 		mInternalAlphabet = internalAlphabet;
 		mCallAlphabet = callAlphabet;
 		mReturnAlphabet = returnAlphabet;
 	}
 	
-	public InCaReAlphabet(IAutomaton<LETTER, ?> automaton) {
+	/**
+	 * @param automaton automaton
+	 */
+	public InCaReAlphabet(final IAutomaton<LETTER, ?> automaton) {
 		if (automaton instanceof INestedWordAutomaton) {
 			final INestedWordAutomaton<LETTER, ?> nwa = 
 					(INestedWordAutomaton<LETTER, ?>) automaton;
@@ -75,7 +85,4 @@ public class InCaReAlphabet<LETTER> {
 	public Set<LETTER> getReturnAlphabet() {
 		return mReturnAlphabet;
 	}
-	
-	
-
 }

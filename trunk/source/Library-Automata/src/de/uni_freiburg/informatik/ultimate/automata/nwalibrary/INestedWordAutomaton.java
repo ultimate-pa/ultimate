@@ -37,97 +37,154 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Summa
 
 /**
  * Interface for data structures that implement nested word automata.
- * (see INestedWordAutomatonSimple).
+ * 
+ * @see INestedWordAutomatonSimple
  * @author Matthias Heizmann
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomatonSimple<LETTER, STATE> {
+public interface INestedWordAutomaton<LETTER, STATE>
+		extends INestedWordAutomatonSimple<LETTER, STATE> {
 
 	/**
-	 * Returns the set of states of this automaton. <b>Use with caution!</b>
+	 * @return The set of states of this automaton. <b>Use with caution!</b>
 	 * Some implementations (e.g., automaton which represents result of
 	 * a complementation) construct their set of states on the fly.
 	 */
-	public Set<STATE> getStates();
+	Set<STATE> getStates();
 
 	/**
-	 * Returns the set of initial states. 
+	 * @return The set of initial states. 
 	 */
 	@Override
-	public Set<STATE> getInitialStates();
+	Set<STATE> getInitialStates();
 	
 	/**
-	 * Returns the set of states of this automaton. <b>Use with caution!</b>
+	 * @return The set of states of this automaton. <b>Use with caution!</b>
 	 * Some implementations (e.g., automaton which represents result of
 	 * a complementation) construct their set of states on the fly. Use the
 	 * {@link isFinal} method to check if a specific state is final. 	
 	 */
-	public Collection<STATE> getFinalStates();
+	Collection<STATE> getFinalStates();
 
 	/**
+	 * @param state state
 	 * @return All letters a such that state has an incoming internal 
 	 * transition labeled with letter a.
 	 */
-	public Set<LETTER> lettersInternalIncoming(STATE state);
+	Set<LETTER> lettersInternalIncoming(STATE state);
 	
 	/**
+	 * @param state state
 	 * @return All letters a such that state has an incoming call 
 	 * transition labeled with letter a.
 	 */	
-	public Set<LETTER> lettersCallIncoming(STATE state);
+	Set<LETTER> lettersCallIncoming(STATE state);
 	
 	/**
+	 * @param state state
 	 * @return All letters a such that state has an incoming return 
 	 * transition labeled with letter a.
 	 */		
-	public Set<LETTER> lettersReturnIncoming(STATE state);
+	Set<LETTER> lettersReturnIncoming(STATE state);
 	
 	/**
+	 * @param state state
 	 * @return All letters a such that state occurs as hierarchical predecessor
 	 * in a return transition labeled with letter a.
 	 */
-	public Set<LETTER> lettersReturnSummary(STATE state);
+	Set<LETTER> lettersReturnSummary(STATE state);
 	
 	/**
+	 * @param state state
+	 * @param letter letter
 	 * @return All states hier such that state has an outgoing 
 	 * return transition (state, hier, letter, succ)
 	 */
-	public abstract Iterable<STATE> hierPred(STATE state, LETTER letter);
-
-	public abstract Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
+	Iterable<STATE> hierPred(STATE state, LETTER letter);
+	
+	/**
+	 * @param hier hierarchical state
+	 * @param letter letter
+	 * @return outgoing summary transitions
+	 */
+	Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
 			final STATE hier, final LETTER letter);
 	
-	public abstract Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
+	/**
+	 * @param hier hierarchical state
+	 * @return outgoing summary transitions
+	 */
+	Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
 			final STATE hier);
-
-	public abstract Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
+	
+	/**
+	 * @param succ successor state
+	 * @return incoming internal transitions
+	 */
+	Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
 			final STATE succ);
 	
-	public abstract Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
+	/**
+	 * @param succ successor state
+	 * @param letter letter
+	 * @return incoming internal transitions
+	 */
+	Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
 			final STATE succ, final LETTER letter);
-
-	public abstract Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
+	
+	/**
+	 * @param succ successor state
+	 * @param letter letter
+	 * @return incoming call transitions
+	 */
+	Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
 			final STATE succ, final LETTER letter);
-
-	public abstract Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
+	
+	/**
+	 * @param succ successor state
+	 * @return incoming internal transitions
+	 */
+	Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
 			final STATE succ);
-
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+	
+	/**
+	 * @param succ successor state
+	 * @param hier hierarchical predecessor
+	 * @param letter letter
+	 * @return incoming return transitions
+	 */
+	Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			final STATE succ, final STATE hier, final LETTER letter);
 	
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+	/**
+	 * @param succ successor state
+	 * @param letter letter
+	 * @return incoming return transitions
+	 */
+	Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			final STATE succ, final LETTER letter);
 	
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+	/**
+	 * @param succ successor state
+	 * @return incoming return transitions
+	 */
+	Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			final STATE succ);
 	
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+	/**
+	 * @param state state
+	 * @param letter letter
+	 * @return outgoing return transitions
+	 */
+	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			final STATE state, final LETTER letter);
 	
-	
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+	/**
+	 * @param state state
+	 * @return outgoing return transitions
+	 */
+	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			final STATE state);
-	
 }

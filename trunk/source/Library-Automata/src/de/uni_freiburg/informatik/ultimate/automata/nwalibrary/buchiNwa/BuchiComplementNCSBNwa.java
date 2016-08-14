@@ -210,7 +210,7 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 				for (final OutgoingInternalTransition<LETTER, STATE> trans : 
 								mOperand.internalSuccessors(up.getState(), letter)) {
 					hasSuccessor = true;
-					constraint.addConstaint(down, trans.getSucc(), up.getRank(), up.isInO(), mOperand.isFinal(up.getState()));
+					constraint.addConstraint(down, trans.getSucc(), up.getRank(), up.isInO(), mOperand.isFinal(up.getState()));
 				}
 				if (transitionWouldAnnihilateEvenRank(down, up, hasSuccessor)) {
 					transitionWouldAnnihilateEvenRank = true;
@@ -252,7 +252,7 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 				for (final OutgoingCallTransition<LETTER, STATE> trans : 
 								mOperand.callSuccessors(up.getState(), letter)) {
 					hasSuccessor = true;
-					constraint.addConstaint(up, trans.getSucc(), up.getRank(), up.isInO(), mOperand.isFinal(up.getState()));
+					constraint.addConstraint(up, trans.getSucc(), up.getRank(), up.isInO(), mOperand.isFinal(up.getState()));
 				}
 				if (transitionWouldAnnihilateEvenRank(down, up, hasSuccessor)) {
 					return new LevelRankingConstraintDrdCheck<LETTER, STATE>();
@@ -280,7 +280,7 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 					for (final OutgoingReturnTransition<LETTER, STATE> trans : 
 						mOperand.returnSuccessors(up.getState(), upHier.getState(), letter)) {
 						hasSuccessor = true;
-						constraint.addConstaint(downHier, trans.getSucc(), up.getRank(), up.isInO(), mOperand.isFinal(up.getState()));
+						constraint.addConstraint(downHier, trans.getSucc(), up.getRank(), up.isInO(), mOperand.isFinal(up.getState()));
 					}
 					if (transitionWouldAnnihilateEvenRank(downHier, up, hasSuccessor)) {
 						return new LevelRankingConstraintDrdCheck<LETTER, STATE>();

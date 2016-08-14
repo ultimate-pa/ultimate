@@ -70,7 +70,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 
 	private final HashMap<Set<STATE>, Integer> statesToLC = new HashMap<Set<STATE>, Integer>();
 
-	public LoopComplexity(AutomataLibraryServices services, INestedWordAutomaton<LETTER, STATE> operand)
+	public LoopComplexity(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataLibraryException {
 		super();
 
@@ -96,7 +96,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	 * where each edge has the same label. As label we us some letter form the alphabet.
 	 */
 	private NestedWordAutomatonReachableStates<LETTER, STATE> constructGraph(
-			INestedWordAutomaton<LETTER, STATE> automaton) throws AutomataOperationCanceledException {
+			final INestedWordAutomaton<LETTER, STATE> automaton) throws AutomataOperationCanceledException {
 		final LETTER letter = automaton.getInternalAlphabet().iterator().next();
 		final Set<LETTER> singletonAlphabet = Collections.singleton(letter);
 		final NestedWordAutomaton<LETTER, STATE> graph = new NestedWordAutomaton<LETTER, STATE>(mServices, singletonAlphabet,
@@ -122,10 +122,11 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	 * 
 	 * @throws AutomataLibraryException
 	 */
-	private Integer computeLoopComplexityOfSubgraph(Set<STATE> statesOfSubgraph) throws AutomataLibraryException {
+	private Integer computeLoopComplexityOfSubgraph(final Set<STATE> statesOfSubgraph) throws AutomataLibraryException {
 
-		final AutomatonSccComputation<LETTER, STATE> sccComputation = new AutomatonSccComputation<LETTER, STATE>(mGraph,
-				mServices, statesOfSubgraph, statesOfSubgraph);
+		final AutomatonSccComputation<LETTER, STATE> sccComputation =
+				new AutomatonSccComputation<LETTER, STATE>(mServices,
+						mGraph, statesOfSubgraph, statesOfSubgraph);
 		final Collection<StronglyConnectedComponent<STATE>> balls = sccComputation.getBalls();
 
 		// Graph contains no balls.
@@ -198,7 +199,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	 * Returns a new collection that contains only the non-chain states. We call a state a non-chain state if it has not
 	 * exactly one predecessor or not exactly one successor.
 	 */
-	private Collection<STATE> extractNonchainStates(Set<STATE> states) {
+	private Collection<STATE> extractNonchainStates(final Set<STATE> states) {
 		final Collection<STATE> peakStates = new ArrayList<STATE>();
 		// Determine number of predecessors and successors for each state.
 		for (final STATE q : states) {
@@ -254,7 +255,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		// TODO Auto-generated method stub
 		return true;
 	}

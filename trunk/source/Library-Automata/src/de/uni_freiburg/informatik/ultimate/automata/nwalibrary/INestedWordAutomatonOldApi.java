@@ -26,58 +26,71 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
+/**
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ * @param <LETTER> letter type
+ * @param <STATE> state type
+ * @deprecated Do not use this old API anymore.
+ * @see INestedWordAutomatonSimple
+ * @see INestedWordAutomaton
+ */
+@Deprecated
 public interface INestedWordAutomatonOldApi<LETTER,STATE> 
-										extends INestedWordAutomaton<LETTER, STATE> {
-
-
+		extends INestedWordAutomaton<LETTER, STATE> {
 	
 	/**
+	 * @param state state
+	 * @param letter letter
 	 * @return All states succ such that state has an outgoing 
 	 * internal transition (state, letter, succ)
 	 */
-	public Iterable<STATE> succInternal(STATE state, LETTER letter);
+	Iterable<STATE> succInternal(STATE state, LETTER letter);
 	
 	/**
+	 * @param state state
+	 * @param letter letter
 	 * @return All states succ such that state has an outgoing 
 	 * call transition (state, letter, succ)
 	 */
-	public Iterable<STATE> succCall(STATE state, LETTER letter);
-	
-	
+	Iterable<STATE> succCall(STATE state, LETTER letter);
 	
 	/**
+	 * @param state state
+	 * @param hier hierarchical predecessor
+	 * @param letter letter
 	 * @return All states succ such that state has an outgoing 
 	 * return transition (state, hier, letter, succ)
 	 */
-	public Iterable<STATE> succReturn(STATE state, STATE hier, LETTER letter);
+	Iterable<STATE> succReturn(STATE state, STATE hier, LETTER letter);
 
 	/**
+	 * @param state state
+	 * @param letter letter
 	 * @return All states pred such that there is an incoming 
 	 * internal transition (pred, letter, state)
 	 */
-	public Iterable<STATE> predInternal(STATE state, LETTER letter);
+	Iterable<STATE> predInternal(STATE state, LETTER letter);
 
 	/**
+	 * @param state state
+	 * @param letter letter
 	 * @return All states pred such that there is an incoming 
 	 * call transition (pred, letter, state)
 	 */
-	public Iterable<STATE> predCall(STATE state, LETTER letter);
-	
-	
-
+	Iterable<STATE> predCall(STATE state, LETTER letter);
 	
 	/**
-	 * Return true iff we can not leave the set of final states, i.e.,
+	 * @return true iff we can not leave the set of final states, i.e.,
 	 * if q is final and there is a transitions (q,a,q') then q' is final.
 	 * Not important. Only used to check correctness of one operation. Might
 	 * be moved to this operation.
-	 * 
 	 */
-	public boolean finalIsTrap();
+	boolean finalIsTrap();
 	
-
 	/**
-	 * Return true iff there is at most one initial state and for each state q
+	 * @return true iff there is at most one initial state and for each state q
 	 * of the automaton the following holds
 	 * <ul>
 	 * <li> for each letter a of the internal alphabet there is at most one
@@ -88,8 +101,7 @@ public interface INestedWordAutomatonOldApi<LETTER,STATE>
 	 * automaton there is at most one transition (q,q̀,a,q').
 	 * </ul>
 	 */
-	public boolean isDeterministic();
-	
+	boolean isDeterministic();
 	
 	/**
 	 * @return true iff there is at least one initial state and for each state
@@ -101,6 +113,4 @@ public interface INestedWordAutomatonOldApi<LETTER,STATE>
 	 * </ul>
 	 */
 	boolean isTotal();
-	
-	
 }

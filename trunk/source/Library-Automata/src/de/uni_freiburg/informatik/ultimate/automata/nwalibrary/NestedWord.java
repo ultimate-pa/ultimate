@@ -46,27 +46,27 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * 
- *         In this implementation we stick to the definition of [3] and deviate from [2] by allowing nested words to
- *         have pending calls and pending returns.
+ * In this implementation we stick to the definition of [3] and deviate from [2] by allowing nested words to
+ * have pending calls and pending returns.
  * 
- *         In this implementation Objects are used as symbols of the alphabet. The type of these objects is specified by
- *         the LETTER parameter.
+ * In this implementation Objects are used as symbols of the alphabet. The type of these objects is specified by
+ * the LETTER parameter.
  * 
- *         We model the word of a nested word using an array of LETTERs. The (binary) nesting Relation is modeled by an
- *         int array mNestingRelation (that has the same length) the following way. If i is an internal position
- *         mNestingRelation[i] is INTERNAL_POSITION. If i is a call position mNestingRelation[i] is the position of the
- *         corresponding return position and PLUS_INFINITY is it is a pending call. If i is a return position
- *         mNestingRelation[i] is the position of the corresponding call position and MINUS_INFINITY is it is a pending
- *         return.
+ * We model the word of a nested word using an array of LETTERs. The (binary) nesting Relation is modeled by an
+ * int array mNestingRelation (that has the same length) the following way. If i is an internal position
+ * mNestingRelation[i] is INTERNAL_POSITION. If i is a call position mNestingRelation[i] is the position of the
+ * corresponding return position and PLUS_INFINITY is it is a pending call. If i is a return position
+ * mNestingRelation[i] is the position of the corresponding call position and MINUS_INFINITY is it is a pending
+ * return.
  * 
- *         Example: The nested word (a b c d, {(0,2),(-infinity,3)} ) is modeled as mWord = {'a', 'b' ,'c' 'd' }
- *         mNestingRelation = { 2 , INTERNAL_POSITION, 0 , MINUS_INFINITY }
+ * Example: The nested word (a b c d, {(0,2),(-infinity,3)} ) is modeled as mWord = {'a', 'b' ,'c' 'd' }
+ * mNestingRelation = { 2 , INTERNAL_POSITION, 0 , MINUS_INFINITY }
  * 
- *         This model of a nesting relation wastes some memory if the nested word has only few calls and returns, but is
- *         very simple.
+ * This model of a nesting relation wastes some memory if the nested word has only few calls and returns, but is
+ * very simple.
  * 
  * @param <LETTER>
- *            Type of the Objects which can be symbols of the alphabet.
+ *    Type of the Objects which can be symbols of the alphabet.
  */
 
 // FIXME after all testscript are ready: Remove unnecessay constructors an let
@@ -104,7 +104,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * @param nestingRelation
 	 *            The nestingRelation of nested word.
 	 */
-	public NestedWord(LETTER[] word, int[] nestingRelation) {
+	public NestedWord(final LETTER[] word, final int[] nestingRelation) {
 		assert (word.length == nestingRelation.length) : "nestingRelation must contain one entry for each LETTER in the word";
 		assert (nestingRelationValuesInRange(
 				nestingRelation)) : "nestingRelation may contain one only -2, plus infinity, minus infinity or natural numbers";
@@ -128,7 +128,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * 
 	 * @param letter
 	 */
-	public NestedWord(LETTER letter, int internalORcallORreturn) {
+	public NestedWord(final LETTER letter, final int internalORcallORreturn) {
 		if (internalORcallORreturn != INTERNAL_POSITION && internalORcallORreturn != PLUS_INFINITY
 				&& internalORcallORreturn != MINUS_INFINITY) {
 			throw new IllegalArgumentException(
@@ -146,7 +146,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * 
 	 * @param word
 	 */
-	private NestedWord(Word<LETTER> word) {
+	private NestedWord(final Word<LETTER> word) {
 		mWord = (LETTER[]) new ArrayList<LETTER>(word.asList()).toArray();
 		final int length = word.length();
 		this.mNestingRelation = new int[length];
@@ -156,7 +156,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 	}
 
-	public static <LETTER> NestedWord<LETTER> nestedWord(Word<LETTER> word) {
+	public static <LETTER> NestedWord<LETTER> nestedWord(final Word<LETTER> word) {
 		if (word instanceof NestedWord) {
 			return (NestedWord<LETTER>) word;
 		} else {
@@ -214,7 +214,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * @return True iff every entry of nestingRelation is in index in the range of the array or an INTERNAL_POSITION,
 	 *         PLUS_INFINITY or MINUS_INFINITY.
 	 */
-	private boolean nestingRelationValuesInRange(int[] nestingRelation) {
+	private boolean nestingRelationValuesInRange(final int[] nestingRelation) {
 		for (int i = 0; i < nestingRelation.length; i++) {
 			if (nestingRelation[i] == INTERNAL_POSITION) {
 			} else if (0 <= nestingRelation[i] && nestingRelation[i] < nestingRelation.length) {
@@ -235,7 +235,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * @return True iff nestingRelation[i]=j implies nestingRelation[j]=i for all i such that 0<=nestingRelation[i]<
 	 *         nestingRelation.length
 	 */
-	private boolean nestingRelationSymmetricNestingEdges(int[] nestingRelation) {
+	private boolean nestingRelationSymmetricNestingEdges(final int[] nestingRelation) {
 		for (int i = 0; i < nestingRelation.length; i++) {
 			if (0 <= nestingRelation[i] && nestingRelation[i] < nestingRelation.length
 					&& nestingRelation[nestingRelation[i]] != i) {
@@ -253,7 +253,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * @return False iff the modeled nesting relation contains (i,j) and (i',j') such that i<i'<=j<j'.
 	 */
 
-	private boolean nestingEdgesDoNotCross(int[] nestingRelation) {
+	private boolean nestingEdgesDoNotCross(final int[] nestingRelation) {
 		for (int i = 0; i < nestingRelation.length; i++) {
 			if (0 <= nestingRelation[i] && nestingRelation[i] < nestingRelation.length) {
 				for (int k = i + 1; k < nestingRelation[i]; k++) {
@@ -277,12 +277,13 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * @return The length of the NestedWord is the length of the word. The length is 0 for the empty word, 1 for the
 	 *         word that consists of one symbol, etc.
 	 */
+	@SuppressWarnings("squid:S1185")
 	@Override
 	public int length() {
 		return super.length();
 	}
 
-	public boolean isCallPosition(int i) {
+	public boolean isCallPosition(final int i) {
 		assert (0 <= i) : "Access to position " + i + " not possible. The first position of a nested word is 0";
 		assert (i <= mWord.length) : "Access to position " + i + " not possible. The last positions of this word is "
 				+ (mWord.length - 1);
@@ -293,7 +294,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 	}
 
-	public boolean isInternalPosition(int i) {
+	public boolean isInternalPosition(final int i) {
 		assert (0 <= i) : "Access to position " + i + " not possible. The first position of a nested word is 0";
 		assert (i <= mWord.length) : "Access to position " + i + " not possible. The last positions of this word is "
 				+ (mWord.length - 1);
@@ -304,7 +305,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 	}
 
-	public boolean isReturnPosition(int i) {
+	public boolean isReturnPosition(final int i) {
 		assert (0 <= i) : "Access to position " + i + " not possible. The first position of a nested word is 0";
 		assert (i <= mWord.length) : "Access to position " + i + " not possible. The last positions of this word is "
 				+ (mWord.length - 1);
@@ -315,7 +316,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 	}
 
-	public LETTER getSymbolAt(int position) {
+	public LETTER getSymbolAt(final int position) {
 		assert (position >= 0 && position < mWord.length);
 		return mWord[position];
 	}
@@ -323,7 +324,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	/**
 	 * Return the corresponding return position if i is call position.
 	 */
-	public int getReturnPosition(int i) {
+	public int getReturnPosition(final int i) {
 		if (isCallPosition(i)) {
 			return mNestingRelation[i];
 		} else {
@@ -334,7 +335,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	/**
 	 * Return the corresponding call position if i is return position.
 	 */
-	public int getCallPosition(int i) {
+	public int getCallPosition(final int i) {
 		if (isReturnPosition(i)) {
 			return mNestingRelation[i];
 		} else {
@@ -342,7 +343,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 	}
 
-	public boolean isPendingCall(int i) {
+	public boolean isPendingCall(final int i) {
 		if (mNestingRelation[i] == PLUS_INFINITY) {
 			return true;
 		} else {
@@ -350,7 +351,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 	}
 
-	public boolean isPendingReturn(int i) {
+	public boolean isPendingReturn(final int i) {
 		if (mNestingRelation[i] == MINUS_INFINITY) {
 			return true;
 		} else {
@@ -369,7 +370,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	/**
 	 * Returns a new NestedWord which is a subword of this starting with firstIndex and ending with lastIndex.
 	 */
-	public NestedWord<LETTER> getSubWord(int firstIndex, int lastIndex) {
+	public NestedWord<LETTER> getSubWord(final int firstIndex, final int lastIndex) {
 		if (lastIndex < firstIndex) {
 			throw new IllegalArgumentException("lastIndex must not be smaller than first");
 		}
@@ -418,7 +419,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * @return New nested word which is the concatenation.
 	 */
 	@SuppressWarnings("unchecked")
-	public NestedWord<LETTER> concatenate(NestedWord<LETTER> nestedWord2) {
+	public NestedWord<LETTER> concatenate(final NestedWord<LETTER> nestedWord2) {
 		final LETTER[] word2 = nestedWord2.getWord();
 		final int[] nestingRelation2 = nestedWord2.getNestingRelation();
 		final int[] concatNestingRelation = new int[mWord.length + word2.length];
@@ -514,7 +515,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	/**
 	 * Return the subWord starting with firstIndex and lastIndex.
 	 */
-	public NestedWord<LETTER> subWord(int firstIndex, int lastIndex) {
+	public NestedWord<LETTER> subWord(final int firstIndex, final int lastIndex) {
 		if (firstIndex < 0) {
 			throw new IllegalArgumentException("first index must be >=0");
 		}
