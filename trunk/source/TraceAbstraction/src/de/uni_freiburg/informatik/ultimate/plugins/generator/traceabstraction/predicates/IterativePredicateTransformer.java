@@ -78,6 +78,7 @@ public class IterativePredicateTransformer {
 	private final IPredicate mPostcondition;
 	protected final SortedMap<Integer, IPredicate> mPendingContexts;
 	private final IPredicate mFalsePredicate;
+	private final boolean mInterproceduralPost = true;
 	
 	private static final boolean s_TransformSummaryToCNF = true;
 
@@ -144,7 +145,7 @@ public class IterativePredicateTransformer {
 				final Call call = (Call) mTrace.getSymbol(i); 
 				final String calledMethod = call.getCallStatement().getMethodName();
 				final Set<IProgramVar> modifiedGlobals = mModifiedGlobals.getModifiedBoogieVars(calledMethod);
-				if (mTrace.isPendingCall(i)) {
+				if (mTrace.isPendingCall(i) || !mInterproceduralPost ) {
 					spTerm = mPredicateTransformer.strongestPostconditionCall(
 							predecessor, nf.getLocalVarAssignment(i),
 							nf.getGlobalVarAssignment(i), nf.getOldVarAssignment(i),
