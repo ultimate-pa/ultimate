@@ -49,14 +49,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
@@ -155,19 +154,6 @@ public class PredicateTransformer {
 		return pushed;
 	}
 
-	/**
-	 * Compute the strongest postcondition for a predicate and a call statement.
-	 * Call statements must be treated in a special way.
-	 */
-	@Deprecated
-	public Term strongestPostcondition(final IPredicate p, final Call call, final boolean isPendingCall) {
-		return strongestPostcondition(p, call.getTransitionFormula(),
-				mModifiableGlobalVariableManager.getGlobalVarsAssignment(call.getCallStatement().getMethodName()),
-				mModifiableGlobalVariableManager.getOldVarsAssignment(call.getCallStatement().getMethodName()),
-				isPendingCall);
-	}
-	
-	
 	public Term weakLocalPostconditionCall(final IPredicate p, final TransFormula globalVarAssignments, final Set<IProgramVar> modifiableGlobals) {
 		final Set<TermVariable> varsToQuantify = new HashSet<>();
 		
@@ -308,163 +294,6 @@ public class PredicateTransformer {
 	}
 
 	/**
-	 * Compute the strongest postcondition for a predicate and a call statement.
-	 * Call statements must be treated in a special way. TODO: How do we compute
-	 * the SP of a Call Statement?
-	 */
-	@Deprecated
-	private Term strongestPostcondition(final IPredicate p, final TransFormula localVarAssignments,
-			final TransFormula globalVarAssignments, final TransFormula oldVarAssignments, final boolean isPendingCall) {
-
-		// VarsToQuantify contains the local Vars and the global vars of the
-		// calling proc, for a non-pending call.
-		final Set<TermVariable> varsToQuantifyNonPendingCall = new HashSet<TermVariable>();
-		// Variables, which should be quantified if we have a pending call.
-		final Set<TermVariable> varsToQuantifyPendingCall = new HashSet<TermVariable>();
-		// We rename oldvars of non-modifiable global variables to freshvars and
-		// quantify them.
-		final Set<TermVariable> varsToQuantifyNonModOldVars = new HashSet<TermVariable>();
-		// In Pred we rename oldvars of non-modifiable global variables to
-		// freshvars.
-		final Map<Term, Term> varsToRenameInPredInBoth = new HashMap<Term, Term>();
-		// Union Set of auxvars occurring in each transformula
-		final Set<TermVariable> allAuxVars = new HashSet<TermVariable>();
-		allAuxVars.addAll(localVarAssignments.getAuxVars());
-		allAuxVars.addAll(globalVarAssignments.getAuxVars());
-		allAuxVars.addAll(oldVarAssignments.getAuxVars());
-
-		final Map<Term, Term> varsToRenameInPredPendingCall = new HashMap<Term, Term>();
-		final Map<Term, Term> varsToRenameInPredNonPendingCall = new HashMap<Term, Term>();
-		// 1.1 Rename the invars in global variable assignments.Invars are
-		// {old(g) --> old(g)_23}
-		final Map<Term, Term> substitution = new HashMap<Term, Term>();
-		Term globalVarsInvarsRenamed = substituteToRepresantativesAndAddToQuantify(globalVarAssignments.getInVars(),
-				globalVarAssignments.getFormula(), varsToRenameInPredNonPendingCall, varsToQuantifyNonPendingCall);
-		varsToQuantifyPendingCall.addAll(varsToQuantifyNonPendingCall);
-		varsToRenameInPredPendingCall.putAll(varsToRenameInPredNonPendingCall);
-
-		Term globalVarsInVarsRenamedOutVarsRenamed = substituteToRepresantativesAndAddToQuantify(
-				restrictMap(globalVarAssignments.getOutVars(), GlobalType.NONOLDVAR), globalVarsInvarsRenamed,
-				varsToRenameInPredNonPendingCall, varsToQuantifyNonPendingCall);
-		substitution.clear();
-		if (SmtUtils.isTrue(globalVarAssignments.getFormula())) {
-			for (final IProgramVar pv : oldVarAssignments.getInVars().keySet()) {
-				substitution.put(oldVarAssignments.getInVars().get(pv), pv.getTermVariable());
-				final TermVariable freshVar = constructFreshTermVariable(mMgdScript, pv);
-				varsToQuantifyNonPendingCall.add(freshVar);
-				varsToRenameInPredNonPendingCall.put(pv.getTermVariable(), freshVar);
-			}
-			globalVarsInvarsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution)
-					.transform(oldVarAssignments.getFormula());
-			substitution.clear();
-
-			for (final IProgramVar pv : oldVarAssignments.getOutVars().keySet()) {
-				if (pv.isOldvar()) {
-					final TermVariable freshVar = constructFreshTermVariable(mMgdScript, pv);
-					substitution.put(oldVarAssignments.getOutVars().get(pv), pv.getTermVariable());
-					varsToQuantifyPendingCall.add(freshVar);
-					varsToRenameInPredPendingCall.put(pv.getTermVariable(), freshVar);
-					varsToRenameInPredNonPendingCall.put(pv.getTermVariable(), freshVar);
-					varsToQuantifyNonPendingCall.add(freshVar);
-				}
-			}
-			globalVarsInVarsRenamedOutVarsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution)
-					.transform(globalVarsInvarsRenamed);
-		}
-		// Collect the local and the non-modifiable global variables of the
-		// calling proc.
-		for (final IProgramVar pv : p.getVars()) {
-			// Procedure is null, if it is a global variable
-			if (pv.getProcedure() != null) {
-				varsToQuantifyNonPendingCall.add(pv.getTermVariable());
-				/*
-				 * On 2014-06-25 Matthias commented the following two lines of
-				 * code: This lead to a problem with recursive programs where a
-				 * variable occurred in p and also in the call. I do not know if
-				 * commenting these lines is a proper solution (or is the reason
-				 * for other bugs).
-				 */
-				// Ensure that variable doesn't occur in call
-				// if (!localVarAssignments.getInVars().containsKey(pv)
-				// && !localVarAssignments.getOutVars().containsKey(pv)) {
-				final TermVariable freshVar = constructFreshTermVariable(mMgdScript, pv);
-				varsToRenameInPredPendingCall.put(pv.getTermVariable(), freshVar);
-				varsToQuantifyPendingCall.add(freshVar);
-				varsToQuantifyNonPendingCall.add(pv.getTermVariable());
-				// }
-			} else {
-				// if is global var of modifiable oldvar we rename var to oldvar
-				if (!pv.isOldvar() && oldVarAssignments.getInVars().containsKey(pv)) {
-					varsToRenameInPredInBoth.put(pv.getTermVariable(), ((IProgramNonOldVar) pv).getOldVar().getTermVariable());
-				}
-				
-				if (!globalVarAssignments.getInVars().containsKey(pv)
-						&& !globalVarAssignments.getOutVars().containsKey(pv)) {
-					if (pv.isOldvar()) {
-						final TermVariable freshVar = constructFreshTermVariable(mMgdScript, pv);
-						varsToRenameInPredInBoth.put(pv.getTermVariable(), freshVar);
-						varsToQuantifyNonModOldVars.add(freshVar);
-					}
-				}
-			}
-		}
-		substitution.clear();
-
-		// 2.1 Rename the invars of the term of Call-Statement.
-		for (final IProgramVar pv : localVarAssignments.getInVars().keySet()) {
-
-			if (globalVarAssignments.getOutVars().containsKey(pv)) {
-				// If it is a global var, then we substitute it through its
-				// oldvar
-				substitution.put(localVarAssignments.getInVars().get(pv), ((IProgramNonOldVar) pv).getOldVar()
-						.getTermVariable());
-			} else {
-				final TermVariable freshVar = constructFreshTermVariable(mMgdScript, pv);
-				substitution.put(localVarAssignments.getInVars().get(pv), freshVar);
-				varsToRenameInPredPendingCall.put(pv.getTermVariable(), freshVar);
-				varsToQuantifyPendingCall.add(freshVar);
-				varsToQuantifyNonPendingCall.add(pv.getTermVariable());
-			}
-		}
-		final Term call_TermInVarsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(localVarAssignments
-				.getFormula());
-		substitution.clear();
-
-		final Term predNonModOldVarsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, varsToRenameInPredInBoth).transform(p.getFormula());
-
-		final Term quantified;
-		if (isPendingCall) {
-			// 2.2 Rename the outvars of the term of the Call-Statement.
-			for (final IProgramVar pv : localVarAssignments.getOutVars().keySet()) {
-				substitution.put(localVarAssignments.getOutVars().get(pv), pv.getTermVariable());
-			}
-			final Term callTermInvarsRenamedOutVarsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution)
-					.transform(call_TermInVarsRenamed);
-			// Rename the invars of CAll, local Vars and old version of global
-			// variables.
-			final Term predRenamed = new SubstitutionWithLocalSimplification(mMgdScript, varsToRenameInPredPendingCall)
-					.transform(predNonModOldVarsRenamed);
-			final Term predANDCallANDGlobalVars = Util.and(mScript, predRenamed, callTermInvarsRenamedOutVarsRenamed,
-					globalVarsInVarsRenamedOutVarsRenamed);
-			varsToQuantifyPendingCall.addAll(varsToQuantifyNonModOldVars);
-			varsToQuantifyPendingCall.addAll(allAuxVars);
-
-			quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantifyNonPendingCall, predANDCallANDGlobalVars);
-		} else {
-			final Term predRenamed = new SubstitutionWithLocalSimplification(mMgdScript, varsToRenameInPredNonPendingCall)
-					.transform(predNonModOldVarsRenamed);
-			varsToQuantifyNonPendingCall.addAll(varsToQuantifyNonModOldVars);
-			varsToQuantifyNonPendingCall.addAll(allAuxVars);
-			
-			final Term result = Util.and(mScript, predRenamed, globalVarsInVarsRenamedOutVarsRenamed);
-			quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantifyNonPendingCall, result);
-		}
-		final Term pushed = new QuantifierPusher(mMgdScript, mServices).transform(quantified);
-		return pushed;
-
-	}
-
-	/**
 	 * Compute strongest postcondition for a return statement, where calleePred
 	 * is the predicate that holds in the called procedure before the return
 	 * statement and callerPred is the predicate that held in the calling
@@ -490,7 +319,7 @@ public class PredicateTransformer {
 
 		// Substitute oldvars of modifiable global vars by fresh vars in
 		// calleePred
-		// and substitue their non-oldvar by the same fresh var in callerPred.
+		// and substitute their non-oldvar by the same fresh var in callerPred.
 		for (final IProgramVar pv : globalVarsAssignment.getInVars().keySet()) {
 			final TermVariable freshVar = constructFreshTermVariable(mMgdScript, pv);
 			varsToRenameInCalleePred.put(pv.getTermVariable(), freshVar);

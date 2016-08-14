@@ -78,12 +78,10 @@ public class HoareAnnotationWriter {
 				mHoareAnnotationFragments.getProgPoint2StatesWithEmptyContext());
 
 		for (final IPredicate context : mHoareAnnotationFragments.getDeadContexts2ProgPoint2Preds().keySet()) {
-			if (true || mUseEntry || containsAnOldVar(context)) {
+			if (mUseEntry || containsAnOldVar(context)) {
 				precondForContext = mHoareAnnotationFragments.getContext2Entry().get(context);
 			} else {
-				final Term spTerm = mPredicateTransformer.strongestPostcondition(context,
-						getCall((ISLPredicate) context), true);
-				precondForContext = mSmtManager.getPredicateFactory().newPredicate(spTerm);
+				// compute SP
 			}
 			precondForContext = mSmtManager.renameGlobalsToOldGlobals(precondForContext);
 			final HashRelation<ProgramPoint, IPredicate> pp2preds = mHoareAnnotationFragments
@@ -92,12 +90,10 @@ public class HoareAnnotationWriter {
 		}
 
 		for (final IPredicate context : mHoareAnnotationFragments.getLiveContexts2ProgPoint2Preds().keySet()) {
-			if (true || mUseEntry || containsAnOldVar(context)) {
+			if (mUseEntry || containsAnOldVar(context)) {
 				precondForContext = mHoareAnnotationFragments.getContext2Entry().get(context);
 			} else {
-				final Term spTerm = mPredicateTransformer.strongestPostcondition(context,
-						getCall((ISLPredicate) context), true);
-				precondForContext = mSmtManager.getPredicateFactory().newPredicate(spTerm);
+				// compute SP
 			}
 			precondForContext = mSmtManager.renameGlobalsToOldGlobals(precondForContext);
 			final HashRelation<ProgramPoint, IPredicate> pp2preds = mHoareAnnotationFragments
