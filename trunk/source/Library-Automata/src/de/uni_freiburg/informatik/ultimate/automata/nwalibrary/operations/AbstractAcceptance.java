@@ -32,38 +32,38 @@ import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AUnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
 /**
  * Contains methods which are shared by Acceptance and BuchiAcceptance.  
  * @author heizmann@informatik.uni-freiburg.de
+ * 
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public abstract class AbstractAcceptance<LETTER,STATE> {
-
-	protected final AutomataLibraryServices mServices;
-	protected final ILogger mLogger;
+public abstract class AbstractAcceptance<LETTER,STATE>
+		extends AUnaryNwaOperation<LETTER, STATE> {
 	
-	
-	
-	
-	public AbstractAcceptance(AutomataLibraryServices services) {
-		super();
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+	/**
+	 * @param services Ultimate services
+	 * @param operand operand
+	 */
+	public AbstractAcceptance(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+		super(services, operand);
 	}
 
 	/**
-	 * Result contains a configuration for each state which contains only this
-	 * state.
+	 * @return Result contains a configuration for each state which contains
+	 * only this state.
 	 */
-	public Set<Stack<STATE>> emptyStackConfiguration(Iterable<STATE> states) {
+	public Set<Stack<STATE>> emptyStackConfiguration(final Iterable<STATE> states) {
 		final Set<Stack<STATE>> configurations = new HashSet<Stack<STATE>>();
 		for (final STATE state : states) {
 			final Stack<STATE> singletonStack = new Stack<STATE>();
@@ -74,10 +74,10 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 	}
 	
 	/**
-	 * Returns true iff the topmost stack element is an accepting state.
+	 * @return true iff the topmost stack element is an accepting state.
 	 */
-	public boolean isAcceptingConfiguration(Stack<STATE> configuration,
-			INestedWordAutomatonSimple<LETTER,STATE> nwa) {
+	public boolean isAcceptingConfiguration(final Stack<STATE> configuration,
+			final INestedWordAutomatonSimple<LETTER,STATE> nwa) {
 			final STATE state = configuration.peek();
 			if (nwa.isFinal(state)) {
 				return true;
@@ -106,9 +106,9 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 	 * @throws AutomataLibraryException 
 	 * 
 	 */
-	public Set<Stack<STATE>> successorConfigurations(Set<Stack<STATE>> configurations,
-			NestedWord<LETTER> nw, int position, INestedWordAutomatonSimple<LETTER,STATE> nwa,
-			boolean addInitial) throws AutomataLibraryException {
+	public Set<Stack<STATE>> successorConfigurations(final Set<Stack<STATE>> configurations,
+			final NestedWord<LETTER> nw, final int position, final INestedWordAutomatonSimple<LETTER,STATE> nwa,
+			final boolean addInitial) throws AutomataLibraryException {
 		final Set<Stack<STATE>> succConfigs = new HashSet<Stack<STATE>>();
 		if (addInitial) {
 			configurations.addAll(configurations);
@@ -150,8 +150,7 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 				}
 				if (config.isEmpty()) {
 					mLogger.warn("Input has pending returns, we reject such words");
-				}
-				else {
+				} else {
 					final STATE callPred = config.pop();
 					final Iterable<OutgoingReturnTransition<LETTER, STATE>> outTransitions = 
 							nwa.returnSuccessors(state, callPred, symbol);

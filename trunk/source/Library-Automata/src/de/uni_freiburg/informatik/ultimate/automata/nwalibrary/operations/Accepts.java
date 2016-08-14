@@ -40,41 +40,60 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 /**
  * Check if word is accepted by automaton.
  * 
- * @param prefixOfIntputIsAccepted
- *            is a prefix of the input accepted? Coincides with usual
- *            acceptance for automata where accepting states can not be
- *            left.
- * @param inputIsSuffixOfAcceptedWord
- *            is the input the suffix of an accepted word? Coincides with
- *            the usual acceptance for automata where each transition can
- *            also (nondeterministically) lead to an initial state.
  * @author heizmann@informatik.uni-freiburg.de
+ * 
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
-									  implements IOperation<LETTER,STATE> {
+public class Accepts<LETTER,STATE>
+		extends AbstractAcceptance<LETTER,STATE>
+		implements IOperation<LETTER,STATE> {
 
-	private final INestedWordAutomatonSimple<LETTER,STATE> mAutomaton;
 	private final NestedWord<LETTER> mWord;
 	private final boolean mPrefixOfInputIsAccepted;
 	private final boolean mInputIsSuffixOfAcceptedWord;
 	private boolean mIsAccepted;
 
-	public Accepts(AutomataLibraryServices services,
-			INestedWordAutomatonSimple<LETTER,STATE> automaton, NestedWord<LETTER> word,
-			boolean prefixOfIntputIsAccepted,
-			boolean inputIsSuffixOfAcceptedWord) throws AutomataLibraryException {
-		super(services);
-		this.mAutomaton = automaton;
-		this.mWord = word;
-		this.mPrefixOfInputIsAccepted = prefixOfIntputIsAccepted;
-		this.mInputIsSuffixOfAcceptedWord = inputIsSuffixOfAcceptedWord;
+	/**
+	 * @param services Ultimate services
+	 * @param operand operand
+	 * @param word word
+	 * @param prefixOfIntputIsAccepted
+	 *            is a prefix of the input accepted? Coincides with usual
+	 *            acceptance for automata where accepting states can not be
+	 *            left.
+	 * @param inputIsSuffixOfAcceptedWord
+	 *            is the input the suffix of an accepted word? Coincides with
+	 *            the usual acceptance for automata where each transition can
+	 *            also (nondeterministically) lead to an initial state.
+	 * @throws AutomataLibraryException if acceptance fails
+	 */
+	public Accepts(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER,STATE> operand,
+			final NestedWord<LETTER> word,
+			final boolean prefixOfIntputIsAccepted,
+			final boolean inputIsSuffixOfAcceptedWord)
+					throws AutomataLibraryException {
+		super(services, operand);
+		mWord = word;
+		mPrefixOfInputIsAccepted = prefixOfIntputIsAccepted;
+		mInputIsSuffixOfAcceptedWord = inputIsSuffixOfAcceptedWord;
 		mLogger.info(startMessage());
 		mIsAccepted = isAccepted();
 		mLogger.info(exitMessage());
 	}
-	public Accepts(AutomataLibraryServices services,
-			INestedWordAutomatonSimple<LETTER,STATE> automaton, NestedWord<LETTER> word) throws AutomataLibraryException {
-		this(services, automaton, word, false, false);
+	
+	/**
+	 * @param services Ultimate services
+	 * @param operand operand
+	 * @param word word
+	 * @throws AutomataLibraryException if acceptance fails
+	 */
+	public Accepts(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER,STATE> operand,
+			final NestedWord<LETTER> word)
+					throws AutomataLibraryException {
+		this(services, operand, word, false, false);
 	}
 
 	@Override
@@ -85,7 +104,7 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " automaton "
-				+ mAutomaton.sizeInformation() + ". " + "word has length "
+				+ mOperand.sizeInformation() + ". " + "word has length "
 				+ mWord.length();
 	}
 
@@ -119,23 +138,24 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		return mIsAccepted;
 	}
 
+	@Override
+	public boolean checkResult(final StateFactory<STATE> stateFactory) {
+		mLogger.warn("No test for Accepts available yet");
+		return true;
+	}
+	
 	private boolean isAccepted() throws AutomataLibraryException {
-		Set<Stack<STATE>> currentConfigs = emptyStackConfiguration(mAutomaton.getInitialStates());
+		Set<Stack<STATE>> currentConfigs = emptyStackConfiguration(mOperand.getInitialStates());
 		for (int i = 0; i < mWord.length(); i++) {
 			currentConfigs = successorConfigurations(currentConfigs, mWord, i,
-					mAutomaton, mInputIsSuffixOfAcceptedWord);
+					mOperand, mInputIsSuffixOfAcceptedWord);
 			if (mPrefixOfInputIsAccepted
 					&& containsAcceptingConfiguration(currentConfigs,
-							mAutomaton)) {
+							mOperand)) {
 				return true;
 			}
 		}
-		if (containsAcceptingConfiguration(currentConfigs, mAutomaton)) {
-			return true;
-		} else {
-			return false;
-		}
-
+		return containsAcceptingConfiguration(currentConfigs, mOperand);
 	}
 
 	/**
@@ -143,20 +163,13 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 * say that a configuration is accepting if the topmost stack element is an
 	 * accepting state.
 	 */
-	public boolean containsAcceptingConfiguration(Set<Stack<STATE>> configurations,
-			INestedWordAutomatonSimple<LETTER,STATE> nwa) {
+	public boolean containsAcceptingConfiguration(final Set<Stack<STATE>> configurations,
+			final INestedWordAutomatonSimple<LETTER,STATE> nwa) {
 		for (final Stack<STATE> config : configurations) {
-			if (isAcceptingConfiguration(config, mAutomaton)) {
+			if (isAcceptingConfiguration(config, mOperand)) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
-	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory) {
-		return true;
-	}
-
-
 }

@@ -50,68 +50,37 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Abstra
  * @param <LETTER> Symbol. Type of the symbols used as alphabet.
  * @param <STATE> Content. Type of the labels ("the content") of the automata states. 
  */
-public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
-									    implements IOperation<LETTER,STATE> {
+public class BuchiAccepts<LETTER,STATE>
+		extends AbstractAcceptance<LETTER,STATE>
+		implements IOperation<LETTER,STATE> {
 	/**
 	 * stem of the nested lasso word whose acceptance is checked 
 	 */
-	NestedWord<LETTER> mStem;
+	private NestedWord<LETTER> mStem;
 	
 	/**
 	 * loop of the nested lasso word whose acceptance is checked 
 	 */
-	NestedWord<LETTER> mLoop;
+	private NestedWord<LETTER> mLoop;
 	
-	
-	private final INestedWordAutomatonSimple<LETTER,STATE> mNwa;
 	private boolean mAccepted;
-
 	
-
-
-	@Override
-	public String operationName() {
-		return "buchiAccepts";
-	}
-	
-	
-
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + " Operand " + mNwa.sizeInformation() 
-				+ " Stem has " + mStem.length() + " letters." 
-				+ " Loop has " + mLoop.length() + " letters.";
-	}
-	
-	
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName();
-	}
-
-
-
-
-	@Override
-	public Boolean getResult() {
-		return mAccepted;
-	}
-
-
 	/**
-	 * Check if a Buchi nested word automaton accepts a nested lasso word. 
+	 * Check if a Buchi nested word automaton accepts a nested lasso word.
+	 * 
+	 * @param services Ultimate services
 	 * @param nlw NestedLassoWord whose acceptance is checked
-	 * @param nwa NestedWordAutomaton which is interpreted as Buchi nested word
+	 * @param operand NestedWordAutomaton which is interpreted as Buchi nested word
 	 * automaton here
 	 * @return true iff nlw is accepted by nwa. Note that here a nested lasso word is
 	 *  always rejected its loop contains pending returns.  
-	 * @throws AutomataLibraryException 
+	 * @throws AutomataLibraryException if accept fails
 	 */
 	public BuchiAccepts(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER,STATE> nwa,
-			final NestedLassoWord<LETTER> nlw) throws AutomataLibraryException{
-		super(services);
-		mNwa = nwa;
+			final INestedWordAutomatonSimple<LETTER,STATE> operand,
+			final NestedLassoWord<LETTER> nlw)
+					throws AutomataLibraryException {
+		super(services, operand);
 		mStem = nlw.getStem();
 		mLoop = nlw.getLoop();
 		
@@ -129,7 +98,6 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 					" words, where the loop contains pending returns.");
 			mAccepted = false;
 			return;
-
 		}
 		
 		if (mLoop.length() ==0) {
@@ -139,9 +107,25 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 			return;
 		}
 
-
 		mAccepted = buchiAccepts();
 		mLogger.info(exitMessage());
+	}
+
+	@Override
+	public String operationName() {
+		return "buchiAccepts";
+	}
+	
+	@Override
+	public String startMessage() {
+		return "Start " + operationName() + " Operand " + mOperand.sizeInformation() 
+				+ " Stem has " + mStem.length() + " letters." 
+				+ " Loop has " + mLoop.length() + " letters.";
+	}
+	
+	@Override
+	public Boolean getResult() {
+		return mAccepted;
 	}
 
 	private boolean buchiAccepts() throws AutomataLibraryException {
@@ -151,10 +135,10 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		// Therefore we call theses stats Honda states.
 		Set<STATE> hondaStates;
 		{
-			Set<Stack<STATE>> currentConfigs = emptyStackConfiguration(mNwa.getInitialStates());
+			Set<Stack<STATE>> currentConfigs = emptyStackConfiguration(mOperand.getInitialStates());
 			for (int i = 0; i < mStem.length(); i++) {
 				currentConfigs = successorConfigurations(currentConfigs, mStem, i,
-						mNwa, false);
+						mOperand, false);
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
@@ -168,7 +152,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 			Set<Stack<STATE>> currentConfigs = emptyStackConfiguration(hondaStates);
 			for (int i = 0; i < mLoop.length(); i++) {
 				currentConfigs = successorConfigurations(
-						currentConfigs, mLoop, i, mNwa, false);
+						currentConfigs, mLoop, i, mOperand, false);
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
@@ -206,16 +190,16 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		final Set<Stack<STATE>> singletonConfigSet = 
 				emptyStackConfiguration(singletonStateSet);
 		currentConfigsVisitedAccepting = 
-				removeAcceptingConfigurations(singletonConfigSet, mNwa);
+				removeAcceptingConfigurations(singletonConfigSet, mOperand);
 		currentConfigsNotVisitedAccepting = singletonConfigSet;
 		while (!currentConfigsNotVisitedAccepting.isEmpty() || !currentConfigsVisitedAccepting.isEmpty()) {
 			for (int i = 0; i < mLoop.length(); i++) {
 				currentConfigsVisitedAccepting = successorConfigurations(
-						currentConfigsVisitedAccepting, mLoop, i, mNwa, false);
+						currentConfigsVisitedAccepting, mLoop, i, mOperand, false);
 				currentConfigsNotVisitedAccepting = successorConfigurations(
-						currentConfigsNotVisitedAccepting, mLoop, i, mNwa, false);
+						currentConfigsNotVisitedAccepting, mLoop, i, mOperand, false);
 				final Set<Stack<STATE>> justVisitedAccepting = 
-						removeAcceptingConfigurations(currentConfigsNotVisitedAccepting, mNwa);
+						removeAcceptingConfigurations(currentConfigsNotVisitedAccepting, mOperand);
 				currentConfigsVisitedAccepting.addAll(justVisitedAccepting);
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new AutomataOperationCanceledException(this.getClass());
@@ -265,7 +249,6 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		return result;
 	}
 	
-	
 	/**
 	 * Remove from the input all accepting configurations. Return all these
 	 * configurations which were accepting.
@@ -285,14 +268,11 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		return acceptingConfigurations;
 	}
 
-
-
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
+		mLogger.warn("No test for BuchiAccepts available yet");
 		return true;
 	}
-	
-	
 }
 

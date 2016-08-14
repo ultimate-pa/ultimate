@@ -71,7 +71,7 @@ public abstract class AUnaryNwaOperation<LETTER, STATE>
 	 * automaton or if language equivalence should not be tested.
 	 */
 	@Override
-	public final boolean checkResult(final StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
 		
