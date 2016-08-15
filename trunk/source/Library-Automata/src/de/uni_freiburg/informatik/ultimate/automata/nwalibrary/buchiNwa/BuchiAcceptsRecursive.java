@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingTransitionlet;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
@@ -203,7 +203,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 		else {
 			final LETTER currentSymbol = mStem.getSymbolAt(currentPosition);
 
-			final Iterable<? extends OutgoingTransitionlet<LETTER, STATE>> outgoingTransitions;
+			final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> outgoingTransitions;
 			if (mStem.isInternalPosition(currentPosition)) {
 				outgoingTransitions = mNwa.internalSuccessors(currentState, currentSymbol);
 			}
@@ -227,7 +227,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 
 			else{
 				final List<STATE> succStates = new ArrayList<STATE>();
-				for (final OutgoingTransitionlet<LETTER, STATE> outgoingTransition : outgoingTransitions) {
+				for (final IOutgoingTransitionlet<LETTER, STATE> outgoingTransition : outgoingTransitions) {
 					succStates.add(outgoingTransition.getSucc());
 				}
 				final Set<STATE> result = new HashSet<STATE>();
@@ -307,7 +307,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 
 		final LETTER currentSymbol = mLoop.getSymbolAt(currentPosition);
 
-		final Iterable<? extends OutgoingTransitionlet<LETTER, STATE>> outgoingTransitions;
+		final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> outgoingTransitions;
 		if (mLoop.isInternalPosition(currentPosition)) {
 			outgoingTransitions = mNwa.internalSuccessors(currentState, currentSymbol);
 		}
@@ -332,7 +332,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 			@SuppressWarnings("unchecked")
 			final
 			List<STATE> succStates = new ArrayList<STATE>();
-			for (final OutgoingTransitionlet<LETTER, STATE> outgoingTransition : outgoingTransitions) {
+			for (final IOutgoingTransitionlet<LETTER, STATE> outgoingTransition : outgoingTransitions) {
 				succStates.add(outgoingTransition.getSucc());
 			}
 			boolean result = false;

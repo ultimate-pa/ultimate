@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Transitionlet;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.ITransitionlet;
 
 /**
  * Construction of initial runs and runs for summaries. Runs are constructed
@@ -339,7 +339,7 @@ class RunConstructor<LETTER,STATE> {
 			
 			final TransitionWithObligation transitionWOToLowest = predStack.peek().next();
 			assert transitionWOToLowest != null;
-			final Transitionlet<LETTER, STATE> transitionToLowest = transitionWOToLowest.getObject();
+			final ITransitionlet<LETTER, STATE> transitionToLowest = transitionWOToLowest.getObject();
 			StateContainer<LETTER,STATE> predSc;
 			NestedRun<LETTER,STATE> newPrefix;
 			if (transitionToLowest instanceof IncomingInternalTransition) {
@@ -474,8 +474,8 @@ class RunConstructor<LETTER,STATE> {
 		
 	}
 	
-	private class TransitionWithObligation extends ObjectWithObligation<Transitionlet<LETTER,STATE>> {
-		public TransitionWithObligation(Transitionlet<LETTER, STATE> object, boolean flag) {
+	private class TransitionWithObligation extends ObjectWithObligation<ITransitionlet<LETTER,STATE>> {
+		public TransitionWithObligation(ITransitionlet<LETTER, STATE> object, boolean flag) {
 			super(object, flag);
 		}
 	}

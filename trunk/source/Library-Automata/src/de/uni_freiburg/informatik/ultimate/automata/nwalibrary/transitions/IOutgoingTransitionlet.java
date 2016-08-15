@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -27,14 +27,16 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions;
 
 /**
- * Interface for outgoing (resp. incoming) transitions of nested word automata. 
- * For reasons of efficiency these transitions do not contain the predecessor
- * (resp. successor) because the automaton already stores this information.
+ * Interface for outgoing transitions of nested word automata. 
  * 
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public interface Transitionlet<LETTER,STATE> {
+public interface IOutgoingTransitionlet<LETTER,STATE>
+		extends ITransitionlet<LETTER, STATE> {
 	
-	public LETTER getLetter();
+	/**
+	 * @return successor state
+	 */
+	STATE getSucc();
 }

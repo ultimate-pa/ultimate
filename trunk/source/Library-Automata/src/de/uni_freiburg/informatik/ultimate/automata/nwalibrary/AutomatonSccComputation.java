@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingTransitionlet;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.StateBasedTransitionFilterPredicateProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -116,7 +116,7 @@ public class AutomatonSccComputation<LETTER, STATE> {
 				final Set<STATE> stateSubset) {
 			mTransitionFilter = new StateBasedTransitionFilterPredicateProvider<>(stateSubset);
 		}
-		private <E extends OutgoingTransitionlet<LETTER, STATE>> Iterator<STATE>
+		private <E extends IOutgoingTransitionlet<LETTER, STATE>> Iterator<STATE>
 				getStateContainerIterator(final Iterator<E> it) {
 			return new Iterator<STATE>() {
 

@@ -36,7 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingTransitionlet;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -180,9 +180,9 @@ public class LineCoverageCalculator {
 		return rtr;
 	}
 
-	private <T extends OutgoingTransitionlet<CodeBlock, IPredicate>> void addCodeblock(Set<CodeBlock> rtr,
+	private <T extends IOutgoingTransitionlet<CodeBlock, IPredicate>> void addCodeblock(Set<CodeBlock> rtr,
 			Deque<IPredicate> open, Iterable<T> iter) {
-		for (final OutgoingTransitionlet<CodeBlock, IPredicate> trans : iter) {
+		for (final IOutgoingTransitionlet<CodeBlock, IPredicate> trans : iter) {
 			if (rtr.add(trans.getLetter())) {
 				open.addFirst(trans.getSucc());
 			}

@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Transitionlet;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.ITransitionlet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -351,7 +351,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 * @param initialWord
 	 *            Word consisting of the label of the edge
 	 */
-	private void exploreInitialEdge(final Transitionlet<CodeBlock, IPredicate> e, final IPredicate target,
+	private void exploreInitialEdge(final ITransitionlet<CodeBlock, IPredicate> e, final IPredicate target,
 			final NestedWord<CodeBlock> initialWord) {
 		mActualPath = new ArrayList<IPredicate>(16);
 		// remember the path, we follow
@@ -379,7 +379,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	// Variable stacks to emulate recursion
 	private ArrayList<IPredicate> mStackState;
 	private ArrayList<Integer> mStackEdgeType;
-	private ArrayList<Iterator<Transitionlet<CodeBlock, IPredicate>>> mStackIterator;
+	private ArrayList<Iterator<ITransitionlet<CodeBlock, IPredicate>>> mStackIterator;
 	private ArrayList<Iterator<IPredicate>> mStackHier;
 	private ArrayList<NestedWord<CodeBlock>> mStackWord;
 
@@ -400,7 +400,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		mLogger.debug(
 				"Explore path: " + state.toString() + " wordLen: " + word.length() + " pathLen: " + mActualPath.size());
 		mStackState = new ArrayList<IPredicate>();
-		mStackIterator = new ArrayList<Iterator<Transitionlet<CodeBlock, IPredicate>>>();
+		mStackIterator = new ArrayList<Iterator<ITransitionlet<CodeBlock, IPredicate>>>();
 		mStackEdgeType = new ArrayList<Integer>();
 		mStackHier = new ArrayList<Iterator<IPredicate>>();
 		mStackWord = new ArrayList<NestedWord<CodeBlock>>();

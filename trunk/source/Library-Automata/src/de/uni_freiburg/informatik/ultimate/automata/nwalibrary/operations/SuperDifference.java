@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Transitionlet;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.ITransitionlet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -329,7 +329,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 	 * @param hierPred hierarchical predecessor
 	 */
 	private void traverseEdge(
-			Transitionlet<LETTER,STATE> e,
+			ITransitionlet<LETTER,STATE> e,
 			STATE r, 
 			STATE s, 
 			STATE q,

@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Transitionlet;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.ITransitionlet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
@@ -170,7 +170,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 
 	}
 
-	private void continueCheckForOutgoingPath(final IPredicate p, final Transitionlet<CodeBlock, IPredicate> transition,
+	private void continueCheckForOutgoingPath(final IPredicate p, final ITransitionlet<CodeBlock, IPredicate> transition,
 			final IPredicate succ) throws AutomataOperationCanceledException {
 		if (mAnnotated.contains(succ)) {
 			final IPredicate predItp = mEpimorphism.getMapping(p);
@@ -195,7 +195,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 	}
 
 	private boolean interpolantAutomatonContainsTransition(final IPredicate predItp,
-			final Transitionlet<CodeBlock, IPredicate> transition, final IPredicate succItp) {
+			final ITransitionlet<CodeBlock, IPredicate> transition, final IPredicate succItp) {
 		if (transition instanceof OutgoingInternalTransition) {
 			final OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans =
 					(OutgoingInternalTransition<CodeBlock, IPredicate>) transition;
@@ -220,7 +220,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 	}
 
 	private NestedRun<CodeBlock, IPredicate> constructRunOfLengthOne(final IPredicate p,
-			final Transitionlet<CodeBlock, IPredicate> transition) {
+			final ITransitionlet<CodeBlock, IPredicate> transition) {
 		if (transition instanceof OutgoingInternalTransition) {
 			final OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans =
 					(OutgoingInternalTransition<CodeBlock, IPredicate>) transition;
@@ -244,7 +244,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 
 	}
 
-	private void checkRunOfLenthOne(final IPredicate predItp, final Transitionlet<CodeBlock, IPredicate> transition,
+	private void checkRunOfLenthOne(final IPredicate predItp, final ITransitionlet<CodeBlock, IPredicate> transition,
 			final IPredicate succItp) {
 		if (transition instanceof OutgoingInternalTransition) {
 			final OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans =
@@ -283,7 +283,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 		}
 	}
 
-	private void caseDistinction(final IPredicate p, final Transitionlet<CodeBlock, IPredicate> transition, final IPredicate succ) {
+	private void caseDistinction(final IPredicate p, final ITransitionlet<CodeBlock, IPredicate> transition, final IPredicate succ) {
 		if (transition instanceof OutgoingInternalTransition) {
 			final OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans =
 					(OutgoingInternalTransition<CodeBlock, IPredicate>) transition;

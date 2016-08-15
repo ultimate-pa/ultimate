@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLa
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Transitionlet;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.ITransitionlet;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 class LassoConstructor<LETTER, STATE> {
@@ -192,7 +192,7 @@ class LassoConstructor<LETTER, STATE> {
 	 */
 	private void checkAndAddPredecessor(StateContainer<LETTER, STATE> sc,
 			Map<StateContainer<LETTER, STATE>, SuccessorInfo> succInfo,
-			Transitionlet<LETTER, STATE> inTrans,
+			ITransitionlet<LETTER, STATE> inTrans,
 			StateContainer<LETTER, STATE> predSc) {
 		if (mScc.getNodes().contains(predSc) && !mVisited.contains(predSc)) {
 			mVisited.add(predSc);
@@ -207,14 +207,14 @@ class LassoConstructor<LETTER, STATE> {
 	
 	
 	private class SuccessorInfo {
-		private final Transitionlet<LETTER, STATE> mTransition;
+		private final ITransitionlet<LETTER, STATE> mTransition;
 		private final StateContainer<LETTER,STATE> mSuccessor;
-		public SuccessorInfo(Transitionlet<LETTER, STATE> transition, StateContainer<LETTER, STATE> successor) {
+		public SuccessorInfo(ITransitionlet<LETTER, STATE> transition, StateContainer<LETTER, STATE> successor) {
 			super();
 			mTransition = transition;
 			mSuccessor = successor;
 		}
-		public Transitionlet<LETTER, STATE> getTransition() {
+		public ITransitionlet<LETTER, STATE> getTransition() {
 			return mTransition;
 		}
 		public StateContainer<LETTER, STATE> getSuccessor() {
