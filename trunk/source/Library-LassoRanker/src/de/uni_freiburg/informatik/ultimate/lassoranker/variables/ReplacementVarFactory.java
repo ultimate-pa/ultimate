@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -124,30 +123,8 @@ public class ReplacementVarFactory {
 		}
 		return auxVar;
 	}
-	
-	/**
-	 * Construct constant (0-ary function) for an auxVar. 
-	 */
-	@Deprecated
-	public Term getOrConstructConstForAuxVar(final TermVariable tv) {
-		final Term auxVarConst = mAuxVarConstants.getOrConstruct(tv);
-		return auxVarConst;
-	}
-	
-	/**
-	 * Given a set of auxVars, construct a map that assigns to auxVar its
-	 * corresponding constant. Construct constant if it does not yet exist.
-	 */
-	public HashMap<TermVariable, Term> constructAuxVarMapping(final Set<TermVariable> auxVars) {
-		final HashMap<TermVariable,Term> result = new HashMap<>();
-		for (final TermVariable auxVar : auxVars) {
-			final Term auxVarConst = getOrConstructConstForAuxVar(auxVar);
-			result.put(auxVar, auxVarConst);
-		}
-		return result;
-	}
-	
-	
+
+
 	/**
 	 * Get unique BoogieVarWrapper for a given BoogieVar.
 	 */
