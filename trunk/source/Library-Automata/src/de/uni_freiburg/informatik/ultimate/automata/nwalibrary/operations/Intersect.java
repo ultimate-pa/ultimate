@@ -30,37 +30,33 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ABinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
-public class Intersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
+public class Intersect<LETTER,STATE>
+		extends ABinaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
 
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-	
-	private final INestedWordAutomatonSimple<LETTER,STATE> mFstOperand;
-	private final INestedWordAutomatonSimple<LETTER,STATE> mSndOperand;
 	private final IntersectNwa<LETTER, STATE> mIntersect;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
 	private final StateFactory<STATE> mStateFactory;
 	
-	
-	
-	
+	/**
+	 * @param services Ultimate services
+	 * @param fstOperand first operand
+	 * @param sndOperand second operand
+	 * @throws AutomataLibraryException if construction fails
+	 */
 	public Intersect(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand
-			) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mFstOperand = fstOperand;
-		mSndOperand = sndOperand;
+			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand)
+					throws AutomataLibraryException {
+		super(services, fstOperand, sndOperand);
 		mStateFactory = mFstOperand.getStateFactory();
 		mLogger.info(startMessage());
 		mIntersect = new IntersectNwa<LETTER, STATE>(mFstOperand, mSndOperand, mStateFactory, false);
@@ -76,17 +72,9 @@ public class Intersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	
 	@Override
-	public String startMessage() {
-		return "Start intersect. First operand " + 
-				mFstOperand.sizeInformation() + ". Second operand " + 
-				mSndOperand.sizeInformation();	
-	}
-	
-	
-	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + 
-				mResult.sizeInformation();
+		return "Finished " + operationName() + " Result "
+				+ mResult.sizeInformation();
 	}
 	
 

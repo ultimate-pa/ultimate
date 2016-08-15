@@ -34,55 +34,63 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AUnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
-public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
+public class Determinize<LETTER,STATE>
+		extends AUnaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
 
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-	
-	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
 	private final DeterminizeNwa<LETTER, STATE> mDeterminized;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
 	private final IStateDeterminizer<LETTER,STATE> mStateDeterminizer;
 	private final StateFactory<STATE> mStateFactory;
 	
-	
+	/**
+	 * @param services Ultimate services
+	 * @param stateFactory state factory
+	 * @param operand operand
+	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 */
 	public Determinize(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory, 
-			final INestedWordAutomatonSimple<LETTER,STATE> input)
+			final INestedWordAutomatonSimple<LETTER,STATE> operand)
 					throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		this.mStateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
-		this.mStateFactory = stateFactory;
-		this.mOperand = input;
+		super(services, operand);
+		mStateDeterminizer =
+				new PowersetDeterminizer<LETTER, STATE>(mOperand, true, stateFactory);
+		mStateFactory = stateFactory;
 		mLogger.info(startMessage());
-		mDeterminized = new DeterminizeNwa<LETTER, STATE>(mServices, input, mStateDeterminizer, mStateFactory);
+		mDeterminized = new DeterminizeNwa<LETTER, STATE>(
+				mServices, mOperand, mStateDeterminizer, mStateFactory);
 		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mDeterminized);
 		mLogger.info(exitMessage());
 	}
 	
+	/**
+	 * @param services Ultimate services
+	 * @param stateFactory state factory
+	 * @param operand operand
+	 * @param predefinedInitials predefined initial states
+	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 */
 	public Determinize(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory, 
-			final INestedWordAutomatonSimple<LETTER,STATE> input,
+			final INestedWordAutomatonSimple<LETTER,STATE> operand,
 			final Set<STATE> predefinedInitials)
 					throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		this.mStateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
-		this.mStateFactory = stateFactory;
-		this.mOperand = input;
+		super(services, operand);
+		mStateDeterminizer =
+				new PowersetDeterminizer<LETTER, STATE>(mOperand, true, stateFactory);
+		mStateFactory = stateFactory;
 		mLogger.info(startMessage());
 		mDeterminized = new DeterminizeNwa<LETTER, STATE>(
-				mServices, input, mStateDeterminizer, mStateFactory,
+				mServices, mOperand, mStateDeterminizer, mStateFactory,
 				predefinedInitials, false);
 		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mDeterminized);
 		mLogger.info(exitMessage());
@@ -93,18 +101,10 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		return "determinize";
 	}
 	
-	
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + " Operand " + 
-			mOperand.sizeInformation();
-	}
-	
-	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + 
-				mResult.sizeInformation();
+		return "Finished " + operationName() + ". Result "
+				+ mResult.sizeInformation();
 	}
 
 	@Override

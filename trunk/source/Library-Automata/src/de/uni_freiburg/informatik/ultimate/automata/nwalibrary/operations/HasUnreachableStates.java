@@ -32,6 +32,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -47,17 +48,23 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * Does not change the input automaton.
  * @author heizmann@informatik.uni-freiburg.de
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETTER,STATE>
-										   implements IOperation<LETTER,STATE> {
+public class HasUnreachableStates<LETTER,STATE>
+		extends DoubleDeckerVisitor<LETTER,STATE>
+		implements IOperation<LETTER,STATE> {
 	private final Set<STATE> mVisitedStates = new HashSet<STATE>();
 	private int mUnreachalbeStates = 0;
 
-	
+	/**
+	 * @param services Ultimate services
+	 * @param operand operand
+	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 */
 	public HasUnreachableStates(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER,STATE> operand) throws AutomataLibraryException {
+			final INestedWordAutomaton<LETTER,STATE> operand)
+					throws AutomataOperationCanceledException  {
 		super(services);
 		mTraversedNwa = operand;
 		mLogger.info(startMessage());
@@ -134,15 +141,14 @@ public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETT
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + " Operand " + 
-			mTraversedNwa.sizeInformation();
+		return "Start " + operationName() + " Operand "
+			+ mTraversedNwa.sizeInformation();
 	}
-	
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Operand has " + 
-			mUnreachalbeStates + " unreachalbe states";
+		return "Finished " + operationName() + " Operand has "
+			+ mUnreachalbeStates + " unreachalbe states";
 	}
 	
 	public boolean result() {
@@ -154,6 +160,4 @@ public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETT
 			throws AutomataLibraryException {
 		return true;
 	}
-	
-
 }

@@ -40,13 +40,17 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * Represents complement of deterministic and total nwa.
  * @author heizmann@informatik.uni-freiburg.de
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class ComplementDeterministicNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
+public class ComplementDeterministicNwa<LETTER, STATE>
+		implements INestedWordAutomatonSimple<LETTER, STATE> {
 	
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	
+	/**
+	 * @param operand operand
+	 */
 	public ComplementDeterministicNwa(final INestedWordAutomatonSimple<LETTER, STATE> operand) {
 		if (operand instanceof DeterminizeNwa) {
 			if (!((DeterminizeNwa<LETTER, STATE>)operand).isTotal()) {
@@ -99,8 +103,6 @@ public class ComplementDeterministicNwa<LETTER, STATE> implements INestedWordAut
 		return !mOperand.isFinal(state);
 	}
 
-
-
 	@Override
 	public STATE getEmptyStackState() {
 		return mOperand.getEmptyStackState();
@@ -146,8 +148,6 @@ public class ComplementDeterministicNwa<LETTER, STATE> implements INestedWordAut
 		return mOperand.callSuccessors(state);
 	}
 
-
-
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			final STATE state, final STATE hier, final LETTER letter) {
@@ -177,6 +177,4 @@ public class ComplementDeterministicNwa<LETTER, STATE> implements INestedWordAut
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-
 }

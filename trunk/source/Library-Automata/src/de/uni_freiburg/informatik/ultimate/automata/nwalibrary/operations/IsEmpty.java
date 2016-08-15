@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AUnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 
@@ -70,11 +69,9 @@ import de.uni_freiburg.informatik.ultimate.util.Utils;
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-
-public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-	
+public class IsEmpty<LETTER,STATE>
+		extends AUnaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
 	/**
 	 * Set of states in which the run we are searching has to begin.
 	 */
@@ -96,11 +93,6 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * Set of states in which the run we are searching must not visit.
 	 */
 	private final Collection<STATE> mForbiddenStates;
-	
-	/**
-	 * INestedWordAutomaton for which we check emptiness.
-	 */
-	private final INestedWordAutomatonSimple<LETTER,STATE> mNwa;
 	
 	private final NestedRun<LETTER,STATE> mAcceptingRun;
 	
@@ -229,15 +221,13 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * of the automaton to the final states of the automaton.
 	 * 
 	 * @param services Ultimate services
-	 * @param nwa input NWA
+	 * @param operand input NWA
 	 */
 	public IsEmpty(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER,STATE> nwa) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mNwa = nwa;
-		mDummyEmptyStackState = mNwa.getEmptyStackState();
-		mStartStates = Utils.constructHashSet(mNwa.getInitialStates());
+			final INestedWordAutomatonSimple<LETTER,STATE> operand) {
+		super(services, operand);
+		mDummyEmptyStackState = mOperand.getEmptyStackState();
+		mStartStates = Utils.constructHashSet(mOperand.getInitialStates());
 		mGoalStateIsAcceptingState = true;
 		mGoalStates = null;
 		mForbiddenStates = Collections.emptySet();
@@ -254,18 +244,19 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * The set of goalStates defines where the run that we search has to end.
 	 * 
 	 * @param services Ultimate services
-	 * @param nwa input NWA
+	 * @param operand input NWA
+	 * @param startStates start states
+	 * @param forbiddenStates forbidden states
+	 * @param goalStates goal states
 	 */
 	public IsEmpty(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER,STATE> nwa, 
+			final INestedWordAutomaton<LETTER,STATE> operand, 
 			final Set<STATE> startStates, final Set<STATE> forbiddenStates, 
 			final Set<STATE> goalStates) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mNwa = nwa;
-		assert nwa.getStates().containsAll(startStates) : "unknown states";
-		assert nwa.getStates().containsAll(goalStates) : "unknown states";
-		mDummyEmptyStackState = mNwa.getEmptyStackState();
+		super(services, operand);
+		assert operand.getStates().containsAll(startStates) : "unknown states";
+		assert operand.getStates().containsAll(goalStates) : "unknown states";
+		mDummyEmptyStackState = mOperand.getEmptyStackState();
 		mStartStates = startStates;
 		mGoalStateIsAcceptingState = false;
 		mGoalStates = goalStates;
@@ -285,7 +276,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		if (mGoalStateIsAcceptingState) {
 			assert mGoalStates == null : 
 				"if we search accepting states, mGoalStates is null";
-			return mNwa.isFinal(state);
+			return mOperand.isFinal(state);
 		} else {
 			return mGoalStates.contains(state);
 		}
@@ -405,7 +396,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			processSummaries(state,stateK);
 			
 			for (final OutgoingInternalTransition<LETTER, STATE> internalTransition : 
-											mNwa.internalSuccessors(state)) {
+											mOperand.internalSuccessors(state)) {
 				final LETTER symbol = internalTransition.getLetter();
 				final STATE succ = internalTransition.getSucc();
 				if (!mForbiddenStates.contains(succ)) {
@@ -418,7 +409,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			}
 
 			for (final OutgoingCallTransition<LETTER, STATE> callTransition : 
-												mNwa.callSuccessors(state)) {
+												mOperand.callSuccessors(state)) {
 				final LETTER symbol = callTransition.getLetter();
 				final STATE succ = callTransition.getSucc();
 				if (!mForbiddenStates.contains(succ)) {
@@ -430,19 +421,19 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				}
 			}
 			
-			if (stateK == mNwa.getEmptyStackState()) {
+			if (stateK == mOperand.getEmptyStackState()) {
 				//there is no return transition
 				continue;
 			}
 			
 			for (final OutgoingReturnTransition<LETTER, STATE> returnTransition : 
-							mNwa.returnSuccessorsGivenHier(state, stateK)) {
+							mOperand.returnSuccessorsGivenHier(state, stateK)) {
 				final LETTER symbol = returnTransition.getLetter();
 				final STATE succ = returnTransition.getSucc();
 				if (!mForbiddenStates.contains(succ)) {
 					for (final STATE stateKK : getCallStatesOfCallState(stateK) ) {
 						addSummary(stateK, succ, state, symbol);
-						if(!wasVisited(succ, stateKK)) {
+						if (!wasVisited(succ, stateKK)) {
 							enqueueAndMarkVisited(succ, stateKK);
 							addRunInformationReturn(succ, stateKK, symbol, state, stateK);
 						}
@@ -472,7 +463,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				assert (succ2ReturnSymbol.containsKey(succ));
 				final STATE returnPred = entry.getValue();
 				final LETTER symbol = succ2ReturnSymbol.get(succ);
-				if(!wasVisited(succ, stateK)) {
+				if (!wasVisited(succ, stateK)) {
 					enqueueAndMarkVisited(succ, stateK);
 					addRunInformationReturn(
 									succ, stateK, symbol, returnPred, state);
@@ -653,8 +644,8 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			} else if (computeCallSubRun(state, stateK)) {
 			} else if (computeReturnSubRun(state, stateK)) {
 			} else {
-				mLogger.warn("No Run ending in pair "+state+ "  "+ stateK + 
-						" with reconstructionStack" + mReconstructionStack);
+				mLogger.warn("No Run ending in pair " + state + "  " + stateK 
+						+ " with reconstructionStack" + mReconstructionStack);
 				throw new AssertionError();
 			}
 			run = mReconstructionOneStepRun.concatenate(run);
@@ -758,8 +749,8 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		if (mAcceptingRun == null) {
 			mLogger.warn("Emptiness not double checked ");
 		} else {
-			mLogger.info("Correctness of emptinessCheck not tested.");
-			correct = (new Accepts<LETTER, STATE>(mServices, mNwa, mAcceptingRun.getWord())).getResult();
+			mLogger.warn("Correctness of emptinessCheck not tested.");
+			correct = (new Accepts<LETTER, STATE>(mServices, mOperand, mAcceptingRun.getWord())).getResult();
 			mLogger.info("Finished testing correctness of emptinessCheck");
 		}
 		return correct;
@@ -771,19 +762,13 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	@Override
-	public String startMessage() {
-		return "Start " + operationName() +
-				". Operand " + mNwa.sizeInformation();
-	}
-	
-	@Override
 	public String exitMessage() {
 		if (mAcceptingRun == null) {
-			return "Finished " + operationName() +
-				". No accepting run.";
+			return "Finished " + operationName()
+				+ ". No accepting run.";
 		} else {
-			return "Finished " + operationName() +
-				". Found accepting run of length " + mAcceptingRun.getLength();
+			return "Finished " + operationName()
+				+ ". Found accepting run of length " + mAcceptingRun.getLength();
 		}
 	}
 }

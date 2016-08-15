@@ -30,12 +30,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AUnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
 /**
@@ -47,13 +46,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
+public class Totalize<LETTER,STATE>
+		extends AUnaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
 	
-	private final AutomataLibraryServices mServices;
-
-	private final ILogger mLogger;
-	
-	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
 	private final StateFactory<STATE> mStateFactory;
 	
@@ -66,10 +62,8 @@ public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public Totalize(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER,STATE> operand)
 					throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services, operand);
 		mStateFactory = operand.getStateFactory();
-		mOperand = operand;
 		mLogger.info(startMessage());
 		final TotalizeNwa<LETTER, STATE> totalized =
 				new TotalizeNwa<LETTER, STATE>(operand, mStateFactory);
@@ -78,50 +72,47 @@ public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		mLogger.info(exitMessage());
 	}
 	
-	
 	@Override
 	public String operationName() {
 		return "totalize";
 	}
 	
-	
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + " Operand " + 
-			mOperand.sizeInformation();
-	}
-	
-	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + 
-				mResult.sizeInformation();
+		return "Finished " + operationName() + " Result "
+				+ mResult.sizeInformation();
 	}
 	
-
-
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
-	}
-
-
+	}	
 	@Override
-	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
-		boolean correct = true;
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
-
-		// check for same language
-		correct &= new IsIncluded<>(mServices, sf, mOperand, mResult).getResult();
-		correct &= new IsIncluded<>(mServices, sf, mResult, mOperand).getResult();
 		
-		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
-					operationName() + "Failed", "language is different",
-					mOperand);
+		final String message;
+		boolean correct = true;
+		if (! checkLanguageEquivalence(stateFactory)) {
+			// language equivalence check failed
+			message = "The result language differs.";
+			correct = false;
+			assert false;
+		} else if (! new IsTotal<LETTER, STATE>(mServices, mResult).getResult()) {
+			// totality check failed
+			message = "The result is not total.";
+			correct = false;
+			assert false;
+		} else {
+			message = null;
 		}
 		
 		mLogger.info("Finished testing correctness of " + operationName());
+		if (! correct) {
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
+					operationName() + "Failed", message, mOperand);
+		}
 		return correct;
 	}
 }

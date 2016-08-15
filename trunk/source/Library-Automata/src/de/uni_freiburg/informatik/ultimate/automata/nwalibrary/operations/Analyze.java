@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AUnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
@@ -280,12 +279,6 @@ public class Analyze<LETTER, STATE>
 	@Override
 	public Object getResult() throws AutomataLibraryException {
 		return "NWA analysis result";
-	}
-	
-	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		return true;
 	}
 	
 	// --- computation methods ---

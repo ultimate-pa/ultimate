@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -70,5 +71,13 @@ public abstract class AOperation<LETTER, STATE>
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ".";
+	}
+	
+	@Override
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
+		mLogger.warn("No result check for " + operationName()
+			+ " available yet.");
+		return true;
 	}
 }

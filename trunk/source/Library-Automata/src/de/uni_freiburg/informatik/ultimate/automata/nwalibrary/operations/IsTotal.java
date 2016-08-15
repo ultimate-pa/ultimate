@@ -26,21 +26,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AUnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Checks whether an NWA is total.
+ * Checks whether a nested word automaton is total.
  * 
- * An NWA is total if for each state and symbol there is an outgoing transition.
+ * <p>An NWA is total if for each state and symbol there is an outgoing
+ * transition.
  * For return transitions, we require that for each hierarchical predecessor
  * there is a transition with each return symbol.
  * 
@@ -48,19 +46,24 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class IsTotal<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+public class IsTotal<LETTER, STATE>
+		extends AUnaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER, STATE> {
 	private final boolean mResult;
 	
+	/*
+	 * The operand as more specific interface.
+	 * It shadows the superclass field with the same name.
+	 */
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+	
 	/**
+	 * @param services Ultimate services
 	 * @param operand input NWA
 	 */
 	public IsTotal(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services, operand);
 		mOperand = operand;
 		mResult = isTotal();
 		mLogger.info("automaton is " + (mResult ? "" : "not ") + "total");
@@ -71,29 +74,43 @@ public class IsTotal<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 */
 	private boolean isTotal() {
 		for (final STATE state : mOperand.getStates()) {
-			for (final LETTER symbol : mOperand.getInternalAlphabet()) {
-				final Iterable<OutgoingInternalTransition<LETTER, STATE>> it =
-					mOperand.internalSuccessors(state, symbol);
+			if (! isTotal(state)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * @param state state for which totality is tested
+	 * @return true iff the given state has all outgoing transitions
+	 */
+	private boolean isTotal(final STATE state) {
+		// internal
+		for (final LETTER symbol : mOperand.getInternalAlphabet()) {
+			final Iterable<OutgoingInternalTransition<LETTER, STATE>> it =
+				mOperand.internalSuccessors(state, symbol);
+			if (!it.iterator().hasNext()) {
+				return false;
+			}
+		}
+		
+		// call
+		for (final LETTER symbol : mOperand.getCallAlphabet()) {
+			final Iterable<OutgoingCallTransition<LETTER, STATE>> it =
+				mOperand.callSuccessors(state, symbol);
+			if (!it.iterator().hasNext()) {
+				return false;
+			}
+		}
+		
+		 // return
+		for (final LETTER symbol : mOperand.getReturnAlphabet()) {
+			for (final STATE hier : mOperand.getStates()) {
+				final Iterable<OutgoingReturnTransition<LETTER, STATE>> it =
+					mOperand.returnSuccessors(state, hier, symbol);
 				if (!it.iterator().hasNext()) {
 					return false;
-				}
-			}
-			
-			for (final LETTER symbol : mOperand.getCallAlphabet()) {
-				final Iterable<OutgoingCallTransition<LETTER, STATE>> it =
-					mOperand.callSuccessors(state, symbol);
-				if (!it.iterator().hasNext()) {
-					return false;
-				}
-			}
-			
-			for (final LETTER symbol : mOperand.getReturnAlphabet()) {
-				for (final STATE hier : mOperand.getStates()) {
-					final Iterable<OutgoingReturnTransition<LETTER, STATE>> it =
-						mOperand.returnSuccessors(state, hier, symbol);
-					if (!it.iterator().hasNext()) {
-						return false;
-					}
 				}
 			}
 		}
@@ -106,24 +123,7 @@ public class IsTotal<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	@Override
-	public final String startMessage() {
-		return "Start " + operationName();
-	}
-	
-	@Override
-	public final String exitMessage() {
-		return "Finished " + operationName();
-	}
-	
-	@Override
 	public Boolean getResult() {
 		return mResult;
-	}
-	
-	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		// TODO Auto-generated method stub
-		return true;
 	}
 }

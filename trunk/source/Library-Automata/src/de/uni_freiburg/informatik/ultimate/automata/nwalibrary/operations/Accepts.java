@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 /**
  * Check if word is accepted by automaton.
@@ -129,12 +128,6 @@ public class Accepts<LETTER,STATE>
 			message += "is rejected.";
 		}
 		return message;
-	}
-
-	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory) {
-		mLogger.warn("No test for Accepts available yet");
-		return true;
 	}
 	
 	private boolean isAccepted() throws AutomataLibraryException {

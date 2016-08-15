@@ -29,29 +29,29 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AUnaryNwaOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class GetAcceptedWord<LETTER, STATE> implements IOperation<LETTER,STATE> {
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
+public class GetAcceptedWord<LETTER, STATE>
+		extends AUnaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
+	private NestedWord<LETTER> mAcceptedWord;
 
-	INestedWordAutomaton<LETTER, STATE> mOperand;
-	NestedWord<LETTER> mAcceptedWord;
-
+	/**
+	 * @param services Ultimate services
+	 * @param operand operand
+	 * @throws AutomataLibraryException if construction fails
+	 */
 	public GetAcceptedWord(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mOperand = operand;
+			final INestedWordAutomatonSimple<LETTER, STATE> operand)
+					throws AutomataLibraryException {
+		super(services, operand);
 		mLogger.info(startMessage());
 		final IsEmpty<LETTER, STATE> isEmpty = new IsEmpty<LETTER, STATE>(mServices, operand);
 		if (isEmpty.getResult()) {
 			throw new IllegalArgumentException(
-					"unable to get word from emtpy language");
+					"unable to get word from empty language");
 		} else {
 			mAcceptedWord = isEmpty.getNestedRun().getWord();
 		}
@@ -69,21 +69,8 @@ public class GetAcceptedWord<LETTER, STATE> implements IOperation<LETTER,STATE> 
 	}
 
 	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Operand "
-				+ mOperand.sizeInformation();
-	}
-
-	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Found word of length "
 				+ mAcceptedWord.length();
 	}
-
-	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		return true;
-	}
-
 }

@@ -33,8 +33,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AUnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -44,16 +44,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE> {
+public class RemoveUnreachable<LETTER,STATE>
+		extends AUnaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
 	
-	private final AutomataLibraryServices mServices;
-	
-	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
-
-	private final ILogger mLogger;
 
 	/**
 	 * Given an INestedWordAutomaton nwa return a NestedWordAutomaton that has
@@ -61,30 +57,23 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 	 * Each state of the result also occurred in the input. Only the auxiliary
 	 * empty stack state of the result is different. 
 	 * 
-	 * @param nwa
-	 * @throws AutomataOperationCanceledException
+	 * @param services Ultimate services
+	 * @param operand operand
+	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
 	public RemoveUnreachable(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER,STATE> nwa)
+			final INestedWordAutomatonSimple<LETTER,STATE> operand)
 			throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mOperand = nwa;
+		super(services, operand);
 		mLogger.info(startMessage());
-		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mOperand);
+		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(
+				mServices, mOperand);
 		mLogger.info(exitMessage());
 	}
 	
-
 	@Override
 	public String operationName() {
 		return "removeUnreachable";
-	}
-
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Input "
-				+ mOperand.sizeInformation();
 	}
 
 	@Override
@@ -98,7 +87,6 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 	public NestedWordAutomatonReachableStates<LETTER,STATE> getResult() throws AutomataOperationCanceledException {
 		return mResult;
 	}
-
 	
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
@@ -122,27 +110,33 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 			assert correct;
 			for (final STATE state : reachableStatesCopy.getStates()) {
 				for (final OutgoingInternalTransition<LETTER, STATE> outTrans : reachableStatesCopy.internalSuccessors(state)) {
-					correct &= mResult.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
+					correct &= mResult.containsInternalTransition(state, outTrans.getLetter(),
+							outTrans.getSucc());
 					assert correct;
 				}
 				for (final OutgoingCallTransition<LETTER, STATE> outTrans : reachableStatesCopy.callSuccessors(state)) {
-					correct &= mResult.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
+					correct &= mResult.containsCallTransition(state, outTrans.getLetter(),
+							outTrans.getSucc());
 					assert correct;
 				}
 				for (final OutgoingReturnTransition<LETTER, STATE> outTrans : reachableStatesCopy.returnSuccessors(state)) {
-					correct &= mResult.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
+					correct &= mResult.containsReturnTransition(state, outTrans.getHierPred(),
+							outTrans.getLetter(), outTrans.getSucc());
 					assert correct;
 				}
 				for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mResult.internalSuccessors(state)) {
-					correct &= reachableStatesCopy.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
+					correct &= reachableStatesCopy.containsInternalTransition(state,
+							outTrans.getLetter(), outTrans.getSucc());
 					assert correct;
 				}
 				for (final OutgoingCallTransition<LETTER, STATE> outTrans : mResult.callSuccessors(state)) {
-					correct &= reachableStatesCopy.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
+					correct &= reachableStatesCopy.containsCallTransition(state,
+							outTrans.getLetter(), outTrans.getSucc());
 					assert correct;
 				}
 				for (final OutgoingReturnTransition<LETTER, STATE> outTrans : mResult.returnSuccessors(state)) {
-					correct &= reachableStatesCopy.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
+					correct &= reachableStatesCopy.containsReturnTransition(state,
+							outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
 					assert correct;
 				}
 				final Set<STATE> rCSdownStates = reachableStatesCopy
@@ -162,5 +156,4 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 		}
 		return correct;
 	}
-
 }

@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ABinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonFilteredStates;
@@ -41,16 +41,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
-public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
+public class Difference<LETTER,STATE>
+		extends ABinaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE>,
+			IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-	
-	private final INestedWordAutomatonSimple<LETTER,STATE> mFstOperand;
-	private final INestedWordAutomatonSimple<LETTER,STATE> mSndOperand;
 	private DeterminizeNwa<LETTER,STATE> mSndDeterminized;
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 	private ComplementDeterministicNwa<LETTER,STATE> mSndComplemented;
@@ -59,70 +56,75 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	private NestedWordAutomatonFilteredStates<LETTER, STATE> mResultWOdeadEnds;
 	private final StateFactory<STATE> mStateFactory;
 	
-	
-	public Difference(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory, 
+	private Difference(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand
-			) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mFstOperand = fstOperand;
-		mSndOperand = sndOperand;
-		mStateFactory = mFstOperand.getStateFactory();
-		mStateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(sndOperand, true, stateFactory);
+			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
+			final boolean finalIsTrap)
+					throws AutomataLibraryException {
+		super(services, fstOperand, sndOperand);
+		mStateFactory = stateFactory;
+		mStateDeterminizer = stateDeterminizer;
 		mLogger.info(startMessage());
-		computateDifference(false);
+		computeDifference(finalIsTrap);
 		mLogger.info(exitMessage());
 	}
 	
+	/**
+	 * Uses a PowersetDeterminizer.
+	 * 
+	 * @param services Ultimate services
+	 * @param stateFactory state factory for powerset determinizer
+	 * @param fstOperand first operand
+	 * @param sndOperand second operand
+	 * @throws AutomataLibraryException if construction fails
+	 */
+	public Difference(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory, 
+			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand)
+					throws AutomataLibraryException {
+		this(services, fstOperand.getStateFactory(), fstOperand, sndOperand,
+				new PowersetDeterminizer<LETTER,STATE>(sndOperand, true, stateFactory),
+				false);
+	}
 	
+	/**
+	 * Uses a user defined state determinizer.
+	 * 
+	 * @param services Ultimate services
+	 * @param fstOperand first operand
+	 * @param sndOperand second operand
+	 * @param stateDeterminizer state determinizer
+	 * @param stateFactory state factory for construction
+	 * @throws AutomataLibraryException if construction fails
+	 */
 	public Difference(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
-			final StateFactory<STATE> sf,
+			final StateFactory<STATE> stateFactory,
 			final boolean finalIsTrap) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mFstOperand = fstOperand;
-		mSndOperand = sndOperand;
-		mStateFactory = sf;
-		mStateDeterminizer = stateDeterminizer;
-		mLogger.info(startMessage());
-		computateDifference(finalIsTrap);
-		mLogger.info(exitMessage());
+		this(services, stateFactory, fstOperand, sndOperand, stateDeterminizer,
+				false);
 	}
-	
 	
 	@Override
 	public String operationName() {
 		return "difference";
 	}
 	
-	
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". First operand " + 
-				mFstOperand.sizeInformation() + ". Second operand " + 
-				mSndOperand.sizeInformation();	
-	}
-	
-	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + 
-				mResult.sizeInformation();
+		return "Finished " + operationName() + " Result "
+				+ mResult.sizeInformation();
 	}
 	
-	
-	
-	
-	
-	
-	private void computateDifference(final boolean finalIsTrap) throws AutomataLibraryException {
+	private void computeDifference(final boolean finalIsTrap) throws AutomataLibraryException {
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
-			final TotalizeNwa<LETTER, STATE> sndTotalized = new TotalizeNwa<LETTER, STATE>(mSndOperand, mStateFactory);
+			final TotalizeNwa<LETTER, STATE> sndTotalized =
+					new TotalizeNwa<LETTER, STATE>(mSndOperand, mStateFactory);
 			final ComplementDeterministicNwa<LETTER,STATE> sndComplemented =
 					new ComplementDeterministicNwa<LETTER, STATE>(sndTotalized);
 			final IntersectNwa<LETTER, STATE> intersect =
@@ -192,10 +194,6 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 		return correct;
 	}
 
-
-
-
-
 	@Override
 	public boolean removeDeadEnds() throws AutomataOperationCanceledException {
 		mResult.computeDeadEnds();
@@ -223,11 +221,5 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	public Map<STATE, Map<STATE, IntersectNwa<LETTER, STATE>.ProductState>> getFst2snd2res() {
 		return mIntersect.getFst2snd2res();
 	}
-	
-	
-	
-	
-	
-	
 }
 

@@ -33,8 +33,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AUnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -47,16 +47,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
+public class RemoveDeadEnds<LETTER,STATE>
+		extends AUnaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
 	
-	private final AutomataLibraryServices mServices;
-	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> mReach;
 	private final IDoubleDeckerAutomaton<LETTER,STATE> mResult;
-
-	private final ILogger mLogger;
 
 	/**
 	 * Given an INestedWordAutomaton nwa return a nested word automaton that has
@@ -68,19 +65,19 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * 
 	 * @param services Ultimate services
 	 * @param operand operand
-	 * @throws AutomataOperationCanceledException
+	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
 	public RemoveDeadEnds(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER,STATE> operand)
 			throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mOperand = operand;
+		super(services, operand);
 		mLogger.info(startMessage());
 		try {
-			mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mOperand);
+			mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(
+					mServices, mOperand);
 			mReach.computeDeadEnds();
-			mResult = new NestedWordAutomatonFilteredStates<LETTER, STATE>(mServices, mReach, mReach.getWithOutDeadEnds());
+			mResult = new NestedWordAutomatonFilteredStates<LETTER, STATE>(
+					mServices, mReach, mReach.getWithOutDeadEnds());
 		} catch (final AutomataOperationCanceledException oce) {
 			throw new AutomataOperationCanceledException(getClass());
 		}
@@ -88,16 +85,9 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		assert (new TransitionConsistencyCheck<LETTER, STATE>(mResult)).consistentForAll();
 	}
 	
-
 	@Override
 	public String operationName() {
 		return "removeDeadEnds";
-	}
-
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Input "
-				+ mOperand.sizeInformation();
 	}
 
 	@Override
@@ -106,7 +96,6 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				+ mOperand.sizeInformation() + " to "
 				+ mResult.sizeInformation();
 	}
-
 
 	@Override
 	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() throws AutomataOperationCanceledException {

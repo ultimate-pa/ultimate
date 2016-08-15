@@ -66,6 +66,6 @@ public abstract class ABinaryNwaOperation<LETTER, STATE>
 	public String startMessage() {
 		return "Start " + operationName() + ". Operands have "
 				+ mFstOperand.sizeInformation() + " and "
-				+ mSndOperand.sizeInformation() + ".";
+				+ mSndOperand.sizeInformation() + '.';
 	}
 }

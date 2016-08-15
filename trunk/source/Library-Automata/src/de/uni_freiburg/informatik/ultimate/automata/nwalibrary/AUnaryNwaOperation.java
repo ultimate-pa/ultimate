@@ -59,20 +59,17 @@ public abstract class AUnaryNwaOperation<LETTER, STATE>
 	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Operand has "
-				+ mOperand.sizeInformation() + ".";
+		return "Start " + operationName() + ". Operand "
+				+ mOperand.sizeInformation() + '.';
 	}
 	
 	/**
-	 * This is the default implementation of the checkResult() method.
+	 * This implementation can be used in the checkResult() method.
 	 * It checks language equivalence between the operand and the result.
-	 * 
-	 * <p>This method must be overwritten if the result is not a nested word
-	 * automaton or if language equivalence should not be tested.
 	 */
-	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	protected boolean checkLanguageEquivalence(
+			final StateFactory<STATE> stateFactory)
+					throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
 		
 		// type-check and cast result to nested word automaton
@@ -101,8 +98,7 @@ public abstract class AUnaryNwaOperation<LETTER, STATE>
 			message = null;
 		}
 		
-		mLogger.info("Finished testing correctness of " +
-				operationName());
+		mLogger.info("Finished testing correctness of " + operationName());
 		if (! correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
 					operationName() + "Failed", message, mOperand);

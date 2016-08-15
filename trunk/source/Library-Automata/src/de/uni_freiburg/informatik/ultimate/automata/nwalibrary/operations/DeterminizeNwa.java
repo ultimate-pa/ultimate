@@ -43,7 +43,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
+public class DeterminizeNwa<LETTER, STATE>
+		implements INestedWordAutomatonSimple<LETTER, STATE> {
 	
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
@@ -55,34 +56,49 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	private final Set<STATE> mPredefinedInitials;
 	private final boolean mMakeAutomatonTotal;
 	
-	private final Map<STATE,DeterminizedState<LETTER, STATE>> mres2det =
+	private final Map<STATE,DeterminizedState<LETTER, STATE>> mRes2det =
 			new HashMap<STATE,DeterminizedState<LETTER, STATE>>();
-	private final Map<DeterminizedState<LETTER, STATE>, STATE> mdet2res =
+	private final Map<DeterminizedState<LETTER, STATE>, STATE> mDet2res =
 			new HashMap<DeterminizedState<LETTER, STATE>, STATE>();
 	
+	/**
+	 * @param services Ultimate services
+	 * @param operand operand
+	 * @param stateDeterminizer state determinizer
+	 * @param stateFactory state factory
+	 * @param predefinedInitials predefined initial states
+	 * @param makeAutomatonTotal make automaton total?
+	 */
 	public DeterminizeNwa(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand, 
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, 
-			final StateFactory<STATE> sf, final Set<STATE> predefinedInitials,
+			final StateFactory<STATE> stateFactory,
+			final Set<STATE> predefinedInitials,
 			final boolean makeAutomatonTotal) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
 		mStateDeterminizer = stateDeterminizer;
-		mStateFactory = sf;
+		mStateFactory = stateFactory;
 		mCache = new NestedWordAutomaton<LETTER, STATE>(mServices, operand.getInternalAlphabet(), 
-				operand.getCallAlphabet(), operand.getReturnAlphabet(), sf);
+				operand.getCallAlphabet(), operand.getReturnAlphabet(), stateFactory);
 		mPredefinedInitials = predefinedInitials;
 		mMakeAutomatonTotal = makeAutomatonTotal;
 
 	}
 	
 	
+	/**
+	 * @param services Ultimate services
+	 * @param operand operand
+	 * @param stateDeterminizer state determinizer
+	 * @param stateFactory state factory
+	 */
 	public DeterminizeNwa(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand, 
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, 
-			final StateFactory<STATE> sf) {
-		this(services, operand, stateDeterminizer, sf, null, false);
+			final StateFactory<STATE> stateFactory) {
+		this(services, operand, stateDeterminizer, stateFactory, null, false);
 	}
 	
 	public boolean isTotal() {
@@ -94,8 +110,8 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 			final DeterminizedState<LETTER, STATE> initialDet = 
 					mStateDeterminizer.initialState();
 			final STATE initialState = mStateDeterminizer.getState(initialDet);
-			mdet2res.put(initialDet, initialState);
-			mres2det.put(initialState, initialDet);
+			mDet2res.put(initialDet, initialState);
+			mRes2det.put(initialState, initialDet);
 			mCache.addState(true, initialDet.containsFinal(), initialState);
 		} else {
 			// add singleton DoubleDecker for each initial state of operand
@@ -104,19 +120,19 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 						new DeterminizedState<LETTER,STATE>(mOperand);
 				initialDet.addPair(mOperand.getEmptyStackState(), initialOperand, mOperand);
 				final STATE initialState = mStateDeterminizer.getState(initialDet);
-				mdet2res.put(initialDet, initialState);
-				mres2det.put(initialState, initialDet);
+				mDet2res.put(initialDet, initialState);
+				mRes2det.put(initialState, initialDet);
 				mCache.addState(true, initialDet.containsFinal(), initialState);
 			}
 		}
 	}
 	
 	private STATE getOrConstructState(final DeterminizedState<LETTER, STATE> detState) {
-		STATE state = mdet2res.get(detState);
+		STATE state = mDet2res.get(detState);
 		if (state == null) {
 			state = mStateDeterminizer.getState(detState);
-			mdet2res.put(detState, state);
-			mres2det.put(state, detState);
+			mDet2res.put(detState, state);
+			mRes2det.put(state, detState);
 			mCache.addState(false, detState.containsFinal(), state);
 		}
 		return state;
@@ -127,7 +143,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	public Collection<STATE> succInternal(final STATE state, final LETTER letter) {
 		final Collection<STATE> succs = mCache.succInternal(state, letter);
 		if (succs == null) {
-			final DeterminizedState<LETTER, STATE> detState = mres2det.get(state);
+			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
 			assert (detState != null);
 			final DeterminizedState<LETTER, STATE> detSucc = 
 					mStateDeterminizer.internalSuccessor(detState, letter);
@@ -140,7 +156,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	public Collection<STATE> succCall(final STATE state, final LETTER letter) {
 		final Collection<STATE> succs = mCache.succCall(state, letter);
 		if (succs == null) {
-			final DeterminizedState<LETTER, STATE> detState = mres2det.get(state);
+			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
 			assert (detState != null);
 			final DeterminizedState<LETTER, STATE> detSucc = 
 					mStateDeterminizer.callSuccessor(detState, letter);
@@ -153,9 +169,9 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	public Collection<STATE> succReturn(final STATE state, final STATE hier, final LETTER letter) {
 		final Collection<STATE> succs = mCache.succReturn(state, hier, letter);
 		if (succs == null) {
-			final DeterminizedState<LETTER, STATE> detState = mres2det.get(state);
+			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
 			assert (detState != null);
-			final DeterminizedState<LETTER, STATE> detHier = mres2det.get(hier);
+			final DeterminizedState<LETTER, STATE> detHier = mRes2det.get(hier);
 			assert (detHier != null);
 			final DeterminizedState<LETTER, STATE> detSucc = 
 					mStateDeterminizer.returnSuccessor(detState, detHier, letter);
@@ -221,7 +237,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 			return getInternalAlphabet();
 		} else {
 			final Set<LETTER> result = new HashSet<LETTER>();
-			final DeterminizedState<LETTER, STATE> detState = mres2det.get(state);
+			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
 			for (final STATE down : detState.getDownStates()) {
 				for (final STATE up : detState.getUpStates(down)) {
 					result.addAll(mOperand.lettersInternal(up));
@@ -237,7 +253,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 			return getCallAlphabet();
 		} else {
 			final Set<LETTER> result = new HashSet<LETTER>();
-			final DeterminizedState<LETTER, STATE> detState = mres2det.get(state);
+			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
 			for (final STATE down : detState.getDownStates()) {
 				for (final STATE up : detState.getUpStates(down)) {
 					result.addAll(mOperand.lettersCall(up));
@@ -253,7 +269,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 			return getReturnAlphabet();
 		} else {
 			final Set<LETTER> result = new HashSet<LETTER>();
-			final DeterminizedState<LETTER, STATE> detState = mres2det.get(state);
+			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
 			for (final STATE down : detState.getDownStates()) {
 				for (final STATE up : detState.getUpStates(down)) {
 					result.addAll(mOperand.lettersReturn(up));
@@ -269,7 +285,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 			final STATE state, final LETTER letter) {
 		final Collection<STATE> succs = mCache.succInternal(state, letter);
 		if (succs == null || succs.isEmpty()) {
-			final DeterminizedState<LETTER, STATE> detState = mres2det.get(state);
+			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
 			assert (detState != null);
 			final DeterminizedState<LETTER, STATE> detSucc = 
 					mStateDeterminizer.internalSuccessor(detState, letter);
@@ -293,7 +309,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 			final STATE state, final LETTER letter) {
 		final Collection<STATE> succs = mCache.succCall(state, letter);
 		if (succs == null || succs.isEmpty()) {
-			final DeterminizedState<LETTER, STATE> detState = mres2det.get(state);
+			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
 			assert (detState != null);
 			final DeterminizedState<LETTER, STATE> detSucc = 
 					mStateDeterminizer.callSuccessor(detState, letter);
@@ -319,9 +335,9 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 			final STATE state, final STATE hier, final LETTER letter) {
 		final Collection<STATE> succs = mCache.succReturn(state, hier, letter);
 		if (succs == null || succs.isEmpty()) {
-			final DeterminizedState<LETTER, STATE> detState = mres2det.get(state);
+			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
 			assert (detState != null);
-			final DeterminizedState<LETTER, STATE> detHier = mres2det.get(hier);
+			final DeterminizedState<LETTER, STATE> detHier = mRes2det.get(hier);
 			assert (detHier != null);
 			final DeterminizedState<LETTER, STATE> detSucc = 
 					mStateDeterminizer.returnSuccessor(detState, detHier, letter);
@@ -347,7 +363,8 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 
 	@Override
 	public Set<LETTER> getAlphabet() {
-		throw new UnsupportedOperationException();	}
+		throw new UnsupportedOperationException();
+	}
 
 	@Override
 	public String sizeInformation() {

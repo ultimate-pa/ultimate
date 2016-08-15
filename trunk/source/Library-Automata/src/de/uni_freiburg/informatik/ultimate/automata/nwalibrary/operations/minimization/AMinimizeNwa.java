@@ -158,6 +158,12 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 		}
 		return mResult;
 	}
+	
+	@Override
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
+		return checkLanguageEquivalence(stateFactory);
+	}
 
 	/**
 	 * Returns a Map from states of the input automaton to states of the output

@@ -35,15 +35,20 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * Operation that returns the number of states of a nested word automaton.
  * @author heizmann@informatik.uni-freiburg.de
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class NumberOfStates<LETTER, STATE> implements IOperation<LETTER,STATE> {
+public class NumberOfStates<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
 	
-	INestedWordAutomatonSimple<LETTER, STATE> mNwa;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	
-	public NumberOfStates(INestedWordAutomatonSimple<LETTER, STATE> nwa) {
-		mNwa = nwa;
+	/**
+	 * @param operand operand
+	 */
+	public NumberOfStates(
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+		mOperand = operand;
 	}
 
 	@Override
@@ -63,13 +68,12 @@ public class NumberOfStates<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public Integer getResult() throws AutomataLibraryException {
-		return mNwa.size();
+		return mOperand.size();
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}
-
 }
