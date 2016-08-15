@@ -126,10 +126,11 @@ public final class AbstractInterpreter {
 	 * Run abstract interpretation on a path program constructed from a counterexample.
 	 *
 	 */
-	@SuppressWarnings("squid:S1166")
-	public static IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> runOnPathProgram(
-			final NestedRun<CodeBlock, ?> counterexample, final INestedWordAutomaton<CodeBlock, ?> currentAutomata,
-			final RootNode root, final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
+	public static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
+			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, ProgramPoint>
+			runOnPathProgram(final NestedRun<CodeBlock, ?> counterexample,
+					final INestedWordAutomaton<CodeBlock, ?> currentAutomata, final RootNode root,
+					final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
 		assert counterexample != null && counterexample.getLength() > 0 : "Invalid counterexample";
 		assert currentAutomata != null;
 		assert root != null;
@@ -182,9 +183,10 @@ public final class AbstractInterpreter {
 				transitionProvider, rootAnnot, isSilent);
 	}
 
-	private static AbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> runSilentlyOnNWA(
-			final NWAPathProgramTransitionProvider transProvider, final CodeBlock initial, final RootNode root,
-			final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
+	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
+			AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, ProgramPoint>
+			runSilentlyOnNWA(final NWAPathProgramTransitionProvider transProvider, final CodeBlock initial,
+					final RootNode root, final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
 
 		final BoogieSymbolTable symbolTable = getSymbolTable(root);
 		if (symbolTable == null) {
@@ -196,36 +198,39 @@ public final class AbstractInterpreter {
 		final Script script = rootAnnot.getScript();
 		final Boogie2SmtSymbolTable boogieVarTable = bpl2smt.getBoogie2SmtSymbolTable();
 
-		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain =
-				selectDomain(root, () -> new RCFGLiteralCollector(root), symbolTable, services, rootAnnot);
+		final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain =
+				(IAbstractDomain<STATE, CodeBlock, IBoogieVar>) selectDomain(root, () -> new RCFGLiteralCollector(root),
+						symbolTable, services, rootAnnot);
 
 		return runSilentlyOnNWA(initial, timer, services, symbolTable, bpl2smt, script, boogieVarTable, domain,
 				transProvider, transProvider, rootAnnot);
 	}
 
-	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOC>
-			AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, LOC> runSilentlyOnNWA(final CodeBlock initial,
-					final IProgressAwareTimer timer, final IUltimateServiceProvider services,
-					final BoogieSymbolTable symbolTable, final Boogie2SMT bpl2smt, final Script script,
-					final Boogie2SmtSymbolTable boogieVarTable,
+	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
+			AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, ProgramPoint>
+			runSilentlyOnNWA(final CodeBlock initial, final IProgressAwareTimer timer,
+					final IUltimateServiceProvider services, final BoogieSymbolTable symbolTable,
+					final Boogie2SMT bpl2smt, final Script script, final Boogie2SmtSymbolTable boogieVarTable,
 					final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain,
-					final ITransitionProvider<CodeBlock, LOC> transitionProvider,
+					final ITransitionProvider<CodeBlock, ProgramPoint> transitionProvider,
 					final ILoopDetector<CodeBlock> loopDetector, final RootAnnot rootAnnot) {
 
-		final RcfgDebugHelper<STATE, LOC> debugHelper = new RcfgDebugHelper<STATE, LOC>(rootAnnot, services);
-		final FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, LOC, Expression> params =
-				new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, LOC, Expression>(services).setDomain(domain)
-						.setLoopDetector(loopDetector)
-						.setStorage(new RcfgAbstractStateStorageProvider<STATE, LOC, IBoogieVar>(
+		final RcfgDebugHelper<STATE, ProgramPoint> debugHelper =
+				new RcfgDebugHelper<STATE, ProgramPoint>(rootAnnot, services);
+		final FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression> params =
+				new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression>(services)
+						.setDomain(domain).setLoopDetector(loopDetector)
+						.setStorage(new RcfgAbstractStateStorageProvider<STATE, ProgramPoint, IBoogieVar>(
 								domain.getMergeOperator(), services, transitionProvider))
 						.setTransitionProvider(transitionProvider)
 						.setVariableProvider(new RcfgVariableProvider<>(symbolTable, boogieVarTable, services))
 						.setDebugHelper(debugHelper).setTimer(timer);
 
-		final FixpointEngine<STATE, CodeBlock, IBoogieVar, LOC, Expression> fxpe = new FixpointEngine<>(params);
+		final FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression> fxpe =
+				new FixpointEngine<>(params);
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		try {
-			final AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, LOC> result =
+			final AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, ProgramPoint> result =
 					fxpe.run(initial, script, bpl2smt);
 			if (!result.hasReachedError()) {
 				logger.info("NWA was safe (error state unreachable)");
