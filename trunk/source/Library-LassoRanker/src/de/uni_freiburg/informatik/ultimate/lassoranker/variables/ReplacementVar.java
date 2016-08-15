@@ -102,6 +102,6 @@ public class ReplacementVar implements IProgramVar {
 
 	@Override
 	public String getGloballyUniqueId() {
-		throw new UnsupportedOperationException("Matthias will implement this if you need it.");
+		return getIdentifier();
 	}
 }

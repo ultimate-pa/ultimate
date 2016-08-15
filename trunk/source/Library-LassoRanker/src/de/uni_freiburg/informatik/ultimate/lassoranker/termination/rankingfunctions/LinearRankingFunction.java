@@ -49,7 +49,7 @@ public class LinearRankingFunction extends RankingFunction {
 	
 	private final AffineFunction mranking;
 	
-	public LinearRankingFunction(AffineFunction ranking) {
+	public LinearRankingFunction(final AffineFunction ranking) {
 		mranking = ranking;
 	}
 	
@@ -78,7 +78,7 @@ public class LinearRankingFunction extends RankingFunction {
 				if (!first) {
 					sb.append(", ");
 				}
-				sb.append(var.getIdentifier());
+				sb.append(var.getGloballyUniqueId());
 				first = false;
 			}
 			sb.append(")");
@@ -89,12 +89,12 @@ public class LinearRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Term[] asLexTerm(Script script) throws SMTLIBException {
+	public Term[] asLexTerm(final Script script) throws SMTLIBException {
 		return new Term[] { mranking.asTerm(script) };
 	}
 	
 	@Override
-	public Ordinal evaluate(Map<IProgramVar, Rational> assignment) {
+	public Ordinal evaluate(final Map<IProgramVar, Rational> assignment) {
 		BigInteger i = mranking.evaluate(assignment).ceil().numerator();
 		if (i.compareTo(BigInteger.ZERO) < 0) {
 			i = BigInteger.ZERO;

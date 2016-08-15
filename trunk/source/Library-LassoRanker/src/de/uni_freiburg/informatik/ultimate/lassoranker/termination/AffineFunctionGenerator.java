@@ -70,7 +70,7 @@ public class AffineFunctionGenerator implements Serializable {
 	 */
 	private static String coeffName(final String prefix, final IProgramVar var) {
 		return prefix + "_" + SmtUtils.removeSmtQuoteCharacters(
-													var.getIdentifier());
+													var.getGloballyUniqueId());
 	}
 	
 	/**

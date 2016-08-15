@@ -49,7 +49,7 @@ public class LexicographicRankingFunction extends RankingFunction {
 	
 	private final RankingFunction[] mParts;
 	
-	public LexicographicRankingFunction(RankingFunction[] parts) {
+	public LexicographicRankingFunction(final RankingFunction[] parts) {
 		assert(parts.length >= 1);
 		mParts = parts;
 	}
@@ -83,7 +83,7 @@ public class LexicographicRankingFunction extends RankingFunction {
 			if (!first) {
 				sb.append(", ");
 			}
-			sb.append(var.getIdentifier());
+			sb.append(var.getGloballyUniqueId());
 			first = false;
 		}
 		sb.append(") = <");
@@ -98,7 +98,7 @@ public class LexicographicRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Term[] asLexTerm(Script script) throws SMTLIBException {
+	public Term[] asLexTerm(final Script script) throws SMTLIBException {
 		final List<Term> lex = new ArrayList<Term>();
 		for (int i = 0; i < mParts.length; ++i) {
 			final Term[] lex_part = mParts[i].asLexTerm(script);
@@ -110,7 +110,7 @@ public class LexicographicRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Ordinal evaluate(Map<IProgramVar, Rational> assignment) {
+	public Ordinal evaluate(final Map<IProgramVar, Rational> assignment) {
 		final Ordinal o = Ordinal.ZERO;
 		// TODO
 //		Ordinal w_pow = Ordinal.ONE;

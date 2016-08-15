@@ -51,7 +51,7 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	private final AffineFunction[] mpredicates;
 	public final int pieces;
 	
-	public PiecewiseRankingFunction(AffineFunction[] ranking, AffineFunction[] predicates) {
+	public PiecewiseRankingFunction(final AffineFunction[] ranking, final AffineFunction[] predicates) {
 		mranking = ranking;
 		mpredicates = predicates;
 		pieces = ranking.length;
@@ -93,7 +93,7 @@ public class PiecewiseRankingFunction extends RankingFunction {
 			if (!first) {
 				sb.append(", ");
 			}
-			sb.append(var.getIdentifier());
+			sb.append(var.getGloballyUniqueId());
 			first = false;
 		}
 		sb.append(") = {\n");
@@ -113,7 +113,7 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Term[] asLexTerm(Script script) throws SMTLIBException {
+	public Term[] asLexTerm(final Script script) throws SMTLIBException {
 		Term value = script.numeral(BigInteger.ZERO);
 		for (int i = mranking.length - 1; i >= 0; --i) {
 			final AffineFunction af = mranking[i];
@@ -126,7 +126,7 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Ordinal evaluate(Map<IProgramVar, Rational> assignment) {
+	public Ordinal evaluate(final Map<IProgramVar, Rational> assignment) {
 		Rational r = Rational.ZERO;
 		for (int i = 0; i < pieces; ++i) {
 			if (!mpredicates[i].evaluate(assignment).isNegative()) {

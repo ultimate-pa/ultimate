@@ -347,7 +347,7 @@ public class TransFormulaLRWithArrayCells {
 	}
 
 	private void addRankVar(final IProgramVar rv) {
-		final String name = SmtUtils.removeSmtQuoteCharacters(rv.getIdentifier() + "_InOut");
+		final String name = SmtUtils.removeSmtQuoteCharacters(rv.getGloballyUniqueId() + "_InOut");
 		final Sort sort = ReplacementVarUtils.getDefinition(rv).getSort();
 		final TermVariable tv = mReplacementVarFactory.getOrConstructAuxVar(name, sort);
 		mResult.addInVar(rv, tv);
