@@ -35,7 +35,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 
 /**
@@ -53,10 +52,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  *
  */
-public final class EmptyDomainState<ACTION> implements IAbstractState<EmptyDomainState<ACTION>, ACTION, IBoogieVar> {
+public final class EmptyDomainState<ACTION, VARDECL>
+		implements IAbstractState<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> {
 
 	private static int sId;
-	private final Set<IBoogieVar> mVarDecls;
+	private final Set<VARDECL> mVarDecls;
 	private final int mId;
 
 	protected EmptyDomainState() {
@@ -65,56 +65,56 @@ public final class EmptyDomainState<ACTION> implements IAbstractState<EmptyDomai
 		mId = sId;
 	}
 
-	protected EmptyDomainState(final Set<IBoogieVar> varDecls) {
+	protected EmptyDomainState(final Set<VARDECL> varDecls) {
 		mVarDecls = varDecls;
 		sId++;
 		mId = sId;
 	}
 
 	@Override
-	public EmptyDomainState<ACTION> addVariable(final IBoogieVar variable) {
+	public EmptyDomainState<ACTION, VARDECL> addVariable(final VARDECL variable) {
 		assert variable != null;
 
-		final Set<IBoogieVar> newMap = new HashSet<>(mVarDecls);
+		final Set<VARDECL> newMap = new HashSet<>(mVarDecls);
 		if (!newMap.add(variable)) {
 			throw new UnsupportedOperationException("Variable names have to be disjoint");
 		}
-		return new EmptyDomainState<ACTION>(newMap);
+		return new EmptyDomainState<ACTION, VARDECL>(newMap);
 	}
 
 	@Override
-	public EmptyDomainState<ACTION> removeVariable(final IBoogieVar variable) {
+	public EmptyDomainState<ACTION, VARDECL> removeVariable(final VARDECL variable) {
 		assert variable != null;
-		final Set<IBoogieVar> newMap = new HashSet<>(mVarDecls);
+		final Set<VARDECL> newMap = new HashSet<>(mVarDecls);
 		final boolean result = newMap.remove(variable);
 		assert result;
-		return new EmptyDomainState<ACTION>(newMap);
+		return new EmptyDomainState<ACTION, VARDECL>(newMap);
 	}
 
 	@Override
-	public EmptyDomainState<ACTION> addVariables(final Collection<IBoogieVar> variables) {
+	public EmptyDomainState<ACTION, VARDECL> addVariables(final Collection<VARDECL> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 
-		final Set<IBoogieVar> newMap = new HashSet<>(mVarDecls);
-		for (final IBoogieVar entry : variables) {
+		final Set<VARDECL> newMap = new HashSet<>(mVarDecls);
+		for (final VARDECL entry : variables) {
 			if (!newMap.add(entry)) {
 				throw new UnsupportedOperationException("Variable names have to be disjoint");
 			}
 		}
-		return new EmptyDomainState<ACTION>(newMap);
+		return new EmptyDomainState<ACTION, VARDECL>(newMap);
 	}
 
 	@Override
-	public EmptyDomainState<ACTION> removeVariables(final Collection<IBoogieVar> variables) {
+	public EmptyDomainState<ACTION, VARDECL> removeVariables(final Collection<VARDECL> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 
-		final Set<IBoogieVar> newMap = new HashSet<>(mVarDecls);
-		for (final IBoogieVar entry : variables) {
+		final Set<VARDECL> newMap = new HashSet<>(mVarDecls);
+		for (final VARDECL entry : variables) {
 			newMap.remove(entry);
 		}
-		return new EmptyDomainState<ACTION>(newMap);
+		return new EmptyDomainState<ACTION, VARDECL>(newMap);
 	}
 
 	@Override
@@ -130,14 +130,14 @@ public final class EmptyDomainState<ACTION> implements IAbstractState<EmptyDomai
 	@Override
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
-		for (final IBoogieVar entry : mVarDecls) {
+		for (final VARDECL entry : mVarDecls) {
 			sb.append(entry).append("; ");
 		}
 		return sb.toString();
 	}
 
 	@Override
-	public boolean isEqualTo(final EmptyDomainState<ACTION> other) {
+	public boolean isEqualTo(final EmptyDomainState<ACTION, VARDECL> other) {
 		if (other == null) {
 			return false;
 		}
@@ -150,7 +150,7 @@ public final class EmptyDomainState<ACTION> implements IAbstractState<EmptyDomai
 			return false;
 		}
 
-		for (final IBoogieVar entry : mVarDecls) {
+		for (final VARDECL entry : mVarDecls) {
 			if (!other.mVarDecls.contains(entry)) {
 				return false;
 			}
@@ -180,7 +180,7 @@ public final class EmptyDomainState<ACTION> implements IAbstractState<EmptyDomai
 			return false;
 		}
 		@SuppressWarnings("unchecked")
-		final EmptyDomainState<ACTION> other = (EmptyDomainState<ACTION>) obj;
+		final EmptyDomainState<ACTION, VARDECL> other = (EmptyDomainState<ACTION, VARDECL>) obj;
 		return mId == other.mId;
 	}
 
@@ -191,17 +191,17 @@ public final class EmptyDomainState<ACTION> implements IAbstractState<EmptyDomai
 	 *            another state
 	 * @return true iff this state has the same variables than other
 	 */
-	boolean hasSameVariables(final EmptyDomainState<ACTION> other) {
+	boolean hasSameVariables(final EmptyDomainState<ACTION, VARDECL> other) {
 		return isEqualTo(other);
 	}
 
 	@Override
-	public Set<IBoogieVar> getVariables() {
+	public Set<VARDECL> getVariables() {
 		return Collections.unmodifiableSet(mVarDecls);
 	}
 
 	@Override
-	public boolean containsVariable(final IBoogieVar var) {
+	public boolean containsVariable(final VARDECL var) {
 		return mVarDecls.contains(var);
 	}
 
@@ -211,14 +211,14 @@ public final class EmptyDomainState<ACTION> implements IAbstractState<EmptyDomai
 	}
 
 	@Override
-	public EmptyDomainState<ACTION> patch(final EmptyDomainState<ACTION> dominator) {
+	public EmptyDomainState<ACTION, VARDECL> patch(final EmptyDomainState<ACTION, VARDECL> dominator) {
 		if (dominator.isEmpty()) {
 			return this;
 		} else if (isEmpty()) {
 			return dominator;
 		}
 
-		final Set<IBoogieVar> newVarDecls = new HashSet<>();
+		final Set<VARDECL> newVarDecls = new HashSet<>();
 		newVarDecls.addAll(mVarDecls);
 		newVarDecls.addAll(dominator.mVarDecls);
 
@@ -226,11 +226,11 @@ public final class EmptyDomainState<ACTION> implements IAbstractState<EmptyDomai
 			return this;
 		}
 
-		return new EmptyDomainState<ACTION>(newVarDecls);
+		return new EmptyDomainState<ACTION, VARDECL>(newVarDecls);
 	}
 
 	@Override
-	public SubsetResult isSubsetOf(final EmptyDomainState<ACTION> other) {
+	public SubsetResult isSubsetOf(final EmptyDomainState<ACTION, VARDECL> other) {
 		assert hasSameVariables(other);
 		return isEqualTo(other) ? SubsetResult.EQUAL : SubsetResult.NONE;
 	}

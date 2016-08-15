@@ -50,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  */
 public class VPDomain implements IAbstractDomain<VPDomainState, CodeBlock, IBoogieVar> {
 
-	private Map<IProgramVar, Set<PointerExpression>> pointerMap;
-	private Map<IProgramVar, Set<IProgramVar>> indexToArraysMap;
+	private Map<IProgramVar, Set<PointerExpression>> mPointerMap;
+	private Map<IProgramVar, Set<IProgramVar>> mIndexToArraysMap;
 
 	private IAbstractPostOperator<VPDomainState, CodeBlock, IBoogieVar> mPostOperator;
 
@@ -69,8 +69,8 @@ public class VPDomain implements IAbstractDomain<VPDomainState, CodeBlock, IBoog
 			final Map<IProgramVar, Set<IProgramVar>> indexToArraysMap, final RootAnnot rootAnnotation) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		this.pointerMap = pointerMap;
-		this.indexToArraysMap = indexToArraysMap;
+		mPointerMap = pointerMap;
+		mIndexToArraysMap = indexToArraysMap;
 		mRootAnnotation = rootAnnotation;
 	}
 
@@ -104,18 +104,18 @@ public class VPDomain implements IAbstractDomain<VPDomainState, CodeBlock, IBoog
 	}
 
 	public Map<IProgramVar, Set<PointerExpression>> getPointerMap() {
-		return pointerMap;
+		return mPointerMap;
 	}
 
 	public void setPointerMap(final Map<IProgramVar, Set<PointerExpression>> pointerMap) {
-		this.pointerMap = pointerMap;
+		mPointerMap = pointerMap;
 	}
 
 	public Map<IProgramVar, Set<IProgramVar>> getIndexToArraysMap() {
-		return indexToArraysMap;
+		return mIndexToArraysMap;
 	}
 
 	public void setIndexToArraysMap(final Map<IProgramVar, Set<IProgramVar>> indexToArraysMap) {
-		this.indexToArraysMap = indexToArraysMap;
+		mIndexToArraysMap = indexToArraysMap;
 	}
 }

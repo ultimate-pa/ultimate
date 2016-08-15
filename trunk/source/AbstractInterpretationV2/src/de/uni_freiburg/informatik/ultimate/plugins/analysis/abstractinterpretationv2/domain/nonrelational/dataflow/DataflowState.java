@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -51,14 +52,14 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 	private final Set<IProgramVar> mVars;
 	private final Map<IProgramVar, Set<CodeBlock>> mDef;
 	private final Map<IProgramVar, Set<CodeBlock>> mUse;
-	private final Map<IProgramVar, CodeBlock> mReachDef;
+	private final Map<IProgramVar, Set<CodeBlock>> mReachDef;
 
 	DataflowState() {
 		this(new HashSet<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
 	}
 
 	DataflowState(final Set<IProgramVar> vars, final Map<IProgramVar, Set<CodeBlock>> def,
-			final Map<IProgramVar, Set<CodeBlock>> use, final Map<IProgramVar, CodeBlock> reachdef) {
+			final Map<IProgramVar, Set<CodeBlock>> use, final Map<IProgramVar, Set<CodeBlock>> reachdef) {
 		assert vars != null;
 		assert def != null;
 		assert use != null;
@@ -90,7 +91,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		def.remove(variable);
 		final Map<IProgramVar, Set<CodeBlock>> use = AbsIntUtil.getFreshMap(mUse);
 		use.remove(variable);
-		final Map<IProgramVar, CodeBlock> reachdef = AbsIntUtil.getFreshMap(mReachDef);
+		final Map<IProgramVar, Set<CodeBlock>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
 		use.remove(variable);
 		return new DataflowState(vars, def, use, reachdef);
 	}
@@ -113,7 +114,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars);
 		final Map<IProgramVar, Set<CodeBlock>> def = AbsIntUtil.getFreshMap(mDef);
 		final Map<IProgramVar, Set<CodeBlock>> use = AbsIntUtil.getFreshMap(mUse);
-		final Map<IProgramVar, CodeBlock> reachdef = AbsIntUtil.getFreshMap(mReachDef);
+		final Map<IProgramVar, Set<CodeBlock>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
 		variables.stream().forEach(a -> {
 			vars.remove(a);
 			def.remove(a);
@@ -187,11 +188,24 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append('{');
-		mReachDef.entrySet().stream().sorted().forEach(a -> {
-			sb.append(a.getKey().getIdentifier());
+		for (final Entry<IProgramVar, Set<CodeBlock>> entry : mReachDef.entrySet()) {
+			if (entry.getValue().isEmpty()) {
+				continue;
+			}
+			sb.append(entry.getKey().getIdentifier());
 			sb.append("->");
-			sb.append(a.getValue());
-		});
+			if (entry.getValue().size() == 1) {
+				sb.append(entry.getValue().iterator().next());
+			} else {
+				sb.append('{');
+				for (final CodeBlock value : entry.getValue()) {
+					sb.append(value.getSerialNumber());
+					sb.append(", ");
+				}
+				sb.delete(sb.length() - 2, sb.length());
+				sb.append('}');
+			}
+		}
 		sb.append('}');
 		return sb.toString();
 	}
@@ -204,7 +218,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		return Collections.unmodifiableMap(mUse);
 	}
 
-	Map<IProgramVar, CodeBlock> getReachingDefinitions() {
+	Map<IProgramVar, Set<CodeBlock>> getReachingDefinitions() {
 		return Collections.unmodifiableMap(mReachDef);
 	}
 

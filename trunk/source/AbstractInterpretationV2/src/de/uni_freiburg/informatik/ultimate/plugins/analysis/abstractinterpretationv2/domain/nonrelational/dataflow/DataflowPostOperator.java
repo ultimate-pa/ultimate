@@ -28,9 +28,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
@@ -52,14 +54,21 @@ public class DataflowPostOperator implements IAbstractPostOperator<DataflowState
 			return Collections.singletonList(oldstate);
 		}
 
-		final Map<IProgramVar, CodeBlock> reach = new HashMap<>(oldstate.getReachingDefinitions());
+		final Map<IProgramVar, Set<CodeBlock>> reach = new HashMap<>(oldstate.getReachingDefinitions());
 
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-			reach.put(entry.getKey(), transition);
+			Set<CodeBlock> set = reach.get(entry.getKey());
+			if (set == null) {
+				set = new HashSet<CodeBlock>();
+				set.add(transition);
+				reach.put(entry.getKey(), set);
+			} else {
+				set.add(transition);
+			}
 		}
 
-		return Collections.singletonList(
-				new DataflowState(oldstate.getVariables(), oldstate.getDef(), oldstate.getUse(), reach));
+		return Collections
+				.singletonList(new DataflowState(oldstate.getVariables(), oldstate.getDef(), oldstate.getUse(), reach));
 	}
 
 	@Override
