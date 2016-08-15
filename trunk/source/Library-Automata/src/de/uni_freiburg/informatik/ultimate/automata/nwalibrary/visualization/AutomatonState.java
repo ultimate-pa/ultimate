@@ -36,13 +36,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  * Ultimate model of an automaton state.
  * @author heizmann@informatik.uni-freiburg.de 
  */
-
-public class AutomatonState extends ModifiableExplicitEdgesMultigraph<AutomatonState, AutomatonTransition,AutomatonState, AutomatonTransition> {
+public class AutomatonState
+		extends ModifiableExplicitEdgesMultigraph<AutomatonState, AutomatonTransition,AutomatonState, AutomatonTransition> {
 	private static final long serialVersionUID = 264254789648279608L;
 	
 	private final String mName;
 	
-	public AutomatonState(Object content, boolean isAccepting) {
+	public AutomatonState(final Object content, final boolean isAccepting) {
 		
 		final DefaultAnnotations acceptance = new DefaultAnnotations();
 		acceptance.put("isAccepting",isAccepting);
