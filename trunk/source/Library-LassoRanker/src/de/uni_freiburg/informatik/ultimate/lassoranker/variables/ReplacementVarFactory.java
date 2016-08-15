@@ -35,8 +35,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
-import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 
 /**
  * Factory for constructing ReplacementVars ensures that for each defining
@@ -53,7 +51,6 @@ public class ReplacementVarFactory {
 			new HashMap<Term, Map<Object, LocalReplacementVar>>();
 	private final Map<String, TermVariable> mAuxVarMapping = 
 			new HashMap<String, TermVariable>();
-	private final ConstructionCache<TermVariable, Term> mAuxVarConstants;
 	/**
 	 * Maps each BoogieVar to a unique BoogieVarWrapper.
 	 */
@@ -63,16 +60,6 @@ public class ReplacementVarFactory {
 	public ReplacementVarFactory(final ManagedScript variableManager) {
 		super();
 		mVariableManager = variableManager;
-		
-		final IValueConstruction<TermVariable, Term> valueConstruction = new IValueConstruction<TermVariable, Term>() {
-			@Override
-			public Term constructValue(final TermVariable key) {
-				final Term auxVarConst = mVariableManager.constructFreshTermVariable(key.getName(), key.getSort());
-				return auxVarConst;
-			}
-		};
-		
-		mAuxVarConstants = new ConstructionCache<>(valueConstruction);
 	}
 
 	/**
