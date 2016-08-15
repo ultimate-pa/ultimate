@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
  * Abstract operation taking two automata as input.
  * The most common methods are provided but can also be overwritten.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER> letter type
  * @param <STATE> state type
  */

@@ -71,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * 
  * For DFAs the algorithm just performs Hopcroft's algorithm.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER> letter type
  * @param <STATE> state type
  */

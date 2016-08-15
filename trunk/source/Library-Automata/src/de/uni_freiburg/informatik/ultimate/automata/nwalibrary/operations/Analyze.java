@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * Given an NWA, this class analyzes the NWA to obtain various information.
  * A user should use the respective getters to obtain individual data.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * 
  * @param <LETTER> letter type
  * @param <STATE> state type

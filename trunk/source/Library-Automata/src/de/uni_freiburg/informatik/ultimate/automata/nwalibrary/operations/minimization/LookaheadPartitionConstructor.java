@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
+ * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -65,8 +65,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *   both states are deterministic are mergeable.
  *
  * TODO: Extend this to returns by providing a partition of DoubleDeckers.
- * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER> letter type
  * @param <STATE> state type
  */

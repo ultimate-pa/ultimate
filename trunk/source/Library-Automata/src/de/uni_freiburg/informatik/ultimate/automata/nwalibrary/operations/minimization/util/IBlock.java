@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 /**
  * Interface for a general block data structure inside a partition.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <STATE> state type
  */
 public interface IBlock<STATE> {

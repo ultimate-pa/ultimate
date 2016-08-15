@@ -321,7 +321,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 	/**
 	 * common methods of test file writers
 	 * 
-	 * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	private abstract class ATestFileWriterCommon {
 		protected void printValues(final Map<?, String> alphabet) {
@@ -348,7 +348,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 	}
 	    
  
-		/**
+	/**
 	 * Constructor takes a NestedWordAutomaton and writes it to testfile.
 	 */
 	private class NwaTestFileWriter extends ATestFileWriterCommon {

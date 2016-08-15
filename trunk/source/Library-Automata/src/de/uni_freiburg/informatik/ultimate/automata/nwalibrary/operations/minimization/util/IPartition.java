@@ -32,7 +32,7 @@ import java.util.Iterator;
 /**
  * Interface for a general partition data structure.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <STATE> state type
  */
 public interface IPartition<STATE> {

@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncl
  * Abstract operation taking one nested word automaton as input.
  * The most common methods are provided but can also be overwritten.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
@@ -67,7 +67,7 @@ public abstract class AUnaryNwaOperation<LETTER, STATE>
 	 * This is the default implementation of the checkResult() method.
 	 * It checks language equivalence between the operand and the result.
 	 * 
-	 * This method must be overwritten if the result is not a nested word
+	 * <p>This method must be overwritten if the result is not a nested word
 	 * automaton or if language equivalence should not be tested.
 	 */
 	@Override

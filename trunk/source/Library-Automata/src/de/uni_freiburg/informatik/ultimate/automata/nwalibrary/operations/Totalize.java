@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * Totalizes an NWA, i.e., makes every state have an outgoing transition
  * for every letter.
  * 
- * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  * @param <LETTER> letter type
  * @param <STATE> state type

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
- * Copyright (C) 2016 Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -55,8 +55,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  * The equivalence relation has to be given as a {@link UnionFind} or a
  * {@link IPartition} data structure.
  * 
- * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER> letter type
  * @param <STATE> state type
  */

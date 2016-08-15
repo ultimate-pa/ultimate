@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * For return transitions, we require that for each hierarchical predecessor
  * there is a transition with each return symbol.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER> letter type
  * @param <STATE> state type
  */

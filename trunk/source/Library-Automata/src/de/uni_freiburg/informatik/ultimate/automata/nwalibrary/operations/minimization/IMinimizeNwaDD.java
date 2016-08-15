@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAuto
  * #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton}
  * result.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER> letter type
  * @param <STATE> state type
  */

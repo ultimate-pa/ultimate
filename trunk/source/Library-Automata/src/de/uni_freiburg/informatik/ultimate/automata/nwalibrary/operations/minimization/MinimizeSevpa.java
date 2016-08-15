@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2013-2015 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2015 Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * Copyright (C) 2015 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Summa
  * afterwards soundness is assured using a more expensive analysis
  * this process is looped until no change occurs anymore
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
@@ -934,7 +934,7 @@ public class MinimizeSevpa<LETTER,STATE>
 		final boolean assertion = mPartition.removeEmptyEquivalenceClasses();
 		if (assertion) {
 			throw new AssertionError(
-					"Please report this error to <schillic@informatik.uni-freiburg.de>.");
+					"Please report this error to (schillic@informatik.uni-freiburg.de).");
 		}
 		
 		// construct result with library method
