@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.ModelExtractionUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -59,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
@@ -197,19 +197,19 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		final String sort = minteger_mode ? "Int" : "Real";
 		
 		// Create new variables
-		final Map<RankVar, Term> vars_init = new LinkedHashMap<RankVar, Term>();
-		final Map<RankVar, Term> vars_honda = new LinkedHashMap<RankVar, Term>();
-		final List<Map<RankVar, Term>> vars_gevs =
-				new ArrayList<Map<RankVar, Term>>(msettings.number_of_gevs);
+		final Map<IProgramVar, Term> vars_init = new LinkedHashMap<IProgramVar, Term>();
+		final Map<IProgramVar, Term> vars_honda = new LinkedHashMap<IProgramVar, Term>();
+		final List<Map<IProgramVar, Term>> vars_gevs =
+				new ArrayList<Map<IProgramVar, Term>>(msettings.number_of_gevs);
 		final List<Term> lambdas = new ArrayList<Term>(msettings.number_of_gevs);
-		for (final RankVar var : mlasso.getAllRankVars()) {
+		for (final IProgramVar var : mlasso.getAllRankVars()) {
 			final String name = SmtUtils.removeSmtQuoteCharacters(var.toString());
 			vars_init.put(var, newConstant(s_prefix_init + name, sort));
 			vars_honda.put(var, newConstant(s_prefix_honda + name, sort));
 		}
 		for (int i = 0; i < msettings.number_of_gevs; ++i) {
-			final Map<RankVar, Term> vars_gev = new LinkedHashMap<RankVar, Term>();
-			for (final RankVar var : mlasso.getAllRankVars()) {
+			final Map<IProgramVar, Term> vars_gev = new LinkedHashMap<IProgramVar, Term>();
+			for (final IProgramVar var : mlasso.getAllRankVars()) {
 				final String name = SmtUtils.removeSmtQuoteCharacters(var.toString());
 				vars_gev.put(var, newConstant(s_prefix_gevector + name + i, sort));
 			}
@@ -252,8 +252,8 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @param nus variables for the nilpotent components
 	 * @return the constraints
 	 */
-	public Term generateConstraints(Map<RankVar, Term> vars_init,
-			Map<RankVar, Term> vars_honda, List<Map<RankVar, Term>> vars_gevs,
+	public Term generateConstraints(Map<IProgramVar, Term> vars_init,
+			Map<IProgramVar, Term> vars_honda, List<Map<IProgramVar, Term>> vars_gevs,
 			List<Term> lambdas, List<Term> nus) {
 		msettings.checkSanity();
 		assert msettings.number_of_gevs >= 0;
@@ -267,7 +267,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		}
 		assert numvars >= 0;
 		
-		final Collection<RankVar> rankVars = mlasso.getAllRankVars();
+		final Collection<IProgramVar> rankVars = mlasso.getAllRankVars();
 		
 		Term zero; // = 0
 		Term one; // = 1
@@ -331,10 +331,10 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		}
 		
 		// vars_end + vars_gevs
-		final Map<RankVar, Term> vars_end_plus_gevs =
-				new LinkedHashMap<RankVar, Term>();
+		final Map<IProgramVar, Term> vars_end_plus_gevs =
+				new LinkedHashMap<IProgramVar, Term>();
 		vars_end_plus_gevs.putAll(vars_honda);
-		for (final RankVar rkVar : rankVars) {
+		for (final IProgramVar rkVar : rankVars) {
 			final Term[] summands = new Term[msettings.number_of_gevs + 1];
 			summands[0] = vars_honda.get(rkVar);
 			for (int i = 0; i < msettings.number_of_gevs; ++i) {
@@ -350,11 +350,11 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		}
 		
 		// vars_gev[i] * lambda_guesses + nu_i * vars_gev[i+1] for each i
-		final List<List<Map<RankVar, Term>>> vars_gevs_next =
-				new ArrayList<List<Map<RankVar, Term>>>(msettings.number_of_gevs);
+		final List<List<Map<IProgramVar, Term>>> vars_gevs_next =
+				new ArrayList<List<Map<IProgramVar, Term>>>(msettings.number_of_gevs);
 		for (int i = 0; i < msettings.number_of_gevs; ++i) {
-			final List<Map<RankVar, Term>> vars_gevs_next_i =
-					new ArrayList<Map<RankVar, Term>>(lambda_guesses.size());
+			final List<Map<IProgramVar, Term>> vars_gevs_next_i =
+					new ArrayList<Map<IProgramVar, Term>>(lambda_guesses.size());
 			vars_gevs_next.add(vars_gevs_next_i);
 			for (int j = 0; j < lambda_guesses.size(); ++j) {
 				for (int k = 0; k < nu_guesses.size(); ++k) {
@@ -367,9 +367,9 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 						nu_guess = nus.get(i);
 					}
 					
-					final Map<RankVar, Term> gev_next = new LinkedHashMap<RankVar, Term>();
+					final Map<IProgramVar, Term> gev_next = new LinkedHashMap<IProgramVar, Term>();
 					vars_gevs_next_i.add(gev_next);
-					for (final RankVar rkVar : rankVars) {
+					for (final IProgramVar rkVar : rankVars) {
 						if (msettings.nilpotent_components && i < msettings.number_of_gevs - 1) {
 							gev_next.put(rkVar, mscript.term("+",
 								mscript.term("*", vars_gevs.get(i).get(rkVar), lambda_guess),
@@ -460,8 +460,8 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	
 	private Term generateConstraint(LinearTransition transition,
 			List<LinearInequality> polyhedron,
-			Map<RankVar, Term> varsIn,
-			Map<RankVar, Term> varsOut,
+			Map<IProgramVar, Term> varsIn,
+			Map<IProgramVar, Term> varsOut,
 			boolean rays) {
 		final Map<Term, Term> auxVars = new LinkedHashMap<Term, Term>();
 		final List<Term> conjunction = new ArrayList<Term>(polyhedron.size());
@@ -470,7 +470,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			final Collection<Term> added_vars = new LinkedHashSet<Term>();
 			
 			// outVars
-			for (final Map.Entry<RankVar, Term> entry :
+			for (final Map.Entry<IProgramVar, Term> entry :
 					transition.getOutVars().entrySet()) {
 				if (!varsOut.containsKey(entry.getKey())) {
 					continue;
@@ -483,7 +483,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			}
 			
 			// inVars
-			for (final Map.Entry<RankVar, Term> entry :
+			for (final Map.Entry<IProgramVar, Term> entry :
 					transition.getInVars().entrySet()) {
 				if (added_vars.contains(entry.getValue())) {
 					// the transition implicitly requires that
@@ -542,7 +542,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @return the program state as a map from program variables to rational
 	 *         numbers
 	 */
-	private Map<RankVar, Rational> extractState(Map<RankVar, Term> vars)
+	private Map<IProgramVar, Rational> extractState(Map<IProgramVar, Term> vars)
 			throws SMTLIBException, UnsupportedOperationException,
 			TermException {
 		if (vars.isEmpty()) {
@@ -550,8 +550,8 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		}
 		final Map<Term, Rational> val = ModelExtractionUtils.getValuation(mscript, vars.values());
 		// Concatenate vars and val
-		final Map<RankVar, Rational> state = new LinkedHashMap<RankVar, Rational>();
-		for (final Map.Entry<RankVar, Term> entry : vars.entrySet()) {
+		final Map<IProgramVar, Rational> state = new LinkedHashMap<IProgramVar, Rational>();
+		for (final Map.Entry<IProgramVar, Term> entry : vars.entrySet()) {
 			assert(val.containsKey(entry.getValue()));
 			state.put(entry.getKey(), val.get(entry.getValue()));
 		}
@@ -564,18 +564,18 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @throws SMTLIBException
 	 */
 	private NonTerminationArgument extractArgument(
-			Map<RankVar, Term> vars_init,
-			Map<RankVar, Term> vars_honda,
-			List<Map<RankVar, Term>> vars_gevs,
+			Map<IProgramVar, Term> vars_init,
+			Map<IProgramVar, Term> vars_honda,
+			List<Map<IProgramVar, Term>> vars_gevs,
 			List<Term> var_lambdas,
 			List<Term> var_nus) {
 //		assert mscript.checkSat() == LBool.SAT;
 		
 		try {
-			final Map<RankVar, Rational> state0 = extractState(vars_init);
-			final Map<RankVar, Rational> state1 = extractState(vars_honda);
-			final List<Map<RankVar, Rational>> gevs =
-					new ArrayList<Map<RankVar, Rational>>(msettings.number_of_gevs);
+			final Map<IProgramVar, Rational> state0 = extractState(vars_init);
+			final Map<IProgramVar, Rational> state1 = extractState(vars_honda);
+			final List<Map<IProgramVar, Rational>> gevs =
+					new ArrayList<Map<IProgramVar, Rational>>(msettings.number_of_gevs);
 			final Map<Term, Term> lambda_val;
 			if (var_lambdas.size() > 0) {
 				lambda_val = mscript.getValue(var_lambdas.toArray(new Term[var_lambdas.size()]));

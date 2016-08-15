@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * Some static methods for {@link ReplacementVar}s. 
@@ -35,12 +36,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class ReplacementVarUtils {
 
-	public static Term getDefinition(final RankVar pv) {
+	public static Term getDefinition(final IProgramVar pv) {
 		final Term result; 
 		if (pv instanceof ReplacementVar) {
-			result = pv.getDefinition();
+			result = ((ReplacementVar) pv).getDefinition();
 		} else {
-			result = ((BoogieVarWrapper) pv).getBoogieVar().getTermVariable();
+			result = pv.getTermVariable();
 		}
 		return result;
 	}

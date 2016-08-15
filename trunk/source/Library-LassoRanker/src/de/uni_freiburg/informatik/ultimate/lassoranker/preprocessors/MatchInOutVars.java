@@ -30,11 +30,11 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -76,7 +76,7 @@ public class MatchInOutVars extends TransitionPreprocessor {
 	}
 
 	private void addMissingInVars(final TransFormulaLR tf) {
-		for (final Map.Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
+		for (final Map.Entry<IProgramVar, Term> entry : tf.getOutVars().entrySet()) {
 			if (!tf.getInVars().containsKey(entry.getKey())) {
 				final String id = SmtUtils.removeSmtQuoteCharacters(
 						entry.getKey().getIdentifier());
@@ -89,7 +89,7 @@ public class MatchInOutVars extends TransitionPreprocessor {
 	}
 	
 	private void addMissingOutVars(final TransFormulaLR tf) {
-		for (final Map.Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
+		for (final Map.Entry<IProgramVar, Term> entry : tf.getInVars().entrySet()) {
 			if (!tf.getOutVars().containsKey(entry.getKey())) {
 				final TermVariable inVar = mVariableManager.constructFreshTermVariable(
 						entry.getKey().getIdentifier(),
@@ -109,7 +109,7 @@ public class MatchInOutVars extends TransitionPreprocessor {
 	 * preprocessing steps.
 	 */
 	private boolean eachInVarHasOutVar(final TransFormulaLR tf) {
-		for (final Map.Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
+		for (final Map.Entry<IProgramVar, Term> entry : tf.getInVars().entrySet()) {
 			if (!tf.getOutVars().containsKey(entry.getKey())) {
 				assert false : "no outVar for inVar " + entry.getKey();
 				return false;

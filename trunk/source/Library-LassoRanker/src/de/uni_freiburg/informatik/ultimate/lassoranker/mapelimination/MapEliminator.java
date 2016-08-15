@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.IndexAnalyzer;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
@@ -313,7 +312,7 @@ public class MapEliminator {
 		final Term originalTerm = newTF.getFormula();
 		final Set<Term> assignedVars = new HashSet<>();
 		final Set<Term> assignedIndices = new HashSet<>();
-		for (final RankVar rv : transformula.getAssignedVars()) {
+		for (final IProgramVar rv : transformula.getAssignedVars()) {
 			final Term term = ReplacementVarUtils.getDefinition(rv);
 			assignedVars.add(term);
 			assignedIndices.addAll(mVariablesToIndexTerms.getImage(term));
@@ -399,13 +398,13 @@ public class MapEliminator {
 	 * @param transformula
 	 */
 	private void clearTransFormula(final TransFormulaLR transformula) {
-		final List<RankVar> inVarsToRemove = new ArrayList<>();
-		final List<RankVar> outVarsToRemove = new ArrayList<>();
+		final List<IProgramVar> inVarsToRemove = new ArrayList<>();
+		final List<IProgramVar> outVarsToRemove = new ArrayList<>();
 		final List<TermVariable> auxVarsToRemove = new ArrayList<>();
 		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(transformula.getFormula().getFreeVars()));
-		for (final Entry<RankVar, Term> entry : transformula.getInVars().entrySet()) {
+		for (final Entry<IProgramVar, Term> entry : transformula.getInVars().entrySet()) {
 			final Term inVar = entry.getValue();
-			final RankVar rankVar = entry.getKey();
+			final IProgramVar rankVar = entry.getKey();
 			if (inVar.getSort().isArraySort()) {
 				inVarsToRemove.add(rankVar);
 			} else if (!freeVars.contains(inVar) && transformula.getOutVars().get(rankVar) == inVar) {
@@ -413,7 +412,7 @@ public class MapEliminator {
 				outVarsToRemove.add(rankVar);
 			}
 		}
-		for (final Entry<RankVar, Term> entry : transformula.getOutVars().entrySet()) {
+		for (final Entry<IProgramVar, Term> entry : transformula.getOutVars().entrySet()) {
 			final Term outVar = entry.getValue();
 			if (outVar.getSort().isArraySort()) {
 				outVarsToRemove.add(entry.getKey());
@@ -424,10 +423,10 @@ public class MapEliminator {
 				auxVarsToRemove.add(tv);
 			}
 		}
-		for (final RankVar rv : inVarsToRemove) {
+		for (final IProgramVar rv : inVarsToRemove) {
 			transformula.removeInVar(rv);
 		}
-		for (final RankVar rv : outVarsToRemove) {
+		for (final IProgramVar rv : outVarsToRemove) {
 			transformula.removeOutVar(rv);
 		}
 		for (final TermVariable tv : auxVarsToRemove) {
@@ -443,7 +442,7 @@ public class MapEliminator {
 				assert template.getIdentifier() instanceof TermVariable;
 				final TermVariable array = (TermVariable) template.getIdentifier();
 				final IProgramVar boogieVar = mSymbolTable.getBoogieVar(array);
-				final RankVar rankVar = mReplacementVarFactory.getOrConstuctBoogieVarWrapper(boogieVar);
+				final IProgramVar rankVar = boogieVar;
 				final Term inVar = transformula.getInVars().get(rankVar);
 				final Term outVar = transformula.getOutVars().get(rankVar);
 				if (inVar != outVar && !freeVars.contains(outVar)) {
@@ -709,10 +708,10 @@ public class MapEliminator {
 		if (term instanceof ConstantTerm) {
 			return term;
 		}
-		RankVar rankVar = null;
+		IProgramVar rankVar = null;
 		if (term instanceof TermVariable) {
 			final IProgramVar boogieVar = mSymbolTable.getBoogieVar((TermVariable) term);
-			rankVar = mReplacementVarFactory.getOrConstuctBoogieVarWrapper(boogieVar);
+			rankVar = boogieVar;
 		}
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm a = (ApplicationTerm) term;

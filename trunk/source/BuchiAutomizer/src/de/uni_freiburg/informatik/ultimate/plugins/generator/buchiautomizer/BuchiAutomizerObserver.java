@@ -59,9 +59,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
@@ -146,7 +146,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		// mRootAnnot.getBoogie2Smt().translate(term)
 		final Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
 
-		final List<Map<RankVar, Rational>> states = new ArrayList<Map<RankVar, Rational>>();
+		final List<Map<IProgramVar, Rational>> states = new ArrayList<Map<IProgramVar, Rational>>();
 		states.add(nta.getStateInit());
 		states.add(nta.getStateHonda());
 		states.addAll(nta.getGEVs());
@@ -376,8 +376,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		/**
 		 * Return true iff all coefficients of generalized eigenvector are zero.
 		 */
-		private boolean isZero(final Map<RankVar, Rational> gev) {
-			for (final Entry<RankVar, Rational> entry : gev.entrySet()) {
+		private boolean isZero(final Map<IProgramVar, Rational> gev) {
+			for (final Entry<IProgramVar, Rational> entry : gev.entrySet()) {
 				if (!entry.getValue().numerator().equals(BigInteger.ZERO)) {
 					return false;
 				}

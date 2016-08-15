@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -79,7 +80,7 @@ public class LassoPartitioneer {
 	private List<Term> mStemConjunctsWithoutSymbols;
 	private List<Term> mLoopConjunctsWithoutSymbols;
 	private final UnionFind<NonTheorySymbol<?>> mEquivalentSymbols = new UnionFind<>();
-	private final Set<RankVar> mAllRankVars = new HashSet<RankVar>();
+	private final Set<IProgramVar> mAllRankVars = new HashSet<IProgramVar>();
 	private final Script mScript;
 	private final List<LassoUnderConstruction> mNewLassos = new ArrayList<>();
 	private final XnfConversionTechnique mXnfConversionTechnique;
@@ -131,7 +132,7 @@ public class LassoPartitioneer {
 		extractSymbols(Part.LOOP, mLasso.getLoop(), mSymbol2LoopConjuncts, 
 				mLoopSymbolsWithoutConjuncts, mLoopConjunctsWithoutSymbols);
 		
-		for (final RankVar rv : mAllRankVars) {
+		for (final IProgramVar rv : mAllRankVars) {
 			final Set<NonTheorySymbol<?>> symbols = new HashSet<NonTheorySymbol<?>>();
 			extractInVarAndOutVarSymbols(rv, symbols, mLasso.getStem());
 			extractInVarAndOutVarSymbols(rv, symbols, mLasso.getLoop()); 
@@ -190,7 +191,7 @@ public class LassoPartitioneer {
 		}
 	}
 
-	private void extractInVarAndOutVarSymbols(final RankVar rv,
+	private void extractInVarAndOutVarSymbols(final IProgramVar rv,
 			final Set<NonTheorySymbol<?>> symbols, final TransFormulaLR transFormulaLR) {
 		final Term inVar = transFormulaLR.getInVars().get(rv);
 		if (inVar != null) {
@@ -239,8 +240,8 @@ public class LassoPartitioneer {
 		} else {
 			throw new UnsupportedOperationException("function symbols not yet supported");
 		}
-		final RankVar inVarRankVar = original.getInVarsReverseMapping().get(term);
-		final RankVar outVarRankVar = original.getOutVarsReverseMapping().get(term);
+		final IProgramVar inVarRankVar = original.getInVarsReverseMapping().get(term);
+		final IProgramVar outVarRankVar = original.getOutVarsReverseMapping().get(term);
 		final boolean isAuxVar = original.getAuxVars().contains(term);
 		assert (isConstant || !isAuxVar || (inVarRankVar == null && outVarRankVar == null)) : "auxVar may neither be inVar nor outVar";
 		assert (isConstant || !(inVarRankVar == null && outVarRankVar == null) || isAuxVar) : "neither inVar nor outVar may be auxVar";
@@ -284,10 +285,10 @@ public class LassoPartitioneer {
 				announceEquivalence(allSymbolsOfConjunct);
 			}
 		}
-		for (final Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
+		for (final Entry<IProgramVar, Term> entry : tf.getInVars().entrySet()) {
 			addIfNotAlreadyAdded(part, symbolsWithoutConjuncts, tf, entry.getValue(), symbol2Conjuncts);
 		}
-		for (final Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
+		for (final Entry<IProgramVar, Term> entry : tf.getOutVars().entrySet()) {
 			addIfNotAlreadyAdded(part, symbolsWithoutConjuncts, tf, entry.getValue(), symbol2Conjuncts);
 		}
 		return symbol2Conjuncts;

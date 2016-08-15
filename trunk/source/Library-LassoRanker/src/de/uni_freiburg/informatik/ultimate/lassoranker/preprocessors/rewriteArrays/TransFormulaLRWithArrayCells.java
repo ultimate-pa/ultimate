@@ -40,7 +40,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
@@ -51,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -233,24 +233,24 @@ public class TransFormulaLRWithArrayCells {
 	
 	private void removeArrayInOutVars() {
 		{
-			final List<RankVar> toRemove = new ArrayList<RankVar>();
+			final List<IProgramVar> toRemove = new ArrayList<IProgramVar>();
 			toRemove.addAll(filterArrays(mResult.getInVars().keySet()));
-			for (final RankVar rv : toRemove) {
+			for (final IProgramVar rv : toRemove) {
 				mResult.removeInVar(rv);
 			}
 		}
 		{
-			final List<RankVar> toRemove = new ArrayList<RankVar>();
+			final List<IProgramVar> toRemove = new ArrayList<IProgramVar>();
 			toRemove.addAll(filterArrays(mResult.getOutVars().keySet()));
-			for (final RankVar rv : toRemove) {
+			for (final IProgramVar rv : toRemove) {
 				mResult.removeOutVar(rv);
 			}
 		}
 	}
 
-	private Collection<RankVar> filterArrays(final Set<RankVar> keySet) {
-		final List<RankVar> result = new ArrayList<RankVar>();
-		for (final RankVar rv : keySet) {
+	private Collection<IProgramVar> filterArrays(final Set<IProgramVar> keySet) {
+		final List<IProgramVar> result = new ArrayList<IProgramVar>();
+		for (final IProgramVar rv : keySet) {
 			final Sort sort = ReplacementVarUtils.getDefinition(rv).getSort();
 			if (sort.isArraySort()) {
 				result.add(rv);
@@ -309,8 +309,8 @@ public class TransFormulaLRWithArrayCells {
 			final ArrayCellReplacementVarInformation acrvi = triple.getThird();
 			assert acrvi.getArrayRepresentative().equals(triple.getFirst());
 			assert acrvi.getIndexRepresentative().equals(triple.getSecond());
-			final Collection<RankVar> rankVarsOccurringInIndex = acrvi.termVariableToRankVarMappingForIndex().values();
-			for (final RankVar rv : rankVarsOccurringInIndex) {
+			final Collection<IProgramVar> rankVarsOccurringInIndex = acrvi.termVariableToRankVarMappingForIndex().values();
+			for (final IProgramVar rv : rankVarsOccurringInIndex) {
 				if (!rankVarOccursInThisTransformula(rv, mResult)) {
 					addRankVar(rv);
 					throw new AssertionError("case may not occur any more");
@@ -325,7 +325,7 @@ public class TransFormulaLRWithArrayCells {
 	
 	
 	private ArrayIndex translateIndex(final ArrayIndex index,
-			final Map<TermVariable, RankVar> termVariableToRankVarMappingForIndex) {
+			final Map<TermVariable, IProgramVar> termVariableToRankVarMappingForIndex) {
 		final List<Term> translatedIndex = new ArrayList<Term>();
 		for (final Term entry : index) {
 			final Term translatedEntry = translateIndexEntry(entry, termVariableToRankVarMappingForIndex);
@@ -335,10 +335,10 @@ public class TransFormulaLRWithArrayCells {
 	}
 
 	private Term translateIndexEntry(final Term entry,
-			final Map<TermVariable, RankVar> termVariableToRankVarMappingForIndex) {
+			final Map<TermVariable, IProgramVar> termVariableToRankVarMappingForIndex) {
 		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (final TermVariable originalTv : entry.getFreeVars()) {
-			final RankVar rv = termVariableToRankVarMappingForIndex.get(originalTv);
+			final IProgramVar rv = termVariableToRankVarMappingForIndex.get(originalTv);
 			final TermVariable newTv = (TermVariable) mResult.getInVars().get(rv);
 			substitutionMapping.put(originalTv, newTv);
 		}
@@ -346,7 +346,7 @@ public class TransFormulaLRWithArrayCells {
 		return renamedEntry;
 	}
 
-	private void addRankVar(final RankVar rv) {
+	private void addRankVar(final IProgramVar rv) {
 		final String name = SmtUtils.removeSmtQuoteCharacters(rv.getIdentifier() + "_InOut");
 		final Sort sort = ReplacementVarUtils.getDefinition(rv).getSort();
 		final TermVariable tv = mReplacementVarFactory.getOrConstructAuxVar(name, sort);
@@ -354,7 +354,7 @@ public class TransFormulaLRWithArrayCells {
 		mResult.addOutVar(rv, tv);
 	}
 
-	private boolean rankVarOccursInThisTransformula(final RankVar rv,
+	private boolean rankVarOccursInThisTransformula(final IProgramVar rv,
 			final TransFormulaLR transFormulaLR) {
 		final Term inVar = transFormulaLR.getInVars().get(rv);
 		final Term outVar = transFormulaLR.getOutVars().get(rv);

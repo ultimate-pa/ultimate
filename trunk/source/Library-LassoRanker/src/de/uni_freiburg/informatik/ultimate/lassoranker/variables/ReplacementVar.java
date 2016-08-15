@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  *
  * @author Jan Leike, Matthias Heizmann
  */
-public class ReplacementVar extends RankVar implements IProgramVar {
+public class ReplacementVar implements IProgramVar {
 	private static final long serialVersionUID = 5797704734079950805L;
 
 	private final String mName;
@@ -56,7 +56,6 @@ public class ReplacementVar extends RankVar implements IProgramVar {
 	/**
 	 * @return the definition of this replacement variable, i.e., the term it replaces
 	 */
-	@Override
 	public Term getDefinition() {
 		return mDefinition;
 	}

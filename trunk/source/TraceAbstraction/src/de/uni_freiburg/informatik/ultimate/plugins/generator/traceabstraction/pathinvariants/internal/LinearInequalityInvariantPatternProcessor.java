@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.ModelExtractionUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.MotzkinTransformation;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -59,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -102,7 +102,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	/**
 	 * The pattern coefficients, that is the program- and helper variables.
 	 */
-	private final Set<RankVar> patternCoefficients;
+	private final Set<IProgramVar> patternCoefficients;
 	private Map<Term, Rational> valuation;
 	private Collection<Collection<LinearPatternBase>> entryInvariantPattern;
 	private Collection<Collection<LinearPatternBase>> exitInvariantPattern;
@@ -275,7 +275,7 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	/**
 	 * Transforms a pattern into a DNF of linear inequalities relative to a
-	 * given mapping of {@link RankVar}s involved.
+	 * given mapping of {@link IProgramVar}s involved.
 	 * 
 	 * @param pattern
 	 *            the pattern to transform
@@ -285,7 +285,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private static Collection<Collection<LinearInequality>> mapPattern(
 			final Collection<Collection<LinearPatternBase>> pattern,
-			final Map<RankVar, Term> mapping) {
+			final Map<IProgramVar, Term> mapping) {
 		final Collection<Collection<LinearInequality>> result = new ArrayList<>(
 				pattern.size());
 		for (final Collection<LinearPatternBase> conjunct : pattern) {
@@ -302,7 +302,7 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	/**
 	 * Transforms and negates a pattern into a DNF of linear inequalities
-	 * relative to a given mapping of {@link RankVar}s involved.
+	 * relative to a given mapping of {@link IProgramVar}s involved.
 	 * 
 	 * @param pattern
 	 *            the pattern to transform
@@ -313,7 +313,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private static Collection<Collection<LinearInequality>> mapAndNegatePattern(
 			final Collection<Collection<LinearPatternBase>> pattern,
-			final Map<RankVar, Term> mapping) {
+			final Map<IProgramVar, Term> mapping) {
 		// This is the trivial algorithm (expanding). Feel free to optimize ;)
 		// 1. map Pattern, result is dnf
 		final Collection<Collection<LinearInequality>> mappedPattern = mapPattern(
@@ -505,10 +505,10 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @param mapping
 	 *            mapping to add auxiliary terms to
 	 */
-	protected void completeMapping(final Map<RankVar, Term> mapping) {
+	protected void completeMapping(final Map<IProgramVar, Term> mapping) {
 		final String prefix = newPrefix() + "replace_";
 		int index = 0;
-		for (final RankVar coefficient : patternCoefficients) {
+		for (final IProgramVar coefficient : patternCoefficients) {
 			if (mapping.containsKey(coefficient)) {
 				continue;
 			}
@@ -532,9 +532,9 @@ public final class LinearInequalityInvariantPatternProcessor
 	 *            mapping to get auxiliary terms from, must contain one entry
 	 *            for each coefficient
 	 */
-	protected void completeMapping(final Map<RankVar, Term> mapping,
-			final Map<RankVar, Term> source) {
-		for (final RankVar coefficient : patternCoefficients) {
+	protected void completeMapping(final Map<IProgramVar, Term> mapping,
+			final Map<IProgramVar, Term> source) {
+		for (final IProgramVar coefficient : patternCoefficients) {
 			if (mapping.containsKey(coefficient)) {
 				continue;
 			}
@@ -558,7 +558,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private Term buildImplicationTerm(final LinearTransition condition,
 			final Collection<Collection<LinearPatternBase>> pattern) {
-		final Map<RankVar, Term> primedMapping = new HashMap<RankVar, Term>(
+		final Map<IProgramVar, Term> primedMapping = new HashMap<IProgramVar, Term>(
 				condition.getOutVars());
 		completeMapping(primedMapping);
 
@@ -598,7 +598,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private Term buildBackwardImplicationTerm(final LinearTransition condition,
 			final Collection<Collection<LinearPatternBase>> pattern) {
-		final Map<RankVar, Term> primedMapping = new HashMap<RankVar, Term>(
+		final Map<IProgramVar, Term> primedMapping = new HashMap<IProgramVar, Term>(
 				condition.getOutVars());
 		completeMapping(primedMapping);
 
@@ -640,10 +640,10 @@ public final class LinearInequalityInvariantPatternProcessor
 			final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate) {
 		final LinearTransition transition = linearizer.linearize(predicate
 				.getTransition());
-		final Map<RankVar, Term> unprimedMapping = new HashMap<RankVar, Term>(
+		final Map<IProgramVar, Term> unprimedMapping = new HashMap<IProgramVar, Term>(
 				transition.getInVars());
 		completeMapping(unprimedMapping);
-		final Map<RankVar, Term> primedMapping = new HashMap<RankVar, Term>(
+		final Map<IProgramVar, Term> primedMapping = new HashMap<IProgramVar, Term>(
 				transition.getOutVars());
 		completeMapping(primedMapping, unprimedMapping);
 
@@ -731,9 +731,9 @@ public final class LinearInequalityInvariantPatternProcessor
 	@Override
 	protected Term getTermForPattern(
 			final Collection<Collection<LinearPatternBase>> pattern) {
-		final Map<RankVar, Term> definitionMap = new HashMap<RankVar, Term>(
+		final Map<IProgramVar, Term> definitionMap = new HashMap<IProgramVar, Term>(
 				patternCoefficients.size());
-		for (final RankVar coefficient : patternCoefficients) {
+		for (final IProgramVar coefficient : patternCoefficients) {
 			final Term definition = ReplacementVarUtils.getDefinition(coefficient);
 			definitionMap.put(coefficient, definition);
 		}

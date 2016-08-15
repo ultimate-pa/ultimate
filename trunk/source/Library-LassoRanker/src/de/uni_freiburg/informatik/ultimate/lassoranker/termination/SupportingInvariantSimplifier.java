@@ -40,12 +40,12 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.SMTSolver;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * Simplify the generated supporting invariants by testing the implication
@@ -96,7 +96,7 @@ class SupportingInvariantSimplifier {
 	private LinearInequality SI2LI(final SupportingInvariant si) {
 		final LinearInequality li = new LinearInequality();
 		li.add(new AffineTerm(si.mconstant));
-		for (final Map.Entry<RankVar, BigInteger> entry : si.mcoefficients.entrySet()) {
+		for (final Map.Entry<IProgramVar, BigInteger> entry : si.mcoefficients.entrySet()) {
 			li.add(ReplacementVarUtils.getDefinition(entry.getKey()), new AffineTerm(entry.getValue()));
 		}
 		li.setStrict(si.strict);

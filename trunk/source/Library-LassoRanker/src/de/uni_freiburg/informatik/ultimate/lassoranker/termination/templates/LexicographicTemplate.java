@@ -40,10 +40,10 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctio
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.LexicographicRankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -125,7 +125,7 @@ public class LexicographicTemplate extends RankingTemplate {
 	
 	@Override
 	public List<List<LinearInequality>> getConstraints(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
 		checkInitialized();
 		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();

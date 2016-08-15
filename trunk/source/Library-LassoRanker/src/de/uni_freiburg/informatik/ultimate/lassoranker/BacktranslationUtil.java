@@ -32,11 +32,11 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -52,7 +52,7 @@ public class BacktranslationUtil {
 	 * Translate a RankVar into a (Boogie) Expression. The Expression is the
 	 * (unique) Expression that represents the definition of the RankVar.
 	 */
-	private static Expression rankVar2Expression(final Term2Expression term2expression, final RankVar rv) {
+	private static Expression rankVar2Expression(final Term2Expression term2expression, final IProgramVar rv) {
 		return term2expression.translate(ReplacementVarUtils.getDefinition(rv));
 	}
 	
@@ -68,13 +68,13 @@ public class BacktranslationUtil {
 	 */
 	public static List<Map<Expression, Rational>> rank2Boogie(
 			final Term2Expression term2expression,
-			final List<Map<RankVar, Rational>> states) {
+			final List<Map<IProgramVar, Rational>> states) {
 		final List<Map<Expression, Rational>> result =
 				new ArrayList<Map<Expression, Rational>>(states.size());
-		for (final Map<RankVar, Rational> state : states) {
+		for (final Map<IProgramVar, Rational> state : states) {
 			final Map<Expression, Rational> expression2rational =
 					new LinkedHashMap<Expression, Rational>();
-			for (final Map.Entry<RankVar, Rational> entry : state.entrySet()) {
+			for (final Map.Entry<IProgramVar, Rational> entry : state.entrySet()) {
 				final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
 				final Expression e = term2expression.translate(definition);
 				Rational r = entry.getValue();

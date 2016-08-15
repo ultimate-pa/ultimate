@@ -32,11 +32,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -64,8 +64,8 @@ public class LexicographicRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Set<RankVar> getVariables() {
-		final Set<RankVar> vars = new LinkedHashSet<RankVar>();
+	public Set<IProgramVar> getVariables() {
+		final Set<IProgramVar> vars = new LinkedHashSet<IProgramVar>();
 		for (final RankingFunction rf : mParts) {
 			vars.addAll(rf.getVariables());
 		}
@@ -79,7 +79,7 @@ public class LexicographicRankingFunction extends RankingFunction {
 		sb.append("-lexicographic ranking function:\n");
 		sb.append("  f(");
 		boolean first = true;
-		for (final RankVar var : getVariables()) {
+		for (final IProgramVar var : getVariables()) {
 			if (!first) {
 				sb.append(", ");
 			}
@@ -110,7 +110,7 @@ public class LexicographicRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Ordinal evaluate(Map<RankVar, Rational> assignment) {
+	public Ordinal evaluate(Map<IProgramVar, Rational> assignment) {
 		final Ordinal o = Ordinal.ZERO;
 		// TODO
 //		Ordinal w_pow = Ordinal.ONE;

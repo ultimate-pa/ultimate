@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArrays2;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.ArrayCellReplacementVarInformation.VarType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.SingleUpdateNormalFormTransformer.FreshAuxVarGenerator;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
@@ -54,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
@@ -214,7 +214,7 @@ public class TransFormulaLRWithArrayInformation {
 		final HashRelation<TermVariable, ArrayIndex> arrayInVar2ForeignIndices = new HashRelation<>();
 		for (final Triple<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> triple : stem.getArrayCellOutVars().entrySet()) {
 			final ArrayCellReplacementVarInformation acrvi = triple.getThird();
-			final RankVar arrayRv = acrvi.getArrayRankVar();
+			final IProgramVar arrayRv = acrvi.getArrayRankVar();
 			final TermVariable arrayInVar = (TermVariable) mTransFormulaLR.getInVars().get(arrayRv);
 			if (arrayInVar != null) {
 				// array also occurs in loop, we have to add the index
@@ -232,10 +232,10 @@ public class TransFormulaLRWithArrayInformation {
 
 
 
-	private ArrayIndex computeForeignIndex(final RankVar arrayRv, final ArrayIndex index,
-			final Map<TermVariable, RankVar> termVariableToRankVarMappingForIndex) {
+	private ArrayIndex computeForeignIndex(final IProgramVar arrayRv, final ArrayIndex index,
+			final Map<TermVariable, IProgramVar> termVariableToRankVarMappingForIndex) {
 		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-		for (final Entry<TermVariable, RankVar> foreigntv2rv : termVariableToRankVarMappingForIndex.entrySet()) {
+		for (final Entry<TermVariable, IProgramVar> foreigntv2rv : termVariableToRankVarMappingForIndex.entrySet()) {
 			if (!mTransFormulaLR.getInVars().containsKey(foreigntv2rv.getValue())) {
 				addForeignInVarAndOutVar(foreigntv2rv.getValue());
 			}
@@ -249,7 +249,7 @@ public class TransFormulaLRWithArrayInformation {
 
 
 
-	private void addForeignInVarAndOutVar(final RankVar value) {
+	private void addForeignInVarAndOutVar(final IProgramVar value) {
 		final String name = value.getIdentifier() + "_ForeignInOutVar";
 		final Sort sort = ReplacementVarUtils.getDefinition(value).getSort();
 		final TermVariable inOutVar = mScript.constructFreshTermVariable(name, sort);
@@ -527,7 +527,7 @@ public class TransFormulaLRWithArrayInformation {
 	private void constructSubstitutions() {
 		final Map<Term, Term> in2outMapping = new HashMap<Term, Term>();
 		final Map<Term, Term> out2inMapping = new HashMap<Term, Term>();
-		for (final RankVar rv : mTransFormulaLR.getInVars().keySet()) {
+		for (final IProgramVar rv : mTransFormulaLR.getInVars().keySet()) {
 			final Term inVar = mTransFormulaLR.getInVars().get(rv);
 			assert inVar != null;
 			final Term outVar = mTransFormulaLR.getOutVars().get(rv);

@@ -33,14 +33,14 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctionGenerator;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * A class representing an (possibly strict) linear inequality over a set of
- * {@link RankVar}s. A DNF over these inequalities forms a pattern as used
+ * {@link IProgramVar}s. A DNF over these inequalities forms a pattern as used
  * within {@link LinearInequalityInvariantPatternProcessor}.
  */
 public final class LinearPatternBase {
@@ -48,7 +48,7 @@ public final class LinearPatternBase {
 	private final boolean strict;
 
 	/**
-	 * Creates a new linear inequality over a given set of {@link RankVar}s.
+	 * Creates a new linear inequality over a given set of {@link IProgramVar}s.
 	 * 
 	 * @param solver
 	 *            the solver to generate new function symbols in (for
@@ -63,8 +63,8 @@ public final class LinearPatternBase {
 	 *            non-strict inequality is to be generated
 	 */
 	public LinearPatternBase(final Script solver,
-			final Collection<RankVar> variables, final String prefix,
-			boolean strict) {
+			final Collection<IProgramVar> variables, final String prefix,
+			final boolean strict) {
 		function = new AffineFunctionGenerator(solver, variables, prefix);
 		this.strict = strict;
 	}
@@ -72,7 +72,7 @@ public final class LinearPatternBase {
 	/**
 	 * Returns a collection of terms representing one generated variable each.
 	 * 
-	 * Generated variables are coefficients for {@link RankVar}s and the
+	 * Generated variables are coefficients for {@link IProgramVar}s and the
 	 * constant term.
 	 * 
 	 * @return collection of all variables
@@ -83,18 +83,18 @@ public final class LinearPatternBase {
 
 	/**
 	 * Returns a linear inequality corresponding to this part of the invariant,
-	 * when applied to a given {@link RankVar}-Mapping (that is, a map assigning
-	 * a {@link Term} to each {@link RankVar} within the inequality represented
+	 * when applied to a given {@link IProgramVar}-Mapping (that is, a map assigning
+	 * a {@link Term} to each {@link IProgramVar} within the inequality represented
 	 * by this class).
 	 * 
 	 * @param map
 	 *            mapping to {@link Terms} to be used within the
 	 *            {@link LinearInequality} generated
 	 * @return linear inequality equivalent to the linear inequality represented
-	 *         by this class, where each {@link RankVar} is replaced according
+	 *         by this class, where each {@link IProgramVar} is replaced according
 	 *         to the given mapping
 	 */
-	public LinearInequality getLinearInequality(final Map<RankVar, Term> map) {
+	public LinearInequality getLinearInequality(final Map<IProgramVar, Term> map) {
 		final LinearInequality inequality = function.generate(map);
 		inequality.setStrict(strict);
 		return inequality;

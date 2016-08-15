@@ -73,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.Nes
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.ParallelTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.PiecewiseTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.RankingTemplate;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -437,7 +436,7 @@ public class LassoRankerStarter {
 		// mRootAnnot.getBoogie2Smt().translate(term)
 		final Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
 
-		final List<Map<RankVar, Rational>> states = new ArrayList<Map<RankVar, Rational>>();
+		final List<Map<IProgramVar, Rational>> states = new ArrayList<Map<IProgramVar, Rational>>();
 		states.add(nta.getStateInit());
 		states.add(nta.getStateHonda());
 		states.addAll(nta.getGEVs());

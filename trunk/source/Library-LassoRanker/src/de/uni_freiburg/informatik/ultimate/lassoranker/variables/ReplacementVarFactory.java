@@ -32,7 +32,6 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -51,11 +50,6 @@ public class ReplacementVarFactory {
 			new HashMap<Term, Map<Object, LocalReplacementVar>>();
 	private final Map<String, TermVariable> mAuxVarMapping = 
 			new HashMap<String, TermVariable>();
-	/**
-	 * Maps each BoogieVar to a unique BoogieVarWrapper.
-	 */
-	private final Map<IProgramVar, BoogieVarWrapper> mBoogieVarWrappers
-		= new HashMap<IProgramVar, BoogieVarWrapper>();
 
 	public ReplacementVarFactory(final ManagedScript variableManager) {
 		super();
@@ -109,20 +103,6 @@ public class ReplacementVarFactory {
 			}
 		}
 		return auxVar;
-	}
-
-
-	/**
-	 * Get unique BoogieVarWrapper for a given BoogieVar.
-	 */
-	public RankVar getOrConstuctBoogieVarWrapper(final IProgramVar boogieVar) {
-		if (mBoogieVarWrappers.containsKey(boogieVar)) {
-			return mBoogieVarWrappers.get(boogieVar);
-		} else {
-			final BoogieVarWrapper wrapper = new BoogieVarWrapper(boogieVar);
-			mBoogieVarWrappers.put(boogieVar, wrapper);
-			return wrapper;
-		}
 	}
 
 }
