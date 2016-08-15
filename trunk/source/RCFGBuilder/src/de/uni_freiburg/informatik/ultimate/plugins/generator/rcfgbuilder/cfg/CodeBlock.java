@@ -171,13 +171,13 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 		mOccurenceInCounterexamples++;
 	}
 
-	public int getSerialNumer() {
+	public int getSerialNumber() {
 		return mSerialnumber;
 	}
 
 	@Override
 	public int hashCode() {
-		return getSerialNumer();
+		return getSerialNumber();
 	}
 
 	public final void connectSource(RCFGNode source) {

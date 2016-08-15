@@ -106,7 +106,7 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 			prettyPrinted += "PARALLEL" + codeBlocks.get(i).getPrettyPrintedStatements();
 			transFormulas[i] = codeBlocks.get(i).getTransitionFormula();
 			transFormulasWithBranchEncoders[i] = codeBlocks.get(i).getTransitionFormulaWithBranchEncoders();
-			final String varname = "LBE" + codeBlocks.get(i).getSerialNumer();
+			final String varname = "LBE" + codeBlocks.get(i).getSerialNumber();
 			final Sort boolSort = script.sort("Bool");
 			final TermVariable tv = script.variable(varname, boolSort);
 			branchIndicator[i] = tv;
@@ -121,10 +121,10 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 		final boolean s_TransformToCNF = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
-		mTransitionFormula = TransFormula.parallelComposition(mLogger, mServices, getSerialNumer(), mgdScript,
+		mTransitionFormula = TransFormula.parallelComposition(mLogger, mServices, getSerialNumber(), mgdScript,
 				null, s_TransformToCNF, xnfConversionTechnique, transFormulas);
 		mTransitionFormulaWithBranchEncoders = TransFormula.parallelComposition(mLogger, mServices,
-				getSerialNumer(), mgdScript, branchIndicator, s_TransformToCNF, xnfConversionTechnique, transFormulasWithBranchEncoders);
+				getSerialNumber(), mgdScript, branchIndicator, s_TransformToCNF, xnfConversionTechnique, transFormulasWithBranchEncoders);
 	}
 
 	@Override
