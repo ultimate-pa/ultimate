@@ -130,7 +130,8 @@ public class TermVariableRenamer {
 	
 	
 	private TermVariable getNewTermVariable(final IProgramVar var, final TermVariable tv, final String prefix) {
-		final TermVariable result = mScript.getScript().variable(prefix +"_" +var.getIdentifier(), tv.getSort());
+		// TODO: if this fails because old var and non-oldvar get same variable use getGloballyUniqueId()
+		final TermVariable result = mScript.variable(prefix +"_" +var.getIdentifier(), tv.getSort());
 		return result;
 	}
 	
