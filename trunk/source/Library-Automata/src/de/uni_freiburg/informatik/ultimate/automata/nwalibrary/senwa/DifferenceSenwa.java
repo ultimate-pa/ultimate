@@ -56,9 +56,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class DifferenceSenwa<LETTER, STATE> implements 
-								ISuccessorVisitor<LETTER, STATE>,
-								IOperation<LETTER, STATE>,
-								IOpWithDelayedDeadEndRemoval<LETTER, STATE>{
+		ISuccessorVisitor<LETTER, STATE>,
+		IOperation<LETTER, STATE>,
+		IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 	
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
@@ -75,24 +75,26 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	private final SenwaWalker<LETTER, STATE> mSenwaWalker;
 	
 	
-	
-	
-	
 	/**
 	 * Maps a state in resulting automaton to the DifferenceState for which it
 	 * was created.
 	 */
 	private final Map<STATE,DifferenceState<LETTER,STATE>> mResult2Operand = 
-			new HashMap<STATE,DifferenceState<LETTER,STATE>>();
+			new HashMap<>();
 	
 	/**
 	 * Maps a DifferenceState and an entry state to its representative in the
 	 * resulting automaton.
 	 */
 	private final Map<DifferenceState<LETTER,STATE>,Map<DifferenceState<LETTER,STATE>,STATE>> mEntry2Operand2Result = 
-			new HashMap<DifferenceState<LETTER,STATE>,Map<DifferenceState<LETTER,STATE>,STATE>>();
+			new HashMap<>();
 	
-	
+	/**
+	 * @param services Ultimate services
+	 * @param minuend minuend
+	 * @param subtrahend subtrahend
+	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 */
 	public DifferenceSenwa(
 			final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER,STATE> minuend,
@@ -104,14 +106,22 @@ public class DifferenceSenwa<LETTER, STATE> implements
 				true);
 	}
 	
-	
+	/**
+	 * @param services Ultimate services
+	 * @param minuend minuend
+	 * @param subtrahend subtrahend
+	 * @param stateDeterminizer state determinizer
+	 * @param removeDeadEndsImmediately true iff dead ends should be removed
+	 *        immediately
+	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 */
 	public DifferenceSenwa(
 			final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER,STATE> minuend,
 			final INestedWordAutomaton<LETTER,STATE> subtrahend,
 			final IStateDeterminizer<LETTER,STATE> stateDeterminizer,
 			final boolean removeDeadEndsImmediately)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mContentFactory = minuend.getStateFactory();
@@ -130,9 +140,6 @@ public class DifferenceSenwa<LETTER, STATE> implements
 		mSenwaWalker = new SenwaWalker<LETTER, STATE>(mServices, mSenwa, this, removeDeadEndsImmediately);
 		mLogger.info(exitMessage());
 	}
-	
-	
-	
 	
 	
 	private STATE getOrConstructResultState(

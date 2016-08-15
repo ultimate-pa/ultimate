@@ -33,6 +33,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
@@ -46,18 +47,39 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, STATE>, IOperation<LETTER, STATE> {
+public class SenwaBuilder<LETTER, STATE>
+		implements ISuccessorVisitor<LETTER, STATE>,
+			IOperation<LETTER, STATE> {
 	
 	private final AutomataLibraryServices mServices;
-	Senwa<LETTER, STATE> mSenwa;
-	INestedWordAutomaton<LETTER, STATE> mNwa;
-	Set<STATE> mAdded = new HashSet<STATE>();
+	private final Senwa<LETTER, STATE> mSenwa;
+	private final INestedWordAutomaton<LETTER, STATE> mNwa;
+//	private final Set<STATE> mAdded = new HashSet<>();
 	
-	Map<STATE,STATE> mResult2Operand = new HashMap<STATE,STATE>();
-	Map<STATE,Map<STATE,STATE>> mEntry2Operand2Result = new HashMap<STATE,Map<STATE,STATE>>();
+	private final Map<STATE,STATE> mResult2Operand = new HashMap<>();
+	private final Map<STATE,Map<STATE,STATE>> mEntry2Operand2Result = new HashMap<>();
 	
 	
 	private final ILogger mLogger;
+
+	/**
+	 * @param services Ultimate services
+	 * @param nwa nested word automaton
+	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 */
+	public SenwaBuilder(final AutomataLibraryServices services, 
+			final INestedWordAutomaton<LETTER, STATE> nwa)
+					throws AutomataOperationCanceledException {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mNwa = nwa;
+		mLogger.info(startMessage());
+		mSenwa = new Senwa<LETTER, STATE>(mServices,
+				mNwa.getInternalAlphabet(), mNwa.getCallAlphabet(), 
+				mNwa.getReturnAlphabet(), mNwa.getStateFactory());
+		new SenwaWalker<LETTER, STATE>(mServices, mSenwa, this, true);
+		mLogger.info(exitMessage());
+	}
 	
 	
 	@Override
@@ -76,24 +98,6 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 		return "Finished " + operationName() + " Result has " + 
 				mSenwa.sizeInformation();
 	}
-	
-	
-	
-	
-	
-	public SenwaBuilder(final AutomataLibraryServices services, 
-			final INestedWordAutomaton<LETTER, STATE> nwa) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mNwa = nwa;
-		mLogger.info(startMessage());
-		mSenwa = new Senwa<LETTER, STATE>(mServices,
-				mNwa.getInternalAlphabet(), mNwa.getCallAlphabet(), 
-				mNwa.getReturnAlphabet(), mNwa.getStateFactory());
-		new SenwaWalker<LETTER, STATE>(mServices, mSenwa, this, true);
-		mLogger.info(exitMessage());
-	}
-	
 	
 	
 	private STATE getOrConstructResultState(final STATE opEntry, final STATE opState, final boolean isInitial) {
