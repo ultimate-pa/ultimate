@@ -50,6 +50,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 public abstract class AbstractAcceptance<LETTER,STATE>
 		extends AUnaryNwaOperation<LETTER, STATE> {
 	
+	protected boolean mIsAccepted;
+	
 	/**
 	 * @param services Ultimate services
 	 * @param operand operand
@@ -168,6 +170,10 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 			config.push(state);
 		}
 		return succConfigs;
-
+	}
+	
+	@Override
+	public Boolean getResult() {
+		return mIsAccepted;
 	}
 }

@@ -41,6 +41,7 @@ public abstract class AOperation<LETTER, STATE>
 	 * Ultimate services
 	 */
 	protected final AutomataLibraryServices mServices;
+	
 	/**
 	 * logger
 	 */

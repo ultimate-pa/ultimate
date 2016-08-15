@@ -31,7 +31,6 @@ import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -52,7 +51,6 @@ public class Accepts<LETTER,STATE>
 	private final NestedWord<LETTER> mWord;
 	private final boolean mPrefixOfInputIsAccepted;
 	private final boolean mInputIsSuffixOfAcceptedWord;
-	private boolean mIsAccepted;
 
 	/**
 	 * @param services Ultimate services
@@ -104,7 +102,7 @@ public class Accepts<LETTER,STATE>
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " automaton "
-				+ mOperand.sizeInformation() + ". " + "word has length "
+				+ mOperand.sizeInformation() + ". Word has length "
 				+ mWord.length();
 	}
 
@@ -131,11 +129,6 @@ public class Accepts<LETTER,STATE>
 			message += "is rejected.";
 		}
 		return message;
-	}
-
-	@Override
-	public Boolean getResult() throws AutomataOperationCanceledException {
-		return mIsAccepted;
 	}
 
 	@Override

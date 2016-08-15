@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  */
 public class MinimizeBrzozowski<LETTER, STATE>
 		extends AMinimizeNwa<LETTER, STATE>
-		implements IOperation<LETTER, STATE>{
+		implements IOperation<LETTER, STATE> {
 	/**
 	 * Constructor.
 	 * 
@@ -102,7 +102,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	/**
 	 * This method reverses the automaton.
 	 * 
-	 * Reversal means that
+	 * <p>Reversal means that
      * - the transitions are turned around,
      * - the final states become the initial states,
      * - the initial states become the final states.

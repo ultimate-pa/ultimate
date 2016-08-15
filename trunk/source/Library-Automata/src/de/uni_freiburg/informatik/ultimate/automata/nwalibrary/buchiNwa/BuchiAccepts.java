@@ -63,8 +63,6 @@ public class BuchiAccepts<LETTER,STATE>
 	 */
 	private NestedWord<LETTER> mLoop;
 	
-	private boolean mAccepted;
-	
 	/**
 	 * Check if a Buchi nested word automaton accepts a nested lasso word.
 	 * 
@@ -89,25 +87,25 @@ public class BuchiAccepts<LETTER,STATE>
 		if (mStem.containsPendingReturns()) {
 			mLogger.warn("This implementation of Buchi acceptance rejects lasso" +
 					" words, where the stem contains pending returns.");
-			mAccepted = false;
+			mIsAccepted = false;
 			return;
 		}
 		
 		if (mLoop.containsPendingReturns()) {
 			mLogger.warn("This implementation of Buchi acceptance rejects lasso" +
 					" words, where the loop contains pending returns.");
-			mAccepted = false;
+			mIsAccepted = false;
 			return;
 		}
 		
 		if (mLoop.length() ==0) {
 			mLogger.debug("LassoWords with empty lasso are rejected by every Büchi" +
 					" automaton");
-			mAccepted = false;
+			mIsAccepted = false;
 			return;
 		}
 
-		mAccepted = buchiAccepts();
+		mIsAccepted = buchiAccepts();
 		mLogger.info(exitMessage());
 	}
 
@@ -121,11 +119,6 @@ public class BuchiAccepts<LETTER,STATE>
 		return "Start " + operationName() + " Operand " + mOperand.sizeInformation() 
 				+ " Stem has " + mStem.length() + " letters." 
 				+ " Loop has " + mLoop.length() + " letters.";
-	}
-	
-	@Override
-	public Boolean getResult() {
-		return mAccepted;
 	}
 
 	private boolean buchiAccepts() throws AutomataLibraryException {
