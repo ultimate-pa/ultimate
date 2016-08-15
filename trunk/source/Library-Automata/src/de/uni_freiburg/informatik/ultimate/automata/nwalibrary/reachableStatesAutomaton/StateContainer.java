@@ -53,8 +53,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * </ul>
  * @author Matthias Heizmann
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public abstract class StateContainer<LETTER, STATE> {
 	
@@ -69,7 +69,7 @@ public abstract class StateContainer<LETTER, STATE> {
 		 * (up, down) that visits a final state at infinitely often. 
 		 */
 		REACH_FINAL_INFTY(2),
-		REACHABLE_FROmFINAL_WITHOUT_CALL(4),
+		REACHABLE_FROM_FINAL_WITHOUT_CALL(4),
 		/**
 		 * The DoubleDecker (up,down) cannot reach a final state 
 		 * (REACH_FINAL_ONCE does not hold), but is still reachable, if dead 
@@ -84,14 +84,14 @@ public abstract class StateContainer<LETTER, STATE> {
 		REACHABLE_AFTER_NONLIVE_REMOVAL(16);
 		
 		
-		private final int bitcode;
+		private final int mBitcode;
 		
-		DownStateProp(int bitcode) {
-			this.bitcode = bitcode;
+		DownStateProp(final int bitcode) {
+			this.mBitcode = bitcode;
 		}
 		
 		public int getBitCode() {
-			return bitcode;
+			return mBitcode;
 		}
 	}
 	
@@ -102,6 +102,15 @@ public abstract class StateContainer<LETTER, STATE> {
 	protected final Map<STATE, Integer> mDownStates;
 	protected Set<STATE> mUnpropagatedDownStates;
 	protected final boolean mCanHaveOutgoingReturn;
+
+	public StateContainer(final STATE state, final int serialNumber, 
+			final HashMap<STATE, Integer> downStates, final boolean canHaveOutgoingReturn) {
+		mState = state;
+		mSerialNumber = serialNumber;
+		mDownStates = downStates;
+		mReachProp = ReachProp.REACHABLE;
+		mCanHaveOutgoingReturn = canHaveOutgoingReturn;
+	}
 
 	@Override
 	public String toString() {
@@ -137,15 +146,6 @@ public abstract class StateContainer<LETTER, STATE> {
 //		return sb.toString();
 		return mState.toString();
 	}
-
-	public StateContainer(STATE state, int serialNumber, 
-			HashMap<STATE, Integer> downStates, boolean canHaveOutgoingReturn) {
-		mState = state;
-		mSerialNumber = serialNumber;
-		mDownStates = downStates;
-		mReachProp = ReachProp.REACHABLE;
-		mCanHaveOutgoingReturn = canHaveOutgoingReturn;
-	}
 	
 	public int getSerialNumber() {
 		return mSerialNumber;
@@ -155,7 +155,7 @@ public abstract class StateContainer<LETTER, STATE> {
 		return mReachProp;
 	}
 
-	public void setReachProp(ReachProp reachProp) {
+	public void setReachProp(final ReachProp reachProp) {
 		mReachProp = reachProp;
 	}
 
@@ -178,7 +178,7 @@ public abstract class StateContainer<LETTER, STATE> {
 	 *  If the down state was already there it may not have had any 
 	 *  DownStateProps
 	 */
-	boolean addReachableDownState(STATE down) {
+	boolean addReachableDownState(final STATE down) {
 		assert !mDownStates.containsKey(down) || mDownStates.get(down) == 0;
 		final Integer oldValue = mDownStates.put(down, 0);
 		if (oldValue == null) {
@@ -196,7 +196,7 @@ public abstract class StateContainer<LETTER, STATE> {
 	 * Set DownStateProp prop for down state. Returns true iff this property was
 	 * modified (not already set).
 	 */
-	boolean setDownProp(STATE down, DownStateProp prop) {
+	boolean setDownProp(final STATE down, final DownStateProp prop) {
 		final int currentProps = mDownStates.get(down);
 		if ((currentProps & prop.getBitCode()) == 0) {
 			// property not yet set
@@ -215,7 +215,7 @@ public abstract class StateContainer<LETTER, STATE> {
 		}
 	}
 	
-	boolean hasDownProp(STATE down, DownStateProp prop) {
+	boolean hasDownProp(final STATE down, final DownStateProp prop) {
 		final int currentProps = mDownStates.get(down);
 		if ((currentProps & prop.getBitCode()) == 0) {
 			return false;
@@ -234,7 +234,7 @@ public abstract class StateContainer<LETTER, STATE> {
 		mUnpropagatedDownStates = null;
 	}
 
-	protected boolean containsInternalTransition(LETTER letter, STATE succ) {
+	protected boolean containsInternalTransition(final LETTER letter, final STATE succ) {
 		for (final OutgoingInternalTransition<LETTER, STATE> trans : internalSuccessors(letter)) {
 			if (succ.equals(trans.getSucc())) {
 				return true;
@@ -243,7 +243,7 @@ public abstract class StateContainer<LETTER, STATE> {
 		return false;
 	}
 
-	protected boolean containsCallTransition(LETTER letter, STATE succ) {
+	protected boolean containsCallTransition(final LETTER letter, final STATE succ) {
 		for (final OutgoingCallTransition<LETTER, STATE> trans : callSuccessors(letter)) {
 			if (succ.equals(trans.getSucc())) {
 				return true;
@@ -252,7 +252,7 @@ public abstract class StateContainer<LETTER, STATE> {
 		return false;
 	}
 
-	protected boolean containsReturnTransition(STATE hier, LETTER letter, STATE succ) {
+	protected boolean containsReturnTransition(final STATE hier, final LETTER letter, final STATE succ) {
 		for (final OutgoingReturnTransition<LETTER, STATE> trans : returnSuccessors(hier, letter)) {
 			if (succ.equals(trans.getSucc())) {
 				return true;
@@ -307,7 +307,8 @@ public abstract class StateContainer<LETTER, STATE> {
 
 	public abstract Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors();
 	
-	public abstract Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE hier, final LETTER letter);
+	public abstract Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+			final STATE hier, final LETTER letter);
 
 	public abstract Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final LETTER letter);
 
@@ -315,7 +316,8 @@ public abstract class StateContainer<LETTER, STATE> {
 
 	public abstract Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors();
 
-	public abstract Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE hier, final LETTER letter);
+	public abstract Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+			final STATE hier, final LETTER letter);
 
 	public abstract Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final LETTER letter);
 
@@ -337,11 +339,11 @@ public abstract class StateContainer<LETTER, STATE> {
 	abstract void addReturnIncoming(IncomingReturnTransition<LETTER, STATE> returnIncoming);
 	
 	/**
-	 * Returns the StateContainer that has the lower serial number.
+	 * @return The StateContainer that has the lower serial number.
 	 * If one is null return the other. If both are null return null;
 	 */
 	public static <LETTER, STATE> StateContainer<LETTER, STATE> returnLower(
-			StateContainer<LETTER, STATE> fst, StateContainer<LETTER, STATE> snd) {
+			final StateContainer<LETTER, STATE> fst, final StateContainer<LETTER, STATE> snd) {
 		if (fst == null) {
 			return snd;
 		} else if (snd == null) {
