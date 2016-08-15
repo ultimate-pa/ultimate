@@ -53,6 +53,6 @@ public abstract class RankVar implements Serializable {
 	/**
 	 * @return a globally unique identifier for this variable
 	 */
-	public abstract String getGloballyUniqueId();
+	public abstract String getIdentifier();
 	
 }

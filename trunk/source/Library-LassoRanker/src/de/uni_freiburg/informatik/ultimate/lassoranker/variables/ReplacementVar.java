@@ -26,14 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * A replacement variable replacing another variable or term that cannot be used directly.
  *
- * @author Jan Leike
+ * @author Jan Leike, Matthias Heizmann
  */
-public class ReplacementVar extends RankVar {
+public class ReplacementVar extends RankVar implements IProgramVar {
 	private static final long serialVersionUID = 5797704734079950805L;
 
 	private final String mName;
@@ -59,12 +62,47 @@ public class ReplacementVar extends RankVar {
 	}
 
 	@Override
-	public String getGloballyUniqueId() {
+	public String getIdentifier() {
 		return mName;
 	}
 
 	@Override
 	public String toString() {
 		return mName;
+	}
+
+	@Override
+	public String getProcedure() {
+		throw new UnsupportedOperationException("Matthias will implement this if you need it.");
+	}
+
+	@Override
+	public boolean isGlobal() {
+		throw new UnsupportedOperationException("Matthias will implement this if you need it.");
+	}
+
+	@Override
+	public boolean isOldvar() {
+		throw new UnsupportedOperationException("Matthias will implement this if you need it.");
+	}
+
+	@Override
+	public TermVariable getTermVariable() {
+		throw new UnsupportedOperationException("Matthias will implement this if you need it.");
+	}
+
+	@Override
+	public ApplicationTerm getDefaultConstant() {
+		throw new UnsupportedOperationException("Matthias will implement this if you need it.");
+	}
+
+	@Override
+	public ApplicationTerm getPrimedConstant() {
+		throw new UnsupportedOperationException("Matthias will implement this if you need it.");
+	}
+
+	@Override
+	public String getGloballyUniqueId() {
+		throw new UnsupportedOperationException("Matthias will implement this if you need it.");
 	}
 }

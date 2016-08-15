@@ -83,7 +83,7 @@ public class LexicographicRankingFunction extends RankingFunction {
 			if (!first) {
 				sb.append(", ");
 			}
-			sb.append(var.getGloballyUniqueId());
+			sb.append(var.getIdentifier());
 			first = false;
 		}
 		sb.append(") = <");

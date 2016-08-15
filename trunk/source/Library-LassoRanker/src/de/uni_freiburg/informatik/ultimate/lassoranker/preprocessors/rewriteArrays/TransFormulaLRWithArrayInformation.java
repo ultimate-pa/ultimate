@@ -250,7 +250,7 @@ public class TransFormulaLRWithArrayInformation {
 
 
 	private void addForeignInVarAndOutVar(final RankVar value) {
-		final String name = value.getGloballyUniqueId() + "_ForeignInOutVar";
+		final String name = value.getIdentifier() + "_ForeignInOutVar";
 		final Sort sort = ReplacementVarUtils.getDefinition(value).getSort();
 		final TermVariable inOutVar = mScript.constructFreshTermVariable(name, sort);
 		assert !mTransFormulaLR.getInVars().containsKey(value);

@@ -79,7 +79,7 @@ public class MatchInOutVars extends TransitionPreprocessor {
 		for (final Map.Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
 			if (!tf.getInVars().containsKey(entry.getKey())) {
 				final String id = SmtUtils.removeSmtQuoteCharacters(
-						entry.getKey().getGloballyUniqueId());
+						entry.getKey().getIdentifier());
 				final TermVariable inVar = mVariableManager.constructFreshTermVariable(
 						id, entry.getValue().getSort()
 				);
@@ -92,7 +92,7 @@ public class MatchInOutVars extends TransitionPreprocessor {
 		for (final Map.Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
 			if (!tf.getOutVars().containsKey(entry.getKey())) {
 				final TermVariable inVar = mVariableManager.constructFreshTermVariable(
-						entry.getKey().getGloballyUniqueId(),
+						entry.getKey().getIdentifier(),
 						entry.getValue().getSort()
 				);
 				tf.addOutVar(entry.getKey(), inVar);
