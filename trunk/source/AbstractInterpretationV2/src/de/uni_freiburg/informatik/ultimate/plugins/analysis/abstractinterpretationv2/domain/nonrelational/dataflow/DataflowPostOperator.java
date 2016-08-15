@@ -26,8 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -41,8 +47,19 @@ public class DataflowPostOperator implements IAbstractPostOperator<DataflowState
 
 	@Override
 	public List<DataflowState> apply(final DataflowState oldstate, final CodeBlock transition) {
-		// TODO Auto-generated method stub
-		return null;
+		final TransFormula tf = transition.getTransitionFormula();
+		if (tf.getOutVars().isEmpty()) {
+			return Collections.singletonList(oldstate);
+		}
+
+		final Map<IProgramVar, CodeBlock> reach = new HashMap<>(oldstate.getReachingDefinitions());
+
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
+			reach.put(entry.getKey(), transition);
+		}
+
+		return Collections.singletonList(
+				new DataflowState(oldstate.getVariables(), oldstate.getDef(), oldstate.getUse(), reach));
 	}
 
 	@Override

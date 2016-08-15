@@ -49,6 +49,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public class DataflowDomain implements IAbstractDomain<DataflowState, CodeBlock, IProgramVar> {
 
+	private final DataflowPostOperator mPost;
+	private final DataflowMergeOperator mMerge;
+
+	public DataflowDomain() {
+		mPost = new DataflowPostOperator();
+		mMerge = new DataflowMergeOperator();
+	}
+
 	@Override
 	public DataflowState createFreshState() {
 		return new DataflowState();
@@ -56,24 +64,29 @@ public class DataflowDomain implements IAbstractDomain<DataflowState, CodeBlock,
 
 	@Override
 	public IAbstractStateBinaryOperator<DataflowState> getWideningOperator() {
-		return null;
+		return mMerge;
 	}
 
 	@Override
 	public IAbstractStateBinaryOperator<DataflowState> getMergeOperator() {
-		// TODO Auto-generated method stub
-		return null;
+		return mMerge;
 	}
 
 	@Override
 	public IAbstractPostOperator<DataflowState, CodeBlock, IProgramVar> getPostOperator() {
-		// TODO Auto-generated method stub
-		return null;
+		return mPost;
 	}
 
 	@Override
 	public int getDomainPrecision() {
-		// TODO Auto-generated method stub
-		return 0;
+		throw new UnsupportedOperationException("this domain has no precision");
+	}
+
+	private static final class DataflowMergeOperator implements IAbstractStateBinaryOperator<DataflowState> {
+
+		@Override
+		public DataflowState apply(final DataflowState first, final DataflowState second) {
+			return first.union(second);
+		}
 	}
 }

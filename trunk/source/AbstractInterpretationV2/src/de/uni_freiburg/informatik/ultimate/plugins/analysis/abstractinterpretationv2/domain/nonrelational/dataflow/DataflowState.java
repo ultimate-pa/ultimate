@@ -27,6 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -34,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -43,40 +48,89 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public class DataflowState implements IAbstractState<DataflowState, CodeBlock, IProgramVar> {
 
+	private final Set<IProgramVar> mVars;
+	private final Map<IProgramVar, Set<CodeBlock>> mDef;
+	private final Map<IProgramVar, Set<CodeBlock>> mUse;
+	private final Map<IProgramVar, CodeBlock> mReachDef;
+
+	DataflowState() {
+		this(new HashSet<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
+	}
+
+	DataflowState(final Set<IProgramVar> vars, final Map<IProgramVar, Set<CodeBlock>> def,
+			final Map<IProgramVar, Set<CodeBlock>> use, final Map<IProgramVar, CodeBlock> reachdef) {
+		assert vars != null;
+		assert def != null;
+		assert use != null;
+		assert reachdef != null;
+		mVars = vars;
+		mDef = def;
+		mUse = use;
+		mReachDef = reachdef;
+	}
+
 	@Override
 	public DataflowState addVariable(final IProgramVar variable) {
-		// TODO Auto-generated method stub
-		return null;
+		if (mVars.contains(variable)) {
+			return this;
+		}
+		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars, mVars.size() + 1);
+		vars.add(variable);
+		return new DataflowState(vars, mDef, mUse, mReachDef);
 	}
 
 	@Override
 	public DataflowState removeVariable(final IProgramVar variable) {
-		// TODO Auto-generated method stub
-		return null;
+		if (!mVars.contains(variable)) {
+			return this;
+		}
+		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars);
+		vars.remove(variable);
+		final Map<IProgramVar, Set<CodeBlock>> def = AbsIntUtil.getFreshMap(mDef);
+		def.remove(variable);
+		final Map<IProgramVar, Set<CodeBlock>> use = AbsIntUtil.getFreshMap(mUse);
+		use.remove(variable);
+		final Map<IProgramVar, CodeBlock> reachdef = AbsIntUtil.getFreshMap(mReachDef);
+		use.remove(variable);
+		return new DataflowState(vars, def, use, reachdef);
 	}
 
 	@Override
 	public DataflowState addVariables(final Collection<IProgramVar> variables) {
-		// TODO Auto-generated method stub
-		return null;
+		if (variables == null || variables.isEmpty()) {
+			return this;
+		}
+		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars, mVars.size() + variables.size());
+		vars.addAll(variables);
+		return new DataflowState(vars, mDef, mUse, mReachDef);
 	}
 
 	@Override
 	public DataflowState removeVariables(final Collection<IProgramVar> variables) {
-		// TODO Auto-generated method stub
-		return null;
+		if (variables == null || variables.isEmpty()) {
+			return this;
+		}
+		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars);
+		final Map<IProgramVar, Set<CodeBlock>> def = AbsIntUtil.getFreshMap(mDef);
+		final Map<IProgramVar, Set<CodeBlock>> use = AbsIntUtil.getFreshMap(mUse);
+		final Map<IProgramVar, CodeBlock> reachdef = AbsIntUtil.getFreshMap(mReachDef);
+		variables.stream().forEach(a -> {
+			vars.remove(a);
+			def.remove(a);
+			use.remove(a);
+			reachdef.remove(a);
+		});
+		return new DataflowState(vars, def, use, reachdef);
 	}
 
 	@Override
 	public boolean containsVariable(final IProgramVar var) {
-		// TODO Auto-generated method stub
-		return false;
+		return mVars.contains(var);
 	}
 
 	@Override
 	public Set<IProgramVar> getVariables() {
-		// TODO Auto-generated method stub
-		return null;
+		return Collections.unmodifiableSet(mVars);
 	}
 
 	@Override
@@ -87,39 +141,74 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 
 	@Override
 	public boolean isEmpty() {
-		// TODO Auto-generated method stub
-		return false;
+		return mVars.isEmpty();
 	}
 
 	@Override
 	public boolean isBottom() {
-		// TODO Auto-generated method stub
+		// A basic dataflow state is never bottom
 		return false;
 	}
 
 	@Override
 	public boolean isEqualTo(final DataflowState other) {
-		// TODO Auto-generated method stub
-		return false;
+		if (other == null) {
+			return false;
+		}
+		if (!other.mVars.equals(mVars)) {
+			return false;
+		}
+		if (!other.mDef.equals(mDef)) {
+			return false;
+		}
+		if (!other.mUse.equals(mUse)) {
+			return false;
+		}
+		if (!other.mReachDef.equals(mReachDef)) {
+			return false;
+		}
+		return true;
 	}
 
 	@Override
-	public de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState.SubsetResult
-			isSubsetOf(final DataflowState other) {
-		// TODO Auto-generated method stub
-		return null;
+	public SubsetResult isSubsetOf(final DataflowState other) {
+		if (isEqualTo(other)) {
+			return SubsetResult.EQUAL;
+		}
+		return SubsetResult.NONE;
 	}
 
 	@Override
 	public Term getTerm(final Script script, final Boogie2SMT bpl2smt) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Cannot create Term from DataflowState");
 	}
 
 	@Override
 	public String toLogString() {
-		// TODO Auto-generated method stub
-		return null;
+		final StringBuilder sb = new StringBuilder();
+		sb.append('{');
+		mReachDef.entrySet().stream().sorted().forEach(a -> {
+			sb.append(a.getKey().getIdentifier());
+			sb.append("->");
+			sb.append(a.getValue());
+		});
+		sb.append('}');
+		return sb.toString();
 	}
 
+	Map<IProgramVar, Set<CodeBlock>> getDef() {
+		return Collections.unmodifiableMap(mDef);
+	}
+
+	Map<IProgramVar, Set<CodeBlock>> getUse() {
+		return Collections.unmodifiableMap(mUse);
+	}
+
+	Map<IProgramVar, CodeBlock> getReachingDefinitions() {
+		return Collections.unmodifiableMap(mReachDef);
+	}
+
+	DataflowState union(final DataflowState other) {
+		return null;
+	}
 }
