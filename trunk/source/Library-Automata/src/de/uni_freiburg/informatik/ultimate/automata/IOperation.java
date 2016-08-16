@@ -104,7 +104,7 @@ public interface IOperation<LETTER, STATE> {
 	 * Get information about the runtime and resource consumption of the
 	 * operation. Delivering this information is optional.
 	 */
-	default AutomataOperationBenchmark getAutomataOperationBenchmark() {
+	default AutomataOperationStatistics getAutomataOperationStatistics() {
 		return null;
 	}
 }

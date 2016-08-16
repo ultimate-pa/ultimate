@@ -36,12 +36,12 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
 /**
- * Object that stores benchmark data of an automata library operation
+ * Object that stores statistics of an automata library operation
  * Stores a single row of a CSV as a key-value map.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class AutomataOperationBenchmark implements ICsvProviderProvider<Object> {
+public class AutomataOperationStatistics implements ICsvProviderProvider<Object> {
 	
 	private final LinkedHashMap<String, Object> mKeyValueMap = new LinkedHashMap<>();
 
