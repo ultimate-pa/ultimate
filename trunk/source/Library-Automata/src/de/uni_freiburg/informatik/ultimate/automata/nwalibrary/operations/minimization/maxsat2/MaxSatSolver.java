@@ -47,16 +47,22 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
  * be a globally optimal solution (which is a solution in which the number
  * of true-assigned variables is maximal).
  * 
- * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <V> variable type
  */
 @SuppressWarnings("squid:UselessParenthesesCheck")
 public class MaxSatSolver<V> extends AMaxSatSolver<V> {
-	private final SolverStack<V> mStack;
+	private final SolverStack mStack;
 	
 	// TODO temporary improvement, should become more sophisticated
 	private int mNumberOfNonHornClauses;
+	
+	/*
+	 * used for debugging, can be very expensive for bigger automata!
+	 * TODO remove after thoroughly testing
+	 */
+	private final boolean mShowExpensiveDebugLogs = false;
 	
 	/**
 	 * @param services Ultimate services
@@ -64,7 +70,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 	public MaxSatSolver(final AutomataLibraryServices services) {
 		super(services);
 		
-		mStack = new SolverStack<V>();
+		mStack = new SolverStack();
 		synchronizeStack();
 	}
 
@@ -88,9 +94,9 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 		}
 		
 		final Clause<V> clause = new Clause<V>(this, positiveAtoms, negativeAtoms);
-//		if (mLogger.isDebugEnabled()) {
-//			mLogger.debug("creating clause: " + clause);
-//		}
+		if (mShowExpensiveDebugLogs && mLogger.isDebugEnabled()) {
+			mLogger.debug("creating clause: " + clause);
+		}
 		
 		if (clause.isEquivalentToTrue()) {
 			mClauses++;
@@ -105,18 +111,12 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 				throw new UnsupportedOperationException(
 						"clause set is equivalent to false");
 			} else  {
-//				if (mLogger.isDebugEnabled()) {
-//					mLogger.debug("adding clause");
-//				}
 				assert clause.getUnsetAtoms() > 0;
 				for (final V var :clause.getNegativeAtoms()) {
-//					mLogger.debug("ONC " + mOccursNegative);
 					mOccursNegative.addPair(var, clause);
-//					mLogger.debug("ONC " + mOccursNegative);
 				}
 				for (final V var :clause.getPositiveAtoms()) {
 					mOccursPositive.addPair(var, clause);
-//					mLogger.debug("OPC " + mOccursPositive);
 				}
 				if (clause.getUnsetAtoms() == 1) {
 					mPropagatees.add(clause);
@@ -151,7 +151,8 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 			if (result != null) {
 				assert (! mVariablesIrrevocablySet.containsKey(var)) :
 					"Unsynchronized assignment data structures.";
-				// TODO cache result 
+				// TODO cache result
+				// TODO get rid of this Boolean
 				return result;
 			}
 		}
@@ -185,9 +186,9 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 
 		@Override
 	protected void setVariable(final V var, final boolean newStatus) {
-//		if (mLogger.isDebugEnabled()) {
-//			mLogger.debug("setting variable " + var + " to " + newStatus);
-//		}
+		if (mShowExpensiveDebugLogs && mLogger.isDebugEnabled()) {
+			mLogger.debug("setting variable " + var + " to " + newStatus);
+		}
 		assert mVariables.contains(var) : "unknown variable";
 		assert !mVariablesIrrevocablySet.containsKey(var) : "variable already set";
 //		assert checkClausesConsistent() : "clauses inconsistent";
@@ -228,6 +229,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 
 	@Override
 	protected void backtrack(final V var) {
+		mLogger.debug("backtracking");
 		mWrongDecisions ++;
 		final Set<V> variablesIncorrectlySet = mStack.getVarTempSet().keySet();
 		popStack();
@@ -325,138 +327,136 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 //		}
 		return poppedLowestLevel;
 	}
-}
-
-/**
- * Encapsulates a solver stack.
- *
- * @param <V> variably type
- */
-class SolverStack<V> {
-	private final ArrayDeque<StackContent> mStackInner;
-	private StackContent mLowestLevel;
-	private boolean mIsLowestLevel;
-	
-	public SolverStack() {
-		this.mStackInner = new ArrayDeque<>();
-		mLowestLevel = new StackContent();
-		mIsLowestLevel = true;
-	}
-
-	public boolean pop() {
-		if (mStackInner.size() > 0) {
-			mStackInner.pop();
-			mIsLowestLevel = mStackInner.isEmpty();
-			return false;
-		} else {
-			mLowestLevel = new StackContent();
-			return true;
-		}
-	}
-	
-	public void push(final V var) {
-		mStackInner.push(new StackContent(var));
-		mIsLowestLevel = false;
-	}
-	
-	public boolean isLowestStackLevel() {
-		assert (mIsLowestLevel == mStackInner.isEmpty());
-		return mIsLowestLevel;
-	}
-	
-	public Map<V, Boolean> getVarTempSet() {
-		return getCurrentLevel().mVariablesTemporarilySet;
-	}
-	
-	public V getDecision() {
-		return getCurrentLevel().mVariableDecision;
-	}
-	
-	public Set<Clause<V>> getMarkedClauses() {
-		return getCurrentLevel().mClausesMarkedForRemoval;
-	}
 	
 	/**
-	 * NOTE: Must be used by alternation of <code>hasNext()</code> and
-	 * <code>next()</code>. <br>
-	 * 
-	 * NOTE: Do not edit the stack during iteration!
-	 * 
-	 * @return unsynchronized iterator over all temporary maps
+	 * Encapsulates a solver stack.
 	 */
-	public Iterator<Map<V, Boolean>> iterator() {
-		return new Iterator<Map<V, Boolean>>() {
-			private final Iterator<StackContent> mIt = mStackInner.iterator();
-			private boolean mIsAtBottom = false;
-
-			@Override
-			public boolean hasNext() {
-				final boolean hasStackNext = mIt.hasNext();
-				if (hasStackNext) {
-					return true;
-				} else if (mIsAtBottom) {
-					return false;
-				}
-				mIsAtBottom = true;
+	private class SolverStack {
+		private final ArrayDeque<StackContent> mStackInner;
+		private StackContent mLowestLevel;
+		private boolean mIsLowestLevel;
+		
+		public SolverStack() {
+			this.mStackInner = new ArrayDeque<>();
+			mLowestLevel = new StackContent();
+			mIsLowestLevel = true;
+		}
+	
+		public boolean pop() {
+			if (! mStackInner.isEmpty()) {
+				mStackInner.pop();
+				mIsLowestLevel = mStackInner.isEmpty();
+				return false;
+			} else {
+				mLowestLevel = new StackContent();
 				return true;
 			}
-
+		}
+		
+		public void push(final V var) {
+			mStackInner.push(new StackContent(var));
+			mIsLowestLevel = false;
+		}
+		
+		public boolean isLowestStackLevel() {
+			assert (mIsLowestLevel == mStackInner.isEmpty());
+			return mIsLowestLevel;
+		}
+		
+		public Map<V, Boolean> getVarTempSet() {
+			return getCurrentLevel().mVariablesTemporarilySet;
+		}
+		
+		public V getDecision() {
+			return getCurrentLevel().mVariableDecision;
+		}
+		
+		public Set<Clause<V>> getMarkedClauses() {
+			return getCurrentLevel().mClausesMarkedForRemoval;
+		}
+		
+		/**
+		 * NOTE: Must be used by alternation of <code>hasNext()</code> and
+		 * <code>next()</code>. <br>
+		 * 
+		 * NOTE: Do not edit the stack during iteration!
+		 * 
+		 * @return unsynchronized iterator over all temporary maps
+		 */
+		public Iterator<Map<V, Boolean>> iterator() {
+			return new Iterator<Map<V, Boolean>>() {
+				private final Iterator<StackContent> mIt = mStackInner.iterator();
+				private boolean mIsAtBottom;
+	
+				@Override
+				public boolean hasNext() {
+					final boolean hasStackNext = mIt.hasNext();
+					if (hasStackNext) {
+						return true;
+					} else if (mIsAtBottom) {
+						return false;
+					}
+					mIsAtBottom = true;
+					return true;
+				}
+	
+				@Override
+				public Map<V, Boolean> next() {
+					final StackContent level = mIsAtBottom
+							? mLowestLevel
+							: mIt.next();
+					return level.mVariablesTemporarilySet;
+				}
+			};
+		}
+		
+		private StackContent getCurrentLevel() {
+			final StackContent sc = mIsLowestLevel
+					? mLowestLevel
+					: mStackInner.peek();
+			return sc;
+		}
+		
+		/**
+		 * Contents in one stack level.
+		 */
+		private class StackContent {
+			private final V mVariableDecision;
+			private final Map<V, Boolean> mVariablesTemporarilySet;
+			private final Set<Clause<V>> mClausesMarkedForRemoval;
+			
+			public StackContent() {
+				this(null, false);
+			}
+			
+			public StackContent(final V variable) {
+				this(variable, false);
+				assert (variable != null) : "Do not set the variable to null!";
+			}
+			
+			@SuppressWarnings("squid:S1172")
+			private StackContent(final V variable, final boolean dummy) {
+				this.mVariableDecision = variable;
+				this.mVariablesTemporarilySet = new HashMap<>();
+				this.mClausesMarkedForRemoval = new LinkedHashSet<Clause<V>>();
+			}
+			
 			@Override
-			public Map<V, Boolean> next() {
-				final StackContent level = mIsAtBottom
-						? mLowestLevel
-						: mIt.next();
-				return level.mVariablesTemporarilySet;
+			public String toString() {
+				final StringBuilder b = new StringBuilder();
+				b.append("<");
+				if (mVariableDecision == null) {
+					b.append("lowest level, ");
+				} else {
+					b.append(mVariableDecision);
+					b.append(" = current decision, ");
+				}
+				b.append(mVariablesTemporarilySet.size());
+				b.append(" variables temporarily assigned, ");
+				b.append(this.mClausesMarkedForRemoval.size());
+				b.append(" clauses temporarily satisfied>");
+				return b.toString();
 			}
-		};
-	}
-	
-	private StackContent getCurrentLevel() {
-		final StackContent sc = mIsLowestLevel
-				? mLowestLevel
-				: mStackInner.peek();
-		return sc;
-	}
-	
-	/**
-	 * Contents in one stack level.
-	 */
-	private class StackContent {
-		private final V mVariableDecision;
-		private final Map<V, Boolean> mVariablesTemporarilySet;
-		private final Set<Clause<V>> mClausesMarkedForRemoval;
-		
-		public StackContent() {
-			this(null, false);
-		}
-		
-		public StackContent(final V variable) {
-			this(variable, false);
-			assert (variable != null) : "Do not set the variable to null!";
-		}
-		
-		@SuppressWarnings("squid:S1172")
-		private StackContent(final V variable, final boolean dummy) {
-			this.mVariableDecision = variable;
-			this.mVariablesTemporarilySet = new HashMap<>();
-			this.mClausesMarkedForRemoval = new LinkedHashSet<Clause<V>>();
-		}
-		
-		@Override
-		public String toString() {
-			final StringBuilder b = new StringBuilder();
-			b.append("<");
-			if (mVariableDecision == null) {
-				b.append("lowest level, ");
-			} else {
-				b.append(mVariableDecision);
-				b.append(" = current decision, ");
-			}
-			b.append(mVariablesTemporarilySet.size());
-			b.append(" variables temporarily assigned, ");
-			b.append(this.mClausesMarkedForRemoval.size());
-			b.append(" clauses temporarily satisfied>");
-			return b.toString();
 		}
 	}
 }

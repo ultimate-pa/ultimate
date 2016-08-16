@@ -217,7 +217,7 @@ class Clause<V> {
 			sb.append(" --> ");
 		}
 		if (mPositiveAtoms.length == 0) {
-			sb.append("true");
+			sb.append("false");
 		} else {
 			it = Arrays.asList(mPositiveAtoms).iterator();
 			while(it.hasNext()) {
