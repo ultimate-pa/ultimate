@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
+ * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -66,8 +66,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * we have either few long clauses or many short clauses (for all types of
  * transitions).
  * 
- * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Tischner
  * @param <LETTER> letter type
  * @param <STATE> state type
@@ -291,14 +291,14 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 	}
 
 	/**
-	 * tells the solver that two states are different
+	 * Tells the solver that two states are different.
 	 */
 	private void setStatesDifferent(final Doubleton<STATE> doubleton) {
 		mSolver.addHornClause(consArr(doubleton), null);
 	}
 
 	/**
-	 * tells the solver that two states are different
+	 * Tells the solver that two states are different.
 	 */
 	private void setStatesDifferent(final STATE state1, final STATE state2) {
 		setStatesDifferent(mStatePairs.get(state1, state2));
@@ -390,6 +390,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 			}
 		}
 	}
+	
 	private void generateTransitionConstraint_Internal_General(
 			final STATE predState1, final STATE predState2,
 			final Doubleton<STATE> predDoubleton) {

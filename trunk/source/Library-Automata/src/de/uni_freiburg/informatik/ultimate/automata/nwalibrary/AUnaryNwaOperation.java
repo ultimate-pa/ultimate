@@ -60,7 +60,7 @@ public abstract class AUnaryNwaOperation<LETTER, STATE>
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand "
-				+ mOperand.sizeInformation() + '.';
+				+ mOperand.sizeInformation();
 	}
 	
 	/**

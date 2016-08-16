@@ -65,12 +65,12 @@ public abstract class AOperation<LETTER, STATE>
 	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ".";
+		return "Start " + operationName() + '.';
 	}
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ".";
+		return "Finished " + operationName() + '.';
 	}
 	
 	@Override
