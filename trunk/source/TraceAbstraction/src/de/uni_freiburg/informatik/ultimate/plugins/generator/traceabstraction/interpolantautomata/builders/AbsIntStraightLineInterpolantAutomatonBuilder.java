@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -22,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class AbsIntCanonicalInterpolantAutomatonBuilder implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
+public class AbsIntStraightLineInterpolantAutomatonBuilder implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
 
 	private static final boolean CANNIBALIZE = false;
 	private static final long PRINT_PREDS_LIMIT = 30;
@@ -32,10 +33,10 @@ public class AbsIntCanonicalInterpolantAutomatonBuilder implements IInterpolantA
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
 	private final SmtManager mSmtManager;
 
-	public AbsIntCanonicalInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
-			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
-			final PredicateUnifier predUnifier, final SmtManager smtManager) {
+	public AbsIntStraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
+	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
+	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
+	        final PredicateUnifier predUnifier, final SmtManager smtManager) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSmtManager = smtManager;
@@ -47,13 +48,30 @@ public class AbsIntCanonicalInterpolantAutomatonBuilder implements IInterpolantA
 		return mResult;
 	}
 
+	private NestedWordAutomaton<CodeBlock, IPredicate> getSimpleTermAutomaton(
+	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final Set<Term> terms,
+	        final PredicateUnifier predicateUnifier) {
+
+		mLogger.info("Creating automaton from AI predicates.");
+
+		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<CodeBlock, IPredicate>(
+		        new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
+		        oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
+		
+		final Set<IPredicate> predicates = new HashSet<>();
+		
+		result.addState(true, false, predicateUnifier.getTruePredicate());
+		
+		return null;
+	}
+
 	private NestedWordAutomaton<CodeBlock, IPredicate> getTermAutomaton(
-			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final Set<Term> terms,
-			final PredicateUnifier predicateUnifier) {
+	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final Set<Term> terms,
+	        final PredicateUnifier predicateUnifier) {
 		mLogger.info("Creating automaton from AI predicates (Cannibalize=" + CANNIBALIZE + ").");
 		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<CodeBlock, IPredicate>(
-				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
-				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
+		        new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
+		        oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
 		final Set<IPredicate> predicates = new HashSet<>();
 		result.addState(true, false, predicateUnifier.getTruePredicate());
 		predicates.add(predicateUnifier.getTruePredicate());
@@ -76,11 +94,11 @@ public class AbsIntCanonicalInterpolantAutomatonBuilder implements IInterpolantA
 
 		if (PRINT_PREDS_LIMIT < predicates.size()) {
 			mLogger.info("Using " + predicates.size() + " predicates from AI: " + String.join(",",
-					predicates.stream().limit(PRINT_PREDS_LIMIT).map(a -> a.toString()).collect(Collectors.toList()))
-					+ "...");
+			        predicates.stream().limit(PRINT_PREDS_LIMIT).map(a -> a.toString()).collect(Collectors.toList()))
+			        + "...");
 		} else {
 			mLogger.info("Using " + predicates.size() + " predicates from AI: "
-					+ String.join(",", predicates.stream().map(a -> a.toString()).collect(Collectors.toList())));
+			        + String.join(",", predicates.stream().map(a -> a.toString()).collect(Collectors.toList())));
 		}
 
 		return result;
