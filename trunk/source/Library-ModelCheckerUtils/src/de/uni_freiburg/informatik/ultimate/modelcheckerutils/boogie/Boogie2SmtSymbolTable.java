@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
@@ -30,6 +30,7 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -57,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 /**
  * Stores a mapping from Boogie identifiers to BoogieVars and a mapping from TermVariables that are representatives of
  * BoogieVars to these BoogieVars.
- * 
+ *
  * @author Matthias Heizmann
  *
  */
@@ -68,7 +69,7 @@ public class Boogie2SmtSymbolTable {
 	 * <li>no function has to be declared, function is already defined in the logic
 	 * <li>given value has to be used in the translation.
 	 * </ul>
-	 * 
+	 *
 	 */
 	static final String s_BUILTINIDENTIFIER = "builtin";
 
@@ -211,7 +212,7 @@ public class Boogie2SmtSymbolTable {
 
 	/**
 	 * Get BoogieVar for in our outparams.
-	 * 
+	 *
 	 * @param varId
 	 *            The id of the param.
 	 * @param procedure
@@ -333,7 +334,8 @@ public class Boogie2SmtSymbolTable {
 	 * there is a NamedAttribute with name whose value is not a single StringLiteral. Returns null if there is no
 	 * NamedAttribute with name n.
 	 */
-	public static String checkForAttributeDefinedIdentifier(final Map<String, Expression[]> attributes, final String n) {
+	public static String checkForAttributeDefinedIdentifier(final Map<String, Expression[]> attributes,
+			final String n) {
 		final Expression[] values = attributes.get(n);
 		if (values == null) {
 			// no such name
@@ -420,6 +422,36 @@ public class Boogie2SmtSymbolTable {
 	}
 
 	/**
+	 * Return old variables.
+	 */
+	public Map<String, IProgramVar> getOldVars() {
+		return Collections.unmodifiableMap(mOldGlobals);
+	}
+
+	/**
+	 * Return all variables that are in the scope of this procedure (i.e., all in, out and local vars) except for old
+	 * vars.
+	 */
+	public Map<String, LocalBoogieVar> getLocals(final String procedurename) {
+		final Map<String, LocalBoogieVar> rtr = new HashMap<>();
+		addLocals(rtr, mImplementationLocals, procedurename);
+		addLocals(rtr, mImplementationInParam, procedurename);
+		addLocals(rtr, mImplementationOutParam, procedurename);
+		return rtr;
+	}
+
+	private void addLocals(final Map<String, LocalBoogieVar> current, final Map<String, Map<String, BoogieVar>> toAdd,
+			final String procedurename) {
+		final Map<String, BoogieVar> map = toAdd.get(procedurename);
+		if (map == null) {
+			return;
+		}
+		for (final Entry<String, BoogieVar> entry : map.entrySet()) {
+			current.put(entry.getKey(), (LocalBoogieVar) entry.getValue());
+		}
+	}
+
+	/**
 	 * Return global constants;
 	 */
 	public Map<String, BoogieConst> getConsts() {
@@ -497,7 +529,7 @@ public class Boogie2SmtSymbolTable {
 
 	/**
 	 * Declare in or our parameters of a specification.
-	 * 
+	 *
 	 * @param procId
 	 *            name of procedure
 	 * @param vl
@@ -507,8 +539,8 @@ public class Boogie2SmtSymbolTable {
 	 * @param declarationInformation
 	 *            StorageClass of the constructed BoogieVar
 	 */
-	private void declareParams(final String procId, final VarList[] vl, final Map<String, Map<String, BoogieVar>> specMap,
-			final DeclarationInformation declarationInformation) {
+	private void declareParams(final String procId, final VarList[] vl,
+			final Map<String, Map<String, BoogieVar>> specMap, final DeclarationInformation declarationInformation) {
 		for (int i = 0; i < vl.length; i++) {
 			final IType type = vl[i].getType().getBoogieType();
 			final String[] ids = vl[i].getIdentifiers();
@@ -539,7 +571,7 @@ public class Boogie2SmtSymbolTable {
 	/**
 	 * Construct BoogieVar and store it. Expects that no BoogieVar with the same identifier has already been
 	 * constructed.
-	 * 
+	 *
 	 * @param identifier
 	 * @param procedure
 	 * @param iType
@@ -548,8 +580,8 @@ public class Boogie2SmtSymbolTable {
 	 *            BoogieASTNode for which errors (e.g., unsupported syntax) are reported
 	 * @param declarationInformation
 	 */
-	private LocalBoogieVar constructLocalBoogieVar(final String identifier, final String procedure, final IType iType, final VarList varList,
-			final DeclarationInformation declarationInformation) {
+	private LocalBoogieVar constructLocalBoogieVar(final String identifier, final String procedure, final IType iType,
+			final VarList varList, final DeclarationInformation declarationInformation) {
 		final Sort sort = mTypeSortTranslator.getSort(iType, varList);
 
 		final String name = constructBoogieVarName(identifier, procedure, false, false);
@@ -571,11 +603,12 @@ public class Boogie2SmtSymbolTable {
 	/**
 	 * Construct global BoogieVar and the corresponding oldVar and store both. Expects that no local BoogieVarwith the
 	 * same identifier has already been constructed.
-	 * 
+	 *
 	 * @param boogieASTNode
 	 *            BoogieASTNode for which errors (e.g., unsupported syntax) are reported
 	 */
-	private BoogieNonOldVar constructGlobalBoogieVar(final String identifier, final IType iType, final VarList varlist) {
+	private BoogieNonOldVar constructGlobalBoogieVar(final String identifier, final IType iType,
+			final VarList varlist) {
 		final Sort sort = mTypeSortTranslator.getSort(iType, varlist);
 		final String procedure = null;
 		final DeclarationInformation declarationInformation = new DeclarationInformation(StorageClass.GLOBAL, null);
@@ -630,7 +663,8 @@ public class Boogie2SmtSymbolTable {
 		return defaultConstant;
 	}
 
-	private String constructBoogieVarName(final String identifier, final String procedure, final boolean isGlobal, final boolean isOldvar) {
+	private String constructBoogieVarName(final String identifier, final String procedure, final boolean isGlobal,
+			final boolean isOldvar) {
 		String name;
 		if (isGlobal) {
 			assert procedure == null;
@@ -646,8 +680,8 @@ public class Boogie2SmtSymbolTable {
 		return name;
 	}
 
-	IProgramNonOldVar constructAuxiliaryGlobalBoogieVar(final String identifier, final String procedure, final IType iType,
-			final VarList varList) {
+	IProgramNonOldVar constructAuxiliaryGlobalBoogieVar(final String identifier, final String procedure,
+			final IType iType, final VarList varList) {
 		final BoogieNonOldVar bv = constructGlobalBoogieVar(identifier, iType, varList);
 		mGlobals.put(identifier, bv);
 		mOldGlobals.put(identifier, bv.getOldVar());
