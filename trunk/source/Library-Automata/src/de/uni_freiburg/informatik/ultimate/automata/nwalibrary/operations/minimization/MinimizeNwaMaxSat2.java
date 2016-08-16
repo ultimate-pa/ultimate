@@ -219,11 +219,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 				mState2EquivalenceClass.put(state, equivalenceClass);
 			}
 		}
-		mLogger.warn("before vars");
 		generateVariables();
-		mLogger.warn("after vars");
 		generateTransitionConstraints();
-		mLogger.warn("after transitions");
 		generateTransitivityConstraints();
 		mLogger.info(
 				"Number of clauses for: -> acceptance: "
