@@ -778,7 +778,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			mLogger.info("reporting benchmark results");
 			final ICsvProviderProvider bench = null;
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-					new BenchmarkResult<>(Activator.PLUGIN_ID, "automata script interpreter benchmark results", bench));
+					new BenchmarkResult<Object>(Activator.PLUGIN_ID, "automata script interpreter benchmark results", bench));
 		}
 		reportToLogger(LoggerSeverity.DEBUG, "Reporting results...");
 		reportResult(interpretationFinished, errorMessage);
