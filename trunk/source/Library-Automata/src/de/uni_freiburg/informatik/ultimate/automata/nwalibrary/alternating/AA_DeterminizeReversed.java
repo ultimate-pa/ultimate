@@ -42,7 +42,7 @@ public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, BitSet
 	private final NestedWordAutomaton<LETTER, BitSet> mResultAutomaton;
 
 	public AA_DeterminizeReversed(final AutomataLibraryServices ultimateServiceProvider,
-			final AlternatingAutomaton<LETTER, BitSet> alternatingAutomaton){
+			final AlternatingAutomaton<LETTER, BitSet> alternatingAutomaton) {
 		mResultAutomaton = new NestedWordAutomaton<LETTER, BitSet>(
 				ultimateServiceProvider,
 				alternatingAutomaton.getAlphabet(),
@@ -52,17 +52,17 @@ public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, BitSet
 			);
 		final LinkedList<BitSet> newStates = new LinkedList<BitSet>();
 		newStates.add(alternatingAutomaton.getFinalStatesBitVector());
-		while(!newStates.isEmpty()){
+		while (!newStates.isEmpty()) {
 			final BitSet state = newStates.getFirst();
 			final boolean isInitial = (state == alternatingAutomaton.getFinalStatesBitVector());
 			final boolean isFinal = alternatingAutomaton.getAcceptingFunction().getResult(state);
 			mResultAutomaton.addState(isInitial, isFinal, state);
-			for(final LETTER letter : alternatingAutomaton.getAlphabet()){
+			for (final LETTER letter : alternatingAutomaton.getAlphabet()) {
 				final BitSet nextState = (BitSet) state.clone();
 				alternatingAutomaton.resolveLetter(letter, nextState);
 				mResultAutomaton.addInternalTransition(state, letter, nextState);
-				if(!mResultAutomaton.getStates().contains(nextState)){
-					if(!newStates.contains(nextState)){
+				if (!mResultAutomaton.getStates().contains(nextState)) {
+					if (!newStates.contains(nextState)) {
 						newStates.add(nextState);
 					}
 				}
@@ -72,27 +72,27 @@ public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, BitSet
 	}
 	
 	@Override
-	public String operationName(){
+	public String operationName() {
 		return "AA_DeterminizeReversed";
 	}
 
 	@Override
-	public String startMessage(){
+	public String startMessage() {
 		return "Start: " + operationName();
 	}
 
 	@Override
-	public String exitMessage(){
+	public String exitMessage() {
 		return "Exit: " + operationName();
 	}
 
 	@Override
-	public INestedWordAutomaton<LETTER, BitSet> getResult() throws AutomataLibraryException{
+	public INestedWordAutomaton<LETTER, BitSet> getResult() throws AutomataLibraryException {
 		return mResultAutomaton;
 	}
 
 	@Override
-	public boolean checkResult(final StateFactory<BitSet> stateFactory) throws AutomataLibraryException{
+	public boolean checkResult(final StateFactory<BitSet> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
 }

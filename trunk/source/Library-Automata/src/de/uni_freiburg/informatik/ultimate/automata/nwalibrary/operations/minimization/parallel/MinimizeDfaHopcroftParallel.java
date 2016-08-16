@@ -122,7 +122,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE>
 	 * This variable will be true as soon as the mappings of states to integer
 	 * are entirely computed.
 	 * 
-	 * Christian: 2016-08-02: This variable is neither used nor changed.
+	 * <p>Christian: 2016-08-02: This variable is neither used nor changed.
 	 */
 	private final boolean mInitialized = false;
 
@@ -542,7 +542,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE>
 	/**
 	 * Getter for mappings from integer to state.
 	 * 
-	 * @return
+	 * @return state
 	 */
 	public ArrayList<STATE> getInt2State() {
 		return mInt2state;
@@ -551,7 +551,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE>
 	/**
 	 * Getter for mappings from state to integer.
 	 * 
-	 * @return
+	 * @return integer
 	 */
 	public HashMap<STATE, Integer> getState2Int() {
 		return mState2int;

@@ -32,64 +32,62 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class BooleanExpression{
+public class BooleanExpression {
 
-	public BooleanExpression(final BitSet alpha, final BitSet beta){
-		this.alpha = alpha;
-		this.beta = beta;
+	public BooleanExpression(final BitSet alpha, final BitSet beta) {
+		this.mAlpha = alpha;
+		this.mBeta = beta;
 	}
-	private final BitSet alpha;
-	private final BitSet beta;
-	private BooleanExpression nextConjunctExpression;
 	
-	public void addConjunction(final BooleanExpression booleanExpression){
-		if(!containsConjunction(booleanExpression)){
-			if(nextConjunctExpression != null){
-				nextConjunctExpression.addConjunction(booleanExpression);
-			}
-			else{
-				nextConjunctExpression = booleanExpression;
+	private final BitSet mAlpha;
+	private final BitSet mBeta;
+	private BooleanExpression mNextConjunctExpression;
+	
+	public void addConjunction(final BooleanExpression booleanExpression) {
+		if (!containsConjunction(booleanExpression)) {
+			if (mNextConjunctExpression != null) {
+				mNextConjunctExpression.addConjunction(booleanExpression);
+			} else {
+				mNextConjunctExpression = booleanExpression;
 			}
 		}
 	}
 	
-	public boolean containsConjunction(final BooleanExpression booleanExpression){
-		if(equals(booleanExpression)){
+	public boolean containsConjunction(final BooleanExpression booleanExpression) {
+		if (equals(booleanExpression)) {
 			return true;
-		}
-		else if(nextConjunctExpression != null){
-			nextConjunctExpression.containsConjunction(booleanExpression);
+		} else if (mNextConjunctExpression != null) {
+			mNextConjunctExpression.containsConjunction(booleanExpression);
 		}
 		return false;
 	}
 	
-	public boolean getResult(final BitSet bitVector){
+	public boolean getResult(final BitSet bitVector) {
 		final BitSet result = (BitSet) bitVector.clone();
-		result.and(alpha);
-		result.xor(beta);
-		if(result.isEmpty()){
+		result.and(mAlpha);
+		result.xor(mBeta);
+		if (result.isEmpty()) {
 			return true;
-		}
-		else if(nextConjunctExpression != null){
-			return nextConjunctExpression.getResult(bitVector);
+		} else if (mNextConjunctExpression != null) {
+			return mNextConjunctExpression.getResult(bitVector);
 		}
 		return false;
 	}
 	
-	public BooleanExpression cloneShifted(final Map<Integer,Integer> shiftMap, final int newSize){
+	public BooleanExpression cloneShifted(final Map<Integer,Integer> shiftMap, final int newSize) {
 		final BitSet shiftedAlpha = new BitSet(newSize);
 		final BitSet shiftedBeta = new BitSet(newSize);
 		for (final Entry<Integer, Integer> entry : shiftMap.entrySet()) {
-			if (alpha.get(entry.getKey())) {
+			if (mAlpha.get(entry.getKey())) {
 				shiftedAlpha.set(entry.getValue());
 			}
-			if (beta.get(entry.getKey())) {
+			if (mBeta.get(entry.getKey())) {
 				shiftedBeta.set(entry.getValue());
 			}
 		}	
 		final BooleanExpression result = new BooleanExpression(shiftedAlpha, shiftedBeta);
-		if(nextConjunctExpression != null){
-			result.nextConjunctExpression = nextConjunctExpression.cloneShifted(shiftMap, newSize);
+		if (mNextConjunctExpression != null) {
+			result.mNextConjunctExpression = mNextConjunctExpression.cloneShifted(shiftMap, newSize);
 		}	
 		return result;
 	}
@@ -98,44 +96,44 @@ public class BooleanExpression{
 	 * TODO Christian 2016-08-16: This does not override the Object.equals()
 	 *      method. It may be confusing when using in Collections.
 	 */
-	public boolean equals(final BooleanExpression booleanExpression){
-		return (alpha.equals(booleanExpression.alpha)
-				&& beta.equals(booleanExpression.beta));
+	public boolean equals(final BooleanExpression booleanExpression) {
+		return (mAlpha.equals(booleanExpression.mAlpha)
+				&& mBeta.equals(booleanExpression.mBeta));
 	}
 	
-	public <T> String toString(final List<T> variables){
+	public <T> String toString(final List<T> variables) {
 		String text = "";
 		int r = 0;
-		for(int i=0;i<variables.size();i++){
-			if(alpha.get(i)){
-				if(r != 0){
+		for (int i = 0; i < variables.size(); i++) {
+			if (mAlpha.get(i)) {
+				if (r != 0) {
 					text += " ^ ";
 				}
-				if(!beta.get(i)){
+				if (!mBeta.get(i)) {
 					text += "~";
 				}
 				text += variables.get(i);
 				r++;
 			}
 		}
-		if(nextConjunctExpression != null){
-			if(r > 1){
+		if (mNextConjunctExpression != null) {
+			if (r > 1) {
 				text = "(" + text + ")";
 			}
-			text += " v " + nextConjunctExpression.toString(variables);
+			text += " v " + mNextConjunctExpression.toString(variables);
 		}
 		return text;
 	}
 	
 	public BitSet getAlpha() {
-		return alpha;
+		return mAlpha;
 	}
 	
 	public BitSet getBeta() {
-		return beta;
+		return mBeta;
 	}
 	
 	public BooleanExpression getNextConjunctExpression() {
-		return nextConjunctExpression;
+		return mNextConjunctExpression;
 	}
 }

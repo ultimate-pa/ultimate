@@ -64,10 +64,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @author heizmann@informatik.uni-freiburg.de
  *
  * @param <LETTER> Symbol. Type of the elements of the alphabet over which the
- * automata are defined. 
+ *     automata are defined. 
  * @param <STATE> Content. Type of the labels that are assigned to the states of
- * automata. In many cases you want to use String as STATE and your states are
- * labeled e.g. with "q0", "q1", ... 
+ *     automata. In many cases you want to use String as STATE and your states are
+ *     labeled e.g. with "q0", "q1", ... 
  */
 public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
@@ -108,7 +108,6 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final List<SummaryState<LETTER,STATE>> mWorklist = 
 		new LinkedList<SummaryState<LETTER,STATE>>();
 	
-	
 	/**
 	 * Pairs of states (q,q') of the resulting automaton such that q' is
 	 * reachable from q via a well-matched nested word in which the first
@@ -121,7 +120,6 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private final StateFactory<STATE> mContentFactory;
 	
-
 	public DifferenceSadd(
 			final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER,STATE> minuend,
@@ -208,7 +206,6 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		return mDifference;
 	}
 	
-	
 	public boolean wasVisited(final STATE callerState, final STATE state) {
 		final Set<STATE> callerStates = mVisited.get(state);
 		if (callerStates == null) {
@@ -227,7 +224,6 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		callerStates.add(callerState);
 	}
 	
-
 	public void enqueueAndMark(final STATE callerState, final STATE state) {
 		if (!wasVisited(callerState, state)) {
 			markVisited(callerState, state);
@@ -235,8 +231,6 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			mWorklist.add(statePair);
 		}
 	}
-	
-	
 	
 	public void addSummary(final STATE summaryPred, final STATE summarySucc) {
 		Set<STATE> summarySuccessors = mSummary.get(summaryPred);
@@ -246,7 +240,6 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 		summarySuccessors.add(summarySucc);
 	}
-
 	
 	/**
 	 * Get all states <i>resCaller</i> of the resulting automaton (computed so
@@ -262,8 +255,6 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 	}
 	
-	
-
 	public void computeDifference() {
 		final DeterminizedState<LETTER,STATE> detState = mStateDeterminizer.initialState(); 
 		for (final STATE minuState : mMinuend.getInitialStates()) {
@@ -278,7 +269,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			enqueueAndMark(mAuxiliaryEmptyStackState, diffState);
 		}
 		
-		while(!mWorklist.isEmpty()) {
+		while (!mWorklist.isEmpty()) {
 			final SummaryState<LETTER,STATE> statePair = mWorklist.remove(0);
 //			mLogger.debug("Processing: "+ statePair);
 			processSummaryState(statePair);
@@ -290,9 +281,6 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 	}
 	
-
-	
-
 	/**
 	 * Let resSummaryState=(<i>caller</i>,<i>present</i>). Extend the
 	 * construction of the resulting automaton at <i>present</i> by outgoing
@@ -375,18 +363,6 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-
-	
-	
 	/**
 	 * Get the state in the resulting automaton that represents a
 	 * DifferenceState. If this state in the resulting automaton does not exist
@@ -406,8 +382,6 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 	}
 	
-	
-
 	/**
 	 * State of an NWA that accepts the language difference of two NWAs.
 	 * A DifferenceState is a pair whose first entry is a state of the minuend, the
@@ -480,12 +454,11 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}	
 	}
 	
-	
-	
 	private class SummaryState<LETTER,STATE> {
 		private final STATE mCallerState;
 		private final STATE mPresentState;
 		private final int mHashCode;
+		
 		public SummaryState(final STATE presentState, final STATE callerState) {
 			this.mCallerState = callerState;
 			this.mPresentState = presentState;
@@ -497,12 +470,9 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			return mCallerState;
 		}
 
-
 		public STATE getPresentState() {
 			return mPresentState;
 		}
-
-
 
 		@SuppressWarnings("unchecked")
 		@Override
@@ -523,16 +493,9 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 		@Override
 		public String toString() {
-			return "CallerState: " + mCallerState + "  State: "+ mPresentState;
+			return "CallerState: " + mCallerState + "  State: " + mPresentState;
 		}
-		
 	}
-
-
-
-
-
-
 
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory)

@@ -163,8 +163,7 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 				state = mContentFactory.intersectBuchi(
 										fst, snd, 1);				
 			} else {
-			state= mContentFactory.intersection(
-											fst, snd);
+				state = mContentFactory.intersection(fst, snd);
 			}
 
 			mResultNwa.addState(isInitial, isFinal, state);
@@ -209,7 +208,7 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 					succTrack = 1;
 				}
 			} else {
-				assert(stateTrack == 2);
+				assert (stateTrack == 2);
 				if (mSndNwa.isFinal(sndState)) {
 					succTrack = 1;
 				} else {

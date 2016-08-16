@@ -33,7 +33,7 @@ final class UnionFind {
 	private final int[] mSize;
 	private final int[] mStack;
 
-	UnionFind(int numNodes) {
+	UnionFind(final int numNodes) {
 		mRoot = new int[numNodes];
 		mSize = new int[numNodes];
 		mStack = new int[numNodes];
@@ -92,7 +92,7 @@ final class UnionFind {
 			mStack[ptr++] = node;
 			node = mRoot[node];
 		}
-		while (ptr --> 0) {
+		while (ptr-- > 0) {
 			mRoot[mStack[ptr]] = node;
 		}
 	}

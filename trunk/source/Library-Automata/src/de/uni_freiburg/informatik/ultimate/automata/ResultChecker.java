@@ -330,8 +330,8 @@ public final class ResultChecker {
 
 	/**
 	 * @deprecated unused legacy code; use
-	 * {@link #nwaLanguageInclusion(AutomataLibraryServices, INestedWordAutomaton, INestedWordAutomaton, StateFactory)}
-	 * if possible
+	 *     {@link #nwaLanguageInclusion(AutomataLibraryServices, INestedWordAutomaton, INestedWordAutomaton, StateFactory)}
+	 *     if possible
 	 */
 	@Deprecated
 	public static <LETTER, STATE> NestedRun<LETTER, STATE> nwaLanguageInclusionOldApi(
@@ -357,8 +357,8 @@ public final class ResultChecker {
 
 	/**
 	 * @deprecated unused legacy code; use
-	 * #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded}
-	 * directly if possible
+	 *     #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded}
+	 *     directly if possible
 	 */
 	@Deprecated
 	public static <LETTER, STATE> NestedRun<LETTER, STATE> nwaLanguageInclusion(
@@ -372,8 +372,8 @@ public final class ResultChecker {
 
 	/**
 	 * @deprecated unused legacy code; use
-	 * {@link #getNormalNwa(AutomataLibraryServices, INestedWordAutomatonSimple)}
-	 * if possible
+	 *     {@link #getNormalNwa(AutomataLibraryServices, INestedWordAutomatonSimple)}
+	 *     if possible
 	 */
 	@Deprecated
 	public static <LETTER, STATE> INestedWordAutomatonOldApi<LETTER, STATE> getOldApiNwa(
@@ -389,8 +389,8 @@ public final class ResultChecker {
 
 	/**
 	 * @deprecated unused legacy code; operations should support
-	 * #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple}
-	 * directly
+	 *     #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple}
+	 *     directly
 	 */
 	@Deprecated
 	public static <LETTER, STATE> INestedWordAutomaton<LETTER, STATE> getNormalNwa(

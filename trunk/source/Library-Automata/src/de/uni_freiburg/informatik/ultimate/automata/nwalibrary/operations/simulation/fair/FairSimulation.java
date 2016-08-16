@@ -144,7 +144,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * If the simulation process itself should log detailed debugging
 	 * information.
 	 */
-	private final boolean debugSimulation = false;
+	private final boolean mDebugSimulation = false;
 	/**
 	 * Amount of SCCs of the initial game graph version.
 	 */
@@ -855,14 +855,14 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	protected void efficientLiftingAlgorithm(final int localInfinity, final Set<Vertex<LETTER, STATE>> scc)
 			throws AutomataOperationCanceledException {
 		final SimulationPerformance performance = super.getSimulationPerformance();
-		if (debugSimulation) {
+		if (mDebugSimulation) {
 			mLogger.debug("Lifting SCC: " + scc);
 		}
 
 		// Initialize working list and the C value of the correct vertices
 		initSimulation(localInfinity, scc);
 
-		if (debugSimulation) {
+		if (mDebugSimulation) {
 			mLogger.debug("WL: " + getWorkingList());
 		}
 
@@ -873,7 +873,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			// Poll the current working vertex
 			final Vertex<LETTER, STATE> workingVertex = pollVertexFromWorkingList();
 
-			if (debugSimulation) {
+			if (mDebugSimulation) {
 				mLogger.debug("\tWorking with: " + workingVertex);
 			}
 
@@ -881,7 +881,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			Set<Vertex<LETTER, STATE>> usedSCCForNeighborCalculation = scc;
 			if (isUsingSCCs() && mPokedFromNeighborSCC.contains(workingVertex)) {
 				usedSCCForNeighborCalculation = null;
-				if (debugSimulation) {
+				if (mDebugSimulation) {
 					mLogger.debug("\t\tVertex was poked.");
 				}
 			}
@@ -894,7 +894,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			workingVertex.setBEff(calcBestNghbMeasure(workingVertex, localInfinity, usedSCCForNeighborCalculation));
 			saveBEffChange(workingVertex, oldBEff, mCurrentChanges);
 
-			if (debugSimulation) {
+			if (mDebugSimulation) {
 				mLogger.debug("\t\tUpdated BEff: " + oldBEff + " -> " + workingVertex.getBEff());
 			}
 
@@ -902,7 +902,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			workingVertex.setC(calcNghbCounter(workingVertex, localInfinity, usedSCCForNeighborCalculation));
 			saveCChange(workingVertex, oldC, mCurrentChanges);
 
-			if (debugSimulation) {
+			if (mDebugSimulation) {
 				mLogger.debug("\t\tUpdated C: " + oldC + " -> " + workingVertex.getC());
 			}
 
@@ -911,7 +911,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			workingVertex.setPM(currentProgressMeasure);
 			savePmChange(workingVertex, oldProgressMeasure, mCurrentChanges);
 
-			if (debugSimulation) {
+			if (mDebugSimulation) {
 				mLogger.debug("\t\tUpdated PM: " + oldProgressMeasure + " -> " + currentProgressMeasure);
 			}
 
@@ -928,7 +928,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 						mNotSimulatingNonTrivialVertices.remove(workingVertex);
 						mSimulationWasAborted = true;
 
-						if (debugSimulation) {
+						if (mDebugSimulation) {
 							mLogger.debug("\t\tAborting simulation since " + workingVertex + " reached infinity.");
 						}
 						return;
@@ -962,7 +962,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				predecessorsToConsider.addAll(mGame.getPushOverPredecessors(workingVertex));
 			}
 			for (final Vertex<LETTER, STATE> pred : predecessorsToConsider) {
-				if (debugSimulation) {
+				if (mDebugSimulation) {
 					mLogger.debug("\t\tWorking pred: " + pred);
 				}
 
@@ -979,7 +979,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 							&& oldProgressMeasure < localInfinity;
 					pokePossible = hasNewlyReachedInfinity && !mPokedFromNeighborSCC.contains(pred);
 
-					if (debugSimulation) {
+					if (mDebugSimulation) {
 						mLogger.debug("\t\t\tPoke possible for pred: " + pred);
 					}
 					if (!pokePossible) {
@@ -1019,13 +1019,13 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 							if (pokePossible) {
 								mPokedFromNeighborSCC.add(pred);
 
-								if (debugSimulation) {
+								if (mDebugSimulation) {
 									mLogger.debug("\t\t\tPred has no better alternative, poking.");
 								}
 							} else {
 								addVertexToWorkingList(pred);
 
-								if (debugSimulation) {
+								if (mDebugSimulation) {
 									mLogger.debug("\t\t\tPred has no better alternative, adding.");
 								}
 							}
@@ -1037,7 +1037,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 							pred.setC(pred.getC() - 1);
 							saveCChange(pred, oldPredC, mCurrentChanges);
 
-							if (debugSimulation) {
+							if (mDebugSimulation) {
 								mLogger.debug("\t\t\tPred has a better alternative.");
 							}
 						}
@@ -1048,13 +1048,13 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 						if (pokePossible) {
 							mPokedFromNeighborSCC.add(pred);
 
-							if (debugSimulation) {
+							if (mDebugSimulation) {
 								mLogger.debug("\t\t\tPred is spoiler, poking.");
 							}
 						} else {
 							addVertexToWorkingList(pred);
 
-							if (debugSimulation) {
+							if (mDebugSimulation) {
 								mLogger.debug("\t\t\tPred is spoiler, adding.");
 							}
 						}

@@ -64,12 +64,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 /**
  * This class minimizes nested word automata.
  * 
- * It is based on Hopcroft's minimization for deterministic finite automata.
+ * <p>It is based on Hopcroft's minimization for deterministic finite automata.
  * 
- * Basically we do an over-approximation of the language by merging all states. Then iteratively the so-called
+ * <p>Basically we do an over-approximation of the language by merging all states.
+ * Then iteratively the so-called
  * equivalence classes are split until no more witness for a split is found.
  * 
- * For DFAs the algorithm just performs Hopcroft's algorithm.
+ * <p>For DFAs the algorithm just performs Hopcroft's algorithm.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER> letter type
@@ -574,8 +575,8 @@ public class ShrinkNwa<LETTER, STATE>
 				try {
 					mWriter1.close();
 					mWriter2.close();
-				} catch (final IOException eWriter) {
-					mLogger.fatal(eWriter);
+				} catch (final IOException e) {
+					mLogger.fatal(e);
 				}
 			}
 		}
@@ -739,7 +740,7 @@ public class ShrinkNwa<LETTER, STATE>
 	/**
 	 * This method assures correctness for the naive return split.
 	 * 
-	 * Currently it just executes the old return split, which seems to be too expensive.
+	 * <p>Currently it just executes the old return split, which seems to be too expensive.
 	 * 
 	 * @param linEc
 	 *            the linear equivalence class
@@ -786,7 +787,8 @@ public class ShrinkNwa<LETTER, STATE>
 	/**
 	 * This method assures correctness for the naive return split.
 	 * 
-	 * Currently it just executes the old return split, which seems to be too expensive. Hierarchical states are not
+	 * <p>Currently it just executes the old return split, which seems to be too expensive.
+	 * Hierarchical states are not
 	 * analyzed.
 	 * 
 	 * @param linEc
@@ -956,7 +958,7 @@ public class ShrinkNwa<LETTER, STATE>
 	/**
 	 * For each state and internal or call symbol respectively do the usual Hopcroft backwards split.
 	 * 
-	 * First all predecessor sets (with respect to a single symbol) are found and then for each such set the states are
+	 * <p>First all predecessor sets (with respect to a single symbol) are found and then for each such set the states are
 	 * split from their equivalence classes.
 	 * 
 	 * @param a
@@ -1014,7 +1016,7 @@ public class ShrinkNwa<LETTER, STATE>
 	/**
 	 * This method implements the return split.
 	 * 
-	 * For each return symbol respectively first find the predecessor states (both linear and hierarchical). Then do the
+	 * <p>For each return symbol respectively first find the predecessor states (both linear and hierarchical). Then do the
 	 * following first for the linear and then for the hierarchical states: Mark the simple splits, then find violations
 	 * due to the neutral states and break ties on which states to split there.
 	 */
@@ -1228,10 +1230,10 @@ public class ShrinkNwa<LETTER, STATE>
 	/**
 	 * This method checks and potentially triggers a linear return split.
 	 *
-	 * TODO(nondeterminism) at most one successor for deterministic automata,
+	 * <p>TODO(nondeterminism) at most one successor for deterministic automata,
 	 *     offer improved version (no Set of STATE , no Set of EquivalenceClass)?
 	 * 
-	 * TODO(ignoreMarked) ignore already marked pairs
+	 * <p>TODO(ignoreMarked) ignore already marked pairs
 	 * 
 	 * @param hier2lin2letter2succ
 	 *            map hier. to lin. to letter to succ. state
@@ -1341,7 +1343,7 @@ public class ShrinkNwa<LETTER, STATE>
 	/**
 	 * This method checks and potentially triggers a hierarchical return split.
 	 * 
-	 * TODO(nondeterminism) at most one successor for deterministic automata,
+	 * <p>TODO(nondeterminism) at most one successor for deterministic automata,
 	 *      offer improved version (no Set of STATE, no Set of EquivalenceClass)?
 	 * 
 	 * @param hier2lin2letter2succ
@@ -1441,7 +1443,7 @@ public class ShrinkNwa<LETTER, STATE>
 	 * This method executes the return splits for all passed equivalence classes. The input has information of which
 	 * states must be separated. The goal is to come up with a splitting that satisfies the separations.
 	 * 
-	 * The general solution is algorithmically hard, so here the following heuristic is used: The general rule is to
+	 * <p>The general solution is algorithmically hard, so here the following heuristic is used: The general rule is to
 	 * assign a state to an existing group of states if possible. If there is more than one possible group, the first
 	 * one found is chosen.
 	 *
@@ -1907,7 +1909,7 @@ public class ShrinkNwa<LETTER, STATE>
 	/**
 	 * This method implements an optional first linear return split before considering the real return split.
 	 * 
-	 * NOTE: The split is not perfect in the sense that once an equivalence class has been split, its return
+	 * <p>NOTE: The split is not perfect in the sense that once an equivalence class has been split, its return
 	 * predecessors are not reconsidered. This could be added, but is currently not the case, since this is only meant
 	 * as a preprocessing step.
 	 */
@@ -2028,7 +2030,7 @@ public class ShrinkNwa<LETTER, STATE>
 	/**
 	 * This method checks whether the given equivalence class must be split linearly. If so, the states are marked.
 	 * 
-	 * This is a mixture of a full and a random split, since only a fixed number of hierarchical predecessor states is
+	 * <p>This is a mixture of a full and a random split, since only a fixed number of hierarchical predecessor states is
 	 * considered at one time. If there are more of them, they are considered in a later iteration.
 	 * 
 	 * @param linEc
@@ -2220,9 +2222,9 @@ public class ShrinkNwa<LETTER, STATE>
 	/**
 	 * This method randomly splits the given equivalence class.
 	 * 
-	 * If it has outgoing call transitions, it is split into equally sized blocks of states.
+	 * <p>If it has outgoing call transitions, it is split into equally sized blocks of states.
 	 * 
-	 * Otherwise (without any outgoing call transitions) it keeps states with no outgoing return transitions together,
+	 * <p>Otherwise (without any outgoing call transitions) it keeps states with no outgoing return transitions together,
 	 * since these states will never take part in any matrix and hence can be kept together.
 	 * 
 	 * @param ec
@@ -2984,7 +2986,7 @@ public class ShrinkNwa<LETTER, STATE>
 	/**
 	 * An equivalence class contains states and knows whether it is in the work list.
 	 * 
-	 * Two equivalence class objects are equal iff they share the same pointer.
+	 * <p>Two equivalence class objects are equal iff they share the same pointer.
 	 */
 	private class EquivalenceClass implements IBlock<STATE> {
 		// unique ID (useful for hashCode and so for deterministic runs)
@@ -3551,7 +3553,7 @@ public class ShrinkNwa<LETTER, STATE>
 	/**
 	 * The work list has a priority queue of equivalence classes.
 	 * 
-	 * Since the size of the equivalence classes may change due to splitting, it is not guaranteed that the order is
+	 * <p>Since the size of the equivalence classes may change due to splitting, it is not guaranteed that the order is
 	 * correct over time, but since it is a heuristic rather than a rule to prefer smaller splitters first, this is not
 	 * considered bad and additional overhead is avoided.
 	 */

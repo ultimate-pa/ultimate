@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * This class minimizes nested word automata.
  * 
- * It is based on Hopcroft's minimization for deterministic finite automata. All
+ * <p>It is based on Hopcroft's minimization for deterministic finite automata. All
  * nested edges (calls and returns) are seen as fresh symbols consisting of the
  * tuple <code>(symbol, hierarchical state)</code>
  * 
@@ -228,7 +228,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 	 * For each state and symbol respectively do the usual Hopcroft backwards
 	 * split.
 	 * 
-	 * First all predecessor sets (with respect to a single symbol) are found
+	 * <p>First all predecessor sets (with respect to a single symbol) are found
 	 * and then for each such set the states are split from their equivalence
 	 * classes.
 	 * 
@@ -720,7 +720,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 	 * An equivalence class contains states and knows whether it is in the work
 	 * list.
 	 * 
-	 * Two equivalence class objects are equal iff they share the same pointer.
+	 * <p>Two equivalence class objects are equal iff they share the same pointer.
 	 */
 	private class EquivalenceClass implements IBlock<STATE> {
 		// unique ID (useful for hashCode and so for deterministic runs)
@@ -789,6 +789,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 					break;
 				case NONE:
 					mIncomingInt = EIncomingStatus.NONE;
+					break;
 				default:
 					throw new IllegalArgumentException();
 			}
@@ -800,6 +801,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 					break;
 				case NONE:
 					mIncomingCall = EIncomingStatus.NONE;
+					break;
 				default:
 					throw new IllegalArgumentException();
 			}
@@ -932,7 +934,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 	/**
 	 * The work list has a priority queue of equivalence classes.
 	 * 
-	 * Since the size of the equivalence classes may change due to splitting, it
+	 * <p>Since the size of the equivalence classes may change due to splitting, it
 	 * is not guaranteed that the order is correct over time, but since it is a
 	 * heuristic rather than a rule to prefer smaller splitters first, this is
 	 * not considered bad and additional overhead is avoided.

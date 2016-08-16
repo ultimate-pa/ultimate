@@ -75,7 +75,6 @@ public class BuchiClosureNwa<LETTER, STATE>
 	
 	/**
 	 * maximize set of accepting states
-	 * @return 
 	 */
 	public Set<STATE> computeSetOfAcceptingStates() {
 		final Set<STATE> newFinalStates = new HashSet<STATE>();

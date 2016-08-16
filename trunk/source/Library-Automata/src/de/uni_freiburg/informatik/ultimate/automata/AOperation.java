@@ -39,16 +39,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public abstract class AOperation<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 	/**
-	 * Ultimate services
+	 * Ultimate services.
 	 */
 	protected final AutomataLibraryServices mServices;
 	
 	/**
-	 * logger
+	 * logger.
 	 */
 	protected final ILogger mLogger;
 	
 	/**
+	 * Constructor.
+	 * 
 	 * @param services Ultimate services
 	 */
 	public AOperation(final AutomataLibraryServices services) {

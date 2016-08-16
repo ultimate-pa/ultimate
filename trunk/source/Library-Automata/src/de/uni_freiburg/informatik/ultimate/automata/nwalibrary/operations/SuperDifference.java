@@ -123,15 +123,15 @@ public class SuperDifference<LETTER, STATE>
 		
 		// initializes the process by adding the initial states. Since there can
 		// be many initial states, it adds all possible initial state pair combinations
-		for (final STATE init_m : mMinuend.getInitialStates()) {
-			STATE initS = mEpimorphism.getMapping(init_m);
+		for (final STATE initM : mMinuend.getInitialStates()) {
+			STATE initS = mEpimorphism.getMapping(initM);
 			if (initS == null || !mSubtrahend.getInitialStates().contains(initS)) {
 				initS = mSinkState;
 			} else {
-				assert(mSubtrahend.getStates().contains(initS));
+				assert (mSubtrahend.getStates().contains(initS));
 			}
-			mLogger.debug("Add initial state:" + init_m + "---" + initS);			
-			addState(init_m, initS);
+			mLogger.debug("Add initial state:" + initM + "---" + initS);			
+			addState(initM, initS);
 		}
 		mLogger.info(exitMessage());
 	}

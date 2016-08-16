@@ -207,7 +207,7 @@ public class Analyze<LETTER, STATE>
 	 * number of symbols <code>L</code>. <br>
 	 * transition density = <code>T / (S * L)</code> <br>
 	 * 
-	 * In particular, for return transitions the number of symbols
+	 * <p>In particular, for return transitions the number of symbols
 	 * <code>L</code> is the number of return symbol multiplied by the number
 	 * of states.
 	 * 
@@ -247,7 +247,7 @@ public class Analyze<LETTER, STATE>
 	 * A state is nondeterministic if it contains at least two outgoing
 	 * transitions with the same symbol. <br>
 	 * 
-	 * In particular, for return transitions the same return symbol and
+	 * <p>In particular, for return transitions the same return symbol and
 	 * hierarchical predecessor state must occur twice.
 	 * 
 	 * @return number of nondeterministic states

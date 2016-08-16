@@ -39,17 +39,17 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 /**
  * This class implements Brzozowski's minimization algorithm.
  * 
- * The key idea is to reverse and determinize the automaton twice.
+ * <p>The key idea is to reverse and determinize the automaton twice.
  * After each reversal the resulting DFA is minimal wrt. its language
  * (i.e., the reversed DFA minimally accepts the reverse language and the
  * twice reversed DFA minimally accepts the original language).
  * 
- * Reversal means that
+ * <p>Reversal means that
  * - the transitions are turned around,
  * - the final states become the initial states,
  * - the initial states become the final states.
  * 
- * NOTE: The implementation is naive in the sense that both a new automaton is
+ * <p>NOTE: The implementation is naive in the sense that both a new automaton is
  * created after each operation and the reversal and determinization do not
  * know each other (potentially they may .
  * 

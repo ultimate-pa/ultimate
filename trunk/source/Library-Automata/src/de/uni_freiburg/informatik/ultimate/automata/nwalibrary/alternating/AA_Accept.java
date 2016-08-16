@@ -39,33 +39,33 @@ public class AA_Accept<LETTER,STATE>
 	public AA_Accept(
 			final AlternatingAutomaton<LETTER,STATE> alternatingAutomaton,
 			final Word<LETTER> word)
-					throws AutomataLibraryException{
+					throws AutomataLibraryException {
 		mIsAccepted = alternatingAutomaton.accepts(word);
 	}
 	
 	@Override
-	public String operationName(){
+	public String operationName() {
 		return "AA_Accept";
 	}
 
 	@Override
-	public String startMessage(){
+	public String startMessage() {
 		return "Start: " + operationName();
 	}
 
 	@Override
-	public String exitMessage(){
+	public String exitMessage() {
 		return "Exit: " + operationName();
 	}
 
 	@Override
-	public Boolean getResult(){
+	public Boolean getResult() {
 		return mIsAccepted;
 	}
 
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException{
+			throws AutomataLibraryException {
 		return true;
 	}
 }

@@ -33,33 +33,36 @@ class Summary<LETTER, STATE> {
 	private final StateContainer<LETTER, STATE> mLinPred;
 	private final LETTER mLetter;
 	private final StateContainer<LETTER, STATE> mSucc;
-	public Summary(StateContainer<LETTER, STATE> hierPred, 
-			StateContainer<LETTER, STATE> linPred,
-			LETTER letter,
-			StateContainer<LETTER, STATE> succ) {
+	
+	public Summary(final StateContainer<LETTER, STATE> hierPred, 
+			final StateContainer<LETTER, STATE> linPred,
+			final LETTER letter,
+			final StateContainer<LETTER, STATE> succ) {
 		super();
 		mHierPred = hierPred;
 		mLinPred = linPred;
 		mLetter = letter;
 		mSucc = succ;
 	}
+	
 	public StateContainer<LETTER, STATE> getHierPred() {
 		return mHierPred;
 	}
+	
 	public StateContainer<LETTER, STATE> getLinPred() {
 		return mLinPred;
 	}
+	
 	public LETTER getLetter() {
 		return mLetter;
 	}
+	
 	public StateContainer<LETTER, STATE> getSucc() {
 		return mSucc;
 	}
 	
-
-	
 	public IncomingReturnTransition<LETTER, STATE> obtainIncomingReturnTransition(
-			NestedWordAutomatonReachableStates<LETTER, STATE> nwars) {
+			final NestedWordAutomatonReachableStates<LETTER, STATE> nwars) {
 		for (final IncomingReturnTransition<LETTER, STATE> inTrans  : 
 			nwars.returnPredecessors(getSucc().getState(), getHierPred().getState(), getLetter())) {
 			if (getLinPred().getState().equals(inTrans.getLinPred())) {
@@ -81,8 +84,9 @@ class Summary<LETTER, STATE> {
 				+ ((mSucc == null) ? 0 : mSucc.hashCode());
 		return result;
 	}
+	
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -116,6 +120,7 @@ class Summary<LETTER, STATE> {
 		}
 		return true;
 	}
+	
 	@Override
 	public String toString() {
 		return "(" + mHierPred + ", " + mLinPred + ", " + mSucc + ")";

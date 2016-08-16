@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * Automaton that is returned as the result of the {@code BuchiComplementSVW}
  * operation. States and transitions are built on the fly. <br>
  * 
- * The implementation follows the notation introduced in “Improved Ramsey-Based
+ * <p>The implementation follows the notation introduced in “Improved Ramsey-Based
  * Büchi Complementation” by Breuers, Löding and Olschewski (Springer, 2012).
  * 
  * @author Fabian Reiter
@@ -341,8 +341,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 				}
 			}
 			// Convert set of MetaStates to set of STATEs.
-			for (final MetaState mSuccState : mResult) {
-				result.add(mSuccState.mOutputState);
+			for (final MetaState succState : mResult) {
+				result.add(succState.mOutputState);
 			}
 		}
 		return result;
@@ -393,8 +393,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 				}
 			}
 			// Convert set of MetaStates to set of STATEs.
-			for (final MetaState mPredState : mResult) {
-				result.add(mPredState.mOutputState);
+			for (final MetaState predState : mResult) {
+				result.add(predState.mOutputState);
 			}
 		}
 		return result;
@@ -780,7 +780,6 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 			}
 
 			/**
-			 * @param a
 			 * @return the transition profile τ(a) for letter {@code a}
 			 */
 			public TransitionProfile(final LETTER a) throws AutomataLibraryException {
@@ -799,8 +798,6 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 			}
 
 			/**
-			 * @param s
-			 * @param t
 			 * @return the transition profile for the concatenation s·t
 			 */
 			public TransitionProfile(final TransitionProfile s, final TransitionProfile t) {

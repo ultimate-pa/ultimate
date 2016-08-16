@@ -265,7 +265,7 @@ public final class SpoilerNwaVertex<LETTER, STATE> extends SpoilerVertex<LETTER,
 		}
 		sb.append("<" + getPriority() + ">");
 
-		sb.append("),p:").append(getPriority()).append(",pm:").append(pm);
+		sb.append("),p:").append(getPriority()).append(",pm:").append(mPm);
 		sb.append(">");
 		return sb.toString();
 	}

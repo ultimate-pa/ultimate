@@ -90,8 +90,7 @@ final class Converter<LETTER, STATE> {
 	 * INestedWordAutomaton for later minimization. Stores a NWA converted from
 	 * the INestedWordAutomaton.
 	 *
-	 * @param logger
-	 * @param services
+	 * @param services Ultimate services
 	 * @param stateFactory
 	 *            the StateFactory that was used to make the states in the
 	 *            input automaton

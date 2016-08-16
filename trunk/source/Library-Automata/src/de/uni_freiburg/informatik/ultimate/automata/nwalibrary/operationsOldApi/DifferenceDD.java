@@ -67,10 +67,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * @author heizmann@informatik.uni-freiburg.de
  *
  * @param <LETTER> Symbol. Type of the elements of the alphabet over which the
- * automata are defined. 
+ *     automata are defined. 
  * @param <STATE> Content. Type of the labels that are assigned to the states of
- * automata. In many cases you want to use String as STATE and your states are
- * labeled e.g. with "q0", "q1", ... 
+ *     automata. In many cases you want to use String as STATE and your states are
+ *     labeled e.g. with "q0", "q1", ... 
  */
 //TODO: Optimization for special case where subtrahend is closed under
 // concatenation with Sigma^*. Use only one DeterminizedState detFin state that

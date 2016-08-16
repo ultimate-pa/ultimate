@@ -340,7 +340,7 @@ public abstract class StateContainer<LETTER, STATE> {
 	
 	/**
 	 * @return The StateContainer that has the lower serial number.
-	 * If one is null return the other. If both are null return null;
+	 *     If one is null return the other. If both are null return null;
 	 */
 	public static <LETTER, STATE> StateContainer<LETTER, STATE> returnLower(
 			final StateContainer<LETTER, STATE> fst, final StateContainer<LETTER, STATE> snd) {

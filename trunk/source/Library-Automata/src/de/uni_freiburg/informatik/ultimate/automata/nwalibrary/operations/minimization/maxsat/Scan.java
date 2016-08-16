@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -51,7 +50,6 @@ final class Scan {
 	 * @param reader
 	 *			  where to scan from
 	 * @return parsed <code>NWA</code> or <code>null</code>
-	 * @throws java.io.IOException
 	 */
 	static NWA scanNWA(final Reader reader) throws IOException {
 		int numStates;
@@ -65,9 +63,9 @@ final class Scan {
 		int numRTrans;
 		boolean[] isInitial;
 		boolean[] isFinal;
-		ITrans[] iTrans;
-		CTrans[] cTrans;
-		RTrans[] rTrans;
+		ITrans[] inTrans;
+		CTrans[] caTrans;
+		RTrans[] reTrans;
 
 		final StreamTokenizer in = new StreamTokenizer(reader);
 		in.eolIsSignificant(true);
@@ -103,9 +101,9 @@ final class Scan {
 
 			isInitial = new boolean[numStates];
 			isFinal = new boolean[numStates];
-			iTrans = new ITrans[numITrans];
-			cTrans = new CTrans[numCTrans];
-			rTrans = new RTrans[numRTrans];
+			inTrans = new ITrans[numITrans];
+			caTrans = new CTrans[numCTrans];
+			reTrans = new RTrans[numRTrans];
 
 			for (int i = 0; i < numInitial; i++) {
 				expectString(in, "initial");
@@ -126,7 +124,7 @@ final class Scan {
 				final int src = parseInt(in, numStates);
 				final int sym = parseInt(in, numISyms);
 				final int dst = parseInt(in, numStates);
-				iTrans[i] = new ITrans(src, sym, dst);
+				inTrans[i] = new ITrans(src, sym, dst);
 				expectEOL(in);
 			}
 
@@ -135,7 +133,7 @@ final class Scan {
 				final int src = parseInt(in, numStates);
 				final int sym = parseInt(in, numCSyms);
 				final int dst = parseInt(in, numStates);
-				cTrans[i] = new CTrans(src, sym, dst);
+				caTrans[i] = new CTrans(src, sym, dst);
 				expectEOL(in);
 			}
 
@@ -145,7 +143,7 @@ final class Scan {
 				final int sym = parseInt(in, numRSyms);
 				final int top = parseInt(in, numStates);
 				final int dst = parseInt(in, numStates);
-				rTrans[i] = new RTrans(src, sym, top, dst);
+				reTrans[i] = new RTrans(src, sym, top, dst);
 				expectEOL(in);
 			}
 
@@ -163,9 +161,9 @@ final class Scan {
 		out.mNumRSyms = numRSyms;
 		out.mIsInitial = isInitial;
 		out.mIsFinal = isFinal;
-		out.mITrans = iTrans;
-		out.mCTrans = cTrans;
-		out.mRTrans = rTrans;
+		out.mITrans = inTrans;
+		out.mCTrans = caTrans;
+		out.mRTrans = reTrans;
 
 		if (!NWA.checkConsistency(out)) {
 			System.err.println("ERROR: Parsed automaton is not consistent");
@@ -179,8 +177,6 @@ final class Scan {
 	 * Convenience method which calls <code>inputAsRelations(Reader)</code> with
 	 * an <code>InputStreamReader</code> made from the <code>filepath</code>
 	 * argument.
-	 *
-	 * @throws FileNotFoundException
 	 */
 	static NWA inputAsRelations(final String filepath) throws IOException {
 		final InputStream inputStream = new FileInputStream(filepath);
@@ -203,7 +199,7 @@ final class Scan {
 	private static void expectString(final java.io.StreamTokenizer in, final String x)
 			throws java.io.IOException, ParseNWAException {
 		in.nextToken();
-		if (in.ttype != StreamTokenizer.TT_WORD ||!in.sval.equals(x)) {
+		if (in.ttype != StreamTokenizer.TT_WORD || !in.sval.equals(x)) {
 			throw new ParseNWAException("expected " + x + ", but got " + in.sval);
 		}
 	}

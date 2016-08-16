@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * Contains STATES and information of transitions in field/Map implementation
  * of NWAs 
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class StateContainerFieldMap<LETTER, STATE> {
 	private final STATE mState;

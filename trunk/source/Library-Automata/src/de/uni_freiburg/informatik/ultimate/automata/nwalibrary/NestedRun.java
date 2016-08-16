@@ -97,8 +97,6 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 	}
 
 	/**
-	 * @param i
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord#isCallPosition(int)
 	 */
 	public boolean isCallPosition(final int i) {
@@ -106,8 +104,6 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 	}
 
 	/**
-	 * @param i
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord#isInternalPosition(int)
 	 */
 	public boolean isInternalPosition(final int i) {
@@ -115,8 +111,6 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 	}
 
 	/**
-	 * @param i
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord#isReturnPosition(int)
 	 */
 	public boolean isReturnPosition(final int i) {
@@ -124,8 +118,6 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 	}
 
 	/**
-	 * @param i
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord#isPendingCall(int)
 	 */
 	public boolean isPendingCall(final int i) {

@@ -98,7 +98,7 @@ final class Partition {
 	 * This static utility method is useful for making a Partition structure
 	 * from a root node array as returned by UnionFind.
 	 *
-	 * It creates a copy of the input array with the values renamed to fit in
+	 * <p>It creates a copy of the input array with the values renamed to fit in
 	 * the range <code>[0, numClasses)</code> where <code>numClasses</code> is
 	 * the number of distinct values in the array.
 	 *
@@ -150,7 +150,7 @@ final class Partition {
 		assert partition.mClassOf[2] == partition.mClassOf[4];
 		assert partition.mClassOf[2] == partition.mClassOf[5];
 		for (int i = 0; i < partition.mClassOf.length; i++) {
-			assert(i == 3 || partition.mClassOf[i] != partition.mClassOf[3]);
+			assert (i == 3 || partition.mClassOf[i] != partition.mClassOf[3]);
 		}
 
 		partition = Partition.compress(new int[] { 1, 1, 1, 1 });

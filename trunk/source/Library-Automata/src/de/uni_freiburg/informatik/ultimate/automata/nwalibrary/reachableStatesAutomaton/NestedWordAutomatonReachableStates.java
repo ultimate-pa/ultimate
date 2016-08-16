@@ -963,11 +963,11 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	 * are the final states, in a non-live computation the precious states are
 	 * all states of accepting SCCs).
 	 * 
-	 * If a state <i>up</i> can reach a precious state via a run without pending
+	 * <p>If a state <i>up</i> can reach a precious state via a run without pending
 	 * returns, we known that all double deckers <i>(up,down)</i> can reach a
 	 * precious state and <i>up</i> gets the property "allDownProp".
 	 * 
-	 * If a state <i>up</i> can reach a precious state only via a run with
+	 * <p>If a state <i>up</i> can reach a precious state only via a run with
 	 * pending calls we identify the down states such that the double decker
 	 * <i>(up,down)</i> can reach a precious state. The up state gets the
 	 * property "someDownProp", and the double decker gets the property
@@ -1332,10 +1332,10 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		 * @param up up state
 		 * @param down down state
 		 * @return true iff the DoubleDecker (up,down) is reachable in the
-		 * original automaton (before removal of deadEnds or non-live states).
-		 * This is a workaround to maintain backward compatibility with the old
-		 * implementation. In the future we return true if (up,down) is
-		 * reachable in the resulting automaton
+		 *     original automaton (before removal of deadEnds or non-live states).
+		 *     This is a workaround to maintain backward compatibility with the old
+		 *     implementation. In the future we return true if (up,down) is
+		 *     reachable in the resulting automaton
 		 */
 		public boolean isDownState(final STATE up, final STATE down) {
 			final StateContainer<LETTER, STATE> cont = mStates.get(up);
@@ -1358,10 +1358,10 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		/**
 		 * @param state up state
 		 * @return The set of all down states such that (up,down) is reachable
-		 * DoubleDecker in original automaton (before removal of deadEnds or
-		 * non-live states). This is a workaround to maintain backward
-		 * compatibility with the old implementation. In the future we return
-		 * set of down states in resulting automaton.
+		 *     DoubleDecker in original automaton (before removal of deadEnds or
+		 *     non-live states). This is a workaround to maintain backward
+		 *     compatibility with the old implementation. In the future we return
+		 *     set of down states in resulting automaton.
 		 */
 		public Set<STATE> getDownStates(final STATE state) {
 			final StateContainer<LETTER, STATE> cont = mStates.get(state);
@@ -1403,8 +1403,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		/**
 		 * @param state state
 		 * @return true if the DoubleDecker (state,auxiliaryEmptyStackState) can
-		 * reach a precious state (finals DeadEndComputation, accepting SSCs in
-		 * non-live computation)
+		 *     reach a precious state (finals DeadEndComputation, accepting SSCs in
+		 *     non-live computation)
 		 */
 		public boolean isInitial(final STATE state) {
 			if (!mInitialStates.contains(state)) {
@@ -1425,8 +1425,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		 * final states in dead end computation) is reachable. This is a
 		 * workaround to maintain backward compatibility. In the future we
 		 * return triples reachable in resulting automaton.
-		 * 
-		 * @return
 		 */
 		public Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry() {
 

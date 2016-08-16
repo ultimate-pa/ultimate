@@ -156,6 +156,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 		}
 		succs.add(succ);
 	}
+	
 	@Override
 	void addCallIncoming(final IncomingCallTransition<LETTER, STATE> callIncoming) {
 		final LETTER letter = callIncoming.getLetter();
@@ -170,6 +171,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 		}
 		preds.add(pred);
 	}
+	
 	@Override
 	void addReturnOutgoing(final OutgoingReturnTransition<LETTER, STATE> returnOutgoing) {
 		final LETTER letter = returnOutgoing.getLetter();
@@ -190,6 +192,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 		}
 		succs.add(succ);
 	}
+	
 	@Override
 	void addReturnIncoming(final IncomingReturnTransition<LETTER, STATE> returnIncoming) {
 		final LETTER letter = returnIncoming.getLetter();

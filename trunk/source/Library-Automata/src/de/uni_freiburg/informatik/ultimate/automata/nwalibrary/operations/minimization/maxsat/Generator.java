@@ -37,7 +37,7 @@ import java.util.HashSet;
  * Formulate "merge relation constraints" (as defined in my thesis) as a
  * MAX-SAT instance.
  *
- * A solution to the instance can be converted to a merge relation later.
+ * <p>A solution to the instance can be converted to a merge relation later.
  *
  * @author stimpflj
  */
@@ -61,7 +61,7 @@ final class Generator {
 		}
 
 		for (int i = 0; i < numStates; i++) {
-			for (int j = i+1; j < numStates; j++) {
+			for (int j = i + 1; j < numStates; j++) {
 				final int eqVar = calc.eqVar(i, j);
 				if (assigned[eqVar] == Solver.TRUE) {
 					unionFind.merge(i, j);
@@ -169,22 +169,22 @@ final class Generator {
 		}
 
 		for (int i = 0; i < numITrans; i++) {
-			if (i == 0 || iTrans[i-1].mSrc != iTrans[i].mSrc || iTrans[i-1].mSym != iTrans[i].mSym) {
+			if (i == 0 || iTrans[i - 1].mSrc != iTrans[i].mSrc || iTrans[i - 1].mSym != iTrans[i].mSym) {
 				iSet[iTrans[i].mSrc].add(iTrans[i].mSym);
 			}
 		}
 		for (int i = 0; i < numCTrans; i++) {
-			if (i == 0 || cTrans[i-1].mSrc != cTrans[i].mSrc || cTrans[i-1].mSym != cTrans[i].mSym) {
+			if (i == 0 || cTrans[i - 1].mSrc != cTrans[i].mSrc || cTrans[i - 1].mSym != cTrans[i].mSym) {
 				cSet[cTrans[i].mSrc].add(cTrans[i].mSym);
 			}
 		}
 		for (int i = 0; i < numRTrans; i++) {
-			if (i == 0 || rTrans[i-1].mSrc != rTrans[i].mSrc || rTrans[i-1].mSym != rTrans[i].mSym) {
+			if (i == 0 || rTrans[i - 1].mSrc != rTrans[i].mSrc || rTrans[i - 1].mSym != rTrans[i].mSym) {
 				rSet[rTrans[i].mSrc].add(rTrans[i].mSym);
 			}
 		}
 		for (int i = 0; i < numRTrans; i++) {
-			if (i == 0 || rTransTop[i-1].mSrc != rTransTop[i].mSrc || rTransTop[i-1].mTop != rTransTop[i].mTop) {
+			if (i == 0 || rTransTop[i - 1].mSrc != rTransTop[i].mSrc || rTransTop[i - 1].mTop != rTransTop[i].mTop) {
 				rTop[rTransTop[i].mSrc].add(rTransTop[i].mTop);
 			}
 		}
@@ -213,27 +213,27 @@ final class Generator {
 
 		for (int i = 0; i < numStates; i++) {
 			for (int j = 0; j < iSet[i].size(); j++) {
-				assert j == 0 || iSet[i].get(j) > iSet[i].get(j-1);
+				assert j == 0 || iSet[i].get(j) > iSet[i].get(j - 1);
 			}
 		}
 		for (int i = 0; i < numStates; i++) {
 			for (int j = 0; j < cSet[i].size(); j++) {
-				assert j == 0 || cSet[i].get(j) > cSet[i].get(j-1);
+				assert j == 0 || cSet[i].get(j) > cSet[i].get(j - 1);
 			}
 		}
 		for (int i = 0; i < numStates; i++) {
 			for (int j = 0; j < rSet[i].size(); j++) {
-				assert j == 0 || rSet[i].get(j) > rSet[i].get(j-1);
+				assert j == 0 || rSet[i].get(j) > rSet[i].get(j - 1);
 			}
 		}
 		for (int i = 0; i < numStates; i++) {
 			for (int j = 0; j < rTop[i].size(); j++) {
-				assert j == 0 || rTop[i].get(j) > rTop[i].get(j-1);
+				assert j == 0 || rTop[i].get(j) > rTop[i].get(j - 1);
 			}
 		}
 		for (int i = 0; i < numStates; i++) {
 			for (int j = 0; j < hSet[i].size(); j++) {
-				assert j == 0 || hSet[i].get(j) > hSet[i].get(j-1);
+				assert j == 0 || hSet[i].get(j) > hSet[i].get(j - 1);
 			}
 		}
 
@@ -265,7 +265,7 @@ final class Generator {
 		}
 
 		for (int i = 0; i < numStates; i++) {
-			for (int j = i+1; j < numStates; j++) {
+			for (int j = i + 1; j < numStates; j++) {
 				if (isFinal[i] != isFinal[j]) {
 					final int eq1 = calc.eqVar(i, j);
 					builder.addClauseF(eq1);
@@ -395,7 +395,7 @@ final class Generator {
 
 		int getNumEqVars() {
 			// add 2 because 0 and 1 are reserved for const false / const true
-			return 2 + mN*(mN+1)/2;
+			return 2 + mN * (mN + 1) / 2;
 		}
 
 		int eqVar(final int a, final int b) {
@@ -405,7 +405,7 @@ final class Generator {
 				return eqVar(b, a);
 			}
 			// add 2 because 0 and 1 are reserved for const false / const true
-			return 2 + (mN*(mN+1)/2)-((mN-a)*(mN-a+1)/2) + b-a;
+			return 2 + (mN * (mN + 1) / 2) - ((mN - a) * (mN - a + 1) / 2) + b - a;
 		}
 	}
 

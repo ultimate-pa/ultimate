@@ -39,30 +39,30 @@ public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	
 	private final AlternatingAutomaton<LETTER, STATE> mResultAutomaton;
 
-	public AA_MergedUnion(final AlternatingAutomaton<LETTER, STATE> automaton1, final AlternatingAutomaton<LETTER, STATE> automaton2){
+	public AA_MergedUnion(final AlternatingAutomaton<LETTER, STATE> automaton1, final AlternatingAutomaton<LETTER, STATE> automaton2) {
 		assert automaton1.getAlphabet().equals(automaton2.getAlphabet());
 		assert (automaton1.isReversed() == automaton2.isReversed());
 		mResultAutomaton = new AlternatingAutomaton<>(automaton1.getAlphabet(), automaton1.getStateFactory());
 		final HashMap<Integer, Integer> shiftMap1 = new HashMap<>();
 		final HashMap<Integer, Integer> shiftMap2 = new HashMap<>();
-		for(final STATE state : automaton1.getStates()){
+		for (final STATE state : automaton1.getStates()) {
 			mResultAutomaton.addState(state);
 			shiftMap1.put(automaton1.getStateIndex(state), mResultAutomaton.getStateIndex(state));
-			if(automaton1.isStateFinal(state)){
+			if (automaton1.isStateFinal(state)) {
 				mResultAutomaton.setStateFinal(state);
 			}
 		}
-		for(final STATE state : automaton2.getStates()){
+		for (final STATE state : automaton2.getStates()) {
 			mResultAutomaton.addState(state);
 			shiftMap2.put(automaton2.getStateIndex(state), mResultAutomaton.getStateIndex(state));
-			if(automaton2.isStateFinal(state)){
+			if (automaton2.isStateFinal(state)) {
 				mResultAutomaton.setStateFinal(state);
 			}
 		}
 		final int newSize = mResultAutomaton.getStates().size();
-		for(final Entry<LETTER, BooleanExpression[]> entry : automaton1.getTransitionFunction().entrySet()){
-			for(int i=0;i<automaton1.getStates().size();i++){
-				if(entry.getValue()[i] != null){
+		for (final Entry<LETTER, BooleanExpression[]> entry : automaton1.getTransitionFunction().entrySet()) {
+			for (int i = 0; i < automaton1.getStates().size(); i++) {
+				if (entry.getValue()[i] != null) {
 					mResultAutomaton.addTransition(
 							entry.getKey(), 
 							automaton1.getStates().get(i), 
@@ -70,9 +70,9 @@ public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE> 
 				}
 			}
 		}
-		for(final Entry<LETTER, BooleanExpression[]> entry : automaton2.getTransitionFunction().entrySet()){
-			for(int i=0;i<automaton2.getStates().size();i++){
-				if(entry.getValue()[i] != null){
+		for (final Entry<LETTER, BooleanExpression[]> entry : automaton2.getTransitionFunction().entrySet()) {
+			for (int i = 0; i < automaton2.getStates().size(); i++) {
+				if (entry.getValue()[i] != null) {
 					mResultAutomaton.addTransition(
 							entry.getKey(), 
 							automaton2.getStates().get(i), 
@@ -86,27 +86,27 @@ public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	}
 
 	@Override
-	public String operationName(){
+	public String operationName() {
 		return "AA_MergedUnion";
 	}
 
 	@Override
-	public String startMessage(){
+	public String startMessage() {
 		return "Start: " + operationName();
 	}
 
 	@Override
-	public String exitMessage(){
+	public String exitMessage() {
 		return "Exit: " + operationName();
 	}
 
 	@Override
-	public AlternatingAutomaton<LETTER, STATE> getResult() throws AutomataOperationCanceledException{
+	public AlternatingAutomaton<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
 		return mResultAutomaton;
 	}
 
 	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException{
+	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
 }

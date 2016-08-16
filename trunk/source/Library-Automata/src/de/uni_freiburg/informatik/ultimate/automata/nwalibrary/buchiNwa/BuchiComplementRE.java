@@ -47,7 +47,7 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 	private final INestedWordAutomaton<LETTER,STATE> mOperand;
 	private INestedWordAutomaton<LETTER,STATE> mResult;
 	
-	private boolean mbuchiComplementREApplicable;
+	private boolean mBuchiComplementREApplicable;
 	
 	@Override
 	public String operationName() {
@@ -62,7 +62,7 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 
 	@Override
 	public String exitMessage() {
-		if (mbuchiComplementREApplicable) {
+		if (mBuchiComplementREApplicable) {
 			return "Finished " + operationName() + " Result " + 
 				mResult.sizeInformation();
 		} else {
@@ -72,7 +72,7 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 
 	@Override
 	public INestedWordAutomaton<LETTER,STATE> getResult() throws AutomataLibraryException {
-		if (mbuchiComplementREApplicable) {
+		if (mBuchiComplementREApplicable) {
 			return mResult;
 		} else {
 			assert mResult == null;
@@ -93,8 +93,7 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 		if (new IsDeterministic<>(mServices, operandWithoutNonLiveStates).getResult()) {
 			mLogger.info("Rüdigers determinization knack not necessary, already deterministic");
 			mResult = (new BuchiComplementDeterministic<LETTER,STATE>(mServices, operandWithoutNonLiveStates)).getResult();
-		}
-		else {
+		} else {
 			final PowersetDeterminizer<LETTER,STATE> pd = 
 					new PowersetDeterminizer<LETTER,STATE>(operandWithoutNonLiveStates, true, stateFactory);
 			final INestedWordAutomaton<LETTER,STATE> determinized = 
@@ -106,12 +105,11 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 			final NestedLassoRun<LETTER,STATE> run = (new BuchiIsEmpty<LETTER,STATE>(mServices, intersectionWithOperand)).getAcceptingNestedLassoRun();
 			if (run == null) {
 				mLogger.info("Rüdigers determinization knack applicable");
-				mbuchiComplementREApplicable = true;
+				mBuchiComplementREApplicable = true;
 				mResult = determinizedComplement;
-			}
-			else {
+			} else {
 				mLogger.info("Rüdigers determinization knack not applicable");
-				mbuchiComplementREApplicable = false;
+				mBuchiComplementREApplicable = false;
 				mResult = null;
 			}
 		}
@@ -126,7 +124,7 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 	 * Return true if buchiComplementRE was applicable on the input.
 	 */
 	public boolean applicable() {
-		return mbuchiComplementREApplicable;
+		return mBuchiComplementREApplicable;
 	}
 
 	@Override

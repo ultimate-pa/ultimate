@@ -128,13 +128,13 @@ public class StringFactory extends StateFactory<String> {
 
 	@Override
 	public String getBlackContent(final String c) {
-		return "Black:"+c;
+		return "Black:" + c;
 	}
 
 
 	@Override
 	public String getWhiteContent(final String c) {
-		return "White:"+c;
+		return "White:" + c;
 	}
 	
 	@Override
@@ -266,7 +266,7 @@ public class StringFactory extends StateFactory<String> {
 	@Override
 	public String complementBuchiDeterministicNonFinal(final String c) {
 		// TODO Auto-generated method stub
-		return "NonFinal:"+c;
+		return "NonFinal:" + c;
 	}
 
 	/* (non-Javadoc)
@@ -274,18 +274,18 @@ public class StringFactory extends StateFactory<String> {
 	 */
 	@Override
 	public String complementBuchiDeterministicFinal(final String c) {
-		return "Final:"+c;
+		return "Final:" + c;
 	}
 	
 	@Override
 	public String minimize(final Collection<String> states) {
-		if(states == null) {
+		if (states == null) {
 			return "{}";
 		}
 		final StringBuilder sb = new StringBuilder("{");
-		for(final Iterator<String> it = states.iterator(); it.hasNext(); ) {
+		for (final Iterator<String> it = states.iterator(); it.hasNext(); ) {
 			sb.append(it.next());
-			if(it.hasNext()) {
+			if (it.hasNext()) {
 				sb.append(", ");
 			}
 		}
@@ -317,5 +317,4 @@ public class StringFactory extends StateFactory<String> {
 		final String result = state + " (entry " + entry + ")";
 		return result;
 	}
-	
 }

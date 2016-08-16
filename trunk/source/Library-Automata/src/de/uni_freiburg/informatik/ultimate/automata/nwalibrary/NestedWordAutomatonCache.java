@@ -1015,7 +1015,7 @@ public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutoma
 	 * Return true iff this automaton is deterministic.
 	 */
 	public boolean isDeterministic() {
-		if(getInitialStates().size() > 1) {
+		if (getInitialStates().size() > 1) {
 			return false;
 		}
 		for (final STATE state : this.getStates()) {

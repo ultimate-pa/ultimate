@@ -109,14 +109,14 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 	/**
 	 * Method for mapping STATE/LETTER to int and vice versa.
 	 */
-	private void initializeMappings(final int nOfStates, final int nOfLables) {
+	private void initializeMappings(final int numberOfStates, final int numberOfLables) {
 		// Allocate the finite space in ArrayList and HashMap.
-		mInt2state = new ArrayList<STATE>(nOfStates);
+		mInt2state = new ArrayList<STATE>(numberOfStates);
 		mState2int = new HashMap<STATE, Integer>(
-				computeHashCap(nOfStates));
-		mInt2letter = new ArrayList<LETTER>(nOfLables);
+				computeHashCap(numberOfStates));
+		mInt2letter = new ArrayList<LETTER>(numberOfLables);
 		mLetter2int = new HashMap<LETTER, Integer>(
-				computeHashCap(nOfLables));
+				computeHashCap(numberOfLables));
 
 		int index = -1;
 		for (final STATE state : mOperand.getStates()) {
@@ -434,9 +434,6 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 
 		/**
 		 * Constructor. Initialize arrays finalStates and nonfinalStates.
-		 * 
-		 * @param nOfStates number of states
-		 * @param nOfFinalStates number of final states
 		 */
 		public Partition() {
 			mSize = 0;
@@ -458,15 +455,15 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 			mNonfinalStates = new int[nOfStates - nOfFinalStates];
 			mSetsOfPartition = new ArrayList<int[]>(nOfStates);
 
-			int fStatesInd = -1;
-			int nfStatesInd = -1;
+			int finalStatesInd = -1;
+			int nonfinalStatesInd = -1;
 			final Iterator<STATE> it = states.iterator();
 			while (it.hasNext()) {
 				final STATE st = it.next();
 				if (finalStates.contains(st)) {
-					mFinalStates[++fStatesInd] = mState2int.get(st);
+					mFinalStates[++finalStatesInd] = mState2int.get(st);
 				} else {
-					mNonfinalStates[++nfStatesInd] = mState2int.get(st);
+					mNonfinalStates[++nonfinalStatesInd] = mState2int.get(st);
 				}
 				mSize++;
 			}
@@ -531,7 +528,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 		 * Pop last element of worklist.
 		 */
 		public int[] popFromWorklist() {
-			assert(! mSetsOfStates.isEmpty());
+			assert (! mSetsOfStates.isEmpty());
 			final int[] ret = mSetsOfStates.remove(mSize - 1);
 			mSize--;
 			return ret;

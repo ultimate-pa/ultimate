@@ -55,6 +55,8 @@ public class AutomatonEpimorphism<STATE> {
 	private final HashMap<STATE, STATE> mEpimorphism;
 
 	/**
+	 * Constructor.
+	 * 
 	 * @param services Ultimate services
 	 */
 	public AutomatonEpimorphism(final AutomataLibraryServices services) {
@@ -136,7 +138,7 @@ public class AutomatonEpimorphism<STATE> {
 	}
 
 	public void print() {
-		for(final Entry<STATE, STATE> e : mEpimorphism.entrySet()) {
+		for (final Entry<STATE, STATE> e : mEpimorphism.entrySet()) {
 			mLogger.debug(e.getKey().toString() + " --> " + e.getValue());
 		}		
 	}

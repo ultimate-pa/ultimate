@@ -124,7 +124,7 @@ class LassoConstructor<LETTER, STATE> {
 			final Map<StateContainer<LETTER, STATE>, SuccessorInfo> map = 
 					new HashMap<StateContainer<LETTER,STATE>,SuccessorInfo>();
 			mSuccInfos.add(map);
-			for (final StateContainer<LETTER, STATE> sc  : mSuccInfos.get(mIteration-1).keySet()) {
+			for (final StateContainer<LETTER, STATE> sc  : mSuccInfos.get(mIteration - 1).keySet()) {
 				addPredecessors(sc, map);
 			}
 		}
@@ -132,13 +132,13 @@ class LassoConstructor<LETTER, STATE> {
 
 	/**
 	 * Use mSuccInfos to construct a run for a loop that has been found.
-	 * @throws AutomataOperationCanceledException 
+	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
 	private void constructRunOfLoop() throws AutomataOperationCanceledException {
 		//then we reconstruct the run
 		mLoop = new NestedRun<LETTER, STATE>(mGoal.getState());
 		StateContainer<LETTER, STATE> current = mGoal;
-		for (int i=mIteration; i>=0; i--) {
+		for (int i = mIteration; i >= 0; i--) {
 			NestedRun<LETTER, STATE> newSuffix;
 			final SuccessorInfo info = mSuccInfos.get(i).get(current);
 			if (info.getTransition() instanceof IncomingInternalTransition) {
@@ -224,14 +224,17 @@ class LassoConstructor<LETTER, STATE> {
 	private class SuccessorInfo {
 		private final ITransitionlet<LETTER, STATE> mTransition;
 		private final StateContainer<LETTER,STATE> mSuccessor;
+		
 		public SuccessorInfo(final ITransitionlet<LETTER, STATE> transition, final StateContainer<LETTER, STATE> successor) {
 			super();
 			mTransition = transition;
 			mSuccessor = successor;
 		}
+		
 		public ITransitionlet<LETTER, STATE> getTransition() {
 			return mTransition;
 		}
+		
 		public StateContainer<LETTER, STATE> getSuccessor() {
 			return mSuccessor;
 		}

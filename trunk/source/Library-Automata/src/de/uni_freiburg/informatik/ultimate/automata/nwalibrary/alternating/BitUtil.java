@@ -26,11 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating;
 
-public class BitUtil{
+public class BitUtil {
 	
 	private static final long[] MASKS_SINGLE_BIT = new long[64];
+	
 	static {
-		for(int i = 0; i < MASKS_SINGLE_BIT.length;i++) {
+		for (int i = 0; i < MASKS_SINGLE_BIT.length;i++) {
 			MASKS_SINGLE_BIT[i] = (((long) 1) << i);
 		}
 	}
@@ -43,17 +44,17 @@ public class BitUtil{
         }
     }
 	
-	public static long setBit(final long bitVector, final int bitIndex){
+	public static long setBit(final long bitVector, final int bitIndex) {
         return (bitVector | MASKS_SINGLE_BIT[bitIndex]);
     }
 	
-	public static long unsetBit(final long bitVector, final int bitIndex){
+	public static long unsetBit(final long bitVector, final int bitIndex) {
         return (bitVector & (~MASKS_SINGLE_BIT[bitIndex]));
     }
 	
 	public static int getNextSetBit(final long bitVector, final int offset) {
         for (int i = offset; i < 64; i++) {
-            if (getBit(bitVector, i)){
+            if (getBit(bitVector, i)) {
             	return i;
             }
         }
@@ -66,7 +67,7 @@ public class BitUtil{
 	
 	public static String getText(long bitVector) {
         final StringBuilder text = new StringBuilder();
-        for (int i = 0; i < 64; i++){
+        for (int i = 0; i < 64; i++) {
             final long currentBit = (bitVector & 1);
             text.append((currentBit == 1) ? 1 : 0);
             bitVector >>>= 1;

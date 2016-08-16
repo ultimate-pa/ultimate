@@ -332,7 +332,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 		}
 		sb.append("<" + getPriority() + ">");
 
-		sb.append("),p:").append(getPriority()).append(",pm:").append(pm);
+		sb.append("),p:").append(getPriority()).append(",pm:").append(mPm);
 		sb.append(">");
 		return sb.toString();
 	}

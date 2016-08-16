@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * LevelRankingConstraintWithDelayedRankDecreaseCheck
  * @author Matthias Heizmann
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingConstraint<LETTER, STATE> {
 	

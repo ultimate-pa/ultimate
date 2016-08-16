@@ -75,7 +75,6 @@ final class Print {
 	 * @param nwa
 	 *            readonly NWA. Must have no null fields and must be constrained
 	 *            as suggested
-	 * @param out
 	 */
 	static void printNWA(final Writer writer, final NWA nwa) {
 		final ArrayList<Integer> initialStates = NWA.computeInitialStates(nwa);

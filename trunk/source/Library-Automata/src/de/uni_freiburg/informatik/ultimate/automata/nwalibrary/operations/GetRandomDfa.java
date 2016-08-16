@@ -476,7 +476,7 @@ public final class GetRandomDfa
 		 * the data structure and caused problems (could become negative).
 		 * Let us hope this fixed it - need to double-check with Daniel.
 		 */
-//		int remainingStatesAmount = msize;
+		// int remainingStatesAmount = msize;
 		for (int i = 0; i < mSize; i++) {
 			remainingStates.add(i);
 		}
@@ -532,7 +532,7 @@ public final class GetRandomDfa
 	 * {@link mflags} do not get deleted hence the DFA keeps connected.<br />
 	 * <br />
 	 * 
-	 * Runtime is in <b>O(size * alphabetSize)</b>
+	 * <p>Runtime is in <b>O(size * alphabetSize)</b>
 	 * @param dfa
 	 *            The DFA to calculate accepting states for in the int[] array
 	 *            format specified by
@@ -577,7 +577,7 @@ public final class GetRandomDfa
 		//Variant 1: Generate random indexes until we have enough unique
 		if (!useShuffleVariant) {
 			int counter = 0;
-			while(!useShuffleVariant && transToDelete.size() < amountToDelete) {
+			while (!useShuffleVariant && transToDelete.size() < amountToDelete) {
 				final int transition = mRandom.nextInt(dfa.length);
 				if (mEnsureIsConnected) {
 					//Don't add flag edges for deletion

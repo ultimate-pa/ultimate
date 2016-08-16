@@ -64,7 +64,7 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 
 	/**
 	 * @return Result contains a configuration for each state which contains
-	 * only this state.
+	 *     only this state.
 	 */
 	public Set<ArrayDeque<STATE>> emptyStackConfiguration(final Iterable<STATE> states) {
 		final Set<ArrayDeque<STATE>> configurations = new HashSet<>();
@@ -116,6 +116,9 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 			final boolean addInitial) throws AutomataLibraryException {
 		final Set<ArrayDeque<STATE>> succConfigs = new HashSet<ArrayDeque<STATE>>();
 		if (addInitial) {
+			/**
+			 * TODO Christian 2016-08-16: Most probably a bug: Does not make sense.
+			 */
 			configurations.addAll(configurations);
 		}
 		for (final ArrayDeque<STATE> config : configurations) {
@@ -132,7 +135,7 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 						nwa.internalSuccessors(state, symbol);
 				for (final OutgoingInternalTransition<LETTER, STATE> outRans :outTransitions) {
 					final STATE succ = outRans.getSucc();
-					final ArrayDeque<STATE> succConfig = (ArrayDeque<STATE>) config.clone();
+					final ArrayDeque<STATE> succConfig = config.clone();
 					succConfig.push(succ);
 					succConfigs.add(succConfig);
 				}
@@ -147,7 +150,7 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 						nwa.callSuccessors(state, symbol);
 				for (final OutgoingCallTransition<LETTER, STATE> outRans :outTransitions) {
 					final STATE succ = outRans.getSucc();
-					final ArrayDeque<STATE> succConfig = (ArrayDeque<STATE>) config.clone();
+					final ArrayDeque<STATE> succConfig = config.clone();
 					succConfig.push(state);
 					succConfig.push(succ);
 					succConfigs.add(succConfig);

@@ -33,14 +33,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 
 public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 	
-	public Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry();
+	Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry();
 	
-	public boolean removeDeadEnds() throws AutomataOperationCanceledException;
+	boolean removeDeadEnds() throws AutomataOperationCanceledException;
 	
-	public INestedWordAutomaton<LETTER,STATE> getResult() throws AutomataOperationCanceledException;
+	INestedWordAutomaton<LETTER,STATE> getResult() throws AutomataOperationCanceledException;
 	
-	public long getDeadEndRemovalTime();
-	
+	long getDeadEndRemovalTime();
 	
 	public class UpDownEntry<STATE> {
 		private final STATE mUp;
@@ -52,12 +51,15 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 			mDown = down;
 			mEntry = entry;
 		}
+		
 		public STATE getUp() {
 			return mUp;
 		}
+		
 		public STATE getDown() {
 			return mDown;
 		}
+		
 		public STATE getEntry() {
 			return mEntry;
 		}
@@ -78,6 +80,7 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 			result = prime * result + ((mUp == null) ? 0 : mUp.hashCode());
 			return result;
 		}
+		
 		@Override
 		public boolean equals(final Object obj) {
 			if (this == obj) {

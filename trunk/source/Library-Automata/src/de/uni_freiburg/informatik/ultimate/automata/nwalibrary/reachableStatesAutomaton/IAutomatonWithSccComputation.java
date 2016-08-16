@@ -47,9 +47,7 @@ public interface IAutomatonWithSccComputation<LETTER, STATE> {
 	 * Computes all balls of given subset of states.
 	 * @param stateSubset subset of the automata's states
 	 * @param startStates states at which the computation of SSCs starts
-	 * @return
 	 */
 	Collection<StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> computeBalls(
 			Set<STATE> stateSubset, Set<STATE> startStates);
-
 }

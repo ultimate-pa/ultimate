@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
+@SuppressWarnings("squid:UselessParenthesesCheck")
 public abstract class AMinimizeNwaDD<LETTER, STATE>
 		extends AMinimizeNwa<LETTER, STATE>
 		implements IMinimizeNwaDD<LETTER, STATE> {
@@ -60,10 +61,10 @@ public abstract class AMinimizeNwaDD<LETTER, STATE>
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services, stateFactory, name, operand);
 	}
-
+	
 	/**
 	 * @return result as
-	 * #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton}
+	 *     #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton}
 	 */
 	@Override
 	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {

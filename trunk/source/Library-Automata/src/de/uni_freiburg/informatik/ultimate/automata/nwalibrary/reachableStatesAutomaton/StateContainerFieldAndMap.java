@@ -68,16 +68,16 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 
 
 	boolean mapModeOutgoing() {
-		return (mOut1 instanceof Map) ||(mOut2 instanceof Map) || (mOut3 instanceof Map); 
+		return (mOut1 instanceof Map) || (mOut2 instanceof Map) || (mOut3 instanceof Map); 
 	}
 	
 	boolean mapModeIncoming() {
-		return (mIn1 instanceof Map) ||(mIn2 instanceof Map) || (mIn3 instanceof Map); 
+		return (mIn1 instanceof Map) || (mIn2 instanceof Map) || (mIn3 instanceof Map); 
 	}
 	
 	
 	private void switchOutgoingToMapMode() {
-		assert(!mapModeOutgoing());
+		assert (!mapModeOutgoing());
 		final List<Object> transitions = new ArrayList<Object>(3);
 		if (mOut1 != null) {
 			transitions.add(mOut1);
@@ -106,7 +106,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 	}
 	
 	private void switchIncomingToMapMode() {
-		assert(!mapModeIncoming());
+		assert (!mapModeIncoming());
 		final List<Object> transitions = new ArrayList<Object>(3);
 		if (mIn1 != null) {
 			transitions.add(mIn1);
@@ -276,6 +276,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 		}
 		succs.add(succ);
 	}
+	
 	void addCallIncomingMap(final IncomingCallTransition<LETTER, STATE> callIncoming) {
 		final LETTER letter = callIncoming.getLetter();
 		final STATE pred = callIncoming.getPred();
@@ -289,6 +290,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 		}
 		preds.add(pred);
 	}
+	
 	void addReturnOutgoingMap(final OutgoingReturnTransition<LETTER, STATE> returnOutgoing) {
 		final LETTER letter = returnOutgoing.getLetter();
 		final STATE hier = returnOutgoing.getHierPred();
@@ -308,6 +310,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 		}
 		succs.add(succ);
 	}
+	
 	void addReturnIncomingMap(final IncomingReturnTransition<LETTER, STATE> returnIncoming) {
 		final LETTER letter = returnIncoming.getLetter();
 		final STATE hier = returnIncoming.getHierPred();
@@ -327,7 +330,6 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 		}
 		preds.add(pred);
 	}
-
 
 	@Override
 	public Set<LETTER> lettersInternal() {
@@ -1919,7 +1921,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			final LETTER letter) {
-		if(mapModeOutgoing()) {
+		if (mapModeOutgoing()) {
 			return internalSuccessorsMap(letter);
 		} else {
 			return internalSuccessorsField(letter);
@@ -1929,7 +1931,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors() {
-		if(mapModeOutgoing()) {
+		if (mapModeOutgoing()) {
 			return internalSuccessorsMap();
 		} else {
 			return internalSuccessorsField(null);
@@ -1940,7 +1942,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
 			final LETTER letter) {
-		if(mapModeIncoming()) {
+		if (mapModeIncoming()) {
 			return internalPredecessorsMap(letter);
 		} else {
 			return internalPredecessorsField(letter);
@@ -1950,7 +1952,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors() {
-		if(mapModeIncoming()) {
+		if (mapModeIncoming()) {
 			return internalPredecessorsMap();
 		} else {
 			return internalPredecessorsField(null);

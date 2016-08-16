@@ -42,6 +42,8 @@ public class SummaryReturnTransition<LETTER,STATE>
 	private final STATE mSucc;
 	
 	/**
+	 * Constructor.
+	 * 
 	 * @param linPred linear predecessor state
 	 * @param letter letter
 	 * @param succ successor state
@@ -56,10 +58,12 @@ public class SummaryReturnTransition<LETTER,STATE>
 	public STATE getLinPred() {
 		return mLinPred;
 	}
+	
 	@Override
 	public LETTER getLetter() {
 		return mLetter;
 	}
+	
 	@Override
 	public STATE getSucc() {
 		return mSucc;

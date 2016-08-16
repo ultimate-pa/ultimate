@@ -86,7 +86,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 	 *     automaton here
 	 */
 	public BuchiAcceptsRecursive(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER,STATE> nwa, final NestedLassoWord<LETTER> nlw){
+			final INestedWordAutomaton<LETTER,STATE> nwa, final NestedLassoWord<LETTER> nlw) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mNwa = nwa;
@@ -111,7 +111,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 
 		}
 		
-		if (mLoop.length() ==0) {
+		if (mLoop.length() == 0) {
 			mLogger.debug("LassoWords with empty lasso are rejected by every Büchi" +
 					" automaton");
 			mAccepted = false;
@@ -214,7 +214,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 			} else if (mStem.isReturnPosition(currentPosition)) {
 				assert (!callStack.isEmpty()) : "restricted to stem without pending return";
 				//pop the top element from the callStack
-				final STATE linearPred = callStack.remove(callStack.size()-1);
+				final STATE linearPred = callStack.remove(callStack.size() - 1);
 				outgoingTransitions = mNwa.returnSuccessors(currentState, linearPred, currentSymbol);
 			} else {
 				throw new IllegalArgumentException();
@@ -228,19 +228,19 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 					succStates.add(outgoingTransition.getSucc());
 				}
 				final Set<STATE> result = new HashSet<STATE>();
-				for (int i=0; i<succStates.size(); i++) {
+				for (int i = 0; i < succStates.size(); i++) {
 					// in case of nondeterminism, i.e. several successor states for 
 					// currentSymbol, every recursive call of this procedure needs its own
 					// copy of the call stack. One of the recursive procedure calls (I decided 
 					// for the last one) can use the existing copy  of the callStack. 
 					List<STATE> callStackcopy;
-					if (i!= succStates.size()-1) {
+					if (i != succStates.size() - 1) {
 						callStackcopy = new LinkedList<STATE>(callStack);
 					} else {
 						callStackcopy = callStack;
 					}
 					final Set<STATE> returnValue = getReachableStates(
-							currentPosition+1, 
+							currentPosition + 1, 
 							succStates.get(i), 
 							callStackcopy);
 					result.addAll(returnValue);
@@ -311,7 +311,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 		} else if (mLoop.isReturnPosition(currentPosition)) {
 			assert (!callStack.isEmpty()) : "restricted to loop without pending return";
 			//pop the top element from the callStack
-			final STATE linearPred = callStack.remove(callStack.size()-1);
+			final STATE linearPred = callStack.remove(callStack.size() - 1);
 			outgoingTransitions = mNwa.returnSuccessors(currentState, linearPred, currentSymbol);
 		} else {
 			throw new IllegalArgumentException();
@@ -327,14 +327,14 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 				succStates.add(outgoingTransition.getSucc());
 			}
 			boolean result = false;
-			for (int i=0; i<succStates.size(); i++) {
+			for (int i = 0; i < succStates.size(); i++) {
 				// in case of nondeterminism, i.e. several successor states for 
 				// currentSymbol, every recursive call of this procedure needs its own
 				// copy of the call stack. One of the recursive procedure calls (I decided 
 				// for the last one) can use the existing copy  of the callStack. 
 				List<STATE> callStackCopy;
 				Map<STATE, Boolean> hondaCandidatesCopy;
-				if (i!= succStates.size()-1) {
+				if (i != succStates.size() - 1) {
 					callStackCopy = new LinkedList<STATE>(callStack);
 					hondaCandidatesCopy = new HashMap<STATE,Boolean>(
 												hondaCandidates2visitedFinal);
@@ -345,8 +345,8 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 
 				result = result || isCompleteableToAcceptingRun(
 						hondaCandidatesCopy,
-						currentPosition+1, 
-						succStates.get(i), 
+						currentPosition + 1,
+						succStates.get(i),
 						callStackCopy);
 			}
 			return result;

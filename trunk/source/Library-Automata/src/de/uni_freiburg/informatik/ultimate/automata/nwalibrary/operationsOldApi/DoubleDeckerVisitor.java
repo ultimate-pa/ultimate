@@ -55,20 +55,21 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 /**
  * TODO Documentation
  * 
- * TODO: Optimization: For most operations the internal and call successors of
+ * <p>TODO: Optimization: For most operations the internal and call successors of
  * (<i>down</i>,<i>up</i>) are the same for all down states. So a lot of
  * successors are computed several times, but you could see the already in
  * mTraversedNwa. Suggestion: Extension that implements
  * visitAndGetInternalSuccessors(DoubleDecker) and has abstract
  * constructInternalSuccessors(IState) method.
  * 
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 
 	protected final AutomataLibraryServices mServices;
 	protected final ILogger mLogger;
+	
 	public enum ReachFinal {
 		UNKNOWN, AT_LEAST_ONCE
 	}
@@ -80,7 +81,8 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 	 * the worklist. The DoubleDecker (<i>down</i>,<i>up</i>) is marked iff
 	 * <i>down</i> is contained in the range of <i>up</i>.
 	 */
-	private final Map<STATE, Map<STATE, ReachFinal>> mMarked_Up2Down = new HashMap<STATE, Map<STATE, ReachFinal>>();
+	private final Map<STATE, Map<STATE, ReachFinal>> mMarked_Up2Down =
+			new HashMap<>();
 
 	/**
 	 * DoubleDecker that are already known but have not yet been visited.
@@ -881,13 +883,13 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 	}
 
 	private class DoubleDeckerSet {
-		private final Map<STATE, Set<STATE>> mup2down = new HashMap<STATE, Set<STATE>>();
+		private final Map<STATE, Set<STATE>> mUp2down = new HashMap<STATE, Set<STATE>>();
 
 		public void add(final STATE up, final STATE down) {
-			Set<STATE> downStates = mup2down.get(up);
+			Set<STATE> downStates = mUp2down.get(up);
 			if (downStates == null) {
 				downStates = new HashSet<STATE>();
-				mup2down.put(up, downStates);
+				mUp2down.put(up, downStates);
 			}
 			downStates.add(down);
 		}
@@ -899,39 +901,39 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 		}
 
 		public Map<STATE, Set<STATE>> getUp2DownMap() {
-			return mup2down;
+			return mUp2down;
 		}
 	}
 
 	private class DoubleDeckerWorkList {
-		private final Map<STATE, Set<STATE>> mup2down = new HashMap<STATE, Set<STATE>>();
+		private final Map<STATE, Set<STATE>> mUp2down = new HashMap<STATE, Set<STATE>>();
 
 		public void add(final STATE up, final STATE down) {
-			Set<STATE> downStates = mup2down.get(up);
+			Set<STATE> downStates = mUp2down.get(up);
 			if (downStates == null) {
 				downStates = new HashSet<STATE>();
-				mup2down.put(up, downStates);
+				mUp2down.put(up, downStates);
 			}
 			downStates.add(down);
 		}
 
 		public void add(final STATE up, final Collection<STATE> downs) {
-			Set<STATE> downStates = mup2down.get(up);
+			Set<STATE> downStates = mUp2down.get(up);
 			if (downStates == null) {
 				downStates = new HashSet<STATE>();
-				mup2down.put(up, downStates);
+				mUp2down.put(up, downStates);
 			}
 			downStates.addAll(downs);
 		}
 
 		public boolean isEmpty() {
-			return mup2down.isEmpty();
+			return mUp2down.isEmpty();
 		}
 
 		public Map<STATE, Set<STATE>> removeUpAndItsDowns() {
-			final STATE up = mup2down.keySet().iterator().next();
-			final Map<STATE, Set<STATE>> result = Collections.singletonMap(up, mup2down.get(up));
-			mup2down.remove(up);
+			final STATE up = mUp2down.keySet().iterator().next();
+			final Map<STATE, Set<STATE>> result = Collections.singletonMap(up, mUp2down.get(up));
+			mUp2down.remove(up);
 			return result;
 		}
 	}
@@ -954,7 +956,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 					private STATE mUp;
 					private Iterator<STATE> mDownIterator;
 					private STATE mDown;
-					boolean mhasNext = true;
+					boolean mHasNext = true;
 
 					{
 						mUpIterator = getUp2DownMapping().keySet().iterator();
@@ -962,7 +964,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 							mUp = mUpIterator.next();
 							mDownIterator = getUp2DownMapping().get(mUp).keySet().iterator();
 						} else {
-							mhasNext = false;
+							mHasNext = false;
 						}
 						computeNextElement();
 
@@ -970,7 +972,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 
 					private void computeNextElement() {
 						mDown = null;
-						while (mDown == null && mhasNext) {
+						while (mDown == null && mHasNext) {
 							if (mDownIterator.hasNext()) {
 								final STATE downCandidate = mDownIterator.next();
 								final ReachFinal reach = getUp2DownMapping().get(mUp).get(downCandidate);
@@ -984,7 +986,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 									mUp = mUpIterator.next();
 									mDownIterator = getUp2DownMapping().get(mUp).keySet().iterator();
 								} else {
-									mhasNext = false;
+									mHasNext = false;
 								}
 							}
 
@@ -993,7 +995,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 
 					@Override
 					public boolean hasNext() {
-						return mhasNext;
+						return mHasNext;
 					}
 
 					@Override

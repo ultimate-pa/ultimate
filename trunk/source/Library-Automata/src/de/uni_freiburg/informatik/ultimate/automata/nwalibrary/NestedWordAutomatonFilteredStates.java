@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.FilteredIterable;
 /**
  * undocumented!
  * 
- * NOTE: The interface INestedWordAutomatonOldApi can be removed when also
+ * <p>NOTE: The interface INestedWordAutomatonOldApi can be removed when also
  * removing the respective overridden methods.
  * 
  * @param <LETTER> letter type

@@ -97,7 +97,7 @@ public class DifferenceBlackAndWhite<S,C>
 			throw new UnsupportedOperationException("DifferenceBlackAndWhite" +
 					" needs an automaton with exactly one inital state");
 		}
-		if(!nwa.finalIsTrap()) {
+		if (!nwa.finalIsTrap()) {
 			throw new UnsupportedOperationException("Second operand has to" +
 					"closed under concatenation with sigma star");
 			//otherwise the result won't be the intersection of languages
@@ -105,7 +105,7 @@ public class DifferenceBlackAndWhite<S,C>
 		final C nwaInitialState = nwa.getInitialStates().iterator().next();
 		classifySymbols();
 //		mSymbol2AutomatonTransition = createSymbol2AutomatonTransitionMap();
-		if(nwa.isFinal(nwaInitialState)) {
+		if (nwa.isFinal(nwaInitialState)) {
 			// case where nwa accepts everything. Result will be a net that
 			// accepts the empty language
 			mResult = new PetriNetJulian<S,C>(mServices, mOperand.getAlphabet(),
@@ -260,9 +260,9 @@ public class DifferenceBlackAndWhite<S,C>
 					final Place<S,C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					predecessors.add(newPlace);
 				}
-				assert(mWhitePlace.containsKey(predState));
+				assert (mWhitePlace.containsKey(predState));
 				predecessors.add(mWhitePlace.get(predState));
-				assert(mWhitePlace.containsKey(succState));
+				assert (mWhitePlace.containsKey(succState));
 				predecessors.add(mBlackPlace.get(succState));
 				
 				final Collection<Place<S,C>> successors = 
@@ -271,9 +271,9 @@ public class DifferenceBlackAndWhite<S,C>
 					final Place<S,C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					successors.add(newPlace);
 				}
-				assert(mWhitePlace.containsKey(succState));
+				assert (mWhitePlace.containsKey(succState));
 				successors.add(mWhitePlace.get(succState));
-				assert(mBlackPlace.containsKey(predState));
+				assert (mBlackPlace.containsKey(predState));
 				successors.add(mBlackPlace.get(predState));
 				
 				mResult.addTransition(oldTrans.getSymbol(), predecessors, successors);
@@ -346,12 +346,12 @@ public class DifferenceBlackAndWhite<S,C>
 	private boolean isPreSuccPlaceInNet(final PetriNetJulian<S,C> net) {
 		for (final ITransition<S,C> trans : net.getTransitions()) {
 			for (final Place<S,C> place : trans.getPredecessors()) {
-				if(!net.getPlaces().contains(place)) {
+				if (!net.getPlaces().contains(place)) {
 					return false;
 				}
 			}
 			for (final Place<S,C> place : trans.getSuccessors()) {
-				if(!net.getPlaces().contains(place)) {
+				if (!net.getPlaces().contains(place)) {
 					return false;
 				}
 			}
@@ -364,12 +364,12 @@ public class DifferenceBlackAndWhite<S,C>
 	private boolean isPreSuccTransitionInNet(final PetriNetJulian<S,C> net) {
 		for (final Place<S,C> place : net.getPlaces()) {
 			for (final ITransition<S,C> trans : place.getPredecessors()) {
-				if(!net.getTransitions().contains(trans)) {
+				if (!net.getTransitions().contains(trans)) {
 					return false;
 				}
 			}
 			for (final ITransition<S,C> trans : place.getSuccessors()) {
-				if(!net.getTransitions().contains(trans)) {
+				if (!net.getTransitions().contains(trans)) {
 					return false;
 				}
 			}

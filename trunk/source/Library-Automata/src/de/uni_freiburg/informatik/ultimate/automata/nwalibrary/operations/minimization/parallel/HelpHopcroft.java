@@ -50,8 +50,6 @@ public class HelpHopcroft implements Runnable {
 	 *            Instance of incremental algorithm that creates the task
 	 * @param hopcroft
 	 *            Instance of currently parallel running Hopcroft algorithm
-	 * @param state1
-	 * @param state2
 	 */
 	public HelpHopcroft(final MinimizeDfaAmrParallel<?, ?> incremental,
 			final MinimizeDfaHopcroftParallel<?, ?> hopcroft, final int state1,

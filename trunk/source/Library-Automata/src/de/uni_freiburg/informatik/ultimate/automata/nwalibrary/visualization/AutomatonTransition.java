@@ -50,8 +50,8 @@ public class AutomatonTransition
 							   final String linPred,
 							   final AutomatonState succState) {
 		super(state, succState);
-		assert(type == Transition.RETURN || linPred ==null);
-		assert(type != Transition.RETURN || linPred != null);
+		assert (type == Transition.RETURN || linPred == null);
+		assert (type != Transition.RETURN || linPred != null);
 		switch (type) {
 			case CALL:
 				mName = "Call";
@@ -78,10 +78,12 @@ public class AutomatonTransition
 		state.addOutgoing(this);
 		succState.addIncoming(this);
 	}
+	
 	@Override
 	public String toString() {
 		return mName;
 	}
+	
 	@Override
 	public AutomatonTransition getLabel() {
 		return this;

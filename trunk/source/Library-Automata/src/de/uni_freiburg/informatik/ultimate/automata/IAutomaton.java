@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  *
  * @param <LETTER> Type of objects that are contained in the alphabet.
  * @param <STATE> Type of objects that are used to label states (resp. places
- * for PetriNet)
+ *     for PetriNet)
  */
 public interface IAutomaton<LETTER,STATE> {
 	/**
@@ -45,7 +45,7 @@ public interface IAutomaton<LETTER,STATE> {
 	
 	/**
 	 * @return StateFactory that was used to construct this automaton. This
-	 * method become deprecated.
+	 *     method become deprecated.
 	 */
 	StateFactory<STATE> getStateFactory();
 	

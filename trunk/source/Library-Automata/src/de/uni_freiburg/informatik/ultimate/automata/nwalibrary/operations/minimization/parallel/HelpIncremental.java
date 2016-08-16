@@ -48,8 +48,6 @@ public class HelpIncremental implements Runnable {
 	 * 
 	 * @param incremental
 	 *            Currently running instance of the incremental algorithm
-	 * @param array1
-	 * @param array2
 	 */
 	public HelpIncremental(final MinimizeDfaAmrParallel<?, ?> incremental,
 			final Set<Integer> array1, final Set<Integer> array2) {

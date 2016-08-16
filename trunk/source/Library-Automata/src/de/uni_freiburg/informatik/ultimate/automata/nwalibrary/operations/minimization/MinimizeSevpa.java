@@ -58,10 +58,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Summa
 /**
  * minimizer for special type of nested word automata used in Ultimate
  * 
- * based on idea of Hopcroft's minimization for deterministic finite automata
+ * <p>based on idea of Hopcroft's minimization for deterministic finite automata
  * applied to nested word automata (some huge differences)
  * 
- * over-approximation of the language due to ignorance of
+ * <p>over-approximation of the language due to ignorance of
  * history encoded in call and return edges
  * afterwards soundness is assured using a more expensive analysis
  * this process is looped until no change occurs anymore
@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Summa
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
+@SuppressWarnings("squid:UselessParenthesesCheck")
 public class MinimizeSevpa<LETTER,STATE>
 		extends AMinimizeNwaDD<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
@@ -600,12 +601,12 @@ public class MinimizeSevpa<LETTER,STATE>
 	}
 	
 	/**
-	 * splits states which encode different histories in the run
+	 * Splits states which encode different histories in the run.
 	 * 
-	 * distinguishes return transitions by the equivalence class of the
+	 * <p>distinguishes return transitions by the equivalence class of the
 	 * hierarchical and linear predecessor and splits non-similar transitions
 	 * 
-	 * expensive method, only used to accomplish soundness in the end
+	 * <p>expensive method, only used to accomplish soundness in the end
 	 * 
 	 * @param a target set of which X shall be computed
 	 * @param partition partition of the states
@@ -1280,7 +1281,7 @@ public class MinimizeSevpa<LETTER,STATE>
 		 * constructor for initial equivalence classes
 		 * 
 		 * @param collection collection of states for the equivalence class
-		 * 			must contain at least one element
+		 *     must contain at least one element
 		 * @param isFinal true iff equivalence states are final
 		 */
 		public EquivalenceClass(final Collection<STATE> collection,
@@ -1292,7 +1293,7 @@ public class MinimizeSevpa<LETTER,STATE>
 		 * private constructor for initial equivalence classes
 		 * 
 		 * @param collection collection of states for the equivalence class
-		 * 			must contain at least one element
+		 *     must contain at least one element
 		 * @param isFinal true iff equivalence states are final
 		 * @param inW true iff equivalence class shall be put in work list
 		 */
@@ -1404,7 +1405,7 @@ public class MinimizeSevpa<LETTER,STATE>
 		
 		/**
 		 * @param intersected collection of intersected equivalence classes
-		 * 			needed to remember new intersections
+		 *     needed to remember new intersections
 		 * @return collection of states in the intersection
 		 */
 		Collection<STATE> getIntersection(
@@ -1458,7 +1459,7 @@ public class MinimizeSevpa<LETTER,STATE>
 		 * 
 		 * @param state state to move
 		 * @param intersected collection of intersected equivalence classes
-		 * 			remembered for later computations
+		 *     remembered for later computations
 		 */
 		public void moveState(final STATE state,
 								final Collection<EquivalenceClass> intersected) {
@@ -1710,8 +1711,8 @@ public class MinimizeSevpa<LETTER,STATE>
 		 * of which a state is reached from a newly outgoing return
 		 * 
 		 * @param equivalenceClass equivalence class with states from
-		 * 			predecessor set of which return successors are to be
-		 * 			added to the work list
+		 *     predecessor set of which return successors are to be
+		 *     added to the work list
 		 */
 		void addReturnsToWorkList(final EquivalenceClass equivalenceClass) {
 			final Collection<STATE> collection = equivalenceClass.getCollection();
@@ -1787,25 +1788,31 @@ public class MinimizeSevpa<LETTER,STATE>
 			}
 			return result;
 		}
+		
 		Iterable<OutgoingInternalTransition<LETTER, STATE>> succInternal(
 				final STATE state, final LETTER letter) {
 			return mParentOperand.internalSuccessors(state, letter);
 		}
+		
 		Iterable<OutgoingCallTransition<LETTER, STATE>> succCall(
 				final STATE state, final LETTER letter) {
 			return mParentOperand.callSuccessors(state, letter);
 		}
+		
 		Iterable<OutgoingReturnTransition<LETTER, STATE>> succReturn(
 				final STATE state, final STATE hier, final LETTER letter) {
 			return mParentOperand.returnSuccessors(state, hier, letter);
 		}
+		
 		Iterable<STATE> hierPred(final STATE state, final LETTER letter) {
 			return mParentOperand.hierPred(state, letter);
 		}
+		
 		Iterable<IncomingReturnTransition<LETTER, STATE>> linPredIncoming(
 				final STATE state, final STATE hier, final LETTER letter) {
 			return mParentOperand.returnPredecessors(state, hier, letter);
 		}
+		
 		Iterable<IncomingReturnTransition<LETTER, STATE>> hierPredIncoming(
 				final STATE state, final LETTER letter) {
 			return mParentOperand.returnPredecessors(state, letter);
@@ -1825,6 +1832,7 @@ public class MinimizeSevpa<LETTER,STATE>
 				}
 			}
 		}
+		
 		/**
 		 * finds predecessor states and directly adds elements to the set
 		 * more efficient variant if no states were removed
@@ -1861,19 +1869,23 @@ public class MinimizeSevpa<LETTER,STATE>
 				addNeighborsEfficient(new InternalTransitionIterator(
 						mParentOperand.internalPredecessors(state, letter)), x);
 		}
+		
 		void addPredCall(final STATE state, final LETTER letter, final PredecessorSet x) {
 				addNeighborsEfficient(new CallTransitionIterator(
 						mParentOperand.callPredecessors(state, letter)), x);
 		}
+		
 		void addPredReturnLin(final STATE state, final LETTER letter,
 				final STATE hier, final PredecessorSet x) {
 				addNeighborsEfficientLin(mParentOperand.returnPredecessors(
 						state, hier, letter), x);
 		}
+		
 		void addPredReturnHier(final STATE state, final LETTER letter, final PredecessorSet x) {
 				addNeighborsEfficientHier(
 						mParentOperand.returnPredecessors(state, letter), x);
 		}
+		
 		void addSuccReturnHier(final STATE state, final LETTER letter, final PredecessorSet x) {
 			final HashSet<STATE> hierSet = new HashSet<STATE>();
 			for (final STATE hier : mParentOperand.hierPred(state, letter)) {
@@ -1887,6 +1899,7 @@ public class MinimizeSevpa<LETTER,STATE>
 		 */
 		class InternalTransitionIterator implements Iterable<STATE> {
 			protected final Iterable<IncomingInternalTransition<LETTER, STATE>> mIterable;
+			
 			public InternalTransitionIterator(
 					final Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors) {
 				mIterable = internalPredecessors;
@@ -1901,6 +1914,7 @@ public class MinimizeSevpa<LETTER,STATE>
 					public boolean hasNext() {
 						return mIt.hasNext();
 					}
+					
 					@Override
 					public STATE next() {
 						return mIt.next().getPred();
@@ -1914,6 +1928,7 @@ public class MinimizeSevpa<LETTER,STATE>
 		 */
 		class CallTransitionIterator implements Iterable<STATE> {
 			protected final Iterable<IncomingCallTransition<LETTER, STATE>> mIterable;
+			
 			public CallTransitionIterator(
 					final Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors) {
 				mIterable = callPredecessors;
@@ -1928,6 +1943,7 @@ public class MinimizeSevpa<LETTER,STATE>
 					public boolean hasNext() {
 						return mIt.hasNext();
 					}
+					
 					@Override
 					public STATE next() {
 						return mIt.next().getPred();
@@ -1977,7 +1993,7 @@ public class MinimizeSevpa<LETTER,STATE>
 	 * in order to get valid results, the original equivalence class A has to
 	 * be remembered somehow, since it can be destroyed during the splitting
 	 * 
-	 * NOTE: iterator must be used in 'hasNext()-loop'
+	 * <p>NOTE: iterator must be used in 'hasNext()-loop'
 	 * and with no change to the equivalence classes during iteration
 	 */
 	class TargetSet {
@@ -1985,7 +2001,7 @@ public class MinimizeSevpa<LETTER,STATE>
 		
 		/**
 		 * @param firstEquivalenceClass first equivalence class
-		 * 			(must not be null)
+		 *     (must not be null)
 		 */
 		public TargetSet(final EquivalenceClass firstEquivalenceClass) {
 			assert firstEquivalenceClass != null;
@@ -1995,12 +2011,12 @@ public class MinimizeSevpa<LETTER,STATE>
 		}
 		
 		/**
-		 * @return iterator over all states
-		 * 
 		 * NOTE: is only correct if used in 'hasNext()-loop',
 		 * but therefore needs less overhead
 		 * NOTE: is only correct if no further equivalence classes are added
 		 * during iteration
+		 * 
+		 * @return iterator over all states
 		 */
 		Iterator<STATE> iterator() {
 			return new Iterator<STATE>() {
@@ -2107,7 +2123,7 @@ public class MinimizeSevpa<LETTER,STATE>
 	/**
 	 * work list which is roughly sorted by size (small < big)
 	 * 
-	 * NOTE: ordering is not assured, since equivalence classes often change
+	 * <p>NOTE: ordering is not assured, since equivalence classes often change
 	 * size, which results in reordering, which again is not efficient,
 	 * since PriorityQueue does not offer a decreaseKey() method
 	 */
@@ -2396,12 +2412,12 @@ public class MinimizeSevpa<LETTER,STATE>
 		}
 		
 		/**
-		 * @return iterator of final states
-		 * 
 		 * NOTE: is only correct if used in 'hasNext()-loop',
 		 * but therefore needs less overhead
 		 * NOTE: is only correct if no further equivalence classes are added
 		 * during iteration
+		 * 
+		 * @return iterator of final states
 		 */
 		Iterator<STATE> getFinalsIterator() {
 			switch (mMode) {
@@ -2459,7 +2475,7 @@ public class MinimizeSevpa<LETTER,STATE>
 		 * number of states removed (only used for hash set initialization)
 		 * 
 		 * @param finals true iff number of final states is needed
-		 * 				false iff number of non-final states is needed
+		 *     false iff number of non-final states is needed
 		 * @return number of removed states
 		 */
 		int getRemovedSize(final boolean finals) {

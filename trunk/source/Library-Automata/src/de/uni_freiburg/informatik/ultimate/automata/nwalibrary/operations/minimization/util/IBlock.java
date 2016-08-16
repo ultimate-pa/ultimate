@@ -63,10 +63,10 @@ public interface IBlock<STATE> {
 	 * If a block is independent of the representative, then one must only look
 	 * at one state in the block when interested in the successor blocks.
 	 * 
-	 * Since internal and call transitions are considered similarly by many
+	 * <p>Since internal and call transitions are considered similarly by many
 	 * operations, they are handled the same way.
 	 * 
-	 * NOTE: We assume here that return transitions are more complicated and
+	 * <p>NOTE: We assume here that return transitions are more complicated and
 	 * cannot be handled in a way independent of the representative.
 	 * 
 	 * @return true iff all states have the same outgoing transitions

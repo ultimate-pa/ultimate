@@ -81,12 +81,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	private final InSumCaSuccessorProvider mNWARSSuccessorProvider;
 
 	/**
-	 * 
-	 * @param nestedWordAutomatonReachableStates
-	 * @param asc
-	 * @param services
 	 * @param allStates states that are considered in this SCC computation
-	 * @param startStates
 	 */
 	public AcceptingComponentsAnalysis(
 			final NestedWordAutomatonReachableStates<LETTER, STATE> nestedWordAutomatonReachableStates, 
@@ -246,21 +241,14 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	
 	
 	
-	
-	
-	
-	
-	
-	
-	
 	/**
 	 * Extension of {@link StronglyConnectedcomponent} that stores an maintains
 	 * information which is needed by {@link NestedWordAutomatonReachableStates}
 	 * to efficiently computed accepting runs.
 	 * @author Matthias Heizmann
 	 *
-	 * @param <LETTER>
-	 * @param <STATE>
+	 * @param <LETTER> letter type
+	 * @param <STATE> state type
 	 */
 	public static class StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>
 			extends StronglyConnectedComponent<StateContainer<LETTER, STATE>> {
@@ -351,8 +339,6 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 		 * Returns the state with the lowest serial number that is accepting
 		 * or call predecessor of an accepting summary. Returns null if no
 		 * such state exists.
-		 * 
-		 * @return
 		 */
 		public StateContainer<LETTER, STATE> getAcceptingWithLowestSerialNumber() {
 			return mAcceptingWithLowestSerialNumber;
@@ -360,9 +346,9 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 
 		/**
 		 * @return all states (not state containers) of this SCC.
-		 * This methods is not efficient because a new Set is constructed.
-		 * At the moment this is a workaround for Thomas' loop complexity
-		 * project.
+		 *     This methods is not efficient because a new Set is constructed.
+		 *     At the moment this is a workaround for Thomas' loop complexity
+		 *     project.
 		 */
 		public Set<STATE> getAllStates() {
 			final Set<STATE> result = new HashSet<>();

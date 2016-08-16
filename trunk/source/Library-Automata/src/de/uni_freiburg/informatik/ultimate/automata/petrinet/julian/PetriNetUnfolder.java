@@ -134,7 +134,6 @@ public class PetriNetUnfolder<S, C>
 	private final PetriNetUnfolder<S, C>.Statistics mStatistics = new Statistics();
 
 	/**
-	 * 
 	 * Build the finite Prefix of PetriNet net.
 	 * 
 	 * @param services Ultimate services
@@ -249,10 +248,7 @@ public class PetriNetUnfolder<S, C>
 	 * constructs a run over the unfolding which leads to the marking
 	 * corresponding with the local configuration of the specified event e.
 	 * 
-	 * uses the recursive helper-method {@code #constructRun(Event, Marking)}
-	 * 
-	 * @param e
-	 * @return
+	 * <p>uses the recursive helper-method {@code #constructRun(Event, Marking)}
 	 */
 	private PetriNetRun<S, C> constructRun(final Event<S, C> e) {
 		mLogger.debug("Marking: " + mUnfolding.getDummyRoot().getMark());
@@ -264,11 +260,7 @@ public class PetriNetUnfolder<S, C>
 	 * marking corresponding with the local configuration of the specified event
 	 * e.
 	 * 
-	 * The run starts with the given Marking {@code initialMarking}
-	 * 
-	 * @param e
-	 * @param initialMarking
-	 * @return
+	 * <p>The run starts with the given Marking {@code initialMarking}
 	 */
 	private RunAndConditionMarking constructRun(final Event<S, C> e,
 			final ConditionMarking<S, C> initialMarking) {
@@ -324,8 +316,6 @@ public class PetriNetUnfolder<S, C>
 	/**
 	 * Return some accepting run of PetriNet net, return null if net does not
 	 * have an accepting run.
-	 * @throws AssertionError 
-	 * @throws AutomataOperationCanceledException 
 	 */
 	public PetriNetRun<S, C> getAcceptingRun() throws AutomataOperationCanceledException, AssertionError {
 		return mRun;
@@ -334,7 +324,7 @@ public class PetriNetUnfolder<S, C>
 	/**
 	 * Return the occurrence net which is the finite prefix of the unfolding of
 	 * net.
-	 * @throws AutomataOperationCanceledException 
+	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
 	public BranchingProcess<S, C> getFinitePrefix() throws AutomataOperationCanceledException {
 		return mUnfolding;

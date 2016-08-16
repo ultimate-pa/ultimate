@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,7 +34,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.Stack;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -290,7 +290,7 @@ class RunConstructor<LETTER,STATE> {
 	/**
 	 * Returns run whose first state is mGoal and whose last state is 
 	 * mStart.
-	 * @throws AutomataOperationCanceledException 
+	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
 	NestedRun<LETTER, STATE> constructRun() throws AutomataOperationCanceledException {
 		//TODO: Check if this timeout check is responsible for problems.
@@ -306,8 +306,8 @@ class RunConstructor<LETTER,STATE> {
 		final StateContainerWithObligation startStateWithStartObligation = 
 				new StateContainerWithObligation(mStart, startStateHasObligation);
 		StateContainerWithObligation current = startStateWithStartObligation;
-		final Stack<Iterator<TransitionWithObligation>> predStack = new Stack<Iterator<TransitionWithObligation>>();
-		final Stack<RunWithObligation> takenStack = new Stack<RunWithObligation>();
+		final ArrayDeque<Iterator<TransitionWithObligation>> predStack = new ArrayDeque<Iterator<TransitionWithObligation>>();
+		final ArrayDeque<RunWithObligation> takenStack = new ArrayDeque<RunWithObligation>();
 		
 		// if this is set the last round
 		boolean backtrack = false;
@@ -368,10 +368,10 @@ class RunConstructor<LETTER,STATE> {
 						predSc, 
 						mNwars.obtainSC(inTrans.getLinPred()),
 						inTrans.getLetter(), current.getObject());
-				final boolean isAcceptingSummaryRequired = 
-						current.hasObligation() && 
-						!transitionWOToLowest.hasObligation() && 
-						!mNwars.isFinal(predSc.getState());
+				final boolean isAcceptingSummaryRequired =
+						current.hasObligation()
+							&& !transitionWOToLowest.hasObligation()
+							&& !mNwars.isFinal(predSc.getState());
 				assert !isAcceptingSummaryRequired || mNwars.isAccepting(summary);
 				final RunConstructor<LETTER,STATE> runConstuctor = new RunConstructor<LETTER,STATE>(
 						mServices, 
@@ -389,7 +389,7 @@ class RunConstructor<LETTER,STATE> {
 			} else {
 				throw new AssertionError();
 			}
-			assert current.getObject().getState() == newPrefix.getStateAtPosition(newPrefix.getLength()-1);
+			assert current.getObject().getState() == newPrefix.getStateAtPosition(newPrefix.getLength() - 1);
 			final StateContainerWithObligation predWo = new StateContainerWithObligation(
 					predSc, transitionWOToLowest.hasObligation());
 			final RunWithObligation newPrefixWO = new RunWithObligation(
@@ -402,13 +402,13 @@ class RunConstructor<LETTER,STATE> {
 		}
 	}
 
-	private NestedRun<LETTER, STATE> constructResult(final Stack<RunWithObligation> stack) {
+	private NestedRun<LETTER, STATE> constructResult(final ArrayDeque<RunWithObligation> stack) {
 		final Iterator<RunWithObligation> it = stack.iterator();
 		NestedRun<LETTER, STATE> result = it.next().getNestedRun();
-		while(it.hasNext()) {
+		while (it.hasNext()) {
 			result = it.next().getNestedRun().concatenate(result);
 		}
-		assert mStart.getState() == result.getStateAtPosition(result.getLength()-1);
+		assert mStart.getState() == result.getStateAtPosition(result.getLength() - 1);
 		if (mFindSummary) {
 			final NestedRun<LETTER, STATE> returnSuffix = new NestedRun<LETTER, STATE>(
 					mSummary.getLinPred().getState(), 
@@ -423,12 +423,14 @@ class RunConstructor<LETTER,STATE> {
 	private class ObjectWithObligation<E> {
 		private final E mObject;
 		private final boolean mFlag;
+		
 		public ObjectWithObligation(
 				final E object, final boolean flag) {
 			super();
 			mObject = object;
 			mFlag = flag;
 		}
+		
 		public E getObject() {
 			return mObject;
 		}
@@ -436,6 +438,7 @@ class RunConstructor<LETTER,STATE> {
 		public boolean hasObligation() {
 			return mFlag;
 		}
+		
 		@Override
 		public int hashCode() {
 			final int prime = 31;
@@ -445,6 +448,7 @@ class RunConstructor<LETTER,STATE> {
 					+ ((mObject == null) ? 0 : mObject.hashCode());
 			return result;
 		}
+		
 		@Override
 		public boolean equals(final Object obj) {
 			if (this == obj) {
@@ -469,13 +473,12 @@ class RunConstructor<LETTER,STATE> {
 			}
 			return true;
 		}
+		
 		@Override
 		public String toString() {
 			return "ObjectWithObligation [mObject=" + mObject + ", mFlag="
 					+ mFlag + "]";
 		}
-		
-		
 	}
 	
 	private class TransitionWithObligation extends ObjectWithObligation<ITransitionlet<LETTER,STATE>> {
@@ -492,14 +495,17 @@ class RunConstructor<LETTER,STATE> {
 	
 	private class RunWithObligation extends StateContainerWithObligation {
 		private final NestedRun<LETTER,STATE> mNestedRun;
+		
 		public RunWithObligation(final StateContainer<LETTER, STATE> object,
 				final boolean flag, final NestedRun<LETTER,STATE> nestedRun) {
 			super(object, flag);
 			mNestedRun = nestedRun;
 		}
+		
 		public NestedRun<LETTER,STATE> getNestedRun() {
 			return mNestedRun;
 		}
+		
 		public StateContainerWithObligation getStateWithObligation() {
 			return new StateContainerWithObligation(getObject(), hasObligation());
 		}
@@ -510,5 +516,4 @@ class RunConstructor<LETTER,STATE> {
 			super(object, flag);
 		}
 	}
-	
 }

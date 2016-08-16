@@ -36,7 +36,7 @@ public class Word<LETTER> implements Iterable<LETTER> {
 	protected LETTER[] mWord;
 	
 	/**
-	 * Construct Word consisting of a sequence of symbols
+	 * Construct Word consisting of a sequence of symbols.
 	 * 
 	 * @param symbols sequence of symbols
 	 */
@@ -47,13 +47,15 @@ public class Word<LETTER> implements Iterable<LETTER> {
 	
 	/**
 	 * @return The length of the Word is 0 for the empty word, 1 for the
-	 * word that consists of one symbol, etc.
+	 *     word that consists of one symbol, etc.
 	 */
 	public int length() {
 		return mWord.length;
 	}
 	
 	/**
+	 * A list view of the symbols.
+	 * 
 	 * @return list of symbols
 	 */
 	public List<LETTER> asList() {
@@ -82,11 +84,11 @@ public class Word<LETTER> implements Iterable<LETTER> {
 		final LETTER[] concatenationSymbols = 
 			(LETTER[]) new Object[lengthWord1 + lengthWord2];
 		
-		for (int i=0; i<lengthWord1; i++) {
+		for (int i = 0; i < lengthWord1; i++) {
 			concatenationSymbols[i] = this.getSymbol(i);
 		}
-		for (int i=0; i<lengthWord2; i++) {
-			concatenationSymbols[lengthWord1+i] = word2.getSymbol(i);
+		for (int i = 0; i < lengthWord2; i++) {
+			concatenationSymbols[lengthWord1 + i] = word2.getSymbol(i);
 		}
 		return new Word<LETTER>(concatenationSymbols);
 	}		

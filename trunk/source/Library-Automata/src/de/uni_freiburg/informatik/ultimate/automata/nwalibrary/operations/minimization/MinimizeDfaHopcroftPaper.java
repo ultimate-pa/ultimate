@@ -85,7 +85,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 	// number of letters in alphabet.
 	private int mNumberOfLetters;
 	// index for msetsWithMarkedElements.
-	private int mw = 0;
+	private int mW = 0;
 	// blocks (consist of states).
 	private Partition mBlocks;
 	// cords (consist of transitions).
@@ -407,30 +407,31 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 		private int[] mSetElemBelongsTo;
 		private int[] mFirst;
 		private int[] mPast;
+		
 		/***************************************************************//**
 		 * Method for initializing partition.
-		 * @param nOfStates number of states
+		 * @param numberOfStates number of states
 		 */
-		public void init(final int nOfStates) {
+		public void init(final int numberOfStates) {
 			// After initialization, partition contains either one
 			// or none block of states.
-			this.mNumberOfSets = (nOfStates > 0 ? 1 : 0);
+			this.mNumberOfSets = (numberOfStates > 0 ? 1 : 0);
 			// all states of the automaton.
-			this.mElements = new int[nOfStates];
+			this.mElements = new int[numberOfStates];
 			// location in mElements of a state
-			this.mLocationOfElem = new int[nOfStates];
+			this.mLocationOfElem = new int[numberOfStates];
 			// # of block an element e belongs to
-			this.mSetElemBelongsTo = new int[nOfStates];
+			this.mSetElemBelongsTo = new int[numberOfStates];
 			
 			// Elements e of block b are stored in an unspecified order in
 			// E[f], E[f + 1], ... , E[p - 1] where f = F[b], p = P[b]
 			
 			 // first element e of block.
-			this.mFirst = new int[nOfStates];
+			this.mFirst = new int[numberOfStates];
 			// first element e of next block
-			this.mPast = new int[nOfStates];
+			this.mPast = new int[numberOfStates];
 			
-			for (int i = 0; i < nOfStates; ++i) {
+			for (int i = 0; i < numberOfStates; ++i) {
 				// After initialization elements are sorted.
 				this.mElements[i] = this.mLocationOfElem[i] = i;
 				// Each element belongs to block number 0.
@@ -441,7 +442,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 				// first element of block 0 = 0.
 				this.mFirst[0] = 0;
 				// first element of not existing block 1 = nOfStates.
-				this.mPast[0] = nOfStates;
+				this.mPast[0] = numberOfStates;
 			}
 			
 			// Now we got an array mElements = [0, 1, 2, ... , #states - 1]
@@ -470,7 +471,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 			// If no element was marked in this block before, add this block
 			// to list of blocks with marked elements.
 			if (mNumberOfMarkedElemInSet[set] == 0) {
-				mSetsWithMarkedElements[mw++] = set;
+				mSetsWithMarkedElements[mW++] = set;
 			}
 			// Increment marked elements in block, element e belongs to.
 			mNumberOfMarkedElemInSet[set]++;
@@ -481,9 +482,9 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 		 * Method for splitting blocks with marked elements.
 		 */
 		public void split() {
-			while (mw > 0) {
+			while (mW > 0) {
 				// set with marked elements.
-				final int set = mSetsWithMarkedElements[--mw];
+				final int set = mSetsWithMarkedElements[--mW];
 				// first unmarked element of set.
 				final int firstUnmarked = this.mFirst[set] + mNumberOfMarkedElemInSet[set];
 				

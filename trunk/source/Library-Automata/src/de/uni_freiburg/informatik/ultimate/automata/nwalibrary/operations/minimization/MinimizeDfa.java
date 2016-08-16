@@ -173,7 +173,6 @@ public class MinimizeDfa<LETTER,STATE>
 	 *            the states counter i
 	 * @param k
 	 *            the alphabet counter k
-	 * @return
 	 */
 	private ArrayList<STATE> getSuccessors(final ArrayList<STATE> states,
 			final LETTER s, final int i) {

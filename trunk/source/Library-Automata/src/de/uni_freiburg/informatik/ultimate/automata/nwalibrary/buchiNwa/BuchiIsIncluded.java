@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * 
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 

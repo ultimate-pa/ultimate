@@ -37,33 +37,34 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 /**
  * Implementation of nested words.
  * 
- * A nested word is a model for data that has not only a linear order (like a word) but also a hierarchical order (like
+ * <p>A nested word is a model for data that has not only a linear order (like a word) but also a hierarchical order (like
  * an execution of a procedural program or like an XML document.
  * 
- * Nested words have been introduced by Rajeev Alur et al. [1] http://www.cis.upenn.edu/~alur/nw.html [2] Rajeev Alur,
+ * <p>Nested words have been introduced by Rajeev Alur et al. [1] http://www.cis.upenn.edu/~alur/nw.html [2] Rajeev Alur,
  * P. Madhusudan: Adding Nesting Structure to Words. Developments in Language Theory 2006:1-13 [3] Rajeev Alur, P.
  * Madhusudan: Adding nesting structure to words. J. ACM (JACM) 56(3) (2009)
  * 
- * @author heizmann@informatik.uni-freiburg.de
  * 
- * In this implementation we stick to the definition of [3] and deviate from [2] by allowing nested words to
+ * <p>In this implementation we stick to the definition of [3] and deviate from [2] by allowing nested words to
  * have pending calls and pending returns.
  * 
- * In this implementation Objects are used as symbols of the alphabet. The type of these objects is specified by
+ * <p>In this implementation Objects are used as symbols of the alphabet. The type of these objects is specified by
  * the LETTER parameter.
  * 
- * We model the word of a nested word using an array of LETTERs. The (binary) nesting Relation is modeled by an
+ * <p>We model the word of a nested word using an array of LETTERs. The (binary) nesting Relation is modeled by an
  * int array mNestingRelation (that has the same length) the following way. If i is an internal position
  * mNestingRelation[i] is INTERNAL_POSITION. If i is a call position mNestingRelation[i] is the position of the
  * corresponding return position and PLUS_INFINITY is it is a pending call. If i is a return position
  * mNestingRelation[i] is the position of the corresponding call position and MINUS_INFINITY is it is a pending
  * return.
  * 
- * Example: The nested word (a b c d, {(0,2),(-infinity,3)} ) is modeled as mWord = {'a', 'b' ,'c' 'd' }
+ * <p>Example: The nested word (a b c d, {(0,2),(-infinity,3)} ) is modeled as mWord = {'a', 'b' ,'c' 'd' }
  * mNestingRelation = { 2 , INTERNAL_POSITION, 0 , MINUS_INFINITY }
  * 
- * This model of a nesting relation wastes some memory if the nested word has only few calls and returns, but is
+ * <p>This model of a nesting relation wastes some memory if the nested word has only few calls and returns, but is
  * very simple.
+ * 
+ * @author heizmann@informatik.uni-freiburg.de
  * 
  * @param <LETTER>
  *    Type of the Objects which can be symbols of the alphabet.
@@ -124,9 +125,9 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	}
 
 	/**
-	 * Word of length one
+	 * Word of length one.
 	 * 
-	 * @param letter
+	 * @param letter letter
 	 */
 	public NestedWord(final LETTER letter, final int internalORcallORreturn) {
 		if (internalORcallORreturn != INTERNAL_POSITION && internalORcallORreturn != PLUS_INFINITY
@@ -144,7 +145,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	/**
 	 * TODO: Preserve nesting relation if word is nested word
 	 * 
-	 * @param word
+	 * @param word word
 	 */
 	private NestedWord(final Word<LETTER> word) {
 		mWord = (LETTER[]) new ArrayList<LETTER>(word.asList()).toArray();

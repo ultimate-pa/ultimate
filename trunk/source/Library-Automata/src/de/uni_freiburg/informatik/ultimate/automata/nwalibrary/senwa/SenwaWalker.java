@@ -238,7 +238,7 @@ public class SenwaWalker<LETTER,STATE> {
 			enqueueAndMark(state);
 		}
 		
-		while(!mWorklist.isEmpty()) {
+		while (!mWorklist.isEmpty()) {
 			final STATE state = mWorklist.remove(0);
 			assert mTraversedSenwa.getStates().contains(state);
 			
@@ -412,8 +412,8 @@ public class SenwaWalker<LETTER,STATE> {
 	 * Remove in the resulting automaton all states that can not reach a final
 	 * state.
 	 * @param computeRemovedDoubleDeckersAndCallSuccessors compute the set of 
-	 * all DoubleDeckers which occurred in the build automaton but are not
-	 * reachable after the removal 
+	 *     all DoubleDeckers which occurred in the build automaton but are not
+	 *     reachable after the removal 
 	 * @return true iff at least one state was removed.
 	 */
 	public final boolean removeStatesThatCanNotReachFinal(
@@ -488,7 +488,7 @@ public class SenwaWalker<LETTER,STATE> {
 				if (downCallSuccs.size() > 1) {
 					throw new UnsupportedOperationException("If state has" +
 							" several outgoing call transitions Hoare annotation might be incorrect.");
-				} else if (downCallSuccs.size() == 1){
+				} else if (downCallSuccs.size() == 1) {
 					final STATE callSucc = downCallSuccs.iterator().next();
 					mCallSuccOfRemovedDown.put(down, callSucc);
 				} else {

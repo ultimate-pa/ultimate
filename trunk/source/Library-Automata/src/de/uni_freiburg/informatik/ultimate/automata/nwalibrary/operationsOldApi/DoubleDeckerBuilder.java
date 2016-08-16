@@ -37,8 +37,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 
-public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisitor<LETTER,STATE> 
-														implements IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
+public abstract class DoubleDeckerBuilder<LETTER,STATE>
+		extends DoubleDeckerVisitor<LETTER,STATE> 
+		implements IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 
 	Set<STATE> mSuccessorsConstructedIn = new HashSet<STATE>();
 	Set<STATE> mSuccessorsConstructedCa = new HashSet<STATE>();
@@ -61,8 +62,7 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 				}
 			}
 			return succs;
-		}
-		else {
+		} else {
 			mSuccessorsConstructedIn.add(up);
 			return buildInternalSuccessors(doubleDecker);
 		}
@@ -81,8 +81,7 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 				}
 			}
 			return succs;
-		}
-		else {
+		} else {
 			mSuccessorsConstructedCa.add(up);
 			return buildCallSuccessors(doubleDecker);
 		}
@@ -96,8 +95,7 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 //		STATE up = doubleDecker.getUp();
 //		if (mSuccessorsConstructedRe.contains(up)) {
 //			return mTraversedNwa.succReturn(up);
-//		}
-//		else {
+//		} else {
 //			mSuccessorsConstructedRe.add(up);
 			return buildReturnSuccessors(doubleDecker);
 //		}

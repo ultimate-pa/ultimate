@@ -63,8 +63,8 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	 * Each state of the result also occurred in the input. Only the auxiliary
 	 * empty stack state of the result is different. 
 	 * 
-	 * @param nwa
-	 * @throws AutomataOperationCanceledException
+	 * @param nwa NWA
+	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
 	public ReachableStatesCopy(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER,STATE> nwa,

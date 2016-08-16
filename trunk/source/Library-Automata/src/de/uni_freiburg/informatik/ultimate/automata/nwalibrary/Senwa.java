@@ -93,7 +93,7 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 
 	/**
 	 * @return The set of all states which have an outgoing call transition to
-	 * entry.
+	 *     entry.
 	 */
 	public Set<STATE> getCallPredecessors(final STATE entry) {
 		assert mEntry2Module.containsKey(entry);
@@ -203,7 +203,7 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 			assert predEntry != null;
 			final STATE succEntry = mState2Entry.get(succ);
 			assert succEntry != null;
-			if( predEntry != succEntry) {
+			if (predEntry != succEntry) {
 				throw new IllegalArgumentException("Result is no senwa");
 			}
 		super.addInternalTransition(pred, letter, succ);

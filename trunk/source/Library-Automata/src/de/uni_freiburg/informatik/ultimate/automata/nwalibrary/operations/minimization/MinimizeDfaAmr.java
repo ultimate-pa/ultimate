@@ -48,21 +48,21 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * This class implements the incremental DFA minimization algorithm by Almeida,
  * Moreira, and Reis ('Incremental DFA minimisation').
  * 
- * The basic idea is to check equivalence of each pair of states exactly once
+ * <p>The basic idea is to check equivalence of each pair of states exactly once
  * (with an order on the states even only once per two states, so
  * <code>q, q'</code> we either check as <code>(q, q')</code> or
  * <code>(q', q)</code>).
  * 
- * Initially each state is not equivalent to all states that have a different
+ * <p>Initially each state is not equivalent to all states that have a different
  * final status (<code>q !~ q' <=> (q in F <=> q' not in F)</code>).
  * Also it is clear that each state is equivalent to itself.
  * 
- * If for a pair of states it is not clear whether they are equivalent, then
+ * <p>If for a pair of states it is not clear whether they are equivalent, then
  * the they are equivalent if and only if all successor states (wrt. a symbol)
  * are equivalent, so we shift the task for one level. Loops are avoided by
  * storing the visited pairs.
  * 
- * If the result was finally found for a pair of states, typically some more
+ * <p>If the result was finally found for a pair of states, typically some more
  * pairs of states were investigated. If the answer was positive, all pairs of
  * states that were tested are equivalent. If the answer was negative, some
  * pairs of states were not equivalent. All those pairs are stored and the
@@ -119,11 +119,11 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * Option:
 	 * Separate states with different transitions.
 	 * 
-	 * That is, if there is a letter {@code l} where one of the states has
+	 * <p>That is, if there is a letter {@code l} where one of the states has
 	 * an outgoing transitions with {@code l} and one has not (hence this
 	 * transition would go to an implicit sink state.
 	 * 
-	 * NOTE: This is only reasonable if the input automaton is not total.
+	 * <p>NOTE: This is only reasonable if the input automaton is not total.
 	 * Furthermore, the method becomes incomplete (i.e., may not find the
 	 * minimum) if dead ends have not been removed beforehand.
 	 */
@@ -255,9 +255,9 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * This method is the main method of the minimization. As long as it runs,
 	 * it finds for each pair of states whether they are equivalent or not.
 	 * 
-	 * It terminates automatically, but can also be halted at any time.
+	 * <p>It terminates automatically, but can also be halted at any time.
 	 * 
-	 * pseudocode name: MIN-INCR
+	 * <p>pseudocode name: MIN-INCR
 	 * @throws AutomataOperationCanceledException when execution is cancelled
 	 */
 	private void findEquiv() throws AutomataOperationCanceledException {
@@ -316,9 +316,9 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * This method initializes the set of pairs of states which are definitely
 	 * not equivalent.
 	 * 
-	 * The certain candidates are pairs where exactly one state is final.
+	 * <p>The certain candidates are pairs where exactly one state is final.
 	 * 
-	 * There is a global option for separating states with different outgoing
+	 * <p>There is a global option for separating states with different outgoing
 	 * transitions.
 	 * 
 	 * @return set of pairs of states not equivalent to each other
@@ -366,11 +366,9 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * states are equivalent. It uses the global set lists to store the paths
 	 * it searched through.
 	 * 
-	 * The recursion was transformed to an explicit form using a stack.
+	 * <p>The recursion was transformed to an explicit form using a stack.
 	 * 
-	 * 
-	 * 
-	 * pseudocode name: EQUIV-P
+	 * <p>pseudocode name: EQUIV-P
 	 * 
 	 * @param origTuple tuple to check equivalence of
 	 * @return true iff the pair of states is equivalent
@@ -584,9 +582,9 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	/**
 	 * This method initializes the Union-Find data structure.
 	 * 
-	 * That is, each state points to itself.
+	 * <p>That is, each state points to itself.
 	 * 
-	 * pseudocode name: MAKE in for-loop
+	 * <p>pseudocode name: MAKE in for-loop
 	 */
 	private void initializeUnionFind() {
 		for (int i = mUnionFind.length - 1; i >= 0; --i) {
@@ -598,11 +596,11 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * This method implements the find operation of the Union-Find data
 	 * structure.
 	 * 
-	 * That is, the representative chain is searched and afterwards all
+	 * <p>That is, the representative chain is searched and afterwards all
 	 * intermediate representatives in this chain are updated accordingly
 	 * for faster future find operations.
 	 * 
-	 * pseudocode name: FIND
+	 * <p>pseudocode name: FIND
 	 * 
 	 * @param oldRepresentative state
 	 * @return representative of the given state
@@ -632,14 +630,14 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * This method implements the union operation of the Union-Find data
 	 * structure.
 	 * 
-	 * That is, the representative of the second state is set to the
+	 * <p>That is, the representative of the second state is set to the
 	 * representative of the first state.
 	 * 
-	 * NOTE: The find operation is used in order to safe one update later on.
+	 * <p>NOTE: The find operation is used in order to safe one update later on.
 	 *       This way the direct representatives are certainly the true
 	 *       representatives.
 	 * 
-	 * pseudocode name: UNION
+	 * <p>pseudocode name: UNION
 	 * 
 	 * @param tuple pair of states that shall be united  
 	 */
@@ -706,15 +704,15 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * This is a data structure containing a map and a list for fast operations
 	 * on the data (tuples, i.e., pairs of states).
 	 * 
-	 * The map holds pairs(tuple, list node), i.e., it maps a pair of states to
+	 * <p>The map holds pairs(tuple, list node), i.e., it maps a pair of states to
 	 * the list node containing it. For iteration the list is used.
 	 * 
-	 * Insertion and removal both work in {@code O(1)}. The problem here is
+	 * <p>Insertion and removal both work in {@code O(1)}. The problem here is
 	 * that hash maps must be initialized and this takes time {@code O(size)}.
 	 * Since {@code size} is in {@code O(n^2)} throughout the execution and the
 	 * sets are repeatedly recreated, this comes with a big cost.
 	 *   
-	 * To avoid this, the map is instead cleaned for all entries, which might
+	 * <p>To avoid this, the map is instead cleaned for all entries, which might
 	 * hopefully be much less than all possible entries.
 	 */
 	private final class SetList {
@@ -741,11 +739,11 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		/**
 		 * This method adds a pair of states.
 		 * 
-		 * NOTE: The original pseudocode allows elements to be present
+		 * <p>NOTE: The original pseudocode allows elements to be present
 		 * beforehand and removes them first. That is avoided by this
 		 * implementation.
     	 * 
-    	 * pseudocode name: SET-INSERT
+    	 * <p>pseudocode name: SET-INSERT
 		 * 
 		 * @param tuple pair of states
 		 */
@@ -760,10 +758,10 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		/**
 		 * This method removes a pair of states.
 		 * 
-		 * NOTE: The original pseudocode allows elements to not be present
+		 * <p>NOTE: The original pseudocode allows elements to not be present
 		 * beforehand. That is avoided by this implementation.
     	 * 
-    	 * pseudocode name: SET-REMOVE
+    	 * <p>pseudocode name: SET-REMOVE
 		 * 
 		 * @param tuple pair of states
 		 */
@@ -778,7 +776,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		/**
 		 * This method checks containment of a pair of states.
     	 * 
-    	 * pseudocode name: SET-SEARCH
+    	 * <p>pseudocode name: SET-SEARCH
 		 * 
 		 * @param tuple pair of states
 		 * @return true iff pair of states is contained
@@ -790,7 +788,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		/**
 		 * This method returns an iterator of all contained elements.
     	 * 
-    	 * pseudocode name: SET-ELEMENTS
+    	 * <p>pseudocode name: SET-ELEMENTS
 		 * 
 		 * @return iterator
 		 */
@@ -803,7 +801,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		 * initialization), the map is instead cleaned for all entries in the
 		 * list.
     	 * 
-    	 * pseudocode name: SET-MAKE
+    	 * <p>pseudocode name: SET-MAKE
 		 */
 		void clean() {
 			if (mIsInitialized) {
@@ -963,7 +961,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 			/**
 			 * This method returns an iterator of the list elements.
 			 * 
-			 * NOTE: It is assumed that the list is not modified during
+			 * <p>NOTE: It is assumed that the list is not modified during
 			 *       iteration.
 			 * 
 			 * @param size the size of the list (known by the set)

@@ -471,7 +471,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	/**
 	 * This map only supports the <code>get()</code> method.
 	 * 
-	 * We use it here for the map 'old state -> new state' as this is the only
+	 * <p>We use it here for the map 'old state -> new state' as this is the only
 	 * operation used later on.
 	 * The reason why we use this map instead of a fresh one is that we create
 	 * the backing data structure already during construction time.
@@ -479,8 +479,8 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	private class GetOnlyMap implements Map<STATE, STATE> {
 		private final IResultStateConstructor<STATE> mResStateConstructor;
 		
-		public GetOnlyMap(final IResultStateConstructor<STATE> mResCons) {
-			this.mResStateConstructor = mResCons;
+		public GetOnlyMap(final IResultStateConstructor<STATE> resCons) {
+			this.mResStateConstructor = resCons;
 		}
 
 		@Override
@@ -520,7 +520,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		}
 
 		@Override
-		public void putAll(final Map<? extends STATE, ? extends STATE> m) {
+		public void putAll(final Map<? extends STATE, ? extends STATE> map) {
 			throw new UnsupportedOperationException();				
 		}
 

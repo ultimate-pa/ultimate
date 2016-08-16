@@ -170,7 +170,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		mDetState2macrostate.put(initialDetState, initialMacroState);
 		enqueueAndMark(initialDetState,mAuxiliaryEmptyStackState);
 		
-		while(!mQueue.isEmpty()) {
+		while (!mQueue.isEmpty()) {
 			final StatePair statePair = mQueue.remove(0);
 //			mLogger.debug("Processing: "+ statePair);
 			processStatePair(statePair);
@@ -326,13 +326,12 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		private final STATE mState;
 		private final STATE mCallerState;
 		private final int mHashCode;
+		
 		public StatePair(final STATE state, final STATE callerState) {
 			this.mState = state;
 			this.mCallerState = callerState;
 			mHashCode = computeHashCode(); 
 		}
-
-
 		
 		@Override
 		public boolean equals(final Object obj) {
@@ -373,8 +372,6 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			return mHashCode;
 		}
 
-
-
 		public int computeHashCode() {
 			final int prime = 31;
 			int hc = 1;
@@ -387,19 +384,16 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		
 		@Override
 		public String toString() {
-			return "CallerState: " + mCallerState + "  State: "+ mState;
+			return "CallerState: " + mCallerState + "  State: " + mState;
 		}
-
-
 
 		private DeterminizeSadd getOuterType() {
 			return DeterminizeSadd.this;
 		}
-		
 	}
 	
 	/**
-	 * List of pairs of States
+	 * List of pairs of States.
 	 *
 	 * @param <LETTER> Symbol
 	 * @param <STATE> Content
@@ -438,7 +432,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 		
 		private void addPairs(final STATE state, 
-											final Set<STATE> newCallerStates){
+											final Set<STATE> newCallerStates) {
 			if (mOperand.isFinal(state)) {
 				mIsFinal = true;
 			}
@@ -486,6 +480,4 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		mLogger.info("Finished testing correctness of determinization");
 		return correct;
 	}
-	
-
 }

@@ -38,10 +38,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 public class BranchingProcessToUltimateModel<S, C> {
 	
-	
-	
 	@SuppressWarnings("unchecked")
-	public IElement getUltimateModelOfBranchingProcess(BranchingProcess<S, C> branchingProcess) {
+	public IElement getUltimateModelOfBranchingProcess(final BranchingProcess<S, C> branchingProcess) {
 		final BranchingProcessInitialNode<S, C> graphroot = new BranchingProcessInitialNode<S, C>(branchingProcess);
 		
 		final Collection<Condition<S, C>> initialStates = branchingProcess.initialConditions();
@@ -57,9 +55,9 @@ public class BranchingProcessToUltimateModel<S, C> {
 	
 		// add all initial states to model - all are successors of the graphroot
 		for (final Condition<S, C> place : initialStates) {
-			final ConditionNode<S,C> ConditionNode = new ConditionNode<S,C>(place,branchingProcess);
-			place2ConditionNode.put(place,ConditionNode);
-			graphroot.connectOutgoing(ConditionNode);
+			final ConditionNode<S,C> conditionNode = new ConditionNode<S,C>(place,branchingProcess);
+			place2ConditionNode.put(place,conditionNode);
+			graphroot.connectOutgoing(conditionNode);
 			
 		}
 		
@@ -68,7 +66,7 @@ public class BranchingProcessToUltimateModel<S, C> {
 			
 			if (node instanceof Condition) {
 				final Condition<S,C> place = (Condition<S,C>) node;
-				final ConditionNode<S,C> ConditionNode = place2ConditionNode.get(place);
+				final ConditionNode<S,C> conditionNode = place2ConditionNode.get(place);
 				for (final Event<S,C> transition : place.getSuccessorEvents()) {
 					EventNode<S,C> transNode = 
 						transition2EventNode.get(transition);
@@ -77,22 +75,21 @@ public class BranchingProcessToUltimateModel<S, C> {
 						transition2EventNode.put(transition, transNode);
 						queue.add(transition);
 					}
-					ConditionNode.connectOutgoing(transNode);
+					conditionNode.connectOutgoing(transNode);
 				}
-			}
-			else if (node instanceof Event) {
+			} else if (node instanceof Event) {
 				final Event<S,C> transition = (Event<S,C>) node;
-				final EventNode<S,C> EventNode = 
+				final EventNode<S,C> eventNode = 
 					transition2EventNode.get(transition);
 				for (final Condition<S, C> place : transition.getSuccessorConditions()) {
-					ConditionNode<S,C> ConditionNode = place2ConditionNode.get(place);
-					if (ConditionNode == null) {
+					ConditionNode<S,C> conditionNode = place2ConditionNode.get(place);
+					if (conditionNode == null) {
 						
-						ConditionNode = new ConditionNode<S,C>(place,branchingProcess);
-						place2ConditionNode.put(place, ConditionNode);
+						conditionNode = new ConditionNode<S,C>(place,branchingProcess);
+						place2ConditionNode.put(place, conditionNode);
 						queue.add(place);
 					}
-					EventNode.connectOutgoing(ConditionNode);
+					eventNode.connectOutgoing(conditionNode);
 				}
 			}
 		}

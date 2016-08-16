@@ -34,7 +34,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
  * Takes a set of Horn clauses. Goes through all variables in sequence, and
  * tries to set each to true.
  *
- * Note that we stick to the convention introduced in HornClause3.java:
+ * <p>Note that we stick to the convention introduced in HornClause3.java:
  * the variables 0 and 1 are reserved for constant true and false,
  * respectively.
  *

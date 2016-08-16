@@ -79,9 +79,11 @@ public class InCaReAlphabet<LETTER> {
 	public Set<LETTER> getInternalAlphabet() {
 		return mInternalAlphabet;
 	}
+	
 	public Set<LETTER> getCallAlphabet() {
 		return mCallAlphabet;
 	}
+	
 	public Set<LETTER> getReturnAlphabet() {
 		return mReturnAlphabet;
 	}

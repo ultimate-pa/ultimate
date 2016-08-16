@@ -43,19 +43,19 @@ public class VertexV1<LETTER,STATE> extends Vertex<LETTER, STATE> {
     /**
      * The priority of this vertex.
      */
-    private final int priority;
+    private final int mPriority;
     /**
      * The progressMeasure for Jurdzinski lifting function.
      */
-    private int pm;
+    private int mPm;
     /**
      * The b required for the efficient lifting algorithm implementation.
      */
-    private int b_eff;
+    private int mBEff;
     /**
      * The c required for the efficient lifting algorithm implementation.
      */
-    private int c;
+    private int mC;
 
     /*_______________________________________________________________________*\
     \* CONSTRUCTORS                                                          */
@@ -72,7 +72,7 @@ public class VertexV1<LETTER,STATE> extends Vertex<LETTER, STATE> {
      */
     public VertexV1(int priority, STATE q0, STATE q1) {
     	super(q0, q1);
-        this.priority = priority;
+        this.mPriority = priority;
         // int initializes to zero anyway ...
         // this.progressMeasure = 0;
         // this.b = 0;
@@ -103,7 +103,7 @@ public class VertexV1<LETTER,STATE> extends Vertex<LETTER, STATE> {
      * @return the priority
      */
     public int getPriority() {
-        return priority;
+        return mPriority;
     }
     
     /**
@@ -112,7 +112,7 @@ public class VertexV1<LETTER,STATE> extends Vertex<LETTER, STATE> {
      * @return the progress measure
      */
     public int getPM() {
-        return pm;
+        return mPm;
     }
 
     /**
@@ -122,7 +122,7 @@ public class VertexV1<LETTER,STATE> extends Vertex<LETTER, STATE> {
      *            the progress measure
      */
     public void setPM(int pm) {
-        this.pm = pm;
+        this.mPm = pm;
     }
 
 	/**
@@ -130,7 +130,7 @@ public class VertexV1<LETTER,STATE> extends Vertex<LETTER, STATE> {
 	 * @return the b
 	 */
 	public int getBEff() {
-		return b_eff;
+		return mBEff;
 	}
 
 	/**
@@ -138,7 +138,7 @@ public class VertexV1<LETTER,STATE> extends Vertex<LETTER, STATE> {
 	 * @param b the b to set
 	 */
 	public void setBEff(int b) {
-		this.b_eff = b;
+		this.mBEff = b;
 	}
 
 	/**
@@ -146,7 +146,7 @@ public class VertexV1<LETTER,STATE> extends Vertex<LETTER, STATE> {
 	 * @return the c
 	 */
 	public int getC() {
-		return c;
+		return mC;
 	}
 
 	/**
@@ -154,6 +154,6 @@ public class VertexV1<LETTER,STATE> extends Vertex<LETTER, STATE> {
 	 * @param c the c to set
 	 */
 	public void setC(int c) {
-		this.c = c;
+		this.mC = c;
 	}
 }
