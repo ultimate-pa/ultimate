@@ -4,14 +4,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * This class is identical to ReplacementVar except that the equality
- * between a LocalReplacementVar is guaranteed only at one location.
+ * of the variable with the expression in the defintion field is guaranteed 
+ * only at one location.
  * The location where "this = definition" is guaranteed to be valid is 
  * given through an extra field.
  * 
- * @author Alexander Nutz
+ * @author nutz
  *
  */
-public class LocalReplacementVar extends ReplacementVar {
+public class ReplacementVarWithRestrictedDefinition extends ReplacementVar {
 
 	private static final long serialVersionUID = 1380442540266572918L;
 
@@ -24,7 +25,7 @@ public class LocalReplacementVar extends ReplacementVar {
 	Object mLocation;
 	
 	
-	public LocalReplacementVar(String name, Term definition, Object location) {
+	public ReplacementVarWithRestrictedDefinition(String name, Term definition, Object location) {
 		super(name, definition);
 		mLocation = location;
 	}
