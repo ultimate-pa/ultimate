@@ -141,7 +141,7 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 	}
 
 	@Override
-	protected void makeModificationsPersistent() {
+	protected void makeAssignmentPersistent() {
 		removeMarkedClauses();
 		for (final Entry<V, Boolean> entry : mVariablesTemporarilySet.entrySet()) {
 			mVariablesIrrevocablySet.put(entry.getKey(), entry.getValue());
@@ -159,7 +159,7 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 		if (mConjunctionEquivalentToFalse) {
 			backtrack(var);
 		} else {
-			makeModificationsPersistent();
+			makeAssignmentPersistent();
 		}
 	}
 

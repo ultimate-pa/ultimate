@@ -66,6 +66,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * that we have either few long clauses or many short clauses (for all types of
  * transitions).
  * 
+ * <p>TODO add transitivity clauses on the fly
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Tischner

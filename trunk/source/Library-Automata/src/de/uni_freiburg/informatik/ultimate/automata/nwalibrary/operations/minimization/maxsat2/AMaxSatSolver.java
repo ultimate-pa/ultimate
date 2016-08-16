@@ -71,7 +71,7 @@ public abstract class AMaxSatSolver<V> {
 	 * A clause is a propagatee if it has exactly one unset literal and is not
 	 * equivalent to true at the moment.
 	 * 
-	 * TODO Instead of storing the clauses, store the variables and respective value:
+	 * <p>TODO Instead of storing the clauses, store the variables and respective value:
 	 *      this is exactly what happens next in the implementation, might save
 	 *      a lot of memory, and might detect inconsistencies earlier (if one
 	 *      variable gets positive and negative value at the moment of storing).
@@ -96,6 +96,8 @@ public abstract class AMaxSatSolver<V> {
 	
 	
 	/**
+	 * Constructor.
+	 * 
 	 * @param services Ultimate services
 	 */
 	public AMaxSatSolver(final AutomataLibraryServices services) {
@@ -123,13 +125,13 @@ public abstract class AMaxSatSolver<V> {
 	 * atom. 
 	 * @param negativeAtoms array of non-null variables
 	 * @param positiveAtom variable that may be null. If the variable is null
-	 *  it considered as true. If you want to assert only a negative atom, you
-	 *  have to use null as positive Atom
+	 *     it considered as true. If you want to assert only a negative atom, you
+	 *     have to use null as positive Atom
 	 * @deprecated This method is only present for legacy reasons and just
-	 *  converts the Horn clause to a general clause in the general solver.
-	 *  The caller should instead directly call the general
-	 *  <code>addClause()</code> method.
-	 *  For the old solver, this method is still needed.
+	 *     converts the Horn clause to a general clause in the general solver.
+	 *     The caller should instead directly call the general
+	 *     <code>addClause()</code> method.
+	 *     For the old solver, this method is still needed.
 	 */
 	@Deprecated
 	public abstract void addHornClause(final V[] negativeAtoms, final V positiveAtom);
@@ -140,8 +142,8 @@ public abstract class AMaxSatSolver<V> {
 	 * atoms. 
 	 * @param negativeAtoms array of non-null variables considered negative
 	 * @param positiveAtoms array of non-null variables considered positive.
-	 *  If you want to assert only a negative atom, you have to use an empty
-	 *  array as positive atoms.
+	 *     If you want to assert only a negative atom, you have to use an empty
+	 *     array as positive atoms.
 	 */
 	public abstract void addClause(final V[] negativeAtoms, final V[] positiveAtoms);
 	
@@ -152,8 +154,8 @@ public abstract class AMaxSatSolver<V> {
 	public boolean solve() throws AutomataOperationCanceledException {
 		mLogger.info("starting solver");
 		propagateAll();
-		makeModificationsPersistent();
-		while(!mUnsetVariables.isEmpty()) {
+		makeAssignmentPersistent();
+		while (!mUnsetVariables.isEmpty()) {
 			decideOne();
 			if (mConjunctionEquivalentToFalse) {
 				return false;
@@ -162,14 +164,14 @@ public abstract class AMaxSatSolver<V> {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
-		makeModificationsPersistent();
+		makeAssignmentPersistent();
 		mLogger.info("finished solver");
 		log();
 		return true;
 	}
 
 	/**
-	 * prints the log message
+	 * Prints the log message.
 	 */
 	protected abstract void log();
 	
@@ -196,7 +198,7 @@ public abstract class AMaxSatSolver<V> {
 	}
 
 	/**
-	 * assignment to the variable which is guaranteed to not be backtracked
+	 * Assignment to the variable which is guaranteed to not be backtracked.
 	 * 
 	 * @param var variable
 	 * @return <code>true</code>/<code>false</code> if assigned,
@@ -205,7 +207,7 @@ public abstract class AMaxSatSolver<V> {
 	protected abstract Boolean getPersistentAssignment(V var);
 
 	/**
-	 * assignment to the variable which is not guaranteed to not be backtracked
+	 * Assignment to the variable which is not guaranteed to not be backtracked.
 	 * 
 	 * @param var variable
 	 * @return <code>true</code>/<code>false</code> if assigned,
@@ -214,23 +216,29 @@ public abstract class AMaxSatSolver<V> {
 	protected abstract Boolean getTemporaryAssignment(V var);
 
 	/**
-	 * backtracking mechanism
+	 * Backtracking mechanism.
 	 * 
 	 * @param var last set variable which lead to inconsistency
 	 */
 	protected abstract void backtrack(final V var);
 	
 	/**
-	 * 
+	 * Make current assignment persistent.
 	 */
-	protected abstract void makeModificationsPersistent();
-
+	protected abstract void makeAssignmentPersistent();
+	
+	/**
+	 * Propagate and assign all pseudo-unit clauses (under current assignment).
+	 */
 	protected void propagateAll() {
 		while (!mPropagatees.isEmpty() && !mConjunctionEquivalentToFalse) {
 			propagateOne();
 		}
 	}
 	
+	/**
+	 * Assign pseudo-unit clause (under current assignment).
+	 */
 	private void propagateOne() {
 		final Clause<V> clause = getPropagatee();
 		final Pair<V, Boolean> unsetAtom = clause.getUnsetAtom(this);
@@ -240,7 +248,7 @@ public abstract class AMaxSatSolver<V> {
 	/**
 	 * current policy: just return the next clause from the set
 	 * 
-	 * TODO other policies
+	 * <p>TODO other policies
 	 *      The only goal for optimization here is to find contradictions faster.
 	 *      If no contradiction is found, all policies should take the same time.
 	 *      One policy could be to prefer clauses with positive/negative
@@ -257,7 +265,7 @@ public abstract class AMaxSatSolver<V> {
 	}
 	
 	/**
-	 * sets a status to a variable
+	 * Sets a status to a variable.
 	 * 
 	 * @param var variable
 	 * @param newStatus new status
@@ -265,7 +273,9 @@ public abstract class AMaxSatSolver<V> {
 	protected abstract void setVariable(final V var, final boolean newStatus);
 	
 	/**
-	 * NOTE: must be called from backtracking, as we modify the set
+	 * Reevaluate all clauses whose variables have been incorrectly set.
+	 * 
+	 * <p>NOTE: must be called from backtracking, as we modify the set
 	 * 
 	 * @param variablesIncorrectlySet variables to be unset (modified here)
 	 * @param varToBeSetFalse variable which is going to be set to false soon
@@ -316,8 +326,8 @@ public abstract class AMaxSatSolver<V> {
 			final boolean removed = mPropagatees.remove(clause);
 			assert removed : "clause was not there";
 		} else {
-			assert clause.getUnsetAtoms() == 1 ||
-					!mPropagatees.contains(clause) : " clause illegal";
+			assert clause.getUnsetAtoms() == 1
+					|| (! mPropagatees.contains(clause)) : " clause illegal";
 		}
 	}
 
@@ -330,7 +340,7 @@ public abstract class AMaxSatSolver<V> {
 	/**
 	 * current policy: just return the next variable from the set
 	 * 
-	 * TODO other policies, e.g., prefer non-Horn clauses
+	 * <p>TODO other policies, e.g., prefer non-Horn clauses
 	 * 
 	 * @return unset variable
 	 */
@@ -387,8 +397,8 @@ public abstract class AMaxSatSolver<V> {
 				consistent = false;
 				assert consistent;
 			}
-			if (clause.getClauseCondition().getClauseStatus() == EClauseStatus.TRUE && 
-					!mClausesMarkedForRemoval.contains(clause)) {
+			if (clause.getClauseCondition().getClauseStatus() == EClauseStatus.TRUE
+					&& (! mClausesMarkedForRemoval.contains(clause))) {
 				consistent = false;
 				assert consistent;
 			}

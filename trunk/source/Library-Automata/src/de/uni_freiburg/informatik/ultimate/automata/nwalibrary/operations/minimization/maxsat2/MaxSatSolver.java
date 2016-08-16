@@ -47,6 +47,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
  * be a globally optimal solution (which is a solution in which the number
  * of true-assigned variables is maximal).
  * 
+ * TODO add resolution to solver
+ * 
+ * TODO detect clause duplicates
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <V> variable type
@@ -65,6 +69,8 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 	private final boolean mShowExpensiveDebugLogs = false;
 	
 	/**
+	 * Constructor.
+	 * 
 	 * @param services Ultimate services
 	 */
 	public MaxSatSolver(final AutomataLibraryServices services) {
@@ -201,7 +207,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 	}
 
 	@Override
-	protected void makeModificationsPersistent() {
+	protected void makeAssignmentPersistent() {
 		mLogger.debug("making current solver state persistent");
 		while (true) {
 			// make variable assignment persistent
@@ -262,7 +268,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 		final boolean makeReallyPersistent =
 				(mStack.isLowestStackLevel() || hasOnlyHornClauses());
 		if (makeReallyPersistent) {
-			makeModificationsPersistent();
+			makeAssignmentPersistent();
 		} else {
 			// only mark temporarily assigned variables as unset
 			for (final Entry<V, Boolean> entry : mStack.getVarTempSet().entrySet()) {
@@ -379,7 +385,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 		 * NOTE: Must be used by alternation of <code>hasNext()</code> and
 		 * <code>next()</code>. <br>
 		 * 
-		 * NOTE: Do not edit the stack during iteration!
+		 * <p>NOTE: Do not edit the stack during iteration!
 		 * 
 		 * @return unsynchronized iterator over all temporary maps
 		 */
