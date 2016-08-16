@@ -42,8 +42,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
  * assignment any more.
  * There is no guarantee that this locally optimal solution does not have to
  * be a globally optimal solution (which is a solution in which the number
- * of true-assigned variables is maximal).  
- * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
+ * of true-assigned variables is maximal).
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <V> Kind of objects that are used as variables.
  */
 public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {

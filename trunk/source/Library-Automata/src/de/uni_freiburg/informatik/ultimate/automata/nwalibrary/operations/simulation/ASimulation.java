@@ -102,7 +102,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * space where n is the amount of states and k the amount of transitions from
  * the inputed automaton.<br/>
  * The algorithm is based on the paper: <i>Fair simulation relations, parity
- * games, and state space reduction for büchi automata<i> by <i>Etessami, Wilke
+ * games, and state space reduction for büchi automata</i> by <i>Etessami, Wilke
  * and Schuller</i>.
  * 
  * @author Daniel Tischner

@@ -181,10 +181,10 @@ class LassoConstructor<LETTER, STATE> {
 		return mLasso;
 	}
 
-    /**
-     * Add for all predecessors of sc that have not yet been visited the
-     * successor information to map.
-     */
+	/**
+	 * Add for all predecessors of sc that have not yet been visited the
+	 * successor information to map.
+	 */
 	private void addPredecessors(final StateContainer<LETTER,STATE> sc,
 			final Map<StateContainer<LETTER,STATE>,SuccessorInfo> succInfo) {
 		for (final IncomingReturnTransition<LETTER, STATE> inTrans : mNwars.returnPredecessors(sc.getState())) {

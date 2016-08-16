@@ -66,7 +66,7 @@ public class AutomatonEpimorphism<STATE> {
 	/**
 	 * Creates the epimorphism for two automatons from a1 to a2. The Labels of
 	 * a1 have to be of type string and have to be of the following scheme:
-	 * "<l1>_<l2>", where "<l1>" is the actual label of the state and <l2> is
+	 * "l1_l2", where "l1" is the actual label of the state and "l2" is
 	 * the label of the node of a2, which it is epimorph to
 	 * 
 	 * @param services Ultimate services

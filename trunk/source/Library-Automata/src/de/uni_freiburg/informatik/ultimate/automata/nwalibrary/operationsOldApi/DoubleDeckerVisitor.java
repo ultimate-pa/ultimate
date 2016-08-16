@@ -718,6 +718,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 	 * @param computeRemovedDoubleDeckersAndCallSuccessors
 	 *            compute the set of all DoubleDeckers which occurred in the
 	 *            build automaton but are not reachable after the removal
+	 *            TODO non-existent parameter
 	 * @return true iff at least one state was removed.
 	 */
 	public final boolean removeDeadEnds() {

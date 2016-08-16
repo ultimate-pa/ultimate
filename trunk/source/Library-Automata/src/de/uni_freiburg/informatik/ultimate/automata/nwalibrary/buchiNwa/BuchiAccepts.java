@@ -26,11 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Abstra
 
 
 /**
- * Class that provides the Buchi acceptance check for nested word automata. 
+ * Class that provides the Buchi acceptance check for nested word automata.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
@@ -66,12 +66,13 @@ public class BuchiAccepts<LETTER,STATE>
 	/**
 	 * Check if a Buchi nested word automaton accepts a nested lasso word.
 	 * 
+	 * <p>Returns true iff nlw is accepted by nwa. Note that here a nested lasso
+	 * word is always rejected if its loop contains pending returns.
+	 * 
 	 * @param services Ultimate services
 	 * @param nlw NestedLassoWord whose acceptance is checked
 	 * @param operand NestedWordAutomaton which is interpreted as Buchi nested word
-	 * automaton here
-	 * @return true iff nlw is accepted by nwa. Note that here a nested lasso word is
-	 *  always rejected its loop contains pending returns.  
+	 *     automaton here
 	 * @throws AutomataLibraryException if accept fails
 	 */
 	public BuchiAccepts(final AutomataLibraryServices services,
@@ -85,22 +86,22 @@ public class BuchiAccepts<LETTER,STATE>
 		mLogger.info(startMessage());
 		
 		if (mStem.containsPendingReturns()) {
-			mLogger.warn("This implementation of Buchi acceptance rejects lasso" +
-					" words, where the stem contains pending returns.");
+			mLogger.warn("This implementation of Buchi acceptance rejects lasso"
+					+ " words, where the stem contains pending returns.");
 			mIsAccepted = false;
 			return;
 		}
 		
 		if (mLoop.containsPendingReturns()) {
-			mLogger.warn("This implementation of Buchi acceptance rejects lasso" +
-					" words, where the loop contains pending returns.");
+			mLogger.warn("This implementation of Buchi acceptance rejects lasso"
+					+ " words, where the loop contains pending returns.");
 			mIsAccepted = false;
 			return;
 		}
 		
-		if (mLoop.length() ==0) {
-			mLogger.debug("LassoWords with empty lasso are rejected by every Büchi" +
-					" automaton");
+		if (mLoop.length() == 0) {
+			mLogger.debug("LassoWords with empty lasso are rejected by every Büchi"
+					+ " automaton");
 			mIsAccepted = false;
 			return;
 		}
@@ -128,7 +129,7 @@ public class BuchiAccepts<LETTER,STATE>
 		// Therefore we call theses stats Honda states.
 		Set<STATE> hondaStates;
 		{
-			Set<Stack<STATE>> currentConfigs = emptyStackConfiguration(mOperand.getInitialStates());
+			Set<ArrayDeque<STATE>> currentConfigs = emptyStackConfiguration(mOperand.getInitialStates());
 			for (int i = 0; i < mStem.length(); i++) {
 				currentConfigs = successorConfigurations(currentConfigs, mStem, i,
 						mOperand, false);
@@ -142,7 +143,7 @@ public class BuchiAccepts<LETTER,STATE>
 		Set<STATE> newHondaStates = hondaStates;
 		do {
 			hondaStates.addAll(newHondaStates);
-			Set<Stack<STATE>> currentConfigs = emptyStackConfiguration(hondaStates);
+			Set<ArrayDeque<STATE>> currentConfigs = emptyStackConfiguration(hondaStates);
 			for (int i = 0; i < mLoop.length(); i++) {
 				currentConfigs = successorConfigurations(
 						currentConfigs, mLoop, i, mOperand, false);
@@ -165,14 +166,15 @@ public class BuchiAccepts<LETTER,STATE>
 	 * Compute for each hondaState if processing mLoop repeatedly can lead to
 	 * a run that contains an accepting state and brings the automaton back to
 	 * the honda state.
-	 * @throws AutomataLibraryException 
+	 * @throws AutomataLibraryException if construction fails
 	 */
-	private boolean repeatedLoopLeadsAgainToHondaState(final STATE hondaState) throws AutomataLibraryException {
+	private boolean repeatedLoopLeadsAgainToHondaState(final STATE hondaState)
+			throws AutomataLibraryException {
 		// Store in currentConfigsVisitedAccepting / currentConfigsNotVisitedAccepting
 		// which configurations belong to a run which has already visited an
 		// accepting state.
-		Set<Stack<STATE>> currentConfigsVisitedAccepting;
-		Set<Stack<STATE>> currentConfigsNotVisitedAccepting;
+		Set<ArrayDeque<STATE>> currentConfigsVisitedAccepting;
+		Set<ArrayDeque<STATE>> currentConfigsNotVisitedAccepting;
 		// Store in visited state which states have been visited when we
 		// returned to the honda (related problem executing loop is not
 		// sufficient to reach honda, executing loop^k is sufficient)
@@ -180,7 +182,7 @@ public class BuchiAccepts<LETTER,STATE>
 		final Set<STATE> visitedatHondaNonAccepting = new HashSet<STATE>();
 		final Set<STATE> singletonStateSet = new HashSet<STATE>();
 		singletonStateSet.add(hondaState);
-		final Set<Stack<STATE>> singletonConfigSet = 
+		final Set<ArrayDeque<STATE>> singletonConfigSet = 
 				emptyStackConfiguration(singletonStateSet);
 		currentConfigsVisitedAccepting = 
 				removeAcceptingConfigurations(singletonConfigSet, mOperand);
@@ -191,7 +193,7 @@ public class BuchiAccepts<LETTER,STATE>
 						currentConfigsVisitedAccepting, mLoop, i, mOperand, false);
 				currentConfigsNotVisitedAccepting = successorConfigurations(
 						currentConfigsNotVisitedAccepting, mLoop, i, mOperand, false);
-				final Set<Stack<STATE>> justVisitedAccepting = 
+				final Set<ArrayDeque<STATE>> justVisitedAccepting = 
 						removeAcceptingConfigurations(currentConfigsNotVisitedAccepting, mOperand);
 				currentConfigsVisitedAccepting.addAll(justVisitedAccepting);
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -207,11 +209,13 @@ public class BuchiAccepts<LETTER,STATE>
 			removeAllWhoseTopmostElementIsOneOf(
 							currentConfigsNotVisitedAccepting, visitedatHondaNonAccepting);
 			
-			final Set<STATE> topmostAccepting = getTopMostStackElemets(currentConfigsVisitedAccepting);
-			final Set<STATE> topmostNonAccepting = getTopMostStackElemets(currentConfigsNotVisitedAccepting);
+			final Set<STATE> topmostAccepting =
+					getTopMostStackElemets(currentConfigsVisitedAccepting);
 			if (topmostAccepting.contains(hondaState)) {
 				return true;
 			}
+			final Set<STATE> topmostNonAccepting =
+					getTopMostStackElemets(currentConfigsNotVisitedAccepting);
 			visitedatHondaAccepting.addAll(topmostAccepting);
 			visitedatHondaNonAccepting.addAll(topmostNonAccepting);
 		}
@@ -222,21 +226,21 @@ public class BuchiAccepts<LETTER,STATE>
 	 * Remove all configurations whose topmost element is in states.
 	 */
 	private void removeAllWhoseTopmostElementIsOneOf(
-						final Set<Stack<STATE>> configurations, final Set<STATE> states) {
-		final List<Stack<STATE>> removalCandidate = new ArrayList<Stack<STATE>>();
-		for (final Stack<STATE> config : configurations) {
+						final Set<ArrayDeque<STATE>> configurations, final Set<STATE> states) {
+		final List<ArrayDeque<STATE>> removalCandidate = new ArrayList<ArrayDeque<STATE>>();
+		for (final ArrayDeque<STATE> config : configurations) {
 			if (states.contains(config.peek())) {
 				removalCandidate.add(config);
 			}
 		}
-		for (final Stack<STATE> config : removalCandidate) {
+		for (final ArrayDeque<STATE> config : removalCandidate) {
 			configurations.remove(config);
 		}
 	}
 	
-	private Set<STATE> getTopMostStackElemets(final Set<Stack<STATE>> configurations) {
+	private Set<STATE> getTopMostStackElemets(final Set<ArrayDeque<STATE>> configurations) {
 		final Set<STATE> result = new HashSet<STATE>();
-		for (final Stack<STATE> config : configurations) {
+		for (final ArrayDeque<STATE> config : configurations) {
 			result.add(config.peek());
 		}
 		return result;
@@ -246,16 +250,16 @@ public class BuchiAccepts<LETTER,STATE>
 	 * Remove from the input all accepting configurations. Return all these
 	 * configurations which were accepting.
 	 */
-	private Set<Stack<STATE>> removeAcceptingConfigurations(final Set<Stack<STATE>> configurations,
+	private Set<ArrayDeque<STATE>> removeAcceptingConfigurations(final Set<ArrayDeque<STATE>> configurations,
 			final INestedWordAutomatonSimple<LETTER,STATE> nwa) {
-		final Set<Stack<STATE>> acceptingConfigurations = new HashSet<Stack<STATE>>();
-		for (final Stack<STATE> config : configurations) {
+		final Set<ArrayDeque<STATE>> acceptingConfigurations = new HashSet<ArrayDeque<STATE>>();
+		for (final ArrayDeque<STATE> config : configurations) {
 			final STATE state = config.peek();
 			if (nwa.isFinal(state)) {
 				acceptingConfigurations.add(config);
 			}
 		}
-		for (final Stack<STATE> config : acceptingConfigurations) {
+		for (final ArrayDeque<STATE> config : acceptingConfigurations) {
 			configurations.remove(config);
 		}
 		return acceptingConfigurations;

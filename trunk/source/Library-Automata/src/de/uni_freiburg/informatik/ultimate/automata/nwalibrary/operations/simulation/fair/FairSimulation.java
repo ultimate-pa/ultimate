@@ -71,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * The algorithm runs in <b>O(n^4 * k^2)</b> time and <b>O(n * k)</b> space
  * where n is the amount of states and k the amount of transitions from the
  * inputed automaton.<br/>
- * The algorithm is based on the paper: <i>Fair simulation minimization<i> by
+ * The algorithm is based on the paper: <i>Fair simulation minimization</i> by
  * <i>Gurumurthy, Bloem and Somenzi</i>.
  * 
  * @author Daniel Tischner
@@ -95,8 +95,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * @param changes
 	 *            Changes object to store change in
 	 */
-	private static <LETTER, STATE> void saveBEffChange(Vertex<LETTER, STATE> vertex, int oldValue,
-			GameGraphChanges<LETTER, STATE> changes) {
+	private static <LETTER, STATE> void saveBEffChange(final Vertex<LETTER, STATE> vertex, final int oldValue,
+			final GameGraphChanges<LETTER, STATE> changes) {
 		if (changes != null && oldValue != vertex.getBEff() && !changes.hasBEffEntry(vertex)) {
 			changes.rememberBEffVertex(vertex, oldValue);
 		}
@@ -114,8 +114,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * @param changes
 	 *            Changes object to store change in
 	 */
-	private static <LETTER, STATE> void saveCChange(Vertex<LETTER, STATE> vertex, int oldValue,
-			GameGraphChanges<LETTER, STATE> changes) {
+	private static <LETTER, STATE> void saveCChange(final Vertex<LETTER, STATE> vertex, final int oldValue,
+			final GameGraphChanges<LETTER, STATE> changes) {
 		if (changes != null && oldValue != vertex.getC() && !changes.hasCEntry(vertex)) {
 			changes.rememberCVertex(vertex, oldValue);
 		}
@@ -133,8 +133,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * @param changes
 	 *            Changes object to store change in
 	 */
-	private static <LETTER, STATE> void savePmChange(Vertex<LETTER, STATE> vertex, int oldValue,
-			GameGraphChanges<LETTER, STATE> changes) {
+	private static <LETTER, STATE> void savePmChange(final Vertex<LETTER, STATE> vertex, final int oldValue,
+			final GameGraphChanges<LETTER, STATE> changes) {
 		if (changes != null && oldValue != vertex.getPM(null, 0) && !changes.hasPmEntry(vertex)) {
 			changes.rememberPmVertex(vertex, oldValue);
 		}
@@ -917,7 +917,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 			// If vertex now defines a non trivial non possible simulation
 			if (currentProgressMeasure >= mGlobalInfinity) {
-				boolean isAuxiliaryVertex = workingVertex.getQ0() == null || workingVertex.getQ1() == null;
+				final boolean isAuxiliaryVertex = workingVertex.getQ0() == null || workingVertex.getQ1() == null;
 				if (workingVertex.isSpoilerVertex() && !isAuxiliaryVertex && !workingVertex.getQ0().equals(workingVertex.getQ1())) {
 					final boolean wasAdded = mNotSimulatingNonTrivialVertices
 							.add((SpoilerVertex<LETTER, STATE>) workingVertex);

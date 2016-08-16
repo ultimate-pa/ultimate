@@ -1228,10 +1228,10 @@ public class ShrinkNwa<LETTER, STATE>
 	/**
 	 * This method checks and potentially triggers a linear return split.
 	 *
-	 * TODO<nondeterminism> at most one successor for deterministic automata, offer improved version (no Set<STATE>, no
-	 * Set<EquivalenceClass>)?
+	 * TODO(nondeterminism) at most one successor for deterministic automata,
+	 *     offer improved version (no Set of STATE , no Set of EquivalenceClass)?
 	 * 
-	 * TODO<ignoreMarked> ignore already marked pairs
+	 * TODO(ignoreMarked) ignore already marked pairs
 	 * 
 	 * @param hier2lin2letter2succ
 	 *            map hier. to lin. to letter to succ. state
@@ -1341,8 +1341,8 @@ public class ShrinkNwa<LETTER, STATE>
 	/**
 	 * This method checks and potentially triggers a hierarchical return split.
 	 * 
-	 * TODO<nondeterminism> at most one successor for deterministic automata, offer improved version (no Set<STATE>, no
-	 * Set<EquivalenceClass>)?
+	 * TODO(nondeterminism) at most one successor for deterministic automata,
+	 *      offer improved version (no Set of STATE, no Set of EquivalenceClass)?
 	 * 
 	 * @param hier2lin2letter2succ
 	 *            map hier. to lin. to letter to succ. state
@@ -2567,10 +2567,10 @@ public class ShrinkNwa<LETTER, STATE>
 		Set<LETTER> letters(final STATE state);
 
 		/**
-		 * This method returns a new collection. This is for efficiency reasons, since first only a list is needed,
-		 * where later a set is needed.
+		 * This method returns a new collection. This is for efficiency reasons,
+		 *    since first only a list is needed, where later a set is needed.
 		 *
-		 * @return
+		 * @return new collection
 		 */
 		Collection<STATE> newCollection();
 
@@ -3070,6 +3070,8 @@ public class ShrinkNwa<LETTER, STATE>
 				break;
 			case NONE:
 				mIncomingInt = EIncomingStatus.NONE;
+			default:
+				throw new IllegalArgumentException();
 			}
 
 			switch (parent.mIncomingCall) {
@@ -3082,6 +3084,8 @@ public class ShrinkNwa<LETTER, STATE>
 				break;
 			case NONE:
 				mIncomingCall = EIncomingStatus.NONE;
+			default:
+				throw new IllegalArgumentException();
 			}
 
 			switch (parent.mIncomingRet) {
@@ -3093,6 +3097,8 @@ public class ShrinkNwa<LETTER, STATE>
 			case NONE:
 				mIncomingRet = EIncomingStatus.NONE;
 				break;
+			default:
+				throw new IllegalArgumentException();
 			}
 
 			if (mFirstReturnSplitAlternative) {
@@ -3105,6 +3111,8 @@ public class ShrinkNwa<LETTER, STATE>
 				case NONE:
 					mOutgoingRet = EIncomingStatus.NONE;
 					break;
+				default:
+					throw new IllegalArgumentException();
 				}
 			}
 
@@ -3239,10 +3247,12 @@ public class ShrinkNwa<LETTER, STATE>
 								mOperand.returnSuccessorsGivenHier(lin, hier).iterator();
 						if (edges.hasNext()) {
 							/*
-							 * TODO<nondeterminism> at most one successor for deterministic automata, offer improved
-							 * version (no Set<STATE>, no "if" in loop)?
+							 * TODO(nondeterminism) at most one successor for
+							 *     deterministic automata, offer improved
+							 *     version (no Set<STATE>, no "if" in loop)?
 							 */
-							final HashMap<LETTER, HashSet<STATE>> return2succ = new HashMap<LETTER, HashSet<STATE>>();
+							final HashMap<LETTER, HashSet<STATE>> return2succ =
+									new HashMap<LETTER, HashSet<STATE>>();
 							lin2letter2succ.put(lin, return2succ);
 							do {
 								final OutgoingReturnTransition<LETTER, STATE> edge = edges.next();

@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * The algorithm runs in <b>O(n^4 * k^2)</b> time and <b>O(n * k)</b> space
  * where n is the amount of states and k the amount of transitions from the
  * inputed automaton.<br/>
- * The algorithm is based on the paper: <i>Fair simulation minimization<i> by
+ * The algorithm is based on the paper: <i>Fair simulation minimization</i> by
  * <i>Gurumurthy, Bloem and Somenzi</i>.
  * 
  * @author Daniel Tischner

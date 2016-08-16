@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
+import java.util.ArrayDeque;
 import java.util.Set;
-import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -131,7 +131,8 @@ public class Accepts<LETTER,STATE>
 	}
 	
 	private boolean isAccepted() throws AutomataLibraryException {
-		Set<Stack<STATE>> currentConfigs = emptyStackConfiguration(mOperand.getInitialStates());
+		Set<ArrayDeque<STATE>> currentConfigs =
+				emptyStackConfiguration(mOperand.getInitialStates());
 		for (int i = 0; i < mWord.length(); i++) {
 			currentConfigs = successorConfigurations(currentConfigs, mWord, i,
 					mOperand, mInputIsSuffixOfAcceptedWord);
@@ -148,10 +149,15 @@ public class Accepts<LETTER,STATE>
 	 * Check if set of configurations contains an accepting configuration. We
 	 * say that a configuration is accepting if the topmost stack element is an
 	 * accepting state.
+	 * 
+	 * @param configurations set of configurations
+	 * @param nwa nested word automaton
+	 * @return true iff configurations contain an accepting configuration
 	 */
-	public boolean containsAcceptingConfiguration(final Set<Stack<STATE>> configurations,
+	public boolean containsAcceptingConfiguration(
+			final Set<ArrayDeque<STATE>> configurations,
 			final INestedWordAutomatonSimple<LETTER,STATE> nwa) {
-		for (final Stack<STATE> config : configurations) {
+		for (final ArrayDeque<STATE> config : configurations) {
 			if (isAcceptingConfiguration(config, mOperand)) {
 				return true;
 			}

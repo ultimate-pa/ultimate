@@ -58,51 +58,52 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 public class MinimizeDfa<LETTER,STATE>
 		extends AMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
-    /*_______________________________________________________________________*\
-    \* FIELDS / ATTRIBUTES                                                   */
-    
+	/*_______________________________________________________________________*\
+	\* FIELDS / ATTRIBUTES                                                   */
+	
 	private final boolean mIsDeterministic;
-
-    /*_______________________________________________________________________*\
-    \* CONSTRUCTORS                                                          */
-    
+	
+	/*_______________________________________________________________________*\
+	\* CONSTRUCTORS                                                          */
+	
 	/**
 	 * Constructor.
 	 * 
 	 * @param services Ultimate services
 	 * @param operand
 	 *            the input automaton
-	 * @throws AutomataOperationCanceledException 
+	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
-    public MinimizeDfa(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER,STATE> operand)
-            throws AutomataLibraryException {
-    	super(services, operand.getStateFactory(), "minimizeDFA", operand);
-    	
-        if (new HasUnreachableStates<LETTER,STATE>(mServices, operand)
+	public MinimizeDfa(final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER,STATE> operand)
+					throws AutomataLibraryException {
+		super(services, operand.getStateFactory(), "minimizeDFA", operand);
+		
+	    if (new HasUnreachableStates<LETTER,STATE>(mServices, operand)
 				.result()) {
 			throw new IllegalArgumentException("No unreachalbe states allowed");
 		}
 		mIsDeterministic = new IsDeterministic<>(mServices, mOperand).getResult();
 		startMessageDebug();
-
+	
 		final ArrayList<STATE> states = new ArrayList<STATE>();
 		states.addAll(mOperand.getStates());
 		final boolean[][] table = initializeTable(states);
 		calculateTable(states, table);
-
+	
 		if (mLogger.isDebugEnabled()) {
 			printTable(states, table);
 		}
 		generateResultAutomaton(states, table);
-
+	
 		exitMessageDebug();
 		mLogger.info(exitMessage());
 	}
-
-	/*_______________________________________________________________________*\
-    \* METHODS                                                               */
 	
-    /**
+	/*_______________________________________________________________________*\
+	\* METHODS                                                               */
+	
+	/**
 	 * Calculate, where in the table to set markers.
 	 * 
 	 * @param states
@@ -111,9 +112,11 @@ public class MinimizeDfa<LETTER,STATE>
 	 *            the alphabet
 	 * @param table
 	 *            the table
-     * @throws AutomataOperationCanceledException 
+	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
-	private void calculateTable(final ArrayList<STATE> states, final boolean[][] table) throws AutomataLibraryException {
+	private void calculateTable(final ArrayList<STATE> states,
+			final boolean[][] table)
+					throws AutomataLibraryException {
 		// we iterate on the table to get all the equivalent states
 		boolean makeNextIteration = true;
 		while (makeNextIteration) {
@@ -148,7 +151,7 @@ public class MinimizeDfa<LETTER,STATE>
 			}
 		}
 	}
-
+	
 	/**
 	 * Mark the table at (i, j) and (j, i).
 	 * @param table the table to mark
@@ -159,7 +162,7 @@ public class MinimizeDfa<LETTER,STATE>
 		table[i][j] = true;
 		table[j][i] = true;
 	}
-
+	
 	/**
 	 * Get successor for state i and symbol s.
 	 * @param states
@@ -172,17 +175,18 @@ public class MinimizeDfa<LETTER,STATE>
 	 *            the alphabet counter k
 	 * @return
 	 */
-	private ArrayList<STATE> getSuccessors(final ArrayList<STATE> states, final LETTER s, final int i) {
+	private ArrayList<STATE> getSuccessors(final ArrayList<STATE> states,
+			final LETTER s, final int i) {
 		// check successor pairs (i', j') for each k
 		// all successors of i for symbol k
 		final ArrayList<STATE> first = new ArrayList<STATE>();
-		for(final OutgoingInternalTransition<LETTER, STATE> trans :
+		for (final OutgoingInternalTransition<LETTER, STATE> trans :
 				mOperand.internalSuccessors(states.get(i), s)) {
 			first.add(trans.getSucc());
 		}
 		return first;
 	}
-
+	
 	/**
 	 * Initialize the table.
 	 * 
@@ -198,15 +202,15 @@ public class MinimizeDfa<LETTER,STATE>
 		for (int r = 0; r < states.size(); r++) {
 			for (int c = 0; c < r; c++) {
 				if (!table[r][c]
-						&& (mOperand.isFinal(states.get(r)) !=
-						mOperand.isFinal(states.get(c)))) {
+						&& (mOperand.isFinal(states.get(r))
+								!= mOperand.isFinal(states.get(c)))) {
 					mark(table, r, c);
 				}
 			}
 		}
 		return table;
 	}
-
+	
 	/**
 	 * Generate the resulting automaton.
 	 * 
@@ -235,12 +239,12 @@ public class MinimizeDfa<LETTER,STATE>
 				if (!table[i][j]) {
 					temp.add(states.get(j));
 					marker[j] = true;
-                    if (!isFinal) {
-                        isFinal = mOperand.isFinal(states.get(j));
-                    }
-                    if (!isInitial) {
-                        isInitial = mOperand.isInitial(states.get(j));
-                    }
+	                if (!isFinal) {
+	                    isFinal = mOperand.isFinal(states.get(j));
+	                }
+	                if (!isInitial) {
+	                    isInitial = mOperand.isInitial(states.get(j));
+	                }
 				}
 			}
 			final STATE minimizedStateName = mStateFactory.minimize(temp);
@@ -250,7 +254,7 @@ public class MinimizeDfa<LETTER,STATE>
 			addState(isInitial, isFinal, minimizedStateName);
 			marker[i] = true;
 		}
-
+	
 		// add edges
 		for (final STATE c : mOperand.getStates()) {
 			for (final LETTER s : mOperand.getInternalAlphabet()) {
@@ -264,7 +268,7 @@ public class MinimizeDfa<LETTER,STATE>
 		}
 		finishResultConstruction(null, false);
 	}
-
+	
 	/**
 	 * Print the table.
 	 * 
@@ -293,7 +297,7 @@ public class MinimizeDfa<LETTER,STATE>
 	
 	/**
 	 * Print transitions of this nwa.
-	 * @param nwa
+	 * @param nwa nested word automaton
 	 */
 	private void printTransitions(final INestedWordAutomaton<LETTER,STATE> nwa) {
 		StringBuilder msg;
@@ -308,7 +312,7 @@ public class MinimizeDfa<LETTER,STATE>
 			}
 		}
 	}
-
+	
 	/**
 	 * Set markers in the table.
 	 * 
@@ -342,38 +346,38 @@ public class MinimizeDfa<LETTER,STATE>
 		return false;
 	}
 	
-    /*_______________________________________________________________________*\
-    \* OVERRIDDEN METHODS                                                    */
-    
-
-    private void startMessageDebug() {
-        final StringBuilder msg = new StringBuilder("Start ");
+	/*_______________________________________________________________________*\
+	\* OVERRIDDEN METHODS                                                    */
+	
+	
+	private void startMessageDebug() {
+	    final StringBuilder msg = new StringBuilder("Start ");
 		msg.append(operationName()).append(" Operand ")
 				.append(mOperand.sizeInformation());
-        mLogger.info(msg.toString());
-
-        if (mLogger.isDebugEnabled()) {
-            printTransitions(mOperand);
-        }
-        
-        if (! mIsDeterministic) {
-            mLogger.info("Given automaton is not deterministic!");
-            mLogger.info("Automaton will not be minimized, but only reduced.");
-        }
-        
-        mLogger.info("Starting to minimize...");
-    }
-    
-    private void exitMessageDebug() {
-        if (mLogger.isDebugEnabled()) {
-        	printTransitions(getResult());
-        }
-        final StringBuilder msg = new StringBuilder();
-        msg.append("Finished ").append(operationName()).append(" Result ")
-                .append(getResult().sizeInformation());
-        mLogger.info(msg.toString());
-    }
-
-    /*_______________________________________________________________________*\
-    \* GETTERS AND SETTERS                                                   */
+	    mLogger.info(msg.toString());
+	
+	    if (mLogger.isDebugEnabled()) {
+	        printTransitions(mOperand);
+	    }
+	    
+	    if (! mIsDeterministic) {
+	        mLogger.info("Given automaton is not deterministic!");
+	        mLogger.info("Automaton will not be minimized, but only reduced.");
+	    }
+	    
+	    mLogger.info("Starting to minimize...");
+	}
+	
+	private void exitMessageDebug() {
+	    if (mLogger.isDebugEnabled()) {
+	    	printTransitions(getResult());
+	    }
+	    final StringBuilder msg = new StringBuilder();
+	    msg.append("Finished ").append(operationName()).append(" Result ")
+	            .append(getResult().sizeInformation());
+	    mLogger.info(msg.toString());
+	}
+	
+	/*_______________________________________________________________________*\
+	\* GETTERS AND SETTERS                                                   */
 }

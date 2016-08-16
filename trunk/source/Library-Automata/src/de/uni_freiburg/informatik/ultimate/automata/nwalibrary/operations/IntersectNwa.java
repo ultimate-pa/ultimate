@@ -314,20 +314,6 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 							fstState, fstHier, letter), hier, sndState, sndHier);
 	}
 
-	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
-			final STATE state, final STATE hier) {
-		final ProductState prodState = mRes2prod.get(state);
-		final STATE fstState = prodState.getFst();
-		final STATE sndState = prodState.getSnd();
-		final ProductState prodHier = mRes2prod.get(hier);
-		final STATE fstHier = prodHier.getFst();
-		final STATE sndHier = prodHier.getSnd();
-		return returnSuccessors(mFstOperand.returnSuccessorsGivenHier(
-							fstState, fstHier), hier, sndState, sndHier);
-	}
-
-
 	private Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			final Iterable<OutgoingReturnTransition<LETTER, STATE>> fstReturnSuccs,
 			final STATE hier, final STATE sndState, final STATE sndHier) {
@@ -348,6 +334,19 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 
 		}
 		return result;
+	}
+
+	@Override
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
+			final STATE state, final STATE hier) {
+		final ProductState prodState = mRes2prod.get(state);
+		final STATE fstState = prodState.getFst();
+		final STATE sndState = prodState.getSnd();
+		final ProductState prodHier = mRes2prod.get(hier);
+		final STATE fstHier = prodHier.getFst();
+		final STATE sndHier = prodHier.getSnd();
+		return returnSuccessors(mFstOperand.returnSuccessorsGivenHier(
+							fstState, fstHier), hier, sndState, sndHier);
 	}
 
 	@Override

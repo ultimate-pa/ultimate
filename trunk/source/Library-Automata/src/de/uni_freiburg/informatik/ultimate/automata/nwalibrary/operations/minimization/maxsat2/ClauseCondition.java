@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 /**
  * Clause condition.
  * 
- * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 class ClauseCondition {
 	private final EClauseStatus mClauseStatus;
@@ -40,21 +40,25 @@ class ClauseCondition {
 		mClauseStatus = clauseStatus;
 		mUnsetAtoms = unsetAtoms;
 	}
+	
 	public EClauseStatus getClauseStatus() {
 		return mClauseStatus;
 	}
+	
 	public int getUnsetAtoms() {
 		return mUnsetAtoms;
 	}
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result +
-				((mClauseStatus == null) ? 0 : mClauseStatus.hashCode());
+		result = prime * result
+				+ ((mClauseStatus == null) ? 0 : mClauseStatus.hashCode());
 		result = prime * result + mUnsetAtoms;
 		return result;
 	}
+	
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -75,6 +79,7 @@ class ClauseCondition {
 		}
 		return true;
 	}
+	
 	@Override
 	public String toString() {
 		return "ClauseCondition [mClauseStatus=" + mClauseStatus + ", mUnsetAtoms=" + mUnsetAtoms + "]";

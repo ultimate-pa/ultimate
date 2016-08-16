@@ -48,7 +48,7 @@ public final class SpoilerWinningSinkExtended<LETTER, STATE> implements IWinning
 	/**
 	 * The priority that is winning for Spoiler.
 	 */
-	private final static int SPOILER_WINNING_PRIORITY = 1;
+	private static final int SPOILER_WINNING_PRIORITY = 1;
 
 	/**
 	 * The duplicator vertex of this sink.

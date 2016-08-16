@@ -28,22 +28,24 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 
-public class TestCase<LETTER>{
+public class TestCase<LETTER> {
+	private final Word<LETTER> mWord;
+	private final boolean mIsAccepted;
 
-	public TestCase(Word<LETTER> word, boolean isAccepted){
-		this.word = word;
-		this.isAccepted = isAccepted;
+	public TestCase(final Word<LETTER> word, final boolean isAccepted) {
+		this.mWord = word;
+		this.mIsAccepted = isAccepted;
 	}
-	private final Word<LETTER> word;
-	private final boolean isAccepted;
 	
-	public static <LETTER> void test(AlternatingAutomaton<LETTER, String> automaton, TestCase<LETTER>[] testCases){
+	public static <LETTER> void test(final AlternatingAutomaton<LETTER, String> automaton,
+			final TestCase<LETTER>[] testCases){
 		for(int i=0;i<testCases.length;i++){
-			System.out.println("Test #" + i + " " + (testCases[i].test(automaton)?"successful":"failed"));
+			System.out.println("Test #" + i + " "
+					+ (testCases[i].test(automaton)?"successful":"failed"));
 		}
 	}
 	
-	public boolean test(AlternatingAutomaton<LETTER, String> automaton){
-		return (automaton.accepts(word) == isAccepted);
+	public boolean test(final AlternatingAutomaton<LETTER, String> automaton){
+		return (automaton.accepts(mWord) == mIsAccepted);
 	}
 }

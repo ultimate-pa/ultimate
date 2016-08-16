@@ -429,12 +429,12 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	}
 	
 	/**
-	 * This method handles the case of {@link isPairEquiv(Tuple origTuple)}
+	 * This method handles the case of {@link #isPairEquiv(Tuple)}
 	 * when the pair of states has not yet been expanded.
 	 * 
-	 * It pushes the pairs of successor states on the stack.
+	 * <p>It pushes the pairs of successor states on the stack.
 	 * 
-	 * If the states have not been separated wrt. different outgoing
+	 * <p>If the states have not been separated wrt. different outgoing
 	 * transitions at the beginning, this is checked here and then possibly a
 	 * reason for non-equivalence is found.
 	 * 
@@ -932,7 +932,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 			/**
 			 * This method removes a given list node in {@code O(1)}.
 			 * 
-			 * @param listNode
+			 * @param listNode list node
 			 */
 			void remove(final ListNode listNode) {
 				assert (listNode != null) :

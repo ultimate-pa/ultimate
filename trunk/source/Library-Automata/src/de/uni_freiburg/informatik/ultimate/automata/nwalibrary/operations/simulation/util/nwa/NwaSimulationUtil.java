@@ -66,15 +66,17 @@ public final class NwaSimulationUtil {
 	 * Computes if the simulation results saved in the given game graph are
 	 * correct.
 	 * 
-	 * @param mGameGraph
+	 * @param gameGraph
 	 *            Game graph where the simulation results are saved in
-	 * @param mNwa
+	 * @param nwa
 	 *            The underlying Nwa automata
 	 * @return <tt>True</tt> if the simulation results are correct,
 	 *         <tt>false</tt> otherwise.
 	 */
-	public static <LETTER, STATE> boolean areNwaSimulationResultsCorrect(final AGameGraph<LETTER, STATE> gameGraph,
-			final IDoubleDeckerAutomaton<LETTER, STATE> nwa, final ESimulationType simulationType,
+	public static <LETTER, STATE> boolean areNwaSimulationResultsCorrect(
+			final AGameGraph<LETTER, STATE> gameGraph,
+			final IDoubleDeckerAutomaton<LETTER, STATE> nwa,
+			final ESimulationType simulationType,
 			final ILogger logger) {
 		if (logger.isInfoEnabled()) {
 			logger.info("Starting checking correctness of simulation results.");

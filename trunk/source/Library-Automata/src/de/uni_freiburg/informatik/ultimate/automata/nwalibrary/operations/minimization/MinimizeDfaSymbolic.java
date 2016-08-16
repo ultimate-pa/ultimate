@@ -84,7 +84,8 @@ public class MinimizeDfaSymbolic<LETTER, STATE>
 	/**
 	 * Constructor
 	 * 
-	 * @param operand
+	 * @param services Ultimate services
+	 * @param operand operand
 	 */
 	public MinimizeDfaSymbolic(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
@@ -393,8 +394,8 @@ public class MinimizeDfaSymbolic<LETTER, STATE>
 	 * Returns true, if there exists an incoming transition to state labeled
 	 * with letter letter.
 	 * 
-	 * @param state
-	 * @param letter
+	 * @param state state
+	 * @param letter letter
 	 * @return if incoming transition labeled with letter exists.
 	 */
 	private boolean hasIncomingTransitionWithLetter(final STATE state, final LETTER letter) {
@@ -405,8 +406,8 @@ public class MinimizeDfaSymbolic<LETTER, STATE>
 	 * Returns state, which is predecessors of state with transition labeled
 	 * with letter.
 	 * 
-	 * @param state
-	 * @param letter
+	 * @param state state
+	 * @param letter letter
 	 * @return predecessor state.
 	 */
 	private LinkedList<STATE> getPredecessor(final STATE state, final LETTER letter) {

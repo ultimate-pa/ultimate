@@ -758,6 +758,10 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 					// Append block to candidate list
 					splitCandidatesToAppend.add(splitBlockPart);
 					// Update maximal split part size
+					/*
+					 * TODO Christian 2016-08-16: Probably a bug: This condition
+					 *      always evaluates to true.
+					 */
 					if (splitBlockPart.size() > maxSplitPartSize) {
 						biggestSplitPart = splitBlockPart;
 					}

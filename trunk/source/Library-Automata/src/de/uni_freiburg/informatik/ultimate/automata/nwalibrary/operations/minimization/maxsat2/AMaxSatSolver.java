@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * Abstract MAX-SAT solver for propositional logic clauses.
  * 
- * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <V> Kind of objects that are used as variables.
  */
 public abstract class AMaxSatSolver<V> {

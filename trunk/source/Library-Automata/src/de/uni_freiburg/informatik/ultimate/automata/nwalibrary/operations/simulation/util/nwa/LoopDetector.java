@@ -68,7 +68,7 @@ public final class LoopDetector<LETTER, STATE> {
 	 * 
 	 * @param gameGraph
 	 *            Game graph to use for loop detection
-	 * @param progressTimer
+	 * @param progressAwareTimer
 	 *            Timer used for responding to timeouts and operation
 	 *            cancellation.
 	 * @param logger
@@ -88,8 +88,8 @@ public final class LoopDetector<LETTER, STATE> {
 	 *            Vertex in question
 	 * @param destination
 	 *            Destination to reach
-	 * @return <tt>True if destination is reachable from vertex, <tt>false</tt>
-	 *         if not.
+	 * @return <tt>True</tt> if destination is reachable from vertex,
+	 *         <tt>false</tt> if not.
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.

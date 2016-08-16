@@ -209,13 +209,13 @@ final class Solver {
 
 	// "test" the thing
 	public static void main(final String[] args) {
-		char[] assign;
 		Horn3ArrayBuilder builder;
 
 		builder = new Horn3ArrayBuilder(4);
 		builder.addClauseF(3);
 		builder.addClauseFT(2, 3);
 
+		char[] assign;
 		assign = new Solver(builder.extract()).solve();
 		assert assign[2] == FALSE;
 		assert assign[3] == FALSE;

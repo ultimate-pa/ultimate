@@ -1425,75 +1425,6 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 		};
 	}
 
-	private Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHierMap(
-			final STATE hier) {
-		assert (mapModeOutgoing());
-		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
-			/**
-			 * Iterates over all OutgoingReturnTransition of state with 
-			 * hierarchical successor hier. 
-			 * Iterates over all outgoing return letters and uses the 
-			 * iterators returned by returnSuccecessorsMap(state, hier, letter)
-			 */
-			@Override
-			public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
-				final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
-						new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
-					private Iterator<LETTER> mLetterIterator;
-					private LETTER mCurrentLetter;
-					private Iterator<OutgoingReturnTransition<LETTER, STATE>> mCurrentIterator;
-					{
-						mLetterIterator = lettersReturn().iterator();
-						nextLetter();
-					}
-
-					private void nextLetter() {
-						if (mLetterIterator.hasNext()) {
-							do {
-								mCurrentLetter = mLetterIterator.next();
-								mCurrentIterator = returnSuccessorsMap(
-										hier, mCurrentLetter).iterator();
-							} while (!mCurrentIterator.hasNext()
-									&& mLetterIterator.hasNext());
-							if (!mCurrentIterator.hasNext()) {
-								mCurrentLetter = null;
-								mCurrentIterator = null;
-							}
-						} else {
-							mCurrentLetter = null;
-							mCurrentIterator = null;
-						}
-					}
-
-					@Override
-					public boolean hasNext() {
-						return mCurrentLetter != null;
-					}
-
-					@Override
-					public OutgoingReturnTransition<LETTER, STATE> next() {
-						if (mCurrentLetter == null) {
-							throw new NoSuchElementException();
-						} else {
-							final OutgoingReturnTransition<LETTER, STATE> result = 
-									mCurrentIterator.next();
-							if (!mCurrentIterator.hasNext()) {
-								nextLetter();
-							}
-							return result;
-						}
-					}
-
-					@Override
-					public void remove() {
-						throw new UnsupportedOperationException();
-					}
-				};
-				return iterator;
-			}
-		};
-	}
-
 
 	private Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsMap(
 			) {
@@ -1563,6 +1494,75 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 	}
 
 
+
+	private Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHierMap(
+			final STATE hier) {
+		assert (mapModeOutgoing());
+		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
+			/**
+			 * Iterates over all OutgoingReturnTransition of state with 
+			 * hierarchical successor hier. 
+			 * Iterates over all outgoing return letters and uses the 
+			 * iterators returned by returnSuccecessorsMap(state, hier, letter)
+			 */
+			@Override
+			public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
+				final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
+						new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
+					private Iterator<LETTER> mLetterIterator;
+					private LETTER mCurrentLetter;
+					private Iterator<OutgoingReturnTransition<LETTER, STATE>> mCurrentIterator;
+					{
+						mLetterIterator = lettersReturn().iterator();
+						nextLetter();
+					}
+
+					private void nextLetter() {
+						if (mLetterIterator.hasNext()) {
+							do {
+								mCurrentLetter = mLetterIterator.next();
+								mCurrentIterator = returnSuccessorsMap(
+										hier, mCurrentLetter).iterator();
+							} while (!mCurrentIterator.hasNext()
+									&& mLetterIterator.hasNext());
+							if (!mCurrentIterator.hasNext()) {
+								mCurrentLetter = null;
+								mCurrentIterator = null;
+							}
+						} else {
+							mCurrentLetter = null;
+							mCurrentIterator = null;
+						}
+					}
+
+					@Override
+					public boolean hasNext() {
+						return mCurrentLetter != null;
+					}
+
+					@Override
+					public OutgoingReturnTransition<LETTER, STATE> next() {
+						if (mCurrentLetter == null) {
+							throw new NoSuchElementException();
+						} else {
+							final OutgoingReturnTransition<LETTER, STATE> result = 
+									mCurrentIterator.next();
+							if (!mCurrentIterator.hasNext()) {
+								nextLetter();
+							}
+							return result;
+						}
+					}
+
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+				};
+				return iterator;
+			}
+		};
+	}
 	
 	
 	private boolean properOutgoingInternalTransitionAtPosition1(final LETTER letter) {
@@ -1836,14 +1836,13 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
-			final STATE hier) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors() {
 		if (mapModeOutgoing()) {
-			return returnSuccessorsGivenHierMap(hier);
+			return returnSuccessorsMap();
 		} else {
 			final ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = 
 					new ArrayList<OutgoingReturnTransition<LETTER, STATE>>(1);
-			if (properOutgoingReturnTransitionAtPosition3(hier,null)) {
+			if (properOutgoingReturnTransitionAtPosition3(null,null)) {
 				result.add((OutgoingReturnTransition<LETTER, STATE>) mOut3);
 			}
 			return result;
@@ -1852,13 +1851,14 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors() {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
+			final STATE hier) {
 		if (mapModeOutgoing()) {
-			return returnSuccessorsMap();
+			return returnSuccessorsGivenHierMap(hier);
 		} else {
 			final ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = 
 					new ArrayList<OutgoingReturnTransition<LETTER, STATE>>(1);
-			if (properOutgoingReturnTransitionAtPosition3(null,null)) {
+			if (properOutgoingReturnTransitionAtPosition3(hier,null)) {
 				result.add((OutgoingReturnTransition<LETTER, STATE>) mOut3);
 			}
 			return result;

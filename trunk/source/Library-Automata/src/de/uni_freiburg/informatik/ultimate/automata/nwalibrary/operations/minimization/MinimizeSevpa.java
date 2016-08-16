@@ -122,8 +122,6 @@ public class MinimizeSevpa<LETTER,STATE>
 	 * @param stateFactory state factory
 	 * @param operand nested word automaton to minimize
 	 * @param equivalenceClasses represent initial equivalence classes
-	 * @param removeUnreachables true iff removal of unreachable states is used
-	 * @param removeDeadEnds true iff removal of dead-end states is used
 	 * @param addMapOldState2newState add map old state 2 new state?
 	 * @throws AutomataOperationCanceledException iff cancel signal is received
 	 */
@@ -1266,8 +1264,6 @@ public class MinimizeSevpa<LETTER,STATE>
 		private boolean mInW;
 		// equivalence class is contained in target set
 		private boolean mInA;
-		// representative. Note that this is a state of the resulting NWA.
-		private STATE mRepresentative;
 		// equivalence class contains final/initial states
 		private boolean mIsFinal;
 		private boolean mIsInitial;
@@ -1433,13 +1429,6 @@ public class MinimizeSevpa<LETTER,STATE>
 				mCollection = mIntersection;
 			}
 			mIntersection = null;
-		}
-		
-		/**
-		 * @return representative state (initial if possible)
-		 */
-		STATE getRepresentative() {
-			return mRepresentative;
 		}
 		
 		/**
@@ -1693,16 +1682,8 @@ public class MinimizeSevpa<LETTER,STATE>
 		}
 		
 		/**
-		 * @param state state in equivalence class
-		 * @return representative of equivalence class containing the state
-		 */
-		STATE getRepresentative(final STATE state) {
-			return getEquivalenceClass(state).getRepresentative();
-		}
-		
-		/**
 		 * @param state state for equivalence class
-		 * @param equivalenceClass 
+		 * @param equivalenceClass equivalence class
 		 */
 		protected void setEquivalenceClass(final STATE state, 
 									final EquivalenceClass equivalenceClass) {

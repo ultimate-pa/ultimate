@@ -1134,15 +1134,15 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 		};
 	}
 
+
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
-			final STATE hier) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+			) {
 		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
 			/**
-			 * Iterates over all OutgoingReturnTransition of state with 
-			 * hierarchical successor hier. 
+			 * Iterates over all OutgoingReturnTransition of state.
 			 * Iterates over all outgoing return letters and uses the 
-			 * iterators returned by returnSuccecessors(state, hier, letter)
+			 * iterators returned by returnSuccessors(state, letter)
 			 */
 			@Override
 			public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
@@ -1160,8 +1160,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 						if (mLetterIterator.hasNext()) {
 							do {
 								mCurrentLetter = mLetterIterator.next();
-								mCurrentIterator = returnSuccessors(
-										hier, mCurrentLetter).iterator();
+								mCurrentIterator = returnSuccessors(mCurrentLetter).iterator();
 							} while (!mCurrentIterator.hasNext()
 									&& mLetterIterator.hasNext());
 							if (!mCurrentIterator.hasNext()) {
@@ -1203,15 +1202,15 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 		};
 	}
 
-
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-			) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
+			final STATE hier) {
 		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
 			/**
-			 * Iterates over all OutgoingReturnTransition of state.
+			 * Iterates over all OutgoingReturnTransition of state with 
+			 * hierarchical successor hier. 
 			 * Iterates over all outgoing return letters and uses the 
-			 * iterators returned by returnSuccessors(state, letter)
+			 * iterators returned by returnSuccecessors(state, hier, letter)
 			 */
 			@Override
 			public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
@@ -1229,7 +1228,8 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 						if (mLetterIterator.hasNext()) {
 							do {
 								mCurrentLetter = mLetterIterator.next();
-								mCurrentIterator = returnSuccessors(mCurrentLetter).iterator();
+								mCurrentIterator = returnSuccessors(
+										hier, mCurrentLetter).iterator();
 							} while (!mCurrentIterator.hasNext()
 									&& mLetterIterator.hasNext());
 							if (!mCurrentIterator.hasNext()) {

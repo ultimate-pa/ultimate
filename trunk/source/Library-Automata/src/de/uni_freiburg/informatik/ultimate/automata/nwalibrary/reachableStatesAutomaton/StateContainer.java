@@ -312,9 +312,9 @@ public abstract class StateContainer<LETTER, STATE> {
 
 	public abstract Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final LETTER letter);
 
-	public abstract Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE hier);
-
 	public abstract Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors();
+
+	public abstract Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE hier);
 
 	public abstract Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			final STATE hier, final LETTER letter);

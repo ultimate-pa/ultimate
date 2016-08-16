@@ -26,9 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -65,10 +66,10 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 	 * @return Result contains a configuration for each state which contains
 	 * only this state.
 	 */
-	public Set<Stack<STATE>> emptyStackConfiguration(final Iterable<STATE> states) {
-		final Set<Stack<STATE>> configurations = new HashSet<Stack<STATE>>();
+	public Set<ArrayDeque<STATE>> emptyStackConfiguration(final Iterable<STATE> states) {
+		final Set<ArrayDeque<STATE>> configurations = new HashSet<>();
 		for (final STATE state : states) {
-			final Stack<STATE> singletonStack = new Stack<STATE>();
+			final ArrayDeque<STATE> singletonStack = new ArrayDeque<STATE>();
 			singletonStack.push(state);
 			configurations.add(singletonStack);
 		}
@@ -78,7 +79,7 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 	/**
 	 * @return true iff the topmost stack element is an accepting state.
 	 */
-	public boolean isAcceptingConfiguration(final Stack<STATE> configuration,
+	public boolean isAcceptingConfiguration(final Deque<STATE> configuration,
 			final INestedWordAutomatonSimple<LETTER,STATE> nwa) {
 			final STATE state = configuration.peek();
 			if (nwa.isFinal(state)) {
@@ -108,47 +109,55 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 	 * @throws AutomataLibraryException 
 	 * 
 	 */
-	public Set<Stack<STATE>> successorConfigurations(final Set<Stack<STATE>> configurations,
-			final NestedWord<LETTER> nw, final int position, final INestedWordAutomatonSimple<LETTER,STATE> nwa,
+	public Set<ArrayDeque<STATE>> successorConfigurations(
+			final Set<ArrayDeque<STATE>> configurations,
+			final NestedWord<LETTER> nw, final int position,
+			final INestedWordAutomatonSimple<LETTER,STATE> nwa,
 			final boolean addInitial) throws AutomataLibraryException {
-		final Set<Stack<STATE>> succConfigs = new HashSet<Stack<STATE>>();
+		final Set<ArrayDeque<STATE>> succConfigs = new HashSet<ArrayDeque<STATE>>();
 		if (addInitial) {
 			configurations.addAll(configurations);
 		}
-		for (final Stack<STATE> config : configurations) {
+		for (final ArrayDeque<STATE> config : configurations) {
 			final STATE state = config.pop();
 			final LETTER symbol = nw.getSymbol(position);
 			if (nw.isInternalPosition(position)) {
 				if (!nwa.getInternalAlphabet().contains(symbol)) {
-					throw new AutomataLibraryException(this.getClass(), "Unable to check acceptance. Letter " + 
-							symbol + " at position " + position + " not in internal alphabet of automaton.");
+					throw new AutomataLibraryException(this.getClass(),
+							"Unable to check acceptance. Letter "
+							+ symbol + " at position " + position
+							+ " not in internal alphabet of automaton.");
 				}
 				final Iterable<OutgoingInternalTransition<LETTER, STATE>> outTransitions = 
 						nwa.internalSuccessors(state, symbol);
 				for (final OutgoingInternalTransition<LETTER, STATE> outRans :outTransitions) {
 					final STATE succ = outRans.getSucc();
-					final Stack<STATE> succConfig = (Stack<STATE>) config.clone();
+					final ArrayDeque<STATE> succConfig = (ArrayDeque<STATE>) config.clone();
 					succConfig.push(succ);
 					succConfigs.add(succConfig);
 				}
 			} else if (nw.isCallPosition(position)) {
 				if (!nwa.getCallAlphabet().contains(symbol)) {
-					throw new AutomataLibraryException(this.getClass(), "Unable to check acceptance. Letter " + 
-							symbol + " at position " + position + " not in call alphabet of automaton.");
+					throw new AutomataLibraryException(this.getClass(),
+							"Unable to check acceptance. Letter " 
+							+ symbol + " at position " + position
+							+ " not in call alphabet of automaton.");
 				}
 				final Iterable<OutgoingCallTransition<LETTER, STATE>> outTransitions = 
 						nwa.callSuccessors(state, symbol);
 				for (final OutgoingCallTransition<LETTER, STATE> outRans :outTransitions) {
 					final STATE succ = outRans.getSucc();
-					final Stack<STATE> succConfig = (Stack<STATE>) config.clone();
+					final ArrayDeque<STATE> succConfig = (ArrayDeque<STATE>) config.clone();
 					succConfig.push(state);
 					succConfig.push(succ);
 					succConfigs.add(succConfig);
 				}
 			} else if (nw.isReturnPosition(position)) {
 				if (!nwa.getReturnAlphabet().contains(symbol)) {
-					throw new AutomataLibraryException(this.getClass(), "Unable to check acceptance. Letter " + 
-							symbol + " at position " + position + " not in return alphabet of automaton.");
+					throw new AutomataLibraryException(this.getClass(),
+							"Unable to check acceptance. Letter "
+							+ symbol + " at position " + position
+							+ " not in return alphabet of automaton.");
 				}
 				if (config.isEmpty()) {
 					mLogger.warn("Input has pending returns, we reject such words");
@@ -158,7 +167,7 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 							nwa.returnSuccessors(state, callPred, symbol);
 					for (final OutgoingReturnTransition<LETTER, STATE> outRans :outTransitions) {
 						final STATE succ = outRans.getSucc();
-						final Stack<STATE> succConfig = (Stack<STATE>) config.clone();
+						final ArrayDeque<STATE> succConfig = config.clone();
 						succConfig.push(succ);
 						succConfigs.add(succConfig);
 					}

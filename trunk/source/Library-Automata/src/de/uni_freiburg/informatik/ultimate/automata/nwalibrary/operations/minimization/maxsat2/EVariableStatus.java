@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 /**
  * status of a variable
  * 
- * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public enum EVariableStatus {
 	UNSET,

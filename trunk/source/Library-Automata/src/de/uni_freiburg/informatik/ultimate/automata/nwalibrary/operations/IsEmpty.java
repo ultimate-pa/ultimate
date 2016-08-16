@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,7 +35,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -208,7 +208,7 @@ public class IsEmpty<LETTER,STATE>
 	 * Corresponds to the stack-of-returned-elements-that-have-not-been-called
 	 * of the automaton but all elements are shifted by one.   
 	 */
-	private final Stack<STATE> mReconstructionStack = new Stack<STATE>();
+	private final ArrayDeque<STATE> mReconstructionStack = new ArrayDeque<STATE>();
 
 	private NestedRun<LETTER,STATE> mReconstructionOneStepRun;
 

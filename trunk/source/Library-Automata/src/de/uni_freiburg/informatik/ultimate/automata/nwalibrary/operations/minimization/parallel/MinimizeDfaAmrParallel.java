@@ -74,7 +74,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * information is then propagated to avoid checking these states later.
  * 
  * @author Layla Franke
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
@@ -415,10 +415,6 @@ public class MinimizeDfaAmrParallel<LETTER, STATE>
 		// refinement loop
 		for (int p = 0; p < mSize; ++p) {
 			for (int q = p + 1; q < mSize; ++q) {
-				if (mInterrupt.getStatus()) {
-					return;
-				}
-
 				// termination signal found
 				if ((mInterrupt != null) && (mInterrupt.getStatus())) {
 					return;
@@ -587,12 +583,12 @@ public class MinimizeDfaAmrParallel<LETTER, STATE>
 	}
 
 	/**
-	 * This method handles the case of {@link isPairEquiv(Tuple origTuple)} when
+	 * This method handles the case of {@link #isPairEquiv(Tuple)} when
 	 * the pair of states has not yet been expanded.
 	 * 
-	 * It pushes the pairs of successor states on the stack.
+	 * <p>It pushes the pairs of successor states on the stack.
 	 * 
-	 * If the states have not been separated wrt. different outgoing transitions
+	 * <p>If the states have not been separated wrt. different outgoing transitions
 	 * at the beginning, this is checked here and then possibly a reason for
 	 * non-equivalence is found.
 	 * 

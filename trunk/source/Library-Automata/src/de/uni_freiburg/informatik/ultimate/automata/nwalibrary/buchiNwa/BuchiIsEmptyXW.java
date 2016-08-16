@@ -143,7 +143,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	
-    /** The range of bridge, can be omega, singleton or quadruple of states. */
+	/** The range of bridge, can be omega, singleton or quadruple of states. */
 	protected abstract class BridgeRange {
 	}
 	
@@ -346,10 +346,8 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	/**
 	 * Check if a Buchi nested word automaton accepts any nested lasso word. 
-	 * @param nwa NestedWordAutomaton which is interpreted as Buchi nested word
-	 * automaton here
 	 * @return true iff nwa does not accept any nested lasso word.
-	 * @throws AutomataOperationCanceledException 
+	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
 	// Requires collections of transitions to be final. 
 	public boolean checkEmptiness() throws AutomataLibraryException {

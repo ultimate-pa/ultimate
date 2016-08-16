@@ -35,8 +35,10 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 
-public class Transition<S, C> implements ITransition<S, C>, Serializable,
-		Comparable<Transition<S, C>> {
+public class Transition<S, C>
+		implements ITransition<S, C>,
+			Serializable,
+			Comparable<Transition<S, C>> {
 	private static final long serialVersionUID = 5948089529814334197L;
 
 	private final int mHashCode;
@@ -46,8 +48,12 @@ public class Transition<S, C> implements ITransition<S, C>, Serializable,
 
 	private final int mTotalOrderID;
 
-	public Transition(S symbol, Collection<Place<S, C>> predecessors,
-			Collection<Place<S, C>> successors, int totalOrderID) {
+	/**
+	 * TODO Christian 2016-08-16: The code assumes that the Collection
+	 *      parameters are of type List. Why not explicitly type-check this?
+	 */
+	public Transition(final S symbol, final Collection<Place<S, C>> predecessors,
+			final Collection<Place<S, C>> successors, final int totalOrderID) {
 		mSymbol = symbol;
 		mPredecessors = Collections
 				.unmodifiableList((List<Place<S, C>>) predecessors);
@@ -84,7 +90,7 @@ public class Transition<S, C> implements ITransition<S, C>, Serializable,
 
 	@Override
 	public String toString() {
-		return mSymbol.toString()+"["+mTotalOrderID+"]";
+		return mSymbol.toString() + "[" + mTotalOrderID + "]";
 	}
 
 	public int getTotalOrderID() {
@@ -92,7 +98,7 @@ public class Transition<S, C> implements ITransition<S, C>, Serializable,
 	}
 
 	@Override
-	public int compareTo(Transition<S, C> o) {
+	public int compareTo(final Transition<S, C> o) {
 		return mTotalOrderID - o.mTotalOrderID;
 	}
 

@@ -206,7 +206,9 @@ final class Converter<LETTER, STATE> {
 	 * @return NWA generated from input <code>INestedWordAutomaton</code>
 	 *         automaton.
 	 */
-	NWA getNWA() { return mConverted.clone(); }
+	NWA getNWA() {
+		return mConverted.clone();
+	}
 
 	/**
 	 * @param partition

@@ -777,7 +777,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 
 		/**
 		 * Construct State Container. Add to
-		 * CommonEntriesComponent<LETTER,STATE>. Add to ForwardWorklist.
+		 * CommonEntriesComponent. Add to ForwardWorklist.
 		 */
 		private StateContainer<LETTER, STATE> addState(final STATE state, final HashMap<STATE, Integer> downStates) {
 			assert !mStates.containsKey(state);

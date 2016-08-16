@@ -1241,14 +1241,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
-			final STATE hier) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
 		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
 			/**
-			 * Iterates over all OutgoingReturnTransition of state with
-			 * hierarchical successor hier. Iterates over all outgoing return
-			 * letters and uses the iterators returned by
-			 * returnSuccecessors(state, hier, letter)
+			 * Iterates over all OutgoingReturnTransition of state. Iterates
+			 * over all outgoing return letters and uses the iterators returned
+			 * by returnSuccessors(state, letter)
 			 */
 			@Override
 			public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
@@ -1266,7 +1264,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 						if (mLetterIterator.hasNext()) {
 							do {
 								mCurrentLetter = mLetterIterator.next();
-								mCurrentIterator = returnSuccessors(state, hier, mCurrentLetter).iterator();
+								mCurrentIterator = returnSuccessors(state, mCurrentLetter).iterator();
 							} while (!mCurrentIterator.hasNext() && mLetterIterator.hasNext());
 							if (!mCurrentIterator.hasNext()) {
 								mCurrentLetter = null;
@@ -1307,12 +1305,14 @@ public class NestedWordAutomaton<LETTER, STATE>
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
+			final STATE hier) {
 		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
 			/**
-			 * Iterates over all OutgoingReturnTransition of state. Iterates
-			 * over all outgoing return letters and uses the iterators returned
-			 * by returnSuccessors(state, letter)
+			 * Iterates over all OutgoingReturnTransition of state with
+			 * hierarchical successor hier. Iterates over all outgoing return
+			 * letters and uses the iterators returned by
+			 * returnSuccecessors(state, hier, letter)
 			 */
 			@Override
 			public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
@@ -1330,7 +1330,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 						if (mLetterIterator.hasNext()) {
 							do {
 								mCurrentLetter = mLetterIterator.next();
-								mCurrentIterator = returnSuccessors(state, mCurrentLetter).iterator();
+								mCurrentIterator = returnSuccessors(state, hier, mCurrentLetter).iterator();
 							} while (!mCurrentIterator.hasNext() && mLetterIterator.hasNext());
 							if (!mCurrentIterator.hasNext()) {
 								mCurrentLetter = null;
@@ -2627,6 +2627,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 	 * <li>the return transition (q_i, q_k, a_i, a_{i+1}) where k is the
 	 * corresponding call position. Expects that all symbols are contained in
 	 * the alphabets and the all states are contained in the automaton.
+	 * </ul>
 	 */
 	public void addTransitions(final NestedWord<LETTER> nw, final List<STATE> stateList) {
 		assert nw.length() + 1 == stateList.size();

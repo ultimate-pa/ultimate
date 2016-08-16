@@ -259,7 +259,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 
 	/*******************************************************************//**
 	 * Initialize structure for labels.
-	 * Iterate over all states and get their OutgoingInternalTransistion<LETTER, STATE>
+	 * Iterate over all states and get their OutgoingInternalTransistion
 	 * for storing nOfLabel, headOfLabel and tailOfLabel.
 	 */
 	private void initializeLables() {
@@ -277,7 +277,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 					mOperand.internalSuccessors(st).iterator();
 			// hasNext? --> add to labels.
 			while (it.hasNext()) {
-				final OutgoingInternalTransition< LETTER, STATE> oit = it.next();
+				final OutgoingInternalTransition<LETTER, STATE> oit = it.next();
 				labels.add(mLetter2int.get(oit.getLetter()));
 				tails.add(mState2int.get(st));
 				heads.add(mState2int.get(oit.getSucc()));
@@ -378,7 +378,6 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 	 * Using labelTails[] as K[] --> computes outgoing transitions.
 	 * Adjacent transitions of state q are:
 	 * madjacent[mF[q]], madjacent[mF[q] + 1], ... , madjacent[mF[q+1] - 1]
-	 * @param arrayK
 	 */
 	private void makeAdjacent(final int[] arrayK) {
 		int q;
@@ -410,7 +409,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 		private int[] mPast;
 		/***************************************************************//**
 		 * Method for initializing partition.
-		 * @param nOfStates
+		 * @param nOfStates number of states
 		 */
 		public void init(final int nOfStates) {
 			// After initialization, partition contains either one
@@ -452,7 +451,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 		
 		/***************************************************************//**
 		 * Method for marking an element e.
-		 * @param element
+		 * @param element element
 		 */
 		public void mark(final int element) {
 			// # block, element e belongs to.

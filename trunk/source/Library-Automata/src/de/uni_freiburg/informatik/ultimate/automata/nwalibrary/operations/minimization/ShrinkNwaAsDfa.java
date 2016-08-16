@@ -279,6 +279,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 				case RETURN:
 					a.mIncomingRet = EIncomingStatus.NONE;
 					break;
+				default:
+					throw new IllegalArgumentException();
 			}
 		} else {
 			// split each map value (set of predecessor states)
@@ -787,6 +789,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 					break;
 				case NONE:
 					mIncomingInt = EIncomingStatus.NONE;
+				default:
+					throw new IllegalArgumentException();
 			}
 			switch (parent.mIncomingCall) {
 				case UNKNOWN:
@@ -796,6 +800,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 					break;
 				case NONE:
 					mIncomingCall = EIncomingStatus.NONE;
+				default:
+					throw new IllegalArgumentException();
 			}
 			switch (parent.mIncomingRet) {
 				case UNKNOWN:
@@ -806,6 +812,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 				case NONE:
 					mIncomingRet = EIncomingStatus.NONE;
 					break;
+				default:
+					throw new IllegalArgumentException();
 			}
 			if (add) {
 				mWorkList.add(this);

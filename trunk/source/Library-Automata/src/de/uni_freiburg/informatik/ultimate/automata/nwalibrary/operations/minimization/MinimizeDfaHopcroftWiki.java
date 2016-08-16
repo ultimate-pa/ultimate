@@ -133,7 +133,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 	// NOTE: Is this necessary - how could the algorithm even use it??
 	/**
 	 * Initialize structure for lables. Iterate over all states and get their
-	 * OutgoingInternalTransition<LETTER, STATE> for storing nOfLabel,
+	 * OutgoingInternalTransition for storing nOfLabel,
 	 * headOfLabel and tailOfLabel.
 	 */
 	private void initializeLables() {
@@ -234,9 +234,6 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 	}
 
 	/**
-	 * 
-	 * @param set
-	 * @param worklist
 	 * @return Natural number (position of set in worklist) if worklist contains
 	 *         set, -1 otherwise.
 	 */
@@ -252,16 +249,23 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 	/**
 	 * Compare equality of two arrays.
 	 * 
-	 * @param a
-	 * @param b
+	 * @param a first array
+	 * @param b second array
 	 * @return True if arrays contain the same numbers, false otherwise.
 	 */
 	private boolean arrayEquals(final int[] a, final int[] b) {
 		if (b.length != a.length) {
 			return false;
 		}
-		for (final int number : b) {
-			if (!Arrays.asList(a).contains(number)) {
+		for (final int numberA : a) {
+			boolean found = false;
+			for (final int numberB : b) {
+				if (numberA == numberB) {
+					found = true;
+					break;
+				}
+			}
+			if (! found) {
 				return false;
 			}
 		}
@@ -351,11 +355,11 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 
 	// ---------- Unused methods.---------- //
 	/**
-	 * Returns true, if there exists an incoming transition to <state> labeled
-	 * with letter <letter>.
+	 * Returns true if there exists an incoming transition to the state labeled
+	 * with the letter.
 	 * 
-	 * @param state
-	 * @param letter
+	 * @param state state
+	 * @param letter letter
 	 * @return if incoming transition labeled with letter exists.
 	 */
 	private boolean hasIncomingTransitionWithLetter(final int state, final int letter) {
@@ -365,12 +369,12 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 	}
 
 	/**
-	 * Returns true, if an outgoing transition from <state> labeled with
-	 * <letter> exists.
+	 * Returns true, if an outgoing transition from the state labeled with
+	 * the letter exists.
 	 * 
-	 * @param state
-	 * @param letter
-	 * @return if outgoing transition labeled with <letter> exists.
+	 * @param state state
+	 * @param letter letter
+	 * @return if outgoing transition labeled with the letter exists.
 	 */
 	private boolean hasOutgoingTransitionWithLetter(final int state, final int letter) {
 		final STATE st = mInt2state.get(state);
@@ -380,11 +384,11 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 
 	// NOTE: There can be several such states in a DFA!!
 	/**
-	 * Returns number of state, which is predecessor of <state> with transition
-	 * labeled with <letter>.
+	 * Returns number of state, which is predecessor of the state with transition
+	 * labeled with the letter.
 	 * 
-	 * @param state
-	 * @param letter
+	 * @param state state
+	 * @param letter letter
 	 * @return Number of predecessor state.
 	 */
 	private int getPredecessor(final int state, final int letter) {
@@ -396,11 +400,11 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 	}
 
 	/**
-	 * Returns number of state, which is successor of <state> with transition
-	 * labeled with <letter>.
+	 * Returns number of state, which is successor of the state with transition
+	 * labeled with the letter.
 	 * 
-	 * @param state
-	 * @param letter
+	 * @param state state
+	 * @param letter letter
 	 * @return Number of successor state.
 	 */
 	private int getSuccessor(final int state, final int letter) {
@@ -416,9 +420,6 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 	 * Class for representing a partition. A partition P contains blocks of
 	 * states Y_1 ... Y_n. As initial blocks a partition P should contain P =
 	 * {Y_1, Y_2} with Y_1 = {F} and Y_2 = {Q\F}.
-	 * 
-	 * @author bjoern
-	 *
 	 */
 	public class Partition {
 		// ArrayList, to represent the sets in partition.
@@ -434,8 +435,8 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 		/**
 		 * Constructor. Initialize arrays finalStates and nonfinalStates.
 		 * 
-		 * @param nOfStates
-		 * @param nOfFinalStates
+		 * @param nOfStates number of states
+		 * @param nOfFinalStates number of final states
 		 */
 		public Partition() {
 			mSize = 0;
@@ -519,7 +520,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 		private int mSize;
 
 		/**
-		 * Constructor. Initialize ArrayList<int[]> with maxSize = nOfStates.
+		 * Constructor. Initialize ArrayList with maxSize = nOfStates.
 		 */
 		public Worklist(final int maxSize) {
 			mSetsOfStates = new ArrayList<int[]>(maxSize);
@@ -564,8 +565,6 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE>
 
 		/**
 		 * Get number of arrays currently in the list.
-		 * 
-		 * @return
 		 */
 		public int getSize() {
 			return mSize;

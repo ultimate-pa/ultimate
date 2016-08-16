@@ -37,37 +37,40 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
-public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, STATE>{
+public class AlternatingAutomaton<LETTER, STATE>
+		implements IAutomaton<LETTER, STATE> {
 
-	public AlternatingAutomaton(Set<LETTER> alphabet, StateFactory<STATE> stateFactory){
-		this.alphabet = alphabet;
-		this.stateFactory = stateFactory;
+	public AlternatingAutomaton(final Set<LETTER> alphabet, final StateFactory<STATE> stateFactory){
+		this.mAlphabet = alphabet;
+		this.mStateFactory = stateFactory;
 	}
-	private final Set<LETTER> alphabet;
-	private final StateFactory<STATE> stateFactory;
-	private final ArrayList<STATE> states = new ArrayList<STATE>();
-	private final HashMap<STATE, Integer> statesIndices = new HashMap<STATE, Integer>();
-	private final HashMap<LETTER, BooleanExpression[]> transitionFunction = new HashMap<LETTER, BooleanExpression[]>();
-	private BooleanExpression acceptingFunction;
-	private final BitSet finalStatesBitVector = new BitSet();
-	private boolean isReversed;
+	private final Set<LETTER> mAlphabet;
+	private final StateFactory<STATE> mStateFactory;
+	private final ArrayList<STATE> mStates = new ArrayList<STATE>();
+	private final HashMap<STATE, Integer> mStatesIndices = new HashMap<STATE, Integer>();
+	private final HashMap<LETTER, BooleanExpression[]> mTransitionFunction =
+			new HashMap<LETTER, BooleanExpression[]>();
+	private BooleanExpression mAcceptingFunction;
+	private final BitSet mFinalStatesBitVector = new BitSet();
+	private boolean mIsReversed;
 	
-	public void addState(STATE state){
-		if(!states.contains(state)){
-			final int stateIndex = states.size();
-			states.add(state);
-			statesIndices.put(state, stateIndex);
+	public void addState(final STATE state){
+		if (!mStates.contains(state)){
+			final int stateIndex = mStates.size();
+			mStates.add(state);
+			mStatesIndices.put(state, stateIndex);
 		}
 	}
 	
-	public void addTransition(LETTER letter, STATE state, BooleanExpression booleanExpression){
-		BooleanExpression[] letterTransitions = transitionFunction.get(letter);
-		if(letterTransitions == null){
+	public void addTransition(final LETTER letter, final STATE state,
+			final BooleanExpression booleanExpression){
+		BooleanExpression[] letterTransitions = mTransitionFunction.get(letter);
+		if (letterTransitions == null){
 			letterTransitions = new BooleanExpression[64];
-			transitionFunction.put(letter, letterTransitions);
+			mTransitionFunction.put(letter, letterTransitions);
 		}
 		final int stateIndex = getStateIndex(state);
-		if(letterTransitions[stateIndex] == null){
+		if (letterTransitions[stateIndex] == null){
 			letterTransitions[stateIndex] = booleanExpression;
 		}
 		else{
@@ -75,61 +78,63 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 		}
 	}
 	
-	public void addAcceptingConjunction(BooleanExpression booleanExpression){
-		if(acceptingFunction == null){
-			acceptingFunction = booleanExpression;
+	public void addAcceptingConjunction(final BooleanExpression booleanExpression){
+		if (mAcceptingFunction == null){
+			mAcceptingFunction = booleanExpression;
 		}
 		else{
-			acceptingFunction.addConjunction(booleanExpression);
+			mAcceptingFunction.addConjunction(booleanExpression);
 		}
 	}
 	
-	public BooleanExpression generateCube(STATE[] resultStates, STATE[] negatedResultStates){
-		final BitSet alpha = new BitSet(states.size());
-		final BitSet beta = new BitSet(states.size());
-		for(final STATE resultState : resultStates){
+	public BooleanExpression generateCube(final STATE[] resultStates, final STATE[] negatedResultStates){
+		final BitSet alpha = new BitSet(mStates.size());
+		final BitSet beta = new BitSet(mStates.size());
+		for (final STATE resultState : resultStates){
 			final int stateIndex = getStateIndex(resultState);
 			alpha.set(stateIndex);
 			beta.set(stateIndex);
 		}
-		for(final STATE resultState : negatedResultStates){
+		for (final STATE resultState : negatedResultStates){
 			final int stateIndex = getStateIndex(resultState);
 			alpha.set(stateIndex);
 		}
 		return new BooleanExpression(alpha, beta);
 	}
 	
-	public void setStateFinal(STATE state){
+	public void setStateFinal(final STATE state){
 		final int stateIndex = getStateIndex(state);
-		finalStatesBitVector.set(stateIndex);
+		mFinalStatesBitVector.set(stateIndex);
 	}
 	
-	public boolean isStateFinal(STATE state){
+	public boolean isStateFinal(final STATE state){
 		final int stateIndex = getStateIndex(state);
-		return finalStatesBitVector.get(stateIndex);
+		return mFinalStatesBitVector.get(stateIndex);
 	}
 	
-	public boolean accepts(Word<LETTER> word){
-		final BitSet resultingStates = (BitSet) finalStatesBitVector.clone();
-		if(isReversed){
-			for(int i=0;i<word.length();i++){
+	public boolean accepts(final Word<LETTER> word){
+		final BitSet resultingStates = (BitSet) mFinalStatesBitVector.clone();
+		if (mIsReversed){
+			for (int i=0;i<word.length();i++){
 				resolveLetter(word.getSymbol(i), resultingStates);
 			}
 		}
 		else{
-			for(int i=(word.length() - 1);i>=0;i--){
+			for (int i=(word.length() - 1);i>=0;i--){
 				resolveLetter(word.getSymbol(i), resultingStates);
 			}
 		}
-		return acceptingFunction.getResult(resultingStates);
+		return mAcceptingFunction.getResult(resultingStates);
 	}
 	
-	public void resolveLetter(LETTER letter, BitSet currentStates){
-		final BooleanExpression[] letterTransitions = transitionFunction.get(letter);
-		if(letterTransitions != null){
+	public void resolveLetter(final LETTER letter, final BitSet currentStates){
+		final BooleanExpression[] letterTransitions = mTransitionFunction.get(letter);
+		if (letterTransitions != null){
 			final BitSet tmpCurrentStates = (BitSet) currentStates.clone();
-			for(int i=0;i<states.size();i++){
-				final boolean result = ((letterTransitions[i] != null)?letterTransitions[i].getResult(tmpCurrentStates):false);
+			for (int i=0;i<mStates.size();i++){
+				final boolean result = ((letterTransitions[i] != null)
+						? letterTransitions[i].getResult(tmpCurrentStates)
+						: false);
 				currentStates.set(i, result);
 			}
 		}
@@ -139,46 +144,46 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 	}
 	
 	public ArrayList<STATE> getStates(){
-		return states;
+		return mStates;
 	}
 	
-	public int getStateIndex(STATE state){
-		return statesIndices.get(state);
+	public int getStateIndex(final STATE state){
+		return mStatesIndices.get(state);
 	}
 	
 	public HashMap<LETTER, BooleanExpression[]> getTransitionFunction(){
-		return transitionFunction;
+		return mTransitionFunction;
 	}
 	
 	public BooleanExpression getAcceptingFunction(){
-		return acceptingFunction;
+		return mAcceptingFunction;
 	}
 	
 	public BitSet getFinalStatesBitVector(){
-		return finalStatesBitVector;
+		return mFinalStatesBitVector;
 	}
 	
-	public void setReversed(boolean isReversed){
-		this.isReversed = isReversed;
+	public void setReversed(final boolean isReversed){
+		this.mIsReversed = isReversed;
 	}
 	
 	public boolean isReversed(){
-		return isReversed;
+		return mIsReversed;
 	}
 
 	@Override
 	public Set<LETTER> getAlphabet(){
-		return alphabet;
+		return mAlphabet;
 	}
 
 	@Override
 	public StateFactory<STATE> getStateFactory(){
-		return stateFactory;
+		return mStateFactory;
 	}
 
 	@Override
 	public int size(){
-		return states.size();
+		return mStates.size();
 	}
 
 	@Override
@@ -189,49 +194,49 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 	@Override
 	public String toString(){
 		String text = "[AlternatingAutomaton\n\tAlphabet = {";
-		final Iterator<LETTER> letterIterator = alphabet.iterator();
+		final Iterator<LETTER> letterIterator = mAlphabet.iterator();
 		int r = 0;
-		while(letterIterator.hasNext()){
-			if(r != 0){
+		while (letterIterator.hasNext()){
+			if (r != 0){
 				text += ", ";
 			}
 			text += letterIterator.next();
 			r++;
 		}
 		text += "}\n\tStates = {";
-		for(int i=0;i<states.size();i++){
-			if(i != 0){
+		for (int i=0;i<mStates.size();i++){
+			if (i != 0){
 				text += ", ";
 			}
-			text += states.get(i);
+			text += mStates.get(i);
 		}
 		text += "}\n\tFinalStates = {";
 		r = 0;
-		for(int i=0;i<states.size();i++){
-			if(finalStatesBitVector.get(i)){
-				if(r != 0){
+		for (int i=0;i<mStates.size();i++){
+			if (mFinalStatesBitVector.get(i)){
+				if (r != 0){
 					text += ", ";
 				}
-				text += states.get(i);
+				text += mStates.get(i);
 				r++;
 			}
 		}
-		text += "}\n\tAcceptingFunction = " + acceptingFunction.toString(states) + "\n\tTransistions = {\n";
+		text += "}\n\tAcceptingFunction = " + mAcceptingFunction.toString(mStates) + "\n\tTransistions = {\n";
 		r = 0;
-		for(final Entry<LETTER, BooleanExpression[]> entry : transitionFunction.entrySet()){
+		for (final Entry<LETTER, BooleanExpression[]> entry : mTransitionFunction.entrySet()){
 			text += "\t\t" + entry.getKey() + " => {\n";
 			int z = 0;
-			for(int i=0;i<states.size();i++){
-				if(entry.getValue()[i] != null){
-					if(z != 0){
+			for (int i=0;i<mStates.size();i++){
+				if (entry.getValue()[i] != null){
+					if (z != 0){
 						text += ",\n";
 					}
-					text += "\t\t\t" + states.get(i) + " => " + entry.getValue()[i].toString(states);
+					text += "\t\t\t" + mStates.get(i) + " => " + entry.getValue()[i].toString(mStates);
 					z++;
 				}
 			}
 			text += "\n\t\t}";
-			if(r != (transitionFunction.size() - 1)){
+			if (r != (mTransitionFunction.size() - 1)){
 				text += ",";
 			}
 			text += "\n";

@@ -49,11 +49,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimi
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class MinimizeDfaParallel<LETTER, STATE>
+public final class MinimizeDfaParallel<LETTER, STATE>
 		extends AMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 	/**
-	 * Is the result constructed yet?
+	 * Whether the result is constructed yet.
 	 */
 	private boolean mResultConstructed = false;
 	/**
@@ -133,8 +133,8 @@ public class MinimizeDfaParallel<LETTER, STATE>
 		super(services, stateFactory, "MinimizeDfaParallel", operand);
 		
 		// added by Christian
-		if ((operand.getCallAlphabet().size() > 0) ||
-				(operand.getReturnAlphabet().size() > 0)) {
+		if ((operand.getCallAlphabet().size() > 0)
+				|| (operand.getReturnAlphabet().size() > 0)) {
 			throw new UnsupportedOperationException(
 				"This class only supports minimization of finite automata.");
 		}
@@ -227,8 +227,6 @@ public class MinimizeDfaParallel<LETTER, STATE>
 
 	/**
 	 * Getter for instance of Hopcroft's algorithm.
-	 * 
-	 * @return
 	 */
 	public MinimizeDfaHopcroftParallel<LETTER, STATE> getHopcroft() {
 		return mHopcroftAlgorithm;
@@ -236,8 +234,6 @@ public class MinimizeDfaParallel<LETTER, STATE>
 
 	/**
 	 * Getter for instance of incremental algorithm.
-	 * 
-	 * @return
 	 */
 	public MinimizeDfaAmrParallel<LETTER, STATE> getIncremental() {
 		return mIncrementalAlgorithm;
@@ -318,7 +314,7 @@ public class MinimizeDfaParallel<LETTER, STATE>
 	 * program to do so. The thread will run at a priority that is one less than
 	 * the priority of the thread that calls the constructor.
 	 * 
-	 * A WorkerThread is designed to run in an infinite loop. It will end only
+	 * <p>A WorkerThread is designed to run in an infinite loop. It will end only
 	 * when the Java virtual machine exits. (This assumes that the tasks that
 	 * are executed don't throw exceptions, which is true in this program.) The
 	 * constructor sets the thread to run as a daemon thread; the Java virtual
@@ -333,7 +329,7 @@ public class MinimizeDfaParallel<LETTER, STATE>
 		/**
 		 * Creating the thread.
 		 * 
-		 * @param name
+		 * @param name name
 		 */
 		WorkingThread(final String name) {
 			super(name);
@@ -517,9 +513,6 @@ public class MinimizeDfaParallel<LETTER, STATE>
 
 	/**
 	 * Enum for choosing the algorithm to run in AlgorithmTasks.
-	 * 
-	 * @author layla
-	 *
 	 */
 	private enum Algorithm {
 		HOPCROFT, INCREMENTAL

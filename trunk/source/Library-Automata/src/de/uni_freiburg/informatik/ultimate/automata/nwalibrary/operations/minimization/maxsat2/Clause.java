@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * positive atom in Horn clauses, this class allows one to use
  * several positive atoms.
  * 
- * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <V> Kind of objects that are used as variables.
  */
 class Clause<V> {

@@ -65,40 +65,10 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 	private final Map<STATE,Integer> mResult2track = 
 		new HashMap<STATE,Integer>();
 	
-	Map<STATE,Map<STATE,STATE>> mTrack1_fst2snd2result = 
+	private final Map<STATE,Map<STATE,STATE>> mTrack1_fst2snd2result = 
 		new HashMap<STATE,Map<STATE,STATE>>();
-	Map<STATE,Map<STATE,STATE>> mTrack2_fst2snd2result = 
+	private final Map<STATE,Map<STATE,STATE>> mTrack2_fst2snd2result = 
 		new HashMap<STATE,Map<STATE,STATE>>();
-	
-	@Override
-	public abstract String operationName();
-
-	
-	@Override
-	public String startMessage() {
-		if (mBuchi) {
-			return "Start buchiIntersect. First operand " + 
-			mFstNwa.sizeInformation() + ". Second operand " + 
-			mSndNwa.sizeInformation();
-		}
-		else {
-			return "Start intersect. First operand " + 
-			mFstNwa.sizeInformation() + ". Second operand " + 
-			mSndNwa.sizeInformation();	
-		}
-	}
-
-	@Override
-	public String exitMessage() {
-		if (mBuchi) {
-			return "Finished buchiIntersect. Result " + 
-			mTraversedNwa.sizeInformation();
-		}
-		else {
-			return "Finished intersect. Result " + 
-			mTraversedNwa.sizeInformation();
-		}
-	}
 
 
 	
@@ -115,7 +85,8 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 		mFstNwa = fstNwa;
 		mSndNwa = sndNwa;
 		if (!NestedWordAutomaton.sameAlphabet(mFstNwa, mSndNwa)) {
-			throw new AutomataLibraryException(this.getClass(), "Unable to apply operation to automata with different alphabets.");
+			throw new AutomataLibraryException(this.getClass(),
+					"Unable to apply operation to automata with different alphabets.");
 		}
 
 		mContentFactory = mFstNwa.getStateFactory();
@@ -140,7 +111,33 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 		if (mBuchi) {
 			assert (ResultChecker.buchiIntersect(mServices, mFstNwa, mSndNwa, mResultNwa));
 		}
-		else {
+	}
+	
+	@Override
+	public abstract String operationName();
+
+	
+	@Override
+	public String startMessage() {
+		if (mBuchi) {
+			return "Start buchiIntersect. First operand " + 
+			mFstNwa.sizeInformation() + ". Second operand " + 
+			mSndNwa.sizeInformation();
+		} else {
+			return "Start intersect. First operand " + 
+			mFstNwa.sizeInformation() + ". Second operand " + 
+			mSndNwa.sizeInformation();	
+		}
+	}
+
+	@Override
+	public String exitMessage() {
+		if (mBuchi) {
+			return "Finished buchiIntersect. Result " + 
+			mTraversedNwa.sizeInformation();
+		} else {
+			return "Finished intersect. Result " + 
+			mTraversedNwa.sizeInformation();
 		}
 	}
 	
@@ -158,16 +155,14 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 			boolean isFinal;
 			if (mBuchi) {
 				isFinal = mFstNwa.isFinal(fst);
-			}
-			else {
+			} else {
 				isFinal = mFstNwa.isFinal(fst) && mSndNwa.isFinal(snd);
 			}
 			
 			if (mBuchi) {
 				state = mContentFactory.intersectBuchi(
 										fst, snd, 1);				
-			}
-			else {
+			} else {
 			state= mContentFactory.intersection(
 											fst, snd);
 			}
@@ -192,7 +187,7 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 		if (state == null) {
 			final boolean isInitial = false;
 			final boolean isFinal = false;
-			assert (mBuchi);
+			assert mBuchi;
 			state = mContentFactory.intersectBuchi(fst, snd, 2);				
 			mResultNwa.addState(isInitial, isFinal, state);
 			snd2result.put(snd,state);
@@ -210,22 +205,18 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 			if (stateTrack == 1) {
 				if (mFstNwa.isFinal(fstState)) {
 					succTrack = 2;
-				}
-				else {
+				} else {
 					succTrack = 1;
 				}
-			}
-			else {
+			} else {
 				assert(stateTrack == 2);
 				if (mSndNwa.isFinal(sndState)) {
 					succTrack = 1;
-				}
-				else {
+				} else {
 					succTrack = 2;
 				}
 			}
-		}
-		else {
+		} else {
 			succTrack = 1;
 		}
 		return succTrack;
@@ -268,8 +259,7 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 					STATE resSucc;
 					if (succTrack == 1) {
 						resSucc = getOrConstructOnTrack1(fstTrans.getSucc(),sndTrans.getSucc(),false);
-					}
-					else {
+					} else {
 						assert (succTrack == 2);
 						resSucc = getOrConstructOnTrack2(fstTrans.getSucc(), sndTrans.getSucc());
 					}
@@ -300,8 +290,7 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 					STATE resSucc;
 					if (succTrack == 1) {
 						resSucc = getOrConstructOnTrack1(fstTrans.getSucc(),sndTrans.getSucc(),false);
-					}
-					else {
+					} else {
 						assert (succTrack == 2);
 						resSucc = getOrConstructOnTrack2(fstTrans.getSucc(), sndTrans.getSucc());
 					}
@@ -339,8 +328,7 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 					STATE resSucc;
 					if (succTrack == 1) {
 						resSucc = getOrConstructOnTrack1(fstTrans.getSucc(),sndTrans.getSucc(),false);
-					}
-					else {
+					} else {
 						assert (succTrack == 2);
 						resSucc = getOrConstructOnTrack2(fstTrans.getSucc(), sndTrans.getSucc());
 					}
@@ -351,9 +339,4 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 		}
 		return resSuccs;
 	}
-
-
-
-
-
 }

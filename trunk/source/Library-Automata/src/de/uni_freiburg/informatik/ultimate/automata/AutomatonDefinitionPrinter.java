@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 /**
  * Writes an automaton definition in for a given automaton.
  * 
- * if Labeling == TOSTRING
+ * <p>if Labeling == TOSTRING
  * The String representation of LETTER and STATE is used.
  * if Labeling == QUOTED
  * The String representation of LETTER and STATE plus the hashcode() is used.
@@ -103,7 +103,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 		 */
 		GFF("gff"),
 		/**
-		 * The Hanoi Omega Automaton Format
+		 * The Hanoi Omega Automaton Format.
 		 */
 		HOA("hoa");
 		
@@ -160,7 +160,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 		case ATS:
 		case ATS_NUMERATE:
 		case ATS_QUOTED:
-			mPrintWriter.println("// Testfile dumped by Ultimate at "+getDateTimeNice());
+			mPrintWriter.println("// Testfile dumped by Ultimate at "
+					+ getDateTimeNice());
 			mPrintWriter.println("//");
 			mPrintWriter.println("// " + message);
 			mPrintWriter.println("");
@@ -176,7 +177,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 		if (automata.length == 1) {
 			printAutomaton(automatonName, automata[0], format);
 		}
-		for (int i=0; i< automata.length; i++) {
+		for (int i = 0; i < automata.length; i++) {
 			printAutomaton(automatonName + String.valueOf(i), automata[i], format);
 		}
 	}
@@ -185,7 +186,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 	 * @param services Ultimate services
 	 * @param automatonName automaton name
 	 * @param format output format
-	 * @param automata sequence of automata to print
+	 * @param automaton automaton to print
 	 */
 	public AutomatonDefinitionPrinter(
 			final AutomataLibraryServices services,
@@ -202,7 +203,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 	 * Writes the passed automata to files if the option is enabled.
 	 * Does nothing otherwise. <br>
 	 * 
-	 * This method is intended to be used for dumping automata when an error
+	 * <p>This method is intended to be used for dumping automata when an error
 	 * occurs in an operation, e.g., when the <code>checkResult()</code> method
 	 * fails.
 	 * 
@@ -210,6 +211,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 	 * @param filenamePrefix prefix of the file name (e.g., operation name)
 	 * @param message message to be printed in the file
 	 * @param automata sequence of automata to be printed
+	 * @param <LETTER> letter type
+	 * @param <STATE> state type
 	 */
 	@SafeVarargs
 	public static <LETTER, STATE> void writeToFileIfPreferred(
@@ -217,7 +220,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			final String filenamePrefix,
 			final String message,
 			final IAutomaton<?, ?>... automata) {
-		if (!DUMP_AUTOMATON) {
+		if (! DUMP_AUTOMATON) {
 			return;
 		}
 		final String workingDirectory = System.getProperty("user.dir");
@@ -290,7 +293,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			} else {
 				throw new AssertionError("unsupported labeling");
 			}
-		} else if(automaton instanceof AlternatingAutomaton){
+		} else if (automaton instanceof AlternatingAutomaton) {
 			final AlternatingAutomaton<LETTER,STATE> aa =
 					(AlternatingAutomaton<LETTER,STATE>) automaton;
 			new AATestFileWriter(aa);
@@ -557,7 +560,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			for (final LETTER letter : alphabet) {
 				alphabetMapping.put(letter,
 						'\"' + letter.toString().replaceAll("\"", "\\\"")
-						+ (letter.hashCode()/sHashDivisor) + '\"');
+						+ (letter.hashCode() / sHashDivisor) + '\"');
 			}
 			return alphabetMapping;
 		}
@@ -568,7 +571,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			final Map<STATE,String> stateMapping = new HashMap<STATE,String>();
 			for (final STATE state : states) {
 				stateMapping.put(state, '\"' + state.toString().replaceAll("\"", "\\\"") +
-						(state.hashCode()/sHashDivisor) + '\"');
+						(state.hashCode() / sHashDivisor) + '\"');
 			}
 			return stateMapping;
 		}
@@ -684,7 +687,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 		}
 	}
 	
-	private class NetTestFileWriterToString extends NetTestFileWriter{
+	private class NetTestFileWriterToString extends NetTestFileWriter {
 
 		public NetTestFileWriterToString(final IPetriNet<LETTER,STATE> net) {
 			super(net);

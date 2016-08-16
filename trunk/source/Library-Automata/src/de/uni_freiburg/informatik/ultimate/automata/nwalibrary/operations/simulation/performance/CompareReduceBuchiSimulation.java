@@ -86,19 +86,19 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	 * Amount of fix fields in the log format. Currently this is name, type,
 	 * usedSCCs, timedOut and outOfMemory.
 	 */
-	private final static int FIX_FIELD_AMOUNT = 5;
+	private static final int FIX_FIELD_AMOUNT = 5;
 	/**
 	 * Constant for representing no value in the html format.
 	 */
-	private final static String HTML_NO_VALUE = "&ndash;";
+	private static final String HTML_NO_VALUE = "&ndash;";
 	/**
 	 * Marks the end of the head from an entry.
 	 */
-	private final static String LOG_ENTRY_HEAD_END = "-->";
+	private static final String LOG_ENTRY_HEAD_END = "-->";
 	/**
 	 * Marks the start of the head from an entry.
 	 */
-	private final static String LOG_ENTRY_HEAD_START = "<!--";
+	private static final String LOG_ENTRY_HEAD_START = "<!--";
 	/**
 	 * Path where simulation perfomance relevant logs and data gets saved.
 	 */
@@ -127,19 +127,19 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	/**
 	 * Separator that is used in the log.
 	 */
-	private final static String LOG_SEPARATOR = "\t";
+	private static final String LOG_SEPARATOR = "\t";
 	/**
 	 * Constant for representing no value in the plot format.
 	 */
-	private final static String PLOT_NO_VALUE = "--";
+	private static final String PLOT_NO_VALUE = "--";
 	/**
 	 * Separator that is used in plot files.
 	 */
-	private final static String PLOT_SEPARATOR = "\t";
+	private static final String PLOT_SEPARATOR = "\t";
 	/**
 	 * Time in seconds after which a simulation method should timeout.
 	 */
-	private final static int SIMULATION_TIMEOUT = 10;
+	private static final int SIMULATION_TIMEOUT = 10;
 
 	/**
 	 * Reads the log file and creates readable performance tables as html files.

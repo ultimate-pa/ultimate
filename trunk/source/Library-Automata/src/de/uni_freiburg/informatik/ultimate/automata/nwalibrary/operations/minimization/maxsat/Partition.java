@@ -35,8 +35,7 @@ import java.io.Writer;
 /**
  * A partition of a number of (integer) states into equivalence classes.
  *
- * <p>
- * There is a static <code>checkConsistency()</code> method.
+ * <p>There is a static <code>checkConsistency()</code> method.
  *
  * @author stimpflj
  *
@@ -48,7 +47,7 @@ final class Partition {
 	/** For each old state, to what equivalence class it belongs */
 	int[] mClassOf;
 
-	Partition(int numClasses, int[] classOf) {
+	Partition(final int numClasses, final int[] classOf) {
 		this.mNumClasses = numClasses;
 		this.mClassOf = classOf;
 	}
@@ -69,7 +68,7 @@ final class Partition {
 	 *
 	 * @return <code>true</code> iff the input Classes is consistent
 	 */
-	public static boolean checkConsistency(Partition eq) {
+	public static boolean checkConsistency(final Partition eq) {
 		if (eq.mNumClasses < 0) {
 			return false;
 		}
@@ -103,8 +102,7 @@ final class Partition {
 	 * the range <code>[0, numClasses)</code> where <code>numClasses</code> is
 	 * the number of distinct values in the array.
 	 *
-	 * <p>
-	 * This "compressed" array is returned together with the
+	 * <p>This "compressed" array is returned together with the
 	 * <code>numClasses</code> value as a <code>Partition</code>.
 	 *
 	 * @param root
@@ -113,7 +111,7 @@ final class Partition {
 	 *
 	 * @return a <code>Partition</code> carrying the compressed array
 	 */
-	public static Partition compress(int[] root) {
+	public static Partition compress(final int[] root) {
 		for (int i = 0; i < root.length; i++) {
 			assert 0 <= root[i] && root[i] < root.length;
 		}
@@ -141,7 +139,7 @@ final class Partition {
 	}
 
 	/** "test" the thing */
-	public static void main(String[] args) {
+	public static void main(final String[] args) {
 		final Writer writer = new PrintWriter(new OutputStreamWriter(System.err));
 		Partition partition = null;
 

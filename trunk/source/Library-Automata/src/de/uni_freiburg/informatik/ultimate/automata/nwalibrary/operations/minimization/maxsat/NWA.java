@@ -35,11 +35,9 @@ import java.util.HashSet;
  * A Nested Word automaton. There is no distinction between linear and
  * hierarchical states.
  *
- * <p>
- * This is a mostly normalized POD (plain old data) representation of NWAs.
+ * <p>This is a mostly normalized POD (plain old data) representation of NWAs.
  *
- * <p>
- * The following constraints are useful in most situations:
+ * <p>The following constraints are useful in most situations:
  *
  * <ul>
  * <li>numStates &ge; 0 && numISyms &ge; 0 && numRSyms &ge; 0
@@ -49,8 +47,7 @@ import java.util.HashSet;
  * the ranges [0, numStates), [0, numISyms), [0, numCSyms), [0, numRSyms)
  * </ul>
  *
- * <p>
- * This class has static methods to verify these constraints, and also methods
+ * <p>This class has static methods to verify these constraints, and also methods
  * to assert determinism.
  *
  * @author stimpflj

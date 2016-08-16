@@ -63,12 +63,12 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	 * 
 	 * @param events
 	 */
-	public Configuration(Set<Event<S, C>> events) {
+	public Configuration(final Set<Event<S, C>> events) {
 		// this.mEvents = new HashSet<Event<S, C>>(events);
 		this.mEvents = events;
 	}
 
-	private Configuration(Set<Event<S, C>> events, Set<Event<S, C>> min) {
+	private Configuration(final Set<Event<S, C>> events, final Set<Event<S, C>> min) {
 		// this.mEvents = new HashSet<Event<S, C>>(events);
 		this.mEvents = events;
 		this.mMin = min;
@@ -105,7 +105,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	 * @param unf
 	 * @return
 	 */
-	public Configuration<S, C> getMin(BranchingProcess<S, C> unf) {
+	public Configuration<S, C> getMin(final BranchingProcess<S, C> unf) {
 		Set<Event<S, C>> result;
 		if (mMin != null) {
 			result = mMin;
@@ -132,12 +132,12 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	}
 
 	@Override
-	public boolean add(Event<S, C> arg0) {
+	public boolean add(final Event<S, C> arg0) {
 		return mEvents.add(arg0);
 	}
 
 	@Override
-	public boolean addAll(Collection<? extends Event<S, C>> arg0) {
+	public boolean addAll(final Collection<? extends Event<S, C>> arg0) {
 		return mEvents.addAll(arg0);
 	}
 
@@ -147,12 +147,12 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	}
 
 	@Override
-	public boolean contains(Object arg0) {
+	public boolean contains(final Object arg0) {
 		return mEvents.contains(arg0);
 	}
 
 	@Override
-	public boolean containsAll(Collection<?> arg0) {
+	public boolean containsAll(final Collection<?> arg0) {
 		return mEvents.containsAll(arg0);
 	}
 
@@ -162,7 +162,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	 * @param events
 	 * @return
 	 */
-	public boolean containsAny(Collection<Event<S, C>> events) {
+	public boolean containsAny(final Collection<Event<S, C>> events) {
 		for (final Event<S, C> place : events) {
 			if (mEvents.contains(place)) {
 				return true;
@@ -177,7 +177,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	}
 
 	@Override
-	public boolean remove(Object arg0) {
+	public boolean remove(final Object arg0) {
 		return mEvents.remove(arg0);
 	}
 
@@ -210,12 +210,12 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	}
 
 	@Override
-	public boolean removeAll(Collection<?> arg0) {
+	public boolean removeAll(final Collection<?> arg0) {
 		return mEvents.removeAll(arg0);
 	}
 
 	@Override
-	public boolean retainAll(Collection<?> arg0) {
+	public boolean retainAll(final Collection<?> arg0) {
 		return mEvents.retainAll(arg0);
 	}
 
@@ -225,7 +225,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	}
 
 	@Override
-	public <T> T[] toArray(T[] arg0) {
+	public <T> T[] toArray(final T[] arg0) {
 		return mEvents.toArray(arg0);
 	}
 
@@ -235,7 +235,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	 * the total order on their transitions.
 	 */
 	@Override
-	public int compareTo(Configuration<S, C> o) {
+	public int compareTo(final Configuration<S, C> o) {
 		if (size() != o.size()) {
 			return size() - o.size();
 		}
@@ -255,7 +255,11 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 		return 0;
 	}
 
-	public boolean equals(Configuration<S, C> other) {
+	/**
+	 * TODO Christian 2016-08-16: This does not override the Object.equals()
+	 *      method. It may be confusing when using in Collections.
+	 */
+	public boolean equals(final Configuration<S, C> other) {
 		return containsAll(other) && other.containsAll(this);
 	}
 

@@ -64,24 +64,32 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * 
  * @author Fabian Reiter
  * 
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAutomatonOldApi<LETTER, STATE> {
+public class BuchiComplementAutomatonSVW<LETTER, STATE>
+		implements INestedWordAutomatonOldApi<LETTER, STATE> {
 	private final AutomataLibraryServices mServices;
 	private final TransitionMonoidAutomaton mTMA;
 	private final Set<LETTER> mAlphabet;
-	private SizeInfoContainer msizeInfo = null;
-	boolean mBuildCompleted = false; // not all transitions have been computed
+	private SizeInfoContainer mSizeInfo = null;
+	// not all transitions have been computed
+	private boolean mBuildCompleted = false;
 	protected final StateFactory<STATE> mStateFactory;
-	protected final STATE memptyStackState;
+	protected final STATE mEmptyStackState;
 	private final STATE mInitialState;
-	private final Set<STATE> mInitialStateSet = new HashSet<STATE>(1); // only one
+	// only one
+	private final Set<STATE> mInitialStateSet = new HashSet<STATE>(1);
 	private final Set<STATE> mFinalStateSet = null;
-	private final Map<STATE, Map<LETTER, Set<STATE>>> mTransitionsOut = new HashMap<STATE, Map<LETTER, Set<STATE>>>();
-	private final Map<STATE, Map<LETTER, Set<STATE>>> mTransitionsIn = new HashMap<STATE, Map<LETTER, Set<STATE>>>();
-	private final Map<STATE, MetaState> mmapState2MS = new HashMap<STATE, MetaState>();
+	private final Map<STATE, Map<LETTER, Set<STATE>>> mTransitionsOut =
+			new HashMap<>();
+	private final Map<STATE, Map<LETTER, Set<STATE>>> mTransitionsIn =
+			new HashMap<>();
+	private final Map<STATE, MetaState> mMapState2MS = new HashMap<>();
 
 	private final ILogger mLogger;
-	private final String UnsupportedOperationMessage = "Transform to NestedWordAutomaton to get full support.";
+	private final String mUnsupportedOperationMessage =
+			"Transform to NestedWordAutomaton to get full support.";
 
 	public BuchiComplementAutomatonSVW(final AutomataLibraryServices services, 
 			final INestedWordAutomaton<LETTER, STATE> origAutomaton)
@@ -94,9 +102,9 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			throw new IllegalArgumentException("only applicable to Buchi automata (not BuchiNWA)");
 		}
 		mStateFactory = origAutomaton.getStateFactory();
-		memptyStackState = mStateFactory.createEmptyStackState();
-		final MetaState metaInitialState = getMetaState(mTMA.initialState, mTMA.initialTMA);
-		mInitialState = metaInitialState.outputState;
+		mEmptyStackState = mStateFactory.createEmptyStackState();
+		final MetaState metaInitialState = getMetaState(mTMA.mInitialState, mTMA.mInitialTMA);
+		mInitialState = metaInitialState.mOutputState;
 		mInitialStateSet.add(mInitialState);
 	}
 
@@ -109,7 +117,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		final NestedWordAutomaton<LETTER, STATE> result = 
 				new NestedWordAutomaton<LETTER, STATE>(mServices, mAlphabet, null, null,
 				mStateFactory);
-		final int size = getSizeInfo().totalSize;
+		final int size = getSizeInfo().mTotalSize;
 		// Breadth-first traversal of the state space.
 		final Set<STATE> alreadySeen = new HashSet<STATE>(size);
 		final Queue<STATE> queue = new LinkedList<STATE>();
@@ -142,27 +150,27 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	}
 
 	private class SizeInfoContainer {
-		public int totalSize;
-		public int tmaSize;
-		public int numOfReachableTMAs;
+		public int mTotalSize;
+		public int mTmaSize;
+		public int mNumOfReachableTMAs;
 	}
 
 	private SizeInfoContainer getSizeInfo() {
-		if (msizeInfo == null) {
-			msizeInfo = new SizeInfoContainer();
+		if (mSizeInfo == null) {
+			mSizeInfo = new SizeInfoContainer();
 			// Number of states per TMA:
-			final int m = msizeInfo.tmaSize = mTMA.size();
+			final int m = mSizeInfo.mTmaSize = mTMA.size();
 			// Number of reachable TMAs (initial + looping part):
-			final int r = msizeInfo.numOfReachableTMAs = mTMA.statesWithLeftRejectingPartners().size() + 1;
+			final int r = mSizeInfo.mNumOfReachableTMAs = mTMA.statesWithLeftRejectingPartners().size() + 1;
 			// Total number of states:
-			msizeInfo.totalSize = r * m;
+			mSizeInfo.mTotalSize = r * m;
 		}
-		return msizeInfo;
+		return mSizeInfo;
 	}
 
 	@Override
 	public int size() {
-		return getSizeInfo().totalSize;
+		return getSizeInfo().mTotalSize;
 	}
 
 	@Override
@@ -175,13 +183,13 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		final SizeInfoContainer sizeInfo = getSizeInfo();
 		final StringBuilder sb = new StringBuilder();
 		sb.append("has ");
-		sb.append(sizeInfo.totalSize);
+		sb.append(sizeInfo.mTotalSize);
 		sb.append(" states.");
 		sb.append(" Size of a transition monoid automaton (TMA): ");
-		sb.append(sizeInfo.tmaSize);
+		sb.append(sizeInfo.mTmaSize);
 		sb.append(".");
 		sb.append(" Number of reachable TMAs: ");
-		sb.append(sizeInfo.numOfReachableTMAs);
+		sb.append(sizeInfo.mNumOfReachableTMAs);
 		sb.append(".");
 		return sb.toString();
 	}
@@ -199,7 +207,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	@Override
 	public Set<STATE> getStates() {
 		if (!mBuildCompleted) {
-			final int size = getSizeInfo().totalSize;
+			final int size = getSizeInfo().mTotalSize;
 			// Breadth-first traversal of the state space.
 			final Set<STATE> alreadySeen = new HashSet<STATE>(size);
 			final Queue<STATE> queue = new LinkedList<STATE>();
@@ -239,8 +247,11 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		if (mFinalStateSet == null) {
 			final Set<Integer> reachableTMAs = mTMA.statesWithLeftRejectingPartners();
 			for (final Integer tmaNb : reachableTMAs) {
-				final MetaState metaState = getMetaState(mTMA.initialState, tmaNb);
-				mFinalStateSet.add(metaState.outputState);
+				final MetaState metaState = getMetaState(mTMA.mInitialState, tmaNb);
+				/**
+				 * Christian 2016-08-16: BUG: mFinalStateSet is null here.
+				 */
+				mFinalStateSet.add(metaState.mOutputState);
 			}
 		}
 		return mFinalStateSet;
@@ -260,12 +271,12 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		if (metaState == null) {
 			throw new IllegalArgumentException("State " + state + " is not (yet) known.");
 		}
-		return metaState.stateNb.equals(mTMA.initialState) && !metaState.tmaNb.equals(mTMA.initialTMA);
+		return metaState.mStateNb.equals(mTMA.mInitialState) && !metaState.mTmaNb.equals(mTMA.mInitialTMA);
 	}
 
 	@Override
 	public STATE getEmptyStackState() {
-		return this.memptyStackState;
+		return this.mEmptyStackState;
 	}
 
 	@Override
@@ -312,27 +323,26 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			map.put(letter, result);
 			final Set<MetaState> mResult = new HashSet<MetaState>();
 			// Add the (unique) successor that is in the same TMA.
-			final Integer succStateNb = mTMA.successor(mState.stateNb, letter);
-			mResult.add(getMetaState(succStateNb, mState.tmaNb));
+			final Integer succStateNb = mTMA.successor(mState.mStateNb, letter);
+			mResult.add(getMetaState(succStateNb, mState.mTmaNb));
 			// If we are in the initial TMA, we have to add transitions to the
 			// initial states of some of the TMAs in the looping part of the
 			// complement automaton.
-			if (mState.tmaNb.equals(mTMA.initialTMA)) {
+			if (mState.mTmaNb.equals(mTMA.mInitialTMA)) {
 				for (final Integer otherTMA_Nb : mTMA.rightRejectingPartners(succStateNb)) {
-					mResult.add(getMetaState(mTMA.initialState, otherTMA_Nb));
+					mResult.add(getMetaState(mTMA.mInitialState, otherTMA_Nb));
 				}
-			}
-			// Otherwise we are in a TMA in the looping part. If we can reach
-			// the final state (of this TMA), we have to add a transition that
-			// loops back to the initial state.
-			else {
-				if (succStateNb.equals(mState.tmaNb)) {
-					mResult.add(getMetaState(mTMA.initialState, mState.tmaNb));
+			} else {
+				// Otherwise we are in a TMA in the looping part. If we can reach
+				// the final state (of this TMA), we have to add a transition that
+				// loops back to the initial state.
+				if (succStateNb.equals(mState.mTmaNb)) {
+					mResult.add(getMetaState(mTMA.mInitialState, mState.mTmaNb));
 				}
 			}
 			// Convert set of MetaStates to set of STATEs.
 			for (final MetaState mSuccState : mResult) {
-				result.add(mSuccState.outputState);
+				result.add(mSuccState.mOutputState);
 			}
 		}
 		return result;
@@ -359,32 +369,32 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			map.put(letter, result);
 			final Set<MetaState> mResult = new HashSet<MetaState>();
 			// Add the predecessors inherited from the TMA.
-			final Set<Integer> predStateNbSet = mTMA.predecessors(mState.stateNb, letter);
+			final Set<Integer> predStateNbSet = mTMA.predecessors(mState.mStateNb, letter);
 			for (final Integer predStateNb : predStateNbSet) {
-				mResult.add(getMetaState(predStateNb, mState.tmaNb));
+				mResult.add(getMetaState(predStateNb, mState.mTmaNb));
 			}
 			// If state is the initial state of a TMA in the looping part of the
 			// complement automaton, we have to add the transitions from the
 			// initial part and those from within the same TMA that loop back to
 			// the initial state.
-			if (mState.stateNb.equals(mTMA.initialState) && !mState.tmaNb.equals(mTMA.initialTMA)) {
+			if (mState.mStateNb.equals(mTMA.mInitialState) && !mState.mTmaNb.equals(mTMA.mInitialTMA)) {
 				// Transitions from the initial part
-				final Set<Integer> leftRejectingPartnerSet = mTMA.leftRejectingPartners(mState.tmaNb);
+				final Set<Integer> leftRejectingPartnerSet = mTMA.leftRejectingPartners(mState.mTmaNb);
 				for (final Integer leftRejectingPartner : leftRejectingPartnerSet) {
 					final Set<Integer> predOfLRPSet = mTMA.predecessors(leftRejectingPartner, letter);
 					for (final Integer predOfLRP : predOfLRPSet) {
-						mResult.add(getMetaState(predOfLRP, mTMA.initialTMA));
+						mResult.add(getMetaState(predOfLRP, mTMA.mInitialTMA));
 					}
 				}
 				// Back loops from within the same TMA
-				final Set<Integer> predOfTerminalSet = mTMA.predecessors(mState.tmaNb, letter);
+				final Set<Integer> predOfTerminalSet = mTMA.predecessors(mState.mTmaNb, letter);
 				for (final Integer predOfTerminal : predOfTerminalSet) {
-					mResult.add(getMetaState(predOfTerminal, mState.tmaNb));
+					mResult.add(getMetaState(predOfTerminal, mState.mTmaNb));
 				}
 			}
 			// Convert set of MetaStates to set of STATEs.
 			for (final MetaState mPredState : mResult) {
-				result.add(mPredState.outputState);
+				result.add(mPredState.mOutputState);
 			}
 		}
 		return result;
@@ -392,7 +402,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 
 	@Override
 	public boolean finalIsTrap() {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
+		throw new UnsupportedOperationException(mUnsupportedOperationMessage);
 		// This method can be implemented very easily. There is exactly one
 		// final state in each TMA in the looping part (and none in the TMA in
 		// the initial part). Such a final state is the initial state of the TMA
@@ -412,7 +422,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 
 	@Override
 	public boolean isDeterministic() {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
+		throw new UnsupportedOperationException(mUnsupportedOperationMessage);
 		// This method can be implemented very easily. By construction the TMA
 		// is always deterministic and total. Thus the complement automaton is
 		// deterministic iff none of the TMAs in the looping part are reachable
@@ -426,7 +436,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 
 	@Override
 	public boolean isTotal() {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
+		throw new UnsupportedOperationException(mUnsupportedOperationMessage);
 		// This method can be implemented very easily. Since the TMA is always
 		// total (by construction), the same holds for the complement automaton.
 		//
@@ -476,27 +486,34 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 
 	@Override
 	public Collection<STATE> succCall(final STATE state, final LETTER letter) {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
+		throw new UnsupportedOperationException(mUnsupportedOperationMessage);
 	}
 
 	@Override
 	public Collection<STATE> hierPred(final STATE state, final LETTER letter) {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
+		throw new UnsupportedOperationException(mUnsupportedOperationMessage);
 	}
 
 	@Override
 	public Collection<STATE> succReturn(final STATE state, final STATE hier, final LETTER letter) {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
+		throw new UnsupportedOperationException(mUnsupportedOperationMessage);
 	}
 
 	@Override
 	public Collection<STATE> predCall(final STATE state, final LETTER letter) {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
+		throw new UnsupportedOperationException(mUnsupportedOperationMessage);
 	}
 
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(final STATE hier, final LETTER letter) {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
+		throw new UnsupportedOperationException(mUnsupportedOperationMessage);
+	}
+
+	@Override
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
+			final STATE hier) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	/**
@@ -504,47 +521,48 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	 *         by the automaton
 	 */
 	private boolean knows(final STATE state) {
-		return mmapState2MS.containsKey(state);
+		return mMapState2MS.containsKey(state);
 	}
 
 	private MetaState getMetaState(final Integer stateNb, final Integer tmaNb) {
 		MetaState metaState = new MetaState(stateNb, tmaNb);
 		// If there is already a MetaState object equal to the computed
 		// MetaState, use that object instead.
-		if (mmapState2MS.containsKey(metaState.outputState)) {
-			metaState = mmapState2MS.get(metaState.outputState);
-		}
-		// Otherwise add this new MetaState to the map.
-		else {
-			mmapState2MS.put(metaState.outputState, metaState);
+		if (mMapState2MS.containsKey(metaState.mOutputState)) {
+			metaState = mMapState2MS.get(metaState.mOutputState);
+		} else {
+			// Otherwise add this new MetaState to the map.
+			mMapState2MS.put(metaState.mOutputState, metaState);
 		}
 		return metaState;
 	}
 
 	private MetaState getMetaState(final STATE state) {
-		return mmapState2MS.get(state);
+		return mMapState2MS.get(state);
 	}
 
 	/**
 	 * Copy of a TMA state indexed by the number of the TMA instance.
 	 */
 	private final class MetaState {
-		final protected Integer stateNb; // state number inside the TMA
-		final protected Integer tmaNb; // number of the TMA instance
-		final protected STATE outputState;
+		// state number inside the TMA
+		private final Integer mStateNb;
+		// number of the TMA instance
+		private final Integer mTmaNb;
+		private final STATE mOutputState;
 
 		public MetaState(final Integer stateNb, final Integer tmaNb) {
-			this.stateNb = stateNb;
-			this.tmaNb = tmaNb;
-			this.outputState = mStateFactory.constructBuchiSVWState(stateNb, tmaNb);
+			this.mStateNb = stateNb;
+			this.mTmaNb = tmaNb;
+			this.mOutputState = mStateFactory.constructBuchiSVWState(stateNb, tmaNb);
 		}
 
 		@Override
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + ((stateNb == null) ? 0 : stateNb.hashCode());
-			result = prime * result + ((tmaNb == null) ? 0 : tmaNb.hashCode());
+			result = prime * result + ((mStateNb == null) ? 0 : mStateNb.hashCode());
+			result = prime * result + ((mTmaNb == null) ? 0 : mTmaNb.hashCode());
 			return result;
 		}
 
@@ -558,13 +576,13 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 				return false;
 			}
 			final MetaState other = (MetaState) obj;
-			if ((stateNb == null) && (other.stateNb != null)) {
+			if ((mStateNb == null) && (other.mStateNb != null)) {
 				return false;
 			}
-			if ((tmaNb == null) && (other.tmaNb != null)) {
+			if ((mTmaNb == null) && (other.mTmaNb != null)) {
 				return false;
 			}
-			return stateNb.equals(other.stateNb) && tmaNb.equals(other.tmaNb);
+			return mStateNb.equals(other.mStateNb) && mTmaNb.equals(other.mTmaNb);
 		}
 	}
 
@@ -572,14 +590,17 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	//
 	private class TransitionMonoidAutomaton {
 
-		public Integer initialState = 0; // number assigned to copy of τ(ε)
-		public Integer initialTMA = initialState;
+		// number assigned to copy of τ(ε)
+		public Integer mInitialState = 0;
+		public Integer mInitialTMA = mInitialState;
 
 		private final INestedWordAutomaton<LETTER, STATE> mOrigAutomaton;
 
 		// Transitions
-		private final Map<Integer, Map<LETTER, Integer>> mTransitionsOut = new HashMap<Integer, Map<LETTER, Integer>>();
-		private final Map<Integer, Map<LETTER, Set<Integer>>> mTransitionsIn = new HashMap<Integer, Map<LETTER, Set<Integer>>>();
+		private final Map<Integer, Map<LETTER, Integer>> mTransitionsOut =
+				new HashMap<>();
+		private final Map<Integer, Map<LETTER, Set<Integer>>> mTransitionsIn =
+				new HashMap<>();
 
 		// Rejecting s-t pairs
 		private final Map<Integer, Set<Integer>> mRejectingPairsL2R;
@@ -609,7 +630,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 				mapLetter2TP.put(a, new TransitionProfile(a));
 			}
 			// Build the automaton (i.e. compute the transitions)
-			final int i_init = initialState; // i.e. i_init = 0
+			final int i_init = mInitialState; // i.e. i_init = 0
 			final TransitionProfile t_init = new TransitionProfile(); // τ(ε)-copy
 			mapNum2TP.put(i_init, t_init);
 			mapTP2Num.put(t_init, i_init);
@@ -739,8 +760,9 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 
 		private class TransitionProfile {
-			boolean mIsInitial = false; // only true for the copy of τ(ε)
-			Map<Transition, Boolean> mTransitions = new HashMap<Transition, Boolean>();
+			private boolean mIsInitial = false; // only true for the copy of τ(ε)
+			private final Map<Transition, Boolean> mTransitions =
+					new HashMap<Transition, Boolean>();
 
 			/**
 			 * @return the copy of the transition profile τ(ε), i.e. the initial
@@ -784,8 +806,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			public TransitionProfile(final TransitionProfile s, final TransitionProfile t) {
 				for (final Transition trans1 : s.mTransitions.keySet()) {
 					for (final Transition trans2 : t.mTransitions.keySet()) {
-						if (trans1.q2.equals(trans2.q1)) {
-							final Transition trans1x2 = new Transition(trans1.q1, trans2.q2);
+						if (trans1.mQ2.equals(trans2.mQ1)) {
+							final Transition trans1x2 = new Transition(trans1.mQ1, trans2.mQ2);
 							if (s.mTransitions.get(trans1) || t.mTransitions.get(trans2)) {
 								mTransitions.put(trans1x2, true);
 							} else if (!this.mTransitions.containsKey(trans1x2)) {
@@ -817,8 +839,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			 */
 			public boolean hasAcceptingLasso(final TransitionProfile t) {
 				for (final Transition trans1 : this.mTransitions.keySet()) {
-					if (mOrigAutomaton.isInitial(trans1.q1)) {
-						final Transition trans2 = new Transition(trans1.q2, trans1.q2);
+					if (mOrigAutomaton.isInitial(trans1.mQ1)) {
+						final Transition trans2 = new Transition(trans1.mQ2, trans1.mQ2);
 						if (t.mTransitions.containsKey(trans2) && t.mTransitions.get(trans2)) {
 							return true;
 						}
@@ -845,10 +867,11 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 					return false;
 				}
 				final TransitionProfile other = (TransitionProfile) obj;
-				if ((mTransitions == null) && (other.mTransitions != null)) {
-					return false;
+				if (mTransitions == null) {
+					return (other.mTransitions == null);
 				}
-				return mTransitions.equals(other.mTransitions) && mIsInitial == other.mIsInitial;
+				return mTransitions.equals(other.mTransitions)
+						&& mIsInitial == other.mIsInitial;
 			}
 		}
 
@@ -857,20 +880,20 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		 * They are implemented as tuples of states.
 		 */
 		private final class Transition {
-			final protected STATE q1;
-			final protected STATE q2;
+			private final STATE mQ1;
+			private final STATE mQ2;
 
 			public Transition(final STATE q1, final STATE q2) {
-				this.q1 = q1;
-				this.q2 = q2;
+				this.mQ1 = q1;
+				this.mQ2 = q2;
 			}
 
 			@Override
 			public int hashCode() {
 				final int prime = 31;
 				int result = 1;
-				result = prime * result + ((q1 == null) ? 0 : q1.hashCode());
-				result = prime * result + ((q2 == null) ? 0 : q2.hashCode());
+				result = prime * result + ((mQ1 == null) ? 0 : mQ1.hashCode());
+				result = prime * result + ((mQ2 == null) ? 0 : mQ2.hashCode());
 				return result;
 			}
 
@@ -884,44 +907,50 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 					return false;
 				}
 				final Transition other = (Transition) obj;
-				if ((q1 == null) && (other.q1 != null)) {
+				if ((mQ1 == null) && (other.mQ1 != null)) {
 					return false;
 				}
-				if ((q2 == null) && (other.q2 != null)) {
+				if ((mQ2 == null) && (other.mQ2 != null)) {
 					return false;
 				}
-				return q1.equals(other.q1) && q2.equals(other.q2);
+				return mQ1.equals(other.mQ1) && mQ2.equals(other.mQ2);
 			}
 		}
 	}
 
 	@Override
-	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ, final LETTER letter) {
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
+			final STATE succ, final LETTER letter) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ) {
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
+			final STATE succ) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ, final LETTER letter) {
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
+			final STATE succ, final LETTER letter) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ) {
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
+			final STATE succ) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state, final LETTER letter) {
-		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<OutgoingInternalTransition<LETTER, STATE>>();
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
+			final STATE state, final LETTER letter) {
+		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result =
+				new ArrayList<OutgoingInternalTransition<LETTER, STATE>>();
 		for (final STATE succ : succInternal(state, letter)) {
 			result.add(new OutgoingInternalTransition<LETTER, STATE>(letter, succ));
 		}
@@ -929,8 +958,10 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
-		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<OutgoingInternalTransition<LETTER, STATE>>();
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
+			final STATE state) {
+		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result =
+				new ArrayList<OutgoingInternalTransition<LETTER, STATE>>();
 		for (final LETTER letter : lettersInternal(state)) {
 			for (final STATE succ : succInternal(state, letter)) {
 				result.add(new OutgoingInternalTransition<LETTER, STATE>(letter, succ));
@@ -940,57 +971,59 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	}
 
 	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
+			final STATE state, final LETTER letter) {
 		return new ArrayList<OutgoingCallTransition<LETTER, STATE>>();
 	}
 
 	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
+			final STATE state) {
 		return new ArrayList<OutgoingCallTransition<LETTER, STATE>>();
 	}
 
 	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final STATE hier, final LETTER letter) {
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+			final STATE succ, final STATE hier, final LETTER letter) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final LETTER letter) {
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+			final STATE succ, final LETTER letter) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ) {
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+			final STATE succ) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier, final LETTER letter) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+			final STATE state, final STATE hier, final LETTER letter) {
 		return new ArrayList<OutgoingReturnTransition<LETTER, STATE>>();
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final LETTER letter) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+			final STATE state, final LETTER letter) {
 		return new ArrayList<OutgoingReturnTransition<LETTER, STATE>>();
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+			final STATE state) {
 		return new ArrayList<OutgoingReturnTransition<LETTER, STATE>>();
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state, final STATE hier) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
+			final STATE state, final STATE hier) {
 		return new ArrayList<OutgoingReturnTransition<LETTER, STATE>>();
 	}
-
-	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(final STATE hier) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 }

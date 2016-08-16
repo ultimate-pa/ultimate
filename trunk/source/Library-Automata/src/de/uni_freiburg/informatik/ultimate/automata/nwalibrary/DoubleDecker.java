@@ -30,8 +30,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
  * Part of a NestedWordAutomaton's configuration. up is the state in which
  * the automaton is. down is the state before the last call transition
  * that the automaton has taken.
- * <p>
- * For many algorithms (e.g. determinization) we do not have to use 
+ * 
+ * <p>For many algorithms (e.g. determinization) we do not have to use 
  * configurations (current state + stack) of the automaton, the DoubleDeckers
  * are sufficient. In 
  * "JACM2009 - Alur,Madhusudan - Adding nesting structure to words"

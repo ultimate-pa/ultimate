@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 /**
  * Minimization of NWA by reduction to MaxSAT.
  * 
- * @author Jens Stimpfle <stimpflj@informatik.uni-freiburg.de>
+ * @author Jens Stimpfle (stimpflj@informatik.uni-freiburg.de)
  *
  * @param <LETTER> letter type
  * @param <STATE> state type

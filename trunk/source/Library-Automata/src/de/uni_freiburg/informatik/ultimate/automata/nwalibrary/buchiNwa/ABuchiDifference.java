@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 /**
  * Abstract superclass of Buchi difference operations.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * 
  * @param <LETTER> letter type
  * @param <STATE> state type

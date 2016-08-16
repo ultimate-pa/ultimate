@@ -49,8 +49,8 @@ public interface INestedWordAutomaton<LETTER, STATE>
 
 	/**
 	 * @return The set of states of this automaton. <b>Use with caution!</b>
-	 * Some implementations (e.g., automaton which represents result of
-	 * a complementation) construct their set of states on the fly.
+	 *     Some implementations (e.g., automaton which represents result of
+	 *     a complementation) construct their set of states on the fly.
 	 */
 	Set<STATE> getStates();
 
@@ -62,37 +62,38 @@ public interface INestedWordAutomaton<LETTER, STATE>
 	
 	/**
 	 * @return The set of states of this automaton. <b>Use with caution!</b>
-	 * Some implementations (e.g., automaton which represents result of
-	 * a complementation) construct their set of states on the fly. Use the
-	 * {@link isFinal} method to check if a specific state is final. 	
+	 *     Some implementations (e.g., automaton which represents result of
+	 *     a complementation) construct their set of states on the fly. Use the
+	 *     #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple#isFinal(Object)}
+	 *     method to check if a specific state is final.
 	 */
 	Collection<STATE> getFinalStates();
 
 	/**
 	 * @param state state
 	 * @return All letters a such that state has an incoming internal 
-	 * transition labeled with letter a.
+	 *     transition labeled with letter a.
 	 */
 	Set<LETTER> lettersInternalIncoming(STATE state);
 	
 	/**
 	 * @param state state
 	 * @return All letters a such that state has an incoming call 
-	 * transition labeled with letter a.
+	 *     transition labeled with letter a.
 	 */	
 	Set<LETTER> lettersCallIncoming(STATE state);
 	
 	/**
 	 * @param state state
 	 * @return All letters a such that state has an incoming return 
-	 * transition labeled with letter a.
+	 *     transition labeled with letter a.
 	 */		
 	Set<LETTER> lettersReturnIncoming(STATE state);
 	
 	/**
 	 * @param state state
 	 * @return All letters a such that state occurs as hierarchical predecessor
-	 * in a return transition labeled with letter a.
+	 *     in a return transition labeled with letter a.
 	 */
 	Set<LETTER> lettersReturnSummary(STATE state);
 	
@@ -100,7 +101,7 @@ public interface INestedWordAutomaton<LETTER, STATE>
 	 * @param state state
 	 * @param letter letter
 	 * @return All states hier such that state has an outgoing 
-	 * return transition (state, hier, letter, succ)
+	 *     return transition (state, hier, letter, succ)
 	 */
 	Iterable<STATE> hierPred(STATE state, LETTER letter);
 	
