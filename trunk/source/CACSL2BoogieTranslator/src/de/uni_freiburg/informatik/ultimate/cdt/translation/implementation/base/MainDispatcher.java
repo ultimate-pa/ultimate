@@ -169,6 +169,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BitVectorAccessExpress
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BlockLengthExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Case;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeForBehavior;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeInvariant;
@@ -679,6 +680,9 @@ public class MainDispatcher extends Dispatcher {
 			}
 			if (n instanceof BooleanLiteral) {
 				return mAcslHandler.visit(this, (BooleanLiteral) n);
+			}
+			if (n instanceof CastExpression) {
+				return mAcslHandler.visit(this, (CastExpression) n);
 			}
 			if (n instanceof IntegerLiteral) {
 				return mAcslHandler.visit(this, (IntegerLiteral) n);
