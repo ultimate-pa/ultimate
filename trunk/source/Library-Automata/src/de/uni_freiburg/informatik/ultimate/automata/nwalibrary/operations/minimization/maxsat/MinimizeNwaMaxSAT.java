@@ -51,6 +51,8 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 		implements IMinimizeNwa<LETTER, STATE>, IOperation<LETTER, STATE> {
 
 	/**
+	 * Constructor.
+	 * 
 	 * @param services Ultimate services
 	 * @param stateFactory state factory
 	 * @param automaton input NWA
@@ -76,19 +78,19 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 		final ArrayList<Hist> history = converter.computeHistoryStates();
 		convertLog.info(
 				"finished conversion. "
-				+ Integer.toString(nwa.mNumStates) + " states, "
-				+ Integer.toString(nwa.mNumISyms) + " iSyms, "
-				+ Integer.toString(nwa.mNumCSyms) + " cSyms, "
-				+ Integer.toString(nwa.mNumRSyms) + " rSyms, "
-				+ Integer.toString(nwa.mITrans.length) + " iTrans, "
-				+ Integer.toString(nwa.mCTrans.length) + " cTrans, "
-				+ Integer.toString(nwa.mRTrans.length) + " rTrans."
+				+ nwa.mNumStates + " states, "
+				+ nwa.mNumISyms + " iSyms, "
+				+ nwa.mNumCSyms + " cSyms, "
+				+ nwa.mNumRSyms + " rSyms, "
+				+ nwa.mITrans.length + " iTrans, "
+				+ nwa.mCTrans.length + " cTrans, "
+				+ nwa.mRTrans.length + " rTrans."
 		);
 
 		generateLog.info("starting clauses generation");
 		final Horn3Array clauses = Generator.generateClauses(nwa, history);
-		generateLog.info("finished clauses generation. " +
-				Integer.toString(clauses.size()) + " clauses");
+		generateLog.info("finished clauses generation. "
+				+ clauses.size() + " clauses");
 
 		solveLog.info("starting Solver");
 		final char[] assignments = new Solver(clauses).solve();

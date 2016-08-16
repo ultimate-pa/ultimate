@@ -60,33 +60,33 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * 
  * @param <LETTER> Type of objects that are contained in the alphabet.
  * @param <STATE> Type of objects that are used to label states (resp. places
- * for PetriNet)
+ *     for PetriNet)
  */
 public interface IOperation<LETTER, STATE> {
 	
 	/**
 	 * @return Name of the operation.
-	 * This name should also be used in the test grammar.
+	 *     This name should also be used in the test grammar.
 	 */
 	String operationName();
 	
 	/**
 	 * @return Message that should be logged when the operation is stated.
-	 * Use some information like: "starting operation intersection. First
-	 * operand has 2394 states, second operand has 9374 states" 
+	 *     Use some information like: "starting operation intersection. First
+	 *     operand has 2394 states, second operand has 9374 states" 
 	 */
 	String startMessage();
 	
 	/**
 	 * @return Message that should be logged when the operation is finished.
-	 * Use some information like: "finished operation intersection result has
-	 * 345 states"
+	 *     Use some information like: "finished operation intersection result has
+	 *     345 states"
 	 */
 	String exitMessage();
 	
 	/**
 	 * @return Return the result of the operation.
-	 * @throws AutomataLibraryException 
+	 * @throws AutomataLibraryException if operation fails
 	 */
 	Object getResult() throws AutomataLibraryException;
 	

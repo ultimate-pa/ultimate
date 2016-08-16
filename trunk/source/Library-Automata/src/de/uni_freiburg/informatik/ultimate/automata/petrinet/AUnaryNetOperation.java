@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 public abstract class AUnaryNetOperation<LETTER, STATE>
 		extends AOperation<LETTER, STATE> {
 	/**
-	 * Input nested word automaton.
+	 * Input Petri net.
 	 */
 	protected final IPetriNet<LETTER, STATE> mOperand;
 	

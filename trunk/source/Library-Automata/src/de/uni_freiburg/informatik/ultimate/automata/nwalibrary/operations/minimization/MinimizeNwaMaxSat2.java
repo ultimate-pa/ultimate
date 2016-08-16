@@ -53,17 +53,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 /**
  * MAX-SAT based minimization for NWAs. This operation is a re-implementation of
- * Jens' bachlor thesis. Its main purpose is to test the
- * {@link MaxHornSatSolver}. For small determinstic NWAs it should produce small
+ * Jens' bachelor thesis. Its main purpose is to test the
+ * {@link MaxHornSatSolver}. For small deterministic NWAs it should produce small
  * results efficiently. For larger NWAs it runs out of memory. For
  * nondeterministic NWAs it should be correct, however the size reduction will
  * be very poor for states with nondeterministic outgoing transitions. (Given a
  * pair of states q1, q2 and a letter x, then q1 and q2 are only equivalent if
  * all x-successors of q1 are equivalent to all x-successors of q2.)
  * 
- * TODO For generating nondeterministic clauses, the order of the arguments is
- * not specified. Hence we might want to rearrange state1 and state2 such that
- * we have either few long clauses or many short clauses (for all types of
+ * <p>TODO For generating nondeterministic clauses, the order of the arguments
+ * is not specified. Hence we might want to rearrange state1 and state2 such
+ * that we have either few long clauses or many short clauses (for all types of
  * transitions).
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -97,7 +97,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 	 * used. The flag should only be set when dealing with deterministic
 	 * transition clauses; otherwise the clauses are not of Horn form anymore.
 	 * 
-	 * TODO In the long term, we want to remove the old solver and hence this
+	 * <p>TODO In the long term, we want to remove the old solver and hence this
 	 * flag.
 	 */
 	private final boolean mUseHornSolver;
@@ -219,8 +219,11 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 				mState2EquivalenceClass.put(state, equivalenceClass);
 			}
 		}
+		mLogger.warn("before vars");
 		generateVariables();
+		mLogger.warn("after vars");
 		generateTransitionConstraints();
+		mLogger.warn("after transitions");
 		generateTransitivityConstraints();
 		mLogger.info(
 				"Number of clauses for: -> acceptance: "
@@ -627,6 +630,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private void addTwoLiteralHornClause(final Doubleton<STATE> negativeAtom, final Doubleton<STATE> positiveAtom) {
 		if (negativeAtom == null) {
 			if (positiveAtom == null) {
@@ -641,6 +645,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private void addThreeLiteralHornClause(final Doubleton<STATE> negativeAtom1, final Doubleton<STATE> negativeAtom2,
 			final Doubleton<STATE> positiveAtom) {
 		if (negativeAtom1 == null) {
@@ -755,6 +760,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 		return doubletons;
 	}
 
+	@SuppressWarnings("unchecked")
 	private Doubleton<STATE>[] consArr(final Collection<Doubleton<STATE>> doubletons) {
 		return doubletons.toArray(new Doubleton[doubletons.size()]);
 	}
