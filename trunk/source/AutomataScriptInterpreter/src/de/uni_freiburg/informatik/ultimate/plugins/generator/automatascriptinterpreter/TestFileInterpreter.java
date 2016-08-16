@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult.OverallResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -97,6 +98,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableDeclarationAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableExpressionAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.WhileStatementAST;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 /**
  * This enum represents the current flow of the program. It could have the values "NORMAL", "BREAK", "CONTINUE", and
@@ -647,6 +649,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 */
 	private final List<GenericResultAtElement<AtsASTNode>> mResultOfAssertStatements;
 	private final IUltimateServiceProvider mServices;
+	private final boolean mProvideBenchmarkResults = false;
 	
 
 	public TestFileInterpreter(final IUltimateServiceProvider services) {
@@ -728,7 +731,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			} catch (final InterpreterException e) {
 				reportToLogger(LoggerSeverity.INFO, "Error: " + e.getMessage());
 				if (e instanceof InterpreterException) {
-					reportToLogger(LoggerSeverity.INFO, "Error: " + ((InterpreterException) e).getShortDescription());
+					reportToLogger(LoggerSeverity.INFO, "Error: " + e.getShortDescription());
 				}
 				reportToLogger(LoggerSeverity.INFO, "Interpretation of testfile cancelled.");
 				String shortDescription = e.getShortDescription();
@@ -770,6 +773,12 @@ public class TestFileInterpreter implements IMessagePrinter {
 							"Interpretation of ats file failed", node);
 				}
 			}
+		}
+		if (mProvideBenchmarkResults ) {
+			mLogger.info("reporting benchmark results");
+			final ICsvProviderProvider bench = null;
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+					new BenchmarkResult<>(Activator.PLUGIN_ID, "automata script interpreter benchmark results", bench));
 		}
 		reportToLogger(LoggerSeverity.DEBUG, "Reporting results...");
 		reportResult(interpretationFinished, errorMessage);
