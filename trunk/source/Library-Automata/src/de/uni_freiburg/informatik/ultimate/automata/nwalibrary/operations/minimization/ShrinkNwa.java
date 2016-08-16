@@ -3070,6 +3070,7 @@ public class ShrinkNwa<LETTER, STATE>
 				break;
 			case NONE:
 				mIncomingInt = EIncomingStatus.NONE;
+				break;
 			default:
 				throw new IllegalArgumentException();
 			}
@@ -3084,6 +3085,7 @@ public class ShrinkNwa<LETTER, STATE>
 				break;
 			case NONE:
 				mIncomingCall = EIncomingStatus.NONE;
+				break;
 			default:
 				throw new IllegalArgumentException();
 			}
