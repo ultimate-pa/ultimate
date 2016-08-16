@@ -5,18 +5,28 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngineParameters;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgAbstractStateStorageProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgDebugHelper;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence.CongruenceDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
@@ -28,16 +38,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
-public class AbstractDomainFactory {
+public class FixpointEngineParameterFactory {
 
 	private final BoogieSymbolTable mSymbolTable;
 	private final RootNode mRoot;
 	private final IUltimateServiceProvider mServices;
 	private final LiteralCollectorFactory mLiteralCollector;
 
-	public AbstractDomainFactory(final RootNode root, final LiteralCollectorFactory literalCollector,
+	public FixpointEngineParameterFactory(final RootNode root, final LiteralCollectorFactory literalCollector,
 			final IUltimateServiceProvider services) {
 		mRoot = root;
 		mServices = services;
@@ -48,13 +60,35 @@ public class AbstractDomainFactory {
 		}
 		mSymbolTable = pa.getSymbolTable();
 		mLiteralCollector = literalCollector;
+	}
+
+	@SuppressWarnings("unchecked")
+	public <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
+			FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression>
+			createParams(final IProgressAwareTimer timer,
+					final ITransitionProvider<CodeBlock, ProgramPoint> transitionProvider,
+					final ILoopDetector<CodeBlock> loopDetector) {
+		final RootAnnot rootAnnot = mRoot.getRootAnnot();
+		final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain =
+				(IAbstractDomain<STATE, CodeBlock, IBoogieVar>) selectDomain();
+		final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, ProgramPoint> storageProvider =
+				new RcfgAbstractStateStorageProvider<STATE, ProgramPoint, IBoogieVar>(domain.getMergeOperator(),
+						mServices, transitionProvider);
+		final RcfgVariableProvider<STATE> variableProvider = new RcfgVariableProvider<>(mSymbolTable,
+				rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), mServices);
+		final RcfgDebugHelper<STATE, IBoogieVar, ProgramPoint> debugHelper =
+				new RcfgDebugHelper<>(rootAnnot, mServices);
+		return new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression>(mServices)
+				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
+				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
+				.setDebugHelper(debugHelper).setTimer(timer);
 
 	}
 
-	private IAbstractDomain<?, CodeBlock, IProgramVar> selectDomainFutureCfg() {
+	public IAbstractDomain<?, CodeBlock, IProgramVar> selectDomainFutureCfg() {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final String selectedDomain = prefs.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN);
-		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		// final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		if (EmptyDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new EmptyDomain<>();
@@ -64,7 +98,7 @@ public class AbstractDomainFactory {
 		throw new UnsupportedOperationException(getFailureString(selectedDomain));
 	}
 
-	private IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain() {
+	public IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain() {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final String selectedDomain = prefs.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN);
 		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
