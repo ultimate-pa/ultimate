@@ -99,4 +99,12 @@ public interface IOperation<LETTER, STATE> {
 	 */
 	boolean checkResult(StateFactory<STATE> stateFactory) 
 			throws AutomataLibraryException;
+	
+	/**
+	 * Get information about the runtime and resource consumption of the
+	 * operation. Delivering this information is optional.
+	 */
+	default AutomataOperationBenchmark getAutomataOperationBenchmark() {
+		return null;
+	}
 }
