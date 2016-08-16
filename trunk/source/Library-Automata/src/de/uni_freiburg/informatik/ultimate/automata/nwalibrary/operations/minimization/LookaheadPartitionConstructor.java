@@ -37,8 +37,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -49,10 +48,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * language. This means that each pair of states whose two elements are in
  * different blocks is considered unmergeable.
  * 
- * WARNING: The result is only correct if the input automaton did not have any
- * dead-end states.
+ * <p>WARNING: The result is only correct if the input automaton did not have
+ * any dead-end states.
  * 
- * We detect non-mergeable states as follows.
+ * <p>We detect non-mergeable states as follows.
  * A pair of states is non-mergeable if
  * <br>
  * - both states do not have the same outgoing internal symbols
@@ -64,12 +63,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * - the respective successors for each internal and call symbol under which
  *   both states are deterministic are mergeable.
  *
- * TODO: Extend this to returns by providing a partition of DoubleDeckers.
+ * <p>TODO: Extend this to returns by providing a partition of DoubleDeckers.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * 
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
+@SuppressWarnings("squid:UselessParenthesesCheck")
 public class LookaheadPartitionConstructor<LETTER, STATE>  {
 
 	private final AutomataLibraryServices mServices;
@@ -78,6 +80,8 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 	private final Set<Set<STATE>> mResult;
 	
 	/**
+	 * Standard constructor.
+	 * 
 	 * @param services Ultimate services
 	 * @param operand input automaton
 	 */
@@ -87,6 +91,8 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 	}
 	
 	/**
+	 * Constructor with more options.
+	 * 
 	 * @param services Ultimate services
 	 * @param operand input automaton
 	 * @param separateAcceptingStates true iff only accepting or non-accepting
@@ -125,7 +131,8 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 		// split states with (unique) split successors wrt. a symbol
 		partition = splitSuccessorsDeterministic(partition);
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Splitting by different deterministic successors, result:");
+			mLogger.debug(
+					"Splitting by different deterministic successors, result:");
 			mLogger.debug(partition);
 		}
 		
@@ -140,7 +147,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 		}
 		
 		final Set<Set<STATE>> partition = new LinkedHashSet<>();
-		for(final OutgoingInCaSymbols<LETTER> outgoingSymbols : symbols2states.getDomain()) {
+		for (final OutgoingInCaSymbols<LETTER> outgoingSymbols : symbols2states.getDomain()) {
 			partition.add(symbols2states.getImage(outgoingSymbols));
 		}
 		
@@ -300,23 +307,21 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 		return result;
 	}
 	
-	@SuppressWarnings("unchecked")
 	private STATE getSuccessor(final LETTER letter, final STATE state,
 			final boolean isInternal) {
-		final Iterator<?> it = isInternal
-				? mOperand.internalSuccessors(state, letter).iterator()
-				: mOperand.callSuccessors(state, letter).iterator();
+		final Iterator<? extends IOutgoingTransitionlet<LETTER, STATE>> it =
+				isInternal
+						? mOperand.internalSuccessors(state, letter).iterator()
+						: mOperand.callSuccessors(state, letter).iterator();
 		assert it.hasNext() :
 			"There should be at least one outgoing transition.";
 		@SuppressWarnings("squid:S1941")
-		final Object trans = it.next();
+		final IOutgoingTransitionlet<LETTER, STATE> trans = it.next();
 		if (it.hasNext()) {
 			// state is nondeterministic wrt. letter
 			return null;
 		}
-		final STATE targetState = isInternal
-				? ((OutgoingInternalTransition<LETTER, STATE>) trans).getSucc()
-				: ((OutgoingCallTransition<LETTER, STATE>) trans).getSucc();
+		final STATE targetState = trans.getSucc();
 		return targetState;
 	}
 	
@@ -361,12 +366,14 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 		private static final int PRIME = 31;
 		private final Set<LETTER> mInternal;
 		private final Set<LETTER> mCall;
+		
 		public OutgoingInCaSymbols(
 				final Set<LETTER> internal,
 				final Set<LETTER> call) {
 			mInternal = internal;
 			mCall = call;
 		}
+		
 		@Override
 		public int hashCode() {
 			int result = 1;
@@ -374,6 +381,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 			result = PRIME * result + ((mInternal == null) ? 0 : mInternal.hashCode());
 			return result;
 		}
+		
 		@Override
 		public boolean equals(final Object obj) {
 			if (this == obj) {
@@ -385,9 +393,8 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
-			@SuppressWarnings("unchecked")
-			final OutgoingInCaSymbols<LETTER> other =
-					(OutgoingInCaSymbols<LETTER>) obj;
+			final OutgoingInCaSymbols<?> other =
+					(OutgoingInCaSymbols<?>) obj;
 			if (mCall == null) {
 				if (other.mCall != null) {
 					return false;
@@ -404,10 +411,11 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 			}
 			return true;
 		}
+		
 		@Override
 		public String toString() {
-			return "OutgoingInCaSymbols [mInternal=" + mInternal + ", mCall=" +
-					mCall + "]";
+			return "OutgoingInCaSymbols [mInternal=" + mInternal
+					+ ", mCall=" + mCall + "]";
 		}
 	}
 	
