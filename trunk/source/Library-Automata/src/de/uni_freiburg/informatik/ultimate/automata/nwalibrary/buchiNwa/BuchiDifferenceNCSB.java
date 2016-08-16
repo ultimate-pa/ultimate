@@ -39,12 +39,20 @@ public class BuchiDifferenceNCSB<LETTER,STATE>
 		implements IOperation<LETTER,STATE> {
 	private BuchiComplementNCSBNwa<LETTER,STATE> mSndComplemented;
 	
+	/**
+	 * Constructor.
+	 * 
+	 * @param services Ultimate services
+	 * @param stateFactory state factory
+	 * @param fstOperand first operand
+	 * @param sndOperand second operand
+	 */
 	public BuchiDifferenceNCSB(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
-		super(services, fstOperand, sndOperand, stateFactory);
+		super(services, stateFactory, sndOperand, fstOperand);
 		mLogger.info(startMessage());
 		constructResult();
 		mLogger.info(exitMessage());

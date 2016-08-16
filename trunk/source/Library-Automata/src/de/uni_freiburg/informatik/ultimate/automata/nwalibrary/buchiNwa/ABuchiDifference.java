@@ -34,12 +34,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ABinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Abstract superclass of Buchi difference operations.
@@ -50,30 +49,26 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE> state type
  */
 public abstract class ABuchiDifference<LETTER, STATE>
+		extends ABinaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
-	protected final AutomataLibraryServices mServices;
-	protected final ILogger mLogger;
 	
-	protected final INestedWordAutomatonSimple<LETTER,STATE> mFstOperand;
-	protected final INestedWordAutomatonSimple<LETTER,STATE> mSndOperand;
 	protected BuchiIntersectNwa<LETTER, STATE> mIntersect;
 	protected NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
 	protected final StateFactory<STATE> mStateFactory;
 	
 	/**
+	 * Constructor.
+	 * 
 	 * @param services Ultimate services
+	 * @param stateFactory state factory
 	 * @param fstOperand first operand
 	 * @param sndOperand second operand
-	 * @param stateFactory state factory
 	 */
 	public ABuchiDifference(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
-			final StateFactory<STATE> stateFactory) {
-		mServices = services;
-		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mFstOperand = fstOperand;
-		mSndOperand = sndOperand;
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) {
+		super(services, fstOperand, sndOperand);
 		mStateFactory = stateFactory;
 	}
 	
@@ -83,7 +78,8 @@ public abstract class ABuchiDifference<LETTER, STATE>
 	public abstract INestedWordAutomatonSimple<LETTER, STATE> getSndComplemented();
 	
 	/**
-	 * constructs the difference using the complement of the second operand
+	 * Constructs the difference using the complement of the second operand.
+	 * 
 	 * @throws AutomataLibraryException if construction fails
 	 */
 	protected void constructDifferenceFromComplement()
@@ -95,20 +91,13 @@ public abstract class ABuchiDifference<LETTER, STATE>
 	}
 	
 	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". First operand " + 
-				mFstOperand.sizeInformation() + ". Second operand " + 
-				mSndOperand.sizeInformation();	
-	}
-	
-	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". First operand " + 
-				mFstOperand.sizeInformation() + ". Second operand " + 
-				mSndOperand.sizeInformation() + " Result " + 
-				mResult.sizeInformation() + 
-				" Complement of second has " + getSndComplemented().size() +
-				" states.";
+		return "Finished " + operationName() + ". First operand "
+				+ mFstOperand.sizeInformation() + ". Second operand "
+				+ mSndOperand.sizeInformation() + " Result "
+				+ mResult.sizeInformation() 
+				+ " Complement of second has " + getSndComplemented().size()
+				+ " states.";
 	}
 	
 	@Override

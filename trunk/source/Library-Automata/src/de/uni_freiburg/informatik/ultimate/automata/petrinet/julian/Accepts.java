@@ -27,67 +27,61 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
-//package de.uni_freiburg.informatik.ultimate.automata.petrinet;
-
 import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.AUnaryNetOperation;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class Accepts<S, C> implements IOperation<S, C> {
+public class Accepts<S, C>
+		extends AUnaryNetOperation<S, C>
+		implements IOperation<S, C> {
 	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-		
-	@Override
-	public String operationName() {
-		return "acceptsJulian";
-	}
-	
-	private final PetriNetJulian<S, C> net;
-	private final Word<S> nWord;
+	private final Word<S> mWord;
 	private final Boolean mResult;
-
-	// private Collection<Place<S, C>> marking;
-	// private int position;
 	
-	
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() +
-			"Operand " + net.sizeInformation();
-	}
-	
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName();
-	}
-
-	
-	
-
-	public Accepts(AutomataLibraryServices services, 
-			PetriNetJulian<S, C> net, Word<S> nWord) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		this.net = net;
-		this.nWord = nWord;
+	/**
+	 * Constructor.
+	 * 
+	 * @param services Ultimate services
+	 * @param net Petri net
+	 * @param word word
+	 * @throws AutomataLibraryException if construction fails
+	 */
+	public Accepts(final AutomataLibraryServices services, 
+			final IPetriNet<S, C> net, final Word<S> word)
+					throws AutomataLibraryException {
+		super(services, net);
+		mWord = word;
 		mLogger.info(startMessage());
 		// this.marking = new HashSet<Place<S, C>>(net.getInitialMarking());
 		// this.position = 0;
 		mResult = getResultHelper(0,net.getInitialMarking());
 		mLogger.info(exitMessage());
+	}
+	
+	@Override
+	public String operationName() {
+		return "acceptsJulian";
+	}
+
+	// private Collection<Place<S, C>> marking;
+	// private int position;
+	
+	@Override
+	public String startMessage() {
+		return "Start " + operationName()
+			+ "Operand " + mOperand.sizeInformation();
 	}
 
 	@Override
@@ -96,9 +90,9 @@ public class Accepts<S, C> implements IOperation<S, C> {
 	}
 
 	private boolean getResultHelper(int position,
-	        Marking<S, C> marking) throws AutomataLibraryException {
-		if (position >= nWord.length()) {
-			return net.isAccepting(marking);
+	        final Marking<S, C> marking) throws AutomataLibraryException {
+		if (position >= mWord.length()) {
+			return mOperand.isAccepting(marking);
 		}
 		
 		
@@ -106,10 +100,10 @@ public class Accepts<S, C> implements IOperation<S, C> {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 
-		final S symbol = nWord.getSymbol(position);
-		if (!net.getAlphabet().contains(symbol)) {
-			throw new IllegalArgumentException("Symbol "+symbol
-					+" not in alphabet"); 
+		final S symbol = mWord.getSymbol(position);
+		if (!mOperand.getAlphabet().contains(symbol)) {
+			throw new IllegalArgumentException("Symbol " + symbol
+					+ " not in alphabet"); 
 		}
 
 		final HashSet<ITransition<S, C>> activeTransitionsWithTheSymbol = 
@@ -138,22 +132,21 @@ public class Accepts<S, C> implements IOperation<S, C> {
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<C> stateFactory)
+	public boolean checkResult(final StateFactory<C> stateFactory)
 			throws AutomataLibraryException {
 
 		mLogger.info("Testing correctness of accepts");
 
-		final NestedWord<S> nw = NestedWord.nestedWord(nWord);
-		final boolean resultAutomata = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts(mServices, 
-				(new PetriNet2FiniteAutomaton<S, C>(mServices, net)).getResult(), nw))
-				.getResult();
+		final NestedWord<S> nw = NestedWord.nestedWord(mWord);
+		final boolean resultAutomata =
+				(new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts<S, C>(
+						mServices,
+						(new PetriNet2FiniteAutomaton<S, C>(mServices, mOperand)).getResult(),
+						nw)).getResult();
 		final boolean correct = (mResult == resultAutomata);
 
 		mLogger.info("Finished testing correctness of accepts");
 
 		return correct;
-
 	}
-
-
 }

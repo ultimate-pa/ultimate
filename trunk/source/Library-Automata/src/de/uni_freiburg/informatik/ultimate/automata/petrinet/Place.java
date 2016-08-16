@@ -35,17 +35,17 @@ public class Place<S,C> implements Serializable {
 
 	private final int mHashCode;
 	
-	static int s_SerialNumberCounter = 0;
+	private static int sSerialNumberCounter = 0;
 	
 	private final C mContent;
 	private final ArrayList<ITransition<S,C>> mPredecessors;
 	private final ArrayList<ITransition<S,C>> mSuccessors;
 	
-	private final int mSerialNumber = s_SerialNumberCounter++;
+	private final int mSerialNumber = sSerialNumberCounter++;
 	
 	
 	
-	public Place(C content) {
+	public Place(final C content) {
 		this.mContent = content;
 		this.mPredecessors = new ArrayList<ITransition<S,C>>();
 		this.mSuccessors = new ArrayList<ITransition<S,C>>();
@@ -64,11 +64,11 @@ public class Place<S,C> implements Serializable {
 		return mSuccessors;
 	}
 	
-	public void addPredecessor(ITransition<S,C> transition) {
+	public void addPredecessor(final ITransition<S,C> transition) {
 		mPredecessors.add(transition);
 	}
 	
-	public void addSuccessor(ITransition<S,C> transition) {
+	public void addSuccessor(final ITransition<S,C> transition) {
 		mSuccessors.add(transition);
 	}
 	
@@ -78,7 +78,7 @@ public class Place<S,C> implements Serializable {
 	}
 	
 	public String toStringWithSerial() {
-		return "#"+ mSerialNumber + "#" + String.valueOf(mContent);
+		return "#" + mSerialNumber + "#" + mContent;
 	}
 
 	@Override

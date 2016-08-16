@@ -27,45 +27,43 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AUnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 
 /**
  * Operation that returns the number of transitions of a finite automaton.
+ * 
  * @author heizmann@informatik.uni-freiburg.de
  *
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class NumberOfTransitions<LETTER, STATE> implements IOperation<LETTER,STATE> {
-	
+public class NumberOfTransitions<LETTER, STATE>
+		extends AUnaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
+	/*
+	 * The operand as more specific interface.
+	 * It shadows the superclass field with the same name.
+	 */
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	
 	/**
+	 * Constructor.
+	 * 
+	 * @param services Ultimate services
 	 * @param operand operand
 	 */
 	public NumberOfTransitions(
+			final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
+		super(services, operand);
 		mOperand = operand;
 	}
-
-	@Override
-	public String operationName() {
-		return "numberOfTransitions";
-	}
-
-	@Override
-	public String startMessage() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public String exitMessage() {
-		throw new UnsupportedOperationException();
-	}
-
+	
 	@Override
 	public Integer getResult() throws AutomataLibraryException {
 		int number = 0;
@@ -78,7 +76,7 @@ public class NumberOfTransitions<LETTER, STATE> implements IOperation<LETTER,STA
 		}
 		return number;
 	}
-
+	
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {

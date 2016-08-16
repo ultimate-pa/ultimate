@@ -64,8 +64,8 @@ public abstract class ABinaryNwaOperation<LETTER, STATE>
 	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". First operand has "
-				+ mFstOperand.sizeInformation() + " Second operand has "
+		return "Start " + operationName() + ". First operand "
+				+ mFstOperand.sizeInformation() + " Second operand "
 				+ mSndOperand.sizeInformation();
 	}
 }

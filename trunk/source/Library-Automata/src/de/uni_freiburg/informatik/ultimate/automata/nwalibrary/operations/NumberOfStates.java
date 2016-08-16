@@ -27,28 +27,33 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AUnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 /**
  * Operation that returns the number of states of a nested word automaton.
+ * 
  * @author heizmann@informatik.uni-freiburg.de
  *
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
 public class NumberOfStates<LETTER, STATE>
+		extends AUnaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
 	
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
-	
 	/**
+	 * Constructor.
+	 * 
+	 * @param services Ultimate services
 	 * @param operand operand
 	 */
 	public NumberOfStates(
+			final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
-		mOperand = operand;
+		super(services, operand);
 	}
 
 	@Override
@@ -57,23 +62,7 @@ public class NumberOfStates<LETTER, STATE>
 	}
 
 	@Override
-	public String startMessage() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public String exitMessage() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Integer getResult() throws AutomataLibraryException {
 		return mOperand.size();
-	}
-
-	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		return true;
 	}
 }

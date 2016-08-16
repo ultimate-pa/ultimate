@@ -36,23 +36,20 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.AUnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
+public class PetriNetUnfolder<S, C>
+		extends AUnaryNetOperation<S, C>
+		implements IOperation<S, C> {
 
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-	
-	private final PetriNetJulian<S, C> mNet;
 	private final boolean mStopIfAcceptingRunFound;
 	private final boolean mSameTransitionCutOff;
 	private final order mOrder;
@@ -60,35 +57,14 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	private final BranchingProcess<S, C> mUnfolding;
 	private PetriNetRun<S, C> mRun;
 
-	@Override
-	public String operationName() {
-		return "finitePrefix";
-	}
-
-	@Override
-	public String startMessage() {
-		return "Start "
-				+ operationName()
-				+ ". Net "
-				+ mNet.sizeInformation()
-				+ (mStopIfAcceptingRunFound ? "We stop if some accepting run was found"
-						: "We compute complete finite Prefix");
-	}
-
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + " Result "
-				+ mUnfolding.sizeInformation();
-	}
-
-	private final Order<S, C> MC_MILLANS_ORDER = new Order<S, C>() {
+	private final Order<S, C> mMcMillanOrder = new Order<S, C>() {
 		@Override
 		public int compare(final Configuration<S, C> o1, final Configuration<S, C> o2) {
 			return o1.size() - o2.size();
 		}
 	};
 
-	private final Order<S, C> ESPARZAS_ROEMER_VOGLER_ORDER = new Order<S, C>() {
+	private final Order<S, C> mEsparzaRoemerVoglerOrder = new Order<S, C>() {
 
 		@Override
 		public int compare(final Configuration<S, C> c1, final Configuration<S, C> c2) {
@@ -128,11 +104,11 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		}
 	};
 
-	private final Order<S, C> ERV_EQUAL_MARKING_ORDER = new Order<S, C>() {
+	private final Order<S, C> mErvEqualMarkingOrder = new Order<S, C>() {
 
 		@Override
 		public int compare(final Event<S, C> o1, final Event<S, C> o2) {
-			int result = MC_MILLANS_ORDER.compare(o1, o2);
+			int result = mMcMillanOrder.compare(o1, o2);
 			if (result != 0) {
 				return result;
 			}
@@ -151,7 +127,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 
 		@Override
 		public int compare(final Configuration<S, C> c1, final Configuration<S, C> c2) {
-			return ESPARZAS_ROEMER_VOGLER_ORDER.compare(c1, c2);
+			return mEsparzaRoemerVoglerOrder.compare(c1, c2);
 		}
 	};
 	
@@ -161,7 +137,9 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	 * 
 	 * Build the finite Prefix of PetriNet net.
 	 * 
-	 * @param Order
+	 * @param services Ultimate services
+	 * @param operand Petri net
+	 * @param order
 	 *            the order on events and configurations respectively is used to
 	 *            determine cut-off events.
 	 * @param sameTransitionCutOff
@@ -170,28 +148,26 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	 *            from the net.
 	 * @param stopIfAcceptingRunFound
 	 *            if false, the complete finite Prefix will be build.
-	 * @throws AutomataOperationCanceledException
+	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
 	public PetriNetUnfolder(final AutomataLibraryServices services, 
-			final PetriNetJulian<S, C> net, final order Order,
+			final PetriNetJulian<S, C> operand, final order order,
 			final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
 			throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		this.mNet = net;
+		super(services, operand);
 		this.mStopIfAcceptingRunFound = stopIfAcceptingRunFound;
 		this.mSameTransitionCutOff = sameTransitionCutOff;
-		this.mOrder = Order;
+		this.mOrder = order;
 		mLogger.info(startMessage());
-		this.mUnfolding = new BranchingProcess<S, C>(mServices, net, ESPARZAS_ROEMER_VOGLER_ORDER);
+		this.mUnfolding = new BranchingProcess<S, C>(mServices, operand, mEsparzaRoemerVoglerOrder);
 		// this.cutOffEvents = new HashSet<Event<S, C>>();
-		Order<S, C> queueOrder = MC_MILLANS_ORDER;
-		switch (Order) {
+		Order<S, C> queueOrder = mMcMillanOrder;
+		switch (order) {
 		case ERV_MARK:
-			queueOrder = ERV_EQUAL_MARKING_ORDER;
+			queueOrder = mErvEqualMarkingOrder;
 			break;
 		case ERV:
-			queueOrder = ESPARZAS_ROEMER_VOGLER_ORDER;
+			queueOrder = mEsparzaRoemerVoglerOrder;
 			break;
 		default:
 			throw new IllegalArgumentException();
@@ -203,6 +179,27 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		mLogger.info(exitMessage());
 		mLogger.info(mStatistics.cutOffInformation());
 		mLogger.info(mStatistics.coRelationInformation());
+	}
+	
+	@Override
+	public String operationName() {
+		return "finitePrefix";
+	}
+
+	@Override
+	public String startMessage() {
+		return "Start "
+				+ operationName()
+				+ ". Net "
+				+ mOperand.sizeInformation()
+				+ (mStopIfAcceptingRunFound ? "We stop if some accepting run was found"
+						: "We compute complete finite Prefix");
+	}
+
+	@Override
+	public String exitMessage() {
+		return "Finished " + operationName() + " Result "
+				+ mUnfolding.sizeInformation();
 	}
 
 	private void computeUnfolding() throws AutomataOperationCanceledException {
@@ -222,7 +219,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 					}
 				}
 				// TODO: switch over the order given in the constructor.
-				if (!mUnfolding.isCutoffEvent(e, ESPARZAS_ROEMER_VOGLER_ORDER,
+				if (!mUnfolding.isCutoffEvent(e, mEsparzaRoemerVoglerOrder,
 						mSameTransitionCutOff)) {
 					mPossibleExtensions.update(e);
 					mLogger.debug("Constructed Non-cut-off-Event: "
@@ -259,7 +256,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	 */
 	private PetriNetRun<S, C> constructRun(final Event<S, C> e) {
 		mLogger.debug("Marking: " + mUnfolding.getDummyRoot().getMark());
-		return constructRun(e, mUnfolding.getDummyRoot().getConditionMark()).Run;
+		return constructRun(e, mUnfolding.getDummyRoot().getConditionMark()).mRun;
 	}
 
 	/**
@@ -288,8 +285,8 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 			}
 			final RunAndConditionMarking result = constructRun(
 					c.getPredecessorEvent(), current);
-			run = run.concatenate(result.Run);
-			current = result.Marking;
+			run = run.concatenate(result.mRun);
+			current = result.mMarking;
 		}
 		assert (current != null);
 
@@ -305,14 +302,14 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	}
 
 	class RunAndConditionMarking {
+		public PetriNetRun<S, C> mRun;
+		public ConditionMarking<S, C> mMarking;
+		
 		public RunAndConditionMarking(final PetriNetRun<S, C> run,
 				final ConditionMarking<S, C> marking) {
-			Run = run;
-			Marking = marking;
+			mRun = run;
+			mMarking = marking;
 		}
-
-		public PetriNetRun<S, C> Run;
-		public ConditionMarking<S, C> Marking;
 	}
 
 	private boolean parentIsCutoffEvent(final Event<S, C> e) {
@@ -357,7 +354,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		ERV("Esparza Römer Vogler"), KMM("Ken McMillan"), ERV_MARK(
 				"ERV with equal markings");
 
-		String mDescription;
+		private String mDescription;
 
 		private order(final String name) {
 			mDescription = name;
@@ -366,13 +363,14 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		public String getDescription() {
 			return mDescription;
 		}
-	};
+	}
 
 	// FIXME documentation
 	private class Statistics {
-		Map<ITransition<S, C>, Map<Marking<S, C>, Set<Event<S, C>>>> mTrans2Mark2Events = new HashMap<ITransition<S, C>, Map<Marking<S, C>, Set<Event<S, C>>>>();
-		int mCutOffEvents = 0;
-		int mNonCutOffEvents = 0;
+		private final Map<ITransition<S, C>, Map<Marking<S, C>, Set<Event<S, C>>>> mTrans2Mark2Events =
+				new HashMap<ITransition<S, C>, Map<Marking<S, C>, Set<Event<S, C>>>>();
+		private int mCutOffEvents = 0;
+		private int mNonCutOffEvents = 0;
 
 		public void add(final Event<S, C> e) {
 			final Marking<S, C> marking = e.getMark();
@@ -436,7 +434,9 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 
 		boolean correct = true;
 		if (mRun == null) {
-			final NestedRun<S, C> automataRun = (new IsEmpty<S, C>(mServices, (new PetriNet2FiniteAutomaton<S, C>(mServices, mNet)).getResult())).getNestedRun();
+			final NestedRun<S, C> automataRun =
+					(new IsEmpty<S, C>(mServices,
+							(new PetriNet2FiniteAutomaton<S, C>(mServices, mOperand)).getResult())).getNestedRun();
 			if (automataRun != null) {
 				correct = false;
 				mLogger.error("EmptinessCheck says empty, but net accepts: " + automataRun.getWord());
@@ -444,16 +444,15 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 			correct = (automataRun == null);
 		} else {
 			final Word<S> word = mRun.getWord();
-			if (mNet.accepts(word)) {
+			if (mOperand.accepts(word)) {
 				correct = true;
-			}
-			else {
+			} else {
 				mLogger.error("Result of EmptinessCheck, but not accepted: " + word);
 				correct = false;
 			}
 		}
 		mLogger.info("Finished testing correctness of emptinessCheck");
-		return false;
+		return correct;
 	}
 
 }

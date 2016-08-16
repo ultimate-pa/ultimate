@@ -27,23 +27,32 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.AUnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 
 /**
- * Operation that returns the number of places of a petri net.
+ * Operation that returns the number of places of a Petri net.
+ * 
  * @author heizmann@informatik.uni-freiburg.de
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <PLACE> place type
  */
-public class NumberOfPlaces<LETTER, STATE> implements IOperation<LETTER,STATE> {
+public class NumberOfPlaces<LETTER, PLACE>
+		extends AUnaryNetOperation<LETTER, PLACE>
+		implements IOperation<LETTER,PLACE> {
 	
-	IPetriNet<LETTER, STATE> mNet;
-	
-	public NumberOfPlaces(IPetriNet<LETTER, STATE> nwa) {
-		mNet = nwa;
+	/**
+	 * Constructor.
+	 * 
+	 * @param services Ultimate services
+	 * @param operand operand
+	 */
+	public NumberOfPlaces(final AutomataLibraryServices services,
+			final IPetriNet<LETTER, PLACE> operand) {
+		super(services, operand);
 	}
 
 	@Override
@@ -52,24 +61,7 @@ public class NumberOfPlaces<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public String startMessage() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public String exitMessage() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Integer getResult() throws AutomataLibraryException {
-		return mNet.getPlaces().size();
+		return mOperand.getPlaces().size();
 	}
-
-	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		return true;
-	}
-
 }

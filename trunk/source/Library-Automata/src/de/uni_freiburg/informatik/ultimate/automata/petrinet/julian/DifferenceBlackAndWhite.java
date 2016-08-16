@@ -33,10 +33,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -45,26 +45,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
+public class DifferenceBlackAndWhite<S,C>
+		extends AOperation<S, C>
+		implements IOperation<S,C> {
 	
-	private final AutomataLibraryServices mServices;
-	
-	@Override
-	public String operationName() {
-		return "differenceBlackAndWhite";
-	}
-	
-	private final ILogger mLogger;
-	
-	
-	
-	private final PetriNetJulian<S,C> mNet;
+	private final PetriNetJulian<S,C> mOperand;
 	private final NestedWordAutomaton<S,C> mNwa;
 	private final StateFactory<C> mContentFactory;
 	
-	PetriNetJulian<S,C> mResult;
+	private PetriNetJulian<S,C> mResult;
 	
 	private final Map<Place<S,C>,Place<S,C>> mOldPlace2NewPlace =
 		new HashMap<Place<S,C>,Place<S,C>>();
@@ -80,28 +70,18 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 	private final Map<C,Place<S,C>> mBlackPlace =
 		new HashMap<C,Place<S,C>>();
 	
-	
-
-	
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() +
-			"First Operand " + mNet.sizeInformation() +
-			"Second Operand " + mNwa.sizeInformation();
-	}
-	
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() +
-			" Result " + mResult.sizeInformation();
-	}
-	
+	/**
+	 * Constructor.
+	 * 
+	 * @param services Ultimate services
+	 * @param net Petri net
+	 * @param nwa nested word automaton
+	 */
 	public DifferenceBlackAndWhite(final AutomataLibraryServices services,
 									final PetriNetJulian<S,C> net, 
 								   final NestedWordAutomaton<S,C> nwa) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mNet = net;
+		super(services);
+		mOperand = net;
 		mNwa = nwa;
 		mContentFactory = net.getStateFactory();
 		
@@ -128,18 +108,38 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 		if(nwa.isFinal(nwaInitialState)) {
 			// case where nwa accepts everything. Result will be a net that
 			// accepts the empty language
-			mResult = new PetriNetJulian<S,C>(mServices, mNet.getAlphabet(),
-					mNet.getStateFactory(),
+			mResult = new PetriNetJulian<S,C>(mServices, mOperand.getAlphabet(),
+					mOperand.getStateFactory(),
 					true);
 			final C sinkContent = mContentFactory.createSinkStateContent();
 			mResult.addPlace(sinkContent, true, false);
-		}
-		else {		
-			copyNet_StatesOnly();
+		} else {		
+			copyNetStatesOnly();
 			addBlackAndWhitePlaces();
 			addTransitions();
 		}
 		mLogger.info(exitMessage());
+	}
+	
+	@Override
+	public String operationName() {
+		return "differenceBlackAndWhite";
+	}
+	
+	
+
+	
+	@Override
+	public String startMessage() {
+		return "Start " + operationName() +
+			"First Operand " + mOperand.sizeInformation() +
+			"Second Operand " + mNwa.sizeInformation();
+	}
+	
+	@Override
+	public String exitMessage() {
+		return "Finished " + operationName() +
+			" Result " + mResult.sizeInformation();
 	}
 	
 	
@@ -164,8 +164,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 				}
 				if (successors.contains(state)) {
 					selfloopStates.add(state);
-				}
-				else {
+				} else {
 					changerStates.add(state);
 				}
 			}
@@ -207,18 +206,18 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 //	}
 	
 	
-	private void copyNet_StatesOnly() {
+	private void copyNetStatesOnly() {
 		
 		// difference black and white preserves the constantTokenAmount invariant
-		final boolean constantTokenAmount = mNet.constantTokenAmount();
-		mResult = new PetriNetJulian<S,C>(mServices, mNet.getAlphabet(),
-											mNet.getStateFactory(),
+		final boolean constantTokenAmount = mOperand.constantTokenAmount();
+		mResult = new PetriNetJulian<S,C>(mServices, mOperand.getAlphabet(),
+											mOperand.getStateFactory(),
 											constantTokenAmount);
 		
-		for (final Place<S,C> oldPlace : mNet.getPlaces()) {
+		for (final Place<S,C> oldPlace : mOperand.getPlaces()) {
 			final C content = oldPlace.getContent();
-			final boolean isInitial = mNet.getInitialMarking().contains(oldPlace);
-			final boolean isAccepting = mNet.getAcceptingPlaces().contains(oldPlace);
+			final boolean isInitial = mOperand.getInitialMarking().contains(oldPlace);
+			final boolean isAccepting = mOperand.getAcceptingPlaces().contains(oldPlace);
 			final Place<S,C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
 			mOldPlace2NewPlace.put(oldPlace, newPlace);
 		}
@@ -241,7 +240,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 	}
 	
 	private void addTransitions() {
-		for (final ITransition<S, C> oldTrans : mNet.getTransitions()) {
+		for (final ITransition<S, C> oldTrans : mOperand.getTransitions()) {
 			final S symbol = oldTrans.getSymbol();
 			
 			// A copy for each changer
@@ -384,7 +383,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 		mLogger.info("Testing correctness of differenceBlackAndWhite");
 
 		final INestedWordAutomaton<S, C> op1AsNwa =
-				(new PetriNet2FiniteAutomaton<S, C>(mServices, mNet)).getResult();
+				(new PetriNet2FiniteAutomaton<S, C>(mServices, mOperand)).getResult();
 		final INestedWordAutomaton<S, C> rcResult =
 				(new DifferenceDD<S, C>(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
 		final INestedWordAutomaton<S, C> resultAsNwa =

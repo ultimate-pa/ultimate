@@ -472,7 +472,7 @@ public class RefineBuchi {
 					throws AutomataLibraryException {
 		INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction;
 		final BuchiDifferenceFKV<CodeBlock, IPredicate> diff = new BuchiDifferenceFKV<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), 
-				abstraction, mInterpolAutomatonUsedInRefinement, stateDeterminizer, mStateFactoryForRefinement,
+				mStateFactoryForRefinement, abstraction, mInterpolAutomatonUsedInRefinement, stateDeterminizer,
 				optimization.toString(),
 				Integer.MAX_VALUE);
 		finishComputation(mInterpolAutomatonUsedInRefinement, setting);

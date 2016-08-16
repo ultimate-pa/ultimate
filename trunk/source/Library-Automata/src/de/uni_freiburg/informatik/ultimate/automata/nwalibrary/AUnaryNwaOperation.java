@@ -48,6 +48,8 @@ public abstract class AUnaryNwaOperation<LETTER, STATE>
 	protected final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	
 	/**
+	 * Constructor.
+	 * 
 	 * @param services Ultimate services
 	 * @param operand operand
 	 */
