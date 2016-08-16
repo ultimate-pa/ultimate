@@ -44,9 +44,9 @@ public interface IAutomaton<LETTER,STATE> {
 	Set<LETTER> getAlphabet();
 	
 	/**
-	 * @return StateFactory that was used to construct this automaton. This
-	 *     method become deprecated.
+	 * @return StateFactory that was used to construct this automaton. 
 	 */
+	@Deprecated
 	StateFactory<STATE> getStateFactory();
 	
 	/**
