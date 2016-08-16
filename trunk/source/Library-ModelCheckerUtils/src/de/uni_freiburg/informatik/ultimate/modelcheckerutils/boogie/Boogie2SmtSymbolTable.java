@@ -87,8 +87,8 @@ public class Boogie2SmtSymbolTable {
 			new HashMap<String, Map<String, BoogieVar>>();
 	private final Map<String, Map<String, BoogieVar>> mImplementationOutParam =
 			new HashMap<String, Map<String, BoogieVar>>();
-	private final Map<String, Map<String, BoogieVar>> mImplementationLocals =
-			new HashMap<String, Map<String, BoogieVar>>();
+	private final Map<String, Map<String, LocalBoogieVar>> mImplementationLocals =
+			new HashMap<String, Map<String, LocalBoogieVar>>();
 	private final Map<String, BoogieConst> mConstants = new HashMap<String, BoogieConst>();
 
 	private final Map<TermVariable, IProgramVar> mSmtVar2BoogieVar = new HashMap<TermVariable, IProgramVar>();
@@ -140,10 +140,10 @@ public class Boogie2SmtSymbolTable {
 		mScript.echo(new QuotedObject("Finished declaration local variables"));
 	}
 
-	private void putNew(final String procId, final String varId, final BoogieVar bv, final Map<String, Map<String, BoogieVar>> map) {
-		Map<String, BoogieVar> varId2BoogieVar = map.get(procId);
+	private <T extends BoogieVar> void putNew(final String procId, final String varId, final T bv, final Map<String, Map<String, T>> map) {
+		Map<String, T> varId2BoogieVar = map.get(procId);
 		if (varId2BoogieVar == null) {
-			varId2BoogieVar = new HashMap<String, BoogieVar>();
+			varId2BoogieVar = new HashMap<String, T>();
 			map.put(procId, varId2BoogieVar);
 		}
 		final BoogieVar previousValue = varId2BoogieVar.put(varId, bv);
@@ -155,8 +155,8 @@ public class Boogie2SmtSymbolTable {
 		assert previousValue == null : "variable already contained";
 	}
 
-	private BoogieVar get(final String varId, final String procId, final Map<String, Map<String, BoogieVar>> map) {
-		final Map<String, BoogieVar> varId2BoogieVar = map.get(procId);
+	private <T extends BoogieVar> T get(final String varId, final String procId, final Map<String, Map<String, T>> map) {
+		final Map<String, T> varId2BoogieVar = map.get(procId);
 		if (varId2BoogieVar == null) {
 			return null;
 		} else {
@@ -404,9 +404,19 @@ public class Boogie2SmtSymbolTable {
 
 	/**
 	 * Return global variables;
+	 * @return Map that assigns to each variable identifier the 
+	 * non-old global variable
 	 */
 	public Map<String, IProgramNonOldVar> getGlobals() {
 		return Collections.unmodifiableMap(mGlobals);
+	}
+	
+	/**
+	 * Return all local variables, input parameters and output parameters 
+	 * for a given procedure.
+	 */
+	public Map<String, LocalBoogieVar> getLocals(final String proc) {
+		return null;
 	}
 
 	/**
@@ -517,7 +527,7 @@ public class Boogie2SmtSymbolTable {
 				for (final VarList vl : vdecl.getVariables()) {
 					for (final String id : vl.getIdentifiers()) {
 						final IType type = vl.getType().getBoogieType();
-						final BoogieVar bv =
+						final LocalBoogieVar bv =
 								constructLocalBoogieVar(id, proc.getIdentifier(), type, vl, declarationInformation);
 						putNew(proc.getIdentifier(), id, bv, mImplementationLocals);
 					}
