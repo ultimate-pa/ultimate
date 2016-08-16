@@ -103,13 +103,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 	private final Map<STATE,DifferenceState<LETTER,STATE>> mRes2diff =
 		new HashMap<STATE, DifferenceState<LETTER,STATE>>();
 	
-	/**
-	 * StateFactory used for the construction of new states. This is _NOT_ the
-	 * state factory relayed to the new automaton.
-	 * Necessary because the Automizer needs a special StateFactory during
-	 * abstraction refinement (for computation of HoareAnnotation).
-	 */
-	private final StateFactory<STATE> mStateFactoryConstruction;
+	private final StateFactory<STATE> mStateFactoryForIntersection;
 	
 	
 //	private INestedWordAutomaton<LETTER,DeterminizedState<LETTER,STATE>> 
@@ -138,20 +132,17 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 	private final Map<DeterminizedState<LETTER,STATE>,Map<DeterminizedState<LETTER,STATE>,
 		Map<LETTER,DeterminizedState<LETTER,STATE>>>> mReturnSuccessorCache = new HashMap<>();
 
-	private final STATE mSubtrahendAuxiliaryEmptyStackState;
-	
-	
 	public DifferenceDD(
 			final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER,STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER,STATE> subtrahend,
 			final IStateDeterminizer<LETTER,STATE> stateDeterminizer,
-			final StateFactory<STATE> stateFactory,
+			final StateFactory<STATE> stateFactoryForIntersection,
 			final boolean removeDeadEnds,
 			final boolean subtrahendSigmaStarClosed) throws AutomataLibraryException {
 		super(services);
 		this.mSubtrahendSigmaStarClosed = subtrahendSigmaStarClosed;
-		mStateFactoryConstruction = stateFactory;
+		mStateFactoryForIntersection = stateFactoryForIntersection;
 		this.mMinuend = minuend;
 		this.mSubtrahend = subtrahend;
 		if (!NestedWordAutomaton.sameAlphabet(this.mMinuend, this.mSubtrahend)) {
@@ -159,15 +150,13 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 					"Unable to apply operation to automata with different alphabets.");
 		}
 		mLogger.info(startMessage());
-		this.mSubtrahendAuxiliaryEmptyStackState = 
-			subtrahend.getEmptyStackState();
 		this.mStateDeterminizer = stateDeterminizer;
 		super.mTraversedNwa = new DoubleDeckerAutomaton<LETTER,STATE>(
 				mServices, 
 				minuend.getInternalAlphabet(),
 				minuend.getCallAlphabet(),
 				minuend.getReturnAlphabet(),
-				minuend.getStateFactory());
+				mStateFactoryForIntersection);
 		super.mRemoveDeadEnds = removeDeadEnds;
 		
 //		mDeterminizedSubtrahend = 
@@ -189,13 +178,18 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 				"was accepting (use sigma star concat closure?)");
 	}
 	
+	/**
+	 * 
+	 * @param stateFactory {@link StateFactory} that is used for intersection
+	 * and determinization
+	 */
 	public DifferenceDD(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER,STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER,STATE> subtrahend) throws AutomataLibraryException {
 		super(services);
 		this.mSubtrahendSigmaStarClosed = false;
-		mStateFactoryConstruction = minuend.getStateFactory();
+		mStateFactoryForIntersection = stateFactory;
 		this.mMinuend = minuend;
 		this.mSubtrahend = subtrahend;
 		if (!NestedWordAutomaton.sameAlphabet(this.mMinuend, this.mSubtrahend)) {
@@ -203,8 +197,6 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 					"Unable to apply operation to automata with different alphabets.");
 		}
 		mLogger.info(startMessage());
-		this.mSubtrahendAuxiliaryEmptyStackState = 
-			subtrahend.getEmptyStackState();
 		this.mStateDeterminizer =
 			new PowersetDeterminizer<LETTER,STATE>(subtrahend, true, stateFactory);
 		super.mTraversedNwa = new DoubleDeckerAutomaton<LETTER,STATE>(
@@ -212,7 +204,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 				minuend.getInternalAlphabet(),
 				minuend.getCallAlphabet(),
 				minuend.getReturnAlphabet(),
-				minuend.getStateFactory());
+				mStateFactoryForIntersection);
 		super.mRemoveDeadEnds = false;
 		
 		final Set<LETTER> newInternals = new HashSet<LETTER>();
@@ -371,7 +363,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 											!detState.containsFinal();
 			final DifferenceState<LETTER,STATE> diffState = 
 				new DifferenceState<LETTER,STATE>(minuState, detState, isFinal);
-			final STATE resState = mStateFactoryConstruction.intersection(
+			final STATE resState = mStateFactoryForIntersection.intersection(
 					diffState.getMinuendState(), 
 					mStateDeterminizer.getState(diffState.getSubtrahendDeterminizedState()));
 			((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(true, diffState.isFinal(), resState);
@@ -582,7 +574,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		if (mDiff2res.containsKey(diffState)) {
 			return mDiff2res.get(diffState);
 		} else {
-			final STATE resState = mStateFactoryConstruction.intersection(
+			final STATE resState = mStateFactoryForIntersection.intersection(
 					diffState.getMinuendState(),
 					mStateDeterminizer.getState(diffState.getSubtrahendDeterminizedState()));
 			((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(false, diffState.isFinal(), resState);
