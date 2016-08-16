@@ -30,11 +30,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 
@@ -51,16 +50,13 @@ public class IntervalSimpleWideningOperator implements IAbstractStateBinaryOpera
 		assert first.hasSameVariables(second);
 		assert !first.isBottom() && !second.isBottom();
 
-		final List<String> boolsToTop = new ArrayList<>();
-		final List<String> varsToTop = new ArrayList<>();
-		final List<String> arraysToTop = new ArrayList<>();
+		final List<IBoogieVar> boolsToTop = new ArrayList<>();
+		final List<IBoogieVar> varsToTop = new ArrayList<>();
+		final List<IBoogieVar> arraysToTop = new ArrayList<>();
 
-		for (final Entry<String, IBoogieVar> entry : first.getVariables().entrySet()) {
-			final String var = entry.getKey();
-			final IBoogieVar type = entry.getValue();
-
-			if (type.getIType() instanceof PrimitiveType) {
-				final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
+		for (final IBoogieVar var : first.getVariables()) {
+			if (var.getIType() instanceof PrimitiveType) {
+				final PrimitiveType primitiveType = (PrimitiveType) var.getIType();
 
 				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
 					final BooleanValue firstBool = first.getBooleanValue(var);
@@ -76,7 +72,7 @@ public class IntervalSimpleWideningOperator implements IAbstractStateBinaryOpera
 						varsToTop.add(var);
 					}
 				}
-			} else if (type.getIType() instanceof ArrayType) {
+			} else if (var.getIType() instanceof ArrayType) {
 				// TODO:
 				// We treat Arrays as normal variables for the time being.
 				final IntervalDomainValue firstValue = first.getValue(var);

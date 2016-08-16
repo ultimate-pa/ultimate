@@ -31,83 +31,80 @@ import java.util.Iterator;
 import java.util.List;
 
 
-	public class Word<Symbol> implements Iterable<Symbol> {
+public class Word<LETTER> implements Iterable<LETTER> {
 
-		protected Symbol[] mWord;
-		
+	protected LETTER[] mWord;
 	
-		/**
-		 * Construct Word consisting of a sequence of symbols
-		 */
-		@SafeVarargs
-		public Word(Symbol... symbols) {
-			this.mWord = symbols;
-		}
-		
-		
-		/**
-		 * @return The length of the Word is 0 for the empty word, 1 for the
-		 * word that consists of one symbol, etc.
-		 */
-		public int length() {
-			return mWord.length;
-		}
-		
-		public List<Symbol> asList() {
-			return Arrays.asList(mWord);
-		}
-		
-		
-		/**
-		 * 
-		 * @param position
-		 * @return Symbol at position;
-		 */
-		public Symbol getSymbol(int position) 
-		{
-			if (position < 0 || position >= mWord.length) {
-				throw new IllegalArgumentException("index out of range");
-			}
-			return mWord[position];
-		}
-		
-		
-		@SuppressWarnings("unchecked")
-		public Word<Symbol> concatenate(Word<Symbol> nestedWord2) {
-			final int lengthWord1 = this.length();
-			final int lengthWord2 = nestedWord2.length();
-			final Symbol[] concatenationSymbols = 
-				(Symbol[]) new Object[lengthWord1 + lengthWord2];
-			
-			for (int i=0; i<lengthWord1; i++) {
-				concatenationSymbols[i] = this.getSymbol(i);
-			}
-			for (int i=0; i<lengthWord2; i++) {
-				concatenationSymbols[lengthWord1+i] = nestedWord2.getSymbol(i);
-			}
-			return new Word<Symbol>(concatenationSymbols);
-		}		
-		
-		
-		public List<Symbol> lettersAsList() {
-			return Arrays.asList(mWord);
-		}
-		
-
-		@Override
-		public String toString() {
-			//return mWord.toString();
-			String s = "[";
-			for (int i = 0; i < mWord.length; i++) {
-				s += mWord[i];
-			}
-			s += "]";
-			return s;
-		}
-
-
-		@Override
-		public Iterator<Symbol> iterator() {
-			return Arrays.asList(mWord).iterator();
-		}
+	/**
+	 * Construct Word consisting of a sequence of symbols
+	 * 
+	 * @param symbols sequence of symbols
+	 */
+	@SafeVarargs
+	public Word(final LETTER... symbols) {
+		this.mWord = symbols;
 	}
+	
+	/**
+	 * @return The length of the Word is 0 for the empty word, 1 for the
+	 * word that consists of one symbol, etc.
+	 */
+	public int length() {
+		return mWord.length;
+	}
+	
+	/**
+	 * @return list of symbols
+	 */
+	public List<LETTER> asList() {
+		return Arrays.asList(mWord);
+	}
+	
+	/**
+	 * @param position position in word
+	 * @return Symbol at position.
+	 */
+	public LETTER getSymbol(final int position) {
+		if (position < 0 || position >= mWord.length) {
+			throw new IllegalArgumentException("index out of range");
+		}
+		return mWord[position];
+	}
+	
+	/**
+	 * @param word2 other word
+	 * @return concatenation 'this.word2'
+	 */
+	@SuppressWarnings("unchecked")
+	public Word<LETTER> concatenate(final Word<LETTER> word2) {
+		final int lengthWord1 = this.length();
+		final int lengthWord2 = word2.length();
+		final LETTER[] concatenationSymbols = 
+			(LETTER[]) new Object[lengthWord1 + lengthWord2];
+		
+		for (int i=0; i<lengthWord1; i++) {
+			concatenationSymbols[i] = this.getSymbol(i);
+		}
+		for (int i=0; i<lengthWord2; i++) {
+			concatenationSymbols[lengthWord1+i] = word2.getSymbol(i);
+		}
+		return new Word<LETTER>(concatenationSymbols);
+	}		
+	
+	@Override
+	public String toString() {
+		//return mWord.toString();
+		final StringBuilder sb = new StringBuilder();
+		sb.append('[');
+		for (int i = 0; i < mWord.length; i++) {
+			sb.append(mWord[i]);
+		}
+		sb.append(']');
+		return sb.toString();
+	}
+	
+	@Override
+	public Iterator<LETTER> iterator() {
+		return Arrays.asList(mWord).iterator();
+	}
+}

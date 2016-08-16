@@ -39,9 +39,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -55,17 +55,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class QuantifierPusher extends TermTransformer {
 	private final Script mScript;
 	private final IUltimateServiceProvider mServices;
-	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
+	private final ManagedScript mMgdScript;
 
-	public QuantifierPusher(Script script, IUltimateServiceProvider services, 
-			IFreshTermVariableConstructor freshTermVariableConstructor) {
-		mScript = script;
+	public QuantifierPusher(final ManagedScript script, final IUltimateServiceProvider services) {
 		mServices = services;
-		mFreshTermVariableConstructor = freshTermVariableConstructor;
+		mMgdScript = script;
+		mScript = script.getScript();
 	}
 
 	@Override
-	protected void convert(Term term) {
+	protected void convert(final Term term) {
 		if (term instanceof QuantifiedFormula) {
 			final Term pushed = tryToPush((QuantifiedFormula) term); 
 			super.convert(pushed);
@@ -74,7 +73,7 @@ public class QuantifierPusher extends TermTransformer {
 		}
 	}
 
-	private Term tryToPush(QuantifiedFormula quantifiedFormula) {
+	private Term tryToPush(final QuantifiedFormula quantifiedFormula) {
 		final Term subformula = quantifiedFormula.getSubformula();
 		final Term result;
 		if (subformula instanceof QuantifiedFormula) {
@@ -109,7 +108,7 @@ public class QuantifierPusher extends TermTransformer {
 		return result;
 	}
 
-	private Term sameFinite(QuantifiedFormula quantifiedFormula, ApplicationTerm appTerm) {
+	private Term sameFinite(final QuantifiedFormula quantifiedFormula, final ApplicationTerm appTerm) {
 		final Term[] oldParams = appTerm.getParameters();
 		final Term[] newParams = new Term[oldParams.length];
 		for (int i=0; i<oldParams.length; i++) {
@@ -119,7 +118,7 @@ public class QuantifierPusher extends TermTransformer {
 		return mScript.term(appTerm.getFunction().getName(), newParams);
 	}
 
-	private Term otherFinite(QuantifiedFormula quantifiedFormula, ApplicationTerm appTerm) {
+	private Term otherFinite(final QuantifiedFormula quantifiedFormula, final ApplicationTerm appTerm) {
 		assert quantifiedFormula.getQuantifier() == QuantifiedFormula.EXISTS && appTerm.getFunction().getName().equals("and")
 				|| quantifiedFormula.getQuantifier() == QuantifiedFormula.FORALL && appTerm.getFunction().getName().equals("or");
 //		{
@@ -136,7 +135,7 @@ public class QuantifierPusher extends TermTransformer {
 		final Term[] derResult;
 		final Set<TermVariable> eliminatees = new HashSet<TermVariable>(Arrays.asList(quantifiedFormula.getVariables()));
 		{
-			final XnfDer xnfDer = new XnfDer(mScript, mServices, mFreshTermVariableConstructor);
+			final XnfDer xnfDer = new XnfDer(mMgdScript, mServices);
 			final Term[] xjuncts = PartialQuantifierElimination.getXjunctsInner(quantifiedFormula.getQuantifier(), appTerm);
 			derResult = xnfDer.tryToEliminate(quantifiedFormula.getQuantifier(), xjuncts, eliminatees);
 			if (eliminatees.isEmpty()) {
@@ -183,8 +182,8 @@ public class QuantifierPusher extends TermTransformer {
 		return result;
 	}
 
-	private Term otherQuantifier(QuantifiedFormula quantifiedFormula, QuantifiedFormula quantifiedSubFormula) {
-		final Term quantifiedSubFormulaPushed = (new QuantifierPusher(mScript, mServices, mFreshTermVariableConstructor)).transform(quantifiedSubFormula);
+	private Term otherQuantifier(final QuantifiedFormula quantifiedFormula, final QuantifiedFormula quantifiedSubFormula) {
+		final Term quantifiedSubFormulaPushed = (new QuantifierPusher(mMgdScript, mServices)).transform(quantifiedSubFormula);
 		final QuantifiedFormula update = (QuantifiedFormula) mScript.quantifier(quantifiedFormula.getQuantifier(), quantifiedFormula.getVariables(), quantifiedSubFormulaPushed);
 		if (quantifiedSubFormulaPushed instanceof QuantifiedFormula &&
 				((QuantifiedFormula) quantifiedSubFormulaPushed).getQuantifier() == quantifiedSubFormula.getQuantifier()) {
@@ -197,7 +196,7 @@ public class QuantifierPusher extends TermTransformer {
 		
 	}
 
-	private QuantifiedFormula sameQuantifier(QuantifiedFormula quantifiedFormula, QuantifiedFormula quantifiedSubFormula) {
+	private QuantifiedFormula sameQuantifier(final QuantifiedFormula quantifiedFormula, final QuantifiedFormula quantifiedSubFormula) {
 		assert (quantifiedSubFormula.getQuantifier() == quantifiedFormula.getQuantifier());
 		assert (quantifiedSubFormula == quantifiedFormula.getSubformula());
 		TermVariable[] vars;

@@ -67,7 +67,7 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 
 	@Override
 	public void init(String givenPref) {
-		switch (strategy) {
+		switch (mStrategy) {
 		case DISJUNCTIVE_STMTCOUNT:
 			givenPref = computeDisStmtBoundary();
 			break;

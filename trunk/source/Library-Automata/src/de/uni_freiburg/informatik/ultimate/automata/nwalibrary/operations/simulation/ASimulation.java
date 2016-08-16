@@ -42,9 +42,12 @@ import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze.ESymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.EMultipleDataOption;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ETimeMeasure;
@@ -99,7 +102,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * space where n is the amount of states and k the amount of transitions from
  * the inputed automaton.<br/>
  * The algorithm is based on the paper: <i>Fair simulation relations, parity
- * games, and state space reduction for büchi automata<i> by <i>Etessami, Wilke
+ * games, and state space reduction for büchi automata</i> by <i>Etessami, Wilke
  * and Schuller</i>.
  * 
  * @author Daniel Tischner
@@ -128,7 +131,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	/**
 	 * The resulting possible reduced buechi automaton.
 	 */
-	private INestedWordAutomatonOldApi<LETTER, STATE> mResult;
+	private INestedWordAutomaton<LETTER, STATE> mResult;
 	/**
 	 * The object that computes the SCCs of a given buechi automaton.
 	 */
@@ -244,8 +247,8 @@ public abstract class ASimulation<LETTER, STATE> {
 			duration += durationGraph;
 			mPerformance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
 		}
-		mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, getGameGraph().getSize());
-		mPerformance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, getGameGraph().getGlobalInfinity());
+
+		retrieveGeneralAutomataPerformance();
 
 		mLogger.info((this.mUseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
 	}
@@ -255,7 +258,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * 
 	 * @return The resulting possible reduced buechi automaton.
 	 */
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 
@@ -848,6 +851,52 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
+	 * Retrieves general performance data of the input and output automaton.
+	 * Saves the data in the current internal performance object.
+	 */
+	protected void retrieveGeneralAutomataPerformance() {
+		final AGameGraph<LETTER, STATE> graph = getGameGraph();
+		final AutomataLibraryServices services = graph.getServices();
+		final INestedWordAutomaton<LETTER, STATE> input = graph.getAutomaton();
+
+		// Input automaton
+		final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(services, input, true);
+		final int inputStates = inputAnalyzer.getNumberOfStates();
+		final int inputTransitions = inputAnalyzer.getNumberOfTransitions(ESymbolType.TOTAL);
+		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, inputStates);
+		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_NONDETERMINISTIC_STATES,
+				inputAnalyzer.getNumberOfNondeterministicStates());
+
+		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE,
+				inputAnalyzer.getNumberOfSymbols(ESymbolType.TOTAL));
+		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS, inputTransitions);
+		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_DENSITY_MILLION,
+				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.TOTAL) * 1_000_000));
+
+		// Output automaton
+		final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, mResult, true);
+		final int outputStates = outputAnalyzer.getNumberOfStates();
+		final int outputTransitions = outputAnalyzer.getNumberOfTransitions(ESymbolType.TOTAL);
+		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_STATES, outputStates);
+		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_NONDETERMINISTIC_STATES,
+				outputAnalyzer.getNumberOfNondeterministicStates());
+
+		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE,
+				outputAnalyzer.getNumberOfSymbols(ESymbolType.TOTAL));
+		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS, outputTransitions);
+		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_DENSITY_MILLION,
+				(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.TOTAL) * 1_000_000));
+
+		// General metrics
+		mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, graph.getSize());
+		mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES, graph.getAmountOfEdges());
+
+		mPerformance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, graph.getGlobalInfinity());
+		mPerformance.setCountingMeasure(ECountingMeasure.REMOVED_STATES, inputStates - outputStates);
+		mPerformance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS, inputTransitions - outputTransitions);
+	}
+
+	/**
 	 * Sets the result of the simulation calculation, a possible reduced buechi
 	 * automaton.
 	 * 
@@ -855,7 +904,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *            The result of the simulation calculation, a possible reduced
 	 *            buechi automaton.
 	 */
-	protected void setResult(final INestedWordAutomatonOldApi<LETTER, STATE> result) {
+	protected void setResult(final INestedWordAutomaton<LETTER, STATE> result) {
 		mResult = result;
 	}
 

@@ -61,7 +61,7 @@ class Summary<LETTER, STATE> {
 	public IncomingReturnTransition<LETTER, STATE> obtainIncomingReturnTransition(
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars) {
 		for (final IncomingReturnTransition<LETTER, STATE> inTrans  : 
-			nwars.returnPredecessors(getHierPred().getState(), getLetter(), getSucc().getState())) {
+			nwars.returnPredecessors(getSucc().getState(), getHierPred().getState(), getLetter())) {
 			if (getLinPred().getState().equals(inTrans.getLinPred())) {
 				return inTrans;
 			}

@@ -3,32 +3,52 @@ package de.uni_freiburg.informatik.ultimate.automata.tree;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.automata.ITreeRun;
+
 /**
  * Class to create a tree for the tree automaton.
  * @author grugelt@uni-freiburg.de
  */
-public class Tree<LETTER> {
+public class Tree<LETTER> implements ITreeRun<LETTER> {
 
-	/*
-	 * Variables
-	 */
-	private final TreeNode<LETTER> mRoot;
-	private final List<TreeNode<LETTER>> mLeafList;
+	private final List<Tree<LETTER>> children;
+	private final LETTER symbol;
 	
-	public Tree(TreeNode<LETTER> root) {
-		this.mRoot = root;
-		this.mLeafList = new ArrayList<TreeNode<LETTER>>();
+	public Tree(LETTER symbol) {
+		this.children = new ArrayList<Tree<LETTER>>();
+		this.symbol = symbol;
 	}
 	
-	public void addLeaf(TreeNode<LETTER> leaf) {
-		this.mLeafList.add(leaf);
+	
+	public Tree(LETTER symbol, List<Tree<LETTER>> children) {
+		this.children = children;
+		this.symbol = symbol;
 	}
 	
-	public TreeNode<LETTER> getRoot() {
-		return this.mRoot;
+	public void addChild(Tree<LETTER> child) {
+		children.add(child);
 	}
 	
-	public List<TreeNode<LETTER>> getLeafList(){
-		return this.mLeafList;
+	public List<Tree<LETTER>> getChildren() {
+		return this.children;
 	}
-}
+	
+
+	public String toString() {
+		String res = symbol.toString();
+		if (!getChildren().isEmpty()) {
+			res += " ( ";
+			for (Tree<LETTER> child : getChildren()) {
+				res += child.toString() + ", ";
+			}
+			res += " ) ";
+		}
+		return res;
+	}
+
+	@Override
+	public LETTER getRoot() {
+		return symbol;
+	}
+	
+ }

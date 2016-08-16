@@ -27,12 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Determinize;
@@ -55,34 +53,31 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * created after each operation and the reversal and determinization do not
  * know each other (potentially they may .
  * 
- * @author Christian
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class MinimizeBrzozowski<LETTER, STATE>
 		extends AMinimizeNwa<LETTER, STATE>
-		implements IOperation<LETTER, STATE>{
-	/**
-	 * The result automaton.
-	 * 
-	 * NOTE: All intermediate results are also stored here.
-	 */
-	private final INestedWordAutomaton<LETTER, STATE> mresult;
-	
+		implements IOperation<LETTER, STATE> {
 	/**
 	 * Constructor.
 	 * 
+	 * @param services Ultimate services
+	 * @param stateFactory state factory
 	 * @param operand input (finite, possibly nondeterministic) automaton
-	 * @throws AutomataOperationCanceledException thrown when execution is cancelled
+	 * @throws AutomataOperationCanceledException when execution is cancelled
 	 */
-	public MinimizeBrzozowski(AutomataLibraryServices services,
-			StateFactory<STATE> stateFactory, 
-			INestedWordAutomaton<LETTER, STATE> operand)
-			throws AutomataLibraryException {
+	public MinimizeBrzozowski(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory, 
+			final INestedWordAutomaton<LETTER, STATE> operand)
+					throws AutomataOperationCanceledException {
 		super(services, stateFactory, "MinimizeBrzozowski", operand);
 		
-		assert super.checkForFiniteAutomaton() :
+		assert super.isFiniteAutomaton() :
 			"The input automaton contains call or return transitions.";
 		
-		mresult = minimize();
+		minimize();
 		mLogger.info(exitMessage());
 	}
 	
@@ -90,11 +85,9 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 * This method simply reverses and determinizes the automaton twice, which
 	 * results in the minimal DFA.
 	 * 
-	 * @return the minimal DFA
-	 * @throws AutomataOperationCanceledException thrown when execution is cancelled
+	 * @throws AutomataOperationCanceledException when execution is cancelled
 	 */
-	private INestedWordAutomaton<LETTER, STATE> minimize()
-			throws AutomataLibraryException {
+	private void minimize() throws AutomataOperationCanceledException {
 		INestedWordAutomaton<LETTER, STATE> automaton = mOperand;
 		for (int i = 0; i < 2; ++i) {
 			super.checkForContinuation();
@@ -103,13 +96,13 @@ public class MinimizeBrzozowski<LETTER, STATE>
 			super.checkForContinuation();
 			automaton = determinize(automaton);
 		}
-		return automaton;
+		directResultConstruction(automaton);
 	}
 	
 	/**
 	 * This method reverses the automaton.
 	 * 
-	 * Reversal means that
+	 * <p>Reversal means that
      * - the transitions are turned around,
      * - the final states become the initial states,
      * - the initial states become the final states.
@@ -148,22 +141,11 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 * 
 	 * @param automaton automaton
 	 * @return the determinized automaton
-	 * @throws AutomataOperationCanceledException 
+	 * @throws AutomataOperationCanceledException when execution is cancelled
 	 */
 	private INestedWordAutomaton<LETTER, STATE> determinize(
-			final INestedWordAutomaton<LETTER, STATE> automaton) {
-		try {
-			return new Determinize<LETTER, STATE>(mServices, mStateFactory, automaton).getResult();
-		}
-		// this case cannot occur
-		catch (final AutomataLibraryException e) {
-			e.printStackTrace();
-			return automaton;
-		}
-	}
-	
-	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getResult() {
-		return mresult;
+			final INestedWordAutomaton<LETTER, STATE> automaton)
+					throws AutomataOperationCanceledException {
+		return new Determinize<LETTER, STATE>(mServices, mStateFactory, automaton).getResult();
 	}
 }

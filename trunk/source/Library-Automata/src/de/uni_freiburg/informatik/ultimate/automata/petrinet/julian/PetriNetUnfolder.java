@@ -83,7 +83,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 
 	private final Order<S, C> MC_MILLANS_ORDER = new Order<S, C>() {
 		@Override
-		public int compare(Configuration<S, C> o1, Configuration<S, C> o2) {
+		public int compare(final Configuration<S, C> o1, final Configuration<S, C> o2) {
 			return o1.size() - o2.size();
 		}
 	};
@@ -91,7 +91,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	private final Order<S, C> ESPARZAS_ROEMER_VOGLER_ORDER = new Order<S, C>() {
 
 		@Override
-		public int compare(Configuration<S, C> c1, Configuration<S, C> c2) {
+		public int compare(final Configuration<S, C> c1, final Configuration<S, C> c2) {
 			int result = c1.compareTo(c2);
 			if (result != 0) {
 				return result;
@@ -131,7 +131,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	private final Order<S, C> ERV_EQUAL_MARKING_ORDER = new Order<S, C>() {
 
 		@Override
-		public int compare(Event<S, C> o1, Event<S, C> o2) {
+		public int compare(final Event<S, C> o1, final Event<S, C> o2) {
 			int result = MC_MILLANS_ORDER.compare(o1, o2);
 			if (result != 0) {
 				return result;
@@ -141,15 +141,16 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 			}
 			final Configuration<S, C> c1 = o1.getLocalConfiguration();
 			final Configuration<S, C> c2 = o2.getLocalConfiguration();
-			assert !(c1.containsAll(c2) && c2.containsAll(c1)) : "Different events with equal local configurations. equals:"
+			assert !(c1.containsAll(c2) && c2.containsAll(c1)) :
+				"Different events with equal local configurations. equals:"
 					+ c1.equals(c2);
 			result = compare(c1, c2);
 
 			return result;
-		};
+		}
 
 		@Override
-		public int compare(Configuration<S, C> c1, Configuration<S, C> c2) {
+		public int compare(final Configuration<S, C> c1, final Configuration<S, C> c2) {
 			return ESPARZAS_ROEMER_VOGLER_ORDER.compare(c1, c2);
 		}
 	};
@@ -171,9 +172,9 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	 *            if false, the complete finite Prefix will be build.
 	 * @throws AutomataOperationCanceledException
 	 */
-	public PetriNetUnfolder(AutomataLibraryServices services, 
-			PetriNetJulian<S, C> net, order Order,
-			boolean sameTransitionCutOff, boolean stopIfAcceptingRunFound)
+	public PetriNetUnfolder(final AutomataLibraryServices services, 
+			final PetriNetJulian<S, C> net, final order Order,
+			final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
 			throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -192,6 +193,8 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		case ERV:
 			queueOrder = ESPARZAS_ROEMER_VOGLER_ORDER;
 			break;
+		default:
+			throw new IllegalArgumentException();
 		}
 		this.mPossibleExtensions = new PossibleExtensions<S, C>(mUnfolding,
 				queueOrder);
@@ -254,7 +257,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	 * @param e
 	 * @return
 	 */
-	private PetriNetRun<S, C> constructRun(Event<S, C> e) {
+	private PetriNetRun<S, C> constructRun(final Event<S, C> e) {
 		mLogger.debug("Marking: " + mUnfolding.getDummyRoot().getMark());
 		return constructRun(e, mUnfolding.getDummyRoot().getConditionMark()).Run;
 	}
@@ -270,8 +273,8 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	 * @param initialMarking
 	 * @return
 	 */
-	private RunAndConditionMarking constructRun(Event<S, C> e,
-			ConditionMarking<S, C> initialMarking) {
+	private RunAndConditionMarking constructRun(final Event<S, C> e,
+			final ConditionMarking<S, C> initialMarking) {
 		assert (e != mUnfolding.getDummyRoot());
 		assert (e.getPredecessorConditions().size() > 0);
 		assert !mUnfolding.pairwiseConflictOrCausalRelation(e
@@ -302,8 +305,8 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	}
 
 	class RunAndConditionMarking {
-		public RunAndConditionMarking(PetriNetRun<S, C> run,
-				ConditionMarking<S, C> marking) {
+		public RunAndConditionMarking(final PetriNetRun<S, C> run,
+				final ConditionMarking<S, C> marking) {
 			Run = run;
 			Marking = marking;
 		}
@@ -312,7 +315,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		public ConditionMarking<S, C> Marking;
 	}
 
-	private boolean parentIsCutoffEvent(Event<S, C> e) {
+	private boolean parentIsCutoffEvent(final Event<S, C> e) {
 		for (final Condition<S, C> c : e.getPredecessorConditions()) {
 			if (c.getPredecessorEvent().isCutoffEvent()) {
 				return true;
@@ -356,7 +359,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 
 		String mDescription;
 
-		private order(String name) {
+		private order(final String name) {
 			mDescription = name;
 		}
 
@@ -371,7 +374,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		int mCutOffEvents = 0;
 		int mNonCutOffEvents = 0;
 
-		public void add(Event<S, C> e) {
+		public void add(final Event<S, C> e) {
 			final Marking<S, C> marking = e.getMark();
 			final ITransition<S, C> transition = e.getTransition();
 			Map<Marking<S, C>, Set<Event<S, C>>> mark2Events = mTrans2Mark2Events
@@ -427,7 +430,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<C> stateFactory)
+	public boolean checkResult(final StateFactory<C> stateFactory)
 			throws AutomataLibraryException {
 		mLogger.info("Testing correctness of emptinessCheck");
 

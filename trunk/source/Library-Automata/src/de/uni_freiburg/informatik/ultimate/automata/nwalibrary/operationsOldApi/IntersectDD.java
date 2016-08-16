@@ -29,24 +29,24 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 
-	public IntersectDD(AutomataLibraryServices services,
-			INestedWordAutomatonOldApi<LETTER, STATE> fstNwa,
-			INestedWordAutomatonOldApi<LETTER, STATE> sndNwa)
+	public IntersectDD(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa)
 			throws AutomataLibraryException {
 		super(services, false, false, fstNwa, sndNwa);
 	}
 
 	public IntersectDD(
-			AutomataLibraryServices services,
-			boolean minimizeResult,
-			INestedWordAutomatonOldApi<LETTER, STATE> fstNwa,
-			INestedWordAutomatonOldApi<LETTER, STATE> sndNwa)
+			final AutomataLibraryServices services,
+			final boolean minimizeResult,
+			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa)
 			throws AutomataLibraryException {
 		super(services, false, minimizeResult, fstNwa, sndNwa);
 	}
@@ -57,7 +57,7 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		mLogger.warn("Correctness of result was not tested");
 		return true;

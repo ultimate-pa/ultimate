@@ -84,7 +84,7 @@ public class TypeSortTranslator {
 
 	}
 
-	public IType getType(Sort sort) {
+	public IType getType(final Sort sort) {
 		IType type = mSort2Type.get(sort);
 		if (type == null) {
 			// TODO Matthias: The following special treatment of arrays is only
@@ -99,6 +99,10 @@ public class TypeSortTranslator {
 				final BoogieType[] indexTypes = { (BoogieType) getType(indexSort) };
 				final BoogieType valueType = (BoogieType) getType(valueSort);
 				type = BoogieType.createArrayType(0, indexTypes, valueType);
+			} else if (sort.getRealSort().getName().equals("BitVec")) {
+				final BigInteger bvsize = sort.getIndices()[0];
+				type = BoogieType.createBitvectorType(bvsize.intValueExact());
+				return type;
 			} else {
 				throw new IllegalArgumentException("Unknown sort" + sort);
 			}
@@ -114,7 +118,7 @@ public class TypeSortTranslator {
 	 * @param BoogieASTNode
 	 *            BoogieASTNode for which Sort is computed
 	 */
-	public Sort getSort(IType type, BoogieASTNode BoogieASTNode) {
+	public Sort getSort(IType type, final BoogieASTNode BoogieASTNode) {
 		if (type instanceof BoogieType) {
 			type = ((BoogieType) type).getUnderlyingType();
 		}
@@ -125,7 +129,7 @@ public class TypeSortTranslator {
 		}
 	}
 
-	private void declareType(TypeDeclaration typeDecl) {
+	private void declareType(final TypeDeclaration typeDecl) {
 		final String[] typeParams = typeDecl.getTypeParams();
 		if (typeParams.length != 0) {
 			throw new IllegalArgumentException("Only types without parameters supported");
@@ -158,7 +162,7 @@ public class TypeSortTranslator {
 	 * @param BoogieASTNode
 	 *            BoogieASTNode for which Sort is computed
 	 */
-	protected Sort constructSort(IType boogieType, BoogieASTNode BoogieASTNode) {
+	protected Sort constructSort(final IType boogieType, final BoogieASTNode BoogieASTNode) {
 		Sort result;
 		if (boogieType instanceof PrimitiveType) {
 			if (boogieType.equals(PrimitiveType.TYPE_BOOL)) {

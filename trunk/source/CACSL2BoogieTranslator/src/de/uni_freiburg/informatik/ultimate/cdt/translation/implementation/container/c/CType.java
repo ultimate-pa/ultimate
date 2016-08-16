@@ -31,8 +31,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
 
 /**
@@ -113,7 +113,7 @@ public abstract class CType {
 	 */
 	public boolean isIntegerType() {
 		if (this instanceof CPrimitive) {
-			return (((CPrimitive) this).getGeneralType() == GENERALPRIMITIVE.INTTYPE);
+			return (((CPrimitive) this).getGeneralType() == CPrimitiveCategory.INTTYPE);
 		} else if (this instanceof CEnum) {
 			return true;
 		} else {
@@ -128,9 +128,9 @@ public abstract class CType {
 	public boolean isRealFloatingType() {
 		if (this instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) this;
-			return cPrimitive.getType() == PRIMITIVE.FLOAT || 
-					cPrimitive.getType() == PRIMITIVE.DOUBLE || 
-					cPrimitive.getType() == PRIMITIVE.LONGDOUBLE;
+			return cPrimitive.getType() == CPrimitives.FLOAT || 
+					cPrimitive.getType() == CPrimitives.DOUBLE || 
+					cPrimitive.getType() == CPrimitives.LONGDOUBLE;
 		} else {
 			return false;
 		}
@@ -143,9 +143,9 @@ public abstract class CType {
 	public boolean isComplexType() {
 		if (this instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) this;
-			return cPrimitive.getType() == PRIMITIVE.COMPLEX_FLOAT|| 
-					cPrimitive.getType() == PRIMITIVE.COMPLEX_DOUBLE || 
-					cPrimitive.getType() == PRIMITIVE.COMPLEX_LONGDOUBLE;
+			return cPrimitive.getType() == CPrimitives.COMPLEX_FLOAT|| 
+					cPrimitive.getType() == CPrimitives.COMPLEX_DOUBLE || 
+					cPrimitive.getType() == CPrimitives.COMPLEX_LONGDOUBLE;
 		} else {
 			return false;
 		}
@@ -157,7 +157,7 @@ public abstract class CType {
 	 */
 	public boolean isFloatingType() {
 		if (this instanceof CPrimitive) {
-			return (((CPrimitive) this).getGeneralType() == GENERALPRIMITIVE.FLOATTYPE);
+			return (((CPrimitive) this).getGeneralType() == CPrimitiveCategory.FLOATTYPE);
 		} else {
 			return false;
 		}

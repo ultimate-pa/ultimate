@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -41,12 +41,12 @@ public class BasicPredicate extends AbstractAnnotations implements IPredicate {
 	protected final String[] mProcedures;
 	protected Term mFormula;
 	protected final Term mClosedFormula;
-	protected final Set<BoogieVar> mVars;
+	protected final Set<IProgramVar> mVars;
 	protected final int mSerialNumber;
 	
 	
 	
-	public BasicPredicate(int serialNumber, String[] procedures, Term term, Set<BoogieVar> vars,
+	public BasicPredicate(int serialNumber, String[] procedures, Term term, Set<IProgramVar> vars,
 			Term closedFormula) {
 		mFormula = term;
 		mClosedFormula = closedFormula;
@@ -102,7 +102,7 @@ public class BasicPredicate extends AbstractAnnotations implements IPredicate {
 	}
 
 	@Override
-	public Set<BoogieVar> getVars() {
+	public Set<IProgramVar> getVars() {
 		return mVars;
 	}
 	

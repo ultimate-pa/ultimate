@@ -20,9 +20,9 @@ Require-Bundle: Library-UltimateCore,
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
- de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark,
- de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck

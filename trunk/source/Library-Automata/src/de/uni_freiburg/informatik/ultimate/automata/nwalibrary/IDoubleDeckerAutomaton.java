@@ -30,7 +30,16 @@ import java.util.Set;
 
 public interface IDoubleDeckerAutomaton<LETTER, STATE> extends INestedWordAutomaton<LETTER,STATE> {
 
-	public boolean isDoubleDecker(STATE up, STATE down);
+	/**
+	 * @param up up state
+	 * @param down down state
+	 * @return true iff (up, down) forms a DoubleDecker
+	 */
+	boolean isDoubleDecker(STATE up, STATE down);
 	
-	public Set<STATE> getDownStates(STATE up);
+	/**
+	 * @param up up state
+	 * @return all down states of 'up'
+	 */
+	Set<STATE> getDownStates(STATE up);
 }

@@ -88,7 +88,7 @@ public class TermTransferrerBooleanCore extends TermTransferrer {
 		if (!term.getSort().getName().equals("Bool")) {
 			setResult(mAuxiliaryTerm);
 		} else if (term instanceof QuantifiedFormula) {
-			final Term result = mConstructionCache.getOrConstuct(term);
+			final Term result = mConstructionCache.getOrConstruct(term);
 			setResult(result);
 		} else {
 			super.convert(term);
@@ -98,7 +98,7 @@ public class TermTransferrerBooleanCore extends TermTransferrer {
 	@Override
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
 		if (Arrays.asList(newArgs).contains(mAuxiliaryTerm)) {
-			final Term result = mConstructionCache.getOrConstuct(appTerm);
+			final Term result = mConstructionCache.getOrConstruct(appTerm);
 			setResult(result);
 		} else {
 			super.convertApplicationTerm(appTerm, newArgs);

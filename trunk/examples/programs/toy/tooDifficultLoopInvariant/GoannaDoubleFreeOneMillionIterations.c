@@ -6,7 +6,7 @@
  * "BackwardPredicates we succeed.
  * 
  * Date: 2015-04-02
- * Author: heizmann@informtik.uni-freiburg.de
+ * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
 #include <stdlib.h>

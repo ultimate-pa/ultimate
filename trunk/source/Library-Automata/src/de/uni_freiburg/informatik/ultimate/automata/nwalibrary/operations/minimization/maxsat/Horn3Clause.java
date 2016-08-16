@@ -38,16 +38,16 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
  */
 final class Horn3Clause {
 
-	static final int FALSEVAR = 0;
-	static final int TRUEVAR = 1;
+	public static final int FALSEVAR = 0;
+	public static final int TRUEVAR = 1;
 
-	int x;
-	int y;
-	int z;
+	int mX;
+	int mY;
+	int mZ;
 
-	Horn3Clause(int x, int y, int z) {
-		this.x = x;
-		this.y = y;
-		this.z = z;
+	Horn3Clause(final int x, final int y, final int z) {
+		this.mX = x;
+		this.mY = y;
+		this.mZ = z;
 	}
 }

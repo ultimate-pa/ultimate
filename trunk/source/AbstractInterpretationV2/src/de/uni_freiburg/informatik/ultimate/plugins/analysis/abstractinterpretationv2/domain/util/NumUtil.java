@@ -13,6 +13,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class NumUtil {
 
+	public static final BigDecimal TWO = new BigDecimal(2);
+
 	/**
 	 * Calculates the euclidean division.euc
 	 * The result {@code q} of the euclidean division {@code a / b = q}

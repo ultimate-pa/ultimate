@@ -34,11 +34,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -66,10 +66,10 @@ public class DivisibilityPredicateGenerator {
 	}
 
 	public Collection<IPredicate> divisibilityPredicates(Collection<IPredicate> preds) {
-		final Map<BoogieVar, Integer> offsetVar2size = new HashMap<>();
+		final Map<IProgramVar, Integer> offsetVar2size = new HashMap<>();
 		final List<IPredicate> result = new ArrayList<IPredicate>();
 		for (final IPredicate pred : preds) {
-			for (final BoogieVar bv : pred.getVars()) {
+			for (final IProgramVar bv : pred.getVars()) {
 				if (isOffsetVar(bv)) {
 					final int size = getSize(bv);
 					final Integer oldValue = offsetVar2size.put(bv, size);
@@ -86,7 +86,7 @@ public class DivisibilityPredicateGenerator {
 			}
 			
 		}
-		for (final Entry<BoogieVar, Integer> entry  : offsetVar2size.entrySet()) {
+		for (final Entry<IProgramVar, Integer> entry  : offsetVar2size.entrySet()) {
 			final Term term = getDivisibilityTerm(entry.getKey().getTermVariable(), entry.getValue());
 			final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(term);
 			result.add(unified);
@@ -94,11 +94,11 @@ public class DivisibilityPredicateGenerator {
 		return result;
 	}
 
-	private int getSize(BoogieVar bv) {
+	private int getSize(IProgramVar bv) {
 		return 4;
 	}
 
-	private boolean isOffsetVar(BoogieVar bv) {
+	private boolean isOffsetVar(IProgramVar bv) {
 		if (bv.getTermVariable().getSort().getName().equals("Int")) {
 			return bv.getIdentifier().contains("offset");
 		} else {

@@ -30,23 +30,27 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 public class InterproceduralSequentialComposition extends SequentialComposition implements IInternalAction {
 
 	private static final long serialVersionUID = -1637790156358220366L;
 
-	InterproceduralSequentialComposition(int serialNumber, ProgramPoint source,
-			ProgramPoint target, Boogie2SMT boogie2smt, 
-			ModifiableGlobalVariableManager modGlobVarManager, 
-			boolean simplify, boolean extPqe, List<CodeBlock> codeBlocks, ILogger logger, IUltimateServiceProvider services) {
-		super(serialNumber, source, target, boogie2smt, modGlobVarManager, simplify, extPqe, services, codeBlocks);
+	InterproceduralSequentialComposition(final int serialNumber, final ProgramPoint source,
+			final ProgramPoint target, final ManagedScript mgdScript, 
+			final ModifiableGlobalVariableManager modGlobVarManager, 
+			final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks, 
+			final ILogger logger, final IUltimateServiceProvider services,
+			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
+		super(serialNumber, source, target, mgdScript, modGlobVarManager, simplify, extPqe, services, codeBlocks, xnfConversionTechnique, simplificationTechnique);
 	}
 
 	@Override
-	protected void checkNumberOfCallsAndReturns(int numberCalls, int  numberReturns) {
+	protected void checkNumberOfCallsAndReturns(final int numberCalls, final int  numberReturns) {
 		if(numberCalls <= numberReturns) {
 			throw new IllegalArgumentException("more calls and returns required");
 		}

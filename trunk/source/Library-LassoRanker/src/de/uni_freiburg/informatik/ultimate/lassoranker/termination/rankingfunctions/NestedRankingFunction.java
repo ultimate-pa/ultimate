@@ -33,11 +33,11 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -64,8 +64,8 @@ public class NestedRankingFunction extends RankingFunction {
 
 	
 	@Override
-	public Set<RankVar> getVariables() {
-		final Set<RankVar> vars = new LinkedHashSet<RankVar>();
+	public Set<IProgramVar> getVariables() {
+		final Set<IProgramVar> vars = new LinkedHashSet<IProgramVar>();
 		for (final AffineFunction af : mRanking) {
 			vars.addAll(af.getVariables());
 		}
@@ -111,7 +111,7 @@ public class NestedRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Ordinal evaluate(Map<RankVar, Rational> assignment) {
+	public Ordinal evaluate(Map<IProgramVar, Rational> assignment) {
 		throw new UnsupportedOperationException("not yet implemented");
 	}
 	

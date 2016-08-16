@@ -49,7 +49,10 @@ public class StateContainerFieldMap<LETTER, STATE> {
 	private Object mOut3;
 	private Object mOut4;
 	
-	public StateContainerFieldMap(STATE state) {
+	/**
+	 * @param state state
+	 */
+	public StateContainerFieldMap(final STATE state) {
 		mState = state;
 	}
 	
@@ -62,7 +65,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 				(mOut3 instanceof Map) || (mOut4 instanceof Map);
 	}
 	
-	private void addOutgoingInternal(LETTER letter, STATE succ) {
+	private void addOutgoingInternal(final LETTER letter, final STATE succ) {
 		final OutgoingInternalTransition<LETTER, STATE> trans = 
 				new OutgoingInternalTransition<LETTER, STATE>(letter, succ);
 		if (inOutMapMode()) {
@@ -100,7 +103,10 @@ public class StateContainerFieldMap<LETTER, STATE> {
 	}
 	
 	
-	private void addInternalTransitionMap(Map<LETTER, Set<STATE>> letter2succs, LETTER letter, STATE succ) {
+	private void addInternalTransitionMap(
+			final Map<LETTER, Set<STATE>> letter2succs,
+			final LETTER letter,
+			final STATE succ) {
 		Set<STATE> succs = letter2succs.get(letter);
 		if (succs == null) {
 			succs = new HashSet<STATE>();
@@ -118,7 +124,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 					/**
 					 * Points to next field that has OutgoingInternalTransition.
 					 */
-					short mPosition;
+					private short mPosition;
 					{
 						mPosition = 0;
 						updatePosition();
@@ -179,7 +185,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 			public Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator() {
 				final Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator = 
 						new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
-					Iterator<STATE> mIterator;
+					private Iterator<STATE> mIterator;
 					{
 						if (letter2succ != null) {
 							if (letter2succ.get(letter) != null) {
@@ -229,9 +235,9 @@ public class StateContainerFieldMap<LETTER, STATE> {
 			public Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator() {
 				final Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator = 
 						new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
-					Iterator<LETTER> mLetterIterator;
-					LETTER mCurrentLetter;
-					Iterator<OutgoingInternalTransition<LETTER, STATE>> mCurrentIterator;
+					private Iterator<LETTER> mLetterIterator;
+					private LETTER mCurrentLetter;
+					private Iterator<OutgoingInternalTransition<LETTER, STATE>> mCurrentIterator;
 					{
 						mLetterIterator = letter2succ.keySet().iterator();
 						nextLetter();

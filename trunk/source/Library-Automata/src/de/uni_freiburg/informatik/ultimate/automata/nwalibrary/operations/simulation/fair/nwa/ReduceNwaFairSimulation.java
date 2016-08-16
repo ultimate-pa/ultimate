@@ -28,6 +28,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -35,14 +37,19 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.LassoExtractor;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.FairSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.ReduceBuchiFairSimulation;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Operation that reduces a given nwa automaton by using {@link FairSimulation}.
+ * Operation that reduces a given nwa by using {@link FairSimulation}.
  * <br/>
  * Once constructed the reduction automatically starts, the result can be get by
  * using {@link #getResult()}.
@@ -50,17 +57,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @author Daniel Tischner
  * 
  * @param <LETTER>
- *            Letter class of nwa automaton
+ *            Letter class of nwa
  * @param <STATE>
- *            State class of nwa automaton
+ *            State class of nwa
  */
 public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFairSimulation<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
-
-	/**
-	 * The logger used by the Ultimate framework.
-	 */
-	private final ILogger mLogger;
 
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
@@ -72,13 +74,13 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 * @param stateFactory
 	 *            The state factory used for creating states
 	 * @param operand
-	 *            The nwa automaton to reduce
+	 *            The nwa to reduce
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public ReduceNwaFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, true, Collections.emptyList());
 	}
 
@@ -92,7 +94,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 * @param stateFactory
 	 *            The state factory used for creating states
 	 * @param operand
-	 *            The nwa automaton to reduce
+	 *            The nwa to reduce
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
@@ -101,9 +103,10 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 *             framework.
 	 */
 	public ReduceNwaFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs)
+			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs)
 					throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, useSCCs, Collections.emptyList());
+		this(services, stateFactory, operand, useSCCs,
+				new LookaheadPartitionConstructor<LETTER, STATE>(services, operand).getResult());
 	}
 
 	/**
@@ -116,7 +119,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 * @param stateFactory
 	 *            The state factory used for creating states
 	 * @param operand
-	 *            The nwa automaton to reduce
+	 *            The nwa to reduce
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
@@ -130,7 +133,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 *             framework.
 	 */
 	public ReduceNwaFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
+			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs,
 			final Collection<Set<STATE>> possibleEquivalentClasses) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, useSCCs, false,
 				new FairNwaSimulation<LETTER, STATE>(services.getProgressMonitorService(),
@@ -138,8 +141,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 						possibleEquivalentClasses,
 						new FairNwaGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
-								stateFactory)));
-		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+								stateFactory, possibleEquivalentClasses)));
 	}
 
 	/*
@@ -151,12 +153,54 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 */
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		mLogger.info("Start testing correctness of " + operationName());
-		// Simply returns true in any case. The only method that currently
-		// exists for checking the result needs very long and we do not want to
-		// slow progress.
-		final boolean correct = true;
-		mLogger.info("Finished testing correctness of " + operationName());
+		getLogger().info("Start testing correctness of " + operationName());
+		boolean correct = true;
+
+		final AutomataLibraryServices services = getServices();
+		final INestedWordAutomaton<LETTER, STATE> operand = getOperand();
+		final INestedWordAutomaton<LETTER, STATE> result = getResult();
+
+		// This is a semi-test, if it returns false, the result can also be
+		// correct though
+		correct &= (new IsIncluded<LETTER, STATE>(services, stateFactory, operand, result)).getResult();
+		correct &= (new IsIncluded<LETTER, STATE>(services, stateFactory, result, operand)).getResult();
+
+		// Try using some random lasso-words to prove a possible incorrectness
+		if (!correct) {
+			final List<NestedLassoWord<LETTER>> nestedLassoWords = new LinkedList<>();
+			nestedLassoWords.addAll((new LassoExtractor<LETTER, STATE>(services, operand)).getResult());
+			nestedLassoWords.addAll((new LassoExtractor<LETTER, STATE>(services, result)).getResult());
+
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
+
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+
+			correct = true;
+			for (final NestedLassoWord<LETTER> nestedLassoWord : nestedLassoWords) {
+				final boolean op = (new BuchiAccepts<LETTER, STATE>(services, operand, nestedLassoWord)).getResult();
+				final boolean res = (new BuchiAccepts<LETTER, STATE>(services, operand, nestedLassoWord)).getResult();
+				correct &= (op == res);
+			}
+		}
+		getLogger().info("Finished testing correctness of " + operationName());
+
+		// We may assume the result is correct as the chance of it being not
+		// covered by the test is comparable small
 		return correct;
 	}
 

@@ -7,13 +7,15 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -23,17 +25,19 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACT
 	private final IAbstractStateBinaryOperator<STATE> mMergeOp;
 	private final ITransitionProvider<ACTION, LOCATION> mTransProvider;
 	private final int mMaxParallelStates;
+	private final ILogger mLogger;
 
 	SummaryMap(final IAbstractStateBinaryOperator<STATE> mergeOp, final ITransitionProvider<ACTION, LOCATION> trans,
-			final int maxParallelStates) {
+			final int maxParallelStates, final ILogger logger) {
 		mTransProvider = trans;
 		mMergeOp = mergeOp;
 		mSummaries = new HashMap<>();
 		mMaxParallelStates = maxParallelStates;
+		mLogger = logger;
 	}
 
 	/**
-	 * 
+	 *
 	 * @param preCallState
 	 * @param postCallState
 	 * @param current
@@ -48,11 +52,31 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACT
 				summaries.remove(summary);
 				final Pair<STATE, STATE> newSummary = getMergedSummary(summary, preCallState, postCallState);
 				summaries.add(newSummary);
+				logCurrentSummaries(current);
 				return;
 			}
 		}
 		summaries.add(new Pair<>(preCallState, postCallState));
 		mergeIfNecessary(summaries);
+		logCurrentSummaries(current);
+	}
+
+	private void logCurrentSummaries(final ACTION current) {
+		if (!mLogger.isDebugEnabled()) {
+			return;
+		}
+		final ACTION summaryAction = getSummaryAction(current);
+		final Set<Pair<STATE, STATE>> summaries = mSummaries.get(summaryAction);
+		if (summaries == null || summaries.isEmpty()) {
+			return;
+		}
+		mLogger.debug(AbsIntPrefInitializer.INDENT + " Current summaries for "
+				+ LoggingHelper.getTransitionString(current, mTransProvider) + ":");
+		for (final Pair<STATE, STATE> pair : summaries) {
+			mLogger.debug(AbsIntPrefInitializer.DINDENT + " PreCall " + LoggingHelper.getStateString(pair.getFirst())
+					+ " PostCall " + LoggingHelper.getStateString(pair.getSecond()));
+		}
+
 	}
 
 	private ACTION getSummaryAction(final ACTION current) {
@@ -60,7 +84,7 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACT
 		return succActions.stream().filter(a -> mTransProvider.isSummaryForCall(a, current)).findAny().get();
 	}
 
-	private void mergeIfNecessary(Set<Pair<STATE, STATE>> summaries) {
+	private void mergeIfNecessary(final Set<Pair<STATE, STATE>> summaries) {
 		if (summaries.size() <= mMaxParallelStates) {
 			return;
 		}
@@ -99,7 +123,7 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACT
 		return new Pair<>(newPre, newPost);
 	}
 
-	private Set<Pair<STATE, STATE>> getOrCreateSummaries(ACTION current) {
+	private Set<Pair<STATE, STATE>> getOrCreateSummaries(final ACTION current) {
 		Set<Pair<STATE, STATE>> rtr = mSummaries.get(current);
 		if (rtr == null) {
 			rtr = new HashSet<>();

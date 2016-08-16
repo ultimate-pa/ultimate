@@ -26,24 +26,26 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.nwa;
 
+import java.util.Collection;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.DelayedGameGraph;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.EMultipleDataOption;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ETimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.INwaGameGraph;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.NwaGameGraphGeneration;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SummarizeEdge;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.INwaGameGraph;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.NwaGameGraphGeneration;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.SummarizeEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
@@ -63,9 +65,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * @author Daniel Tischner
  *
  * @param <LETTER>
- *            Letter class of nwa automaton
+ *            Letter class of nwa
  * @param <STATE>
- *            State class of nwa automaton
+ *            State class of nwa
  */
 public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<LETTER, STATE>
 		implements INwaGameGraph<LETTER, STATE> {
@@ -74,13 +76,13 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 	 */
 	private final NwaGameGraphGeneration<LETTER, STATE> mGeneration;
 	/**
-	 * The underlying nwa automaton, as double decker automaton, from which the
+	 * The underlying nwa, as double decker automaton, from which the
 	 * game graph gets generated.
 	 */
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mNwa;
 
 	/**
-	 * Creates a new delayed nwa game graph by using the given nwa automaton.
+	 * Creates a new delayed nwa game graph by using the given nwa.
 	 * 
 	 * @param services
 	 *            Service provider of Ultimate framework
@@ -90,29 +92,36 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 * @param nwa
-	 *            The underlying nwa automaton from which the game graph gets
+	 *            The underlying nwa from which the game graph gets
 	 *            generated.
 	 * @param stateFactory
 	 *            State factory used for state creation
+	 * @param possibleEquivalenceClasses
+	 *            A collection of sets which contains states of an
+	 *            automaton that may be merge-able. States which are not in the
+	 *            same set are definitely not merge-able which is used as an
+	 *            optimization for the game graph
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	@SuppressWarnings("unchecked")
-	public DelayedNwaGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
-			final ILogger logger, final INestedWordAutomatonOldApi<LETTER, STATE> nwa,
-			final StateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
+	public DelayedNwaGameGraph(final AutomataLibraryServices services,
+			final IProgressAwareTimer progressTimer,
+			final ILogger logger, final IDoubleDeckerAutomaton<LETTER, STATE> nwa,
+			final StateFactory<STATE> stateFactory,
+			final Collection<Set<STATE>> possibleEquivalenceClasses)
+					throws AutomataOperationCanceledException {
 		super(services, progressTimer, logger, nwa, stateFactory);
 		// To derive down states of automaton ensure it
 		// is a double decker automaton
-		final INestedWordAutomatonOldApi<LETTER, STATE> preparedNwa = getAutomaton();
+		final INestedWordAutomaton<LETTER, STATE> preparedNwa = getAutomaton();
 		if (preparedNwa instanceof IDoubleDeckerAutomaton<?, ?>) {
 			mNwa = (IDoubleDeckerAutomaton<LETTER, STATE>) preparedNwa;
 		} else {
 			mNwa = new RemoveUnreachable<LETTER, STATE>(services, preparedNwa).getResult();
 		}
 		mGeneration = new NwaGameGraphGeneration<LETTER, STATE>(services, getProgressTimer(), getLogger(), mNwa, this,
-				ESimulationType.DELAYED);
+				ESimulationType.DELAYED, possibleEquivalenceClasses);
 	}
 
 	/*
@@ -122,14 +131,14 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 	 * simulation.delayed.DelayedGameGraph#generateAutomatonFromGraph()
 	 */
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph()
+	public INestedWordAutomaton<LETTER, STATE> generateAutomatonFromGraph()
 			throws AutomataOperationCanceledException {
 		final SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);
 		}
 
-		final INestedWordAutomatonOldApi<LETTER, STATE> result = mGeneration.generateAutomatonFromGraph();
+		final INestedWordAutomaton<LETTER, STATE> result = mGeneration.generateAutomatonFromGraph(false);
 
 		// Log performance
 		if (performance != null) {
@@ -153,9 +162,6 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 		// Set values for compatibility with non nwa graph
 		final SimulationPerformance performance = mGeneration.getSimulationPerformance();
 		setGraphBuildTime(performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE));
-		setBuechiAmountOfStates(performance.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES));
-		setBuechiAmountOfTransitions(performance.getCountingMeasureResult(ECountingMeasure.BUCHI_TRANSITIONS));
-		setGraphAmountOfEdges(performance.getCountingMeasureResult(ECountingMeasure.GAMEGRAPH_EDGES));
 	}
 
 	/**
@@ -171,8 +177,6 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 			final boolean bit) {
 		throw new UnsupportedOperationException(
 				"Use getDuplicatorVertex(q0, q1, a, bit, transType, summarizeEdge, sink) instead.");
-		// TODO Can later be removed but for now
-		// it should throw an Exception for problem detection.
 	}
 
 	/**
@@ -186,8 +190,6 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 	@Override
 	public SpoilerVertex<LETTER, STATE> getSpoilerVertex(final STATE q0, final STATE q1, final boolean bit) {
 		throw new UnsupportedOperationException("Use getSpoilerVertex(q0, q1, a, bit, summarizeEdge, sink) instead.");
-		// TODO Can later be removed but for now
-		// it should throw an Exception for problem detection.
 	}
 
 	/*
@@ -206,10 +208,10 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * simulation.AGameGraph#verifyAutomatonValidity(de.uni_freiburg.informatik.
-	 * ultimate.automata.nwalibrary.INestedWordAutomatonOldApi)
+	 * ultimate.automata.nwalibrary.INestedWordAutomaton)
 	 */
 	@Override
-	public void verifyAutomatonValidity(final INestedWordAutomatonOldApi<LETTER, STATE> automaton) {
-		// Do noting to accept nwa automata
+	public void verifyAutomatonValidity(final INestedWordAutomaton<LETTER, STATE> automaton) {
+		// Do noting to accept nwa
 	}
 }

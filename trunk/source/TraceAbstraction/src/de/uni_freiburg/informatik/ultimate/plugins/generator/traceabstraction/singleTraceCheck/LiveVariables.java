@@ -33,10 +33,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashSet;
 
@@ -61,23 +60,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashSet;
  *
  */
 public class LiveVariables {
-	private final Map<Term,BoogieVar> mConstants2BoogieVar;
-	private final ModifiableNestedFormulas<Map<TermVariable,Term>, Map<TermVariable,Term>> mTraceWithConstants;
-	private final Map<BoogieVar, TreeMap<Integer, Term>> mIndexedVarRepresentative;
+	private final Map<Term,IProgramVar> mConstants2BoogieVar;
+	private final ModifiableNestedFormulas<Map<Term,Term>, Map<Term,Term>> mTraceWithConstants;
+	private final Map<IProgramVar, TreeMap<Integer, Term>> mIndexedVarRepresentative;
 
 	
 	private final Collection<Term>[] mConstantsForEachPosition;
 	private final Set<Term>[] mLiveConstants;
 	//mLiveVariables[i] are the live variables _before_ statement i
-	private final Set<BoogieVar>[] mLiveVariables;
+	private final Set<IProgramVar>[] mLiveVariables;
 
 	
 	
-	public LiveVariables(ModifiableNestedFormulas<Map<TermVariable,Term>, 
-			Map<TermVariable,Term>> traceWithConstants,
-			Map<Term,BoogieVar> constants2BoogieVar,
-			Map<BoogieVar, TreeMap<Integer, Term>> indexedVarRepresentative,
-			SmtManager smtManager, ModifiableGlobalVariableManager modifiedGlobals) {
+	public LiveVariables(final ModifiableNestedFormulas<Map<Term,Term>, 
+			Map<Term,Term>> traceWithConstants,
+			final Map<Term,IProgramVar> constants2BoogieVar,
+			final Map<IProgramVar, TreeMap<Integer, Term>> indexedVarRepresentative,
+			final SmtManager smtManager, final ModifiableGlobalVariableManager modifiedGlobals) {
 		mConstants2BoogieVar = constants2BoogieVar;
 		mTraceWithConstants = traceWithConstants;
 		mIndexedVarRepresentative = indexedVarRepresentative;
@@ -163,7 +162,7 @@ public class LiveVariables {
 	 * auxVars)
 	 */
 	@SafeVarargs
-	private final Set<Term> extractVarConstants(Collection<Term>... collections) {
+	private final Set<Term> extractVarConstants(final Collection<Term>... collections) {
 		final Set<Term> result = new HashSet<Term>();
 		for (final Collection<Term> terms : collections) {
 			for (final Term term : terms) {
@@ -240,9 +239,9 @@ public class LiveVariables {
 	 * Add to writeSet all constants from readCollection that correspond to
 	 * global BoogieVars.
 	 */
-	private void addGlobals(HashSet<Term> writeSet, Collection<Term> readCollection) {
+	private void addGlobals(final HashSet<Term> writeSet, final Collection<Term> readCollection) {
 		for (final Term term : readCollection) {
-			final BoogieVar bv = mConstants2BoogieVar.get(term);
+			final IProgramVar bv = mConstants2BoogieVar.get(term);
 			if (bv.isGlobal()) {
 				writeSet.add(term);
 			}
@@ -253,9 +252,9 @@ public class LiveVariables {
 	 * Add to writeSet all constants from readCollection that correspond to
 	 * local BoogieVars of procedure proc
 	 */
-	private void addLocals(String proc, HashSet<Term> writeSet, Collection<Term> readCollection) {
+	private void addLocals(final String proc, final HashSet<Term> writeSet, final Collection<Term> readCollection) {
 		for (final Term term : readCollection) {
-			final BoogieVar bv = mConstants2BoogieVar.get(term);
+			final IProgramVar bv = mConstants2BoogieVar.get(term);
 			if (!bv.isGlobal()) {
 				if (bv.getProcedure().equals(proc)) {
 					writeSet.add(term);
@@ -267,11 +266,11 @@ public class LiveVariables {
 	/**
 	 * Remove from set all constants whose index is i.
 	 */
-	private void removeConstantsWithIndex_i(HashSet<Term> set, int i) {
+	private void removeConstantsWithIndex_i(final HashSet<Term> set, final int i) {
 		final Iterator<Term> it = set.iterator();
 		while (it.hasNext()) {
 			final Term term = it.next();
-			final BoogieVar bv = mConstants2BoogieVar.get(term);
+			final IProgramVar bv = mConstants2BoogieVar.get(term);
 			final Map<Integer, Term> indexedVar = mIndexedVarRepresentative.get(bv);
 			if (indexedVar.get(i) == term) {
 				it.remove();
@@ -287,12 +286,12 @@ public class LiveVariables {
 	 * Furthermore each global variable that occurs between a call and return
 	 * is live until the return.
 	 */
-	private Set<BoogieVar>[] computeLiveVariables() {
+	private Set<IProgramVar>[] computeLiveVariables() {
 		@SuppressWarnings("unchecked")
 		final
-		Set<BoogieVar>[] result = new Set[mTraceWithConstants.getTrace().length() + 1];
-		final ScopedHashSet<BoogieVar> globalVarsBetweenCallAndReturn = 
-				new ScopedHashSet<BoogieVar>();
+		Set<IProgramVar>[] result = new Set[mTraceWithConstants.getTrace().length() + 1];
+		final ScopedHashSet<IProgramVar> globalVarsBetweenCallAndReturn = 
+				new ScopedHashSet<IProgramVar>();
 		for (int i = 0; i < result.length; i++) {
 			if (i > 0 && i < result.length-1 && 
 					mTraceWithConstants.getTrace().isCallPosition(i-1) && 
@@ -307,9 +306,9 @@ public class LiveVariables {
 					 globalVarsBetweenCallAndReturn.endScope();
 				 }
 			}
-			final Set<BoogieVar> liveVars = new HashSet<BoogieVar>();
+			final Set<IProgramVar> liveVars = new HashSet<IProgramVar>();
 			for (final Term t : mLiveConstants[i]) {
-				final BoogieVar bv = mConstants2BoogieVar.get(t);
+				final IProgramVar bv = mConstants2BoogieVar.get(t);
 				if (!globalVarsBetweenCallAndReturn.isEmptyScope() && bv.isGlobal()) {
 					globalVarsBetweenCallAndReturn.add(bv);
 				} else {
@@ -322,7 +321,7 @@ public class LiveVariables {
 		return result;
 	}
 	
-	public Set<BoogieVar>[] getLiveVariables() {
+	public Set<IProgramVar>[] getLiveVariables() {
 		return mLiveVariables;
 	}
 }

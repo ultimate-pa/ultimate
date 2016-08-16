@@ -34,29 +34,30 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 /**
  * Interface for a general block data structure inside a partition.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <STATE> state type
  */
 public interface IBlock<STATE> {
 	/**
 	 * @return true iff block contains an initial state
 	 */
-	public boolean isInitial();
+	boolean isInitial();
 	
 	/**
 	 * @return true iff block contains an final state
 	 */
-	public boolean isFinal();
+	boolean isFinal();
 	
 	/**
 	 * @param stateFactory state factory
 	 * @return state constructed by state factory
 	 */
-	public STATE minimize(final StateFactory<STATE> stateFactory);
+	STATE minimize(final StateFactory<STATE> stateFactory);
 	
 	/**
 	 * @return iterator over all states
 	 */
-	public Iterator<STATE> statesIterator();
+	Iterator<STATE> statesIterator();
 	
 	/**
 	 * If a block is independent of the representative, then one must only look
@@ -66,9 +67,9 @@ public interface IBlock<STATE> {
 	 * operations, they are handled the same way.
 	 * 
 	 * NOTE: We assume here that return transitions are more complicated and
-	 * cannot be handled independent of the representative.
+	 * cannot be handled in a way independent of the representative.
 	 * 
 	 * @return true iff all states have the same outgoing transitions
 	 */
-	public boolean isRepresentativeIndependentInternalsCalls();
+	boolean isRepresentativeIndependentInternalsCalls();
 }

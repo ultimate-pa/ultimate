@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class IntervalValue implements Comparable<IntervalValue> {
 
-	private static int sId = 0;
+	private static int sId;
 	private final int mId;
 
 	private BigDecimal mValue;
@@ -71,6 +71,9 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 *            The value to set.
 	 */
 	public IntervalValue(final BigDecimal val) {
+		if (val == null) {
+			throw new IllegalArgumentException("val may not be null");
+		}
 		mValue = val;
 		mIsInfty = false;
 		sId++;
@@ -128,6 +131,9 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 *            The value to set.
 	 */
 	protected void setValue(final BigDecimal val) {
+		if (val == null) {
+			throw new IllegalArgumentException("val may not be null");
+		}
 		mValue = val;
 		mIsInfty = false;
 	}
@@ -160,6 +166,47 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 */
 	public boolean isInfinity() {
 		return mIsInfty;
+	}
+
+	/**
+	 * Multiply two {@link IntervalValue}s.
+	 * 
+	 * @param a
+	 *            The first operand.
+	 * @param b
+	 *            The second operand.
+	 * @return The result of a * b.
+	 */
+	public static IntervalValue multiply(IntervalValue a, IntervalValue b) {
+		if (a == null || b == null) {
+			throw new IllegalArgumentException("Arguments may not be null");
+		}
+
+		if (a.isInfinity() && b.isInfinity()) {
+			// is infinity
+			return new IntervalValue();
+		}
+
+		if (a.isInfinity()) {
+			if (b.getValue().signum() == 0) {
+				// infinity times 0 is 0
+				return new IntervalValue(0);
+			} else {
+				// infinity times something is infinity
+				return new IntervalValue();
+			}
+		}
+
+		if (b.isInfinity()) {
+			if (a.getValue().signum() == 0) {
+				return new IntervalValue(0);
+			} else {
+				return new IntervalValue();
+			}
+		}
+
+		// neither a nor b are infinity, thus a.getValue() has always a value
+		return new IntervalValue(a.getValue().multiply(b.getValue()));
 	}
 
 	@Override
@@ -232,7 +279,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 			return script.numeral(mValue.toBigIntegerExact());
 		} else {
 			assert sort.getName()
-			        .equals("Real") : "Seems that numeric sort now has something different then Int or Real";
+					.equals("Real") : "Seems that numeric sort now has something different then Int or Real";
 			// has to be real
 			return script.decimal(mValue);
 		}

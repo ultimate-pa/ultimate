@@ -422,7 +422,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		}
 
 		@Override
-		public Iterable<OutgoingReturnTransition<CodeBlock, AnnotatedProgramPoint>> returnSucccessors(
+		public Iterable<OutgoingReturnTransition<CodeBlock, AnnotatedProgramPoint>> returnSuccessors(
 				AnnotatedProgramPoint state, AnnotatedProgramPoint hier, CodeBlock letter) {
 			final HashMap<AnnotatedProgramPoint, HashMap<CodeBlock, ArrayList<OutgoingReturnTransition<CodeBlock, AnnotatedProgramPoint>>>> hier2letter2 = _stateToHierToLetterToOutgoingReturnTransitions
 					.get(state);

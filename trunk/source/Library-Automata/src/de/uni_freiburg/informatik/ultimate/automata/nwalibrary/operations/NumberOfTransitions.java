@@ -36,15 +36,19 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * Operation that returns the number of transitions of a finite automaton.
  * @author heizmann@informatik.uni-freiburg.de
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class NumberOfTransitions<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
-	INestedWordAutomaton<LETTER, STATE> mNwa;
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	
-	public NumberOfTransitions(INestedWordAutomaton<LETTER, STATE> nwa) {
-		mNwa = nwa;
+	/**
+	 * @param operand operand
+	 */
+	public NumberOfTransitions(
+			final INestedWordAutomaton<LETTER, STATE> operand) {
+		mOperand = operand;
 	}
 
 	@Override
@@ -65,8 +69,10 @@ public class NumberOfTransitions<LETTER, STATE> implements IOperation<LETTER,STA
 	@Override
 	public Integer getResult() throws AutomataLibraryException {
 		int number = 0;
-		for (final STATE state : mNwa.getStates()) {
-			for (@SuppressWarnings("unused") final OutgoingInternalTransition<LETTER, STATE> trans : mNwa.internalSuccessors(state)) {
+		for (final STATE state : mOperand.getStates()) {
+			for (@SuppressWarnings("unused")
+					final OutgoingInternalTransition<LETTER, STATE> trans :
+						mOperand.internalSuccessors(state)) {
 				number++;
 			}
 		}
@@ -74,9 +80,8 @@ public class NumberOfTransitions<LETTER, STATE> implements IOperation<LETTER,STA
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}
-
 }

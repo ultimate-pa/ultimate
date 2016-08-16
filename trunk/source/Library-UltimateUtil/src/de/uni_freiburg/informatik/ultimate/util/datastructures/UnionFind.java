@@ -58,7 +58,7 @@ public class UnionFind<E> {
 	/**
 	 * Returns the representative of the equivalence class of element e.
 	 */
-	public E find(E e) {
+	public E find(final E e) {
 		final Set<E> set = mEquivalenceClass.get(e);
 		return mRepresentative.get(set);
 	}
@@ -68,7 +68,7 @@ public class UnionFind<E> {
 	 * there is no equivalence class for e this equivalence class is
 	 * constructed.
 	 */
-	public E findAndConstructEquivalenceClassIfNeeded(E e) {
+	public E findAndConstructEquivalenceClassIfNeeded(final E e) {
 		final E findResult = find(e);
 		if (findResult == null) {
 			makeEquivalenceClass(e);
@@ -106,7 +106,7 @@ public class UnionFind<E> {
 	 * Return set of all elements that are in the same equivalence class than e.
 	 * (Returned set also contains e).
 	 */
-	public Set<E> getEquivalenceClassMembers(E e) {
+	public Set<E> getEquivalenceClassMembers(final E e) {
 		return Collections.unmodifiableSet(mEquivalenceClass.get(e));
 	}
 
@@ -114,7 +114,7 @@ public class UnionFind<E> {
 	 * Construct a new equivalence class that is a singleton and contains only
 	 * element e.
 	 */
-	public void makeEquivalenceClass(E e) {
+	public void makeEquivalenceClass(final E e) {
 		if (mEquivalenceClass.containsKey(e)) {
 			throw new IllegalArgumentException("Already contained " + e);
 		}
@@ -133,7 +133,7 @@ public class UnionFind<E> {
 	 * Merge the equivalence classes of the elements e1 and e2. (e1 and e2 do
 	 * not have to be the representatives of this equivalence classes).
 	 */
-	public void union(E e1, E e2) {
+	public void union(final E e1, final E e2) {
 		final Set<E> set1 = mEquivalenceClass.get(e1);
 		final Set<E> set2 = mEquivalenceClass.get(e2);
 		final E set1rep = mRepresentative.get(set1);
@@ -144,6 +144,13 @@ public class UnionFind<E> {
 			mEquivalenceClass.put(e, set1);
 		}
 		mRepresentative.put(set1, set1rep);
+	}
+	
+	/**
+	 * @return number of equivalence classes
+	 */
+	public int size() {
+		return mRepresentative.size();
 	}
 
 }

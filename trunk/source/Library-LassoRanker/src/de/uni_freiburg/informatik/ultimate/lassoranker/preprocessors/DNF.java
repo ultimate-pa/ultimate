@@ -34,8 +34,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
 /**
@@ -50,16 +51,20 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf
  */
 public class DNF extends TransitionPreprocessor {
 	private final IUltimateServiceProvider mServices;
-	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
+	private final ManagedScript mMgdScript;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 	
 	public static final String s_Description = 
 			"Transform into disjunctive normal form";
 	
-	public DNF(IUltimateServiceProvider services, 
-			IFreshTermVariableConstructor freshTermVariableConstructor) {
+	public DNF(final IUltimateServiceProvider services, 
+			final ManagedScript freshTermVariableConstructor, 
+			final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
-		mFreshTermVariableConstructor = freshTermVariableConstructor;
+		mMgdScript = freshTermVariableConstructor;
+		mXnfConversionTechnique = xnfConversionTechnique;
+		
 	}
 	
 	@Override
@@ -68,8 +73,8 @@ public class DNF extends TransitionPreprocessor {
 	}
 	
 	@Override
-	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
-			TransFormulaLR newTF) {
+	protected boolean checkSoundness(final Script script, final TransFormulaLR oldTF,
+			final TransFormulaLR newTF) {
 		final Term old_term = oldTF.getFormula();
 		final Term new_term = newTF.getFormula();
 		return LBool.SAT != Util.checkSat(script,
@@ -77,9 +82,9 @@ public class DNF extends TransitionPreprocessor {
 	}
 	
 	@Override
-	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
-		final Dnf dnf = new Dnf(script, mServices, mFreshTermVariableConstructor);
-		tf.setFormula(dnf.transform(tf.getFormula()));
+	public TransFormulaLR process(final Script script, final TransFormulaLR tf) throws TermException {
+		final Term dnf = SmtUtils.toDnf(mServices, mMgdScript, tf.getFormula(), mXnfConversionTechnique);
+		tf.setFormula(dnf);
 		return tf;
 	}
 }

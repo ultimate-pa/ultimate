@@ -128,7 +128,7 @@ public class MinModelConverter {
 		final String prefValue = prefs.getString(PreferenceInitializer.LABEL_RATINGBOUND);
 		final RatingStrategy strategy = prefs.getEnum(PreferenceInitializer.LABEL_STRATEGY, RatingStrategy.class);
 		// if there is no boundary value given, we do Large Block Encoding
-		if (strategy == RatingStrategy.LARGE_BLOCK) {
+		if (strategy == RatingStrategy.LARGE_BLOCK || prefValue.isEmpty()) {
 			return null;
 		}
 		// check if we should use the statistic based heuristic

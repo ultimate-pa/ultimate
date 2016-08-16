@@ -31,39 +31,48 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.AAToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.NwaToUltimateModel;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.TreeAutomatonToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.PetriNetToUltimateModel;
+import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
+public final class Automaton2UltimateModel {
+	private Automaton2UltimateModel() {
+		// private constructor
+	}
 
-public class Automaton2UltimateModel<LETTER,STATE> {
-	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static IElement ultimateModel(AutomataLibraryServices services, IAutomaton automaton) throws AutomataOperationCanceledException {
+	public static IElement ultimateModel(
+			final AutomataLibraryServices services,
+			final IAutomaton automaton)
+					throws AutomataOperationCanceledException {
 		if (automaton instanceof INestedWordAutomatonSimple) {
 			final INestedWordAutomatonSimple nwa = (INestedWordAutomatonSimple) automaton;
 			final NwaToUltimateModel transformer = new NwaToUltimateModel(services);
 				return transformer.getUltimateModelOfNwa(nwa);
-		}
-		else if (automaton instanceof IPetriNet) {
+		} else if (automaton instanceof IPetriNet) {
 			final IPetriNet net = (IPetriNet) automaton;
 			final PetriNetToUltimateModel transformer = new PetriNetToUltimateModel();
 			return transformer.getUltimateModelOfPetriNet(net);
-		}
-		else if (automaton instanceof BranchingProcess) {
+		} else if (automaton instanceof BranchingProcess) {
 			final BranchingProcess bp = (BranchingProcess) automaton;
-			final BranchingProcessToUltimateModel transformer = new BranchingProcessToUltimateModel();
+			final BranchingProcessToUltimateModel transformer =
+					new BranchingProcessToUltimateModel();
 			return transformer.getUltimateModelOfBranchingProcess(bp);
-		}
-		else if (automaton instanceof AlternatingAutomaton) {
+		} else if (automaton instanceof AlternatingAutomaton) {
 			final AlternatingAutomaton aa = (AlternatingAutomaton) automaton;
 			final AAToUltimateModel transformer = new AAToUltimateModel();
 			return transformer.getUltimateModelOfAA(aa);
-		}
-		else {
-			throw new IllegalArgumentException("Only nwa, aa and net supported");
+		} else if (automaton instanceof ITreeAutomaton) {
+			final ITreeAutomaton ta = (ITreeAutomaton) automaton;
+			final TreeAutomatonToUltimateModel transformer = new TreeAutomatonToUltimateModel<>();
+			return transformer.getUltimateModelOfAA(ta);
+		} else {
+			throw new IllegalArgumentException(
+					"Only nwa, aa, tree automaton, and net supported");
 		}
 	}
 }

@@ -26,14 +26,26 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.LassoExtractor;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.IMinimizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.MinimizeDfaSimulation;
 
 /**
@@ -53,8 +65,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaSimulation<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public final class ReduceNwaDirectSimulation<LETTER, STATE>
+		extends MinimizeDfaSimulation<LETTER, STATE>
+		implements IMinimizeNwa<LETTER, STATE>, IOperation<LETTER, STATE> {
 
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
@@ -66,13 +79,13 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 	 * @param stateFactory
 	 *            The state factory used for creating states
 	 * @param operand
-	 *            The nwa automaton to reduce
+	 *            The nwa to reduce
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceNwaDirectSimulation(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+	public ReduceNwaDirectSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, true);
 	}
 
@@ -86,7 +99,7 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 	 * @param stateFactory
 	 *            The state factory used for creating states
 	 * @param operand
-	 *            The nwa automaton to reduce
+	 *            The nwa to reduce
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
@@ -94,15 +107,45 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceNwaDirectSimulation(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs)
+	public ReduceNwaDirectSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean useSCCs)
 					throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand, useSCCs,
+				new LookaheadPartitionConstructor<LETTER, STATE>(services, operand, true).getResult());
+	}
+
+	/**
+	 * Creates a new nwa reduce object that starts reducing the given nwa
+	 * automaton.<br/>
+	 * Once finished the result can be get by using {@link #getResult()}.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            The state factory used for creating states
+	 * @param operand
+	 *            The nwa to reduce
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @param possibleEquivalenceClasses
+	 *            A collection of sets which contains states of an automaton
+	 *            that may be merge-able. States which are not in the same set
+	 *            are definitely not merge-able which is used as an optimization
+	 *            for the game graph
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public ReduceNwaDirectSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean useSCCs,
+			final Collection<Set<STATE>> possibleEquivalenceClasses) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand,
 				new DirectNwaSimulation<LETTER, STATE>(services.getProgressMonitorService(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						new DirectNwaGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
-								stateFactory)));
+								stateFactory, possibleEquivalenceClasses)));
 	}
 
 	/*
@@ -116,9 +159,52 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		getLogger().info("Start testing correctness of " + operationName());
 		boolean correct = true;
-		correct &= (new IsIncluded<LETTER, STATE>(getServices(), stateFactory, getOperand(), getResult())).getResult();
-		correct &= (new IsIncluded<LETTER, STATE>(getServices(), stateFactory, getResult(), getOperand())).getResult();
+
+		final AutomataLibraryServices services = getServices();
+		final INestedWordAutomaton<LETTER, STATE> operand = getOperand();
+		final INestedWordAutomaton<LETTER, STATE> result = getResult();
+
+		// This is a semi-test, if it returns false, the result can also be
+		// correct though
+		correct &= (new IsIncluded<LETTER, STATE>(services, stateFactory, operand, result)).getResult();
+		correct &= (new IsIncluded<LETTER, STATE>(services, stateFactory, result, operand)).getResult();
+
+		// Try using some random lasso-words to prove a possible incorrectness
+		if (!correct) {
+			final List<NestedLassoWord<LETTER>> nestedLassoWords = new LinkedList<>();
+			nestedLassoWords.addAll((new LassoExtractor<LETTER, STATE>(services, operand)).getResult());
+			nestedLassoWords.addAll((new LassoExtractor<LETTER, STATE>(services, result)).getResult());
+
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
+
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
+
+			correct = true;
+			for (final NestedLassoWord<LETTER> nestedLassoWord : nestedLassoWords) {
+				final boolean op = (new BuchiAccepts<LETTER, STATE>(services, operand, nestedLassoWord)).getResult();
+				final boolean res = (new BuchiAccepts<LETTER, STATE>(services, operand, nestedLassoWord)).getResult();
+				correct &= (op == res);
+			}
+		}
 		getLogger().info("Finished testing correctness of " + operationName());
+
+		// We may assume the result is correct as the chance of it being not
+		// covered by the test is comparable small
 		return correct;
 	}
 

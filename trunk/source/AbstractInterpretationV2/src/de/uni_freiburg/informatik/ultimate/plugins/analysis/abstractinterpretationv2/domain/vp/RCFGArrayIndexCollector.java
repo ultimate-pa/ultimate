@@ -38,10 +38,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
@@ -57,9 +57,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
 public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 
 	private final Set<ApplicationTerm> termSet = new HashSet<>();
-	private final Map<BoogieVar, Set<PointerExpression>> pointerMap = new HashMap<BoogieVar, Set<PointerExpression>>();
-	private final Map<BoogieVar, Set<BoogieVar>> indexToArraysMap = new HashMap<BoogieVar, Set<BoogieVar>>();
-	private Map<TermVariable, BoogieVar> termVarToBooVarMap;
+	private final Map<IProgramVar, Set<PointerExpression>> pointerMap = new HashMap<IProgramVar, Set<PointerExpression>>();
+	private final Map<IProgramVar, Set<IProgramVar>> indexToArraysMap = new HashMap<IProgramVar, Set<IProgramVar>>();
+	private Map<TermVariable, IProgramVar> termVarToBooVarMap;
 
 	public RCFGArrayIndexCollector(final RCFGNode root) {
 		process(root.getOutgoingEdges());
@@ -91,7 +91,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		TermVariable[] termVariableArray;
 		final Set<PointerExpression> ptrExprSet = new HashSet<PointerExpression>();
 		PointerExpression ptrExpr;
-		Map<TermVariable, BoogieVar> ptrExprTermMap;
+		Map<TermVariable, IProgramVar> ptrExprTermMap;
 
 		termVarToBooVarMap = getTermVarToBooVar(c.getTransitionFormula().getInVars());
 
@@ -102,17 +102,17 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 			if (terms.length >= 2) {
 
 				termVariableArray = term.getFreeVars();
-				ptrExprTermMap = new HashMap<TermVariable, BoogieVar>();
+				ptrExprTermMap = new HashMap<TermVariable, IProgramVar>();
 				final TermVariable[] termVar = terms[1].getFreeVars();
-				final BoogieVar pointerMapKey = termVarToBooVarMap.get(termVariableArray[0]);
+				final IProgramVar pointerMapKey = termVarToBooVarMap.get(termVariableArray[0]);
 
 				for (final TermVariable tv : termVar) {
-					final BoogieVar indexTermVar = termVarToBooVarMap.get(tv);
+					final IProgramVar indexTermVar = termVarToBooVarMap.get(tv);
 					if (indexTermVar != null) {
 						ptrExprTermMap.put(tv, indexTermVar);
 
 						if (!indexToArraysMap.containsKey(indexTermVar)) {
-							final Set<BoogieVar> indexToArraySet = new HashSet<BoogieVar>();
+							final Set<IProgramVar> indexToArraySet = new HashSet<IProgramVar>();
 							indexToArraySet.add(pointerMapKey);
 							indexToArraysMap.put(indexTermVar, indexToArraySet);
 						} else {
@@ -158,11 +158,11 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 //
 //	}
 
-	private Map<TermVariable, BoogieVar> getTermVarToBooVar(Map<BoogieVar, TermVariable> map) {
+	private Map<TermVariable, IProgramVar> getTermVarToBooVar(Map<IProgramVar, TermVariable> map) {
 
-		final Map<TermVariable, BoogieVar> result = new HashMap<TermVariable, BoogieVar>();
+		final Map<TermVariable, IProgramVar> result = new HashMap<TermVariable, IProgramVar>();
 
-		for (final Entry<BoogieVar, TermVariable> entry : map.entrySet()) {
+		for (final Entry<IProgramVar, TermVariable> entry : map.entrySet()) {
 			result.put(entry.getValue(), entry.getKey());
 		}
 
@@ -174,11 +174,11 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		return "";
 	}
 	
-	public Map<BoogieVar, Set<PointerExpression>> getPointerMap () {
+	public Map<IProgramVar, Set<PointerExpression>> getPointerMap () {
 		return pointerMap;
 	}
 	
-	public Map<BoogieVar, Set<BoogieVar>> getIndexToArraysMap () {
+	public Map<IProgramVar, Set<IProgramVar>> getIndexToArraysMap () {
 		return indexToArraysMap;
 	}
 

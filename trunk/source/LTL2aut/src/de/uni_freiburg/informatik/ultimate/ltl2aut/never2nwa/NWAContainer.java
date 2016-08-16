@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IVisualizable;
@@ -38,13 +38,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class NWAContainer extends BasePayloadContainer implements IVisualizable {
 
 	private static final long serialVersionUID = 1L;
-	private final NestedWordAutomaton<CodeBlock, String> mNWA;
+	private final INestedWordAutomaton<CodeBlock, String> mNWA;
 
-	public NWAContainer(NestedWordAutomaton<CodeBlock, String> nwa) {
+	public NWAContainer(final INestedWordAutomaton<CodeBlock, String> nwa) {
 		mNWA = nwa;
 	}
 
-	public NestedWordAutomaton<CodeBlock, String> getNWA() {
+	public INestedWordAutomaton<CodeBlock, String> getNWA() {
 		return mNWA;
 	}
 

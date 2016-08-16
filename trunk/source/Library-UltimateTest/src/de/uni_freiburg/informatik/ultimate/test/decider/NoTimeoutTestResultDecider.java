@@ -44,8 +44,12 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 /**
+ * This {@link ITestResultDecider} will fail a test if a timeout or an exception occurs. Every other result will be a
+ * success.
  * 
- * @author dietsch@informatik.uni-freiburg.de
+ * This decider can be used for testing translation or preprocessing steps where no verification result is produced.
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public class NoTimeoutTestResultDecider extends TestResultDecider {
@@ -53,19 +57,14 @@ public class NoTimeoutTestResultDecider extends TestResultDecider {
 	private final String mInputFileNames;
 
 	/**
-	 * 
-	 * @param inputFile
-	 * @param settingsFile
-	 * @param fileending
-	 *            use .c or .bpl or something like that. The . is important
-	 * 
+	 * The standard constructor for a test result decider. It takes an {@link UltimateRunDefinition} as argument.
 	 */
-	public NoTimeoutTestResultDecider(UltimateRunDefinition urd) {
+	public NoTimeoutTestResultDecider(final UltimateRunDefinition urd) {
 		mInputFileNames = urd.getInputFileNames();
 	}
 
 	@Override
-	public TestResult getTestResult(IUltimateServiceProvider services) {
+	public TestResult getTestResult(final IUltimateServiceProvider services) {
 		setResultCategory("");
 		setResultMessage("");
 

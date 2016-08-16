@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
@@ -51,7 +51,7 @@ public class SizeBenchmark implements ICsvProviderProvider<Integer> {
 	private final String mLabel;
 
 	@SuppressWarnings("unused")
-	public <E, V> SizeBenchmark(NestedWordAutomaton<E, V> nwa, String label) {
+	public <E, V> SizeBenchmark(final INestedWordAutomaton<E, V> nwa, final String label) {
 		final Collection<V> states = nwa.getStates();
 		int edges = 0;
 		int locs = 0;
@@ -75,7 +75,7 @@ public class SizeBenchmark implements ICsvProviderProvider<Integer> {
 		mLabel = label;
 	}
 
-	public SizeBenchmark(RootNode root, String label) {
+	public SizeBenchmark(final RootNode root, final String label) {
 		final ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
 		final HashSet<RCFGEdge> closedE = new HashSet<>();
 		final HashSet<RCFGNode> closedV = new HashSet<>();

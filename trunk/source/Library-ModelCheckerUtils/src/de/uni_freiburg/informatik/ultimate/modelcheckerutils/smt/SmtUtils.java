@@ -57,15 +57,22 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.bdd.SimplifyBdd;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class SmtUtils {
+	
+	public enum XnfConversionTechnique {BDD_BASED, BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION };
+	
+	public enum SimplicationTechnique {SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA };
 
 	private SmtUtils() {
 		// Prevent instantiation of this utility class
@@ -77,12 +84,29 @@ public class SmtUtils {
 	 */
 	private static final boolean BINARY_BITVECTOR_SUM_WORKAROUND = false;
 
-	public static Term simplify(final Script script, final Term formula, final IUltimateServiceProvider services) {
+	public static Term simplify(final ManagedScript script, final Term formula, final IUltimateServiceProvider services,
+			final SimplicationTechnique simplificationTechnique) {
 		final ILogger logger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
 		}
-		final Term simplified = (new SimplifyDDAWithTimeout(script, services)).getSimplifiedTerm(formula);
+		final Term simplified;
+		switch (simplificationTechnique) {
+		case SIMPLIFY_BDD_PROP:
+			simplified = (new SimplifyBdd(services, script)).transform(formula);
+			break;
+		case SIMPLIFY_BDD_FIRST_ORDER:
+			simplified = (new SimplifyBdd(services, script)).transformWithImplications(formula);
+			break;
+		case SIMPLIFY_DDA:
+			simplified = (new SimplifyDDAWithTimeout(script.getScript(), services)).getSimplifiedTerm(formula);
+			break;
+		case SIMPLIFY_QUICK:
+			simplified = (new SimplifyQuick(script.getScript(), services)).getSimplifiedTerm(formula);
+			break;
+		default:
+			throw new AssertionError("unknown enum constant");
+		}
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("DAG size before simplification {0}, DAG size after simplification {1}",
 					new DagSizePrinter(formula), new DagSizePrinter(simplified)));
@@ -473,15 +497,22 @@ public class SmtUtils {
 		}
 		final ConstantTerm fstConst = (ConstantTerm) fst;
 		final ConstantTerm sndConst = (ConstantTerm) snd;
-		final Object fstValue = fstConst.getValue();
-		final Object sndValue = sndConst.getValue();
-		if (fstValue.getClass() != sndValue.getClass()) {
-			return false;
+		Object fstValue = fstConst.getValue();
+		Object sndValue = sndConst.getValue();
+		if (fstValue instanceof BigInteger && sndValue instanceof Rational) {
+			fstValue = Rational.valueOf((BigInteger) fstValue, BigInteger.ONE);
+		} else if (fstValue instanceof Rational && sndValue instanceof BigInteger) {
+			sndValue = Rational.valueOf((BigInteger) sndValue, BigInteger.ONE);
 		}
-		return !fstConst.getValue().equals(sndConst.getValue());
+		if (fstValue.getClass() != sndValue.getClass()) {
+			throw new UnsupportedOperationException(
+					"First value is " + fstValue.getClass().getSimpleName() + 
+					" second value is " + sndValue.getClass().getSimpleName());
+		}
+		return !fstValue.equals(sndValue);
 	}
 
-	public static List<Term> substitutionElementwise(final List<Term> subtituents, final SafeSubstitution subst) {
+	public static List<Term> substitutionElementwise(final List<Term> subtituents, final Substitution subst) {
 		final List<Term> result = new ArrayList<Term>();
 		for (int i = 0; i < subtituents.size(); i++) {
 			result.add(subst.transform(subtituents.get(i)));
@@ -498,23 +529,24 @@ public class SmtUtils {
 		return result;
 	}
 
-	public static Map<Term, Term> termVariables2Constants(final Script script, final VariableManager variableManager,
-			final Collection<TermVariable> termVariables) {
+	public static Map<Term, Term> termVariables2Constants(final Script script,
+			final Collection<TermVariable> termVariables,
+			final boolean declareConstants) {
 		final Map<Term, Term> mapping = new HashMap<Term, Term>();
 		for (final TermVariable tv : termVariables) {
-			Term constant = variableManager.getCorrespondingConstant(tv);
-			if (constant == null) {
-				constant = termVariable2constant(script, tv);
-			}
+			final Term constant = termVariable2constant(script, tv, declareConstants);
 			mapping.put(tv, constant);
 		}
 		return mapping;
 	}
 
-	public static Term termVariable2constant(final Script script, final TermVariable tv) {
+	public static Term termVariable2constant(
+			final Script script, final TermVariable tv, final boolean declareConstant) {
 		final String name = removeSmtQuoteCharacters(tv.getName());
-		final Sort resultSort = tv.getSort();
-		script.declareFun(name, new Sort[0], resultSort);
+		if (declareConstant) {
+			final Sort resultSort = tv.getSort();
+			script.declareFun(name, new Sort[0], resultSort);
+		}
 		return script.term(name);
 	}
 
@@ -907,7 +939,7 @@ public class SmtUtils {
 			final Map<Term, Term> ucMapping = new HashMap<>();
 			final Term[] conjuncts = getConjuncts(term);
 			for (int i = 0; i < conjuncts.length; i++) {
-				final Term conjunct = (new SafeSubstitution(script, substitutionMapping)).transform(conjuncts[i]);
+				final Term conjunct = (new Substitution(script, substitutionMapping)).transform(conjuncts[i]);
 				final String name = "conjunct" + i;
 				final Annotation annot = new Annotation(":named", name);
 				final Term annotTerm = script.annotate(conjunct, annot);
@@ -1062,17 +1094,16 @@ public class SmtUtils {
 	 * the quantifier and occur in the set toRename to fresh variables.
 	 * @param freshVarPrefix prefix of the fresh variables
 	 */
-	public static Term renameQuantifiedVariables(final Script script, 
-			final IFreshTermVariableConstructor freshVarConstructor, 
-			final QuantifiedFormula qFormula, final Set<TermVariable> toRename, 
-			final String freshVarPrefix) {
+	public static Term renameQuantifiedVariables(final ManagedScript mgdScript, 
+			final QuantifiedFormula qFormula, 
+			final Set<TermVariable> toRename, final String freshVarPrefix) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final TermVariable var : toRename) {
-			final TermVariable freshVariable = freshVarConstructor.
+			final TermVariable freshVariable = mgdScript.
 					constructFreshTermVariable(freshVarPrefix, var.getSort());
 			substitutionMapping.put(var, freshVariable);
 		}
-		final Term newBody = (new SafeSubstitution(script, freshVarConstructor, 
+		final Term newBody = (new Substitution(mgdScript, 
 					substitutionMapping)).transform(qFormula.getSubformula());
 		
 		final TermVariable[] vars = new TermVariable[qFormula.getVariables().length];
@@ -1084,7 +1115,7 @@ public class SmtUtils {
 				vars[i] = qFormula.getVariables()[i];
 			}
 		}
-		final Term result = script.quantifier(qFormula.getQuantifier(), vars, newBody);
+		final Term result = mgdScript.getScript().quantifier(qFormula.getQuantifier(), vars, newBody);
 		return result;
 	}
 	
@@ -1101,5 +1132,47 @@ public class SmtUtils {
 		}
 		return false;
 	}
+	
+
+	/**
+	 * @return logically equivalent term in disjunctive normal form (DNF)
+	 */
+	public static Term toDnf(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final Term term,
+			final XnfConversionTechnique xnfConversionTechnique) {
+		final Term result;
+		switch (xnfConversionTechnique) {
+		case BDD_BASED:
+			result = (new SimplifyBdd(services, mgdScript)).transformToDNF(term);
+			break;
+		case BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION:
+			result = (new Dnf(mgdScript, services)).transform(term);
+			break;
+		default:
+			throw new AssertionError("unknown enum constant");
+		}
+		return result;
+	}
+	
+	/**
+	 * @return logically equivalent term in conjunctive normal form (CNF)
+	 */
+	public static Term toCnf(final IUltimateServiceProvider services, 
+			final ManagedScript mgdScript, final Term term,
+			final XnfConversionTechnique xnfConversionTechnique) {
+		final Term result;
+		switch (xnfConversionTechnique) {
+		case BDD_BASED:
+			result = (new SimplifyBdd(services, mgdScript)).transformToCNF(term);
+			break;
+		case BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION:
+			result = (new Cnf(mgdScript, services)).transform(term);
+			break;
+		default:
+			throw new AssertionError("unknown enum constant");
+		}
+		return result;
+	}
+	
 
 }

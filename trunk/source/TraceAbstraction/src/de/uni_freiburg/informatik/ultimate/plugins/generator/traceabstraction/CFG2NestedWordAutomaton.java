@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
@@ -62,7 +63,7 @@ public class CFG2NestedWordAutomaton {
 	
 	private final ILogger mLogger;
 	
-	public CFG2NestedWordAutomaton(IUltimateServiceProvider services, boolean interprocedural, SmtManager predicateFactory, ILogger logger) {
+	public CFG2NestedWordAutomaton(final IUltimateServiceProvider services, final boolean interprocedural, final SmtManager predicateFactory, final ILogger logger) {
 		mServices = services;
 		mLogger = logger;
 		mSmtManager = predicateFactory;
@@ -79,10 +80,10 @@ public class CFG2NestedWordAutomaton {
 	 * corresponds to an error location will be accepting. Otherwise only the
 	 * state corresponding to errorLoc will be accepting.
 	 */
-	public NestedWordAutomaton<CodeBlock,IPredicate> getNestedWordAutomaton(
-							RootNode rootNode,
-							StateFactory<IPredicate> tAContentFactory,
-							Collection<ProgramPoint> errorLocs) {
+	public INestedWordAutomaton<CodeBlock,IPredicate> getNestedWordAutomaton(
+							final RootNode rootNode,
+							final StateFactory<IPredicate> tAContentFactory,
+							final Collection<ProgramPoint> errorLocs) {
 		final Set<ProgramPoint> initialNodes = new HashSet<ProgramPoint>();
 		final Set<ProgramPoint> allNodes = new HashSet<ProgramPoint>();
 		

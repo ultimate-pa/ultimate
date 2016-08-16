@@ -45,9 +45,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
 /**
@@ -58,7 +58,7 @@ public class Nnf {
 	
 	protected final Script mScript;
 	private static final String s_FreshVariableString = "nnf";
-	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
+	private final ManagedScript mMgdScript;
 	protected final ILogger mLogger;
 	private final NnfTransformerHelper mNnfTransformerHelper;
 	private List<List<TermVariable>> mQuantifiedVariables;
@@ -66,22 +66,21 @@ public class Nnf {
 	public enum QuantifierHandling { CRASH, PULL, KEEP, IS_ATOM }
 	protected final QuantifierHandling mQuantifierHandling;
 	
-	public Nnf(Script script, IUltimateServiceProvider services, 
-			IFreshTermVariableConstructor freshTermVariableConstructor,
-			QuantifierHandling quantifierHandling) {
+	public Nnf(final ManagedScript mgdScript, final IUltimateServiceProvider services, 
+			final QuantifierHandling quantifierHandling) {
 		super();
 		mQuantifierHandling = quantifierHandling;
-		mScript = script;
-		mFreshTermVariableConstructor = freshTermVariableConstructor;
+		mScript = mgdScript.getScript();
+		mMgdScript = mgdScript;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mNnfTransformerHelper = getNnfTransformerHelper(services);
 	}
 	
-	protected NnfTransformerHelper getNnfTransformerHelper(IUltimateServiceProvider services) {
+	protected NnfTransformerHelper getNnfTransformerHelper(final IUltimateServiceProvider services) {
 		return new NnfTransformerHelper(services);
 	}
 	
-	public Term transform(Term term) {
+	public Term transform(final Term term) {
 		assert mQuantifiedVariables == null;
 		if (mQuantifierHandling == QuantifierHandling.PULL) {
 			mQuantifiedVariables = new ArrayList<List<TermVariable>>();
@@ -109,12 +108,12 @@ public class Nnf {
 		
 		protected IUltimateServiceProvider mServices;
 
-		protected NnfTransformerHelper(IUltimateServiceProvider services){
+		protected NnfTransformerHelper(final IUltimateServiceProvider services){
 			mServices = services;
 		}
 		
 		@Override
-		protected void convert(Term term) {
+		protected void convert(final Term term) {
 			assert term.getSort().getName().equals("Bool") : "Input is not Bool";
 			if (term instanceof ApplicationTerm) {
 				final ApplicationTerm appTerm = (ApplicationTerm) term; 
@@ -235,12 +234,12 @@ public class Nnf {
 					}
 					final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 					for (final TermVariable oldTv : qf.getVariables()) {
-						final TermVariable freshTv = mFreshTermVariableConstructor.
+						final TermVariable freshTv = mMgdScript.
 								constructFreshTermVariable(s_FreshVariableString, oldTv.getSort()); 
 						substitutionMapping.put(oldTv, freshTv);
 						variables.add(freshTv);
 					}
-					final Term newBody = (new SafeSubstitution(mScript, substitutionMapping)).transform(qf.getSubformula());
+					final Term newBody = (new Substitution(mScript, substitutionMapping)).transform(qf.getSubformula());
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
@@ -257,7 +256,7 @@ public class Nnf {
 			}
 		}
 
-		private Term convertIte(Term condTerm, Term ifTerm, Term elseTerm) {
+		private Term convertIte(final Term condTerm, final Term ifTerm, final Term elseTerm) {
 			final Term condImpliesIf = Util.or(mScript, SmtUtils.not(mScript, condTerm), ifTerm);
 			final Term notCondImpliesElse = Util.or(mScript, condTerm, elseTerm);
 			final Term result = Util.and(mScript, condImpliesIf, notCondImpliesElse);
@@ -272,13 +271,13 @@ public class Nnf {
 		 * Sort Bool.
 		 * </ul>
 		 */
-		private boolean isXor(ApplicationTerm appTerm, String functionName) {
+		private boolean isXor(final ApplicationTerm appTerm, final String functionName) {
 			return functionName.equals("xor") || 
 					(functionName.equals("distinct") && SmtUtils.firstParamIsBool(appTerm));
 		}
 		
 		
-		private void convertNot(Term notParam, Term notTerm) {
+		private void convertNot(final Term notParam, final Term notTerm) {
 			assert notParam.getSort().getName().equals("Bool") : "Input is not Bool";
 			if (notParam instanceof ApplicationTerm) {
 				final ApplicationTerm appTerm = (ApplicationTerm) notParam; 
@@ -394,7 +393,7 @@ public class Nnf {
 			}
 		}
 		
-		private Term[] negateTerms(Term[] terms) {
+		private Term[] negateTerms(final Term[] terms) {
 			final Term[] newTerms = new Term[terms.length];
 			for (int i=0; i<terms.length; i++) {
 				newTerms[i] = SmtUtils.not(mScript, terms[i]);
@@ -402,7 +401,7 @@ public class Nnf {
 			return newTerms;
 		}
 		
-		private Term[] negateLast(Term[] terms) {
+		private Term[] negateLast(final Term[] terms) {
 			final Term[] newTerms = new Term[terms.length];
 			for (int i=0; i<terms.length-1; i++) {
 				newTerms[i] = terms[i];
@@ -411,7 +410,7 @@ public class Nnf {
 			return newTerms;
 		}
 		
-		private Term[] negateAllButLast(Term[] terms) {
+		private Term[] negateAllButLast(final Term[] terms) {
 			final Term[] newTerms = new Term[terms.length];
 			for (int i=0; i<terms.length-1; i++) {
 				newTerms[i] = SmtUtils.not(mScript, terms[i]);
@@ -422,7 +421,7 @@ public class Nnf {
 
 		
 		@Override
-		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
+		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 			final Term simplified = SmtUtils.termWithLocalSimplification(mScript, 
 					appTerm.getFunction().getName(), 
 					appTerm.getFunction().getIndices(), newArgs);

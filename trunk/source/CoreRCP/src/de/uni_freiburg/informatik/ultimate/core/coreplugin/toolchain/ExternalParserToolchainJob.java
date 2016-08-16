@@ -78,7 +78,7 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 
 		try {
 			tpm.worked(1);
-			if ((mJobMode == ChainMode.RERUN || mJobMode == ChainMode.KEEP_Toolchain)) {
+			if ((mJobMode == ChainMode.RERUN || mJobMode == ChainMode.KEEP_TOOLCHAIN)) {
 				throw new Exception("Rerun currently unsupported! Aborting...");
 			}
 			// all modes requires this

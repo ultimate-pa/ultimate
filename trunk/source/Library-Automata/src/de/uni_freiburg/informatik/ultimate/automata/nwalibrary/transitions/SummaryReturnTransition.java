@@ -26,22 +26,28 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions;
 
-
 /**
  * Return Transition of a hierarchical predecessor.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class SummaryReturnTransition<LETTER,STATE> implements OutgoingTransitionlet<LETTER,STATE> {
+public class SummaryReturnTransition<LETTER,STATE>
+		implements IOutgoingTransitionlet<LETTER,STATE> {
 	
 	private final STATE mLinPred;
 	private final LETTER mLetter; 
 	private final STATE mSucc;
 	
-	public SummaryReturnTransition(STATE linPred, LETTER letter, STATE succ) {
+	/**
+	 * @param linPred linear predecessor state
+	 * @param letter letter
+	 * @param succ successor state
+	 */
+	public SummaryReturnTransition(final STATE linPred, final LETTER letter,
+			final STATE succ) {
 		mLinPred = linPred;
 		mLetter = letter;
 		mSucc = succ;
@@ -58,5 +64,4 @@ public class SummaryReturnTransition<LETTER,STATE> implements OutgoingTransition
 	public STATE getSucc() {
 		return mSucc;
 	}
-	
 }

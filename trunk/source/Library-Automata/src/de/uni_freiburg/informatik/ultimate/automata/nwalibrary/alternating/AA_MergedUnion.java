@@ -35,33 +35,35 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
-public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE>{
+public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE> {
+	
+	private final AlternatingAutomaton<LETTER, STATE> mResultAutomaton;
 
-	public AA_MergedUnion(AlternatingAutomaton<LETTER, STATE> automaton1, AlternatingAutomaton<LETTER, STATE> automaton2){
+	public AA_MergedUnion(final AlternatingAutomaton<LETTER, STATE> automaton1, final AlternatingAutomaton<LETTER, STATE> automaton2){
 		assert automaton1.getAlphabet().equals(automaton2.getAlphabet());
 		assert (automaton1.isReversed() == automaton2.isReversed());
-		resultAutomaton = new AlternatingAutomaton<>(automaton1.getAlphabet(), automaton1.getStateFactory());
+		mResultAutomaton = new AlternatingAutomaton<>(automaton1.getAlphabet(), automaton1.getStateFactory());
 		final HashMap<Integer, Integer> shiftMap1 = new HashMap<>();
 		final HashMap<Integer, Integer> shiftMap2 = new HashMap<>();
 		for(final STATE state : automaton1.getStates()){
-			resultAutomaton.addState(state);
-			shiftMap1.put(automaton1.getStateIndex(state), resultAutomaton.getStateIndex(state));
+			mResultAutomaton.addState(state);
+			shiftMap1.put(automaton1.getStateIndex(state), mResultAutomaton.getStateIndex(state));
 			if(automaton1.isStateFinal(state)){
-				resultAutomaton.setStateFinal(state);
+				mResultAutomaton.setStateFinal(state);
 			}
 		}
 		for(final STATE state : automaton2.getStates()){
-			resultAutomaton.addState(state);
-			shiftMap2.put(automaton2.getStateIndex(state), resultAutomaton.getStateIndex(state));
+			mResultAutomaton.addState(state);
+			shiftMap2.put(automaton2.getStateIndex(state), mResultAutomaton.getStateIndex(state));
 			if(automaton2.isStateFinal(state)){
-				resultAutomaton.setStateFinal(state);
+				mResultAutomaton.setStateFinal(state);
 			}
 		}
-		final int newSize = resultAutomaton.getStates().size();
+		final int newSize = mResultAutomaton.getStates().size();
 		for(final Entry<LETTER, BooleanExpression[]> entry : automaton1.getTransitionFunction().entrySet()){
 			for(int i=0;i<automaton1.getStates().size();i++){
 				if(entry.getValue()[i] != null){
-					resultAutomaton.addTransition(
+					mResultAutomaton.addTransition(
 							entry.getKey(), 
 							automaton1.getStates().get(i), 
 							entry.getValue()[i].cloneShifted(shiftMap1, newSize));
@@ -71,18 +73,17 @@ public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE>{
 		for(final Entry<LETTER, BooleanExpression[]> entry : automaton2.getTransitionFunction().entrySet()){
 			for(int i=0;i<automaton2.getStates().size();i++){
 				if(entry.getValue()[i] != null){
-					resultAutomaton.addTransition(
+					mResultAutomaton.addTransition(
 							entry.getKey(), 
 							automaton2.getStates().get(i), 
 							entry.getValue()[i].cloneShifted(shiftMap2, newSize));
 				}
 			}
 		}
-		resultAutomaton.addAcceptingConjunction(automaton1.getAcceptingFunction().cloneShifted(shiftMap1, newSize));
-		resultAutomaton.addAcceptingConjunction(automaton2.getAcceptingFunction().cloneShifted(shiftMap2, newSize));
-		resultAutomaton.setReversed(automaton1.isReversed());
+		mResultAutomaton.addAcceptingConjunction(automaton1.getAcceptingFunction().cloneShifted(shiftMap1, newSize));
+		mResultAutomaton.addAcceptingConjunction(automaton2.getAcceptingFunction().cloneShifted(shiftMap2, newSize));
+		mResultAutomaton.setReversed(automaton1.isReversed());
 	}
-	private final AlternatingAutomaton<LETTER, STATE> resultAutomaton;
 
 	@Override
 	public String operationName(){
@@ -101,11 +102,11 @@ public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE>{
 
 	@Override
 	public AlternatingAutomaton<LETTER, STATE> getResult() throws AutomataOperationCanceledException{
-		return resultAutomaton;
+		return mResultAutomaton;
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException{
+	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException{
 		return true;
 	}
 }

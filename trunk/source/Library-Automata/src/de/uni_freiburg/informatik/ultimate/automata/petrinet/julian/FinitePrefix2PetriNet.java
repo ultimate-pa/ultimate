@@ -85,8 +85,8 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 //		return result;
 //	}
 
-	public FinitePrefix2PetriNet(AutomataLibraryServices services, 
-			BranchingProcess<L, C> bp) throws AutomataLibraryException {
+	public FinitePrefix2PetriNet(final AutomataLibraryServices services, 
+			final BranchingProcess<L, C> bp) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		// TODO implement merging for markings?
@@ -249,7 +249,7 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 	}
 	
 	
-	private void mergeConditions(Iterable<Condition<L,C>> set1, Iterable<Condition<L,C>> set2) {
+	private void mergeConditions(final Iterable<Condition<L,C>> set1, final Iterable<Condition<L,C>> set2) {
 		final Map<Place<L,C>, Condition<L,C>> origPlace2Condition = new HashMap<Place<L,C>, Condition<L,C>>();
 		for (final Condition<L,C> c1 : set1) {
 			origPlace2Condition.put(c1.getPlace(), c1);
@@ -274,10 +274,10 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 	
 	
 	class TransitionSet {
-		Map<L, Map< Set<Place<L, C>>, Set<Set<Place<L, C>>>>> mLetter2Predset2Succsets = 
-				new HashMap<L, Map< Set<Place<L, C>>, Set<Set<Place<L, C>>>>>();
+		Map<L, Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>>> mLetter2Predset2Succsets = 
+				new HashMap<L, Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>>>();
 		
-		void addTransition(L letter, Set<Place<L, C>> predset, Set<Place<L, C>> succset) {
+		void addTransition(final L letter, final Set<Place<L, C>> predset, final Set<Place<L, C>> succset) {
 			Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>> predsets2succsets = mLetter2Predset2Succsets.get(letter);
 			if (predsets2succsets == null) {
 				predsets2succsets = new HashMap<Set<Place<L, C>>, Set<Set<Place<L, C>>>>();
@@ -291,7 +291,7 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 			succsets.add(succset);
 		}
 		
-		void addAllTransitionsToNet(PetriNetJulian<L,C> net) {
+		void addAllTransitionsToNet(final PetriNetJulian<L,C> net) {
 			for (final L letter : mLetter2Predset2Succsets.keySet()) {
 				final Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>> predsets2succsets = mLetter2Predset2Succsets.get(letter);
 				for (final Set<Place<L,C>> predset : predsets2succsets.keySet()) {
@@ -308,7 +308,7 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 
 
 	@Override
-	public boolean checkResult(StateFactory<C> stateFactory)
+	public boolean checkResult(final StateFactory<C> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}

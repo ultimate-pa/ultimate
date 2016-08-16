@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -52,20 +52,24 @@ public class AutomatonEpimorphism<STATE> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
-	private final HashMap<STATE, STATE> mepimorphism;
+	private final HashMap<STATE, STATE> mEpimorphism;
 
-	public AutomatonEpimorphism(AutomataLibraryServices services) {
+	/**
+	 * @param services Ultimate services
+	 */
+	public AutomatonEpimorphism(final AutomataLibraryServices services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mepimorphism = new HashMap<STATE, STATE>();
+		mEpimorphism = new HashMap<STATE, STATE>();
 	}
 
 	/**
 	 * Creates the epimorphism for two automatons from a1 to a2. The Labels of
 	 * a1 have to be of type string and have to be of the following scheme:
-	 * "<l1>_<l2>", where "<l1>" is the actual label of the state and <l2> is
+	 * "l1_l2", where "l1" is the actual label of the state and "l2" is
 	 * the label of the node of a2, which it is epimorph to
 	 * 
+	 * @param services Ultimate services
 	 * @param a1
 	 *            automaton where the epimorphism to to is encoded in the labels
 	 * @param a2
@@ -73,10 +77,10 @@ public class AutomatonEpimorphism<STATE> {
 	 * @return an epimorphism structure from a1 to a2
 	 */
 	public static AutomatonEpimorphism<String> createFromAutomatonLabels(
-			AutomataLibraryServices services,
+			final AutomataLibraryServices services,
 			
-			INestedWordAutomatonOldApi<String, String> a1,
-			INestedWordAutomatonOldApi<String, String> a2) {
+			final INestedWordAutomaton<String, String> a1,
+			final INestedWordAutomaton<String, String> a2) {
 		final ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		final AutomatonEpimorphism<String> epimorphism = new AutomatonEpimorphism<String>(services);
 
@@ -112,7 +116,7 @@ public class AutomatonEpimorphism<STATE> {
 				}
 
 				// set the mapping from state1 to state2
-				epimorphism.mepimorphism.put(state1, state2);
+				epimorphism.mEpimorphism.put(state1, state2);
 			}
 		}
 
@@ -121,22 +125,18 @@ public class AutomatonEpimorphism<STATE> {
 	
 	/**
 	 * Returns the state, where the epimorphism points to
-	 * @param s
+	 * @param s state
 	 */
-	public STATE getMapping(STATE s)
-	{
-		return mepimorphism.get(s);
+	public STATE getMapping(final STATE s) {
+		return mEpimorphism.get(s);
 	}
 	
-	public void insert(STATE from, STATE to)
-	{
-		mepimorphism.put(from, to);
+	public void insert(final STATE from, final STATE to) {
+		mEpimorphism.put(from, to);
 	}
 
-	public void Print() 
-	{
-		for(final Entry<STATE, STATE> e : mepimorphism.entrySet())
-		{
+	public void print() {
+		for(final Entry<STATE, STATE> e : mEpimorphism.entrySet()) {
 			mLogger.debug(e.getKey().toString() + " --> " + e.getValue());
 		}		
 	}

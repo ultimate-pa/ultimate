@@ -1,0 +1,26 @@
+// Author: schillic@informatik.uni-freiburg.de
+// Date: 2016-06-07
+
+reduceNwaDirectSimulation(removeDeadEnds(nwa), false);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {c},
+	internalAlphabet = {a b},
+	returnAlphabet = {r1 r2},
+	states = {q0 q1 q2 q3 qf},
+	initialStates = {q0},
+	finalStates = {qf},
+	callTransitions = {
+		(q1 c q3)
+		(q2 c q3)
+	},
+	internalTransitions = {
+		(q0 a q1)
+		(q0 b q2)
+		(qf a qf)
+	},
+	returnTransitions = {
+		(q3 q1 r1 qf)
+		(q3 q2 r2 qf)
+	}
+);

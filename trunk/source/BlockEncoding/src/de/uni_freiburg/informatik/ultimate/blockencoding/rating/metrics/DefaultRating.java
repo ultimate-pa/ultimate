@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRati
  */
 public class DefaultRating implements IRating {
 
-	private RatingValueContainer<Integer> countOfStatements;
+	private RatingValueContainer<Integer> mCountOfStatements;
 
 	/**
 	 * Constructor, which is only visible in this package (default visibility)
@@ -55,12 +55,12 @@ public class DefaultRating implements IRating {
 	DefaultRating(IMinimizedEdge edge) {
 		// Basic-Edges have exactly one statement
 		if (edge instanceof IBasicEdge) {
-			countOfStatements = new RatingValueContainer<Integer>(1);
+			mCountOfStatements = new RatingValueContainer<Integer>(1);
 		}
 		// For Composite-Edges we summarize the count of statements of the left
 		// and the right side
 		if (edge instanceof ICompositeEdge) {
-			countOfStatements = new RatingValueContainer<Integer>(0);
+			mCountOfStatements = new RatingValueContainer<Integer>(0);
 			final ICompositeEdge compEdge = (ICompositeEdge) edge;
 			final IMinimizedEdge left = compEdge.getCompositeEdges()[0];
 			final IMinimizedEdge right = compEdge.getCompositeEdges()[1];
@@ -71,7 +71,7 @@ public class DefaultRating implements IRating {
 			}
 			final DefaultRating leftRating = (DefaultRating) left.getRating();
 			final DefaultRating rightRating = (DefaultRating) right.getRating();
-			countOfStatements.setValue(leftRating.getRatingValueContainer()
+			mCountOfStatements.setValue(leftRating.getRatingValueContainer()
 					.getValue()
 					+ rightRating.getRatingValueContainer().getValue());
 		}
@@ -86,20 +86,13 @@ public class DefaultRating implements IRating {
 	 */
 	public DefaultRating(String prefValue) {
 		// Here we interpret the preference string
-		countOfStatements = new RatingValueContainer<Integer>(
+		mCountOfStatements = new RatingValueContainer<Integer>(
 				Integer.parseInt(prefValue));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IRating
-	 * #getRatingValue()
-	 */
 	@Override
 	public RatingValueContainer<Integer> getRatingValueContainer() {
-		return countOfStatements;
+		return mCountOfStatements;
 	}
 
 	@Override
@@ -109,13 +102,13 @@ public class DefaultRating implements IRating {
 					"Comparison of different Ratings is forbidden!");
 		}
 		final DefaultRating otherRating = (DefaultRating) other;
-		return countOfStatements.getValue().compareTo(
+		return mCountOfStatements.getValue().compareTo(
 				otherRating.getRatingValueContainer().getValue());
 	}
 
 	@Override
 	public int getRatingValueAsInteger() {
-		return countOfStatements.getValue();
+		return mCountOfStatements.getValue();
 	}
 
 }

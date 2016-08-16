@@ -34,7 +34,7 @@ import java.util.Map.Entry;
 
 public class BooleanExpression{
 
-	public BooleanExpression(BitSet alpha, BitSet beta){
+	public BooleanExpression(final BitSet alpha, final BitSet beta){
 		this.alpha = alpha;
 		this.beta = beta;
 	}
@@ -42,7 +42,7 @@ public class BooleanExpression{
 	private final BitSet beta;
 	private BooleanExpression nextConjunctExpression;
 	
-	public void addConjunction(BooleanExpression booleanExpression){
+	public void addConjunction(final BooleanExpression booleanExpression){
 		if(!containsConjunction(booleanExpression)){
 			if(nextConjunctExpression != null){
 				nextConjunctExpression.addConjunction(booleanExpression);
@@ -53,7 +53,7 @@ public class BooleanExpression{
 		}
 	}
 	
-	public boolean containsConjunction(BooleanExpression booleanExpression){
+	public boolean containsConjunction(final BooleanExpression booleanExpression){
 		if(equals(booleanExpression)){
 			return true;
 		}
@@ -63,7 +63,7 @@ public class BooleanExpression{
 		return false;
 	}
 	
-	public boolean getResult(BitSet bitVector){
+	public boolean getResult(final BitSet bitVector){
 		final BitSet result = (BitSet) bitVector.clone();
 		result.and(alpha);
 		result.xor(beta);
@@ -76,7 +76,7 @@ public class BooleanExpression{
 		return false;
 	}
 	
-	public BooleanExpression cloneShifted(Map<Integer,Integer> shiftMap, int newSize){
+	public BooleanExpression cloneShifted(final Map<Integer,Integer> shiftMap, final int newSize){
 		final BitSet shiftedAlpha = new BitSet(newSize);
 		final BitSet shiftedBeta = new BitSet(newSize);
 		for (final Entry<Integer, Integer> entry : shiftMap.entrySet()) {
@@ -94,11 +94,16 @@ public class BooleanExpression{
 		return result;
 	}
 	
-	public boolean equals(BooleanExpression booleanExpression){
-		return (alpha.equals(booleanExpression.alpha) && beta.equals(booleanExpression.beta));
+	/**
+	 * TODO Christian 2016-08-16: This does not override the Object.equals()
+	 *      method. It may be confusing when using in Collections.
+	 */
+	public boolean equals(final BooleanExpression booleanExpression){
+		return (alpha.equals(booleanExpression.alpha)
+				&& beta.equals(booleanExpression.beta));
 	}
 	
-	public <T> String toString(List<T> variables){
+	public <T> String toString(final List<T> variables){
 		String text = "";
 		int r = 0;
 		for(int i=0;i<variables.size();i++){

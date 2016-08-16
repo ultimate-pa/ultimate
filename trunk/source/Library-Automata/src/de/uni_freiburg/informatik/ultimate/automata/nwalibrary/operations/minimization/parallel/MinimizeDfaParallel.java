@@ -37,188 +37,136 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.AMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.Interrupt;
 
 /**
  * This class manages the parallel computation of minimization by Hopcroft's and
- * Incremental Amr algorithm.
+ * Incremental AMR algorithm.
  * 
  * @author Layla Franke
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class MinimizeDfaParallel<LETTER, STATE> extends
-		AMinimizeNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public final class MinimizeDfaParallel<LETTER, STATE>
+		extends AMinimizeNwa<LETTER, STATE>
+		implements IOperation<LETTER, STATE> {
 	/**
-	 * Result automaton.
+	 * Whether the result is constructed yet.
 	 */
-	private INestedWordAutomaton<LETTER, STATE> mresult;
+	private boolean mResultConstructed = false;
 	/**
 	 * Getter for result.
 	 */
-	private Callable<INestedWordAutomaton<LETTER, STATE>> mresultGetter;
-	/**
-	 * Input automaton.
-	 */
-	private final INestedWordAutomaton<LETTER, STATE> moperand;
+	private Callable<INestedWordAutomaton<LETTER, STATE>> mResultGetter;
 	/**
 	 * Array of threads processing helper tasks.
 	 */
-	private final ArrayList<WorkingThread> mthreads;
+	private final ArrayList<WorkingThread> mThreads;
 	/**
 	 * Blocking queue for Tasks.
 	 */
-	private final LinkedBlockingQueue<Runnable> mtaskQueue;
+	private final LinkedBlockingQueue<Runnable> mTaskQueue;
 	/**
 	 * Thread running Hopcroft's Algorithm.
 	 */
-	private final Thread mhopcroftThread;
+	private final Thread mHopcroftThread;
 	/**
 	 * Thread running the Incremental Algorithm.
 	 */
-	private final Thread mincrementalThread;
+	private final Thread mIncrementalThread;
 	/**
 	 * Instance of Hopcroft's Algorithm.
 	 */
-	private MinimizeDfaHopcroftParallel<LETTER, STATE> mhopcroftAlgorithm;
+	private MinimizeDfaHopcroftParallel<LETTER, STATE> mHopcroftAlgorithm;
 	/**
 	 * Instance of the Incremental Algorithm.
 	 */
-	private MinimizeDfaAmrParallel<LETTER, STATE> mincrementalAlgorithm;
+	private MinimizeDfaAmrParallel<LETTER, STATE> mIncrementalAlgorithm;
 
 	/**
 	 * Object for interrupting the incremental algorithm.
 	 */
-	private final Interrupt minterrupt;
+	private final Interrupt mInterrupt;
 
 	
-	private boolean mhopcroftAlgorithmInitialized = false;
-	private boolean mincrementalAlgorithmInitialized = false;
+	private boolean mHopcroftAlgorithmInitialized = false;
+	private boolean mIncrementalAlgorithmInitialized = false;
 
 	/**
 	 * Sum of run time of all threads in nanoseconds.
 	 */
-	private double[] mcpuTime;
-
-	/**
-	 * Getter for run time.
-	 */
-	public double[] getCpuTime() {
-		return mcpuTime;
-	}
+	private double[] mCpuTime;
 
 	/**
 	 * String Builder holding the run time of all threads.
 	 */
-	private StringBuilder msb;
-
-	/**
-	 * Getter of runtime string builder for testing.
-	 */
-	public String getRunTime() {
-		return msb.toString();
-	}
-
-	/**
-	 * Getter for instance of Hopcroft's algorithm.
-	 * 
-	 * @return
-	 */
-	public MinimizeDfaHopcroftParallel<LETTER, STATE> getHopcroft() {
-		return mhopcroftAlgorithm;
-	}
-
-	/**
-	 * Getter for instance of incremental algorithm.
-	 * 
-	 * @return
-	 */
-	public MinimizeDfaAmrParallel<LETTER, STATE> getIncremental() {
-		return mincrementalAlgorithm;
-	}
+	private final StringBuilder mSb;
 
 	/**
 	 * Preprocessed mappings.
 	 */
-	private ArrayList<STATE> mint2state;
-	private HashMap<STATE, Integer> mstate2int;
+	private ArrayList<STATE> mInt2state;
+	private HashMap<STATE, Integer> mState2int;
 
 	/**
 	 * Switches for setting priority. Setting both to true will have the same
 	 * effect as setting both to false. Then they will just all run with the
 	 * same priority as the main thread.
 	 */
-	public static boolean PreferHelperThreads = false;
-	public static boolean PreferAlgorithmThreads = false;
+	public static final boolean PREFER_HELPER_THREADS = false;
+	public static final boolean PREFER_ALGORITHM_THREADS = false;
 
-	/**
-	 * GUI Constructor
-	 * 
-	 * @param services
-	 * @param stateFactory	 
-	 * @param operand
-	 * 				input automaton (DFA)
-	 * @throws AutomataLibraryException
-	 * 				thrown when execution is cancelled
-	 * @throws AutomataLibraryException
-	 * 				thrown by DFA check
-	 */
-	public MinimizeDfaParallel(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand)
-			throws AutomataLibraryException, AutomataLibraryException {
-		this(services, operand);
-	}
 	
 	/**
 	 * Constructor.
 	 * 
-	 * @param services
+	 * @param services Ultimave services
+	 * @param stateFactory state factory
 	 * @param operand
 	 * 			input automaton
 	 */
 	public MinimizeDfaParallel(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
-		super(services, operand.getStateFactory(), "MinimizeDfaParallel",
-				operand);
+		super(services, stateFactory, "MinimizeDfaParallel", operand);
 		
 		// added by Christian
-		if ((operand.getCallAlphabet().size() > 0) ||
-				(operand.getReturnAlphabet().size() > 0)) {
+		if ((operand.getCallAlphabet().size() > 0)
+				|| (operand.getReturnAlphabet().size() > 0)) {
 			throw new UnsupportedOperationException(
 				"This class only supports minimization of finite automata.");
 		}
 		
-		this.moperand = operand;
-		this.minterrupt = new Interrupt();
+		this.mInterrupt = new Interrupt();
 
 		MinimizeDfaHopcroftParallel.setParallelFlag(true);
 		MinimizeDfaAmrParallel.setParallelFlag(true);
 
-		mhopcroftThread = new AlgorithmTask(this, Algorithm.Hopcroft);
-		mincrementalThread = new AlgorithmTask(this, Algorithm.Incremental);
+		mHopcroftThread = new AlgorithmTask(this, Algorithm.HOPCROFT);
+		mIncrementalThread = new AlgorithmTask(this, Algorithm.INCREMENTAL);
 
 		// Initialize Data.
 		initialize();
 
 		// Create queue
-		mtaskQueue = new LinkedBlockingQueue<Runnable>();
+		mTaskQueue = new LinkedBlockingQueue<Runnable>();
 		
 		//final int processors = Runtime.getRuntime().availableProcessors();
 		final int processors = 6;
-		mthreads = new ArrayList<WorkingThread>();
+		mThreads = new ArrayList<WorkingThread>();
 		for (int i = 0; i < Math.max(1, processors - 2); i++) {
-			mthreads.add(new WorkingThread("HelperThread" + i));
-			mthreads.get(i).start();
+			mThreads.add(new WorkingThread("HelperThread" + i));
+			mThreads.get(i).start();
 		}
 		mLogger.info("MAIN: Start execution of Incremental algorithm.");
-		mincrementalThread.start();
+		mIncrementalThread.start();
 		mLogger.info("MAIN: Start execution of Hopcroft algorithm.");
-		mhopcroftThread.start();
+		mHopcroftThread.start();
 
 		synchronized (this) {
-			if (mresult == null) {
+			if (! mResultConstructed) {
 				try {
 					this.wait();
 				} catch (final InterruptedException e) {
@@ -231,35 +179,64 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 		mLogger.info("MAIN: Result available. Start interrupting working threads.");
 		measureTime();
 
-		for (final Thread thread : mthreads) {
+		for (final Thread thread : mThreads) {
 			thread.interrupt();
 		}
-		synchronized (mincrementalThread) {
-			mincrementalThread.notify();
+		synchronized (mIncrementalThread) {
+			mIncrementalThread.notify();
 		}
-		synchronized (mhopcroftThread) {
-			mhopcroftThread.notify();
+		synchronized (mHopcroftThread) {
+			mHopcroftThread.notify();
 		}
 		// End execution of both algorithms.
-		mincrementalThread.interrupt();
-		mhopcroftThread.interrupt();
-		minterrupt.setStatus();
+		mIncrementalThread.interrupt();
+		mHopcroftThread.interrupt();
+		mInterrupt.setStatus();
 		mLogger.info("MAIN: Interrupting working threads finished.");
 
 		mLogger.info("MAIN: Start postprocessing result.");
 		try {
-			mresult = mresultGetter.call();
+			directResultConstruction(mResultGetter.call());
+			mResultConstructed = true;
 		} catch (final Exception e) {
 			//e.printStackTrace();
 		}
 
-		msb = createConsoleOutput();
-		mLogger.info(msb);
+		mSb = createConsoleOutput();
+		mLogger.info(mSb);
 
 		// Set parallel flags of both algorithms to false again.
 		MinimizeDfaHopcroftParallel.setParallelFlag(false);
 		MinimizeDfaAmrParallel.setParallelFlag(false);
 		mLogger.info("MAIN: " + exitMessage());
+	}
+
+	/**
+	 * Getter for run time.
+	 */
+	public double[] getCpuTime() {
+		return mCpuTime;
+	}
+
+	/**
+	 * Getter of runtime string builder for testing.
+	 */
+	public String getRunTime() {
+		return mSb.toString();
+	}
+
+	/**
+	 * Getter for instance of Hopcroft's algorithm.
+	 */
+	public MinimizeDfaHopcroftParallel<LETTER, STATE> getHopcroft() {
+		return mHopcroftAlgorithm;
+	}
+
+	/**
+	 * Getter for instance of incremental algorithm.
+	 */
+	public MinimizeDfaAmrParallel<LETTER, STATE> getIncremental() {
+		return mIncrementalAlgorithm;
 	}
 
 	/**
@@ -269,15 +246,15 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 	 *         thread.
 	 */
 	private void measureTime() {
-		mcpuTime = new double[mthreads.size() + 2];
+		mCpuTime = new double[mThreads.size() + 2];
 		final ThreadMXBean bean = ManagementFactory.getThreadMXBean();
-		for (int i = 0; i < mthreads.size(); i++) {
-			mcpuTime[i] = bean.getThreadCpuTime(mthreads.get(i).getId());
+		for (int i = 0; i < mThreads.size(); i++) {
+			mCpuTime[i] = bean.getThreadCpuTime(mThreads.get(i).getId());
 		}
-		mcpuTime[mthreads.size()] = bean.getThreadCpuTime(mincrementalThread
+		mCpuTime[mThreads.size()] = bean.getThreadCpuTime(mIncrementalThread
 				.getId());
-		mcpuTime[mthreads.size() + 1] = bean
-				.getThreadCpuTime(mhopcroftThread.getId());
+		mCpuTime[mThreads.size() + 1] = bean
+				.getThreadCpuTime(mHopcroftThread.getId());
 	}
 
 	/**
@@ -289,17 +266,17 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 		final StringBuilder sb = new StringBuilder();
 		sb.append("CPU TIME needed for computation:\n");
 
-		for (int j = 0; j < mthreads.size(); j++) {
+		for (int j = 0; j < mThreads.size(); j++) {
 
-			sb.append("Thread " + (j + 1) + ": " + mcpuTime[j] + "ns\n");
+			sb.append("Thread " + (j + 1) + ": " + mCpuTime[j] + "ns\n");
 
 		}
-		sb.append("Incremental Thread: " + mcpuTime[mthreads.size()] + "ns\n");
-		sb.append("Hopcroft Thread: " + mcpuTime[mthreads.size() + 1]
+		sb.append("Incremental Thread: " + mCpuTime[mThreads.size()] + "ns\n");
+		sb.append("Hopcroft Thread: " + mCpuTime[mThreads.size() + 1]
 				+ "ns\n");
 
 		long sum = 0;
-		for (final double i : mcpuTime) {
+		for (final double i : mCpuTime) {
 			sum += i;
 		}
 
@@ -316,14 +293,14 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 	 * Initialize mappings from state to int.
 	 */
 	private void initialize() {
-		final int nOfStates = moperand.getStates().size();
+		final int nOfStates = mOperand.size();
 		// Allocate the finite space in ArrayList and HashMap.
-		mint2state = new ArrayList<STATE>(nOfStates);
-		mstate2int = new HashMap<STATE, Integer>(nOfStates);
+		mInt2state = new ArrayList<STATE>(nOfStates);
+		mState2int = new HashMap<STATE, Integer>(nOfStates);
 		int index = -1;
-		for (final STATE state : moperand.getStates()) {
-			mint2state.add(state);
-			mstate2int.put(state, ++index);
+		for (final STATE state : mOperand.getStates()) {
+			mInt2state.add(state);
+			mState2int.put(state, ++index);
 		}
 	}
 
@@ -337,7 +314,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 	 * program to do so. The thread will run at a priority that is one less than
 	 * the priority of the thread that calls the constructor.
 	 * 
-	 * A WorkerThread is designed to run in an infinite loop. It will end only
+	 * <p>A WorkerThread is designed to run in an infinite loop. It will end only
 	 * when the Java virtual machine exits. (This assumes that the tasks that
 	 * are executed don't throw exceptions, which is true in this program.) The
 	 * constructor sets the thread to run as a daemon thread; the Java virtual
@@ -352,14 +329,14 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 		/**
 		 * Creating the thread.
 		 * 
-		 * @param name
+		 * @param name name
 		 */
 		WorkingThread(final String name) {
 			super(name);
 			try {
-				if (PreferHelperThreads && !PreferAlgorithmThreads) {
+				if (PREFER_HELPER_THREADS && !PREFER_ALGORITHM_THREADS) {
 					setPriority(Thread.MAX_PRIORITY);
-				} else if (!PreferHelperThreads && PreferAlgorithmThreads) {
+				} else if (!PREFER_HELPER_THREADS && PREFER_ALGORITHM_THREADS) {
 					setPriority(Thread.MIN_PRIORITY);
 				}
 			} catch (final Exception e) {
@@ -377,12 +354,12 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 			while (!isInterrupted()) {
 				try {
 					assert (!isInterrupted());
-					final Runnable task = mtaskQueue.take();
+					final Runnable task = mTaskQueue.take();
 					if (!isInterrupted()) {
 						task.run();
 					}
 					mLogger.info("MAIN: Size of task queue: "
-							+ mtaskQueue.size());
+							+ mTaskQueue.size());
 				} catch (final InterruptedException e) {
 					interrupt();
 				}
@@ -397,20 +374,19 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 	 * 
 	 * @author layla
 	 */
-	private class AlgorithmTask extends Thread implements
-			IOperation<LETTER, STATE> {
+	private class AlgorithmTask extends Thread {
 		/**
 		 * Reference to main thread for setting result.
 		 */
-		private final MinimizeDfaParallel<LETTER, STATE> mmainThread;
+		private final MinimizeDfaParallel<LETTER, STATE> mMainThread;
 		/**
 		 * Parameter for deciding on which algorithm to run.
 		 */
-		private final Algorithm mchooseAlgorithm;
+		private final Algorithm mChooseAlgorithm;
 		/**
 		 * Instance of running algorithm.
 		 */
-		private IMinimize malgorithm;
+		private IMinimize mAlgorithm;
 
 		/**
 		 * Constructor for a thread processing a minimization algorithm.
@@ -423,13 +399,13 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 		AlgorithmTask(final MinimizeDfaParallel<LETTER, STATE> mainThread,
 				final Algorithm algorithm) {
 			super(algorithm.toString());
-			mchooseAlgorithm = algorithm;
-			mmainThread = mainThread;
+			mChooseAlgorithm = algorithm;
+			mMainThread = mainThread;
 
 			try {
-				if (!PreferAlgorithmThreads && PreferHelperThreads) {
+				if (!PREFER_ALGORITHM_THREADS && PREFER_HELPER_THREADS) {
 					setPriority(Thread.MIN_PRIORITY);
-				} else if (PreferAlgorithmThreads && !PreferHelperThreads) {
+				} else if (PREFER_ALGORITHM_THREADS && !PREFER_HELPER_THREADS) {
 					setPriority(Thread.MAX_PRIORITY);
 				}
 			} catch (final Exception e) {
@@ -442,82 +418,83 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 			}
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
 		public void run() {
 			try {
-				if (mchooseAlgorithm.equals(Algorithm.Hopcroft)) {
+				if (mChooseAlgorithm.equals(Algorithm.HOPCROFT)) {
 
-					mLogger.info("moep1");
-					malgorithm = new MinimizeDfaHopcroftParallel<LETTER, STATE>(
-							mServices, moperand.getStateFactory(),
-							moperand,
-							minterrupt, mint2state, mstate2int);
+					mLogger.debug("moep1");
+					mAlgorithm = new MinimizeDfaHopcroftParallel<LETTER, STATE>(
+							mServices, mOperand.getStateFactory(),
+							mOperand,
+							mInterrupt, mInt2state, mState2int);
 
 					if (isInterrupted()) {
 						return;
 					}
-					mLogger.info("moep2");
-					mhopcroftAlgorithm = (MinimizeDfaHopcroftParallel) malgorithm;
-					mhopcroftAlgorithmInitialized = true;
+					mLogger.debug("moep2");
+					mHopcroftAlgorithm = (MinimizeDfaHopcroftParallel<LETTER, STATE>) mAlgorithm;
+					mHopcroftAlgorithmInitialized = true;
 
-					synchronized (minterrupt) {
-						if (mincrementalAlgorithmInitialized) {
-							mLogger.info("moep3a");
-							synchronized (mincrementalAlgorithm) {
-								minterrupt.notify();
+					synchronized (mInterrupt) {
+						if (mIncrementalAlgorithmInitialized) {
+							mLogger.debug("moep3a");
+							synchronized (mIncrementalAlgorithm) {
+								mInterrupt.notify();
 							}
 						} else {
-							mLogger.info("moep3b");
-							minterrupt.wait();
+							mLogger.debug("moep3b");
+							mInterrupt.wait();
 						}
 					}
-					mLogger.info("moep4");
-					mhopcroftAlgorithm.minimizeParallel(mtaskQueue,
-							mincrementalAlgorithm);
-					mLogger.info("moep5");
+					mLogger.debug("moep4");
+					mHopcroftAlgorithm.minimizeParallel(mTaskQueue,
+							mIncrementalAlgorithm);
+					mLogger.debug("moep5");
 
 				} else {
-					mLogger.info("miep1");
-					malgorithm = new MinimizeDfaAmrParallel<LETTER, STATE>(
-							mServices, moperand.getStateFactory(), moperand,
-							minterrupt, mint2state, mstate2int);
+					mLogger.debug("miep1");
+					mAlgorithm = new MinimizeDfaAmrParallel<LETTER, STATE>(
+							mServices, mOperand.getStateFactory(), mOperand,
+							mInterrupt, mInt2state, mState2int);
 
 					if (isInterrupted()) {
 						return;
 					}
-					mLogger.info("miep2");
-					mincrementalAlgorithm = (MinimizeDfaAmrParallel) malgorithm;
-					mincrementalAlgorithmInitialized = true;
-					synchronized (minterrupt) {
-						if (mhopcroftAlgorithmInitialized) {
-							mLogger.info("miep3a");
-							minterrupt.notify();
+					mLogger.debug("miep2");
+					mIncrementalAlgorithm = (MinimizeDfaAmrParallel<LETTER, STATE>) mAlgorithm;
+					mIncrementalAlgorithmInitialized = true;
+					synchronized (mInterrupt) {
+						if (mHopcroftAlgorithmInitialized) {
+							mLogger.debug("miep3a");
+							mInterrupt.notify();
 						} else {
-							mLogger.info("miep3b");
+							mLogger.debug("miep3b");
 
-							minterrupt.wait();
+							mInterrupt.wait();
 						}
 					}
-					mLogger.info("miep4");
-					mincrementalAlgorithm.minimizeParallel(mtaskQueue,
-							mhopcroftAlgorithm);
-					mLogger.info("miep5");
+					mLogger.debug("miep4");
+					mIncrementalAlgorithm.minimizeParallel(mTaskQueue,
+							mHopcroftAlgorithm);
+					mLogger.debug("miep5");
 				}
 
 				if (isInterrupted()) {
 					return;
 				}
 				
-				synchronized (mmainThread) {
-					if (mresultGetter == null) {
-						mresultGetter = new Callable<INestedWordAutomaton<LETTER, STATE>>() {
+				synchronized (mMainThread) {
+					if (mResultGetter == null) {
+						mResultGetter = new Callable<INestedWordAutomaton<LETTER, STATE>>() {
 							@Override
 							public INestedWordAutomaton<LETTER, STATE> call() {
-								return (INestedWordAutomaton<LETTER, STATE>) malgorithm
+								return (INestedWordAutomaton<LETTER, STATE>) mAlgorithm
 										.getResult();
 							}
 						};
-						mmainThread.notify();
+						mMainThread.notify();
 					}
 				}
 				synchronized (this) {
@@ -530,49 +507,14 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 				//e.printStackTrace();
 			}
 		}
-
-		@Override
-		public String operationName() {
-			return malgorithm.operationName();
-		}
-
-		@Override
-		public String startMessage() {
-			return malgorithm.startMessage();
-		}
-
-		@Override
-		public String exitMessage() {
-			return malgorithm.exitMessage();
-		}
-
-		@Override
-		public Object getResult() throws AutomataLibraryException {
-			return malgorithm.getResult();
-		}
-
-		@Override
-		public boolean checkResult(StateFactory<STATE> stateFactory)
-				throws AutomataLibraryException {
-			// TODO Implement method.
-			return true;
-		}
 	}
 
 	// ------------ Enum ------------ //
 
 	/**
 	 * Enum for choosing the algorithm to run in AlgorithmTasks.
-	 * 
-	 * @author layla
-	 *
 	 */
 	private enum Algorithm {
-		Hopcroft, Incremental
-	}
-
-	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getResult() {
-		return mresult;
+		HOPCROFT, INCREMENTAL
 	}
 }

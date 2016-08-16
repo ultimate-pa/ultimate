@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.benchmark.SizeBenchmark;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.AssumeMerger;
@@ -64,7 +64,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 	private final ProductBacktranslator mBacktranslator;
 	private final IToolchainStorage mStorage;
 
-	public BuchiProductObserver(ILogger logger, IUltimateServiceProvider services, ProductBacktranslator backtranslator, IToolchainStorage storage) {
+	public BuchiProductObserver(final ILogger logger, final IUltimateServiceProvider services, final ProductBacktranslator backtranslator, final IToolchainStorage storage) {
 		mLogger = logger;
 		mServices = services;
 		mStorage = storage;
@@ -75,7 +75,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
 
 	}
 
@@ -139,7 +139,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		return;
 	}
 
-	private boolean optimizeRemoveSinkStates(IPreferenceProvider ups, boolean continueOptimization) {
+	private boolean optimizeRemoveSinkStates(final IPreferenceProvider ups, boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_SINK_STATES)) {
 			final RemoveSinkStates rss = new RemoveSinkStates(mProduct, mServices, mStorage);
 			mProduct = rss.getResult();
@@ -148,7 +148,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		return continueOptimization;
 	}
 
-	private boolean optimizeRemoveInfeasibleEdges(IPreferenceProvider ups, boolean continueOptimization) {
+	private boolean optimizeRemoveInfeasibleEdges(final IPreferenceProvider ups, boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_INFEASIBLE_EDGES)) {
 			final RemoveInfeasibleEdges opt1 = new RemoveInfeasibleEdges(mProduct, mServices, mStorage);
 			mProduct = opt1.getResult();
@@ -157,7 +157,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		return continueOptimization;
 	}
 
-	private boolean optimizeMaximizeFinalStates(IPreferenceProvider ups, boolean continueOptimization) {
+	private boolean optimizeMaximizeFinalStates(final IPreferenceProvider ups, boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_MAXIMIZE_FINAL_STATES)) {
 			final MaximizeFinalStates opt2 = new MaximizeFinalStates(mProduct, mServices, mStorage);
 			mProduct = opt2.getResult();
@@ -166,7 +166,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		return continueOptimization;
 	}
 
-	private boolean optimizeMinimizeStates(IPreferenceProvider ups, boolean continueOptimization) {
+	private boolean optimizeMinimizeStates(final IPreferenceProvider ups, boolean continueOptimization) {
 		final MinimizeStates minimizeStates = ups.getEnum(PreferenceInitializer.OPTIMIZE_MINIMIZE_STATES,
 				MinimizeStates.class);
 
@@ -192,7 +192,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		return continueOptimization;
 	}
 
-	private boolean optimizeSimplifyAssumes(IPreferenceProvider ups, boolean continueOptimization) {
+	private boolean optimizeSimplifyAssumes(final IPreferenceProvider ups, boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES)) {
 			final BaseProductOptimizer opt4 = new AssumeMerger(mProduct, mServices, mStorage);
 			mProduct = opt4.getResult();
@@ -201,15 +201,15 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		return continueOptimization;
 	}
 
-	private void reportSizeBenchmark(String message, NestedWordAutomaton<CodeBlock, String> nwa) {
+	private void reportSizeBenchmark(final String message, final INestedWordAutomaton<CodeBlock, String> nwa) {
 		reportSizeBenchmark(message, new SizeBenchmark(nwa, message));
 	}
 
-	private void reportSizeBenchmark(String message, RootNode root) {
+	private void reportSizeBenchmark(final String message, final RootNode root) {
 		reportSizeBenchmark(message, new SizeBenchmark(root, message));
 	}
 
-	private void reportSizeBenchmark(String message, SizeBenchmark bench) {
+	private void reportSizeBenchmark(final String message, final SizeBenchmark bench) {
 		mLogger.info(message + " " + bench);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new BenchmarkResult<>(Activator.PLUGIN_ID, message, bench));
@@ -228,7 +228,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 	/**
 	 * Collect one RCFG and one LTL2Aut.AST
 	 */
-	public boolean process(IElement root) throws Exception {
+	public boolean process(final IElement root) throws Exception {
 
 		// collect root nodes of Buechi automaton
 		if (root instanceof NWAContainer) {

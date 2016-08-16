@@ -28,23 +28,28 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions;
 
 import java.text.MessageFormat;
 
-
 /**
  * Return Transition of a successor state.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class IncomingReturnTransition<LETTER,STATE> implements Transitionlet<LETTER,STATE> {
+public class IncomingReturnTransition<LETTER,STATE>
+		implements ITransitionlet<LETTER,STATE> {
 	
 	private final STATE mLinPred;
 	private final STATE mHierPred;
 	private final LETTER mLetter; 
 
-	
-	public IncomingReturnTransition(STATE linPred, STATE hierPred, LETTER letter) {
+	/**
+	 * @param linPred linear predecessor state
+	 * @param hierPred hierarchical predecessor state
+	 * @param letter letter
+	 */
+	public IncomingReturnTransition(final STATE linPred, final STATE hierPred,
+			final LETTER letter) {
 		mLinPred = linPred;
 		mHierPred = hierPred;
 		mLetter = letter;
@@ -63,10 +68,10 @@ public class IncomingReturnTransition<LETTER,STATE> implements Transitionlet<LET
 		return mLetter;
 	}
 	
-	
 	@Override
 	public String toString() {
-		return MessageFormat.format("( {0} , {1} , {2} , _ )",getLinPred(), getHierPred(), getLetter());
+		return MessageFormat.format("( {0} , {1} , {2} , _ )",
+				getLinPred(), getHierPred(), getLetter());
 	}
 
 	@Override
@@ -83,7 +88,7 @@ public class IncomingReturnTransition<LETTER,STATE> implements Transitionlet<LET
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -93,7 +98,8 @@ public class IncomingReturnTransition<LETTER,STATE> implements Transitionlet<LET
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final IncomingReturnTransition other = (IncomingReturnTransition) obj;
+		final IncomingReturnTransition<?, ?> other =
+				(IncomingReturnTransition<?, ?>) obj;
 		if (mHierPred == null) {
 			if (other.mHierPred != null) {
 				return false;
@@ -117,7 +123,4 @@ public class IncomingReturnTransition<LETTER,STATE> implements Transitionlet<LET
 		}
 		return true;
 	}
-	
-	
-	
 }

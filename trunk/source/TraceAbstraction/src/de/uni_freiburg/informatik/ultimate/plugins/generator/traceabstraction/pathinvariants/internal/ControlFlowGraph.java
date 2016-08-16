@@ -33,7 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
 /**
@@ -74,6 +74,13 @@ public final class ControlFlowGraph {
 		public ProgramPoint getProgramPoint() {
 			return programPoint;
 		}
+
+		@Override
+		public String toString() {
+			return programPoint.toString();
+		}
+		
+		
 	}
 
 	/**
@@ -128,6 +135,13 @@ public final class ControlFlowGraph {
 		public Location getEnd() {
 			return end;
 		}
+
+		@Override
+		public String toString() {
+			return "Transition from=" + start + " to=" + end + ", transFormula=" + transFormula;
+		}
+		
+		
 	}
 
 	/**

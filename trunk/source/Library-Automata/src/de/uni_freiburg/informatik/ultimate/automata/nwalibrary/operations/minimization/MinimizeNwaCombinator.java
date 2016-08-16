@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Christian Schilling <schillic@informatik.uni-freiburg.de>
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -34,8 +34,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 /**
@@ -43,17 +42,20 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * minimization method according to a fixed pattern. The pattern is finite and
  * repeated.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class MinimizeNwaCombinator<LETTER, STATE> extends
-		AMinimizeNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class MinimizeNwaCombinator<LETTER, STATE>
+		extends AMinimizeNwaDD<LETTER, STATE>
+		implements IOperation<LETTER, STATE> {
 	/**
 	 * Possible minimization algorithms.
 	 */
 	private enum EMinimizations {
-		MinimizeSevpa,
-		ShrinkNwa,
-		None
+		MINIMIZE_SEVPA,
+		SHRINK_NWA,
+		NONE
 	}
 	
 	// minimization algorithms executed from left to right
@@ -73,7 +75,7 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 	 */
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand)
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 					throws AutomataLibraryException {
 		this(services, stateFactory, operand, null, false, 0);
 	}
@@ -91,16 +93,16 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 	 */
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final Collection<Set<STATE>> partition,
 			final boolean addMapOldState2newState,
 			final int iteration)
 					throws AutomataLibraryException {
 		this(services, stateFactory, operand, partition, addMapOldState2newState,
 				new EMinimizations[] {
-					EMinimizations.None, EMinimizations.MinimizeSevpa,
-					EMinimizations.None, EMinimizations.MinimizeSevpa,
-					EMinimizations.None, EMinimizations.ShrinkNwa }, iteration);
+					EMinimizations.NONE, EMinimizations.MINIMIZE_SEVPA,
+					EMinimizations.NONE, EMinimizations.MINIMIZE_SEVPA,
+					EMinimizations.NONE, EMinimizations.SHRINK_NWA }, iteration);
 	}
 	
 	/**
@@ -117,7 +119,7 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 	 */
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final Collection<Set<STATE>> partition,
 			final boolean addMapOldState2newState,
 			final EMinimizations[] pattern, final int iteration)
@@ -126,18 +128,18 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 		mPattern = pattern;
 		mCounter = iteration % mPattern.length;
 		switch (mPattern[mCounter]) {
-			case MinimizeSevpa:
+			case MINIMIZE_SEVPA:
 				mCurrent = new MinimizeSevpa<LETTER, STATE>(services, operand,
 						partition, stateFactory, addMapOldState2newState);
 				break;
 				
-			case ShrinkNwa:
+			case SHRINK_NWA:
 				mCurrent = new ShrinkNwa<LETTER, STATE>(services, stateFactory,
 						operand, partition, addMapOldState2newState, false,
 						false, 200, false, 0, false, false);
 				break;
 				
-			case None:
+			case NONE:
 				mCurrent = operand;
 				break;
 				
@@ -148,16 +150,16 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getResult() {
+	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
 		switch (mPattern[mCounter]) {
-			case MinimizeSevpa:
+			case MINIMIZE_SEVPA:
 				return ((MinimizeSevpa<LETTER, STATE>) mCurrent).getResult();
 				
-			case ShrinkNwa:
+			case SHRINK_NWA:
 				return ((ShrinkNwa<LETTER, STATE>) mCurrent).getResult();
 				
-			case None:
-				return (INestedWordAutomatonSimple<LETTER, STATE>) mCurrent;
+			case NONE:
+				return (IDoubleDeckerAutomaton<LETTER, STATE>) mCurrent;
 				
 			default:
 				throw new IllegalArgumentException("Undefined enum state.");
@@ -165,37 +167,21 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 	}
 	
 	@SuppressWarnings("unchecked")
+	@Override
 	public Map<STATE, STATE> getOldState2newState() {
 		switch (mPattern[mCounter]) {
-			case MinimizeSevpa:
+			case MINIMIZE_SEVPA:
 				return ((MinimizeSevpa<LETTER, STATE>) mCurrent)
 						.getOldState2newState();
 						
-			case ShrinkNwa:
+			case SHRINK_NWA:
 				return ((ShrinkNwa<LETTER, STATE>) mCurrent)
 						.getOldState2newState();
 						
-			case None:
+			case NONE:
 				throw new IllegalArgumentException(
 						"Do not ask for Hoare annotation if no minimization was used.");
 						
-			default:
-				throw new IllegalArgumentException("Undefined enum state.");
-		}
-	}
-	
-	/**
-	 * @return true iff backing minimization method supports Hoare annotation
-	 */
-	public boolean supportHoareAnnotation() {
-		switch (mPattern[mCounter]) {
-			case MinimizeSevpa:
-			case ShrinkNwa:
-				return true;
-				
-			case None:
-				return false;
-				
 			default:
 				throw new IllegalArgumentException("Undefined enum state.");
 		}

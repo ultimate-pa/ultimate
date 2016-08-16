@@ -32,11 +32,11 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -51,7 +51,7 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	private final AffineFunction[] mpredicates;
 	public final int pieces;
 	
-	public PiecewiseRankingFunction(AffineFunction[] ranking, AffineFunction[] predicates) {
+	public PiecewiseRankingFunction(final AffineFunction[] ranking, final AffineFunction[] predicates) {
 		mranking = ranking;
 		mpredicates = predicates;
 		pieces = ranking.length;
@@ -66,8 +66,8 @@ public class PiecewiseRankingFunction extends RankingFunction {
 
 	
 	@Override
-	public Set<RankVar> getVariables() {
-		final Set<RankVar> vars = new LinkedHashSet<RankVar>();
+	public Set<IProgramVar> getVariables() {
+		final Set<IProgramVar> vars = new LinkedHashSet<IProgramVar>();
 		for (final AffineFunction af : mranking) {
 			vars.addAll(af.getVariables());
 		}
@@ -89,7 +89,7 @@ public class PiecewiseRankingFunction extends RankingFunction {
 		sb.append("-piece ranking function:\n");
 		sb.append("  f(");
 		boolean first = true;
-		for (final RankVar var : getVariables()) {
+		for (final IProgramVar var : getVariables()) {
 			if (!first) {
 				sb.append(", ");
 			}
@@ -113,7 +113,7 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Term[] asLexTerm(Script script) throws SMTLIBException {
+	public Term[] asLexTerm(final Script script) throws SMTLIBException {
 		Term value = script.numeral(BigInteger.ZERO);
 		for (int i = mranking.length - 1; i >= 0; --i) {
 			final AffineFunction af = mranking[i];
@@ -126,7 +126,7 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Ordinal evaluate(Map<RankVar, Rational> assignment) {
+	public Ordinal evaluate(final Map<IProgramVar, Rational> assignment) {
 		Rational r = Rational.ZERO;
 		for (int i = 0; i < pieces; ++i) {
 			if (!mpredicates[i].evaluate(assignment).isNegative()) {

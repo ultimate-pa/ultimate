@@ -67,36 +67,37 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
 	
 	/**
-	 * Set of all letters that can occur as label of an internal transition. 
+	 * @return Set of all letters that can occur as label of an internal
+	 * transition. 
 	 * The default definition of nested word automata does not allow separate
 	 * alphabets for internal, call and return. The default definition of 
 	 * visibly pushdown automata requires that all three alphabets are disjoint.
 	 * We deviate from both definitions. We allow separate alphabets but do not
 	 * require that they are disjoint.
 	 */
-	public Set<LETTER> getInternalAlphabet();
+	Set<LETTER> getInternalAlphabet();
 
 
 	/**
-	 * Set of all letters that can occur as label of a call transition. 
+	 * @return Set of all letters that can occur as label of a call transition. 
 	 * The default definition of nested word automata does not allow separate
 	 * alphabets for internal, call and return. The default definition of 
 	 * visibly pushdown automata requires that all three alphabets are disjoint.
 	 * We deviate from both definitions. We allow separate alphabets but do not
 	 * require that they are disjoint.
 	 */
-	public Set<LETTER> getCallAlphabet();
+	Set<LETTER> getCallAlphabet();
 
 
 	/**
-	 * Set of all letters that can occur as label of a return transition. 
+	 * @return Set of all letters that can occur as label of a return transition. 
 	 * The default definition of nested word automata does not allow separate
 	 * alphabets for internal, call and return. The default definition of 
 	 * visibly pushdown automata requires that all three alphabets are disjoint.
 	 * We deviate from both definitions. We allow separate alphabets but do not
 	 * require that they are disjoint.
 	 */
-	public Set<LETTER> getReturnAlphabet();
+	Set<LETTER> getReturnAlphabet();
 	
 	
 	/**
@@ -104,70 +105,104 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 * automaton.
 	 */
 	@Override
-	public StateFactory<STATE> getStateFactory();
+	StateFactory<STATE> getStateFactory();
 	
 	
 	/**
-	 * Auxiliary state used to model the hierarchical predecessor of a pending
+	 * @return Auxiliary state used to model the hierarchical predecessor of a
+	 * pending
 	 * return in some operations. Recall that we generally do not accept nested
 	 * word with pending returns. This auxiliary state is <i>never</i> contained
 	 * is the set of states.
 	 * Viewing nested word automata as visibly pushdown automata this state can
 	 * be seen as a "bottom letter" of the pushdown alphabet.
 	 */
-	public STATE getEmptyStackState();
+	STATE getEmptyStackState();
 	
 
 	/**
-	 * All initial states of automaton. 
+	 * @return All initial states of automaton. 
 	 */
-	public abstract Iterable<STATE> getInitialStates();
+	Iterable<STATE> getInitialStates();
 	
 	/**
-	 * Returns true iff state is initial.
+	 * @param state state
+	 * @return true iff state is initial.
 	 */
-	public boolean isInitial(STATE state);
+	boolean isInitial(STATE state);
 	
 	
 	/**
-	 * Returns true iff state is final.
+	 * @param state state
+	 * @return true iff state is final.
 	 */
-	public boolean isFinal(STATE state);
+	boolean isFinal(STATE state);
 
 	/**
-	 * Superset of all letters a such that state has an outgoing internal 
-	 * transition labeled with letter a.
+	 * @param state state
+	 * @return Superset of all letters a such that state has an outgoing
+	 * internal transition labeled with letter a.
 	 */
-	public Set<LETTER> lettersInternal(STATE state);
+	Set<LETTER> lettersInternal(STATE state);
 	
 	/**
-	 * Superset of all letters a such that state has an outgoing call 
+	 * @param state state
+	 * @return Superset of all letters a such that state has an outgoing call
 	 * transition labeled with letter a.
 	 */	
-	public Set<LETTER> lettersCall(STATE state);
+	Set<LETTER> lettersCall(STATE state);
 	
 	/**
-	 * Superset of all letters a such that state has an outgoing return 
+	 * @param state state
+	 * @return Superset of all letters a such that state has an outgoing return 
 	 * transition labeled with letter a.
 	 */		
-	public Set<LETTER> lettersReturn(STATE state);
+	Set<LETTER> lettersReturn(STATE state);
 
-	
-	public abstract Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
+	/**
+	 * @param state state
+	 * @param letter letter
+	 * @return outgoing  transitions
+	 */
+	Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			final STATE state, final LETTER letter);
 
-	public abstract Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
+	/**
+	 * @param state state
+	 * @return outgoing  transitions
+	 */
+	Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			final STATE state);
 
-	public abstract Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
+	/**
+	 * @param state state
+	 * @param letter letter
+	 * @return outgoing  transitions
+	 */
+	Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			final STATE state, final LETTER letter);
 
-	public abstract Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
+	/**
+	 * @param state state
+	 * @return outgoing  transitions
+	 */
+	Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			final STATE state);
 	
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
+	/**
+	 * @param state state
+	 * @param hier hierarchical predecessor
+	 * @param letter letter
+	 * @return outgoing return transitions
+	 */
+	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			final STATE state, final STATE hier, final LETTER letter);
 	
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
+	/**
+	 * @param state state
+	 * @param hier hierarchical predecessor
+	 * @return outgoing return transitions
+	 */
+	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			final STATE state, final STATE hier);
 }

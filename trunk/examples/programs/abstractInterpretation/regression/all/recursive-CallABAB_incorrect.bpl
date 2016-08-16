@@ -5,7 +5,7 @@
  */
 
 
-procedure main()
+procedure ULTIMATE.start()
 {
   var x : int;
 	

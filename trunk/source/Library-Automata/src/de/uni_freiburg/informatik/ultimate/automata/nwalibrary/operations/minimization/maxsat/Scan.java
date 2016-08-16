@@ -43,6 +43,9 @@ import java.io.StreamTokenizer;
  *
  */
 final class Scan {
+	private Scan() {
+		// no public constructor
+	}
 
 	/**
 	 * @param reader
@@ -50,7 +53,7 @@ final class Scan {
 	 * @return parsed <code>NWA</code> or <code>null</code>
 	 * @throws java.io.IOException
 	 */
-	static NWA scanNWA(Reader reader) throws IOException {
+	static NWA scanNWA(final Reader reader) throws IOException {
 		int numStates;
 		int numISyms;
 		int numCSyms;
@@ -149,20 +152,20 @@ final class Scan {
 			expectEOF(in);
 
 		} catch (final ParseNWAException exc) {
-			System.err.println(exc.problem);
+			System.err.println(exc.mProblem);
 			return null;
 		}
 
 		final NWA out = new NWA();
-		out.numStates = numStates;
-		out.numISyms = numISyms;
-		out.numCSyms = numCSyms;
-		out.numRSyms = numRSyms;
-		out.isInitial = isInitial;
-		out.isFinal = isFinal;
-		out.iTrans = iTrans;
-		out.cTrans = cTrans;
-		out.rTrans = rTrans;
+		out.mNumStates = numStates;
+		out.mNumISyms = numISyms;
+		out.mNumCSyms = numCSyms;
+		out.mNumRSyms = numRSyms;
+		out.mIsInitial = isInitial;
+		out.mIsFinal = isFinal;
+		out.mITrans = iTrans;
+		out.mCTrans = cTrans;
+		out.mRTrans = rTrans;
 
 		if (!NWA.checkConsistency(out)) {
 			System.err.println("ERROR: Parsed automaton is not consistent");
@@ -179,7 +182,7 @@ final class Scan {
 	 *
 	 * @throws FileNotFoundException
 	 */
-	static NWA inputAsRelations(String filepath) throws FileNotFoundException, IOException {
+	static NWA inputAsRelations(final String filepath) throws IOException {
 		final InputStream inputStream = new FileInputStream(filepath);
 		final Reader reader = new InputStreamReader(inputStream);
 		return scanNWA(reader);
@@ -190,35 +193,39 @@ final class Scan {
 
 	@SuppressWarnings("serial")
 	static final class ParseNWAException extends Exception {
-		String problem;
+		public final String mProblem;
 
-		ParseNWAException(String problem) {
-			this.problem = problem;
+		ParseNWAException(final String problem) {
+			this.mProblem = problem;
 		}
 	}
 
-	private static void expectString(java.io.StreamTokenizer in, String x) throws java.io.IOException, ParseNWAException {
+	private static void expectString(final java.io.StreamTokenizer in, final String x)
+			throws java.io.IOException, ParseNWAException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_WORD ||!in.sval.equals(x)) {
 			throw new ParseNWAException("expected " + x + ", but got " + in.sval);
 		}
 	}
 
-	private static void expectEOL(java.io.StreamTokenizer in) throws java.io.IOException, ParseNWAException {
+	private static void expectEOL(final java.io.StreamTokenizer in)
+			throws java.io.IOException, ParseNWAException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_EOL) {
 			throw new ParseNWAException("expected EOL");
 		}
 	}
 
-	private static void expectEOF(java.io.StreamTokenizer in) throws java.io.IOException, ParseNWAException {
+	private static void expectEOF(final java.io.StreamTokenizer in)
+			throws java.io.IOException, ParseNWAException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_EOF) {
 			throw new ParseNWAException("expected EOF");
 		}
 	}
 
-	private static int parseInt(java.io.StreamTokenizer in) throws java.io.IOException, ParseNWAException {
+	private static int parseInt(final java.io.StreamTokenizer in)
+			throws java.io.IOException, ParseNWAException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_NUMBER) {
 			throw new ParseNWAException("expected number");
@@ -226,7 +233,8 @@ final class Scan {
 		return (int) in.nval;
 	}
 
-	private static int parseInt(java.io.StreamTokenizer in, int max)throws java.io.IOException, ParseNWAException {
+	private static int parseInt(final java.io.StreamTokenizer in, final int max)
+			throws java.io.IOException, ParseNWAException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_NUMBER) {
 			throw new ParseNWAException("expected number");

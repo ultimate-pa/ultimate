@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 /**
  * IDebugHelper is used to implement some assertions in the {@link FixpointEngine}.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -14,7 +14,7 @@ public interface IDebugHelper<STATE extends IAbstractState<STATE, ACTION, VARDEC
 
 	/**
 	 * Check whether the Hoare triple {stateBeforeLeaving} {stateAfterLeaving} transition {/\ postStates} holds.
-	 * 
+	 *
 	 * @param stateBeforeLeaving
 	 *            The abstract state in the old scope, i.e., the scope that we are leaving.
 	 * @param stateAfterLeaving

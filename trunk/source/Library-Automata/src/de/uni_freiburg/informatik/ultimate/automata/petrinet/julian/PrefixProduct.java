@@ -37,11 +37,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ConcurrentProduct;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
@@ -53,7 +53,7 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 	private final ILogger mLogger;
 	
 	private final PetriNetJulian<S,C> mNet;
-	private final NestedWordAutomaton<S,C> mNwa;
+	private final INestedWordAutomaton<S,C> mNwa;
 	private PetriNetJulian<S,C> mResult;
 	
 	private HashSet<S> mNetOnlyAlphabet;
@@ -94,8 +94,8 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 	
 	
 	
-	private void updateSymbol2netTransitions(S symbol, 
-											 ITransition<S,C> netTransition) {
+	private void updateSymbol2netTransitions(final S symbol, 
+											 final ITransition<S,C> netTransition) {
 		Collection<ITransition<S,C>> netTransitions;
 		netTransitions = symbol2netTransitions.get(symbol);
 		if (netTransitions == null) {
@@ -105,8 +105,8 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 		netTransitions.add(netTransition);
 	}
 	
-	private void updateSymbol2nwaTransitions(S symbol, 
-				AutomatonTransition nwaTransition) {
+	private void updateSymbol2nwaTransitions(final S symbol, 
+				final AutomatonTransition nwaTransition) {
 		Collection<AutomatonTransition> nwaTransitions;
 		nwaTransitions = symbol2nwaTransitions.get(symbol);
 		if (nwaTransitions == null) {
@@ -118,8 +118,8 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 	
 
 	
-	public PrefixProduct(AutomataLibraryServices services,
-			PetriNetJulian<S, C> net, NestedWordAutomaton<S, C> nwa) {
+	public PrefixProduct(final AutomataLibraryServices services,
+			final PetriNetJulian<S, C> net, final INestedWordAutomaton<S, C> nwa) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.mNet = net;
@@ -176,17 +176,18 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 		}
 		
 		for (final C state : mNwa.getStates()) {
-			for (final S letter : mNwa.lettersInternal(state)) {
-				for (final C succ : mNwa.succInternal(state, letter)) {
-					Collection<AutomatonTransition> automatonTransitions = 
-							symbol2nwaTransitions.get(letter);
-					if (automatonTransitions == null) {
-						automatonTransitions = new HashSet<AutomatonTransition>();
-						symbol2nwaTransitions.put(letter, automatonTransitions);
-					}
-					automatonTransitions.add(
-							new AutomatonTransition(state, letter, succ));
+			for (final OutgoingInternalTransition<S, C> trans :
+					mNwa.internalSuccessors(state)) {
+				final S letter = trans.getLetter();
+				final C succ = trans.getSucc();
+				Collection<AutomatonTransition> automatonTransitions = 
+						symbol2nwaTransitions.get(letter);
+				if (automatonTransitions == null) {
+					automatonTransitions = new HashSet<AutomatonTransition>();
+					symbol2nwaTransitions.put(letter, automatonTransitions);
 				}
+				automatonTransitions.add(
+						new AutomatonTransition(state, letter, succ));
 			}
 		}
 		
@@ -267,7 +268,7 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 		private final S letter;
 		private final C successor;
 
-		public AutomatonTransition(C predecessor, S letter, C successor) {
+		public AutomatonTransition(final C predecessor, final S letter, final C successor) {
 			this.predecessor = predecessor;
 			this.letter = letter;
 			this.successor = successor;
@@ -289,16 +290,19 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<C> stateFactory)
+	public boolean checkResult(final StateFactory<C> stateFactory)
 			throws AutomataLibraryException {
 		mLogger.info("Testing correctness of prefixProduct");
 
-		final INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(mServices, mNet)).getResult();
-		final INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(mServices, mResult)).getResult();
-		final INestedWordAutomatonOldApi nwaResult = (new ConcurrentProduct(mServices, op1AsNwa, mNwa, true)).getResult();
+		final INestedWordAutomaton<S, C> op1AsNwa = 
+				(new PetriNet2FiniteAutomaton<S, C>(mServices, mNet)).getResult();
+		final INestedWordAutomaton<S, C> resultAsNwa =
+				(new PetriNet2FiniteAutomaton<S, C>(mServices, mResult)).getResult();
+		final INestedWordAutomaton<S, C> nwaResult =
+				(new ConcurrentProduct<S, C>(mServices, op1AsNwa, mNwa, true)).getResult();
 		boolean correct = true;
-		correct &= (new IsIncluded(mServices, stateFactory, resultAsNwa,nwaResult)).getResult();
-		correct &= (new IsIncluded(mServices, stateFactory, nwaResult,resultAsNwa)).getResult();
+		correct &= (new IsIncluded<>(mServices, stateFactory, resultAsNwa,nwaResult)).getResult();
+		correct &= (new IsIncluded<>(mServices, stateFactory, nwaResult,resultAsNwa)).getResult();
 
 		mLogger.info("Finished testing correctness of prefixProduct");
 		return correct;

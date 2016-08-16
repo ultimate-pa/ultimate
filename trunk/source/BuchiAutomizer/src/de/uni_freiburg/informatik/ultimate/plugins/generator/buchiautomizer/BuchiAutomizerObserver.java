@@ -59,9 +59,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
@@ -93,13 +93,13 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 
-	public BuchiAutomizerObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
+	public BuchiAutomizerObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		mServices = services;
 		mStorage = storage;
 	}
 
 	@Override
-	public boolean process(IElement root) throws IOException {
+	public boolean process(final IElement root) throws IOException {
 		if (!(root instanceof RootNode)) {
 			return false;
 		}
@@ -108,7 +108,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		mGraphRoot = root;
 
 		mSmtManager = new SmtManager(mRootAnnot.getScript(), mRootAnnot.getBoogie2SMT(),
-				mRootAnnot.getModGlobVarManager(), mServices, false, mRootAnnot.getManagedScript());
+				mRootAnnot.getModGlobVarManager(), mServices, false, mRootAnnot.getManagedScript(),
+				taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 
 		mPref = taPrefs;
 
@@ -140,12 +141,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	/**
 	 * Report a nontermination argument back to Ultimate's toolchain
 	 */
-	private void reportNonTerminationResult(ProgramPoint honda, NonTerminationArgument nta) {
+	private void reportNonTerminationResult(final ProgramPoint honda, final NonTerminationArgument nta) {
 		// TODO: translate also the rational coefficients to Expressions?
 		// mRootAnnot.getBoogie2Smt().translate(term)
 		final Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
 
-		final List<Map<RankVar, Rational>> states = new ArrayList<Map<RankVar, Rational>>();
+		final List<Map<IProgramVar, Rational>> states = new ArrayList<Map<IProgramVar, Rational>>();
 		states.add(nta.getStateInit());
 		states.add(nta.getStateHonda());
 		states.addAll(nta.getGEVs());
@@ -158,7 +159,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		reportResult(result);
 	}
 
-	private void interpretAndReportResult(BuchiCegarLoop bcl, Result result) throws AssertionError {
+	private void interpretAndReportResult(final BuchiCegarLoop bcl, final Result result) throws AssertionError {
 		String whatToProve = "termination";
 
 		if (bcl.isInLTLMode()) {
@@ -224,11 +225,11 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final Map<Integer, ProgramState<Expression>> partialProgramStateMapping = Collections.emptyMap();
 			@SuppressWarnings("unchecked")
 			final
-			RcfgProgramExecution stemPE = new RcfgProgramExecution(counterexample.getStem().getWord().lettersAsList(),
+			RcfgProgramExecution stemPE = new RcfgProgramExecution(counterexample.getStem().getWord().asList(),
 					partialProgramStateMapping, new Map[counterexample.getStem().getLength()]);
 			@SuppressWarnings("unchecked")
 			final
-			RcfgProgramExecution loopPE = new RcfgProgramExecution(counterexample.getLoop().getWord().lettersAsList(),
+			RcfgProgramExecution loopPE = new RcfgProgramExecution(counterexample.getLoop().getWord().asList(),
 					partialProgramStateMapping, new Map[counterexample.getLoop().getLength()]);
 			final IResult ntreportRes = new NonterminatingLassoResult<RcfgElement, RCFGEdge, Expression>(honda,
 					Activator.PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE,
@@ -239,19 +240,19 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private void reportLTLPropertyHolds(BuchiCegarLoop bcl, LTLPropertyCheck ltlAnnot) {
+	private void reportLTLPropertyHolds(final BuchiCegarLoop bcl, final LTLPropertyCheck ltlAnnot) {
 		final IResult result = new AllSpecificationsHoldResult(Activator.PLUGIN_ID,
 				"Buchi Automizer proved that the LTL property " + ltlAnnot.getLTLProperty() + " holds");
 		reportResult(result);
 	}
 
-	private void reportLTLPropertyIsViolated(BuchiCegarLoop bcl, LTLPropertyCheck ltlAnnot) {
+	private void reportLTLPropertyIsViolated(final BuchiCegarLoop bcl, final LTLPropertyCheck ltlAnnot) {
 		final NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
 		final ProgramPoint position = ((ISLPredicate) counterexample.getLoop().getStateAtPosition(0)).getProgramPoint();
 		// first, check if the counter example is really infinite or not
 
-		final List<CodeBlock> stem = counterexample.getStem().getWord().lettersAsList();
-		final List<CodeBlock> loop = counterexample.getLoop().getWord().lettersAsList();
+		final List<CodeBlock> stem = counterexample.getStem().getWord().asList();
+		final List<CodeBlock> loop = counterexample.getLoop().getWord().asList();
 
 		final boolean isFinite = isLTLCounterExampleFinite(loop);
 
@@ -290,7 +291,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private boolean isLTLCounterExampleFinite(List<CodeBlock> loop) {
+	private boolean isLTLCounterExampleFinite(final List<CodeBlock> loop) {
 		// TODO: does not work reliably
 		// boolean isFinite = true;
 		//
@@ -315,7 +316,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		return mServices.getBacktranslationService();
 	}
 
-	void reportResult(IResult res) {
+	void reportResult(final IResult res) {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 	}
 
@@ -325,7 +326,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
 
 	}
 
@@ -353,7 +354,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		private final boolean mLambdaZero;
 		private final boolean mGEVZero;
 
-		public NonterminationBenchmark(NonTerminationArgument nta) {
+		public NonterminationBenchmark(final NonTerminationArgument nta) {
 			boolean lambdaZero = true;
 			boolean gevZero = true;
 			final List<Rational> lambdas = nta.getLambdas();
@@ -375,8 +376,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		/**
 		 * Return true iff all coefficients of generalized eigenvector are zero.
 		 */
-		private boolean isZero(Map<RankVar, Rational> gev) {
-			for (final Entry<RankVar, Rational> entry : gev.entrySet()) {
+		private boolean isZero(final Map<IProgramVar, Rational> gev) {
+			for (final Entry<IProgramVar, Rational> entry : gev.entrySet()) {
 				if (!entry.getValue().numerator().equals(BigInteger.ZERO)) {
 					return false;
 				}

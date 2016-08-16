@@ -34,15 +34,15 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ETimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -72,19 +72,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	/**
 	 * The underlying buechi automaton from which the game graph gets generated.
 	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> mBuechi;
-	/**
-	 * Amount of states the inputed buechi automata has.
-	 */
-	private int mBuechiAmountOfStates;
-	/**
-	 * Amount of transitions the inputed buechi automata has.
-	 */
-	private int mBuechiAmountOfTransitions;
-	/**
-	 * Amount of edges the game graph has.
-	 */
-	private int mGraphAmountOfEdges;
+	private final INestedWordAutomaton<LETTER, STATE> mBuechi;
 	/**
 	 * Time duration building the graph took in milliseconds.
 	 */
@@ -122,19 +110,16 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 *             an empty call and return alphabet.
 	 */
 	public DirectGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
-			final ILogger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
+			final ILogger logger, final INestedWordAutomaton<LETTER, STATE> buechi,
 			final StateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
 		super(services, progressTimer, logger, stateFactory, buechi);
-		final INestedWordAutomatonOldApi<LETTER, STATE> preparedBuechi = getAutomaton();
+		final INestedWordAutomaton<LETTER, STATE> preparedBuechi = getAutomaton();
 		verifyAutomatonValidity(preparedBuechi);
 
 		mServices = services;
 		mBuechi = preparedBuechi;
 		mStateFactory = stateFactory;
-		mBuechiAmountOfStates = 0;
-		mBuechiAmountOfTransitions = 0;
 		mGraphBuildTime = 0;
-		mGraphAmountOfEdges = 0;
 	}
 
 	/*
@@ -144,7 +129,8 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * buchiReduction.AGameGraph#generateBuchiAutomatonFromGraph()
 	 */
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph() throws AutomataOperationCanceledException {
+	public INestedWordAutomaton<LETTER, STATE> generateAutomatonFromGraph()
+			throws AutomataOperationCanceledException {
 		final SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);
@@ -189,8 +175,6 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			representativesOfInitials.add(uf.find(initial));
 		}
 
-		int resultAmountOfStates = 0;
-
 		final Map<STATE, STATE> input2result = new HashMap<>(mBuechi.size());
 		for (final STATE representative : uf.getAllRepresentatives()) {
 			final boolean isInitial = representativesOfInitials.contains(representative);
@@ -199,21 +183,17 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			final STATE resultState = mStateFactory.minimize(eqClass);
 
 			result.addState(isInitial, isFinal, resultState);
-			resultAmountOfStates++;
 
 			for (final STATE eqClassMember : eqClass) {
 				input2result.put(eqClassMember, resultState);
 			}
 		}
 
-		int resultAmountOfTransitions = 0;
-
 		for (final STATE state : uf.getAllRepresentatives()) {
 			final STATE pred = input2result.get(state);
 			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mBuechi.internalSuccessors(state)) {
 				final STATE succ = input2result.get(outTrans.getSucc());
 				result.addInternalTransition(pred, outTrans.getLetter(), succ);
-				resultAmountOfTransitions++;
 			}
 		}
 
@@ -221,13 +201,6 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		if (performance != null) {
 			performance.stopTimeMeasure(ETimeMeasure.BUILD_RESULT);
 			performance.addTimeMeasureValue(ETimeMeasure.BUILD_GRAPH, mGraphBuildTime);
-			performance.setCountingMeasure(ECountingMeasure.REMOVED_STATES,
-					mBuechiAmountOfStates - resultAmountOfStates);
-			performance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS,
-					mBuechiAmountOfTransitions - resultAmountOfTransitions);
-			performance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS, mBuechiAmountOfTransitions);
-			performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, mBuechiAmountOfStates);
-			performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES, mGraphAmountOfEdges);
 		}
 
 		if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
@@ -249,8 +222,6 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 		// Calculate v1 [paper ref 10]
 		for (final STATE q0 : mBuechi.getStates()) {
-			mBuechiAmountOfStates++;
-
 			for (final STATE q1 : mBuechi.getStates()) {
 				final SpoilerVertex<LETTER, STATE> v1e = new SpoilerVertex<>(0, false, q0, q1);
 				addSpoilerVertex(v1e);
@@ -263,8 +234,6 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		}
 		// Calculate v0 and edges [paper ref 10, 11, 12]
 		for (final STATE q0 : mBuechi.getStates()) {
-			boolean countedTransitionsForQ0 = false;
-
 			for (final STATE q1 : mBuechi.getStates()) {
 				final Set<LETTER> relevantLetters = new HashSet<>();
 				relevantLetters.addAll(mBuechi.lettersInternalIncoming(q0));
@@ -273,30 +242,25 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					final DuplicatorVertex<LETTER, STATE> v0e = new DuplicatorVertex<>(0, false, q0, q1, s);
 					addDuplicatorVertex(v0e);
 					// V1 -> V0 edges [paper ref 11]
-					for (final STATE pred0 : mBuechi.predInternal(q0, s)) {
+					for (final IncomingInternalTransition<LETTER, STATE> trans :
+							mBuechi.internalPredecessors(q0, s)) {
+						final STATE pred0 = trans.getPred();
 						// Only add edge if duplicator does not directly loose
 						if (!mBuechi.isFinal(pred0) || mBuechi.isFinal(q1)) {
 							addEdge(getSpoilerVertex(pred0, q1, false), v0e);
-							mGraphAmountOfEdges++;
-						}
-
-						// Make sure to only count this transitions one time for
-						// q0
-						if (!countedTransitionsForQ0) {
-							mBuechiAmountOfTransitions++;
 						}
 					}
 
 					// V0 -> V1 edges [paper ref 11]
-					for (final STATE succ1 : mBuechi.succInternal(q1, s)) {
+					for (final OutgoingInternalTransition<LETTER, STATE> trans :
+							mBuechi.internalSuccessors(q1, s)) {
+						final STATE succ1 = trans.getSucc();
 						// Only add edge if duplicator does not directly loose
 						if (!mBuechi.isFinal(q0) || mBuechi.isFinal(succ1)) {
 							addEdge(v0e, getSpoilerVertex(q0, succ1, false));
-							mGraphAmountOfEdges++;
 						}
 					}
 				}
-				countedTransitionsForQ0 = true;
 			}
 
 			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
@@ -313,40 +277,9 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					+ (getDuplicatorVertices().size() + getSpoilerVertices().size()));
 			logger.debug("Number of vertices in v0: " + getDuplicatorVertices().size());
 			logger.debug("Number of vertices in v1: " + getSpoilerVertices().size());
-			logger.debug("Number of edges in game graph: " + mGraphAmountOfEdges);
 		}
 
 		setGraphBuildTime(System.currentTimeMillis() - graphBuildTimeStart);
-	}
-
-	/**
-	 * Sets the internal counter of the amount of buechi states.
-	 * 
-	 * @param amount
-	 *            Amount of buechi states.
-	 */
-	protected void setBuechiAmountOfStates(final int amount) {
-		mBuechiAmountOfStates = amount;
-	}
-
-	/**
-	 * Sets the internal counter of the amount of buechi transitions.
-	 * 
-	 * @param amount
-	 *            Amount of buechi transitions.
-	 */
-	protected void setBuechiAmountOfTransitions(final int amount) {
-		mBuechiAmountOfTransitions = amount;
-	}
-
-	/**
-	 * Sets the internal counter of the amount of graph edges.
-	 * 
-	 * @param amount
-	 *            Amount of graph edges.
-	 */
-	protected void setGraphAmountOfEdges(final int amount) {
-		mGraphAmountOfEdges = amount;
 	}
 
 	/**

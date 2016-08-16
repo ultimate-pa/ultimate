@@ -42,103 +42,108 @@ import java.util.Iterator;
  */
 final class IntArray implements Iterable<Integer> {
 
-	private int[] array;
-	private int size;
-	private int capacity;
+	private int[] mArray;
+	private int mSize;
+	private int mCapacity;
 
 	IntArray() {
-		array = new int[0];
-		size = 0;
-		capacity = 0;
+		mArray = new int[0];
+		mSize = 0;
+		mCapacity = 0;
 	}
 
-	int get(int idx) {
-		if (idx < 0 || idx >= size) {
+	int get(final int idx) {
+		if (idx < 0 || idx >= mSize) {
 			throw new ArrayIndexOutOfBoundsException();
 		}
 
-		return array[idx];
+		return mArray[idx];
 	}
 
-	void set(int idx, int val) {
-		if (idx < 0 || idx >= size) {
+	void set(final int idx, final int val) {
+		if (idx < 0 || idx >= mSize) {
 			throw new ArrayIndexOutOfBoundsException();
 		}
 
-		array[idx] = val;
+		mArray[idx] = val;
 	}
 
-	void add(int val) {
-		if (size == capacity) {
-			final int newCapacity = (capacity == 0) ? 4 : 2 * capacity;
-			array = Arrays.copyOf(array, newCapacity);
-			capacity = newCapacity;
+	void add(final int val) {
+		if (mSize == mCapacity) {
+			final int newCapacity = (mCapacity == 0) ? 4 : 2 * mCapacity;
+			mArray = Arrays.copyOf(mArray, newCapacity);
+			mCapacity = newCapacity;
 		}
 
-		array[size++] = val;
+		mArray[mSize++] = val;
 	}
 
 	void clear() {
-		array = new int[0];
-		size = 0;
-		capacity = 0;
+		mArray = new int[0];
+		mSize = 0;
+		mCapacity = 0;
 	}
 
 	int size() {
-		return size;
+		return mSize;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (obj == null || !(obj instanceof IntArray)) {
 			return false;
 		}
 
 		final IntArray b = (IntArray) obj;
 
-		if (b.size != size) {
+		if (b.mSize != mSize) {
 			return false;
 		}
 
-		for (int i = 0; i < size; i++) {
-			if (b.array[i] != array[i]) {
+		for (int i = 0; i < mSize; i++) {
+			if (b.mArray[i] != mArray[i]) {
 				return false;
 			}
 		}
 
 		return true;
 	}
+	
+	@Override
+	public int hashCode() {
+		throw new UnsupportedOperationException("hashCode() not implemented");
+	}
 
 	@Override
 	public Iterator<Integer> iterator() {
-		return new IntArrayIterator(array, 0, size);
+		return new IntArrayIterator(mArray, 0, mSize);
 	}
 
 	private static final class IntArrayIterator implements Iterator<Integer> {
-		private final int[] array;
-		private final int last;
-		private int idx;
+		private final int[] mInnerArray;
+		private final int mLast;
+		private int mIdx;
 
-		IntArrayIterator(int[] array, int first, int last) {
+		IntArrayIterator(final int[] array, final int first, final int last) {
 			assert 0 <= first && first <= last && last <= array.length;
 
-			this.array = array;
-			this.last = last;
-			idx = first;
+			this.mInnerArray = array;
+			this.mLast = last;
+			mIdx = first;
 		}
 
 		@Override
 		public boolean hasNext() {
-			return idx < last;
+			return mIdx < mLast;
 		}
 
 		@Override
 		public Integer next() {
-			if (idx == last) {
+			if (mIdx == mLast) {
 				throw new ArrayIndexOutOfBoundsException();
 			}
 
-			return array[idx++];
+			return mInnerArray[mIdx++];
 		}
 	}
 }

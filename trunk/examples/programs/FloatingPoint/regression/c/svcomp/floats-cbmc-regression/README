@@ -1,0 +1,4 @@
+All examples are taken from CBMC's regression test suite
+(http://svn.cprover.org/svn/cbmc/trunk/regression/cbmc/).
+
+The overflow checks were omitted as these require more elaborate assertions.

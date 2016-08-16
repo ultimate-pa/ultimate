@@ -41,11 +41,12 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class XnfIrd extends XjunctPartialQuantifierElimination {
 
-	public XnfIrd(Script script, IUltimateServiceProvider services) {
+	public XnfIrd(final ManagedScript script, final IUltimateServiceProvider services) {
 		super(script, services);
 	}
 
@@ -66,8 +67,8 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 
 
 	@Override
-	public Term[] tryToEliminate(int quantifier, Term[] oldParams,
-			Set<TermVariable> eliminatees) {
+	public Term[] tryToEliminate(final int quantifier, final Term[] oldParams,
+			final Set<TermVariable> eliminatees) {
 		final Iterator<TermVariable> it = eliminatees.iterator();
 		Term[] result = oldParams;
 		while (it.hasNext()) {
@@ -106,7 +107,7 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 	 * 
 	 * @param logger
 	 */
-	public static Term[] irdSimple(Script script, int quantifier, Term[] oldParams, TermVariable tv, ILogger logger) {
+	public static Term[] irdSimple(final Script script, final int quantifier, final Term[] oldParams, final TermVariable tv, final ILogger logger) {
 		assert tv.getSort().isNumericSort() : "only applicable for numeric sorts";
 
 		final ArrayList<Term> paramsWithoutTv = new ArrayList<Term>();

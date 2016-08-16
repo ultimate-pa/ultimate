@@ -23,10 +23,11 @@ public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> im
 			key -> data -> String.valueOf(data) + " " + key;
 	public static Function<String, Function<Object,String>> s_TimeBeforeKey = 
 			key -> time -> prettyprintNanoseconds( (Long) time) + " " + key;
+
 	
 	private final Class<T> mKeys;
 	
-	public AStatisticsType(Class<T> keys) {
+	public AStatisticsType(final Class<T> keys) {
 		super();
 		mKeys = keys;
 	}
@@ -41,14 +42,14 @@ public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> im
 	}
 
 	@Override
-	public Object aggregate(String key, Object value1, Object value2) {
+	public Object aggregate(final String key, final Object value1, final Object value2) {
 		final T keyEnum = Enum.valueOf(mKeys, key);
 		final Object result = keyEnum.aggregate(value1, value2);
 		return result;
 	}
 
 	@Override
-	public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
+	public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
 		final StringBuilder sb = new StringBuilder();
 		boolean first = true;
 		for (final String key : getKeys()) {
@@ -65,12 +66,12 @@ public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> im
 	}
 	
 	
-	public static String prettyprintBenchmarkData(String key, IStatisticsDataProvider benchmarkData) {
+	public static String prettyprintBenchmarkData(final String key, final IStatisticsDataProvider benchmarkData) {
 		return key + " " + benchmarkData.getValue(key);
 	}
 	
 	
-	public static String prettyprintNanoseconds(long time) {
+	public static String prettyprintNanoseconds(final long time) {
 		final long seconds = time / 1000000000;
 		final long tenthDigit = (time / 100000000) % 10;
 		return seconds + "." + tenthDigit + "s";

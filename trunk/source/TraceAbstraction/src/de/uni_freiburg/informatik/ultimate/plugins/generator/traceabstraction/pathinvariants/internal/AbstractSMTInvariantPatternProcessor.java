@@ -31,8 +31,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 /**
@@ -45,21 +45,21 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements
 		IInvariantPatternProcessor<IPT> {
 
 	protected final PredicateUnifier predicateUnifier;
-	protected final SmtManager smtManager;
+	protected final ManagedScript mScript;
 
 	/**
 	 * Creates a new pattern processor based on SMT.
 	 * 
 	 * @param predicateUnifier
 	 *            predicate unifier to unify predicates with
-	 * @param smtManager
+	 * @param script
 	 *            SMT manager to access {@link Boogie2SMT} through
 	 */
 	public AbstractSMTInvariantPatternProcessor(
 			final PredicateUnifier predicateUnifier,
-			final SmtManager smtManager) {
+			final ManagedScript script) {
 		this.predicateUnifier = predicateUnifier;
-		this.smtManager = smtManager;
+		this.mScript = script;
 	}
 
 	/**
@@ -93,7 +93,7 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements
 	 * {@link #getTermForPattern(Object)} into a {@link Term} representing the
 	 * program states covered by the pattern under the given configuration.
 	 * 
-	 * @see SafeSubstitution
+	 * @see Substitution
 	 * @return transformer replacing pattern variables
 	 * 
 	 */

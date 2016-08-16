@@ -35,11 +35,9 @@ import java.util.HashSet;
  * A Nested Word automaton. There is no distinction between linear and
  * hierarchical states.
  *
- * <p>
- * This is a mostly normalized POD (plain old data) representation of NWAs.
+ * <p>This is a mostly normalized POD (plain old data) representation of NWAs.
  *
- * <p>
- * The following constraints are useful in most situations:
+ * <p>The following constraints are useful in most situations:
  *
  * <ul>
  * <li>numStates &ge; 0 && numISyms &ge; 0 && numRSyms &ge; 0
@@ -49,39 +47,38 @@ import java.util.HashSet;
  * the ranges [0, numStates), [0, numISyms), [0, numCSyms), [0, numRSyms)
  * </ul>
  *
- * <p>
- * This class has static methods to verify these constraints, and also methods
+ * <p>This class has static methods to verify these constraints, and also methods
  * to assert determinism.
  *
  * @author stimpflj
  */
 final class NWA implements Cloneable {
 	/** Number of states */
-	int numStates;
+	int mNumStates;
 
 	/** Number of internal symbols */
-	int numISyms;
+	int mNumISyms;
 
 	/** Number of call symbols */
-	int numCSyms;
+	int mNumCSyms;
 
 	/** Number of return symbols */
-	int numRSyms;
+	int mNumRSyms;
 
 	/** For each state whether it is initial */
-	boolean[] isInitial;
+	boolean[] mIsInitial;
 
 	/** For each state whether it is final */
-	boolean[] isFinal;
+	boolean[] mIsFinal;
 
 	/** Internal Transitions */
-	ITrans[] iTrans;
+	ITrans[] mITrans;
 
 	/** Call Transitions */
-	CTrans[] cTrans;
+	CTrans[] mCTrans;
 
 	/** Return Transitions */
-	RTrans[] rTrans;
+	RTrans[] mRTrans;
 
 
 	/**
@@ -89,60 +86,60 @@ final class NWA implements Cloneable {
 	 *
 	 * @return <code>true</code> iff the automaton is consistent
 	 */
-	static boolean checkConsistency(NWA nwa) {
-		if (nwa.numStates < 0) {
+	static boolean checkConsistency(final NWA nwa) {
+		if (nwa.mNumStates < 0) {
 			return false;
 		}
-		if (nwa.numISyms < 0) {
+		if (nwa.mNumISyms < 0) {
 			return false;
 		}
-		if (nwa.numRSyms < 0) {
+		if (nwa.mNumRSyms < 0) {
 			return false;
 		}
-		if (nwa.numCSyms < 0) {
-			return false;
-		}
-
-		if (nwa.isInitial == null || nwa.isInitial.length != nwa.numStates) {
-			return false;
-		}
-		if (nwa.isFinal == null || nwa.isFinal.length != nwa.numStates) {
+		if (nwa.mNumCSyms < 0) {
 			return false;
 		}
 
-		for (final ITrans x : nwa.iTrans) {
-			if (x.src < 0 || x.src >= nwa.numStates) {
+		if (nwa.mIsInitial == null || nwa.mIsInitial.length != nwa.mNumStates) {
+			return false;
+		}
+		if (nwa.mIsFinal == null || nwa.mIsFinal.length != nwa.mNumStates) {
+			return false;
+		}
+
+		for (final ITrans x : nwa.mITrans) {
+			if (x.mSrc < 0 || x.mSrc >= nwa.mNumStates) {
 				return false;
 			}
-			if (x.sym < 0 || x.sym >= nwa.numISyms) {
+			if (x.mSym < 0 || x.mSym >= nwa.mNumISyms) {
 				return false;
 			}
-			if (x.dst < 0 || x.dst >= nwa.numStates) {
+			if (x.mDst < 0 || x.mDst >= nwa.mNumStates) {
 				return false;
 			}
 		}
-		for (final CTrans x : nwa.cTrans) {
-			if (x.src < 0 || x.src >= nwa.numStates) {
+		for (final CTrans x : nwa.mCTrans) {
+			if (x.mSrc < 0 || x.mSrc >= nwa.mNumStates) {
 				return false;
 			}
-			if (x.sym < 0 || x.sym >= nwa.numCSyms) {
+			if (x.mSym < 0 || x.mSym >= nwa.mNumCSyms) {
 				return false;
 			}
-			if (x.dst < 0 || x.dst >= nwa.numStates) {
+			if (x.mDst < 0 || x.mDst >= nwa.mNumStates) {
 				return false;
 			}
 		}
-		for (final RTrans x : nwa.rTrans) {
-			if (x.src < 0 || x.src >= nwa.numStates) {
+		for (final RTrans x : nwa.mRTrans) {
+			if (x.mSrc < 0 || x.mSrc >= nwa.mNumStates) {
 				return false;
 			}
-			if (x.sym < 0 || x.sym >= nwa.numRSyms) {
+			if (x.mSym < 0 || x.mSym >= nwa.mNumRSyms) {
 				return false;
 			}
-			if (x.top < 0 || x.top >= nwa.numStates) {
+			if (x.mTop < 0 || x.mTop >= nwa.mNumStates) {
 				return false;
 			}
-			if (x.dst < 0 || x.dst >= nwa.numStates) {
+			if (x.mDst < 0 || x.mDst >= nwa.mNumStates) {
 				return false;
 			}
 		}
@@ -157,23 +154,22 @@ final class NWA implements Cloneable {
 	 * @return <code>true</code> iff the automaton is deterministic (multiple
 	 *         identical transitions count as non-deterministic)
 	 */
-	static boolean checkDeterminism(NWA nwa) {
+	static boolean checkDeterminism(final NWA nwa) {
 		final HashSet<ITrans> iSeen = new HashSet<ITrans>();
+		for (final ITrans x : nwa.mITrans) {
+			if (!iSeen.add(new ITrans(x.mSrc, x.mSym, 0))) {
+				return false;
+			}
+		}
 		final HashSet<CTrans> cSeen = new HashSet<CTrans>();
+		for (final CTrans x : nwa.mCTrans) {
+			if (!cSeen.add(new CTrans(x.mSrc, x.mSym, 0))) {
+				return false;
+			}
+		}
 		final HashSet<RTrans> rSeen = new HashSet<RTrans>();
-
-		for (final ITrans x : nwa.iTrans) {
-			if (!iSeen.add(new ITrans(x.src, x.sym, 0))) {
-				return false;
-			}
-		}
-		for (final CTrans x : nwa.cTrans) {
-			if (!cSeen.add(new CTrans(x.src, x.sym, 0))) {
-				return false;
-			}
-		}
-		for (final RTrans x : nwa.rTrans) {
-			if (!rSeen.add(new RTrans(x.src, x.sym, x.top, 0))) {
+		for (final RTrans x : nwa.mRTrans) {
+			if (!rSeen.add(new RTrans(x.mSrc, x.mSym, x.mTop, 0))) {
 				return false;
 			}
 		}
@@ -187,11 +183,11 @@ final class NWA implements Cloneable {
 	 * @return ArrayList containing all final states of <code>nwa</code>, in
 	 *         strictly ascending order.
 	 */
-	static ArrayList<Integer> computeInitialStates(NWA nwa) {
+	static ArrayList<Integer> computeInitialStates(final NWA nwa) {
 		final ArrayList<Integer> out = new ArrayList<Integer>();
 
-		for (int i = 0; i < nwa.numStates; i++) {
-			if (nwa.isInitial[i]) {
+		for (int i = 0; i < nwa.mNumStates; i++) {
+			if (nwa.mIsInitial[i]) {
 				out.add(i);
 			}
 		}
@@ -205,11 +201,11 @@ final class NWA implements Cloneable {
 	 * @return ArrayList containing all final states of <code>nwa</code>, in
 	 *         strictly ascending order.
 	 */
-	static ArrayList<Integer> computeFinalStates(NWA nwa) {
+	static ArrayList<Integer> computeFinalStates(final NWA nwa) {
 		final ArrayList<Integer> out = new ArrayList<Integer>();
 
-		for (int i = 0; i < nwa.numStates; i++) {
-			if (nwa.isFinal[i]) {
+		for (int i = 0; i < nwa.mNumStates; i++) {
+			if (nwa.mIsFinal[i]) {
 				out.add(i);
 			}
 		}
@@ -224,15 +220,15 @@ final class NWA implements Cloneable {
 	@Override
 	public NWA clone() {
 		final NWA out = new NWA();
-		out.numStates = numStates;
-		out.numISyms = numISyms;
-		out.numCSyms = numCSyms;
-		out.numRSyms = numRSyms;
-		out.isInitial = isInitial.clone();
-		out.isFinal = isFinal.clone();
-		out.iTrans = iTrans.clone();
-		out.cTrans = cTrans.clone();
-		out.rTrans = rTrans.clone();
+		out.mNumStates = mNumStates;
+		out.mNumISyms = mNumISyms;
+		out.mNumCSyms = mNumCSyms;
+		out.mNumRSyms = mNumRSyms;
+		out.mIsInitial = mIsInitial.clone();
+		out.mIsFinal = mIsFinal.clone();
+		out.mITrans = mITrans.clone();
+		out.mCTrans = mCTrans.clone();
+		out.mRTrans = mRTrans.clone();
 
 		return out;
 	}
@@ -246,46 +242,46 @@ final class NWA implements Cloneable {
  */
 final class ITrans {
 	/** Source state */
-	int src;
+	int mSrc;
 
 	/** Internal symbol */
-	int sym;
+	int mSym;
 
 	/** Destination state */
-	int dst;
+	int mDst;
 
 
 	ITrans() {}
 
-	ITrans(int src, int sym, int dst) {
-		this.src = src;
-		this.sym = sym;
-		this.dst = dst;
+	ITrans(final int src, final int sym, final int dst) {
+		this.mSrc = src;
+		this.mSym = sym;
+		this.mDst = dst;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (obj == null || !(obj instanceof ITrans)) {
 			return false;
 		}
 
 		final ITrans b = (ITrans) obj;
-		return src == b.src && sym == b.sym && dst == b.dst;
+		return mSrc == b.mSrc && mSym == b.mSym && mDst == b.mDst;
 	}
 
 	@Override
 	public int hashCode() {
-		return (src * 31 + sym) * 31 + dst;
+		return (mSrc * 31 + mSym) * 31 + mDst;
 	}
 
-	static int compareSrcSymDst(ITrans a, ITrans b) {
-		if (a.src != b.src) {
-			return a.src - b.src;
+	static int compareSrcSymDst(final ITrans a, final ITrans b) {
+		if (a.mSrc != b.mSrc) {
+			return a.mSrc - b.mSrc;
 		}
-		if (a.sym != b.sym) {
-			return a.sym - b.sym;
+		if (a.mSym != b.mSym) {
+			return a.mSym - b.mSym;
 		}
-		return a.dst - b.dst;
+		return a.mDst - b.mDst;
 	}
 }
 
@@ -297,46 +293,46 @@ final class ITrans {
  */
 final class CTrans {
 	/** Source state */
-	int src;
+	int mSrc;
 
 	/** Call symbol */
-	int sym;
+	int mSym;
 
 	/** Destination state */
-	int dst;
+	int mDst;
 
 	CTrans() {}
 
-	CTrans(int src, int sym, int dst) {
-		this.src = src;
-		this.sym = sym;
-		this.dst = dst;
+	CTrans(final int src, final int sym, final int dst) {
+		this.mSrc = src;
+		this.mSym = sym;
+		this.mDst = dst;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (obj == null || !(obj instanceof CTrans)) {
 			return false;
 		}
 
 		final CTrans b = (CTrans) obj;
 
-		return src == b.src && sym == b.sym && dst == b.dst;
+		return mSrc == b.mSrc && mSym == b.mSym && mDst == b.mDst;
 	}
 
 	@Override
 	public int hashCode() {
-		return (src * 31 + sym) * 31 + dst;
+		return (mSrc * 31 + mSym) * 31 + mDst;
 	}
 
-	static int compareSrcSymDst(CTrans a, CTrans b) {
-		if (a.src != b.src) {
-			return a.src - b.src;
+	static int compareSrcSymDst(final CTrans a, final CTrans b) {
+		if (a.mSrc != b.mSrc) {
+			return a.mSrc - b.mSrc;
 		}
-		if (a.sym != b.sym) {
-			return a.sym - b.sym;
+		if (a.mSym != b.mSym) {
+			return a.mSym - b.mSym;
 		}
-		return a.dst - b.dst;
+		return a.mDst - b.mDst;
 	}
 }
 
@@ -348,66 +344,66 @@ final class CTrans {
  */
 final class RTrans {
 	/** Source state */
-	int src;
+	int mSrc;
 
 	/** Return symbol */
-	int sym;
+	int mSym;
 
 	/** top-of-stack (hierarchical) state */
-	int top;
+	int mTop;
 
 	/** Destination state */
-	int dst;
+	int mDst;
 
 
 	RTrans() {}
 
-	RTrans(int src, int sym, int top, int dst) {
-		this.src = src;
-		this.sym = sym;
-		this.top = top;
-		this.dst = dst;
+	RTrans(final int src, final int sym, final int top, final int dst) {
+		this.mSrc = src;
+		this.mSym = sym;
+		this.mTop = top;
+		this.mDst = dst;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (!(obj instanceof RTrans)) {
 			return false;
 		}
 
 		final RTrans b = (RTrans) obj;
 
-		return src == b.src && top == b.top && sym == b.sym && dst == b.dst;
+		return mSrc == b.mSrc && mTop == b.mTop && mSym == b.mSym && mDst == b.mDst;
 	}
 
 	@Override
 	public int hashCode() {
-		return ((src * 31 + sym) * 31 + top) * 31 + dst;
+		return ((mSrc * 31 + mSym) * 31 + mTop) * 31 + mDst;
 	}
 
-	static int compareSrcSymTopDst(RTrans a, RTrans b) {
-		if (a.src != b.src) {
-			return a.src - b.src;
+	static int compareSrcSymTopDst(final RTrans a, final RTrans b) {
+		if (a.mSrc != b.mSrc) {
+			return a.mSrc - b.mSrc;
 		}
-		if (a.sym != b.sym) {
-			return a.sym - b.sym;
+		if (a.mSym != b.mSym) {
+			return a.mSym - b.mSym;
 		}
-		if (a.top != b.top) {
-			return a.top - b.top;
+		if (a.mTop != b.mTop) {
+			return a.mTop - b.mTop;
 		}
-		return a.dst - b.dst;
+		return a.mDst - b.mDst;
 	}
 
-	static int compareSrcTopSymDst(RTrans a, RTrans b) {
-		if (a.src != b.src) {
-			return a.src - b.src;
+	static int compareSrcTopSymDst(final RTrans a, final RTrans b) {
+		if (a.mSrc != b.mSrc) {
+			return a.mSrc - b.mSrc;
 		}
-		if (a.top != b.top) {
-			return a.top - b.top;
+		if (a.mTop != b.mTop) {
+			return a.mTop - b.mTop;
 		}
-		if (a.sym != b.sym) {
-			return a.sym - b.sym;
+		if (a.mSym != b.mSym) {
+			return a.mSym - b.mSym;
 		}
-		return a.dst - b.dst;
+		return a.mDst - b.mDst;
 	}
 }

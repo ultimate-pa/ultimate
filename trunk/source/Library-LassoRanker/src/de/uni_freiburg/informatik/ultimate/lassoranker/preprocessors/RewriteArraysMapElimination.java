@@ -29,41 +29,60 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.mapelimination.MapEliminator;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.EqualitySupportingInvariantAnalysis;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Replace term with arrays by term without arrays by introducing replacement
- * variables for all "important" array values and equalities that state the
- * constraints between array indices and array values (resp. their replacement
- * variables).
- *
+ * Replace term with arrays by term without arrays by introducing replacement variables for all "important" array values
+ * and equalities that state the constraints between array indices and array values (resp. their replacement variables).
  *
  * @author Frank Schüssele
  */
 public class RewriteArraysMapElimination extends LassoPreprocessor {
+	public static final String s_Description = "Removes arrays by introducing new variables for each relevant array cell";
 
 	private final IUltimateServiceProvider mServices;
+	private final ManagedScript mManagedScript;
+	private final Boogie2SmtSymbolTable mSymbolTable;
+	private final ReplacementVarFactory mReplacementVarFactory;
+	private final TransFormula mOriginalStem;
+	private final TransFormula mOriginalLoop;
+	private final Set<IProgramVar> mModifiableGlobalsAtHonda;
+	private final SimplicationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
+	private final Set<Term> mArrayIndexSupportingInvariants;
 
-	public static final String s_Description =
-			"Removes arrays by introducing new variables for each relevant array cell";
-
-	private final TransFormula mStem;
-	private final TransFormula mLoop;
-	private final Boogie2SMT mBoogie2smt;
-
-
-	public RewriteArraysMapElimination(final TransFormula stem, final TransFormula loop, final IUltimateServiceProvider services,
-			final Boogie2SMT boogie2smt) {
+	public RewriteArraysMapElimination(final IUltimateServiceProvider services, final ManagedScript managedScript,
+			final Boogie2SmtSymbolTable symbolTable, final ReplacementVarFactory replacementVarFactory,
+			final TransFormula originalStem, final TransFormula originalLoop,
+			final Set<IProgramVar> modifiableGlobalsAtHonda, final SimplicationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final Set<Term> arrayIndexSupportingInvariants) {
 		mServices = services;
-		mStem = stem;
-		mLoop = loop;
-		mBoogie2smt = boogie2smt;
+		mManagedScript = managedScript;
+		mSymbolTable = symbolTable;
+		mReplacementVarFactory = replacementVarFactory;
+		mOriginalStem = originalStem;
+		mOriginalLoop = originalLoop;
+		mModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
+		mArrayIndexSupportingInvariants = arrayIndexSupportingInvariants;
+
 	}
 
 	@Override
@@ -78,10 +97,20 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 
 	@Override
 	public Collection<LassoUnderConstruction> process(final LassoUnderConstruction lasso) throws TermException {
-		// TODO: Only basic version, do other things like IndexSupportingInvariantAnalysis
-		final MapEliminator elim = new MapEliminator(mServices, mBoogie2smt, Arrays.asList(mStem, mLoop));
-		final TransFormulaLR newStem = elim.getRewrittenTransFormula(mStem);
-		final TransFormulaLR newLoop = elim.getRewrittenTransFormula(mLoop);
+		final MapEliminator elim = new MapEliminator(mServices, mManagedScript, mSymbolTable, mReplacementVarFactory,
+				mSimplificationTechnique, mXnfConversionTechnique, Arrays.asList(lasso.getStem(), lasso.getLoop()));
+		final EqualityAnalysisResult equalityAnalysisStem = new EqualityAnalysisResult(elim.getDoubletons());
+		final EqualitySupportingInvariantAnalysis esia = new EqualitySupportingInvariantAnalysis(elim.getDoubletons(),
+				mSymbolTable, mManagedScript.getScript(), mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
+		final EqualityAnalysisResult equalityAnalysisLoop = esia.getEqualityAnalysisResult();
+		mArrayIndexSupportingInvariants
+				.addAll(equalityAnalysisLoop.constructListOfEqualities(mManagedScript.getScript()));
+		mArrayIndexSupportingInvariants
+				.addAll(equalityAnalysisLoop.constructListOfNotEquals(mManagedScript.getScript()));
+		final TransFormulaLR newStem = elim.getRewrittenTransFormula(lasso.getStem(), equalityAnalysisStem,
+				equalityAnalysisLoop, true);
+		final TransFormulaLR newLoop = elim.getRewrittenTransFormula(lasso.getLoop(), equalityAnalysisLoop,
+				equalityAnalysisLoop, true);
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
 		return Collections.singleton(newLasso);
 	}

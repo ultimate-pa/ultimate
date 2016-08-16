@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 /**
  * This {@link IResultReporter} does not generate any results.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -14,17 +14,17 @@ public final class SilentReporter<STATE extends IAbstractState<STATE, ACTION, VA
 		implements IResultReporter<STATE, ACTION, VARDECL, LOCATION> {
 
 	@Override
-	public void reportSafe(ACTION elem) {
+	public void reportSafe(final ACTION elem) {
 
 	}
 
 	@Override
-	public void reportSafe(ACTION elem, String msg) {
+	public void reportSafe(final ACTION elem, final String msg) {
 
 	}
 
 	@Override
-	public void reportPossibleError(AbstractCounterexample<STATE, ACTION, ?, LOCATION> cex) {
+	public void reportPossibleError(final AbstractCounterexample<STATE, ACTION, ?, LOCATION> cex) {
 
 	}
 }

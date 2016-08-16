@@ -32,11 +32,11 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -49,7 +49,7 @@ public class LinearRankingFunction extends RankingFunction {
 	
 	private final AffineFunction mranking;
 	
-	public LinearRankingFunction(AffineFunction ranking) {
+	public LinearRankingFunction(final AffineFunction ranking) {
 		mranking = ranking;
 	}
 	
@@ -59,7 +59,7 @@ public class LinearRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Set<RankVar> getVariables() {
+	public Set<IProgramVar> getVariables() {
 		return Collections.unmodifiableSet(mranking.getVariables());
 	}
 	
@@ -74,7 +74,7 @@ public class LinearRankingFunction extends RankingFunction {
 		if (!mranking.isConstant()) {
 			sb.append("(");
 			boolean first = true;
-			for (final RankVar var : mranking.getVariables()) {
+			for (final IProgramVar var : mranking.getVariables()) {
 				if (!first) {
 					sb.append(", ");
 				}
@@ -89,12 +89,12 @@ public class LinearRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Term[] asLexTerm(Script script) throws SMTLIBException {
+	public Term[] asLexTerm(final Script script) throws SMTLIBException {
 		return new Term[] { mranking.asTerm(script) };
 	}
 	
 	@Override
-	public Ordinal evaluate(Map<RankVar, Rational> assignment) {
+	public Ordinal evaluate(final Map<IProgramVar, Rational> assignment) {
 		BigInteger i = mranking.evaluate(assignment).ceil().numerator();
 		if (i.compareTo(BigInteger.ZERO) < 0) {
 			i = BigInteger.ZERO;

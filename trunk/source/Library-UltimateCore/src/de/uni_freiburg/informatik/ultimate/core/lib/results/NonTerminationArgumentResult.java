@@ -79,7 +79,7 @@ public class NonTerminationArgumentResult<P extends IElement, E> extends Abstrac
 	 * How many steps the infinite execution should be schematically unwinded
 	 */
 	private final static int SCHEMATIC_EXECUTION_LENGTH = 3;
-	private final static boolean ALTERNATIVE_LONG_DESCRIPTION = !false;
+	private final static boolean ALTERNATIVE_LONG_DESCRIPTION = true;
 
 	private final Map<E, Rational> mStateInit;
 	private final Map<E, Rational> mStateHonda;
@@ -88,9 +88,9 @@ public class NonTerminationArgumentResult<P extends IElement, E> extends Abstrac
 	private final List<Rational> mNus;
 	private final Class<E> mExprClazz;
 
-	public NonTerminationArgumentResult(P position, String plugin, Map<E, Rational> stateInit,
-			Map<E, Rational> stateHonda, List<Map<E, Rational>> rays, List<Rational> lambdas, List<Rational> nus,
-			IBacktranslationService translatorSequence, Class<E> exprClazz) {
+	public NonTerminationArgumentResult(final P position, final String plugin, final Map<E, Rational> stateInit,
+			final Map<E, Rational> stateHonda, final List<Map<E, Rational>> rays, final List<Rational> lambdas, final List<Rational> nus,
+			final IBacktranslationService translatorSequence, final Class<E> exprClazz) {
 		super(position, plugin, translatorSequence);
 		mStateInit = stateInit;
 		mStateHonda = stateHonda;
@@ -106,7 +106,7 @@ public class NonTerminationArgumentResult<P extends IElement, E> extends Abstrac
 		return "Nontermination argument in form of an infinite " + "program execution.";
 	}
 
-	private String printState(Map<E, String> state) {
+	private String printState(final Map<E, String> state) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("{");
 		boolean first = true;
@@ -181,7 +181,7 @@ public class NonTerminationArgumentResult<P extends IElement, E> extends Abstrac
 		// State 1 (before the honda)
 		sb.append("State at position 0 is\n");
 		final Map<E, String> statePos0 = new HashMap<E, String>();
-		for (final Entry<E, Rational> entry : mStateHonda.entrySet()) {
+		for (final Entry<E, Rational> entry : mStateInit.entrySet()) {
 			final E var = entry.getKey();
 			final Rational x0 = mStateInit.get(var);
 			statePos0.put(var, x0.toString());

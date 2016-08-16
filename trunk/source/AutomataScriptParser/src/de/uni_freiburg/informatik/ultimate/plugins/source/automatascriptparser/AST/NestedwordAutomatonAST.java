@@ -64,7 +64,7 @@ public class NestedwordAutomatonAST extends AutomatonAST {
 	private Map<String, Map<String, Map<String, Set<String>>>> mReturnTransitions;
 	
 	public NestedwordAutomatonAST(ILocation loc, String name) {
-		super(loc);
+		super(loc, name);
 		mCallAlphabet = new ArrayList<String>();
 		mInternalAlphabet = new ArrayList<String>();
 		mReturnAlphabet = new ArrayList<String>();
@@ -74,7 +74,7 @@ public class NestedwordAutomatonAST extends AutomatonAST {
 		mInternalTransitions = new HashMap<Pair<String,String>, Set<String>>();
 		mCallTransitions = new HashMap<Pair<String,String>, Set<String>>();
 		mReturnTransitions = new HashMap<String, Map<String, Map<String, Set<String>>>>();
-		mName = name;
+//		mName = name;
 		
 	}
 

@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler.RequiredMemoryModelFeatures;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -66,13 +66,13 @@ public abstract class AMemoryModel {
 	
 	protected abstract int bytesizeOfStoredPointerComponents();
 	
-	protected abstract String getProcedureSuffix(PRIMITIVE primitive);
+	protected abstract String getProcedureSuffix(CPrimitives primitive);
        	
-	public final String getReadProcedureName(PRIMITIVE primitive) {
+	public final String getReadProcedureName(CPrimitives primitive) {
 		return s_ReadProcedurePrefix + getProcedureSuffix(primitive);
 	}
 
-	public final String getWriteProcedureName(PRIMITIVE primitive) {
+	public final String getWriteProcedureName(CPrimitives primitive) {
 		return s_WriteProcedurePrefix + getProcedureSuffix(primitive);
 	}
 	
@@ -88,7 +88,7 @@ public abstract class AMemoryModel {
 	}
 
 	
-	public abstract HeapDataArray getDataHeapArray(PRIMITIVE primitive);
+	public abstract HeapDataArray getDataHeapArray(CPrimitives primitive);
 	
 	public final HeapDataArray getPointerHeapArray() {
 		return mPointerArray;
@@ -99,7 +99,7 @@ public abstract class AMemoryModel {
 		if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
 			result.add(getPointerHeapArray());
 		}
-		for (final PRIMITIVE primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
+		for (final CPrimitives primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
 			result.add(getDataHeapArray(primitive));
 		}
 		return result;
@@ -125,8 +125,8 @@ public abstract class AMemoryModel {
 		private final String mProcedureSuffix;
 		private final int mBytesize;
 		private final ASTType mASTType;
-		private final Set<PRIMITIVE> mPrimitives;
-		public ReadWriteDefinition(String procedureName, int bytesize, ASTType aSTType, Set<PRIMITIVE> primitives) {
+		private final Set<CPrimitives> mPrimitives;
+		public ReadWriteDefinition(String procedureName, int bytesize, ASTType aSTType, Set<CPrimitives> primitives) {
 			super();
 			mProcedureSuffix = procedureName;
 			mBytesize = bytesize;
@@ -145,7 +145,7 @@ public abstract class AMemoryModel {
 		public ASTType getASTType() {
 			return mASTType;
 		}
-		public Set<PRIMITIVE> getPrimitives() {
+		public Set<CPrimitives> getPrimitives() {
 			return mPrimitives;
 		}
 		@Override

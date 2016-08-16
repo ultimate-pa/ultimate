@@ -51,7 +51,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	public AbstractRegressionTestSuite() {
 		mTimeout = 1000;
 		mFilterRegex = ".*";
-		mFiletypesToConsider = new String[] { ".c", ".bpl" };
+		mFiletypesToConsider = new String[] { ".c", ".bpl", ".i" };
 	}
 
 	@Override
@@ -128,7 +128,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	 * @return null if the path to the folder is invalid, a File representing
 	 *         the path otherwise
 	 */
-	protected static File getRootFolder(String path) {
+	protected static File getRootFolder(final String path) {
 		if (path == null) {
 			return null;
 		}
@@ -149,7 +149,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	 *         runConfiguration) lies and that have the endings specified by
 	 *         mFileTypesToConsider.
 	 */
-	protected Collection<File> getInputFiles(Pair runConfiguration) {
+	protected Collection<File> getInputFiles(final Pair runConfiguration) {
 		return TestUtil.getFiles(runConfiguration.getToolchainFile().getParentFile(), mFiletypesToConsider);
 	}
 
@@ -157,7 +157,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 	public class Pair {
 
-		public Pair(File toolchain, File settings) {
+		public Pair(final File toolchain, final File settings) {
 			mToolchainFile = toolchain;
 			mSettingsFile = settings;
 		}

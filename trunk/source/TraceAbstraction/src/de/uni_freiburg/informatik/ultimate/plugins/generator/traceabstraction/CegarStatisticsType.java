@@ -26,10 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.function.Function;
+
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
 
 public class CegarStatisticsType extends AStatisticsType<CegarLoopStatisticsDefinitions> {
+	
+	public static Function<Object, Function<Object,Object>> s_SizeIterationPairDataAggregation = 
+			x -> y -> { return new SizeIterationPair(-1, -1); };
 	
 	public CegarStatisticsType() {
 		super(CegarLoopStatisticsDefinitions.class);
@@ -42,17 +47,17 @@ public class CegarStatisticsType extends AStatisticsType<CegarLoopStatisticsDefi
 	}
 
 
-	public static String prettyprintNanoseconds(long time) {
+	public static String prettyprintNanoseconds(final long time) {
 		final long seconds = time / 1000000000;
 		final long tenthDigit = (time / 100000000) % 10;
 		return seconds + "." + tenthDigit + "s";
 	}
 
-	public class SizeIterationPair {
+	public static class SizeIterationPair {
 		final int mSize;
 		final int mIteration;
 
-		public SizeIterationPair(int size, int iteration) {
+		public SizeIterationPair(final int size, final int iteration) {
 			super();
 			mSize = size;
 			mIteration = iteration;

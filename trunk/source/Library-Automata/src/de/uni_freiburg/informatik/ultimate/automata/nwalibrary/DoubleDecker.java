@@ -27,11 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
 /**
- * Part of a NestedWordAutomatons configuration. up is the state in which
+ * Part of a NestedWordAutomaton's configuration. up is the state in which
  * the automaton is. down is the state before the last call transition
  * that the automaton has taken.
- * <p>
- * For many algorithms (e.g. determinization) we do not have to use 
+ * 
+ * <p>For many algorithms (e.g. determinization) we do not have to use 
  * configurations (current state + stack) of the automaton, the DoubleDeckers
  * are sufficient. In 
  * "JACM2009 - Alur,Madhusudan - Adding nesting structure to words"
@@ -40,53 +40,63 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
  *  
  * @author heizmann@informatik.uni-freiburg.de
  *
- * @param <S> Symbol
- * @param <C> Content
+ * @param <STATE> state type
  */
-public class DoubleDecker<C> {
-	private final C mDown;
-	private final C mUp;
-	private final int hashCode;
+public class DoubleDecker<STATE> {
+	private final STATE mDown;
+	private final STATE mUp;
+	private final int mHashCode;
 	
-	public DoubleDecker(C down, C up) {
+	/**
+	 * @param down down state (current hierarchical state)
+	 * @param up up state (current linear state)
+	 */
+	public DoubleDecker(final STATE down, final STATE up) {
 		this.mDown = down;
 		this.mUp = up;
 		
-		this.hashCode = 
-			3 * this.mDown.hashCode() + 5 * this.mUp.hashCode();
+		this.mHashCode = 
+			computeHashCode(mDown, mUp);
+	}
+
+	private int computeHashCode(final STATE down, final STATE up) {
+		final int prime1 = 3;
+		final int prime2 = 5;
+		return prime1 * down.hashCode() + prime2 * up.hashCode();
 	}
 	
-	public C getDown() {
+	public STATE getDown() {
 		return mDown;
 	}
-
-
-	public C getUp() {
+	
+	public STATE getUp() {
 		return mUp;
 	}
 	
-
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof DoubleDecker) {
-			final DoubleDecker<C> summaryState = (DoubleDecker<C>) obj;
-			return mUp.equals(summaryState.mUp) && 
-							mDown.equals(summaryState.mDown);
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
 		}
-		else {
+		if (obj == null) {
+			return this == null;
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
 		}
+		final DoubleDecker<STATE> other = (DoubleDecker<STATE>) obj;
+		return mUp.equals(other.mUp) && 
+						mDown.equals(other.mDown);
 	}
 	
 	@Override
 	public int hashCode() {
-		return hashCode;
+		return mHashCode;
 	}
-
+	
 	@Override
 	public String toString() {
 		return "Basement: " + mDown + "  Upstairs: " + mUp;
 	}
-	
 }

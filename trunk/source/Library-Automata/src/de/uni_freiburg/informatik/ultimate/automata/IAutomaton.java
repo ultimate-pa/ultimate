@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -39,27 +38,24 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * for PetriNet)
  */
 public interface IAutomaton<LETTER,STATE> {
-	
-
 	/**
-	 * Alphabet of this automaton. 
+	 * @return Alphabet of this automaton.
 	 */
-	public Set<LETTER> getAlphabet();
+	Set<LETTER> getAlphabet();
 	
 	/**
-	 * StateFactory that was used to construct this automaton. This method 
-	 * become deprecated.
+	 * @return StateFactory that was used to construct this automaton. This
+	 * method become deprecated.
 	 */
-	public StateFactory<STATE> getStateFactory();
-
-
-	/**
-	 * Size of the automaton. E.g., the number of states.
-	 */
-	public int size();
+	StateFactory<STATE> getStateFactory();
 	
 	/**
-	 * Provide some human readable information about the size of the automaton. 
+	 * @return Size of the automaton. E.g., the number of states.
 	 */
-	public String sizeInformation();
+	int size();
+	
+	/**
+	 * @return Some human readable information about the size of the automaton.
+	 */
+	String sizeInformation();
 }

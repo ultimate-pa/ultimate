@@ -71,8 +71,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -101,6 +102,7 @@ public class PostProcessor {
 	private final ILogger mLogger;
 	
 	private final AExpressionTranslation mExpressionTranslation;
+	private final boolean mOverapproximateFloatingPointOperations;
 
 	/*
 	 * Decides if the PostProcessor declares the special function that we use for
@@ -111,12 +113,16 @@ public class PostProcessor {
 
 	/**
 	 * Constructor.
+	 * @param overapproximateFloatingPointOperations 
 	 */
-	public PostProcessor(Dispatcher dispatcher, ILogger logger, AExpressionTranslation expressionTranslation) {
+	public PostProcessor(final Dispatcher dispatcher, final ILogger logger, 
+			final AExpressionTranslation expressionTranslation, 
+			final boolean overapproximateFloatingPointOperations) {
 		mInitializedGlobals = new LinkedHashSet<String>();
 		mDispatcher = dispatcher;
 		mLogger = logger;
 		mExpressionTranslation = expressionTranslation;
+		mOverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
 	}
 
 
@@ -148,10 +154,10 @@ public class PostProcessor {
 	 *            a set of uninitialized global variables.
 	 * @return a declaration list holding the init() and start() procedure.
 	 */
-	public ArrayList<Declaration> postProcess(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, 
-			ArrayHandler arrayHandler, FunctionHandler functionHandler, StructHandler structHandler,
-			TypeHandler typeHandler, Set<String> undefinedTypes, 
-			LinkedHashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie, AExpressionTranslation expressionTranslation) {
+	public ArrayList<Declaration> postProcess(final Dispatcher main, final ILocation loc, final MemoryHandler memoryHandler, 
+			final ArrayHandler arrayHandler, final FunctionHandler functionHandler, final StructHandler structHandler,
+			final TypeHandler typeHandler, final Set<String> undefinedTypes, 
+			final LinkedHashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie, final AExpressionTranslation expressionTranslation) {
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 		decl.addAll(createUltimateInitProcedure(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler,
@@ -165,7 +171,7 @@ public class PostProcessor {
 					typeHandler));
 
 			if ((typeHandler).areFloatingTypesNeeded()) {
-				decl.addAll(PostProcessor.declareFloatDataTypes(loc, main.getTypeSizes(), typeHandler));
+				decl.addAll(PostProcessor.declareFloatDataTypes(loc, main.getTypeSizes(), typeHandler, mOverapproximateFloatingPointOperations, expressionTranslation));
 			}
 
 		}
@@ -173,8 +179,8 @@ public class PostProcessor {
 	}
 	
 	private ArrayList<Declaration> declareConversionFunctions(
-			Dispatcher main, FunctionHandler functionHandler, 
-			MemoryHandler memoryHandler, StructHandler structHandler) {
+			final Dispatcher main, final FunctionHandler functionHandler, 
+			final MemoryHandler memoryHandler, final StructHandler structHandler) {
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
@@ -219,8 +225,8 @@ public class PostProcessor {
 	}
 
 	private ArrayList<Declaration> declareFunctionPointerProcedures(
-			Dispatcher main, FunctionHandler functionHandler, 
-			MemoryHandler memoryHandler, StructHandler structHandler) {
+			final Dispatcher main, final FunctionHandler functionHandler, 
+			final MemoryHandler memoryHandler, final StructHandler structHandler) {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final ArrayList<Declaration> result = new ArrayList<>();
 //		for (CFunction cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
@@ -284,16 +290,16 @@ public class PostProcessor {
 	 *            a set of uninitialized global variables.
 	 * @return a list the initialized variables.
 	 */
-	private ArrayList<Declaration> createUltimateInitProcedure(ILocation translationUnitLoc,
-			Dispatcher main, MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler,   
-			StructHandler structHandler, LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie, 
-			AExpressionTranslation expressionTranslation) {
+	private ArrayList<Declaration> createUltimateInitProcedure(final ILocation translationUnitLoc,
+			final Dispatcher main, final MemoryHandler memoryHandler, final ArrayHandler arrayHandler, final FunctionHandler functionHandler,   
+			final StructHandler structHandler, final LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie, 
+			final AExpressionTranslation expressionTranslation) {
 		functionHandler.beginUltimateInit(main, translationUnitLoc, SFO.INIT);
 		final ArrayList<Statement> initStatements = new ArrayList<Statement>();
 
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		final ArrayList<VariableDeclaration> initDecl = new ArrayList<VariableDeclaration>();
-		if (main.isMMRequired() || memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
+		if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
 			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
 				final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(
 						translationUnitLoc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
@@ -418,7 +424,7 @@ public class PostProcessor {
 	 * @return declarations and implementation of the start procedure.
 	 */
 	private ArrayList<Declaration> createUltimateStartProcedure(
-			Dispatcher main, ILocation loc, FunctionHandler functionHandler) {
+			final Dispatcher main, final ILocation loc, final FunctionHandler functionHandler) {
 		final LinkedHashMap<String, Procedure> procedures = functionHandler.getProcedures();
 		final String checkedMethod = main.getCheckedMethod();
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
@@ -545,15 +551,15 @@ public class PostProcessor {
 	 * workaround.
 	 * @param typeHandler 
 	 */
-	public static ArrayList<Declaration> declarePrimitiveDataTypeSynonyms(ILocation loc, 
-			TypeSizes typeSizes, TypeHandler typeHandler) {
+	public static ArrayList<Declaration> declarePrimitiveDataTypeSynonyms(final ILocation loc, 
+			final TypeSizes typeSizes, final TypeHandler typeHandler) {
 		final ArrayList<Declaration> decls = new ArrayList<Declaration>();
-		for (final CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
+		for (final CPrimitive.CPrimitives cPrimitive: CPrimitive.CPrimitives.values()) {
 			final CPrimitive cPrimitiveO = new CPrimitive(cPrimitive);
-			if (cPrimitiveO.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+			if (cPrimitiveO.getGeneralType() == CPrimitiveCategory.INTTYPE) {
 				final Attribute[] attributes = new Attribute[2];
 				attributes[0] = new NamedAttribute(loc, "isUnsigned", 
-						new Expression[]{ new BooleanLiteral(loc, cPrimitiveO.isUnsigned())});
+						new Expression[]{ new BooleanLiteral(loc, typeSizes.isUnsigned(cPrimitiveO))});
 				final int bytesize = typeSizes.getSize(cPrimitive);
 				final int bitsize = bytesize * 8;
 				attributes[1] = new NamedAttribute(loc, "bitsize", 
@@ -561,7 +567,7 @@ public class PostProcessor {
 				final String identifier = "C_" + cPrimitive.name();
 				final String[] typeParams = new String[0];
 				final String name= "bv" + bitsize;
-				final ASTType astType = typeHandler.bytesize2asttype(loc, GENERALPRIMITIVE.INTTYPE, bytesize);
+				final ASTType astType = typeHandler.bytesize2asttype(loc, CPrimitiveCategory.INTTYPE, bytesize);
 				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams , astType));
 			}
 		}
@@ -573,37 +579,70 @@ public class PostProcessor {
 	 * @param loc
 	 * @param typesizes
 	 * @param typeHandler
+	 * @param expressionTranslation 
 	 * @return
 	 */
-	public static ArrayList<Declaration> declareFloatDataTypes(ILocation loc,
-			TypeSizes typesizes, TypeHandler typeHandler) {
+	public static ArrayList<Declaration> declareFloatDataTypes(final ILocation loc,
+			final TypeSizes typesizes, final TypeHandler typeHandler, 
+			final boolean overapproximateFloat, final AExpressionTranslation expressionTranslation) {
 		final ArrayList<Declaration> decls = new ArrayList<Declaration>();
 		
 		//Roundingmodes, for now RNE hardcoded
-		
-		final Attribute[] attributesRM = new Attribute[1];
-		attributesRM[0] = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RoundingMode")});
-		final String identifierRM = "RoundingMode";
+		final Attribute[] attributesRM;
+		if (overapproximateFloat) {
+			attributesRM = new Attribute[0];
+		} else {
+			final String smtlibRmIdentifier = "RoundingMode";
+			attributesRM = new Attribute[1];
+			attributesRM[0] = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, smtlibRmIdentifier)});
+		}
 		final String[] typeParamsRM = new String[0];
-		decls.add(new TypeDeclaration(loc, attributesRM, false, identifierRM, typeParamsRM));
+		decls.add(new TypeDeclaration(loc, attributesRM, false, BitvectorTranslation.BOOGIE_ROUNDING_MODE_IDENTIFIER, typeParamsRM));
+
+		final Attribute[] attributesRNE;
+		final Attribute[] attributesRTZ;
+		if (overapproximateFloat) {
+			attributesRNE = new Attribute[0];
+			attributesRTZ = new Attribute[0];
+		} else {
+			final Attribute attributeRNE = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RNE")});
+			final Attribute attributeRTZ = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RTZ")});
+			attributesRNE = new Attribute[]{attributeRNE};
+			attributesRTZ = new Attribute[]{attributeRTZ};
+		}
+		decls.add(new ConstDeclaration(loc, attributesRNE, false, new VarList(loc, new String[]{BitvectorTranslation.BOOGIE_ROUNDING_MODE_RNE}, 
+				new NamedType(loc, BitvectorTranslation.BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0])),null, false));
+		decls.add(new ConstDeclaration(loc, attributesRTZ, false, new VarList(loc, new String[]{BitvectorTranslation.BOOGIE_ROUNDING_MODE_RTZ}, 
+				new NamedType(loc, BitvectorTranslation.BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0])),null, false));
 		
-		final Attribute attributeRNE = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RNE")});
-		final Attribute attributeRTZ = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RTZ")});
-		
-		decls.add(new ConstDeclaration(loc, new Attribute[]{attributeRNE}, false, new VarList(loc, new String[]{"RNE"}, new NamedType(loc, "RoundingMode", new ASTType[0])),null, false));
-		decls.add(new ConstDeclaration(loc, new Attribute[]{attributeRTZ}, false, new VarList(loc, new String[]{"RTZ"}, new NamedType(loc, "RoundingMode", new ASTType[0])),null, false));
-		
-		for (final CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
+		for (final CPrimitive.CPrimitives cPrimitive: CPrimitive.CPrimitives.values()) {
 			
 			final CPrimitive cPrimitive0 = new CPrimitive(cPrimitive);
 			
-			if (cPrimitive0.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE
+			if (cPrimitive0.getGeneralType() == CPrimitiveCategory.FLOATTYPE
 					&& !cPrimitive0.isComplexType()) {
-				final Attribute[] attributes = new Attribute[2];
-				attributes[0] = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "FloatingPoint")});
-				final int bytesize = typesizes.getSize(cPrimitive);
-				final int[] indices = new int[2];
-				switch (bytesize) {
+				
+				if (!overapproximateFloat) {
+					final BitvectorTranslation bt = ((BitvectorTranslation) expressionTranslation);
+					// declare floating point constructors here because we might 
+					// always need them for our backtranslation
+					bt.declareFloatingPointConstructors(loc, new CPrimitive(cPrimitive));
+					bt.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_MINUS_INF, new CPrimitive(cPrimitive));
+					bt.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_PLUS_INF, new CPrimitive(cPrimitive));
+					bt.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_NAN, new CPrimitive(cPrimitive));
+					bt.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_MINUS_ZERO, new CPrimitive(cPrimitive));
+					bt.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_PLUS_ZERO, new CPrimitive(cPrimitive));
+				}
+
+				final Attribute[] attributes;
+				if (overapproximateFloat) {
+					attributes = new Attribute[0];
+				} else {
+					attributes = new Attribute[2];
+					attributes[0] = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "FloatingPoint")});
+					final int bytesize = typesizes.getSize(cPrimitive);
+					final int[] indices = new int[2];
+					switch (bytesize) {
 					case 4:
 						indices[0] = 8;
 						indices[1] = 24;
@@ -619,18 +658,16 @@ public class PostProcessor {
 						break;
 					default:
 						throw new UnsupportedSyntaxException(loc, "unknown primitive type");
+					}
+					attributes[1] = new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER,
+							new Expression[]{	new IntegerLiteral(loc, String.valueOf(indices[0])),
+									new IntegerLiteral(loc, String.valueOf(indices[1]))});
 				}
-				attributes[1] = new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER,
-						new Expression[]{	new IntegerLiteral(loc, String.valueOf(indices[0])),
-											new IntegerLiteral(loc, String.valueOf(indices[1]))});
 				final String identifier = "C_" + cPrimitive.name();
 				final String[] typeParams = new String[0];
 				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams ));
-				
 			}
 		}	
-			
-			
 		return decls;
 	}
 			

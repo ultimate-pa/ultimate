@@ -39,11 +39,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class LassoPartitioneer {
 	
 	private final IUltimateServiceProvider mServices;
-	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
+	private final ManagedScript mMgdScript;
 	
 	private final LassoUnderConstruction mLasso;
 	
@@ -80,20 +80,21 @@ public class LassoPartitioneer {
 	private List<Term> mStemConjunctsWithoutSymbols;
 	private List<Term> mLoopConjunctsWithoutSymbols;
 	private final UnionFind<NonTheorySymbol<?>> mEquivalentSymbols = new UnionFind<>();
-	private final Set<RankVar> mAllRankVars = new HashSet<RankVar>();
+	private final Set<IProgramVar> mAllRankVars = new HashSet<IProgramVar>();
 	private final Script mScript;
 	private final List<LassoUnderConstruction> mNewLassos = new ArrayList<>();
-	private final Boogie2SMT mBoogie2Smt;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 	
 	
-	public LassoPartitioneer(IUltimateServiceProvider services, 
-			Boogie2SMT boogie2smt, 
-			Script script, LassoUnderConstruction lasso) {
+	public LassoPartitioneer(final IUltimateServiceProvider services, 
+			final ManagedScript freshVarConstructor, 
+			final Script script, final LassoUnderConstruction lasso, 
+			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
-		mBoogie2Smt = boogie2smt;
-		mFreshTermVariableConstructor = boogie2smt.getVariableManager();
-		mScript = script;
+		mMgdScript = freshVarConstructor;
+		mScript = freshVarConstructor.getScript();
 		mLasso = lasso;
+		this.mXnfConversionTechnique = xnfConversionTechnique;
 		doPartition();
 //		assert checkStemImplications() : "stem problem";
 	}
@@ -131,7 +132,7 @@ public class LassoPartitioneer {
 		extractSymbols(Part.LOOP, mLasso.getLoop(), mSymbol2LoopConjuncts, 
 				mLoopSymbolsWithoutConjuncts, mLoopConjunctsWithoutSymbols);
 		
-		for (final RankVar rv : mAllRankVars) {
+		for (final IProgramVar rv : mAllRankVars) {
 			final Set<NonTheorySymbol<?>> symbols = new HashSet<NonTheorySymbol<?>>();
 			extractInVarAndOutVarSymbols(rv, symbols, mLasso.getStem());
 			extractInVarAndOutVarSymbols(rv, symbols, mLasso.getLoop()); 
@@ -181,7 +182,7 @@ public class LassoPartitioneer {
 
 
 
-	private boolean emptyOrTrue(List<Term> terms) {
+	private boolean emptyOrTrue(final List<Term> terms) {
 		if (terms.isEmpty()) {
 			return true;
 		} else {
@@ -190,8 +191,8 @@ public class LassoPartitioneer {
 		}
 	}
 
-	private void extractInVarAndOutVarSymbols(RankVar rv,
-			Set<NonTheorySymbol<?>> symbols, TransFormulaLR transFormulaLR) {
+	private void extractInVarAndOutVarSymbols(final IProgramVar rv,
+			final Set<NonTheorySymbol<?>> symbols, final TransFormulaLR transFormulaLR) {
 		final Term inVar = transFormulaLR.getInVars().get(rv);
 		if (inVar != null) {
 			symbols.add(constructSymbol(inVar));
@@ -204,7 +205,7 @@ public class LassoPartitioneer {
 	}
 	
 	private TransFormulaLR constructTransFormulaLR(
-			Part part, Set<Term> equivalentConjuncts, Set<NonTheorySymbol<?>> equivalentVariablesWithoutConjunct) {
+			final Part part, final Set<Term> equivalentConjuncts, final Set<NonTheorySymbol<?>> equivalentVariablesWithoutConjunct) {
 		TransFormulaLR transformulaLR;
 		final Term formula = Util.and(mScript, equivalentConjuncts.toArray(new Term[equivalentConjuncts.size()]));
 		transformulaLR = new TransFormulaLR(formula);
@@ -218,7 +219,7 @@ public class LassoPartitioneer {
 	}
 	
 	private TransFormulaLR constructTransFormulaLR(
-			Part part, List<Term> conjunctsWithoutSymbols) {
+			final Part part, final List<Term> conjunctsWithoutSymbols) {
 		TransFormulaLR transformulaLR;
 		final Term formula = Util.and(mScript, conjunctsWithoutSymbols.toArray(new Term[conjunctsWithoutSymbols.size()]));
 		transformulaLR = new TransFormulaLR(formula);
@@ -226,7 +227,7 @@ public class LassoPartitioneer {
 	}
 
 
-	private void addInOuAuxVar(Part part, TransFormulaLR transformulaLR, NonTheorySymbol<?> symbol) {
+	private void addInOuAuxVar(final Part part, final TransFormulaLR transformulaLR, final NonTheorySymbol<?> symbol) {
 		final TransFormulaLR original = mSymbol2OriginalTF.get(part, symbol);
 		boolean isConstant;
 		Term term;
@@ -239,9 +240,9 @@ public class LassoPartitioneer {
 		} else {
 			throw new UnsupportedOperationException("function symbols not yet supported");
 		}
-		final RankVar inVarRankVar = original.getInVarsReverseMapping().get(term);
-		final RankVar outVarRankVar = original.getOutVarsReverseMapping().get(term);
-		final boolean isAuxVar = original.getAuxVars().keySet().contains(term);
+		final IProgramVar inVarRankVar = original.getInVarsReverseMapping().get(term);
+		final IProgramVar outVarRankVar = original.getOutVarsReverseMapping().get(term);
+		final boolean isAuxVar = original.getAuxVars().contains(term);
 		assert (isConstant || !isAuxVar || (inVarRankVar == null && outVarRankVar == null)) : "auxVar may neither be inVar nor outVar";
 		assert (isConstant || !(inVarRankVar == null && outVarRankVar == null) || isAuxVar) : "neither inVar nor outVar may be auxVar";
 		if (inVarRankVar != null) {
@@ -252,21 +253,20 @@ public class LassoPartitioneer {
 		}
 		if (isAuxVar) {
 			final TermVariable auxVarTv = (TermVariable) term;
-			final Term auxVarConst = transformulaLR.getAuxVars().get(auxVarTv);
-			transformulaLR.addAuxVars(Collections.singletonMap(auxVarTv, auxVarConst));
+			transformulaLR.addAuxVars(Collections.singleton(auxVarTv));
 		}
 	}
 
 
 	private HashRelation<NonTheorySymbol<?>, Term> extractSymbols(
-			Part part, TransFormulaLR tf, 
-			HashRelation<NonTheorySymbol<?>, Term> symbol2Conjuncts, 
-			HashSet<NonTheorySymbol<?>> symbolsWithoutConjuncts,
-			List<Term> conjunctsWithoutSymbols) {
+			final Part part, final TransFormulaLR tf, 
+			final HashRelation<NonTheorySymbol<?>, Term> symbol2Conjuncts, 
+			final HashSet<NonTheorySymbol<?>> symbolsWithoutConjuncts,
+			final List<Term> conjunctsWithoutSymbols) {
 		mAllRankVars.addAll(tf.getInVars().keySet());
 		mAllRankVars.addAll(tf.getOutVars().keySet());
 		//FIXME CNF conversion should be done in advance if desired
-		final Term cnf = (new Cnf(mScript, mServices, mFreshTermVariableConstructor)).transform(tf.getFormula());
+		final Term cnf = SmtUtils.toCnf(mServices, mMgdScript, tf.getFormula(), mXnfConversionTechnique);
 		final Term[] conjuncts = SmtUtils.getConjuncts(cnf);
 		for (final Term conjunct : conjuncts) {
 			final Set<NonTheorySymbol<?>> allSymbolsOfConjunct = NonTheorySymbol.extractNonTheorySymbols(conjunct);
@@ -285,10 +285,10 @@ public class LassoPartitioneer {
 				announceEquivalence(allSymbolsOfConjunct);
 			}
 		}
-		for (final Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
+		for (final Entry<IProgramVar, Term> entry : tf.getInVars().entrySet()) {
 			addIfNotAlreadyAdded(part, symbolsWithoutConjuncts, tf, entry.getValue(), symbol2Conjuncts);
 		}
-		for (final Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
+		for (final Entry<IProgramVar, Term> entry : tf.getOutVars().entrySet()) {
 			addIfNotAlreadyAdded(part, symbolsWithoutConjuncts, tf, entry.getValue(), symbol2Conjuncts);
 		}
 		return symbol2Conjuncts;
@@ -296,9 +296,9 @@ public class LassoPartitioneer {
 
 
 	private void addIfNotAlreadyAdded(
-			Part part, HashSet<NonTheorySymbol<?>> symbolsWithoutConjuncts, TransFormulaLR tf,
-			Term tvOrConstant,
-			HashRelation<NonTheorySymbol<?>, Term> symbol2Conjuncts) {
+			final Part part, final HashSet<NonTheorySymbol<?>> symbolsWithoutConjuncts, final TransFormulaLR tf,
+			final Term tvOrConstant,
+			final HashRelation<NonTheorySymbol<?>, Term> symbol2Conjuncts) {
 		final NonTheorySymbol<?> symbol = constructSymbol(tvOrConstant);
 		if (!symbol2Conjuncts.getDomain().contains(symbol) && !symbolsWithoutConjuncts.contains(symbol)) {
 			if (mEquivalentSymbols.find(symbol) == null) {
@@ -312,7 +312,7 @@ public class LassoPartitioneer {
 	}
 
 
-	private NonTheorySymbol<?> constructSymbol(Term tvOrConstant) {
+	private NonTheorySymbol<?> constructSymbol(final Term tvOrConstant) {
 		if (tvOrConstant instanceof TermVariable) {
 			return new NonTheorySymbol.Variable((TermVariable) tvOrConstant);
 		} else {
@@ -325,7 +325,7 @@ public class LassoPartitioneer {
 	}
 
 
-	private void announceEquivalence(Set<NonTheorySymbol<?>> allSymbolsOfConjunct) {
+	private void announceEquivalence(final Set<NonTheorySymbol<?>> allSymbolsOfConjunct) {
 		NonTheorySymbol<?> last = null;
 		for (final NonTheorySymbol<?> symbol : allSymbolsOfConjunct) {
 			if (last != null) {

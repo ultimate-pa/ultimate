@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.parallel;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -35,13 +34,13 @@ import java.util.Set;
  * Helper Task for processing information from the Hopcroft algorithm for the
  * Incremental algorithm
  * 
- * @author layla
+ * @author Layla Franke
  *
  */
 public class HelpIncremental implements Runnable {
-	private final MinimizeDfaAmrParallel<?, ?> mincrementalAlgorithm;
-	private final HashSet<Integer> marray1;
-	private final HashSet<Integer> marray2;
+	private final MinimizeDfaAmrParallel<?, ?> mIncrementalAlgorithm;
+	private final Set<Integer> mArray1;
+	private final Set<Integer> mArray2;
 
 	/**
 	 * For each pair (a, b) of states where w.l.o.g. a in array1, b in array2 we
@@ -52,19 +51,19 @@ public class HelpIncremental implements Runnable {
 	 * @param array1
 	 * @param array2
 	 */
-	public HelpIncremental(MinimizeDfaAmrParallel<?, ?> incremental,
-			HashSet<Integer> array1, HashSet<Integer> array2) {
-		mincrementalAlgorithm = incremental;
-		marray1 = array1;
-		marray2 = array2;
+	public HelpIncremental(final MinimizeDfaAmrParallel<?, ?> incremental,
+			final Set<Integer> array1, final Set<Integer> array2) {
+		mIncrementalAlgorithm = incremental;
+		mArray1 = array1;
+		mArray2 = array2;
 	}
 
 	@Override
 	public void run() {
-		final Set<Tuple> neq = mincrementalAlgorithm.getNeq();
-		for (final Iterator<Integer> iter1 = marray1.iterator(); iter1.hasNext();) {
+		final Set<Tuple> neq = mIncrementalAlgorithm.getNeq();
+		for (final Iterator<Integer> iter1 = mArray1.iterator(); iter1.hasNext();) {
 			final int i = iter1.next();
-			for (final Iterator<Integer> iter2 = marray2.iterator(); iter2.hasNext();) {
+			for (final Iterator<Integer> iter2 = mArray2.iterator(); iter2.hasNext();) {
 				// Write into mneq
 
 				final int j = iter2.next();
@@ -82,5 +81,4 @@ public class HelpIncremental implements Runnable {
 		}
 
 	}
-
 }

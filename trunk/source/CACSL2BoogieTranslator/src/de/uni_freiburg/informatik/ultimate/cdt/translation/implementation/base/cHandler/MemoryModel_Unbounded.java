@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler.RequiredMemoryModelFeatures;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -61,7 +61,7 @@ public class MemoryModel_Unbounded extends AMemoryModel {
 		 * represents this data.
 		 */
         final ASTType intArrayType = typeHandler.ctype2asttype(ignoreLoc, 
-        		new CPrimitive(PRIMITIVE.INT));
+        		new CPrimitive(CPrimitives.INT));
         
     	/*
     	 * In our Lindenmann-Hoenicke memory model, we use an array for all
@@ -69,19 +69,19 @@ public class MemoryModel_Unbounded extends AMemoryModel {
     	 * use to represent this data.
     	 */
         final ASTType realArrayType = typeHandler.ctype2asttype(ignoreLoc, 
-        		new CPrimitive(PRIMITIVE.FLOAT));
+        		new CPrimitive(CPrimitives.FLOAT));
         
        	mIntegerArray = new HeapDataArray(SFO.INT, intArrayType, 0);
        	mFloatingArray = new HeapDataArray(SFO.REAL, realArrayType, 0);
 	}
 	
 	@Override
-	public String getProcedureSuffix(PRIMITIVE primitive) {
+	public String getProcedureSuffix(CPrimitives primitive) {
 		return getDataHeapArray(primitive).getName();
 	}
        	
 	@Override
-	public HeapDataArray getDataHeapArray(PRIMITIVE primitive) {
+	public HeapDataArray getDataHeapArray(CPrimitives primitive) {
 		if (primitive.isIntegertype()) {
 			return mIntegerArray;
 		} else if(primitive.isFloatingtype()) {
@@ -95,8 +95,8 @@ public class MemoryModel_Unbounded extends AMemoryModel {
 	
 	@Override
 	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda, RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
-		final HashRelation<Integer, PRIMITIVE> bytesizes2primitives = new HashRelation<>();
-		for (final PRIMITIVE primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
+		final HashRelation<Integer, CPrimitives> bytesizes2primitives = new HashRelation<>();
+		for (final CPrimitives primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
 			final int bytesize = 0;
 			if (getDataHeapArray(primitive) == hda) {
 				bytesizes2primitives.addPair(bytesize, primitive);
@@ -104,7 +104,7 @@ public class MemoryModel_Unbounded extends AMemoryModel {
 		}
 		final List<ReadWriteDefinition> result = new ArrayList<>();
 		for (final Integer bytesize : bytesizes2primitives.getDomain()) {
-			final PRIMITIVE representative = bytesizes2primitives.getImage(bytesize).iterator().next();
+			final CPrimitives representative = bytesizes2primitives.getImage(bytesize).iterator().next();
 			final String procedureName = getProcedureSuffix(representative);
 			final ASTType astType = mTypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
 			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, bytesizes2primitives.getImage(bytesize)));

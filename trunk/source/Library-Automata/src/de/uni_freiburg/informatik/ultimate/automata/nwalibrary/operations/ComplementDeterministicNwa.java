@@ -40,15 +40,22 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * Represents complement of deterministic and total nwa.
  * @author heizmann@informatik.uni-freiburg.de
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class ComplementDeterministicNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
+public class ComplementDeterministicNwa<LETTER, STATE>
+		implements INestedWordAutomatonSimple<LETTER, STATE> {
 	
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	
-	public ComplementDeterministicNwa(INestedWordAutomatonSimple<LETTER, STATE> operand) {
+	/**
+	 * @param operand operand
+	 */
+	public ComplementDeterministicNwa(final INestedWordAutomatonSimple<LETTER, STATE> operand) {
 		if (operand instanceof DeterminizeNwa) {
+			if (!((DeterminizeNwa<LETTER, STATE>)operand).isTotal()) {
+				throw new AssertionError("can only complement total automata");
+			}
 			mOperand = operand;
 		} else if (operand instanceof TotalizeNwa) {
 			mOperand = operand;
@@ -87,16 +94,14 @@ public class ComplementDeterministicNwa<LETTER, STATE> implements INestedWordAut
 	}
 	
 	@Override
-	public boolean isInitial(STATE state) {
+	public boolean isInitial(final STATE state) {
 		return mOperand.isInitial(state);
 	}
 
 	@Override
-	public boolean isFinal(STATE state) {
+	public boolean isFinal(final STATE state) {
 		return !mOperand.isFinal(state);
 	}
-
-
 
 	@Override
 	public STATE getEmptyStackState() {
@@ -104,56 +109,54 @@ public class ComplementDeterministicNwa<LETTER, STATE> implements INestedWordAut
 	}
 
 	@Override
-	public Set<LETTER> lettersInternal(STATE state) {
+	public Set<LETTER> lettersInternal(final STATE state) {
 		return mOperand.getInternalAlphabet();
 	}
 
 	@Override
-	public Set<LETTER> lettersCall(STATE state) {
+	public Set<LETTER> lettersCall(final STATE state) {
 		return mOperand.getCallAlphabet();
 	}
 
 	@Override
-	public Set<LETTER> lettersReturn(STATE state) {
+	public Set<LETTER> lettersReturn(final STATE state) {
 		return mOperand.getReturnAlphabet();
 	}
 
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
-			STATE state, LETTER letter) {
+			final STATE state, final LETTER letter) {
 		return mOperand.internalSuccessors(state, letter);
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
-			STATE state) {
+			final STATE state) {
 		return mOperand.internalSuccessors(state);
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-			STATE state, LETTER letter) {
+			final STATE state, final LETTER letter) {
 		return mOperand.callSuccessors(state, letter);
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-			STATE state) {
+			final STATE state) {
 		return mOperand.callSuccessors(state);
 	}
 
-
-
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
-			STATE state, STATE hier, LETTER letter) {
-		return mOperand.returnSucccessors(state, hier, letter);
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+			final STATE state, final STATE hier, final LETTER letter) {
+		return mOperand.returnSuccessors(state, hier, letter);
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
-			STATE state, STATE hier) {
+			final STATE state, final STATE hier) {
 		return mOperand.returnSuccessorsGivenHier(state, hier);
 	}
 
@@ -174,6 +177,4 @@ public class ComplementDeterministicNwa<LETTER, STATE> implements INestedWordAut
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-
 }

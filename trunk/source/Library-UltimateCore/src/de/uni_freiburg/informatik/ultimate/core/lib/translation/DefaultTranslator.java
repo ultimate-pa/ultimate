@@ -2,27 +2,27 @@
  * Copyright (C) 2012-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.translation;
@@ -40,8 +40,10 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.Multigraph;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
@@ -52,10 +54,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * source and target differ ClassCastExceptions are thrown during the translation. <br>
  * Because {@link DefaultTranslator} is used for <b>back-translation</b>, <i>Source</i> describes the output of a tool
  * and <i>Target</i> the input of a tool.
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  * @param <STE>
  *            Source Trace Element. Type of trace elements (e.g., Statements, CodeBlocks, BoogieASTNodes) in the source
  *            program model.
@@ -108,7 +110,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<TTE> translateTrace(List<STE> trace) {
+	public List<TTE> translateTrace(final List<STE> trace) {
 		List<TTE> result = null;
 		try {
 			result = (List<TTE>) trace;
@@ -123,7 +125,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	}
 
 	@Override
-	public List<String> targetTraceToString(List<TTE> trace) {
+	public List<String> targetTraceToString(final List<TTE> trace) {
 		final List<String> rtr = new ArrayList<>();
 		for (final Object elem : trace) {
 			rtr.add(elem.toString());
@@ -133,21 +135,21 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public TE translateExpression(SE expression) {
+	public TE translateExpression(final SE expression) {
 		TE result;
 		try {
 			result = (TE) expression;
 		} catch (final ClassCastException e) {
-			final String message = "Type of SourceExpression and type of"
-					+ " TargetExpression are different. DefaultTranslator can"
-					+ " only be applied to expression of same type.";
+			final String message =
+					"Type of SourceExpression and type of" + " TargetExpression are different. DefaultTranslator can"
+							+ " only be applied to expression of same type.";
 			throw new AssertionError(message);
 		}
 		return result;
 	}
 
 	@Override
-	public String targetExpressionToString(TE expression) {
+	public String targetExpressionToString(final TE expression) {
 		if (expression == null) {
 			return "NULL";
 		}
@@ -156,23 +158,22 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public IProgramExecution<TTE, TE> translateProgramExecution(IProgramExecution<STE, SE> programExecution) {
-		IProgramExecution<TTE, TE> result = null;
+	public IProgramExecution<TTE, TE> translateProgramExecution(final IProgramExecution<STE, SE> programExecution) {
 		try {
-			result = (IProgramExecution<TTE, TE>) programExecution;
+			final IProgramExecution<TTE, TE> result = (IProgramExecution<TTE, TE>) programExecution;
 			assert (consistsOfTargetTraceElements(programExecution));
+			return result;
 		} catch (final ClassCastException e) {
 			final String message = "Type of source trace element and type of target"
 					+ " trace element are different. DefaultTranslator can"
 					+ " only be applied to traces of same type.";
 			throw new AssertionError(message);
 		}
-		return result;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public IBacktranslatedCFG<?, TTE> translateCFG(IBacktranslatedCFG<?, STE> cfg) {
+	public IBacktranslatedCFG<?, TTE> translateCFG(final IBacktranslatedCFG<?, STE> cfg) {
 		try {
 			return (IBacktranslatedCFG<?, TTE>) cfg;
 		} catch (final ClassCastException e) {
@@ -186,7 +187,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	 * Returns true if all elements of IProgramExecution are of type TTE, throws a ClassCastException otherwise.
 	 */
 	@SuppressWarnings("unchecked")
-	private boolean consistsOfTargetTraceElements(IProgramExecution<STE, SE> programExecution) {
+	private boolean consistsOfTargetTraceElements(final IProgramExecution<STE, SE> programExecution) {
 		final List<TTE> auxilliaryList = new ArrayList<TTE>(programExecution.getLength());
 		for (int i = 0; i < programExecution.getLength(); i++) {
 			auxilliaryList.add((TTE) programExecution.getTraceElement(i));
@@ -198,7 +199,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	 * Returns true if all elements of trace are of type TTE, throws a ClassCastException otherwise.
 	 */
 	@SuppressWarnings("unchecked")
-	private boolean consistsOfTargetTraceElements(List<STE> trace) {
+	private boolean consistsOfTargetTraceElements(final List<STE> trace) {
 		final List<TTE> auxilliaryList = new ArrayList<TTE>(trace.size());
 		for (final STE ste : trace) {
 			try {
@@ -212,7 +213,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 
 	/**
 	 * Translate an expression of an arbitrary type E to the target expression type of this ITranslator.
-	 * 
+	 *
 	 * @param iTranslators
 	 *            is a sequence of ITranslaters itrans_0,...,itrans_n such that
 	 *            <ul>
@@ -223,8 +224,8 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	 *            </ul>
 	 */
 	@SuppressWarnings("unchecked")
-	public static <STE, TTE, SE, TE> TE translateExpressionIteratively(SE expr,
-			ITranslator<?, ?, ?, ?>... iTranslators) {
+	public static <STE, TTE, SE, TE> TE translateExpressionIteratively(final SE expr,
+			final ITranslator<?, ?, ?, ?>... iTranslators) {
 		TE result;
 
 		if (iTranslators.length == 0) {
@@ -239,8 +240,8 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <STE, TTE, SE, TE> List<TTE> translateTraceIteratively(List<STE> trace,
-			ITranslator<?, ?, ?, ?>... iTranslators) {
+	public static <STE, TTE, SE, TE> List<TTE> translateTraceIteratively(final List<STE> trace,
+			final ITranslator<?, ?, ?, ?>... iTranslators) {
 		List<TTE> result;
 		if (iTranslators.length == 0) {
 			result = (List<TTE>) trace;
@@ -283,34 +284,34 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	}
 
 	protected <TVL, SVL> IBacktranslatedCFG<TVL, TTE> translateCFG(final IBacktranslatedCFG<SVL, STE> cfg,
-			final Function<Map<IExplicitEdgesMultigraph<?, ?, SVL, STE,?>, Multigraph<TVL, TTE>>, IMultigraphEdge<?, ?, SVL, STE,?>, Multigraph<TVL, TTE>, Multigraph<TVL, TTE>> funTranslateEdge,
-			final Function<String, List<Multigraph<TVL, TTE>>, Class<TTE>, IBacktranslatedCFG<TVL, TTE>> funCreateBCFG) {
+			final IFunction<Map<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>>, IMultigraphEdge<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>, Multigraph<TVL, TTE>> funTranslateEdge,
+			final IFunction<String, List<Multigraph<TVL, TTE>>, Class<TTE>, IBacktranslatedCFG<TVL, TTE>> funCreateBCFG) {
 
-		final List<IExplicitEdgesMultigraph<?, ?, SVL, STE,?>> oldRoots = cfg.getCFGs();
+		final List<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>> oldRoots = cfg.getCFGs();
 		final List<Multigraph<TVL, TTE>> newRoots = new ArrayList<>();
 
-		for (final IExplicitEdgesMultigraph<?, ?, SVL, STE,?> oldRoot : oldRoots) {
-			final Multigraph<TVL, TTE> newRoot = createWitnessNode();
-			final Map<IExplicitEdgesMultigraph<?, ?, SVL, STE,?>, Multigraph<TVL, TTE>> nodeCache = new HashMap<>();
-			final Deque<Pair<IExplicitEdgesMultigraph<?, ?, SVL, STE,?>, Multigraph<TVL, TTE>>> worklist = new ArrayDeque<>();
-			final Set<IExplicitEdgesMultigraph<?, ?, SVL, STE,?>> closed = new HashSet<>();
+		for (final IExplicitEdgesMultigraph<?, ?, SVL, STE, ?> oldRoot : oldRoots) {
+			final Multigraph<TVL, TTE> newRoot = createUnlabeledWitnessNode(oldRoot);
+			final Map<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>> nodeCache = new HashMap<>();
+			final Deque<Pair<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>>> worklist =
+					new ArrayDeque<>();
+			final Set<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>> closed = new HashSet<>();
 
 			newRoots.add(newRoot);
 			nodeCache.put(oldRoot, newRoot);
 			worklist.add(new Pair<>(oldRoot, newRoot));
 
 			while (!worklist.isEmpty()) {
-				final Pair<IExplicitEdgesMultigraph<?, ?, SVL, STE,?>, Multigraph<TVL, TTE>> current = worklist.remove();
-				final IExplicitEdgesMultigraph<?, ?, SVL, STE,?> oldSourceNode = current.getFirst();
+				final Pair<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>> current =
+						worklist.remove();
+				final IExplicitEdgesMultigraph<?, ?, SVL, STE, ?> oldSourceNode = current.getFirst();
 				final Multigraph<TVL, TTE> newSourceNode = current.getSecond();
 				if (!closed.add(oldSourceNode)) {
-//					System.out.println(getClass().getSimpleName()+": skipping new source " + newSourceNode );
 					continue;
 				}
 
-				for (final IMultigraphEdge<?, ?, SVL, STE,?> edge : oldSourceNode.getOutgoingEdges()) {
+				for (final IMultigraphEdge<?, ?, SVL, STE, ?> edge : oldSourceNode.getOutgoingEdges()) {
 					final Multigraph<TVL, TTE> newTargetNode = funTranslateEdge.create(nodeCache, edge, newSourceNode);
-//					System.out.println(getClass().getSimpleName()+": new edge from " + newSourceNode + " to " + newTargetNode);
 					if (newTargetNode != null) {
 						worklist.add(new Pair<>(edge.getTarget(), newTargetNode));
 					}
@@ -323,7 +324,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 
 	/**
 	 * Helper function for backtranslation of CFG. Just supply the CFG and a function that translates edges.
-	 * 
+	 *
 	 * @param cfg
 	 *            The CFG that should be backtranslated.
 	 * @param funTranslateEdge
@@ -334,31 +335,35 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	 * @return A backtranslated CFG.
 	 */
 	protected <TVL, SVL> IBacktranslatedCFG<TVL, TTE> translateCFG(final IBacktranslatedCFG<SVL, STE> cfg,
-			final Function<Map<IExplicitEdgesMultigraph<?, ?, SVL, STE,?>, Multigraph<TVL, TTE>>, IMultigraphEdge<?, ?, SVL, STE,?>, Multigraph<TVL, TTE>, Multigraph<TVL, TTE>> funTranslateEdge) {
+			final IFunction<Map<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>>, IMultigraphEdge<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>, Multigraph<TVL, TTE>> funTranslateEdge) {
 		return translateCFG(cfg, funTranslateEdge, (a, b, c) -> new BacktranslatedCFG<>(a, b, c));
 	}
 
-	protected <VL> Multigraph<VL, TTE> createWitnessNode(final IExplicitEdgesMultigraph<?, ?, VL, STE,?> old) {
-		return new Multigraph<VL, TTE>(old.getLabel());
+	protected <VL> Multigraph<VL, TTE> createLabeledWitnessNode(final IExplicitEdgesMultigraph<?, ?, VL, STE, ?> old) {
+		final Multigraph<VL, TTE> rtr = new Multigraph<VL, TTE>(old.getLabel());
+		ModelUtils.copyAnnotations(old, rtr);
+		return rtr;
 	}
 
-	protected <VL> Multigraph<VL, TTE> createWitnessNode() {
-		return new Multigraph<VL, TTE>(null);
+	protected <VL> Multigraph<VL, TTE> createUnlabeledWitnessNode(final IElement old) {
+		final Multigraph<VL, TTE> rtr = new Multigraph<VL, TTE>(null);
+		ModelUtils.copyAnnotations(old, rtr);
+		return rtr;
 	}
 
-	protected void printCFG(IBacktranslatedCFG<?, ?> cfg, Consumer<String> printer) {
-		for (final IExplicitEdgesMultigraph<?, ?, ?, ?,?> root : cfg.getCFGs()) {
-			final Deque<IExplicitEdgesMultigraph<?, ?, ?, ?,?>> worklist = new ArrayDeque<>();
-			final Set<IExplicitEdgesMultigraph<?, ?, ?, ?,?>> closed = new HashSet<>();
+	protected void printCFG(final IBacktranslatedCFG<?, ?> cfg, final Consumer<String> printer) {
+		for (final IExplicitEdgesMultigraph<?, ?, ?, ?, ?> root : cfg.getCFGs()) {
+			final Deque<IExplicitEdgesMultigraph<?, ?, ?, ?, ?>> worklist = new ArrayDeque<>();
+			final Set<IExplicitEdgesMultigraph<?, ?, ?, ?, ?>> closed = new HashSet<>();
 			worklist.add(root);
 
 			while (!worklist.isEmpty()) {
-				final IExplicitEdgesMultigraph<?, ?, ?, ?,?> current = worklist.remove();
+				final IExplicitEdgesMultigraph<?, ?, ?, ?, ?> current = worklist.remove();
 				if (!closed.add(current)) {
 					continue;
 				}
 				printer.accept(current.toString());
-				for (final IMultigraphEdge<?, ?, ?, ?,?> out : current.getOutgoingEdges()) {
+				for (final IMultigraphEdge<?, ?, ?, ?, ?> out : current.getOutgoingEdges()) {
 					printer.accept("  --" + out + "--> " + out.getTarget());
 					worklist.add(out.getTarget());
 				}
@@ -366,8 +371,8 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 		}
 	}
 
-	protected void printHondas(IBacktranslatedCFG<?, ?> cfg, Consumer<String> printer) {
-		for (final IExplicitEdgesMultigraph<?, ?, ?, ?,?> graph : cfg.getCFGs()) {
+	protected void printHondas(final IBacktranslatedCFG<?, ?> cfg, final Consumer<String> printer) {
+		for (final IExplicitEdgesMultigraph<?, ?, ?, ?, ?> graph : cfg.getCFGs()) {
 			final Set<?> set = getHondas(graph);
 			if (set.isEmpty()) {
 				printer.accept("No Hondas");
@@ -378,19 +383,19 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 		}
 	}
 
-	protected <VL, EL> Set<VL> getHondas(final IExplicitEdgesMultigraph<?, ?, VL, EL,?> root) {
-		final Deque<IExplicitEdgesMultigraph<?, ?, VL, EL,?>> worklist = new ArrayDeque<>();
-		final Set<IExplicitEdgesMultigraph<?, ?, VL, EL,?>> closed = new HashSet<>();
-		final Set<IExplicitEdgesMultigraph<?, ?, VL, EL,?>> hondas = new HashSet<>();
+	protected <VL, EL> Set<VL> getHondas(final IExplicitEdgesMultigraph<?, ?, VL, EL, ?> root) {
+		final Deque<IExplicitEdgesMultigraph<?, ?, VL, EL, ?>> worklist = new ArrayDeque<>();
+		final Set<IExplicitEdgesMultigraph<?, ?, VL, EL, ?>> closed = new HashSet<>();
+		final Set<IExplicitEdgesMultigraph<?, ?, VL, EL, ?>> hondas = new HashSet<>();
 		worklist.add(root);
 
 		while (!worklist.isEmpty()) {
-			final IExplicitEdgesMultigraph<?, ?, VL, EL,?> current = worklist.remove();
+			final IExplicitEdgesMultigraph<?, ?, VL, EL, ?> current = worklist.remove();
 			if (!closed.add(current)) {
 				hondas.add(current);
 				continue;
 			}
-			for (final IMultigraphEdge<?, ?, VL, EL,?> out : current.getOutgoingEdges()) {
+			for (final IMultigraphEdge<?, ?, VL, EL, ?> out : current.getOutgoingEdges()) {
 				worklist.add(out.getTarget());
 			}
 		}
@@ -398,7 +403,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	}
 
 	@FunctionalInterface
-	public interface Function<P1, P2, P3, R> {
+	public interface IFunction<P1, P2, P3, R> {
 		R create(P1 p1, P2 p2, P3 p3);
 	}
 }

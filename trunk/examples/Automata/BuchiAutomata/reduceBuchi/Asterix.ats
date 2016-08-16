@@ -6,8 +6,9 @@
 // gamegraph consists of 20278 SCCs
 // reduced automaton has 75 states and 292 internal transitions
 
-assert(!buchiAccepts(buchiReduce(nwa), [,]));
-//print(nwa);
+NestedWordAutomaton reduced = buchiReduce(nwa);
+print(numberOfStates(reduced));
+assert(numberOfStates(reduced) == 13);
 
 
 NestedWordAutomaton nwa = (

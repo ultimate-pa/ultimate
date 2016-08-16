@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -40,11 +40,11 @@ public class Automaton2Net<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
-	INestedWordAutomatonOldApi<LETTER, STATE> mOperand;
+	INestedWordAutomaton<LETTER, STATE> mOperand;
 	IPetriNet<LETTER, STATE> mNet;
 
-	public Automaton2Net(AutomataLibraryServices services, 
-			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
+	public Automaton2Net(final AutomataLibraryServices services, 
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
@@ -76,7 +76,7 @@ public class Automaton2Net<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}

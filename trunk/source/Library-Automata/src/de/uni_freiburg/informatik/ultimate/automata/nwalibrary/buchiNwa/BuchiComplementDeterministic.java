@@ -36,11 +36,15 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsTotal;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 
 
 /**
@@ -51,8 +55,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 
 public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisitor<LETTER,STATE>
 											   implements IOperation<LETTER,STATE> {
-	private final INestedWordAutomatonOldApi<LETTER,STATE> mOperand;
-	private final INestedWordAutomatonOldApi<LETTER,STATE> mTotalizedOperand;
+	private final INestedWordAutomaton<LETTER,STATE> mOperand;
+	private final INestedWordAutomaton<LETTER,STATE> mTotalizedOperand;
 	private final StateFactory<STATE> mContentFactory;
 	
 	private final HashMap<STATE,STATE> mNew2Old = new HashMap<STATE,STATE>();
@@ -83,13 +87,13 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 			mTraversedNwa.sizeInformation();
 	}
 	
-	public BuchiComplementDeterministic(AutomataLibraryServices services,
-			INestedWordAutomatonOldApi<LETTER,STATE> nwa) throws AutomataLibraryException {
+	public BuchiComplementDeterministic(final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER,STATE> nwa) throws AutomataLibraryException {
 		super(services);
 		mOperand = nwa;
 		mContentFactory = mOperand.getStateFactory();
 		mLogger.info(startMessage());
-		if (mOperand.isTotal()) {
+		if (new IsTotal<LETTER, STATE>(mServices, mOperand).getResult()) {
 			mTotalizedOperand = mOperand;
 		}
 		else { 			
@@ -111,12 +115,12 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 	
 	
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
+	public INestedWordAutomaton<LETTER, STATE> getResult()
 			throws AutomataOperationCanceledException {
 		return mTraversedNwa;
 	}
 
-	STATE getOrConstructNewState(STATE oldState, boolean isInitial, boolean isFinal) {
+	STATE getOrConstructNewState(final STATE oldState, final boolean isInitial, final boolean isFinal) {
 		STATE newState;
 		STATE newContent;
 		if (isFinal) {
@@ -160,13 +164,15 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 
 	@Override
 	protected Collection<STATE> visitAndGetCallSuccessors(
-			DoubleDecker<STATE> doubleDecker) {
+			final DoubleDecker<STATE> doubleDecker) {
 		final Collection<STATE> newSuccs = new ArrayList<STATE>();
 		final STATE newState = doubleDecker.getUp();
 		final boolean isFinal = mTraversedNwa.isFinal(newState);
 		final STATE oldState = mNew2Old.get(newState);
 		for (final LETTER symbol : mTotalizedOperand.lettersCall(oldState)) {
-			for (final STATE succ : mTotalizedOperand.succCall(oldState, symbol)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans :
+					mTotalizedOperand.callSuccessors(oldState, symbol)) {
+				final STATE succ = trans.getSucc();
 				if (!isFinal) {
 					final STATE newSuccNonFinal = getOrConstructNewState(succ, false, false);
 					((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addCallTransition(newState, symbol, newSuccNonFinal);
@@ -184,13 +190,15 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 
 	@Override
 	protected Collection<STATE> visitAndGetInternalSuccessors(
-			DoubleDecker<STATE> doubleDecker) {
+			final DoubleDecker<STATE> doubleDecker) {
 		final Collection<STATE> newSuccs = new ArrayList<STATE>();
 		final STATE newState = doubleDecker.getUp();
 		final boolean isFinal = mTraversedNwa.isFinal(newState);
 		final STATE oldState = mNew2Old.get(newState);
 		for (final LETTER symbol : mTotalizedOperand.lettersInternal(oldState)) {
-			for (final STATE succ : mTotalizedOperand.succInternal(oldState, symbol)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans :
+					mTotalizedOperand.internalSuccessors(oldState, symbol)) {
+				final STATE succ = trans.getSucc();
 				if (!isFinal) {
 					final STATE newSuccNonFinal = getOrConstructNewState(succ, false, false);
 					((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addInternalTransition(newState, symbol, newSuccNonFinal);
@@ -208,7 +216,7 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 
 	@Override
 	protected Collection<STATE> visitAndGetReturnSuccessors(
-			DoubleDecker<STATE> doubleDecker) {
+			final DoubleDecker<STATE> doubleDecker) {
 		final Collection<STATE> newSuccs = new ArrayList<STATE>();
 		final STATE newHier = doubleDecker.getDown();
 		if (newHier == mTraversedNwa.getEmptyStackState()) {
@@ -220,7 +228,9 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 		final boolean isFinal = mTraversedNwa.isFinal(newState);
 		final STATE oldState = mNew2Old.get(newState);
 		for (final LETTER symbol : mTotalizedOperand.lettersReturn(oldState)) {
-			for (final STATE succ : mTotalizedOperand.succReturn(oldState, oldHier, symbol)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> trans :
+					mTotalizedOperand.returnSuccessors(oldState, oldHier, symbol)) {
+				final STATE succ = trans.getSucc();
 				if (!isFinal) {
 					final STATE newSuccNonFinal = 
 									getOrConstructNewState(succ, false, false);
@@ -239,7 +249,7 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return ResultChecker.buchiComplement(mServices, mOperand, mTraversedNwa);
 	}

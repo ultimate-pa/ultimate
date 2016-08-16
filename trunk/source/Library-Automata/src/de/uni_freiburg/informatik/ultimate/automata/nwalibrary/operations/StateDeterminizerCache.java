@@ -31,33 +31,33 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
 
-public class StateDeterminizerCache<LETTER, STATE> implements
-		IStateDeterminizer<LETTER, STATE> {
-	
+public class StateDeterminizerCache<LETTER, STATE>
+		implements IStateDeterminizer<LETTER, STATE> {
 	
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 	
-	Map<DeterminizedState<LETTER,STATE>,Map<LETTER,DeterminizedState<LETTER,STATE>>>	mInternalSuccessorCache =
-	new HashMap<DeterminizedState<LETTER,STATE>,Map<LETTER,DeterminizedState<LETTER,STATE>>>();
+	private final Map<DeterminizedState<LETTER,STATE>,Map<LETTER,DeterminizedState<LETTER,STATE>>>
+			mInternalSuccessorCache = new HashMap<>();
 	
-	Map<DeterminizedState<LETTER,STATE>,Map<LETTER,DeterminizedState<LETTER,STATE>>>	mCallSuccessorCache =
-		new HashMap<DeterminizedState<LETTER,STATE>,Map<LETTER,DeterminizedState<LETTER,STATE>>>();
+	private final Map<DeterminizedState<LETTER,STATE>,Map<LETTER,DeterminizedState<LETTER,STATE>>>
+			mCallSuccessorCache = new HashMap<>();
 	
-	Map<DeterminizedState<LETTER,STATE>,Map<DeterminizedState<LETTER,STATE>,Map<LETTER,DeterminizedState<LETTER,STATE>>>> 
-	 mReturnSuccessorCache = new HashMap<DeterminizedState<LETTER,STATE>,
-		Map<DeterminizedState<LETTER,STATE>,Map<LETTER,DeterminizedState<LETTER,STATE>>>>();
+	private final Map<DeterminizedState<LETTER,STATE>,Map<DeterminizedState<LETTER,STATE>,Map<LETTER,DeterminizedState<LETTER,STATE>>>>
+	 		mReturnSuccessorCache = new HashMap<>();
 
-	int mInternalSuccs = 0;
-	int mInternalSuccsCache = 0;
-	int mCallSuccs = 0;
-	int mCallSuccsCache = 0;
-	int mReturnSuccs = 0;
-	int mReturnSuccsCache = 0;
-	int mUnnecessary = 0;
+	private int mInternalSuccs = 0;
+	private int mInternalSuccsCache = 0;
+	private int mCallSuccs = 0;
+	private int mCallSuccsCache = 0;
+	private int mReturnSuccs = 0;
+	private int mReturnSuccsCache = 0;
+//	private int mUnnecessary = 0;
 	
-	
+	/**
+	 * @param stateDeterminizer state determinizer
+	 */
 	public StateDeterminizerCache(
-			IStateDeterminizer<LETTER, STATE> stateDeterminizer) {
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) {
 		mStateDeterminizer = stateDeterminizer;
 	}
 
@@ -65,11 +65,10 @@ public class StateDeterminizerCache<LETTER, STATE> implements
 	public DeterminizedState<LETTER, STATE> initialState() {
 		return mStateDeterminizer.initialState();
 	}
-
 	
 	@Override
 	public DeterminizedState<LETTER, STATE> internalSuccessor(
-			DeterminizedState<LETTER, STATE> detState, LETTER symbol) {
+			final DeterminizedState<LETTER, STATE> detState, final LETTER symbol) {
 		DeterminizedState<LETTER, STATE> detSucc;
 		detSucc = internalSuccessorCache(detState, symbol);
 		if (detSucc == null) {
@@ -82,10 +81,9 @@ public class StateDeterminizerCache<LETTER, STATE> implements
 		return detSucc;
 	}
 
-
 	@Override
 	public DeterminizedState<LETTER, STATE> callSuccessor(
-			DeterminizedState<LETTER, STATE> detState, LETTER symbol) {
+			final DeterminizedState<LETTER, STATE> detState, final LETTER symbol) {
 		DeterminizedState<LETTER, STATE> detSucc;
 		detSucc = callSuccessorCache(detState, symbol);
 		if (detSucc == null) {
@@ -98,11 +96,10 @@ public class StateDeterminizerCache<LETTER, STATE> implements
 		return detSucc;
 	}
 
-
 	@Override
 	public DeterminizedState<LETTER, STATE> returnSuccessor(
-			DeterminizedState<LETTER, STATE> detState,
-			DeterminizedState<LETTER, STATE> hierPred, LETTER symbol) {
+			final DeterminizedState<LETTER, STATE> detState,
+			final DeterminizedState<LETTER, STATE> hierPred, final LETTER symbol) {
 		DeterminizedState<LETTER, STATE> detSucc;
 		detSucc = returnSuccessorCache(detState, hierPred, symbol);
 		if (detSucc == null) {
@@ -120,11 +117,9 @@ public class StateDeterminizerCache<LETTER, STATE> implements
 		return mStateDeterminizer.getMaxDegreeOfNondeterminism();
 	}
 	
-	
-
 	private DeterminizedState<LETTER,STATE> internalSuccessorCache(
-			DeterminizedState<LETTER,STATE>  state,
-			LETTER symbol) {
+			final DeterminizedState<LETTER,STATE>  state,
+			final LETTER symbol) {
 		final Map<LETTER, DeterminizedState<LETTER,STATE>> symbol2succ = 
 			mInternalSuccessorCache.get(state);
 		if (symbol2succ == null) {
@@ -134,9 +129,9 @@ public class StateDeterminizerCache<LETTER, STATE> implements
 	}
 	
 	private void putInternalSuccessorCache(
-			DeterminizedState<LETTER,STATE>  state,
-			LETTER symbol,
-			DeterminizedState<LETTER,STATE>  succ) {
+			final DeterminizedState<LETTER,STATE>  state,
+			final LETTER symbol,
+			final DeterminizedState<LETTER,STATE>  succ) {
 		Map<LETTER, DeterminizedState<LETTER,STATE>> symbol2succ = 
 			mInternalSuccessorCache.get(state);
 		if (symbol2succ == null) {
@@ -149,8 +144,8 @@ public class StateDeterminizerCache<LETTER, STATE> implements
 	
 	
 	private DeterminizedState<LETTER,STATE> callSuccessorCache(
-			DeterminizedState<LETTER,STATE>  state,
-			LETTER symbol) {
+			final DeterminizedState<LETTER,STATE>  state,
+			final LETTER symbol) {
 		final Map<LETTER, DeterminizedState<LETTER,STATE>> symbol2succ = 
 			mCallSuccessorCache.get(state);
 		if (symbol2succ == null) {
@@ -160,9 +155,9 @@ public class StateDeterminizerCache<LETTER, STATE> implements
 	}
 	
 	private void putCallSuccessorCache(
-			DeterminizedState<LETTER,STATE>  state,
-			LETTER symbol,
-			DeterminizedState<LETTER,STATE>  succ) {
+			final DeterminizedState<LETTER,STATE>  state,
+			final LETTER symbol,
+			final DeterminizedState<LETTER,STATE>  succ) {
 		Map<LETTER, DeterminizedState<LETTER,STATE>> symbol2succ = 
 			mCallSuccessorCache.get(state);
 		if (symbol2succ == null) {
@@ -173,9 +168,9 @@ public class StateDeterminizerCache<LETTER, STATE> implements
 	}
 	
 	private DeterminizedState<LETTER,STATE> returnSuccessorCache(
-			DeterminizedState<LETTER,STATE>  state,
-			DeterminizedState<LETTER,STATE> linPred,
-			LETTER symbol) {
+			final DeterminizedState<LETTER,STATE>  state,
+			final DeterminizedState<LETTER,STATE> linPred,
+			final LETTER symbol) {
 		final Map<DeterminizedState<LETTER,STATE>,Map<LETTER, DeterminizedState<LETTER,STATE>>> linPred2symbol2succ =
 			mReturnSuccessorCache.get(linPred);
 		if (linPred2symbol2succ == null) {
@@ -190,10 +185,10 @@ public class StateDeterminizerCache<LETTER, STATE> implements
 	}
 	
 	private void putReturnSuccessorCache(
-			DeterminizedState<LETTER,STATE>  state,
-			DeterminizedState<LETTER,STATE> linPred,
-			LETTER symbol,
-			DeterminizedState<LETTER,STATE>  succ) {
+			final DeterminizedState<LETTER,STATE>  state,
+			final DeterminizedState<LETTER,STATE> linPred,
+			final LETTER symbol,
+			final DeterminizedState<LETTER,STATE>  succ) {
 		Map<DeterminizedState<LETTER,STATE>,Map<LETTER, DeterminizedState<LETTER,STATE>>> linPred2symbol2succ =
 			mReturnSuccessorCache.get(linPred);
 		if (linPred2symbol2succ == null) {
@@ -216,8 +211,7 @@ public class StateDeterminizerCache<LETTER, STATE> implements
 	}
 
 	@Override
-	public STATE getState(DeterminizedState<LETTER, STATE> determinizedState) {
+	public STATE getState(final DeterminizedState<LETTER, STATE> determinizedState) {
 		return mStateDeterminizer.getState(determinizedState);
 	}
-
 }

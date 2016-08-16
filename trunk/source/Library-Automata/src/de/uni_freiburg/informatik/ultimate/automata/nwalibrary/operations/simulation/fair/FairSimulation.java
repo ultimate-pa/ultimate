@@ -71,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * The algorithm runs in <b>O(n^4 * k^2)</b> time and <b>O(n * k)</b> space
  * where n is the amount of states and k the amount of transitions from the
  * inputed automaton.<br/>
- * The algorithm is based on the paper: <i>Fair simulation minimization<i> by
+ * The algorithm is based on the paper: <i>Fair simulation minimization</i> by
  * <i>Gurumurthy, Bloem and Somenzi</i>.
  * 
  * @author Daniel Tischner
@@ -95,8 +95,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * @param changes
 	 *            Changes object to store change in
 	 */
-	private static <LETTER, STATE> void saveBEffChange(Vertex<LETTER, STATE> vertex, int oldValue,
-			GameGraphChanges<LETTER, STATE> changes) {
+	private static <LETTER, STATE> void saveBEffChange(final Vertex<LETTER, STATE> vertex, final int oldValue,
+			final GameGraphChanges<LETTER, STATE> changes) {
 		if (changes != null && oldValue != vertex.getBEff() && !changes.hasBEffEntry(vertex)) {
 			changes.rememberBEffVertex(vertex, oldValue);
 		}
@@ -114,8 +114,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * @param changes
 	 *            Changes object to store change in
 	 */
-	private static <LETTER, STATE> void saveCChange(Vertex<LETTER, STATE> vertex, int oldValue,
-			GameGraphChanges<LETTER, STATE> changes) {
+	private static <LETTER, STATE> void saveCChange(final Vertex<LETTER, STATE> vertex, final int oldValue,
+			final GameGraphChanges<LETTER, STATE> changes) {
 		if (changes != null && oldValue != vertex.getC() && !changes.hasCEntry(vertex)) {
 			changes.rememberCVertex(vertex, oldValue);
 		}
@@ -133,8 +133,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * @param changes
 	 *            Changes object to store change in
 	 */
-	private static <LETTER, STATE> void savePmChange(Vertex<LETTER, STATE> vertex, int oldValue,
-			GameGraphChanges<LETTER, STATE> changes) {
+	private static <LETTER, STATE> void savePmChange(final Vertex<LETTER, STATE> vertex, final int oldValue,
+			final GameGraphChanges<LETTER, STATE> changes) {
 		if (changes != null && oldValue != vertex.getPM(null, 0) && !changes.hasPmEntry(vertex)) {
 			changes.rememberPmVertex(vertex, oldValue);
 		}
@@ -192,13 +192,13 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * update by ignoring the bounds of its own SCC as soon as its their turn
 	 * because a successor of a neighboring SCC has reached infinity.
 	 */
-	private HashSet<Vertex<LETTER, STATE>> mpokedFromNeighborSCC;
+	private HashSet<Vertex<LETTER, STATE>> mPokedFromNeighborSCC;
 	/**
 	 * A collection of sets which contains states of the buechi automaton that
 	 * may be merge-able. States which are not in the same set are definitely
 	 * not merge-able which is used as an optimization for the simulation.
 	 */
-	private final Map<STATE, Set<STATE>> mPossibleEquivalentClasses;
+	private final Map<STATE, Set<STATE>> mPossibleEquivalenceClasses;
 
 	/**
 	 * True if the simulation was aborted early because its already known that
@@ -226,7 +226,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *            Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
-	 * @param possibleEquivalentClasses
+	 * @param possibleEquivalenceClasses
 	 *            A collection of sets which contains states of the buechi
 	 *            automaton that may be merge-able. States which are not in the
 	 *            same set are definitely not merge-able which is used as an
@@ -238,13 +238,13 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *             framework.
 	 */
 	public FairSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
+			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalenceClasses,
 			final FairGameGraph<LETTER, STATE> game) throws AutomataOperationCanceledException {
 		super(progressTimer, logger, useSCCs, stateFactory, ESimulationType.FAIR);
 
 		mLogger = getLogger();
-		mPossibleEquivalentClasses = processEquivalenceClasses(possibleEquivalentClasses);
-		mpokedFromNeighborSCC = null;
+		mPossibleEquivalenceClasses = processEquivalenceClasses(possibleEquivalenceClasses);
+		mPokedFromNeighborSCC = null;
 		mNotSimulatingNonTrivialVertices = new HashSet<>();
 		mCurrentChanges = null;
 
@@ -325,95 +325,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		}
 		performance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, mGlobalInfinity);
 
-		// Merge states
-		mAttemptingChanges = true;
-		final Set<SpoilerVertex<LETTER, STATE>> mergeCandidates = mergeCandidates();
-		final Set<SpoilerVertex<LETTER, STATE>> noTransitionCandidates = new HashSet<>();
-
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Size of merge candidates: " + mergeCandidates.size());
-		}
-
-		for (final SpoilerVertex<LETTER, STATE> mergeCandidate : mergeCandidates) {
-			final STATE leftState = mergeCandidate.getQ0();
-			final STATE rightState = mergeCandidate.getQ1();
-
-			// Attempt merge
-			final FairGameGraphChanges<LETTER, STATE> changes = attemptMerge(leftState, rightState);
-			// Undo if language changed, else do not consider
-			// pair for transition removal
-			if (changes != null) {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Attempted merge for " + leftState + " and " + rightState
-							+ " was not successful, undoing...");
-				}
-
-				mGame.undoChanges(changes);
-				performance.increaseCountingMeasure(ECountingMeasure.FAILED_MERGE_ATTEMPTS);
-			} else {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Attempted merge for " + leftState + " and " + rightState + " was successful.");
-				}
-				// Pass merge to game graph
-				mGame.markMergeable(leftState, rightState);
-
-				// Pair and mirrored pair are no candidates
-				// for transition removal
-				noTransitionCandidates.add(mergeCandidate);
-				final SpoilerVertex<LETTER, STATE> mirroredCandidate = mGame.getSpoilerVertex(rightState, leftState, false);
-				if (mirroredCandidate != null) {
-					noTransitionCandidates.add(mirroredCandidate);
-				}
-			}
-
-			// If operation was canceled, for example from the
-			// Ultimate framework
-			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-				mLogger.debug("Stopped in doSimulation/attempting merges");
-				throw new AutomataOperationCanceledException(this.getClass());
-			}
-		}
-
-		// Remove redundant transitions
-		final HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates = transitionCandidates(noTransitionCandidates);
-
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Size of transition candidates: " + transitionCandidates.size());
-		}
-
-		for (final Quad<STATE, LETTER, STATE, STATE> transitionCandidate : transitionCandidates) {
-			final STATE src = transitionCandidate.getFirst();
-			final LETTER a = transitionCandidate.getSecond();
-			final STATE dest = transitionCandidate.getThird();
-			final STATE invoker = transitionCandidate.getFourth();
-
-			// Attempt transition removal
-			final FairGameGraphChanges<LETTER, STATE> changes = attemptTransitionRemoval(src, a, dest, invoker);
-			// Undo if language changed, else add transition for removal
-			if (changes != null) {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Attempted transition removal for " + src + " -" + a + "-> " + dest
-							+ " was not successful, undoing...");
-				}
-
-				mGame.undoChanges(changes);
-				performance.increaseCountingMeasure(ECountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS);
-			} else {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(
-							"Attempted transition removal for " + src + " -" + a + "-> " + dest + " was successful.");
-				}
-				// Pass removal to game graph
-				mGame.markRemoveableTransition(src, a, dest);
-			}
-
-			// If operation was canceled, for example from the
-			// Ultimate framework
-			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-				mLogger.debug("Stopped in doSimulation/attempting transition removal");
-				throw new AutomataOperationCanceledException(this.getClass());
-			}
-		}
+		doFollowingSimulation(performance);
 
 		// Re-enable the usage
 		if (disabledSCCUsage) {
@@ -430,12 +342,14 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		long duration = performance.stopTimeMeasure(ETimeMeasure.OVERALL);
 		// Add time building of the graph took to the overall time since this
 		// happens outside of simulation
-		final long durationGraph = performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE);
+		final long durationGraph = performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH,
+				EMultipleDataOption.ADDITIVE);
 		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
 			duration += durationGraph;
 			performance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
 		}
-		performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, mGame.getSize());
+
+		retrieveGeneralAutomataPerformance();
 
 		mLogger.info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds and "
 				+ performance.getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS) + " simulation steps.");
@@ -540,7 +454,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	private boolean doSingleSimulation(final GameGraphChanges<LETTER, STATE> changes)
 			throws AutomataOperationCanceledException {
 		if (isUsingSCCs()) {
-			mpokedFromNeighborSCC = new HashSet<>();
+			mPokedFromNeighborSCC = new HashSet<>();
 			getSimulationPerformance().startTimeMeasure(ETimeMeasure.BUILD_SCC);
 			final DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
 			final GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(mGame);
@@ -644,22 +558,22 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * Processes a given collection of possible equivalent classes into a data
 	 * structure that has a faster access for single states.
 	 * 
-	 * @param possibleEquivalentClasses
+	 * @param possibleEquivalenceClasses
 	 *            Collection to process
 	 * @return Data structure with a fast access for state to its equivalent
 	 *         class
 	 */
-	private Map<STATE, Set<STATE>> processEquivalenceClasses(final Collection<Set<STATE>> possibleEquivalentClasses) {
+	private Map<STATE, Set<STATE>> processEquivalenceClasses(final Collection<Set<STATE>> possibleEquivalenceClasses) {
 		Map<STATE, Set<STATE>> result;
-		if (possibleEquivalentClasses.isEmpty()) {
+		if (possibleEquivalenceClasses.isEmpty()) {
 			result = Collections.emptyMap();
 		} else {
 			result = new HashMap<>();
 		}
 
-		for (final Set<STATE> possibleEquivalentClass : possibleEquivalentClasses) {
-			for (final STATE state : possibleEquivalentClass) {
-				result.put(state, possibleEquivalentClass);
+		for (final Set<STATE> possibleEquivalenceClass : possibleEquivalenceClasses) {
+			for (final STATE state : possibleEquivalenceClass) {
+				result.put(state, possibleEquivalenceClass);
 			}
 		}
 
@@ -767,8 +681,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			throws AutomataOperationCanceledException {
 		// Optimize the attempted merge if we have information about equivalence
 		// classes of the states
-		if (!mPossibleEquivalentClasses.isEmpty()) {
-			final Set<STATE> equivalenceClass = mPossibleEquivalentClasses.get(firstState);
+		if (!mPossibleEquivalenceClasses.isEmpty()) {
+			final Set<STATE> equivalenceClass = mPossibleEquivalenceClasses.get(firstState);
 			// If the states are not in the same equivalence class we already
 			// know that the merge can not be possible
 			if (equivalenceClass != null && !equivalenceClass.contains(secondState)) {
@@ -826,6 +740,111 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		return validateChange(changes);
 	}
 
+	/**
+	 * Proceeds with following simulations to validate which states can be
+	 * merged and which transitions can be removed.
+	 * 
+	 * @param performance
+	 *            Performance object used
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	protected void doFollowingSimulation(final SimulationPerformance performance)
+			throws AutomataOperationCanceledException {
+		// Merge states
+		mAttemptingChanges = true;
+		final Set<SpoilerVertex<LETTER, STATE>> mergeCandidates = mergeCandidates();
+		final Set<SpoilerVertex<LETTER, STATE>> noTransitionCandidates = new HashSet<>();
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Size of merge candidates: " + mergeCandidates.size());
+		}
+
+		for (final SpoilerVertex<LETTER, STATE> mergeCandidate : mergeCandidates) {
+			final STATE leftState = mergeCandidate.getQ0();
+			final STATE rightState = mergeCandidate.getQ1();
+
+			// Attempt merge
+			final FairGameGraphChanges<LETTER, STATE> changes = attemptMerge(leftState, rightState);
+			// Undo if language changed, else do not consider
+			// pair for transition removal
+			if (changes != null) {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Attempted merge for " + leftState + " and " + rightState
+							+ " was not successful, undoing...");
+				}
+
+				mGame.undoChanges(changes);
+				performance.increaseCountingMeasure(ECountingMeasure.FAILED_MERGE_ATTEMPTS);
+			} else {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Attempted merge for " + leftState + " and " + rightState + " was successful.");
+				}
+				// Pass merge to game graph
+				mGame.markMergeable(leftState, rightState);
+
+				// Pair and mirrored pair are no candidates
+				// for transition removal
+				noTransitionCandidates.add(mergeCandidate);
+				final SpoilerVertex<LETTER, STATE> mirroredCandidate = mGame.getSpoilerVertex(rightState, leftState,
+						false);
+				if (mirroredCandidate != null) {
+					noTransitionCandidates.add(mirroredCandidate);
+				}
+			}
+
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+				mLogger.debug("Stopped in doSimulation/attempting merges");
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
+		}
+
+		// Remove redundant transitions
+		final HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates = transitionCandidates(
+				noTransitionCandidates);
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Size of transition candidates: " + transitionCandidates.size());
+		}
+
+		for (final Quad<STATE, LETTER, STATE, STATE> transitionCandidate : transitionCandidates) {
+			final STATE src = transitionCandidate.getFirst();
+			final LETTER a = transitionCandidate.getSecond();
+			final STATE dest = transitionCandidate.getThird();
+			final STATE invoker = transitionCandidate.getFourth();
+
+			// Attempt transition removal
+			final FairGameGraphChanges<LETTER, STATE> changes = attemptTransitionRemoval(src, a, dest, invoker);
+			// Undo if language changed, else add transition for removal
+			if (changes != null) {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Attempted transition removal for " + src + " -" + a + "-> " + dest
+							+ " was not successful, undoing...");
+				}
+
+				mGame.undoChanges(changes);
+				performance.increaseCountingMeasure(ECountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS);
+			} else {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(
+							"Attempted transition removal for " + src + " -" + a + "-> " + dest + " was successful.");
+				}
+				// Pass removal to game graph
+				mGame.markRemoveableTransition(src, a, dest);
+			}
+
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+				mLogger.debug("Stopped in doSimulation/attempting transition removal");
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
+		}
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -860,7 +879,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 			// Ignore bounds of own SCC if vertex was poked
 			Set<Vertex<LETTER, STATE>> usedSCCForNeighborCalculation = scc;
-			if (isUsingSCCs() && mpokedFromNeighborSCC.contains(workingVertex)) {
+			if (isUsingSCCs() && mPokedFromNeighborSCC.contains(workingVertex)) {
 				usedSCCForNeighborCalculation = null;
 				if (debugSimulation) {
 					mLogger.debug("\t\tVertex was poked.");
@@ -898,7 +917,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 			// If vertex now defines a non trivial non possible simulation
 			if (currentProgressMeasure >= mGlobalInfinity) {
-				if (workingVertex.isSpoilerVertex() && !workingVertex.getQ0().equals(workingVertex.getQ1())) {
+				final boolean isAuxiliaryVertex = workingVertex.getQ0() == null || workingVertex.getQ1() == null;
+				if (workingVertex.isSpoilerVertex() && !isAuxiliaryVertex && !workingVertex.getQ0().equals(workingVertex.getQ1())) {
 					final boolean wasAdded = mNotSimulatingNonTrivialVertices
 							.add((SpoilerVertex<LETTER, STATE>) workingVertex);
 					if (mAttemptingChanges && wasAdded) {
@@ -917,7 +937,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			}
 
 			// Skip updating predecessors if there are no
-			final boolean considerPushOverPredecessors = workingVertex.getPM(scc, mGlobalInfinity) == mGlobalInfinity && mGame.hasPushOverPredecessors(workingVertex);
+			final boolean considerPushOverPredecessors = workingVertex.getPM(scc, mGlobalInfinity) == mGlobalInfinity
+					&& mGame.hasPushOverPredecessors(workingVertex);
 			final Set<Vertex<LETTER, STATE>> predVertices = mGame.getPredecessors(workingVertex);
 			if ((predVertices == null || predVertices.isEmpty()) && !considerPushOverPredecessors) {
 				continue;
@@ -956,7 +977,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				if (isUsingSCCs() && !scc.contains(pred)) {
 					final boolean hasNewlyReachedInfinity = currentProgressMeasure >= localInfinity
 							&& oldProgressMeasure < localInfinity;
-					pokePossible = hasNewlyReachedInfinity && !mpokedFromNeighborSCC.contains(pred);
+					pokePossible = hasNewlyReachedInfinity && !mPokedFromNeighborSCC.contains(pred);
 
 					if (debugSimulation) {
 						mLogger.debug("\t\t\tPoke possible for pred: " + pred);
@@ -996,7 +1017,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 							// It has no better alternative,
 							// adding to working list or poking
 							if (pokePossible) {
-								mpokedFromNeighborSCC.add(pred);
+								mPokedFromNeighborSCC.add(pred);
 
 								if (debugSimulation) {
 									mLogger.debug("\t\t\tPred has no better alternative, poking.");
@@ -1025,7 +1046,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 						// progress measure,
 						// adding to working list or poking
 						if (pokePossible) {
-							mpokedFromNeighborSCC.add(pred);
+							mPokedFromNeighborSCC.add(pred);
 
 							if (debugSimulation) {
 								mLogger.debug("\t\t\tPred is spoiler, poking.");
@@ -1042,8 +1063,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			}
 
 			// Update poked set if worked a poked vertex
-			if (isUsingSCCs() && mpokedFromNeighborSCC.contains(workingVertex)) {
-				mpokedFromNeighborSCC.remove(workingVertex);
+			if (isUsingSCCs() && mPokedFromNeighborSCC.contains(workingVertex)) {
+				mPokedFromNeighborSCC.remove(workingVertex);
 			}
 
 			// If operation was canceled, for example from the
@@ -1084,7 +1105,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		// could then be correct).
 		final boolean isDeadEnd = !mGame.hasSuccessors(vertex);
 		final boolean hasPriorityOne = mGame.getPriority(vertex) == 1;
-		final boolean isPokedVertex = isUsingSCCs() && mpokedFromNeighborSCC.contains(vertex);
+		final boolean isPokedVertex = isUsingSCCs() && mPokedFromNeighborSCC.contains(vertex);
 		final boolean isNonTrivialAddedVertex = mAttemptingChanges && mCurrentChanges != null
 				&& mCurrentChanges.isAddedVertex(vertex) && mGame.getPriority(vertex) != 0;
 		final boolean isVertexInvolvedInEdgeChanges = mAttemptingChanges && mCurrentChanges != null
@@ -1103,7 +1124,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		if (isUsingSCCs()) {
 			Set<Vertex<LETTER, STATE>> usedSCCForNeighborCalculation = scc;
 			// Ignore bounds of own SCC if vertex was poked
-			if (mpokedFromNeighborSCC.contains(vertex)) {
+			if (mPokedFromNeighborSCC.contains(vertex)) {
 				usedSCCForNeighborCalculation = null;
 			}
 			final int oldC = vertex.getC();

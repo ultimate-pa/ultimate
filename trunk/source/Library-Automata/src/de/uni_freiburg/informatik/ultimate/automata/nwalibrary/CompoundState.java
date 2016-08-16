@@ -31,24 +31,30 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class CompoundState<STATE> {
-	final Collection<STATE> states;
+	private final Collection<STATE> mStates;
 	
-	public CompoundState(Collection<STATE> states) {
-		this.states = states;
+	/**
+	 * @param states states
+	 */
+	public CompoundState(final Collection<STATE> states) {
+		mStates = states;
 	}
 	
 	@Override
 	public String toString() {
-		return states.toString();
+		return mStates.toString();
 	}
 	
 	public Collection<STATE> getStates() {
-		return states;
+		return mStates;
 	}
 
 	@Override
-	public boolean equals(Object arg0) {
-		if (!(arg0 instanceof CompoundState<?>)) {
+	public boolean equals(final Object arg0) {
+		if (arg0 == null) {
+			return this == null;
+		}
+		if (getClass() != arg0.getClass()) {
 			return false;
 		} 
 		return ((CompoundState<?>) arg0).getStates().equals(this.getStates());
@@ -57,7 +63,7 @@ public class CompoundState<STATE> {
 	@Override
 	public int hashCode() {
 		int hc = 0;
-		for (final STATE s : states) {
+		for (final STATE s : mStates) {
 			hc += HashUtils.hashJenkins(31, s);
 		}
 		return hc;

@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.DelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.NwaSimulationUtil;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SpoilerDoubleDeckerVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
@@ -103,20 +103,18 @@ public final class DelayedNwaSimulation<LETTER, STATE> extends DelayedSimulation
 			getLogger().debug("Simulation results (filtered):");
 			for (final Vertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
 				final int progressMeasure = vertex.getPM(null, getGameGraph().getGlobalInfinity());
-				if (!(vertex instanceof SpoilerDoubleDeckerVertex<?, ?>)
+				if (!(vertex instanceof SpoilerNwaVertex<?, ?>)
 						|| (progressMeasure >= getGameGraph().getGlobalInfinity() && (vertex.getQ0() != vertex.getQ1()))
 						|| (progressMeasure < getGameGraph().getGlobalInfinity()
 								&& (vertex.getQ0() == vertex.getQ1()))) {
 					continue;
 				}
-				SpoilerDoubleDeckerVertex<LETTER, STATE> vertexAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) vertex;
 				String progressMeasureText = progressMeasure + "";
 				if (progressMeasure >= getGameGraph().getGlobalInfinity()) {
 					progressMeasureText = "inf";
 				}
-				getLogger().debug("\t(" + vertex.getQ0() + "," + vertex.getQ1() + "; ["
-						+ vertexAsDD.getVertexDownState().getLeftDownState() + ", "
-						+ vertexAsDD.getVertexDownState().getRightDownState() + "]) = " + progressMeasureText);
+				getLogger().debug("\t(" + vertex.isB() + "," + vertex.getQ0() + "," + vertex.getQ1() + ") = "
+						+ progressMeasureText);
 			}
 		}
 	}
@@ -125,10 +123,12 @@ public final class DelayedNwaSimulation<LETTER, STATE> extends DelayedSimulation
 	 * (non-Javadoc)
 	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.ASimulation#simulationHook()
+	 * simulation.ASimulation#retrieveGeneralAutomataPerformance()
 	 */
 	@Override
-	protected void simulationHook() throws AutomataOperationCanceledException {
-		NwaSimulationUtil.doInnerNwaSimulation(getGameGraph(), getLogger(), getProgressTimer());
+	protected void retrieveGeneralAutomataPerformance() {
+		super.retrieveGeneralAutomataPerformance();
+		NwaSimulationUtil.retrieveGeneralNwaAutomataPerformance(getSimulationPerformance(),
+				getGameGraph().getAutomaton(), getResult(), getGameGraph().getServices());
 	}
 }

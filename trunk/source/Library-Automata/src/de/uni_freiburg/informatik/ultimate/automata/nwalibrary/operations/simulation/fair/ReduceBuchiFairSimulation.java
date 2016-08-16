@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
@@ -85,7 +85,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		final Set<String> alphabet = new HashSet<>();
 		alphabet.add("a");
 		alphabet.add("b");
-		NestedWordAutomaton<String, String> buechi = new NestedWordAutomaton<>(new AutomataLibraryServices(services),
+		INestedWordAutomaton<String, String> buechi = new NestedWordAutomaton<>(new AutomataLibraryServices(services),
 				alphabet, null, null, snf);
 
 		// Big example from Matthias cardboard
@@ -215,11 +215,11 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 					new AutomataLibraryServices(services), snf, buechi);
 			boolean errorOccurred = false;
 			errorOccurred = checkOperationDeep(operation, logNoErrorDebug, false);
-//			try {
-//				errorOccurred = !operation.checkResult(operation.mStateFactory);
-//			} catch (AutomataLibraryException e) {
-//				e.printStackTrace();
-//			}
+			// try {
+			// errorOccurred = !operation.checkResult(operation.mStateFactory);
+			// } catch (AutomataLibraryException e) {
+			// e.printStackTrace();
+			// }
 			if (errorOccurred) {
 				break;
 			}
@@ -270,7 +270,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 				logMessage("Start Cross-Simulation without SCC...", logger);
 			}
 
-			operationNoSCC = new ReduceBuchiFairSimulation<>(operation.mServices, operation.mStateFactory,
+			operationNoSCC = new ReduceBuchiFairSimulation<LETTER, STATE>(operation.mServices, operation.mStateFactory,
 					operation.mOperand, false);
 			simulationNoSCC = operationNoSCC.mSimulation;
 			if (logNoErrorDebug) {
@@ -280,7 +280,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 			if (logNoErrorDebug) {
 				logMessage("Start Cross-Simulation with SCC...", logger);
 			}
-			operationSCC = new ReduceBuchiFairSimulation<>(operation.mServices, operation.mStateFactory,
+			operationSCC = new ReduceBuchiFairSimulation<LETTER, STATE>(operation.mServices, operation.mStateFactory,
 					operation.mOperand, true);
 			simulationSCC = operationSCC.mSimulation;
 			if (logNoErrorDebug) {
@@ -296,7 +296,8 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 			logMessage("Start comparing results...", logger);
 		}
 		boolean errorOccurred = false;
-		final FairGameGraph<LETTER, STATE> simNoSCCGraph = (FairGameGraph<LETTER, STATE>) simulationNoSCC.getGameGraph();
+		final FairGameGraph<LETTER, STATE> simNoSCCGraph = (FairGameGraph<LETTER, STATE>) simulationNoSCC
+				.getGameGraph();
 		final Set<Vertex<LETTER, STATE>> simSCCVertices = simulationSCC.getGameGraph().getVertices();
 		final Set<Vertex<LETTER, STATE>> simNoSCCVertices = simulationNoSCC.getGameGraph().getVertices();
 		final int globalInfinity = simNoSCCGraph.getGlobalInfinity();
@@ -317,8 +318,8 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		for (final Vertex<LETTER, STATE> simSCCVertex : simSCCVertices) {
 			if (simSCCVertex.isSpoilerVertex()) {
 				final SpoilerVertex<LETTER, STATE> asSV = (SpoilerVertex<LETTER, STATE>) simSCCVertex;
-				final SpoilerVertex<LETTER, STATE> simNoSCCVertex = simNoSCCGraph.getSpoilerVertex(asSV.getQ0(), asSV.getQ1(),
-						false);
+				final SpoilerVertex<LETTER, STATE> simNoSCCVertex = simNoSCCGraph.getSpoilerVertex(asSV.getQ0(),
+						asSV.getQ1(), false);
 				if (simNoSCCVertex == null) {
 					logMessage("SCCVertex unknown for nonSCC version: " + asSV, logger);
 					errorOccurred = true;
@@ -415,11 +416,11 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	/**
 	 * The inputed buechi automaton.
 	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> mOperand;
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	/**
 	 * The resulting possible reduced buechi automaton.
 	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> mResult;
+	private final INestedWordAutomaton<LETTER, STATE> mResult;
 	/**
 	 * Service provider of Ultimate framework.
 	 */
@@ -455,7 +456,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 *             framework.
 	 */
 	public ReduceBuchiFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, true, Collections.emptyList(), false);
 	}
 
@@ -478,7 +479,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 *             framework.
 	 */
 	public ReduceBuchiFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs)
+			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs)
 					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, Collections.emptyList(), false);
 	}
@@ -507,7 +508,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 *             framework.
 	 */
 	public ReduceBuchiFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
+			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs,
 			final Collection<Set<STATE>> possibleEquivalentClasses) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, possibleEquivalentClasses, false);
 	}
@@ -539,7 +540,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 *             framework.
 	 */
 	public ReduceBuchiFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
+			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs,
 			final Collection<Set<STATE>> possibleEquivalentClasses, final boolean checkOperationDeeply)
 					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, checkOperationDeeply,
@@ -575,7 +576,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 *             framework.
 	 */
 	protected ReduceBuchiFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
+			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs,
 			final boolean checkOperationDeeply, final FairSimulation<LETTER, STATE> simulation)
 					throws AutomataOperationCanceledException {
 		mServices = services;
@@ -638,7 +639,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
 	 */
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws AutomataLibraryException {
+	public INestedWordAutomaton<LETTER, STATE> getResult() throws AutomataLibraryException {
 		return mResult;
 	}
 
@@ -662,5 +663,32 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand has " + mOperand.sizeInformation();
+	}
+
+	/**
+	 * Gets the logger used by the Ultimate framework.
+	 * 
+	 * @return The logger used by the Ultimate framework.
+	 */
+	protected ILogger getLogger() {
+		return mLogger;
+	}
+
+	/**
+	 * Gets the inputed automaton.
+	 * 
+	 * @return The inputed automaton.
+	 */
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
+	}
+
+	/**
+	 * Gets the service provider of the Ultimate framework.
+	 * 
+	 * @return The service provider of the Ultimate framework.
+	 */
+	protected AutomataLibraryServices getServices() {
+		return mServices;
 	}
 }

@@ -38,8 +38,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
  */
 public class AutomatonAST extends AtsASTNode {
 
-	public AutomatonAST(ILocation loc) {
+	public AutomatonAST(ILocation loc, String name) {
 		super(loc);
+		mName = name;
 	}
 
 

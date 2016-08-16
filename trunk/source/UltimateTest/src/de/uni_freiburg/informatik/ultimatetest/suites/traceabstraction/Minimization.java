@@ -135,6 +135,9 @@ public class Minimization extends AbstractTraceAbstractionTestSuite {
 		"automizer/minimization/TreeInterpolants-NONE.epf",
 		"automizer/minimization/TreeInterpolants-SHRINK_NWA.epf",
 		"automizer/minimization/TreeInterpolants-NWA_COMBINATOR.epf",
+//		"automizer/minimization/TreeInterpolants-NWA_MAX_SAT.epf", // use with caution, does not respect timeout
+		"automizer/minimization/TreeInterpolants-NWA_MAX_SAT2.epf",
+		"automizer/minimization/TreeInterpolants-RAQ_DIRECT_SIMULATION.epf",
 	};
 	
 	/**
@@ -148,21 +151,21 @@ public class Minimization extends AbstractTraceAbstractionTestSuite {
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (final String setting : s_Settings) {
-			addTestCase("AutomizerCInline.xml", 
+			addTestCase("AutomizerC.xml", 
 					setting, 
 					s_SVCOMP_Programs);
 		}
 		
 		for (final String setting : s_Settings) {
 			addTestCase(
-					"AutomizerBplInline.xml",
+					"AutomizerBpl.xml",
 					setting,
 					s_UltimateRepository_Programs,
 				    new String[] {".bpl"});
 		}
 		for (final String setting : s_Settings) {
 			addTestCase(
-					"AutomizerCInline.xml",
+					"AutomizerC.xml",
 					setting,
 					s_UltimateRepository_Programs,
 				    new String[] {".c", ".i"});

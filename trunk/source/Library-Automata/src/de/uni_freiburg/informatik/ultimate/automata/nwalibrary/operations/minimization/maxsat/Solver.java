@@ -41,92 +41,95 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
  * @author stimpflj
  */
 final class Solver {
-	static final char NONE = 0;
-	static final char TRUE = 1;
-	static final char FALSE = 2;
-
-	private static enum Sat { OK, UNSATISFIABLE; };
+	public static final char NONE = 0;
+	public static final char TRUE = 1;
+	public static final char FALSE = 2;
 
 	/** the number of boolean variables */
-	private int numVars;
+	private int mNumVars;
 
 	/** the problem in CNF */
-	private final Horn3Array clauses;
+	private final Horn3Array mClauses;
 
 	/** variable -> clauses in which it occurs */
-	private final IntArray[] occur;
+	private final IntArray[] mOccur;
 
 	/** variable -> assigned value (NONE, TRUE, FALSE) */
-	private final char[] assign;
+	private final char[] mAssign;
 
 	/** last assignment operations */
-	private final IntArray op;
+	private final IntArray mOp;
 
 	/** pre-allocate a clause to avoid garbage collection overhead */
-	private final Horn3Clause clause;
+	private final Horn3Clause mClause;
 
-	Solver(Horn3Array clauses) {
-		this.clauses = clauses;
-		clause = new Horn3Clause(-1,-1,-1);
+	Solver(final Horn3Array clauses) {
+		this.mClauses = clauses;
+		mClause = new Horn3Clause(-1,-1,-1);
 
-		numVars = 2; // const true and const false
+		// const true and const false
+		mNumVars = 2;
 		for (final Horn3Clause c : clauses) {
-			assert 0 <= c.x;
-			assert 0 <= c.y;
-			assert 0 <= c.z;
+			assert 0 <= c.mX;
+			assert 0 <= c.mY;
+			assert 0 <= c.mZ;
 
-			numVars = Math.max(numVars, c.x + 1);
-			numVars = Math.max(numVars, c.y + 1);
-			numVars = Math.max(numVars, c.z + 1);
+			mNumVars = Math.max(mNumVars, c.mX + 1);
+			mNumVars = Math.max(mNumVars, c.mY + 1);
+			mNumVars = Math.max(mNumVars, c.mZ + 1);
 		}
 
-		assign = new char[numVars];
-		op = new IntArray();
+		mAssign = new char[mNumVars];
+		mOp = new IntArray();
 
-		occur = new IntArray[numVars];
-		for (int i = 0; i < numVars; i++) {
-			occur[i] = new IntArray();
+		mOccur = new IntArray[mNumVars];
+		for (int i = 0; i < mNumVars; i++) {
+			mOccur[i] = new IntArray();
 		}
 
 		for (int i = 0; i < clauses.size(); i++) {
-			clauses.get(i, clause);
+			clauses.get(i, mClause);
 
-			occur[clause.x].add(i);
-			occur[clause.y].add(i);
-			occur[clause.z].add(i);
+			mOccur[mClause.mX].add(i);
+			mOccur[mClause.mY].add(i);
+			mOccur[mClause.mZ].add(i);
 		}
 
-		for (int i = 0; i < numVars; i++) {
-			assign[i] = NONE;
+		for (int i = 0; i < mNumVars; i++) {
+			mAssign[i] = NONE;
 		}
-		assign[Horn3Clause.TRUEVAR] = TRUE;
-		assign[Horn3Clause.FALSEVAR] = FALSE;
+		mAssign[Horn3Clause.TRUEVAR] = TRUE;
+		mAssign[Horn3Clause.FALSEVAR] = FALSE;
 	}
 
-	private void setVar(int v, char a) {
+	private enum Sat {
+		OK, UNSATISFIABLE;
+	}
+
+	private void setVar(final int v, final char a) {
 		assert a != NONE;
-		assert assign[v] == NONE;
-		op.add(v);
-		assign[v] = a;
+		assert mAssign[v] == NONE;
+		mOp.add(v);
+		mAssign[v] = a;
 	}
 
-	private Sat check(Horn3Clause c) {
-		if (assign[c.x] == TRUE &&
-			assign[c.y] == TRUE &&
-			assign[c.z] == FALSE) {
+	private Sat check(final Horn3Clause c) {
+		if (mAssign[c.mX] == TRUE &&
+			mAssign[c.mY] == TRUE &&
+			mAssign[c.mZ] == FALSE) {
 			return Sat.UNSATISFIABLE;
-		} else if (assign[c.x] == NONE &&
-				 assign[c.y] == TRUE &&
-				 assign[c.z] == FALSE) {
-			setVar(c.x, FALSE);
-		} else if (assign[c.x] == TRUE &&
-				 assign[c.y] == NONE &&
-				 assign[c.z] == FALSE) {
-			setVar(c.y, FALSE);
-		} else if (assign[c.x] == TRUE &&
-				 assign[c.y] == TRUE &&
-				 assign[c.z] == NONE) {
-			setVar(c.z, TRUE);
+		} else if (mAssign[c.mX] == NONE &&
+				 mAssign[c.mY] == TRUE &&
+				 mAssign[c.mZ] == FALSE) {
+			setVar(c.mX, FALSE);
+		} else if (mAssign[c.mX] == TRUE &&
+				 mAssign[c.mY] == NONE &&
+				 mAssign[c.mZ] == FALSE) {
+			setVar(c.mY, FALSE);
+		} else if (mAssign[c.mX] == TRUE &&
+				 mAssign[c.mY] == TRUE &&
+				 mAssign[c.mZ] == NONE) {
+			setVar(c.mZ, TRUE);
 		}
 		return Sat.OK;
 	}
@@ -134,9 +137,9 @@ final class Solver {
 	private Sat propagate() {
 		/* NOTE: the termination condition is "flexible" since the
 		 * loop body might insert new elements into `op' */
-		for (int i = 0; i < op.size(); i++) {
-			for (final int c : occur[op.get(i)]) {
-				if (check(clauses.get(c, clause)) == Sat.UNSATISFIABLE) {
+		for (int i = 0; i < mOp.size(); i++) {
+			for (final int c : mOccur[mOp.get(i)]) {
+				if (check(mClauses.get(c, mClause)) == Sat.UNSATISFIABLE) {
 					return Sat.UNSATISFIABLE;
 				}
 			}
@@ -144,18 +147,18 @@ final class Solver {
 		return Sat.OK;
 	}
 
-	private Sat setAndPropagate(int v, char a) {
-		assert op.size() == 0;
+	private Sat setAndPropagate(final int v, final char a) {
+		assert mOp.size() == 0;
 		setVar(v, a);
 		if (propagate() == Sat.UNSATISFIABLE) {
 			/* rollback */
-			for (final int v2 : op) {
-				assign[v2] = NONE;
+			for (final int v2 : mOp) {
+				mAssign[v2] = NONE;
 			}
-			op.clear();
+			mOp.clear();
 			return Sat.UNSATISFIABLE;
 		}
-		op.clear();
+		mOp.clear();
 		return Sat.OK;
 	}
 
@@ -171,9 +174,9 @@ final class Solver {
 	 * of assignments (TRUE or FALSE) for each variable.
 	 */
 	char[] solve() {
-		assert op.size() == 0;
+		assert mOp.size() == 0;
 
-		for (final Horn3Clause c : clauses) {
+		for (final Horn3Clause c : mClauses) {
 			if (check(c) == Sat.UNSATISFIABLE) {
 				return null;
 			}
@@ -181,10 +184,10 @@ final class Solver {
 		if (propagate() == Sat.UNSATISFIABLE) {
 			return null;
 		}
-		op.clear();
+		mOp.clear();
 
-		for (int v = 0; v < numVars; v++) {
-			if (assign[v] == NONE) {
+		for (int v = 0; v < mNumVars; v++) {
+			if (mAssign[v] == NONE) {
 				if (setAndPropagate(v, TRUE) == Sat.UNSATISFIABLE
 					&& setAndPropagate(v, FALSE) == Sat.UNSATISFIABLE) {
 					/* should not happen */
@@ -194,25 +197,25 @@ final class Solver {
 		}
 
 		/* test */
-		for (final Horn3Clause c : clauses) {
-			assert assign[c.x] == FALSE
-					|| assign[c.y] == FALSE
-					|| assign[c.z] == TRUE;
+		for (final Horn3Clause c : mClauses) {
+			assert mAssign[c.mX] == FALSE
+					|| mAssign[c.mY] == FALSE
+					|| mAssign[c.mZ] == TRUE;
 		}
 
-		return assign;
+		return mAssign;
 	}
 
 
 	// "test" the thing
-	public static void main(String[] args) {
-		char assign[];
+	public static void main(final String[] args) {
 		Horn3ArrayBuilder builder;
 
 		builder = new Horn3ArrayBuilder(4);
 		builder.addClauseF(3);
 		builder.addClauseFT(2, 3);
 
+		char[] assign;
 		assign = new Solver(builder.extract()).solve();
 		assert assign[2] == FALSE;
 		assert assign[3] == FALSE;
@@ -235,6 +238,6 @@ final class Solver {
 
 		assert builder.extract() == null;
 
-		System.err.printf("tests passed\n");
+		System.err.printf("tests passed%n");
 	}
 }

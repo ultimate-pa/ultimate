@@ -1,7 +1,7 @@
 //#Safe
 /*
  * Date: October 2013
- * Author: Christian Schilling and heizmann@informtik.uni-freiburg.de
+ * Author: Christian Schilling and heizmann@informatik.uni-freiburg.de
  * 
  */
 

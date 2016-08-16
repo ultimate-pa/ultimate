@@ -31,21 +31,22 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -84,7 +85,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	private final Map<Integer, TransFormula> mOldVarsAssignmentTransFormulasAtCall;
 	
 	
-	private final Boogie2SMT mBoogie2Smt;
+	private final ManagedScript mScript;
 	
 	private final static boolean s_ComputeSumSizeFormulasInUnsatCore = false;
 	
@@ -94,48 +95,48 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	private int mSumSizeFormulasInUnsatCore = 0;
 	private final int mSumSizeFormulasNotInUnsatCore = 0; 
 	
-	public RelevantTransFormulas(NestedWord<? extends IAction> nestedTrace,
-			IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts,
-			Set<IAction> unsat_core,
-			ModifiableGlobalVariableManager modGlobalVarManager,
-			boolean[] localVarAssignmentsAtCallInUnsatCore,
-			boolean[] oldVarAssignmentAtCallInUnsatCore,
-			Boogie2SMT boogie2smt) {
+	public RelevantTransFormulas(final NestedWord<? extends IAction> nestedTrace,
+			final IPredicate precondition, final IPredicate postcondition,
+			final SortedMap<Integer, IPredicate> pendingContexts,
+			final Set<IAction> unsat_core,
+			final ModifiableGlobalVariableManager modGlobalVarManager,
+			final boolean[] localVarAssignmentsAtCallInUnsatCore,
+			final boolean[] oldVarAssignmentAtCallInUnsatCore,
+			final ManagedScript script) {
 		super(nestedTrace, pendingContexts);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
 		mTransFormulas = new TransFormula[nestedTrace.length()];
 		mGlobalAssignmentTransFormulaAtCall = new HashMap<Integer, TransFormula>();
 		mOldVarsAssignmentTransFormulasAtCall = new HashMap<Integer, TransFormula>();
-		mBoogie2Smt = boogie2smt;
+		mScript = script;
 		generateRelevantTransFormulas(unsat_core, localVarAssignmentsAtCallInUnsatCore, 
 				oldVarAssignmentAtCallInUnsatCore, modGlobalVarManager);
 		
 	}
 	
-	public RelevantTransFormulas(NestedWord<? extends IAction> nestedTrace,
-			IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts,
-			Set<Term> unsat_core,
-			ModifiableGlobalVariableManager modGlobalVarManager,
-			Boogie2SMT boogie2smt,
-			AnnotateAndAsserter aaa,
-			AnnotateAndAssertConjunctsOfCodeBlocks aac) {
+	public RelevantTransFormulas(final NestedWord<? extends IAction> nestedTrace,
+			final IPredicate precondition, final IPredicate postcondition,
+			final SortedMap<Integer, IPredicate> pendingContexts,
+			final Set<Term> unsat_core,
+			final ModifiableGlobalVariableManager modGlobalVarManager,
+			final ManagedScript script,
+			final AnnotateAndAsserter aaa,
+			final AnnotateAndAssertConjunctsOfCodeBlocks aac) {
 		super(nestedTrace, pendingContexts);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
 		mTransFormulas = new TransFormula[nestedTrace.length()];
 		mGlobalAssignmentTransFormulaAtCall = new HashMap<Integer, TransFormula>();
 		mOldVarsAssignmentTransFormulasAtCall = new HashMap<Integer, TransFormula>();
-		mBoogie2Smt = boogie2smt;
+		mScript = script;
 		generateRelevantTransFormulas(unsat_core, modGlobalVarManager, aaa, aac);
 	}
 	
-	private void generateRelevantTransFormulas(Set<IAction> unsat_core, 
-			boolean[] localVarAssignmentsAtCallInUnsatCore,
-			boolean[] oldVarAssignmentAtCallInUnsatCore,
-			ModifiableGlobalVariableManager modGlobalVarManager) {
+	private void generateRelevantTransFormulas(final Set<IAction> unsat_core, 
+			final boolean[] localVarAssignmentsAtCallInUnsatCore,
+			final boolean[] oldVarAssignmentAtCallInUnsatCore,
+			final ModifiableGlobalVariableManager modGlobalVarManager) {
 		for (int i = 0; i < super.getTrace().length(); i++) {
 			if (unsat_core.contains(super.getTrace().getSymbol(i))) {
 				if (super.getTrace().getSymbol(i) instanceof ICallAction) {
@@ -177,10 +178,10 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 		
 	}
 	
-	private void generateRelevantTransFormulas(Set<Term> unsat_core, 
-			ModifiableGlobalVariableManager modGlobalVarManager,
-			AnnotateAndAsserter aaa,
-			AnnotateAndAssertConjunctsOfCodeBlocks aac) {
+	private void generateRelevantTransFormulas(final Set<Term> unsat_core, 
+			final ModifiableGlobalVariableManager modGlobalVarManager,
+			final AnnotateAndAsserter aaa,
+			final AnnotateAndAssertConjunctsOfCodeBlocks aac) {
 		final Map<Term, Term> annot2Original = aac.getAnnotated2Original();
 		for (int i = 0; i < super.getTrace().length(); i++) {
 			if (super.getTrace().getSymbol(i) instanceof Call) {
@@ -219,9 +220,9 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	 * Filters out the irrelevant conjuncts, and restore equalities, if possible. I.e. if there are two inequalities in
 	 * the unsat core which belong together, then replace them by one equality.
 	 */
-	private Set<Term> filterRelevantConjunctsAndRestoreEqualities(Set<Term> unsat_core,
-			Map<Term, Term> annot2Original, Term[] conjuncts_annot,
-			SplitEqualityMapping sem) {
+	private Set<Term> filterRelevantConjunctsAndRestoreEqualities(final Set<Term> unsat_core,
+			final Map<Term, Term> annot2Original, final Term[] conjuncts_annot,
+			final SplitEqualityMapping sem) {
 		final Set<Term> conjunctsInUnsatCore = new HashSet<Term>(conjuncts_annot.length);
 		final Set<Term> conjuncts_annotInequalitiesSuccRestored = new HashSet<Term>();
 		
@@ -262,75 +263,68 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 		return conjunctsInUnsatCore;
 	}
 	
-	private TransFormula buildTransFormulaForStmtNotInUnsatCore(TransFormula tf) {
-		final Map<BoogieVar, TermVariable> outvars = new HashMap<BoogieVar, TermVariable>();
-		for (final BoogieVar bv : tf.getAssignedVars()) {
+	private TransFormula buildTransFormulaForStmtNotInUnsatCore(final TransFormula tf) {
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, 
+				tf.getBranchEncoders().isEmpty(), tf.getBranchEncoders(), true);
+		for (final IProgramVar bv : tf.getAssignedVars()) {
 			if (tf.getOutVars().containsKey(bv)) {
-				outvars.put(bv, tf.getOutVars().get(bv));
+				tfb.addOutVar(bv, tf.getOutVars().get(bv));
 			}
 		}
-		
-		return new TransFormula(mBoogie2Smt.getScript().term("true"),
-				new HashMap<BoogieVar, TermVariable>(),
-				outvars,
-				Collections.emptyMap(), 
-				tf.getBranchEncoders(),
-				tf.isInfeasible(),
-				tf.getClosedFormula());
+		tfb.setFormula(mScript.getScript().term("true"));
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		return tfb.finishConstruction(mScript);
 	}
 	
-	private TransFormula buildTransFormulaWithRelevantConjuncts(TransFormula tf, Term[] conjunctsInUnsatCore) {
-		final Term formula = Util.and(mBoogie2Smt.getScript(), conjunctsInUnsatCore);
+	private TransFormula buildTransFormulaWithRelevantConjuncts(
+			final TransFormula tf, final Term[] conjunctsInUnsatCore) {
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(
+				null, null, false, null, false);
+		
+		final Term formula = Util.and(mScript.getScript(), conjunctsInUnsatCore);
 		final Set<TermVariable> freeVars = new HashSet<TermVariable>();
 		Collections.addAll(freeVars, formula.getFreeVars());
-		final Map<BoogieVar, TermVariable> invars = new HashMap<BoogieVar, TermVariable>();
-		final Map<BoogieVar, TermVariable> outvars = new HashMap<BoogieVar, TermVariable>();
-		for (final BoogieVar bv : tf.getInVars().keySet()) {
+		for (final IProgramVar bv : tf.getInVars().keySet()) {
 			if (freeVars.contains(tf.getInVars().get(bv))) {
-				invars.put(bv, tf.getInVars().get(bv));
+				tfb.addInVar(bv, tf.getInVars().get(bv));
 			}
 		}
-		for (final BoogieVar bv : tf.getOutVars().keySet()) {
+		for (final IProgramVar bv : tf.getOutVars().keySet()) {
 			if (tf.getOutVars().get(bv) != tf.getInVars().get(bv)) {
-				outvars.put(bv, tf.getOutVars().get(bv));
+				tfb.addOutVar(bv, tf.getOutVars().get(bv));
 			} else if (freeVars.contains(tf.getOutVars().get(bv))) {
-				outvars.put(bv, tf.getOutVars().get(bv));
+				tfb.addOutVar(bv, tf.getOutVars().get(bv));
 			}
 		}
-		final Map<TermVariable, Term> auxVars = new HashMap<TermVariable, Term>();
-		for (final Entry<TermVariable, Term> entry : tf.getAuxVars().entrySet()) {
-			if (freeVars.contains(entry.getKey())) {
-				auxVars.put(entry.getKey(), entry.getValue());
+		final Set<TermVariable> auxVars = new HashSet<>();
+		for (final TermVariable auxVar : tf.getAuxVars()) {
+			if (freeVars.contains(auxVar)) {
+				auxVars.add(auxVar);
 			}
 		}
-		final Term closedFormula = TransFormula.computeClosedFormula(formula, invars, outvars, auxVars, mBoogie2Smt);
-		
-		return new TransFormula(formula,
-				invars,
-				outvars,
-				auxVars, 
-				tf.getBranchEncoders(),
-				tf.isInfeasible(),
-				closedFormula);
+		tfb.setFormula(formula);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		tfb.addAuxVarsButRenameToFreshCopies(auxVars, mScript);
+		return tfb.finishConstruction(mScript);
 	}
 
 	@Override
-	protected TransFormula getFormulaFromValidNonCallPos(int i) {
+	protected TransFormula getFormulaFromValidNonCallPos(final int i) {
 		return mTransFormulas[i];
 	}
 
 	@Override
-	protected TransFormula getLocalVarAssignmentFromValidPos(int i) {
+	protected TransFormula getLocalVarAssignmentFromValidPos(final int i) {
 		return mTransFormulas[i];
 	}
 
 	@Override
-	protected TransFormula getGlobalVarAssignmentFromValidPos(int i) {
+	protected TransFormula getGlobalVarAssignmentFromValidPos(final int i) {
 		return mGlobalAssignmentTransFormulaAtCall.get(i);
 	}
 
 	@Override
-	protected TransFormula getOldVarAssignmentFromValidPos(int i) {
+	protected TransFormula getOldVarAssignmentFromValidPos(final int i) {
 		return mOldVarsAssignmentTransFormulasAtCall.get(i);
 	}
 }

@@ -78,9 +78,10 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 						targetPhaseConj = dest.getStateInvariant();
 					}
 					CDD guard = trans.getGuard();
+					targetPhaseConj = targetPhaseConj.and(guard.unprime());
 					//handling for timed automata (only necessary for upper bounds on states)
 					/// destFinal && bound is > or >= && sourceFinal && dest.timeinv != true && sourceinv != false
-					if(this.systemModel.phaseIsUpperBoundFinal(pea, source) && 
+					/*if(this.systemModel.phaseIsUpperBoundFinal(pea, source) && 
 							this.systemModel.phaseIsUpperBoundFinal(pea, dest)){
 						// as timer is ticking all input has no effect
 						guard = guard.and(this.encodeNotDeducedInConjunct(i));
@@ -91,14 +92,14 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 						// when jumping into a timer phase the precondition must be deduced
 						guard = guard.and(this.encodeReadConjunct(guard, i, true, identsToProof));
 						guard = guard.and(this.encodeNotDeducedInConjunct(i));
-					} else {
+					} else {*/
 						// if timer is running supress read guards on edges
 						boolean timed = this.systemModel.phaseIsUpperBoundFinal(pea, source) && 
 								this.systemModel.phaseIsUpperBoundFinal(pea, dest);
 						// untimed or final and timed which means that this must set an effect (and an R_v)
-						CDD deductionGuard = this.transormInvariantToDeductionGuard(targetPhaseConj, destFinal, i, identsToProof );
+						CDD deductionGuard = this.transormInvariantToDeductionGuard(targetPhaseConj, destFinal, i, timed, identsToProof );
 						guard = guard.and(deductionGuard);
-					}
+					//}
 					trans.setGuard(guard);
 				}			
 			}
@@ -122,11 +123,15 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 		for(int i = maxSource +1; i <= maxDest; i++){
 			result.addAll(ct.getPhases()[i].getInvariant().getIdents());
 		}
+		// selfloops
+		if (maxDest == maxSource){
+			result.addAll(ct.getPhases()[maxDest].getInvariant().getIdents());
+		}
 		// if final phase, add seeps
 		if(maxDest == this.systemModel.getFinalPhaseNumber(ct)){
 			result.addAll(ct.getPhases()[maxDest+1].getInvariant().getIdents());
 		}
-		return result;
+		return result; 
 	}
 	
 	
@@ -135,7 +140,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	 * because the model can currently deduce the values of all necessary variables.
 	 */
 	private CDD transormInvariantToDeductionGuard(CDD invariant, boolean destinationHasLastPhase, 
-			int reqNo, List<String> identsToProof){
+			int reqNo, boolean timed, List<String> identsToProof){
 		CDD[] dnf = invariant.toDNF();
 		CDD resultingConjunct = CDD.FALSE;
 		CDD temp = CDD.TRUE;
@@ -144,8 +149,8 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 			if(destinationHasLastPhase){
 				if (this.containsEffect(conjunct, reqNo)){
 					// conjunct && L_wholePhaseNecessary && !(all other conjuncts)
-					CDD l = this.encodeReadConjunct(invariant, reqNo, true, identsToProof );
-					//if (timed) l = CDD.TRUE; //TODO: HACK
+					CDD l = this.encodeReadConjunct(invariant, reqNo, true, identsToProof);
+					if (timed) l = CDD.TRUE; //TODO: HACK
 					temp = conjunct.prime().and(l);
 					for(CDD t: dnf){
 						if(!this.containsEffect(t, reqNo)){

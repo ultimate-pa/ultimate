@@ -40,18 +40,21 @@ import java.util.ArrayList;
  *
  */
 final class Print {
+	private Print() {
+		// no public constructor
+	}
 
-	static void printPartition(Writer writer, Partition partition) {
+	static void printPartition(final Writer writer, final Partition partition) {
 		assert Partition.checkConsistency(partition);
 
 		final ArrayList<ArrayList<Integer>> classes = new ArrayList<ArrayList<Integer>>();
 
-		for (int i = 0; i < partition.numClasses; i++) {
+		for (int i = 0; i < partition.mNumClasses; i++) {
 			classes.add(new ArrayList<Integer>());
 		}
 
-		for (int i = 0; i < partition.classOf.length; i++) {
-			classes.get(partition.classOf[i]).add(i);
+		for (int i = 0; i < partition.mClassOf.length; i++) {
+			classes.get(partition.mClassOf[i]).add(i);
 		}
 
 		final PrintWriter out = new PrintWriter(writer);
@@ -64,7 +67,7 @@ final class Print {
 			out.print(" }");
 		}
 
-		out.print("\n");
+		out.print("%n");
 		out.flush();
 	}
 
@@ -74,48 +77,48 @@ final class Print {
 	 *            as suggested
 	 * @param out
 	 */
-	static void printNWA(Writer writer, NWA nwa) {
+	static void printNWA(final Writer writer, final NWA nwa) {
 		final ArrayList<Integer> initialStates = NWA.computeInitialStates(nwa);
 		final ArrayList<Integer> finalStates = NWA.computeFinalStates(nwa);
 
 		final PrintWriter p = new PrintWriter(writer);
 
-		p.printf("numStates %d\n", nwa.numStates);
-		p.printf("numISyms %d\n",  nwa.numISyms);
-		p.printf("numCSyms %d\n",  nwa.numCSyms);
-		p.printf("numRSyms %d\n",  nwa.numRSyms);
-		p.printf("numInitial %d\n", initialStates.size());
-		p.printf("numFinal %d\n",  finalStates.size());
-		p.printf("numITrans %d\n", nwa.iTrans.length);
-		p.printf("numCTrans %d\n", nwa.cTrans.length);
-		p.printf("numRTrans %d\n", nwa.rTrans.length);
+		p.printf("numStates %d%n", nwa.mNumStates);
+		p.printf("numISyms %d%n",  nwa.mNumISyms);
+		p.printf("numCSyms %d%n",  nwa.mNumCSyms);
+		p.printf("numRSyms %d%n",  nwa.mNumRSyms);
+		p.printf("numInitial %d%n", initialStates.size());
+		p.printf("numFinal %d%n",  finalStates.size());
+		p.printf("numITrans %d%n", nwa.mITrans.length);
+		p.printf("numCTrans %d%n", nwa.mCTrans.length);
+		p.printf("numRTrans %d%n", nwa.mRTrans.length);
 
 		for (final int i : initialStates) {
-			p.printf("initial %d\n", i);
+			p.printf("initial %d%n", i);
 		}
 		for (final int i : finalStates) {
-			p.printf("final %d\n", i);
+			p.printf("final %d%n", i);
 		}
-		for (final ITrans x : nwa.iTrans) {
-			p.printf("iTrans %d %d %d\n", x.src, x.sym, x.dst);
+		for (final ITrans x : nwa.mITrans) {
+			p.printf("iTrans %d %d %d%n", x.mSrc, x.mSym, x.mDst);
 		}
-		for (final CTrans x : nwa.cTrans) {
-			p.printf("cTrans %d %d %d\n", x.src, x.sym, x.dst);
+		for (final CTrans x : nwa.mCTrans) {
+			p.printf("cTrans %d %d %d%n", x.mSrc, x.mSym, x.mDst);
 		}
-		for (final RTrans x : nwa.rTrans) {
-			p.printf("rTrans %d %d %d %d\n", x.src, x.sym, x.top, x.dst);
+		for (final RTrans x : nwa.mRTrans) {
+			p.printf("rTrans %d %d %d %d%n", x.mSrc, x.mSym, x.mTop, x.mDst);
 		}
 
 		p.flush();
 	}
 
-	static String makeString(Partition cls) {
+	static String makeString(final Partition cls) {
 		final StringWriter w = new StringWriter();
 		Print.printPartition(w,  cls);
 		return w.toString();
 	}
 
-	static String makeString(NWA nwa) {
+	static String makeString(final NWA nwa) {
 		final StringWriter w = new StringWriter();
 		Print.printNWA(w,  nwa);
 		return w.toString();

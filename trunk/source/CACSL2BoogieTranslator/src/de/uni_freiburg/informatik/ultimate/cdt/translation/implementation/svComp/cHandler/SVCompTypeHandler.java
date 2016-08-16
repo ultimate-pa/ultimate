@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
@@ -65,13 +65,13 @@ public class SVCompTypeHandler extends TypeHandler {
             // maybe be more elegant (make an entry to symboltable, make a typedef in boogie file??)
             if (cId.equals("size_t") || cId.equals("ssize_t")) {
                 return (new TypesResult(new PrimitiveType(loc, SFO.REAL), node.isConst(),
-                		false, new CPrimitive(PRIMITIVE.UINT)));
+                		false, new CPrimitive(CPrimitives.UINT)));
             } else if (cId.equals("__builtin_va_list")) {
                 return (new TypesResult(super.constructPointerType(loc), node.isConst(),
-                		false, new CPointer(new CPrimitive(PRIMITIVE.CHAR))));
+                		false, new CPointer(new CPrimitive(CPrimitives.CHAR))));
             } else if (cId.equals("__pthread_list_t")) {
             	    return (new TypesResult(super.constructPointerType(loc), node.isConst(),
-                		false, new CPointer(new CPrimitive(PRIMITIVE.VOID))));
+                		false, new CPointer(new CPrimitive(CPrimitives.VOID))));
             } else {
             	return super.visit(main, node);
             }

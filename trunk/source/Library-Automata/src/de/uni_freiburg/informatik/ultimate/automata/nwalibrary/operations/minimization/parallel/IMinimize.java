@@ -31,12 +31,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
  * @author Layla Franke
  */
 public interface IMinimize {
-
+	/**
+	 * @return result
+	 */
 	Object getResult();
-
-	String operationName();
-
-	String startMessage();
-
-	String exitMessage();
 }

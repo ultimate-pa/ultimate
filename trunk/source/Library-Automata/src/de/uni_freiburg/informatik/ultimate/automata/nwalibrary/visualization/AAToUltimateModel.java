@@ -36,12 +36,13 @@ public class AAToUltimateModel<LETTER,STATE> {
 //	private static ILogger mLogger = 
 //		NestedWordAutomata.getLogger();
 //	
-	public IElement getUltimateModelOfAA(AlternatingAutomaton<LETTER,STATE> aaSimple) throws AutomataOperationCanceledException {
+	public IElement getUltimateModelOfAA(final AlternatingAutomaton<LETTER,STATE> aaSimple)
+			throws AutomataOperationCanceledException {
 //		final AlternatingAutomaton<LETTER,STATE> aa;
 //		aa = (AlternatingAutomaton<LETTER, STATE>) aaSimple;
 		System.out.println("Foo");
-		final AutomatonState graphroot = new AutomatonState("Sucessors of this node are the" +
-					" initial states",false);	
+		final AutomatonState graphroot = new AutomatonState(
+				"Sucessors of this node are the initial states", false);
 //		Map<STATE,AutomatonState> constructed =	new HashMap<STATE,AutomatonState>();
 //		LinkedList<STATE> queue = new LinkedList<STATE>();
 //	
@@ -114,6 +115,4 @@ public class AAToUltimateModel<LETTER,STATE> {
 //		}
 		return graphroot;
 	}
-	
-
 }

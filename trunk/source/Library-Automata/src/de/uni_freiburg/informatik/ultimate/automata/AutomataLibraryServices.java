@@ -34,14 +34,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * Wrapper for ILoggingService and IProgressMonitorService that are used in the automata library.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  */
 public class AutomataLibraryServices {
 
 	private final ILoggingService mLoggingService;
 	private final IProgressMonitorService mProgressMonitorService;
 
-	public AutomataLibraryServices(IUltimateServiceProvider ultimateServices) {
+	/**
+	 * @param ultimateServices Ultimate services
+	 */
+	public AutomataLibraryServices(final IUltimateServiceProvider ultimateServices) {
 		mLoggingService = ultimateServices.getLoggingService();
 		mProgressMonitorService = ultimateServices.getProgressMonitorService();
 	}

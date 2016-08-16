@@ -71,18 +71,18 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 	 * and, as a side-effect, adds valid extensions (ones whose predecessors are
 	 * a co-set) to he possible extension set.
 	 * 
-	 * @param mt
+	 * @param mT
 	 * @param mChosen
 	 * @param mPlaces
 	 */
 	private void evolveCandidate(Candidate<S, C> cand) {
 		if (cand.mPlaces.isEmpty()) {
-			mPe.add(new Event<S, C>(cand.mChosen, cand.mt));
+			mPe.add(new Event<S, C>(cand.mChosen, cand.mT));
 			return;
 		}
 		final Place<S, C> p = cand.mPlaces.remove(cand.mPlaces.size() - 1);
 		for (final Condition<S, C> c : mBranchingProcess.place2cond(p)) {
-			assert cand.mt.getPredecessors().contains(c.getPlace());
+			assert cand.mT.getPredecessors().contains(c.getPlace());
 			assert c.getPlace() == p;
 			assert !cand.mChosen.contains(c);
 			if (mBranchingProcess.isCoset(cand.mChosen, c)) {

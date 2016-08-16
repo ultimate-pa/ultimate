@@ -34,18 +34,18 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class XnfUsr extends XjunctPartialQuantifierElimination {
 	
 	private final Set<TermVariable> affectedEliminatees = new HashSet<>();
 
-	public XnfUsr(Script script, IUltimateServiceProvider services) {
+	public XnfUsr(final ManagedScript script, final IUltimateServiceProvider services) {
 		super(script, services);
 	}
 
@@ -66,8 +66,8 @@ public class XnfUsr extends XjunctPartialQuantifierElimination {
 
 
 	@Override
-	public Term[] tryToEliminate(int quantifier, Term[] inputAtoms,
-			Set<TermVariable> eliminatees) {
+	public Term[] tryToEliminate(final int quantifier, final Term[] inputAtoms,
+			final Set<TermVariable> eliminatees) {
 		final HashRelation<TermVariable, Term> var2arrays = new HashRelation<TermVariable, Term>();
 		final HashRelation<TermVariable, Term> var2parameters = new HashRelation<TermVariable, Term>();
 		final Set<TermVariable> blacklist = new HashSet<TermVariable>();

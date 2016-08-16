@@ -28,12 +28,13 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 
 /**
- * Interface to create IEvaluators for different abstract domains.
+ * Interface to create {@link IEvaluator}s for different abstract domains.
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
@@ -46,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <VARDECL>
  *            Any declaration type.
  */
-public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
+public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, ACTION, IBoogieVar>, ACTION> {
 
 	/**
 	 * Creates an n-ary evaluator for n-ary expressions.
@@ -57,7 +58,7 @@ public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, AC
 	 *            The type of the evaluator.
 	 * @return A new {@link INAryEvaluator}.
 	 */
-	INAryEvaluator<VALUE, STATE, ACTION, VARDECL> createNAryExpressionEvaluator(int arity, EvaluatorType type);
+	INAryEvaluator<VALUE, STATE, ACTION> createNAryExpressionEvaluator(final int arity, final EvaluatorType type);
 
 	/**
 	 * Creates a function evaluator for expressions that contain functions.
@@ -68,12 +69,19 @@ public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, AC
 	 *            The number of input parameters of the function.
 	 * @return A new {@link IEvaluator}.
 	 */
-	IEvaluator<VALUE, STATE, ACTION, VARDECL> createFunctionEvaluator(String functionName, int inputParamCount);
+	IEvaluator<VALUE, STATE, ACTION> createFunctionEvaluator(final String functionName, final int inputParamCount);
 
 	/**
 	 * @return A new conditional evaluator.
 	 */
-	IEvaluator<VALUE, STATE, ACTION, VARDECL> createConditionalEvaluator();
+	IEvaluator<VALUE, STATE, ACTION> createConditionalEvaluator();
+
+	/**
+	 * Creates an evaluator that represents the top value.
+	 * 
+	 * @return A new {@link IEvaluator}.
+	 */
+	IEvaluator<VALUE, STATE, ACTION> createSingletonValueTopEvaluator();
 
 	/**
 	 * Creates an evaluator for single values that are occurring in expressions.
@@ -84,7 +92,8 @@ public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, AC
 	 *            The type of the value.
 	 * @return A new {@link IEvaluator}.
 	 */
-	IEvaluator<VALUE, STATE, ACTION, VARDECL> createSingletonValueExpressionEvaluator(String value, Class<?> valueType);
+	IEvaluator<VALUE, STATE, ACTION> createSingletonValueExpressionEvaluator(final String value,
+	        final Class<?> valueType);
 
 	/**
 	 * Creates an evaluator for single variables that are occurring in expressions.
@@ -93,7 +102,7 @@ public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, AC
 	 *            The name of the variable.
 	 * @return A new {@link IEvaluator}.
 	 */
-	IEvaluator<VALUE, STATE, ACTION, VARDECL> createSingletonVariableExpressionEvaluator(String variableName);
+	IEvaluator<VALUE, STATE, ACTION> createSingletonVariableExpressionEvaluator(final IBoogieVar variableName);
 
 	/**
 	 * Creates an evaluator for single boolean values that are occurring in expressions.
@@ -102,5 +111,5 @@ public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, AC
 	 *            The boolean value.
 	 * @return A new {@link IEvaluator}.
 	 */
-	IEvaluator<VALUE, STATE, ACTION, VARDECL> createSingletonLogicalValueExpressionEvaluator(BooleanValue value);
+	IEvaluator<VALUE, STATE, ACTION> createSingletonLogicalValueExpressionEvaluator(final BooleanValue value);
 }

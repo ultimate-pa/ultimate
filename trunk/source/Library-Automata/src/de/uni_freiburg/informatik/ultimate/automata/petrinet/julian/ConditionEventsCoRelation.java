@@ -33,31 +33,33 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
-	private int coRelationQueries = 0;
+	private int mCoRelationQueries = 0;
 
-	private final HashMap<Condition<S, C>, Set<Event<S, C>>> coRelation = new HashMap<Condition<S, C>, Set<Event<S, C>>>();
-	private final BranchingProcess<S, C> branchingProcess;
+	private final HashMap<Condition<S, C>, Set<Event<S, C>>> mCoRelation =
+			new HashMap<>();
+	private final BranchingProcess<S, C> mBranchingProcess;
+
+	public ConditionEventsCoRelation(
+			final BranchingProcess<S, C> branchingProcess) {
+		mBranchingProcess = branchingProcess;
+	}
 
 	@Override
 	public int getCoRelationQueries() {
-		return coRelationQueries;
-	}
-
-	public ConditionEventsCoRelation(BranchingProcess<S, C> branchingProcess) {
-		this.branchingProcess = branchingProcess;
+		return mCoRelationQueries;
 	}
 
 	@Override
-	public void update(Event<S, C> e) {
+	public void update(final Event<S, C> e) {
 		for (final Condition<S, C> c : e.getSuccessorConditions()) {
-			coRelation.put(c, new HashSet<Event<S, C>>());
+			mCoRelation.put(c, new HashSet<Event<S, C>>());
 		}
-		for (final Event<S, C> e1 : branchingProcess.getEvents()) {
+		for (final Event<S, C> e1 : mBranchingProcess.getEvents()) {
 			if (isInIrreflexiveCoRelation(e, e1)) {
 				for (final Condition<S, C> c : e1.getSuccessorConditions()) {
 					assert (!e.getPredecessorConditions().contains(c));
 					assert (!e.getSuccessorConditions().contains(c));
-					coRelation.get(c).add(e);
+					mCoRelation.get(c).add(e);
 				}
 			}
 		}
@@ -91,9 +93,9 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 		for (final Condition<S, C> c : e.getConditionMark()) {
 			if (!e.getSuccessorConditions().contains(c)) {
 				assert (!e.getSuccessorConditions().contains(c));
-				assert (!branchingProcess.inCausalRelation(c, e)) : c + " , "
+				assert (!mBranchingProcess.inCausalRelation(c, e)) : c + " , "
 						+ e + " in causal relation, not in co-relation!";
-				coRelation.get(c).add(e);
+				mCoRelation.get(c).add(e);
 			}
 		}
 	}
@@ -108,18 +110,18 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 	// }
 
 	@Override
-	public boolean isInCoRelation(Condition<S, C> c1, Condition<S, C> c2) {
-		coRelationQueries++;
-		final boolean result = coRelation.get(c1).contains(c2.getPredecessorEvent())
-				|| coRelation.get(c2).contains(c1.getPredecessorEvent())
+	public boolean isInCoRelation(final Condition<S, C> c1, final Condition<S, C> c2) {
+		mCoRelationQueries++;
+		final boolean result = mCoRelation.get(c1).contains(c2.getPredecessorEvent())
+				|| mCoRelation.get(c2).contains(c1.getPredecessorEvent())
 				|| (c1.getPredecessorEvent() == c2.getPredecessorEvent());
 		if (result) {
-			assert (!branchingProcess.inCausalRelation(c1, c2)) : c1 + " , "
+			assert (!mBranchingProcess.inCausalRelation(c1, c2)) : c1 + " , "
 					+ c2 + " in causal relation, not in co-relation!";
-			assert (!branchingProcess.inConflict(c1, c2)) : c1 + " , " + c2
+			assert (!mBranchingProcess.inConflict(c1, c2)) : c1 + " , " + c2
 					+ " in conflict, not in co-relation!";
 		} else {
-			assert (branchingProcess.inCausalRelation(c1, c2) || branchingProcess
+			assert (mBranchingProcess.inCausalRelation(c1, c2) || mBranchingProcess
 					.inConflict(c1, c2)) : c1 + " , " + c2
 					+ " missing in co-relation!";
 		}
@@ -139,28 +141,24 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 	 * with *e i denote the predecessor-nodes of e.
 	 * </p>
 	 * 
-	 * <p>
-	 * 1. If e1 ic e2 then their parents are pairwise in irreflexive
+	 * <p>1. If e1 ic e2 then their parents are pairwise in irreflexive
 	 * co-relation.<br>
 	 * <b>Proof:</b> <br>
 	 * let e1 co e2. Furthermore let ci be a predecessor of ei for i \in {1,2}
 	 * </p>
 	 * 
-	 * <p>
-	 * If c1#c2 then e1#e2 _|_.<br>
+	 * <p>If c1#c2 then e1#e2 _|_.<br>
 	 * If c1 and c2 are equal then e1#e2 or e1=e2 _|_.<br>
 	 * If c1 and c2 are in causal relation, then one of the following must hold:
 	 * e1 is in causal relation to e2 e1 # e2 _|_ <br>
 	 * q.e.d.
 	 * </p>
 	 * 
-	 * 
-	 * <p>
-	 * 2. If for all c1 \in *e1, c2 \in *e2: c1 ic c2 then e1 ci e2.<br>
+	 * <p>2. If for all c1 \in *e1, c2 \in *e2: c1 ic c2 then e1 ci e2.<br>
 	 * <b>Proof:</b>Assume the left side of the implication.
 	 * </p>
-	 * <p>
-	 * If e1 = e2 it is trivial, that there are c1,c2 s.t. c1=c2 _|_<br>
+	 * 
+	 * <p>If e1 = e2 it is trivial, that there are c1,c2 s.t. c1=c2 _|_<br>
 	 * Assume e1 < e2, then there has to be a path between e1 and e2 s.t.
 	 * \exists c1 \in *e1 s.t. c1 < e2. For each parent c2 \in *e2 then c1 < c2
 	 * holds. (e1 > e2 analogously) _|_<br>
@@ -173,17 +171,13 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 	 * *e1, c2 \in *e2 s.t. c1#c2 _|_. <br>
 	 * q.e.d.
 	 * </p>
-	 * 
-	 * @param conditions
-	 * @param e
-	 * @return
 	 */
-	private boolean isInIrreflexiveCoRelation(Event<S, C> e1, Event<S, C> e2) {
+	private boolean isInIrreflexiveCoRelation(final Event<S, C> e1, final Event<S, C> e2) {
 		if (e1 == e2) {
 			return false;
 		}
-		if (branchingProcess.getDummyRoot() == e1 
-				|| branchingProcess.getDummyRoot() == e2 ) {
+		if (mBranchingProcess.getDummyRoot() == e1 
+				|| mBranchingProcess.getDummyRoot() == e2 ) {
 			return false;
 		}
 		final Collection<Condition<S, C>> conditions1 = e1.getPredecessorConditions();
@@ -198,13 +192,14 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 	}
 
 	@Override
-	public void initialize(Set<Condition<S, C>> initialConditions) {
+	public void initialize(final Set<Condition<S, C>> initialConditions) {
 		// there are no events the conditions could be in relation with yet.
 		// hence there's nothing to do here
 	}
 
 	@Override
-	public boolean isCoset(Collection<Condition<S, C>> coSet, Condition<S, C> c) {
+	public boolean isCoset(final Collection<Condition<S, C>> coSet,
+			final Condition<S, C> c) {
 		for (final Condition<S, C> condition : coSet) {
 			if (!isInCoRelation(c, condition)) {
 				return false;

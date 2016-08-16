@@ -1,7 +1,7 @@
 //#Unsafe
 /* Check that we do not read more memory than we have allocated.
  * Date: 2016-02-22
- * Author: heizmann@informtik.uni-freiburg.de
+ * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
 

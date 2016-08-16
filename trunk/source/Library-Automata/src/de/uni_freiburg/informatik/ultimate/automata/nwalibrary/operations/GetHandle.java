@@ -26,22 +26,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AUnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
 /**
@@ -55,20 +52,34 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * a cycle shape)
  * </ul>
  * @author Matthias Heizmann
+ * 
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-
+public class GetHandle<LETTER, STATE>
+		extends AUnaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
+	/*
+	 * The operand as more specific interface.
+	 * It shadows the superclass field with the same name.
+	 */
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+	
 	private NestedRun<LETTER,STATE> mHandle;
-	private enum NoHandleReason { MULTI_INITIAL, CYCLE_SHAPE, MULTI_INIT_SUCC }
 	private NoHandleReason mNoHandleReason;
-
-	public GetHandle(AutomataLibraryServices services,
-			INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+	
+	private enum NoHandleReason {
+		MULTI_INITIAL, CYCLE_SHAPE, MULTI_INIT_SUCC
+	}
+	
+	/**
+	 * @param services Ultimate services
+	 * @param operand operand
+	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 */
+	public GetHandle(final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+		super(services, operand);
 		mOperand = operand;
 		mLogger.info(startMessage());
 		if (mOperand.getInitialStates().size() != 1) {
@@ -80,8 +91,8 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 				mNoHandleReason = NoHandleReason.MULTI_INIT_SUCC;
 			} else {
 				while (true) {
-					final STATE knownPredecessor = mHandle.getStateAtPosition(mHandle.getLength()-2);
-					final STATE current = mHandle.getStateAtPosition(mHandle.getLength()-1);
+					final STATE knownPredecessor = mHandle.getStateAtPosition(mHandle.getLength() - 2);
+					final STATE current = mHandle.getStateAtPosition(mHandle.getLength() - 1);
 					final boolean singlePred = hasSinglePredecessor(current, knownPredecessor);
 					if (!singlePred) {
 						break;
@@ -105,7 +116,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	
-	public NestedRun<LETTER,STATE> getSingleSuccessor(STATE state) {
+	public NestedRun<LETTER,STATE> getSingleSuccessor(final STATE state) {
 		NestedRun<LETTER,STATE> result = null;
 		for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mOperand.internalSuccessors(state)) {
 			if (result == null) {
@@ -140,7 +151,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 		return result;
 	}
 	
-	public boolean hasSinglePredecessor(STATE state, STATE knownPredecessor) {
+	public boolean hasSinglePredecessor(final STATE state, final STATE knownPredecessor) {
 		STATE predecessor = null;
 		for (final IncomingInternalTransition<LETTER, STATE> inTrans : mOperand.internalPredecessors(state)) {
 			if (predecessor == null) {
@@ -185,12 +196,6 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Operand "
-				+ mOperand.sizeInformation();
-	}
-
-	@Override
 	public String exitMessage() {
 		String result = "Finished " + operationName();
 		if (mHandle == null) {
@@ -200,11 +205,4 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 		}
 		return result;
 	}
-
-	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		return true;
-	}
-
 }
