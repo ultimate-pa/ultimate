@@ -63,6 +63,8 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 	// TODO temporary improvement, should become more sophisticated
 	private int mNumberOfNonHornClauses;
 	
+	private int mMaxNonHornClauses;
+	
 	/*
 	 * used for debugging, can be very expensive for bigger automata!
 	 * TODO remove after thoroughly testing
@@ -129,8 +131,8 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 					final Pair<V, Boolean> propagatee = clause.getPropagatee();
 					mPropagatees.put(propagatee.getFirst(), propagatee.getSecond());
 					propagateAll();
-				} else if (! clause.isHorn(this)) {
-					mNumberOfNonHornClauses++;
+				} else if (! clause.isHorn()) {
+					incrementNumberOfNonHornClauses();
 				}
 			}
 		}
@@ -252,12 +254,32 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 		// this solver treats the unset variables more carefully
 		mUnsetVariables.add(var);
 	}
+	
+	@Override
+	protected void incrementNumberOfNonHornClauses() {
+		mNumberOfNonHornClauses++;
+		mLogger.debug("NumberOfNonHornClauses: " + mNumberOfNonHornClauses);
+	}
+	
+	@Override
+	protected void decrementNumberOfNonHornClauses() {
+		mNumberOfNonHornClauses--;
+		mLogger.debug("NumberOfNonHornClauses: " + mNumberOfNonHornClauses);
+		assert mNumberOfNonHornClauses >= 0 :
+			"Number of non-Horn clauses became negative.";
+	}
+	
+	@Override
+	protected void firstDecisionOrStop() {
+		mMaxNonHornClauses = mNumberOfNonHornClauses;
+	}
 
 	@Override
 	protected void log() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Clauses: ").append(mClauses);
-		sb.append(" (thereof " + mTrivialClauses + " trivial clauses)");
+		sb.append(" (thereof " + mTrivialClauses + " trivial clauses");
+		sb.append(" and " + mMaxNonHornClauses + " Non-Horn clauses)");
 		sb.append(" MaxLiveClauses: ").append(mMaxLiveClauses);
 		sb.append(" Decisions : ").append(mDecisions);
 		sb.append(" (thereof " + mWrongDecisions + " wrong decisions)");

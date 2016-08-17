@@ -74,26 +74,27 @@ public abstract class AMaxSatSolver<V> {
 	 * We call the pair (variable, assignment) a propagatee.
 	 */
 	protected Map<V, Boolean> mPropagatees = new LinkedHashMap<>();
-	protected boolean mConjunctionEquivalentToFalse = false;
+	protected boolean mConjunctionEquivalentToFalse;
 	protected Set<Clause<V>> mClausesMarkedForRemoval = new LinkedHashSet<>();
 	
 	/*
-	 * TODO There is no need to separate the occurrence as positive or negative
-	 *      literal. Have only one relation, which should also give a speed-up.
+	 * NOTE: There is no need to separate the occurrence as positive or negative
+	 *       literal at the moment. Still, having only one relation is slower in
+	 *       practice.
 	 */
 	protected final HashRelation<V, Clause<V>> mOccursPositive = new HashRelation<>();
 	protected final HashRelation<V, Clause<V>> mOccursNegative = new HashRelation<>();
 	
-	protected int mDecisions = 0;
-	protected int mWrongDecisions = 0;
-	protected int mClauses = 0;
+	protected int mDecisions;
+	protected int mWrongDecisions;
+	protected int mClauses;
 	/**
 	 * A clause is trivial if we were able to evaluate it to true when it was
 	 * added.
 	 */
-	protected int mTrivialClauses = 0;
-	protected int mCurrentLiveClauses = 0;
-	protected int mMaxLiveClauses = 0;
+	protected int mTrivialClauses;
+	protected int mCurrentLiveClauses;
+	protected int mMaxLiveClauses;
 	
 	
 	/**
@@ -160,6 +161,7 @@ public abstract class AMaxSatSolver<V> {
 		mLogger.debug("trues before first decision: " + Clause.trues);
 		mLogger.debug("falses before first decision: " + Clause.falses);
 		mLogger.debug("neithers before first decision: " + Clause.neithers);
+		firstDecisionOrStop();
 		while (!mUnsetVariables.isEmpty()) {
 			decideOne();
 			if (mConjunctionEquivalentToFalse) {
@@ -176,6 +178,20 @@ public abstract class AMaxSatSolver<V> {
 		mLogger.debug("falses total: " + Clause.falses);
 		mLogger.debug("neithers total: " + Clause.neithers);
 		return true;
+	}
+	
+	/**
+	 * Called after all clauses have been added and pseudo-unit clauses have
+	 * been propagated.
+	 * 
+	 * <p>In other words, this method is called before the first decision in
+	 * case there is at least one unassigned variable left.
+	 * 
+	 * <p>The intention is that implementing solvers are informed about the
+	 * beginning of the decision phase.
+	 */
+	protected void firstDecisionOrStop() {
+		// do nothing in the general case
 	}
 
 	/**
@@ -257,8 +273,12 @@ public abstract class AMaxSatSolver<V> {
 	 * <p>TODO other policies
 	 *      The only goal for optimization here is to find contradictions faster.
 	 *      If no contradiction is found, all policies should take the same time.
-	 *      One policy could be to prefer clauses with positive/negative
+	 *      
+	 *      <p>One policy could be to prefer clauses with positive/negative
 	 *      variable, but it is not clear whether this makes sense.
+	 *      
+	 *      <p>Another possibility could be to prefer variables which also
+	 *      occur in a non-Horn clause to remove the number of such clauses.
 	 * 
 	 * @return pair of unset variable and assignment value
 	 */
@@ -317,6 +337,7 @@ public abstract class AMaxSatSolver<V> {
 	}
 
 	private void reEvaluateClauseStatus(final Clause<V> clause) {
+		final boolean wasHorn = clause.isHorn();
 		clause.updateClauseCondition(this);
 		if (clause.isEquivalentToFalse()) {
 			mConjunctionEquivalentToFalse = true;
@@ -331,7 +352,21 @@ public abstract class AMaxSatSolver<V> {
 				// The propagatee already existed with a different value.
 				mConjunctionEquivalentToFalse = true;
 			}
+		} else if (wasHorn != clause.isHorn()) {
+			if (wasHorn && !clause.isHorn()) {
+				incrementNumberOfNonHornClauses();
+			} else {
+				decrementNumberOfNonHornClauses();
+			}
 		}
+	}
+
+	protected void incrementNumberOfNonHornClauses() {
+		// do nothing in the general case
+	}
+
+	protected void decrementNumberOfNonHornClauses() {
+		// do nothing in the general case
 	}
 
 	protected void undoAssignment(final V var) {
@@ -353,7 +388,7 @@ public abstract class AMaxSatSolver<V> {
 		it.remove();
 		return var;
 	}
-
+	
 	protected void removeMarkedClauses() {
 		for (final Clause<V> clause : mClausesMarkedForRemoval) {
 			removeClause(clause);

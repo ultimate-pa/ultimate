@@ -43,6 +43,7 @@ class Clause<V> {
 	protected final V[] mPositiveAtoms;
 	protected final V[] mNegativeAtoms;
 	protected IClauseCondition mClauseCondition;
+	private boolean mIsHorn;
 	private final int mHashCode;
 	
 	// default clause conditions
@@ -112,8 +113,8 @@ class Clause<V> {
 			}
 		}
 		
-		// TODO add this information
-//		final boolean isHornClause = (unsetAtoms <= 1);
+		// is the current clause a Horn clause?
+		mIsHorn = (unsetAtoms <= 1);
 		
 		if (clauseStatus == EClauseStatus.NEITHER) {
 			for (int i = 0; i < mNegativeAtoms.length; ++i) {
@@ -222,6 +223,8 @@ class Clause<V> {
 	}
 
 	/**
+	 * Yet unset literal.
+	 * 
 	 * @param solver solver
 	 * @return an atom that was not yet set
 	 */
@@ -285,27 +288,44 @@ class Clause<V> {
 		}
 		return sb.toString();
 	}
-
+	
 	/**
-	 * TODO this can be stored by clause condition!
+	 * Returns the Horn status of the last evaluation of the clause.
+	 * It is intended that this does not necessarily correspond to the current
+	 * assignment.
+	 * 
+	 * @return true iff the clause is a Horn clause under the current assignment
+	 */
+	public boolean isHorn() {
+		return mIsHorn;
+	}
+	
+	/**
+	 * Checks whether the clause is a Horn clause under the current assignment.
+	 * 
+	 * @deprecated The method is currently not used as we report the Horn status
+	 *     of the last evaluation time.
 	 * 
 	 * @param solver solver
 	 * @return true iff the clause is a Horn clause under the current assignment
 	 */
-	public boolean isHorn(final AMaxSatSolver<V> solver) {
+	@Deprecated
+	public boolean isHornCurrent(final AMaxSatSolver<V> solver) {
 		boolean foundFirst = false;
 		for (final V var : mPositiveAtoms) {
 			final EVariableStatus status = getCurrentVariableStatus(var, solver);
 			switch (status) {
-				case TRUE:
+				case UNSET:
 					if (foundFirst) {
 						return false;
 					}
 					foundFirst = true;
 					break;
 				case FALSE:
-				case UNSET:
 					break;
+				case TRUE:
+					throw new IllegalArgumentException(
+							"Do not call this method for clauses which are equivalent to 'true'.");
 				default:
 					throw new IllegalArgumentException();
 			}
