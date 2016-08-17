@@ -753,6 +753,8 @@ public class MapEliminator {
 			return stringBuilder.toString();
 
 		}
+		// TODO: Remove SMT quote character somewhere
+		// SmtUtils.removeSmtQuoteCharacters(string)
 		return term.toString();
 	}
 
