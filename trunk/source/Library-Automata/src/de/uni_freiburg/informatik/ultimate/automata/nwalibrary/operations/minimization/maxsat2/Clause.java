@@ -45,6 +45,14 @@ class Clause<V> {
 	protected IClauseCondition mClauseCondition;
 	private final int mHashCode;
 	
+	// default clause conditions
+	private static final TrueClauseCondition TRUE_CLAUSE_CONDITION =
+			new TrueClauseCondition();
+	private static final FalseClauseCondition FALSE_CLAUSE_CONDITION =
+			new FalseClauseCondition();
+	private static final UndeterminedClauseCondition UNDETERMINED_CLAUSE_CONDITION =
+			new UndeterminedClauseCondition();
+	
 	/*
 	 * counters for true/false/neither clauses
 	 * 
@@ -135,14 +143,14 @@ class Clause<V> {
 		if (clauseStatus == EClauseStatus.TRUE) {
 			// trivial 'true' clause
 			trues++;
-			return new TrueClauseCondition();
+			return TRUE_CLAUSE_CONDITION;
 		}
 		
 		if (unsetAtoms == 0 || clauseStatus == EClauseStatus.FALSE) {
 			assert (clauseStatus != EClauseStatus.TRUE);
 			// trivial 'false' clause
 			falses++;
-			return new FalseClauseCondition();
+			return FALSE_CLAUSE_CONDITION;
 		}
 		
 		assert (clauseStatus == EClauseStatus.NEITHER);
@@ -152,7 +160,7 @@ class Clause<V> {
 			return new PseudoUnitClauseCondition(unitIndex, unitIsPositive);
 		} else {
 			// clause with several undetermined literals
-			return new UndeterminedClauseCondition();
+			return UNDETERMINED_CLAUSE_CONDITION;
 		}
 	}
 	
