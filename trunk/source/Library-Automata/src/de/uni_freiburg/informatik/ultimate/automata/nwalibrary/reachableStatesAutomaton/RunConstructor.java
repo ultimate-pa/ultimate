@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,6 +33,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.Stack;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -306,8 +306,8 @@ class RunConstructor<LETTER,STATE> {
 		final StateContainerWithObligation startStateWithStartObligation = 
 				new StateContainerWithObligation(mStart, startStateHasObligation);
 		StateContainerWithObligation current = startStateWithStartObligation;
-		final ArrayDeque<Iterator<TransitionWithObligation>> predStack = new ArrayDeque<Iterator<TransitionWithObligation>>();
-		final ArrayDeque<RunWithObligation> takenStack = new ArrayDeque<RunWithObligation>();
+		final Stack<Iterator<TransitionWithObligation>> predStack = new Stack<Iterator<TransitionWithObligation>>();
+		final Stack<RunWithObligation> takenStack = new Stack<RunWithObligation>();
 		
 		// if this is set the last round
 		boolean backtrack = false;
@@ -402,7 +402,7 @@ class RunConstructor<LETTER,STATE> {
 		}
 	}
 
-	private NestedRun<LETTER, STATE> constructResult(final ArrayDeque<RunWithObligation> stack) {
+	private NestedRun<LETTER, STATE> constructResult(final Stack<RunWithObligation> stack) {
 		final Iterator<RunWithObligation> it = stack.iterator();
 		NestedRun<LETTER, STATE> result = it.next().getNestedRun();
 		while (it.hasNext()) {
