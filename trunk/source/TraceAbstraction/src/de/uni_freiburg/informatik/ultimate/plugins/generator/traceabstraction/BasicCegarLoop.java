@@ -571,17 +571,17 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 								oldAbstraction, determinized, psd2, mStateFactoryForRefinement,
 								explointSigmaStarConcatOfIA);
 						determinized.switchToReadonlyMode();
-						final INestedWordAutomaton<CodeBlock, IPredicate> test =
+						final INestedWordAutomaton<CodeBlock, IPredicate> completelyBuiltInterpolantAutomaton =
 								(new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 										determinized)).getResult();
 						if (mPref.dumpAutomata()) {
 							final String filename = "EnhancedInterpolantAutomaton_Iteration" + mIteration;
-							super.writeAutomatonToFile(test, filename);
+							super.writeAutomatonToFile(completelyBuiltInterpolantAutomaton, filename);
 						}
 						if (mAbsIntRunner.isDisabled()) {
 							// check only if AI did not run
 							final boolean ctxAccepted =
-									(new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), test,
+									(new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), completelyBuiltInterpolantAutomaton,
 											(NestedWord<CodeBlock>) mCounterexample.getWord(), true, false))
 													.getResult();
 							if (!ctxAccepted) {
@@ -590,7 +590,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 										+ " not accepted");
 							}
 						}
-						assert (new InductivityCheck(mServices, test, false, true, new IncrementalHoareTripleChecker(
+						assert (new InductivityCheck(mServices, completelyBuiltInterpolantAutomaton, false, true, new IncrementalHoareTripleChecker(
 								mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager))).getResult();
 					}
 					break;
