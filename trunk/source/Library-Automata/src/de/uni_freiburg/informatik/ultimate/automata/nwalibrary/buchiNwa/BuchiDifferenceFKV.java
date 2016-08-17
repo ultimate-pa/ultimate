@@ -61,7 +61,7 @@ public class BuchiDifferenceFKV<LETTER,STATE>
 		 *      factory of the first operand instead of the one passed in the
 		 *      constructor here?
 		 */
-		super(services, fstOperand.getStateFactory(), sndOperand, fstOperand);
+		super(services, fstOperand.getStateFactory(), fstOperand, sndOperand);
 		final IStateDeterminizer<LETTER, STATE> stateDeterminizer =
 				new PowersetDeterminizer<LETTER,STATE>(sndOperand, true, stateFactory);
 		mLogger.info(startMessage());
@@ -89,7 +89,7 @@ public class BuchiDifferenceFKV<LETTER,STATE>
 			final String optimization,
 			final int userDefinedMaxRank)
 					throws AutomataLibraryException {
-		super(services, stateFactory, sndOperand, fstOperand);
+		super(services, stateFactory, fstOperand, sndOperand);
 		mLogger.info(startMessage());
 		constructResult(stateDeterminizer, userDefinedMaxRank,
 				FkvOptimization.valueOf(optimization));

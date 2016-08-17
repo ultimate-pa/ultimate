@@ -52,7 +52,7 @@ public class BuchiDifferenceNCSB<LETTER,STATE>
 			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
-		super(services, stateFactory, sndOperand, fstOperand);
+		super(services, stateFactory, fstOperand, sndOperand);
 		mLogger.info(startMessage());
 		constructResult();
 		mLogger.info(exitMessage());
