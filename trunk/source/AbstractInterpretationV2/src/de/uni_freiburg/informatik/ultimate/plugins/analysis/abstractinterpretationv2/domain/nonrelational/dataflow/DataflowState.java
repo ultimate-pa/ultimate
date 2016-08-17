@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
 /**
  *
@@ -56,13 +57,15 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 	private final Map<IProgramVar, Set<CodeBlock>> mDef;
 	private final Map<IProgramVar, Set<CodeBlock>> mUse;
 	private final Map<IProgramVar, Set<CodeBlock>> mReachDef;
+	private final Map<IProgramVar, Set<ProgramPoint>> mNoWrite;
 
 	DataflowState() {
-		this(new HashSet<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
+		this(new HashSet<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
 	}
 
 	DataflowState(final Set<IProgramVar> vars, final Map<IProgramVar, Set<CodeBlock>> def,
-			final Map<IProgramVar, Set<CodeBlock>> use, final Map<IProgramVar, Set<CodeBlock>> reachdef) {
+			final Map<IProgramVar, Set<CodeBlock>> use, final Map<IProgramVar, Set<CodeBlock>> reachdef,
+			final Map<IProgramVar, Set<ProgramPoint>> noWrite) {
 		assert vars != null;
 		assert def != null;
 		assert use != null;
@@ -72,6 +75,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		mUse = use;
 		mReachDef = reachdef;
 		mId = getFreshId();
+		mNoWrite = noWrite;
 	}
 
 	@Override
@@ -81,7 +85,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		}
 		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars, mVars.size() + 1);
 		vars.add(variable);
-		return new DataflowState(vars, mDef, mUse, mReachDef);
+		return new DataflowState(vars, mDef, mUse, mReachDef, mNoWrite);
 	}
 
 	@Override
@@ -97,7 +101,9 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		use.remove(variable);
 		final Map<IProgramVar, Set<CodeBlock>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
 		use.remove(variable);
-		return new DataflowState(vars, def, use, reachdef);
+		final Map<IProgramVar, Set<ProgramPoint>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
+		use.remove(variable);
+		return new DataflowState(vars, def, use, reachdef, noWrite);
 	}
 
 	@Override
@@ -107,7 +113,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		}
 		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars, mVars.size() + variables.size());
 		vars.addAll(variables);
-		return new DataflowState(vars, mDef, mUse, mReachDef);
+		return new DataflowState(vars, mDef, mUse, mReachDef, mNoWrite);
 	}
 
 	@Override
@@ -119,13 +125,15 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		final Map<IProgramVar, Set<CodeBlock>> def = AbsIntUtil.getFreshMap(mDef);
 		final Map<IProgramVar, Set<CodeBlock>> use = AbsIntUtil.getFreshMap(mUse);
 		final Map<IProgramVar, Set<CodeBlock>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
+		final Map<IProgramVar, Set<ProgramPoint>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
 		variables.stream().forEach(a -> {
 			vars.remove(a);
 			def.remove(a);
 			use.remove(a);
 			reachdef.remove(a);
+			noWrite.remove(a);
 		});
-		return new DataflowState(vars, def, use, reachdef);
+		return new DataflowState(vars, def, use, reachdef, noWrite);
 	}
 
 	@Override
@@ -170,6 +178,9 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 			return false;
 		}
 		if (!other.mReachDef.equals(mReachDef)) {
+			return false;
+		}
+		if (!other.mNoWrite.equals(mNoWrite)) {
 			return false;
 		}
 		return true;
@@ -252,6 +263,10 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		return Collections.unmodifiableMap(mReachDef);
 	}
 
+	Map<IProgramVar, Set<ProgramPoint>> getNoWrite() {
+		return Collections.unmodifiableMap(mNoWrite);
+	}
+
 	DataflowState union(final DataflowState other) {
 		if (other == null || other == this || other.isEqualTo(this)) {
 			return this;
@@ -265,6 +280,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		final Map<IProgramVar, Set<CodeBlock>> def = AbsIntUtil.getFreshMap(mDef);
 		final Map<IProgramVar, Set<CodeBlock>> use = AbsIntUtil.getFreshMap(mUse);
 		final Map<IProgramVar, Set<CodeBlock>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
+		final Map<IProgramVar, Set<ProgramPoint>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
 
 		// TODO: What about def and use?
 
@@ -279,8 +295,20 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 				reachdef.put(otherEntry.getKey(), newset);
 			}
 		}
+		
+		for (final Entry<IProgramVar, Set<ProgramPoint>> otherEntry : other.mNoWrite.entrySet()) {
+			final Set<ProgramPoint> set = noWrite.get(otherEntry.getKey());
+			if (set == null) {
+				noWrite.put(otherEntry.getKey(), new HashSet<>(otherEntry.getValue()));
+			} else {
+				final Set<ProgramPoint> newset = new HashSet<>();
+				newset.addAll(otherEntry.getValue());
+				newset.addAll(set);
+				noWrite.put(otherEntry.getKey(), newset);
+			}
+		}
 
-		return new DataflowState(vars, def, use, reachdef);
+		return new DataflowState(vars, def, use, reachdef, noWrite);
 	}
 
 	private static int getFreshId() {
