@@ -96,6 +96,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLType;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assertion;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assigns;
@@ -1002,7 +1003,75 @@ public class ACSLHandler implements IACSLHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final CastExpression node) {
-		// TODO Auto-generated method stub
-		return null;
+		final ILocation loc = LocationFactory.createACSLLocation(node);
+		final CPrimitive resultType = translateAcslTypeToCType(node.getCastedType());
+		final ExpressionResult expr = (ExpressionResult) main.dispatch(node.getExpression());
+    	final AExpressionTranslation expressionTranslation = 
+    			((CHandler) main.mCHandler).getExpressionTranslation();
+    	expressionTranslation.convertIfNecessary(loc, expr, resultType);
+		return expr;
+	}
+	
+	private CPrimitive translateAcslTypeToCType(final ACSLType t) {
+		final CPrimitives primitives;
+		switch (t.getTypeName()) {
+		case "char":
+			primitives = CPrimitives.CHAR;
+			break;
+		case "signed char":
+			primitives = CPrimitives.SCHAR;
+			break;
+		case "unsigned char":
+			primitives = CPrimitives.UCHAR;
+			break;
+		case "short":
+			primitives = CPrimitives.SHORT;
+			break;
+		case "signed short":
+			primitives = CPrimitives.SHORT;
+			break;
+		case "unsigned short":
+			primitives = CPrimitives.USHORT;
+			break;
+		case "int":
+			primitives = CPrimitives.INT;
+			break;
+		case "signed int":
+			primitives = CPrimitives.INT;
+			break;
+		case "unsigned int":
+			primitives = CPrimitives.UINT;
+			break;
+		case "long":
+			primitives = CPrimitives.LONG;
+			break;
+		case "signed long":
+			primitives = CPrimitives.LONG;
+			break;
+		case "unsigned long":
+			primitives = CPrimitives.ULONG;
+			break;
+		case "long long":
+			primitives = CPrimitives.LONGLONG;
+			break;
+		case "signed long long":
+			primitives = CPrimitives.LONGLONG;
+			break;
+		case "unsigned long long":
+			primitives = CPrimitives.ULONGLONG;
+			break;
+		case "float":
+			primitives = CPrimitives.FLOAT;
+			break;
+		case "double":
+			primitives = CPrimitives.DOUBLE;
+			break;
+		case "long double":
+			primitives = CPrimitives.LONGDOUBLE;
+			break;
+		default:
+			throw new UnsupportedOperationException("not yet implemented " + t);
+		}
+		return new CPrimitive(primitives);
 	}
 }
