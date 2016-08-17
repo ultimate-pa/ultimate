@@ -141,7 +141,8 @@ public class Boogie2SmtSymbolTable {
 		mScript.echo(new QuotedObject("Finished declaration local variables"));
 	}
 
-	private <T extends BoogieVar> void putNew(final String procId, final String varId, final T bv, final Map<String, Map<String, T>> map) {
+	private <T extends BoogieVar> void putNew(final String procId, final String varId, final T bv,
+			final Map<String, Map<String, T>> map) {
 		Map<String, T> varId2BoogieVar = map.get(procId);
 		if (varId2BoogieVar == null) {
 			varId2BoogieVar = new HashMap<String, T>();
@@ -156,7 +157,8 @@ public class Boogie2SmtSymbolTable {
 		assert previousValue == null : "variable already contained";
 	}
 
-	private <T extends BoogieVar> T get(final String varId, final String procId, final Map<String, Map<String, T>> map) {
+	private <T extends BoogieVar> T get(final String varId, final String procId,
+			final Map<String, Map<String, T>> map) {
 		final Map<String, T> varId2BoogieVar = map.get(procId);
 		if (varId2BoogieVar == null) {
 			return null;
@@ -406,19 +408,11 @@ public class Boogie2SmtSymbolTable {
 
 	/**
 	 * Return global variables;
-	 * @return Map that assigns to each variable identifier the 
-	 * non-old global variable
+	 *
+	 * @return Map that assigns to each variable identifier the non-old global variable
 	 */
 	public Map<String, IProgramNonOldVar> getGlobals() {
 		return Collections.unmodifiableMap(mGlobals);
-	}
-	
-	/**
-	 * Return all local variables, input parameters and output parameters 
-	 * for a given procedure.
-	 */
-	public Map<String, LocalBoogieVar> getLocals(final String proc) {
-		return null;
 	}
 
 	/**
@@ -429,8 +423,7 @@ public class Boogie2SmtSymbolTable {
 	}
 
 	/**
-	 * Return all variables that are in the scope of this procedure (i.e., all in, out and local vars) except for old
-	 * vars.
+	 * Return all local variables, input parameters and output parameters for a given procedure.
 	 */
 	public Map<String, LocalBoogieVar> getLocals(final String procedurename) {
 		final Map<String, LocalBoogieVar> rtr = new HashMap<>();
@@ -440,13 +433,13 @@ public class Boogie2SmtSymbolTable {
 		return rtr;
 	}
 
-	private void addLocals(final Map<String, LocalBoogieVar> current, final Map<String, Map<String, BoogieVar>> toAdd,
-			final String procedurename) {
-		final Map<String, BoogieVar> map = toAdd.get(procedurename);
+	private <T extends BoogieVar> void addLocals(final Map<String, LocalBoogieVar> current,
+			final Map<String, Map<String, T>> toAdd, final String procedurename) {
+		final Map<String, T> map = toAdd.get(procedurename);
 		if (map == null) {
 			return;
 		}
-		for (final Entry<String, BoogieVar> entry : map.entrySet()) {
+		for (final Entry<String, T> entry : map.entrySet()) {
 			current.put(entry.getKey(), (LocalBoogieVar) entry.getValue());
 		}
 	}

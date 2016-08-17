@@ -49,6 +49,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public class DataflowState implements IAbstractState<DataflowState, CodeBlock, IProgramVar> {
 
+	private static int sId;
+	private final int mId;
+
 	private final Set<IProgramVar> mVars;
 	private final Map<IProgramVar, Set<CodeBlock>> mDef;
 	private final Map<IProgramVar, Set<CodeBlock>> mUse;
@@ -68,6 +71,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		mDef = def;
 		mUse = use;
 		mReachDef = reachdef;
+		mId = getFreshId();
 	}
 
 	@Override
@@ -181,7 +185,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 
 	@Override
 	public Term getTerm(final Script script, final Boogie2SMT bpl2smt) {
-		throw new UnsupportedOperationException("Cannot create Term from DataflowState");
+		return script.term("true");
 	}
 
 	@Override
@@ -195,7 +199,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 			sb.append(entry.getKey().getIdentifier());
 			sb.append("->");
 			if (entry.getValue().size() == 1) {
-				sb.append(entry.getValue().iterator().next());
+				sb.append(entry.getValue().iterator().next().getSerialNumber());
 			} else {
 				sb.append('{');
 				for (final CodeBlock value : entry.getValue()) {
@@ -208,6 +212,32 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		}
 		sb.append('}');
 		return sb.toString();
+	}
+
+	@Override
+	public int hashCode() {
+		return mId;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final DataflowState other = (DataflowState) obj;
+		if (!isEqualTo(other)) {
+			return false;
+		}
+		if (other.mId != mId) {
+			return false;
+		}
+		return true;
 	}
 
 	Map<IProgramVar, Set<CodeBlock>> getDef() {
@@ -223,6 +253,38 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 	}
 
 	DataflowState union(final DataflowState other) {
-		return null;
+		if (other == null || other == this || other.isEqualTo(this)) {
+			return this;
+		}
+
+		if (!mVars.equals(other.mVars)) {
+			throw new UnsupportedOperationException("Cannot create union of two incompatible dataflow states");
+		}
+
+		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars);
+		final Map<IProgramVar, Set<CodeBlock>> def = AbsIntUtil.getFreshMap(mDef);
+		final Map<IProgramVar, Set<CodeBlock>> use = AbsIntUtil.getFreshMap(mUse);
+		final Map<IProgramVar, Set<CodeBlock>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
+
+		// TODO: What about def and use?
+
+		for (final Entry<IProgramVar, Set<CodeBlock>> otherEntry : other.mReachDef.entrySet()) {
+			final Set<CodeBlock> set = reachdef.get(otherEntry.getKey());
+			if (set == null) {
+				reachdef.put(otherEntry.getKey(), new HashSet<>(otherEntry.getValue()));
+			} else {
+				final Set<CodeBlock> newset = new HashSet<>();
+				newset.addAll(otherEntry.getValue());
+				newset.addAll(set);
+				reachdef.put(otherEntry.getKey(), newset);
+			}
+		}
+
+		return new DataflowState(vars, def, use, reachdef);
+	}
+
+	private static int getFreshId() {
+		sId++;
+		return sId;
 	}
 }

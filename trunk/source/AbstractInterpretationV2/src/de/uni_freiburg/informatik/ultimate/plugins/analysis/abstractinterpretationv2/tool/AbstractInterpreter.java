@@ -218,7 +218,11 @@ public final class AbstractInterpreter {
 		return result;
 	}
 
-	private static <STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>>
+	/**
+	 * Run abstract interpretation on the RCFG of the future (experimental).
+	 *
+	 */
+	public static <STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>>
 			IAbstractInterpretationResult<STATE, CodeBlock, IProgramVar, ProgramPoint> runFuture(final RootNode root,
 					final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
 					final IUltimateServiceProvider services, final boolean isSilent) {

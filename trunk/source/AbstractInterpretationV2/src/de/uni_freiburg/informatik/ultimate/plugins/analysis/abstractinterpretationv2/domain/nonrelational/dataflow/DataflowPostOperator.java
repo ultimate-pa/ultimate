@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -57,14 +56,7 @@ public class DataflowPostOperator implements IAbstractPostOperator<DataflowState
 		final Map<IProgramVar, Set<CodeBlock>> reach = new HashMap<>(oldstate.getReachingDefinitions());
 
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-			Set<CodeBlock> set = reach.get(entry.getKey());
-			if (set == null) {
-				set = new HashSet<CodeBlock>();
-				set.add(transition);
-				reach.put(entry.getKey(), set);
-			} else {
-				set.add(transition);
-			}
+			reach.put(entry.getKey(), Collections.singleton(transition));
 		}
 
 		return Collections

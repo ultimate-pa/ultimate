@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
@@ -51,10 +52,12 @@ public class DataflowDomain implements IAbstractDomain<DataflowState, CodeBlock,
 
 	private final DataflowPostOperator mPost;
 	private final DataflowMergeOperator mMerge;
+	private final ILogger mLogger;
 
-	public DataflowDomain() {
+	public DataflowDomain(final ILogger logger) {
 		mPost = new DataflowPostOperator();
 		mMerge = new DataflowMergeOperator();
+		mLogger = logger;
 	}
 
 	@Override
@@ -82,11 +85,22 @@ public class DataflowDomain implements IAbstractDomain<DataflowState, CodeBlock,
 		throw new UnsupportedOperationException("this domain has no precision");
 	}
 
-	private static final class DataflowMergeOperator implements IAbstractStateBinaryOperator<DataflowState> {
+	private final class DataflowMergeOperator implements IAbstractStateBinaryOperator<DataflowState> {
 
 		@Override
 		public DataflowState apply(final DataflowState first, final DataflowState second) {
-			return first.union(second);
+			final DataflowState rtr = first.union(second);
+			if (mLogger.isDebugEnabled()) {
+				final StringBuilder sb = new StringBuilder();
+				sb.append("merge(");
+				sb.append(first.toLogString());
+				sb.append(',');
+				sb.append(second.toLogString());
+				sb.append(") = ");
+				sb.append(rtr.toLogString());
+				mLogger.debug(sb);
+			}
+			return rtr;
 		}
 	}
 }

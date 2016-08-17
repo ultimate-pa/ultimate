@@ -114,12 +114,12 @@ public class FixpointEngineParameterFactory {
 	private IAbstractDomain<?, CodeBlock, IProgramVar> selectDomainFutureCfg() {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final String selectedDomain = prefs.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN);
-		// final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		if (EmptyDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new EmptyDomain<>();
 		} else if (DataflowDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new DataflowDomain();
+			return new DataflowDomain(logger);
 		}
 		throw new UnsupportedOperationException(getFailureString(selectedDomain));
 	}

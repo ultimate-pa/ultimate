@@ -58,7 +58,7 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> globalStorage,
 			final SummaryMap<STATE, ACTION, VARDECL, LOCATION> summaryMap) {
 		assert action != null;
-		assert pre != null;
+		assert pre != null : "Prestate may not be null";
 		assert globalStorage != null;
 
 		mHierachicalPreState = pre;
