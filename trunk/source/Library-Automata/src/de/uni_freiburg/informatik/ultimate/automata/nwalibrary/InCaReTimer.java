@@ -19,21 +19,30 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
+/**
+ * TODO Check and/or add documentation. Christian's guess:
+ * 
+ * <p>Encapsulates three stopwatches, one for internal, one for call, and one
+ * for return transitions.
+ * Only one stopwatch may run at the same time.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ */
 public class InCaReTimer {
 	
 	private long mInternal;
-	private final long mCall;
-	private final long mReturn;
+	private long mCall;
+	private long mReturn;
 	
 	private long mStartTime;
-
+	
 	/**
 	 * Constructor.
 	 */
@@ -43,51 +52,75 @@ public class InCaReTimer {
 		mReturn = 0;
 		mStartTime = 0;
 	}
-
+	
 	private void run() {
 		assert mStartTime == 0 : "timer already running";
 		mStartTime = System.nanoTime();
 	}
 	
+	/**
+	 * Runs internal stopwatch.
+	 */
 	public void runIn() {
 		run();
 	}
 	
+	/**
+	 * Runs call stopwatch.
+	 */
 	public void runCa() {
 		run();
 	}
 	
+	/**
+	 * Runs return stopwatch.
+	 */
 	public void runRe() {
 		run();
 	}
 	
+	/**
+	 * Stops internal stopwatch.
+	 */
 	public void stopIn() {
 		mInternal += (System.nanoTime() - mStartTime);
 		mStartTime = 0;
 	}
 	
+	/**
+	 * Stops call stopwatch.
+	 */
 	public void stopCa() {
-		mInternal += (System.nanoTime() - mStartTime);
+		mCall += (System.nanoTime() - mStartTime);
 		mStartTime = 0;
 	}
-
+	
+	/**
+	 * Stops return stopwatch.
+	 */
 	public void stopRe() {
-		mInternal += (System.nanoTime() - mStartTime);
+		mReturn += (System.nanoTime() - mStartTime);
 		mStartTime = 0;
 	}
-
+	
 	public long getInternal() {
 		return mInternal;
 	}
-
+	
 	public long getCall() {
 		return mCall;
 	}
-
+	
 	public long getReturn() {
 		return mReturn;
 	}
 	
+	/**
+	 * Pretty-prints nano seconds in seconds.
+	 * 
+	 * @param time time in nano seconds
+	 * @return pretty-printed time
+	 */
 	public static String prettyprintNanoseconds(final long time) {
 		final long seconds = time / 1000000000;
 		final long tenthDigit = (time / 100000000) % 10;
@@ -105,7 +138,4 @@ public class InCaReTimer {
 		sb.append("Re");
 		return sb.toString();
 	}
-	
-	
-
 }
