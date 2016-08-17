@@ -57,6 +57,8 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTIO
 	IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> createStorage();
 
 	Map<LOCATION, Term> getLoc2Term(final ACTION initialTransition, final Script script, final Boogie2SMT bpl2smt);
+	
+	Map<LOCATION, STATE> getLoc2State(final ACTION initialTransition);
 
 	Set<Term> getTerms(final ACTION initialTransition, final Script script, final Boogie2SMT bpl2smt);
 }

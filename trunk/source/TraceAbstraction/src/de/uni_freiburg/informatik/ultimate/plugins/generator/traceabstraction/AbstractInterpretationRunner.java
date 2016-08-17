@@ -61,9 +61,9 @@ public class AbstractInterpretationRunner {
 	private boolean mSkipIteration;
 
 	public AbstractInterpretationRunner(final IUltimateServiceProvider services,
-			final CegarLoopStatisticsGenerator benchmark, final RootNode root,
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final SmtManager smtManager) {
+	        final CegarLoopStatisticsGenerator benchmark, final RootNode root,
+	        final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+	        final SmtManager smtManager) {
 		mCegarLoopBenchmark = benchmark;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -78,23 +78,23 @@ public class AbstractInterpretationRunner {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAlwaysRefine = prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ABSINT_ALWAYS_REFINE);
 		mMode = prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ABSINT_MODE,
-				AbstractInterpretationMode.class);
+		        AbstractInterpretationMode.class);
 		checkSettings();
 	}
 
 	private void checkSettings() {
 		if (mMode == AbstractInterpretationMode.USE_PATH_PROGRAM && mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT,
-						InterpolantAutomatonEnhancement.class) != InterpolantAutomatonEnhancement.NONE) {
+		        .getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT,
+		                InterpolantAutomatonEnhancement.class) != InterpolantAutomatonEnhancement.NONE) {
 			throw new IllegalArgumentException("If using \"" + TraceAbstractionPreferenceInitializer.LABEL_ABSINT_MODE
-					+ "\"=" + AbstractInterpretationMode.USE_PATH_PROGRAM + " you also have to use \""
-					+ TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT + "\"="
-					+ InterpolantAutomatonEnhancement.NONE);
+			        + "\"=" + AbstractInterpretationMode.USE_PATH_PROGRAM + " you also have to use \""
+			        + TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT + "\"="
+			        + InterpolantAutomatonEnhancement.NONE);
 		}
 		if (mMode == AbstractInterpretationMode.NONE && mAlwaysRefine) {
 			throw new IllegalArgumentException("If using \"" + TraceAbstractionPreferenceInitializer.LABEL_ABSINT_MODE
-					+ "\"=" + AbstractInterpretationMode.NONE + " you cannot use \""
-					+ TraceAbstractionPreferenceInitializer.LABEL_ABSINT_ALWAYS_REFINE + "\"=true");
+			        + "\"=" + AbstractInterpretationMode.NONE + " you cannot use \""
+			        + TraceAbstractionPreferenceInitializer.LABEL_ABSINT_ALWAYS_REFINE + "\"=true");
 		}
 	}
 
@@ -109,7 +109,7 @@ public class AbstractInterpretationRunner {
 	 * </ul>
 	 */
 	public void generateFixpoints(final IRun<CodeBlock, IPredicate> currentCex,
-			final INestedWordAutomaton<CodeBlock, IPredicate> currentAbstraction) {
+	        final INestedWordAutomaton<CodeBlock, IPredicate> currentAbstraction) {
 		assert currentCex != null : "Cannot run AI on empty counterexample";
 		assert currentAbstraction != null : "Cannot run AI on empty abstraction";
 		if (mMode == AbstractInterpretationMode.NONE) {
@@ -139,17 +139,17 @@ public class AbstractInterpretationRunner {
 			// allow for 20% of the remaining time
 			final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 			mLogger.info("Running AI on error trace of length " + currentCex.getLength()
-					+ " with the following transitions: ");
+			        + " with the following transitions: ");
 			mLogger.info(String.join(", ", pathProgramSet.stream().map(a -> a.hashCode()).sorted()
-					.map(a -> "[" + String.valueOf(a) + "]").collect(Collectors.toList())));
+			        .map(a -> "[" + String.valueOf(a) + "]").collect(Collectors.toList())));
 			if (mLogger.isDebugEnabled()) {
 				for (final CodeBlock trans : pathProgramSet) {
 					mLogger.debug("[" + trans.hashCode() + "] " + trans);
 				}
 			}
-			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result =
-					AbstractInterpreter.runOnPathProgram(mRoot,
-							currentAbstraction, (NestedRun<CodeBlock, IPredicate>) currentCex, timer, mServices);
+			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result = AbstractInterpreter
+			        .runOnPathProgram(mRoot, currentAbstraction, (NestedRun<CodeBlock, IPredicate>) currentCex, timer,
+			                mServices);
 			mAbsIntResult = result;
 			if (hasShownInfeasibility()) {
 				mCegarLoopBenchmark.announceStrongAbsInt();
@@ -177,9 +177,9 @@ public class AbstractInterpretationRunner {
 	}
 
 	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createInterpolantAutomatonBuilder(
-			final IInterpolantGenerator interpolGenerator,
-			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
-			final IRun<CodeBlock, IPredicate> currentCex) {
+	        final IInterpolantGenerator interpolGenerator,
+	        final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
+	        final IRun<CodeBlock, IPredicate> currentCex) {
 		if (mMode == AbstractInterpretationMode.NONE) {
 			return null;
 		}
@@ -200,13 +200,14 @@ public class AbstractInterpretationRunner {
 				throw new AssertionError("Mode should have been checked earlier");
 			case USE_PATH_PROGRAM:
 				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder(mServices, abstraction,
-						interpolGenerator.getPredicateUnifier(), mSmtManager.getManagedScript(),
-						mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), currentCex, mSimplificationTechnique,
-						mXnfConversionTechnique);
+				        interpolGenerator.getPredicateUnifier(), mSmtManager.getManagedScript(),
+				        mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), currentCex, mSimplificationTechnique,
+				        mXnfConversionTechnique);
 				break;
 			case USE_PREDICATES:
 				aiInterpolAutomatonBuilder = new AbsIntStraightLineInterpolantAutomatonBuilder(mServices, abstraction,
-						mAbsIntResult, interpolGenerator.getPredicateUnifier(), mSmtManager);
+				        mAbsIntResult, interpolGenerator.getPredicateUnifier(), mSmtManager, currentCex,
+				        mSimplificationTechnique, mXnfConversionTechnique);
 				break;
 			default:
 				throw new UnsupportedOperationException("AI mode " + mMode + " not yet implemented");
@@ -218,14 +219,14 @@ public class AbstractInterpretationRunner {
 	}
 
 	public void refineAnyways(final IInterpolantGenerator interpolGenerator,
-			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction, final IRun<CodeBlock, IPredicate> cex,
-			final IRefineFunction refineFun) throws AutomataLibraryException {
+	        final INestedWordAutomaton<CodeBlock, IPredicate> abstraction, final IRun<CodeBlock, IPredicate> cex,
+	        final IRefineFunction refineFun) throws AutomataLibraryException {
 		if (mMode == AbstractInterpretationMode.NONE || !mAlwaysRefine || mSkipIteration) {
 			return;
 		}
 		mLogger.info("Refining with AI automaton anyways");
-		final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton =
-				createInterpolantAutomatonBuilder(interpolGenerator, abstraction, cex).getResult();
+		final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton = createInterpolantAutomatonBuilder(
+		        interpolGenerator, abstraction, cex).getResult();
 		refine(interpolGenerator.getPredicateUnifier(), aiInterpolAutomaton, cex, refineFun);
 	}
 
@@ -234,9 +235,9 @@ public class AbstractInterpretationRunner {
 	 * @return true iff abstract interpretation was strong enough to prove infeasibility of the current counterexample.
 	 */
 	public boolean refine(final PredicateUnifier predUnifier,
-			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
-			final IRun<CodeBlock, IPredicate> currentCex, final IRefineFunction refineFun)
-			throws AutomataLibraryException {
+	        final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
+	        final IRun<CodeBlock, IPredicate> currentCex, final IRefineFunction refineFun)
+	        throws AutomataLibraryException {
 		if (mMode == AbstractInterpretationMode.NONE) {
 			throw new UnsupportedOperationException("You cannot refine in mode " + AbstractInterpretationMode.NONE);
 		}
@@ -274,8 +275,8 @@ public class AbstractInterpretationRunner {
 	}
 
 	private boolean hasAiProgress(final boolean result,
-			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
-			final IRun<CodeBlock, IPredicate> cex) {
+	        final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
+	        final IRun<CodeBlock, IPredicate> cex) {
 		if (result) {
 			return result;
 		}
@@ -294,13 +295,13 @@ public class AbstractInterpretationRunner {
 
 	private String simplify(final Term term) {
 		return SmtUtils.simplify(mRoot.getRootAnnot().getManagedScript(), term, mServices, mSimplificationTechnique)
-				.toStringDirect();
+		        .toStringDirect();
 	}
 
 	@FunctionalInterface
 	public interface IRefineFunction {
 		boolean refine(NestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton, PredicateUnifier unifier)
-				throws AssertionError, AutomataOperationCanceledException, AutomataLibraryException;
+		        throws AssertionError, AutomataOperationCanceledException, AutomataLibraryException;
 	}
 
 }

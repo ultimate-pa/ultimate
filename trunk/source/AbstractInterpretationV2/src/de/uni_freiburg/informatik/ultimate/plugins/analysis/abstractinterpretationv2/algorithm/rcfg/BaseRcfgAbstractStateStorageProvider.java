@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, LOCATION, VARDECL>
-		implements IAbstractStateStorage<STATE, CodeBlock, VARDECL, LOCATION> {
+        implements IAbstractStateStorage<STATE, CodeBlock, VARDECL, LOCATION> {
 
 	private final IAbstractStateBinaryOperator<STATE> mMergeOperator;
 	private final IUltimateServiceProvider mServices;
@@ -64,7 +64,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	private final ITransitionProvider<CodeBlock, LOCATION> mTransProvider;
 
 	public BaseRcfgAbstractStateStorageProvider(final IAbstractStateBinaryOperator<STATE> mergeOperator,
-			final IUltimateServiceProvider services, final ITransitionProvider<CodeBlock, LOCATION> transProvider) {
+	        final IUltimateServiceProvider services, final ITransitionProvider<CodeBlock, LOCATION> transProvider) {
 		assert mergeOperator != null;
 		assert services != null;
 		assert transProvider != null;
@@ -125,7 +125,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 
 	@Override
 	public List<STATE> widenPostState(final CodeBlock transition, final IAbstractStateBinaryOperator<STATE> wideningOp,
-			final STATE operand) {
+	        final STATE operand) {
 		assert transition != null;
 		final Deque<STATE> states = getPostStates(transition);
 		final Iterator<STATE> iterator = states.iterator();
@@ -150,12 +150,22 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 
 	@Override
 	public Map<LOCATION, Term> getLoc2Term(final CodeBlock initialTransition, final Script script,
-			final Boogie2SMT bpl2smt) {
+	        final Boogie2SMT bpl2smt) {
 		// TODO: What shall we do about different scopes? Currently, states at the same location are merged and later
 		// converted to terms. This leads to loss of precision, so that tools relying on those terms cannot prove
 		// absence of errors with the terms alone, even if AI was able to prove it.
-		final Map<LOCATION, StateDecorator> states = getMergedStatesOfAllChilds(initialTransition);
+		final Map<LOCATION, StateDecorator> states = getMergedStatesOfAllChildren(initialTransition);
 		return convertStates2Terms(states, script, bpl2smt);
+	}
+
+	@Override
+	public Map<LOCATION, STATE> getLoc2State(final CodeBlock initialTransition) {
+		final Map<LOCATION, StateDecorator> states = getMergedStatesOfAllChildren(initialTransition);
+		// TODO: Maybe get rid of the filter here for API reasons. The user of this method does not see that only
+		// locations are filtered which have an actual abstract state. Rather return a new location to state mapping
+		// where state is some bottom state.
+		return states.entrySet().stream().filter(e -> e.getValue().mState != null)
+		        .collect(Collectors.toMap(Map.Entry::getKey, decorator -> decorator.getValue().mState));
 	}
 
 	@Override
@@ -168,10 +178,10 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		return rtr;
 	}
 
-	private Map<LOCATION, StateDecorator> getMergedStatesOfAllChilds(final CodeBlock initialTransition) {
+	private Map<LOCATION, StateDecorator> getMergedStatesOfAllChildren(final CodeBlock initialTransition) {
 		Map<LOCATION, StateDecorator> states = getMergedLocalStates(initialTransition);
 		for (final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> child : mChildStores) {
-			states = mergeMaps(states, child.getMergedStatesOfAllChilds(initialTransition));
+			states = mergeMaps(states, child.getMergedStatesOfAllChildren(initialTransition));
 		}
 		return states;
 	}
@@ -221,7 +231,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	private Set<Term> getLocalTerms(final CodeBlock initialTransition, final Script script, final Boogie2SMT bpl2smt,
-			final Set<Term> terms) {
+	        final Set<Term> terms) {
 		final Deque<CodeBlock> worklist = new ArrayDeque<>();
 		final Set<CodeBlock> closed = new LinkedHashSet<>();
 
@@ -262,7 +272,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	private Map<LOCATION, StateDecorator> mergeMaps(final Map<LOCATION, StateDecorator> a,
-			final Map<LOCATION, StateDecorator> b) {
+	        final Map<LOCATION, StateDecorator> b) {
 		final Map<LOCATION, StateDecorator> rtr = new HashMap<>();
 
 		for (final Entry<LOCATION, StateDecorator> entryA : a.entrySet()) {
@@ -287,7 +297,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	private Map<LOCATION, Term> convertStates2Terms(final Map<LOCATION, StateDecorator> states, final Script script,
-			final Boogie2SMT bpl2smt) {
+	        final Boogie2SMT bpl2smt) {
 		final Map<LOCATION, Term> rtr = new HashMap<>();
 
 		for (final Entry<LOCATION, StateDecorator> entry : states.entrySet()) {
@@ -342,6 +352,5 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 			}
 			return new StateDecorator(mMergeOperator.apply(mState, other.mState));
 		}
-
 	}
 }
