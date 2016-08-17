@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -18,28 +18,28 @@ public final class UltimateRunDefinitionGenerator {
 	private static final String SETTINGS_PATH = "examples/settings/";
 	private static final String TOOLCHAIN_PATH = "examples/toolchains/";
 
-	private static File getFileFromSettingsDir(String settings) {
+	public static File getFileFromSettingsDir(final String settings) {
 		return new File(TestUtil.getPathFromTrunk(SETTINGS_PATH + settings));
 	}
 
-	private static File getFileFromToolchainDir(String toolchain) {
+	public static File getFileFromToolchainDir(final String toolchain) {
 		return new File(TestUtil.getPathFromTrunk(TOOLCHAIN_PATH + toolchain));
 	}
 
-	private static File getFileFromTrunkDir(String input) {
+	public static File getFileFromTrunkDir(final String input) {
 		return new File(TestUtil.getPathFromTrunk(input));
 	}
 
 	/**
 	 * Get input files from directory. Do not take all files but only up to n pseudorandomly selected files.
 	 */
-	private static Collection<File> getInputFiles(File directory, String[] fileEndings, int n) {
+	private static Collection<File> getInputFiles(final File directory, final String[] fileEndings, final int n) {
 		return TestUtil.limitFiles(TestUtil.getFiles(directory, fileEndings), n);
 	}
 
 	/**
 	 * Get an {@link UltimateRunDefinition} from strings representing relative paths.
-	 * 
+	 *
 	 * @param input
 	 *            A relative path to a single input file.
 	 * @param settings
@@ -68,7 +68,7 @@ public final class UltimateRunDefinitionGenerator {
 	 * Get a {@link Collection} of {@link UltimateRunDefinition}s where for each directory in <code>directories</code>
 	 * some files with a file ending from <code>fileEndings</code> define a run definition with the settings file
 	 * <code>settings</code> and the toolchain file <code>toolchain</code>.
-	 * 
+	 *
 	 * Note:
 	 * <ul>
 	 * <li>All files are defined by their paths relative to the Ultimate trunk directory.
@@ -77,7 +77,7 @@ public final class UltimateRunDefinitionGenerator {
 	 * </ul>
 	 */
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunk(final String[] directories,
-			final String[] fileEndings, final String settings, final String toolchain, int limit) {
+			final String[] fileEndings, final String settings, final String toolchain, final int limit) {
 		final File toolchainFile = getFileFromToolchainDir(toolchain);
 		final File settingsFile = settings == null ? null : getFileFromSettingsDir(settings);
 		return Arrays.stream(directories).map(a -> getFileFromTrunkDir(a))
@@ -85,8 +85,8 @@ public final class UltimateRunDefinitionGenerator {
 				.map(a -> new UltimateRunDefinition(a, settingsFile, toolchainFile)).collect(Collectors.toList());
 	}
 
-	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunk(String toolchain, String settings,
-			DirectoryFileEndingsPair[] directoryFileEndingsPairs) {
+	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunk(final String toolchain,
+			final String settings, final DirectoryFileEndingsPair[] directoryFileEndingsPairs) {
 		return Arrays.stream(directoryFileEndingsPairs)
 				.map(a -> UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(new String[] { a.getDirectory() },
 						a.getFileEndings(), settings, toolchain, a.getLimit()))
@@ -97,7 +97,7 @@ public final class UltimateRunDefinitionGenerator {
 	 * Get a {@link Collection} of {@link UltimateRunDefinition}s where for each directory in <code>directories</code>
 	 * all files with a file ending from <code>fileEndings</code> that have a witness in the same folder define a run
 	 * definition with the settings file <code>settings</code> and the toolchain file <code>toolchain</code>.
-	 * 
+	 *
 	 * Note:
 	 * <ul>
 	 * <li>All files are defined by their paths relative to the Ultimate trunk directory.
@@ -113,7 +113,7 @@ public final class UltimateRunDefinitionGenerator {
 	 * Get a {@link Collection} of {@link UltimateRunDefinition}s where for each directory in <code>directories</code>
 	 * all files with a file ending from <code>fileEndings</code> that have a witness in the same folder define a run
 	 * definition with the settings file <code>settings</code> and the toolchain file <code>toolchain</code>.
-	 * 
+	 *
 	 * Note:
 	 * <ul>
 	 * <li>All files are defined by their paths relative to the Ultimate trunk directory.
@@ -123,7 +123,7 @@ public final class UltimateRunDefinitionGenerator {
 	 * </ul>
 	 */
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnesses(final String[] directories,
-			final String[] fileEndings, final String settings, final String toolchain, int limit) {
+			final String[] fileEndings, final String settings, final String toolchain, final int limit) {
 		return getRunDefinitionFromTrunkWithWitnesses(toolchain, settings,
 				Arrays.stream(directories).map(a -> new DirectoryFileEndingsPair(a, fileEndings, limit))
 						.toArray(size -> new DirectoryFileEndingsPair[size]));
@@ -161,7 +161,7 @@ public final class UltimateRunDefinitionGenerator {
 	 * all files with a file ending from <code>fileEndings</code> that have a witness in the folder
 	 * <code>witnessFolder</code> define a run definition with the settings file <code>settings</code> and the toolchain
 	 * file <code>toolchain</code>.
-	 * 
+	 *
 	 * Note:
 	 * <ul>
 	 * <li><code>witnessFolder</code> is an absolute path.
@@ -207,7 +207,7 @@ public final class UltimateRunDefinitionGenerator {
 
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(
 			final String[] directories, final String[] fileEndings, final String settings, final String toolchain,
-			final String witnessFolder, int limit) {
+			final String witnessFolder, final int limit) {
 		return getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(toolchain, settings,
 				Arrays.stream(directories).map(a -> new DirectoryFileEndingsPair(a, fileEndings, limit))
 						.toArray(size -> new DirectoryFileEndingsPair[size]),
