@@ -119,7 +119,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	 */
 	public static final String LABEL_TryTwofoldRefinement = "Try twofold refinement";
 	public static final String LABEL_USE_OLD_MAP_ELIMINATION = "Use old map elimination";
-	private static final boolean DEF_USE_OLD_MAP_ELIMINATION = false;
+	private static final boolean DEF_USE_OLD_MAP_ELIMINATION = true;
 
 	public enum BInterpolantAutomaton {
 		LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic, Staged, TwoStage
