@@ -303,12 +303,17 @@ public abstract class AMaxSatSolver<V> {
 	}
 
 	protected void reEvaluateStatusOfAllClauses(final V var) {
-		// TODO improvement: interrupt if clause equivalent to false was found
 		for (final Clause<V> clause : mOccursPositive.getImage(var)) {
 			reEvaluateClauseStatus(clause);
+			if (mConjunctionEquivalentToFalse) {
+				return;
+			}
 		}
 		for (final Clause<V> clause : mOccursNegative.getImage(var)) {
 			reEvaluateClauseStatus(clause);
+			if (mConjunctionEquivalentToFalse) {
+				return;
+			}
 		}
 	}
 

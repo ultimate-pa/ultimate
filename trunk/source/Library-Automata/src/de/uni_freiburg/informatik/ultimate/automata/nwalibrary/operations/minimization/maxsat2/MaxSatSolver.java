@@ -270,7 +270,6 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 			makeAssignmentPersistent();
 		} else {
 			// only mark temporarily assigned variables as set
-			System.err.println();
 			for (final Entry<V, Boolean> entry : mStack.getVarTempSet().entrySet()) {
 				mUnsetVariables.remove(entry.getKey());
 			}
@@ -347,7 +346,12 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 			mLowestLevel = new StackContent();
 			mIsLowestLevel = true;
 		}
-	
+		
+		/**
+		 * Pops the current stack level, empties the stack if at lowermost level.
+		 * 
+		 * @return true iff stack is empty afterward
+		 */
 		public boolean pop() {
 			if (! mStackInner.isEmpty()) {
 				mStackInner.pop();
@@ -359,6 +363,11 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 			}
 		}
 		
+		/**
+		 * Pushes a new stack level.
+		 * 
+		 * @param var current decision
+		 */
 		public void push(final V var) {
 			mStackInner.push(new StackContent(var));
 			mIsLowestLevel = false;
