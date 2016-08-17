@@ -320,7 +320,13 @@ public abstract class AMaxSatSolver<V> {
 			mClausesMarkedForRemoval.add(clause);
 		} else if (clause.isPseudoUnit()) {
 			final Pair<V, Boolean> propagatee = clause.getPropagatee();
-			mPropagatees.put(propagatee.getFirst(), propagatee.getSecond());
+			final Boolean oldVal =
+					mPropagatees.put(propagatee.getFirst(), propagatee.getSecond());
+			if ((oldVal != null)
+					&& (! oldVal.equals(propagatee.getSecond()))) {
+				// The propagatee already existed with a different value.
+				mConjunctionEquivalentToFalse = true;
+			}
 		}
 	}
 
