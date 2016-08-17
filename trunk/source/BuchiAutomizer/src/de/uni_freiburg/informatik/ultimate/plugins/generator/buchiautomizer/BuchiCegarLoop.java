@@ -658,7 +658,7 @@ public class BuchiCegarLoop {
 					new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) mAbstraction);
 			assert minimizeOp.checkResult(mPredicateFactoryResultChecking);
-			result = (INestedWordAutomaton<CodeBlock, IPredicate>) minimizeOp.getResult();
+			result = minimizeOp.getResult();
 			break;
 		}
 		case MinimizeNwaMaxSat: {
@@ -683,6 +683,7 @@ public class BuchiCegarLoop {
 				lassoChecker.getBinaryStatePredicateManager().getOldRankVariables(),
 				mRootNode.getRootAnnot().getModGlobVarManager(), mRootNode.getRootAnnot().getBoogie2SMT());
 		for (final RefinementSetting rs : mBuchiRefinementSettingSequence) {
+			assert automatonUsesISLPredicates(mAbstraction) : "used wrong StateFactory";
 			INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction = null;
 			try {
 				newAbstraction = mRefineBuchi.refineBuchi(mAbstraction, mCounterexample, mIteration, rs,
@@ -843,6 +844,7 @@ public class BuchiCegarLoop {
 						mRootNode.getRootAnnot().getManagedScript(), modGlobVarManager)))
 								.getResult();
 		mAbstraction = diff.getResult();
+		assert automatonUsesISLPredicates(mAbstraction) : "used wrong StateFactory";
 		mBenchmarkGenerator.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
 		mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 	}
@@ -958,6 +960,11 @@ public class BuchiCegarLoop {
 	 */
 	public boolean isInLTLMode() {
 		return mLTLMode;
+	}
+	
+	private static boolean automatonUsesISLPredicates(final INestedWordAutomaton<CodeBlock, IPredicate> nwa) {
+		final IPredicate someState = nwa.getStates().iterator().next();
+		return (someState instanceof ISLPredicate);
 	}
 
 }
