@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
+ * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -29,59 +29,33 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 /**
  * Clause condition.
  * 
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-class ClauseCondition {
-	private final EClauseStatus mClauseStatus;
-	private final int mUnsetAtoms;
-	
-	
-	public ClauseCondition(final EClauseStatus clauseStatus, final int unsetAtoms) {
-		mClauseStatus = clauseStatus;
-		mUnsetAtoms = unsetAtoms;
+public interface IClauseCondition {
+	/**
+	 * Returns 'NEITHER' by default.
+	 * 
+	 * @return clause truth value
+	 */
+	default EClauseStatus getClauseStatus() {
+		return EClauseStatus.NEITHER;
 	}
 	
-	public EClauseStatus getClauseStatus() {
-		return mClauseStatus;
+	/**
+	 * Returns 'false' by default.
+	 * 
+	 * @return true iff clause is a pseudo-unit
+	 */
+	default boolean isPseudoUnit() {
+		return false;
 	}
 	
-	public int getUnsetAtoms() {
-		return mUnsetAtoms;
-	}
-	
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result
-				+ ((mClauseStatus == null) ? 0 : mClauseStatus.hashCode());
-		result = prime * result + mUnsetAtoms;
-		return result;
-	}
-	
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final ClauseCondition other = (ClauseCondition) obj;
-		if (mClauseStatus != other.mClauseStatus) {
-			return false;
-		}
-		if (mUnsetAtoms != other.mUnsetAtoms) {
-			return false;
-		}
-		return true;
-	}
-	
-	@Override
-	public String toString() {
-		return "ClauseCondition [mClauseStatus=" + mClauseStatus + ", mUnsetAtoms=" + mUnsetAtoms + "]";
+	/**
+	 * Throws an exception by default.
+	 * 
+	 * @return index of the unit literal (if any)
+	 */
+	default int getUnitIndex() {
+		throw new UnsupportedOperationException();
 	}
 }

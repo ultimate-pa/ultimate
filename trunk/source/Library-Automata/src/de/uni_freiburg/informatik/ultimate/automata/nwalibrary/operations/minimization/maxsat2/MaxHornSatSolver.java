@@ -33,6 +33,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * MAX-SAT solver for Horn clauses.
@@ -48,9 +49,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
  * @param <V> Kind of objects that are used as variables.
  */
 public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
-	protected Map<V, Boolean> mVariablesTemporarilySet = new HashMap<V, Boolean>();
+	protected Map<V, Boolean> mVariablesTemporarilySet = new HashMap<>();
 	
 	/**
+	 * Constructor.
+	 * 
 	 * @param services Ultimate services
 	 */
 	public MaxHornSatSolver(final AutomataLibraryServices services) {
@@ -63,6 +66,7 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 		if (mDecisions > 0) {
 			throw new UnsupportedOperationException("only legal before decisions were made");
 		}
+		assert mPropagatees.isEmpty();
 		
 		final V[] positiveAtoms;
 		if (positiveAtom == null) {
@@ -84,18 +88,15 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 				mConjunctionEquivalentToFalse = true;
 				throw new UnsupportedOperationException("clause set is equivalent to false");
 			} else  {
-				assert clause.getUnsetAtoms() > 0;
 				for (final V var :clause.getNegativeAtoms()) {
 					mOccursNegative.addPair(var, clause);
 				}
 				for (final V var :clause.getPositiveAtoms()) {
 					mOccursPositive.addPair(var, clause);
 				}
-				if (clause.getUnsetAtoms() == 1) {
-					mPropagatees.add(clause);
-					assert clause.isPropagatee();
-				} else {
-					assert !clause.isPropagatee();
+				if (clause.isPseudoUnit()) {
+					final Pair<V, Boolean> propagatee = clause.getPropagatee();
+					mPropagatees.put(propagatee.getFirst(), propagatee.getSecond());
 				}
 			}
 			propagateAll();
@@ -136,6 +137,7 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 		if (oldStatus != null) {
 			throw new IllegalArgumentException("variable already set " + var);
 		}
+		mPropagatees.remove(var);
 		reEvaluateStatusOfAllClauses(var);
 //		assert checkClausesConsistent() : "clauses inconsistent";
 	}
@@ -170,6 +172,7 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 		final Set<V> variablesIncorrectlySet = mVariablesTemporarilySet.keySet();
 		mVariablesTemporarilySet = new HashMap<>();
 		mConjunctionEquivalentToFalse = false;
+		mPropagatees = new HashMap<>();
 		reEvaluateStatusOfAllClauses(variablesIncorrectlySet, var);
 		setVariable(var, false);
 		assert ! mConjunctionEquivalentToFalse : "resetting variable did not help";

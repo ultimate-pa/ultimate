@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
- * Copyright (C) 2016 Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -68,18 +69,18 @@ public abstract class AMaxSatSolver<V> {
 	 */
 	protected final Set<V> mUnsetVariables = new HashSet<>();
 	/**
-	 * A clause is a propagatee if it has exactly one unset literal and is not
+	 * A clause is pseudo-unit if it has exactly one unset literal and is not
 	 * equivalent to true at the moment.
-	 * 
-	 * <p>TODO Instead of storing the clauses, store the variables and respective value:
-	 *      this is exactly what happens next in the implementation, might save
-	 *      a lot of memory, and might detect inconsistencies earlier (if one
-	 *      variable gets positive and negative value at the moment of storing).
+	 * We call the pair (variable, assignment) a propagatee.
 	 */
-	protected final Set<Clause<V>> mPropagatees = new HashSet<>();
+	protected Map<V, Boolean> mPropagatees = new LinkedHashMap<>();
 	protected boolean mConjunctionEquivalentToFalse = false;
 	protected Set<Clause<V>> mClausesMarkedForRemoval = new LinkedHashSet<>();
 	
+	/*
+	 * TODO There is no need to separate the occurrence as positive or negative
+	 *      literal. Have only one relation, which should also give a speed-up.
+	 */
 	protected final HashRelation<V, Clause<V>> mOccursPositive = new HashRelation<>();
 	protected final HashRelation<V, Clause<V>> mOccursNegative = new HashRelation<>();
 	
@@ -103,6 +104,7 @@ public abstract class AMaxSatSolver<V> {
 	public AMaxSatSolver(final AutomataLibraryServices services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		Clause.trues = 0; Clause.falses = 0; Clause.neithers = 0;
 	}
 	
 	/**
@@ -155,6 +157,9 @@ public abstract class AMaxSatSolver<V> {
 		mLogger.info("starting solver");
 		propagateAll();
 		makeAssignmentPersistent();
+		mLogger.debug("trues before first decision: " + Clause.trues);
+		mLogger.debug("falses before first decision: " + Clause.falses);
+		mLogger.debug("neithers before first decision: " + Clause.neithers);
 		while (!mUnsetVariables.isEmpty()) {
 			decideOne();
 			if (mConjunctionEquivalentToFalse) {
@@ -167,6 +172,9 @@ public abstract class AMaxSatSolver<V> {
 		makeAssignmentPersistent();
 		mLogger.info("finished solver");
 		log();
+		mLogger.debug("trues total: " + Clause.trues);
+		mLogger.debug("falses total: " + Clause.falses);
+		mLogger.debug("neithers total: " + Clause.neithers);
 		return true;
 	}
 
@@ -240,13 +248,12 @@ public abstract class AMaxSatSolver<V> {
 	 * Assign pseudo-unit clause (under current assignment).
 	 */
 	private void propagateOne() {
-		final Clause<V> clause = getPropagatee();
-		final Pair<V, Boolean> unsetAtom = clause.getUnsetAtom(this);
-		setVariable(unsetAtom.getFirst(), unsetAtom.getSecond());
+		final Entry<V, Boolean> unsetAtom = getPropagatee();
+		setVariable(unsetAtom.getKey(), unsetAtom.getValue());
 	}
 
 	/**
-	 * current policy: just return the next clause from the set
+	 * current policy: just return the next propagatee from the set
 	 * 
 	 * <p>TODO other policies
 	 *      The only goal for optimization here is to find contradictions faster.
@@ -254,14 +261,13 @@ public abstract class AMaxSatSolver<V> {
 	 *      One policy could be to prefer clauses with positive/negative
 	 *      variable, but it is not clear whether this makes sense.
 	 * 
-	 * @return clause with only one unset variable
+	 * @return pair of unset variable and assignment value
 	 */
-	private Clause<V> getPropagatee() {
-		final Iterator<Clause<V>> it = mPropagatees.iterator();
-		final Clause<V> clause = it.next();
-//		Do not remove, we remove while updating clause, this will ease debugging
-//		it.remove();
-		return clause;
+	private Entry<V, Boolean> getPropagatee() {
+		final Iterator<Entry<V, Boolean>> it = mPropagatees.entrySet().iterator();
+		final Entry<V, Boolean> propagatee = it.next();
+		// Do not remove, we remove while updating clause, this will ease debugging.
+		return propagatee;
 	}
 	
 	/**
@@ -307,27 +313,14 @@ public abstract class AMaxSatSolver<V> {
 	}
 
 	private void reEvaluateClauseStatus(final Clause<V> clause) {
-		final boolean wasPropagatee = clause.isPropagatee();
 		clause.updateClauseCondition(this);
 		if (clause.isEquivalentToFalse()) {
 			mConjunctionEquivalentToFalse = true;
 		} else if (clause.isEquivalentToTrue()) {
 			mClausesMarkedForRemoval.add(clause);
-		} else {
-			if (clause.getUnsetAtoms() == 1) {
-				assert clause.isPropagatee();
-				mPropagatees.add(clause);
-			} else {
-				assert !clause.isPropagatee();
-				assert clause.getUnsetAtoms() > 1;
-			}
-		}
-		if (wasPropagatee && !clause.isPropagatee()) {
-			final boolean removed = mPropagatees.remove(clause);
-			assert removed : "clause was not there";
-		} else {
-			assert clause.getUnsetAtoms() == 1
-					|| (! mPropagatees.contains(clause)) : " clause illegal";
+		} else if (clause.isPseudoUnit()) {
+			final Pair<V, Boolean> propagatee = clause.getPropagatee();
+			mPropagatees.put(propagatee.getFirst(), propagatee.getSecond());
 		}
 	}
 
@@ -361,7 +354,6 @@ public abstract class AMaxSatSolver<V> {
 	}
 
 	private void removeClause(final Clause<V> clause) {
-		mPropagatees.remove(clause);
 		for (final V var : clause.mPositiveAtoms) {
 			mOccursPositive.removePair(var, clause);
 		}
@@ -376,8 +368,8 @@ public abstract class AMaxSatSolver<V> {
 		for (final Entry<V, Clause<V>> entry : mOccursPositive.entrySet()) {
 			final Clause<V> clause = entry.getValue();
 			allClauses.add(clause);
-			final ClauseCondition condition = clause.computeClauseCondition(this);
-			if (condition.getClauseStatus().equals(clause.getClauseCondition().getClauseStatus())) {
+			final IClauseCondition condition = clause.computeClauseCondition(this);
+			if (condition.getClauseStatus().equals(clause.getClauseStatus())) {
 				consistent = false;
 				assert consistent;
 			}
@@ -385,19 +377,21 @@ public abstract class AMaxSatSolver<V> {
 		for (final Entry<V, Clause<V>> entry : mOccursNegative.entrySet()) {
 			final Clause<V> clause = entry.getValue();
 			allClauses.add(clause);
-			final ClauseCondition condition = clause.computeClauseCondition(this);
-			if (condition.getClauseStatus().equals(clause.getClauseCondition().getClauseStatus())) {
+			final IClauseCondition condition = clause.computeClauseCondition(this);
+			if (condition.getClauseStatus().equals(clause.getClauseStatus())) {
 				consistent = false;
 				assert consistent;
 			}
 			
 		}
 		for (final Clause<V> clause : allClauses) {
-			if (clause.isPropagatee() && !mPropagatees.contains(clause)) {
-				consistent = false;
-				assert consistent;
+			if (clause.isPseudoUnit()) {
+				if (!mPropagatees.get(clause.getUnsetAtom(this))) {
+					consistent = false;
+					assert consistent;
+				}
 			}
-			if (clause.getClauseCondition().getClauseStatus() == EClauseStatus.TRUE
+			if (clause.getClauseStatus() == EClauseStatus.TRUE
 					&& (! mClausesMarkedForRemoval.contains(clause))) {
 				consistent = false;
 				assert consistent;
@@ -405,17 +399,7 @@ public abstract class AMaxSatSolver<V> {
 
 		}
 		for (final Clause<V> clause : mClausesMarkedForRemoval) {
-			if (clause.getClauseCondition().getClauseStatus() != EClauseStatus.TRUE) {
-				consistent = false;
-				assert consistent;
-			}
-			if (!allClauses.contains(clause)) {
-				consistent = false;
-				assert consistent;
-			}
-		}
-		for (final Clause<V> clause : mPropagatees) {
-			if (!clause.isPropagatee()) {
+			if (clause.getClauseStatus() != EClauseStatus.TRUE) {
 				consistent = false;
 				assert consistent;
 			}

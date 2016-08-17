@@ -36,6 +36,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * MAX-SAT solver for propositional logic clauses.
@@ -47,9 +48,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
  * be a globally optimal solution (which is a solution in which the number
  * of true-assigned variables is maximal).
  * 
- * TODO add resolution to solver
+ * <p>TODO add resolution to solver
  * 
- * TODO detect clause duplicates
+ * <p>TODO detect clause duplicates
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
@@ -98,6 +99,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 			throw new UnsupportedOperationException(
 					"only legal before decisions were made");
 		}
+		assert mPropagatees.isEmpty();
 		
 		final Clause<V> clause = new Clause<V>(this, positiveAtoms, negativeAtoms);
 		if (mShowExpensiveDebugLogs && mLogger.isDebugEnabled()) {
@@ -117,23 +119,18 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 				throw new UnsupportedOperationException(
 						"clause set is equivalent to false");
 			} else  {
-				assert clause.getUnsetAtoms() > 0;
 				for (final V var :clause.getNegativeAtoms()) {
 					mOccursNegative.addPair(var, clause);
 				}
 				for (final V var :clause.getPositiveAtoms()) {
 					mOccursPositive.addPair(var, clause);
 				}
-				if (clause.getUnsetAtoms() == 1) {
-					mPropagatees.add(clause);
-					assert clause.isPropagatee();
+				if (clause.isPseudoUnit()) {
+					final Pair<V, Boolean> propagatee = clause.getPropagatee();
+					mPropagatees.put(propagatee.getFirst(), propagatee.getSecond());
 					propagateAll();
-				} else {
-					assert !clause.isPropagatee();
-					assert mPropagatees.isEmpty();
-					if (! clause.isHorn(this)) {
-						mNumberOfNonHornClauses++;
-					}
+				} else if (! clause.isHorn(this)) {
+					mNumberOfNonHornClauses++;
 				}
 			}
 		}
@@ -174,7 +171,6 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 		mDecisions++;
 		
 		setVariable(var, true);
-//		mLogger.debug("Propagatees: " + mPropagatees);
 		propagateAll();
 		if (mConjunctionEquivalentToFalse) {
 			// first backtracking attempt
@@ -202,6 +198,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 		if (oldStatus != null) {
 			throw new IllegalArgumentException("variable already set " + var);
 		}
+		mPropagatees.remove(var);
 		reEvaluateStatusOfAllClauses(var);
 //		assert checkClausesConsistent() : "clauses inconsistent";
 	}
@@ -240,6 +237,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 		final Set<V> variablesIncorrectlySet = mStack.getVarTempSet().keySet();
 		popStack();
 		
+		mPropagatees = new HashMap<>();
 		mConjunctionEquivalentToFalse = false;
 		reEvaluateStatusOfAllClauses(variablesIncorrectlySet, var);
 		setVariable(var, false);
@@ -248,6 +246,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 	
 	@Override
 	protected void undoAssignment(final V var) {
+		super.undoAssignment(var);
 		// this solver treats the unset variables more carefully
 		mUnsetVariables.add(var);
 	}
@@ -270,9 +269,10 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 		if (makeReallyPersistent) {
 			makeAssignmentPersistent();
 		} else {
-			// only mark temporarily assigned variables as unset
+			// only mark temporarily assigned variables as set
+			System.err.println();
 			for (final Entry<V, Boolean> entry : mStack.getVarTempSet().entrySet()) {
-				mUnsetVariables.add(entry.getKey());
+				mUnsetVariables.remove(entry.getKey());
 			}
 		}
 	}

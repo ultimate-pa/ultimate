@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
+ * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -42,8 +42,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 class Clause<V> {
 	protected final V[] mPositiveAtoms;
 	protected final V[] mNegativeAtoms;
-	protected ClauseCondition mClauseCondition;
+	protected IClauseCondition mClauseCondition;
 	private final int mHashCode;
+	
+	/*
+	 * counters for true/false/neither clauses
+	 * 
+	 * TODO remove after debugging
+	 */
+	public static int trues = 0, falses = 0, neithers = 0;
+	
 	
 	public Clause(final AMaxSatSolver<V> solver, final V[] positiveAtoms, final V[] negativeAtoms) {
 		mPositiveAtoms = positiveAtoms;
@@ -62,15 +70,22 @@ class Clause<V> {
 	}
 
 	/**
-	 * TODO: do update only for newly changed variable
+	 * Computes the clause condition.
+	 * 
+	 * <p>TODO: do update only for newly changed variable
+	 * 
+	 * <p>TODO: update arrays to move finished variables to the end?
 	 * 
 	 * @param solver solver
 	 * @return clause condition
 	 */
-	public ClauseCondition computeClauseCondition(final AMaxSatSolver<V> solver) {
+	public IClauseCondition computeClauseCondition(final AMaxSatSolver<V> solver) {
 		EClauseStatus clauseStatus = EClauseStatus.NEITHER;
 		int unsetAtoms = 0;
-		for (final V var : mPositiveAtoms) {
+		int unitIndex = -1;
+		boolean unitIsPositive = false;
+		for (int i = 0; i < mPositiveAtoms.length; ++i) {
+			final V var = mPositiveAtoms[i];
 			final EVariableStatus status = getCurrentVariableStatus(var, solver);
 			switch (status) {
 			case FALSE:
@@ -81,32 +96,76 @@ class Clause<V> {
 				break;
 			case UNSET:
 				unsetAtoms++;
+				unitIndex = i;
+				unitIsPositive = true;
 				break;
 			default:
-				throw new AssertionError();
+				throw new IllegalArgumentException();
 			}
 		}
-		for (final V var : mNegativeAtoms) {
-			final EVariableStatus status = getCurrentVariableStatus(var, solver);
-			switch (status) {
-			case FALSE:
-				clauseStatus = EClauseStatus.TRUE;
-				break;
-			case TRUE:
-				// do nothing
-				break;
-			case UNSET:
-				unsetAtoms++;
-				break;
-			default:
-				throw new AssertionError();
+		
+		// TODO add this information
+//		final boolean isHornClause = (unsetAtoms <= 1);
+		
+		if (clauseStatus == EClauseStatus.NEITHER) {
+			for (int i = 0; i < mNegativeAtoms.length; ++i) {
+				final V var = mNegativeAtoms[i];
+				final EVariableStatus status = getCurrentVariableStatus(var, solver);
+				switch (status) {
+				case FALSE:
+					clauseStatus = EClauseStatus.TRUE;
+					break;
+				case TRUE:
+					// do nothing
+					break;
+				case UNSET:
+					unsetAtoms++;
+					unitIndex = i;
+					unitIsPositive = false;
+					break;
+				default:
+					throw new IllegalArgumentException();
+				}
 			}
 		}
-		assert unsetAtoms >= 0 && unsetAtoms <= mPositiveAtoms.length + mNegativeAtoms.length;
-		if (unsetAtoms == 0 && clauseStatus != EClauseStatus.TRUE) {
-			clauseStatus = EClauseStatus.FALSE;
+		
+		assert (unsetAtoms >= 0)
+				&& (unsetAtoms <= mPositiveAtoms.length + mNegativeAtoms.length);
+		
+		if (clauseStatus == EClauseStatus.TRUE) {
+			// trivial 'true' clause
+			trues++;
+			return new TrueClauseCondition();
 		}
-		return new ClauseCondition(clauseStatus, unsetAtoms);
+		
+		if (unsetAtoms == 0 || clauseStatus == EClauseStatus.FALSE) {
+			assert (clauseStatus != EClauseStatus.TRUE);
+			// trivial 'false' clause
+			falses++;
+			return new FalseClauseCondition();
+		}
+		
+		assert (clauseStatus == EClauseStatus.NEITHER);
+		neithers++;
+		if (unsetAtoms == 1) {
+			// pseudo-unit clause
+			return new PseudoUnitClauseCondition(unitIndex, unitIsPositive);
+		} else {
+			// clause with several undetermined literals
+			return new UndeterminedClauseCondition();
+		}
+	}
+	
+	public Pair<V, Boolean> getPropagatee() {
+		final int propagateeIndex = mClauseCondition.getUnitIndex();
+		final boolean propagateeIsPositive = (propagateeIndex >= 0);
+		final V var;
+		if (propagateeIsPositive) {
+			var = mPositiveAtoms[propagateeIndex];
+		} else {
+			var = mNegativeAtoms[-(propagateeIndex + 1)];
+		}
+		return new Pair<V, Boolean>(var, propagateeIsPositive);
 	}
 	
 	private EVariableStatus getCurrentVariableStatus(final V var, final AMaxSatSolver<V> solver) {
@@ -138,26 +197,28 @@ class Clause<V> {
 		return mClauseCondition.getClauseStatus() == EClauseStatus.TRUE;
 	}
 	
-	public int getUnsetAtoms() {
-		return mClauseCondition.getUnsetAtoms();
+	public boolean isPseudoUnit() {
+		return mClauseCondition.isPseudoUnit();
 	}
 
 	/**
-	 * @return positive atoms; DO NOT EDIT THE ARRAY!
+	 * Positive atoms.
+	 * DO NOT EDIT THE ARRAY!
 	 */
 	public V[] getPositiveAtoms() {
 		return mPositiveAtoms;
 	}
 
 	/**
-	 * @return negative atoms; DO NOT EDIT THE ARRAY!
+	 * Negative atoms.
+	 * DO NOT EDIT THE ARRAY!
 	 */
 	public V[] getNegativeAtoms() {
 		return mNegativeAtoms;
 	}
 	
-	public ClauseCondition getClauseCondition() {
-		return mClauseCondition;
+	public EClauseStatus getClauseStatus() {
+		return mClauseCondition.getClauseStatus();
 	}
 
 	/**
@@ -165,7 +226,7 @@ class Clause<V> {
 	 * @return an atom that was not yet set
 	 */
 	public Pair<V,Boolean> getUnsetAtom(final AMaxSatSolver<V> solver) {
-		if (mClauseCondition.getUnsetAtoms() != 1) {
+		if (! mClauseCondition.isPseudoUnit()) {
 			throw new IllegalArgumentException("not only one unset Atom");
 		} else {
 			for (final V var : mPositiveAtoms) {
@@ -178,7 +239,7 @@ class Clause<V> {
 				case UNSET:
 					return new Pair<V, Boolean>(var, true);
 				default:
-					throw new AssertionError();
+					throw new IllegalArgumentException();
 				}
 			}
 			for (final V var : mNegativeAtoms) {
@@ -191,23 +252,18 @@ class Clause<V> {
 				case UNSET:
 					return new Pair<V, Boolean>(var, false);
 				default:
-					throw new AssertionError();
+					throw new IllegalArgumentException();
 				}
 			}
 			throw new AssertionError("did not find unset atom");
 		}
 	}
 	
-	public boolean isPropagatee() {
-		return mClauseCondition.getUnsetAtoms() == 1 && 
-				mClauseCondition.getClauseStatus() != EClauseStatus.TRUE;
-	}
-
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		Iterator<V> it = Arrays.asList(mNegativeAtoms).iterator();
-		while(it.hasNext()) {
+		while (it.hasNext()) {
 			sb.append(it.next());
 			if (it.hasNext()) {
 				sb.append(" /\\ ");
@@ -220,7 +276,7 @@ class Clause<V> {
 			sb.append("false");
 		} else {
 			it = Arrays.asList(mPositiveAtoms).iterator();
-			while(it.hasNext()) {
+			while (it.hasNext()) {
 				sb.append(it.next());
 				if (it.hasNext()) {
 					sb.append(" \\/ ");
@@ -231,6 +287,8 @@ class Clause<V> {
 	}
 
 	/**
+	 * TODO this can be stored by clause condition!
+	 * 
 	 * @param solver solver
 	 * @return true iff the clause is a Horn clause under the current assignment
 	 */
@@ -249,7 +307,7 @@ class Clause<V> {
 				case UNSET:
 					break;
 				default:
-					throw new AssertionError();
+					throw new IllegalArgumentException();
 			}
 		}
 		return true;
