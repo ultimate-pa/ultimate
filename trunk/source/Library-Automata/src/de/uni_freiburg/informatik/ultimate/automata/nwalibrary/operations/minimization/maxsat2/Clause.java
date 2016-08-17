@@ -186,15 +186,7 @@ class Clause<V> {
 				return EVariableStatus.FALSE;
 			}
 		}
-		final Boolean tmp = solver.getTemporaryAssignment(var);
-		if (tmp != null) {
-			if (tmp) {
-				return EVariableStatus.TRUE;
-			} else {
-				return EVariableStatus.FALSE;
-			}
-		}
-		return EVariableStatus.UNSET;
+		return solver.getTemporaryAssignment(var);
 	}
 
 	public boolean isEquivalentToFalse() {

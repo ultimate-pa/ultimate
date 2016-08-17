@@ -218,10 +218,9 @@ public abstract class AMaxSatSolver<V> {
 	 * Assignment to the variable which is not guaranteed to not be backtracked.
 	 * 
 	 * @param var variable
-	 * @return <code>true</code>/<code>false</code> if assigned,
-	 *         <code>null</code> otherwise
+	 * @return assignment status
 	 */
-	protected abstract Boolean getTemporaryAssignment(V var);
+	protected abstract EVariableStatus getTemporaryAssignment(V var);
 
 	/**
 	 * Backtracking mechanism.

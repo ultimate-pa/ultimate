@@ -146,7 +146,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 
 	@SuppressWarnings("squid:S2447")
 	@Override
-	protected Boolean getTemporaryAssignment(final V var) {
+	protected EVariableStatus getTemporaryAssignment(final V var) {
 		final Iterator<Map<V, Boolean>> it = mStack.iterator();
 		while (it.hasNext()) {
 			final Map<V, Boolean> map = it.next();
@@ -155,11 +155,13 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 				assert (! mVariablesIrrevocablySet.containsKey(var)) :
 					"Unsynchronized assignment data structures.";
 				// TODO cache result
-				// TODO get rid of this Boolean
-				return result;
+				
+				return result
+						? EVariableStatus.TRUE
+						: EVariableStatus.FALSE;
 			}
 		}
-		return null;
+		return EVariableStatus.UNSET;
 	}
 
 	@Override

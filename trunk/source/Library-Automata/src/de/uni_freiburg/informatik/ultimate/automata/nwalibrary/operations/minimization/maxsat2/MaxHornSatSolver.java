@@ -118,11 +118,16 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 	}
 
 	@Override
-	protected Boolean getTemporaryAssignment(final V var) {
+	protected EVariableStatus getTemporaryAssignment(final V var) {
 		final Boolean result = mVariablesTemporarilySet.get(var);
-		assert (result == null) || (! mVariablesIrrevocablySet.containsKey(var)) :
+		if (result == null) {
+			return EVariableStatus.UNSET;
+		}
+		assert !mVariablesIrrevocablySet.containsKey(var) :
 			"Unsynchronized assignment data structures.";
-		return result;
+		return result
+				? EVariableStatus.TRUE
+				: EVariableStatus.FALSE;
 	}
 	
 	@Override
