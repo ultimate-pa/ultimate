@@ -162,7 +162,7 @@ public class CorrectnessWitnessExtractor {
 		mLogger.info("Found the following invariants in the witness:");
 		for (final Entry<IASTNode, ExtractedWitnessInvariant> entry : result.entrySet()) {
 			assert entry.getKey() == entry.getValue().getRelatedAstNode();
-			mLogger.info(entry.getValue().toString());
+			mLogger.info(entry.getValue().toStringWithWitnessNodeLabel());
 		}
 	}
 
