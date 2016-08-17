@@ -142,6 +142,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -1053,12 +1054,18 @@ public class MainDispatcher extends Dispatcher {
 			result = null;
 		} else {
 			final ExtractedWitnessInvariant invariants = mWitnessInvariants.get(node);
-			final List<AssertStatement> list = translateWitnessInvariant(invariants, (x -> x.isAt()));
-			if (list.isEmpty()) {
+			try {
+				final List<AssertStatement> list = translateWitnessInvariant(invariants, (x -> x.isAt()));
+				if (list.isEmpty()) {
+					result = null;
+				} else {
+					assert list.size() == 1;
+					result = list.get(0);
+				}
+			} catch	(final IncorrectSyntaxException ise) {
+				mLogger.error("The following invariant contains an incorrect syntax and was ignored. Reason: " + ise.getMessage());
+				mLogger.error(invariants);
 				result = null;
-			} else {
-				assert list.size() == 1;
-				result = list.get(0);
 			}
 		}
 		return result;
