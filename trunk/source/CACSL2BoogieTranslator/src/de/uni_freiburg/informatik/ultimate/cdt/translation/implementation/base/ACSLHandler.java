@@ -1005,7 +1005,10 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final Dispatcher main, final CastExpression node) {
 		final ILocation loc = LocationFactory.createACSLLocation(node);
 		final CPrimitive resultType = translateAcslTypeToCType(node.getCastedType());
-		final ExpressionResult expr = (ExpressionResult) main.dispatch(node.getExpression());
+		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getExpression());
+        final MemoryHandler memoryHandler = ((CHandler) main.mCHandler).getMemoryHandler();
+        final StructHandler structHandler = ((CHandler) main.mCHandler).mStructHandler;
+		expr = expr.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
     	final AExpressionTranslation expressionTranslation = 
     			((CHandler) main.mCHandler).getExpressionTranslation();
     	expressionTranslation.convertIfNecessary(loc, expr, resultType);
