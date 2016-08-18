@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <V> Kind of objects that are used as variables.
  */
-public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
+public class HornMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	protected Map<V, Boolean> mVariablesTemporarilySet = new HashMap<>();
 	
 	/**
@@ -56,7 +56,7 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 	 * 
 	 * @param services Ultimate services
 	 */
-	public MaxHornSatSolver(final AutomataLibraryServices services) {
+	public HornMaxSatSolver(final AutomataLibraryServices services) {
 		super(services);
 	}
 
@@ -118,16 +118,16 @@ public class MaxHornSatSolver<V> extends AMaxSatSolver<V> {
 	}
 
 	@Override
-	protected EVariableStatus getTemporaryAssignment(final V var) {
+	protected VariableStatus getTemporaryAssignment(final V var) {
 		final Boolean result = mVariablesTemporarilySet.get(var);
 		if (result == null) {
-			return EVariableStatus.UNSET;
+			return VariableStatus.UNSET;
 		}
 		assert !mVariablesIrrevocablySet.containsKey(var) :
 			"Unsynchronized assignment data structures.";
 		return result
-				? EVariableStatus.TRUE
-				: EVariableStatus.FALSE;
+				? VariableStatus.TRUE
+				: VariableStatus.FALSE;
 	}
 	
 	@Override

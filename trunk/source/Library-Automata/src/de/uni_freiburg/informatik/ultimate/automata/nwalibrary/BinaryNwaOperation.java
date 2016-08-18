@@ -24,62 +24,48 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 
 /**
- * Abstract operation with the most common fields and default methods.
+ * Abstract operation taking two automata as input.
+ * The most common methods are provided but can also be overwritten.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public abstract class AOperation<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public abstract class BinaryNwaOperation<LETTER, STATE>
+		extends GeneralOperation<LETTER, STATE> {
 	/**
-	 * Ultimate services.
+	 * Input nested word automaton.
 	 */
-	protected final AutomataLibraryServices mServices;
+	protected final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	
 	/**
-	 * logger.
+	 * Input nested word automaton.
 	 */
-	protected final ILogger mLogger;
+	protected final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	
 	/**
-	 * Constructor.
-	 * 
 	 * @param services Ultimate services
+	 * @param fstOperand first operand
+	 * @param sndOperand second operand
 	 */
-	public AOperation(final AutomataLibraryServices services) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(
-				LibraryIdentifiers.PLUGIN_ID);
-	}
-	
-	@Override
-	public String operationName() {
-		// use runtime class name by default
-		return getClass().getSimpleName();
+	public BinaryNwaOperation(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) {
+		super(services);
+		mFstOperand = fstOperand;
+		mSndOperand = sndOperand;
 	}
 	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + '.';
-	}
-	
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + '.';
-	}
-	
-	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		mLogger.warn("No result check for " + operationName()
-			+ " available yet.");
-		return true;
+		return "Start " + operationName() + ". First operand "
+				+ mFstOperand.sizeInformation() + " Second operand "
+				+ mSndOperand.sizeInformation();
 	}
 }

@@ -52,7 +52,7 @@ import java.util.HashSet;
  *
  * @author stimpflj
  */
-final class NWA implements Cloneable {
+final class NwaWithArrays implements Cloneable {
 	/** Number of states */
 	int mNumStates;
 
@@ -86,7 +86,7 @@ final class NWA implements Cloneable {
 	 *
 	 * @return <code>true</code> iff the automaton is consistent
 	 */
-	static boolean checkConsistency(final NWA nwa) {
+	static boolean checkConsistency(final NwaWithArrays nwa) {
 		if (nwa.mNumStates < 0) {
 			return false;
 		}
@@ -154,7 +154,7 @@ final class NWA implements Cloneable {
 	 * @return <code>true</code> iff the automaton is deterministic (multiple
 	 *         identical transitions count as non-deterministic)
 	 */
-	static boolean checkDeterminism(final NWA nwa) {
+	static boolean checkDeterminism(final NwaWithArrays nwa) {
 		final HashSet<ITrans> iSeen = new HashSet<ITrans>();
 		for (final ITrans x : nwa.mITrans) {
 			if (!iSeen.add(new ITrans(x.mSrc, x.mSym, 0))) {
@@ -183,7 +183,7 @@ final class NWA implements Cloneable {
 	 * @return ArrayList containing all final states of <code>nwa</code>, in
 	 *         strictly ascending order.
 	 */
-	static ArrayList<Integer> computeInitialStates(final NWA nwa) {
+	static ArrayList<Integer> computeInitialStates(final NwaWithArrays nwa) {
 		final ArrayList<Integer> out = new ArrayList<Integer>();
 
 		for (int i = 0; i < nwa.mNumStates; i++) {
@@ -201,7 +201,7 @@ final class NWA implements Cloneable {
 	 * @return ArrayList containing all final states of <code>nwa</code>, in
 	 *         strictly ascending order.
 	 */
-	static ArrayList<Integer> computeFinalStates(final NWA nwa) {
+	static ArrayList<Integer> computeFinalStates(final NwaWithArrays nwa) {
 		final ArrayList<Integer> out = new ArrayList<Integer>();
 
 		for (int i = 0; i < nwa.mNumStates; i++) {
@@ -218,8 +218,8 @@ final class NWA implements Cloneable {
 	 *         instance on which this method is called.
 	 */
 	@Override
-	public NWA clone() {
-		final NWA out = new NWA();
+	public NwaWithArrays clone() {
+		final NwaWithArrays out = new NwaWithArrays();
 		out.mNumStates = mNumStates;
 		out.mNumISyms = mNumISyms;
 		out.mNumCSyms = mNumCSyms;

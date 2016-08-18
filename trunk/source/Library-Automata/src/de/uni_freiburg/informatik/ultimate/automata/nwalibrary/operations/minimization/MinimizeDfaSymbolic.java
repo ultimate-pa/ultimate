@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  * @param <STATE> state type
  */
 public class MinimizeDfaSymbolic<LETTER, STATE>
-		extends AMinimizeNwa<LETTER, STATE>
+		extends AbstractMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 
 	/***********************************************************************/

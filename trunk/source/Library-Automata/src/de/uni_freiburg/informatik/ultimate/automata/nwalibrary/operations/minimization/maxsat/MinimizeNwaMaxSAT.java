@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.AMinimizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.AbstractMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.IMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE> state type
  */
 public class MinimizeNwaMaxSAT<LETTER, STATE>
-		extends AMinimizeNwa<LETTER, STATE>
+		extends AbstractMinimizeNwa<LETTER, STATE>
 		implements IMinimizeNwa<LETTER, STATE>, IOperation<LETTER, STATE> {
 
 	/**
@@ -73,7 +73,7 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 		convertLog.info("starting conversion");
 		final Converter<LETTER, STATE> converter =
 				new Converter<LETTER, STATE>(services, stateFactory, automaton);
-		final NWA nwa = converter.getNWA();
+		final NwaWithArrays nwa = converter.getNWA();
 		// it shouldn't be like this, but...
 		final ArrayList<Hist> history = converter.computeHistoryStates();
 		convertLog.info(

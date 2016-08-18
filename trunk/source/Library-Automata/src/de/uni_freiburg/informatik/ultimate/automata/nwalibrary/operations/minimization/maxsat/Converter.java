@@ -83,7 +83,7 @@ final class Converter<LETTER, STATE> {
 	private final HashMap<STATE, Integer> mOldStateIndex;
 	private final ArrayList<STATE> mOldState;
 
-	private final NWA mConverted;
+	private final NwaWithArrays mConverted;
 
 	/**
 	 * Constructor. Remembers the necessary things about the input
@@ -189,7 +189,7 @@ final class Converter<LETTER, STATE> {
 			}
 		}
 
-		mConverted = new NWA();
+		mConverted = new NwaWithArrays();
 		mConverted.mNumStates = numStates;
 		mConverted.mNumISyms = numISyms;
 		mConverted.mNumCSyms = numCSyms;
@@ -205,7 +205,7 @@ final class Converter<LETTER, STATE> {
 	 * @return NWA generated from input <code>INestedWordAutomaton</code>
 	 *         automaton.
 	 */
-	NWA getNWA() {
+	NwaWithArrays getNWA() {
 		return mConverted.clone();
 	}
 

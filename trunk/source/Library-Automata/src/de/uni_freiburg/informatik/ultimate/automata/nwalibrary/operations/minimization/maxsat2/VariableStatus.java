@@ -27,12 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2;
 
 /**
- * status of a clause
+ * status of a variable
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public enum EClauseStatus {
+public enum VariableStatus {
+	UNSET,
 	TRUE,
-	FALSE,
-	NEITHER
+	FALSE
 }

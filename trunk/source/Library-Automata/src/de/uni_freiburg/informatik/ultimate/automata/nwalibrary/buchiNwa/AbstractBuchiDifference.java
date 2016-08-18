@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ABinaryNwaOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public abstract class ABuchiDifference<LETTER, STATE>
-		extends ABinaryNwaOperation<LETTER, STATE>
+public abstract class AbstractBuchiDifference<LETTER, STATE>
+		extends BinaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 	
 	protected BuchiIntersectNwa<LETTER, STATE> mIntersect;
@@ -64,7 +64,7 @@ public abstract class ABuchiDifference<LETTER, STATE>
 	 * @param fstOperand first operand
 	 * @param sndOperand second operand
 	 */
-	public ABuchiDifference(final AutomataLibraryServices services,
+	public AbstractBuchiDifference(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) {

@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <V> variable type
  */
 @SuppressWarnings("squid:UselessParenthesesCheck")
-public class MaxSatSolver<V> extends AMaxSatSolver<V> {
+public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	private final SolverStack mStack;
 	
 	// TODO temporary improvement, should become more sophisticated
@@ -76,7 +76,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 	 * 
 	 * @param services Ultimate services
 	 */
-	public MaxSatSolver(final AutomataLibraryServices services) {
+	public GeneralMaxSatSolver(final AutomataLibraryServices services) {
 		super(services);
 		
 		mStack = new SolverStack();
@@ -148,7 +148,7 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 
 	@SuppressWarnings("squid:S2447")
 	@Override
-	protected EVariableStatus getTemporaryAssignment(final V var) {
+	protected VariableStatus getTemporaryAssignment(final V var) {
 		final Iterator<Map<V, Boolean>> it = mStack.iterator();
 		while (it.hasNext()) {
 			final Map<V, Boolean> map = it.next();
@@ -159,11 +159,11 @@ public class MaxSatSolver<V> extends AMaxSatSolver<V> {
 				// TODO cache result
 				
 				return result
-						? EVariableStatus.TRUE
-						: EVariableStatus.FALSE;
+						? VariableStatus.TRUE
+						: VariableStatus.FALSE;
 			}
 		}
-		return EVariableStatus.UNSET;
+		return VariableStatus.UNSET;
 	}
 
 	@Override

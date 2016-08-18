@@ -82,7 +82,7 @@ final class Generator {
 	 * @return A (consistent) Partition which represents the minimized
 	 *         automaton.
 	 */
-	static Horn3Array generateClauses(final NWA inNWA, ArrayList<Hist> history) {
+	static Horn3Array generateClauses(final NwaWithArrays inNWA, ArrayList<Hist> history) {
 		assert Hist.checkConsistency(inNWA, history);
 
 		// "assert" that there are no transitions which are never taken

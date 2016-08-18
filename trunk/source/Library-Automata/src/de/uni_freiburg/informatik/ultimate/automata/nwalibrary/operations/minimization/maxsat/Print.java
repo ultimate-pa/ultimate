@@ -76,9 +76,9 @@ final class Print {
 	 *            readonly NWA. Must have no null fields and must be constrained
 	 *            as suggested
 	 */
-	static void printNWA(final Writer writer, final NWA nwa) {
-		final ArrayList<Integer> initialStates = NWA.computeInitialStates(nwa);
-		final ArrayList<Integer> finalStates = NWA.computeFinalStates(nwa);
+	static void printNWA(final Writer writer, final NwaWithArrays nwa) {
+		final ArrayList<Integer> initialStates = NwaWithArrays.computeInitialStates(nwa);
+		final ArrayList<Integer> finalStates = NwaWithArrays.computeFinalStates(nwa);
 
 		final PrintWriter p = new PrintWriter(writer);
 
@@ -117,7 +117,7 @@ final class Print {
 		return w.toString();
 	}
 
-	static String makeString(final NWA nwa) {
+	static String makeString(final NwaWithArrays nwa) {
 		final StringWriter w = new StringWriter();
 		Print.printNWA(w,  nwa);
 		return w.toString();

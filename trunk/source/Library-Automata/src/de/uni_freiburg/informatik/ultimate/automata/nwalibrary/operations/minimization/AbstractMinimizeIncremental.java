@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public abstract class AMinimizeIncremental<LETTER, STATE>
-		extends AMinimizeNwa<LETTER, STATE> {
+public abstract class AbstractMinimizeIncremental<LETTER, STATE>
+		extends AbstractMinimizeNwa<LETTER, STATE> {
 	
 	/**
 	 * The interrupt.
@@ -61,7 +61,7 @@ public abstract class AMinimizeIncremental<LETTER, STATE>
 	 * @param operand input automaton
 	 * @param interrupt interrupt
 	 */
-	protected AMinimizeIncremental(final AutomataLibraryServices services,
+	protected AbstractMinimizeIncremental(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand,

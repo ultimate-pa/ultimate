@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AUnaryNwaOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -61,8 +61,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public abstract class AMinimizeNwa<LETTER, STATE>
-		extends AUnaryNwaOperation<LETTER, STATE>
+public abstract class AbstractMinimizeNwa<LETTER, STATE>
+		extends UnaryNwaOperation<LETTER, STATE>
 		implements IMinimizeNwa<LETTER, STATE>, IOperation<LETTER, STATE> {
 	/**
 	 * The operand as more specific interface.
@@ -103,7 +103,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 * @param operand
 	 *            input automaton
 	 */
-	protected AMinimizeNwa(final AutomataLibraryServices services,
+	protected AbstractMinimizeNwa(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory, final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services, operand);
@@ -129,7 +129,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 * @param operand
 	 *            input automaton
 	 */
-	protected AMinimizeNwa(
+	protected AbstractMinimizeNwa(
 			final AutomataLibraryServices services,
 			final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand) {

@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ABinaryNwaOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * @param <STATE> Content
  */
 public class ConcurrentProduct<LETTER,STATE>
-		extends ABinaryNwaOperation<LETTER, STATE> {
+		extends BinaryNwaOperation<LETTER, STATE> {
 	
 	private final boolean mConcurrentPrefixProduct;
 

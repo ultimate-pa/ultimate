@@ -51,7 +51,7 @@ final class Scan {
 	 *			  where to scan from
 	 * @return parsed <code>NWA</code> or <code>null</code>
 	 */
-	static NWA scanNWA(final Reader reader) throws IOException {
+	static NwaWithArrays scanNWA(final Reader reader) throws IOException {
 		int numStates;
 		int numISyms;
 		int numCSyms;
@@ -154,7 +154,7 @@ final class Scan {
 			return null;
 		}
 
-		final NWA out = new NWA();
+		final NwaWithArrays out = new NwaWithArrays();
 		out.mNumStates = numStates;
 		out.mNumISyms = numISyms;
 		out.mNumCSyms = numCSyms;
@@ -165,7 +165,7 @@ final class Scan {
 		out.mCTrans = caTrans;
 		out.mRTrans = reTrans;
 
-		if (!NWA.checkConsistency(out)) {
+		if (!NwaWithArrays.checkConsistency(out)) {
 			System.err.println("ERROR: Parsed automaton is not consistent");
 			return null;
 		}
@@ -178,7 +178,7 @@ final class Scan {
 	 * an <code>InputStreamReader</code> made from the <code>filepath</code>
 	 * argument.
 	 */
-	static NWA inputAsRelations(final String filepath) throws IOException {
+	static NwaWithArrays inputAsRelations(final String filepath) throws IOException {
 		final InputStream inputStream = new FileInputStream(filepath);
 		final Reader reader = new InputStreamReader(inputStream);
 		return scanNWA(reader);

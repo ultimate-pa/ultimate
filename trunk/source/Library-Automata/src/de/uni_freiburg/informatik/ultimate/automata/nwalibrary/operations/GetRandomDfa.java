@@ -39,7 +39,7 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AOperation;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
  * @author Daniel Tischner
  */
 public final class GetRandomDfa
-		extends AOperation<String, String>
+		extends GeneralOperation<String, String>
 		implements IOperation<String, String> {
 	/**
 	 * Constant for no valid state. Valid states are 0, 1, ...

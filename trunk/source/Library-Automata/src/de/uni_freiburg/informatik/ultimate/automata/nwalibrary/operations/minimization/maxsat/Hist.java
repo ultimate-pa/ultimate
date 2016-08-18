@@ -79,7 +79,7 @@ final class Hist {
 	 *         NOTE: history states can be -1. This means "bottom-of-stack"
 	 *         state.
 	 */
-	static boolean checkConsistency(final NWA nwa, final ArrayList<Hist> hist) {
+	static boolean checkConsistency(final NwaWithArrays nwa, final ArrayList<Hist> hist) {
 		for (int i = 0; i < hist.size(); i++) {
 			if (hist.get(i).mLin < 0 || hist.get(i).mLin >= nwa.mNumStates) {
 				return false;

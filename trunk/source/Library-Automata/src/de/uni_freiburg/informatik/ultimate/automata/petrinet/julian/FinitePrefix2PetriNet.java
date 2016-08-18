@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import de.uni_freiburg.informatik.ultimate.automata.AOperation;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class FinitePrefix2PetriNet<L, C>
-		extends AOperation<L, C>
+		extends GeneralOperation<L, C>
 		implements IOperation<L, C> {
 	
 	private final BranchingProcess<L, C> mInput;

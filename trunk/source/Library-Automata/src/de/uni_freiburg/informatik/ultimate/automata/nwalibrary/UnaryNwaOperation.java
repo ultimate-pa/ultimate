@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
-import de.uni_freiburg.informatik.ultimate.automata.AOperation;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncl
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public abstract class AUnaryNwaOperation<LETTER, STATE>
-		extends AOperation<LETTER, STATE> {
+public abstract class UnaryNwaOperation<LETTER, STATE>
+		extends GeneralOperation<LETTER, STATE> {
 	/**
 	 * Input nested word automaton.
 	 */
@@ -53,7 +53,7 @@ public abstract class AUnaryNwaOperation<LETTER, STATE>
 	 * @param services Ultimate services
 	 * @param operand operand
 	 */
-	public AUnaryNwaOperation(final AutomataLibraryServices services,
+	public UnaryNwaOperation(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
 		super(services);
 		mOperand = operand;

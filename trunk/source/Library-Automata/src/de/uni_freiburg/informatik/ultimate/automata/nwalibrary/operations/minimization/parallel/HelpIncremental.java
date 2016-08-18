@@ -38,7 +38,7 @@ import java.util.Set;
  *
  */
 public class HelpIncremental implements Runnable {
-	private final MinimizeDfaAmrParallel<?, ?> mIncrementalAlgorithm;
+	private final MinimizeDfaIncrementalParallel<?, ?> mIncrementalAlgorithm;
 	private final Set<Integer> mArray1;
 	private final Set<Integer> mArray2;
 
@@ -49,7 +49,7 @@ public class HelpIncremental implements Runnable {
 	 * @param incremental
 	 *            Currently running instance of the incremental algorithm
 	 */
-	public HelpIncremental(final MinimizeDfaAmrParallel<?, ?> incremental,
+	public HelpIncremental(final MinimizeDfaIncrementalParallel<?, ?> incremental,
 			final Set<Integer> array1, final Set<Integer> array2) {
 		mIncrementalAlgorithm = incremental;
 		mArray1 = array1;

@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <V> Kind of objects that are used as variables.
  */
-public abstract class AMaxSatSolver<V> {
+public abstract class AbstractMaxSatSolver<V> {
 	protected final AutomataLibraryServices mServices;
 	protected final ILogger mLogger;
 	
@@ -102,7 +102,7 @@ public abstract class AMaxSatSolver<V> {
 	 * 
 	 * @param services Ultimate services
 	 */
-	public AMaxSatSolver(final AutomataLibraryServices services) {
+	public AbstractMaxSatSolver(final AutomataLibraryServices services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		Clause.trues = 0; Clause.falses = 0; Clause.neithers = 0;
@@ -210,14 +210,14 @@ public abstract class AMaxSatSolver<V> {
 	 * @param var variable
 	 * @return The locally optimal satisfying assignment.
 	 */
-	public EVariableStatus getValue(final V var) {
+	public VariableStatus getValue(final V var) {
 		final Boolean value = getPersistentAssignment(var);
 		if (value == null) {
-			return EVariableStatus.UNSET;
+			return VariableStatus.UNSET;
 		} else if (value) {
-			return EVariableStatus.TRUE;
+			return VariableStatus.TRUE;
 		} else {
-			return EVariableStatus.FALSE;
+			return VariableStatus.FALSE;
 		}
 	}
 
@@ -236,7 +236,7 @@ public abstract class AMaxSatSolver<V> {
 	 * @param var variable
 	 * @return assignment status
 	 */
-	protected abstract EVariableStatus getTemporaryAssignment(V var);
+	protected abstract VariableStatus getTemporaryAssignment(V var);
 
 	/**
 	 * Backtracking mechanism.
@@ -436,7 +436,7 @@ public abstract class AMaxSatSolver<V> {
 					assert consistent;
 				}
 			}
-			if (clause.getClauseStatus() == EClauseStatus.TRUE
+			if (clause.getClauseStatus() == ClauseStatus.TRUE
 					&& (! mClausesMarkedForRemoval.contains(clause))) {
 				consistent = false;
 				assert consistent;
@@ -444,7 +444,7 @@ public abstract class AMaxSatSolver<V> {
 
 		}
 		for (final Clause<V> clause : mClausesMarkedForRemoval) {
-			if (clause.getClauseStatus() != EClauseStatus.TRUE) {
+			if (clause.getClauseStatus() != ClauseStatus.TRUE) {
 				consistent = false;
 				assert consistent;
 			}

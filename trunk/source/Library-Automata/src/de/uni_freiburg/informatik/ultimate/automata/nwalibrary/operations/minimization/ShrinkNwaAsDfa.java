@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <STATE> state type
  */
 public class ShrinkNwaAsDfa<LETTER, STATE>
-		extends AMinimizeNwa<LETTER, STATE>
+		extends AbstractMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 	// old automaton
 	private IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;

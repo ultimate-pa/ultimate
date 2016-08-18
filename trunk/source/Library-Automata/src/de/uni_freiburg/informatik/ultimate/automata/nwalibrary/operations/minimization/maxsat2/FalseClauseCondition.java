@@ -34,8 +34,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 public final class FalseClauseCondition implements IClauseCondition {
 	
 	@Override
-	public EClauseStatus getClauseStatus() {
-		return EClauseStatus.FALSE;
+	public ClauseStatus getClauseStatus() {
+		return ClauseStatus.FALSE;
 	}
 	
 	@Override

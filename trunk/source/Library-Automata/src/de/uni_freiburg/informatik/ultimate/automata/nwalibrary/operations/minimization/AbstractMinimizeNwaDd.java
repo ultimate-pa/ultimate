@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * @param <STATE> state type
  */
 @SuppressWarnings("squid:UselessParenthesesCheck")
-public abstract class AMinimizeNwaDD<LETTER, STATE>
-		extends AMinimizeNwa<LETTER, STATE>
+public abstract class AbstractMinimizeNwaDd<LETTER, STATE>
+		extends AbstractMinimizeNwa<LETTER, STATE>
 		implements IMinimizeNwaDD<LETTER, STATE> {
 	/**
 	 * This constructor should be called by all subclasses and only by them.
@@ -56,7 +56,7 @@ public abstract class AMinimizeNwaDD<LETTER, STATE>
 	 * @param operand
 	 *            input automaton
 	 */
-	protected AMinimizeNwaDD(final AutomataLibraryServices services,
+	protected AbstractMinimizeNwaDd(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory, final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services, stateFactory, name, operand);

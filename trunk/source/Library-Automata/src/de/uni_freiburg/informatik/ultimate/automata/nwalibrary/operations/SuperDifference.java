@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.AOperation;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  */
 
 public class SuperDifference<LETTER, STATE>
-		extends AOperation<LETTER, STATE>
+		extends GeneralOperation<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 	/* *** *** *** Fields *** *** *** */
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
  * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -24,41 +24,15 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.petrinet;
-
-import de.uni_freiburg.informatik.ultimate.automata.AOperation;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2;
 
 /**
- * Abstract operation taking one Petri net as input.
- * The most common methods are provided but can also be overwritten.
+ * status of a clause
  * 
- * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public abstract class AUnaryNetOperation<LETTER, STATE>
-		extends AOperation<LETTER, STATE> {
-	/**
-	 * Input Petri net.
-	 */
-	protected final IPetriNet<LETTER, STATE> mOperand;
-	
-	/**
-	 * Constructor.
-	 * 
-	 * @param services Ultimate services
-	 * @param operand operand
-	 */
-	public AUnaryNetOperation(final AutomataLibraryServices services,
-			final IPetriNet<LETTER, STATE> operand) {
-		super(services);
-		mOperand = operand;
-	}
-	
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Operand "
-				+ mOperand.sizeInformation();
-	}
+public enum ClauseStatus {
+	TRUE,
+	FALSE,
+	NEITHER
 }

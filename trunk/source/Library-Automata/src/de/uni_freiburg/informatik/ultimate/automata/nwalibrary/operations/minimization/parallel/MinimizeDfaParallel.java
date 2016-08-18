@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.AMinimizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.AbstractMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.Interrupt;
 
 /**
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimi
  * @param <STATE> state type
  */
 public final class MinimizeDfaParallel<LETTER, STATE>
-		extends AMinimizeNwa<LETTER, STATE>
+		extends AbstractMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 	/**
 	 * Whether the result is constructed yet.
@@ -83,7 +83,7 @@ public final class MinimizeDfaParallel<LETTER, STATE>
 	/**
 	 * Instance of the Incremental Algorithm.
 	 */
-	private MinimizeDfaAmrParallel<LETTER, STATE> mIncrementalAlgorithm;
+	private MinimizeDfaIncrementalParallel<LETTER, STATE> mIncrementalAlgorithm;
 
 	/**
 	 * Object for interrupting the incremental algorithm.
@@ -142,7 +142,7 @@ public final class MinimizeDfaParallel<LETTER, STATE>
 		this.mInterrupt = new Interrupt();
 
 		MinimizeDfaHopcroftParallel.setParallelFlag(true);
-		MinimizeDfaAmrParallel.setParallelFlag(true);
+		MinimizeDfaIncrementalParallel.setParallelFlag(true);
 
 		mHopcroftThread = new AlgorithmTask(this, Algorithm.HOPCROFT);
 		mIncrementalThread = new AlgorithmTask(this, Algorithm.INCREMENTAL);
@@ -207,7 +207,7 @@ public final class MinimizeDfaParallel<LETTER, STATE>
 
 		// Set parallel flags of both algorithms to false again.
 		MinimizeDfaHopcroftParallel.setParallelFlag(false);
-		MinimizeDfaAmrParallel.setParallelFlag(false);
+		MinimizeDfaIncrementalParallel.setParallelFlag(false);
 		mLogger.info("MAIN: " + exitMessage());
 	}
 
@@ -235,7 +235,7 @@ public final class MinimizeDfaParallel<LETTER, STATE>
 	/**
 	 * Getter for instance of incremental algorithm.
 	 */
-	public MinimizeDfaAmrParallel<LETTER, STATE> getIncremental() {
+	public MinimizeDfaIncrementalParallel<LETTER, STATE> getIncremental() {
 		return mIncrementalAlgorithm;
 	}
 
@@ -455,7 +455,7 @@ public final class MinimizeDfaParallel<LETTER, STATE>
 
 				} else {
 					mLogger.debug("miep1");
-					mAlgorithm = new MinimizeDfaAmrParallel<LETTER, STATE>(
+					mAlgorithm = new MinimizeDfaIncrementalParallel<LETTER, STATE>(
 							mServices, mOperand.getStateFactory(), mOperand,
 							mInterrupt, mInt2state, mState2int);
 
@@ -463,7 +463,7 @@ public final class MinimizeDfaParallel<LETTER, STATE>
 						return;
 					}
 					mLogger.debug("miep2");
-					mIncrementalAlgorithm = (MinimizeDfaAmrParallel<LETTER, STATE>) mAlgorithm;
+					mIncrementalAlgorithm = (MinimizeDfaIncrementalParallel<LETTER, STATE>) mAlgorithm;
 					mIncrementalAlgorithmInitialized = true;
 					synchronized (mInterrupt) {
 						if (mHopcroftAlgorithmInitialized) {

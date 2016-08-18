@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.AMinimizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.AbstractMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.Interrupt;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * @param <STATE> state type
  */
 public class MinimizeDfaHopcroftParallel<LETTER, STATE>
-		extends AMinimizeNwa<LETTER, STATE>
+		extends AbstractMinimizeNwa<LETTER, STATE>
 		implements IMinimize, IOperation<LETTER, STATE> {
 	/**
 	 * Is the result constructed yet?
@@ -117,7 +117,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE>
 	/**
 	 * Instance of the running instance of the incremental algorithm.
 	 */
-	private MinimizeDfaAmrParallel<LETTER, STATE> mIncrementalAlgorithm;
+	private MinimizeDfaIncrementalParallel<LETTER, STATE> mIncrementalAlgorithm;
 	/**
 	 * This variable will be true as soon as the mappings of states to integer
 	 * are entirely computed.
@@ -249,7 +249,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE>
 	 *            The instance of the parallel algorithm.
 	 */
 	public void minimizeParallel(final LinkedBlockingQueue<Runnable> taskQueue,
-			final MinimizeDfaAmrParallel<LETTER, STATE> incremental) {
+			final MinimizeDfaIncrementalParallel<LETTER, STATE> incremental) {
 
 		mTaskQueue = taskQueue;
 		mIncrementalAlgorithm = incremental;

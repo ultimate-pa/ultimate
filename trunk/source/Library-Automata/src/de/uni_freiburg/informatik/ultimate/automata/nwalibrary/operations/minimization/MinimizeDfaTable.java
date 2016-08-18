@@ -55,8 +55,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class MinimizeDfa<LETTER,STATE>
-		extends AMinimizeNwa<LETTER, STATE>
+public class MinimizeDfaTable<LETTER,STATE>
+		extends AbstractMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
 	/*_______________________________________________________________________*\
 	\* FIELDS / ATTRIBUTES                                                   */
@@ -74,7 +74,7 @@ public class MinimizeDfa<LETTER,STATE>
 	 *            the input automaton
 	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
-	public MinimizeDfa(final AutomataLibraryServices services,
+	public MinimizeDfaTable(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER,STATE> operand)
 					throws AutomataLibraryException {
 		super(services, operand.getStateFactory(), "minimizeDFA", operand);

@@ -29,12 +29,12 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AUnaryNwaOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 
 public class GetAcceptedWord<LETTER, STATE>
-		extends AUnaryNwaOperation<LETTER, STATE>
+		extends UnaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
 	private NestedWord<LETTER> mAcceptedWord;
 

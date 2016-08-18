@@ -40,10 +40,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2.AMaxSatSolver;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2.EVariableStatus;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2.MaxHornSatSolver;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2.MaxSatSolver;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2.AbstractMaxSatSolver;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2.VariableStatus;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2.HornMaxSatSolver;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2.GeneralMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 /**
  * MAX-SAT based minimization for NWAs. This operation is a re-implementation of
  * Jens' bachelor thesis. Its main purpose is to test the
- * {@link MaxHornSatSolver}. For small deterministic NWAs it should produce small
+ * {@link HornMaxSatSolver}. For small deterministic NWAs it should produce small
  * results efficiently. For larger NWAs it runs out of memory. For
  * nondeterministic NWAs it should be correct, however the size reduction will
  * be very poor for states with nondeterministic outgoing transitions. (Given a
@@ -75,11 +75,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @param <STATE> state type
  */
 public class MinimizeNwaMaxSat2<LETTER, STATE>
-		extends AMinimizeNwaDD<LETTER, STATE>
+		extends AbstractMinimizeNwaDd<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 
 	private final NestedMap2<STATE, STATE, Doubleton<STATE>> mStatePairs = new NestedMap2<>();
-	private final AMaxSatSolver<Doubleton<STATE>> mSolver;
+	private final AbstractMaxSatSolver<Doubleton<STATE>> mSolver;
 	private final Collection<Set<STATE>> mInitialEquivalenceClasses;
 	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
@@ -209,9 +209,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 					"For using the Horn solver you must use Horn clauses.");
 		}
 		if (mUseHornSolver) {
-			mSolver = new MaxHornSatSolver<Doubleton<STATE>>(mServices);
+			mSolver = new HornMaxSatSolver<Doubleton<STATE>>(mServices);
 		} else {
-			mSolver = new MaxSatSolver<Doubleton<STATE>>(mServices);
+			mSolver = new GeneralMaxSatSolver<Doubleton<STATE>>(mServices);
 		}
 
 		// TODO even copy an existing HashMap?
@@ -695,7 +695,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 		return returnLetters1.equals(returnLetters2);
 	}
 	
-	private EVariableStatus resultFromSolver(final STATE inputState1,
+	private VariableStatus resultFromSolver(final STATE inputState1,
 			final STATE inputState2) {
 		assert haveSimilarEquivalenceClass(inputState1, inputState2) :
 			"check not available";
@@ -705,11 +705,11 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 	}
 
 	private boolean solverSaysDifferent(final STATE inputState1, final STATE inputState2) {
-		return resultFromSolver(inputState1, inputState2) == EVariableStatus.FALSE;
+		return resultFromSolver(inputState1, inputState2) == VariableStatus.FALSE;
 	}
 
 	private boolean solverSaysSimilar(final STATE inputState1, final STATE inputState2) {
-		return resultFromSolver(inputState1, inputState2) == EVariableStatus.TRUE;
+		return resultFromSolver(inputState1, inputState2) == VariableStatus.TRUE;
 	}
 
 	private boolean knownToBeSimilar(final STATE inputState1, final STATE inputState2) {

@@ -47,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class MinimizeDfaHopcroftPaper<LETTER, STATE>
-		extends AMinimizeNwaDD<LETTER, STATE>
+public class MinimizeDfaHopcroftArrays<LETTER, STATE>
+		extends AbstractMinimizeNwaDd<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 	// ArrayList and HashMap for mapping STATE to int and vice versa.
 	private ArrayList<STATE> mInt2state;
@@ -95,14 +95,14 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 	/*******************************************************************//**
 	 * Constructor.
 	 */
-	public MinimizeDfaHopcroftPaper(final AutomataLibraryServices services, 
+	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services, 
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final StateFactory<STATE> stateFactory,
 			final boolean addMapping) {
 		this(services, operand, stateFactory, null, addMapping);
 	}
 	
-	public MinimizeDfaHopcroftPaper(final AutomataLibraryServices services, 
+	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services, 
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final StateFactory<STATE> stateFactory,
 			final Collection<Set<STATE>> initialPartition, final boolean addMapping) {
@@ -128,7 +128,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE>
 	/**
 	 * Constructor without state factory.
 	 */
-	public MinimizeDfaHopcroftPaper(final AutomataLibraryServices services, 
+	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services, 
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		this(services, operand, operand.getStateFactory(), false);
 	}

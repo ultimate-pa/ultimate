@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * @param <C> Content
  */
 public class PetriNet2FiniteAutomaton<S,C>
-		extends AUnaryNetOperation<S, C>
+		extends UnaryNetOperation<S, C>
 		implements IOperation<S,C> {
 	
 	private final NestedWordAutomaton<S,C> mResult;

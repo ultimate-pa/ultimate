@@ -61,8 +61,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * @param <STATE>
  *            Class of the states from the automata
  */
-public final class MinimizeIncompleteDfa<LETTER, STATE>
-		extends AMinimizeNwaDD<LETTER, STATE>
+public final class MinimizeDfaHopcroftLists<LETTER, STATE>
+		extends AbstractMinimizeNwaDd<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 	/**
 	 * Initial amount of blocks.
@@ -121,7 +121,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 	 * where 'n' is the number of states, 'm' the number of edges and 'k' the
 	 * size of the alphabet.
 	 */
-	public MinimizeIncompleteDfa(
+	public MinimizeDfaHopcroftLists(
 			final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final StateFactory<STATE> stateFactory,
@@ -174,7 +174,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE>
 	 * @param operand
 	 *            Automaton to minimize
 	 */
-	public MinimizeIncompleteDfa(final AutomataLibraryServices services,
+	public MinimizeDfaHopcroftLists(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		this(services, operand, operand.getStateFactory(), null, false);
 	}

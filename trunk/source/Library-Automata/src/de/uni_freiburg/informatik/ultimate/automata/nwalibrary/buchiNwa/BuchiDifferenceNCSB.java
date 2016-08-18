@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 
 public class BuchiDifferenceNCSB<LETTER,STATE>
-		extends ABuchiDifference<LETTER, STATE>
+		extends AbstractBuchiDifference<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
 	private BuchiComplementNCSBNwa<LETTER,STATE> mSndComplemented;
 	

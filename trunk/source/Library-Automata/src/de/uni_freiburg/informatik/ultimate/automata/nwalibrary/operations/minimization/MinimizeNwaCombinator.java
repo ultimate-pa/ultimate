@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * @param <STATE> state type
  */
 public class MinimizeNwaCombinator<LETTER, STATE>
-		extends AMinimizeNwaDD<LETTER, STATE>
+		extends AbstractMinimizeNwaDd<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 	/**
 	 * Possible minimization algorithms.

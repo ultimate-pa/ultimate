@@ -62,7 +62,7 @@ class Clause<V> {
 	public static int trues = 0, falses = 0, neithers = 0;
 	
 	
-	public Clause(final AMaxSatSolver<V> solver, final V[] positiveAtoms, final V[] negativeAtoms) {
+	public Clause(final AbstractMaxSatSolver<V> solver, final V[] positiveAtoms, final V[] negativeAtoms) {
 		mPositiveAtoms = positiveAtoms;
 		mNegativeAtoms = negativeAtoms;
 		mHashCode = computeHashCode();
@@ -74,7 +74,7 @@ class Clause<V> {
 		return Arrays.hashCode(mPositiveAtoms) + prime * Arrays.hashCode(mNegativeAtoms);
 	}
 
-	void updateClauseCondition(final AMaxSatSolver<V> solver) {
+	void updateClauseCondition(final AbstractMaxSatSolver<V> solver) {
 		mClauseCondition = computeClauseCondition(solver);
 	}
 
@@ -88,20 +88,20 @@ class Clause<V> {
 	 * @param solver solver
 	 * @return clause condition
 	 */
-	public IClauseCondition computeClauseCondition(final AMaxSatSolver<V> solver) {
-		EClauseStatus clauseStatus = EClauseStatus.NEITHER;
+	public IClauseCondition computeClauseCondition(final AbstractMaxSatSolver<V> solver) {
+		ClauseStatus clauseStatus = ClauseStatus.NEITHER;
 		int unsetAtoms = 0;
 		int unitIndex = -1;
 		boolean unitIsPositive = false;
 		for (int i = 0; i < mPositiveAtoms.length; ++i) {
 			final V var = mPositiveAtoms[i];
-			final EVariableStatus status = getCurrentVariableStatus(var, solver);
+			final VariableStatus status = getCurrentVariableStatus(var, solver);
 			switch (status) {
 			case FALSE:
 				// do nothing
 				break;
 			case TRUE:
-				clauseStatus = EClauseStatus.TRUE;
+				clauseStatus = ClauseStatus.TRUE;
 				break;
 			case UNSET:
 				unsetAtoms++;
@@ -116,13 +116,13 @@ class Clause<V> {
 		// is the current clause a Horn clause?
 		mIsHorn = (unsetAtoms <= 1);
 		
-		if (clauseStatus == EClauseStatus.NEITHER) {
+		if (clauseStatus == ClauseStatus.NEITHER) {
 			for (int i = 0; i < mNegativeAtoms.length; ++i) {
 				final V var = mNegativeAtoms[i];
-				final EVariableStatus status = getCurrentVariableStatus(var, solver);
+				final VariableStatus status = getCurrentVariableStatus(var, solver);
 				switch (status) {
 				case FALSE:
-					clauseStatus = EClauseStatus.TRUE;
+					clauseStatus = ClauseStatus.TRUE;
 					break;
 				case TRUE:
 					// do nothing
@@ -141,20 +141,20 @@ class Clause<V> {
 		assert (unsetAtoms >= 0)
 				&& (unsetAtoms <= mPositiveAtoms.length + mNegativeAtoms.length);
 		
-		if (clauseStatus == EClauseStatus.TRUE) {
+		if (clauseStatus == ClauseStatus.TRUE) {
 			// trivial 'true' clause
 			trues++;
 			return TRUE_CLAUSE_CONDITION;
 		}
 		
-		if (unsetAtoms == 0 || clauseStatus == EClauseStatus.FALSE) {
-			assert (clauseStatus != EClauseStatus.TRUE);
+		if (unsetAtoms == 0 || clauseStatus == ClauseStatus.FALSE) {
+			assert (clauseStatus != ClauseStatus.TRUE);
 			// trivial 'false' clause
 			falses++;
 			return FALSE_CLAUSE_CONDITION;
 		}
 		
-		assert (clauseStatus == EClauseStatus.NEITHER);
+		assert (clauseStatus == ClauseStatus.NEITHER);
 		neithers++;
 		if (unsetAtoms == 1) {
 			// pseudo-unit clause
@@ -177,25 +177,25 @@ class Clause<V> {
 		return new Pair<V, Boolean>(var, propagateeIsPositive);
 	}
 	
-	private EVariableStatus getCurrentVariableStatus(final V var, final AMaxSatSolver<V> solver) {
+	private VariableStatus getCurrentVariableStatus(final V var, final AbstractMaxSatSolver<V> solver) {
 		assert solver.mVariables.contains(var);
 		final Boolean irr = solver.getPersistentAssignment(var);
 		if (irr != null) {
 			if (irr) {
-				return EVariableStatus.TRUE;
+				return VariableStatus.TRUE;
 			} else {
-				return EVariableStatus.FALSE;
+				return VariableStatus.FALSE;
 			}
 		}
 		return solver.getTemporaryAssignment(var);
 	}
 
 	public boolean isEquivalentToFalse() {
-		return mClauseCondition.getClauseStatus() == EClauseStatus.FALSE;
+		return mClauseCondition.getClauseStatus() == ClauseStatus.FALSE;
 	}
 	
 	public boolean isEquivalentToTrue() {
-		return mClauseCondition.getClauseStatus() == EClauseStatus.TRUE;
+		return mClauseCondition.getClauseStatus() == ClauseStatus.TRUE;
 	}
 	
 	public boolean isPseudoUnit() {
@@ -218,7 +218,7 @@ class Clause<V> {
 		return mNegativeAtoms;
 	}
 	
-	public EClauseStatus getClauseStatus() {
+	public ClauseStatus getClauseStatus() {
 		return mClauseCondition.getClauseStatus();
 	}
 
@@ -228,12 +228,12 @@ class Clause<V> {
 	 * @param solver solver
 	 * @return an atom that was not yet set
 	 */
-	public Pair<V,Boolean> getUnsetAtom(final AMaxSatSolver<V> solver) {
+	public Pair<V,Boolean> getUnsetAtom(final AbstractMaxSatSolver<V> solver) {
 		if (! mClauseCondition.isPseudoUnit()) {
 			throw new IllegalArgumentException("not only one unset Atom");
 		} else {
 			for (final V var : mPositiveAtoms) {
-				final EVariableStatus status = getCurrentVariableStatus(var, solver);
+				final VariableStatus status = getCurrentVariableStatus(var, solver);
 				switch (status) {
 				case TRUE:
 				case FALSE:
@@ -246,7 +246,7 @@ class Clause<V> {
 				}
 			}
 			for (final V var : mNegativeAtoms) {
-				final EVariableStatus status = getCurrentVariableStatus(var, solver);
+				final VariableStatus status = getCurrentVariableStatus(var, solver);
 				switch (status) {
 				case TRUE:
 				case FALSE:
@@ -310,10 +310,10 @@ class Clause<V> {
 	 * @return true iff the clause is a Horn clause under the current assignment
 	 */
 	@Deprecated
-	public boolean isHornCurrent(final AMaxSatSolver<V> solver) {
+	public boolean isHornCurrent(final AbstractMaxSatSolver<V> solver) {
 		boolean foundFirst = false;
 		for (final V var : mPositiveAtoms) {
-			final EVariableStatus status = getCurrentVariableStatus(var, solver);
+			final VariableStatus status = getCurrentVariableStatus(var, solver);
 			switch (status) {
 				case UNSET:
 					if (foundFirst) {

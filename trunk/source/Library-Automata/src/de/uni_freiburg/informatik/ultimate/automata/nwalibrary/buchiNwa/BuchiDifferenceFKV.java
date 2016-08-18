@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Powers
 
 
 public class BuchiDifferenceFKV<LETTER,STATE>
-		extends ABuchiDifference<LETTER, STATE>
+		extends AbstractBuchiDifference<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
 	private BuchiComplementFKVNwa<LETTER,STATE> mSndComplemented;
 	

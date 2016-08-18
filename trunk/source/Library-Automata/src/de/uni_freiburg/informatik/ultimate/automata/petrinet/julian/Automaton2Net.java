@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
-import de.uni_freiburg.informatik.ultimate.automata.AOperation;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 
 public class Automaton2Net<LETTER, STATE>
-		extends AOperation<LETTER, STATE>
+		extends GeneralOperation<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
 
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;

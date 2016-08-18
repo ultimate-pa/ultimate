@@ -52,11 +52,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.AMinimizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.AbstractMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.IMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.IMinimizeNwaDD;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeDfaHopcroftPaper;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeIncompleteDfa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeDfaHopcroftArrays;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeDfaHopcroftLists;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaCombinator;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
@@ -806,14 +806,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			}
 			case DFA_HOPCROFT_ARRAYS: {
 				newAbstractionRaw =
-						new MinimizeDfaHopcroftPaper<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+						new MinimizeDfaHopcroftArrays<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 								oldAbstraction, predicateFactoryRefinement, partition, mComputeHoareAnnotation);
 				wasMinimized = true;
 				break;
 			}
 			case DFA_HOPCROFT_LISTS: {
 				newAbstractionRaw =
-						new MinimizeIncompleteDfa<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+						new MinimizeDfaHopcroftLists<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 								oldAbstraction, predicateFactoryRefinement, partition, mComputeHoareAnnotation);
 				wasMinimized = true;
 				break;
@@ -869,11 +869,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 				// extract Hoare annotation
 				if (mComputeHoareAnnotation) {
-					if (!(newAbstractionRaw instanceof AMinimizeNwa)) {
+					if (!(newAbstractionRaw instanceof AbstractMinimizeNwa)) {
 						throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
 					}
-					final AMinimizeNwa<CodeBlock, IPredicate> minimizeOpCast =
-							(AMinimizeNwa<CodeBlock, IPredicate>) newAbstractionRaw;
+					final AbstractMinimizeNwa<CodeBlock, IPredicate> minimizeOpCast =
+							(AbstractMinimizeNwa<CodeBlock, IPredicate>) newAbstractionRaw;
 					final Map<IPredicate, IPredicate> oldState2newState = minimizeOpCast.getOldState2newState();
 					mHaf.updateOnMinimization(oldState2newState, newAbstraction);
 				}

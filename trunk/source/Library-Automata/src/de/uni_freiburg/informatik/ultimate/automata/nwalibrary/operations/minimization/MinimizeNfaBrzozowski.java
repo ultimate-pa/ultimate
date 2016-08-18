@@ -57,8 +57,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class MinimizeBrzozowski<LETTER, STATE>
-		extends AMinimizeNwa<LETTER, STATE>
+public class MinimizeNfaBrzozowski<LETTER, STATE>
+		extends AbstractMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 	/**
 	 * Constructor.
@@ -68,7 +68,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 * @param operand input (finite, possibly nondeterministic) automaton
 	 * @throws AutomataOperationCanceledException when execution is cancelled
 	 */
-	public MinimizeBrzozowski(final AutomataLibraryServices services,
+	public MinimizeNfaBrzozowski(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory, 
 			final INestedWordAutomaton<LETTER, STATE> operand)
 					throws AutomataOperationCanceledException {

@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.AUnaryNetOperation;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 
 /**
@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
  * @param <PLACE> place type
  */
 public class NumberOfTransitions<LETTER, PLACE>
-		extends AUnaryNetOperation<LETTER, PLACE>
+		extends UnaryNetOperation<LETTER, PLACE>
 		implements IOperation<LETTER,PLACE> {
 	
 	/**

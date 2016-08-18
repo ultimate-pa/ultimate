@@ -37,8 +37,8 @@ public interface IClauseCondition {
 	 * 
 	 * @return clause truth value
 	 */
-	default EClauseStatus getClauseStatus() {
-		return EClauseStatus.NEITHER;
+	default ClauseStatus getClauseStatus() {
+		return ClauseStatus.NEITHER;
 	}
 	
 	/**
