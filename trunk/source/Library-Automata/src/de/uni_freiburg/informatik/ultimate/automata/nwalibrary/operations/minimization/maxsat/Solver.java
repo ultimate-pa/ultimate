@@ -28,6 +28,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 
 /**
  * Simple SAT solver.
@@ -44,6 +46,8 @@ final class Solver {
 	public static final char NONE = 0;
 	public static final char TRUE = 1;
 	public static final char FALSE = 2;
+	
+	private final AutomataLibraryServices mServices;
 
 	/** the number of boolean variables */
 	private int mNumVars;
@@ -63,8 +67,9 @@ final class Solver {
 	/** pre-allocate a clause to avoid garbage collection overhead */
 	private final Horn3Clause mClause;
 
-	Solver(final Horn3Array clauses) {
-		this.mClauses = clauses;
+	Solver(final AutomataLibraryServices services, final Horn3Array clauses) {
+		mServices = services;
+		mClauses = clauses;
 		mClause = new Horn3Clause(-1,-1,-1);
 
 		// const true and const false
@@ -205,39 +210,45 @@ final class Solver {
 
 		return mAssign;
 	}
-
-
-	// "test" the thing
-	public static void main(final String[] args) {
-		Horn3ArrayBuilder builder;
-
-		builder = new Horn3ArrayBuilder(4);
-		builder.addClauseF(3);
-		builder.addClauseFT(2, 3);
-
-		char[] assign;
-		assign = new Solver(builder.extract()).solve();
-		assert assign[2] == FALSE;
-		assert assign[3] == FALSE;
-
-		builder = new Horn3ArrayBuilder(5);
-		builder.addClauseT(2);
-		builder.addClauseFT(2, 3);
-		builder.addClauseFFT(2, 3, 4);
-
-		assign = new Solver(builder.extract()).solve();
-		assert assign[2] == TRUE;
-		assert assign[3] == TRUE;
-		assert assign[4] == TRUE;
-
-		builder = new Horn3ArrayBuilder(5);
-		builder.addClauseT(2);
-		builder.addClauseFT(2, 3);
-		builder.addClauseFFT(2, 3, 4);
-		builder.addClauseF(4);
-
-		assert builder.extract() == null;
-
-		System.err.printf("tests passed%n");
+	
+	private void checkTimeout() throws AutomataOperationCanceledException {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			throw new AutomataOperationCanceledException(this.getClass());
+		}
 	}
+
+
+//	// "test" the thing
+//	public static void main(final String[] args) {
+//		Horn3ArrayBuilder builder;
+//
+//		builder = new Horn3ArrayBuilder(4);
+//		builder.addClauseF(3);
+//		builder.addClauseFT(2, 3);
+//
+//		char[] assign;
+//		assign = new Solver(builder.extract()).solve();
+//		assert assign[2] == FALSE;
+//		assert assign[3] == FALSE;
+//
+//		builder = new Horn3ArrayBuilder(5);
+//		builder.addClauseT(2);
+//		builder.addClauseFT(2, 3);
+//		builder.addClauseFFT(2, 3, 4);
+//
+//		assign = new Solver(builder.extract()).solve();
+//		assert assign[2] == TRUE;
+//		assert assign[3] == TRUE;
+//		assert assign[4] == TRUE;
+//
+//		builder = new Horn3ArrayBuilder(5);
+//		builder.addClauseT(2);
+//		builder.addClauseFT(2, 3);
+//		builder.addClauseFFT(2, 3, 4);
+//		builder.addClauseF(4);
+//
+//		assert builder.extract() == null;
+//
+//		System.err.printf("tests passed%n");
+//	}
 }

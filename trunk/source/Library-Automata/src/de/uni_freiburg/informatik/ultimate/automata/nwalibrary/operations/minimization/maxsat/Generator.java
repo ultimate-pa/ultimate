@@ -33,6 +33,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+
 /**
  * Formulate "merge relation constraints" (as defined in my thesis) as a
  * MAX-SAT instance.
@@ -73,6 +76,7 @@ final class Generator {
 	}
 
 	/**
+	 * @param services Ultimate services
 	 * @param inNWA
 	 *            input NWA.
 	 *
@@ -81,8 +85,10 @@ final class Generator {
 	 *
 	 * @return A (consistent) Partition which represents the minimized
 	 *         automaton.
+	 * @throws AutomataOperationCanceledException if operation was canceled
 	 */
-	static Horn3Array generateClauses(final NwaWithArrays inNWA, ArrayList<Hist> history) {
+	static Horn3Array generateClauses(final AutomataLibraryServices services,
+			final NwaWithArrays inNWA, ArrayList<Hist> history) throws AutomataOperationCanceledException {
 		assert Hist.checkConsistency(inNWA, history);
 
 		// "assert" that there are no transitions which are never taken
@@ -188,7 +194,7 @@ final class Generator {
 				rTop[rTransTop[i].mSrc].add(rTransTop[i].mTop);
 			}
 		}
-
+		
 		{
 			// make the hSet, i.e. those history states except bottom-of-stack
 			// symbol which are not in the outgoing return transitions as
@@ -210,7 +216,7 @@ final class Generator {
 				}
 			}
 		}
-
+		
 		for (int i = 0; i < numStates; i++) {
 			for (int j = 0; j < iSet[i].size(); j++) {
 				assert j == 0 || iSet[i].get(j) > iSet[i].get(j - 1);
@@ -250,6 +256,7 @@ final class Generator {
 			a.add(x);
 		}
 
+		checkTimeout(services);
 
 		/*
 		 * GENERATE CLAUSES
@@ -265,6 +272,8 @@ final class Generator {
 		}
 
 		for (int i = 0; i < numStates; i++) {
+			checkTimeout(services);
+			
 			for (int j = i + 1; j < numStates; j++) {
 				if (isFinal[i] != isFinal[j]) {
 					final int eq1 = calc.eqVar(i, j);
@@ -274,6 +283,8 @@ final class Generator {
 		}
 
 		for (int i = 0; i < numStates; i++) {
+			checkTimeout(services);
+			
 			for (int j = i; j < numStates; j++) {
 				final int eq1 = calc.eqVar(i, j);
 
@@ -360,6 +371,8 @@ final class Generator {
 		}
 
 		for (int i = 0; i < numStates; i++) {
+			checkTimeout(services);
+			
 			for (int j = 0; j < numStates; j++) {
 				if (!builder.isAlreadyFalse(calc.eqVar(i, j))) {
 					possible[i].add(j);
@@ -368,6 +381,8 @@ final class Generator {
 		}
 
 		for (int i = 0; i < numStates; i++) {
+			checkTimeout(services);
+			
 			for (final int j : possible[i]) {
 				final int eq1 = calc.eqVar(i, j);
 				for (final int k : possible[j]) {
@@ -380,6 +395,12 @@ final class Generator {
 
 		final Horn3Array clauses = builder.extract();
 		return clauses;
+	}
+	
+	private static void checkTimeout(final AutomataLibraryServices services) throws AutomataOperationCanceledException {
+		if (!services.getProgressMonitorService().continueProcessing()) {
+			throw new AutomataOperationCanceledException(Generator.class);
+		}
 	}
 
 	/**
@@ -414,8 +435,8 @@ final class Generator {
 		private final int mSym;
 
 		SrcSym(final int src, final int sym) {
-			this.mSrc = src;
-			this.mSym = sym;
+			mSrc = src;
+			mSym = sym;
 		}
 
 		@Override

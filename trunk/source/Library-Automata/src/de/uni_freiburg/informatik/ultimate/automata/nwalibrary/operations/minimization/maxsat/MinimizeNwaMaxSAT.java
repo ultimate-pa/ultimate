@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -56,11 +57,12 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 	 * @param services Ultimate services
 	 * @param stateFactory state factory
 	 * @param automaton input NWA
+	 * @throws AutomataOperationCanceledException if operation was canceled
 	 */
 	public MinimizeNwaMaxSAT(
 			final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> automaton) {
+			final INestedWordAutomaton<LETTER, STATE> automaton) throws AutomataOperationCanceledException {
 		super(services, stateFactory, "MinimizeNwaMaxSAT", automaton);
 
 		final ILogger convertLog = services.getLoggingService().getLogger(
@@ -88,12 +90,12 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 		);
 
 		generateLog.info("starting clauses generation");
-		final Horn3Array clauses = Generator.generateClauses(nwa, history);
+		final Horn3Array clauses = Generator.generateClauses(mServices, nwa, history);
 		generateLog.info("finished clauses generation. "
 				+ clauses.size() + " clauses");
 
 		solveLog.info("starting Solver");
-		final char[] assignments = new Solver(clauses).solve();
+		final char[] assignments = new Solver(mServices, clauses).solve();
 		solveLog.info("finished Solver");
 
 		generateLog.info("making equivalence classes from assignments");
