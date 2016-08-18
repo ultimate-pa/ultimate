@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -50,78 +51,140 @@ import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
  */
 public final class CorrectnessWitnessUtils {
 
-	public static IASTStatement findSuccessorStatement(final IASTStatement stmt) {
+	/**
+	 * Given an {@link IASTStatement}, find the next non-empty {@link IASTStatement} with regard to the control-flow of
+	 * the C program.
+	 *
+	 * @param stmt
+	 *            The statement for which you want to find a control-flow successor.
+	 * @return The control-flow successor of <code>stmt</code> or null if
+	 *         <ul>
+	 *         <li>stmt has no successor (i.e., its the last statement of the program),
+	 *         <li>stmt is null,
+	 *         <li>stmt has no parent, i.e., its disconnected from the AST.
+	 *         </ul>
+	 *
+	 */
+	public static Collection<IASTStatement> findSuccessorStatement(final IASTStatement stmt) {
 		if (stmt == null || stmt.getParent() == null) {
 			return null;
 		}
 
-		IASTNode parent = stmt.getParent();
-		while (parent != null) {
-			if (parent instanceof IASTCompoundStatement) {
-				break;
-			}
-			if (parent instanceof IASTStatement) {
-				parent = parent.getParent();
-			} else {
-				break;
-			}
-		}
+		// branching statements have multiple successors: the first of their body (or of their then-block) or the one
+		// afterwards (or of their else-block)
+		final Collection<IASTStatement> rtr = new HashSet<>(2);
+		// if (stmt instanceof IASTForStatement) {
+		// final IASTForStatement forstmt = (IASTForStatement) stmt;
+		// rtr.add(getFirstOrSuccessorStatement(forstmt.getBody()));
+		// } else if (stmt instanceof IASTIfStatement) {
+		// final IASTIfStatement ifstmt = (IASTIfStatement) stmt;
+		// rtr.add(getFirstOrSuccessorStatement(ifstmt.getThenClause()));
+		// rtr.add(getFirstOrSuccessorStatement(ifstmt.getElseClause()));
+		// return rtr;
+		// } else if (stmt instanceof IASTDoStatement) {
+		// final IASTDoStatement dostmt = (IASTDoStatement) stmt;
+		// rtr.add(getFirstOrSuccessorStatement(dostmt.getBody()));
+		// } else if (stmt instanceof IASTWhileStatement) {
+		// final IASTWhileStatement whilestmt = (IASTWhileStatement) stmt;
+		// rtr.add(getFirstOrSuccessorStatement(whilestmt.getBody()));
+		// }
 
-		if (parent == null) {
-			return null;
+		final IASTNode parent = stmt.getParent();
+		if (!(parent instanceof IASTStatement)) {
+			// this is sad, we would have to resolve interprocedural successors
+			throw new UnsupportedOperationException("Interprocedural successors are not supported");
 		}
-
-		IASTStatement successorStatement = null;
-		if (parent instanceof IASTCompoundStatement) {
-			final IASTCompoundStatement compound = (IASTCompoundStatement) parent;
-			final IASTStatement[] stmts = compound.getStatements();
-			for (int i = 0; i < stmts.length; ++i) {
-				if (!stmt.equals(stmts[i])) {
-					continue;
-				}
-				if (i < stmts.length - 1) {
-					// found successor in compound statement
-					successorStatement = stmts[i + 1];
-				} else {
-					// need to find successor of compound statement
-					successorStatement = findSuccessorStatement(compound);
-				}
-				break;
+		final IASTNode[] children = parent.getChildren();
+		for (int i = 0; i < children.length - 1; ++i) {
+			if (children[i].equals(stmt)) {
+				// this is the current stmt; the next child must be the successor
+				rtr.add(getFirstOrSuccessorStatement((IASTStatement) children[i + 1]));
+				return rtr;
 			}
 		}
-
-		if (successorStatement instanceof IASTCompoundStatement) {
-			final IASTCompoundStatement succComp = (IASTCompoundStatement) successorStatement;
-			if (succComp.getStatements().length == 0) {
-				// if this statement has no children, we need its successor
-				successorStatement = findSuccessorStatement(succComp);
-			}
-		}
-
-		if (successorStatement != null) {
-			assert !successorStatement.equals(stmt);
-			return successorStatement;
-		}
-
-		throw new UnsupportedOperationException("Did not think that far");
+		// if we made it past this point, we should be the last child
+		assert children[children.length - 1].equals(stmt);
+		// now we have to find the successor of our parent
+		rtr.addAll(findSuccessorStatement((IASTStatement) parent));
+		return rtr;
 	}
 
+	/**
+	 * Find the next non-empty successor statement of a branching statement for which you know whether the condition
+	 * evaluates to true or to false.
+	 *
+	 * @param trueOrFalseBranch
+	 *            true if the condition evaluates to true, false if the condition evaluates to false.
+	 * @param statement
+	 *            the branching statement
+	 * @return the next non-empty successor statement of <code>statement</code>
+	 * @see #findSuccessorStatement(IASTStatement)
+	 */
 	public static IASTStatement findBranchingSuccessorStatement(final boolean trueOrFalseBranch,
 			final IASTStatement statement) {
 		if (statement instanceof IASTForStatement) {
 			final IASTForStatement forstmt = (IASTForStatement) statement;
-			return trueOrFalseBranch ? forstmt.getBody() : findSuccessorStatement(statement);
+			if (trueOrFalseBranch) {
+				return getFirstOrSuccessorStatement(forstmt.getBody());
+			} else {
+				final Collection<IASTStatement> rtr = findSuccessorStatement(statement);
+				assert rtr.size() < 2;
+				return rtr.isEmpty() ? null : rtr.iterator().next();
+			}
 		} else if (statement instanceof IASTIfStatement) {
 			final IASTIfStatement ifstmt = (IASTIfStatement) statement;
-			return trueOrFalseBranch ? ifstmt.getThenClause() : ifstmt.getElseClause();
+			return trueOrFalseBranch ? getFirstOrSuccessorStatement(ifstmt.getThenClause())
+					: getFirstOrSuccessorStatement(ifstmt.getElseClause());
 		} else if (statement instanceof IASTDoStatement) {
 			final IASTDoStatement dostmt = (IASTDoStatement) statement;
-			return trueOrFalseBranch ? dostmt.getBody() : findSuccessorStatement(statement);
+			if (trueOrFalseBranch) {
+				return getFirstOrSuccessorStatement(dostmt.getBody());
+			} else {
+				final Collection<IASTStatement> rtr = findSuccessorStatement(statement);
+				assert rtr.size() < 2;
+				return rtr.isEmpty() ? null : rtr.iterator().next();
+			}
 		} else if (statement instanceof IASTWhileStatement) {
 			final IASTWhileStatement whilestmt = (IASTWhileStatement) statement;
-			return trueOrFalseBranch ? whilestmt.getBody() : findSuccessorStatement(statement);
+			if (trueOrFalseBranch) {
+				return getFirstOrSuccessorStatement(whilestmt.getBody());
+			} else {
+				final Collection<IASTStatement> rtr = findSuccessorStatement(statement);
+				assert rtr.size() < 2;
+				return rtr.isEmpty() ? null : rtr.iterator().next();
+			}
 		}
-		throw new UnsupportedOperationException("statement " + statement + " is not a branching statement");
+		throw new IllegalArgumentException("statement " + statement + " is not a branching statement");
+	}
+
+	public static boolean isBranchingStatement(final IASTStatement statement) {
+		return statement instanceof IASTForStatement || statement instanceof IASTIfStatement
+				|| statement instanceof IASTDoStatement || statement instanceof IASTWhileStatement;
+	}
+
+	/**
+	 * If stmt is a {@link IASTCompoundStatement}, returns the first non-compound statement in the body, or, the
+	 * successor of the compound statement if it is empty, or the statement itself if it is not a compound statement.
+	 *
+	 * @param stmt
+	 * @return
+	 */
+	public static IASTStatement getFirstOrSuccessorStatement(final IASTStatement stmt) {
+		if (stmt instanceof IASTCompoundStatement) {
+			return getFirstOrSuccessorStatement((IASTCompoundStatement) stmt);
+		}
+		return stmt;
+	}
+
+	private static IASTStatement getFirstOrSuccessorStatement(final IASTCompoundStatement cmpStmt) {
+		final IASTStatement[] children = cmpStmt.getStatements();
+		if (children.length == 0) {
+			final Collection<IASTStatement> rtr = findSuccessorStatement(cmpStmt);
+			assert rtr.size() < 2;
+			return rtr.isEmpty() ? null : rtr.iterator().next();
+		} else {
+			return getFirstOrSuccessorStatement(children[0]);
+		}
 	}
 
 	public static IASTDeclaration findScope(final IASTNode current) {
@@ -145,6 +208,9 @@ public final class CorrectnessWitnessUtils {
 	}
 
 	public static Set<IASTStatement> findDesiredType(final IASTNode node, final Collection<Class<?>> desiredTypes) {
+		if (node == null) {
+			return Collections.emptySet();
+		}
 		return new DesiredTypeExtractor(desiredTypes).run(node);
 	}
 

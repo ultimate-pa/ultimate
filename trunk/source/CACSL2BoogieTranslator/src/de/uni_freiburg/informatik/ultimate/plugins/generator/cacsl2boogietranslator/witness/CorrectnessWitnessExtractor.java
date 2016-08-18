@@ -260,6 +260,12 @@ public class CorrectnessWitnessExtractor {
 			// downward matching matched everything, nothing more to do.
 			return down;
 		}
+		if (down.isEmpty()) {
+			mLogger.warn("Downward matching could not match anything");
+		} else {
+			mLogger.warn("Downward matching could not match all canidates");
+		}
+
 		// try to match the remaining loop heads upwards
 		final Map<IASTNode, ExtractedWitnessInvariant> up = tryMatchLoopInvariantsUpwards(dwnode, loopHeads);
 		if (!loopHeads.isEmpty()) {
@@ -545,7 +551,17 @@ public class CorrectnessWitnessExtractor {
 			if (!matchLineNumber(node)) {
 				return false;
 			}
-			final Set<IASTStatement> result = CorrectnessWitnessUtils.findDesiredType(node, mConditionalTypes);
+			if (!(node instanceof IASTStatement)) {
+				return false;
+			}
+			final IASTStatement stmt = (IASTStatement) node;
+			// we assume that node is a conditional and search for conditionals at this location
+			final Set<IASTStatement> result;
+			if (CorrectnessWitnessUtils.isBranchingStatement(stmt)) {
+				result = Collections.singleton(stmt);
+			} else {
+				result = CorrectnessWitnessUtils.findDesiredType(node.getParent(), mConditionalTypes);
+			}
 			if (result.isEmpty()) {
 				return false;
 			}
@@ -722,10 +738,10 @@ public class CorrectnessWitnessExtractor {
 		}
 
 		public String toStringSimple() {
-			return getLinenumberString() + " " + mEdge;
+			return "Node: " + getLineNumberString() + " Edge: " + mEdge;
 		}
 
-		private String getLinenumberString() {
+		private String getLineNumberString() {
 			final StringBuilder sb = new StringBuilder();
 			sb.append("[L");
 			sb.append(mNode.getFileLocation().getStartingLineNumber());
