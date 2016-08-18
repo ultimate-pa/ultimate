@@ -9,7 +9,7 @@
 
 
 assert(!buchiAccepts(buchiReduce(bluegreen_RemovedNonLiveMinimizeDfa5), [,]));
-//assert(!buchiAccepts(minimizeDFA(bluegreen_RemovedNonLiveMinimizeDfa5"), [,]));
+//assert(!buchiAccepts(minimizeDfaTable(bluegreen_RemovedNonLiveMinimizeDfa5"), [,]));
 
 
 NestedWordAutomaton bluegreen_RemovedNonLiveMinimizeDfa1 = (
