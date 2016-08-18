@@ -566,6 +566,8 @@ public class MapEliminator {
 			return mScript.term("true");
 		}
 		final List<Term> result = new ArrayList<>();
+		final boolean oldIsInVar = transformula.getInVarsReverseMapping().containsKey(oldArray);
+		final boolean newIsInVar = transformula.getInVarsReverseMapping().containsKey(newArray);
 		final Term globalOldArray = translateTermVariablesToDefinitions(mScript, transformula, oldArray);
 		final Term globalNewArray = translateTermVariablesToDefinitions(mScript, transformula, newArray);
 		final SelectTemplate oldTemplate = new SelectTemplate(globalOldArray, mScript);
@@ -579,33 +581,37 @@ public class MapEliminator {
 			}
 			final Term value = process(store.getValue(), transformula, assignedVars, invariants, overapproximate);
 			for (final ArrayIndex globalIndex : mFunctionsToIndices.getImage(newTemplate)) {
-				final ArrayIndex index = getLocalIndex(globalIndex, transformula, assignedVars, false);
+				final ArrayIndex index = getLocalIndex(globalIndex, transformula, assignedVars, newIsInVar);
 				if (assignedIndices.contains(index)) {
 					continue;
 				}
-				if (overapproximate && !areIndicesEqual(index, assignedIndex, invariants)) {
-					continue;
+				if (areIndicesEqual(index, assignedIndex, invariants)
+						&& areAllIndicesUnequal(index, assignedIndices, invariants)) {
+					final Term selectTerm = newTemplate.getTerm(globalIndex);
+					final Term var = getLocalTerm(selectTerm, transformula, assignedVars, newIsInVar);
+					result.add(SmtUtils.binaryEquality(mScript, var, value));
+				} else if (!overapproximate) {
+					final Term selectTerm = newTemplate.getTerm(globalIndex);
+					final Term var = getLocalTerm(selectTerm, transformula, assignedVars, newIsInVar);
+					final Term newTerm = indexEqualityInequalityImpliesValueEquality(index, assignedIndex,
+							assignedIndices, var, value, invariants);
+					result.add(newTerm);
 				}
-				final Term selectTerm = newTemplate.getTerm(globalIndex);
-				final Term var = getLocalTerm(selectTerm, transformula, assignedVars, false);
-				final Term newTerm = indexEqualityInequalityImpliesValueEquality(index, assignedIndex, assignedIndices,
-						var, value, invariants);
-				result.add(newTerm);
+
 			}
 			assignedIndices.add(assignedIndex);
 		}
 		// For un-assigned indices i add: newArray[i] = oldArray[i]
-		if (!overapproximate) {
-			for (final ArrayIndex globalIndex : mFunctionsToIndices.getImage(oldTemplate)) {
-				final Term selectNew = newTemplate.getTerm(globalIndex);
-				final Term selectOld = oldTemplate.getTerm(globalIndex);
-				final boolean oldIsInVar = transformula.getInVarsReverseMapping().containsKey(oldArray);
-				final Term varOld = getLocalTerm(selectOld, transformula, assignedVars, oldIsInVar);
-				final boolean newIsInVar = transformula.getInVarsReverseMapping().containsKey(newArray);
-				final Term varNew = getLocalTerm(selectNew, transformula, assignedVars, newIsInVar);
-				final ArrayIndex indexIn = getLocalIndex(globalIndex, transformula, assignedVars, true);
-				final ArrayIndex indexOut = getLocalIndex(globalIndex, transformula, assignedVars, false);
-				final Term newTerm = indexEqualityInequalityImpliesValueEquality(indexOut, indexIn, assignedIndices,
+		for (final ArrayIndex globalIndex : mFunctionsToIndices.getImage(oldTemplate)) {
+			final Term varOld = getLocalTerm(oldTemplate.getTerm(globalIndex), transformula, assignedVars, oldIsInVar);
+			final Term varNew = getLocalTerm(newTemplate.getTerm(globalIndex), transformula, assignedVars, newIsInVar);
+			final ArrayIndex index1 = getLocalIndex(globalIndex, transformula, assignedVars, oldIsInVar);
+			final ArrayIndex index2 = getLocalIndex(globalIndex, transformula, assignedVars, newIsInVar);
+			if (areIndicesEqual(index1, index2, invariants)
+					&& areAllIndicesUnequal(index2, assignedIndices, invariants)) {
+				result.add(SmtUtils.binaryEquality(mScript, varNew, varOld));
+			} else if (!overapproximate) {
+				final Term newTerm = indexEqualityInequalityImpliesValueEquality(index1, index2, assignedIndices,
 						varNew, varOld, invariants);
 				result.add(newTerm);
 			}
@@ -843,6 +849,28 @@ public class MapEliminator {
 			final Term term1 = index1.get(i);
 			final Term term2 = index2.get(i);
 			if (term1 != term2 && !invariants.getEqualDoubletons().contains(new Doubleton<>(term1, term2))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private boolean areIndicesUnequal(final ArrayIndex index1, final ArrayIndex index2,
+			final EqualityAnalysisResult invariants) {
+		for (int i = 0; i < index1.size(); i++) {
+			final Term term1 = index1.get(i);
+			final Term term2 = index2.get(i);
+			if (invariants.getDistinctDoubletons().contains(new Doubleton<>(term1, term2))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean areAllIndicesUnequal(final ArrayIndex index, final Collection<ArrayIndex> indices,
+			final EqualityAnalysisResult invariants) {
+		for (final ArrayIndex index2 : indices) {
+			if (!areIndicesUnequal(index, index2, invariants)) {
 				return false;
 			}
 		}
