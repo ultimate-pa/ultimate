@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata;
@@ -36,23 +36,22 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
 /**
- * Object that stores statistics of an automata library operation
+ * Object that stores statistics of an automata library operation.
  * Stores a single row of a CSV as a key-value map.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class AutomataOperationStatistics implements ICsvProviderProvider<Object> {
 	
-	private final LinkedHashMap<String, Object> mKeyValueMap = new LinkedHashMap<>();
-
+	private final LinkedHashMap<StatisticsType, Object> mKeyValueMap = new LinkedHashMap<>();
+	
 	@Override
 	public ICsvProvider<Object> createCvsProvider() {
 		final List<String> columnTitles = new ArrayList<>(mKeyValueMap.size());
 		final List<Object> firstRow = new ArrayList<>(mKeyValueMap.size());
-		for (final Entry<String, Object> entry : mKeyValueMap.entrySet()) {
-			columnTitles.add(entry.getKey());
+		for (final Entry<StatisticsType, Object> entry : mKeyValueMap.entrySet()) {
+			columnTitles.add(entry.getKey().toString());
 			firstRow.add(entry.getValue());
-			
 		}
 		final SimpleCsvProvider<Object> result = new SimpleCsvProvider<>(columnTitles);
 		result.addRow(firstRow);
@@ -65,7 +64,7 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	 * @return the previous value associated with key, or null if there was no
 	 *         mapping for key.
 	 */
-	public Object addKeyValuePair(final String key, final Object value) {
+	public Object addKeyValuePair(final StatisticsType key, final Object value) {
 		return mKeyValueMap.put(key, value);
 	}
 }
