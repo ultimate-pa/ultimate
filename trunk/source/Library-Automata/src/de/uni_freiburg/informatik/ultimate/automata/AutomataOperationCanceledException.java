@@ -19,28 +19,33 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
 /**
- * Exception that is thrown by automata operations if they detected that the caller requested a cancellation of the
- * operation (e.g., because a timeout was reached).
+ * Exception that is thrown by automata operations if they detected that the
+ * caller requested a cancellation of the operation (e.g., because a timeout was
+ * reached).
  * 
- * @author Matthias Heizmann
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class AutomataOperationCanceledException extends AutomataLibraryException {
+	
 	private static final long serialVersionUID = -1713238821191695165L;
 	
-	private static final String MESSAGE_CANCELLED = "Timeout or cancelled by user.";
-
+	private static final String MESSAGE_CANCELED = "Timeout or canceled by user.";
+	
 	/**
-	 * @param thrower thrower
+	 * Constructor.
+	 * 
+	 * @param thrower
+	 *            thrower
 	 */
 	public AutomataOperationCanceledException(final Class<?> thrower) {
-		super(thrower, MESSAGE_CANCELLED);
+		super(thrower, MESSAGE_CANCELED);
 	}
 }

@@ -59,8 +59,10 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	}
 	
 	/**
-	 * @param key key with which the specified value is to be associated
-	 * @param value value to be associated with the specified key
+	 * @param key
+	 *            key with which the specified value is to be associated
+	 * @param value
+	 *            value to be associated with the specified key
 	 * @return the previous value associated with key, or null if there was no
 	 *         mapping for key.
 	 */

@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata;
@@ -39,40 +39,69 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.Petri
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
+/**
+ * Converts an automaton (type {@code IAutomaton}) to an Ultimate model.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Markus Pomrehn
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ */
 public final class Automaton2UltimateModel {
+	
 	private Automaton2UltimateModel() {
 		// private constructor
 	}
-
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static IElement ultimateModel(
+	
+	/**
+	 * Converts an {@code IAutomaton} object to an Ultimate model.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param automaton
+	 *            automaton
+	 * @param <LETTER>
+	 *            letter type
+	 * @param <STATE>
+	 *            state type
+	 * @return Ultimate model of the automaton
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
+	public static <LETTER, STATE> IElement ultimateModel(
 			final AutomataLibraryServices services,
-			final IAutomaton automaton)
-					throws AutomataOperationCanceledException {
+			final IAutomaton<LETTER, STATE> automaton)
+			throws AutomataOperationCanceledException {
 		if (automaton instanceof INestedWordAutomatonSimple) {
-			final INestedWordAutomatonSimple nwa = (INestedWordAutomatonSimple) automaton;
-			final NwaToUltimateModel transformer = new NwaToUltimateModel(services);
-				return transformer.getUltimateModelOfNwa(nwa);
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa = (INestedWordAutomatonSimple<LETTER, STATE>) automaton;
+			final NwaToUltimateModel<LETTER, STATE> transformer = new NwaToUltimateModel<LETTER, STATE>(services);
+			return transformer.getUltimateModelOfNwa(nwa);
+			
 		} else if (automaton instanceof IPetriNet) {
-			final IPetriNet net = (IPetriNet) automaton;
-			final PetriNetToUltimateModel transformer = new PetriNetToUltimateModel();
+			final IPetriNet<LETTER, STATE> net = (IPetriNet<LETTER, STATE>) automaton;
+			final PetriNetToUltimateModel<LETTER, STATE> transformer = new PetriNetToUltimateModel<LETTER, STATE>();
 			return transformer.getUltimateModelOfPetriNet(net);
+			
 		} else if (automaton instanceof BranchingProcess) {
-			final BranchingProcess bp = (BranchingProcess) automaton;
-			final BranchingProcessToUltimateModel transformer =
-					new BranchingProcessToUltimateModel();
+			final BranchingProcess<LETTER, STATE> bp = (BranchingProcess<LETTER, STATE>) automaton;
+			final BranchingProcessToUltimateModel<LETTER, STATE> transformer =
+					new BranchingProcessToUltimateModel<LETTER, STATE>();
 			return transformer.getUltimateModelOfBranchingProcess(bp);
+			
 		} else if (automaton instanceof AlternatingAutomaton) {
-			final AlternatingAutomaton aa = (AlternatingAutomaton) automaton;
-			final AAToUltimateModel transformer = new AAToUltimateModel();
+			final AlternatingAutomaton<LETTER, STATE> aa = (AlternatingAutomaton<LETTER, STATE>) automaton;
+			final AAToUltimateModel<LETTER, STATE> transformer = new AAToUltimateModel<LETTER, STATE>();
 			return transformer.getUltimateModelOfAA(aa);
+			
 		} else if (automaton instanceof ITreeAutomaton) {
-			final ITreeAutomaton ta = (ITreeAutomaton) automaton;
-			final TreeAutomatonToUltimateModel transformer = new TreeAutomatonToUltimateModel<>();
+			final ITreeAutomaton<LETTER, STATE> ta = (ITreeAutomaton<LETTER, STATE>) automaton;
+			final TreeAutomatonToUltimateModel<LETTER, STATE> transformer =
+					new TreeAutomatonToUltimateModel<LETTER, STATE>();
 			return transformer.getUltimateModelOfAA(ta);
+			
 		} else {
 			throw new IllegalArgumentException(
-					"Only nwa, aa, tree automaton, and net supported");
+					"Only INestedWordAutomatonSimple, IPetriNet, BranchingProcess, "
+							+ "AlternatingAutomaton, and ITreeAutomaton are supported");
 		}
 	}
 }
