@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
@@ -39,16 +40,19 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
+import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTGotoStatement;
+import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
@@ -56,6 +60,7 @@ import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdgeAnnotation;
@@ -78,11 +83,18 @@ public class CorrectnessWitnessExtractor {
 	private IASTTranslationUnit mTranslationUnit;
 	private Map<IASTNode, ExtractedWitnessInvariant> mAST2Invariant;
 
+	private final Collection<Class<?>> mLoopTypes;
+	private final Collection<Class<?>> mConditionalTypes;
+
 	public CorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
 		mServices = service;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCheckOnlyLoopInvariants = WitnessParserPreferences.getPrefs(service)
 				.getBoolean(WitnessParserPreferences.LABEL_CW_USE_ONLY_LOOPINVARIANTS);
+		mLoopTypes = Arrays.asList(new Class[] { IASTGotoStatement.class, IASTDoStatement.class,
+				IASTWhileStatement.class, IASTForStatement.class });
+		mConditionalTypes = Arrays.asList(new Class[] { IASTDoStatement.class, IASTWhileStatement.class,
+				IASTForStatement.class, IASTIfStatement.class });
 	}
 
 	public void setWitness(final WitnessNode wnode) {
@@ -173,7 +185,7 @@ public class CorrectnessWitnessExtractor {
 			return Collections.emptyMap();
 		}
 		final String invariant = annot.getInvariant();
-		if (invariant == null || invariant.equalsIgnoreCase("true")) {
+		if (invariant == null || "true".equalsIgnoreCase(invariant)) {
 			return Collections.emptyMap();
 		}
 		final Map<IASTNode, ExtractedWitnessInvariant> ast2invariant = matchWitnessToAstNode(current);
@@ -262,11 +274,12 @@ public class CorrectnessWitnessExtractor {
 
 	private Map<IASTNode, ExtractedWitnessInvariant> tryMatchLoopInvariantsDownwards(final DecoratedWitnessNode dwnode,
 			final Set<MatchedASTNode> loopHeads) {
+
 		final Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>();
 		final Iterator<MatchedASTNode> iter = loopHeads.iterator();
 		while (iter.hasNext()) {
 			final MatchedASTNode loopHead = iter.next();
-			final Set<IASTStatement> loopStatements = new LoopStatementExtractor().run(loopHead.getNode());
+			final Set<IASTStatement> loopStatements = new DesiredTypeExtractor(mLoopTypes).run(loopHead.getNode());
 			if (loopStatements.isEmpty()) {
 				continue;
 			} else {
@@ -296,7 +309,7 @@ public class CorrectnessWitnessExtractor {
 		IASTNode currentParent = commonParent;
 		Set<IASTStatement> loopStatements = Collections.emptySet();
 		while (currentParent != null && currentParent instanceof IASTStatement) {
-			loopStatements = new LoopStatementExtractor().run(currentParent);
+			loopStatements = new DesiredTypeExtractor(mLoopTypes).run(currentParent);
 			if (!loopStatements.isEmpty()) {
 				break;
 			}
@@ -371,7 +384,6 @@ public class CorrectnessWitnessExtractor {
 			matcher.run(mTranslationUnit);
 			rtr.addAll(matcher.getMatchedNodes());
 		}
-		// removeSubtreeMatches(rtr);
 		return rtr;
 	}
 
@@ -501,11 +513,87 @@ public class CorrectnessWitnessExtractor {
 		return String.join(", ", stream.map(a -> String.valueOf(a)).collect(Collectors.toList()));
 	}
 
-	private static final class LoopStatementExtractor extends ASTGenericVisitor {
-		private Set<IASTStatement> mStatements;
+	private IASTStatement findSuccessorStatement(final IASTStatement stmt) {
+		if (stmt == null || stmt.getParent() == null) {
+			return null;
+		}
 
-		public LoopStatementExtractor() {
+		IASTNode parent = stmt.getParent();
+		while (parent != null) {
+			if (parent instanceof IASTCompoundStatement) {
+				break;
+			}
+			if (parent instanceof IASTStatement) {
+				parent = parent.getParent();
+			} else {
+				break;
+			}
+		}
+
+		if (parent == null) {
+			return null;
+		}
+
+		IASTStatement successorStatement = null;
+		if (parent instanceof IASTCompoundStatement) {
+			final IASTCompoundStatement compound = (IASTCompoundStatement) parent;
+			final IASTStatement[] stmts = compound.getStatements();
+			for (int i = 0; i < stmts.length; ++i) {
+				if (!stmt.equals(stmts[i])) {
+					continue;
+				}
+				if (i < stmts.length - 1) {
+					// found successor in compound statement
+					successorStatement = stmts[i + 1];
+				} else {
+					// need to find successor of compound statement
+					successorStatement = findSuccessorStatement(compound);
+				}
+				break;
+			}
+		}
+
+		if (successorStatement instanceof IASTCompoundStatement) {
+			final IASTCompoundStatement succComp = (IASTCompoundStatement) successorStatement;
+			if (succComp.getStatements().length == 0) {
+				// if this statement has no children, we need its successor
+				successorStatement = findSuccessorStatement(succComp);
+			}
+		}
+
+		if (successorStatement != null) {
+			assert !successorStatement.equals(stmt);
+			return successorStatement;
+		}
+
+		throw new UnsupportedOperationException("Did not think that far");
+	}
+
+	private IASTStatement findBranchingSuccessorStatement(final boolean trueOrFalseBranch,
+			final IASTStatement statement) {
+		if (statement instanceof IASTForStatement) {
+			final IASTForStatement forstmt = (IASTForStatement) statement;
+			return trueOrFalseBranch ? forstmt.getBody() : findSuccessorStatement(statement);
+		} else if (statement instanceof IASTIfStatement) {
+			final IASTIfStatement ifstmt = (IASTIfStatement) statement;
+			return trueOrFalseBranch ? ifstmt.getThenClause() : ifstmt.getElseClause();
+		} else if (statement instanceof IASTDoStatement) {
+			final IASTDoStatement dostmt = (IASTDoStatement) statement;
+			return trueOrFalseBranch ? dostmt.getBody() : findSuccessorStatement(statement);
+		} else if (statement instanceof IASTWhileStatement) {
+			final IASTWhileStatement whilestmt = (IASTWhileStatement) statement;
+			return trueOrFalseBranch ? whilestmt.getBody() : findSuccessorStatement(statement);
+		}
+		throw new UnsupportedOperationException("statement " + statement + " is not a branching statement");
+	}
+
+	private static final class DesiredTypeExtractor extends ASTGenericVisitor {
+		private Set<IASTStatement> mStatements;
+		private final Collection<Class<?>> mDesiredClasses;
+
+		public DesiredTypeExtractor(final Collection<Class<?>> desiredClasses) {
 			super(true);
+			mDesiredClasses = desiredClasses;
 		}
 
 		public Set<IASTStatement> run(final IASTNode subtreeRoot) {
@@ -516,8 +604,7 @@ public class CorrectnessWitnessExtractor {
 
 		@Override
 		public int visit(final IASTStatement statement) {
-			if (statement instanceof IASTGotoStatement || statement instanceof IASTDoStatement
-					|| statement instanceof IASTWhileStatement || statement instanceof IASTForStatement) {
+			if (mDesiredClasses.stream().anyMatch(a -> a.isAssignableFrom(statement.getClass()))) {
 				mStatements.add(statement);
 				return PROCESS_SKIP;
 			}
@@ -525,15 +612,36 @@ public class CorrectnessWitnessExtractor {
 		}
 	}
 
-	private static final class LineMatchingVisitor extends ASTGenericVisitor {
+	private final class LineMatchingVisitor extends ASTGenericVisitor {
 
 		private final DecoratedWitnessEdge mEdge;
 		private final Set<MatchedASTNode> mMatchedNodes;
+		private final Predicate<IASTNode> mFunMatch;
 
 		public LineMatchingVisitor(final DecoratedWitnessEdge edge) {
 			super(true);
 			mEdge = edge;
 			mMatchedNodes = new HashSet<>();
+			mFunMatch = determineMatcher(mEdge);
+		}
+
+		private Predicate<IASTNode> determineMatcher(final DecoratedWitnessEdge edge) {
+			switch (edge.getConditional()) {
+			case NONE:
+				return this::matchNonConditional;
+			case CONDITION_EVAL_FALSE:
+				return a -> matchConditional(false, a);
+			case CONDITION_EVAL_TRUE:
+				return a -> matchConditional(true, a);
+			case ARG_EVAL:
+			case EXPR_EVAL:
+			case FUNC_CALL:
+			case PROC_CALL:
+			case PROC_RETURN:
+			default:
+				throw new UnsupportedOperationException(
+						"This conditional case was not yet considered: " + edge.getConditional());
+			}
 		}
 
 		public void run(final IASTTranslationUnit translationUnit) {
@@ -546,25 +654,50 @@ public class CorrectnessWitnessExtractor {
 
 		@Override
 		protected int genericVisit(final IASTNode node) {
-			if (match(node)) {
+			if (mFunMatch.test(node)) {
 				// skip the subtree if a match occurred, but continue with siblings.
 				return PROCESS_SKIP;
 			}
 			return PROCESS_CONTINUE;
 		}
 
-		private boolean match(final IASTNode node) {
+		private boolean matchConditional(final boolean condition, final IASTNode node) {
+			if (!matchLineNumber(node)) {
+				return false;
+			}
+			final Set<IASTStatement> result = new DesiredTypeExtractor(mConditionalTypes).run(node);
+			if (result.isEmpty()) {
+				return false;
+			}
+			if (result.size() > 1) {
+				throw new UnsupportedOperationException("cannot handle multiple matches");
+			}
+
+			final IASTStatement branchingSuccessor =
+					findBranchingSuccessorStatement(condition, result.iterator().next());
+			if (branchingSuccessor == null) {
+				return false;
+			}
+			mMatchedNodes.add(new MatchedASTNode(branchingSuccessor, mEdge));
+			return true;
+		}
+
+		private boolean matchNonConditional(final IASTNode node) {
+			if (matchLineNumber(node)) {
+				mMatchedNodes.add(new MatchedASTNode(node, mEdge));
+				return true;
+			}
+			return false;
+		}
+
+		private boolean matchLineNumber(final IASTNode node) {
 			final IASTFileLocation loc = node.getFileLocation();
 			if (loc == null) {
 				return false;
 			}
 
-			if ((mEdge.getLineNumber() == loc.getEndingLineNumber() && mEdge.isIncoming())
-					|| (mEdge.getLineNumber() == loc.getStartingLineNumber() && !mEdge.isIncoming())) {
-				mMatchedNodes.add(new MatchedASTNode(node, mEdge));
-				return true;
-			}
-			return false;
+			return ((mEdge.getLineNumber() == loc.getEndingLineNumber() && mEdge.isIncoming())
+					|| (mEdge.getLineNumber() == loc.getStartingLineNumber() && !mEdge.isIncoming()));
 		}
 	}
 
@@ -635,11 +768,28 @@ public class CorrectnessWitnessExtractor {
 		private final WitnessEdge mEdge;
 		private final WitnessEdgeAnnotation mAnnotation;
 		private final boolean mIsIncoming;
+		private final StepInfo mConditional;
 
 		public DecoratedWitnessEdge(final WitnessEdge edge, final boolean isIncoming) {
 			mIsIncoming = isIncoming;
 			mEdge = edge;
 			mAnnotation = WitnessEdgeAnnotation.getAnnotation(edge);
+			mConditional = getConditionalFromAnnotation(mAnnotation);
+		}
+
+		private static StepInfo getConditionalFromAnnotation(final WitnessEdgeAnnotation annotation) {
+			if (annotation == null || annotation.getCondition() == null) {
+				return StepInfo.NONE;
+			}
+			if (annotation.getCondition().booleanValue()) {
+				return StepInfo.CONDITION_EVAL_TRUE;
+			} else {
+				return StepInfo.CONDITION_EVAL_FALSE;
+			}
+		}
+
+		public StepInfo getConditional() {
+			return mConditional;
 		}
 
 		public boolean hasNoLineNumber() {
