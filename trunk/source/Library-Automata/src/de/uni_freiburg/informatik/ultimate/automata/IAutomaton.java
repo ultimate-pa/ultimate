@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata;
@@ -31,24 +31,27 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 /**
- * All automata have to implement this interface. 
- *
- * @param <LETTER> Type of objects that are contained in the alphabet.
- * @param <STATE> Type of objects that are used to label states (resp. places
- *     for PetriNet)
+ * All automata have to implement this interface.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            Type of objects that are contained in the alphabet.
+ * @param <STATE>
+ *            Type of objects that are used to label states (resp. places
+ *            for PetriNet)
  */
-public interface IAutomaton<LETTER,STATE> {
+public interface IAutomaton<LETTER, STATE> {
 	/**
 	 * @return Alphabet of this automaton.
 	 */
 	Set<LETTER> getAlphabet();
 	
 	/**
-	 * @return StateFactory that was used to construct this automaton. 
+	 * @return StateFactory that was used to construct this automaton.
 	 */
 	@Deprecated
-	StateFactory<STATE> getStateFactory();
-	
+			StateFactory<STATE> getStateFactory();
+			
 	/**
 	 * @return Size of the automaton. E.g., the number of states.
 	 */
