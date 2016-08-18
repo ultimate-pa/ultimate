@@ -51,6 +51,10 @@ import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
  */
 public final class CorrectnessWitnessUtils {
 
+	private CorrectnessWitnessUtils() {
+		// do not instantiate a utility class
+	}
+
 	/**
 	 * Given an {@link IASTStatement}, find the next non-empty {@link IASTStatement} with regard to the control-flow of
 	 * the C program.
@@ -65,30 +69,10 @@ public final class CorrectnessWitnessUtils {
 	 *         </ul>
 	 *
 	 */
-	public static Collection<IASTStatement> findSuccessorStatement(final IASTStatement stmt) {
+	public static IASTStatement findSuccessorStatement(final IASTStatement stmt) {
 		if (stmt == null || stmt.getParent() == null) {
 			return null;
 		}
-
-		// branching statements have multiple successors: the first of their body (or of their then-block) or the one
-		// afterwards (or of their else-block)
-		final Collection<IASTStatement> rtr = new HashSet<>(2);
-		// if (stmt instanceof IASTForStatement) {
-		// final IASTForStatement forstmt = (IASTForStatement) stmt;
-		// rtr.add(getFirstOrSuccessorStatement(forstmt.getBody()));
-		// } else if (stmt instanceof IASTIfStatement) {
-		// final IASTIfStatement ifstmt = (IASTIfStatement) stmt;
-		// rtr.add(getFirstOrSuccessorStatement(ifstmt.getThenClause()));
-		// rtr.add(getFirstOrSuccessorStatement(ifstmt.getElseClause()));
-		// return rtr;
-		// } else if (stmt instanceof IASTDoStatement) {
-		// final IASTDoStatement dostmt = (IASTDoStatement) stmt;
-		// rtr.add(getFirstOrSuccessorStatement(dostmt.getBody()));
-		// } else if (stmt instanceof IASTWhileStatement) {
-		// final IASTWhileStatement whilestmt = (IASTWhileStatement) stmt;
-		// rtr.add(getFirstOrSuccessorStatement(whilestmt.getBody()));
-		// }
-
 		final IASTNode parent = stmt.getParent();
 		if (!(parent instanceof IASTStatement)) {
 			// this is sad, we would have to resolve interprocedural successors
@@ -98,15 +82,13 @@ public final class CorrectnessWitnessUtils {
 		for (int i = 0; i < children.length - 1; ++i) {
 			if (children[i].equals(stmt)) {
 				// this is the current stmt; the next child must be the successor
-				rtr.add(getFirstOrSuccessorStatement((IASTStatement) children[i + 1]));
-				return rtr;
+				return getFirstOrSuccessorStatement((IASTStatement) children[i + 1]);
 			}
 		}
 		// if we made it past this point, we should be the last child
 		assert children[children.length - 1].equals(stmt);
 		// now we have to find the successor of our parent
-		rtr.addAll(findSuccessorStatement((IASTStatement) parent));
-		return rtr;
+		return findSuccessorStatement((IASTStatement) parent);
 	}
 
 	/**
@@ -124,35 +106,20 @@ public final class CorrectnessWitnessUtils {
 			final IASTStatement statement) {
 		if (statement instanceof IASTForStatement) {
 			final IASTForStatement forstmt = (IASTForStatement) statement;
-			if (trueOrFalseBranch) {
-				return getFirstOrSuccessorStatement(forstmt.getBody());
-			} else {
-				final Collection<IASTStatement> rtr = findSuccessorStatement(statement);
-				assert rtr.size() < 2;
-				return rtr.isEmpty() ? null : rtr.iterator().next();
-			}
+			return trueOrFalseBranch ? getFirstOrSuccessorStatement(forstmt.getBody())
+					: findSuccessorStatement(statement);
 		} else if (statement instanceof IASTIfStatement) {
 			final IASTIfStatement ifstmt = (IASTIfStatement) statement;
 			return trueOrFalseBranch ? getFirstOrSuccessorStatement(ifstmt.getThenClause())
 					: getFirstOrSuccessorStatement(ifstmt.getElseClause());
 		} else if (statement instanceof IASTDoStatement) {
 			final IASTDoStatement dostmt = (IASTDoStatement) statement;
-			if (trueOrFalseBranch) {
-				return getFirstOrSuccessorStatement(dostmt.getBody());
-			} else {
-				final Collection<IASTStatement> rtr = findSuccessorStatement(statement);
-				assert rtr.size() < 2;
-				return rtr.isEmpty() ? null : rtr.iterator().next();
-			}
+			return trueOrFalseBranch ? getFirstOrSuccessorStatement(dostmt.getBody())
+					: findSuccessorStatement(statement);
 		} else if (statement instanceof IASTWhileStatement) {
 			final IASTWhileStatement whilestmt = (IASTWhileStatement) statement;
-			if (trueOrFalseBranch) {
-				return getFirstOrSuccessorStatement(whilestmt.getBody());
-			} else {
-				final Collection<IASTStatement> rtr = findSuccessorStatement(statement);
-				assert rtr.size() < 2;
-				return rtr.isEmpty() ? null : rtr.iterator().next();
-			}
+			return trueOrFalseBranch ? getFirstOrSuccessorStatement(whilestmt.getBody())
+					: findSuccessorStatement(statement);
 		}
 		throw new IllegalArgumentException("statement " + statement + " is not a branching statement");
 	}
@@ -178,13 +145,7 @@ public final class CorrectnessWitnessUtils {
 
 	private static IASTStatement getFirstOrSuccessorStatement(final IASTCompoundStatement cmpStmt) {
 		final IASTStatement[] children = cmpStmt.getStatements();
-		if (children.length == 0) {
-			final Collection<IASTStatement> rtr = findSuccessorStatement(cmpStmt);
-			assert rtr.size() < 2;
-			return rtr.isEmpty() ? null : rtr.iterator().next();
-		} else {
-			return getFirstOrSuccessorStatement(children[0]);
-		}
+		return children.length == 0 ? findSuccessorStatement(cmpStmt) : getFirstOrSuccessorStatement(children[0]);
 	}
 
 	public static IASTDeclaration findScope(final IASTNode current) {
