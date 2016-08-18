@@ -45,12 +45,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
-import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
-import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTGotoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -279,7 +277,8 @@ public class CorrectnessWitnessExtractor {
 		final Iterator<MatchedASTNode> iter = loopHeads.iterator();
 		while (iter.hasNext()) {
 			final MatchedASTNode loopHead = iter.next();
-			final Set<IASTStatement> loopStatements = new DesiredTypeExtractor(mLoopTypes).run(loopHead.getNode());
+			final Set<IASTStatement> loopStatements =
+					CorrectnessWitnessUtils.findDesiredType(loopHead.getNode(), mLoopTypes);
 			if (loopStatements.isEmpty()) {
 				continue;
 			} else {
@@ -309,7 +308,7 @@ public class CorrectnessWitnessExtractor {
 		IASTNode currentParent = commonParent;
 		Set<IASTStatement> loopStatements = Collections.emptySet();
 		while (currentParent != null && currentParent instanceof IASTStatement) {
-			loopStatements = new DesiredTypeExtractor(mLoopTypes).run(currentParent);
+			loopStatements = CorrectnessWitnessUtils.findDesiredType(currentParent, mLoopTypes);
 			if (!loopStatements.isEmpty()) {
 				break;
 			}
@@ -405,14 +404,14 @@ public class CorrectnessWitnessExtractor {
 		final Set<MatchedASTNode> before = getIncomingSet(nodes);
 
 		// collect all scopes from the after list
-		final Set<IASTDeclaration> afterScopes =
-				after.stream().map(a -> determineScope(a.getNode())).filter(a -> a != null).collect(Collectors.toSet());
+		final Set<IASTDeclaration> afterScopes = after.stream().map(a -> CorrectnessWitnessUtils.findScope(a.getNode()))
+				.filter(a -> a != null).collect(Collectors.toSet());
 
 		// iterate over before list and remove all matches that would lead to a scope change
 		final Iterator<MatchedASTNode> beforeIter = before.iterator();
 		while (beforeIter.hasNext()) {
 			final MatchedASTNode beforeCurrent = beforeIter.next();
-			final IASTDeclaration beforeScope = determineScope(beforeCurrent.getNode());
+			final IASTDeclaration beforeScope = CorrectnessWitnessUtils.findScope(beforeCurrent.getNode());
 			if (beforeScope == null) {
 				// its the global scope
 				continue;
@@ -424,21 +423,6 @@ public class CorrectnessWitnessExtractor {
 				beforeIter.remove();
 			}
 		}
-	}
-
-	private IASTDeclaration determineScope(final IASTNode current) {
-		IASTNode parent = current.getParent();
-		while (parent != null) {
-			if (parent instanceof IASTFunctionDefinition) {
-				return (IASTDeclaration) parent;
-			}
-			if (parent instanceof IASTTranslationUnit) {
-				return null;
-			}
-			parent = parent.getParent();
-		}
-
-		return null;
 	}
 
 	private IASTNode findCommonParentStatement(final Collection<MatchedASTNode> list) {
@@ -454,8 +438,8 @@ public class CorrectnessWitnessExtractor {
 		final Iterator<MatchedASTNode> iter = list.iterator();
 		while (iter.hasNext()) {
 			final MatchedASTNode currentParent = iter.next();
-			if (list.stream()
-					.allMatch(a -> a == currentParent || isContainedInSubtree(a.getNode(), currentParent.getNode()))) {
+			if (list.stream().allMatch(a -> a == currentParent
+					|| CorrectnessWitnessUtils.isContainedInSubtree(a.getNode(), currentParent.getNode()))) {
 				return currentParent.getNode();
 			}
 		}
@@ -469,18 +453,13 @@ public class CorrectnessWitnessExtractor {
 				return null;
 			}
 			final IASTNode pParent = possibleParent;
-			if (list.stream().allMatch(a -> a.getNode() == pParent || isContainedInSubtree(a.getNode(), pParent))) {
+			if (list.stream().allMatch(a -> a.getNode() == pParent
+					|| CorrectnessWitnessUtils.isContainedInSubtree(a.getNode(), pParent))) {
 				return pParent;
 			}
 			possibleParent = possibleParent.getParent();
 		}
 		return null;
-	}
-
-	private boolean isContainedInSubtree(final IASTNode candidate, final IASTNode possibleParent) {
-		final SubtreeChecker sc = new SubtreeChecker(candidate);
-		possibleParent.accept(sc);
-		return sc.isContainedInSubtree();
 	}
 
 	private <T extends IHasIncoming> Stream<T> getIncomingStream(final Collection<T> edges) {
@@ -511,105 +490,6 @@ public class CorrectnessWitnessExtractor {
 
 	private String toStringCollection(final Stream<?> stream) {
 		return String.join(", ", stream.map(a -> String.valueOf(a)).collect(Collectors.toList()));
-	}
-
-	private IASTStatement findSuccessorStatement(final IASTStatement stmt) {
-		if (stmt == null || stmt.getParent() == null) {
-			return null;
-		}
-
-		IASTNode parent = stmt.getParent();
-		while (parent != null) {
-			if (parent instanceof IASTCompoundStatement) {
-				break;
-			}
-			if (parent instanceof IASTStatement) {
-				parent = parent.getParent();
-			} else {
-				break;
-			}
-		}
-
-		if (parent == null) {
-			return null;
-		}
-
-		IASTStatement successorStatement = null;
-		if (parent instanceof IASTCompoundStatement) {
-			final IASTCompoundStatement compound = (IASTCompoundStatement) parent;
-			final IASTStatement[] stmts = compound.getStatements();
-			for (int i = 0; i < stmts.length; ++i) {
-				if (!stmt.equals(stmts[i])) {
-					continue;
-				}
-				if (i < stmts.length - 1) {
-					// found successor in compound statement
-					successorStatement = stmts[i + 1];
-				} else {
-					// need to find successor of compound statement
-					successorStatement = findSuccessorStatement(compound);
-				}
-				break;
-			}
-		}
-
-		if (successorStatement instanceof IASTCompoundStatement) {
-			final IASTCompoundStatement succComp = (IASTCompoundStatement) successorStatement;
-			if (succComp.getStatements().length == 0) {
-				// if this statement has no children, we need its successor
-				successorStatement = findSuccessorStatement(succComp);
-			}
-		}
-
-		if (successorStatement != null) {
-			assert !successorStatement.equals(stmt);
-			return successorStatement;
-		}
-
-		throw new UnsupportedOperationException("Did not think that far");
-	}
-
-	private IASTStatement findBranchingSuccessorStatement(final boolean trueOrFalseBranch,
-			final IASTStatement statement) {
-		if (statement instanceof IASTForStatement) {
-			final IASTForStatement forstmt = (IASTForStatement) statement;
-			return trueOrFalseBranch ? forstmt.getBody() : findSuccessorStatement(statement);
-		} else if (statement instanceof IASTIfStatement) {
-			final IASTIfStatement ifstmt = (IASTIfStatement) statement;
-			return trueOrFalseBranch ? ifstmt.getThenClause() : ifstmt.getElseClause();
-		} else if (statement instanceof IASTDoStatement) {
-			final IASTDoStatement dostmt = (IASTDoStatement) statement;
-			return trueOrFalseBranch ? dostmt.getBody() : findSuccessorStatement(statement);
-		} else if (statement instanceof IASTWhileStatement) {
-			final IASTWhileStatement whilestmt = (IASTWhileStatement) statement;
-			return trueOrFalseBranch ? whilestmt.getBody() : findSuccessorStatement(statement);
-		}
-		throw new UnsupportedOperationException("statement " + statement + " is not a branching statement");
-	}
-
-	private static final class DesiredTypeExtractor extends ASTGenericVisitor {
-		private Set<IASTStatement> mStatements;
-		private final Collection<Class<?>> mDesiredClasses;
-
-		public DesiredTypeExtractor(final Collection<Class<?>> desiredClasses) {
-			super(true);
-			mDesiredClasses = desiredClasses;
-		}
-
-		public Set<IASTStatement> run(final IASTNode subtreeRoot) {
-			mStatements = new HashSet<>();
-			subtreeRoot.accept(this);
-			return mStatements;
-		}
-
-		@Override
-		public int visit(final IASTStatement statement) {
-			if (mDesiredClasses.stream().anyMatch(a -> a.isAssignableFrom(statement.getClass()))) {
-				mStatements.add(statement);
-				return PROCESS_SKIP;
-			}
-			return PROCESS_CONTINUE;
-		}
 	}
 
 	private final class LineMatchingVisitor extends ASTGenericVisitor {
@@ -665,7 +545,7 @@ public class CorrectnessWitnessExtractor {
 			if (!matchLineNumber(node)) {
 				return false;
 			}
-			final Set<IASTStatement> result = new DesiredTypeExtractor(mConditionalTypes).run(node);
+			final Set<IASTStatement> result = CorrectnessWitnessUtils.findDesiredType(node, mConditionalTypes);
 			if (result.isEmpty()) {
 				return false;
 			}
@@ -674,7 +554,7 @@ public class CorrectnessWitnessExtractor {
 			}
 
 			final IASTStatement branchingSuccessor =
-					findBranchingSuccessorStatement(condition, result.iterator().next());
+					CorrectnessWitnessUtils.findBranchingSuccessorStatement(condition, result.iterator().next());
 			if (branchingSuccessor == null) {
 				return false;
 			}
@@ -698,34 +578,6 @@ public class CorrectnessWitnessExtractor {
 
 			return ((mEdge.getLineNumber() == loc.getEndingLineNumber() && mEdge.isIncoming())
 					|| (mEdge.getLineNumber() == loc.getStartingLineNumber() && !mEdge.isIncoming()));
-		}
-	}
-
-	private static final class SubtreeChecker extends ASTGenericVisitor {
-
-		private final IASTNode mCandidate;
-		private boolean mIsContainedInSubtree;
-
-		public SubtreeChecker(final IASTNode candidate) {
-			super(true);
-			mCandidate = candidate;
-			mIsContainedInSubtree = false;
-		}
-
-		public boolean isContainedInSubtree() {
-			return mIsContainedInSubtree;
-		}
-
-		@Override
-		protected int genericVisit(final IASTNode child) {
-			if (mIsContainedInSubtree) {
-				return PROCESS_ABORT;
-			}
-			if (child == mCandidate) {
-				mIsContainedInSubtree = true;
-				return PROCESS_ABORT;
-			}
-			return PROCESS_CONTINUE;
 		}
 	}
 
