@@ -22,9 +22,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -45,13 +45,13 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.HasUnreachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 
 /**
  * @author Markus Lindenmann
  * @author Oleksii Saukh
  * @date 13.11.2011
+ * 
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
@@ -72,18 +72,17 @@ public class MinimizeDfaTable<LETTER,STATE>
 	 * @param services Ultimate services
 	 * @param operand
 	 *            the input automaton
-	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 * @throws AutomataLibraryException if construction fails
 	 */
 	public MinimizeDfaTable(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER,STATE> operand)
 					throws AutomataLibraryException {
 		super(services, operand.getStateFactory(), "minimizeDFA", operand);
 		
-	    if (new HasUnreachableStates<LETTER,STATE>(mServices, operand)
-				.result()) {
-			throw new IllegalArgumentException("No unreachalbe states allowed");
-		}
-		mIsDeterministic = new IsDeterministic<>(mServices, mOperand).getResult();
+	    assert (new HasUnreachableStates<LETTER,STATE>(mServices, operand).result()) :
+			"No unreachable states allowed";
+		
+		mIsDeterministic = isDeterministic();
 		startMessageDebug();
 	
 		final ArrayList<STATE> states = new ArrayList<STATE>();
@@ -122,8 +121,10 @@ public class MinimizeDfaTable<LETTER,STATE>
 		while (makeNextIteration) {
 			makeNextIteration = false;
 			for (int i = 0; i < states.size(); i++) {
-				for (int j = 0; j < i; j++) { // for each (i, j)
-					if (!table[i][j]) { // if (i, j) not marked
+				// for each (i, j)
+				for (int j = 0; j < i; j++) {
+					// if (i, j) not marked
+					if (!table[i][j]) {
 						for (final LETTER s : mOperand.getInternalAlphabet()) {
 							final ArrayList<STATE> first = getSuccessors(states, s, i);
 							final ArrayList<STATE> second = getSuccessors(states, s, j);
