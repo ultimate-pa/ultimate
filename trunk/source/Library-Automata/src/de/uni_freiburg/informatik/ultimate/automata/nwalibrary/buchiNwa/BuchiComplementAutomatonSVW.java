@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
@@ -91,7 +91,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 	private final String mUnsupportedOperationMessage =
 			"Transform to NestedWordAutomaton to get full support.";
 
-	public BuchiComplementAutomatonSVW(final AutomataLibraryServices services, 
+	public BuchiComplementAutomatonSVW(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> origAutomaton)
 			throws AutomataLibraryException {
 		mServices = services;
@@ -114,7 +114,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 	 *         entirely.
 	 */
 	public INestedWordAutomaton<LETTER, STATE> toNestedWordAutomaton() throws AutomataLibraryException {
-		final NestedWordAutomaton<LETTER, STATE> result = 
+		final NestedWordAutomaton<LETTER, STATE> result =
 				new NestedWordAutomaton<LETTER, STATE>(mServices, mAlphabet, null, null,
 				mStateFactory);
 		final int size = getSizeInfo().mTotalSize;
@@ -678,6 +678,10 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 				mRejectingPairsR2L.put(i_s, new HashSet<Integer>(0));
 			}
 			for (int i_s = i_init; i_s < numOfStates; ++i_s) {
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
+					throw new AutomataOperationCanceledException(this.getClass());
+				}
+				
 				final TransitionProfile s = mapNum2TP.get(i_s);
 				final Set<Integer> rightRejectingPartners_s = mRejectingPairsL2R.get(i_s);
 				for (final TransitionProfile t : idempotents) {
