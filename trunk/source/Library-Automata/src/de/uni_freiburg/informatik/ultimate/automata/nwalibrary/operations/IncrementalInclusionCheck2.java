@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -686,7 +687,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 		Iterable<OutgoingInternalTransition<LETTER,STATE>>nextStaSet = null;
 		HashSet<STATE> newStaSet;
 		curStaSet = new HashSet<STATE>();
-		curStaSet.addAll((HashSet<STATE>)bn.getInitialStates());
+		curStaSet.addAll((Set<STATE>)bn.getInitialStates());
 		if(word.getWord().length()!=0){
 			for(final LETTER alphabet:word.getWord().asList()){
 				newStaSet = new HashSet<STATE>();
