@@ -30,8 +30,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
@@ -44,7 +44,7 @@ public class ProdState extends BasicPredicate {
 	
 	List<IPredicate> mPredicates = new ArrayList<IPredicate>();
 	
-	protected ProdState(int serialNumber, List<IPredicate> mPredicates, Term term, Set<BoogieVar> vars) {
+	protected ProdState(int serialNumber, List<IPredicate> mPredicates, Term term, Set<IProgramVar> vars) {
 		super(serialNumber, null, term, vars, null);
 		mPredicates = mPredicates;
 	}

@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
@@ -86,19 +86,19 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	 * Amount of fix fields in the log format. Currently this is name, type,
 	 * usedSCCs, timedOut and outOfMemory.
 	 */
-	private final static int FIX_FIELD_AMOUNT = 5;
+	private static final int FIX_FIELD_AMOUNT = 5;
 	/**
 	 * Constant for representing no value in the html format.
 	 */
-	private final static String HTML_NO_VALUE = "&ndash;";
+	private static final String HTML_NO_VALUE = "&ndash;";
 	/**
 	 * Marks the end of the head from an entry.
 	 */
-	private final static String LOG_ENTRY_HEAD_END = "-->";
+	private static final String LOG_ENTRY_HEAD_END = "-->";
 	/**
 	 * Marks the start of the head from an entry.
 	 */
-	private final static String LOG_ENTRY_HEAD_START = "<!--";
+	private static final String LOG_ENTRY_HEAD_START = "<!--";
 	/**
 	 * Path where simulation perfomance relevant logs and data gets saved.
 	 */
@@ -127,19 +127,19 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	/**
 	 * Separator that is used in the log.
 	 */
-	private final static String LOG_SEPARATOR = "\t";
+	private static final String LOG_SEPARATOR = "\t";
 	/**
 	 * Constant for representing no value in the plot format.
 	 */
-	private final static String PLOT_NO_VALUE = "--";
+	private static final String PLOT_NO_VALUE = "--";
 	/**
 	 * Separator that is used in plot files.
 	 */
-	private final static String PLOT_SEPARATOR = "\t";
+	private static final String PLOT_SEPARATOR = "\t";
 	/**
 	 * Time in seconds after which a simulation method should timeout.
 	 */
-	private final static int SIMULATION_TIMEOUT = 10;
+	private static final int SIMULATION_TIMEOUT = 10;
 
 	/**
 	 * Reads the log file and creates readable performance tables as html files.
@@ -478,11 +478,11 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	/**
 	 * The inputed buechi automaton.
 	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> mOperand;
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	/**
 	 * The resulting buechi automaton.
 	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> mResult;
+	private final INestedWordAutomaton<LETTER, STATE> mResult;
 	/**
 	 * Service provider of Ultimate framework.
 	 */
@@ -510,7 +510,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	 *             an empty call and return alphabet.
 	 */
 	public CompareReduceBuchiSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		verifyAutomatonValidity(operand);
 
 		mLoggedLines = new LinkedList<String>();
@@ -623,7 +623,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	 * @throws IllegalArgumentException
 	 *             If the given automaton is not valid
 	 */
-	public void verifyAutomatonValidity(final INestedWordAutomatonOldApi<LETTER, STATE> automaton) {
+	public void verifyAutomatonValidity(final INestedWordAutomaton<LETTER, STATE> automaton) {
 		if (!automaton.getCallAlphabet().isEmpty() || !automaton.getReturnAlphabet().isEmpty()) {
 			throw new IllegalArgumentException(
 					"The inputed automaton is no Buechi-automaton. It must have an empty call and return alphabet.");
@@ -709,7 +709,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	 * @return The out of memory performance object
 	 */
 	private SimulationPerformance createOutOfMemoryPerformance(final String name, final ESimulationType type,
-			final boolean useSCCs, final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
+			final boolean useSCCs, final INestedWordAutomaton<LETTER, STATE> operand) {
 		final SimulationPerformance performance = SimulationPerformance.createOutOfMemoryPerformance(type, useSCCs);
 		performance.setName(name);
 		performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, operand.size());
@@ -731,7 +731,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	 * @return The timed out performance object
 	 */
 	private SimulationPerformance createTimedOutPerformance(final String name, final ESimulationType type,
-			final boolean useSCCs, final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
+			final boolean useSCCs, final INestedWordAutomaton<LETTER, STATE> operand) {
 		final SimulationPerformance performance = SimulationPerformance.createTimedOutPerformance(type, useSCCs);
 		performance.setName(name);
 		performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, operand.size());
@@ -831,7 +831,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	@SuppressWarnings("unchecked")
 	protected void appendMethodPerformanceToLog(final Object method, final String name, final ESimulationType type,
 			final boolean usedSCCs, final boolean timedOut, final boolean outOfMemory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
 		createAndResetPerformanceHead();
 
 		if (method instanceof ASimulation) {
@@ -922,7 +922,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	@SuppressWarnings("unchecked")
 	protected void measureMethodPerformance(final String name, final ESimulationType type, final boolean useSCCs,
 			final AutomataLibraryServices services, final long timeout, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
+			final INestedWordAutomaton<LETTER, STATE> operand) {
 		final IProgressAwareTimer progressTimer = services.getProgressMonitorService().getChildTimer(timeout);
 		boolean timedOut = false;
 		boolean outOfMemory = false;

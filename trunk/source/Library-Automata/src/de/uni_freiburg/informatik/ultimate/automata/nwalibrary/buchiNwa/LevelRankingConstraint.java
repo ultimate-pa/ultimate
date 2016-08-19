@@ -101,7 +101,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 				}
 				for (final OutgoingInternalTransition<LETTER, STATE> trans : 
 								mOperand.internalSuccessors(up.getState(),symbol)) {
-					addConstaint(down, trans.getSucc(), upRank, inO, mOperand.isFinal(up.getState()));
+					addConstraint(down, trans.getSucc(), upRank, inO, mOperand.isFinal(up.getState()));
 				}
 			}
 		}
@@ -132,7 +132,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 					} else {
 						succDownState = new StateWithRankInfo<STATE>(mOperand.getEmptyStackState());
 					}
-					addConstaint(succDownState, trans.getSucc(), upRank, inO, mOperand.isFinal(up.getState()));
+					addConstraint(succDownState, trans.getSucc(), upRank, inO, mOperand.isFinal(up.getState()));
 				}
 			}
 		}
@@ -189,9 +189,9 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 				upRank = mUserDefinedMaxRank;
 			}
 			for (final OutgoingReturnTransition<LETTER, STATE> trans : 
-							mOperand.returnSucccessors(stateUp.getState(),hierUp.getState(),symbol)) {
+							mOperand.returnSuccessors(stateUp.getState(),hierUp.getState(),symbol)) {
 				assert mUseDoubleDeckers || hierDown == mOperand.getEmptyStackState();
-				addConstaint(hierDown, trans.getSucc(), upRank, inO, mOperand.isFinal(stateUp.getState()));
+				addConstraint(hierDown, trans.getSucc(), upRank, inO, mOperand.isFinal(stateUp.getState()));
 			}
 		}
 	}
@@ -205,7 +205,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	 * (odd rank only allowed for non-finals or state in o if not odd)
 	 * are added later.
 	 */
-	protected void addConstaint(StateWithRankInfo<STATE> down, STATE up, 
+	protected void addConstraint(StateWithRankInfo<STATE> down, STATE up, 
 			Integer predecessorRank, boolean predecessorIsInO, boolean predecessorIsAccepting) {
 		// This method is very similar to addRank(), but it does not 
 		// override a rank that was already set (instead takes the minimum) 

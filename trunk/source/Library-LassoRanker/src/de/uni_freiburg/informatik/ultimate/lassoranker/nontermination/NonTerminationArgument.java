@@ -33,8 +33,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -74,9 +74,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 public class NonTerminationArgument implements Serializable {
 	private static final long serialVersionUID = 4606815082909883553L;
 	
-	private final Map<RankVar, Rational> mStateInit;
-	private final Map<RankVar, Rational> mStateHonda;
-	private final List<Map<RankVar, Rational>> mGEVs;
+	private final Map<IProgramVar, Rational> mStateInit;
+	private final Map<IProgramVar, Rational> mStateHonda;
+	private final List<Map<IProgramVar, Rational>> mGEVs;
 	private final List<Rational> mLambdas;
 	private final List<Rational> mNus;
 	
@@ -89,9 +89,9 @@ public class NonTerminationArgument implements Serializable {
 	 * @param lambdas eigenvectors
 	 * @param nus nilpotent components
 	 */
-	public NonTerminationArgument(Map<RankVar, Rational> state_init,
-			Map<RankVar, Rational> state_honda,
-			List<Map<RankVar, Rational>> gevs,
+	public NonTerminationArgument(Map<IProgramVar, Rational> state_init,
+			Map<IProgramVar, Rational> state_honda,
+			List<Map<IProgramVar, Rational>> gevs,
 			List<Rational> lambdas,
 			List<Rational> nus) {
 		assert(state_init != null);
@@ -119,23 +119,23 @@ public class NonTerminationArgument implements Serializable {
 	 */
 	public NonTerminationArgument join(NonTerminationArgument other) {
 		// Check for compatibility
-		for (final RankVar rankVar : mStateInit.keySet()) {
+		for (final IProgramVar rankVar : mStateInit.keySet()) {
 			if (other.mStateInit.containsKey(rankVar)) {
 				assert mStateInit.get(rankVar).equals(
 						other.mStateInit.get(rankVar));
 			}
 		}
-		for (final RankVar rankVar : mStateHonda.keySet()) {
+		for (final IProgramVar rankVar : mStateHonda.keySet()) {
 			if (other.mStateHonda.containsKey(rankVar)) {
 				assert mStateHonda.get(rankVar).equals(
 						other.mStateHonda.get(rankVar));
 			}
 		}
 		
-		final Map<RankVar, Rational> stateInit = new HashMap<RankVar, Rational>();
-		final Map<RankVar, Rational> stateHonda = new HashMap<RankVar, Rational>();
-		final List<Map<RankVar, Rational>> gevs =
-				new ArrayList<Map<RankVar, Rational>>();
+		final Map<IProgramVar, Rational> stateInit = new HashMap<IProgramVar, Rational>();
+		final Map<IProgramVar, Rational> stateHonda = new HashMap<IProgramVar, Rational>();
+		final List<Map<IProgramVar, Rational>> gevs =
+				new ArrayList<Map<IProgramVar, Rational>>();
 		final List<Rational> lambdas = new ArrayList<Rational>();
 		final List<Rational> nus = new ArrayList<Rational>();
 		stateInit.putAll(mStateInit);
@@ -155,14 +155,14 @@ public class NonTerminationArgument implements Serializable {
 	/**
 	 * @return the initial state
 	 */
-	public Map<RankVar, Rational> getStateInit() {
+	public Map<IProgramVar, Rational> getStateInit() {
 		return Collections.unmodifiableMap(mStateInit);
 	}
 	
 	/**
 	 * @return the state at the lasso's honda
 	 */
-	public Map<RankVar, Rational> getStateHonda() {
+	public Map<IProgramVar, Rational> getStateHonda() {
 		return Collections.unmodifiableMap(mStateHonda);
 	}
 	
@@ -176,11 +176,11 @@ public class NonTerminationArgument implements Serializable {
 	/**
 	 * @return the generalized eigenvectors
 	 */
-	public List<Map<RankVar, Rational>> getGEVs() {
+	public List<Map<IProgramVar, Rational>> getGEVs() {
 		// Make unmodifiable view
-		final List<Map<RankVar, Rational>> gevs =
-				new ArrayList<Map<RankVar, Rational>>();
-		for (final Map<RankVar, Rational> gev : mGEVs) {
+		final List<Map<IProgramVar, Rational>> gevs =
+				new ArrayList<Map<IProgramVar, Rational>>();
+		for (final Map<IProgramVar, Rational> gev : mGEVs) {
 			gevs.add(Collections.unmodifiableMap(gev));
 		}
 		return Collections.unmodifiableList(gevs);

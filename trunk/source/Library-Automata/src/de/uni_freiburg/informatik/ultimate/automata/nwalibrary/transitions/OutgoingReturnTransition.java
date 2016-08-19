@@ -28,23 +28,28 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions;
 
 import java.text.MessageFormat;
 
-
 /**
  * Return transition outgoing of some state.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class OutgoingReturnTransition<LETTER,STATE> implements OutgoingTransitionlet<LETTER,STATE> {
+public class OutgoingReturnTransition<LETTER,STATE>
+		implements IOutgoingTransitionlet<LETTER,STATE> {
 	
 	private final STATE mHierPred;
 	private final LETTER mLetter; 
 	private final STATE mSucc;
 
-	
-	public OutgoingReturnTransition(STATE hierPred, LETTER letter, STATE succ) {
+	/**
+	 * @param hierPred hierarchical predecessor state
+	 * @param letter letter
+	 * @param succ successor state
+	 */
+	public OutgoingReturnTransition(final STATE hierPred, final LETTER letter,
+			final STATE succ) {
 		mHierPred = hierPred;
 		mLetter = letter;
 		mSucc = succ;
@@ -66,7 +71,8 @@ public class OutgoingReturnTransition<LETTER,STATE> implements OutgoingTransitio
 
 	@Override
 	public String toString() {
-		return MessageFormat.format("( _ , {0} , {1} , {2} )", getHierPred(), getLetter(), getSucc());
+		return MessageFormat.format("( _ , {0} , {1} , {2} )",
+				getHierPred(), getLetter(), getSucc());
 	}
 	
 }

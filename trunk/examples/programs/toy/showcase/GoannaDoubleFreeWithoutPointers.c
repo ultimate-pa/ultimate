@@ -12,7 +12,7 @@
  * 2012TAPAS -  Mark Bradley, Franck Cassez, Ansgar Fehnker, Thomas Given-Wilson, Ralf Huuck -  High Performance Static Analysis for Industry
  * 
  * Date: November 2012
- * Author: heizmann@informtik.uni-freiburg.de
+ * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
 

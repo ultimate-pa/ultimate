@@ -1,7 +1,7 @@
 //#Safe
 /* Check that not more values than specified are copied.
  * Date: 2016-02-22
- * Author: heizmann@informtik.uni-freiburg.de
+ * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
 

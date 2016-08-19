@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
@@ -39,7 +39,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -52,20 +51,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOCATION>
-		implements IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, LOCATION> {
+public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, LOCATION, VARDECL>
+        implements IAbstractStateStorage<STATE, CodeBlock, VARDECL, LOCATION> {
 
 	private final IAbstractStateBinaryOperator<STATE> mMergeOperator;
 	private final IUltimateServiceProvider mServices;
-	private final List<BaseRcfgAbstractStateStorageProvider<STATE, LOCATION>> mChildStores;
+	private final List<BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL>> mChildStores;
 	private final ITransitionProvider<CodeBlock, LOCATION> mTransProvider;
 
 	public BaseRcfgAbstractStateStorageProvider(final IAbstractStateBinaryOperator<STATE> mergeOperator,
-			final IUltimateServiceProvider services, final ITransitionProvider<CodeBlock, LOCATION> transProvider) {
+	        final IUltimateServiceProvider services, final ITransitionProvider<CodeBlock, LOCATION> transProvider) {
 		assert mergeOperator != null;
 		assert services != null;
 		assert transProvider != null;
@@ -76,13 +75,13 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	@Override
-	public List<STATE> getAbstractPostStates(CodeBlock transition) {
+	public List<STATE> getAbstractPostStates(final CodeBlock transition) {
 		assert transition != null;
 		return getPostStates(transition).stream().collect(Collectors.toList());
 	}
 
 	@Override
-	public void addAbstractPostState(CodeBlock transition, STATE state) {
+	public void addAbstractPostState(final CodeBlock transition, final STATE state) {
 		assert transition != null;
 		assert state != null;
 		final Deque<STATE> states = getPostStates(transition);
@@ -93,12 +92,12 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		states.addFirst(state);
 	}
 
-	public void removeAbstractPostState(CodeBlock transition, STATE state) {
+	public void removeAbstractPostState(final CodeBlock transition, final STATE state) {
 		getPostStates(transition).remove(state);
 	}
 
 	@Override
-	public STATE mergePostStates(CodeBlock transition) {
+	public STATE mergePostStates(final CodeBlock transition) {
 		assert transition != null;
 		final Deque<STATE> states = getPostStates(transition);
 		if (states.isEmpty()) {
@@ -113,8 +112,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 				accumulator = state;
 			} else {
 				accumulator = mMergeOperator.apply(state, accumulator);
-				assert accumulator.getVariables().keySet()
-						.equals(state.getVariables().keySet()) : "states have different variables";
+				assert accumulator.getVariables().equals(state.getVariables()) : "states have different variables";
 			}
 			iterator.remove();
 		}
@@ -127,15 +125,14 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 
 	@Override
 	public List<STATE> widenPostState(final CodeBlock transition, final IAbstractStateBinaryOperator<STATE> wideningOp,
-			STATE operand) {
+	        final STATE operand) {
 		assert transition != null;
 		final Deque<STATE> states = getPostStates(transition);
 		final Iterator<STATE> iterator = states.iterator();
 		final Deque<STATE> newStates = new ArrayDeque<STATE>(states.size());
 		while (iterator.hasNext()) {
 			final STATE newState = wideningOp.apply(operand, iterator.next());
-			assert newState.getVariables().keySet()
-					.equals(operand.getVariables().keySet()) : "states have different variables";
+			assert newState.getVariables().equals(operand.getVariables()) : "states have different variables";
 			assert newState != null;
 			iterator.remove();
 			newStates.addFirst(newState);
@@ -145,36 +142,46 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	@Override
-	public final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, LOCATION> createStorage() {
-		final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION> rtr = create();
+	public final IAbstractStateStorage<STATE, CodeBlock, VARDECL, LOCATION> createStorage() {
+		final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> rtr = create();
 		mChildStores.add(rtr);
 		return rtr;
 	}
 
 	@Override
 	public Map<LOCATION, Term> getLoc2Term(final CodeBlock initialTransition, final Script script,
-			final Boogie2SMT bpl2smt) {
+	        final Boogie2SMT bpl2smt) {
 		// TODO: What shall we do about different scopes? Currently, states at the same location are merged and later
 		// converted to terms. This leads to loss of precision, so that tools relying on those terms cannot prove
 		// absence of errors with the terms alone, even if AI was able to prove it.
-		final Map<LOCATION, StateDecorator> states = getMergedStatesOfAllChilds(initialTransition);
+		final Map<LOCATION, StateDecorator> states = getMergedStatesOfAllChildren(initialTransition);
 		return convertStates2Terms(states, script, bpl2smt);
+	}
+
+	@Override
+	public Map<LOCATION, STATE> getLoc2State(final CodeBlock initialTransition) {
+		final Map<LOCATION, StateDecorator> states = getMergedStatesOfAllChildren(initialTransition);
+		// TODO: Maybe get rid of the filter here for API reasons. The user of this method does not see that only
+		// locations are filtered which have an actual abstract state. Rather return a new location to state mapping
+		// where state is some bottom state.
+		return states.entrySet().stream().filter(e -> e.getValue().mState != null)
+		        .collect(Collectors.toMap(Map.Entry::getKey, decorator -> decorator.getValue().mState));
 	}
 
 	@Override
 	public Set<Term> getTerms(final CodeBlock initialTransition, final Script script, final Boogie2SMT bpl2smt) {
 		final Set<Term> rtr = new LinkedHashSet<>();
 		getLocalTerms(initialTransition, script, bpl2smt, rtr);
-		for (final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION> child : mChildStores) {
+		for (final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> child : mChildStores) {
 			rtr.addAll(child.getTerms(initialTransition, script, bpl2smt));
 		}
 		return rtr;
 	}
 
-	private Map<LOCATION, StateDecorator> getMergedStatesOfAllChilds(final CodeBlock initialTransition) {
+	private Map<LOCATION, StateDecorator> getMergedStatesOfAllChildren(final CodeBlock initialTransition) {
 		Map<LOCATION, StateDecorator> states = getMergedLocalStates(initialTransition);
-		for (final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION> child : mChildStores) {
-			states = mergeMaps(states, child.getMergedStatesOfAllChilds(initialTransition));
+		for (final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> child : mChildStores) {
+			states = mergeMaps(states, child.getMergedStatesOfAllChildren(initialTransition));
 		}
 		return states;
 	}
@@ -224,7 +231,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	private Set<Term> getLocalTerms(final CodeBlock initialTransition, final Script script, final Boogie2SMT bpl2smt,
-			final Set<Term> terms) {
+	        final Set<Term> terms) {
 		final Deque<CodeBlock> worklist = new ArrayDeque<>();
 		final Set<CodeBlock> closed = new LinkedHashSet<>();
 
@@ -264,7 +271,8 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		return terms;
 	}
 
-	private Map<LOCATION, StateDecorator> mergeMaps(Map<LOCATION, StateDecorator> a, Map<LOCATION, StateDecorator> b) {
+	private Map<LOCATION, StateDecorator> mergeMaps(final Map<LOCATION, StateDecorator> a,
+	        final Map<LOCATION, StateDecorator> b) {
 		final Map<LOCATION, StateDecorator> rtr = new HashMap<>();
 
 		for (final Entry<LOCATION, StateDecorator> entryA : a.entrySet()) {
@@ -289,7 +297,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	private Map<LOCATION, Term> convertStates2Terms(final Map<LOCATION, StateDecorator> states, final Script script,
-			final Boogie2SMT bpl2smt) {
+	        final Boogie2SMT bpl2smt) {
 		final Map<LOCATION, Term> rtr = new HashMap<>();
 
 		for (final Entry<LOCATION, StateDecorator> entry : states.entrySet()) {
@@ -301,7 +309,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		return rtr;
 	}
 
-	protected abstract BaseRcfgAbstractStateStorageProvider<STATE, LOCATION> create();
+	protected abstract BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> create();
 
 	protected abstract Deque<STATE> getPostStates(CodeBlock action);
 
@@ -324,7 +332,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 			mState = null;
 		}
 
-		private StateDecorator(STATE state) {
+		private StateDecorator(final STATE state) {
 			mState = state;
 		}
 
@@ -344,6 +352,5 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 			}
 			return new StateDecorator(mMergeOperator.apply(mState, other.mState));
 		}
-
 	}
 }

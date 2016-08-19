@@ -33,10 +33,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze.ESymbolType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomNwa;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 
 /**
@@ -88,7 +88,7 @@ public final class RandomNwaBenchmarkCreator {
 		final float totalityCallInPerc = 0.15f;
 		final float totalityReturnInPerc = 0.003f;
 		final int amount = 1000;
-		boolean operationSwitchUseCompareReduce = false;
+		final boolean operationSwitchUseCompareReduce = false;
 
 		final String operation;
 		if (operationSwitchUseCompareReduce) {
@@ -102,7 +102,7 @@ public final class RandomNwaBenchmarkCreator {
 				+ "// Author: Daniel Tischner\n\n" + operation + "\n\n";
 
 		// Create the object and pass settings
-		RandomNwaBenchmarkCreator creator = new RandomNwaBenchmarkCreator(n, k, acceptanceInPerc,
+		final RandomNwaBenchmarkCreator creator = new RandomNwaBenchmarkCreator(n, k, acceptanceInPerc,
 				totalityInternalInPerc, totalityCallInPerc, totalityReturnInPerc);
 		creator.setPreamble(preamble);
 
@@ -232,7 +232,7 @@ public final class RandomNwaBenchmarkCreator {
 	 */
 	public void createAndSaveABenchmark(final int amount, final File pathToSaveBenchmark, final int logEvery)
 			throws IOException {
-		NestedWordAutomaton<String, String> nwa = null;
+		INestedWordAutomaton<String, String> nwa = null;
 
 		final double internalTotalityDouble = percentageToDouble(mInternalTotality);
 		final double callTotalityDouble = percentageToDouble(mCallTotality);
@@ -259,16 +259,16 @@ public final class RandomNwaBenchmarkCreator {
 			
 			if (i == 1) {
 				// Print some debug information
-				Analyze<String, String> analyzer = new Analyze<>(mServices, nwa, true);
+				final Analyze<String, String> analyzer = new Analyze<>(mServices, nwa, true);
 				System.out.println("#Internal: " + analyzer.getNumberOfTransitions(ESymbolType.INTERNAL));
 				System.out.println("#Call: " + analyzer.getNumberOfTransitions(ESymbolType.CALL));
 				System.out.println("#Return: " + analyzer.getNumberOfTransitions(ESymbolType.RETURN));
 			}
 
 			final String fileNamePost = "_" + i;
-			File automatonFile = new File(pathToSaveBenchmark, fileName + fileNamePost + fileFormat);
+			final File automatonFile = new File(pathToSaveBenchmark, fileName + fileNamePost + fileFormat);
 
-			FileWriter fw = new FileWriter(automatonFile);
+			final FileWriter fw = new FileWriter(automatonFile);
 			fw.write(mPreamble + nwa);
 			fw.close();
 		}

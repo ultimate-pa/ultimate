@@ -36,7 +36,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ separate\ solver\ for\ trace\ checks=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/SMT\ solver=External_ModelsAndUnsatCoreMode
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ abstract\ interpretation=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Abstract\ interpretation\ Mode=USE_PREDICATES
 
 
 #Thu Oct 29 17:01:28 CET 2015
@@ -55,4 +55,4 @@ file_export_version=3.0
 \!/instance/UltimateCore=
 @UltimateCore=0.0.1
 /instance/UltimateCore/Generate\ witness\ from\ each\ counter\ example\ result=true
-/instance/UltimateCore/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2\=DEBUG;
+/instance/UltimateCore/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2\=DEBUG;de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction\=DEBUG;

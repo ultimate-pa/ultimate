@@ -31,23 +31,23 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 /**
  * Horn clause with at most three literals.
  *
- * By convention literals <code>x</code> and <code>y</code> are negative, and
+ * <p>By convention literals <code>x</code> and <code>y</code> are negative, and
  * <code>z</code> is positive. For clauses with less than three literals, the
  * special variables <code>FALSEVAR</code> and <code>TRUEVAR</code> are used
  * which are considered "constant" false or true variables.
  */
 final class Horn3Clause {
 
-	static final int FALSEVAR = 0;
-	static final int TRUEVAR = 1;
+	public static final int FALSEVAR = 0;
+	public static final int TRUEVAR = 1;
 
-	int x;
-	int y;
-	int z;
+	int mX;
+	int mY;
+	int mZ;
 
-	Horn3Clause(int x, int y, int z) {
-		this.x = x;
-		this.y = y;
-		this.z = z;
+	Horn3Clause(final int x, final int y, final int z) {
+		this.mX = x;
+		this.mY = y;
+		this.mZ = z;
 	}
 }

@@ -36,7 +36,7 @@ public class BddBuilder extends NonRecursive{
 	public BDD buildBDD(Term in, List<Term> atoms){
 		mAtoms = atoms;
 		mValues = new LinkedList<BDD>();
-		mFactory = BDDFactory.init("java", atoms.size(), atoms.size(), false);
+		mFactory = BDDFactory.init("java", atoms.size()+2, atoms.size()+2, false);
 		mFactory.setVarNum(atoms.size());
 		run(new DownWalker(in));
 		return mValues.poll();

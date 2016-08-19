@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -13,20 +13,20 @@ public final class LoggingHelper {
 		// this is a util class
 	}
 
-	static <STATE extends IAbstractState<STATE, ?, ?>> StringBuilder getStateString(final STATE current) {
+	public static <STATE extends IAbstractState<STATE, ?, ?>> StringBuilder getStateString(final STATE current) {
 		return addHashCodeString(new StringBuilder(), current).append(' ').append(current.toLogString());
 	}
 
-	static <ACTION> StringBuilder getTransitionString(final ACTION current,
-			ITransitionProvider<ACTION, ?> transProvider) {
+	public static <ACTION> StringBuilder getTransitionString(final ACTION current,
+			final ITransitionProvider<ACTION, ?> transProvider) {
 		return addHashCodeString(new StringBuilder(), current).append(' ').append(transProvider.toLogString(current));
 	}
 
-	static StringBuilder getHashCodeString(final Object current) {
+	public static StringBuilder getHashCodeString(final Object current) {
 		return addHashCodeString(new StringBuilder(), current);
 	}
 
-	static StringBuilder addHashCodeString(final StringBuilder builder, final Object current) {
+	public static StringBuilder addHashCodeString(final StringBuilder builder, final Object current) {
 		if (current == null) {
 			return builder.append("[?]");
 		}

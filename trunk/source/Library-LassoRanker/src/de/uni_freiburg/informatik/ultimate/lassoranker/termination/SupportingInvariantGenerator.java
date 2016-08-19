@@ -31,11 +31,11 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.InstanceCounting;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -62,7 +62,7 @@ class SupportingInvariantGenerator extends AffineFunctionGenerator {
 	 * @param strict is this invariant a strict inequality?
 	 */
 	SupportingInvariantGenerator(Script script,
-			Collection<RankVar> variables, boolean strict) {
+			Collection<IProgramVar> variables, boolean strict) {
 		super(script, variables, s_prefix
 				+ (new InstanceCounting()).getInstanceNumber());
 		this.strict = strict;
@@ -74,7 +74,7 @@ class SupportingInvariantGenerator extends AffineFunctionGenerator {
 	 * @return Linear inequality corresponding to si(x)
 	 */
 	@Override
-	public LinearInequality generate(Map<RankVar, Term> vars) {
+	public LinearInequality generate(Map<IProgramVar, Term> vars) {
 		final LinearInequality li = super.generate(vars);
 		li.setStrict(strict);
 		return li;

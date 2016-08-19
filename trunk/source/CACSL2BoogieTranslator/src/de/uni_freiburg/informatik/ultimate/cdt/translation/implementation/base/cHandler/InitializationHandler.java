@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,8 +59,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
@@ -87,8 +88,8 @@ public class InitializationHandler {
 	private final AExpressionTranslation mExpressionTranslation;	
 
 	public InitializationHandler(
-			FunctionHandler functionHandler, StructHandler structHandler,
-			MemoryHandler memoryHandler, AExpressionTranslation expressionTranslation) {
+			final FunctionHandler functionHandler, final StructHandler structHandler,
+			final MemoryHandler memoryHandler, final AExpressionTranslation expressionTranslation) {
 		super();
 		mFunctionHandler = functionHandler;
 		mStructHandler = structHandler;
@@ -133,8 +134,8 @@ public class InitializationHandler {
 	 * 
 	 * @return 
 	 */
-	public ExpressionResult initVar(ILocation loc, Dispatcher main,
-			LeftHandSide lhs, CType cType, ExpressionResult initializerRaw) {
+	public ExpressionResult initVar(final ILocation loc, final Dispatcher main,
+			final LeftHandSide lhs, final CType cType, final ExpressionResult initializerRaw) {
 
 		boolean onHeap = false;
 		if (lhs != null && lhs instanceof VariableLHS) {
@@ -163,15 +164,15 @@ public class InitializationHandler {
 	 * variable as an argument but instead returns a ResultExpression with an lrValue that can be 
 	 * stored in such a variable.
 	 */
-	private ExpressionResult initVar(ILocation loc, Dispatcher main,
-			CType cType, ExpressionResult initializerRaw) {
+	private ExpressionResult initVar(final ILocation loc, final Dispatcher main,
+			final CType cType, final ExpressionResult initializerRaw) {
 		final CType lCType = cType.getUnderlyingType();
 
 		final ArrayList<Statement> stmt = new ArrayList<Statement>();
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 		final ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
-		LRValue lrVal = null;
+		
 
 		//if (f.i.) the initializer comes from a function call, it has statements and declarations that we need to
 		//carry over
@@ -185,51 +186,29 @@ public class InitializationHandler {
 			auxVars.putAll(initializer.auxVars);
 		}
 
-		final VariableLHS lhs = null;
 
-		Expression rhs = null;
+		final LRValue lrVal;
+		final Expression rhs;
 		if (lCType instanceof CPrimitive) {
-			switch (((CPrimitive) lCType).getGeneralType()) {
-			case INTTYPE:
-				if (initializer == null) {
-					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
-				} else {
-					initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-					main.mCHandler.convert(loc, initializer, lCType);
-					rhs = initializer.lrVal.getValue();
+			if (initializer == null) {
+				final CPrimitive lCPrimitive = (CPrimitive) lCType;
+				switch (lCPrimitive.getGeneralType()) {
+				case INTTYPE:
+					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, lCPrimitive, BigInteger.ZERO);
+					break;
+				case FLOATTYPE:
+					rhs = mExpressionTranslation.constructLiteralForFloatingType(loc, lCPrimitive, BigDecimal.ONE);
+					break;
+				case VOID:
+					throw new AssertionError("cannot initialize something that has type void");
+				default:
+					throw new AssertionError("unknown category of type");
 				}
-				break;
-			case FLOATTYPE:
-				if (mExpressionTranslation instanceof BitvectorTranslation) {
-					if (initializer == null) {
-						if (((CPrimitive) lCType).getType().equals(PRIMITIVE.FLOAT)) {
-							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0f").getValue();
-						} else if (((CPrimitive) lCType).getType().equals(PRIMITIVE.DOUBLE)) {
-							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0").getValue();
-						} else if (((CPrimitive) lCType).getType().equals(PRIMITIVE.LONGDOUBLE)) {
-							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0l").getValue();
-						}
-						
-					} else {
-						initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-						main.mCHandler.convert(loc, initializer, lCType);
-						rhs = initializer.lrVal.getValue();
-					}
-				} else {
-					if (initializer == null) {
-						rhs = new RealLiteral(loc, SFO.NR0F);
-					} else {
-						initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-						main.mCHandler.convert(loc, initializer, lCType);
-						rhs = initializer.lrVal.getValue();
-					}
-				}
-				break;
-			case VOID:
-			default:
-				throw new AssertionError("unknown type to init");
+			} else {
+				initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+				main.mCHandler.convert(loc, initializer, lCType);
+				rhs = initializer.lrVal.getValue();
 			}
-
 			lrVal = new RValue(rhs, lCType);
 		} else if (lCType instanceof CPointer) {
 			if (initializer == null) {
@@ -240,7 +219,7 @@ public class InitializationHandler {
 						|| initializerUnderlyingType instanceof CArray) {
 					rhs = initializer.lrVal.getValue();
 				} else if (initializerUnderlyingType instanceof CPrimitive 
-						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == GENERALPRIMITIVE.INTTYPE){
+						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == CPrimitiveCategory.INTTYPE){
 					final BigInteger pointerOffsetValue = mExpressionTranslation.extractIntegerValue((RValue) initializer.lrVal);
 					if (pointerOffsetValue == null) {
 						throw new IllegalArgumentException("unable to understand " + initializer.lrVal);
@@ -258,6 +237,7 @@ public class InitializationHandler {
 
 			lrVal = new RValue(rhs, lCType);
 		} else if (lCType instanceof CArray) {
+			final VariableLHS lhs = null;
 
 			if (initializer == null) {
 				final ExpressionResult aInit = initBoogieArray(main, loc,
@@ -280,6 +260,7 @@ public class InitializationHandler {
 			}
 			//			}
 			assert lhs != null;
+			lrVal = null;
 		} else if (lCType instanceof CStruct) {
 			final CStruct structType = (CStruct) lCType;
 
@@ -291,12 +272,12 @@ public class InitializationHandler {
 			decl.addAll(scRex.decl);
 			overappr.addAll(scRex.overappr);
 			auxVars.putAll(scRex.auxVars);
-
+			rhs = null;
 			lrVal = new RValue(rhs, lCType);
 		} else if (lCType instanceof CEnum) {
 			if (initializer == null) {
 				rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, 
-						new CPrimitive(PRIMITIVE.INT), BigInteger.ZERO);
+						new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
 			} else {
 				initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 				rhs = initializer.lrVal.getValue();
@@ -317,8 +298,8 @@ public class InitializationHandler {
 	 * if var is a HeapLValue, something on Heap is initialized, 
 	 * if it is a LocalLValue something off the Heap is initialized
 	 */
-	private ExpressionResult initVar(ILocation loc, Dispatcher main,
-			LRValue var, CType cType, ExpressionResult initializerRaw) {
+	private ExpressionResult initVar(final ILocation loc, final Dispatcher main,
+			final LRValue var, final CType cType, final ExpressionResult initializerRaw) {
 		assert var != null;
 
 		final boolean onHeap = var instanceof HeapLValue;
@@ -360,11 +341,11 @@ public class InitializationHandler {
 			case FLOATTYPE:
 				if (mExpressionTranslation instanceof BitvectorTranslation) {
 					if (initializer == null) {
-						if (((CPrimitive) lCType).getType().equals(PRIMITIVE.FLOAT)) {
+						if (((CPrimitive) lCType).getType().equals(CPrimitives.FLOAT)) {
 							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0f").getValue();
-						} else if (((CPrimitive) lCType).getType().equals(PRIMITIVE.DOUBLE)) {
+						} else if (((CPrimitive) lCType).getType().equals(CPrimitives.DOUBLE)) {
 							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0").getValue();
-						} else if (((CPrimitive) lCType).getType().equals(PRIMITIVE.LONGDOUBLE)) {
+						} else if (((CPrimitive) lCType).getType().equals(CPrimitives.LONGDOUBLE)) {
 							rhs = mExpressionTranslation.translateFloatingLiteral(loc, "0.0l").getValue();
 						} else {
 							throw new UnsupportedOperationException("UNsopported Floating Type");
@@ -407,7 +388,7 @@ public class InitializationHandler {
 						|| initializerUnderlyingType instanceof CArray) {
 					rhs = initializer.lrVal.getValue();
 				} else if (initializerUnderlyingType instanceof CPrimitive 
-						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == GENERALPRIMITIVE.INTTYPE){
+						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == CPrimitiveCategory.INTTYPE){
 					final BigInteger offsetValue = mExpressionTranslation.extractIntegerValue((RValue) initializer.lrVal);
 					if (offsetValue.equals(BigInteger.ZERO)) {
 						rhs = mExpressionTranslation.constructNullPointer(loc);
@@ -519,7 +500,7 @@ public class InitializationHandler {
 		} else if (lCType instanceof CEnum) {
 			if (initializer == null) {
 				rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, 
-						new CPrimitive(CPrimitive.PRIMITIVE.INT), BigInteger.ZERO);
+						new CPrimitive(CPrimitive.CPrimitives.INT), BigInteger.ZERO);
 			} else {
 				initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 				rhs = initializer.lrVal.getValue();
@@ -546,8 +527,8 @@ public class InitializationHandler {
 	}
 
 
-	public static void addOverApprToStatementAnnots(ArrayList<Overapprox> overappr,
-			Statement stm) {
+	public static void addOverApprToStatementAnnots(final ArrayList<Overapprox> overappr,
+			final Statement stm) {
 		final Map<String, IAnnotations> annots = stm.getPayload().getAnnotations();
 		for (final Overapprox overapprItem : overappr) {
 			annots.put(Overapprox.getIdentifier(), overapprItem);
@@ -561,9 +542,9 @@ public class InitializationHandler {
 	 * @param arrayType The type of the array (containing its size and value type)
 	 * @return a list of statements that do the initialization
 	 */
-	private ExpressionResult initArrayOnHeap(Dispatcher main, ILocation loc, 
-			ArrayList<ExpressionListRecResult> list, Expression startAddress,
-			CArray arrayType) {
+	private ExpressionResult initArrayOnHeap(final Dispatcher main, final ILocation loc, 
+			final ArrayList<ExpressionListRecResult> list, final Expression startAddress,
+			final CArray arrayType) {
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
@@ -593,7 +574,7 @@ public class InitializationHandler {
 			for (int i = 0; i < currentSizeInt; i++) {
 				CType valueType = arrayType.getValueType().getUnderlyingType();
 				if (valueType instanceof CEnum) {
-					valueType = new CPrimitive(PRIMITIVE.INT);
+					valueType = new CPrimitive(CPrimitives.INT);
 				}
 				
 				final Expression iAsExpression = mExpressionTranslation.constructLiteralForIntegerType(
@@ -698,9 +679,9 @@ public class InitializationHandler {
 	 * @param arrayType The type of the array (containing its size and value type)
 	 * @return a list of statements that do the initialization
 	 */
-	private ExpressionResult initBoogieArray(Dispatcher main, ILocation loc, 
-			ArrayList<ExpressionListRecResult> list, LeftHandSide innerArrayAccessLHS,
-			CArray arrayType) {
+	private ExpressionResult initBoogieArray(final Dispatcher main, final ILocation loc, 
+			final ArrayList<ExpressionListRecResult> list, final LeftHandSide innerArrayAccessLHS,
+			final CArray arrayType) {
 		final ArrayList<Statement> stmt = new ArrayList<Statement>();
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
@@ -779,7 +760,7 @@ public class InitializationHandler {
 				
 				// 2015-10-24 Matthias: I don't understand where I can take the
 				// type of the index from. As a workaround I take signed int.
-				final CPrimitive indexType = new CPrimitive(PRIMITIVE.INT);
+				final CPrimitive indexType = new CPrimitive(CPrimitives.INT);
 				final Expression index = mExpressionTranslation.constructLiteralForIntegerType(loc, indexType, BigInteger.valueOf(i));
 				if (innerArrayAccessLHS instanceof ArrayLHS) {
 					final ArrayList<Expression> innerIndices = 
@@ -821,9 +802,9 @@ public class InitializationHandler {
 	/**
 	 * Generate the write calls for the initialization of the struct onHeap.
 	 */
-	private ExpressionResult initStructOnHeapFromRERL(Dispatcher main, ILocation loc, 
-			Expression startAddress, 
-			ExpressionListRecResult rerlIn, CStruct structType) {
+	private ExpressionResult initStructOnHeapFromRERL(final Dispatcher main, final ILocation loc, 
+			final Expression startAddress, 
+			final ExpressionListRecResult rerlIn, final CStruct structType) {
 		ExpressionListRecResult rerl = null;
 		if (rerlIn == null) {
 			rerl = new ExpressionListRecResult();
@@ -973,8 +954,8 @@ public class InitializationHandler {
 	 * nesting structure from the CStruct and the values from the RERL.
 	 * If the RERL is null, the default initialization (int: 0, Ptr: NULL, ...) is used for each entry.
 	 */
-	private ExpressionResult makeStructConstructorFromRERL(Dispatcher main, ILocation loc, 
-			ExpressionListRecResult rerlIn, CStruct structType) {
+	private ExpressionResult makeStructConstructorFromRERL(final Dispatcher main, final ILocation loc, 
+			final ExpressionListRecResult rerlIn, final CStruct structType) {
 		ExpressionListRecResult rerl = null;
 		if (rerlIn == null) {
 			rerl = new ExpressionListRecResult();

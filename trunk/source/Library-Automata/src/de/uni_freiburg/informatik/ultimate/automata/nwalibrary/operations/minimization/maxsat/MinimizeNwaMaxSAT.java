@@ -30,126 +30,81 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.AbstractMinimizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.IMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
+/**
+ * Minimization of NWA by reduction to MaxSAT.
+ * 
+ * @author Jens Stimpfle (stimpflj@informatik.uni-freiburg.de)
+ *
+ * @param <LETTER> letter type
+ * @param <STATE> state type
+ */
 public class MinimizeNwaMaxSAT<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+		extends AbstractMinimizeNwa<LETTER, STATE>
+		implements IMinimizeNwa<LETTER, STATE>, IOperation<LETTER, STATE> {
 
-	private final AutomataLibraryServices mservices;
-	private final INestedWordAutomaton<LETTER, STATE> moperand;
-
-	private final NestedWordAutomaton<LETTER, STATE> mresult;
-
+	/**
+	 * Constructor.
+	 * 
+	 * @param services Ultimate services
+	 * @param stateFactory state factory
+	 * @param automaton input NWA
+	 * @throws AutomataOperationCanceledException if operation was canceled
+	 */
 	public MinimizeNwaMaxSAT(
-			AutomataLibraryServices services,
-			StateFactory<STATE> stateFactory,
-			INestedWordAutomaton<LETTER, STATE> automaton) {
+			final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> automaton) throws AutomataOperationCanceledException {
+		super(services, stateFactory, "MinimizeNwaMaxSAT", automaton);
 
-		mservices = services;
-		moperand = automaton;
-
-		final ILogger logger = services.getLoggingService().getLogger(operationName());
-		final ILogger convertLog = services.getLoggingService().getLogger("Converter");
-		final ILogger generateLog = services.getLoggingService().getLogger("NwaMinimizationClausesGenerator");
-		final ILogger solveLog = services.getLoggingService().getLogger("Solver");
-
-		logger.info(startMessage());
+		final ILogger convertLog = services.getLoggingService().getLogger(
+				"Converter");
+		final ILogger generateLog = services.getLoggingService().getLogger(
+				"NwaMinimizationClausesGenerator");
+		final ILogger solveLog = services.getLoggingService().getLogger(
+				"Solver");
 
 		convertLog.info("starting conversion");
-		final Converter<LETTER, STATE> converter = new Converter<LETTER, STATE>(services, stateFactory, automaton);
-		final NWA nwa = converter.getNWA();
+		final Converter<LETTER, STATE> converter =
+				new Converter<LETTER, STATE>(services, stateFactory, automaton);
+		final NwaWithArrays nwa = converter.getNWA();
 		// it shouldn't be like this, but...
 		final ArrayList<Hist> history = converter.computeHistoryStates();
 		convertLog.info(
 				"finished conversion. "
-				+ Integer.toString(nwa.numStates) + " states, "
-				+ Integer.toString(nwa.numISyms) + " iSyms, "
-				+ Integer.toString(nwa.numCSyms) + " cSyms, "
-				+ Integer.toString(nwa.numRSyms) + " rSyms, "
-				+ Integer.toString(nwa.iTrans.length) + " iTrans, "
-				+ Integer.toString(nwa.cTrans.length) + " cTrans, "
-				+ Integer.toString(nwa.rTrans.length) + " rTrans."
+				+ nwa.mNumStates + " states, "
+				+ nwa.mNumISyms + " iSyms, "
+				+ nwa.mNumCSyms + " cSyms, "
+				+ nwa.mNumRSyms + " rSyms, "
+				+ nwa.mITrans.length + " iTrans, "
+				+ nwa.mCTrans.length + " cTrans, "
+				+ nwa.mRTrans.length + " rTrans."
 		);
 
 		generateLog.info("starting clauses generation");
-		final Horn3Array clauses = Generator.generateClauses(nwa, history);
-		generateLog.info("finished clauses generation. " + Integer.toString(clauses.size()) + " clauses");
+		final Horn3Array clauses = Generator.generateClauses(mServices, nwa, history);
+		generateLog.info("finished clauses generation. "
+				+ clauses.size() + " clauses");
 
 		solveLog.info("starting Solver");
-		final char[] assignments = new Solver(clauses).solve();
+		final char[] assignments = new Solver(mServices, clauses).solve();
 		solveLog.info("finished Solver");
 
 		generateLog.info("making equivalence classes from assignments");
-		final Partition eqCls = Generator.makeMergeRelation(nwa.numStates, assignments);
+		final Partition eqCls = Generator.makeMergeRelation(nwa.mNumStates, assignments);
 		generateLog.info("finished making equivalence classes");
 
-		mresult = converter.constructMerged(eqCls);
+		directResultConstruction(converter.constructMerged(eqCls));
 		convertLog.info("constructed minimized automaton");
 
-		logger.info(exitMessage());
-	}
-
-	@Override
-	public String operationName() {
-		return "MinimizeNwaMaxSAT";
-	}
-
-	@Override
-	public String startMessage() {
-		return "starting MinimizeNwaMaxSAT";
-	}
-
-	@Override
-	public String exitMessage() {
-		return "ending MinimizeNwaMaxSAT";
-	}
-
-	@Override
-	public NestedWordAutomaton<LETTER, STATE> getResult() {
-		return mresult;
-	}
-
-	@Override
-	public final boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		if (checkInclusion(moperand, getResult(), stateFactory)
-			&& checkInclusion(getResult(), moperand, stateFactory)) {
-			return true;
-		} else {
-			ResultChecker.writeToFileIfPreferred(mservices, operationName() + " failed", "language equality check failed", moperand);
-			return false;
-		}
-	 }
-
-	/**
-	 * This method checks language inclusion of the first automaton wrt. the
-	 * second automaton.
-	 *
-	 * @param subset
-	 *			  automaton describing the subset language
-	 * @param superset
-	 *			  automaton describing the superset language
-	 * @param stateFactory
-	 *			  state factory
-	 * @return <code>true</code> iff language is included
-	 * @throws AutomataLibraryException
-	 *			   thrown by inclusion check
-	 */
-	private final boolean checkInclusion(
-			final INestedWordAutomatonSimple<LETTER, STATE> subset,
-			final INestedWordAutomatonSimple<LETTER, STATE> superset,
-			final StateFactory<STATE> stateFactory)
-				throws AutomataLibraryException {
-		return ResultChecker.nwaLanguageInclusion(mservices,
-				ResultChecker.getOldApiNwa(mservices, subset),
-				ResultChecker.getOldApiNwa(mservices, superset),
-				stateFactory) == null;
+		mLogger.info(exitMessage());
 	}
 }

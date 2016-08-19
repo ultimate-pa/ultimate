@@ -48,7 +48,7 @@ public final class DuplicatorWinningSink<LETTER, STATE> implements IWinningSink<
 	/**
 	 * The priority that is winning for Duplicator.
 	 */
-	private final static int DUPLICATOR_WINNING_PRIORITY = 0;
+	private static final int DUPLICATOR_WINNING_PRIORITY = 0;
 
 	/**
 	 * The duplicator vertex of this sink.

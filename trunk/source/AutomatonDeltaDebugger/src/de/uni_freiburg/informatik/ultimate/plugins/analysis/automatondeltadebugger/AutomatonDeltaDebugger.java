@@ -33,12 +33,9 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiClosureNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat.MinimizeNwaMaxSAT;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
@@ -46,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.AutomatonDebuggerExamples.EOperationType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ADebug.EDebugPolicy;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ATester;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AutomatonDeltaDebuggerObserver;
@@ -63,30 +61,51 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * Ultimate interface to the automaton delta debugger.
  * 
  * NOTE: A user may change the code at four places: <br>
- * - the tester (which specifies which operation is run, mandatory change)
- * {@link #getGeneralTester()} or
- * {@link #getIOperation(INestedWordAutomaton, StateFactory)} <br>
+ * - the tester (which specifies which operation is run, mandatory change) <br>
  * - the list of rules to be applied iteratively (optional change)
  * {@link #getShrinkersLoop()} <br>
  * - the list of rules to be applied only once in the end (optional change)
  * {@link #getShrinkersEnd()} <br>
  * - the policy according to which list items are executed (optional change)
- * {@link #getPolicy()} <br>
+ * <br>
  * The class provides some default values here.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	protected ILogger mLogger;
 	protected final List<IObserver> mObservers;
 	private IUltimateServiceProvider mServices;
+	
+	// debug mode
+	private final EAutomatonDeltaDebuggerOperationMode mOperationMode;
+	// debugged operation
+	private final EOperationType mOperationType;
+	// internal debug policy
+	private final EDebugPolicy mDebugPolicy;
 
 	/**
 	 * standard automaton delta debugger
 	 */
 	public AutomatonDeltaDebugger() {
 		mObservers = new LinkedList<IObserver>();
+		/*
+		 * NOTE: Insert your own settings here. 
+		 */
+		mOperationMode = EAutomatonDeltaDebuggerOperationMode.GENERAL;
+		mOperationType = EOperationType.MINIMIZE_NWA_MAXSAT2;
+		mDebugPolicy = EDebugPolicy.BINARY;
+	}
+	
+	/**
+	 * possible mode of the debugger
+	 */
+	public enum EAutomatonDeltaDebuggerOperationMode {
+		GENERAL,
+		CHECK_RESULT
 	}
 
 	@Override
@@ -97,37 +116,43 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 		final String creator = graphType.getCreator();
 		if ("de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser".equals(creator)) {
 			mLogger.info("Preparing to process automaton...");
+			final ATester<LETTER, STATE> tester;
+			switch (mOperationMode) {
+				case GENERAL:
+					tester = getGeneralTester();
+					break;
+				
+				case CHECK_RESULT:
+					tester = getCheckResultTester();
+					break;
+				
+				default:
+					throw new IllegalArgumentException("Unknown mode.");
+			}
 			mObservers.add(new AutomatonDeltaDebuggerObserver<LETTER, STATE>(
-					mServices, getCheckResultTester(), getShrinkersLoop(),
-					getShrinkersEnd(), getPolicy()));
+					mServices, tester, getShrinkersLoop(),
+					getShrinkersEnd(), mDebugPolicy));
 		} else {
 			mLogger.warn("Ignoring input definition " + creator);
 		}
 	}
 
-	/* --- change the following methods accordingly --- */
-
 	/**
 	 * example tester for debugging general problems
 	 * 
-	 * NOTE: Insert an instance of a throwable and one of the automaton library
-	 * methods here.
-	 * 
-	 * @return tester which listens for the specified throwable
+	 * @return tester which listens for any throwable
 	 */
-	@SuppressWarnings({"unused", "squid:UnusedPrivateMethod"})
 	private ATester<LETTER, STATE> getGeneralTester() {
-		// example, use your own throwable here
-		final Throwable throwable = new Exception();
+		// 'null' stands for any exception
+		final Throwable throwable = null;
 
-		// example, use your own method here
 		return new ATester<LETTER, STATE>(throwable) {
-			@SuppressWarnings("squid:S1848")
 			@Override
-			public void execute(INestedWordAutomaton<LETTER, STATE> automaton)
+			public void execute(final INestedWordAutomaton<LETTER, STATE> automaton)
 					throws Throwable {
-				new BuchiClosureNwa<LETTER, STATE>(
-						new AutomataLibraryServices(mServices), automaton);
+				final StateFactory<STATE> factory = automaton.getStateFactory();
+
+				getIOperation(automaton, factory);
 			}
 		};
 	}
@@ -139,40 +164,31 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	 * @return tester which debugs the checkResult method
 	 */
 	private ATester<LETTER, STATE> getCheckResultTester() {
-		// example, use your own thrower class here (not important)
-		final Class<?> thrower = MinimizeNwaMaxSAT.class;
-
 		final String message = "'checkResult' failed";
-		final Throwable throwable = new DebuggerException(thrower, message);
+		final Throwable throwable = new DebuggerException(message);
 
 		return new ATester<LETTER, STATE>(throwable) {
 			@Override
-			public void execute(INestedWordAutomaton<LETTER, STATE> automaton)
+			public void execute(final INestedWordAutomaton<LETTER, STATE> automaton)
 					throws Throwable {
 				final StateFactory<STATE> factory = automaton.getStateFactory();
 
-				// change the following method for a different IOperation
 				final IOperation<LETTER, STATE> op =
 						getIOperation(automaton, factory);
 
 				// throws a fresh exception iff checkResult() fails
 				if (!op.checkResult(factory)) {
-					throw new DebuggerException(thrower, message);
+					throw throwable;
 				}
 			}
 		};
 	}
 
 	/**
-	 * NOTE: Call your own method here.
-	 * 
-	 * @param automaton
-	 *            automaton
-	 * @param factory
-	 *            state factory
+	 * @param automaton automaton
+	 * @param factory state factory
 	 * @return IOperation instance
-	 * @throws Throwable
-	 *             when error occurs
+	 * @throws Throwable when error occurs
 	 */
 	@SuppressWarnings("squid:S00112")
 	private IOperation<LETTER, STATE> getIOperation(
@@ -181,8 +197,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 		final AutomatonDebuggerExamples<LETTER, STATE> examples =
 				new AutomatonDebuggerExamples<LETTER, STATE>(mServices);
 
-		// example code, use your own method here
-		return examples.reduceNwaDelayedSimulation(automaton, factory);
+		return examples.getOperation(mOperationType, automaton, factory);
 	}
 
 	/**
@@ -220,15 +235,6 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 		return shrinkersEnd;
 	}
 	
-	/**
-	 * NOTE: Change policy here.
-	 * 
-	 * @return debugger policy
-	 */
-	private EDebugPolicy getPolicy() {
-		return EDebugPolicy.BINARY;
-	}
-
 	@Override
 	public ModelType getOutputDefinition() {
 		return null;

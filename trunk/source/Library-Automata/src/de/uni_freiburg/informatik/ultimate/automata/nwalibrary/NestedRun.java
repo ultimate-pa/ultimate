@@ -30,171 +30,143 @@ import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 
-public class NestedRun<LETTER,STATE> implements IRun<LETTER,STATE> {
-	
+public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
+
 	private NestedWord<LETTER> mNestedWord;
 	private ArrayList<STATE> mStateSequence;
-	
-	public NestedRun(NestedWord<LETTER> nw,
-					ArrayList<STATE> stateSequence) {
-		if (nw.length()+1 == stateSequence.size()) {
+
+	/**
+	 * @param nw nested word
+	 * @param stateSequence sequence of states
+	 */
+	public NestedRun(final NestedWord<LETTER> nw,
+			final ArrayList<STATE> stateSequence) {
+		if (nw.length() + 1 == stateSequence.size()) {
 			this.mNestedWord = nw;
 			this.mStateSequence = stateSequence;
-		}
-		else {
-			throw new IllegalArgumentException("In a run the length of the" +
-					" sequence of states is length of the word plus 1.");
+		} else {
+			throw new IllegalArgumentException(
+					"In a run the length of the" + " sequence of states is length of the word plus 1.");
 		}
 	}
-	
-	/**
-	 * Constructor for a run of length 1. 
-	 */
 
-	public NestedRun(STATE state) {
+	/**
+	 * Constructor for a run of length 1.
+	 */
+	public NestedRun(final STATE state) {
 		mStateSequence = new ArrayList<STATE>(1);
 		mStateSequence.add(state);
 		@SuppressWarnings("unchecked")
-		final
-		LETTER[] word =  (LETTER[])new Object[] { };
+		final LETTER[] word = (LETTER[]) new Object[] {};
 		final int[] nestingRelation = {};
 		mNestedWord = new NestedWord<LETTER>(word, nestingRelation);
 	}
 
 	/**
-	 * Constructor for a run of length 2. 
+	 * Constructor for a run of length 2.
 	 */
-	public NestedRun(STATE q0,
-			 		  LETTER symbol,
-			 		  int position,
-			 		  STATE q1) {
-		if (position != NestedWord.INTERNAL_POSITION
-			&& position != NestedWord.MINUS_INFINITY
-			&& position != NestedWord.PLUS_INFINITY) {
+	public NestedRun(final STATE q0, final LETTER symbol, final int position, final STATE q1) {
+		if (position != NestedWord.INTERNAL_POSITION && position != NestedWord.MINUS_INFINITY
+				&& position != NestedWord.PLUS_INFINITY) {
 			throw new IllegalArgumentException();
 		}
 		@SuppressWarnings("unchecked")
-		final
-		LETTER[] word = (LETTER[])new Object[] {symbol};
+		final LETTER[] word = (LETTER[]) new Object[] { symbol };
 		final int[] nestingRelation = { position };
-		mNestedWord = new NestedWord<LETTER>(word,nestingRelation);
+		mNestedWord = new NestedWord<LETTER>(word, nestingRelation);
 		mStateSequence = new ArrayList<STATE>(2);
 		mStateSequence.add(q0);
 		mStateSequence.add(q1);
 	}
-	
-		
-	
+
 	@Override
 	public NestedWord<LETTER> getWord() {
 		return this.mNestedWord;
 	}
-	
-	
+
 	public ArrayList<STATE> getStateSequence() {
 		return this.mStateSequence;
 	}
-	
-	
+
 	/**
 	 * Length of this runs state sequence.
-	 */	
+	 */
 	@Override
 	public int getLength() {
 		return this.mStateSequence.size();
 	}
-		
+
 	/**
-	 * @param i
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord#isCallPosition(int)
 	 */
-	public boolean isCallPosition(int i) {
+	public boolean isCallPosition(final int i) {
 		return mNestedWord.isCallPosition(i);
 	}
 
-	
-
 	/**
-	 * @param i
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord#isInternalPosition(int)
 	 */
-	public boolean isInternalPosition(int i) {
+	public boolean isInternalPosition(final int i) {
 		return mNestedWord.isInternalPosition(i);
 	}
 
 	/**
-	 * @param i
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord#isReturnPosition(int)
 	 */
-	public boolean isReturnPosition(int i) {
+	public boolean isReturnPosition(final int i) {
 		return mNestedWord.isReturnPosition(i);
 	}
 
 	/**
-	 * @param i
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord#isPendingCall(int)
 	 */
-	public boolean isPendingCall(int i) {
+	public boolean isPendingCall(final int i) {
 		return mNestedWord.isPendingCall(i);
 	}
 
-	public NestedRun<LETTER,STATE> concatenate(NestedRun<LETTER,STATE> run) {
-		final STATE lastStateOfThis = mStateSequence.get(mStateSequence.size()-1);
+	public NestedRun<LETTER, STATE> concatenate(final NestedRun<LETTER, STATE> run) {
+		final STATE lastStateOfThis = mStateSequence.get(mStateSequence.size() - 1);
 		final STATE firstStateOfRun = run.mStateSequence.get(0);
-		
+
 		if (lastStateOfThis.equals(firstStateOfRun)) {
-	
-		final NestedWord<LETTER> concatNestedWord =
-			mNestedWord.concatenate(run.getWord());
-			final ArrayList<STATE> concatStateSeq =
-					new ArrayList<STATE>(mStateSequence);
-			for (int i=1; i<run.getStateSequence().size(); i++) {
+
+			final NestedWord<LETTER> concatNestedWord = mNestedWord.concatenate(run.getWord());
+			final ArrayList<STATE> concatStateSeq = new ArrayList<STATE>(mStateSequence);
+			for (int i = 1; i < run.getStateSequence().size(); i++) {
 				concatStateSeq.add(run.getStateSequence().get(i));
 			}
-			return new NestedRun<LETTER, STATE>(concatNestedWord,concatStateSeq);
-		}
-		else {
-			throw new IllegalArgumentException("Can only concatenate two runs" +
-					" where the last element of the first runs statement" +
-					" sequence is the same state as the last element of the" +
-					" second runs statement sequence."); 
+			return new NestedRun<LETTER, STATE>(concatNestedWord, concatStateSeq);
+		} else {
+			throw new IllegalArgumentException("Can only concatenate two runs"
+					+ " where the last element of the first runs statement"
+					+ " sequence is the same state as the last element of the" + " second runs statement sequence.");
 		}
 	}
-		
 
-	
-	public STATE getStateAtPosition(int i) {
+	public STATE getStateAtPosition(final int i) {
 		return mStateSequence.get(i);
 	}
-	
+
 	@Override
-	public LETTER getSymbol(int i) {
+	public LETTER getSymbol(final int i) {
 		return mNestedWord.getSymbolAt(i);
 	}
-	
 
-	
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		for (int i = 0; i<mNestedWord.length(); i++) {
+		for (int i = 0; i < mNestedWord.length(); i++) {
 			sb.append(getStateAtPosition(i) + " ");
 			if (mNestedWord.isInternalPosition(i)) {
-				sb.append(mNestedWord.getSymbolAt(i)+" ");
-			}
-			else if (mNestedWord.isCallPosition(i)) {
-				sb.append(mNestedWord.getSymbolAt(i)+"< ");
-			}
-			else if (mNestedWord.isReturnPosition(i)) {
+				sb.append(mNestedWord.getSymbolAt(i) + " ");
+			} else if (mNestedWord.isCallPosition(i)) {
+				sb.append(mNestedWord.getSymbolAt(i) + "< ");
+			} else if (mNestedWord.isReturnPosition(i)) {
 				sb.append(">" + mNestedWord.getSymbolAt(i) + " ");
 			}
 		}
-		sb.append(getStateAtPosition(mStateSequence.size()-1) + " ");
+		sb.append(getStateAtPosition(mStateSequence.size() - 1) + " ");
 		return sb.toString();
 	}
-	
+
 }

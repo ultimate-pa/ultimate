@@ -55,47 +55,47 @@ public class Vertex<LETTER, STATE> {
 	/**
 	 * The bit encodes extra information if needed.
 	 */
-	private final boolean b;
+	private final boolean mB;
 	/**
 	 * The best neighbor measure of this vertex as needed for the
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation
 	 * ASimulation}.
 	 */
-	private int bEff;
+	private int mBEff;
 	/**
 	 * The neighbor counter of this vertex as needed for the
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation
 	 * ASimulation}.
 	 */
-	private int c;
+	private int mC;
 	/**
 	 * Whether this vertex is in the working list of the
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation
 	 * ASimulation} or not.
 	 */
-	private boolean inWL;
+	private boolean mInWL;
 	/**
 	 * The priority of this vertex as needed for the
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation
 	 * ASimulation}.
 	 */
-	private int priority;
+	private int mPriority;
 	/**
 	 * The label of the first buechi automaton state where <i>Spoiler</i>
 	 * currently is at.
 	 */
-	private final STATE q0;
+	private final STATE mQ0;
 	/**
 	 * The label of the second buechi automaton state where <i>Duplicator</i>
 	 * currently is at.
 	 */
-	private final STATE q1;
+	private final STATE mQ1;
 	/**
 	 * The progress measure of this vertex as needed for the
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation
 	 * ASimulation}.
 	 */
-	protected int pm;
+	protected int mPm;
 
 	/**
 	 * Constructs a new vertex with given representation <b>(q0, q1, bit)</b>
@@ -113,13 +113,13 @@ public class Vertex<LETTER, STATE> {
 	 *            The state duplicator is at
 	 */
 	public Vertex(final int priority, final boolean b, final STATE q0, final STATE q1) {
-		this.q0 = q0;
-		this.q1 = q1;
-		this.b = b;
-		this.priority = priority;
-		this.pm = 0;
-		this.bEff = 0;
-		this.c = 0;
+		this.mQ0 = q0;
+		this.mQ1 = q1;
+		this.mB = b;
+		this.mPriority = priority;
+		this.mPm = 0;
+		this.mBEff = 0;
+		this.mC = 0;
 		this.setInWL(false);
 	}
 
@@ -141,21 +141,21 @@ public class Vertex<LETTER, STATE> {
 		}
 		final
 		Vertex<?, ?> other = (Vertex<?, ?>) obj;
-		if (b != other.b) {
+		if (mB != other.mB) {
 			return false;
 		}
-		if (q0 == null) {
-			if (other.q0 != null) {
+		if (mQ0 == null) {
+			if (other.mQ0 != null) {
 				return false;
 			}
-		} else if (!q0.equals(other.q0)) {
+		} else if (!mQ0.equals(other.mQ0)) {
 			return false;
 		}
-		if (q1 == null) {
-			if (other.q1 != null) {
+		if (mQ1 == null) {
+			if (other.mQ1 != null) {
 				return false;
 			}
-		} else if (!q1.equals(other.q1)) {
+		} else if (!mQ1.equals(other.mQ1)) {
 			return false;
 		}
 		return true;
@@ -169,7 +169,7 @@ public class Vertex<LETTER, STATE> {
 	 * @return The best neighbor measure of this vertex
 	 */
 	public int getBEff() {
-		return bEff;
+		return mBEff;
 	}
 
 	/**
@@ -180,7 +180,7 @@ public class Vertex<LETTER, STATE> {
 	 * @return The neighbor counter of this vertex
 	 */
 	public int getC() {
-		return c;
+		return mC;
 	}
 
 	/**
@@ -210,11 +210,11 @@ public class Vertex<LETTER, STATE> {
 	 */
 	public int getPM(final Set<Vertex<LETTER, STATE>> scc, final int infinity) {
 		if (scc == null) {
-			return pm;
-		} else if (pm == infinity) {
+			return mPm;
+		} else if (mPm == infinity) {
 			return infinity;
 		} else if (scc.contains(this)) {
-			return pm;
+			return mPm;
 		} else {
 			return 0;
 		}
@@ -226,7 +226,7 @@ public class Vertex<LETTER, STATE> {
 	 * @return The priority
 	 */
 	public int getPriority() {
-		return priority;
+		return mPriority;
 	}
 
 	/**
@@ -237,7 +237,7 @@ public class Vertex<LETTER, STATE> {
 	 *         <i>Spoiler</i> currently is at.
 	 */
 	public STATE getQ0() {
-		return q0;
+		return mQ0;
 	}
 
 	/**
@@ -248,7 +248,7 @@ public class Vertex<LETTER, STATE> {
 	 *         <i>Duplicator</i> currently is at.
 	 */
 	public STATE getQ1() {
-		return q1;
+		return mQ1;
 	}
 
 	/*
@@ -260,9 +260,9 @@ public class Vertex<LETTER, STATE> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + (b ? 1231 : 1237);
-		result = prime * result + ((q0 == null) ? 0 : q0.hashCode());
-		result = prime * result + ((q1 == null) ? 0 : q1.hashCode());
+		result = prime * result + (mB ? 1231 : 1237);
+		result = prime * result + ((mQ0 == null) ? 0 : mQ0.hashCode());
+		result = prime * result + ((mQ1 == null) ? 0 : mQ1.hashCode());
 		return result;
 	}
 
@@ -273,7 +273,7 @@ public class Vertex<LETTER, STATE> {
 	 *         true, false if not.
 	 */
 	public boolean isB() {
-		return b;
+		return mB;
 	}
 
 	/**
@@ -294,7 +294,7 @@ public class Vertex<LETTER, STATE> {
 	 * @return True if this vertex is in the working list, false if not.
 	 */
 	public boolean isInWL() {
-		return inWL;
+		return mInWL;
 	}
 
 	/**
@@ -316,7 +316,7 @@ public class Vertex<LETTER, STATE> {
 	 *            The best neighbor measure to set
 	 */
 	public void setBEff(final int b) {
-		this.bEff = b;
+		this.mBEff = b;
 	}
 
 	/**
@@ -328,7 +328,7 @@ public class Vertex<LETTER, STATE> {
 	 *            The neighbor counter to set
 	 */
 	public void setC(final int c) {
-		this.c = c;
+		this.mC = c;
 	}
 
 	/**
@@ -340,7 +340,7 @@ public class Vertex<LETTER, STATE> {
 	 *            The value to set
 	 */
 	public void setInWL(final boolean inWL) {
-		this.inWL = inWL;
+		this.mInWL = inWL;
 	}
 
 	/**
@@ -352,7 +352,7 @@ public class Vertex<LETTER, STATE> {
 	 *            The progress measure to set
 	 */
 	public void setPM(final int pm) {
-		this.pm = pm;
+		this.mPm = pm;
 	}
 
 	/**
@@ -362,6 +362,6 @@ public class Vertex<LETTER, STATE> {
 	 *            The priority to set
 	 */
 	public void setPriority(final int priority) {
-		this.priority = priority;
+		this.mPriority = priority;
 	}
 }

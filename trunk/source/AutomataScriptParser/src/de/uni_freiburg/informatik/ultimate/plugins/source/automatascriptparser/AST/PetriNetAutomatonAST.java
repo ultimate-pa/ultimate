@@ -52,16 +52,17 @@ public class PetriNetAutomatonAST extends AutomatonAST {
 	private List<String> macceptingPlaces;
 	
 	
-	public PetriNetAutomatonAST(ILocation loc) {
-		super(loc);
-		mtransitions = new ArrayList<PetriNetTransitionAST>();
-		minitialMarkings = new PetriNetMarkingListAST(loc);
-		macceptingPlaces = new ArrayList<String>();
-	}
+//alex: I commented this, because it is called nowhere and an automaton without a name causes problems
+//	public PetriNetAutomatonAST(ILocation loc) { 
+//		super(loc);
+//		mtransitions = new ArrayList<PetriNetTransitionAST>();
+//		minitialMarkings = new PetriNetMarkingListAST(loc);
+//		macceptingPlaces = new ArrayList<String>();
+//	}
 	
 	public PetriNetAutomatonAST(ILocation loc, String name) {
-		super(loc);
-		mName = name;
+		super(loc, name);
+//		mName = name;
 	}
 
 

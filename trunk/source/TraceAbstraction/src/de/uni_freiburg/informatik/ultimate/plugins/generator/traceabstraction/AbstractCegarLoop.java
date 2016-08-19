@@ -58,6 +58,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -87,6 +89,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 public abstract class AbstractCegarLoop {
 
 	protected final ILogger mLogger;
+	protected final SimplicationTechnique mSimplificationTechnique;
+	protected final XnfConversionTechnique mXnfConversionTechnique;
 
 	/**
 	 * Result of CEGAR loop iteration
@@ -101,7 +105,7 @@ public abstract class AbstractCegarLoop {
 	public enum Result {
 		SAFE, UNSAFE, TIMEOUT, UNKNOWN
 	}
-	public static Result aggregateResult(Object value1, Object value2) {
+	public static Result aggregateResult(final Object value1, final Object value2) {
 		final Result result1 = (Result) value1;
 		final Result result2 = (Result) value2;
 		final Set<Result> results = new HashSet<Result>();
@@ -206,11 +210,13 @@ public abstract class AbstractCegarLoop {
 		return mToolchainCancelledException;
 	}
 
-	public AbstractCegarLoop(IUltimateServiceProvider services, IToolchainStorage storage, String name,
-			RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs, Collection<ProgramPoint> errorLocs,
-			ILogger logger) {
+	public AbstractCegarLoop(final IUltimateServiceProvider services, final IToolchainStorage storage, final String name,
+			final RootNode rootNode, final SmtManager smtManager, final TAPreferences taPrefs, final Collection<ProgramPoint> errorLocs,
+			final ILogger logger) {
 		mServices = services;
 		mLogger = logger;
+		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
+		mXnfConversionTechnique = taPrefs.getXnfConversionTechnique();
 		mPrintAutomataLabeling = taPrefs.getAutomataFormat();
 		mModGlobVarManager = rootNode.getRootAnnot().getModGlobVarManager();
 		mName = name;
@@ -430,7 +436,7 @@ public abstract class AbstractCegarLoop {
 			if (mPref.computeHoareAnnotation() && 
 					mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
 				assert (new InductivityCheck(mServices, (INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction,
-						false, true, new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager, mSmtManager.getBoogie2Smt())))
+						false, true, new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager)))
 								.getResult() : "Not inductive";
 			}
 
@@ -462,7 +468,7 @@ public abstract class AbstractCegarLoop {
 		return Result.TIMEOUT;
 	}
 
-	protected void writeAutomatonToFile(IAutomaton<CodeBlock, IPredicate> automaton, String filename) {
+	protected void writeAutomatonToFile(final IAutomaton<CodeBlock, IPredicate> automaton, final String filename) {
 		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "nwa",
 				mPref.dumpPath() + "/" + filename, mPrintAutomataLabeling, "", automaton);
 	}
@@ -481,7 +487,7 @@ public abstract class AbstractCegarLoop {
 	/*
 	 * TODO unify sequential and concurrent
 	 */
-	protected static void dumpNestedRun(IRun<CodeBlock, IPredicate> run, PrintWriter pW, ILogger logger) {
+	protected static void dumpNestedRun(final IRun<CodeBlock, IPredicate> run, final PrintWriter pW, final ILogger logger) {
 		final NestedWord<CodeBlock> counterexample = NestedWord.nestedWord(run.getWord());
 		ArrayList<IPredicate> stateSequence = null;
 		if (run instanceof NestedRun) {
@@ -521,7 +527,7 @@ public abstract class AbstractCegarLoop {
 	}
 
 	@SuppressWarnings("unused")
-	private void dumpSsa(Term[] ssa) {
+	private void dumpSsa(final Term[] ssa) {
 		final FormulaUnLet unflet = new FormulaUnLet();
 		try {
 			mIterationPW.println("===============SSA of potential Counterexample==========");
@@ -536,7 +542,7 @@ public abstract class AbstractCegarLoop {
 	}
 
 	@SuppressWarnings("unused")
-	private void dumpStateFormulas(IPredicate[] interpolants) {
+	private void dumpStateFormulas(final IPredicate[] interpolants) {
 		try {
 			mIterationPW.println("===============Interpolated StateFormulas==========");
 			for (int i = 0; i < interpolants.length; i++) {
@@ -549,7 +555,7 @@ public abstract class AbstractCegarLoop {
 		}
 	}
 
-	public static String addIndentation(int indentation, String s) {
+	public static String addIndentation(final int indentation, final String s) {
 		final StringBuilder sb = new StringBuilder("");
 		for (int i = 0; i < indentation; i++) {
 			sb.append("    ");
@@ -558,9 +564,9 @@ public abstract class AbstractCegarLoop {
 		return sb.toString();
 	}
 
-	static void dumpBackedges(ProgramPoint repLocName, int position, IPredicate state,
-			Collection<IPredicate> linPredStates, CodeBlock transition, IPredicate succState, IPredicate sf1,
-			IPredicate sf2, LBool result, int iteration, int satProblem, PrintWriter iterationPW) {
+	static void dumpBackedges(final ProgramPoint repLocName, final int position, final IPredicate state,
+			final Collection<IPredicate> linPredStates, final CodeBlock transition, final IPredicate succState, final IPredicate sf1,
+			final IPredicate sf2, final LBool result, final int iteration, final int satProblem, final PrintWriter iterationPW) {
 		try {
 			iterationPW.println(repLocName + " occured once again at position " + position + ". Added backedge");
 			iterationPW.println("from:   " + state);
@@ -597,9 +603,9 @@ public abstract class AbstractCegarLoop {
 		HoareAnnotationTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
 		HoareTripleCheckerStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
 		PredicateUnifierStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
-		StatesRemovedByMinimization(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_DataBeforeKey),
+		StatesRemovedByMinimization(Long.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
 		BasicInterpolantAutomatonTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
-		BiggestAbstraction(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
+		BiggestAbstraction(Integer.class, CegarStatisticsType.s_SizeIterationPairDataAggregation, AStatisticsType.s_KeyBeforeData),
 		TraceCheckerStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
 		InterpolantConsolidationStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
 		InterpolantCoveringCapability(BackwardCoveringInformation.class, CoverageAnalysis.s_DefaultAggregation, AStatisticsType.s_DataBeforeKey),
@@ -613,21 +619,21 @@ public abstract class AbstractCegarLoop {
 		private final Function<Object, Function<Object, Object>> mAggr;
 		private final Function<String, Function<Object, String>> mPrettyprinter;
 		
-		CegarLoopStatisticsDefinitions(Class<?> clazz, 
-				Function<Object, Function<Object, Object>> aggr, 
-				Function<String, Function<Object, String>> prettyprinter) {
+		CegarLoopStatisticsDefinitions(final Class<?> clazz, 
+				final Function<Object, Function<Object, Object>> aggr, 
+				final Function<String, Function<Object, String>> prettyprinter) {
 			mClazz = clazz;
 			mAggr = aggr;
 			mPrettyprinter = prettyprinter;
 		}
 
 		@Override
-		public Object aggregate(Object o1, Object o2) {
+		public Object aggregate(final Object o1, final Object o2) {
 			return mAggr.apply(o1).apply(o2);
 		}
 
 		@Override
-		public String prettyprint(Object o) {
+		public String prettyprint(final Object o) {
 			return mPrettyprinter.apply(name()).apply(o);
 		}
 

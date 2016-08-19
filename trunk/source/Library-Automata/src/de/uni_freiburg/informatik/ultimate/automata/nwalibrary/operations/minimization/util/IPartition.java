@@ -32,22 +32,23 @@ import java.util.Iterator;
 /**
  * Interface for a general partition data structure.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <STATE> state type
  */
 public interface IPartition<STATE> {
 	/**
 	 * @param state state
 	 * @return (unique) block containing state
 	 */
-	public IBlock<STATE> getBlock(final STATE state);
+	IBlock<STATE> getBlock(final STATE state);
 	
 	/**
 	 * @return number of blocks
 	 */
-	public int size();
+	int size();
 
 	/**
 	 * @return iterator over all blocks
 	 */
-	public Iterator<IBlock<STATE>> blocksIterator();
+	Iterator<IBlock<STATE>> blocksIterator();
 }

@@ -29,62 +29,41 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
-public class IsDeterministic<LETTER,STATE> implements IOperation<LETTER,STATE> {
-
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
+public class IsDeterministic<LETTER,STATE>
+		extends UnaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
 	
-	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
-	private final TotalizeNwa<LETTER, STATE> mTotalized;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
 	private final boolean mResult;
 	private final StateFactory<STATE> mStateFactory;
 	private final boolean mNondeterministicTransitions;
 	private final boolean mNondeterministicInitials;
 	
-	
-	@Override
-	public String operationName() {
-		return "isDeterministic";
-	}
-	
-	
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + " Operand " + 
-			mOperand.sizeInformation();
-	}
-	
-	
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + " Operand is " 
-					+ (mResult ? "" : "not") + "deterministic."; 
-	}
-	
-	
-	public IsDeterministic(AutomataLibraryServices services,
-			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		this.mStateFactory = input.getStateFactory();
-		this.mOperand = input;
+	/**
+	 * @param services Ultimate services
+	 * @param operand operand
+	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 */
+	public IsDeterministic(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER,STATE> operand)
+					throws AutomataOperationCanceledException {
+		super(services, operand);
+		mStateFactory = operand.getStateFactory();
 		mLogger.info(startMessage());
-		mTotalized = new TotalizeNwa<LETTER, STATE>(input, mStateFactory);
-		mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mTotalized);
-		mResult = !mTotalized.nonDeterminismInInputDetected();
-		mNondeterministicTransitions = mTotalized.nondeterministicTransitionsDetected();
-		mNondeterministicInitials = mTotalized.nondeterministicInitialsDetected();
+		final TotalizeNwa<LETTER, STATE> totalized =
+				new TotalizeNwa<LETTER, STATE>(operand, mStateFactory);
+		mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, totalized);
+		mResult = !totalized.nonDeterminismInInputDetected();
+		mNondeterministicTransitions = totalized.nondeterministicTransitionsDetected();
+		mNondeterministicInitials = totalized.nondeterministicInitialsDetected();
 		mLogger.info(exitMessage());
 	}
 	
@@ -98,34 +77,42 @@ public class IsDeterministic<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		return mNondeterministicInitials;
 	}
 
+	@Override
+	public String operationName() {
+		return "isDeterministic";
+	}
+	
+	@Override
+	public String exitMessage() {
+		return "Finished " + operationName() + " Operand is " 
+					+ (mResult ? "" : "not ") + "deterministic."; 
+	}
 
 	@Override
 	public Boolean getResult() {
 		return mResult;
 	}
 
-
 	@Override
-	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
+	public boolean checkResult(final StateFactory<STATE> sf)
+			throws AutomataLibraryException {
 		boolean correct = true;
 		if (mResult) {
 			mLogger.info("Start testing correctness of " + operationName());
-			final INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(mServices, mOperand);
 			// should recognize same language as old computation
-			correct &= (ResultChecker.nwaLanguageInclusion(mServices, operandOldApi, mReach, sf) == null);
+			correct &= new IsIncluded<>(mServices, sf, mOperand, mReach).getResult();
 			assert correct;
-			correct &= (ResultChecker.nwaLanguageInclusion(mServices, mReach, operandOldApi, sf) == null);
+			correct &= new IsIncluded<>(mServices, sf, mReach, mOperand).getResult();
 			assert correct;
 			if (!correct) {
-				ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);
+				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
+						operationName() + "Failed", "language is different",
+						mOperand);
 			}
-		mLogger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + operationName());
 		} else {
 			mLogger.warn("result was not tested");
 		}
 		return correct;
 	}
-	
-	
 }
-

@@ -1,7 +1,7 @@
 //#Safe
 /* 
  * Date: 2016-02-27
- * Author: heizmann@informtik.uni-freiburg.de
+ * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
 #include <stdlib.h>

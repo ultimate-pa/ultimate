@@ -120,6 +120,10 @@ StringCharacter = [^\r\n\"\\]
   "|"		    				{ m_LastToken = m_CurToken; m_CurToken = "~"; return symbol(sym.EXPR_STATE_OR); }
   "isReversed"		    		{ m_LastToken = m_CurToken; m_CurToken = "isReversed"; return symbol(sym.IS_REVERSED); }
   
+  /* Tree Automata */
+  "TreeAutomaton"               { m_LastToken = m_CurToken; m_CurToken = "TreeAutomaton"; return symbol(sym.TREE_AUTOMATON); }
+  "rankedAlphabet"              { m_LastToken = m_CurToken; m_CurToken = "rankedAlphabet"; return symbol(sym.RANKED_ALPHABET); }
+  
   // Net transitions  
   "transitions"                     { m_LastToken = m_CurToken; m_CurToken = "transitions"; return symbol(sym.NET_TRANSITIONS); }
   "initialMarking"                  { m_LastToken = m_CurToken; m_CurToken = "initialMarking"; return symbol(sym.INITIAL_MARKINGS); }

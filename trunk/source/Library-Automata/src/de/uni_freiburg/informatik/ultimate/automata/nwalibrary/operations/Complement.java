@@ -28,24 +28,21 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
-public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
+public class Complement<LETTER,STATE>
+		extends UnaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
 
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-	
-	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
 	private DeterminizeNwa<LETTER,STATE> mDeterminized;
 	private ComplementDeterministicNwa<LETTER,STATE> mComplement;
 	private NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
@@ -53,51 +50,39 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final StateFactory<STATE> mStateFactory;
 	
 	
-	@Override
-	public String operationName() {
-		return "complement";
-	}
-	
-	
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + " Operand " + 
-			mOperand.sizeInformation();
-	}
-	
-	
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + 
-				mResult.sizeInformation();
-	}
-	
-	
-	public Complement(AutomataLibraryServices services,
-			INestedWordAutomatonSimple<LETTER,STATE> operand, 
-			IStateDeterminizer<LETTER,STATE> stateDeterminizer, 
-			StateFactory<STATE> sf) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mOperand = operand;
+	/**
+	 * @param services Ultimate services
+	 * @param stateFactory state factory
+	 * @param stateDeterminizer state determinizer
+	 * @param operand operand
+	 * @throws AutomataLibraryException if construction fails
+	 */
+	public Complement(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER,STATE> operand, 
+			final IStateDeterminizer<LETTER,STATE> stateDeterminizer, 
+			final StateFactory<STATE> stateFactory)
+					throws AutomataLibraryException {
+		super(services, operand);
 		mStateDeterminizer = stateDeterminizer;
-		mStateFactory = sf;
-		mLogger.info(startMessage());
-		computeComplement();
-		mLogger.info(exitMessage());
-	}
-	
-	public Complement(AutomataLibraryServices services,
-			StateFactory<STATE> stateFactory, 
-			INestedWordAutomatonSimple<LETTER,STATE> operand) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mOperand = operand;
-		mStateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(operand, true, stateFactory);
 		mStateFactory = stateFactory;
 		mLogger.info(startMessage());
 		computeComplement();
 		mLogger.info(exitMessage());
+	}
+	
+	/**
+	 * @param services Ultimate services
+	 * @param stateFactory state factory
+	 * @param operand operand
+	 * @throws AutomataLibraryException if construction fails
+	 */
+	public Complement(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory, 
+			final INestedWordAutomatonSimple<LETTER,STATE> operand)
+					throws AutomataLibraryException {
+		this(services, operand,
+				new PowersetDeterminizer<LETTER, STATE>(operand, true, stateFactory),
+				stateFactory);
 	}
 	
 	private void computeComplement() throws AutomataLibraryException {
@@ -113,64 +98,83 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				return;
 			}
 		}
-		mDeterminized = new DeterminizeNwa<LETTER, STATE>(mServices, mOperand, mStateDeterminizer, mStateFactory);
+		mDeterminized = new DeterminizeNwa<LETTER, STATE>(mServices, mOperand,
+				mStateDeterminizer, mStateFactory, null, true);
 		mComplement = new ComplementDeterministicNwa<LETTER, STATE>(mDeterminized);
-		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mComplement);
+		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(
+				mServices, mComplement);
 	}
 	
 	private boolean tryWithoutDeterminization() throws AutomataLibraryException {
 		assert (mStateDeterminizer instanceof PowersetDeterminizer);
-		final TotalizeNwa<LETTER, STATE> totalized = new TotalizeNwa<LETTER, STATE>(mOperand, mStateFactory);
-		final ComplementDeterministicNwa<LETTER,STATE> complemented = new ComplementDeterministicNwa<LETTER, STATE>(totalized);
+		final TotalizeNwa<LETTER, STATE> totalized =
+				new TotalizeNwa<LETTER, STATE>(mOperand, mStateFactory);
+		final ComplementDeterministicNwa<LETTER,STATE> complemented =
+				new ComplementDeterministicNwa<LETTER, STATE>(totalized);
 		final NestedWordAutomatonReachableStates<LETTER, STATE> result = 
-				new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, complemented);
+				new NestedWordAutomatonReachableStates<LETTER, STATE>(
+						mServices, complemented);
 		if (!totalized.nonDeterminismInInputDetected()) {
 			mComplement = complemented;
 			mResult = result;
-			mLogger.info("Operand was deterministic. Have not used determinization.");
+			mLogger.info(
+					"Operand was deterministic. Have not used determinization.");
 			return true;
 		} else {
-			mLogger.info("Operand was not deterministic. Recomputing result with determinization.");
+			mLogger.info(
+					"Operand was not deterministic. Recomputing result with determinization.");
 			return false;
 		}
 	}
 	
 
-
+	@Override
+	public String operationName() {
+		return "complement";
+	}
+	
+	
+	@Override
+	public String exitMessage() {
+		return "Finished " + operationName() + ". Result "
+				+ mResult.sizeInformation();
+	}
 
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
+	public INestedWordAutomaton<LETTER, STATE> getResult()
 			throws AutomataLibraryException {
 		return mResult;
 	}
 	
 	
-	
 	@Override
-	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
+	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
-			final INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(mServices, mOperand);
 
 			// intersection of operand and result should be empty
-			final INestedWordAutomatonOldApi<LETTER, STATE> intersectionOperandResult = 
-					(new IntersectDD<LETTER, STATE>(mServices, operandOldApi, mResult)).getResult();
+			final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult = 
+					(new IntersectDD<LETTER, STATE>(mServices, mOperand, mResult)).getResult();
 			correct &= (new IsEmpty<LETTER, STATE>(mServices, intersectionOperandResult)).getResult();
-			final INestedWordAutomatonOldApi<LETTER, STATE> resultDD = 
-					(new ComplementDD<LETTER, STATE>(mServices, sf, operandOldApi)).getResult();
+			final INestedWordAutomatonSimple<LETTER, STATE> resultDD = 
+					(new ComplementDD<LETTER, STATE>(mServices, sf, mOperand)).getResult();
+			
 			// should have same number of states as old complementation
 			// does not hold, resultDD sometimes has additional sink state
 			//		correct &= (resultDD.size() == mResult.size());
+			
 			// should recognize same language as old computation
-			correct &= (ResultChecker.nwaLanguageInclusion(mServices, resultDD, mResult, sf) == null);
-			correct &= (ResultChecker.nwaLanguageInclusion(mServices, mResult, resultDD, sf) == null);
-			if (!correct) {
-				ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);
-			}
+			correct &= new IsIncluded<>(mServices, sf, resultDD, mResult).getResult();
+			correct &= new IsIncluded<>(mServices, sf, mResult, resultDD).getResult();
 			mLogger.info("Finished testing correctness of " + operationName());
 		} else {
 			mLogger.warn("operation not tested");
+		}
+		if (!correct) {
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
+					operationName() + "Failed", "language is different",
+					mOperand);
 		}
 		return correct;
 	}

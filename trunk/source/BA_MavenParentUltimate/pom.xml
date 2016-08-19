@@ -127,7 +127,7 @@
 		<!-- use -XX:+HeapDumpOnOutOfMemoryError if you want to generate dumps 
 			on OutOfMemory exceptions -->
 		<manualtest-argline>-Xmx4g </manualtest-argline>
-		<coverage-argline>-Xmx4g</coverage-argline>
+		<coverage-argline>-Xmx4g -ea</coverage-argline>
 
 	</properties>
 
@@ -355,6 +355,9 @@
 							<includes>
 								<include>**/*.java</include>
 							</includes>
+							<excludes>
+								<exclude>**/ultimatetest/suites/**/*.java</exclude>
+							</excludes>
 						</configuration>
 					</plugin>
 
@@ -389,6 +392,9 @@
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-UltimateTestTest</module>
 				<module>../UltimateRegressionTest</module>
+				
+				<!-- UltimateTest contains actual tests, but should not be run. It is excluded in surefire. -->
+				<module>../UltimateTest</module>
 			</modules>
 		</profile>
 

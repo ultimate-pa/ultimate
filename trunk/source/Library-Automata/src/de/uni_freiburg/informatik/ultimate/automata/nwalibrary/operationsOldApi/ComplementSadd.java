@@ -30,8 +30,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -40,9 +41,9 @@ public class ComplementSadd<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
-	protected INestedWordAutomatonOldApi<LETTER, STATE> mOperand;
-	protected INestedWordAutomatonOldApi<LETTER, STATE> mDeterminizedOperand;
-	protected INestedWordAutomatonOldApi<LETTER, STATE> mResult;
+	protected INestedWordAutomaton<LETTER, STATE> mOperand;
+	protected INestedWordAutomaton<LETTER, STATE> mDeterminizedOperand;
+	protected INestedWordAutomaton<LETTER, STATE> mResult;
 
 	@Override
 	public String operationName() {
@@ -62,20 +63,20 @@ public class ComplementSadd<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	}
 
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
+	public INestedWordAutomaton<LETTER, STATE> getResult()
 											throws AutomataLibraryException {
 		return mResult;
 	}
 
-	public ComplementSadd(AutomataLibraryServices services,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand)
+	public ComplementSadd(final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER, STATE> operand)
 											throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
 
 		mLogger.info(startMessage());
-		if (!mOperand.isDeterministic()) {
+		if (! new IsDeterministic<LETTER, STATE>(services, mOperand).getResult()) {
 			mDeterminizedOperand = 
 					(new DeterminizeSadd<LETTER, STATE>(mServices, mOperand)).getResult();
 		} else {
@@ -88,12 +89,12 @@ public class ComplementSadd<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		mLogger.debug("Testing correctness of complement");
 		boolean correct = true;
-		final INestedWordAutomatonOldApi intersectionOperandResult = (new IntersectDD(mServices, false, mOperand, mResult)).getResult();
-		correct &=  ((new IsEmpty(mServices, intersectionOperandResult)).getResult() == true);
+		final INestedWordAutomaton<LETTER, STATE> intersectionOperandResult = (new IntersectDD<LETTER, STATE>(mServices, false, mOperand, mResult)).getResult();
+		correct &=  ((new IsEmpty<LETTER, STATE>(mServices, intersectionOperandResult)).getResult() == true);
 		mLogger.debug("Finished testing correctness of complement");
 		return correct;
 	}

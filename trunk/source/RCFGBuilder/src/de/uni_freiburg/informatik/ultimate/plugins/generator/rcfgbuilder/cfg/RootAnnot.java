@@ -116,14 +116,14 @@ public class RootAnnot extends AbstractAnnotations {
 	 */
 	private final static String[] s_AttribFields = { "locNodes", "loopEntry" };
 
-	public RootAnnot(IUltimateServiceProvider services, BoogieDeclarations boogieDeclarations, Boogie2SMT mBoogie2smt,
-			RCFGBacktranslator backtranslator) {
+	public RootAnnot(final IUltimateServiceProvider services, final BoogieDeclarations boogieDeclarations, final Boogie2SMT mBoogie2smt,
+			final RCFGBacktranslator backtranslator) {
 		mBoogieDeclarations = boogieDeclarations;
 		mBoogie2SMT = mBoogie2smt;
-		mManagedScript = new ManagedScript(services, mBoogie2smt.getScript());
+		mManagedScript = mBoogie2smt.getManagedScript();
 		mModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(mBoogieDeclarations.getModifiedVars(),
-				mBoogie2smt);
-		mCodeBlockFactory = new CodeBlockFactory(services, mBoogie2SMT, mModifiableGlobalVariableManager);
+				mManagedScript, mBoogie2smt.getBoogie2SmtSymbolTable());
+		mCodeBlockFactory = new CodeBlockFactory(services, mManagedScript, mModifiableGlobalVariableManager);
 	}
 
 	@Override
@@ -132,7 +132,7 @@ public class RootAnnot extends AbstractAnnotations {
 	}
 
 	@Override
-	protected Object getFieldValue(String field) {
+	protected Object getFieldValue(final String field) {
 		if (field == "locNodes") {
 			return mLocNodes;
 		} else if (field == "loopEntry") {

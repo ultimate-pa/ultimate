@@ -44,7 +44,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze.ESymbolType;
@@ -102,7 +102,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * space where n is the amount of states and k the amount of transitions from
  * the inputed automaton.<br/>
  * The algorithm is based on the paper: <i>Fair simulation relations, parity
- * games, and state space reduction for büchi automata<i> by <i>Etessami, Wilke
+ * games, and state space reduction for büchi automata</i> by <i>Etessami, Wilke
  * and Schuller</i>.
  * 
  * @author Daniel Tischner
@@ -131,7 +131,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	/**
 	 * The resulting possible reduced buechi automaton.
 	 */
-	private INestedWordAutomatonOldApi<LETTER, STATE> mResult;
+	private INestedWordAutomaton<LETTER, STATE> mResult;
 	/**
 	 * The object that computes the SCCs of a given buechi automaton.
 	 */
@@ -258,7 +258,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * 
 	 * @return The resulting possible reduced buechi automaton.
 	 */
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 
@@ -855,14 +855,14 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * Saves the data in the current internal performance object.
 	 */
 	protected void retrieveGeneralAutomataPerformance() {
-		AGameGraph<LETTER, STATE> graph = getGameGraph();
-		AutomataLibraryServices services = graph.getServices();
-		INestedWordAutomatonOldApi<LETTER, STATE> input = graph.getAutomaton();
+		final AGameGraph<LETTER, STATE> graph = getGameGraph();
+		final AutomataLibraryServices services = graph.getServices();
+		final INestedWordAutomaton<LETTER, STATE> input = graph.getAutomaton();
 
 		// Input automaton
-		Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(services, input, true);
-		int inputStates = inputAnalyzer.getNumberOfStates();
-		int inputTransitions = inputAnalyzer.getNumberOfTransitions(ESymbolType.TOTAL);
+		final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(services, input, true);
+		final int inputStates = inputAnalyzer.getNumberOfStates();
+		final int inputTransitions = inputAnalyzer.getNumberOfTransitions(ESymbolType.TOTAL);
 		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, inputStates);
 		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_NONDETERMINISTIC_STATES,
 				inputAnalyzer.getNumberOfNondeterministicStates());
@@ -874,9 +874,9 @@ public abstract class ASimulation<LETTER, STATE> {
 				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.TOTAL) * 1_000_000));
 
 		// Output automaton
-		Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, mResult, true);
-		int outputStates = outputAnalyzer.getNumberOfStates();
-		int outputTransitions = outputAnalyzer.getNumberOfTransitions(ESymbolType.TOTAL);
+		final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, mResult, true);
+		final int outputStates = outputAnalyzer.getNumberOfStates();
+		final int outputTransitions = outputAnalyzer.getNumberOfTransitions(ESymbolType.TOTAL);
 		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_STATES, outputStates);
 		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_NONDETERMINISTIC_STATES,
 				outputAnalyzer.getNumberOfNondeterministicStates());
@@ -904,7 +904,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *            The result of the simulation calculation, a possible reduced
 	 *            buechi automaton.
 	 */
-	protected void setResult(final INestedWordAutomatonOldApi<LETTER, STATE> result) {
+	protected void setResult(final INestedWordAutomaton<LETTER, STATE> result) {
 		mResult = result;
 	}
 

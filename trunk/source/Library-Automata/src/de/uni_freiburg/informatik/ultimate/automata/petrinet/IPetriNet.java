@@ -36,21 +36,23 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 public interface IPetriNet<S,C> extends IAutomaton<S,C> {
 	
 	@Override
-	public Set<S> getAlphabet(); 
-	@Override
-	public StateFactory<C> getStateFactory();
-	
-	public Collection<Place<S,C>> getPlaces();
-	public Collection<ITransition<S,C>> getTransitions();
-	
-	public Marking<S,C> getInitialMarking();
-	public Collection<Collection<Place<S,C>>> getAcceptingMarkings();
-	
-	public boolean isAccepting(Marking<S,C> marking);
-	
-	public boolean accepts(Word<S> word);
+	Set<S> getAlphabet(); 
 	
 	@Override
-	public String sizeInformation();
-
+	StateFactory<C> getStateFactory();
+	
+	Collection<Place<S,C>> getPlaces();
+	
+	Collection<ITransition<S,C>> getTransitions();
+	
+	Marking<S,C> getInitialMarking();
+	
+	Collection<Collection<Place<S,C>>> getAcceptingMarkings();
+	
+	boolean isAccepting(Marking<S,C> marking);
+	
+	boolean accepts(Word<S> word);
+	
+	@Override
+	String sizeInformation();
 }

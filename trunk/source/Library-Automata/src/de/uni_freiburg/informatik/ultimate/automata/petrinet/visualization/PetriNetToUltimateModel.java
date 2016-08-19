@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Transition;
 public class PetriNetToUltimateModel<S, C> {
 	
 	@SuppressWarnings("unchecked")
-	public PetriNetInitialNode getUltimateModelOfPetriNet(IPetriNet<S, C> net) {
+	public PetriNetInitialNode getUltimateModelOfPetriNet(final IPetriNet<S, C> net) {
 		final Collection<Collection<Place<S, C>>> acceptingMarkings = 
 			net.getAcceptingMarkings();
 		final PetriNetInitialNode graphroot = 
@@ -81,8 +81,7 @@ public class PetriNetToUltimateModel<S, C> {
 					}
 					placeNode.connectOutgoing(transNode);
 				}
-			}
-			else if (node instanceof ITransition) {
+			} else if (node instanceof ITransition) {
 				final ITransition<S,C> transition = (ITransition<S,C>) node;
 				final TransitionNode transitionNode = 
 					transition2transitionNode.get(transition);
@@ -104,8 +103,8 @@ public class PetriNetToUltimateModel<S, C> {
 	}
 	
 	
-	private Collection<String> participatedAcceptingMarkings(Place<S,C> place,
-					Collection<Collection<Place<S, C>>> acceptingMarkings) {
+	private Collection<String> participatedAcceptingMarkings(final Place<S,C> place,
+					final Collection<Collection<Place<S, C>>> acceptingMarkings) {
 		final LinkedList<String> participatedAcceptingMarkings = 
 													new LinkedList<String>();
 		for (final Collection<Place<S, C>> acceptingMarking : acceptingMarkings) {
@@ -117,7 +116,7 @@ public class PetriNetToUltimateModel<S, C> {
 					acceptingMarkingString += " , ";
 				}
 				acceptingMarkingString = acceptingMarkingString.substring(0,
-											acceptingMarkingString.length()-3);
+											acceptingMarkingString.length() - 3);
 				acceptingMarkingString += "}";
 				participatedAcceptingMarkings.add(acceptingMarkingString);
 			}
@@ -126,13 +125,12 @@ public class PetriNetToUltimateModel<S, C> {
 	}
 	
 	private Collection<String> printAcceptingMarkings(
-			Collection<Collection<Place<S, C>>> acceptingMarkings) {
+			final Collection<Collection<Place<S, C>>> acceptingMarkings) {
 		final LinkedList<String> acceptingMarkingsList = new LinkedList<String>();
 		for (final Collection<Place<S, C>> acceptingMarking : acceptingMarkings) {
 			if (acceptingMarking.isEmpty()) {
 				acceptingMarkingsList.add("{ }");
-			}
-			else {
+			} else {
 				String acceptingMarkingString = "{ ";
 				for (final Place<S,C> placeInMarking : acceptingMarking) {
 					acceptingMarkingString += 
@@ -140,7 +138,7 @@ public class PetriNetToUltimateModel<S, C> {
 					acceptingMarkingString += " , ";
 				}
 				acceptingMarkingString = acceptingMarkingString.substring(0, 
-											acceptingMarkingString.length()-3);
+											acceptingMarkingString.length() - 3);
 				acceptingMarkingString += "}";
 				acceptingMarkingsList.add(acceptingMarkingString);
 			}

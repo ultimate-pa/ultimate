@@ -28,53 +28,47 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieOldVar;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
-	private final BoogieNonOldVar mUnseeded;
-	private final BoogieNonOldVar[] mOldRank;
-	private final BoogieOldVar mUnseededOldVar;
-	private final BoogieOldVar[] mOldRankOldVar;
-	private final Boogie2SMT mBoogie2smt;
-	private final Script mScript;
+	private final IProgramNonOldVar mUnseeded;
+	private final IProgramNonOldVar[] mOldRank;
+	private final IProgramOldVar mUnseededOldVar;
+	private final IProgramOldVar[] mOldRankOldVar;
 	
 	private final Map<String, TransFormula> mProc2OldVarsAssignment;
 	private final Map<String, TransFormula> mProc2GlobalVarsAssignment;
 
-	public BuchiModGlobalVarManager(BoogieNonOldVar unseeded, BoogieNonOldVar[] oldRank,
-			ModifiableGlobalVariableManager modifiableGlobalVariableManager, 
-			Boogie2SMT boogie2Smt) {
+	public BuchiModGlobalVarManager(final IProgramNonOldVar unseeded, final IProgramNonOldVar[] oldRank,
+			final ModifiableGlobalVariableManager modifiableGlobalVariableManager, 
+			final Boogie2SMT boogie2Smt) {
 		super(modifiableGlobalVariableManager);
-		mBoogie2smt = boogie2Smt;
 		mUnseeded = unseeded;
 		mUnseededOldVar = unseeded.getOldVar();
 		assert mUnseededOldVar != null : "oldVar missing";
 		mOldRank = oldRank;
-		mOldRankOldVar = new BoogieOldVar[oldRank.length];
+		mOldRankOldVar = new IProgramOldVar[oldRank.length];
 		for (int i=0; i<oldRank.length; i++) {
 			mOldRankOldVar[i] = oldRank[i].getOldVar();
 			assert mOldRankOldVar[i] != null : "oldVar missing";
 		}
-		mScript  = boogie2Smt.getScript();
 		mProc2OldVarsAssignment = new HashMap<String, TransFormula>();
 		mProc2GlobalVarsAssignment = new HashMap<String, TransFormula>();
 	}
 
 	
 	@Override
-	public TransFormula getOldVarsAssignment(String proc) {
+	public TransFormula getOldVarsAssignment(final String proc) {
 		TransFormula oldVarsAssignment = mProc2OldVarsAssignment.get(proc);
 		if (oldVarsAssignment == null) {
 			oldVarsAssignment = constructOldVarsAssignment(proc);
@@ -86,7 +80,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 	
 
 	@Override
-	public TransFormula getGlobalVarsAssignment(String proc) {
+	public TransFormula getGlobalVarsAssignment(final String proc) {
 		TransFormula globalVarsAssignment = mProc2GlobalVarsAssignment.get(proc);
 		if (globalVarsAssignment == null) {
 			globalVarsAssignment = constructGlobalVarsAssignment(proc);
@@ -96,78 +90,66 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 	}
 	
 	
-	private TransFormula constructOldVarsAssignment(String proc) {
+	private TransFormula constructOldVarsAssignment(final String proc) {
 		final TransFormula without = super.getOldVarsAssignment(proc);
+		assert without.getAuxVars().isEmpty();
+		assert without.getBranchEncoders().isEmpty();
+		assert without.isInfeasible() == Infeasibility.UNPROVEABLE;
 		
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(
+				without.getInVars(), without.getOutVars(), true, null, true);
 		Term formula = without.getFormula();
-		final Map<BoogieVar, TermVariable> inVars = 
-				new HashMap<BoogieVar, TermVariable>(without.getInVars());
-		final Map<BoogieVar, TermVariable> outVars = 
-				new HashMap<BoogieVar, TermVariable>(without.getOutVars());
-		final Map<TermVariable, Term> auxVars = without.getAuxVars();
-		final Set<TermVariable> branchEncoders = without.getBranchEncoders();
-		assert branchEncoders.isEmpty();
-		final Infeasibility infeasibility = without.isInfeasible();
-		assert infeasibility == Infeasibility.UNPROVEABLE;
-		formula = Util.and(mScript, formula, oldVarEquality(mUnseeded, mUnseededOldVar));
-		inVars.put(mUnseeded, mUnseeded.getTermVariable());
-		outVars.put(mUnseeded, mUnseeded.getTermVariable());
-		outVars.put(mUnseededOldVar, mUnseededOldVar.getTermVariable());
+		formula = Util.and(mMgdScript.getScript(), formula, oldVarEquality(mUnseeded, mUnseededOldVar));
+		tfb.addInVar(mUnseeded, mUnseeded.getTermVariable());
+		tfb.addOutVar(mUnseeded, mUnseeded.getTermVariable());
+		tfb.addOutVar(mUnseededOldVar, mUnseededOldVar.getTermVariable());
 		for (int i=0; i<mOldRank.length; i++) {
-			formula = Util.and(mScript, formula, oldVarEquality(mOldRank[i], mOldRankOldVar[i]));
-			inVars.put(mOldRank[i], mOldRank[i].getTermVariable());
-			outVars.put(mOldRank[i], mOldRank[i].getTermVariable());
-			outVars.put(mOldRankOldVar[i], mOldRankOldVar[i].getTermVariable());
+			formula = Util.and(mMgdScript.getScript(), formula, oldVarEquality(mOldRank[i], mOldRankOldVar[i]));
+			tfb.addInVar(mOldRank[i], mOldRank[i].getTermVariable());
+			tfb.addOutVar(mOldRank[i], mOldRank[i].getTermVariable());
+			tfb.addOutVar(mOldRankOldVar[i], mOldRankOldVar[i].getTermVariable());
 		}
-		final Term closedFormula = TransFormula.computeClosedFormula(
-				formula, inVars, outVars, auxVars, mBoogie2smt);
-		final TransFormula result = new TransFormula(formula, inVars, outVars, 
-				auxVars, branchEncoders, infeasibility, closedFormula);
-		return result;
+		tfb.setFormula(formula);
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		return tfb.finishConstruction(mMgdScript);
 	}
 	
 	
-	private TransFormula constructGlobalVarsAssignment(String proc) {
+	private TransFormula constructGlobalVarsAssignment(final String proc) {
 		final TransFormula without = super.getGlobalVarsAssignment(proc);
+		assert without.getAuxVars().isEmpty();
+		assert without.getBranchEncoders().isEmpty();
+		assert without.isInfeasible() == Infeasibility.UNPROVEABLE;
 		
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(
+				without.getInVars(), without.getOutVars(), true, null, true);
 		Term formula = without.getFormula();
-		final Map<BoogieVar, TermVariable> inVars = 
-				new HashMap<BoogieVar, TermVariable>(without.getInVars());
-		final Map<BoogieVar, TermVariable> outVars = 
-				new HashMap<BoogieVar, TermVariable>(without.getOutVars());
-		final Map<TermVariable, Term> auxVars = without.getAuxVars();
-		final Set<TermVariable> branchEncoders = without.getBranchEncoders();
-		assert branchEncoders.isEmpty();
-		final Infeasibility infeasibility = without.isInfeasible();
-		assert infeasibility == Infeasibility.UNPROVEABLE;
-		formula = Util.and(mScript, formula, oldVarEquality(mUnseeded, mUnseededOldVar));
-		inVars.put(mUnseededOldVar, mUnseededOldVar.getTermVariable());
-		outVars.put(mUnseededOldVar, mUnseededOldVar.getTermVariable());
-		outVars.put(mUnseeded, mUnseeded.getTermVariable());
+		formula = Util.and(mMgdScript.getScript(), formula, oldVarEquality(mUnseeded, mUnseededOldVar));
+		tfb.addInVar(mUnseededOldVar, mUnseededOldVar.getTermVariable());
+		tfb.addOutVar(mUnseededOldVar, mUnseededOldVar.getTermVariable());
+		tfb.addOutVar(mUnseeded, mUnseeded.getTermVariable());
 		for (int i=0; i<mOldRank.length; i++) {
-			formula = Util.and(mScript, formula, oldVarEquality(mOldRank[i], mOldRankOldVar[i]));
-			inVars.put(mOldRankOldVar[i], mOldRankOldVar[i].getTermVariable());
-			outVars.put(mOldRankOldVar[i], mOldRankOldVar[i].getTermVariable());
-			outVars.put(mOldRank[i], mOldRank[i].getTermVariable());
+			formula = Util.and(mMgdScript.getScript(), formula, oldVarEquality(mOldRank[i], mOldRankOldVar[i]));
+			tfb.addInVar(mOldRankOldVar[i], mOldRankOldVar[i].getTermVariable());
+			tfb.addOutVar(mOldRankOldVar[i], mOldRankOldVar[i].getTermVariable());
+			tfb.addOutVar(mOldRank[i], mOldRank[i].getTermVariable());
 		}
-		final Term closedFormula = TransFormula.computeClosedFormula(
-				formula, inVars, outVars, auxVars, mBoogie2smt);
-		final TransFormula result = new TransFormula(formula, inVars, outVars, 
-				auxVars, branchEncoders, infeasibility, closedFormula);
-		return result;
+		tfb.setFormula(formula);
+		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
+		return tfb.finishConstruction(mMgdScript);
 	}
 
 
 	
-	public Term oldVarEquality(BoogieVar var, BoogieVar oldVar) {
-		return mScript.term("=", var.getTermVariable(), oldVar.getTermVariable());
+	public Term oldVarEquality(final IProgramVar var, final IProgramVar oldVar) {
+		return mMgdScript.getScript().term("=", var.getTermVariable(), oldVar.getTermVariable());
 	}
 
 
 	@Override
-	public Map<String, BoogieNonOldVar> getGlobals() {
-		final HashMap<String, BoogieNonOldVar> result = 
-				new HashMap<String, BoogieNonOldVar>(super.getGlobals());
+	public Map<String, IProgramNonOldVar> getGlobals() {
+		final HashMap<String, IProgramNonOldVar> result = 
+				new HashMap<String, IProgramNonOldVar>(super.getGlobals());
 		for (int i=0; i<mOldRank.length; i++) {
 			result.put(mOldRank[i].getIdentifier(),mOldRank[i]);
 		}

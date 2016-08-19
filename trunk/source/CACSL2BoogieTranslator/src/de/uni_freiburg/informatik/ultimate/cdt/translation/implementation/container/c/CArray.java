@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
@@ -278,7 +278,7 @@ public class CArray extends CType {
 	@Override
 	public boolean isCompatibleWith(CType o) {
 		if (o instanceof CPrimitive &&
-				((CPrimitive) o).getType() == PRIMITIVE.VOID) {
+				((CPrimitive) o).getType() == CPrimitives.VOID) {
 			return true;
 		}
 		

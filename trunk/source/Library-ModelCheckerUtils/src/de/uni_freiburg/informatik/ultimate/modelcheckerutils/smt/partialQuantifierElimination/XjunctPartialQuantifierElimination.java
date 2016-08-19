@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Abstract superclass for our partial quantifier elimination for Xjuncts of a XNF.
@@ -42,16 +43,18 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 
 public abstract class XjunctPartialQuantifierElimination {
 	protected final Script mScript;
+	protected final ManagedScript mMgdScript;
 	protected final IUltimateServiceProvider mServices; 
 	protected final ILogger mLogger;
 	
 	
-	public XjunctPartialQuantifierElimination(Script script,
-			IUltimateServiceProvider services) {
+	public XjunctPartialQuantifierElimination(final ManagedScript script,
+			final IUltimateServiceProvider services) {
 		super();
-		mScript = script;
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
+		mMgdScript = script;
+		mScript = script.getScript();
 	}
 	public abstract String getName();
 	public abstract String getAcronym();

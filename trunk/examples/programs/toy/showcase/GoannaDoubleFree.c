@@ -14,7 +14,7 @@
  * 2013CAV - Heizmann,Hoenicke,Podelski - Software Model Checking for People Who Love Automata
  * 
  * Date: August 2012
- * Author: heizmann@informtik.uni-freiburg.de
+ * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
 #include <stdlib.h>

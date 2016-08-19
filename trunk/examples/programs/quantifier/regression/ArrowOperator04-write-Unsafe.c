@@ -1,7 +1,7 @@
 //#Unsafe
 /*
  * Date: October 2013
- * Author: heizmann@informtik.uni-freiburg.de
+ * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
 

@@ -30,16 +30,17 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -88,37 +89,32 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	@Override
-	public CompoundDomainState addVariable(String name, IBoogieVar variable) {
-		return performStateOperation(state -> state.addVariable(name, variable));
+	public CompoundDomainState addVariable(IBoogieVar variable) {
+		return performStateOperation(state -> state.addVariable(variable));
 	}
 
 	@Override
-	public CompoundDomainState removeVariable(String name, IBoogieVar variable) {
-		return performStateOperation(state -> state.removeVariable(name, variable));
+	public CompoundDomainState removeVariable(IBoogieVar variable) {
+		return performStateOperation(state -> state.removeVariable(variable));
 	}
 
 	@Override
-	public CompoundDomainState addVariables(Map<String, IBoogieVar> variables) {
+	public CompoundDomainState addVariables(Collection<IBoogieVar> variables) {
 		return performStateOperation(state -> state.addVariables(variables));
 	}
 
 	@Override
-	public CompoundDomainState removeVariables(Map<String, IBoogieVar> variables) {
+	public CompoundDomainState removeVariables(Collection<IBoogieVar> variables) {
 		return performStateOperation(state -> state.removeVariables(variables));
 	}
 
 	@Override
-	public IBoogieVar getVariableDeclarationType(String name) {
-		return mAbstractStates.get(0).getVariableDeclarationType(name);
+	public boolean containsVariable(IBoogieVar var) {
+		return mAbstractStates.get(0).containsVariable(var);
 	}
 
 	@Override
-	public boolean containsVariable(String name) {
-		return mAbstractStates.get(0).containsVariable(name);
-	}
-
-	@Override
-	public Map<String, IBoogieVar> getVariables() {
+	public Set<IBoogieVar> getVariables() {
 		return mAbstractStates.get(0).getVariables();
 	}
 

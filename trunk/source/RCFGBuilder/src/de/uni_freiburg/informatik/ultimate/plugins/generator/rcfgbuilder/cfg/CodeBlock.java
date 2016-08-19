@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
 /**
@@ -171,13 +171,13 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 		mOccurenceInCounterexamples++;
 	}
 
-	public int getSerialNumer() {
+	public int getSerialNumber() {
 		return mSerialnumber;
 	}
 
 	@Override
 	public int hashCode() {
-		return getSerialNumer();
+		return getSerialNumber();
 	}
 
 	public final void connectSource(RCFGNode source) {

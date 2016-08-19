@@ -104,7 +104,7 @@ public class RewriteDivision extends TransformerPreprocessor {
 	/**
 	 * Constructor
 	 */
-	public RewriteDivision(ReplacementVarFactory varFactory) {
+	public RewriteDivision(final ReplacementVarFactory varFactory) {
 		super();
 		mVarFactory = varFactory;
 		mauxVars = new LinkedHashMap<TermVariable, Term>();
@@ -117,7 +117,7 @@ public class RewriteDivision extends TransformerPreprocessor {
 	}
 	
 	@Override
-	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
+	public TransFormulaLR process(final Script script, final TransFormulaLR tf) throws TermException {
 		// Clear the data structures
 		mauxVars.clear();
 		mauxTerms.clear();
@@ -129,15 +129,14 @@ public class RewriteDivision extends TransformerPreprocessor {
 		final Term formula = new_tf.getFormula();
 		final Term auxTerms = Util.and(script, mauxTerms.toArray(new Term[0]));
 		new_tf.setFormula(Util.and(script, formula, auxTerms));
-		final Map<TermVariable, Term> auxVar2Const = mVarFactory.constructAuxVarMapping(mauxVars.keySet());
-		new_tf.addAuxVars(auxVar2Const);
+		new_tf.addAuxVars(mauxVars.keySet());
 		
 		return new_tf;
 	}
 	
 	@Override
-	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
-			TransFormulaLR newTF) {
+	protected boolean checkSoundness(final Script script, final TransFormulaLR oldTF,
+			final TransFormulaLR newTF) {
 		final Term old_term = oldTF.getFormula();
 		final Term old_termwith_def = Util.and(script, old_term,
 				Util.and(script, mauxTerms.toArray(new Term[0])));
@@ -154,7 +153,7 @@ public class RewriteDivision extends TransformerPreprocessor {
 	 * For this check we add to the input term the definition of the auxiliary
 	 * variables.
 	 */
-	private boolean isIncorrect(Script script, Term input, Term result) {
+	private boolean isIncorrect(final Script script, final Term input, final Term result) {
 		return LBool.SAT == Util.checkSat(script,
 				script.term("distinct", input, result));
 	}
@@ -164,8 +163,8 @@ public class RewriteDivision extends TransformerPreprocessor {
 	 * For this check we existentially quantify auxiliary variables in the
 	 * result term.
 	 */
-	private boolean isIncorrectWithQuantifiers(Script script, Term input,
-			Term result) {
+	private boolean isIncorrectWithQuantifiers(final Script script, final Term input,
+			final Term result) {
 		Term quantified;
 		if (mauxVars.size() > 0) {
 			quantified = script.quantifier(Script.EXISTS,
@@ -178,7 +177,7 @@ public class RewriteDivision extends TransformerPreprocessor {
 	}
 	
 	@Override
-	protected TermTransformer getTransformer(Script script) {
+	protected TermTransformer getTransformer(final Script script) {
 		return new RewriteDivisionTransformer(script);
 	}
 	
@@ -189,13 +188,13 @@ public class RewriteDivision extends TransformerPreprocessor {
 	private class RewriteDivisionTransformer extends TermTransformer {
 		private final Script mScript;
 		
-		RewriteDivisionTransformer(Script script) {
+		RewriteDivisionTransformer(final Script script) {
 			assert script != null;
 			mScript = script;
 		}
 		
 		@Override
-		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
+		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 			final String func = appTerm.getFunction().getName();
 			if (func.equals("div")) {
 				assert(appTerm.getParameters().length == 2);
@@ -248,8 +247,8 @@ public class RewriteDivision extends TransformerPreprocessor {
 		 * <li> in an <i>optimized</i> way where strict inequalities are
 		 * replaced by non-strict inequalities.
 		 */
-		private Term computeDivAuxTerms(Term dividend, Term divisor,
-				TermVariable quotientAuxVar) {
+		private Term computeDivAuxTerms(final Term dividend, final Term divisor,
+				final TermVariable quotientAuxVar) {
 			final Term[] disjuncts = new Term[2];
 			final Term one = mScript.numeral(BigInteger.ONE);
 			final Term minusOne = mScript.term("-", one);
@@ -292,8 +291,8 @@ public class RewriteDivision extends TransformerPreprocessor {
 		 * <li> in an <i>optimized</i> way where strict inequalities are
 		 * replaced by non-strict inequalities.
 		 */
-		private Term computeModAuxTerms(Term dividend, Term divisor,
-				TermVariable quotientAuxVar, TermVariable remainderAuxVar) {
+		private Term computeModAuxTerms(final Term dividend, final Term divisor,
+				final TermVariable quotientAuxVar, final TermVariable remainderAuxVar) {
 			final Term[] disjuncts = new Term[2];
 			final Term one = mScript.numeral(BigInteger.ONE);
 			final Term minusOne = mScript.term("-", one);

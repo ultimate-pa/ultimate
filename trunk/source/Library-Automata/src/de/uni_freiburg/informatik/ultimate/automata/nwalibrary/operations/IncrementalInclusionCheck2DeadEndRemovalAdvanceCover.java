@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.AbstractIncrementalInclusionCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.InclusionViaDifference;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Transitionlet;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.ITransitionlet;
 
 /**
  * 
@@ -597,7 +597,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER,STATE> 
 			return result;
 		}
 	}
-	class Transition implements Transitionlet<LETTER,STATE>{
+	class Transition implements ITransitionlet<LETTER,STATE>{
 		private final LETTER letter;
 		private final NodeData succ;
 		public Transition(LETTER let,NodeData node){

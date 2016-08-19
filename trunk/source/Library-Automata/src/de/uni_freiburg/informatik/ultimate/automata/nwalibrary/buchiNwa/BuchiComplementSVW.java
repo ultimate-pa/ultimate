@@ -32,17 +32,17 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Büchi complementation based on the method of Sistla, Vardi, Wolper: <br>
+ * Büchi complementation based on the method of Sistla, Vardi, Wolper:
  * 
- *     “The Complementation Problem for Büchi Automata with Applications to
- *      Temporal Logic” (Elsevier, 1987) <br>
+ * <p>“The Complementation Problem for Büchi Automata with Applications to
+ *      Temporal Logic” (Elsevier, 1987)
  *      
- * The actual implementation of this complementation method is located in the
+ * <p>The actual implementation of this complementation method is located in the
  * class {@code BuchiComplementAutomatonSVW}.
  * 
  * @author Fabian Reiter
@@ -53,7 +53,7 @@ public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	
-	private final INestedWordAutomatonOldApi<LETTER,STATE> mOperand;
+	private final INestedWordAutomaton<LETTER,STATE> mOperand;
 	private final BuchiComplementAutomatonSVW<LETTER,STATE> mResult;
 
 	
@@ -74,8 +74,8 @@ public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE
 				mResult.sizeInformation();
 	}
 		
-	public BuchiComplementSVW(AutomataLibraryServices services,
-			INestedWordAutomatonOldApi<LETTER,STATE> operand)
+	public BuchiComplementSVW(final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER,STATE> operand)
 			throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -86,13 +86,13 @@ public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE
 	}
 
 	@Override
-	public INestedWordAutomatonOldApi<LETTER,STATE> getResult()
+	public INestedWordAutomaton<LETTER,STATE> getResult()
 			throws AutomataLibraryException {
 		return mResult;
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return ResultChecker.buchiComplement(mServices, mOperand, mResult);
 	}

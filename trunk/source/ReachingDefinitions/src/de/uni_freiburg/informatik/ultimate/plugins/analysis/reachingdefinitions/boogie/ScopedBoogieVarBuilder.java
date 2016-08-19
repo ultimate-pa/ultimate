@@ -30,13 +30,13 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 public class ScopedBoogieVarBuilder {
 
@@ -64,17 +64,17 @@ public class ScopedBoogieVarBuilder {
 
 		ScopedBoogieVar rtr = mVarCache.get(uid);
 		if (rtr == null) {
-			final BoogieVar bv = getBoogieVarFromTransformula(identifier, info, tf);
+			final IProgramVar bv = getBoogieVarFromTransformula(identifier, info, tf);
 			rtr = new ScopedBoogieVar(identifier, decl, info, bv);
 			mVarCache.put(uid, rtr);
 		}
 		return rtr;
 	}
 
-	private BoogieVar getBoogieVarFromTransformula(String identifier, DeclarationInformation info, TransFormula tf) {
+	private IProgramVar getBoogieVarFromTransformula(String identifier, DeclarationInformation info, TransFormula tf) {
 		// TODO: Check if this is the "right" way to get the correct BoogieVar
 
-		final HashSet<BoogieVar> vars = new HashSet<BoogieVar>();
+		final HashSet<IProgramVar> vars = new HashSet<IProgramVar>();
 		vars.add(getBoogieVarFromSet(identifier, info, tf.getInVars().keySet()));
 		vars.add(getBoogieVarFromSet(identifier, info, tf.getOutVars().keySet()));
 		vars.add(getBoogieVarFromSet(identifier, info, tf.getAssignedVars()));
@@ -86,8 +86,8 @@ public class ScopedBoogieVarBuilder {
 		return vars.iterator().next();
 	}
 
-	private BoogieVar getBoogieVarFromSet(String identifier, DeclarationInformation info, Set<BoogieVar> vars) {
-		for (final BoogieVar in : vars) {
+	private IProgramVar getBoogieVarFromSet(String identifier, DeclarationInformation info, Set<IProgramVar> vars) {
+		for (final IProgramVar in : vars) {
 			if (in.getIdentifier().equals(identifier)) {
 				if (in.isOldvar()) {
 					continue;

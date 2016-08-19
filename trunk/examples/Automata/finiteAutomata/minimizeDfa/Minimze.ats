@@ -5,7 +5,7 @@
 assert(!isEmpty(nwa));
 
 print(numberOfStates(removeDeadEnds(nwa)));
-int minimizeDFASize = numberOfStates(minimizeDFA(removeDeadEnds(nwa)));
+int minimizeDFASize = numberOfStates(minimizeDfaTable(removeDeadEnds(nwa)));
 print(minimizeDFASize);
 int minimizeDfaSimulationSize = numberOfStates(minimizeDFASimulation(removeDeadEnds(nwa)));
 print(minimizeDfaSimulationSize);

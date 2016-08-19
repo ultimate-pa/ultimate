@@ -29,43 +29,43 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Operation that checks if the language of the first operand is included in the
  * language of the second automaton.
  * @author heizmann@informatik.uni-freiburg.de
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
-	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-	
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand1;
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand2;
+public class IsIncluded<LETTER, STATE>
+		extends BinaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
 	
 	private final Boolean mResult;
 	private final NestedRun<LETTER, STATE> mCounterexample;
 	
-	
-	public IsIncluded(AutomataLibraryServices services,
-			StateFactory<STATE> stateFactory,
-			INestedWordAutomatonSimple<LETTER, STATE> nwa1, 
-			INestedWordAutomatonSimple<LETTER, STATE> nwa2) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mOperand1 = nwa1;
-		mOperand2 = nwa2;
+	/**
+	 * @param services Ultimate services
+	 * @param stateFactory state factory
+	 * @param fstOperand first operand
+	 * @param sndOperand second operand
+	 * @throws AutomataLibraryException if construction fails
+	 */
+	public IsIncluded(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand, 
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand)
+					throws AutomataLibraryException {
+		super(services, fstOperand, sndOperand);
 		mLogger.info(startMessage());
 		final IsEmpty<LETTER, STATE> emptinessCheck = new IsEmpty<LETTER, STATE>(
-				services, (new Difference<LETTER, STATE>(mServices, stateFactory, nwa1, nwa2)).getResult());
+				services, (new Difference<LETTER, STATE>(
+						mServices, stateFactory, fstOperand, sndOperand)).getResult());
 		mResult = emptinessCheck.getResult();
 		mCounterexample = emptinessCheck.getNestedRun();
 		mLogger.info(exitMessage());
@@ -74,13 +74,6 @@ public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public String operationName() {
 		return "isIncluded";
-	}
-
-	@Override
-	public String startMessage() {
-			return "Start " + operationName() + ". Operand1 " + 
-					mOperand1.sizeInformation() + ". Operand2 " + 
-					mOperand2.sizeInformation();	
 	}
 
 	@Override
@@ -97,13 +90,4 @@ public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	public NestedRun<LETTER, STATE> getCounterexample() {
 		return mCounterexample;
 	}
-
-	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		return true;
-	}
-	
-
-
 }

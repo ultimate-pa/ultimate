@@ -34,8 +34,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -51,11 +49,14 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -79,13 +80,15 @@ public class SmtManager {
 
 	private final Boogie2SMT mBoogie2Smt;
 	private final Script mScript;
+	private final SimplicationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final ManagedScript mManagedScript;
 	// private final Map<String,ASTType> mGlobalVars;
 	private final ModifiableGlobalVariableManager mModifiableGlobals;
 	private int msatProbNumber;
 
 	private ScopedHashMap<String, Term> mIndexedConstants;
-	Set<BoogieVar> mAssignedVars;
+	Set<IProgramVar> mAssignedVars;
 
 	private final int mTrivialSatQueries = 0;
 	private int mNontrivialSatQueries = 0;
@@ -127,16 +130,19 @@ public class SmtManager {
 
 	private final PredicateFactory mPredicateFactory;
 
-	public SmtManager(Script script, Boogie2SMT boogie2smt, ModifiableGlobalVariableManager modifiableGlobals,
-			IUltimateServiceProvider services, boolean interpolationModeSwitchNeeded, ManagedScript managedScript) {
+	public SmtManager(final Script script, final Boogie2SMT boogie2smt, final ModifiableGlobalVariableManager modifiableGlobals,
+			final IUltimateServiceProvider services, final boolean interpolationModeSwitchNeeded, final ManagedScript managedScript, 
+			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
 		mInterpolationModeSwitchNeeded = interpolationModeSwitchNeeded;
 		mBoogie2Smt = boogie2smt;
 		mScript = script;
 		mManagedScript = managedScript;
 		mModifiableGlobals = modifiableGlobals;
-		mPredicateFactory = new PredicateFactory(services, boogie2smt);
+		mPredicateFactory = new PredicateFactory(services, boogie2smt.getManagedScript(), boogie2smt.getBoogie2SmtSymbolTable(), simplificationTechnique, xnfConversionTechnique);
 	}
 	
 	
@@ -238,7 +244,7 @@ public class SmtManager {
 		return mVarSetMinimalComputationTime;
 	}
 
-	public void setIteration(int iteration) {
+	public void setIteration(final int iteration) {
 		msatProbNumber = 0;
 	}
 
@@ -246,10 +252,6 @@ public class SmtManager {
 		return msatProbNumber;
 	}
 
-	public VariableManager getVariableManager() {
-		return mBoogie2Smt.getVariableManager();
-	}
-	
 
 
 	/**
@@ -257,12 +259,12 @@ public class SmtManager {
 	 * that are modifiable by procedure proc according to
 	 * ModifiableGlobalVariableManager modGlobVarManager.
 	 */
-	public TermVarsProc getOldVarsEquality(String proc, ModifiableGlobalVariableManager modGlobVarManager) {
-		final Set<BoogieVar> vars = new HashSet<BoogieVar>();
+	public TermVarsProc getOldVarsEquality(final String proc, final ModifiableGlobalVariableManager modGlobVarManager) {
+		final Set<IProgramVar> vars = new HashSet<IProgramVar>();
 		Term term = getScript().term("true");
-		for (final BoogieVar bv : modGlobVarManager.getGlobalVarsAssignment(proc).getAssignedVars()) {
+		for (final IProgramVar bv : modGlobVarManager.getGlobalVarsAssignment(proc).getAssignedVars()) {
 			vars.add(bv);
-			final BoogieVar bvOld = ((BoogieNonOldVar) bv).getOldVar();
+			final IProgramVar bvOld = ((IProgramNonOldVar) bv).getOldVar();
 			vars.add(bvOld);
 			final TermVariable tv = bv.getTermVariable();
 			final TermVariable tvOld = bvOld.getTermVariable();
@@ -315,7 +317,7 @@ public class SmtManager {
 	// return true;
 	// }
 
-	public void startTraceCheck(Object lockClaimer) {
+	public void startTraceCheck(final Object lockClaimer) {
 		lock(lockClaimer);
 		mScript.echo(new QuotedObject("starting trace check"));
 		if (mInterpolationModeSwitchNeeded) {
@@ -324,7 +326,7 @@ public class SmtManager {
 		mScript.push(1);
 	}
 
-	public void endTraceCheck(Object lockOwner) {
+	public void endTraceCheck(final Object lockOwner) {
 		if (mInterpolationModeSwitchNeeded) {
 			mScript.setOption(":produce-interpolants", false);
 		}
@@ -363,7 +365,7 @@ public class SmtManager {
 	// }
 	// }
 
-	LBool checkSatisfiable(Term f) {
+	LBool checkSatisfiable(final Term f) {
 		final long startTime = System.nanoTime();
 		LBool result = null;
 		try {
@@ -397,7 +399,7 @@ public class SmtManager {
 		return result;
 	}
 
-	public LBool assertTerm(Term term) {
+	public LBool assertTerm(final Term term) {
 		final long startTime = System.nanoTime();
 		LBool result = null;
 		result = mScript.assertTerm(term);
@@ -405,7 +407,7 @@ public class SmtManager {
 		return result;
 	}
 
-	public Term[] computeInterpolants(Term[] interpolInput, int[] startOfSubtree) {
+	public Term[] computeInterpolants(final Term[] interpolInput, final int[] startOfSubtree) {
 		final long startTime = System.nanoTime();
 		final Term[] result = mScript.getInterpolants(interpolInput, startOfSubtree);
 		mInterpolQuriesTime += (System.nanoTime() - startTime);
@@ -413,7 +415,7 @@ public class SmtManager {
 		return result;
 	}
 
-	public Term[] computeInterpolants(Term[] interpolInput) {
+	public Term[] computeInterpolants(final Term[] interpolInput) {
 		final long startTime = System.nanoTime();
 		final Term[] result = mScript.getInterpolants(interpolInput);
 		mInterpolQuriesTime += (System.nanoTime() - startTime);
@@ -439,7 +441,7 @@ public class SmtManager {
 	 *         holds, SMT_SAT if the inclusion does not hold and SMT_UNKNOWN if
 	 *         the theorem prover was not able to give an answer.
 	 */
-	public LBool isCovered(IPredicate ps1, IPredicate ps2) {
+	public LBool isCovered(final IPredicate ps1, final IPredicate ps2) {
 		final long startTime = System.nanoTime();
 
 		if (getPredicateFactory().isDontCare(ps1) || getPredicateFactory().isDontCare(ps2)) {
@@ -464,7 +466,7 @@ public class SmtManager {
 				final TermVariable[] vars = new TermVariable[ps1.getVars().size()];
 				final Term[] values = new Term[vars.length];
 				int i = 0;
-				for (final BoogieVar var : ps1.getVars()) {
+				for (final IProgramVar var : ps1.getVars()) {
 					vars[i] = var.getTermVariable();
 					values[i] = var.getDefaultConstant();
 					i++;
@@ -476,7 +478,7 @@ public class SmtManager {
 				final TermVariable[] vars = new TermVariable[ps2.getVars().size()];
 				final Term[] values = new Term[vars.length];
 				int i = 0;
-				for (final BoogieVar var : ps2.getVars()) {
+				for (final IProgramVar var : ps2.getVars()) {
 					vars[i] = var.getTermVariable();
 					values[i] = var.getDefaultConstant();
 					i++;
@@ -493,7 +495,7 @@ public class SmtManager {
 		return result;
 	}
 
-	public Validity isCovered(Object caller, Term formula1, Term formula2) {
+	public Validity isCovered(final Object caller, final Term formula1, final Term formula2) {
 		assert (mManagedScript.isLockOwner(caller)) : "only lock owner may call";
 		final long startTime = System.nanoTime();
 
@@ -529,11 +531,11 @@ public class SmtManager {
 	// return result;
 	// }
 
-	public Term substituteRepresentants(Set<BoogieVar> boogieVars, Map<BoogieVar, TermVariable> substitution, Term term) {
+	public Term substituteRepresentants(final Set<IProgramVar> boogieVars, final Map<IProgramVar, TermVariable> substitution, final Term term) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 
-		for (final BoogieVar var : boogieVars) {
+		for (final IProgramVar var : boogieVars) {
 			final TermVariable representant = var.getTermVariable();
 			assert representant != null;
 			final Term substitute = substitution.get(var);
@@ -548,12 +550,12 @@ public class SmtManager {
 		return result;
 	}
 
-	public Term substituteToRepresentants(Set<BoogieVar> boogieVars, Map<BoogieVar, TermVariable> boogieVar2TermVar,
-			Term term) {
+	public Term substituteToRepresentants(final Set<IProgramVar> boogieVars, final Map<IProgramVar, TermVariable> boogieVar2TermVar,
+			final Term term) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 
-		for (final BoogieVar var : boogieVars) {
+		for (final IProgramVar var : boogieVars) {
 			final TermVariable representant = boogieVar2TermVar.get(var);
 			assert representant != null;
 			final Term substitute = var.getTermVariable();
@@ -568,7 +570,7 @@ public class SmtManager {
 		return result;
 	}
 
-	public Term substituteTermVariablesByTerms(Map<TermVariable, Term> substitution, Term term) {
+	public Term substituteTermVariablesByTerms(final Map<TermVariable, Term> substitution, final Term term) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 
@@ -627,7 +629,7 @@ public class SmtManager {
 	 * @return String representation of number, where -1 is represented as
 	 *         <i>init</i>
 	 */
-	private static String quoteMinusOne(int index) {
+	private static String quoteMinusOne(final int index) {
 		if (index >= 0) {
 			return Integer.toString(index);
 		} else if (index == -1) {
@@ -665,7 +667,7 @@ public class SmtManager {
 	// return result;
 	// }
 
-	private Integer quantifiersContainedInFormula(Term formula, Set<TermVariable> quantifiedVariables) {
+	private Integer quantifiersContainedInFormula(final Term formula, final Set<TermVariable> quantifiedVariables) {
 		Integer quantifier = null;
 		if (formula instanceof ApplicationTerm) {
 			final Term[] parameters = ((ApplicationTerm) formula).getParameters();
@@ -683,31 +685,31 @@ public class SmtManager {
 	 * Construct Predicate which represents the same Predicate as ps, but where
 	 * all globalVars are renamed to oldGlobalVars.
 	 */
-	public IPredicate renameGlobalsToOldGlobals(IPredicate ps) {
+	public IPredicate renameGlobalsToOldGlobals(final IPredicate ps) {
 		if (getPredicateFactory().isDontCare(ps)) {
 			throw new UnsupportedOperationException("don't cat not expected");
 		}
 
-		final Set<BoogieVar> allVars = ps.getVars();
-		final Set<BoogieVar> varsOfRenamed = new HashSet<BoogieVar>();
+		final Set<IProgramVar> allVars = ps.getVars();
+		final Set<IProgramVar> varsOfRenamed = new HashSet<IProgramVar>();
 		varsOfRenamed.addAll(allVars);
-		final Set<BoogieVar> globalVars = new HashSet<BoogieVar>();
-		for (final BoogieVar var : allVars) {
+		final Set<IProgramVar> globalVars = new HashSet<IProgramVar>();
+		for (final IProgramVar var : allVars) {
 			if (var.isGlobal()) {
 				globalVars.add(var);
 				varsOfRenamed.remove(var);
 			}
 		}
 		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-		for (final BoogieVar globalBoogieVar : globalVars) {
+		for (final IProgramVar globalBoogieVar : globalVars) {
 			if (!globalBoogieVar.isOldvar()) {
-				final BoogieVar oldBoogieVar = ((BoogieNonOldVar) globalBoogieVar).getOldVar();
+				final IProgramVar oldBoogieVar = ((IProgramNonOldVar) globalBoogieVar).getOldVar();
 				varsOfRenamed.add(oldBoogieVar);
 				substitutionMapping.put(globalBoogieVar.getTermVariable(), oldBoogieVar.getTermVariable());
 			}
 		}
-		Term renamedFormula = (new SafeSubstitution(mScript, getVariableManager(), substitutionMapping)).transform(ps.getFormula());
-		renamedFormula = SmtUtils.simplify(mScript, renamedFormula, mServices);
+		Term renamedFormula = (new Substitution(getManagedScript(), substitutionMapping)).transform(ps.getFormula());
+		renamedFormula = SmtUtils.simplify(getManagedScript(), renamedFormula, mServices, mSimplificationTechnique);
 		final IPredicate result = getPredicateFactory().newPredicate(renamedFormula);
 		return result;
 	}
@@ -715,8 +717,8 @@ public class SmtManager {
 
 	// FIXME: does not work im SmtInterpol2
 
-	public static void dumpInterpolProblem(Term[] formulas, int iterationNumber, int interpolProblem, String dumpPath,
-			Script theory) {
+	public static void dumpInterpolProblem(final Term[] formulas, final int iterationNumber, final int interpolProblem, final String dumpPath,
+			final Script theory) {
 		// String filename = "Iteration" + iterationNumber + "_InterpolProblem"
 		// + interpolProblem + ".smt";
 		// File file = new File(dumpPath + "/" +filename);
@@ -731,8 +733,8 @@ public class SmtManager {
 	}
 
 	// FIXME: does not work im SmtInterpol2
-	static protected void dumpSatProblem(Term formula, int iterationNumber, int satProbNumber, String dumpPath,
-			Script theory) {
+	static protected void dumpSatProblem(final Term formula, final int iterationNumber, final int satProbNumber, final String dumpPath,
+			final Script theory) {
 		// String filename = "Iteration" + iterationNumber + "_SatProblem"
 		// + satProbNumber + ".smt";
 		// File file = new File(dumpPath + "/" +filename);
@@ -746,11 +748,11 @@ public class SmtManager {
 		// }
 	}
 
-	public static HoareAnnotation getHoareAnnotation(ProgramPoint programPoint) {
+	public static HoareAnnotation getHoareAnnotation(final ProgramPoint programPoint) {
 		return HoareAnnotation.getAnnotation(programPoint);
 	}
 
-	public LBool checkSatWithFreeVars(Term negation) {
+	public LBool checkSatWithFreeVars(final Term negation) {
 		final LBool result = Util.checkSat(mScript, negation);
 		// if (result == LBool.UNKNOWN) {
 		// Object[] reason = mScript.getInfo(":reason-unknown");
@@ -833,11 +835,11 @@ public class SmtManager {
 //		mStatus = status;
 //	}
 	
-	public void lock(Object lockOwner) {
+	public void lock(final Object lockOwner) {
 		mManagedScript.lock(lockOwner);
 	}
 	
-	public void unlock(Object lockOwner) {
+	public void unlock(final Object lockOwner) {
 		mManagedScript.unlock(lockOwner);
 	}
 	
@@ -849,7 +851,7 @@ public class SmtManager {
 		return mManagedScript.requestLockRelease();
 	}
 	
-	boolean isLockOwner(Object allegedLockOwner) {
+	boolean isLockOwner(final Object allegedLockOwner) {
 		return mManagedScript.isLockOwner(allegedLockOwner);
 	}
 

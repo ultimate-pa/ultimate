@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2016 Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
+ * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -31,14 +32,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IBlock;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IPartition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor.ReachFinal;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
@@ -52,16 +55,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  * The equivalence relation has to be given as a {@link UnionFind} or a
  * {@link IPartition} data structure.
  * 
- * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class QuotientNwaConstructor<LETTER, STATE>  {
 	
 	private final AutomataLibraryServices mServices;
 	private final StateFactory<STATE> mStateFactory;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
-	private final NestedWordAutomaton<LETTER, STATE> mResult;
-	private final Map<STATE, STATE> mOldState2newState;
+	private final DoubleDeckerAutomaton<LETTER, STATE> mResult;
+//	private final Map<STATE, STATE> mOldState2NewState;
+	private GetOnlyMap mOldState2NewState;
+	
+	private final Map<STATE, Map<STATE, ReachFinal>> mUp2Down;
+	private final STATE mOldEmptyStackState;
+	private final STATE mNewEmptyStackState;
 	
 	/**
 	 * private constructor for common parts
@@ -70,21 +80,26 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 * @param stateFactory state factory
 	 * @param operand operand automaton
 	 * @param addMapOldState2newState add a map from old to new states?
+	 * @param newSize size of new (to be constructed) automaton
 	 */
 	private QuotientNwaConstructor(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final boolean addMapOldState2newState) {
+			final boolean addMapOldState2newState,
+			final int newSize) {
 		mServices = services;
 		mStateFactory = stateFactory;
 		mOperand = operand;
-		mResult = new NestedWordAutomaton<>(mServices, 
+		mResult = new DoubleDeckerAutomaton<>(mServices, 
 				mOperand.getInternalAlphabet(), mOperand.getCallAlphabet(), 
 				mOperand.getReturnAlphabet(), mStateFactory);
-		
-		mOldState2newState = (addMapOldState2newState
-				? new HashMap<STATE, STATE>(mOperand.size())
-				: null);
+		mUp2Down = new HashMap<>(newSize);
+		mResult.setUp2Down(mUp2Down);
+		mOldEmptyStackState = mOperand.getEmptyStackState();
+		mNewEmptyStackState = mStateFactory.createEmptyStackState();
+//		mOldState2NewState = (addMapOldState2newState
+//				? new HashMap<STATE, STATE>(mOperand.size())
+//				: null);
 	}
 	
 	/**
@@ -101,11 +116,33 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final IPartition<STATE> partition,
 			final boolean addMapOldState2newState) {
-		this(services, stateFactory, operand, addMapOldState2newState);
+		this(services, stateFactory, operand, addMapOldState2newState,
+				partition.size());
 		
 		final ResultStateConstructorFromPartition resStateConstructor =
 				new ResultStateConstructorFromPartition(partition);
 		constructResultPartition(resStateConstructor, partition);
+		mOldState2NewState = addMapOldState2newState
+				? new GetOnlyMap(resStateConstructor)
+				: null;
+		
+		// TODO can be removed after testing
+//		for (final STATE state : mOperand.getStates()) {
+//			System.err.print(state);
+//			System.err.print(": ");
+//			System.err.print(mOperand.getDownStates(state));
+//			System.err.print(", ");
+//		}
+//		System.err.println();
+//		for (final Entry<STATE, Map<STATE, ReachFinal>> entry : mUp2Down.entrySet()) {
+//			System.err.print(entry.getKey());
+//			System.err.print(": ");
+//			for (final STATE down : entry.getValue().keySet()) {
+//				System.err.print(down);
+//				System.err.print(", ");
+//			}
+//		}
+//		System.err.println();
 	}
 	
 	/**
@@ -122,11 +159,15 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final UnionFind<STATE> unionFind,
 			final boolean addMapOldState2newState) {
-		this(services, stateFactory, operand, addMapOldState2newState);
+		this(services, stateFactory, operand, addMapOldState2newState,
+				unionFind.size());
 		
 		final ResultStateConstructorFromUnionFind resStateConstructor =
 				new ResultStateConstructorFromUnionFind(unionFind);
 		constructResultUnionFind(resStateConstructor);
+		mOldState2NewState = addMapOldState2newState
+				? new GetOnlyMap(resStateConstructor)
+				: null;
 	}
 	
 	/**
@@ -145,6 +186,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 * constructs the result automaton from a partition data structure
 	 * 
 	 * @param resStateConstructor state constructor
+	 * @param partition partition
 	 */
 	private void constructResultPartition(
 			final IResultStateConstructor<STATE> resStateConstructor,
@@ -156,7 +198,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		 * NOTE: there needs not be any block for an empty automaton
 		 */
 		while (blocksIt.hasNext()) {
-			IBlock<STATE> block = blocksIt.next();
+			final IBlock<STATE> block = blocksIt.next();
 			final boolean isRepresentativeIndependent =
 					block.isRepresentativeIndependentInternalsCalls();
 			
@@ -185,14 +227,40 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 */
 	private void constructStateAndSuccessors(
 			final IResultStateConstructor<STATE> resStateConstructor,
-			final STATE inputState, final boolean skipInternalsCalls) {
+			final STATE inputState,
+			final boolean skipInternalsCalls) {
 		// new state
 		final STATE resultState =
 				resStateConstructor.getOrConstructResultState(inputState);
 		
-		// add to map
-		if (mOldState2newState != null) {
-			mOldState2newState.put(inputState, resultState);
+//		// add to map
+//		if (mOldState2NewState != null) {
+//			mOldState2NewState.put(inputState, resultState);
+//		}
+		
+		// get down state map
+		Map<STATE, ReachFinal> downStateMap = mUp2Down.get(resultState);
+		if (downStateMap == null) {
+			downStateMap = new HashMap<>();
+			mUp2Down.put(resultState, downStateMap);
+		}
+		
+		// add down states
+		for (final STATE oldDownState : mOperand.getDownStates(inputState)) {
+			// new state
+			final STATE resultDownState;
+			
+			if (oldDownState == mOldEmptyStackState) {
+				// empty stack symbol
+				resultDownState = mNewEmptyStackState;
+			} else {
+				// "normal" stack symbol
+				resultDownState = resStateConstructor.getOrConstructResultState(
+						oldDownState);
+			}
+			
+			// update map
+			downStateMap.put(resultDownState, ReachFinal.UNKNOWN);
 		}
 		
 		// new outgoing transitions
@@ -223,7 +291,6 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 			mResult.addInternalTransition(
 					resultState, trans.getLetter(), resultSucc);
 		}
-		
 	}
 	
 	/**
@@ -275,7 +342,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	/**
 	 * @return quotient automaton
 	 */
-	public NestedWordAutomaton<LETTER, STATE> getResult() {
+	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 	
@@ -283,7 +350,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 * @return map from input automaton states to output automaton states
 	 */
 	public Map<STATE, STATE> getOldState2newState() {
-		return mOldState2newState;
+		return mOldState2NewState;
 	}
 	
 	/**
@@ -293,9 +360,15 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	private interface IResultStateConstructor<STATE> {
 		/**
 		 * @param inputState input state
-		 * @return new state in quotient automaton
+		 * @return new state in quotient automaton (constructed if not existent)
 		 */
 		STATE getOrConstructResultState(final STATE inputState);
+		
+		/**
+		 * @param inputState input state
+		 * @return new state in quotient automaton
+		 */
+		STATE get(final STATE inputState);
 	}
 	
 	private class ResultStateConstructorFromUnionFind
@@ -303,12 +376,12 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		private final ConstructionCache<STATE, STATE> mConstructionCache;
 		private final UnionFind<STATE> mUnionFind;
 		
-		public ResultStateConstructorFromUnionFind(UnionFind<STATE> unionFind) {
+		public ResultStateConstructorFromUnionFind(final UnionFind<STATE> unionFind) {
 			mUnionFind = unionFind;
 			final IValueConstruction<STATE, STATE> valueConstruction =
 					new IValueConstruction<STATE, STATE>() {
 				@Override
-				public STATE constructValue(STATE inputState) {
+				public STATE constructValue(final STATE inputState) {
 					final STATE representative = mUnionFind.find(inputState);
 					if (representative != inputState && representative != null) {
 						throw new IllegalArgumentException("must be representative or null");
@@ -342,7 +415,16 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 			if (inputRepresentative == null) {
 				inputRepresentative = inputState;
 			}
-			return mConstructionCache.getOrConstuct(inputRepresentative);
+			return mConstructionCache.getOrConstruct(inputRepresentative);
+		}
+		
+		@Override
+		public STATE get(final STATE inputState) {
+			STATE inputRepresentative = mUnionFind.find(inputState);
+			if (inputRepresentative == null) {
+				inputRepresentative = inputState;
+			}
+			return mConstructionCache.getMap().get(inputRepresentative);
 		}
 	}
 	
@@ -375,7 +457,91 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 		@Override
 		public STATE getOrConstructResultState(final STATE inputState) {
 			final IBlock<STATE> block = mPartition.getBlock(inputState);
-			return mConstructionCache.getOrConstuct(block);
+			assert (block != null) : "Block is not known.";
+			return mConstructionCache.getOrConstruct(block);
+		}
+		
+		@Override
+		public STATE get(final STATE inputState) {
+			final IBlock<STATE> block = mPartition.getBlock(inputState);
+			return mConstructionCache.getMap().get(block);
+		}
+	}
+	
+	/**
+	 * This map only supports the <code>get()</code> method.
+	 * 
+	 * <p>We use it here for the map 'old state -> new state' as this is the only
+	 * operation used later on.
+	 * The reason why we use this map instead of a fresh one is that we create
+	 * the backing data structure already during construction time.
+	 */
+	private class GetOnlyMap implements Map<STATE, STATE> {
+		private final IResultStateConstructor<STATE> mResStateConstructor;
+		
+		public GetOnlyMap(final IResultStateConstructor<STATE> resCons) {
+			this.mResStateConstructor = resCons;
+		}
+
+		@Override
+		public int size() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isEmpty() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean containsKey(final Object key) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean containsValue(final Object value) {
+			throw new UnsupportedOperationException();
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public STATE get(final Object key) {
+			return mResStateConstructor.get((STATE)key);
+		}
+
+		@Override
+		public STATE put(final STATE key, final STATE value) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public STATE remove(final Object key) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void putAll(final Map<? extends STATE, ? extends STATE> map) {
+			throw new UnsupportedOperationException();				
+		}
+
+		@Override
+		public void clear() {
+			throw new UnsupportedOperationException();				
+		}
+
+		@Override
+		public Set<STATE> keySet() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Collection<STATE> values() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Set<java.util.Map.Entry<STATE, STATE>> entrySet() {
+			throw new UnsupportedOperationException();
 		}
 	}
 }

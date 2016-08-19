@@ -73,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
@@ -96,10 +96,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLType;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assertion;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assigns;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnotStmt;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Contract;
@@ -163,7 +165,7 @@ public class ACSLHandler implements IACSLHandler {
     
     
 
-	public ACSLHandler(boolean witnessInvariantMode) {
+	public ACSLHandler(final boolean witnessInvariantMode) {
 		mWitnessInvariantMode = witnessInvariantMode;
 	}
 
@@ -172,13 +174,13 @@ public class ACSLHandler implements IACSLHandler {
      */
     @Deprecated
 	@Override
-    public Result visit(Dispatcher main, IASTNode node) {
+    public Result visit(final Dispatcher main, final IASTNode node) {
         throw new UnsupportedOperationException(
                 "Implementation Error: Use CHandler for: " + node.getClass());
     }
 
     @Override
-    public Result visit(Dispatcher main, ACSLNode node) {
+    public Result visit(final Dispatcher main, final ACSLNode node) {
     	final ILocation loc = LocationFactory.createACSLLocation(node);
     	if (node instanceof OldValueExpression) {
     		final OldValueExpression ove = (OldValueExpression) node;
@@ -195,7 +197,7 @@ public class ACSLHandler implements IACSLHandler {
     }
 
     @Override
-    public Result visit(Dispatcher main, CodeAnnot node) {
+    public Result visit(final Dispatcher main, final CodeAnnot node) {
         if (node instanceof CodeAnnotStmt) {
             /*
             Result formula = main.dispatch(((Assertion) ((CodeAnnotStmt) node)
@@ -259,7 +261,7 @@ public class ACSLHandler implements IACSLHandler {
      * @return the translates operator or null.
      */
     private static Operator getBoogieBinaryExprOperator(
-            de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator op) {
+            final de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator op) {
         switch (op) {
             case ARITHDIV:
                 return Operator.ARITHDIV;
@@ -311,7 +313,7 @@ public class ACSLHandler implements IACSLHandler {
      * expression in the C AST.
      */
     private int getCASTBinaryExprOperator(
-            de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator op) {
+            final de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator op) {
         switch (op) {
 		case ARITHDIV:
 			return IASTBinaryExpression.op_divide;
@@ -373,8 +375,8 @@ public class ACSLHandler implements IACSLHandler {
 
     @Override
     public Result visit(
-            Dispatcher main,
-            de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression node) {
+            final Dispatcher main,
+            final de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression node) {
     	final ILocation loc = LocationFactory.createACSLLocation(node);
         ExpressionResult left = (ExpressionResult) main.dispatch(node.getLeft());
         ExpressionResult right = (ExpressionResult) main.dispatch(node.getRight());
@@ -458,7 +460,7 @@ public class ACSLHandler implements IACSLHandler {
 	        	right.rexIntToBoolIfNecessary(loc, ((CHandler) main.mCHandler).getExpressionTranslation(), memoryHandler);
 	        	final Expression be = ExpressionFactory.newBinaryExpression(loc, op, left.lrVal.getValue(), right.lrVal.getValue());
 	        	// TODO: Handle Ctype
-	            return new ExpressionResult(stmt, new RValue(be, new CPrimitive(PRIMITIVE.INT), true), decl, auxVars, overappr);
+	            return new ExpressionResult(stmt, new RValue(be, new CPrimitive(CPrimitives.INT), true), decl, auxVars, overappr);
 	            //return new Result(ExpressionFactory.newBinaryExpression(loc, op, left, right));
 	        }
 		}
@@ -475,7 +477,7 @@ public class ACSLHandler implements IACSLHandler {
         			UnaryExpression.Operator.LOGICNEG, left.lrVal.getValue());
         	final Expression r = ExpressionFactory.newBinaryExpression(loc,
         			Operator.LOGICAND, notLeft, right.lrVal.getValue());
-        	return new ExpressionResult(stmt, new RValue(ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, l, r), new CPrimitive(PRIMITIVE.INT), true), decl, auxVars, overappr);
+        	return new ExpressionResult(stmt, new RValue(ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, l, r), new CPrimitive(CPrimitives.INT), true), decl, auxVars, overappr);
         	//return new Result(ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, l, r));
         case BITAND:
         case BITIFF:
@@ -499,8 +501,8 @@ public class ACSLHandler implements IACSLHandler {
 
     @Override
     public Result visit(
-            Dispatcher main,
-            de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression node) {
+            final Dispatcher main,
+            final de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression node) {
         final ILocation loc = LocationFactory.createACSLLocation(node);
         ExpressionResult res = (ExpressionResult) main.dispatch(node.getExpr());
         
@@ -527,7 +529,7 @@ public class ACSLHandler implements IACSLHandler {
     }
 
     @Override
-    public Result visit(Dispatcher main, IntegerLiteral node) {
+    public Result visit(final Dispatcher main, final IntegerLiteral node) {
     	/*
         return new Result(
                 new de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral(
@@ -543,31 +545,29 @@ public class ACSLHandler implements IACSLHandler {
     }
 
     @Override
-    public Result visit(Dispatcher main, BooleanLiteral node) {
+    public Result visit(final Dispatcher main, final BooleanLiteral node) {
     	/*
         return new Result(
                 new de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral(
                         LocationFactory.createACSLLocation(node), node.getValue()));
         */
      	return new ExpressionResult(new RValue(new de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral(
-                LocationFactory.createACSLLocation(node), node.getValue()), new CPrimitive(PRIMITIVE.BOOL), true));
+                LocationFactory.createACSLLocation(node), node.getValue()), new CPrimitive(CPrimitives.BOOL), true));
     }
 
     @Override
-    public Result visit(Dispatcher main, RealLiteral node) {
-    	/*
-        return new Result(
-                new de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral(
-                        LocationFactory.createACSLLocation(node), node.getValue()));
-        */
-     	return new ExpressionResult(new RValue(new de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral(
-                LocationFactory.createACSLLocation(node), node.getValue()), new CPrimitive(PRIMITIVE.DOUBLE)));
+    public Result visit(final Dispatcher main, final RealLiteral node) {
+    	final AExpressionTranslation expressionTranslation = 
+    			((CHandler) main.mCHandler).getExpressionTranslation();
+     	final RValue rValue = expressionTranslation.translateFloatingLiteral(
+     			LocationFactory.createACSLLocation(node), node.getValue());
+     	return new ExpressionResult(rValue);
     }
 
     @Override
     public Result visit(
-            Dispatcher main,
-            de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression node) {
+            final Dispatcher main,
+            final de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression node) {
         String id = SFO.EMPTY;
         final ILocation loc = LocationFactory.createACSLLocation(node);
         switch (specType) {
@@ -662,7 +662,7 @@ public class ACSLHandler implements IACSLHandler {
     }
 
     @Override
-    public Result visit(Dispatcher main, Contract node) {
+    public Result visit(final Dispatcher main, final Contract node) {
         final ILocation loc = LocationFactory.createACSLLocation(node);
         final ArrayList<Specification> spec = new ArrayList<Specification>();
         // First we catch the case that a contract is at a FunctionDefinition
@@ -684,7 +684,7 @@ public class ACSLHandler implements IACSLHandler {
     }
 
     @Override
-    public Result visit(Dispatcher main, Requires node) {
+    public Result visit(final Dispatcher main, final Requires node) {
         specType = ACSLHandler.SPEC_TYPE.REQUIRES;
         final Expression formula = ((ExpressionResult) main.dispatch(node.getFormula())).lrVal.getValue();
         final Check check = new Check(Check.Spec.PRE_CONDITION);
@@ -696,7 +696,7 @@ public class ACSLHandler implements IACSLHandler {
     }
 
     @Override
-    public Result visit(Dispatcher main, Ensures node) {
+    public Result visit(final Dispatcher main, final Ensures node) {
         final ILocation loc = LocationFactory.createACSLLocation(node);
         final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression e = node
                 .getFormula();
@@ -718,7 +718,7 @@ public class ACSLHandler implements IACSLHandler {
     }
 
     @Override
-    public Result visit(Dispatcher main, Assigns node) {
+    public Result visit(final Dispatcher main, final Assigns node) {
         specType = ACSLHandler.SPEC_TYPE.ASSIGNS;
         final ILocation loc = LocationFactory.createACSLLocation(node);
         final ArrayList<String> identifiers = new ArrayList<String>();
@@ -743,13 +743,13 @@ public class ACSLHandler implements IACSLHandler {
     }
 
     @Override
-    public Result visit(Dispatcher main, ACSLResultExpression node) {
-    	return new ExpressionResult(new RValue(new IdentifierExpression(LocationFactory.createACSLLocation(node), "#res"), new CPrimitive(PRIMITIVE.INT)));     
+    public Result visit(final Dispatcher main, final ACSLResultExpression node) {
+    	return new ExpressionResult(new RValue(new IdentifierExpression(LocationFactory.createACSLLocation(node), "#res"), new CPrimitive(CPrimitives.INT)));     
         //return new Result(new IdentifierExpression(LocationFactory.createACSLLocation(node), "#res"));
     }
 
     @Override
-    public Result visit(Dispatcher main, LoopAnnot node) {
+    public Result visit(final Dispatcher main, final LoopAnnot node) {
         if (node.getLoopBehavior() != null
                 && node.getLoopBehavior().length != 0) {
         	final String msg = "Not yet implemented: Behaviour";
@@ -767,7 +767,7 @@ public class ACSLHandler implements IACSLHandler {
     }
 
     @Override
-    public Result visit(Dispatcher main, LoopInvariant node) {
+    public Result visit(final Dispatcher main, final LoopInvariant node) {
         final ExpressionResult res = (ExpressionResult) main.dispatch(node.getFormula());
 
         final ArrayList<Declaration> decl = new ArrayList<Declaration>();
@@ -793,21 +793,21 @@ public class ACSLHandler implements IACSLHandler {
     }
 
     @Override
-    public Result visit(Dispatcher main, LoopVariant node) {
+    public Result visit(final Dispatcher main, final LoopVariant node) {
     	final String msg = "Not yet implemented: LoopVariant";
     	final ILocation loc = LocationFactory.createACSLLocation(node);
         throw new UnsupportedSyntaxException(loc, msg);
     }
 
     @Override
-    public Result visit(Dispatcher main, LoopAssigns node) {
+    public Result visit(final Dispatcher main, final LoopAssigns node) {
     	final String msg = "Not yet implemented: LoopAssigns";
     	final ILocation loc = LocationFactory.createACSLLocation(node);
         throw new UnsupportedSyntaxException(loc, msg);
     }
 
     @Override
-    public Result visit(Dispatcher main, ArrayAccessExpression node) {
+    public Result visit(final Dispatcher main, final ArrayAccessExpression node) {
         final ILocation loc = LocationFactory.createACSLLocation(node);
         final Stack<Expression> args = new Stack<Expression>();
 
@@ -883,12 +883,12 @@ public class ACSLHandler implements IACSLHandler {
             throw new UnsupportedSyntaxException(loc, msg);
         }
         // TODO: Ctype
-        return new ExpressionResult(stmt, new RValue(expr, new CPrimitive(PRIMITIVE.INT)), decl, auxVars, overappr);
+        return new ExpressionResult(stmt, new RValue(expr, new CPrimitive(CPrimitives.INT)), decl, auxVars, overappr);
         //return new Result(expr);
     }
 
     @Override
-    public Result visit(Dispatcher main, FieldAccessExpression node) {
+    public Result visit(final Dispatcher main, final FieldAccessExpression node) {
 
         final ArrayList<Declaration> decl = new ArrayList<Declaration>();
         final ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -911,7 +911,7 @@ public class ACSLHandler implements IACSLHandler {
     }
 
     @Override
-    public Result visit(Dispatcher main, FreeableExpression node) {
+    public Result visit(final Dispatcher main, final FreeableExpression node) {
         final ILocation loc = LocationFactory.createACSLLocation(node);
         final IType it = new InferredType(InferredType.Type.Boolean);
 
@@ -934,12 +934,12 @@ public class ACSLHandler implements IACSLHandler {
         final Expression e = new de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression(
                 loc, it, arr, idc);
         // TODO: CType
-        return new ExpressionResult(stmt, new RValue(e, new CPrimitive(PRIMITIVE.BOOL)), decl, auxVars, overappr);
+        return new ExpressionResult(stmt, new RValue(e, new CPrimitive(CPrimitives.BOOL)), decl, auxVars, overappr);
         //return new Result(e);
     }
 
     @Override
-    public Result visit(Dispatcher main, MallocableExpression node) {
+    public Result visit(final Dispatcher main, final MallocableExpression node) {
         final ILocation loc = LocationFactory.createACSLLocation(node);
         final IType it = new InferredType(InferredType.Type.Boolean);
 
@@ -968,12 +968,12 @@ public class ACSLHandler implements IACSLHandler {
                 valid);
         
         // TODO: CType
-        return new ExpressionResult(stmt, new RValue(e, new CPrimitive(PRIMITIVE.INT)), decl, auxVars, overappr);
+        return new ExpressionResult(stmt, new RValue(e, new CPrimitive(CPrimitives.INT)), decl, auxVars, overappr);
         //return new Result(e);
     }
 
     @Override
-    public Result visit(Dispatcher main, ValidExpression node) {
+    public Result visit(final Dispatcher main, final ValidExpression node) {
         final ILocation loc = LocationFactory.createACSLLocation(node);
         final IType it = new InferredType(InferredType.Type.Boolean);
 
@@ -997,7 +997,84 @@ public class ACSLHandler implements IACSLHandler {
                 loc, it, arr, idc);
         
         // TODO: CType
-        return new ExpressionResult(stmt, new RValue(e, new CPrimitive(PRIMITIVE.INT)), decl, auxVars, overappr);
+        return new ExpressionResult(stmt, new RValue(e, new CPrimitive(CPrimitives.INT)), decl, auxVars, overappr);
         //return new Result(e);
     }
+
+	@Override
+	public Result visit(final Dispatcher main, final CastExpression node) {
+		final ILocation loc = LocationFactory.createACSLLocation(node);
+		final CPrimitive resultType = translateAcslTypeToCType(node.getCastedType());
+		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getExpression());
+        final MemoryHandler memoryHandler = ((CHandler) main.mCHandler).getMemoryHandler();
+        final StructHandler structHandler = ((CHandler) main.mCHandler).mStructHandler;
+		expr = expr.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+    	final AExpressionTranslation expressionTranslation = 
+    			((CHandler) main.mCHandler).getExpressionTranslation();
+    	expressionTranslation.convertIfNecessary(loc, expr, resultType);
+		return expr;
+	}
+	
+	private CPrimitive translateAcslTypeToCType(final ACSLType t) {
+		final CPrimitives primitives;
+		switch (t.getTypeName()) {
+		case "char":
+			primitives = CPrimitives.CHAR;
+			break;
+		case "signed char":
+			primitives = CPrimitives.SCHAR;
+			break;
+		case "unsigned char":
+			primitives = CPrimitives.UCHAR;
+			break;
+		case "short":
+			primitives = CPrimitives.SHORT;
+			break;
+		case "signed short":
+			primitives = CPrimitives.SHORT;
+			break;
+		case "unsigned short":
+			primitives = CPrimitives.USHORT;
+			break;
+		case "int":
+			primitives = CPrimitives.INT;
+			break;
+		case "signed int":
+			primitives = CPrimitives.INT;
+			break;
+		case "unsigned int":
+			primitives = CPrimitives.UINT;
+			break;
+		case "long":
+			primitives = CPrimitives.LONG;
+			break;
+		case "signed long":
+			primitives = CPrimitives.LONG;
+			break;
+		case "unsigned long":
+			primitives = CPrimitives.ULONG;
+			break;
+		case "long long":
+			primitives = CPrimitives.LONGLONG;
+			break;
+		case "signed long long":
+			primitives = CPrimitives.LONGLONG;
+			break;
+		case "unsigned long long":
+			primitives = CPrimitives.ULONGLONG;
+			break;
+		case "float":
+			primitives = CPrimitives.FLOAT;
+			break;
+		case "double":
+			primitives = CPrimitives.DOUBLE;
+			break;
+		case "long double":
+			primitives = CPrimitives.LONGDOUBLE;
+			break;
+		default:
+			throw new UnsupportedOperationException("not yet implemented " + t);
+		}
+		return new CPrimitive(primitives);
+	}
 }

@@ -34,8 +34,8 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -184,8 +184,8 @@ public class CEnum extends CType {
 	@Override
 	public boolean isCompatibleWith(CType o) {
 		if (o instanceof CPrimitive &&
-				(((CPrimitive) o).getType() == PRIMITIVE.VOID 
-				|| ((CPrimitive) o).getGeneralType() == GENERALPRIMITIVE.INTTYPE)) {
+				(((CPrimitive) o).getType() == CPrimitives.VOID 
+				|| ((CPrimitive) o).getGeneralType() == CPrimitiveCategory.INTTYPE)) {
 			return true;
 		}
 		
@@ -222,7 +222,7 @@ public class CEnum extends CType {
 	 */
 	public static CType replaceEnumWithInt(CType cType) {
 		if (cType.getUnderlyingType() instanceof CEnum) {
-			return new CPrimitive(PRIMITIVE.INT);
+			return new CPrimitive(CPrimitives.INT);
 		} else {
 			return cType;
 		}

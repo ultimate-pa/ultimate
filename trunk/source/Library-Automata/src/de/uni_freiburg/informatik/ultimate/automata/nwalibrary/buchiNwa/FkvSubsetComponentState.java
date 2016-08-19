@@ -32,10 +32,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
+ * Represents a state of the subset component.
  * 
- * Represents a state of the subset component. 
  * @author Matthias Heizmann
- *
+ * 
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class FkvSubsetComponentState<LETTER, STATE> implements IFkvState<LETTER, STATE> {
 	
@@ -43,7 +45,7 @@ public class FkvSubsetComponentState<LETTER, STATE> implements IFkvState<LETTER,
 	private final HashRelation<StateWithRankInfo<STATE>, StateWithRankInfo<STATE>> mDown2Up;
 	
 
-	FkvSubsetComponentState(DeterminizedState<LETTER, STATE> detState) {
+	FkvSubsetComponentState(final DeterminizedState<LETTER, STATE> detState) {
 		mDeterminizedState = detState;
 		mDown2Up = new HashRelation<>();
 		for (final STATE down : detState.getDownStates()) {
@@ -64,7 +66,7 @@ public class FkvSubsetComponentState<LETTER, STATE> implements IFkvState<LETTER,
 
 	@Override
 	public Iterable<StateWithRankInfo<STATE>> getUpStates(
-			StateWithRankInfo<STATE> downState) {
+			final StateWithRankInfo<STATE> downState) {
 		return mDown2Up.getImage(downState);
 	}
 
@@ -79,7 +81,7 @@ public class FkvSubsetComponentState<LETTER, STATE> implements IFkvState<LETTER,
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}

@@ -1,0 +1,93 @@
+// Date: 02.08.2016
+// Author: schillic@informatik.uni-freiburg.de 
+
+assert(isTotal(nwa1));
+assert(! isTotal(nwa2));
+assert(isTotal(nwa3));
+assert(! isTotal(nwa4));
+
+NestedWordAutomaton nwa1 = (
+	callAlphabet = {},
+	internalAlphabet = {"a0" "a1" },
+	returnAlphabet = {},
+	states = {"q1" "q0" },
+	initialStates = {"q0" },
+	finalStates = {"q1" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("q0" "a0" "q1")
+		 ("q0" "a1" "q0")
+		 ("q1" "a0" "q1")
+		 ("q1" "a1" "q0")
+	},
+	returnTransitions = {
+	}
+);
+
+NestedWordAutomaton nwa2 = (
+	callAlphabet = {},
+	internalAlphabet = {"a0" "a1" },
+	returnAlphabet = {},
+	states = {"q1" "q0" },
+	initialStates = {"q0" },
+	finalStates = {"q1" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("q0" "a0" "q1")
+		 ("q0" "a1" "q0")
+		 ("q1" "a0" "q1")
+	},
+	returnTransitions = {
+	}
+);
+
+NestedWordAutomaton nwa3 = (
+	callAlphabet = {"c0"},
+	internalAlphabet = {"a0" "a1" },
+	returnAlphabet = {"r0"},
+	states = {"q1" "q0" },
+	initialStates = {"q0" },
+	finalStates = {"q1" },
+	callTransitions = {
+		("q0" "c0" "q1")
+		("q1" "c0" "q1")
+	},
+	internalTransitions = {
+		("q0" "a0" "q1")
+		("q0" "a1" "q0")
+		("q1" "a0" "q1")
+		("q1" "a1" "q0")
+	},
+	returnTransitions = {
+		("q0" "q0" "r0" "q1")
+		("q0" "q1" "r0" "q1")
+		("q1" "q0" "r0" "q1")
+		("q1" "q1" "r0" "q1")
+	}
+);
+
+NestedWordAutomaton nwa4 = (
+	callAlphabet = {"c0"},
+	internalAlphabet = {"a0" "a1" },
+	returnAlphabet = {"r0"},
+	states = {"q1" "q0" },
+	initialStates = {"q0" },
+	finalStates = {"q1" },
+	callTransitions = {
+		("q0" "c0" "q1")
+		("q1" "c0" "q1")
+	},
+	internalTransitions = {
+		("q0" "a0" "q1")
+		("q0" "a1" "q0")
+		("q1" "a0" "q1")
+		("q1" "a1" "q0")
+	},
+	returnTransitions = {
+		("q0" "q0" "r0" "q1")
+		("q0" "q1" "r0" "q1")
+		("q1" "q0" "r0" "q1")
+	}
+);

@@ -44,8 +44,8 @@ public class AlternatingAutomatonAST extends AutomatonAST{
 	private boolean isReversed;
 	
 	public AlternatingAutomatonAST(ILocation loc, String name){
-		super(loc);
-		mName = name;
+		super(loc, name);
+//		mName = name;
 	}
 	
 	public void setAlphabet(List<String> alphabet){

@@ -14,7 +14,7 @@ assert(!accepts(worstCaseDeterminizationk1, [s c<  "0" m "1" e  "0" m "0" e  "1"
 assert(accepts(worstCaseDeterminizationk1, [s c<  "0" m "0" e  "0" m "1" e  "1" m "0" e   "0" >r "1"]));
 NestedWordAutomaton determinized = determinize(worstCaseDeterminizationk1);
 // We assume that sink state was added.
-assert(numberOfStates(determinized) == 167);
+assert(numberOfStates(determinized) == 166);
 
 assert(accepts(determinized, [s c<  "0" m "0" e  "0" m "1" e  "1" m "0" e   "0" >r "1"]));
 assert(!accepts(complement(determinized), [s c<  "0" m "0" e  "0" m "1" e  "1" m "0" e   "0" >r "1"]));

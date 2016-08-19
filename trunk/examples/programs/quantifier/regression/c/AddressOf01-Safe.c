@@ -1,7 +1,7 @@
 //#Safe
 /* Dereferencing p succeeds because the "data storage" x is allocated
  * Date: September 2013
- * Author: heizmann@informtik.uni-freiburg.de
+ * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
 

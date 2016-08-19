@@ -39,9 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.InhibitorTra
  * A Marking of a PetriNet which is a set of Places.
  * 
  * @author heizmann@informatik.uni-freiburg.de
- * 
- * @param <S>
- * @param <C>
  */
 
 public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
@@ -49,33 +46,25 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	
 	private final Set<Place<S, C>> mPlaces;
 
-	public Marking(Set<Place<S, C>> places) {
+	public Marking(final Set<Place<S, C>> places) {
 		mPlaces = places;
 	}
 
-	/**
-	 * @param o
-	 * @return
-	 */
-	public boolean contains(Place<S, C> p) {
+	public boolean contains(final Place<S, C> p) {
 		return mPlaces.contains(p);
 	}
 
 	/**
-	 * @param c
-	 * @return
 	 * @see java.util.Set#containsAll(java.util.Collection)
 	 */
-	public boolean containsAll(Collection<?> c) {
+	public boolean containsAll(final Collection<?> c) {
 		return mPlaces.containsAll(c);
 	}
 	
 	/**
 	 * returns true, if the marking contains any of the specified places.
-	 * @param places
-	 * @return
 	 */
-	public boolean containsAny(Collection<Place<S, C>> places) {
+	public boolean containsAny(final Collection<Place<S, C>> places) {
 		for (final Place<S, C> place : places) {
 			if (mPlaces.contains(place)) {
 				return true;
@@ -85,7 +74,6 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	}
 
 	/**
-	 * @return
 	 * @see java.util.Set#isEmpty()
 	 */
 	public boolean isEmpty() {
@@ -93,7 +81,6 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	}
 
 	/**
-	 * @return
 	 * @see java.util.Set#iterator()
 	 */
 	@Override
@@ -102,7 +89,6 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	}
 
 	/**
-	 * @return
 	 * @see java.util.Set#size()
 	 */
 	public int size() {
@@ -116,7 +102,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -155,7 +141,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 * 
 	 * @return true, if the marking enables the specified transition.
 	 */
-	public boolean isTransitionEnabled(ITransition<S, C> transition) {
+	public boolean isTransitionEnabled(final ITransition<S, C> transition) {
 		if (transition instanceof InhibitorTransition<?, ?>) {
 			final InhibitorTransition<S, C> it = (InhibitorTransition<S, C>) transition;
 			if (containsAny(it.getInhibitors())) {
@@ -177,11 +163,8 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	/**
 	 * returns the marking to which the occurrence of the specified transition
 	 * leads.
-	 * 
-	 * @param transition
-	 * @return
 	 */
-	public Marking<S, C> fireTransition(ITransition<S, C> transition) {
+	public Marking<S, C> fireTransition(final ITransition<S, C> transition) {
 		final HashSet<Place<S, C>> resultSet = new HashSet<Place<S, C>>(mPlaces);
 		resultSet.removeAll(transition.getPredecessors());
 		resultSet.addAll(transition.getSuccessors());
@@ -190,10 +173,8 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 
 	/**
 	 * revokes the occurence of the specified transition if valid.
-	 * @param transition
-	 * @return true if the
 	 */
-	public boolean undoTransition(ITransition<S, C> transition) {
+	public boolean undoTransition(final ITransition<S, C> transition) {
 		if (!mPlaces.containsAll(transition.getSuccessors())) {
 			return false;
 		}
@@ -203,7 +184,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	}
 
 	@Deprecated
-	public Marking(Collection<Place<S, C>> places) {
+	public Marking(final Collection<Place<S, C>> places) {
 		mPlaces = new HashSet<Place<S, C>>(places);
 	}
 

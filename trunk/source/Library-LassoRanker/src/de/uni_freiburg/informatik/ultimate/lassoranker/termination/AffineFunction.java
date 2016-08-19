@@ -34,12 +34,13 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 
@@ -64,11 +65,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 public class AffineFunction implements Serializable {
 	private static final long serialVersionUID = -3142354398708751882L;
 	
-	protected final Map<RankVar, BigInteger> mcoefficients;
+	protected final Map<IProgramVar, BigInteger> mcoefficients;
 	protected BigInteger mconstant;
 	
 	public AffineFunction() {
-		mcoefficients = new LinkedHashMap<RankVar, BigInteger>();
+		mcoefficients = new LinkedHashMap<IProgramVar, BigInteger>();
 		mconstant = BigInteger.ZERO;
 	}
 	
@@ -89,14 +90,14 @@ public class AffineFunction implements Serializable {
 	/**
 	 * @param c set the constant to c
 	 */
-	public void setConstant(BigInteger c) {
+	public void setConstant(final BigInteger c) {
 		mconstant = c;
 	}
 	
 	/**
 	 * @return the set of RankVar's that occur in this function
 	 */
-	public Set<RankVar> getVariables() {
+	public Set<IProgramVar> getVariables() {
 		return mcoefficients.keySet();
 	}
 	
@@ -118,7 +119,7 @@ public class AffineFunction implements Serializable {
 	 * @param var a RankVar variable
 	 * @return the coefficient of to this variable
 	 */
-	public BigInteger get(RankVar var) {
+	public BigInteger get(final IProgramVar var) {
 		return mcoefficients.get(var);
 	}
 	
@@ -127,7 +128,7 @@ public class AffineFunction implements Serializable {
 	 * @param var a Boogie variable
 	 * @param coeff the coefficient of this variable
 	 */
-	public void put(RankVar var, BigInteger coeff) {
+	public void put(final IProgramVar var, final BigInteger coeff) {
 		if (coeff.equals(BigInteger.ZERO)) {
 			mcoefficients.remove(var);
 		} else {
@@ -139,7 +140,7 @@ public class AffineFunction implements Serializable {
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		boolean first = true;
-		for (final Map.Entry<RankVar, BigInteger> entry : mcoefficients.entrySet()) {
+		for (final Map.Entry<IProgramVar, BigInteger> entry : mcoefficients.entrySet()) {
 			if (!first) {
 				sb.append(entry.getValue().compareTo(BigInteger.ZERO) < 0
 						? " - " : " + ");
@@ -165,8 +166,8 @@ public class AffineFunction implements Serializable {
 		return sb.toString();
 	}
 	
-	private static Term constructSummand(Script script, Term t,
-			BigInteger coefficient) {
+	private static Term constructSummand(final Script script, final Term t,
+			final BigInteger coefficient) {
 		if (coefficient.equals(BigInteger.ONE)) {
 			return t; 
 		} else {
@@ -180,11 +181,11 @@ public class AffineFunction implements Serializable {
 	 * @return the generated term
 	 * @throws SMTLIBException
 	 */
-	public Term asTerm(Script script) throws SMTLIBException {
+	public Term asTerm(final Script script) throws SMTLIBException {
 		final ArrayList<Term> summands = new ArrayList<Term>();
-		for (final Map.Entry<RankVar, BigInteger> entry : mcoefficients.entrySet()) {
-			summands.add(constructSummand(script,
-					entry.getKey().getDefinition(), entry.getValue()));
+		for (final Map.Entry<IProgramVar, BigInteger> entry : mcoefficients.entrySet()) {
+			final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
+			summands.add(constructSummand(script, definition, entry.getValue()));
 		}
 		summands.add(script.numeral(mconstant));
 		return SmtUtils.sum(script, script.sort("Real"),
@@ -197,7 +198,7 @@ public class AffineFunction implements Serializable {
 	 * @param smt2boogie the variable translation
 	 * @return the generated expression
 	 */
-	public Expression asExpression(Script script, Term2Expression smt2boogie) {
+	public Expression asExpression(final Script script, final Term2Expression smt2boogie) {
 		final Term formula = asTerm(script);
 		return smt2boogie.translate(formula);
 	}
@@ -207,9 +208,9 @@ public class AffineFunction implements Serializable {
 	 * @param assignment the assignment to the variables
 	 * @return the value of the function
 	 */
-	public Rational evaluate(Map<RankVar, Rational> assignment) {
+	public Rational evaluate(final Map<IProgramVar, Rational> assignment) {
 		final Rational r = Rational.ZERO;
-		for (final Map.Entry<RankVar, BigInteger> entry
+		for (final Map.Entry<IProgramVar, BigInteger> entry
 				: mcoefficients.entrySet()) {
 			Rational val = assignment.get(entry.getKey());
 			if (val == null) {

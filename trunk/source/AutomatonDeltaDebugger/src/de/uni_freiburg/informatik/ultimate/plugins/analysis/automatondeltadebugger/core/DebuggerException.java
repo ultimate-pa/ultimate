@@ -56,12 +56,20 @@ public class DebuggerException extends Exception {
 		mMessage = message;
 	}
 	
+	/**
+	 * @param message message to print when throwing
+	 */
+	public DebuggerException(final String message) {
+		mClassOfThrower = null;
+		mMessage = message;
+	}
+	
 	@Override
 	public String toString() {
 		final StringBuilder b = new StringBuilder();
 		b.append(this.getClass().getSimpleName());
 		b.append("(");
-		b.append(mClassOfThrower);
+		b.append(mClassOfThrower == null ? "null" : mClassOfThrower.toString());
 		b.append(" : ");
 		b.append(mMessage);
 		b.append(")");

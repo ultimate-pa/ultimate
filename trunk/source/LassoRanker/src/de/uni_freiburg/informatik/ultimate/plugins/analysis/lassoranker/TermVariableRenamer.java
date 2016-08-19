@@ -29,25 +29,25 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
 /**
  * @author Matthias Heizmann
  */
 public class TermVariableRenamer {
-	private final Script mScript;
+	private final ManagedScript mScript;
 	
-	public TermVariableRenamer(Script script) {
+	public TermVariableRenamer(final ManagedScript script) {
 		mScript = script;
 	}
 	
@@ -62,21 +62,17 @@ public class TermVariableRenamer {
 	 * </ul>
 	 * Otherwise x_n is not replaced.
 	 */
-	public TransFormula renameVars(TransFormula transFormula, String prefix) {
-		Term formula = transFormula.getFormula();
-		final Map<BoogieVar, TermVariable> inVars = transFormula.getInVars();
-		final Map<BoogieVar, TermVariable> outVars = transFormula.getOutVars();
+	public TransFormula renameVars(final TransFormula tf, final String prefix) {
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, 
+				false, tf.getBranchEncoders(), false);
+		final Map<IProgramVar, TermVariable> inVars = tf.getInVars();
+		final Map<IProgramVar, TermVariable> outVars = tf.getOutVars();
 		
-		final Map<BoogieVar, TermVariable> newInVars = 
-				new LinkedHashMap<BoogieVar, TermVariable>();
-		final Map<BoogieVar, TermVariable> newOutVars = 
-				new LinkedHashMap<BoogieVar, TermVariable>();
+		final Collection<IProgramVar> hasInOnlyVar = new ArrayList<IProgramVar>();
+		final Collection<IProgramVar> hasOutOnlyVar = new ArrayList<IProgramVar>();
+		final Collection<IProgramVar> commonInOutVar = new ArrayList<IProgramVar>();
 		
-		final Collection<BoogieVar> hasInOnlyVar = new ArrayList<BoogieVar>();
-		final Collection<BoogieVar> hasOutOnlyVar = new ArrayList<BoogieVar>();
-		final Collection<BoogieVar> commonInOutVar = new ArrayList<BoogieVar>();
-		
-		for (final BoogieVar var : inVars.keySet()) {
+		for (final IProgramVar var : inVars.keySet()) {
 			final TermVariable inVar = inVars.get(var);
 			final TermVariable outVar = outVars.get(var);
 			if (inVar == outVar) {
@@ -86,21 +82,23 @@ public class TermVariableRenamer {
 				hasInOnlyVar.add(var);
 			}
 		}
-		for (final BoogieVar var : outVars.keySet()) {
+		for (final IProgramVar var : outVars.keySet()) {
 			final TermVariable outVar = outVars.get(var);
 			final TermVariable inVar = inVars.get(var);
 			if (inVar != outVar) {
 				hasOutOnlyVar.add(var);
 			}
 		}
-		formula = renameVars(hasInOnlyVar, formula, inVars, newInVars, prefix+"In");
-		formula = renameVars(commonInOutVar, formula, inVars, newInVars, prefix+"InOut");
-		formula = renameVars(commonInOutVar, formula, outVars, newOutVars, prefix+"InOut");
-		formula = renameVars(hasOutOnlyVar, formula, outVars, newOutVars, prefix+"Out");
-		formula = new FormulaUnLet().unlet(formula);
-		return new TransFormula(formula, newInVars, newOutVars,
-				transFormula.getAuxVars(), transFormula.getBranchEncoders(), 
-				transFormula.isInfeasible(), transFormula.getClosedFormula());
+		Term formula = tf.getFormula();
+		formula = renameVars(hasInOnlyVar, formula, inVars, tfb::addInVar, prefix+"In");
+		formula = renameVars(commonInOutVar, formula, inVars, tfb::addInVar, prefix+"InOut");
+		formula = renameVars(commonInOutVar, formula, outVars, tfb::addOutVar, prefix+"InOut");
+		formula = renameVars(hasOutOnlyVar, formula, outVars, tfb::addOutVar, prefix+"Out");
+		
+		tfb.setFormula(formula);
+		tfb.setInfeasibility(tf.isInfeasible());
+		tfb.addAuxVarsButRenameToFreshCopies(tf.getAuxVars(), mScript);
+		return tfb.finishConstruction(mScript);
 	}
 	
 	/**
@@ -109,43 +107,36 @@ public class TermVariableRenamer {
 	 * <ul>
 	 * <li> Create a TermVariable tv_new named prefix+x
 	 * <li> replace tv_old by tv_new in formula
-	 * <li> add x->tv_new to newVariableMapping
+	 * <li> add x->tv_new to the varAdder functional interface
 	 * <li> remove tv_old from allVars
 	 * <li> add tv_new to allVars
 	 * </ul>
 	 */
-	private Term renameVars(Collection<BoogieVar> boogieVars,
+	private Term renameVars(final Collection<IProgramVar> boogieVars,
 						Term formula,
-						Map<BoogieVar, TermVariable> variableMapping, 
-						Map<BoogieVar, TermVariable> newVariableMapping, 
-						String prefix) {
-		final TermVariable[] vars = new TermVariable[boogieVars.size()];
-		final TermVariable[] newVars= new TermVariable[boogieVars.size()];
-		int i=0;
-		for (final BoogieVar var : boogieVars) {
-			vars[i] = variableMapping.get(var);
-			newVars[i] = getNewTermVariable(var, vars[i], prefix);
-			newVariableMapping.put(var,newVars[i]);
-			i++;
+						final Map<IProgramVar, TermVariable> variableMapping, 
+						final IVarAdder varAdder, 
+						final String prefix) {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+
+		for (final IProgramVar var : boogieVars) {
+			final TermVariable oldVar = variableMapping.get(var);
+			final TermVariable newVar = getNewTermVariable(var, oldVar, prefix);
+			varAdder.addVar(var, newVar);
 		}
-		try {
-			formula = mScript.let(vars, newVars, formula);
-		} catch (final SMTLIBException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		formula = (new Substitution(mScript, substitutionMapping)).transform(formula);
 		return formula;
 	}
 	
 	
-	private TermVariable getNewTermVariable(BoogieVar var, TermVariable tv, String prefix) {
-		TermVariable result = null;
-		try {
-			result =  mScript.variable(prefix +"_" +var.getIdentifier(), tv.getSort());
-		} catch (final SMTLIBException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	private TermVariable getNewTermVariable(final IProgramVar var, final TermVariable tv, final String prefix) {
+		// TODO: if this fails because old var and non-oldvar get same variable use getGloballyUniqueId()
+		final TermVariable result = mScript.variable(prefix +"_" +var.getIdentifier(), tv.getSort());
 		return result;
+	}
+	
+	@FunctionalInterface
+	public interface IVarAdder {
+		public TermVariable addVar(final IProgramVar key, final TermVariable value);
 	}
 }

@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
@@ -78,14 +78,14 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	private LTLPropertyCheck mCheck;
 	private BoogieSymbolTable mSymbolTable;
 
-	public LTL2autObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
+	public LTL2autObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		mServices = services;
 		mStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
 		mNWAContainer = null;
 		mInputFile = null;
 		mSymbolTable = null;
@@ -122,7 +122,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		final AstNode node = getNeverClaim(ltl2baProperty);
 		final CodeBlockFactory cbf =
 				(CodeBlockFactory) mStorage.getStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage);
-		final NestedWordAutomaton<CodeBlock, String> nwa = createNWAFromNeverClaim(node, irs, mSymbolTable, cbf);
+		final INestedWordAutomaton<CodeBlock, String> nwa = createNWAFromNeverClaim(node, irs, mSymbolTable, cbf);
 		mLogger.info("LTL Property is: " + prettyPrintProperty(irs, ltlProperty));
 
 		mNWAContainer = new NWAContainer(nwa);
@@ -209,7 +209,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private AstNode getNeverClaim(String property) throws Throwable {
+	private AstNode getNeverClaim(final String property) throws Throwable {
 		try {
 			mLogger.debug("Parsing LTL property...");
 			return new LTLXBAExecutor(mServices, mStorage).ltl2Ast(property);
@@ -219,7 +219,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private Map<String, CheckableExpression> getIRS(String[] entries) throws Throwable {
+	private Map<String, CheckableExpression> getIRS(final String[] entries) throws Throwable {
 		// TODO: finish
 		// mLogger.debug("Parsing mapping from AP to BoogieCode...");
 		// Map<String, CheckableExpression> aps = new HashMap<>();
@@ -249,8 +249,8 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		// return aps;
 	}
 
-	private NestedWordAutomaton<CodeBlock, String> createNWAFromNeverClaim(AstNode neverclaim,
-			Map<String, CheckableExpression> irs, BoogieSymbolTable symbolTable, CodeBlockFactory cbf)
+	private INestedWordAutomaton<CodeBlock, String> createNWAFromNeverClaim(final AstNode neverclaim,
+			final Map<String, CheckableExpression> irs, final BoogieSymbolTable symbolTable, final CodeBlockFactory cbf)
 			throws Exception {
 		if (neverclaim == null) {
 			throw new IllegalArgumentException("There is no never claim");
@@ -266,7 +266,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 					"The CodeBlockFactory is missing. Did you run the RCFGBuilder before this plugin?");
 		}
 
-		NestedWordAutomaton<CodeBlock, String> nwa;
+		INestedWordAutomaton<CodeBlock, String> nwa;
 		mLogger.debug("Transforming NeverClaim to NestedWordAutomaton...");
 		try {
 			// Build NWA from LTL formula in NeverClaim representation
@@ -287,7 +287,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public boolean process(IElement root) throws Throwable {
+	public boolean process(final IElement root) throws Throwable {
 		if (root instanceof Unit) {
 			mInputFile = ((Unit) root).getLocation().getFileName();
 			mCheck = LTLPropertyCheck.getAnnotation(root);

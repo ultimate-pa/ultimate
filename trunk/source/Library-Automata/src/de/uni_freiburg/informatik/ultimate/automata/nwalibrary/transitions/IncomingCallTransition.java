@@ -28,21 +28,24 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions;
 
 import java.text.MessageFormat;
 
-
 /**
  * Call Transition of a successor state.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class IncomingCallTransition<LETTER,STATE> implements Transitionlet<LETTER,STATE> {
+public class IncomingCallTransition<LETTER,STATE> implements ITransitionlet<LETTER,STATE> {
 	
 	private final LETTER mLetter; 
 	private final STATE mPred;
 	
-	public IncomingCallTransition(STATE pred, LETTER letter) {
+	/**
+	 * @param pred predecessor state
+	 * @param letter letter
+	 */
+	public IncomingCallTransition(final STATE pred, final LETTER letter) {
 		mPred = pred;
 		mLetter = letter;
 	}
@@ -60,5 +63,4 @@ public class IncomingCallTransition<LETTER,STATE> implements Transitionlet<LETTE
 	public String toString() {
 		return MessageFormat.format("( {0} , {1} , _ )",getPred(), getLetter());
 	}
-	
 }

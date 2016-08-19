@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 
 /**
  * Provides a method that checks compatibility of interpolation related preferences.
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class InterpolationPreferenceChecker {
 
-	public static void check(final String pluginName, final INTERPOLATION interpolation,
+	public static void check(final String pluginName, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services) {
 		final SolverMode currentSolverMode = services.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);

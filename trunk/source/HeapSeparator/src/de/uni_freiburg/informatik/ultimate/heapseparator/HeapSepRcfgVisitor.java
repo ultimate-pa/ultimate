@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -15,8 +14,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -27,31 +28,31 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	/**
 	 *  arrayId before separation --> pointerId --> arrayId after separation
 	 */
-	HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>> moldArrayToPointerToNewArray;
+	HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> moldArrayToPointerToNewArray;
 	/**
 	 *  arrayId before separation --> arrayId after separation--> Set of pointerIds
 	 */
-	HashMap<BoogieVar, HashMap<BoogieVar, HashSet<BoogieVar>>> marrayToPartitions;
-	Script mscript;
+	HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> marrayToPartitions;
+	ManagedScript mScript;
 
-	public HeapSepRcfgVisitor(ILogger logger, HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>> map, Script script) {
+	public HeapSepRcfgVisitor(final ILogger logger, final HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> map, final ManagedScript script) {
 		super(logger);
 		moldArrayToPointerToNewArray = map;
 		marrayToPartitions = reverseInnerMap(moldArrayToPointerToNewArray);
-		mscript = script;
+		mScript = script;
 	}
 
 
-	private HashMap<BoogieVar, HashMap<BoogieVar, HashSet<BoogieVar>>> reverseInnerMap(
-			HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>> map) {
-		final HashMap<BoogieVar, HashMap<BoogieVar, HashSet<BoogieVar>>> result = new HashMap<BoogieVar, HashMap<BoogieVar,HashSet<BoogieVar>>>();
+	private HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> reverseInnerMap(
+			final HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> map) {
+		final HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> result = new HashMap<IProgramVar, HashMap<IProgramVar,HashSet<IProgramVar>>>();
 
-		for (final Entry<BoogieVar, HashMap<BoogieVar, BoogieVar>> en1 : map.entrySet()) {
+		for (final Entry<IProgramVar, HashMap<IProgramVar, IProgramVar>> en1 : map.entrySet()) {
 			result.put(en1.getKey(), new HashMap<>());
-			for (final Entry<BoogieVar, BoogieVar> en2 : en1.getValue().entrySet()) {
-				HashSet<BoogieVar> pointers = result.get(en1.getKey()).get(en2.getValue());
+			for (final Entry<IProgramVar, IProgramVar> en2 : en1.getValue().entrySet()) {
+				HashSet<IProgramVar> pointers = result.get(en1.getKey()).get(en2.getValue());
 				if (pointers == null) {
-					pointers = new HashSet<BoogieVar>();
+					pointers = new HashSet<IProgramVar>();
 					result.get(en1.getKey()).put(en2.getValue(), pointers);
 				}
 				pointers.add(en2.getKey());
@@ -80,7 +81,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	}
 
 	@Override
-	public void level(RCFGEdge edge) {
+	public void level(final RCFGEdge edge) {
 		if (!(edge instanceof CodeBlock)) {
 			return;
 		}
@@ -94,7 +95,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	}
 
 	
-	private TransFormula splitArraysInTransFormula(TransFormula tf) {
+	private TransFormula splitArraysInTransFormula(final TransFormula tf) {
 
 	
 		
@@ -118,33 +119,28 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		//   
 		
 
-		final ArraySplitter as = new ArraySplitter(mscript, moldArrayToPointerToNewArray, marrayToPartitions, tf.getInVars(), tf.getOutVars());
+		final ArraySplitter as = new ArraySplitter(mScript.getScript(), moldArrayToPointerToNewArray, marrayToPartitions, tf.getInVars(), tf.getOutVars());
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(
+				as.getUpdatedInVars(), as.getUpdatedOutVars(), 
+				false, tf.getBranchEncoders(), false);
 		final Term newFormula = as.transform(tf.getFormula());
-		final Map<BoogieVar, TermVariable> newInVars = as.getUpdatedInVars();
-		final Map<BoogieVar, TermVariable> newOutVars = as.getUpdatedOutVars();
-	
-		
-		final Map<TermVariable, Term> newAuxVars = tf.getAuxVars();
-		final Set<TermVariable> newBranchEncoders = tf.getBranchEncoders();
-		final Infeasibility newInfeasibility = tf.isInfeasible();
-		final Term newClosedFormula = tf.getClosedFormula();
-
-		final TransFormula result = new TransFormula(newFormula, newInVars, newOutVars, newAuxVars, newBranchEncoders, newInfeasibility, newClosedFormula);
-		
-		return result;
+		tfb.setFormula(newFormula);
+		tfb.setInfeasibility(tf.isInfeasible());
+		tfb.addAuxVarsButRenameToFreshCopies(tf.getAuxVars(), mScript);
+		return tfb.finishConstruction(mScript);
 	}
 
-	public static TermVariable getSplitTermVariable(String arrayName, int splitIndex, Sort sort, Script script) {
+	public static TermVariable getSplitTermVariable(final String arrayName, final int splitIndex, final Sort sort, final Script script) {
 		return script.variable(String.format("{}_split_{}", arrayName, splitIndex), sort);
 	}
 	
-	public static BoogieVar getBoogieVarFromTermVar(TermVariable tv, Map<BoogieVar, TermVariable> map1, Map<BoogieVar, TermVariable> map2) {
-		for (final Entry<BoogieVar, TermVariable> en : map1.entrySet()) {
+	public static IProgramVar getBoogieVarFromTermVar(final TermVariable tv, final Map<IProgramVar, TermVariable> map1, final Map<IProgramVar, TermVariable> map2) {
+		for (final Entry<IProgramVar, TermVariable> en : map1.entrySet()) {
 			if (en.getValue().equals(tv)) {
 				return en.getKey();
 			}
 		}
-		for (final Entry<BoogieVar, TermVariable> en : map2.entrySet()) {
+		for (final Entry<IProgramVar, TermVariable> en : map2.entrySet()) {
 			if (en.getValue().equals(tv)) {
 				return en.getKey();
 			}
@@ -164,13 +160,13 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	 */
 	public static class ArraySplitter extends TermTransformer {
 		Script mscript;
-		Map<BoogieVar, TermVariable> minVars;
-		Map<BoogieVar, TermVariable> moutVars;
+		Map<IProgramVar, TermVariable> minVars;
+		Map<IProgramVar, TermVariable> moutVars;
 		
-		Set<BoogieVar> minVarsToRemove = new HashSet<BoogieVar>();
-		Map<BoogieVar, TermVariable> minVarsToAdd = new HashMap<>();
-		Set<BoogieVar> moutVarsToRemove = new HashSet<BoogieVar>();
-		Map<BoogieVar, TermVariable> moutVarsToAdd = new HashMap<>();
+		Set<IProgramVar> minVarsToRemove = new HashSet<IProgramVar>();
+		Map<IProgramVar, TermVariable> minVarsToAdd = new HashMap<>();
+		Set<IProgramVar> moutVarsToRemove = new HashSet<IProgramVar>();
+		Map<IProgramVar, TermVariable> moutVarsToAdd = new HashMap<>();
 		
 		boolean mequalsMode = false;
 //		BoogieVar maOld;
@@ -181,17 +177,17 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		/**
 		 * arrayId (old array) X pointerId -> arrayId (split version)
 		 */
-		HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>> marrayToPointerToPartition;
+		HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> marrayToPointerToPartition;
 		/**
 		 * arrayId (old array) X arrayId (split version) -> Set<pointerId>
 		 */
-		HashMap<BoogieVar, HashMap<BoogieVar, HashSet<BoogieVar>>> marrayToPartitions;
+		HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> marrayToPartitions;
 
 		
-		public ArraySplitter(Script script, 
-				HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>> arrayToPointerToPartition,
-				HashMap<BoogieVar, HashMap<BoogieVar, HashSet<BoogieVar>>> arrayToPartitions,
-				Map<BoogieVar, TermVariable> inVars, Map<BoogieVar, TermVariable> outVars) {
+		public ArraySplitter(final Script script, 
+				final HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> arrayToPointerToPartition,
+				final HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> arrayToPartitions,
+				final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 			marrayToPointerToPartition = arrayToPointerToPartition;
 			marrayToPartitions = arrayToPartitions;
 			mscript = script;
@@ -200,11 +196,11 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		}
 
 		
-		public ArraySplitter(Script script, 
-				HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>> arrayToPointerToPartition,
-				HashMap<BoogieVar, HashMap<BoogieVar, HashSet<BoogieVar>>> arrayToPartitions,
-				Map<BoogieVar, TermVariable> inVars, Map<BoogieVar, TermVariable> outVars, 
-				TermVariable aOld, TermVariable aNew
+		public ArraySplitter(final Script script, 
+				final HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> arrayToPointerToPartition,
+				final HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> arrayToPartitions,
+				final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars, 
+				final TermVariable aOld, final TermVariable aNew
 				) {
 			this(script, arrayToPointerToPartition, arrayToPartitions, inVars, outVars);
 			mequalsMode = true;
@@ -213,7 +209,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		}
 
 		@Override
-		protected void convert(Term term) {
+		protected void convert(final Term term) {
 			if (mequalsMode) {
 				//TODO: not sure how robust this is..
 				if (term.equals(maOld)) {
@@ -238,13 +234,13 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 							&& appTerm.getParameters()[1] instanceof TermVariable) {
 						assert appTerm.getParameters()[0].getSort().isArraySort();
 
-						final BoogieVar oldArrayVar = getBoogieVarFromTermVar(((TermVariable) appTerm.getParameters()[0]), minVars, moutVars);
+						final IProgramVar oldArrayVar = getBoogieVarFromTermVar(((TermVariable) appTerm.getParameters()[0]), minVars, moutVars);
 
-						final HashMap<BoogieVar, BoogieVar> im = marrayToPointerToPartition.get(oldArrayVar);
+						final HashMap<IProgramVar, IProgramVar> im = marrayToPointerToPartition.get(oldArrayVar);
 						if (im != null) {
-							final BoogieVar ptrName = getBoogieVarFromTermVar(((TermVariable) appTerm.getParameters()[1]), minVars, moutVars);
+							final IProgramVar ptrName = getBoogieVarFromTermVar(((TermVariable) appTerm.getParameters()[1]), minVars, moutVars);
 
-							final BoogieVar newArrayVar = im.get(ptrName);
+							final IProgramVar newArrayVar = im.get(ptrName);
 
 							final TermVariable newVar = newArrayVar.getTermVariable(); //FIXME probably replace getTermVariable, here
 
@@ -277,12 +273,12 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 						final ArrayFinder af0 = new ArrayFinder();
 						af0.transform(p0);
 						final TermVariable a0Tv = af0.getResult();
-						final BoogieVar a0Id = getBoogieVarFromTermVar(a0Tv, minVars, moutVars);
+						final IProgramVar a0Id = getBoogieVarFromTermVar(a0Tv, minVars, moutVars);
 
 						final ArrayFinder af1 = new ArrayFinder();
 						af1.transform(p1);
 						final TermVariable a1Tv = af1.getResult();
-						final BoogieVar a1Id = getBoogieVarFromTermVar(a1Tv, minVars, moutVars);
+						final IProgramVar a1Id = getBoogieVarFromTermVar(a1Tv, minVars, moutVars);
 
 						/*
 						 * sanity check:
@@ -298,15 +294,15 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 						 *  equate e1[a_p] = e2[b_q]
 						 *  (where e1, e2 may be stores or just array identifiers (something else?).
 						 */
-						for (final Entry<BoogieVar, HashSet<BoogieVar>> a0SplitArrayToPointers : marrayToPartitions.get(a0Id).entrySet()) {
-							for (final Entry<BoogieVar, HashSet<BoogieVar>> a1SplitArrayToPointers : marrayToPartitions.get(a1Id).entrySet()) {
+						for (final Entry<IProgramVar, HashSet<IProgramVar>> a0SplitArrayToPointers : marrayToPartitions.get(a0Id).entrySet()) {
+							for (final Entry<IProgramVar, HashSet<IProgramVar>> a1SplitArrayToPointers : marrayToPartitions.get(a1Id).entrySet()) {
 
-								final HashSet<BoogieVar> intersection = new HashSet<BoogieVar>(a0SplitArrayToPointers.getValue());
+								final HashSet<IProgramVar> intersection = new HashSet<IProgramVar>(a0SplitArrayToPointers.getValue());
 								intersection.retainAll(a1SplitArrayToPointers.getValue());
 
 								if (!intersection.isEmpty()) {
-									final BoogieVar a0New = a0SplitArrayToPointers.getKey();
-									final BoogieVar a1New = a1SplitArrayToPointers.getKey();
+									final IProgramVar a0New = a0SplitArrayToPointers.getKey();
+									final IProgramVar a1New = a1SplitArrayToPointers.getKey();
 									final TermVariable a0NewTv = a0New.getTermVariable(); //TODO replace getTermVariable through a unique version
 									final TermVariable a1NewTv = a1New.getTermVariable(); //TODO replace getTermVariable through a unique version
 									equationConjunction.add(
@@ -349,23 +345,23 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 			super.convert(term);
 		}
 
-		public HashMap<BoogieVar, TermVariable> getUpdatedInVars() {
-			final HashMap<BoogieVar, TermVariable> result = new HashMap<BoogieVar, TermVariable>(minVars);
-			for (final BoogieVar bv : minVarsToRemove) {
+		public HashMap<IProgramVar, TermVariable> getUpdatedInVars() {
+			final HashMap<IProgramVar, TermVariable> result = new HashMap<IProgramVar, TermVariable>(minVars);
+			for (final IProgramVar bv : minVarsToRemove) {
 				result.remove(bv);
 			}
-			for (final Entry<BoogieVar, TermVariable> en : minVarsToAdd.entrySet()) {
+			for (final Entry<IProgramVar, TermVariable> en : minVarsToAdd.entrySet()) {
 				result.put(en.getKey(), en.getValue());
 			}
 			return result;
 		}
 		
-		public HashMap<BoogieVar, TermVariable> getUpdatedOutVars() {
-			final HashMap<BoogieVar, TermVariable> result = new HashMap<BoogieVar, TermVariable>(moutVars);
-			for (final BoogieVar bv : moutVarsToRemove) {
+		public HashMap<IProgramVar, TermVariable> getUpdatedOutVars() {
+			final HashMap<IProgramVar, TermVariable> result = new HashMap<IProgramVar, TermVariable>(moutVars);
+			for (final IProgramVar bv : moutVarsToRemove) {
 				result.remove(bv);
 			}
-			for (final Entry<BoogieVar, TermVariable> en : moutVarsToAdd.entrySet()) {
+			for (final Entry<IProgramVar, TermVariable> en : moutVarsToAdd.entrySet()) {
 				result.put(en.getKey(), en.getValue());
 			}
 			return result;
@@ -378,7 +374,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		TermVariable marrayId;
 		
 		@Override
-		protected void convert(Term term) {
+		protected void convert(final Term term) {
 			if (term.getSort().isArraySort() && term instanceof TermVariable) {
 				marrayId = (TermVariable) term;
 				setResult(term);

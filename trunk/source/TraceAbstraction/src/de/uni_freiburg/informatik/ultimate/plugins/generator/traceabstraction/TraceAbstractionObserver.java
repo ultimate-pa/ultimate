@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType.Type;
@@ -56,14 +56,14 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private ModelType mCurrentGraphType;
 
 
-	public TraceAbstractionObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
+	public TraceAbstractionObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		mServices = services;
 		mStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
-	public boolean process(IElement root) {
+	public boolean process(final IElement root) {
 		if (root instanceof RootNode) {
 			if (isOriginalRcfg(mCurrentGraphType)) {
 				if (mRcfgRootNode == null) {
@@ -90,11 +90,11 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	private boolean isBlockEncodingRcfg(ModelType currentGraphType) {
+	private boolean isBlockEncodingRcfg(final ModelType currentGraphType) {
 		return currentGraphType.getCreator().equals("de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding");
 	}
 	
-	private boolean isOriginalRcfg(ModelType currentGraphType) {
+	private boolean isOriginalRcfg(final ModelType currentGraphType) {
 		return currentGraphType.getCreator().equals("de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder");
 	}
 
@@ -111,7 +111,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			if (rcfgRootNode == null) {
 				throw new UnsupportedOperationException("TraceAbstraction needs an RCFG");
 			} else {
-				NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton;
+				INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton;
 				if (mWitnessNode == null) {
 					witnessAutomaton = null;
 				} else {
@@ -132,7 +132,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
 		mCurrentGraphType = modelType;
 		if (currentModelIndex == numberOfModels -1) {
 			mLastModel = true;

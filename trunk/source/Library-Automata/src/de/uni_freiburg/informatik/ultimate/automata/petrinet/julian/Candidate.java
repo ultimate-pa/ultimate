@@ -43,38 +43,36 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
  * </ul>
  **/
 public class Candidate<S, C> {
-	final public Transition<S, C> mt;
-	final public ArrayList<Condition<S, C>> mChosen;
-	final public ArrayList<Place<S, C>> mPlaces;
+	public final Transition<S, C> mT;
+	public final ArrayList<Condition<S, C>> mChosen;
+	public final ArrayList<Place<S, C>> mPlaces;
 	
 	public Candidate(
-			Map.Entry<Transition<S, C>, Map<Place<S, C>, Condition<S, C>>> candidate) {
-		this.mt = candidate.getKey();
+			final Map.Entry<Transition<S, C>, Map<Place<S, C>, Condition<S, C>>> candidate) {
+		this.mT = candidate.getKey();
 		this.mChosen = new ArrayList<Condition<S, C>>(candidate.getValue()
 				.values());
 		this.mPlaces = new ArrayList<Place<S, C>>(candidate.getValue().keySet());
 	}
 
-	public Candidate(Transition<S, C> t2) {
-		this.mt = t2;
-		this.mChosen = new ArrayList<Condition<S, C>>(mt.getPredecessors().size());
-		this.mPlaces = new ArrayList<Place<S, C>>(mt.getPredecessors());
+	public Candidate(final Transition<S, C> t2) {
+		this.mT = t2;
+		this.mChosen = new ArrayList<Condition<S, C>>(mT.getPredecessors().size());
+		this.mPlaces = new ArrayList<Place<S, C>>(mT.getPredecessors());
 	}
 
-
-	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((mChosen == null) ? 0 : mChosen.hashCode());
 		result = prime * result + ((mPlaces == null) ? 0 : mPlaces.hashCode());
-		result = prime * result + ((mt == null) ? 0 : mt.hashCode());
+		result = prime * result + ((mT == null) ? 0 : mT.hashCode());
 		return result;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -99,16 +97,13 @@ public class Candidate<S, C> {
 		} else if (!mPlaces.equals(other.mPlaces)) {
 			return false;
 		}
-		if (mt == null) {
-			if (other.mt != null) {
+		if (mT == null) {
+			if (other.mT != null) {
 				return false;
 			}
-		} else if (!mt.equals(other.mt)) {
+		} else if (!mT.equals(other.mT)) {
 			return false;
 		}
 		return true;
 	}	
-	
-	
-	
 }

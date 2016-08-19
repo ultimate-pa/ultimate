@@ -31,7 +31,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
@@ -108,10 +108,10 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 *             an empty call and return alphabet.
 	 */
 	public FairDirectGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
-			final ILogger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
+			final ILogger logger, final INestedWordAutomaton<LETTER, STATE> buechi,
 			final StateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
 		super(services, progressTimer, logger, buechi, stateFactory);
-		final INestedWordAutomatonOldApi<LETTER, STATE> preparedBuechi = getAutomaton();
+		final INestedWordAutomaton<LETTER, STATE> preparedBuechi = getAutomaton();
 		verifyAutomatonValidity(preparedBuechi);
 		
 		mIsCurrentlyDirectGameGraph = false;
@@ -126,7 +126,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * buchiReduction.fair.FairGameGraph#generateBuchiAutomatonFromGraph()
 	 */
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph()
+	public INestedWordAutomaton<LETTER, STATE> generateAutomatonFromGraph()
 			throws AutomataOperationCanceledException {
 		if (mIsCurrentlyDirectGameGraph) {
 			// For the direct simulation we won't generate an expensive unused
@@ -176,7 +176,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * .automata.nwalibrary.operations.buchiReduction.vertices.Vertex)
 	 */
 	@Override
-	public int getPriority(Vertex<LETTER, STATE> vertex) {
+	public int getPriority(final Vertex<LETTER, STATE> vertex) {
 		if (mIsCurrentlyDirectGameGraph) {
 			// In a direct game graph every vertex has priority 0
 			return 0;
@@ -197,7 +197,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * @return True if vertex, interpreted as (q0, q1), represents a simulation
 	 *         where q1 direct simulates q0, false if not.
 	 */
-	public boolean isDirectSimulating(SpoilerVertex<LETTER, STATE> vertex) {
+	public boolean isDirectSimulating(final SpoilerVertex<LETTER, STATE> vertex) {
 		return mDirectSimulations.contains(vertex) || vertex.getQ0().equals(vertex.getQ1());
 	}
 

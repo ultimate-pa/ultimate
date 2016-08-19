@@ -128,17 +128,17 @@ public class ModelExtractionUtils {
 	 * 			SMT script whose corresponding solver is in a state where
 	 * 			checkSat() was called and the result was SAT.
 	 * 			This method will not modify the assertion stack of the solver.
-	 * @param vars
+	 * @param coefficients
 	 *            a collection of variables
 	 * @return a valuation that assigns a Rational to every variable
 	 * @throws TermException
 	 *             if valuation generation or conversion fails
 	 */
-	public static Map<Term, Rational> getValuation(Script script, Collection<Term> vars) throws TermException {
+	public static Map<Term, Rational> getValuation(Script script, Collection<Term> coefficients) throws TermException {
 		// assert mscript.checkSat() == LBool.SAT;
 		final Map<Term, Rational> result = new LinkedHashMap<Term, Rational>();
-		if (!vars.isEmpty()) {
-			final Map<Term, Term> val = script.getValue(vars.toArray(new Term[vars.size()]));
+		if (!coefficients.isEmpty()) {
+			final Map<Term, Term> val = script.getValue(coefficients.toArray(new Term[coefficients.size()]));
 			for (final Map.Entry<Term, Term> entry : val.entrySet()) {
 				result.put(entry.getKey(), const2Rational(entry.getValue()));
 			}
@@ -302,7 +302,7 @@ public class ModelExtractionUtils {
 	 * 			SMT script whose corresponding solver is in a state where
 	 * 			checkSat() was called and the result was SAT.
 	 * 			This method will not modify the assertion stack of the solver.
-	 * @param variables
+	 * @param coefficients
 	 *            the list of variables that can be set to 0
 	 * @param logger
 	 * 			ILogger to which we write information about the simplification.
@@ -312,13 +312,13 @@ public class ModelExtractionUtils {
 	 *             if model extraction fails
 	 */
 	public static Map<Term, Rational> getSimplifiedAssignment_TwoMode(Script script, 
-			Collection<Term> variables, ILogger logger, IUltimateServiceProvider services) throws TermException {
+			Collection<Term> coefficients, ILogger logger, IUltimateServiceProvider services) throws TermException {
 		final Term zero = script.numeral("0");
 
 		final Set<Term> alreadyZero = new HashSet<Term>(); // variables fixed to 0
-		final Set<Term> zeroCandidates = new HashSet<Term>(variables); // variables that might be fixed to 0
+		final Set<Term> zeroCandidates = new HashSet<Term>(coefficients); // variables that might be fixed to 0
 		final Set<Term> neverZero = new HashSet<Term>(); // variables that will never become 0
-		final Map<Term, Rational> finalValuation = new HashMap<Term, Rational>(getValuation(script, variables));
+		final Map<Term, Rational> finalValuation = new HashMap<Term, Rational>(getValuation(script, coefficients));
 		
 		{
 			final List<Term> notYetAssertedZeros = findNewZeros(finalValuation, alreadyZero, zeroCandidates);
@@ -336,7 +336,7 @@ public class ModelExtractionUtils {
 		while (!zeroCandidates.isEmpty()) {
 			if (!services.getProgressMonitorService().continueProcessing()) {
 				throw new ToolchainCanceledException(ModelExtractionUtils.class,
-						"simplifying assignment for " + variables.size() + "variables");
+						"simplifying assignment for " + coefficients.size() + "variables");
 			}
 			
 			final int subsetSize = computeSubsetSize(zeroCandidates.size(), subsetSizeBonusFactor);

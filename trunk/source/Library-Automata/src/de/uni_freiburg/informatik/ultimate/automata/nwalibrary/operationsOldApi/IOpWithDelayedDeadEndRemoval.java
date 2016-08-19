@@ -29,35 +29,37 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi
 import java.text.MessageFormat;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 
 public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 	
-	public Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry();
+	Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry();
 	
-	public boolean removeDeadEnds() throws AutomataOperationCanceledException;
+	boolean removeDeadEnds() throws AutomataOperationCanceledException;
 	
-	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws AutomataOperationCanceledException;
+	INestedWordAutomaton<LETTER,STATE> getResult() throws AutomataOperationCanceledException;
 	
-	public long getDeadEndRemovalTime();
-	
+	long getDeadEndRemovalTime();
 	
 	public class UpDownEntry<STATE> {
 		private final STATE mUp;
 		private final STATE mDown;
 		private final STATE mEntry;
 		
-		public UpDownEntry(STATE up, STATE down, STATE entry) {
+		public UpDownEntry(final STATE up, final STATE down, final STATE entry) {
 			mUp = up;
 			mDown = down;
 			mEntry = entry;
 		}
+		
 		public STATE getUp() {
 			return mUp;
 		}
+		
 		public STATE getDown() {
 			return mDown;
 		}
+		
 		public STATE getEntry() {
 			return mEntry;
 		}
@@ -78,8 +80,9 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 			result = prime * result + ((mUp == null) ? 0 : mUp.hashCode());
 			return result;
 		}
+		
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(final Object obj) {
 			if (this == obj) {
 				return true;
 			}

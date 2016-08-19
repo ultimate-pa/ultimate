@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.ModelExtractionUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.RankingTemplate;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -57,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
@@ -171,13 +171,13 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	/**
 	 * @return RankVar's that are relevant for supporting invariants
 	 */
-	public Collection<RankVar> getSIVars() {
+	public Collection<IProgramVar> getSIVars() {
 		/*
 		 * Variables that occur as outVars of the stem but are not read by the
 		 * loop (i.e., do not occur as inVar of the loop) are not relevant for
 		 * supporting invariants.
 		 */
-		final Collection<RankVar> result = new LinkedHashSet<RankVar>(mlasso.getStem().getOutVars().keySet());
+		final Collection<IProgramVar> result = new LinkedHashSet<IProgramVar>(mlasso.getStem().getOutVars().keySet());
 		result.retainAll(mlasso.getLoop().getInVars().keySet());
 		return result;
 	}
@@ -185,8 +185,8 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	/**
 	 * @return RankVar's that are relevant for ranking functions
 	 */
-	public Collection<RankVar> getRankVars() {
-		final Collection<RankVar> result = new LinkedHashSet<RankVar>(mlasso.getLoop().getOutVars().keySet());
+	public Collection<IProgramVar> getRankVars() {
+		final Collection<IProgramVar> result = new LinkedHashSet<IProgramVar>(mlasso.getLoop().getOutVars().keySet());
 		result.retainAll(mlasso.getLoop().getInVars().keySet());
 		return result;
 	}
@@ -207,7 +207,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		
 		final List<Term> conj = new ArrayList<Term>(); // List of constraints
 
-		final Collection<RankVar> siVars = getSIVars();
+		final Collection<IProgramVar> siVars = getSIVars();
 		final List<List<LinearInequality>> templateConstraints =
 				template.getConstraints(loop.getInVars(), loop.getOutVars());
 		final List<String> annotations = template.getAnnotations();
@@ -351,8 +351,8 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			mLogger.warn("Using a linear SMT query and a templates of degree "
 					+ "> 0, hence this method is incomplete.");
 		}
-		final Collection<RankVar> rankVars = getRankVars();
-		final Collection<RankVar> siVars = getSIVars();
+		final Collection<IProgramVar> rankVars = getRankVars();
+		final Collection<IProgramVar> siVars = getSIVars();
 		mLogger.info("Template has degree " + mtemplate.getDegree() + ".");
 		mLogger.debug("Variables for ranking functions: " + rankVars);
 		mLogger.debug("Variables for supporting invariants: " + siVars);
@@ -397,19 +397,19 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		final LBool sat = mscript.checkSat();
 		if (sat == LBool.SAT) {
 			// Get all relevant variables
-			final ArrayList<Term> variables = new ArrayList<Term>();
-			variables.addAll(mtemplate.getVariables());
+			final ArrayList<Term> coefficients = new ArrayList<Term>();
+			coefficients.addAll(mtemplate.getCoefficients());
 			for (final SupportingInvariantGenerator sig : msi_generators) {
-				variables.addAll(sig.getVariables());
+				coefficients.addAll(sig.getCoefficients());
 			}
 
 			// Get valuation for the variables
 			Map<Term, Rational> val;
 			if (msettings.simplify_termination_argument) {
 				mLogger.info("Found a termination argument, trying to simplify.");
-				val = ModelExtractionUtils.getSimplifiedAssignment_TwoMode(mscript, variables, mLogger, mservices);
+				val = ModelExtractionUtils.getSimplifiedAssignment_TwoMode(mscript, coefficients, mLogger, mservices);
 			} else {
-				val = ModelExtractionUtils.getValuation(mscript, variables);
+				val = ModelExtractionUtils.getValuation(mscript, coefficients);
 			}
 
 			// Extract ranking function and supporting invariants

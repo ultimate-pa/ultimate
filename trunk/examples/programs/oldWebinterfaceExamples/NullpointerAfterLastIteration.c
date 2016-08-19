@@ -4,7 +4,7 @@
  * at NICTA in Australia.
  * 
  * Date: November 2012
- * Author: heizmann@informtik.uni-freiburg.de
+ * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
 

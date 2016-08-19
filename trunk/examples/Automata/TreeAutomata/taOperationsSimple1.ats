@@ -1,0 +1,38 @@
+// author nutz@informatik.uni-freiburg.de
+// file for basic testing of tree automata operations
+
+
+TreeAutomaton ta1 = ( 
+  rankedAlphabet = { 
+    (0, {a b})
+    (1, {f})
+    (2, {g})
+  },
+  states = {q1 q2},
+  finalStates = {q2},
+  transitionTable = {
+    (() a q1)
+    (() b q1)
+    ((q1) f q1)
+    ((q1 q1) g q2)
+  }
+);
+
+TreeAutomaton ta2 = (
+  rankedAlphabet = { 
+    (0, {a b})
+    (1, {f})
+    (2, {g})
+  },
+  states = {p q r},
+  finalStates = {r},
+  transitionTable = {
+    (() a p)
+    (() b q)
+    ((r) f r)
+    ((r r) g r)
+  }
+);
+
+TreeAutomaton taIntersect = Intersect(ta1, ta2);
+print(taIntersect);

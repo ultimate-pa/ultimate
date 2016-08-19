@@ -29,25 +29,30 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 
 public class NestedLassoWord<LETTER> {
-	private final NestedWord<LETTER> stem;
-	private final NestedWord<LETTER> loop;
-		
-	public NestedLassoWord(NestedWord<LETTER> stem, NestedWord<LETTER> loop) {
-		this.stem = stem;
-		this.loop = loop;
+	private final NestedWord<LETTER> mStem;
+	private final NestedWord<LETTER> mLoop;
+	
+	/**
+	 * Constructor.
+	 * 
+	 * @param stem stem
+	 * @param loop loop
+	 */
+	public NestedLassoWord(final NestedWord<LETTER> stem, final NestedWord<LETTER> loop) {
+		this.mStem = stem;
+		this.mLoop = loop;
 	}
 	
 	public NestedWord<LETTER> getStem() {
-		return stem;
+		return mStem;
 	}
 	
 	public NestedWord<LETTER> getLoop() {
-		return loop;
+		return mLoop;
 	}
 	
 	@Override
 	public String toString() {
-		return "[  " + stem.toString() + " , " + loop.toString() + " ]";
+		return "[  " + mStem.toString() + " , " + mLoop.toString() + " ]";
 	}
-	
 }

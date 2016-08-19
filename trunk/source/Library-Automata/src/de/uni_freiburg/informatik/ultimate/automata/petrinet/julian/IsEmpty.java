@@ -29,27 +29,29 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.order;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
-	private final AutomataLibraryServices mServices;
-	
-	private final ILogger mLogger;
+public class IsEmpty<LETTER,STATE>
+		extends UnaryNetOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
 
-	private final PetriNetJulian<LETTER,STATE> mOperand;
 	private final Boolean mResult;
 	
-	public IsEmpty(AutomataLibraryServices services, 
-			PetriNetJulian<LETTER,STATE> operand) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mOperand = operand;
+	/**
+	 * Constructor.
+	 * 
+	 * @param services Ultimate services
+	 * @param operand operand
+	 * @throws AutomataLibraryException if construction fails
+	 */
+	public IsEmpty(final AutomataLibraryServices services, 
+			final PetriNetJulian<LETTER,STATE> operand) throws AutomataLibraryException {
+		super(services, operand);
 		mLogger.info(startMessage());
 		final PetriNetUnfolder<LETTER,STATE> unf = 
 				new PetriNetUnfolder<LETTER,STATE>(mServices, operand, order.ERV, false, true);
@@ -64,15 +66,9 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public String startMessage() {
-		return "Start " + operationName() +
-			"Operand " + mOperand.sizeInformation();
-	}
-	
-	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() +
-			" language " + (mResult ? "is empty" : "is not emtpy");
+		return "Finished " + operationName()
+			+ " language " + (mResult ? "is empty" : "is not emtpy");
 	}
 
 	@Override
@@ -81,10 +77,13 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		final INestedWordAutomatonOldApi<LETTER, STATE> finiteAutomaton = (new PetriNet2FiniteAutomaton<>(mServices, mOperand)).getResult();
-		final boolean automatonEmpty = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty<LETTER, STATE>(mServices, finiteAutomaton)).getResult();
+		final INestedWordAutomaton<LETTER, STATE> finiteAutomaton =
+				(new PetriNet2FiniteAutomaton<>(mServices, mOperand)).getResult();
+		final boolean automatonEmpty =
+				(new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty<LETTER, STATE>(
+						mServices, finiteAutomaton)).getResult();
 		return (mResult == automatonEmpty);
 	}
 

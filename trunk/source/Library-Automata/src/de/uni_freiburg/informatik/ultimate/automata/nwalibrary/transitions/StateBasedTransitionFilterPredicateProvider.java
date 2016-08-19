@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.util.IPredicate;
  * of states.
  * @author Matthias Heizmann
  *
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class StateBasedTransitionFilterPredicateProvider<LETTER, STATE> {
 	protected final Set<STATE> mStates;
@@ -48,54 +50,57 @@ public class StateBasedTransitionFilterPredicateProvider<LETTER, STATE> {
 	private final IPredicate<OutgoingReturnTransition<LETTER, STATE>> mReturnSuccessorPredicate;
 	private final IPredicate<SummaryReturnTransition<LETTER, STATE>> mReturnSummaryPredicate;
 	
-	public StateBasedTransitionFilterPredicateProvider(Set<STATE> states) {
+	/**
+	 * @param states states for filtering
+	 */
+	public StateBasedTransitionFilterPredicateProvider(final Set<STATE> states) {
 		mStates = states;
 		
 		mInternalPredecessorsPredicate = new IPredicate<IncomingInternalTransition<LETTER,STATE>>() {
 			@Override
-			public boolean evaluate(IncomingInternalTransition<LETTER, STATE> trans) {
+			public boolean evaluate(final IncomingInternalTransition<LETTER, STATE> trans) {
 				return mStates.contains(trans.getPred());
 			}
 		};
 
 		mCallPredecessorPredicate = new IPredicate<IncomingCallTransition<LETTER,STATE>>() {
 			@Override
-			public boolean evaluate(IncomingCallTransition<LETTER, STATE> trans) {
+			public boolean evaluate(final IncomingCallTransition<LETTER, STATE> trans) {
 				return mStates.contains(trans.getPred());
 			}
 		};
 
 		mInternalSuccessorPredicate = new IPredicate<OutgoingInternalTransition<LETTER,STATE>>() {
 			@Override
-			public boolean evaluate(OutgoingInternalTransition<LETTER, STATE> trans) {
+			public boolean evaluate(final OutgoingInternalTransition<LETTER, STATE> trans) {
 				return mStates.contains(trans.getSucc());
 			}
 		};
 
 		mCallSuccessorPredicate = new IPredicate<OutgoingCallTransition<LETTER,STATE>>() {
 			@Override
-			public boolean evaluate(OutgoingCallTransition<LETTER, STATE> trans) {
+			public boolean evaluate(final OutgoingCallTransition<LETTER, STATE> trans) {
 				return mStates.contains(trans.getSucc());
 			}
 		};
 
 		mReturnPredecessorPredicate = new IPredicate<IncomingReturnTransition<LETTER,STATE>>() {
 			@Override
-			public boolean evaluate(IncomingReturnTransition<LETTER, STATE> trans) {
+			public boolean evaluate(final IncomingReturnTransition<LETTER, STATE> trans) {
 				return mStates.contains(trans.getLinPred()) && mStates.contains(trans.getHierPred());
 			}
 		};
 		
 		mReturnSuccessorPredicate = new IPredicate<OutgoingReturnTransition<LETTER,STATE>>() {
 			@Override
-			public boolean evaluate(OutgoingReturnTransition<LETTER, STATE> trans) {
+			public boolean evaluate(final OutgoingReturnTransition<LETTER, STATE> trans) {
 				return mStates.contains(trans.getHierPred()) && mStates.contains(trans.getSucc());
 			}
 		};
 
 		mReturnSummaryPredicate = new IPredicate<SummaryReturnTransition<LETTER,STATE>>() {
 			@Override
-			public boolean evaluate(SummaryReturnTransition<LETTER, STATE> trans) {
+			public boolean evaluate(final SummaryReturnTransition<LETTER, STATE> trans) {
 				return mStates.contains(trans.getSucc()) && mStates.contains(trans.getLinPred());
 			}
 		};
@@ -128,7 +133,4 @@ public class StateBasedTransitionFilterPredicateProvider<LETTER, STATE> {
 	public IPredicate<SummaryReturnTransition<LETTER, STATE>> getReturnSummaryPredicate() {
 		return mReturnSummaryPredicate;
 	}
-	
-	
-
 }

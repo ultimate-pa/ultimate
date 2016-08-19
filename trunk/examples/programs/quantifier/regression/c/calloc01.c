@@ -2,7 +2,7 @@
 /*
  * Check that memory is allocated and initialized with 0.
  * Date: 2016-02-24
- * Author: heizmann@informtik.uni-freiburg.de
+ * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
 

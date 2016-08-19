@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * Builder used by buchiComplementFKV to obtain TightLevelRankingStateGenerators.
  * @author Matthias Heizmann
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public abstract class LevelRankingGenerator<LETTER, STATE, CONSTRAINT extends LevelRankingConstraint<LETTER, STATE>> {
 
@@ -48,9 +48,9 @@ public abstract class LevelRankingGenerator<LETTER, STATE, CONSTRAINT extends Le
 	protected final int mUserDefinedMaxRank;
 
 	public LevelRankingGenerator(
-			AutomataLibraryServices services,
-			INestedWordAutomatonSimple<LETTER, STATE> operand,
-			int userDefinedMaxRank) {
+			final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand,
+			final int userDefinedMaxRank) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);

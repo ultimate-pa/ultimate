@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 /**
  * This class is used to interrupt incremental minimization executions.
  * 
- * @see AMinimizeIncremental
+ * @see AbstractMinimizeIncremental
  * @author Christian Schilling
  */
 public final class Interrupt {
@@ -38,26 +38,26 @@ public final class Interrupt {
 	 * Internal status:
 	 * true <=> terminate
 	 */
-	private boolean mterminate;
+	private boolean mTerminate;
 	
 	/**
 	 * constructor
 	 */
 	public Interrupt() {
-		mterminate = false;
+		mTerminate = false;
 	}
 	
 	/**
 	 * @return the internal status
 	 */
 	public boolean getStatus() {
-		return mterminate;
+		return mTerminate;
 	}
 	
 	/**
 	 * Sets the status to <code>true</code>.
 	 */
 	public void setStatus() {
-		mterminate = true;
+		mTerminate = true;
 	}
 }

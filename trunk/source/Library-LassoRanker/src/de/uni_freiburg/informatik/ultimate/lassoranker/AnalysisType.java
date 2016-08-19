@@ -74,11 +74,4 @@ public enum AnalysisType {
 		return this == Linear_with_guesses;
 	}
 	
-	/**
-	 * @return a list of all possible choices
-	 */
-	public static AnalysisType[] allChoices() {
-		return new AnalysisType[]
-				{ Disabled, Linear, Linear_with_guesses, Nonlinear };
-	}
 }

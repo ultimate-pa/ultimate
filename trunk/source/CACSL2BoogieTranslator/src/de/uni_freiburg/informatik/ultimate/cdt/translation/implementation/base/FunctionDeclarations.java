@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -122,7 +122,7 @@ public class FunctionDeclarations {
 	 * @return true iff all CPrimitives in cPrimitives are equivalent.
 	 */
 	public boolean checkParameters(CPrimitive... cPrimitives) {
-		final PRIMITIVE type = cPrimitives[0].getType();
+		final CPrimitives type = cPrimitives[0].getType();
 		for (final CPrimitive t : cPrimitives) {
 			if (!t.getType().equals(type)) {
 				return false;

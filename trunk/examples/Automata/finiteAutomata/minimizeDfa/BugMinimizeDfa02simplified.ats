@@ -1,7 +1,7 @@
 // Testfile dumped by Ultimate at 2012/01/09 13:33:53
 
 //print(nwa);
-print(minimizeDFA(nwa));
+print(minimizeDfaTable(nwa));
 
 
 NestedWordAutomaton nwa = (

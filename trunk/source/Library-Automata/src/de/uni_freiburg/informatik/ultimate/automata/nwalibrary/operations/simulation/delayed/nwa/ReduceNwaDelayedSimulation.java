@@ -37,7 +37,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.LassoExtractor;
@@ -76,13 +77,13 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 * @param stateFactory
 	 *            The state factory used for creating states
 	 * @param operand
-	 *            The nwa automaton to reduce
+	 *            The nwa to reduce
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceNwaDelayedSimulation(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+	public ReduceNwaDelayedSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, true);
 	}
 
@@ -96,7 +97,7 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 * @param stateFactory
 	 *            The state factory used for creating states
 	 * @param operand
-	 *            The nwa automaton to reduce
+	 *            The nwa to reduce
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
@@ -104,8 +105,8 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceNwaDelayedSimulation(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs)
+	public ReduceNwaDelayedSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean useSCCs)
 					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs,
 				new LookaheadPartitionConstructor<LETTER, STATE>(services, operand).getResult());
@@ -121,7 +122,7 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 * @param stateFactory
 	 *            The state factory used for creating states
 	 * @param operand
-	 *            The nwa automaton to reduce
+	 *            The nwa to reduce
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
@@ -134,8 +135,8 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceNwaDelayedSimulation(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
+	public ReduceNwaDelayedSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean useSCCs,
 			final Collection<Set<STATE>> possibleEquivalenceClasses) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand,
 				new DelayedNwaSimulation<LETTER, STATE>(services.getProgressMonitorService(),
@@ -157,9 +158,9 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 		getLogger().info("Start testing correctness of " + operationName());
 		boolean correct = true;
 
-		AutomataLibraryServices services = getServices();
-		INestedWordAutomatonOldApi<LETTER, STATE> operand = getOperand();
-		INestedWordAutomatonOldApi<LETTER, STATE> result = getResult();
+		final AutomataLibraryServices services = getServices();
+		final INestedWordAutomaton<LETTER, STATE> operand = getOperand();
+		final INestedWordAutomaton<LETTER, STATE> result = getResult();
 
 		// This is a semi-test, if it returns false, the result can also be
 		// correct though
@@ -168,7 +169,7 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 
 		// Try using some random lasso-words to prove a possible incorrectness
 		if (!correct) {
-			List<NestedLassoWord<LETTER>> nestedLassoWords = new LinkedList<>();
+			final List<NestedLassoWord<LETTER>> nestedLassoWords = new LinkedList<>();
 			nestedLassoWords.addAll((new LassoExtractor<LETTER, STATE>(services, operand)).getResult());
 			nestedLassoWords.addAll((new LassoExtractor<LETTER, STATE>(services, result)).getResult());
 
@@ -193,8 +194,8 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 
 			correct = true;
 			for (final NestedLassoWord<LETTER> nestedLassoWord : nestedLassoWords) {
-				boolean op = checkAcceptance(nestedLassoWord, operand, false);
-				boolean res = checkAcceptance(nestedLassoWord, result, false);
+				final boolean op = (new BuchiAccepts<LETTER, STATE>(services, operand, nestedLassoWord)).getResult();
+				final boolean res = (new BuchiAccepts<LETTER, STATE>(services, operand, nestedLassoWord)).getResult();
 				correct &= (op == res);
 			}
 		}
@@ -214,25 +215,5 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	@Override
 	public String operationName() {
 		return "reduceNwaDelayedSimulation";
-	}
-
-	/**
-	 * @see {@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKV#checkAcceptance
-	 *      BuchiComplementFKV#checkAcceptance}
-	 */
-	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw, INestedWordAutomatonOldApi<LETTER, STATE> operand,
-			boolean underApproximationOfComplement) throws AutomataLibraryException {
-		AutomataLibraryServices services = getServices();
-		INestedWordAutomatonOldApi<LETTER, STATE> result = getResult();
-
-		final boolean op = (new BuchiAccepts<LETTER, STATE>(services, operand, nlw)).getResult();
-		final boolean res = (new BuchiAccepts<LETTER, STATE>(services, result, nlw)).getResult();
-		boolean correct;
-		if (underApproximationOfComplement) {
-			correct = !res || op;
-		} else {
-			correct = op ^ res;
-		}
-		return correct;
 	}
 }

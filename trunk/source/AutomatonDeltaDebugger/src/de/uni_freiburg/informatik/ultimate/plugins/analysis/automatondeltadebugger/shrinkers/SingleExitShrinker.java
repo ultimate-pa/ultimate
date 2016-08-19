@@ -69,7 +69,8 @@ public class SingleExitShrinker<LETTER, STATE>
 	public INestedWordAutomaton<LETTER, STATE>
 			createAutomaton(final List<Pair<STATE, STATE>> list) {
 		// create fresh automaton
-		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create();
+		final INestedWordAutomaton<LETTER, STATE> automaton =
+				mFactory.create(mAutomaton);
 		
 		// data structures to contain all transitive chains (forward & backward)
 		final HashMap<STATE, STATE> left2right = new HashMap<STATE, STATE>();

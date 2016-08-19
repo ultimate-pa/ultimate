@@ -35,7 +35,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -52,13 +52,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
  */
 public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 
-	public MinimizeStatesMultiEdgeSingleNode(RootNode product, IUltimateServiceProvider services, IToolchainStorage storage) {
+	public MinimizeStatesMultiEdgeSingleNode(final RootNode product, final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		super(product, services, storage);
 	}
 
 	@Override
-	protected Collection<? extends RCFGNode> processCandidate(RootNode root, ProgramPoint target,
-			Set<RCFGNode> closed) {
+	protected Collection<? extends RCFGNode> processCandidate(final RootNode root, final ProgramPoint target,
+			final Set<RCFGNode> closed) {
 
 		if (new HashSet<>(target.getIncomingNodes()).size() != 1
 				|| new HashSet<>(target.getOutgoingNodes()).size() != 1) {
@@ -130,7 +130,7 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 
 				final SequentialComposition sc = mCbf.constructSequentialComposition(
 						pred, succ, false, false, 
-						Arrays.asList(new CodeBlock[] { predCB,	succCB }));
+						Arrays.asList(new CodeBlock[] { predCB,	succCB }), mXnfConversionTechnique, mSimplificationTechnique);
 				assert sc.getTarget() != null;
 				assert sc.getSource() != null;
 				newEdges++;

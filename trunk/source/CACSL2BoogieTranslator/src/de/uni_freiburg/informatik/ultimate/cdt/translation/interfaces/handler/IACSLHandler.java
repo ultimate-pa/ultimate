@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assigns;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Contract;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Ensures;
@@ -294,4 +295,6 @@ public interface IACSLHandler extends IHandler {
      * @return a result object
      */
     public Result visit(Dispatcher main, ValidExpression node);
+    
+    public Result visit(Dispatcher main, CastExpression node);
 }

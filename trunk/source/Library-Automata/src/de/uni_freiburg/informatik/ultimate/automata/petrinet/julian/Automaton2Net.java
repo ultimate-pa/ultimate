@@ -26,27 +26,32 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class Automaton2Net<LETTER, STATE> implements IOperation<LETTER,STATE> {
+public class Automaton2Net<LETTER, STATE>
+		extends GeneralOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
 
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+	private final IPetriNet<LETTER, STATE> mNet;
 
-	INestedWordAutomatonOldApi<LETTER, STATE> mOperand;
-	IPetriNet<LETTER, STATE> mNet;
-
-	public Automaton2Net(AutomataLibraryServices services, 
-			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+	/**
+	 * Constructor.
+	 * 
+	 * @param services Ultimate services
+	 * @param operand operand
+	 * @throws AutomataLibraryException if construction fails
+	 */
+	public Automaton2Net(final AutomataLibraryServices services, 
+			final INestedWordAutomaton<LETTER, STATE> operand)
+					throws AutomataLibraryException {
+		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
 		mNet = new PetriNetJulian<LETTER, STATE>(mServices, mOperand);
@@ -76,9 +81,8 @@ public class Automaton2Net<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}
-
 }

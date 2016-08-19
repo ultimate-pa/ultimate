@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 
 /**
@@ -44,10 +45,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *            The value type of the abstract domain.
  * @param <ACTION>
  *            Any action type.
- * @param <VARDECL>
- *            Any variable declaration type.
  */
-public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
+public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, IBoogieVar>, ACTION> {
 
 	/**
 	 * Evaluates the evaluator with all its sub-evaluators according to the given state.
@@ -56,7 +55,7 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, V
 	 *            The originating state to evaluate from.
 	 * @return A new evaluation result that contains the result of the evaluation.
 	 */
-	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState);
+	List<IEvaluationResult<VALUE>> evaluate(final STATE currentState);
 
 	/**
 	 * Computes the inverse of the application of the evaluate function with a given reference value and input state.
@@ -65,7 +64,7 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, V
 	 *            Contains the reference value and the input state to compute the inverse for.
 	 * @return The result of the inverse application of the evaluate function.
 	 */
-	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState);
+	List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState);
 
 	/**
 	 * Adds a sub-evaluator to the evaluator.
@@ -73,17 +72,17 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, V
 	 * @param evaluator
 	 *            The evaluator to add.
 	 */
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE, ACTION, VARDECL> evaluator);
+	void addSubEvaluator(final IEvaluator<VALUE, STATE, ACTION> evaluator);
 
 	/**
 	 * @return The set of all variable identifiers that occur in all sub evaluators.
 	 */
-	public Set<String> getVarIdentifiers();
+	Set<IBoogieVar> getVarIdentifiers();
 
 	/**
 	 * @return <code>true</code> if and only if there are still free sub evaluators. <code>false</code> otherwise.
 	 */
-	public boolean hasFreeOperands();
+	boolean hasFreeOperands();
 
 	/**
 	 * States whether somewhere in the evaluator occurs a boolean value. This is needed to determine if the boolean
@@ -94,5 +93,5 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, V
 	 * @return <code>true</code> if and only if in the sub-tree is a boolean literal or interpretation present,
 	 *         <code>false</code> otherwise.
 	 */
-	public boolean containsBool();
+	boolean containsBool();
 }

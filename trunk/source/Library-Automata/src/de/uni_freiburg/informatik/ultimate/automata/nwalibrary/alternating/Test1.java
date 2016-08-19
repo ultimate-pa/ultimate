@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating;
 
-public class Test1{
+public class Test1 {
 
-	public static void main(String[] args){
+	public static void main(final String[] args) {
 		final TestAutomaton_1 automaton = new TestAutomaton_1();
 		final long startNanoTime = System.nanoTime();
 		TestCase.test(automaton, TestAutomaton_1.TEST_CASES);

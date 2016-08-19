@@ -39,9 +39,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -57,13 +58,13 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	@SuppressWarnings("unused")
 	private final ILogger mLogger;
 
-	private final Set<S> alphabet;
-	private final StateFactory<C> stateFactory;
+	private final Set<S> mAlphabet;
+	private final StateFactory<C> mStateFactory;
 
-	private final Collection<Place<S, C>> places = new HashSet<Place<S, C>>();
-	private final Set<Place<S, C>> initialPlaces = new HashSet<Place<S, C>>();
-	private final Collection<Place<S, C>> acceptingPlaces = new HashSet<Place<S, C>>();
-	private final Collection<ITransition<S, C>> transitions = new HashSet<ITransition<S, C>>();
+	private final Collection<Place<S, C>> mPlaces = new HashSet<Place<S, C>>();
+	private final Set<Place<S, C>> mInitialPlaces = new HashSet<Place<S, C>>();
+	private final Collection<Place<S, C>> mAcceptingPlaces = new HashSet<Place<S, C>>();
+	private final Collection<ITransition<S, C>> mTransitions = new HashSet<ITransition<S, C>>();
 
 	/**
 	 * If true the number of tokens in this petri net is constant. Formally:
@@ -72,23 +73,23 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	 */
 	private final boolean mConstantTokenAmount;
 
-	public PetriNetJulian(AutomataLibraryServices services, Set<S> alphabet,
-			StateFactory<C> stateFactory, boolean constantTokenAmount) {
+	public PetriNetJulian(final AutomataLibraryServices services, final Set<S> alphabet,
+			final StateFactory<C> stateFactory, final boolean constantTokenAmount) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		this.alphabet = alphabet;
-		this.stateFactory = stateFactory;
+		this.mAlphabet = alphabet;
+		this.mStateFactory = stateFactory;
 		this.mConstantTokenAmount = constantTokenAmount;
 		assert (!constantTokenAmount() || transitionsPreserveTokenAmount());
 	}
 
-	public PetriNetJulian(AutomataLibraryServices services, 
-			INestedWordAutomatonOldApi<S, C> nwa)
+	public PetriNetJulian(final AutomataLibraryServices services, 
+			final INestedWordAutomaton<S, C> nwa)
 			throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		alphabet = nwa.getInternalAlphabet();
-		stateFactory = nwa.getStateFactory();
+		mAlphabet = nwa.getInternalAlphabet();
+		mStateFactory = nwa.getStateFactory();
 		this.mConstantTokenAmount = true;
 		final Map<C, Place<S, C>> state2place = new HashMap<C, Place<S, C>>();
 		for (final C content : nwa.getStates()) {
@@ -103,19 +104,12 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		for (final C content : nwa.getStates()) {
 			predPlace = new ArrayList<Place<S, C>>(1);
 			predPlace.add(state2place.get(content));
-			for (final S symbol : nwa.lettersInternal(content)) {
-				for (final C succ : nwa.succInternal(content, symbol)) {
-					succPlace = new ArrayList<Place<S, C>>(1);
-					succPlace.add(state2place.get(succ));
-					this.addTransition(symbol, predPlace, succPlace);
-				}
-				// for (C pred : nwa.predInternal(content, symbol)) {
-				// predPlace = new ArrayList<Place<S, C>>(1);
-				// predPlace.add(state2place.get(pred));
-				// }
-
+			for (final OutgoingInternalTransition<S, C> trans :
+					nwa.internalSuccessors(content)) {
+				succPlace = new ArrayList<Place<S, C>>(1);
+				succPlace.add(state2place.get(trans.getSucc()));
+				this.addTransition(trans.getLetter(), predPlace, succPlace);
 			}
-
 		}
 
 		// for (NestedWordAutomaton<S, C>.InternalTransition iTrans : nwa
@@ -133,38 +127,38 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		assert ResultChecker.petriNetJulian(mServices, nwa, this);
 	}
 
-	public Place<S, C> addPlace(C content, boolean isInitial, boolean isFinal) {
+	public Place<S, C> addPlace(final C content, final boolean isInitial, final boolean isFinal) {
 		final Place<S, C> place = new Place<S, C>(content);
-		places.add(place);
+		mPlaces.add(place);
 		if (isInitial) {
-			initialPlaces.add(place);
+			mInitialPlaces.add(place);
 		}
 		if (isFinal) {
-			acceptingPlaces.add(place);
+			mAcceptingPlaces.add(place);
 		}
 		return place;
 	}
 
-	public Transition<S, C> addTransition(S symbol,
-			Collection<Place<S, C>> preds, Collection<Place<S, C>> succs) {
-		if (!alphabet.contains(symbol)) {
+	public Transition<S, C> addTransition(final S symbol,
+			final Collection<Place<S, C>> preds, final Collection<Place<S, C>> succs) {
+		if (!mAlphabet.contains(symbol)) {
 			throw new IllegalArgumentException("unknown letter: " + symbol);
 		}
 		final Transition<S, C> transition = new Transition<S, C>(symbol, preds,
-				succs, transitions.size());
+				succs, mTransitions.size());
 		for (final Place<S, C> pred : preds) {
-			if (!places.contains(pred)) {
+			if (!mPlaces.contains(pred)) {
 				throw new IllegalArgumentException("unknown place");
 			}
 			pred.addSuccessor(transition);
 		}
 		for (final Place<S, C> succ : succs) {
-			if (!places.contains(succ)) {
+			if (!mPlaces.contains(succ)) {
 				throw new IllegalArgumentException("unknown place");
 			}
 			succ.addPredecessor(transition);
 		}
-		transitions.add(transition);
+		mTransitions.add(transition);
 		return transition;
 	}
 
@@ -174,7 +168,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	@Override
 	public Collection<Collection<Place<S, C>>> getAcceptingMarkings() {
 		final ArrayList<Collection<Place<S, C>>> list = new ArrayList<Collection<Place<S, C>>>();
-		list.add(acceptingPlaces);
+		list.add(mAcceptingPlaces);
 		return list;
 	}
 
@@ -189,13 +183,13 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	// });
 	// }
 
-	public boolean isTransitionEnabled(ITransition<S, C> transition,
-			Collection<Place<S, C>> marking) {
+	public boolean isTransitionEnabled(final ITransition<S, C> transition,
+			final Collection<Place<S, C>> marking) {
 		return marking.containsAll(transition.getPredecessors());
 	}
 
-	public Collection<Place<S, C>> fireTransition(ITransition<S, C> transition,
-			Collection<Place<S, C>> marking) {
+	public Collection<Place<S, C>> fireTransition(final ITransition<S, C> transition,
+			final Collection<Place<S, C>> marking) {
 
 		marking.removeAll(transition.getPredecessors());
 		marking.addAll(transition.getSuccessors());
@@ -205,31 +199,31 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 
 	@Override
 	public Set<S> getAlphabet() {
-		return alphabet;
+		return mAlphabet;
 	}
 
 	@Override
 	public StateFactory<C> getStateFactory() {
-		return stateFactory;
+		return mStateFactory;
 	}
 
 	@Override
 	public Collection<Place<S, C>> getPlaces() {
-		return places;
+		return mPlaces;
 	}
 
 	@Override
 	public Marking<S, C> getInitialMarking() {
-		return new Marking<S, C>(initialPlaces);
+		return new Marking<S, C>(mInitialPlaces);
 	}
 
 	public Collection<Place<S, C>> getAcceptingPlaces() {
-		return acceptingPlaces;
+		return mAcceptingPlaces;
 	}
 
 	@Override
 	public Collection<ITransition<S, C>> getTransitions() {
-		return transitions;
+		return mTransitions;
 	}
 
 	/**
@@ -241,7 +235,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	}
 
 	@Override
-	public boolean isAccepting(Marking<S, C> marking) {
+	public boolean isAccepting(final Marking<S, C> marking) {
 		for (final Place<S, C> place : marking) {
 			if (getAcceptingPlaces().contains(place)) {
 				return true;
@@ -280,17 +274,17 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 
 	@Override
 	public int size() {
-		return places.size();
+		return mPlaces.size();
 	}
 
 	@Override
 	public String sizeInformation() {
-		return "has " + places.size() + "places, " + transitions.size()
+		return "has " + mPlaces.size() + "places, " + mTransitions.size()
 				+ " transitions";
 	}
 
 	@Override
-	public boolean accepts(Word<S> word) {
+	public boolean accepts(final Word<S> word) {
 		throw new UnsupportedOperationException();
 	}
 }
