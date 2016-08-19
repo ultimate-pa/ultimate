@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 public final class TestUtil {
 
 	private static final long PSEUDO_RANDOM_FILE_SELECTION_SEED = 19120623;
+	private static int sTestSuffix = 0;
 
 	private TestUtil() {
 		// utility classes should not be instantiated
@@ -654,6 +655,35 @@ public final class TestUtil {
 		} catch (final IOException e) {
 			logger.fatal("Exception while writing to " + logFile.getAbsolutePath(), e);
 		}
+	}
+
+	/**
+	 * The JUnit view in Eclipse seems to limit the length of the test case name to a certain length. You cannot rerun
+	 * tests in the GUI if two test cases have the same prefix. This methods tries to reduce the length of the string
+	 * representing a test case name such that this limit is not reached.
+	 *
+	 * @param testCaseName
+	 *            The original test case name.
+	 * @return The minimized test case name.
+	 */
+	public static String minimizeTestCaseName(final String testCaseName) {
+		if (null == testCaseName) {
+			return null;
+		}
+		String rtr = testCaseName;
+		rtr = rtr.replaceAll("Input:", "I:");
+		rtr = rtr.replaceAll("Settings:", "S:");
+		rtr = rtr.replaceAll("Toolchain:", "T:");
+		rtr = rtr.replaceAll("Toolchain:", "T:");
+
+		if (rtr.length() > 255) {
+			sTestSuffix++;
+			final String currentSuffix = String.valueOf(sTestSuffix);
+			rtr = rtr.substring(0, 254 - currentSuffix.length());
+			rtr = rtr + "-" + currentSuffix;
+		}
+
+		return rtr;
 	}
 
 	private interface ILogWriter {
