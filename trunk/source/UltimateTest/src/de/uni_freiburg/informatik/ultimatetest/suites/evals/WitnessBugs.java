@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
  */
 public class WitnessBugs extends AbstractEvalTestSuite {
 	private static final String[] ALL_C = new String[] { ".c", ".i" };
-	private static final String[] BPL = new String[] { ".bpl" };
 
 	private static Collection<UltimateRunDefinition> createDefs() {
 		final Collection<UltimateRunDefinition> rtr = new ArrayList<>();
@@ -64,6 +63,10 @@ public class WitnessBugs extends AbstractEvalTestSuite {
 		rtr.addAll(produceAndVerifyWitnessSV("floats-cbmc-regression/float11_true-unreach-call.i"));
 		rtr.addAll(produceAndVerifyWitnessSV(
 				"ldv-linux-3.4-simple/32_1_cilled_true-unreach-call_ok_nondet_linux-3.4-32_1-drivers--staging--serqt_usb2--serqt_usb2.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c"));
+		rtr.addAll(produceAndVerifyWitnessSV(
+				"ldv-linux-3.4-simple/32_1_cilled_true-unreach-call_ok_nondet_linux-3.4-32_1-drivers--staging--serqt_usb2--serqt_usb2.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c"));
+		rtr.addAll(produceAndVerifyWitnessSV(
+				"ldv-linux-3.4-simple/32_1_cilled_true-unreach-call_ok_nondet_linux-3.4-32_1-drivers--leds--ledtrig-default-on.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c"));
 
 		// rtr.addAll(produceWitnessSV("loop-acceleration/multivar_true-unreach-call1.i"));
 		// rtr.addAll(verifyWitnessSV("loop-acceleration/multivar_true-unreach-call1.i"));
@@ -79,7 +82,7 @@ public class WitnessBugs extends AbstractEvalTestSuite {
 
 	@Override
 	protected long getTimeout() {
-		return 90 * 1000;
+		return 90 * 1000 * 1000;
 	}
 
 	@Override
