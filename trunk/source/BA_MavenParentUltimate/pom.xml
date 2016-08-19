@@ -351,6 +351,9 @@
 							<includes>
 								<include>**/*.java</include>
 							</includes>
+							<excludes>
+								<exclude>**/UltimateTest/**/*.java</exclude>
+							</excludes>
 						</configuration>
 					</plugin>
 
@@ -385,6 +388,9 @@
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-UltimateTestTest</module>
 				<module>../UltimateRegressionTest</module>
+				
+				<!-- UltimateTest contains actual tests, but should not be run. It is excluded in surefire. -->
+				<module>../UltimateTest</module>
 			</modules>
 		</profile>
 
