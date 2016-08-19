@@ -221,7 +221,7 @@ public final class TestUtil {
 	 * directories.
 	 */
 	public static String generateLogfilename(final ITestLogfile testSummary) {
-		final String filename = testSummary.getDescriptiveLogName() + " "
+		final String filename = testSummary.getDescriptiveLogName() + "_"
 				+ de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString()
 				+ testSummary.getFilenameExtension();
 		return filename;
