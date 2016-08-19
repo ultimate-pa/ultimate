@@ -1,4 +1,4 @@
-//#Unsafe
+//#Safe
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 2016-08-16
 
