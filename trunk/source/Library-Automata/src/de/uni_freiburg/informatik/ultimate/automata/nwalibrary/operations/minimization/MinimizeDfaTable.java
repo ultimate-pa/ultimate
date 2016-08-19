@@ -79,7 +79,7 @@ public class MinimizeDfaTable<LETTER,STATE>
 					throws AutomataLibraryException {
 		super(services, operand.getStateFactory(), "minimizeDFA", operand);
 		
-	    assert (new HasUnreachableStates<LETTER,STATE>(mServices, operand).result()) :
+	    assert !new HasUnreachableStates<LETTER,STATE>(mServices, operand).result() :
 			"No unreachable states allowed";
 		
 		mIsDeterministic = isDeterministic();
