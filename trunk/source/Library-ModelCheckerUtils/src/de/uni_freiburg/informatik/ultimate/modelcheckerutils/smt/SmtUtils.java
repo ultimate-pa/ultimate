@@ -1133,6 +1133,14 @@ public class SmtUtils {
 		return false;
 	}
 	
+	public static boolean isUninterpretedFunction(final Term term) {
+		if (term instanceof ApplicationTerm) {
+			final FunctionSymbol fun = ((ApplicationTerm) term).getFunction();
+			return !fun.isIntern();
+		}
+		return false;
+	}
+	
 
 	/**
 	 * @return logically equivalent term in disjunctive normal form (DNF)
