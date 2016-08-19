@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
@@ -33,16 +33,17 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 
 
 /**
- * Contains methods which are shared by Acceptance and BuchiAcceptance.  
+ * Contains methods which are shared by Acceptance and BuchiAcceptance.
  * @author heizmann@informatik.uni-freiburg.de
  * 
  * @param <LETTER> letter type
@@ -106,7 +107,7 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 	 *            if true we add for each initial state an stack that contains
 	 *            only this initial state. Useful to check if suffix of word is
 	 *            accepted. If set the input configurations is modified.
-	 * @throws AutomataLibraryException 
+	 * @throws AutomataLibraryException
 	 * 
 	 */
 	public Set<ArrayDeque<STATE>> successorConfigurations(
@@ -122,6 +123,10 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 			configurations.addAll(configurations);
 		}
 		for (final ArrayDeque<STATE> config : configurations) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
+			
 			final STATE state = config.pop();
 			final LETTER symbol = nw.getSymbol(position);
 			if (nw.isInternalPosition(position)) {
@@ -131,7 +136,7 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 							+ symbol + " at position " + position
 							+ " not in internal alphabet of automaton.");
 				}
-				final Iterable<OutgoingInternalTransition<LETTER, STATE>> outTransitions = 
+				final Iterable<OutgoingInternalTransition<LETTER, STATE>> outTransitions =
 						nwa.internalSuccessors(state, symbol);
 				for (final OutgoingInternalTransition<LETTER, STATE> outRans :outTransitions) {
 					final STATE succ = outRans.getSucc();
@@ -142,11 +147,11 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 			} else if (nw.isCallPosition(position)) {
 				if (!nwa.getCallAlphabet().contains(symbol)) {
 					throw new AutomataLibraryException(this.getClass(),
-							"Unable to check acceptance. Letter " 
+							"Unable to check acceptance. Letter "
 							+ symbol + " at position " + position
 							+ " not in call alphabet of automaton.");
 				}
-				final Iterable<OutgoingCallTransition<LETTER, STATE>> outTransitions = 
+				final Iterable<OutgoingCallTransition<LETTER, STATE>> outTransitions =
 						nwa.callSuccessors(state, symbol);
 				for (final OutgoingCallTransition<LETTER, STATE> outRans :outTransitions) {
 					final STATE succ = outRans.getSucc();
@@ -166,7 +171,7 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 					mLogger.warn("Input has pending returns, we reject such words");
 				} else {
 					final STATE callPred = config.pop();
-					final Iterable<OutgoingReturnTransition<LETTER, STATE>> outTransitions = 
+					final Iterable<OutgoingReturnTransition<LETTER, STATE>> outTransitions =
 							nwa.returnSuccessors(state, callPred, symbol);
 					for (final OutgoingReturnTransition<LETTER, STATE> outRans :outTransitions) {
 						final STATE succ = outRans.getSucc();
