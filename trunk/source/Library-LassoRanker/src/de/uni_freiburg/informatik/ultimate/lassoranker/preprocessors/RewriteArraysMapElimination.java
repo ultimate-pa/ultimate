@@ -56,6 +56,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 public class RewriteArraysMapElimination extends LassoPreprocessor {
 	public static final String s_Description = "Removes arrays by introducing new variables for each relevant array cell";
 
+	// Parameters for the MapEliminator
+	private static boolean ADD_INEQUALITIES = false;
+	private static boolean ADD_INDEX_ASSIGNMENT = false;
+	private static boolean ADD_IMPLICATIONS = true;
+
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
 	private final Boogie2SmtSymbolTable mSymbolTable;
@@ -98,7 +103,8 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 	@Override
 	public Collection<LassoUnderConstruction> process(final LassoUnderConstruction lasso) throws TermException {
 		final MapEliminator elim = new MapEliminator(mServices, mManagedScript, mSymbolTable, mReplacementVarFactory,
-				mSimplificationTechnique, mXnfConversionTechnique, Arrays.asList(lasso.getStem(), lasso.getLoop()));
+				mSimplificationTechnique, mXnfConversionTechnique, Arrays.asList(lasso.getStem(), lasso.getLoop()),
+				ADD_INEQUALITIES, ADD_INDEX_ASSIGNMENT, ADD_IMPLICATIONS);
 		final EqualityAnalysisResult equalityAnalysisStem = new EqualityAnalysisResult(elim.getDoubletons());
 		final EqualitySupportingInvariantAnalysis esia = new EqualitySupportingInvariantAnalysis(elim.getDoubletons(),
 				mSymbolTable, mManagedScript.getScript(), mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
@@ -108,9 +114,9 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 		mArrayIndexSupportingInvariants
 				.addAll(equalityAnalysisLoop.constructListOfNotEquals(mManagedScript.getScript()));
 		final TransFormulaLR newStem = elim.getRewrittenTransFormula(lasso.getStem(), equalityAnalysisStem,
-				equalityAnalysisLoop, true);
+				equalityAnalysisLoop);
 		final TransFormulaLR newLoop = elim.getRewrittenTransFormula(lasso.getLoop(), equalityAnalysisLoop,
-				equalityAnalysisLoop, true);
+				equalityAnalysisLoop);
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
 		return Collections.singleton(newLasso);
 	}
