@@ -739,7 +739,7 @@ public class MainDispatcher extends Dispatcher {
 				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof IfThenElseExpression) {
-				return mAcslHandler.visit(this, n);
+				return mAcslHandler.visit(this, (IfThenElseExpression) n);
 			}
 			if (n instanceof QuantifierExpression) {
 				return mAcslHandler.visit(this, n);

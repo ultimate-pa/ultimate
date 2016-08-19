@@ -2790,39 +2790,43 @@ public class CHandler implements ICHandler {
 	public Result visit(final Dispatcher main, final IASTConditionalExpression node) {
 		final ILocation loc = LocationFactory.createCLocation(node);
 		assert node.getChildren().length == 3;
-		final Result resLocCond = main.dispatch(node.getLogicalConditionExpression());
-		assert resLocCond instanceof ExpressionResult;
-		ExpressionResult reLocCond = (ExpressionResult) resLocCond;
-		reLocCond = reLocCond.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-		reLocCond.rexIntToBoolIfNecessary(loc, mExpressionTranslation, mMemoryHandler);
+		ExpressionResult opCondition = (ExpressionResult) main.dispatch(node.getLogicalConditionExpression());
+		opCondition = opCondition.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		ExpressionResult opPositive = (ExpressionResult) main.dispatch(node.getPositiveResultExpression());
+		opPositive = opPositive.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		ExpressionResult opNegative = (ExpressionResult) main.dispatch(node.getNegativeResultExpression());
+		opNegative = opNegative.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		return handleConditionalOperator(loc, opCondition, opPositive, opNegative);
+	}
 
-		final Result rPositive = main.dispatch(node.getPositiveResultExpression());
-		assert rPositive instanceof ExpressionResult;
-		ExpressionResult rePositive = (ExpressionResult) rPositive;
-		rePositive = rePositive.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-		rePositive.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+	/**
+	 * Handle conditional operator according to Section 6.5.15 of C11. Assumes that opCondition, opPositive, and 
+	 * opNegative are the results from handling the operands. Requires that the {@link LRValue} of operands is 
+	 * an {@link RValue} (i.e., switchToRValueIfNecessary was applied if needed).
+	 * TODO: Check all corner cases, write some testfiles.
+	 */
+	ExpressionResult handleConditionalOperator(final ILocation loc, final ExpressionResult opCondition,
+			final ExpressionResult opPositive, final ExpressionResult opNegative) {
+		opCondition.rexIntToBoolIfNecessary(loc, mExpressionTranslation, mMemoryHandler);
+		opPositive.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+		opNegative.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+		
 
-		final Result rNegative = main.dispatch(node.getNegativeResultExpression());
-		assert rNegative instanceof ExpressionResult;
-		ExpressionResult reNegative = (ExpressionResult) rNegative;
-		reNegative = reNegative.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-		reNegative.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-
-		if (rePositive.lrVal.getCType().isArithmeticType() && reNegative.lrVal.getCType().isArithmeticType()) {
+		if (opPositive.lrVal.getCType().isArithmeticType() && opNegative.lrVal.getCType().isArithmeticType()) {
 			// C11 6.5.15.5: If 2nd and 3rd operand have arithmetic type,
 			// the result type is determined by the usual arithmetic conversions.
-			mExpressionTranslation.usualArithmeticConversions(loc, rePositive, reNegative);
+			mExpressionTranslation.usualArithmeticConversions(loc, opPositive, opNegative);
 		}
 
-		if ((rePositive.lrVal.getCType().getUnderlyingType() instanceof CPointer)
-				&& reNegative.lrVal.getCType().getUnderlyingType().isIntegerType()) {
-			mExpressionTranslation.convertIntToPointer(loc, reNegative,
-					(CPointer) rePositive.lrVal.getCType().getUnderlyingType());
+		if ((opPositive.lrVal.getCType().getUnderlyingType() instanceof CPointer)
+				&& opNegative.lrVal.getCType().getUnderlyingType().isIntegerType()) {
+			mExpressionTranslation.convertIntToPointer(loc, opNegative,
+					(CPointer) opPositive.lrVal.getCType().getUnderlyingType());
 		}
-		if ((reNegative.lrVal.getCType().getUnderlyingType() instanceof CPointer)
-				&& rePositive.lrVal.getCType().getUnderlyingType().isIntegerType()) {
-			mExpressionTranslation.convertIntToPointer(loc, rePositive,
-					(CPointer) reNegative.lrVal.getCType().getUnderlyingType());
+		if ((opNegative.lrVal.getCType().getUnderlyingType() instanceof CPointer)
+				&& opPositive.lrVal.getCType().getUnderlyingType().isIntegerType()) {
+			mExpressionTranslation.convertIntToPointer(loc, opPositive,
+					(CPointer) opNegative.lrVal.getCType().getUnderlyingType());
 		}
 
 		final ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -2830,43 +2834,42 @@ public class CHandler implements ICHandler {
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
 		final List<Overapprox> overappr = new ArrayList<Overapprox>();
 
-		decl.addAll(reLocCond.decl);
-		auxVars.putAll(reLocCond.auxVars);
-		stmt.addAll(reLocCond.stmt);
-		overappr.addAll(reLocCond.overappr);
+		decl.addAll(opCondition.decl);
+		auxVars.putAll(opCondition.auxVars);
+		stmt.addAll(opCondition.stmt);
+		overappr.addAll(opCondition.overappr);
 
 		final String tmpName = mNameHandler.getTempVarUID(SFO.AUXVAR.ITE, new CPrimitive(CPrimitives.INT));
-		final ASTType tmpType = mTypeHandler.ctype2asttype(loc, rePositive.lrVal.getCType());
+		final ASTType tmpType = mTypeHandler.ctype2asttype(loc, opPositive.lrVal.getCType());
 		final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpType, loc);
 
 		decl.add(tmpVar);
 		auxVars.put(tmpVar, loc);
 
-		final RValue condition = (RValue) reLocCond.lrVal;
 		final List<Statement> ifStatements = new ArrayList<Statement>();
 		{
-			ifStatements.addAll(rePositive.stmt);
+			ifStatements.addAll(opPositive.stmt);
 			final LeftHandSide[] lhs = { new VariableLHS(loc, tmpName) };
-			final Expression assignedVal = rePositive.lrVal.getValue();
+			final Expression assignedVal = opPositive.lrVal.getValue();
 			if (assignedVal != null) {
 				final AssignmentStatement assignStmt =
-						new AssignmentStatement(loc, lhs, new Expression[] { rePositive.lrVal.getValue() });
+						new AssignmentStatement(loc, lhs, new Expression[] { opPositive.lrVal.getValue() });
 				final Map<String, IAnnotations> annots = assignStmt.getPayload().getAnnotations();
 				for (final Overapprox overapprItem : overappr) {
 					annots.put(Overapprox.getIdentifier(), overapprItem);
 				}
 				ifStatements.add(assignStmt);
 			}
-			decl.addAll(rePositive.decl);
-			auxVars.putAll(rePositive.auxVars);
-			overappr.addAll(rePositive.overappr);
+			decl.addAll(opPositive.decl);
+			auxVars.putAll(opPositive.auxVars);
+			overappr.addAll(opPositive.overappr);
 		}
 
 		final List<Statement> elseStatements = new ArrayList<Statement>();
 		{
-			elseStatements.addAll(reNegative.stmt);
+			elseStatements.addAll(opNegative.stmt);
 			final LeftHandSide[] lhs = { new VariableLHS(loc, tmpName) };
-			final Expression assignedVal = reNegative.lrVal.getValue();
+			final Expression assignedVal = opNegative.lrVal.getValue();
 			if (assignedVal != null) { // if we call a void function, we have to
 										// skip this assignment
 				final AssignmentStatement assignStmt =
@@ -2877,11 +2880,11 @@ public class CHandler implements ICHandler {
 				}
 				elseStatements.add(assignStmt);
 			}
-			decl.addAll(reNegative.decl);
-			auxVars.putAll(reNegative.auxVars);
-			overappr.addAll(reNegative.overappr);
+			decl.addAll(opNegative.decl);
+			auxVars.putAll(opNegative.auxVars);
+			overappr.addAll(opNegative.overappr);
 		}
-		final Statement ifStatement = new IfStatement(loc, condition.getValue(), ifStatements.toArray(new Statement[0]),
+		final Statement ifStatement = new IfStatement(loc, opCondition.lrVal.getValue(), ifStatements.toArray(new Statement[0]),
 				elseStatements.toArray(new Statement[0]));
 		final Map<String, IAnnotations> annots = ifStatement.getPayload().getAnnotations();
 		for (final Overapprox overapprItem : overappr) {
@@ -2890,7 +2893,7 @@ public class CHandler implements ICHandler {
 		stmt.add(ifStatement);
 
 		final IdentifierExpression tmpExpr = new IdentifierExpression(loc, tmpName);
-		return new ExpressionResult(stmt, new RValue(tmpExpr, rePositive.lrVal.getCType()), decl, auxVars, overappr);
+		return new ExpressionResult(stmt, new RValue(tmpExpr, opPositive.lrVal.getCType()), decl, auxVars, overappr);
 	}
 
 	@Override
