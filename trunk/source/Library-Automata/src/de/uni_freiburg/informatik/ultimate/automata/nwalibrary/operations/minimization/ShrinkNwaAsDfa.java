@@ -149,12 +149,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 		// internals and calls
 		while (mWorkList.hasNext()) {
 			// cancel if signal is received
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				throw new AutomataOperationCanceledException(this.getClass());
-			}
-			
-			// cancel if signal is received
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (isCancelationRequested()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 			

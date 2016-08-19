@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
@@ -40,11 +40,11 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 
 public class PetriNetUnfolder<S, C>
 		extends UnaryNetOperation<S, C>
@@ -149,7 +149,7 @@ public class PetriNetUnfolder<S, C>
 	 *            if false, the complete finite Prefix will be build.
 	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
-	public PetriNetUnfolder(final AutomataLibraryServices services, 
+	public PetriNetUnfolder(final AutomataLibraryServices services,
 			final PetriNetJulian<S, C> operand, final order order,
 			final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
 			throws AutomataOperationCanceledException {
@@ -238,7 +238,7 @@ public class PetriNetUnfolder<S, C>
 			// assert (false);
 			// }
 
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (isCancelationRequested()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}

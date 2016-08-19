@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
@@ -37,12 +37,12 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.util.IPartition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor.ReachFinal;
@@ -479,7 +479,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 */
 	protected final void checkForContinuation()
 			throws AutomataOperationCanceledException {
-		if (!mServices.getProgressMonitorService().continueProcessing()) {
+		if (isCancelationRequested()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 	}

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
@@ -405,7 +405,7 @@ public class ShrinkNwa<LETTER, STATE>
 			// iterative refinement
 			while (mWorkListIntCall.hasNext()) {
 				// cancel if signal is received
-				if (!mServices.getProgressMonitorService().continueProcessing()) {
+				if (isCancelationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 
@@ -421,16 +421,12 @@ public class ShrinkNwa<LETTER, STATE>
 			// iterative refinement
 			outer: while (true) {
 				// cancel if signal is received
-				if (!mServices.getProgressMonitorService().continueProcessing()) {
+				if (isCancelationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
-
+				
 				// internals and calls
 				while (mWorkListIntCall.hasNext()) {
-					// cancel if signal is received
-					if (!mServices.getProgressMonitorService().continueProcessing()) {
-						throw new AutomataOperationCanceledException(this.getClass());
-					}
 
 					final EquivalenceClass a = mWorkListIntCall.next();
 
@@ -454,7 +450,12 @@ public class ShrinkNwa<LETTER, STATE>
 						}
 					}
 				}
-
+				
+				// cancel if signal is received
+				if (isCancelationRequested()) {
+					throw new AutomataOperationCanceledException(this.getClass());
+				}
+				
 				// return predecessors
 				if (mWorkListRet.hasNext()) {
 

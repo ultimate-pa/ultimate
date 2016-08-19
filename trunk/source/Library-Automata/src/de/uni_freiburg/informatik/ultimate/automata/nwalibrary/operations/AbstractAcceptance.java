@@ -123,7 +123,7 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 			configurations.addAll(configurations);
 		}
 		for (final ArrayDeque<STATE> config : configurations) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (isCancelationRequested()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 			

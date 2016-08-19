@@ -60,7 +60,7 @@ public class IsDeterministic<LETTER,STATE>
 		mLogger.info(startMessage());
 		final TotalizeNwa<LETTER, STATE> totalized =
 				new TotalizeNwa<LETTER, STATE>(operand, mStateFactory);
-		if (!mServices.getProgressMonitorService().continueProcessing()) {
+		if (isCancelationRequested()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 		mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, totalized);

@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
@@ -169,7 +169,7 @@ public class MinimizeSevpa<LETTER,STATE>
 					throws AutomataOperationCanceledException {
 		
 		// cancel if signal is received
-		if (!mServices.getProgressMonitorService().continueProcessing()) {
+		if (isCancelationRequested()) {
 			throw new AutomataOperationCanceledException(getClass());
 		}
 		
@@ -205,16 +205,16 @@ public class MinimizeSevpa<LETTER,STATE>
 					assertStatesSeparation(equivalenceClasses));
 			mPartition = new Partition(mOperand, states.size());
 			
-			for (final Set<STATE> ecSet : equivalenceClasses) { 
-				assert ! ecSet.isEmpty(); 
-				mPartition.addEquivalenceClass( 
-						new EquivalenceClass(ecSet, 
-								mOperand.isFinal(ecSet.iterator().next()))); 
+			for (final Set<STATE> ecSet : equivalenceClasses) {
+				assert ! ecSet.isEmpty();
+				mPartition.addEquivalenceClass(
+						new EquivalenceClass(ecSet,
+								mOperand.isFinal(ecSet.iterator().next())));
 			}
 		}
 		
 		/*
-		 * delete states container data structure 
+		 * delete states container data structure
 		 * (not totally possible in Java)
 		 */
 		states.delete();
@@ -392,7 +392,7 @@ public class MinimizeSevpa<LETTER,STATE>
 				a.delete();
 				
 				// cancel iteration iff cancel signal is received
-				if (!mServices.getProgressMonitorService().continueProcessing()) {
+				if (isCancelationRequested()) {
 					throw new AutomataOperationCanceledException(getClass());
 				}
 			}
@@ -499,7 +499,7 @@ public class MinimizeSevpa<LETTER,STATE>
 				final Iterator<STATE> iterator = a.iterator();
 				while (iterator.hasNext()) {
 					final STATE state = iterator.next();
-					for (final IncomingReturnTransition<LETTER, STATE> inTrans : 
+					for (final IncomingReturnTransition<LETTER, STATE> inTrans :
 								partition.hierPredIncoming(state, letter)) {
 						final EquivalenceClass ec = partition.getEquivalenceClass(
 								inTrans.getHierPred());
@@ -511,7 +511,7 @@ public class MinimizeSevpa<LETTER,STATE>
 						for (final IncomingReturnTransition<LETTER, STATE> inTransInner :
 								partition.linPredIncoming(state,
 									inTrans.getHierPred(), letter)) {
-							linSet.add(inTransInner.getLinPred());							
+							linSet.add(inTransInner.getLinPred());
 						}
 					}
 				}
@@ -546,7 +546,7 @@ public class MinimizeSevpa<LETTER,STATE>
 				final Iterator<STATE> iterator = a.iterator();
 				final Collection<STATE> hierPreds = new HashSet<STATE>();
 				while (iterator.hasNext()) {
-					for (final IncomingReturnTransition<LETTER, STATE> inTrans : 
+					for (final IncomingReturnTransition<LETTER, STATE> inTrans :
 							partition.hierPredIncoming(iterator.next(), letter)) {
 						hierPreds.add(inTrans.getHierPred());
 					}
@@ -761,7 +761,7 @@ public class MinimizeSevpa<LETTER,STATE>
 	
 	/**
 	 * split hierarchical predecessors of outgoing return transitions
-	 *  
+	 * 
 	 * @param a target set of which X shall be computed
 	 * @param partition partition of the states
 	 * @param alphabet collection of return letters
@@ -838,7 +838,7 @@ public class MinimizeSevpa<LETTER,STATE>
 		for (final EquivalenceClass ec : intersected) {
 			/*
 			 * if Y is empty, then the intersection is not needed
-			 * and the states can be restored 
+			 * and the states can be restored
 			 */
 			if (!ec.isEmpty()) {
 				++mSplitsWithChange;
@@ -1035,8 +1035,8 @@ public class MinimizeSevpa<LETTER,STATE>
 		 * 
 		 * @param partition partition of the states
 		 * @param iterable collection of possible successor states
-		 * @param equivalenceClass equivalence class of successor state 
-		 * @return true iff there is an equivalent successor state 
+		 * @param equivalenceClass equivalence class of successor state
+		 * @return true iff there is an equivalent successor state
 		 */
 		private boolean checkExistenceOfSimilarTransition(
 				final Partition partition,
@@ -1686,7 +1686,7 @@ public class MinimizeSevpa<LETTER,STATE>
 		 * @param state state for equivalence class
 		 * @param equivalenceClass equivalence class
 		 */
-		protected void setEquivalenceClass(final STATE state, 
+		protected void setEquivalenceClass(final STATE state,
 									final EquivalenceClass equivalenceClass) {
 			mMapState2EquivalenceClass.put(state, equivalenceClass);
 		}
@@ -2394,7 +2394,7 @@ public class MinimizeSevpa<LETTER,STATE>
 				case NONE :
 					assert false;
 					return null;
-				default : 
+				default :
 					assert false;
 					return null;
 			}
@@ -2465,7 +2465,7 @@ public class MinimizeSevpa<LETTER,STATE>
 				};
 			case NONE :
 				return mParentOperand.getFinalStates().iterator();
-			default : 
+			default :
 				assert false;
 				return null;
 			}

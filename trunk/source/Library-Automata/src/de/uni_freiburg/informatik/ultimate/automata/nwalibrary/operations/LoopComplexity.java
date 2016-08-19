@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
@@ -38,10 +38,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AutomatonSccComputation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
@@ -85,14 +85,14 @@ public class LoopComplexity<LETTER, STATE>
 		super(services, operand);
 
 		if (operand instanceof NestedWordAutomatonReachableStates) {
-			mOperand = (NestedWordAutomatonReachableStates<LETTER, STATE>) operand;
+			mOperand = operand;
 		} else {
 			mOperand = (new RemoveUnreachable<LETTER, STATE>(mServices, operand)).getResult();
 		}
 
 		mGraph = constructGraph();
 
-		mLogger.info(this.startMessage());
+		mLogger.info(startMessage());
 
 		mResult = computeLoopComplexityOfSubgraph(mGraph.getStates());
 		mLogger.info(this.exitMessage());
@@ -161,7 +161,7 @@ public class LoopComplexity<LETTER, STATE>
 
 			for (final STATE stateOut : nonchainStates) {
 				// Check for cancel button.
-				if (!mServices.getProgressMonitorService().continueProcessing()) {
+				if (isCancelationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 

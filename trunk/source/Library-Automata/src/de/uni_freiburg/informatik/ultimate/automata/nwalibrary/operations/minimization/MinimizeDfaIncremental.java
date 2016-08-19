@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
@@ -273,7 +273,7 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 					return;
 				}
 				
-				if (!mServices.getProgressMonitorService().continueProcessing()) {
+				if (isCancelationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 				
@@ -639,7 +639,7 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 	 * 
 	 * <p>pseudocode name: UNION
 	 * 
-	 * @param tuple pair of states that shall be united  
+	 * @param tuple pair of states that shall be united
 	 */
 	private void union(final Tuple tuple) {
 		mUnionFind[find(tuple.mSecond)] = find(tuple.mFirst);
@@ -711,7 +711,7 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 	 * that hash maps must be initialized and this takes time {@code O(size)}.
 	 * Since {@code size} is in {@code O(n^2)} throughout the execution and the
 	 * sets are repeatedly recreated, this comes with a big cost.
-	 *   
+	 * 
 	 * <p>To avoid this, the map is instead cleaned for all entries, which might
 	 * hopefully be much less than all possible entries.
 	 */

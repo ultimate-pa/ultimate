@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
@@ -36,12 +36,12 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 
 public class Accepts<S, C>
 		extends UnaryNetOperation<S, C>
@@ -58,7 +58,7 @@ public class Accepts<S, C>
 	 * @param word word
 	 * @throws AutomataLibraryException if construction fails
 	 */
-	public Accepts(final AutomataLibraryServices services, 
+	public Accepts(final AutomataLibraryServices services,
 			final IPetriNet<S, C> net, final Word<S> word)
 					throws AutomataLibraryException {
 		super(services, net);
@@ -96,17 +96,17 @@ public class Accepts<S, C>
 		}
 		
 		
-		if (!mServices.getProgressMonitorService().continueProcessing()) {
+		if (isCancelationRequested()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 
 		final S symbol = mWord.getSymbol(position);
 		if (!mOperand.getAlphabet().contains(symbol)) {
 			throw new IllegalArgumentException("Symbol " + symbol
-					+ " not in alphabet"); 
+					+ " not in alphabet");
 		}
 
-		final HashSet<ITransition<S, C>> activeTransitionsWithTheSymbol = 
+		final HashSet<ITransition<S, C>> activeTransitionsWithTheSymbol =
 											new HashSet<ITransition<S, C>>();
 
 		// get all active transitions which are labeled with the next symbol

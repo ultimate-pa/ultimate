@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
@@ -48,18 +48,18 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Abstra
  * @author heizmann@informatik.uni-freiburg.de
  *
  * @param <LETTER> Symbol. Type of the symbols used as alphabet.
- * @param <STATE> Content. Type of the labels ("the content") of the automata states. 
+ * @param <STATE> Content. Type of the labels ("the content") of the automata states.
  */
 public class BuchiAccepts<LETTER,STATE>
 		extends AbstractAcceptance<LETTER,STATE>
 		implements IOperation<LETTER,STATE> {
 	/**
-	 * stem of the nested lasso word whose acceptance is checked 
+	 * stem of the nested lasso word whose acceptance is checked
 	 */
 	private NestedWord<LETTER> mStem;
 	
 	/**
-	 * loop of the nested lasso word whose acceptance is checked 
+	 * loop of the nested lasso word whose acceptance is checked
 	 */
 	private NestedWord<LETTER> mLoop;
 	
@@ -117,13 +117,13 @@ public class BuchiAccepts<LETTER,STATE>
 	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + " Operand " + mOperand.sizeInformation() 
-				+ " Stem has " + mStem.length() + " letters." 
+		return "Start " + operationName() + " Operand " + mOperand.sizeInformation()
+				+ " Stem has " + mStem.length() + " letters."
 				+ " Loop has " + mLoop.length() + " letters.";
 	}
 
 	private boolean buchiAccepts() throws AutomataLibraryException {
-		// First compute all states in which the automaton can be after 
+		// First compute all states in which the automaton can be after
 		// processing the stem and lasso^*
 		// Honda denotes the part of the lasso where stem and loop are connected.
 		// Therefore we call theses stats Honda states.
@@ -133,7 +133,7 @@ public class BuchiAccepts<LETTER,STATE>
 			for (int i = 0; i < mStem.length(); i++) {
 				currentConfigs = successorConfigurations(currentConfigs, mStem, i,
 						mOperand, false);
-				if (!mServices.getProgressMonitorService().continueProcessing()) {
+				if (isCancelationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
@@ -147,7 +147,7 @@ public class BuchiAccepts<LETTER,STATE>
 			for (int i = 0; i < mLoop.length(); i++) {
 				currentConfigs = successorConfigurations(
 						currentConfigs, mLoop, i, mOperand, false);
-				if (!mServices.getProgressMonitorService().continueProcessing()) {
+				if (isCancelationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
@@ -182,9 +182,9 @@ public class BuchiAccepts<LETTER,STATE>
 		final Set<STATE> visitedatHondaNonAccepting = new HashSet<STATE>();
 		final Set<STATE> singletonStateSet = new HashSet<STATE>();
 		singletonStateSet.add(hondaState);
-		final Set<ArrayDeque<STATE>> singletonConfigSet = 
+		final Set<ArrayDeque<STATE>> singletonConfigSet =
 				emptyStackConfiguration(singletonStateSet);
-		currentConfigsVisitedAccepting = 
+		currentConfigsVisitedAccepting =
 				removeAcceptingConfigurations(singletonConfigSet, mOperand);
 		currentConfigsNotVisitedAccepting = singletonConfigSet;
 		while (!currentConfigsNotVisitedAccepting.isEmpty() || !currentConfigsVisitedAccepting.isEmpty()) {
@@ -193,17 +193,17 @@ public class BuchiAccepts<LETTER,STATE>
 						currentConfigsVisitedAccepting, mLoop, i, mOperand, false);
 				currentConfigsNotVisitedAccepting = successorConfigurations(
 						currentConfigsNotVisitedAccepting, mLoop, i, mOperand, false);
-				final Set<ArrayDeque<STATE>> justVisitedAccepting = 
+				final Set<ArrayDeque<STATE>> justVisitedAccepting =
 						removeAcceptingConfigurations(currentConfigsNotVisitedAccepting, mOperand);
 				currentConfigsVisitedAccepting.addAll(justVisitedAccepting);
-				if (!mServices.getProgressMonitorService().continueProcessing()) {
+				if (isCancelationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
 			
 			// since pending returns are not allowed we omit considering stack:
-			// if state was visited at honda we do not need to analyze another 
-			// run starting at this state. 
+			// if state was visited at honda we do not need to analyze another
+			// run starting at this state.
 			removeAllWhoseTopmostElementIsOneOf(
 								currentConfigsVisitedAccepting, visitedatHondaAccepting);
 			removeAllWhoseTopmostElementIsOneOf(

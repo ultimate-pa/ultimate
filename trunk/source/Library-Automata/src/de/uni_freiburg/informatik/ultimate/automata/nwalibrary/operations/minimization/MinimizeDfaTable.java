@@ -145,8 +145,7 @@ public class MinimizeDfaTable<LETTER,STATE>
 						}
 					}
 				}
-				if (mServices.getProgressMonitorService() != null
-						&& !mServices.getProgressMonitorService().continueProcessing()) {
+				if (isCancelationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
