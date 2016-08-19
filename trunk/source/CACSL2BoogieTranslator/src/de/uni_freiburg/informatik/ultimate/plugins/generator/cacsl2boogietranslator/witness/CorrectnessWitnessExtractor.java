@@ -263,7 +263,10 @@ public class CorrectnessWitnessExtractor {
 		if (down.isEmpty()) {
 			mLogger.warn("Downward matching could not match anything");
 		} else {
+			// if downward matched something, we take this as it is most likely the correct loop -- we only use upward
+			// matching if downward matching failed completely.
 			mLogger.warn("Downward matching could not match all canidates");
+			return down;
 		}
 
 		// try to match the remaining loop heads upwards
@@ -551,10 +554,15 @@ public class CorrectnessWitnessExtractor {
 			if (!matchLineNumber(node)) {
 				return false;
 			}
+			final IASTStatement stmt;
 			if (!(node instanceof IASTStatement)) {
-				return false;
+				stmt = CorrectnessWitnessUtils.getEnclosingStatement(node);
+				if (stmt == null) {
+					return false;
+				}
+			} else {
+				stmt = (IASTStatement) node;
 			}
-			final IASTStatement stmt = (IASTStatement) node;
 			// we assume that node is a conditional and search for conditionals at this location
 			final Set<IASTStatement> result;
 			if (CorrectnessWitnessUtils.isBranchingStatement(stmt)) {

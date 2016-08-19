@@ -143,6 +143,28 @@ public final class CorrectnessWitnessUtils {
 		return stmt;
 	}
 
+	/**
+	 * Search for the first {@link IASTStatement} that encloses this {@link IASTNode}, i.e., the first parent that is an
+	 * IASTStatement.
+	 *
+	 * @param node
+	 *            The enclosed node.
+	 * @return The first enclosing statement or null if there is no such statement.
+	 */
+	public static IASTStatement getEnclosingStatement(final IASTNode node) {
+		if (node == null || node.getParent() == null) {
+			return null;
+		}
+		IASTNode parent = node.getParent();
+		while (parent != null) {
+			if (parent instanceof IASTStatement) {
+				return (IASTStatement) parent;
+			}
+			parent = parent.getParent();
+		}
+		return null;
+	}
+
 	private static IASTStatement getFirstOrSuccessorStatement(final IASTCompoundStatement cmpStmt) {
 		final IASTStatement[] children = cmpStmt.getStatements();
 		return children.length == 0 ? findSuccessorStatement(cmpStmt) : getFirstOrSuccessorStatement(children[0]);
