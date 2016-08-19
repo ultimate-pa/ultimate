@@ -9,8 +9,8 @@ cp ../../trunk/examples/toolchains/AutomizerAndBuchiAutomizerCWithBlockEncoding.
 cp starexec_run_default StarExecArchive/bin/
 cp Ultimate.ini StarExecArchive/Ultimate/
 cp ../../trunk/examples/settings/buchiAutomizer/termcomp2016.epf StarExecArchive/
-mkdir StarExecArchive/z3
-cp -LR ./z3 StarExecArchive/z3/
+#mkdir StarExecArchive/z3
+cp -LR ./z3 StarExecArchive/bin/
 cp starexec_run_z3test StarExecArchive/bin/
 
 cd StarExecArchive
