@@ -374,8 +374,8 @@ public class MinimizeDfaTable<LETTER,STATE>
 	    }
 	    final StringBuilder msg = new StringBuilder();
 	    msg.append("Finished ").append(operationName()).append(" Result ")
-	            .append(getResult().sizeInformation());
-	    mLogger.info(msg.toString());
+				.append(getResult().sizeInformation());
+		mLogger.info(msg.toString());
 	}
 	
 	/*_______________________________________________________________________*\
