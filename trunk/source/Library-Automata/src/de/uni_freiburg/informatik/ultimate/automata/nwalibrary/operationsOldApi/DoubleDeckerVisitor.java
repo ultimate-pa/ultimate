@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi;
@@ -722,8 +722,9 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 	 *            build automaton but are not reachable after the removal
 	 *            TODO non-existent parameter
 	 * @return true iff at least one state was removed.
+	 * @throws AutomataOperationCanceledException if operation was canceled
 	 */
-	public final boolean removeDeadEnds() {
+	public final boolean removeDeadEnds() throws AutomataOperationCanceledException {
 		final long startTime = System.currentTimeMillis();
 
 		// some states are not removed but loose inital property
@@ -745,6 +746,9 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 		}
 
 		for (final STATE state : mDeadEnds) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
 			((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).removeState(state);
 		}
 
@@ -856,8 +860,9 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 	/**
 	 * Remove all states from which only finitely many accepting states are
 	 * reachable.
+	 * @throws AutomataOperationCanceledException if operation was canceled
 	 */
-	public final void removeNonLiveStates() {
+	public final void removeNonLiveStates() throws AutomataOperationCanceledException {
 		boolean stateRemovedInInteration;
 		do {
 			if (mDeadEnds == null) {
