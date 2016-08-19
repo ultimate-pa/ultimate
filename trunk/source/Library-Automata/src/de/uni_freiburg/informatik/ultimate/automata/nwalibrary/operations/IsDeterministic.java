@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
@@ -31,9 +31,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 
 
@@ -60,6 +60,9 @@ public class IsDeterministic<LETTER,STATE>
 		mLogger.info(startMessage());
 		final TotalizeNwa<LETTER, STATE> totalized =
 				new TotalizeNwa<LETTER, STATE>(operand, mStateFactory);
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			throw new AutomataOperationCanceledException(this.getClass());
+		}
 		mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, totalized);
 		mResult = !totalized.nonDeterminismInInputDetected();
 		mNondeterministicTransitions = totalized.nondeterministicTransitionsDetected();
@@ -84,8 +87,8 @@ public class IsDeterministic<LETTER,STATE>
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Operand is " 
-					+ (mResult ? "" : "not ") + "deterministic."; 
+		return "Finished " + operationName() + " Operand is "
+					+ (mResult ? "" : "not ") + "deterministic.";
 	}
 
 	@Override

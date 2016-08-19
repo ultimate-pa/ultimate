@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton;
@@ -204,8 +204,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	}
 	
 	/**
-	 * Returns the state container for a given state. 
-	 * The visibility of this method is deliberately set package private. 
+	 * Returns the state container for a given state.
+	 * The visibility of this method is deliberately set package private.
 	 */
 	StateContainer<LETTER, STATE> getStateContainer(final STATE state) {
 		return mStates.get(state);
@@ -689,6 +689,10 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 
 			do {
 				while (!mForwardWorklist.isEmpty()) {
+					if (mServices.getProgressMonitorService() != null
+							&& !mServices.getProgressMonitorService().continueProcessing()) {
+						throw new AutomataOperationCanceledException(this.getClass());
+					}
 					final StateContainer<LETTER, STATE> cont = mForwardWorklist.remove(0);
 					cont.eraseUnpropagatedDownStates();
 					Set<STATE> newDownStatesFormSelfloops = null;
@@ -723,10 +727,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 						}
 						mDownPropagationWorklist.add(cont);
 					}
-					if (mServices.getProgressMonitorService() != null
-							&& !mServices.getProgressMonitorService().continueProcessing()) {
-						throw new AutomataOperationCanceledException(this.getClass());
-					}
 				}
 				while (mForwardWorklist.isEmpty() && !mDownPropagationWorklist.isEmpty()) {
 					if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -753,7 +753,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				for (final STATE fin : getFinalStates()) {
 					mLogger.debug(new DebugMessage("Test if can find an accepting run for final state {0}", fin));
 					final NestedRun<LETTER, STATE> run = (new RunConstructor<LETTER, STATE>(
-							mServices, 
+							mServices,
 							NestedWordAutomatonReachableStates.this, mStates.get(fin))).constructRun();
 					try {
 						assert (new Accepts<LETTER, STATE>(mServices, NestedWordAutomatonReachableStates.this, run.getWord()))
@@ -1654,9 +1654,13 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		return false;
 	}
 
-	private boolean checkTransitionsReturnedConsistent() {
+	private boolean checkTransitionsReturnedConsistent() throws AutomataOperationCanceledException {
 		boolean result = true;
 		for (final STATE state : getStates()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
+			
 			for (final IncomingInternalTransition<LETTER, STATE> inTrans : internalPredecessors(state)) {
 				result &= containsInternalTransition(inTrans.getPred(), inTrans.getLetter(), state);
 				assert result;
@@ -1994,7 +1998,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		if (mAcceptingSummaries == null) {
 			mAcceptingSummaries = new AcceptingSummariesComputation();
 		}
-		final AcceptingComponentsAnalysis<LETTER, STATE> sccComputation = 
+		final AcceptingComponentsAnalysis<LETTER, STATE> sccComputation =
 				new AcceptingComponentsAnalysis<>(this, mAcceptingSummaries, mServices, stateSubset, startStates);
 		return sccComputation.getSccComputation().getBalls();
 	}

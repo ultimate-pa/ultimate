@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi;
@@ -61,7 +61,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	 * Given an INestedWordAutomaton nwa return a NestedWordAutomaton that has
 	 * the same states, but all states that are not reachable are omitted.
 	 * Each state of the result also occurred in the input. Only the auxiliary
-	 * empty stack state of the result is different. 
+	 * empty stack state of the result is different.
 	 * 
 	 * @param nwa NWA
 	 * @throws AutomataOperationCanceledException if timeout exceeds
@@ -90,7 +90,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 			makeAutomatonTotal();
 		}
 		mLogger.info(exitMessage());
-//		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices, 
+//		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices,
 //				(IDoubleDeckerAutomaton) mTraversedNwa)).getResult() : "down states inconsistent";
 	}
 	
@@ -111,23 +111,27 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 		traverseDoubleDeckerGraph();
 		((DoubleDeckerAutomaton<LETTER,STATE>) super.mTraversedNwa).setUp2Down(getUp2DownMapping());
 		mLogger.info(exitMessage());
-//		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices, 
+//		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices,
 //				(IDoubleDeckerAutomaton) mTraversedNwa)).getResult() : "down states inconsistent";
 	}
 	
-	private void makeAutomatonTotal() {
+	private void makeAutomatonTotal() throws AutomataOperationCanceledException {
 		final STATE sinkState = mTraversedNwa.getStateFactory().createSinkStateContent();
 		final boolean isInitial = false; //mInput.getInitial().isEmpty();
 		final boolean isFinal = mComplement;
 		((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(isInitial, isFinal, sinkState);
 		
 		for (final STATE state : mTraversedNwa.getStates()) {
-			for (final LETTER letter : mTraversedNwa.getInternalAlphabet()) {				
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
+			
+			for (final LETTER letter : mTraversedNwa.getInternalAlphabet()) {
 				if (!mTraversedNwa.internalSuccessors(state,letter).iterator().hasNext()) {
 					((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addInternalTransition(state, letter, sinkState);
 				}
 			}
-			for (final LETTER letter : mTraversedNwa.getCallAlphabet()) {				
+			for (final LETTER letter : mTraversedNwa.getCallAlphabet()) {
 				if (!mTraversedNwa.callSuccessors(state,letter).iterator().hasNext()) {
 					((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addCallTransition(state, letter, sinkState);
 				}
@@ -259,10 +263,10 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 				input = mOperand;
 			} else {
 				// intersection of operand and result should be empty
-				final INestedWordAutomaton<LETTER, STATE> intersectionOperandResult = 
+				final INestedWordAutomaton<LETTER, STATE> intersectionOperandResult =
 						(new IntersectDD<LETTER, STATE>(mServices, mOperand, mTraversedNwa)).getResult();
 				correct &= (new IsEmpty<LETTER, STATE>(mServices, intersectionOperandResult)).getResult();
-				final INestedWordAutomaton<LETTER, STATE> resultSadd = 
+				final INestedWordAutomaton<LETTER, STATE> resultSadd =
 						(new ComplementDD<LETTER, STATE>(mServices, stateFactory, mOperand)).getResult();
 				input = resultSadd;
 			}
