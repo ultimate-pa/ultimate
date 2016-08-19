@@ -5,6 +5,6 @@
 
 
 int main() {
-    // assert (unsigned char) -1 == 255;
+    //@ assert (unsigned char) -1 == 255;
 	return 0;
 }
