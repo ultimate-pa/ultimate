@@ -352,7 +352,7 @@
 								<include>**/*.java</include>
 							</includes>
 							<excludes>
-								<exclude>**/UltimateTest/**/*.java</exclude>
+								<exclude>**/ultimatetest/suites/**/*.java</exclude>
 							</excludes>
 						</configuration>
 					</plugin>
