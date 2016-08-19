@@ -426,6 +426,10 @@ public class MapEliminator {
 		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(transformula.getFormula().getFreeVars()));
 		for (final Entry<IProgramVar, Term> entry : transformula.getInVars().entrySet()) {
 			final Term inVar = entry.getValue();
+			// Make sure, constants are not removed from in-/out-vars
+			if (SmtUtils.isUninterpretedFunction(inVar)) {
+				continue;
+			}
 			final IProgramVar var = entry.getKey();
 			if (inVar.getSort().isArraySort()) {
 				inVarsToRemove.add(var);
@@ -476,11 +480,11 @@ public class MapEliminator {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm a = (ApplicationTerm) term;
 			final FunctionSymbol function = a.getFunction();
-			if ("select".equals(function.getName()) || !function.isIntern()) {
-				// Handle array read / uf-call
+			final Term[] params = a.getParameters();
+			if ("select".equals(function.getName()) || !function.isIntern() && params.length != 0) {
+				// Handle array read / uf-call (contstants shouldn't be replaced)
 				return processRead(term, transformula, assignedVars, invariants, overapproximate);
 			}
-			final Term[] params = a.getParameters();
 			if ("=".equals(function.getName()) && params[0].getSort().isArraySort()) {
 				// Handle array assignment
 				return processArrayAssignment(term, transformula, assignedVars, invariants, overapproximate);
@@ -513,7 +517,8 @@ public class MapEliminator {
 			final Term array = multiDimensionalSelect.getArray();
 			// If there is a select-store-expression, create an aux-var
 			if (SmtUtils.isFunctionApplication(array, "store")) {
-				final ArrayIndex index = multiDimensionalSelect.getIndex();
+				final ArrayIndex index = processArrayIndex(multiDimensionalSelect.getIndex(), transformula,
+						assignedVars, invariants, overapproximate);
 				final ArrayWrite arrayWrite = new ArrayWrite(array);
 				final Set<ArrayIndex> processedIndices = new HashSet<>();
 				final TermVariable auxVar = mManagedScript.constructFreshTermVariable("aux", term.getSort());
@@ -540,11 +545,12 @@ public class MapEliminator {
 			}
 		}
 		// Otherwise just return the corresponding variable
-		final Term globalTerm = translateTermVariablesToDefinitions(mScript, transformula, term);
 		if (allVariablesAreInVars(term, transformula)) {
+			final Term globalTerm = translateTermVariablesToDefinitions(mScript, transformula, term);
 			return getLocalTerm(globalTerm, transformula, assignedVars, true);
 		}
 		if (allVariablesAreOutVars(term, transformula)) {
+			final Term globalTerm = translateTermVariablesToDefinitions(mScript, transformula, term);
 			return getLocalTerm(globalTerm, transformula, assignedVars, false);
 		}
 		// If the term contains "mixed" vars or aux-vars, an aux-var is returned
@@ -556,6 +562,7 @@ public class MapEliminator {
 		return mSelectToAuxVars.get(term);
 	}
 
+	// TODO: Enable implications by argument (old map-elimination uses these implications)
 	private Term processArrayAssignment(final Term term, final TransFormulaLR transformula,
 			final Set<Term> assignedVars, final EqualityAnalysisResult invariants, final boolean overapproximate) {
 		final ArrayWrite arrayWrite = new ArrayWrite(term);
