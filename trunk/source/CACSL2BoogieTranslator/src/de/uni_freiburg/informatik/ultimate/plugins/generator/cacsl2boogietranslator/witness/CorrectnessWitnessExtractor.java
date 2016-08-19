@@ -574,7 +574,8 @@ public class CorrectnessWitnessExtractor {
 				return false;
 			}
 			if (result.size() > 1) {
-				throw new UnsupportedOperationException("cannot handle multiple matches");
+				mLogger.warn("Possible match is too ambiguous");
+				return false;
 			}
 
 			final IASTStatement branchingSuccessor =
