@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
@@ -47,8 +47,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Buchi Complementation based on 
+ * Buchi Complementation based on
  * 2004ATVA - Friedgut,Kupferman,Vardi - Büchi Complementation Made Tighter
+ * 
+ * TODO Christian 2016-08-19: Writes <tt>"bigX"</tt> to logger on <tt>WARN</tt> level in a loop, i.e., spams a lot.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
@@ -106,7 +108,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE>
 	 * Highest rank that occured during the construction. Used only for
 	 *  statistics.
 	 */
-	private int mHighestRank = -1;	
+	private int mHighestRank = -1;
 	
 	private final MultiOptimizationLevelRankingGenerator<LETTER, STATE, LevelRankingConstraint<LETTER, STATE>>
 		mLevelRankingGenerator;
@@ -126,7 +128,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE>
 		mStateFactory = stateFactory;
 		mCache = new NestedWordAutomatonCache<LETTER, STATE>(
 				mServices,
-				operand.getInternalAlphabet(), operand.getCallAlphabet(), 
+				operand.getInternalAlphabet(), operand.getCallAlphabet(),
 				operand.getReturnAlphabet(), mStateFactory);
 		mStateDeterminizer = stateDeterminizer;
 		mUserDefinedMaxRank = userDefinedMaxRank;
@@ -138,7 +140,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE>
 	
 	private void constructInitialState() {
 		final DeterminizedState<LETTER,STATE> detState = mStateDeterminizer.initialState();
-		getOrAdd(detState, true);	
+		getOrAdd(detState, true);
 	}
 	
 	private STATE constructSinkState() {
