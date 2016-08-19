@@ -35,10 +35,10 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.LexicographicRankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -87,7 +87,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsDec(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
 		final List<List<List<List<LinearInequality>>>> constraints =
 				new ArrayList<List<List<List<LinearInequality>>>>();
 		
@@ -121,7 +121,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsNonInc(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
 		final List<List<List<List<LinearInequality>>>> constraints =
 				new ArrayList<List<List<List<LinearInequality>>>>();
 		// /\_i (T_i^≤ \/ \/_{j < i} T_j^<)
@@ -143,7 +143,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsBounded(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
 		final List<List<List<List<LinearInequality>>>> constraints =
 				new ArrayList<List<List<List<LinearInequality>>>>();
 		
@@ -170,7 +170,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	@Override
 	public List<String> getAnnotationsDec() {
 		// TODO
-		final Map<RankVar, Term> empty = Collections.emptyMap();
+		final Map<IProgramVar, Term> empty = Collections.emptyMap();
 		return blankAnnotations(getConstraintsDec(empty, empty).size());
 	}
 
@@ -178,14 +178,14 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	@Override
 	public List<String> getAnnotationsNonInc() {
 		// TODO
-		final Map<RankVar, Term> empty = Collections.emptyMap();
+		final Map<IProgramVar, Term> empty = Collections.emptyMap();
 		return blankAnnotations(getConstraintsNonInc(empty, empty).size());
 	}
 
 	@Override
 	public List<String> getAnnotationsBounded() {
 		// TODO
-		final Map<RankVar, Term> empty = Collections.emptyMap();
+		final Map<IProgramVar, Term> empty = Collections.emptyMap();
 		return blankAnnotations(getConstraintsBounded(empty, empty).size());
 	}
 	
@@ -195,17 +195,17 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	}
 	
 	@Override
-	public Collection<Term> getVariables() {
+	public Collection<Term> getCoefficients() {
 		final List<Term> variables = new ArrayList<Term>();
 		for (final ComposableTemplate t : mParts) {
-			variables.addAll(t.getVariables());
+			variables.addAll(t.getCoefficients());
 		}
 		return variables;
 	}
 
 	@Override
 	public int getDegree() {
-		final Map<RankVar, Term> empty = Collections.emptyMap();
+		final Map<IProgramVar, Term> empty = Collections.emptyMap();
 		return TemplateComposition.computeDegree(getConstraintsBounded(empty, empty))
 				+ TemplateComposition.computeDegree(getConstraintsDec(empty, empty));
 	}

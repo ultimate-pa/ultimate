@@ -33,7 +33,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.FairSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.SimulationPerformance;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.NwaSimulationUtil;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
@@ -132,14 +135,41 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 	 */
 	@Override
 	public void doSimulation() throws AutomataOperationCanceledException {
-		// super.doSimulation();
-		// getProgressTimer());
+		super.doSimulation();
 
-		// getLogger().debug(getGameGraph().toAtsFormat());
+		// TODO Remove debug stuff when finished
+		// Print some debug stuff
+		if (getLogger().isDebugEnabled()) {
+			getLogger().debug("Simulation results (filtered):");
+			for (final Vertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
+				final int progressMeasure = vertex.getPM(null, getGameGraph().getGlobalInfinity());
+				if (!(vertex instanceof SpoilerNwaVertex<?, ?>)
+						|| (progressMeasure >= getGameGraph().getGlobalInfinity() && (vertex.getQ0() != vertex.getQ1()))
+						|| (progressMeasure < getGameGraph().getGlobalInfinity()
+								&& (vertex.getQ0() == vertex.getQ1()))) {
+					continue;
+				}
+				String progressMeasureText = progressMeasure + "";
+				if (progressMeasure >= getGameGraph().getGlobalInfinity()) {
+					progressMeasureText = "inf";
+				}
+				getLogger().debug("\t(" + vertex.isB() + "," + vertex.getQ0() + "," + vertex.getQ1() + ") = "
+						+ progressMeasureText);
+			}
+		}
+	}
 
-		// Dummy result
-		setResult(getGameGraph().generateAutomatonFromGraph());
-		// TODO Implement some different stuff
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * simulation.fair.FairSimulation#doFollowingSimulation(de.uni_freiburg.
+	 * informatik.ultimate.automata.nwalibrary.operations.simulation.performance
+	 * .SimulationPerformance)
+	 */
+	@Override
+	protected void doFollowingSimulation(final SimulationPerformance performance) {
+		// TODO Draw up how this step should work for NWA automata.
 	}
 
 	/*

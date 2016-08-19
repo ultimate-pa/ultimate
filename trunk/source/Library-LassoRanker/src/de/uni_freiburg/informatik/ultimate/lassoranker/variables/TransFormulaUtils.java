@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -44,8 +43,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 
 /**
  * Some static methods for TransFormulaLR 
@@ -56,7 +56,7 @@ public class TransFormulaUtils {
 
 
 
-	public static boolean allVariablesAreInVars(List<Term> terms, TransFormulaLR tf) {
+	public static boolean allVariablesAreInVars(final List<Term> terms, final TransFormulaLR tf) {
 		for (final Term term : terms) {
 			if (!allVariablesAreInVars(term, tf)) {
 				return false;
@@ -65,7 +65,7 @@ public class TransFormulaUtils {
 		return true;
 	}
 
-	public static boolean allVariablesAreOutVars(List<Term> terms, TransFormulaLR tf) {
+	public static boolean allVariablesAreOutVars(final List<Term> terms, final TransFormulaLR tf) {
 		for (final Term term : terms) {
 			if (!allVariablesAreOutVars(term, tf)) {
 				return false;
@@ -74,7 +74,7 @@ public class TransFormulaUtils {
 		return true;
 	}
 	
-	public static boolean allVariablesAreVisible(List<Term> terms, TransFormulaLR tf) {
+	public static boolean allVariablesAreVisible(final List<Term> terms, final TransFormulaLR tf) {
 		for (final Term term : terms) {
 			if (!allVariablesAreVisible(term, tf)) {
 				return false;
@@ -83,7 +83,7 @@ public class TransFormulaUtils {
 		return true;
 	}
 
-	public static boolean allVariablesAreInVars(Term term, TransFormulaLR tf) {
+	public static boolean allVariablesAreInVars(final Term term, final TransFormulaLR tf) {
 		for (final TermVariable tv : term.getFreeVars()) {
 			if (!isInvar(tv, tf)) {
 				return false;
@@ -92,7 +92,7 @@ public class TransFormulaUtils {
 		return true;
 	}
 
-	public static boolean allVariablesAreOutVars(Term term, TransFormulaLR tf) {
+	public static boolean allVariablesAreOutVars(final Term term, final TransFormulaLR tf) {
 		for (final TermVariable tv : term.getFreeVars()) {
 			if (!isOutvar(tv, tf)) {
 				return false;
@@ -101,7 +101,7 @@ public class TransFormulaUtils {
 		return true;
 	}
 	
-	public static boolean allVariablesAreVisible(Term term, TransFormulaLR tf) {
+	public static boolean allVariablesAreVisible(final Term term, final TransFormulaLR tf) {
 		for (final TermVariable tv : term.getFreeVars()) {
 			if (isVisible(tv, tf)) {
 				// do nothing
@@ -112,64 +112,64 @@ public class TransFormulaUtils {
 		return true;
 	}
 
-	private static boolean isVisible(TermVariable tv, TransFormulaLR tf) {
+	private static boolean isVisible(final TermVariable tv, final TransFormulaLR tf) {
 		return tf.getOutVarsReverseMapping().keySet().contains(tv) || 
 				tf.getInVarsReverseMapping().keySet().contains(tv);
 	}
 
-	public static boolean isInvar(TermVariable tv, TransFormulaLR tf) {
+	public static boolean isInvar(final TermVariable tv, final TransFormulaLR tf) {
 		return tf.getInVarsReverseMapping().keySet().contains(tv);
 	}
 
-	public static boolean isOutvar(TermVariable tv, TransFormulaLR tf) {
+	public static boolean isOutvar(final TermVariable tv, final TransFormulaLR tf) {
 		return tf.getOutVarsReverseMapping().keySet().contains(tv);
 	}
 	
-	public static boolean isVar(TermVariable tv, TransFormulaLR tf) {
+	public static boolean isVar(final TermVariable tv, final TransFormulaLR tf) {
 		return tf.getOutVarsReverseMapping().keySet().contains(tv);
 	}
 	
 	
 	/**
 	 * Replace in term all {@link TermVariable} that are the <i>default 
-	 * {@link TermVariable}s</i> of a given {@link BoogieVar} by the default
-	 * constant for this {@link BoogieVar}.
-	 * @param rvf {@link ReplacementVarFactory} that maps {@link BoogieVar}s to 
-	 * the corresponding {@link RankVar}
+	 * {@link TermVariable}s</i> of a given {@link IProgramVar} by the default
+	 * constant for this {@link IProgramVar}.
+	 * @param rvf {@link ReplacementVarFactory} that maps {@link IProgramVar}s to 
+	 * the corresponding {@link IProgramVar}
 	 * @param symbTab {@link Boogie2SmtSymbolTable} that maps 
-	 * {@link TermVariable} to {@link BoogieVar}s (for the {@link TermVariable}s
-	 * that are default {@link TermVariable}s of {@link BoogieVar}s. 
-	 * @param tf {@link TransFormulaLR} whose mapping from {@link RankVar}s to
+	 * {@link TermVariable} to {@link IProgramVar}s (for the {@link TermVariable}s
+	 * that are default {@link TermVariable}s of {@link IProgramVar}s. 
+	 * @param tf {@link TransFormulaLR} whose mapping from {@link IProgramVar}s to
 	 * inVars is used.
 	 */
-	public static Term renameToDefaultConstants(Script script, Boogie2SmtSymbolTable symbTab, TransFormulaLR tf, Term term) {
+	public static Term renameToDefaultConstants(final Script script, final Boogie2SmtSymbolTable symbTab, final TransFormulaLR tf, final Term term) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final TermVariable tv : term.getFreeVars()) {
-			final BoogieVar bv = symbTab.getBoogieVar(tv);
+			final IProgramVar bv = symbTab.getBoogieVar(tv);
 			if (bv == null) {
 				throw new IllegalArgumentException("term contains unknown variable");
 			}
 			substitutionMapping.put(tv, bv.getDefaultConstant());
 		}
-		final Term result = (new SafeSubstitution(script, substitutionMapping)).transform(term);
+		final Term result = (new Substitution(script, substitutionMapping)).transform(term);
 		return result;
 	}
-	public static Term renameToPrimedConstants(Script script, Boogie2SmtSymbolTable symbTab, TransFormulaLR tf, Term term) {
+	public static Term renameToPrimedConstants(final Script script, final Boogie2SmtSymbolTable symbTab, final TransFormulaLR tf, final Term term) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final TermVariable tv : term.getFreeVars()) {
-			final BoogieVar bv = symbTab.getBoogieVar(tv);
+			final IProgramVar bv = symbTab.getBoogieVar(tv);
 			if (bv == null) {
 				throw new IllegalArgumentException("term contains unknown variable");
 			}
 			substitutionMapping.put(tv, bv.getPrimedConstant());
 		}
-		final Term result = (new SafeSubstitution(script, substitutionMapping)).transform(term);
+		final Term result = (new Substitution(script, substitutionMapping)).transform(term);
 		return result;
 	}
 
-	public static LBool implies(IUltimateServiceProvider services, ILogger logger, 
-			TransFormulaLR antecedent, TransFormulaLR consequent, 
-			Script script, Boogie2SmtSymbolTable symbTab) {
+	public static LBool implies(final IUltimateServiceProvider services, final ILogger logger, 
+			final TransFormulaLR antecedent, final TransFormulaLR consequent, 
+			final Script script, final Boogie2SmtSymbolTable symbTab) {
 		final Term antecentTerm = renameToConstants(services, logger, script, symbTab, antecedent);
 		final Term consequentTerm = renameToConstants(services, logger, script, symbTab, consequent);
 		script.push(1);
@@ -187,39 +187,35 @@ public class TransFormulaUtils {
 	 * @param services 
 	 * @param logger 
 	 */
-	private static Term renameToConstants(IUltimateServiceProvider services, ILogger logger, Script script,
-			Boogie2SmtSymbolTable symbTab, 
-			TransFormulaLR tf) {
+	private static Term renameToConstants(final IUltimateServiceProvider services, final ILogger logger, final Script script,
+			final Boogie2SmtSymbolTable symbTab, 
+			final TransFormulaLR tf) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
+		for (final Entry<IProgramVar, Term> entry : tf.getInVars().entrySet()) {
 			if (entry.getKey() instanceof ReplacementVar) {
-				final Term definition = entry.getKey().getDefinition();
+				final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
 				final Term renamedDefinition = renameToDefaultConstants(script, symbTab, tf, definition);
 				substitutionMapping.put(entry.getValue(), renamedDefinition);
-			} else if (entry.getKey() instanceof BoogieVarWrapper) {
-				final BoogieVar bv = ((BoogieVarWrapper) entry.getKey()).getBoogieVar();
+			} else  {
+				final IProgramVar bv = entry.getKey();
 				substitutionMapping.put(entry.getValue(), bv.getDefaultConstant());
-			} else {
-				throw new UnsupportedOperationException("Unknown RankVar " + entry.getKey().getClass().getSimpleName());
 			} 
 		}
-		for (final Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
+		for (final Entry<IProgramVar, Term> entry : tf.getOutVars().entrySet()) {
 			if (entry.getKey() instanceof ReplacementVar) {
-				final Term definition = entry.getKey().getDefinition();
+				final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
 				final Term renamedDefinition = renameToPrimedConstants(script, symbTab, tf, definition);
 				substitutionMapping.put(entry.getValue(), renamedDefinition);
-			} else if (entry.getKey() instanceof BoogieVarWrapper) {
-				final BoogieVar bv = ((BoogieVarWrapper) entry.getKey()).getBoogieVar();
+			} else  {
+				final IProgramVar bv = entry.getKey();
 				substitutionMapping.put(entry.getValue(), bv.getPrimedConstant());
-			} else {
-				throw new UnsupportedOperationException("Unknown RankVar " + entry.getKey().getClass().getSimpleName());
-			}
+			} 
 		}
-		Term result = (new SafeSubstitution(script, substitutionMapping)).transform(tf.getFormula());
+		Term result = (new Substitution(script, substitutionMapping)).transform(tf.getFormula());
 		result = Util.and(script, result, constructEqualitiesForCoinciding(script, tf));
 		if (!tf.getAuxVars().isEmpty()) {
 			logger.warn(tf.getAuxVars().size() + " quantified variables");
-			final TermVariable[] auxVarsArray = tf.getAuxVars().keySet().toArray(new TermVariable[tf.getAuxVars().size()]);
+			final TermVariable[] auxVarsArray = tf.getAuxVars().toArray(new TermVariable[tf.getAuxVars().size()]);
 			result = script.quantifier(QuantifiedFormula.EXISTS, auxVarsArray, result);
 		}
 		assert (Arrays.asList(result.getFreeVars()).isEmpty()) : "there must not be a TermVariable left";
@@ -229,15 +225,15 @@ public class TransFormulaUtils {
 	/**
 	 * Compute the RankVar of a given TermVariable and return its definition. 
 	 */
-	public static Term getDefinition(TransFormulaLR tf, TermVariable tv) {
-		RankVar rv = tf.getInVarsReverseMapping().get(tv);
+	public static Term getDefinition(final TransFormulaLR tf, final TermVariable tv) {
+		IProgramVar rv = tf.getInVarsReverseMapping().get(tv);
 		if (rv == null) {
 			rv = tf.getOutVarsReverseMapping().get(tv);
 		}
 		if (rv == null) {
 			return null;
 		}
-		return rv.getDefinition();
+		return ReplacementVarUtils.getDefinition(rv);
 	}
 	
 	/**
@@ -247,8 +243,8 @@ public class TransFormulaUtils {
 	 * Throws an IllegalArgumentException if there occurs term contains a
 	 * TermVariable that does not have a RankVar (e.g., an auxiliary variable).
 	 */
-	public static Term translateTermVariablesToDefinitions(Script script, 
-			TransFormulaLR tf, Term term) {
+	public static Term translateTermVariablesToDefinitions(final Script script, 
+			final TransFormulaLR tf, final Term term) {
 		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (final TermVariable tv : term.getFreeVars()) {
 			final Term definition = getDefinition(tf, tv);
@@ -257,13 +253,13 @@ public class TransFormulaUtils {
 			}
 			substitutionMapping.put(tv, definition);
 		}
-		return (new SafeSubstitution(script, substitutionMapping)).transform(term);
+		return (new Substitution(script, substitutionMapping)).transform(term);
 	}
 
 
 	
-	public static List<Term> translateTermVariablesToDefinitions(Script script, 
-			TransFormulaLR tf, List<Term> terms) {
+	public static List<Term> translateTermVariablesToDefinitions(final Script script, 
+			final TransFormulaLR tf, final List<Term> terms) {
 		final List<Term> result = new ArrayList<Term>();
 		for (final Term term : terms) {
 			result.add(translateTermVariablesToDefinitions(script, tf, term));
@@ -272,16 +268,30 @@ public class TransFormulaUtils {
 	}
 	
 	
-	public static boolean inVarAndOutVarCoincide(RankVar rv, TransFormulaLR rf) {
+	public static Term translateTermVariablesToInVars(final Script script, 
+			final TransFormulaLR tf, final Term term, 
+			final Boogie2SmtSymbolTable symbolTable, 
+			final ReplacementVarFactory repVarFac) {
+		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		for (final TermVariable tv : term.getFreeVars()) {
+			final IProgramVar bv = symbolTable.getBoogieVar(tv);
+			final Term inVar = tf.getInVars().get(bv); 
+			substitutionMapping.put(tv, inVar);
+		}
+		return (new Substitution(script, substitutionMapping)).transform(term);
+	}
+	
+	
+	public static boolean inVarAndOutVarCoincide(final IProgramVar rv, final TransFormulaLR rf) {
 		return rf.getInVars().get(rv) == rf.getOutVars().get(rv);
 	}
 	
-	private static Term constructEqualitiesForCoinciding(Script script, TransFormulaLR tf) {
+	private static Term constructEqualitiesForCoinciding(final Script script, final TransFormulaLR tf) {
 		final ArrayList<Term> conjuncts = new ArrayList<Term>();
-		for (final RankVar rv : tf.getInVars().keySet()) {
-			if (rv instanceof BoogieVarWrapper) {
+		for (final IProgramVar rv : tf.getInVars().keySet()) {
+			if (!(rv instanceof ReplacementVar)) {
 				if (inVarAndOutVarCoincide(rv, tf)) {
-					final BoogieVar bv = ((BoogieVarWrapper) rv).getBoogieVar();
+					final IProgramVar bv = rv;
 					conjuncts.add(SmtUtils.binaryEquality(script, bv.getDefaultConstant(), bv.getPrimedConstant()));
 				}
 			}

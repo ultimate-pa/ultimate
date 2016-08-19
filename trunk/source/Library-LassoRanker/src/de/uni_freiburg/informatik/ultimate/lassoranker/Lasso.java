@@ -36,9 +36,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -138,8 +138,8 @@ public class Lasso implements Serializable {
 	/**
 	 * @return all RankVars that occur in the lasso
 	 */
-	public Collection<RankVar> getAllRankVars() {
-		final Collection<RankVar> rankVars = new LinkedHashSet<RankVar>();
+	public Collection<IProgramVar> getAllRankVars() {
+		final Collection<IProgramVar> rankVars = new LinkedHashSet<IProgramVar>();
 		rankVars.addAll(mstem.getInVars().keySet());
 		rankVars.addAll(mstem.getOutVars().keySet());
 		rankVars.addAll(mloop.getInVars().keySet());
@@ -203,8 +203,8 @@ public class Lasso implements Serializable {
 				}
 			}
 			
-			for (final Map.Entry<RankVar, Term> entry : mloop.getOutVars().entrySet()) {
-				final RankVar rkVar = entry.getKey();
+			for (final Map.Entry<IProgramVar, Term> entry : mloop.getOutVars().entrySet()) {
+				final IProgramVar rkVar = entry.getKey();
 				final Term outVar = entry.getValue();
 				
 				// Find possible aliases
@@ -257,8 +257,8 @@ public class Lasso implements Serializable {
 			return stem; // nothing to do
 		}
 		// Add variables existing in the loop to the stem
-		final Map<RankVar, Term> addVars = new HashMap<RankVar, Term>();
-		for (final Map.Entry<RankVar, Term> entry : loop.getInVars().entrySet()) {
+		final Map<IProgramVar, Term> addVars = new HashMap<IProgramVar, Term>();
+		for (final Map.Entry<IProgramVar, Term> entry : loop.getInVars().entrySet()) {
 			if (!stem.getInVars().containsKey(entry.getKey()) &&
 					!stem.getOutVars().containsKey(entry.getKey())) {
 				addVars.put(entry.getKey(), entry.getValue());
@@ -267,10 +267,10 @@ public class Lasso implements Serializable {
 		if (!addVars.isEmpty()) {
 			// Because the variable maps in LinearTransition are immutable,
 			// make a new transition and replace the old one
-			final Map<RankVar, Term> inVars =
-					new HashMap<RankVar, Term>(stem.getInVars());
-			final Map<RankVar, Term> outVars =
-					new HashMap<RankVar, Term>(stem.getOutVars());
+			final Map<IProgramVar, Term> inVars =
+					new HashMap<IProgramVar, Term>(stem.getInVars());
+			final Map<IProgramVar, Term> outVars =
+					new HashMap<IProgramVar, Term>(stem.getOutVars());
 			inVars.putAll(addVars);
 			outVars.putAll(addVars);
 			stem = new LinearTransition(stem.getPolyhedra(), inVars,
@@ -293,8 +293,8 @@ public class Lasso implements Serializable {
 		}
 		
 		// Add variables existing in the stem to the loop
-		final Map<RankVar, Term> addVars = new HashMap<RankVar, Term>();
-		for (final Map.Entry<RankVar, Term> entry : stem.getOutVars().entrySet()) {
+		final Map<IProgramVar, Term> addVars = new HashMap<IProgramVar, Term>();
+		for (final Map.Entry<IProgramVar, Term> entry : stem.getOutVars().entrySet()) {
 			if (!loop.getInVars().containsKey(entry.getKey()) &&
 					!loop.getOutVars().containsKey(entry.getKey())) {
 				addVars.put(entry.getKey(), entry.getValue());
@@ -303,10 +303,10 @@ public class Lasso implements Serializable {
 		if (!addVars.isEmpty()) {
 			// Because the variable maps in LinearTransition are immutable,
 			// make a new transition and replace the old one
-			final Map<RankVar, Term> inVars =
-					new HashMap<RankVar, Term>(loop.getInVars());
-			final Map<RankVar, Term> outVars =
-					new HashMap<RankVar, Term>(loop.getOutVars());
+			final Map<IProgramVar, Term> inVars =
+					new HashMap<IProgramVar, Term>(loop.getInVars());
+			final Map<IProgramVar, Term> outVars =
+					new HashMap<IProgramVar, Term>(loop.getOutVars());
 			inVars.putAll(addVars);
 			outVars.putAll(addVars);
 			loop = new LinearTransition(loop.getPolyhedra(), inVars,

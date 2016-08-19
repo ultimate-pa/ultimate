@@ -7,7 +7,9 @@
 // After buchiIntersect and buchiComplementFKV no state space reduction was used.
 
 
-assert(!buchiAccepts(buchiReduce(bluegreen4), [,]));
+NestedWordAutomaton reduced = buchiReduce(bluegreen1);
+print(numberOfStates(reduced));
+assert(numberOfStates(reduced) == 6);
 
 
 NestedWordAutomaton bluegreen1 = (

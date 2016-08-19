@@ -47,13 +47,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  */
 public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 
-	public MinimizeStatesSingleEdgeSingleNode(RootNode product, IUltimateServiceProvider services, IToolchainStorage storage) {
+	public MinimizeStatesSingleEdgeSingleNode(final RootNode product, final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		super(product, services, storage);
 	}
 
 	@Override
-	protected Collection<? extends RCFGNode> processCandidate(RootNode root, ProgramPoint target,
-			Set<RCFGNode> closed) {
+	protected Collection<? extends RCFGNode> processCandidate(final RootNode root, final ProgramPoint target,
+			final Set<RCFGNode> closed) {
 
 		if (target.getIncomingEdges().size() != 1 || target.getOutgoingEdges().size() != 1) {
 			return target.getOutgoingNodes();
@@ -93,7 +93,7 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 		mRemovedEdges += 2;
 
 		mCbf.constructSequentialComposition(pred, succ, false, false, 
-				Arrays.asList(new CodeBlock[] { (CodeBlock) predEdge, (CodeBlock) succEdge }));
+				Arrays.asList(new CodeBlock[] { (CodeBlock) predEdge, (CodeBlock) succEdge }), mXnfConversionTechnique, mSimplificationTechnique);
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("    removed 2, added 2 edges");

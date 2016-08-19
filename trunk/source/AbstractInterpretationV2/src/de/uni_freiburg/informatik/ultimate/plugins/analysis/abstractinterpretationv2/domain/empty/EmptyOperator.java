@@ -36,11 +36,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <VARDECL>
  */
 public final class EmptyOperator<ACTION, VARDECL>
-		implements IAbstractStateBinaryOperator<EmptyDomainState<ACTION, VARDECL>> {
+		implements IAbstractStateBinaryOperator<EmptyDomainState<ACTION,VARDECL>> {
 
 	@Override
-	public EmptyDomainState<ACTION, VARDECL> apply(EmptyDomainState<ACTION, VARDECL> first,
-			EmptyDomainState<ACTION, VARDECL> second) {
+	public EmptyDomainState<ACTION,VARDECL> apply(EmptyDomainState<ACTION,VARDECL> first,
+			EmptyDomainState<ACTION,VARDECL> second) {
 		assert first != null;
 		assert second != null;
 

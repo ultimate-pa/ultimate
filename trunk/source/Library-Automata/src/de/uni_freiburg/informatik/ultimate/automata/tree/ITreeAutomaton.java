@@ -23,11 +23,16 @@ public interface ITreeAutomaton<LETTER, STATE> extends IAutomaton<LETTER, STATE>
 	 * @return true, if given state is final.
 	 */
 	public boolean isFinalState(STATE state);
+
+	/**
+	 * @return true, if given state is initial.
+	 */
+	public boolean isInitialState(STATE state);
 	
 	/**
 	 * @return a list of all successor states for given states.
 	 */
-	public Iterable<OutgoingTreeTransition<LETTER, STATE>> getSuccessors(List<STATE> states);
+	public Iterable<TreeAutomatonRule<LETTER, STATE>> getSuccessors(List<STATE> states);
 	
 	/**
 	 * @return a list of all successors for given states and given letter.
@@ -44,4 +49,10 @@ public interface ITreeAutomaton<LETTER, STATE> extends IAutomaton<LETTER, STATE>
 	 * using the given letter.
 	 */
 	public Iterable<List<STATE>> getPredecessors(STATE state, LETTER letter);
+	
+	/**
+	 * 
+	 * @return Get the 
+	 */
+	public Iterable<TreeAutomatonRule<LETTER, STATE>> getRules();
 }

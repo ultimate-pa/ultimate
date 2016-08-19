@@ -63,15 +63,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Mono
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.AbstractInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.NondeterministicInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
 
 public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
@@ -83,7 +83,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 
 	public IncrementalInclusionCegarLoop(String name, RootNode rootNode,
 			SmtManager smtManager, TAPreferences taPrefs,
-			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation,
+			Collection<ProgramPoint> errorLocs, InterpolationTechnique interpolation,
 			boolean computeHoareAnnotation, IUltimateServiceProvider services, 
 			IToolchainStorage storage,
 			LanguageOperation languageOperation) {
@@ -261,7 +261,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				final INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), 
 						determinized)).getResult();
 				assert (new InductivityCheck(mServices, test, false, true,
-						new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager, mSmtManager.getBoogie2Smt()))).getResult();
+						new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager))).getResult();
 				progress = true;
 				break;
 			}
@@ -283,7 +283,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				final INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), 
 						nondet)).getResult();
 				assert (new InductivityCheck(mServices, test, false, true,
-						new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager, mSmtManager.getBoogie2Smt()))).getResult();
+						new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager))).getResult();
 				progress = true;
 				break;
 			}

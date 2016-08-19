@@ -35,10 +35,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieOldVar;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -47,14 +43,19 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
@@ -66,18 +67,27 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruc
 public class PredicateTransformer {
 	private final Script mScript;
 	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
-	private final VariableManager mVariableManager;
+	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
+	private final SimplicationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 
-	public PredicateTransformer(VariableManager variableManager, Script script, 
-			ModifiableGlobalVariableManager modifiableGlobalVariableManager,
-			IUltimateServiceProvider services) {
+	public PredicateTransformer(final ManagedScript variableManager, final Script script, 
+			final ModifiableGlobalVariableManager modifiableGlobalVariableManager,
+			final IUltimateServiceProvider services, 
+			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
 		mScript = script;
 		mModifiableGlobalVariableManager = modifiableGlobalVariableManager;
-		mVariableManager = variableManager;
+		mMgdScript = variableManager;
+	}
+	
+	private static TermVariable constructFreshTermVariable(final ManagedScript freshVarConstructor, final IProgramVar pv) {
+		return freshVarConstructor.constructFreshTermVariable(pv.getGloballyUniqueId(), pv.getTermVariable().getSort());
 	}
 
 
@@ -91,144 +101,131 @@ public class PredicateTransformer {
 	 * its occurrence in the given predicate is substituted by a fresh variable.
 	 * All fresh variables are existentially quantified.
 	 */
-	public Term strongestPostcondition(IPredicate p, TransFormula tf) {
+	public Term strongestPostcondition(final IPredicate p, final TransFormula tf) {
 		if (SmtUtils.isFalse(p.getFormula())) {
 			return p.getFormula();
 		}
 		final Set<TermVariable> varsToQuantify = new HashSet<>();
-		final IValueConstruction<BoogieVar, TermVariable> substituentConstruction = new IValueConstruction<BoogieVar, TermVariable>() {
+		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction = new IValueConstruction<IProgramVar, TermVariable>() {
 
 			@Override
-			public TermVariable constructValue(BoogieVar bv) {
-				final TermVariable result = mVariableManager.constructFreshTermVariable(bv);
+			public TermVariable constructValue(final IProgramVar pv) {
+				final TermVariable result = constructFreshTermVariable(mMgdScript, pv);
 				varsToQuantify.add(result);
 				return result;
 			}
 			
 		};
-		final ConstructionCache<BoogieVar, TermVariable> termVariablesForPredecessor = new ConstructionCache<>(substituentConstruction);
+		final ConstructionCache<IProgramVar, TermVariable> termVariablesForPredecessor = new ConstructionCache<>(substituentConstruction);
 		
 		final Map<Term, Term> substitutionForTransFormula = new HashMap<Term, Term>();
 		final Map<Term, Term> substitutionForPredecessor = new HashMap<Term, Term>();
-		for (final Entry<BoogieVar, TermVariable> entry : tf.getInVars().entrySet()) {
-			final BoogieVar bv = entry.getKey();
-			if (entry.getValue() == tf.getOutVars().get(bv)) {
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
+			final IProgramVar pv = entry.getKey();
+			if (entry.getValue() == tf.getOutVars().get(pv)) {
 				// special case, variable unchanged will be renamed when
 				// considering outVars
 			} else {
-				final TermVariable substituent = termVariablesForPredecessor.getOrConstuct(bv);
+				final TermVariable substituent = termVariablesForPredecessor.getOrConstruct(pv);
 				substitutionForTransFormula.put(entry.getValue(), substituent);
-				if (p.getVars().contains(bv)) {
-					substitutionForPredecessor.put(bv.getTermVariable(), substituent);
+				if (p.getVars().contains(pv)) {
+					substitutionForPredecessor.put(pv.getTermVariable(), substituent);
 				}
 			}
 		}
 
-		for (final Entry<BoogieVar, TermVariable> entry : tf.getOutVars().entrySet()) {
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 			substitutionForTransFormula.put(entry.getValue(), entry.getKey().getTermVariable());
 			if (!tf.getInVars().containsKey(entry.getKey()) && p.getVars().contains(entry.getKey())) {
-				final TermVariable substituent = termVariablesForPredecessor.getOrConstuct(entry.getKey());
+				final TermVariable substituent = termVariablesForPredecessor.getOrConstruct(entry.getKey());
 				substitutionForPredecessor.put(entry.getKey().getTermVariable(), substituent);
 			}
 		}
 		
-		final Term renamedTransFormula = new SafeSubstitutionWithLocalSimplification(mScript, substitutionForTransFormula).transform(tf.getFormula());
-		final Term renamedPredecessor = new SafeSubstitutionWithLocalSimplification(mScript, substitutionForPredecessor).transform(p.getFormula());
+		final Term renamedTransFormula = new SubstitutionWithLocalSimplification(mMgdScript, substitutionForTransFormula).transform(tf.getFormula());
+		final Term renamedPredecessor = new SubstitutionWithLocalSimplification(mMgdScript, substitutionForPredecessor).transform(p.getFormula());
 			
 		final Term result = Util.and(mScript, renamedTransFormula, renamedPredecessor);
 
 		// Add aux vars to varsToQuantify
-		varsToQuantify.addAll(tf.getAuxVars().keySet());
+		varsToQuantify.addAll(tf.getAuxVars());
 		final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantify, result);
-		final Term pushed = new QuantifierPusher(mScript, mServices, mVariableManager).transform(quantified);
+		final Term pushed = new QuantifierPusher(mMgdScript, mServices).transform(quantified);
 		return pushed;
 	}
 
-	/**
-	 * Compute the strongest postcondition for a predicate and a call statement.
-	 * Call statements must be treated in a special way.
-	 */
-	@Deprecated
-	public Term strongestPostcondition(IPredicate p, Call call, boolean isPendingCall) {
-		return strongestPostcondition(p, call.getTransitionFormula(),
-				mModifiableGlobalVariableManager.getGlobalVarsAssignment(call.getCallStatement().getMethodName()),
-				mModifiableGlobalVariableManager.getOldVarsAssignment(call.getCallStatement().getMethodName()),
-				isPendingCall);
-	}
-	
-	
-	public Term weakLocalPostconditionCall(IPredicate p, TransFormula globalVarAssignments, final Set<BoogieVar> modifiableGlobals) {
+	public Term weakLocalPostconditionCall(final IPredicate p, final TransFormula globalVarAssignments, final Set<IProgramVar> modifiableGlobals) {
 		final Set<TermVariable> varsToQuantify = new HashSet<>();
 		
 		final Term renamedOldVarsAssignment;
 		{
 			final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-			for (final BoogieVar bv : globalVarAssignments.getAssignedVars()) {
-				assert (bv instanceof BoogieNonOldVar);
-				substitutionMapping.put(globalVarAssignments.getOutVars().get(bv), bv.getTermVariable());
+			for (final IProgramVar pv : globalVarAssignments.getAssignedVars()) {
+				assert (pv instanceof IProgramNonOldVar);
+				substitutionMapping.put(globalVarAssignments.getOutVars().get(pv), pv.getTermVariable());
 			}
-			for (final Entry<BoogieVar, TermVariable> entry : globalVarAssignments.getInVars().entrySet()) {
-				assert (entry.getKey() instanceof BoogieOldVar);
+			for (final Entry<IProgramVar, TermVariable> entry : globalVarAssignments.getInVars().entrySet()) {
+				assert (entry.getKey() instanceof IProgramOldVar);
 				substitutionMapping.put(entry.getValue(), entry.getKey().getTermVariable());
 			}
-			renamedOldVarsAssignment = new SafeSubstitutionWithLocalSimplification(mScript, mVariableManager, substitutionMapping).transform(globalVarAssignments.getFormula());
+			renamedOldVarsAssignment = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(globalVarAssignments.getFormula());
 		}
 
 		final Term renamedPredicate;
 		{
 			final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 			TermVariable substituent;
-			for (final BoogieVar bv : p.getVars()) {
-				if (bv instanceof BoogieNonOldVar) {
-					if (modifiableGlobals.contains(bv)) {
-						substituent = mVariableManager.constructFreshTermVariable(bv);
+			for (final IProgramVar pv : p.getVars()) {
+				if (pv instanceof IProgramNonOldVar) {
+					if (modifiableGlobals.contains(pv)) {
+						substituent = constructFreshTermVariable(mMgdScript, pv);
 						varsToQuantify.add(substituent);
-						substitutionMapping.put(bv.getTermVariable(), substituent);
+						substitutionMapping.put(pv.getTermVariable(), substituent);
 					} else {
 						// do nothing
 					}
-				} else if (bv instanceof BoogieOldVar) {
-					substituent = mVariableManager.constructFreshTermVariable(bv);
+				} else if (pv instanceof IProgramOldVar) {
+					substituent = constructFreshTermVariable(mMgdScript, pv);
 					varsToQuantify.add(substituent);
-					substitutionMapping.put(bv.getTermVariable(), substituent);
-				} else if (bv instanceof LocalBoogieVar) {
-					substituent = mVariableManager.constructFreshTermVariable(bv);
+					substitutionMapping.put(pv.getTermVariable(), substituent);
+				} else if (pv instanceof ILocalProgramVar) {
+					substituent = constructFreshTermVariable(mMgdScript, pv);
 					varsToQuantify.add(substituent);
-					substitutionMapping.put(bv.getTermVariable(), substituent);
+					substitutionMapping.put(pv.getTermVariable(), substituent);
 				} else {
 					throw new AssertionError();
 				}
 			}
-			renamedPredicate = new SafeSubstitutionWithLocalSimplification(mScript, mVariableManager, substitutionMapping).transform(p.getFormula());
+			renamedPredicate = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(p.getFormula());
 		}
 		final Term sucessorTerm = Util.and(mScript, renamedPredicate, renamedOldVarsAssignment);
 		final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantify, sucessorTerm);
-		final Term pushed = new QuantifierPusher(mScript, mServices, mVariableManager).transform(quantified);
+		final Term pushed = new QuantifierPusher(mMgdScript, mServices).transform(quantified);
 		return pushed;
 
 	}
 	
 	
-	public Term strongestPostconditionCall(IPredicate p, TransFormula localVarAssignments,
-			TransFormula globalVarAssignments, TransFormula oldVarAssignments, final Set<BoogieVar> modifiableGlobals) {
+	public Term strongestPostconditionCall(final IPredicate p, final TransFormula localVarAssignments,
+			final TransFormula globalVarAssignments, final TransFormula oldVarAssignments, final Set<IProgramVar> modifiableGlobals) {
 		final Set<TermVariable> varsToQuantify = new HashSet<>();
-		final IValueConstruction<BoogieVar, TermVariable> substituentConstruction = new IValueConstruction<BoogieVar, TermVariable>() {
+		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction = new IValueConstruction<IProgramVar, TermVariable>() {
 
 			@Override
-			public TermVariable constructValue(BoogieVar bv) {
+			public TermVariable constructValue(final IProgramVar pv) {
 				final TermVariable result;
-				if (bv instanceof BoogieNonOldVar) {
-					if (modifiableGlobals.contains(bv)) {
-						result = mVariableManager.constructFreshTermVariable(bv);
+				if (pv instanceof IProgramNonOldVar) {
+					if (modifiableGlobals.contains(pv)) {
+						result = constructFreshTermVariable(mMgdScript, pv);
 						varsToQuantify.add(result);
 					} else {
-						result = bv.getTermVariable();
+						result = pv.getTermVariable();
 					}
-				} else if (bv instanceof BoogieOldVar) {
-					result = mVariableManager.constructFreshTermVariable(bv);
+				} else if (pv instanceof IProgramOldVar) {
+					result = constructFreshTermVariable(mMgdScript, pv);
 					varsToQuantify.add(result);
-				} else if (bv instanceof LocalBoogieVar) {
-					result = mVariableManager.constructFreshTermVariable(bv);
+				} else if (pv instanceof ILocalProgramVar) {
+					result = constructFreshTermVariable(mMgdScript, pv);
 					varsToQuantify.add(result);
 				} else {
 					throw new AssertionError();
@@ -237,218 +234,61 @@ public class PredicateTransformer {
 			}
 			
 		};
-		final ConstructionCache<BoogieVar, TermVariable> termVariablesForPredecessor = new ConstructionCache<>(substituentConstruction);
+		final ConstructionCache<IProgramVar, TermVariable> termVariablesForPredecessor = new ConstructionCache<>(substituentConstruction);
 		
 		final Term renamedGlobalVarAssignment;
 		{
 			final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-			for (final BoogieVar bv : globalVarAssignments.getAssignedVars()) {
-				assert (bv instanceof BoogieNonOldVar);
-				substitutionMapping.put(globalVarAssignments.getOutVars().get(bv), bv.getTermVariable());
+			for (final IProgramVar pv : globalVarAssignments.getAssignedVars()) {
+				assert (pv instanceof IProgramNonOldVar);
+				substitutionMapping.put(globalVarAssignments.getOutVars().get(pv), pv.getTermVariable());
 			}
-			for (final Entry<BoogieVar, TermVariable> entry : globalVarAssignments.getInVars().entrySet()) {
-				assert (entry.getKey() instanceof BoogieOldVar);
+			for (final Entry<IProgramVar, TermVariable> entry : globalVarAssignments.getInVars().entrySet()) {
+				assert (entry.getKey() instanceof IProgramOldVar);
 				substitutionMapping.put(entry.getValue(), entry.getKey().getTermVariable());
 			}
-			renamedGlobalVarAssignment = new SafeSubstitutionWithLocalSimplification(mScript, mVariableManager, substitutionMapping).transform(globalVarAssignments.getFormula());
+			renamedGlobalVarAssignment = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(globalVarAssignments.getFormula());
 		}
 		
 		final Term renamedOldVarsAssignment;
 		{
 			final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-			for (final BoogieVar bv : oldVarAssignments.getAssignedVars()) {
-				assert (bv instanceof BoogieOldVar);
-				substitutionMapping.put(oldVarAssignments.getOutVars().get(bv), bv.getTermVariable());
+			for (final IProgramVar pv : oldVarAssignments.getAssignedVars()) {
+				assert (pv instanceof IProgramOldVar);
+				substitutionMapping.put(oldVarAssignments.getOutVars().get(pv), pv.getTermVariable());
 			}
-			for (final Entry<BoogieVar, TermVariable> entry : oldVarAssignments.getInVars().entrySet()) {
-				assert (entry.getKey() instanceof BoogieNonOldVar);
-				substitutionMapping.put(entry.getValue(), termVariablesForPredecessor.getOrConstuct(entry.getKey()));
+			for (final Entry<IProgramVar, TermVariable> entry : oldVarAssignments.getInVars().entrySet()) {
+				assert (entry.getKey() instanceof IProgramNonOldVar);
+				substitutionMapping.put(entry.getValue(), termVariablesForPredecessor.getOrConstruct(entry.getKey()));
 			}
-			renamedOldVarsAssignment = new SafeSubstitutionWithLocalSimplification(mScript, mVariableManager, substitutionMapping).transform(oldVarAssignments.getFormula());
+			renamedOldVarsAssignment = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(oldVarAssignments.getFormula());
 		}
 		
 		final Term renamedLocalVarsAssignment;
 		{
 			final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-			for (final BoogieVar bv : localVarAssignments.getAssignedVars()) {
-				assert (bv instanceof LocalBoogieVar);
-				substitutionMapping.put(localVarAssignments.getOutVars().get(bv), bv.getTermVariable());
+			for (final IProgramVar pv : localVarAssignments.getAssignedVars()) {
+				assert (pv instanceof ILocalProgramVar);
+				substitutionMapping.put(localVarAssignments.getOutVars().get(pv), pv.getTermVariable());
 			}
-			for (final Entry<BoogieVar, TermVariable> entry : localVarAssignments.getInVars().entrySet()) {
-				substitutionMapping.put(entry.getValue(), termVariablesForPredecessor.getOrConstuct(entry.getKey()));
+			for (final Entry<IProgramVar, TermVariable> entry : localVarAssignments.getInVars().entrySet()) {
+				substitutionMapping.put(entry.getValue(), termVariablesForPredecessor.getOrConstruct(entry.getKey()));
 			}
-			renamedLocalVarsAssignment = new SafeSubstitutionWithLocalSimplification(mScript, mVariableManager, substitutionMapping).transform(localVarAssignments.getFormula());
+			renamedLocalVarsAssignment = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(localVarAssignments.getFormula());
 		}
 		
 		final Term renamedPredicate;
 		{
 			final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-			for (final BoogieVar bv : p.getVars()) {
-				substitutionMapping.put(bv.getTermVariable(), termVariablesForPredecessor.getOrConstuct(bv));
+			for (final IProgramVar pv : p.getVars()) {
+				substitutionMapping.put(pv.getTermVariable(), termVariablesForPredecessor.getOrConstruct(pv));
 			}
-			renamedPredicate = new SafeSubstitutionWithLocalSimplification(mScript, mVariableManager, substitutionMapping).transform(p.getFormula());
+			renamedPredicate = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(p.getFormula());
 		}
 		final Term sucessorTerm = Util.and(mScript, renamedPredicate, renamedLocalVarsAssignment, renamedOldVarsAssignment,
 				renamedGlobalVarAssignment);
 		final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantify, sucessorTerm);
-		final Term pushed = new QuantifierPusher(mScript, mServices, mVariableManager).transform(quantified);
-		return pushed;
-
-	}
-
-	/**
-	 * Compute the strongest postcondition for a predicate and a call statement.
-	 * Call statements must be treated in a special way. TODO: How do we compute
-	 * the SP of a Call Statement?
-	 */
-	@Deprecated
-	private Term strongestPostcondition(IPredicate p, TransFormula localVarAssignments,
-			TransFormula globalVarAssignments, TransFormula oldVarAssignments, boolean isPendingCall) {
-
-		// VarsToQuantify contains the local Vars and the global vars of the
-		// calling proc, for a non-pending call.
-		final Set<TermVariable> varsToQuantifyNonPendingCall = new HashSet<TermVariable>();
-		// Variables, which should be quantified if we have a pending call.
-		final Set<TermVariable> varsToQuantifyPendingCall = new HashSet<TermVariable>();
-		// We rename oldvars of non-modifiable global variables to freshvars and
-		// quantify them.
-		final Set<TermVariable> varsToQuantifyNonModOldVars = new HashSet<TermVariable>();
-		// In Pred we rename oldvars of non-modifiable global variables to
-		// freshvars.
-		final Map<Term, Term> varsToRenameInPredInBoth = new HashMap<Term, Term>();
-		// Union Set of auxvars occurring in each transformula
-		final Set<TermVariable> allAuxVars = new HashSet<TermVariable>();
-		allAuxVars.addAll(localVarAssignments.getAuxVars().keySet());
-		allAuxVars.addAll(globalVarAssignments.getAuxVars().keySet());
-		allAuxVars.addAll(oldVarAssignments.getAuxVars().keySet());
-
-		final Map<Term, Term> varsToRenameInPredPendingCall = new HashMap<Term, Term>();
-		final Map<Term, Term> varsToRenameInPredNonPendingCall = new HashMap<Term, Term>();
-		// 1.1 Rename the invars in global variable assignments.Invars are
-		// {old(g) --> old(g)_23}
-		final Map<Term, Term> substitution = new HashMap<Term, Term>();
-		Term globalVarsInvarsRenamed = substituteToRepresantativesAndAddToQuantify(globalVarAssignments.getInVars(),
-				globalVarAssignments.getFormula(), varsToRenameInPredNonPendingCall, varsToQuantifyNonPendingCall);
-		varsToQuantifyPendingCall.addAll(varsToQuantifyNonPendingCall);
-		varsToRenameInPredPendingCall.putAll(varsToRenameInPredNonPendingCall);
-
-		Term globalVarsInVarsRenamedOutVarsRenamed = substituteToRepresantativesAndAddToQuantify(
-				restrictMap(globalVarAssignments.getOutVars(), GlobalType.NONOLDVAR), globalVarsInvarsRenamed,
-				varsToRenameInPredNonPendingCall, varsToQuantifyNonPendingCall);
-		substitution.clear();
-		if (SmtUtils.isTrue(globalVarAssignments.getFormula())) {
-			for (final BoogieVar bv : oldVarAssignments.getInVars().keySet()) {
-				substitution.put(oldVarAssignments.getInVars().get(bv), bv.getTermVariable());
-				final TermVariable freshVar = mVariableManager.constructFreshTermVariable(bv);
-				varsToQuantifyNonPendingCall.add(freshVar);
-				varsToRenameInPredNonPendingCall.put(bv.getTermVariable(), freshVar);
-			}
-			globalVarsInvarsRenamed = new SafeSubstitutionWithLocalSimplification(mScript, substitution)
-					.transform(oldVarAssignments.getFormula());
-			substitution.clear();
-
-			for (final BoogieVar bv : oldVarAssignments.getOutVars().keySet()) {
-				if (bv.isOldvar()) {
-					final TermVariable freshVar = mVariableManager.constructFreshTermVariable(bv);
-					substitution.put(oldVarAssignments.getOutVars().get(bv), bv.getTermVariable());
-					varsToQuantifyPendingCall.add(freshVar);
-					varsToRenameInPredPendingCall.put(bv.getTermVariable(), freshVar);
-					varsToRenameInPredNonPendingCall.put(bv.getTermVariable(), freshVar);
-					varsToQuantifyNonPendingCall.add(freshVar);
-				}
-			}
-			globalVarsInVarsRenamedOutVarsRenamed = new SafeSubstitutionWithLocalSimplification(mScript, substitution)
-					.transform(globalVarsInvarsRenamed);
-		}
-		// Collect the local and the non-modifiable global variables of the
-		// calling proc.
-		for (final BoogieVar bv : p.getVars()) {
-			// Procedure is null, if it is a global variable
-			if (bv.getProcedure() != null) {
-				varsToQuantifyNonPendingCall.add(bv.getTermVariable());
-				/*
-				 * On 2014-06-25 Matthias commented the following two lines of
-				 * code: This lead to a problem with recursive programs where a
-				 * variable occurred in p and also in the call. I do not know if
-				 * commenting these lines is a proper solution (or is the reason
-				 * for other bugs).
-				 */
-				// Ensure that variable doesn't occur in call
-				// if (!localVarAssignments.getInVars().containsKey(bv)
-				// && !localVarAssignments.getOutVars().containsKey(bv)) {
-				final TermVariable freshVar = mVariableManager.constructFreshTermVariable(bv);
-				varsToRenameInPredPendingCall.put(bv.getTermVariable(), freshVar);
-				varsToQuantifyPendingCall.add(freshVar);
-				varsToQuantifyNonPendingCall.add(bv.getTermVariable());
-				// }
-			} else {
-				// if is global var of modifiable oldvar we rename var to oldvar
-				if (!bv.isOldvar() && oldVarAssignments.getInVars().containsKey(bv)) {
-					varsToRenameInPredInBoth.put(bv.getTermVariable(), ((BoogieNonOldVar) bv).getOldVar().getTermVariable());
-				}
-				
-				if (!globalVarAssignments.getInVars().containsKey(bv)
-						&& !globalVarAssignments.getOutVars().containsKey(bv)) {
-					if (bv.isOldvar()) {
-						final TermVariable freshVar = mVariableManager.constructFreshTermVariable(bv);
-						varsToRenameInPredInBoth.put(bv.getTermVariable(), freshVar);
-						varsToQuantifyNonModOldVars.add(freshVar);
-					}
-				}
-			}
-		}
-		substitution.clear();
-
-		// 2.1 Rename the invars of the term of Call-Statement.
-		for (final BoogieVar bv : localVarAssignments.getInVars().keySet()) {
-
-			if (globalVarAssignments.getOutVars().containsKey(bv)) {
-				// If it is a global var, then we substitute it through its
-				// oldvar
-				substitution.put(localVarAssignments.getInVars().get(bv), ((BoogieNonOldVar) bv).getOldVar()
-						.getTermVariable());
-			} else {
-				final TermVariable freshVar = mVariableManager.constructFreshTermVariable(bv);
-				substitution.put(localVarAssignments.getInVars().get(bv), freshVar);
-				varsToRenameInPredPendingCall.put(bv.getTermVariable(), freshVar);
-				varsToQuantifyPendingCall.add(freshVar);
-				varsToQuantifyNonPendingCall.add(bv.getTermVariable());
-			}
-		}
-		final Term call_TermInVarsRenamed = new SafeSubstitutionWithLocalSimplification(mScript, substitution).transform(localVarAssignments
-				.getFormula());
-		substitution.clear();
-
-		final Term predNonModOldVarsRenamed = new SafeSubstitutionWithLocalSimplification(mScript, varsToRenameInPredInBoth).transform(p.getFormula());
-
-		final Term quantified;
-		if (isPendingCall) {
-			// 2.2 Rename the outvars of the term of the Call-Statement.
-			for (final BoogieVar bv : localVarAssignments.getOutVars().keySet()) {
-				substitution.put(localVarAssignments.getOutVars().get(bv), bv.getTermVariable());
-			}
-			final Term callTermInvarsRenamedOutVarsRenamed = new SafeSubstitutionWithLocalSimplification(mScript, substitution)
-					.transform(call_TermInVarsRenamed);
-			// Rename the invars of CAll, local Vars and old version of global
-			// variables.
-			final Term predRenamed = new SafeSubstitutionWithLocalSimplification(mScript, varsToRenameInPredPendingCall)
-					.transform(predNonModOldVarsRenamed);
-			final Term predANDCallANDGlobalVars = Util.and(mScript, predRenamed, callTermInvarsRenamedOutVarsRenamed,
-					globalVarsInVarsRenamedOutVarsRenamed);
-			varsToQuantifyPendingCall.addAll(varsToQuantifyNonModOldVars);
-			varsToQuantifyPendingCall.addAll(allAuxVars);
-
-			quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantifyNonPendingCall, predANDCallANDGlobalVars);
-		} else {
-			final Term predRenamed = new SafeSubstitutionWithLocalSimplification(mScript, varsToRenameInPredNonPendingCall)
-					.transform(predNonModOldVarsRenamed);
-			varsToQuantifyNonPendingCall.addAll(varsToQuantifyNonModOldVars);
-			varsToQuantifyNonPendingCall.addAll(allAuxVars);
-			
-			final Term result = Util.and(mScript, predRenamed, globalVarsInVarsRenamedOutVarsRenamed);
-			quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantifyNonPendingCall, result);
-		}
-		final Term pushed = new QuantifierPusher(mScript, mServices, mVariableManager).transform(quantified);
+		final Term pushed = new QuantifierPusher(mMgdScript, mServices).transform(quantified);
 		return pushed;
 
 	}
@@ -459,8 +299,8 @@ public class PredicateTransformer {
 	 * statement and callerPred is the predicate that held in the calling
 	 * procedure before the corresponding call. TODO: How is it computed?
 	 */
-	public Term strongestPostcondition(IPredicate calleePred, IPredicate callerPred, TransFormula ret_TF,
-			TransFormula callTF, TransFormula globalVarsAssignment, TransFormula oldVarsAssignment) {
+	public Term strongestPostcondition(final IPredicate calleePred, final IPredicate callerPred, final TransFormula ret_TF,
+			final TransFormula callTF, final TransFormula globalVarsAssignment, final TransFormula oldVarsAssignment) {
 		// VarsToQuantify contains local vars of called procedure, and it may
 		// contain
 		// some invars, if it was a recursive call, i.e. callingProc =
@@ -473,72 +313,72 @@ public class PredicateTransformer {
 		final Map<Term, Term> outVarsToRenameInCallTF = new HashMap<Term, Term>();
 		final Map<Term, Term> inVarsToRenameInReturnTF = new HashMap<Term, Term>();
 		final Set<TermVariable> allAuxVars = new HashSet<TermVariable>();
-		allAuxVars.addAll(ret_TF.getAuxVars().keySet());
-		allAuxVars.addAll(callTF.getAuxVars().keySet());
-		allAuxVars.addAll(globalVarsAssignment.getAuxVars().keySet());
+		allAuxVars.addAll(ret_TF.getAuxVars());
+		allAuxVars.addAll(callTF.getAuxVars());
+		allAuxVars.addAll(globalVarsAssignment.getAuxVars());
 
 		// Substitute oldvars of modifiable global vars by fresh vars in
 		// calleePred
-		// and substitue their non-oldvar by the same fresh var in callerPred.
-		for (final BoogieVar bv : globalVarsAssignment.getInVars().keySet()) {
-			final TermVariable freshVar = mVariableManager.constructFreshTermVariable(bv);
-			varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
-			varsToRenameInCallerPred.put((((BoogieOldVar) bv).getNonOldVar()).getTermVariable(), freshVar);
+		// and substitute their non-oldvar by the same fresh var in callerPred.
+		for (final IProgramVar pv : globalVarsAssignment.getInVars().keySet()) {
+			final TermVariable freshVar = constructFreshTermVariable(mMgdScript, pv);
+			varsToRenameInCalleePred.put(pv.getTermVariable(), freshVar);
+			varsToRenameInCallerPred.put((((IProgramOldVar) pv).getNonOldVar()).getTermVariable(), freshVar);
 			varsToQuantifyOverAll.add(freshVar);
 		}
 		// Note: We have to take also the outvars into account, because
 		// sometimes it may be the case,
 		// that a invar does not occur in the outvars.
-		for (final BoogieVar bv : globalVarsAssignment.getOutVars().keySet()) {
+		for (final IProgramVar pv : globalVarsAssignment.getOutVars().keySet()) {
 			// We have only to check the vars, that are not contained in the map
 			// varsToRenameInCallerPred,
 			// because otherwise it is already treated in the case above.
-			if (!bv.isOldvar() && !varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
-				final TermVariable freshVar = mVariableManager.constructFreshTermVariable(bv);
-				varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
+			if (!pv.isOldvar() && !varsToRenameInCallerPred.containsKey(pv.getTermVariable())) {
+				final TermVariable freshVar = constructFreshTermVariable(mMgdScript, pv);
+				varsToRenameInCallerPred.put(pv.getTermVariable(), freshVar);
 				varsToQuantifyOverAll.add(freshVar);
 			}
 
 		}
 
 		// Collect the local variables of called proc
-		for (final BoogieVar bv : calleePred.getVars()) {
-			if (bv.isGlobal() || bv.isOldvar()) {
+		for (final IProgramVar pv : calleePred.getVars()) {
+			if (pv.isGlobal() || pv.isOldvar()) {
 				continue;
 			}
-			if (ret_TF.getOutVars().containsKey(bv)) {
-				final TermVariable freshVar = mVariableManager.constructFreshTermVariable(bv);
-				varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
+			if (ret_TF.getOutVars().containsKey(pv)) {
+				final TermVariable freshVar = constructFreshTermVariable(mMgdScript, pv);
+				varsToRenameInCalleePred.put(pv.getTermVariable(), freshVar);
 				varsToQuantifyOverAll.add(freshVar);
-				if (ret_TF.getInVars().containsKey(bv)) {
-					inVarsToRenameInReturnTF.put(ret_TF.getInVars().get(bv), freshVar);
+				if (ret_TF.getInVars().containsKey(pv)) {
+					inVarsToRenameInReturnTF.put(ret_TF.getInVars().get(pv), freshVar);
 				}
-				if (callTF.getOutVars().containsKey(bv)) {
-					outVarsToRenameInCallTF.put(callTF.getOutVars().get(bv), freshVar);
+				if (callTF.getOutVars().containsKey(pv)) {
+					outVarsToRenameInCallTF.put(callTF.getOutVars().get(pv), freshVar);
 				}
-			} else if (callTF.getInVars().containsKey(bv)) {
-				final TermVariable freshVar = mVariableManager.constructFreshTermVariable(bv);
-				varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
+			} else if (callTF.getInVars().containsKey(pv)) {
+				final TermVariable freshVar = constructFreshTermVariable(mMgdScript, pv);
+				varsToRenameInCalleePred.put(pv.getTermVariable(), freshVar);
 				varsToQuantifyOverAll.add(freshVar);
-				if (ret_TF.getInVars().containsKey(bv)) {
-					inVarsToRenameInReturnTF.put(ret_TF.getInVars().get(bv), freshVar);
+				if (ret_TF.getInVars().containsKey(pv)) {
+					inVarsToRenameInReturnTF.put(ret_TF.getInVars().get(pv), freshVar);
 				}
-				if (callTF.getOutVars().containsKey(bv)) {
-					outVarsToRenameInCallTF.put(callTF.getOutVars().get(bv), freshVar);
+				if (callTF.getOutVars().containsKey(pv)) {
+					outVarsToRenameInCallTF.put(callTF.getOutVars().get(pv), freshVar);
 				}
-			} else if (callerPred.getVars().contains(bv)) {
-				final TermVariable freshVar = mVariableManager.constructFreshTermVariable(bv);
-				varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
+			} else if (callerPred.getVars().contains(pv)) {
+				final TermVariable freshVar = constructFreshTermVariable(mMgdScript, pv);
+				varsToRenameInCalleePred.put(pv.getTermVariable(), freshVar);
 				varsToQuantifyOverAll.add(freshVar);
-				if (ret_TF.getInVars().containsKey(bv)) {
-					inVarsToRenameInReturnTF.put(ret_TF.getInVars().get(bv), freshVar);
+				if (ret_TF.getInVars().containsKey(pv)) {
+					inVarsToRenameInReturnTF.put(ret_TF.getInVars().get(pv), freshVar);
 				}
-				if (callTF.getOutVars().containsKey(bv)) {
-					outVarsToRenameInCallTF.put(callTF.getOutVars().get(bv), freshVar);
+				if (callTF.getOutVars().containsKey(pv)) {
+					outVarsToRenameInCallTF.put(callTF.getOutVars().get(pv), freshVar);
 				}
-			} else if (!ret_TF.getInVars().containsKey(bv) && !callTF.getOutVars().containsKey(bv)) {
-				if (!mModifiableGlobalVariableManager.getGlobals().containsKey(bv.getIdentifier())) {
-					varsToQuantifyInCalleePred.add(bv.getTermVariable());
+			} else if (!ret_TF.getInVars().containsKey(pv) && !callTF.getOutVars().containsKey(pv)) {
+				if (!mModifiableGlobalVariableManager.getGlobals().containsKey(pv.getIdentifier())) {
+					varsToQuantifyInCalleePred.add(pv.getTermVariable());
 				}
 			}
 
@@ -547,52 +387,52 @@ public class PredicateTransformer {
 		// 1.1 We doesn't rename the invars of the TransFormula Return,
 		// because we quantify them out.
 		final Map<Term, Term> substitution = new HashMap<Term, Term>();
-		for (final BoogieVar bv : ret_TF.getInVars().keySet()) {
-			if (!inVarsToRenameInReturnTF.containsKey(ret_TF.getInVars().get(bv))) {
-				final TermVariable substitutor = ret_TF.getInVars().get(bv);
-				varsToRenameInCalleePred.put(bv.getTermVariable(), substitutor);
+		for (final IProgramVar pv : ret_TF.getInVars().keySet()) {
+			if (!inVarsToRenameInReturnTF.containsKey(ret_TF.getInVars().get(pv))) {
+				final TermVariable substitutor = ret_TF.getInVars().get(pv);
+				varsToRenameInCalleePred.put(pv.getTermVariable(), substitutor);
 				varsToQuantifyOverAll.add(substitutor);
 			}
 		}
 		// 1.2 Rename outvars of Return statement
-		for (final BoogieVar bv : ret_TF.getOutVars().keySet()) {
-			if (calleePred.getVars().contains(bv)) {
-				if (!varsToRenameInCalleePred.containsKey(bv.getTermVariable())) {
-					final TermVariable freshVar = mVariableManager.constructFreshTermVariable(bv);
-					varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
+		for (final IProgramVar pv : ret_TF.getOutVars().keySet()) {
+			if (calleePred.getVars().contains(pv)) {
+				if (!varsToRenameInCalleePred.containsKey(pv.getTermVariable())) {
+					final TermVariable freshVar = constructFreshTermVariable(mMgdScript, pv);
+					varsToRenameInCalleePred.put(pv.getTermVariable(), freshVar);
 					varsToQuantifyOverAll.add(freshVar);
 				}
 			}
-			substitution.put(ret_TF.getOutVars().get(bv), bv.getTermVariable());
-			varsToQuantifyInCallerPredAndCallTF.add(bv.getTermVariable());
+			substitution.put(ret_TF.getOutVars().get(pv), pv.getTermVariable());
+			varsToQuantifyInCallerPredAndCallTF.add(pv.getTermVariable());
 		}
-		Term retTermRenamed = new SafeSubstitutionWithLocalSimplification(mScript, inVarsToRenameInReturnTF).transform(ret_TF.getFormula());
-		retTermRenamed = new SafeSubstitutionWithLocalSimplification(mScript, substitution).transform(retTermRenamed);
+		Term retTermRenamed = new SubstitutionWithLocalSimplification(mMgdScript, inVarsToRenameInReturnTF).transform(ret_TF.getFormula());
+		retTermRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(retTermRenamed);
 		// 2.1 Rename invars of TransFormula of corresponding Call statement
 		substitution.clear();
-		for (final BoogieVar bv : callTF.getInVars().keySet()) {
-			if (ret_TF.getOutVars().containsKey(bv)) {
-				final TermVariable freshVar = mVariableManager.constructFreshTermVariable(bv);
-				substitution.put(callTF.getInVars().get(bv), freshVar);
-				varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
+		for (final IProgramVar pv : callTF.getInVars().keySet()) {
+			if (ret_TF.getOutVars().containsKey(pv)) {
+				final TermVariable freshVar = constructFreshTermVariable(mMgdScript, pv);
+				substitution.put(callTF.getInVars().get(pv), freshVar);
+				varsToRenameInCallerPred.put(pv.getTermVariable(), freshVar);
 				varsToQuantifyInCallerPredAndCallTF.add(freshVar);
-			} else if (globalVarsAssignment.getOutVars().containsKey(bv)) {
-				final Term freshVar = varsToRenameInCallerPred.get(bv.getTermVariable());
+			} else if (globalVarsAssignment.getOutVars().containsKey(pv)) {
+				final Term freshVar = varsToRenameInCallerPred.get(pv.getTermVariable());
 				assert freshVar != null : "added null to substitution mapping";
-				substitution.put(callTF.getInVars().get(bv), freshVar);
+				substitution.put(callTF.getInVars().get(pv), freshVar);
 			} else {
-				substitution.put(callTF.getInVars().get(bv), bv.getTermVariable());
+				substitution.put(callTF.getInVars().get(pv), pv.getTermVariable());
 			}
 		}
-		Term callTermRenamed = new SafeSubstitutionWithLocalSimplification(mScript, outVarsToRenameInCallTF).transform(callTF.getFormula());
-		callTermRenamed = new SafeSubstitutionWithLocalSimplification(mScript, substitution).transform(callTermRenamed);
+		Term callTermRenamed = new SubstitutionWithLocalSimplification(mMgdScript, outVarsToRenameInCallTF).transform(callTF.getFormula());
+		callTermRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(callTermRenamed);
 		// 2.2 We doesn't rename the outvars, because the outvars are the
 		// localvars
 		// of the called procedure, therefore we want to quantify them out.
-		for (final BoogieVar bv : callTF.getOutVars().keySet()) {
-			if (!outVarsToRenameInCallTF.containsKey(callTF.getOutVars().get(bv))) {
-				final TermVariable substitutor = callTF.getOutVars().get(bv);
-				varsToRenameInCalleePred.put(bv.getTermVariable(), substitutor);
+		for (final IProgramVar pv : callTF.getOutVars().keySet()) {
+			if (!outVarsToRenameInCallTF.containsKey(callTF.getOutVars().get(pv))) {
+				final TermVariable substitutor = callTF.getOutVars().get(pv);
+				varsToRenameInCalleePred.put(pv.getTermVariable(), substitutor);
 				varsToQuantifyOverAll.add(substitutor);
 			}
 		}
@@ -602,88 +442,88 @@ public class PredicateTransformer {
 		// which occur as an invar in the TransFormula of the corresponding Call
 		// statement.
 		// This substitution is only necessary, if we have a recursive call.
-		final Term calleePredVarsRenamed = new SafeSubstitutionWithLocalSimplification(mScript, varsToRenameInCalleePred).transform(calleePred
+		final Term calleePredVarsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, varsToRenameInCalleePred).transform(calleePred
 				.getFormula());
 
 		// 5. Substitute oldvars through fresh variables in calleePredicate.
-		final Term calleePredVarsRenamedOldVarsToFreshVars = new SafeSubstitutionWithLocalSimplification(mScript, varsToRenameInCalleePred)
+		final Term calleePredVarsRenamedOldVarsToFreshVars = new SubstitutionWithLocalSimplification(mMgdScript, varsToRenameInCalleePred)
 				.transform(calleePredVarsRenamed);
 
 		// 6. Substitute the global variables in callerPred through the fresh
 		// Vars computed in (4).
-		final Term callerPredVarsRenamedToFreshVars = new SafeSubstitutionWithLocalSimplification(mScript, varsToRenameInCallerPred)
+		final Term callerPredVarsRenamedToFreshVars = new SubstitutionWithLocalSimplification(mMgdScript, varsToRenameInCallerPred)
 				.transform(callerPred.getFormula());
 
 		// 1. CalleePredRenamed and loc vars quantified
-		final Term calleePredRenamedQuantified = PartialQuantifierElimination.quantifier(mServices, mLogger, mScript, mVariableManager,
-				Script.EXISTS, varsToQuantifyInCalleePred,
-				calleePredVarsRenamedOldVarsToFreshVars, (Term[][]) null);
+		final Term calleePredRenamedQuantified = PartialQuantifierElimination.quantifier(mServices, mLogger, mMgdScript, mSimplificationTechnique,
+				mXnfConversionTechnique, Script.EXISTS, varsToQuantifyInCalleePred, calleePredVarsRenamedOldVarsToFreshVars,
+				(Term[][]) null);
 		// 2. CallTF and callerPred
 		final Term calleRPredANDCallTFRenamedQuantified = PartialQuantifierElimination.quantifier(mServices, mLogger,
-				mScript, mVariableManager, Script.EXISTS, varsToQuantifyInCallerPredAndCallTF, 
-				Util.and(mScript,
-						callerPredVarsRenamedToFreshVars, callTermRenamed), (Term[][]) null);
+				mMgdScript, mSimplificationTechnique, mXnfConversionTechnique, Script.EXISTS, varsToQuantifyInCallerPredAndCallTF, Util.and(mScript,
+						callerPredVarsRenamedToFreshVars, callTermRenamed), 
+				(Term[][]) null);
 		// 3. Result
 		varsToQuantifyOverAll.addAll(allAuxVars);
 
 		final Term result = Util.and(mScript, calleePredRenamedQuantified, retTermRenamed, calleRPredANDCallTFRenamedQuantified);
 		final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantifyOverAll, result);
-		final Term pushed = new QuantifierPusher(mScript, mServices, mVariableManager).transform(quantified);
+		final Term pushed = new QuantifierPusher(mMgdScript, mServices).transform(quantified);
 		return pushed;
 
 	}
 	
 
-	public Term weakestPrecondition(IPredicate p, TransFormula tf) {
+	public Term weakestPrecondition(final IPredicate p, final TransFormula tf) {
 		if (SmtUtils.isTrue(p.getFormula())) {
 			return p.getFormula();
 		}
 		final Set<TermVariable> varsToQuantify = new HashSet<>();
-		final IValueConstruction<BoogieVar, TermVariable> substituentConstruction = new IValueConstruction<BoogieVar, TermVariable>() {
+		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction = new IValueConstruction<IProgramVar, TermVariable>() {
 
 			@Override
-			public TermVariable constructValue(BoogieVar bv) {
-				final TermVariable result = mVariableManager.constructFreshTermVariable(bv);
+			public TermVariable constructValue(final IProgramVar pv) {
+				final TermVariable result = constructFreshTermVariable(mMgdScript, pv);
 				varsToQuantify.add(result);
 				return result;
 			}
 			
 		};
-		final ConstructionCache<BoogieVar, TermVariable> termVariablesForSuccessor = new ConstructionCache<>(substituentConstruction);
+		final ConstructionCache<IProgramVar, TermVariable> termVariablesForSuccessor = new ConstructionCache<>(substituentConstruction);
 		
 		final Map<Term, Term> substitutionForTransFormula = new HashMap<Term, Term>();
 		final Map<Term, Term> substitutionForSuccessor = new HashMap<Term, Term>();
 		
-		for (final Entry<BoogieVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-			final BoogieVar bv = entry.getKey();
-			if (entry.getValue() == tf.getInVars().get(bv)) {
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
+			final IProgramVar pv = entry.getKey();
+			if (entry.getValue() == tf.getInVars().get(pv)) {
 				// special case, variable unchanged will be renamed when
 				// considering outVars
 			} else {
-				final TermVariable substituent = termVariablesForSuccessor.getOrConstuct(bv);
+				final TermVariable substituent = termVariablesForSuccessor.getOrConstruct(pv);
 				substitutionForTransFormula.put(entry.getValue(), substituent);
-				if (p.getVars().contains(bv)) {
-					substitutionForSuccessor.put(bv.getTermVariable(), substituent);
+				if (p.getVars().contains(pv)) {
+					substitutionForSuccessor.put(pv.getTermVariable(), substituent);
 				}
 			}
 		}
 
-		for (final Entry<BoogieVar, TermVariable> entry : tf.getInVars().entrySet()) {
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
 			substitutionForTransFormula.put(entry.getValue(), entry.getKey().getTermVariable());
 			if (!tf.getOutVars().containsKey(entry.getKey()) && p.getVars().contains(entry.getKey())) {
-				final TermVariable substituent = termVariablesForSuccessor.getOrConstuct(entry.getKey());
+				final TermVariable substituent = termVariablesForSuccessor.getOrConstruct(entry.getKey());
 				substitutionForSuccessor.put(entry.getKey().getTermVariable(), substituent);
 			}
 		}
 		
-		final Term renamedTransFormula = new SafeSubstitutionWithLocalSimplification(mScript, substitutionForTransFormula).transform(tf.getFormula());
-		final Term renamedSuccessor = new SafeSubstitutionWithLocalSimplification(mScript, substitutionForSuccessor).transform(p.getFormula());
+		final Term renamedTransFormula = new SubstitutionWithLocalSimplification(mMgdScript, substitutionForTransFormula).transform(tf.getFormula());
+		final Term renamedSuccessor = new SubstitutionWithLocalSimplification(mMgdScript, substitutionForSuccessor).transform(p.getFormula());
 			
 		final Term result = Util.or(mScript, SmtUtils.not(mScript, renamedTransFormula), renamedSuccessor);
 		// Add aux vars to varsToQuantify
-		varsToQuantify.addAll(tf.getAuxVars().keySet());
+		varsToQuantify.addAll(tf.getAuxVars());
 		final Term quantified = SmtUtils.quantifier(mScript, Script.FORALL, varsToQuantify, result);
-		final Term pushed = new QuantifierPusher(mScript, mServices, mVariableManager).transform(quantified);
+		final Term pushed = new QuantifierPusher(mMgdScript, mServices).transform(quantified);
 		return pushed;
 	}
 
@@ -691,45 +531,45 @@ public class PredicateTransformer {
 	 * Responsible for computing WP of a Call statement.
 	 * 
 	 */
-	public Term weakestPrecondition(IPredicate calleePred, TransFormula call_TF,
-			TransFormula globalVarsAssignments, TransFormula oldVarsAssignments, 
-			Set<BoogieVar> modifiableGlobals) {
+	public Term weakestPrecondition(final IPredicate calleePred, final TransFormula call_TF,
+			final TransFormula globalVarsAssignments, final TransFormula oldVarsAssignments, 
+			final Set<IProgramVar> modifiableGlobals) {
 		
 		final InstanceProviderWpCall ip = new InstanceProviderWpCall(modifiableGlobals);
 		
 		Term calleePredRenamed;
 		{
 			final Map<Term, Term> substitution = new HashMap<Term, Term>();
-			for (final BoogieVar bv : calleePred.getVars()) {
-				substitution.put(bv.getTermVariable(), ip.getOrConstuctAfterCallInstance(bv));
+			for (final IProgramVar pv : calleePred.getVars()) {
+				substitution.put(pv.getTermVariable(), ip.getOrConstuctAfterCallInstance(pv));
 			}
-			calleePredRenamed = new SafeSubstitutionWithLocalSimplification(mScript, substitution).transform(calleePred.getFormula());
+			calleePredRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(calleePred.getFormula());
 		}
 		
 		final Term call_TFrenamed;
 		{
 			final Map<Term, Term> substitution = new HashMap<Term, Term>();
-			for (final Entry<BoogieVar, TermVariable> entry : call_TF.getInVars().entrySet()) {
+			for (final Entry<IProgramVar, TermVariable> entry : call_TF.getInVars().entrySet()) {
 				final TermVariable beforeCallInstance = ip.getOrConstuctBeforeCallInstance(entry.getKey()); 
 				substitution.put(entry.getValue(), beforeCallInstance);
 			}
-			for (final Entry<BoogieVar, TermVariable> entry : call_TF.getOutVars().entrySet()) {
+			for (final Entry<IProgramVar, TermVariable> entry : call_TF.getOutVars().entrySet()) {
 				final TermVariable afterCallInstance = ip.getOrConstuctAfterCallInstance(entry.getKey()); 
 				substitution.put(entry.getValue(), afterCallInstance);
 			}
-			call_TFrenamed = new SafeSubstitutionWithLocalSimplification(mScript, substitution).transform(call_TF.getFormula());
+			call_TFrenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(call_TF.getFormula());
 		}
 		
 		final Term globalVarsAssignmentsRenamed;
 		{
 			// for the global vars assignment, we use only "after call instances"
 			final Map<Term, Term> substitution = new HashMap<Term, Term>();
-			for (final Entry<BoogieVar, TermVariable> entry : globalVarsAssignments.getInVars().entrySet()) {
+			for (final Entry<IProgramVar, TermVariable> entry : globalVarsAssignments.getInVars().entrySet()) {
 				assert entry.getKey().isOldvar();
 				final TermVariable beforeCallInstance = ip.getOrConstuctAfterCallInstance(entry.getKey()); 
 				substitution.put(entry.getValue(), beforeCallInstance);
 			}
-			for (final Entry<BoogieVar, TermVariable> entry : globalVarsAssignments.getOutVars().entrySet()) {
+			for (final Entry<IProgramVar, TermVariable> entry : globalVarsAssignments.getOutVars().entrySet()) {
 				if (entry.getKey().isOldvar()) {
 					// do nothing
 				} else {
@@ -737,18 +577,18 @@ public class PredicateTransformer {
 					substitution.put(entry.getValue(), afterCallInstance);
 				}
 			}
-			globalVarsAssignmentsRenamed = new SafeSubstitutionWithLocalSimplification(mScript, substitution).transform(globalVarsAssignments.getFormula());
+			globalVarsAssignmentsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(globalVarsAssignments.getFormula());
 		}
 		
 		final Term oldVarsAssignmentsRenamed;
 		{
 			final Map<Term, Term> substitution = new HashMap<Term, Term>();
-			for (final Entry<BoogieVar, TermVariable> entry : oldVarsAssignments.getInVars().entrySet()) {
+			for (final Entry<IProgramVar, TermVariable> entry : oldVarsAssignments.getInVars().entrySet()) {
 				assert !entry.getKey().isOldvar();
 				final TermVariable beforeCallInstance = ip.getOrConstuctBeforeCallInstance(entry.getKey()); 
 				substitution.put(entry.getValue(), beforeCallInstance);
 			}
-			for (final Entry<BoogieVar, TermVariable> entry : oldVarsAssignments.getOutVars().entrySet()) {
+			for (final Entry<IProgramVar, TermVariable> entry : oldVarsAssignments.getOutVars().entrySet()) {
 				if (entry.getKey().isOldvar()) {
 					final TermVariable afterCallInstance = ip.getOrConstuctAfterCallInstance(entry.getKey()); 
 					substitution.put(entry.getValue(), afterCallInstance);
@@ -756,16 +596,16 @@ public class PredicateTransformer {
 					// do nothing
 				}
 			}
-			oldVarsAssignmentsRenamed = new SafeSubstitutionWithLocalSimplification(mScript, substitution).transform(oldVarsAssignments.getFormula());
+			oldVarsAssignmentsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(oldVarsAssignments.getFormula());
 		}
 
 		final Set<TermVariable> varsToQuantify = new HashSet<TermVariable>(ip.getFreshTermVariables());
 		final Term result = Util.or(mScript,
 				SmtUtils.not(mScript, Util.and(mScript, call_TFrenamed, globalVarsAssignmentsRenamed, oldVarsAssignmentsRenamed)),
 				calleePredRenamed);
-		varsToQuantify.addAll(call_TF.getAuxVars().keySet());
+		varsToQuantify.addAll(call_TF.getAuxVars());
 		final Term quantified = SmtUtils.quantifier(mScript, Script.FORALL, varsToQuantify, result);
-		final Term pushed = new QuantifierPusher(mScript, mServices, mVariableManager).transform(quantified);
+		final Term pushed = new QuantifierPusher(mMgdScript, mServices).transform(quantified);
 		return pushed;
 
 	}
@@ -781,9 +621,9 @@ public class PredicateTransformer {
 	 * @param varsOccurringBetweenCallAndReturn 
 	 * 
 	 */
-	public Term weakestPrecondition(IPredicate returnerPred, IPredicate callerPred, TransFormula returnTF,
-			TransFormula callTF, TransFormula globalVarsAssignments, TransFormula oldVarAssignments,
-			Set<BoogieVar> modifiableGlobals, Set<BoogieVar> varsOccurringBetweenCallAndReturn) {
+	public Term weakestPrecondition(final IPredicate returnerPred, final IPredicate callerPred, final TransFormula returnTF,
+			final TransFormula callTF, final TransFormula globalVarsAssignments, final TransFormula oldVarAssignments,
+			final Set<IProgramVar> modifiableGlobals, final Set<IProgramVar> varsOccurringBetweenCallAndReturn) {
 		final InstanceProviderWpReturn ir = new InstanceProviderWpReturn(modifiableGlobals, varsOccurringBetweenCallAndReturn, returnTF.getAssignedVars());
 		
 		
@@ -791,86 +631,86 @@ public class PredicateTransformer {
 		{
 			final Map<Term, Term> substitution = new HashMap<Term, Term>();
 			if (globalVarsAssignments != null) {
-				for (final Entry<BoogieVar, TermVariable> entry : globalVarsAssignments.getInVars().entrySet()) {
-					final BoogieOldVar oldVar = (BoogieOldVar) entry.getKey(); 
+				for (final Entry<IProgramVar, TermVariable> entry : globalVarsAssignments.getInVars().entrySet()) {
+					final IProgramOldVar oldVar = (IProgramOldVar) entry.getKey(); 
 					substitution.put(entry.getValue(), oldVar.getTermVariable());
 				}
-				for (final Entry<BoogieVar, TermVariable> entry : globalVarsAssignments.getOutVars().entrySet()) {
-					if (entry.getKey() instanceof BoogieNonOldVar) {
+				for (final Entry<IProgramVar, TermVariable> entry : globalVarsAssignments.getOutVars().entrySet()) {
+					if (entry.getKey() instanceof IProgramNonOldVar) {
 						final TermVariable beforeCallInstance = 
 								ir.getOrConstuctBeforeCallInstance(entry.getKey());
 						substitution.put(entry.getValue(), beforeCallInstance);
 					} else {
-						assert (entry.getKey() instanceof BoogieOldVar);
+						assert (entry.getKey() instanceof IProgramOldVar);
 					}
 				}
-				globalVarsRenamed = new SafeSubstitutionWithLocalSimplification(mScript, substitution).transform(globalVarsAssignments.getFormula());
+				globalVarsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(globalVarsAssignments.getFormula());
 			} else {
-				for (final Entry<BoogieVar, TermVariable> entry : oldVarAssignments.getOutVars().entrySet()) {
-					final BoogieOldVar oldVar = (BoogieOldVar) entry.getKey(); 
+				for (final Entry<IProgramVar, TermVariable> entry : oldVarAssignments.getOutVars().entrySet()) {
+					final IProgramOldVar oldVar = (IProgramOldVar) entry.getKey(); 
 					substitution.put(entry.getValue(), oldVar.getTermVariable());
 				}
-				for (final Entry<BoogieVar, TermVariable> entry : oldVarAssignments.getInVars().entrySet()) {
-					if (entry.getKey() instanceof BoogieNonOldVar) {
+				for (final Entry<IProgramVar, TermVariable> entry : oldVarAssignments.getInVars().entrySet()) {
+					if (entry.getKey() instanceof IProgramNonOldVar) {
 						final TermVariable beforeCallInstance = 
 								ir.getOrConstuctBeforeCallInstance(entry.getKey());
 						substitution.put(entry.getValue(), beforeCallInstance);
 					} else {
-						assert (entry.getKey() instanceof BoogieOldVar);
+						assert (entry.getKey() instanceof IProgramOldVar);
 					}
 				}
-				globalVarsRenamed = new SafeSubstitutionWithLocalSimplification(mScript, substitution).transform(oldVarAssignments.getFormula());
+				globalVarsRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(oldVarAssignments.getFormula());
 			}
 		}
 		
 		final Term returnTermRenamed;
 		{
 			final Map<Term, Term> substitution = new HashMap<Term, Term>();
-			for (final Entry<BoogieVar, TermVariable> entry : returnTF.getInVars().entrySet()) {
+			for (final Entry<IProgramVar, TermVariable> entry : returnTF.getInVars().entrySet()) {
 				final TermVariable beforeReturnInstance = 
 						ir.getOrConstuctBeforeReturnInstance(entry.getKey());
 				substitution.put(entry.getValue(), beforeReturnInstance);
 			}
-			for (final Entry<BoogieVar, TermVariable> entry : returnTF.getOutVars().entrySet()) {
+			for (final Entry<IProgramVar, TermVariable> entry : returnTF.getOutVars().entrySet()) {
 				final TermVariable afterReturnInstance = 
 						ir.getOrConstuctAfterReturnInstance(entry.getKey());
 				substitution.put(entry.getValue(), afterReturnInstance);
 			}
-			returnTermRenamed = new SafeSubstitutionWithLocalSimplification(mScript, substitution).transform(returnTF.getFormula());
+			returnTermRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(returnTF.getFormula());
 		}
 		
 		final Term callTermRenamed;
 		{
 			final Map<Term, Term> substitution = new HashMap<Term, Term>();
-			for (final Entry<BoogieVar, TermVariable> entry : callTF.getInVars().entrySet()) {
+			for (final Entry<IProgramVar, TermVariable> entry : callTF.getInVars().entrySet()) {
 				final TermVariable beforeCallInstance = 
 						ir.getOrConstuctBeforeCallInstance(entry.getKey());
 				substitution.put(entry.getValue(), beforeCallInstance);
 			}
-			for (final Entry<BoogieVar, TermVariable> entry : callTF.getOutVars().entrySet()) {
+			for (final Entry<IProgramVar, TermVariable> entry : callTF.getOutVars().entrySet()) {
 				final TermVariable beforeReturnInstance = 
 						ir.getOrConstuctBeforeReturnInstance(entry.getKey());
 				substitution.put(entry.getValue(), beforeReturnInstance);
 			}
-			callTermRenamed = new SafeSubstitutionWithLocalSimplification(mScript, substitution).transform(callTF.getFormula());
+			callTermRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(callTF.getFormula());
 		}
 		
 		Term callerPredRenamed;
 		{
 			final Map<Term, Term> substitution = new HashMap<Term, Term>();
-			for (final BoogieVar bv : callerPred.getVars()) {
-				substitution.put(bv.getTermVariable(), ir.getOrConstuctBeforeCallInstance(bv));
+			for (final IProgramVar pv : callerPred.getVars()) {
+				substitution.put(pv.getTermVariable(), ir.getOrConstuctBeforeCallInstance(pv));
 			}
-			callerPredRenamed = new SafeSubstitutionWithLocalSimplification(mScript, substitution).transform(callerPred.getFormula());
+			callerPredRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(callerPred.getFormula());
 		}
 		
 		Term returnPredRenamed;
 		{
 			final Map<Term, Term> substitution = new HashMap<Term, Term>();
-			for (final BoogieVar bv : returnerPred.getVars()) {
-				substitution.put(bv.getTermVariable(), ir.getOrConstuctAfterReturnInstance(bv));
+			for (final IProgramVar pv : returnerPred.getVars()) {
+				substitution.put(pv.getTermVariable(), ir.getOrConstuctAfterReturnInstance(pv));
 			}
-			returnPredRenamed = new SafeSubstitutionWithLocalSimplification(mScript, substitution).transform(returnerPred.getFormula());
+			returnPredRenamed = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(returnerPred.getFormula());
 		}
 
 		final Set<TermVariable> varsToQuantify = new HashSet<TermVariable>(ir.getFreshTermVariables());
@@ -905,18 +745,18 @@ public class PredicateTransformer {
 	
 
 	/**
-	 * return true if varsOccurringBetweenCallAndReturn contains bv or 
+	 * return true if varsOccurringBetweenCallAndReturn contains pv or 
 	 * varsOccurringBetweenCallAndReturn is null (which means that the return
 	 * is a pending return and possibly all vars may occur before return)
-	 * @param bv
+	 * @param pv
 	 * @return
 	 */
 	private boolean varOccursBetweenCallAndReturn(
-			Set<BoogieVar> varsOccurringBetweenCallAndReturn, BoogieVar bv) {
+			final Set<IProgramVar> varsOccurringBetweenCallAndReturn, final IProgramVar pv) {
 		if (varsOccurringBetweenCallAndReturn == null) {
 			return true;
 		} else {
-			return varsOccurringBetweenCallAndReturn.contains(bv);
+			return varsOccurringBetweenCallAndReturn.contains(pv);
 		}
 	}
 	
@@ -936,37 +776,37 @@ public class PredicateTransformer {
 	 *
 	 */
 	private class InstanceProviderWpCall {
-		private final Set<BoogieVar> mModifiableGlobals;
-		private final IValueConstruction<BoogieVar, TermVariable> mValueConstruction = new IValueConstruction<BoogieVar, TermVariable>() {
+		private final Set<IProgramVar> mModifiableGlobals;
+		private final IValueConstruction<IProgramVar, TermVariable> mValueConstruction = new IValueConstruction<IProgramVar, TermVariable>() {
 			@Override
-			public TermVariable constructValue(BoogieVar bv) {
-				return mVariableManager.constructFreshTermVariable(bv);
+			public TermVariable constructValue(final IProgramVar pv) {
+				return constructFreshTermVariable(mMgdScript, pv);
 			}
 		};
-		private final ConstructionCache<BoogieVar, TermVariable> mFreshVariables = new ConstructionCache<>(mValueConstruction);
+		private final ConstructionCache<IProgramVar, TermVariable> mFreshVariables = new ConstructionCache<>(mValueConstruction);
 		
-		public InstanceProviderWpCall(Set<BoogieVar> modifiableGlobals) {
+		public InstanceProviderWpCall(final Set<IProgramVar> modifiableGlobals) {
 			super();
 			mModifiableGlobals = modifiableGlobals;
 		}
 
-		public TermVariable getOrConstuctBeforeCallInstance(BoogieVar bv) {
-			return bv.getTermVariable();
+		public TermVariable getOrConstuctBeforeCallInstance(final IProgramVar pv) {
+			return pv.getTermVariable();
 		}
 
-		public TermVariable getOrConstuctAfterCallInstance(BoogieVar bv) {
-			if (bv.isGlobal()) {
-				if (bv.isOldvar()) {
-					return mFreshVariables.getOrConstuct(bv);
+		public TermVariable getOrConstuctAfterCallInstance(final IProgramVar pv) {
+			if (pv.isGlobal()) {
+				if (pv.isOldvar()) {
+					return mFreshVariables.getOrConstruct(pv);
 				} else {
-					if (mModifiableGlobals.contains(bv)) {
-						return mFreshVariables.getOrConstuct(bv);
+					if (mModifiableGlobals.contains(pv)) {
+						return mFreshVariables.getOrConstruct(pv);
 					} else {
-						return bv.getTermVariable();
+						return pv.getTermVariable();
 					}
 				}
 			} else {
-				return mFreshVariables.getOrConstuct(bv);
+				return mFreshVariables.getOrConstruct(pv);
 			}
 		}
 		
@@ -992,80 +832,80 @@ public class PredicateTransformer {
 	 *
 	 */
 	private class InstanceProviderWpReturn {
-		private final Map<BoogieVar, TermVariable> mBeforeCall = new HashMap<BoogieVar, TermVariable>();
-		private final Map<BoogieVar, TermVariable> mAfterReturn = new HashMap<BoogieVar, TermVariable>();
-		private final Map<BoogieVar, TermVariable> mBeforeAfterCallCoincide = new HashMap<BoogieVar, TermVariable>();
-		private final Set<BoogieVar> mModifiableGlobals;
-		private final Set<BoogieVar> mVarsOccurringBetweenCallAndReturn;
-		private final Set<BoogieVar> mAssignedOnReturn;
+		private final Map<IProgramVar, TermVariable> mBeforeCall = new HashMap<IProgramVar, TermVariable>();
+		private final Map<IProgramVar, TermVariable> mAfterReturn = new HashMap<IProgramVar, TermVariable>();
+		private final Map<IProgramVar, TermVariable> mBeforeAfterCallCoincide = new HashMap<IProgramVar, TermVariable>();
+		private final Set<IProgramVar> mModifiableGlobals;
+		private final Set<IProgramVar> mVarsOccurringBetweenCallAndReturn;
+		private final Set<IProgramVar> mAssignedOnReturn;
 		private final Set<TermVariable> mFreshTermVariables = new HashSet<TermVariable>();
 		
-		public InstanceProviderWpReturn(Set<BoogieVar> modifiableGlobals,
-				Set<BoogieVar> varsOccurringBetweenCallAndReturn,
-				Set<BoogieVar> assignedOnReturn) {
+		public InstanceProviderWpReturn(final Set<IProgramVar> modifiableGlobals,
+				final Set<IProgramVar> varsOccurringBetweenCallAndReturn,
+				final Set<IProgramVar> assignedOnReturn) {
 			super();
 			mModifiableGlobals = modifiableGlobals;
 			mVarsOccurringBetweenCallAndReturn = varsOccurringBetweenCallAndReturn;
 			mAssignedOnReturn = assignedOnReturn;
 		}
 
-		public TermVariable getOrConstuctBeforeCallInstance(BoogieVar bv) {
-			if (bv.isGlobal()) {
-				if (bv.isOldvar()) {
-					return getOrConstructTermVariable(mBeforeAfterCallCoincide, bv);
+		public TermVariable getOrConstuctBeforeCallInstance(final IProgramVar pv) {
+			if (pv.isGlobal()) {
+				if (pv.isOldvar()) {
+					return getOrConstructTermVariable(mBeforeAfterCallCoincide, pv);
 				} else {
-					if (mModifiableGlobals.contains(bv)) {
-						return getOrConstructTermVariable(mBeforeCall, bv);
+					if (mModifiableGlobals.contains(pv)) {
+						return getOrConstructTermVariable(mBeforeCall, pv);
 					} else {
-						if (doesVarOccurBetweenCallAndReturn((BoogieNonOldVar) bv)) {
-							return bv.getTermVariable();
+						if (doesVarOccurBetweenCallAndReturn((IProgramNonOldVar) pv)) {
+							return pv.getTermVariable();
 						} else {
-							return getOrConstructTermVariable_BeforeAndAfterIfNecessary(bv, mBeforeCall);
+							return getOrConstructTermVariable_BeforeAndAfterIfNecessary(pv, mBeforeCall);
 						}
 					}
 				}
 			} else {
-				return getOrConstructTermVariable_BeforeAndAfterIfNecessary(bv, mBeforeCall);
+				return getOrConstructTermVariable_BeforeAndAfterIfNecessary(pv, mBeforeCall);
 			}
 		}
 
-		public TermVariable getOrConstuctBeforeReturnInstance(BoogieVar bv) {
-			if (bv.isGlobal()) {
-				if (bv.isOldvar()) {
-					return bv.getTermVariable();
+		public TermVariable getOrConstuctBeforeReturnInstance(final IProgramVar pv) {
+			if (pv.isGlobal()) {
+				if (pv.isOldvar()) {
+					return pv.getTermVariable();
 				} else {
 					throw new AssertionError("illegal case");
 				}
 			} else {
-				return bv.getTermVariable();
+				return pv.getTermVariable();
 			}
 		}
 		
-		public TermVariable getOrConstuctAfterReturnInstance(BoogieVar bv) {
-			if (bv.isGlobal()) {
-				if (bv.isOldvar()) {
-					return getOrConstructTermVariable(mBeforeAfterCallCoincide, bv);
+		public TermVariable getOrConstuctAfterReturnInstance(final IProgramVar pv) {
+			if (pv.isGlobal()) {
+				if (pv.isOldvar()) {
+					return getOrConstructTermVariable(mBeforeAfterCallCoincide, pv);
 				} else {
-					if (mModifiableGlobals.contains(bv)) {
-						if (mAssignedOnReturn.contains(bv)) {
-							return getOrConstructTermVariable(mAfterReturn, bv);
+					if (mModifiableGlobals.contains(pv)) {
+						if (mAssignedOnReturn.contains(pv)) {
+							return getOrConstructTermVariable(mAfterReturn, pv);
 						} else {
-							return bv.getTermVariable();
+							return pv.getTermVariable();
 						}
 					} else {
-						if (doesVarOccurBetweenCallAndReturn((BoogieNonOldVar) bv)) {
-							if (mAssignedOnReturn.contains(bv)) {
-								return getOrConstructTermVariable(mAfterReturn, bv);
+						if (doesVarOccurBetweenCallAndReturn((IProgramNonOldVar) pv)) {
+							if (mAssignedOnReturn.contains(pv)) {
+								return getOrConstructTermVariable(mAfterReturn, pv);
 							} else {
-								return bv.getTermVariable();
+								return pv.getTermVariable();
 							}
 						} else {
-							return getOrConstructTermVariable_BeforeAndAfterIfNecessary(bv, mAfterReturn);
+							return getOrConstructTermVariable_BeforeAndAfterIfNecessary(pv, mAfterReturn);
 						}
 					}
 				}
 			} else {
-				return getOrConstructTermVariable_BeforeAndAfterIfNecessary(bv, mAfterReturn);
+				return getOrConstructTermVariable_BeforeAndAfterIfNecessary(pv, mAfterReturn);
 			}
 		}
 		
@@ -1074,32 +914,32 @@ public class PredicateTransformer {
 		}
 
 		private boolean doesVarOccurBetweenCallAndReturn(
-				BoogieNonOldVar nonOld) {
+				final IProgramNonOldVar nonOld) {
 			return mVarsOccurringBetweenCallAndReturn.contains(nonOld);
 		}
 
 		/**
-		 * getOrConstructTermVariable for map if bv is assigned on return
+		 * getOrConstructTermVariable for map if pv is assigned on return
 		 * (which means instance before call and after return is different)
 		 * and getOrConstructTermVariable for the mBeforeAfterCallCoincide map
 		 * if the variable is not assigned on return.
 		 */
-		private TermVariable getOrConstructTermVariable_BeforeAndAfterIfNecessary(BoogieVar bv, Map<BoogieVar, TermVariable> map) {
+		private TermVariable getOrConstructTermVariable_BeforeAndAfterIfNecessary(final IProgramVar pv, final Map<IProgramVar, TermVariable> map) {
 			assert map == mBeforeCall || map == mAfterReturn;
-			if (mAssignedOnReturn.contains(bv)) {
-				return getOrConstructTermVariable(map, bv); 
+			if (mAssignedOnReturn.contains(pv)) {
+				return getOrConstructTermVariable(map, pv); 
 			} else {
-				return getOrConstructTermVariable(mBeforeAfterCallCoincide, bv);
+				return getOrConstructTermVariable(mBeforeAfterCallCoincide, pv);
 			}
 		}
 		
 		private TermVariable getOrConstructTermVariable(
-				Map<BoogieVar, TermVariable> map, BoogieVar bv) {
-			TermVariable tv = map.get(bv);
+				final Map<IProgramVar, TermVariable> map, final IProgramVar pv) {
+			TermVariable tv = map.get(pv);
 			if (tv == null) {
-				tv = mVariableManager.constructFreshTermVariable(bv);
+				tv = constructFreshTermVariable(mMgdScript, pv);
 				mFreshTermVariables.add(tv);
-				map.put(bv, tv);
+				map.put(pv, tv);
 			}
 			return tv;
 		}
@@ -1115,9 +955,9 @@ public class PredicateTransformer {
 	 * Returns copy of map restricted to keys that are of the given GlobalType
 	 * (oldVar or nonOldVar).
 	 */
-	private Map<BoogieVar, TermVariable> restrictMap(Map<BoogieVar, TermVariable> map, GlobalType globalType) {
-		final Map<BoogieVar, TermVariable> result = new HashMap<BoogieVar, TermVariable>();
-		for (final Entry<BoogieVar, TermVariable> entry : map.entrySet()) {
+	private Map<IProgramVar, TermVariable> restrictMap(final Map<IProgramVar, TermVariable> map, final GlobalType globalType) {
+		final Map<IProgramVar, TermVariable> result = new HashMap<IProgramVar, TermVariable>();
+		for (final Entry<IProgramVar, TermVariable> entry : map.entrySet()) {
 			if ((globalType == GlobalType.OLDVAR) == (entry.getKey().isOldvar())) {
 				result.put(entry.getKey(), entry.getValue());
 			}
@@ -1144,21 +984,21 @@ public class PredicateTransformer {
 	 * @return formulaToBeSubstituted, where the variables are substituted by
 	 *         fresh variables
 	 */
-	private Term substituteToFreshVarsAndAddToQuantify(Map<BoogieVar, TermVariable> varsToBeSubstituted,
-			Term formulaToBeSubstituted, Map<TermVariable, Term> varsToBeSubstitutedByFreshVars,
-			Set<TermVariable> varsToQuantify) {
+	private Term substituteToFreshVarsAndAddToQuantify(final Map<IProgramVar, TermVariable> varsToBeSubstituted,
+			final Term formulaToBeSubstituted, final Map<TermVariable, Term> varsToBeSubstitutedByFreshVars,
+			final Set<TermVariable> varsToQuantify) {
 		final Map<Term, Term> substitution = new HashMap<Term, Term>();
-		for (final BoogieVar bv : varsToBeSubstituted.keySet()) {
-			final TermVariable freshVar = mVariableManager.constructFreshTermVariable(bv);
-			substitution.put(varsToBeSubstituted.get(bv), freshVar);
+		for (final IProgramVar pv : varsToBeSubstituted.keySet()) {
+			final TermVariable freshVar = constructFreshTermVariable(mMgdScript, pv);
+			substitution.put(varsToBeSubstituted.get(pv), freshVar);
 			if (varsToBeSubstitutedByFreshVars != null) {
-				varsToBeSubstitutedByFreshVars.put(bv.getTermVariable(), freshVar);
+				varsToBeSubstitutedByFreshVars.put(pv.getTermVariable(), freshVar);
 			}
 			if (varsToQuantify != null) {
 				varsToQuantify.add(freshVar);
 			}
 		}
-		return new SafeSubstitutionWithLocalSimplification(mScript, substitution).transform(formulaToBeSubstituted);
+		return new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(formulaToBeSubstituted);
 	}
 
 	/**
@@ -1180,21 +1020,20 @@ public class PredicateTransformer {
 	 * @return formulaToBeSubstituted, where the variables are substituted by
 	 *         the corresponding term variables
 	 */
-	private Term substituteToRepresantativesAndAddToQuantify(Map<BoogieVar, TermVariable> varsToBeSubstituted,
-			Term formulaToBeSubstituted, Map<Term, Term> varsToBeSubstitutedByFreshVars,
-			Set<TermVariable> varsToQuantify) {
+	private Term substituteToRepresantativesAndAddToQuantify(final Map<IProgramVar, TermVariable> varsToBeSubstituted,
+			final Term formulaToBeSubstituted, final Map<Term, Term> varsToBeSubstitutedByFreshVars,
+			final Set<TermVariable> varsToQuantify) {
 		final Map<Term, Term> substitution = new HashMap<Term, Term>();
-		for (final BoogieVar bv : varsToBeSubstituted.keySet()) {
-			final TermVariable freshVar = mVariableManager.constructFreshTermVariable(bv);
-			substitution.put(varsToBeSubstituted.get(bv), bv.getTermVariable());
+		for (final IProgramVar pv : varsToBeSubstituted.keySet()) {
+			final TermVariable freshVar = constructFreshTermVariable(mMgdScript, pv);
+			substitution.put(varsToBeSubstituted.get(pv), pv.getTermVariable());
 			if (varsToBeSubstitutedByFreshVars != null) {
-				varsToBeSubstitutedByFreshVars.put(bv.getTermVariable(), freshVar);
+				varsToBeSubstitutedByFreshVars.put(pv.getTermVariable(), freshVar);
 			}
 			if (varsToQuantify != null) {
 				varsToQuantify.add(freshVar);
 			}
 		}
-		return new SafeSubstitutionWithLocalSimplification(mScript, substitution).transform(formulaToBeSubstituted);
+		return new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(formulaToBeSubstituted);
 	}
-
 }

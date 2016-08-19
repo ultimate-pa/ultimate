@@ -30,9 +30,9 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IModifiableMultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * This interface represents all kinds of minimized edges.
@@ -80,7 +80,7 @@ public interface IMinimizedEdge extends
 	 * 
 	 * @return the set of used boogie vars
 	 */
-	public Set<BoogieVar> getDifferentVariables();
+	public Set<IProgramVar> getDifferentVariables();
 
 	/**
 	 * Returns the number of IMinimizedEdges inside, so basic edges return here

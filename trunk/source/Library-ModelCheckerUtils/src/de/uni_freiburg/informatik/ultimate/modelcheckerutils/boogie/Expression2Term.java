@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
@@ -82,7 +83,7 @@ public class Expression2Term {
 	private final TypeSortTranslator mTypeSortTranslator;
 	private final IOperationTranslator mOperationTranslator;
 	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
-	private final VariableManager mVariableManager;
+	private final ManagedScript mVariableManager;
 	private final boolean mOverapproximateFunctions = false;
 	
 	private final ScopedHashMap<String, TermVariable> mQuantifiedVariables = new ScopedHashMap<>();
@@ -100,9 +101,9 @@ public class Expression2Term {
 	private final IUltimateServiceProvider mServices;
 	private static final String s_Overapproximation = "overapproximation";
 
-	public Expression2Term(IUltimateServiceProvider services, Script script, 
-			TypeSortTranslator typeSortTranslator, 
-			Boogie2SmtSymbolTable boogie2SmtSymbolTable, IOperationTranslator operationTranslator, VariableManager variableManager) {
+	public Expression2Term(final IUltimateServiceProvider services, final Script script, 
+			final TypeSortTranslator typeSortTranslator, 
+			final Boogie2SmtSymbolTable boogie2SmtSymbolTable, final IOperationTranslator operationTranslator, final ManagedScript variableManager) {
 		super();
 		mServices = services;
 		mScript = script;
@@ -112,7 +113,7 @@ public class Expression2Term {
 		mVariableManager = variableManager;
 	}
 
-	public SingleTermResult translateToTerm(IdentifierTranslator[] identifierTranslators, Expression expression) {
+	public SingleTermResult translateToTerm(final IdentifierTranslator[] identifierTranslators, final Expression expression) {
 		assert mSmtIdentifierProviders == null : getClass().getSimpleName() + " in use";
 		assert mQuantifiedVariables.isEmpty() : getClass().getSimpleName() + " in use";
 		assert mOverapproximations == null : getClass().getSimpleName() + " in use";
@@ -128,7 +129,7 @@ public class Expression2Term {
 		return result; 
 	}
 
-	public MultiTermResult translateToTerms(IdentifierTranslator[] identifierTranslators, Expression[] expressions) {
+	public MultiTermResult translateToTerms(final IdentifierTranslator[] identifierTranslators, final Expression[] expressions) {
 		assert mSmtIdentifierProviders == null : getClass().getSimpleName() + " in use";
 		assert mQuantifiedVariables.isEmpty() : getClass().getSimpleName() + " in use";
 		assert mOverapproximations == null : getClass().getSimpleName() + " in use";
@@ -147,7 +148,7 @@ public class Expression2Term {
 		return result; 
 	}
 
-	Term getSmtIdentifier(String id, DeclarationInformation declInfo, boolean isOldContext, BoogieASTNode boogieASTNode) {
+	Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, final boolean isOldContext, final BoogieASTNode boogieASTNode) {
 		if (mQuantifiedVariables.containsKey(id)) {
 			return mQuantifiedVariables.get(id);
 		} else {
@@ -171,7 +172,7 @@ public class Expression2Term {
 		return mOldContextScopeDepth > 0;
 	}
 
-	private Term translate(Expression exp) {
+	private Term translate(final Expression exp) {
 		if (exp instanceof ArrayAccessExpression) {
 			final ArrayAccessExpression arrexp = (ArrayAccessExpression) exp;
 			final Expression[] indices = arrexp.getIndices();
@@ -411,8 +412,8 @@ public class Expression2Term {
 	abstract class TranslationResult {
 		private final Map<String, ILocation> mOverappoximations;
 		private final Collection<TermVariable> mAuxiliaryVars;
-		public TranslationResult(Map<String, ILocation> overapproximations,
-				Collection<TermVariable> auxiliaryVars) {
+		public TranslationResult(final Map<String, ILocation> overapproximations,
+				final Collection<TermVariable> auxiliaryVars) {
 			super();
 			assert auxiliaryVars != null;
 			mOverappoximations = overapproximations;
@@ -428,8 +429,8 @@ public class Expression2Term {
 	
 	public class SingleTermResult extends TranslationResult {
 		private final Term mTerm;
-		public SingleTermResult(Map<String, ILocation> overapproximations,
-				Collection<TermVariable> auxiliaryVars, Term term) {
+		public SingleTermResult(final Map<String, ILocation> overapproximations,
+				final Collection<TermVariable> auxiliaryVars, final Term term) {
 			super(overapproximations, auxiliaryVars);
 			mTerm = term;
 		}
@@ -440,8 +441,8 @@ public class Expression2Term {
 	
 	public class MultiTermResult extends TranslationResult {
 		private final Term[] mTerms;
-		public MultiTermResult(Map<String, ILocation> overapproximations,
-				Collection<TermVariable> auxiliaryVars, Term[] terms) {
+		public MultiTermResult(final Map<String, ILocation> overapproximations,
+				final Collection<TermVariable> auxiliaryVars, final Term[] terms) {
 			super(overapproximations, auxiliaryVars);
 			mTerms = terms;
 		}

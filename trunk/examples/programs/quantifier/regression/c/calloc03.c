@@ -2,7 +2,7 @@
 /*
  * Check that memory leak is detected.
  * Date: 2016-02-24
- * Author: heizmann@informtik.uni-freiburg.de
+ * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
 

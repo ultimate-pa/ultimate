@@ -1,0 +1,229 @@
+/*
+ * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 University of Freiburg
+ * 
+ * This file is part of the ULTIMATE TraceAbstraction plug-in.
+ * 
+ * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
+ * containing parts covered by the terms of the Eclipse Public License, the 
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * to convey the resulting work.
+ */
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender;
+
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+
+
+/**
+ * Tradeoff between PowersetDeterminizer and BestApproximationDeterminizer.
+ * Idea: Make a selfloop if inductive. If not inductive use PowersetDeterminizer
+ * @author heizmann@informatik.uni-freiburg.de
+ * 
+ * TODO: For Call and Return this does not make much sense. Use there
+ * generally the PowersetDeterminizer or the BestApproximationDeterminizer.
+ */
+public class SelfloopDeterminizer 
+					implements IStateDeterminizer<CodeBlock, IPredicate> {
+
+	IHoareTripleChecker mHoareTriplechecker;
+	PowersetDeterminizer<CodeBlock, IPredicate> mPowersetDeterminizer;
+	
+	INestedWordAutomaton<CodeBlock, IPredicate> mInterpolantAutomaton;
+	private final StateFactory<IPredicate> mStateFactory;
+	IPredicate mInterpolantAutomatonFinalState;
+	
+	DeterminizedState<CodeBlock, IPredicate> mResultFinalState;
+	
+	public int mInternalSelfloop = 0;
+	public int mInternalNonSelfloop = 0;
+
+	public int mCallSelfloop = 0;
+	public int mCallNonSelfloop = 0;
+
+	public int mReturnSelfloop = 0;
+	public int mReturnNonSelfloop = 0;
+	
+	public SelfloopDeterminizer(SmtManager mSmtManager,
+			TAPreferences taPreferences,
+			INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutom,
+			StateFactory<IPredicate> stateFactory) {
+		super();
+		mHoareTriplechecker = new MonolithicHoareTripleChecker(
+				mSmtManager.getManagedScript(), mSmtManager.getModifiableGlobals());
+		mInterpolantAutomaton = interpolantAutom;
+		mStateFactory = stateFactory;
+		mPowersetDeterminizer = 
+			new PowersetDeterminizer<CodeBlock, IPredicate>(mInterpolantAutomaton, true, mStateFactory);
+		for (final IPredicate state : mInterpolantAutomaton.getStates()) {
+			if (mInterpolantAutomatonFinalState == null) {
+				if (mInterpolantAutomaton.isFinal(state)) {
+					mInterpolantAutomatonFinalState = state;
+				}
+			}
+			else {
+				throw new IllegalArgumentException("Interpolant Automaton" +
+						" must have one final state");
+			}
+		}
+		mResultFinalState = 
+			new DeterminizedState<CodeBlock, IPredicate>(mInterpolantAutomaton);
+		mResultFinalState.addPair(mInterpolantAutomaton.getEmptyStackState(),
+											mInterpolantAutomatonFinalState, mInterpolantAutomaton);
+	}
+	
+	@Override
+	public DeterminizedState<CodeBlock, IPredicate> initialState() {
+		return mPowersetDeterminizer.initialState();
+	}
+	
+
+	@Override
+	public DeterminizedState<CodeBlock, IPredicate> internalSuccessor(
+						DeterminizedState<CodeBlock, IPredicate> detState,
+						CodeBlock symbol) {
+		if (detState == mResultFinalState) {
+			mInternalSelfloop++;
+			return mResultFinalState;
+		}
+		final DeterminizedState<CodeBlock, IPredicate> powersetSucc = 
+					mPowersetDeterminizer.internalSuccessor(detState, symbol);
+		if (containsFinal(powersetSucc)) {
+			mInternalNonSelfloop++;
+			return mResultFinalState;
+		}
+		if (powersetSucc.isSubsetOf(detState)) {
+			final IPredicate detStateContent = getState(detState);
+			final Validity isInductive = mHoareTriplechecker.checkInternal(detStateContent,
+													   (IInternalAction) symbol, detStateContent);
+			if (isInductive == Validity.VALID) {
+				mInternalSelfloop++;
+				return detState;
+			}
+		}
+		mInternalNonSelfloop++;
+		return powersetSucc;
+	}
+	
+
+	@Override
+	public DeterminizedState<CodeBlock, IPredicate> callSuccessor(
+						DeterminizedState<CodeBlock, IPredicate> detState,
+						CodeBlock symbol) {
+		if (detState == mResultFinalState) {
+			mCallSelfloop++;
+			return mResultFinalState;
+		}
+		final DeterminizedState<CodeBlock, IPredicate> powersetSucc = 
+					mPowersetDeterminizer.callSuccessor(detState, symbol);
+		if (containsFinal(powersetSucc)) {
+			mCallNonSelfloop++;
+			return mResultFinalState;
+		}
+		if (powersetSucc.isSubsetOf(detState)) {
+			final IPredicate detStateContent = getState(detState);
+			final Validity isInductive = mHoareTriplechecker.checkCall(detStateContent,
+										   (Call) symbol, detStateContent);
+			if (isInductive == Validity.VALID) {
+				mCallSelfloop++;
+				return detState;
+			}
+		}
+		mCallNonSelfloop++;
+		return powersetSucc;
+	}
+
+
+	@Override
+	public DeterminizedState<CodeBlock, IPredicate> returnSuccessor(
+			DeterminizedState<CodeBlock, IPredicate> detState,
+			DeterminizedState<CodeBlock, IPredicate> derHier,
+			CodeBlock symbol) {
+		if (detState == mResultFinalState) {
+			mReturnSelfloop++;
+			return mResultFinalState;
+		}
+		if (derHier == mResultFinalState) {
+			throw new AssertionError("I guess this never happens");
+		}		
+		final DeterminizedState<CodeBlock, IPredicate> powersetSucc = 
+			mPowersetDeterminizer.returnSuccessor(detState, derHier, symbol);
+		if (containsFinal(powersetSucc)) {
+			mReturnNonSelfloop++;
+			return mResultFinalState;
+		}
+		if (powersetSucc.isSubsetOf(detState)) {
+			final IPredicate detStateContent = getState(detState);
+			final IPredicate detHierContent = getState(derHier);
+			final Validity isInductive = mHoareTriplechecker.checkReturn(detStateContent, 
+						detHierContent, (Return) symbol, detStateContent);
+			if (isInductive == Validity.VALID) {
+				mReturnSelfloop++;
+				return detState;
+			}
+		}
+		mReturnNonSelfloop++;
+		return powersetSucc;
+	}
+	
+
+	
+	
+	private boolean containsFinal(
+						DeterminizedState<CodeBlock, IPredicate> detState) {
+		for (final IPredicate down : detState.getDownStates()) {
+			for (final IPredicate up : detState.getUpStates(down)) {
+				if (up == mInterpolantAutomatonFinalState) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public int getMaxDegreeOfNondeterminism() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public boolean useDoubleDeckers() {
+		return true;
+	}
+	
+	@Override
+	public IPredicate getState(
+			DeterminizedState<CodeBlock, IPredicate> determinizedState) {
+		return determinizedState.getContent(mStateFactory);
+	}
+
+}

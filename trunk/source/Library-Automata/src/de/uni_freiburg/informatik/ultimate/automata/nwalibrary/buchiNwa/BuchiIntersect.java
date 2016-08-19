@@ -31,10 +31,10 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
@@ -52,6 +52,30 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
 	private final StateFactory<STATE> mStateFactory;
 	
+	
+	public BuchiIntersect(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand
+			) throws AutomataLibraryException {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mFstOperand = fstOperand;
+		mSndOperand = sndOperand;
+		mStateFactory = mFstOperand.getStateFactory();
+		doIntersect();
+	}
+	
+	public BuchiIntersect(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
+			final StateFactory<STATE> sf) throws AutomataLibraryException {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mFstOperand = fstOperand;
+		mSndOperand = sndOperand;
+		mStateFactory = sf;
+		doIntersect();
+	}
 	
 	@Override
 	public String operationName() {
@@ -73,33 +97,6 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				mResult.sizeInformation();
 	}
 	
-	
-	
-	
-	public BuchiIntersect(AutomataLibraryServices services,
-			INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
-			INestedWordAutomatonSimple<LETTER,STATE> sndOperand
-			) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mFstOperand = fstOperand;
-		mSndOperand = sndOperand;
-		mStateFactory = mFstOperand.getStateFactory();
-		doIntersect();
-	}
-	
-	public BuchiIntersect(AutomataLibraryServices services,
-			INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
-			INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
-			StateFactory<STATE> sf) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mFstOperand = fstOperand;
-		mSndOperand = sndOperand;
-		mStateFactory = sf;
-		doIntersect();
-	}
-	
 	private void doIntersect() throws AutomataLibraryException {
 		mLogger.info(startMessage());
 		mIntersect = new BuchiIntersectNwa<LETTER, STATE>(mFstOperand, mSndOperand, mStateFactory);
@@ -107,44 +104,32 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		mLogger.info(exitMessage());
 	}
 	
-
-
-
-
-
-
 	@Override
 	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult()
 			throws AutomataLibraryException {
 		return mResult;
 	}
 
-
-	
 	@Override
-	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
+	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
-		final INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(mServices, mFstOperand);
-		final INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(mServices, mSndOperand);
-		final INestedWordAutomatonOldApi<LETTER, STATE> resultDD = 
-				(new BuchiIntersectDD<LETTER, STATE>(mServices, fstOperandOldApi,sndOperandOldApi)).getResult();
 		boolean correct = true;
+//		final INestedWordAutomaton<LETTER, STATE> resultDD =
+//				(new BuchiIntersectDD<LETTER, STATE>(mServices, mFstOperand, mSndOperand)).getResult();
 //		correct &= (resultDD.size() <= mResult.size());
-		assert correct;
+//		assert correct;
 		correct &= resultCheckWithRandomWords();
 		assert correct;
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mFstOperand,mSndOperand);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
+					operationName() + "Failed", "language is different",
+					mFstOperand, mSndOperand);
 		}
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 	
 	private boolean resultCheckWithRandomWords() throws AutomataLibraryException {
-		final INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = 
-				ResultChecker.getOldApiNwa(mServices, mFstOperand);
-		final INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = 
-				ResultChecker.getOldApiNwa(mServices, mSndOperand);
 		final List<NestedLassoWord<LETTER>> lassoWords = 
 				new ArrayList<NestedLassoWord<LETTER>>();
 		final BuchiIsEmpty<LETTER, STATE> resultEmptiness = 
@@ -153,46 +138,40 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
 		final BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness = 
-				new BuchiIsEmpty<LETTER, STATE>(mServices, fstOperandOldApi);
+				new BuchiIsEmpty<LETTER, STATE>(mServices, mFstOperand);
 		if (fstOperandEmptiness.getResult()) {
 			assert resultEmptiness.getResult();
-		} else 	{
+		} else {
 			lassoWords.add(fstOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
 		final BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness = 
-				new BuchiIsEmpty<LETTER, STATE>(mServices, fstOperandOldApi);
+				new BuchiIsEmpty<LETTER, STATE>(mServices, mSndOperand);
 		if (sndOperandEmptiness.getResult()) {
 			assert resultEmptiness.getResult();
 		} else 	{
 			lassoWords.add(sndOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, fstOperandOldApi.size()));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, sndOperandOldApi.size()));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mFstOperand.size()));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mSndOperand.size()));
 		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mFstOperand)).getResult());
 		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mSndOperand)).getResult());
 		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mResult)).getResult());
 		boolean correct = true;
 		for (final NestedLassoWord<LETTER> nlw : lassoWords) {
-			correct &= checkAcceptance(nlw, fstOperandOldApi, sndOperandOldApi);
+			correct &= checkAcceptance(nlw, mFstOperand, mSndOperand);
 			assert correct;
 		}
 		return correct;
 	}
 	
-	
-	
-
-	
-	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand1,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand2) throws AutomataLibraryException {
+	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand1,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand2)
+					throws AutomataLibraryException {
 		final boolean op1 = (new BuchiAccepts<LETTER, STATE>(mServices, operand1, nlw)).getResult();
 		final boolean op2 = (new BuchiAccepts<LETTER, STATE>(mServices, operand2, nlw)).getResult();
 		final boolean res = (new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
 		return ((op1 && op2) == res);
 	}
-	
-	
 }
-

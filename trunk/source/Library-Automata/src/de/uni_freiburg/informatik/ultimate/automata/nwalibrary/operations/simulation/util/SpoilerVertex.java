@@ -93,7 +93,7 @@ public class SpoilerVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<").append(isB()).append(",(").append(getQ0()).append(",");
 		sb.append(getQ1()).append("),p:");
-		sb.append(getPriority()).append(",pm:").append(pm);
+		sb.append(getPriority()).append(",pm:").append(mPm);
 		sb.append(">");
 		return sb.toString();
 	}

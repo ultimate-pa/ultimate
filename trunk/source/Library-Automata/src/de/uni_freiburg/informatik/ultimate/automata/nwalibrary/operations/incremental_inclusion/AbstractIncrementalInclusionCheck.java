@@ -42,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * 
  * @author Matthias Heizmann
  *
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public abstract class AbstractIncrementalInclusionCheck<LETTER,STATE> {
 	
@@ -51,43 +53,43 @@ public abstract class AbstractIncrementalInclusionCheck<LETTER,STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mA;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> mB = new ArrayList<>();
 	
-	
-	public AbstractIncrementalInclusionCheck(AutomataLibraryServices services,
-			INestedWordAutomatonSimple<LETTER, STATE> a) {
+	/**
+	 * @param services Ultimate services
+	 * @param a minuend
+	 */
+	public AbstractIncrementalInclusionCheck(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER, STATE> a) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		if (a == null) {
-			throw new NullPointerException("automaton A must not be null");
+			throw new IllegalArgumentException("automaton A must not be null");
 		} else {
 			mA = a;
 		}
 	}
-
 
 	/**
 	 * Return an accepting run of automaton A such that the word of the run is
 	 * not accepted by any of the automata B_0,..,B_n.
 	 * Return null if no such run exists, i.e., the language inclusion 
 	 * A ⊆ B_0 ∪ ... ∪ B_n holds. 
-	 * @throws AutomataOperationCanceledException 
+	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
-	public abstract NestedRun<LETTER,STATE> getCounterexample() throws AutomataOperationCanceledException;
-	
+	public abstract NestedRun<LETTER,STATE> getCounterexample()
+			throws AutomataOperationCanceledException;
 	
 	/**
 	 * Add automaton B_{n+1} to our set of subtrahends B_0,...,B_n.
-	 * @throws AutomataLibraryException 
+	 * @param nwa subtrahend
+	 * @throws AutomataLibraryException if construction fails
 	 */
-	public void addSubtrahend(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataOperationCanceledException, AutomataLibraryException {
+	public void addSubtrahend(final INestedWordAutomatonSimple<LETTER, STATE> nwa)
+			throws AutomataLibraryException {
 		mB.add(nwa);
 	}
-
 
 	public INestedWordAutomatonSimple<LETTER, STATE> getA() {
 		return mA;
 	}
-	
-	
-
 }

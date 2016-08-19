@@ -29,12 +29,11 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.InclusionViaDifference;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Operation that takes three Operands A, B_1 and B_2 and checks if the language
@@ -44,16 +43,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * of our incremental inclusion check.
  * @author heizmann@informatik.uni-freiburg.de
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class IsIncluded2<LETTER, STATE> implements IOperation<LETTER,STATE> {
+public class IsIncluded2<LETTER, STATE>
+		extends UnaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
 	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-	
-	
-	private final INestedWordAutomatonSimple<LETTER, STATE> mA;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mB1;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mB2;
 	
@@ -62,20 +58,27 @@ public class IsIncluded2<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	private final Boolean mResult;
 	private final NestedRun<LETTER, STATE> mCounterexample;
 	
-	
-	public IsIncluded2(AutomataLibraryServices services,
-			StateFactory<STATE> stateFactory,
-			INestedWordAutomatonSimple<LETTER, STATE> a, 
-			INestedWordAutomatonSimple<LETTER, STATE> b_1,
-			INestedWordAutomatonSimple<LETTER, STATE> b_2) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mA = a;
-		mB1 = b_1;
-		mB2 = b_2;
+	/**
+	 * @param services Ultimate services
+	 * @param stateFactory state factory
+	 * @param operandA minuend
+	 * @param operandB1 first subtrahend
+	 * @param operandB2 second subtrahend
+	 * @throws AutomataLibraryException if construction fails
+	 */
+	public IsIncluded2(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> operandA, 
+			final INestedWordAutomatonSimple<LETTER, STATE> operandB1,
+			final INestedWordAutomatonSimple<LETTER, STATE> operandB2)
+					throws AutomataLibraryException {
+		super(services, operandA);
+		mB1 = operandB1;
+		mB2 = operandB2;
 		// workaround until Matthias implemented this
 		mLogger.info(startMessage());
-		mInclusionViaDifference = new InclusionViaDifference<>(services, stateFactory, a);
+		mInclusionViaDifference =
+				new InclusionViaDifference<>(services, stateFactory, operandA);
 		mInclusionViaDifference.addSubtrahend(mB1);
 		mInclusionViaDifference.addSubtrahend(mB2);
 		mCounterexample = mInclusionViaDifference.getCounterexample();
@@ -90,10 +93,10 @@ public class IsIncluded2<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public String startMessage() {
-			return "Start " + operationName() + ". Operand A " + 
-					mA.sizeInformation() + ". Operand B_1 " + 
-					mB1.sizeInformation() + ". Operand B_2 " + 
-					mB2.sizeInformation();
+			return "Start " + operationName() + ". Operand A "
+					+ mOperand.sizeInformation() + ". Operand B_1 "
+					+ mB1.sizeInformation() + ". Operand B_2 "
+					+ mB2.sizeInformation();
 	}
 
 	@Override
@@ -112,12 +115,10 @@ public class IsIncluded2<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		// FIXME: not result check implemented yet
+		// FIXME: result check not implemented yet
+		mLogger.warn("FIXME: result check not implemented yet");
 		return true;
 	}
-	
-
-
 }

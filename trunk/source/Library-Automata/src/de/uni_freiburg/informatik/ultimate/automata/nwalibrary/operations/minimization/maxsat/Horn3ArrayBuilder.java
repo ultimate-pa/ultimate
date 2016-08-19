@@ -42,101 +42,101 @@ final class Horn3ArrayBuilder {
 	private static final int SETFALSE = 1;
 	private static final int SETTRUE = 2;
 
-	private Horn3Array array;
+	private Horn3Array mArray;
 
 	/** for each equivalence variable, UNSET or SETTRUE or SETFALSE
 	 */
-	private char[] single;
+	private char[] mSingle;
 
-	private boolean solveable;
+	private boolean mSolveable;
 
 	Horn3ArrayBuilder(int numEqVars) {
-		array = new Horn3Array(numEqVars);
-		single = new char[numEqVars];
-		solveable = true;
+		mArray = new Horn3Array(numEqVars);
+		mSingle = new char[numEqVars];
+		mSolveable = true;
 	}
 
 	boolean solveable() {
-		return solveable;
+		return mSolveable;
 	}
 
 	boolean isAlreadyFalse(int x) {
-		return single[x] == SETFALSE;
+		return mSingle[x] == SETFALSE;
 	}
 
 	void addClauseF(int x) {
-		if (single[x] == UNSET) {
-			array.add(TRUEVAR, x, FALSEVAR);
-			single[x] = SETFALSE;
-		} else if (single[x] == SETTRUE) {
-			solveable = false;
+		if (mSingle[x] == UNSET) {
+			mArray.add(TRUEVAR, x, FALSEVAR);
+			mSingle[x] = SETFALSE;
+		} else if (mSingle[x] == SETTRUE) {
+			mSolveable = false;
 		}
 	}
 
 	void addClauseT(int x) {
-		if (single[x] == UNSET) {
-			array.add(TRUEVAR, TRUEVAR, x);
-			single[x] = SETTRUE;
-		} else if (single[x] == SETFALSE) {
-			solveable = false;
+		if (mSingle[x] == UNSET) {
+			mArray.add(TRUEVAR, TRUEVAR, x);
+			mSingle[x] = SETTRUE;
+		} else if (mSingle[x] == SETFALSE) {
+			mSolveable = false;
 		}
 	}
 
 	void addClauseFF(int x, int y) {
 		if (x > y) {
 			addClauseFF(y, x);
-		} else if (single[x] == SETFALSE) {
+		} else if (mSingle[x] == SETFALSE) {
 			// satisfied
-		} else if (single[x] == SETTRUE) {
+		} else if (mSingle[x] == SETTRUE) {
 			addClauseF(y);
-		} else if (single[y] == SETFALSE) {
+		} else if (mSingle[y] == SETFALSE) {
 			// satisfied
-		} else if (single[y] == SETTRUE) {
+		} else if (mSingle[y] == SETTRUE) {
 			addClauseF(x);
 		} else {
-			array.add(x, y, FALSEVAR);
+			mArray.add(x, y, FALSEVAR);
 		}
 	}
 
 	void addClauseFT(int y, int z) {
-		if (single[y] == SETFALSE) {
+		if (mSingle[y] == SETFALSE) {
 			// satisfied
-		} else if (single[y] == SETTRUE) {
+		} else if (mSingle[y] == SETTRUE) {
 			addClauseT(z);
-		} else if (single[z] == SETFALSE) {
+		} else if (mSingle[z] == SETFALSE) {
 			addClauseF(y);
-		} else if (single[z] == SETTRUE) {
+		} else if (mSingle[z] == SETTRUE) {
 			// satisfied
 		} else {
-			array.add(TRUEVAR, y, z);
+			mArray.add(TRUEVAR, y, z);
 		}
 	}
 
 	void addClauseFFT(int x, int y, int z) {
 		if (x > y) {
 			addClauseFFT(y, x, z);
-		} else if (single[x] == SETFALSE) {
+		} else if (mSingle[x] == SETFALSE) {
 			// satisfied
-		} else if (single[x] == SETTRUE) {
+		} else if (mSingle[x] == SETTRUE) {
 			addClauseFT(y, z);
-		} else if (single[y] == SETFALSE) {
+		} else if (mSingle[y] == SETFALSE) {
 			// satisfied
-		} else if (single[y] == SETTRUE) {
+		} else if (mSingle[y] == SETTRUE) {
 			addClauseFT(x, z);
-		} else if (single[z] == SETFALSE) {
+		} else if (mSingle[z] == SETFALSE) {
 			addClauseFF(x, y);
-		} else if (single[z] == SETTRUE) {
+		} else if (mSingle[z] == SETTRUE) {
 			// satisfied
 		} else {
-			array.add(x, y, z);
+			mArray.add(x, y, z);
 		}
 	}
 
 	Horn3Array extract() {
-		final Horn3Array result = solveable ? array : null;
+		final Horn3Array result = mSolveable ? mArray : null;
 
-		array = null;
-		single = null;
+		mArray = null;
+		mSingle = null;
 
 		return result;
 	}

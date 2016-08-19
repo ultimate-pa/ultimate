@@ -40,10 +40,10 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctio
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctionGenerator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.NestedRankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -116,11 +116,11 @@ public class NestedTemplate extends ComposableTemplate {
 	}
 	
 	@Override
-	public Collection<Term> getVariables() {
+	public Collection<Term> getCoefficients() {
 		final Collection<Term> list = new ArrayList<Term>();
 		list.add(mdelta);
 		for (int i = 0; i < mSize; ++i) {
-			list.addAll(mfgens[i].getVariables());
+			list.addAll(mfgens[i].getCoefficients());
 		}
 		return list;
 	}
@@ -148,7 +148,7 @@ public class NestedTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsDec(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
 		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		// f_0(x') < f_0(x) - δ
@@ -187,7 +187,7 @@ public class NestedTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsNonInc(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
 		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		// /\_i f_i(x') ≤ f_i(x)
@@ -207,7 +207,7 @@ public class NestedTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsBounded(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
 		// f_n(x) > 0
 		final LinearInequality li = mfgens[mSize-1].generate(inVars);
 		li.setStrict(true);

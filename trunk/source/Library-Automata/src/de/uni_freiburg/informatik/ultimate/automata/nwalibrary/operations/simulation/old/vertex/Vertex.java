@@ -43,11 +43,11 @@ public class Vertex<LETTER,STATE> {
     /**
      * The label of the first Buchi automaton state.
      */
-    private final STATE q0;
+    private final STATE mQ0;
     /**
      * The label of the second Buchi automaton state.
      */
-    private final STATE q1;
+    private final STATE mQ1;
 	
     /*_______________________________________________________________________*\
     \* CONSTRUCTORS                                                          */
@@ -61,8 +61,8 @@ public class Vertex<LETTER,STATE> {
      *            the label of the second Buchi automaton state
      */
     public Vertex(STATE q0, STATE q1) {
-        this.q0 = q0;
-        this.q1 = q1;
+        this.mQ0 = q0;
+        this.mQ1 = q1;
     }
     
     /*_______________________________________________________________________*\
@@ -88,7 +88,7 @@ public class Vertex<LETTER,STATE> {
      * @return the label of the first Buchi automaton state
      */
     public STATE getQ0() {
-        return q0;
+        return mQ0;
     }
 
     /**
@@ -97,6 +97,6 @@ public class Vertex<LETTER,STATE> {
      * @return the label of the first Buchi automaton state
      */
     public STATE getQ1() {
-        return q1;
+        return mQ1;
     }
 }

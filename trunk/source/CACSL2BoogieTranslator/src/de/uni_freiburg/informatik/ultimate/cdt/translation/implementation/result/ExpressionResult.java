@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -261,7 +261,7 @@ public class ExpressionResult extends Result {
 			} else if (underlyingType instanceof CFunction) {
 				resultType = new CPointer(underlyingType);
 			} else  if (underlyingType instanceof CEnum) {
-				resultType = new CPrimitive(PRIMITIVE.INT);
+				resultType = new CPrimitive(CPrimitives.INT);
 			} else {
 				resultType = underlyingType;
 			}
@@ -274,7 +274,7 @@ public class ExpressionResult extends Result {
 			final HeapLValue hlv = (HeapLValue) lrVal;
 			CType underlyingType = lrVal.getCType().getUnderlyingType();
 			if (underlyingType instanceof CEnum) {
-				underlyingType = new CPrimitive(PRIMITIVE.INT);
+				underlyingType = new CPrimitive(CPrimitives.INT);
 			}
 		
 			final RValue newValue;
@@ -533,7 +533,7 @@ public class ExpressionResult extends Result {
 				overApp.addAll(readRex.overappr);
 
 				final ArrayLHS aAcc = new ArrayLHS(loc, new VariableLHS(loc, newArrayId),
-						new Expression[] { exprTrans.constructLiteralForIntegerType(loc, new CPrimitive(PRIMITIVE.INT), BigInteger.valueOf(pos)) } );
+						new Expression[] { exprTrans.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.valueOf(pos)) } );
 				final ExpressionResult assRex = ((CHandler) main.mCHandler).makeAssignment(loc, stmt, new LocalLValue(aAcc, arrayType.getValueType()), 
 						(RValue) readRex.lrVal, decl, auxVars, overappr);
 				decl = assRex.decl;
@@ -574,7 +574,7 @@ public class ExpressionResult extends Result {
 		if (lrVal instanceof RValue) {
 			final RValue old = (RValue) lrVal;
 			if (old.getCType() instanceof CEnum) {
-				final CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
+				final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 				lrVal = new RValue(old.getValue(), intType, old.isBoogieBool(), old.isIntFromPointer());
 			} else {
 				// do nothing
@@ -639,16 +639,16 @@ public class ExpressionResult extends Result {
 		} else {
 			throw new UnsupportedSyntaxException(loc, "unsupported type " + underlyingType);
 		}
-		return new RValue(resultEx, new CPrimitive(PRIMITIVE.INT), true);
+		return new RValue(resultEx, new CPrimitive(CPrimitives.INT), true);
 	}
 
 	private static RValue boolToInt(ILocation loc, RValue rVal, 
 			AExpressionTranslation expressionTranslation) {
 		assert rVal.isBoogieBool();
 		final Expression one = expressionTranslation.constructLiteralForIntegerType(loc, 
-				new CPrimitive(PRIMITIVE.INT), BigInteger.ONE);
+				new CPrimitive(CPrimitives.INT), BigInteger.ONE);
 		final Expression zero = expressionTranslation.constructLiteralForIntegerType(loc, 
-				new CPrimitive(PRIMITIVE.INT), BigInteger.ZERO);
+				new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
 		return new RValue(
 				ExpressionFactory.newIfThenElseExpression(loc, rVal.getValue(), one, zero), 
 				rVal.getCType(), false);

@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.Alter
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.BooleanExpression;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -61,7 +62,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.NestedwordAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetTransitionAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.RankedAlphabetEntryAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionListAST.Pair;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAutomatonAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAutomatonRankedAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAutomatonTransitionAST;
 
 /**
  * 
@@ -116,17 +121,32 @@ public class AutomataDefinitionInterpreter {
 							+ System.getProperty("line.separator") + e.getStackTrace(), 
 							"Exception thrown", n);
 				}
-			}
-			else if (n instanceof AlternatingAutomatonAST){
+			} else if (n instanceof AlternatingAutomatonAST){
 				try {
 					interpret((AlternatingAutomatonAST) n);
 				} catch (final Exception e) {
-//					mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
-//							+ System.getProperty("line.separator") + e.getStackTrace(), 
-//							"Exception thrown", n.getLocation());
+					mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
+							+ System.getProperty("line.separator") + e.getStackTrace(), 
+							"Exception thrown", n);
 				}
-				
+			} else if (n instanceof TreeAutomatonAST){
+				try {
+					interpret((TreeAutomatonAST) n);
+				} catch (final Exception e) {
+					mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
+							+ System.getProperty("line.separator") + e.getStackTrace(), 
+							"Exception thrown", n);
+				}
+			} else if (n instanceof TreeAutomatonRankedAST){
+				try {
+					interpret((TreeAutomatonRankedAST) n);
+				} catch (final Exception e) {
+					mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
+							+ System.getProperty("line.separator") + e.getStackTrace(), 
+							"Exception thrown", n);
+				}
 			}
+
 		}
 		
 	}
@@ -160,7 +180,77 @@ public class AutomataDefinitionInterpreter {
 		alternatingAutomaton.setReversed(astNode.isReversed());
 		mAutomata.put(astNode.getName(), alternatingAutomaton);
 	}
-	
+
+	public void interpret(TreeAutomatonAST astNode) throws IllegalArgumentException{
+		mErrorLocation = astNode.getLocation();
+		
+		TreeAutomatonBU<String, String> treeAutomaton = new TreeAutomatonBU<>();
+
+		for (String ltr : astNode.getAlphabet())
+			treeAutomaton.addFinalState(ltr);
+		
+		for (String s : astNode.getStates())
+			treeAutomaton.addState(s);
+
+		for (String is : astNode.getInitialStates())
+			treeAutomaton.addInitialState(is);
+
+		for (String fs : astNode.getFinalStates())
+			treeAutomaton.addFinalState(fs);
+		
+		for (TreeAutomatonTransitionAST trans : astNode.getTransitions()) {
+			if (trans.getSourceStates().size() == 0) {
+				throw new UnsupportedOperationException("The TreeAutomaton format with initial states "
+						+ "(and implicit symbol ranks) does not allow nullary rules, i.e.,"
+						+ "rules where the source state list is empty");
+			} else {
+				treeAutomaton.addRule(trans.getSymbol(), trans.getSourceStates(), trans.getTargetState());
+			}
+		}
+		mAutomata.put(astNode.getName(), treeAutomaton);
+	}
+
+	public void interpret(TreeAutomatonRankedAST astNode) throws IllegalArgumentException{
+		mErrorLocation = astNode.getLocation();
+		
+		TreeAutomatonBU<String, String> treeAutomaton = new TreeAutomatonBU<>();
+		String nullaryString = "elim0arySymbol_";
+
+		List<RankedAlphabetEntryAST> ra = astNode.getRankedAlphabet();
+		for (RankedAlphabetEntryAST rae : ra) {
+			for (String ltr : rae.getAlphabet()) {
+				treeAutomaton.addLetter(ltr);
+				if (Integer.parseInt(rae.getRank()) == 0) {
+					// our tree automata don't have 0-ary symbols right now 
+					// (they use 1-ary, initial states, and adapted rules instead)
+					// this converts 0-ary symbols accordingly
+					String inState = nullaryString + ltr;
+					treeAutomaton.addState(inState); 
+					treeAutomaton.addInitialState(inState);
+				}
+			}
+		}
+		
+		for (String s : astNode.getStates()) {
+			treeAutomaton.addState(s);
+		}
+		
+		for (String fs : astNode.getFinalStates()) {
+			treeAutomaton.addFinalState(fs);
+		}
+		
+		for (TreeAutomatonTransitionAST trans : astNode.getTransitions()) {
+			if (trans.getSourceStates().size() == 0) {
+				treeAutomaton.addRule(trans.getSymbol(), 
+						Collections.singletonList(nullaryString + trans.getSymbol()), 
+						trans.getTargetState());
+			} else {
+				treeAutomaton.addRule(trans.getSymbol(), trans.getSourceStates(), trans.getTargetState());
+			}
+		}
+		mAutomata.put(astNode.getName(), treeAutomaton);
+	}
+
 	private static LinkedList<BooleanExpression> parseBooleanExpressions(AlternatingAutomaton<String, String> alternatingAutomaton, String expression){
 		final LinkedList<BooleanExpression> booleanExpressions = new LinkedList<BooleanExpression>();
 		if(expression.equals("true")){

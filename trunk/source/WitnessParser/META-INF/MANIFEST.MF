@@ -7,7 +7,9 @@ Bundle-Activator: de.uni_freiburg.informatik.ultimate.witnessparser.Activator
 Require-Bundle: UltimateCore,
  Library-log4j,
  Library-Jung,
- Library-UltimateCore
+ Library-UltimateCore,
+ Library-UltimateModel
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Export-Package: de.uni_freiburg.informatik.ultimate.witnessparser.graph
+Export-Package: de.uni_freiburg.informatik.ultimate.witnessparser.graph,
+ de.uni_freiburg.informatik.ultimate.witnessparser.preferences

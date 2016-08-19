@@ -55,7 +55,8 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
  de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;uses:="de.uni_freiburg.informatik.ultimate.automata.petrinet,de.uni_freiburg.informatik.ultimate.automata.nwalibrary,de.uni_freiburg.informatik.ultimate.automata",
  de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.petruchio,
  de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization;uses:="de.uni_freiburg.informatik.ultimate.automata.petrinet,de.uni_freiburg.informatik.ultimate.model,de.uni_freiburg.informatik.ultimate.automata.petrinet.julian",
- de.uni_freiburg.informatik.ultimate.automata.tree
+ de.uni_freiburg.informatik.ultimate.automata.tree,
+ de.uni_freiburg.informatik.ultimate.automata.tree.operations
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: src/de/uni_freiburg/informatik/ultimate/automata/petrinet/julian/petruchio/petruchio.jar,
  .

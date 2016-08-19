@@ -30,7 +30,13 @@ public class FlaggedDoubleDecker<STATE> extends DoubleDecker<STATE> {
 
 	private final boolean mFlag;
 	
-	public FlaggedDoubleDecker(STATE down, STATE up, boolean flag) {
+	/**
+	 * @param down down state
+	 * @param up up state
+	 * @param flag flag
+	 */
+	public FlaggedDoubleDecker(final STATE down, final STATE up,
+			final boolean flag) {
 		super(down, up);
 		mFlag = flag;
 	}
@@ -46,9 +52,10 @@ public class FlaggedDoubleDecker<STATE> extends DoubleDecker<STATE> {
 		result = prime * result + (mFlag ? 1231 : 1237);
 		return result;
 	}
-
+	
+	@SuppressWarnings("squid:S2259")
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -64,10 +71,4 @@ public class FlaggedDoubleDecker<STATE> extends DoubleDecker<STATE> {
 		}
 		return true;
 	}
-
-
-	
-	
-	
-
 }

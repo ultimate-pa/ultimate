@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -43,14 +42,16 @@ import java.io.StreamTokenizer;
  *
  */
 final class Scan {
+	private Scan() {
+		// no public constructor
+	}
 
 	/**
 	 * @param reader
 	 *			  where to scan from
 	 * @return parsed <code>NWA</code> or <code>null</code>
-	 * @throws java.io.IOException
 	 */
-	static NWA scanNWA(Reader reader) throws IOException {
+	static NwaWithArrays scanNWA(final Reader reader) throws IOException {
 		int numStates;
 		int numISyms;
 		int numCSyms;
@@ -62,9 +63,9 @@ final class Scan {
 		int numRTrans;
 		boolean[] isInitial;
 		boolean[] isFinal;
-		ITrans[] iTrans;
-		CTrans[] cTrans;
-		RTrans[] rTrans;
+		ITrans[] inTrans;
+		CTrans[] caTrans;
+		RTrans[] reTrans;
 
 		final StreamTokenizer in = new StreamTokenizer(reader);
 		in.eolIsSignificant(true);
@@ -100,9 +101,9 @@ final class Scan {
 
 			isInitial = new boolean[numStates];
 			isFinal = new boolean[numStates];
-			iTrans = new ITrans[numITrans];
-			cTrans = new CTrans[numCTrans];
-			rTrans = new RTrans[numRTrans];
+			inTrans = new ITrans[numITrans];
+			caTrans = new CTrans[numCTrans];
+			reTrans = new RTrans[numRTrans];
 
 			for (int i = 0; i < numInitial; i++) {
 				expectString(in, "initial");
@@ -123,7 +124,7 @@ final class Scan {
 				final int src = parseInt(in, numStates);
 				final int sym = parseInt(in, numISyms);
 				final int dst = parseInt(in, numStates);
-				iTrans[i] = new ITrans(src, sym, dst);
+				inTrans[i] = new ITrans(src, sym, dst);
 				expectEOL(in);
 			}
 
@@ -132,7 +133,7 @@ final class Scan {
 				final int src = parseInt(in, numStates);
 				final int sym = parseInt(in, numCSyms);
 				final int dst = parseInt(in, numStates);
-				cTrans[i] = new CTrans(src, sym, dst);
+				caTrans[i] = new CTrans(src, sym, dst);
 				expectEOL(in);
 			}
 
@@ -142,29 +143,29 @@ final class Scan {
 				final int sym = parseInt(in, numRSyms);
 				final int top = parseInt(in, numStates);
 				final int dst = parseInt(in, numStates);
-				rTrans[i] = new RTrans(src, sym, top, dst);
+				reTrans[i] = new RTrans(src, sym, top, dst);
 				expectEOL(in);
 			}
 
 			expectEOF(in);
 
 		} catch (final ParseNWAException exc) {
-			System.err.println(exc.problem);
+			System.err.println(exc.mProblem);
 			return null;
 		}
 
-		final NWA out = new NWA();
-		out.numStates = numStates;
-		out.numISyms = numISyms;
-		out.numCSyms = numCSyms;
-		out.numRSyms = numRSyms;
-		out.isInitial = isInitial;
-		out.isFinal = isFinal;
-		out.iTrans = iTrans;
-		out.cTrans = cTrans;
-		out.rTrans = rTrans;
+		final NwaWithArrays out = new NwaWithArrays();
+		out.mNumStates = numStates;
+		out.mNumISyms = numISyms;
+		out.mNumCSyms = numCSyms;
+		out.mNumRSyms = numRSyms;
+		out.mIsInitial = isInitial;
+		out.mIsFinal = isFinal;
+		out.mITrans = inTrans;
+		out.mCTrans = caTrans;
+		out.mRTrans = reTrans;
 
-		if (!NWA.checkConsistency(out)) {
+		if (!NwaWithArrays.checkConsistency(out)) {
 			System.err.println("ERROR: Parsed automaton is not consistent");
 			return null;
 		}
@@ -176,10 +177,8 @@ final class Scan {
 	 * Convenience method which calls <code>inputAsRelations(Reader)</code> with
 	 * an <code>InputStreamReader</code> made from the <code>filepath</code>
 	 * argument.
-	 *
-	 * @throws FileNotFoundException
 	 */
-	static NWA inputAsRelations(String filepath) throws FileNotFoundException, IOException {
+	static NwaWithArrays inputAsRelations(final String filepath) throws IOException {
 		final InputStream inputStream = new FileInputStream(filepath);
 		final Reader reader = new InputStreamReader(inputStream);
 		return scanNWA(reader);
@@ -190,35 +189,39 @@ final class Scan {
 
 	@SuppressWarnings("serial")
 	static final class ParseNWAException extends Exception {
-		String problem;
+		public final String mProblem;
 
-		ParseNWAException(String problem) {
-			this.problem = problem;
+		ParseNWAException(final String problem) {
+			this.mProblem = problem;
 		}
 	}
 
-	private static void expectString(java.io.StreamTokenizer in, String x) throws java.io.IOException, ParseNWAException {
+	private static void expectString(final java.io.StreamTokenizer in, final String x)
+			throws java.io.IOException, ParseNWAException {
 		in.nextToken();
-		if (in.ttype != StreamTokenizer.TT_WORD ||!in.sval.equals(x)) {
+		if (in.ttype != StreamTokenizer.TT_WORD || !in.sval.equals(x)) {
 			throw new ParseNWAException("expected " + x + ", but got " + in.sval);
 		}
 	}
 
-	private static void expectEOL(java.io.StreamTokenizer in) throws java.io.IOException, ParseNWAException {
+	private static void expectEOL(final java.io.StreamTokenizer in)
+			throws java.io.IOException, ParseNWAException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_EOL) {
 			throw new ParseNWAException("expected EOL");
 		}
 	}
 
-	private static void expectEOF(java.io.StreamTokenizer in) throws java.io.IOException, ParseNWAException {
+	private static void expectEOF(final java.io.StreamTokenizer in)
+			throws java.io.IOException, ParseNWAException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_EOF) {
 			throw new ParseNWAException("expected EOF");
 		}
 	}
 
-	private static int parseInt(java.io.StreamTokenizer in) throws java.io.IOException, ParseNWAException {
+	private static int parseInt(final java.io.StreamTokenizer in)
+			throws java.io.IOException, ParseNWAException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_NUMBER) {
 			throw new ParseNWAException("expected number");
@@ -226,7 +229,8 @@ final class Scan {
 		return (int) in.nval;
 	}
 
-	private static int parseInt(java.io.StreamTokenizer in, int max)throws java.io.IOException, ParseNWAException {
+	private static int parseInt(final java.io.StreamTokenizer in, final int max)
+			throws java.io.IOException, ParseNWAException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_NUMBER) {
 			throw new ParseNWAException("expected number");

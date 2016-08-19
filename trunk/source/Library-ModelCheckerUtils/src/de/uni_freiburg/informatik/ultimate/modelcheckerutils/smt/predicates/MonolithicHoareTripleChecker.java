@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.ReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -37,11 +36,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -207,8 +207,8 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		final String procPred = ta.getPreceedingProcedure();
 		final String procSucc = ta.getSucceedingProcedure();
 //		assert proc.equals(ta.getSucceedingProcedure()) : "different procedure before and after";
-		final Set<BoogieVar> modifiableGlobalsPred = mModifiableGlobals.getModifiedBoogieVars(procPred);
-		final Set<BoogieVar> modifiableGlobalsSucc = mModifiableGlobals.getModifiedBoogieVars(procSucc);
+		final Set<IProgramVar> modifiableGlobalsPred = mModifiableGlobals.getModifiedBoogieVars(procPred);
+		final Set<IProgramVar> modifiableGlobalsSucc = mModifiableGlobals.getModifiedBoogieVars(procSucc);
 
 		final LBool result = PredicateUtils.isInductiveHelper(mManagedScript.getScript(), 
 				ps1, ps2, tf, modifiableGlobalsPred, modifiableGlobalsSucc);
@@ -253,20 +253,20 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		// OldVars not renamed if modifiable.
 		// All variables get index 0.
 		final String caller = ta.getPreceedingProcedure();
-		final Set<BoogieVar> modifiableGlobalsCaller = mModifiableGlobals.getModifiedBoogieVars(caller);
-		final Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<BoogieVar>(0), 4, 0,
+		final Set<IProgramVar> modifiableGlobalsCaller = mModifiableGlobals.getModifiedBoogieVars(caller);
+		final Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<IProgramVar>(0), 4, 0,
 				Integer.MIN_VALUE, null, -5, 0, mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCaller);
 
 		final TransFormula tf = ta.getLocalVarsAssignment();
-		final Set<BoogieVar> assignedVars = new HashSet<BoogieVar>();
+		final Set<IProgramVar> assignedVars = new HashSet<IProgramVar>();
 		final Term fTrans = PredicateUtils.formulaWithIndexedVars(tf, 0, 1, assignedVars, mIndexedConstants, mManagedScript.getScript());
 
 		// OldVars renamed to index 0
 		// GlobalVars renamed to index 0
 		// Other vars get index 1
 		final String callee = ta.getSucceedingProcedure();
-		final Set<BoogieVar> modifiableGlobalsCallee = mModifiableGlobals.getModifiedBoogieVars(callee);
-		final Term ps2renamed = PredicateUtils.formulaWithIndexedVars(ps2, new HashSet<BoogieVar>(0), 4, 1, 0, null, 23, 0,
+		final Set<IProgramVar> modifiableGlobalsCallee = mModifiableGlobals.getModifiedBoogieVars(callee);
+		final Term ps2renamed = PredicateUtils.formulaWithIndexedVars(ps2, new HashSet<IProgramVar>(0), 4, 1, 0, null, 23, 0,
 				mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCallee);
 
 		// We want to return true if (fState1 && fTrans)-> fState2 is valid
@@ -313,33 +313,33 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		mIndexedConstants = new ScopedHashMap<String, Term>();
 
 		final TransFormula tfReturn = ta.getAssignmentOfReturn();
-		final Set<BoogieVar> assignedVarsOnReturn = new HashSet<BoogieVar>();
+		final Set<IProgramVar> assignedVarsOnReturn = new HashSet<IProgramVar>();
 		final Term fReturn = PredicateUtils.formulaWithIndexedVars(tfReturn, 1, 2, assignedVarsOnReturn, mIndexedConstants,
 				mManagedScript.getScript());
 		// fReturn = (new FormulaUnLet()).unlet(fReturn);
 
 		final TransFormula tfCall = ta.getLocalVarsAssignmentOfCall();
-		final Set<BoogieVar> assignedVarsOnCall = new HashSet<BoogieVar>();
+		final Set<IProgramVar> assignedVarsOnCall = new HashSet<IProgramVar>();
 		final Term fCall = PredicateUtils.formulaWithIndexedVars(tfCall, 0, 1, assignedVarsOnCall, mIndexedConstants,
 				mManagedScript.getScript());
 		// fCall = (new FormulaUnLet()).unlet(fCall);
 
 		final String callee = ta.getPreceedingProcedure();
-		final Set<BoogieVar> modifiableGlobalsCallee = mModifiableGlobals.getModifiedBoogieVars(callee);
+		final Set<IProgramVar> modifiableGlobalsCallee = mModifiableGlobals.getModifiedBoogieVars(callee);
 
 		final String caller = ta.getSucceedingProcedure();
-		final Set<BoogieVar> modifiableGlobalsCaller = mModifiableGlobals.getModifiedBoogieVars(caller);
+		final Set<IProgramVar> modifiableGlobalsCaller = mModifiableGlobals.getModifiedBoogieVars(caller);
 
 		// oldVars not renamed if modifiable
 		// other variables get index 0
-		final Term pskrenamed = PredicateUtils.formulaWithIndexedVars(psk, new HashSet<BoogieVar>(0), 23, 0,
+		final Term pskrenamed = PredicateUtils.formulaWithIndexedVars(psk, new HashSet<IProgramVar>(0), 23, 0,
 				Integer.MIN_VALUE, null, 23, 0, mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCaller);
 
 		// oldVars get index 0
 		// modifiable globals get index 2
 		// not modifiable globals get index 0
 		// other variables get index 1
-		final Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<BoogieVar>(0), 23, 1, 0,
+		final Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<IProgramVar>(0), 23, 1, 0,
 				modifiableGlobalsCallee, 2, 0, mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCallee);
 
 		// oldVars not renamed if modifiable

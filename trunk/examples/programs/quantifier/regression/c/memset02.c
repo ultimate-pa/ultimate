@@ -2,7 +2,7 @@
 /*
  * Check that invalid pointer base is detected.
  * Date: 2016-02-23
- * Author: heizmann@informtik.uni-freiburg.de
+ * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
 

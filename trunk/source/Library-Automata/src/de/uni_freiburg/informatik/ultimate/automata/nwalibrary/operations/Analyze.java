@@ -36,8 +36,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
@@ -46,9 +46,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * Given an NWA, this class analyzes the NWA to obtain various information.
  * A user should use the respective getters to obtain individual data.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * 
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class Analyze<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class Analyze<LETTER, STATE>
+		extends UnaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER, STATE> {
 	/**
 	 * type of symbol
 	 */
@@ -59,28 +64,32 @@ public class Analyze<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		TOTAL
 	}
 	
+	/*
+	 * The operand as more specific interface.
+	 * It shadows the superclass field with the same name.
+	 */
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+
+	private boolean mNumberOfStatesComputed;
+	private int mNumberOfStates;
 	
-	private boolean mNumberOfStatesComputed = false;
-	private int mNumberOfStates = 0;
+	private boolean mNumberOfSymbolsComputed;
+	private int mNumberOfInternalSymbols;
+	private int mNumberOfCallSymbols;
+	private int mNumberOfReturnSymbols;
 	
-	private boolean mNumberOfSymbolsComputed = false;
-	private int mNumberOfInternalSymbols = 0;
-	private int mNumberOfCallSymbols = 0;
-	private int mNumberOfReturnSymbols = 0;
+	private boolean mNumberOfTransitionsComputed;
+	private int mNumberOfInternalTransitions;
+	private int mNumberOfCallTransitions;
+	private int mNumberOfReturnTransitions;
 	
-	private boolean mNumberOfTransitionsComputed = false;
-	private int mNumberOfInternalTransitions = 0;
-	private int mNumberOfCallTransitions = 0;
-	private int mNumberOfReturnTransitions = 0;
+	private boolean mTransitionDensityComputed;
+	private double mInternalTransitionDensity;
+	private double mCallTransitionDensity;
+	private double mReturnTransitionDensity;
 	
-	private boolean mTransitionDensityComputed = false;
-	private double mInternalTransitionDensity = 0d;
-	private double mCallTransitionDensity = 0d;
-	private double mReturnTransitionDensity = 0d;
-	
-	private boolean mNumberOfNondeterministicStatesComputed = false;
-	private int mNumberOfNondeterministicStates = 0;
+	private boolean mNumberOfNondeterministicStatesComputed;
+	private int mNumberOfNondeterministicStates;
 	
 	/**
 	 * @param services Ultimate services
@@ -101,6 +110,7 @@ public class Analyze<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	public Analyze(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final boolean computeEverything) {
+		super(services, operand);
 		mOperand = operand;
 		
 		// compute all available information
@@ -197,7 +207,7 @@ public class Analyze<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * number of symbols <code>L</code>. <br>
 	 * transition density = <code>T / (S * L)</code> <br>
 	 * 
-	 * In particular, for return transitions the number of symbols
+	 * <p>In particular, for return transitions the number of symbols
 	 * <code>L</code> is the number of return symbol multiplied by the number
 	 * of states.
 	 * 
@@ -237,7 +247,7 @@ public class Analyze<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * A state is nondeterministic if it contains at least two outgoing
 	 * transitions with the same symbol. <br>
 	 * 
-	 * In particular, for return transitions the same return symbol and
+	 * <p>In particular, for return transitions the same return symbol and
 	 * hierarchical predecessor state must occur twice.
 	 * 
 	 * @return number of nondeterministic states
@@ -269,12 +279,6 @@ public class Analyze<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	@Override
 	public Object getResult() throws AutomataLibraryException {
 		return "NWA analysis result";
-	}
-	
-	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		return true;
 	}
 	
 	// --- computation methods ---
@@ -324,6 +328,7 @@ public class Analyze<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		mNumberOfTransitionsComputed = true;
 	}
 	
+	@SuppressWarnings("squid:S1244")
 	private void computeTransitionDensity() {
 		// make sure the numbers of states, symbols, and transitions exist
 		getNumberOfStates();
@@ -333,20 +338,20 @@ public class Analyze<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		double denominator;
 		
 		denominator = (mNumberOfStates * mNumberOfInternalSymbols);
-		mInternalTransitionDensity = (denominator == 0
-				? 0
-				: mNumberOfInternalTransitions / denominator);
+		mInternalTransitionDensity = (denominator == 0d
+				? 0d
+				: (mNumberOfInternalTransitions / denominator));
 		
 		denominator = (mNumberOfStates * mNumberOfCallSymbols);
-		mCallTransitionDensity = (denominator == 0
-				? 0
-				: mNumberOfCallTransitions / denominator);
+		mCallTransitionDensity = (denominator == 0d
+				? 0d
+				: (mNumberOfCallTransitions / denominator));
 		
 		denominator =
 				(mNumberOfStates * mNumberOfStates * mNumberOfReturnSymbols);
-		mReturnTransitionDensity = (denominator == 0
-				? 0
-				: mNumberOfReturnTransitions / denominator);
+		mReturnTransitionDensity = (denominator == 0d
+				? 0d
+				: (mNumberOfReturnTransitions / denominator));
 		
 		mTransitionDensityComputed = true;
 	}

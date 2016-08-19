@@ -4,7 +4,7 @@
 
 
 assert(!isEmpty(a));
-print(minimizeDFA(a));
+print(minimizeDfaTable(a));
 
 NestedWordAutomaton a = (
   callAlphabet = { },

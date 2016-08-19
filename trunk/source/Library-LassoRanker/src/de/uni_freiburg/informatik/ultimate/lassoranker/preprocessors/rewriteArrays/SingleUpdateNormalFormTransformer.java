@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MultiElementCounter;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate.ArrayUpdateExtractor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
@@ -145,7 +145,7 @@ public class SingleUpdateNormalFormTransformer {
 	}
 	
 	private void processNewArrayUpdates() {
-		final SafeSubstitution subst = new SafeSubstitution(mScript, mStore2TermVariable);
+		final Substitution subst = new Substitution(mScript, mStore2TermVariable);
 		for (final ArrayUpdate au : mArrayUpdates) {
 			for (final Term entry : au.getIndex()) {
 				final Term newEntry = subst.transform(entry);
@@ -180,7 +180,7 @@ public class SingleUpdateNormalFormTransformer {
 		final Term[] conjuncts = SmtUtils.getConjuncts(term);
 		final ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, conjuncts);
 		Term remainder = Util.and(mScript, aue.getRemainingTerms().toArray(new Term[0]));
-		remainder = (new SafeSubstitution(mScript, aue.getStore2TermVariable())).transform(remainder);
+		remainder = (new Substitution(mScript, aue.getStore2TermVariable())).transform(remainder);
 		final List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresDeep(remainder);
 		if (mdStores.isEmpty()) {
 			return null;

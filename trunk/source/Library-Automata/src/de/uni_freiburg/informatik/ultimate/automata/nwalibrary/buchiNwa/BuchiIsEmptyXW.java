@@ -39,10 +39,14 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
@@ -56,11 +60,24 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final AutomataLibraryServices mServices;
 	
-	public BuchiIsEmptyXW(AutomataLibraryServices services, 
-			INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws AutomataLibraryException {
+	INestedWordAutomaton<LETTER, STATE> mOperand;
+	final Boolean mResult;
+
+	Bridge mReachabilityBridge = new Bridge();
+	Bridge mReachabilityBridgeA = new Bridge();
+	Bridge mReachabilityBridgeC = new Bridge();
+	Bridge mReachabilityBridgeAC = new Bridge();
+	// TODO: xw: naming
+	STATE mWitnessInitial;
+	STATE mWitnessCritical;
+
+	private final ILogger mLogger;
+	
+	public BuchiIsEmptyXW(final AutomataLibraryServices services, 
+			final INestedWordAutomaton<LETTER, STATE> nwa) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mnwa = nwa;
+		mOperand = nwa;
 		mLogger.info(startMessage());
 		mResult = checkEmptiness();
 		mLogger.info(exitMessage());
@@ -74,7 +91,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public String startMessage() {
 			return "Start " + operationName() + ". Operand " + 
-			mnwa.sizeInformation();	
+			mOperand.sizeInformation();	
 	}
 
 	@Override
@@ -87,31 +104,18 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		return mResult;
 	}
 	
-	INestedWordAutomatonOldApi<LETTER, STATE> mnwa;
-	final Boolean mResult;
-
-	Bridge reachabilityBridge = new Bridge();
-	Bridge reachabilityBridgeA = new Bridge();
-	Bridge reachabilityBridgeC = new Bridge();
-	Bridge reachabilityBridgeAC = new Bridge();
-	// TODO: xw: naming
-	STATE witnessInitial;
-	STATE witnessCritical;
-
-	private final ILogger mLogger;
-	
 	/** Element of worklist, a pair of states. */
 	private class StatePair {	
-		final STATE source;
-		final STATE target;
+		final STATE mSource;
+		final STATE mTarget;
 		
-		public StatePair(STATE source, STATE target) { 
-			this.source = source;
-			this.target = target;		
+		public StatePair(final STATE source, final STATE target) { 
+			this.mSource = source;
+			this.mTarget = target;		
 		}
 			
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(final Object obj) {
 			if (this == obj) {
 				return true;
 			}
@@ -121,25 +125,25 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			if (getClass() != obj.getClass()) {
 				return false;
 			}			
-			return (this.source == ((StatePair) obj).source && 
-					this.target == ((StatePair) obj).target);
+			return (this.mSource == ((StatePair) obj).mSource && 
+					this.mTarget == ((StatePair) obj).mTarget);
 		}
 		
 		@Override
 		public int hashCode() {
-			return ((this.source.hashCode() + 41) * 41 + 
-					this.target.hashCode());
+			return ((this.mSource.hashCode() + 41) * 41 + 
+					this.mTarget.hashCode());
 		}
 
 		@Override
 		public String toString() {
-			return "(" +source + ","+target +")";
+			return "(" + mSource + "," + mTarget + ')';
 		}
 		
 	}
 	
 	
-    /** The range of bridge, can be omega, singleton or quadruple of states. */
+	/** The range of bridge, can be omega, singleton or quadruple of states. */
 	protected abstract class BridgeRange {
 	}
 	
@@ -154,43 +158,41 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	// TODO: xw: naming
 	private class SingletonBridge extends BridgeRange {
-		final STATE singleton;
+		final STATE mSingleton;
 		
-		public SingletonBridge(STATE singleton) {
-			this.singleton = singleton;
+		public SingletonBridge(final STATE singleton) {
+			this.mSingleton = singleton;
 		}
 
 		@Override
 		public String toString() {
-			return "SingletonBridge(" + singleton + ")";
+			return "SingletonBridge(" + mSingleton + ')';
 		}
-		
-		
 	}
 	
 	private class QuadrupleBridge extends BridgeRange {
-		final STATE callPredecessor;
-		final STATE callSuccessor;
-		final STATE returnPredecessor;
-		final STATE returnSuccessor;
+		final STATE mCallPredecessor;
+		final STATE mCallSuccessor;
+		final STATE mReturnPredecessor;
+		final STATE mReturnSuccessor;
 		
-		public QuadrupleBridge(STATE callPredecessor, 
-			                   STATE callSuccessor, 
-				               STATE returnPredecessor, 
-				               STATE returnSuccessor) {
-			this.callPredecessor = callPredecessor;
-			this.callSuccessor = callSuccessor;
-			this.returnPredecessor = returnPredecessor;
-			this.returnSuccessor = returnSuccessor;
+		public QuadrupleBridge(final STATE callPredecessor, 
+			                   final STATE callSuccessor, 
+				               final STATE returnPredecessor, 
+				               final STATE returnSuccessor) {
+			this.mCallPredecessor = callPredecessor;
+			this.mCallSuccessor = callSuccessor;
+			this.mReturnPredecessor = returnPredecessor;
+			this.mReturnSuccessor = returnSuccessor;
 		}
 
 		@Override
 		public String toString() {
 			return "QuadrupleBridge(" 
-			        + callPredecessor + ", " 
-			        + callSuccessor	+ ", " 
-			        + returnPredecessor + ", " 
-			        + returnSuccessor + ")";
+			        + mCallPredecessor + ", " 
+			        + mCallSuccessor	+ ", " 
+			        + mReturnPredecessor + ", " 
+			        + mReturnSuccessor + ")";
 		}
 	}
 	
@@ -198,78 +200,77 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	// TODO: xw: better naming! 
 	// E.g., QuadrupleBridge and Bridge are "different" things.
 	private class Bridge {
-		Map<STATE, HashMap<STATE, BridgeRange>> bridgeInOrder;
-		Map<STATE, HashMap<STATE, BridgeRange>> 
-															bridgeReverseOrder;
+		Map<STATE, HashMap<STATE, BridgeRange>> mBridgeInOrder;
+		Map<STATE, HashMap<STATE, BridgeRange>> mBridgeReverseOrder;
 		
 		public Bridge() {
-		bridgeInOrder = 
-			new HashMap<STATE, HashMap<STATE, BridgeRange>>();
-		bridgeReverseOrder = 
-			new HashMap<STATE, HashMap<STATE, BridgeRange>>();
+			mBridgeInOrder = 
+				new HashMap<STATE, HashMap<STATE, BridgeRange>>();
+			mBridgeReverseOrder = 
+				new HashMap<STATE, HashMap<STATE, BridgeRange>>();
 		}
 		
 		/** Add state pair (source, target) both in order and reverse order. */
 		// TODO: xw: Decision: implement duplication check of adding same pair
-		void addElement(STATE source, STATE target, 
-				BridgeRange bridgeRange) {
-			assert (! (bridgeInOrder.containsKey(source) && 
-					bridgeInOrder.get(source).containsKey(target)));
-			if (! bridgeInOrder.containsKey(source)) {
-				bridgeInOrder.put(source, 
+		void addElement(final STATE source, final STATE target, 
+				final BridgeRange bridgeRange) {
+			assert (! (mBridgeInOrder.containsKey(source) && 
+					mBridgeInOrder.get(source).containsKey(target)));
+			if (! mBridgeInOrder.containsKey(source)) {
+				mBridgeInOrder.put(source, 
 						new HashMap<STATE, BridgeRange>());
 			}
-			bridgeInOrder.get(source).put(target, bridgeRange);
+			mBridgeInOrder.get(source).put(target, bridgeRange);
 
-			assert (! (bridgeReverseOrder.containsKey(target) && 
-					bridgeReverseOrder.get(target).containsKey(source)));
-			if (! bridgeReverseOrder.containsKey(target)) {
-				bridgeReverseOrder.put(target, 
+			assert (! (mBridgeReverseOrder.containsKey(target) && 
+					mBridgeReverseOrder.get(target).containsKey(source)));
+			if (! mBridgeReverseOrder.containsKey(target)) {
+				mBridgeReverseOrder.put(target, 
 						new HashMap<STATE, BridgeRange>());
 			}
-			bridgeReverseOrder.get(target).put(source, bridgeRange);
+			mBridgeReverseOrder.get(target).put(source, bridgeRange);
 		}
 
 		/** Get all states source. */
 		Set<STATE> getAllSources() {
-			if (! bridgeInOrder.isEmpty()) {
-				return bridgeInOrder.keySet();
+			if (! mBridgeInOrder.isEmpty()) {
+				return mBridgeInOrder.keySet();
 			} else {
 				return new HashSet<STATE>(0);
 			}
 		}
 		
 		/** Get all states source such that (source, target) in bridge. */
-		Set<STATE> getAllSources(STATE target) {
-			if (bridgeReverseOrder.containsKey(target)) {
-				return bridgeReverseOrder.get(target).keySet();
+		Set<STATE> getAllSources(final STATE target) {
+			if (mBridgeReverseOrder.containsKey(target)) {
+				return mBridgeReverseOrder.get(target).keySet();
 			} else {
 				return new HashSet<STATE>(0);
 			}
 		}
 		
 		/** Get all states target such that (source, target) in bridge. */
-		Set<STATE> getAllTargets(STATE source) {
-			if (bridgeInOrder.containsKey(source)) {
-				return bridgeInOrder.get(source).keySet();
+		Set<STATE> getAllTargets(final STATE source) {
+			if (mBridgeInOrder.containsKey(source)) {
+				return mBridgeInOrder.get(source).keySet();
 			} else {
 				return new HashSet<STATE>(0);
 			}
 		}
 		
 		/** Get the bridge range of a pair (source, target). */
-		BridgeRange getBridgeRange(STATE source, STATE target) {
-			if (bridgeInOrder.containsKey(source) && bridgeInOrder.get(source).
+		BridgeRange getBridgeRange(final STATE source, final STATE target) {
+			if (mBridgeInOrder.containsKey(source) && mBridgeInOrder.get(source).
 					containsKey(target)) {
-				return bridgeInOrder.get(source).get(target);
+				return mBridgeInOrder.get(source).get(target);
 			} else {
 				return null;
 			}
 		}
 		
-		boolean containsPair(STATE source, STATE target) {
-			if (bridgeInOrder.containsKey(source) && 
-					bridgeInOrder.get(source).containsKey(target)) {
+		boolean containsPair(final STATE source, final STATE target) {
+			if (mBridgeInOrder.containsKey(source) && 
+					mBridgeInOrder.get(source).containsKey(target)) {
 				return true;
 			}
 			return false;
@@ -277,12 +278,12 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 		@Override
 		public String toString() {
-			assert(bridgeInOrder != null);
+			assert (mBridgeInOrder != null);
 			String domain = "";
-			for (final STATE source : bridgeInOrder.keySet()) {
+			for (final STATE source : mBridgeInOrder.keySet()) {
 				for (final STATE target : 
-										bridgeInOrder.get(source).keySet()) {
-					domain = domain + "(" +source + ","+target +") ";
+										mBridgeInOrder.get(source).keySet()) {
+					domain = domain + "(" + source + ',' + target + ") ";
 				}
 			}
 			return domain;
@@ -294,28 +295,28 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * Pair deleted after exploitation.
 	 * */
 	private class Worklist {
-		public LinkedList<StatePair> worklist;
+		public LinkedList<StatePair> mWorklist;
 		
 		public Worklist() {
-			worklist = new LinkedList<StatePair>();
+			mWorklist = new LinkedList<StatePair>();
 		}
 		
 		/** Insert a reachable pair of states (source, target) the worklist. */
-		void enqueue(STATE source, STATE target) {
+		void enqueue(final STATE source, final STATE target) {
 			final StatePair statePair = new StatePair(source, target); 
 //			assert (! worklist.contains(statePair));
-			worklist.addLast(statePair);
+			mWorklist.addLast(statePair);
 		}
 		
 		/** Delete a reachable pair of states. */
 		StatePair dequeue() {
-			assert (! worklist.isEmpty());
-			return worklist.removeFirst();
+			assert (! mWorklist.isEmpty());
+			return mWorklist.removeFirst();
 		}
 		
 		/** Checks whether the worklist is empty. */
 		boolean isEmpty() {
-			return worklist.isEmpty();
+			return mWorklist.isEmpty();
 		}	
 	}
 	
@@ -326,9 +327,9 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		} else {
 			mLogger.info("Starting construction of run");
 			final NestedRun<LETTER,STATE> stem = 
-				reconstructionC(witnessInitial, witnessCritical);
+				reconstructionC(mWitnessInitial, mWitnessCritical);
 			final NestedRun<LETTER,STATE> loop = 
-				reconstructionAC(witnessCritical, witnessCritical);
+				reconstructionAC(mWitnessCritical, mWitnessCritical);
 			final NestedLassoRun<LETTER,STATE> acceptingNestedLassoRun = 
 										new NestedLassoRun<LETTER,STATE>(stem, loop);
 			mLogger.debug("Accepting run: " + acceptingNestedLassoRun);
@@ -342,10 +343,8 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	/**
 	 * Check if a Buchi nested word automaton accepts any nested lasso word. 
-	 * @param nwa NestedWordAutomaton which is interpreted as Buchi nested word
-	 * automaton here
 	 * @return true iff nwa does not accept any nested lasso word.
-	 * @throws AutomataOperationCanceledException 
+	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
 	// Requires collections of transitions to be final. 
 	public boolean checkEmptiness() throws AutomataLibraryException {
@@ -353,22 +352,22 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		final Set<STATE> allStates = new HashSet<STATE>();
 		final Set<STATE> acceptingStates = new HashSet<STATE>();
 		final Set<STATE> initialStates = new HashSet<STATE>();
-		final Collection<LETTER> internalAlphabet = mnwa.getInternalAlphabet();
-		final Collection<LETTER> callAlphabet = mnwa.getCallAlphabet();
-		final Collection<LETTER> returnAlphabet = mnwa.getReturnAlphabet();
+		final Collection<LETTER> internalAlphabet = mOperand.getInternalAlphabet();
+		final Collection<LETTER> callAlphabet = mOperand.getCallAlphabet();
+		final Collection<LETTER> returnAlphabet = mOperand.getReturnAlphabet();
 		
 		// Get all states and accepting states
 		// TODO: xw: check the consequence of casting
-		for (final STATE state : mnwa.getStates()) {
+		for (final STATE state : mOperand.getStates()) {
 			allStates.add(state);
-			if (mnwa.isFinal(state)) {
+			if (mOperand.isFinal(state)) {
 				acceptingStates.add(state);
 			}
 		}
 		
 		// Get all initial states
 		// TODO: xw: check the consequence of casting
-		for (final STATE state : mnwa.getInitialStates()) {
+		for (final STATE state : mOperand.getInitialStates()) {
 			initialStates.add(state);
 		}
 		
@@ -381,8 +380,8 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			for (final STATE p : getCallPredStates(q, callAlphabet)) {
 				for (final STATE pprime : getReturnSuccStates(q, p, 
 						returnAlphabet)) {
-					if (! reachabilityBridge.containsPair(p, pprime)) {
-						reachabilityBridge.addElement(p, pprime, 
+					if (! mReachabilityBridge.containsPair(p, pprime)) {
+						mReachabilityBridge.addElement(p, pprime, 
 								new QuadrupleBridge(p, q, q, pprime));
 						worklist.enqueue(p, pprime);
 					}
@@ -391,19 +390,17 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 		// line6--8
 		for (final STATE internalPredState : allStates) {
-			for (final LETTER symbol : internalAlphabet) {
-				for (final STATE temp : 
-					mnwa.succInternal(internalPredState, symbol)) {
-					// TODO: xw: ill-effect of casting?
-					final STATE internalSuccState = temp;
-					if (! reachabilityBridge.containsPair(internalPredState, 
-							internalSuccState)) {
-						reachabilityBridge.addElement(internalPredState, 
-								internalSuccState, 
-								new SingletonBridge(internalSuccState));
-						worklist.enqueue(internalPredState, internalSuccState);
-					} // end if
-				} // end for
+			for (final OutgoingInternalTransition<LETTER, STATE> trans :
+					mOperand.internalSuccessors(internalPredState)) {
+				final STATE internalSuccState = trans.getSucc();
+				// TODO: xw: ill-effect of casting?
+				if (! mReachabilityBridge.containsPair(internalPredState, 
+						internalSuccState)) {
+					mReachabilityBridge.addElement(internalPredState, 
+							internalSuccState, 
+							new SingletonBridge(internalSuccState));
+					worklist.enqueue(internalPredState, internalSuccState);
+				} // end if
 			} // end for
 		} //end for
 		
@@ -411,14 +408,14 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		while (! worklist.isEmpty()) {
 			final StatePair workPair = worklist.dequeue();
 			// line11--13
-			extendPathCallReturn(workPair.source, workPair.target, 
-					callAlphabet, returnAlphabet, reachabilityBridge, worklist);
+			extendPathCallReturn(workPair.mSource, workPair.mTarget, 
+					callAlphabet, returnAlphabet, mReachabilityBridge, worklist);
 			// line14-16
-			extendPathBeyondDestination(workPair.source, workPair.target, 
-					reachabilityBridge, worklist);
+			extendPathBeyondDestination(workPair.mSource, workPair.mTarget, 
+					mReachabilityBridge, worklist);
 			// line17-19
-			extendPathBeyondOrigin(workPair.source, workPair.target, 
-					reachabilityBridge, worklist);
+			extendPathBeyondOrigin(workPair.mSource, workPair.mTarget, 
+					mReachabilityBridge, worklist);
 			
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				throw new AutomataOperationCanceledException(this.getClass());
@@ -432,19 +429,19 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		assert (worklist.isEmpty());
 		for (final STATE acceptingState : acceptingStates) {
 			// line3--9
-			extendAcceptingPath(acceptingState, reachabilityBridge, 
-					reachabilityBridgeA, worklist);
+			extendAcceptingPath(acceptingState, mReachabilityBridge, 
+					mReachabilityBridgeA, worklist);
 			// line10--12
 			extendPathCallReturn(acceptingState, acceptingState, callAlphabet, 
-					returnAlphabet, reachabilityBridgeA, worklist);
+					returnAlphabet, mReachabilityBridgeA, worklist);
 		}
 		
 		while (! worklist.isEmpty()) {
 			final StatePair workPair = worklist.dequeue();
 			// line15--19
-			extendAcceptingPathCallReturn(workPair.source, workPair.target, 
-					callAlphabet, returnAlphabet, reachabilityBridge, 
-					reachabilityBridgeA, worklist);
+			extendAcceptingPathCallReturn(workPair.mSource, workPair.mTarget, 
+					callAlphabet, returnAlphabet, mReachabilityBridge, 
+					mReachabilityBridgeA, worklist);
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
@@ -457,31 +454,29 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		assert (worklist.isEmpty());
 		
 		// line1--2
-		copyBridge(reachabilityBridge, reachabilityBridgeC, worklist);
+		copyBridge(mReachabilityBridge, mReachabilityBridgeC, worklist);
 		// line3--5
 		for (final STATE callPredState : allStates) {
-			for (final LETTER symbol : callAlphabet) {
-				for (final STATE temp : 
-					mnwa.succCall(callPredState, symbol)) {
-					// TODO: xw: ill-effect of casting?
-					final STATE callSuccState = temp;
-					if (! reachabilityBridgeC.containsPair(callPredState, 
-							callSuccState)) {
-						reachabilityBridgeC.addElement(callPredState, 
-								callSuccState, 
-								new SingletonBridge(callSuccState));
-						worklist.enqueue(callPredState, callSuccState);
-					} // end if
-				} // end for
+			for (final OutgoingCallTransition<LETTER, STATE> trans :
+					mOperand.callSuccessors(callPredState)) {
+				final STATE callSuccState = trans.getSucc();
+				// TODO: xw: ill-effect of casting?
+				if (! mReachabilityBridgeC.containsPair(callPredState, 
+						callSuccState)) {
+					mReachabilityBridgeC.addElement(callPredState, 
+							callSuccState, 
+							new SingletonBridge(callSuccState));
+					worklist.enqueue(callPredState, callSuccState);
+				} // end if
 			} // end for
 		} //end for
 		
 		while (! worklist.isEmpty()) {
 			final StatePair workPair = worklist.dequeue();
-			extendPathBeyondDestination(workPair.source, workPair.target, 
-					reachabilityBridgeC, worklist);
-			extendPathBeyondOrigin(workPair.source,workPair.target, 
-					reachabilityBridgeC, worklist);
+			extendPathBeyondDestination(workPair.mSource, workPair.mTarget, 
+					mReachabilityBridgeC, worklist);
+			extendPathBeyondOrigin(workPair.mSource,workPair.mTarget, 
+					mReachabilityBridgeC, worklist);
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
@@ -493,26 +488,26 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		
 		assert (worklist.isEmpty());
 		
-		copyBridge(reachabilityBridgeA, reachabilityBridgeAC, worklist);
+		copyBridge(mReachabilityBridgeA, mReachabilityBridgeAC, worklist);
 		
 		for (final STATE acceptingState : acceptingStates) {
 			// line3--9
-			extendAcceptingPath(acceptingState, reachabilityBridgeC, 
-					reachabilityBridgeAC, worklist);
+			extendAcceptingPath(acceptingState, mReachabilityBridgeC, 
+					mReachabilityBridgeAC, worklist);
 		}
 		
 		
 		// Emptiness-Check
 		for (final STATE initialState : initialStates) {
 			for (final STATE targetOfIntialState : 
-				reachabilityBridgeC.getAllTargets(initialState)) {
-				if (reachabilityBridgeAC.containsPair(targetOfIntialState, 
+				mReachabilityBridgeC.getAllTargets(initialState)) {
+				if (mReachabilityBridgeAC.containsPair(targetOfIntialState, 
 						targetOfIntialState)) {
-					witnessInitial = initialState;
-					witnessCritical = targetOfIntialState;
+					mWitnessInitial = initialState;
+					mWitnessCritical = targetOfIntialState;
 					mLogger.info("########################################");
-					mLogger.info("witnessInitial: " + witnessInitial + ", "
-							+ "witnessCritical: " + witnessCritical);
+					mLogger.info("witnessInitial: " + mWitnessInitial + ", "
+							+ "witnessCritical: " + mWitnessCritical);
 					mLogger.info("########################################");
 					return false;
 				}
@@ -527,14 +522,15 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	/** Returns all call predecessors of the successor through all symbols. */
 	public Collection<STATE> getCallPredStates(
-			STATE callSuccState, Collection<LETTER> callAlphabet) {
+			final STATE callSuccState, final Collection<LETTER> callAlphabet) {
 		
 		final Collection<STATE> callPredStates = new HashSet<STATE>();	
 		for (final LETTER symbol : callAlphabet) {
-			for (final STATE pred : mnwa.predCall(callSuccState, symbol)) {
-				callPredStates.add(pred);
+			for (final IncomingCallTransition<LETTER, STATE> trans :
+				mOperand.callPredecessors(callSuccState, symbol)) {
+				callPredStates.add(trans.getPred());
 			}
-			}
+		}
 		return callPredStates;
 	}
 	
@@ -544,18 +540,17 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * */
 	@SuppressWarnings("unchecked")
 	public Collection<STATE> getReturnSuccStates(
-			STATE hierarcReturnPredState, 
-			STATE linearReturnPredState, 
-			Collection<LETTER> returnAlphabet) {
+			final STATE hierarcReturnPredState, 
+			final STATE linearReturnPredState, 
+			final Collection<LETTER> returnAlphabet) {
 		
-		final Collection<STATE> returnSuccStates= new HashSet<STATE>();	
+		final Collection<STATE> returnSuccStates = new HashSet<STATE>();	
 		for (final LETTER symbol : returnAlphabet) {
-			final Iterable<STATE> succs = mnwa.succReturn(hierarcReturnPredState, 
-					linearReturnPredState, symbol);
-			for (final STATE succ : succs) {
-				returnSuccStates.add(succ);
+			for (final OutgoingReturnTransition<LETTER, STATE> trans :
+					mOperand.returnSuccessors(hierarcReturnPredState, linearReturnPredState, symbol)) {
+				returnSuccStates.add(trans.getSucc());
 			}
-			}
+		}
 		return returnSuccStates;
 	}
 	
@@ -563,12 +558,12 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * Returns the first internal symbol in the iteration such that 
 	 * "(internalPred, symbol, internalSucc)" is contained in the internal
 	 *  transitions. */
-	LETTER getFirstInternalSymbol(STATE internalPred, 
-			STATE internalSucc) {
-		for (final LETTER internalSymbol : mnwa.lettersInternal(internalPred)) {
-			final Iterable<STATE> succs = mnwa.succInternal(internalPred,internalSymbol);
-			for (final STATE succ : succs) {
-				if (succ.equals(internalSucc)) {
+	LETTER getFirstInternalSymbol(final STATE internalPred, 
+			final STATE internalSucc) {
+		for (final LETTER internalSymbol : mOperand.lettersInternal(internalPred)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans :
+					mOperand.internalSuccessors(internalPred, internalSymbol)) {
+				if (trans.getSucc().equals(internalSucc)) {
 					return internalSymbol;
 				}
 			}
@@ -579,12 +574,12 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	/** 
 	 * Returns the first call symbol in the iteration such that 
 	 * "(callPred, symbol, callSucc)" is contained in the call transitions. */
-	LETTER getFirstCallSymbol(STATE callPred, 
-			STATE callSucc) {
-		for (final LETTER callSymbol : mnwa.lettersCall(callPred)) {
-			final Iterable<STATE> succs = mnwa.succCall(callPred, callSymbol);
-			for (final STATE succ : succs) {
-				if (succ.equals(callSucc)) {
+	LETTER getFirstCallSymbol(final STATE callPred, 
+			final STATE callSucc) {
+		for (final LETTER callSymbol : mOperand.lettersCall(callPred)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans :
+					mOperand.callSuccessors(callPred, callSymbol)) {
+				if (trans.getSucc().equals(callSucc)) {
 					return callSymbol;
 				}
 			}
@@ -596,14 +591,13 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * Returns the first return symbol in the iteration such that 
 	 * "(returnPredHierarc, returnPredLinear, symbol, returnSucc)" 
 	 * is contained in the return transitions. */
-	LETTER getFirstReturnSymbol(STATE returnPredHierarc, 
-			STATE returnPredLinear,  
-			STATE returnSucc) {
-		for (final LETTER returnSymbol : mnwa.lettersReturn(returnPredHierarc)) {
-			final Iterable<STATE> succs = mnwa.succReturn(returnPredHierarc, 
-					returnPredLinear, returnSymbol);
-			for (final STATE succ : succs) {
-				if (succ.equals(returnSucc)) {
+	LETTER getFirstReturnSymbol(final STATE returnPredHierarc, 
+			final STATE returnPredLinear,  
+			final STATE returnSucc) {
+		for (final LETTER returnSymbol : mOperand.lettersReturn(returnPredHierarc)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> trans :
+					mOperand.returnSuccessors(returnPredHierarc, returnPredLinear, returnSymbol)) {
+				if (trans.getSucc().equals(returnSucc)) {
 					return returnSymbol;
 				}
 			}
@@ -613,9 +607,9 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	// TODO: xw: description?
 	// [Reachability line11--13, version 2010-11-22]
-	void extendPathCallReturn(STATE origin, STATE destination, 
-			Collection<LETTER> callAlphabet, Collection<LETTER> returnAlphabet, 
-			Bridge reachabilityBridge, Worklist worklist) {
+	void extendPathCallReturn(final STATE origin, final STATE destination, 
+			final Collection<LETTER> callAlphabet, final Collection<LETTER> returnAlphabet, 
+			final Bridge reachabilityBridge, final Worklist worklist) {
 		for (final STATE callPredState : getCallPredStates(origin, 
 				callAlphabet)) {
 			final Collection<STATE> returnSuccStates = 
@@ -636,10 +630,10 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	
 	// [Reachability line14--16, version 2010-11-22]
-	void extendPathBeyondDestination(STATE origin,
-									 STATE destination,
-			                         Bridge reachabilityBridge,
-			                         Worklist worklist) {
+	void extendPathBeyondDestination(final STATE origin,
+									 final STATE destination,
+			                         final Bridge reachabilityBridge,
+			                         final Worklist worklist) {
 		for (final STATE stateBeyondDestination : reachabilityBridge.
 				getAllTargets(destination)) {
 			if (! reachabilityBridge.containsPair(origin,
@@ -653,8 +647,8 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	
 	// [Reachability line17--19, version 2010-11-22]
-	void extendPathBeyondOrigin(STATE origin, STATE destination,
-			Bridge reachabilityBridge, Worklist worklist) {
+	void extendPathBeyondOrigin(final STATE origin, final STATE destination,
+			final Bridge reachabilityBridge, final Worklist worklist) {
 		for (final STATE stateBeyongdOrigin : reachabilityBridge.
 				getAllSources(origin)) {
 			if (! reachabilityBridge.containsPair(stateBeyongdOrigin,
@@ -669,9 +663,9 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	// [Reachability-A line3--9, version 2010-11-22]
 	// TODO: xw: update version
 	// TODO: xw: naming! In other words, immediate matching not included!
-	void extendAcceptingPath(STATE acceptingState, 
-			Bridge reachabilityBridge, Bridge reachabilityBridgeA, 
-			Worklist worklist) {
+	void extendAcceptingPath(final STATE acceptingState, 
+			final Bridge reachabilityBridge, final Bridge reachabilityBridgeA, 
+			final Worklist worklist) {
 		
 		// line3--5
 		if (reachabilityBridge.containsPair(acceptingState, acceptingState) 
@@ -712,13 +706,13 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	// TODO: xw: make as a generalization of extendPathCallReturn?
 	// TODO: xw: naming!
 	void extendAcceptingPathCallReturn(
-			STATE origin, 
-			STATE destination, 
-			Collection<LETTER> callAlphabet, 
-			Collection<LETTER> returnAlphabet, 
-			Bridge reachabilityBridge, 
-			Bridge reachabilityBridgeA, 
-			Worklist worklist) {
+			final STATE origin, 
+			final STATE destination, 
+			final Collection<LETTER> callAlphabet, 
+			final Collection<LETTER> returnAlphabet, 
+			final Bridge reachabilityBridge, 
+			final Bridge reachabilityBridgeA, 
+			final Worklist worklist) {
 				
 		for (final STATE callPredState : getCallPredStates(origin, 
 				callAlphabet)) {
@@ -764,8 +758,8 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * */
 	// Reachability-C line1--2
 	// TODO: xw: naming
-	void copyBridge(Bridge bridge, Bridge bridgeWithPendingCall, 
-			Worklist worklist) {
+	void copyBridge(final Bridge bridge, final Bridge bridgeWithPendingCall, 
+			final Worklist worklist) {
 		final Set<STATE> bridgeSources = bridge.getAllSources();
 		if (bridgeSources != null) {
 			for (final STATE source : bridgeSources) {
@@ -781,29 +775,29 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}		
 	}
 		
-	NestedRun<LETTER,STATE> reconstructionC(STATE origin, 
-			STATE destination) {
+	NestedRun<LETTER,STATE> reconstructionC(final STATE origin, 
+			final STATE destination) {
 		// Reconstruction-C: case 4c, version 2010-12-21
-		if (! reachabilityBridgeC.containsPair(origin, destination)) {
+		if (! mReachabilityBridgeC.containsPair(origin, destination)) {
 			return new NestedRun<LETTER,STATE>(destination);
 		}
-		final BridgeRange bridgeRange = reachabilityBridgeC.getBridgeRange(origin, 
+		final BridgeRange bridgeRange = mReachabilityBridgeC.getBridgeRange(origin, 
 				destination); 
 		// Reconstruction-C: case 1 and 2, version 2010-12-21
 		// FIXME: xw: instance check
 		if (bridgeRange instanceof BuchiIsEmptyXW.QuadrupleBridge) {
 			final STATE callPredecessor = 
 				((BuchiIsEmptyXW<LETTER,STATE>.QuadrupleBridge) 
-						bridgeRange).callPredecessor; // origin
+						bridgeRange).mCallPredecessor; // origin
 			final STATE callSuccessor = 
 				((BuchiIsEmptyXW<LETTER,STATE>.QuadrupleBridge) 
-						bridgeRange).callSuccessor;
+						bridgeRange).mCallSuccessor;
 			final STATE returnPredecessor = 
 				((BuchiIsEmptyXW<LETTER,STATE>.QuadrupleBridge) 
-						bridgeRange).returnPredecessor; 
+						bridgeRange).mReturnPredecessor; 
 			final STATE returnSuccessor = 
 				((BuchiIsEmptyXW<LETTER,STATE>.QuadrupleBridge) 
-						bridgeRange).returnSuccessor; // destination
+						bridgeRange).mReturnSuccessor; // destination
 
 			final NestedRun<LETTER,STATE> runOfCall = new NestedRun<LETTER,STATE>(
 					callPredecessor, 
@@ -826,20 +820,18 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 					reconstructionC(callSuccessor, 
 							returnPredecessor)).concatenate(
 					runOfReturn);
-		} 
-		// Reconstruction-C: case 3 and 4, version 2010-12-21
-		else if (bridgeRange instanceof BuchiIsEmptyXW.SingletonBridge) {
+		} else if (bridgeRange instanceof BuchiIsEmptyXW.SingletonBridge) {
+			// Reconstruction-C: case 3 and 4, version 2010-12-21
 			final STATE singleton = 
 				((BuchiIsEmptyXW<LETTER,STATE>.SingletonBridge) 
-						bridgeRange).singleton;
+						bridgeRange).mSingleton;
 			// Reconstruction-C: case 4a, version 2010-12-21
 			if (getFirstInternalSymbol(origin, destination) != null) {
 				return new NestedRun<LETTER,STATE>(origin, getFirstInternalSymbol(origin, 
 						destination), NestedWord.INTERNAL_POSITION, 
 						destination);
-			}
-			// Reconstruction-C: case 4b, version 2010-12-21			
-			else if (getFirstCallSymbol(origin, destination) != null) {
+			} else if (getFirstCallSymbol(origin, destination) != null) {
+				// Reconstruction-C: case 4b, version 2010-12-21			
 				return new NestedRun<LETTER,STATE>(origin, getFirstCallSymbol(origin, 
 						destination), NestedWord.PLUS_INFINITY, 
 						destination);
@@ -847,49 +839,45 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				return 	reconstructionC(origin, singleton).concatenate(
 						reconstructionC(singleton, destination));
 			}
-		}
-		else {
+		} else {
 			throw new IllegalArgumentException("unsupported bridge range");
 		}
 	}
 	
-	NestedRun<LETTER,STATE> reconstructionAC(STATE origin, 
-			STATE destination) {
-		assert (reachabilityBridgeAC.containsPair(origin, destination)) :
-			"Pair (" + origin +"," + destination +") not contained"; 
-		final BridgeRange bridgeRange = reachabilityBridgeAC.getBridgeRange(origin, 
+	NestedRun<LETTER,STATE> reconstructionAC(final STATE origin, 
+			final STATE destination) {
+		assert (mReachabilityBridgeAC.containsPair(origin, destination)) :
+			"Pair (" + origin + ',' + destination + ") not contained"; 
+		final BridgeRange bridgeRange = mReachabilityBridgeAC.getBridgeRange(origin, 
 				destination); 
 		// Reconstruction-AC: case 1, version 2010-11-22
 		// TODO: xw: logical error check
 		// FIXME: xw: instance check
 		if (bridgeRange instanceof BuchiIsEmptyXW.OmegaBridge) {
 			return reconstructionC(origin, destination);
-		}
-		
-		// Reconstruction-AC: case 2, version 2010-11-22
-		// FIXME: xw: instance check
-		else if (bridgeRange instanceof BuchiIsEmptyXW.SingletonBridge) {
+		} else if (bridgeRange instanceof BuchiIsEmptyXW.SingletonBridge) {
+			// Reconstruction-AC: case 2, version 2010-11-22
+			// FIXME: xw: instance check
 			final STATE singleton = 
 				((BuchiIsEmptyXW<LETTER,STATE>.SingletonBridge) 
-						bridgeRange).singleton;
+						bridgeRange).mSingleton;
 			// TODO: where to break the long line
 			return reconstructionC(origin, singleton).concatenate(
 					reconstructionC(singleton, destination));
-		}
-		// Reconstruction-AC: case 3 and 4, version 2010-11-22
-		else if (bridgeRange instanceof BuchiIsEmptyXW.QuadrupleBridge) {
+		} else if (bridgeRange instanceof BuchiIsEmptyXW.QuadrupleBridge) {
+			// Reconstruction-AC: case 3 and 4, version 2010-11-22
 			final STATE callPredecessor = 
 				((BuchiIsEmptyXW<LETTER,STATE>.QuadrupleBridge) 
-						bridgeRange).callPredecessor; // origin
+						bridgeRange).mCallPredecessor; // origin
 			final STATE callSuccessor = 
 				((BuchiIsEmptyXW<LETTER,STATE>.QuadrupleBridge) 
-						bridgeRange).callSuccessor;
+						bridgeRange).mCallSuccessor;
 			final STATE returnPredecessor = 
 				((BuchiIsEmptyXW<LETTER,STATE>.QuadrupleBridge) 
-						bridgeRange).returnPredecessor; 
+						bridgeRange).mReturnPredecessor; 
 			final STATE returnSuccessor = 
 				((BuchiIsEmptyXW<LETTER,STATE>.QuadrupleBridge) 
-						bridgeRange).returnSuccessor; // destination
+						bridgeRange).mReturnSuccessor; // destination
 			
 			// Reconstruction-AC: case 3, version 2010-11-22
 			final NestedRun<LETTER,STATE> runOfCall = new NestedRun<LETTER,STATE>(
@@ -906,7 +894,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			
 			// TODO: xw: breaking line
 			return ((callSuccessor == returnPredecessor)
-					&& mnwa.isFinal(callSuccessor))? 
+					&& mOperand.isFinal(callSuccessor)) ? 
 					// Reconstruction-AC: case 3, version 2010-11-22
 					reconstructionC(origin, callPredecessor).concatenate(
 					runOfCall).concatenate(
@@ -925,7 +913,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}

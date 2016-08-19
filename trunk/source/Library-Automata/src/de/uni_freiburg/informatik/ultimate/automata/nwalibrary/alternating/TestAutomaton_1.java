@@ -31,9 +31,11 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 
-public class TestAutomaton_1 extends AlternatingAutomaton<String, String>{
+public class TestAutomaton_1 extends AlternatingAutomaton<String, String> {
+	public static String a = new String("a");
+	public static String b = new String("b");
 
-	public TestAutomaton_1(){
+	public TestAutomaton_1() {
 		super(generateAlphabet(), null);
 		final String state1 = new String("q1_1");
 		final String state2 = new String("q1_2");
@@ -48,15 +50,14 @@ public class TestAutomaton_1 extends AlternatingAutomaton<String, String>{
 		addTransition(b, state2, generateCube(new String[]{}, new String[]{state2}));
 		addAcceptingConjunction(generateCube(new String[]{state1}, new String[]{state2}));
 	}
-	public static String a = new String("a");
-	public static String b = new String("b");
+	
 	@SuppressWarnings("unchecked")
 	public static TestCase<String>[] TEST_CASES = new TestCase[]{
 		new TestCase<String>(new Word<String>(a,a,a,b), true),
 		new TestCase<String>(new Word<String>(b,a,a,a), false)
 	};
 	
-	private static HashSet<String> generateAlphabet(){
+	private static HashSet<String> generateAlphabet() {
 		final HashSet<String> alphabet = new HashSet<String>();
 		alphabet.add(a);
 		alphabet.add(b);

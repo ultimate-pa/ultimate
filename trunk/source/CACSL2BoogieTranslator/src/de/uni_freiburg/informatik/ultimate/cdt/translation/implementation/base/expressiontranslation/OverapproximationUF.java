@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.F
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -73,7 +73,7 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 	@Override
 	public void convertPointerToInt(ILocation loc, ExpressionResult rexp,
 			CPrimitive newType) {
-		if (newType.getType() == PRIMITIVE.BOOL) {
+		if (newType.getType() == CPrimitives.BOOL) {
 			mExpressionTranslation.convertToBool(loc, rexp);
 		} else {
 			final String prefixedFunctionName = declareConvertPointerToIntFunction(

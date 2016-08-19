@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 
 public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitializer {
@@ -99,7 +99,7 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final boolean DEF_MEMOIZERETURNEDGECHECKS = true;
 
 //	public static final SolverAndInterpolator DEF_SOLVERANDINTERPOLATOR = SolverAndInterpolator.Z3SPWP;
-	public static final INTERPOLATION DEF_INTERPOLATIONMODE = INTERPOLATION.Craig_TreeInterpolation;
+	public static final InterpolationTechnique DEF_INTERPOLATIONMODE = InterpolationTechnique.Craig_TreeInterpolation;
 	public static final boolean DEF_INTERPOLANTCONSOLIDATION = false;
 	public static final PredicateUnification DEF_PREDICATEUNIFICATION = PredicateUnification.PER_ITERATION;
 	public static final EdgeCheckOptimization DEF_EDGECHECKOPTIMIZATION = EdgeCheckOptimization.NONE;
@@ -147,9 +147,9 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 			/*
 			 * settings concerning the interpolation and predicate handling in general
 			 */
-			new UltimatePreferenceItem<INTERPOLATION>(
+			new UltimatePreferenceItem<InterpolationTechnique>(
 					LABEL_INTERPOLATIONMODE, DEF_INTERPOLATIONMODE,
-					PreferenceType.Combo, INTERPOLATION.values()),
+					PreferenceType.Combo, InterpolationTechnique.values()),
 			new UltimatePreferenceItem<Boolean>(
 					LABEL_INTERPOLANTCONSOLIDATION, DEF_INTERPOLANTCONSOLIDATION,
 					PreferenceType.Boolean),

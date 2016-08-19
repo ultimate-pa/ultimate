@@ -27,56 +27,59 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 
 /**
  * Operation that returns the number of transitions of a finite automaton.
+ * 
  * @author heizmann@informatik.uni-freiburg.de
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class NumberOfTransitions<LETTER, STATE> implements IOperation<LETTER,STATE> {
+public class NumberOfTransitions<LETTER, STATE>
+		extends UnaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
+	/*
+	 * The operand as more specific interface.
+	 * It shadows the superclass field with the same name.
+	 */
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	
-	INestedWordAutomaton<LETTER, STATE> mNwa;
+	/**
+	 * Constructor.
+	 * 
+	 * @param services Ultimate services
+	 * @param operand operand
+	 */
+	public NumberOfTransitions(
+			final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER, STATE> operand) {
+		super(services, operand);
+		mOperand = operand;
+	}
 	
-	public NumberOfTransitions(INestedWordAutomaton<LETTER, STATE> nwa) {
-		mNwa = nwa;
-	}
-
-	@Override
-	public String operationName() {
-		return "numberOfTransitions";
-	}
-
-	@Override
-	public String startMessage() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public String exitMessage() {
-		throw new UnsupportedOperationException();
-	}
-
 	@Override
 	public Integer getResult() throws AutomataLibraryException {
 		int number = 0;
-		for (final STATE state : mNwa.getStates()) {
-			for (@SuppressWarnings("unused") final OutgoingInternalTransition<LETTER, STATE> trans : mNwa.internalSuccessors(state)) {
+		for (final STATE state : mOperand.getStates()) {
+			for (@SuppressWarnings("unused")
+					final OutgoingInternalTransition<LETTER, STATE> trans :
+						mOperand.internalSuccessors(state)) {
 				number++;
 			}
 		}
 		return number;
 	}
-
+	
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}
-
 }

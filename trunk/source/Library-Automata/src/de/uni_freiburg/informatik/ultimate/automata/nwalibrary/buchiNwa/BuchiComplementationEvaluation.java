@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.MultiOptimizationLevelRankingGenerator.FkvOptimization;
@@ -79,9 +78,9 @@ public class BuchiComplementationEvaluation<LETTER,STATE> implements IOperation<
 				mResult;
 	}
 	
-	public BuchiComplementationEvaluation(AutomataLibraryServices services,
-			StateFactory<STATE> stateFactory, 
-			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
+	public BuchiComplementationEvaluation(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory, 
+			final INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.mOperand = new NestedWordAutomatonReachableStates<>(mServices, input);
@@ -92,7 +91,7 @@ public class BuchiComplementationEvaluation<LETTER,STATE> implements IOperation<
 	
 
 
-	private String evaluate(StateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	private String evaluate(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		final LinkedHashMap<String, Integer> results = new LinkedHashMap<>();
 		{
 			final String name = "BuchiComplementBS";
@@ -115,7 +114,7 @@ public class BuchiComplementationEvaluation<LETTER,STATE> implements IOperation<
 	}
 
 
-	private String prettyPrint(LinkedHashMap<String, Integer> results) {
+	private String prettyPrint(final LinkedHashMap<String, Integer> results) {
 		final StringBuilder sb = new StringBuilder();
 		for (final Entry<String, Integer> entry : results.entrySet()) {
 			sb.append(entry.getKey());
@@ -127,28 +126,28 @@ public class BuchiComplementationEvaluation<LETTER,STATE> implements IOperation<
 	}
 
 
-	private void addToResultsWithSizeReduction(LinkedHashMap<String, Integer> results,
-			String name,
-			NestedWordAutomatonReachableStates<LETTER, STATE> result) throws AutomataLibraryException {
+	private void addToResultsWithSizeReduction(final LinkedHashMap<String, Integer> results,
+			final String name,
+			final NestedWordAutomatonReachableStates<LETTER, STATE> result) throws AutomataLibraryException {
 		addToResults(results, name, result);
-		final INestedWordAutomatonOldApi<LETTER, STATE> nl = (new RemoveNonLiveStates<LETTER, STATE>(mServices, result)).getResult();
+		final INestedWordAutomaton<LETTER, STATE> nl = (new RemoveNonLiveStates<LETTER, STATE>(mServices, result)).getResult();
 		addToResults(results, name + "_nonLiveRemoved", nl);
-		final INestedWordAutomaton<LETTER, STATE> bc = (new BuchiClosure<>(mServices, nl)).getResult();
+		final INestedWordAutomaton<LETTER, STATE> bc = (new BuchiClosure<LETTER, STATE>(mServices, nl)).getResult();
 		final NestedWordAutomatonReachableStates<LETTER, STATE> bcru = (new RemoveUnreachable<LETTER, STATE>(mServices, bc)).getResult();
 		final INestedWordAutomaton<LETTER, STATE> minmized = new MinimizeSevpa<LETTER, STATE>(mServices, bcru).getResult();
 		addToResults(results, name + "_MsSizeReduction", minmized);
 	}
 	
-	private void addToResults(LinkedHashMap<String, Integer> results,
-			String name,
-			INestedWordAutomaton<LETTER, STATE> result) {
+	private void addToResults(final LinkedHashMap<String, Integer> results,
+			final String name,
+			final INestedWordAutomaton<LETTER, STATE> result) {
 		final int size = result.getStates().size();
 		results.put(name, size);
 	}
 
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}

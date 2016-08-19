@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.IndexAnalyzer2.Equality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -45,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult.Equality;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class EquivalentCells {
@@ -54,11 +54,11 @@ public class EquivalentCells {
 	private final Term mInOutEqauality;
 	private final TransFormulaLR mTransFormula;
 	private final Map<TermVariable, Map<ArrayIndex, TermVariable>> mArrayInstance2Index2CellVariable;
-	private final IndexAnalyzer2 mIndexAnalyzer;
+	private final IndexAnalysisResult mIndexAnalyzer;
 
 	public EquivalentCells(Script script, TransFormulaLR tf, 
 			List<ArrayEquality> arrayEqualities, 
-			List<ArrayUpdate> arrayUpdates, IndexAnalyzer2 indexAnalyzer, 
+			List<ArrayUpdate> arrayUpdates, IndexAnalysisResult indexAnalyzer, 
 			Map<TermVariable, 
 			Map<ArrayIndex, TermVariable>> arrayInstance2Index2CellVariable) {
 		mScript = script;

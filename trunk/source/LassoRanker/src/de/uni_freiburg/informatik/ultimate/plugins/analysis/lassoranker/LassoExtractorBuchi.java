@@ -74,12 +74,12 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 	
 	private final IUltimateServiceProvider mServices;	
 	private final INestedWordAutomaton<CodeBlock, IPredicate> mCfgAutomaton;
-	private NestedWordAutomaton<CodeBlock, IPredicate> mLassoAutomaton;
+	private INestedWordAutomaton<CodeBlock, IPredicate> mLassoAutomaton;
 	private final StateFactory<IPredicate> mPredicateFactory;
 	private final SmtManager mSmtManager;
 	private final ILogger mLogger;
 	
-	public LassoExtractorBuchi(IUltimateServiceProvider services, RootNode rootNode, SmtManager smtManager, ILogger logger) 
+	public LassoExtractorBuchi(final IUltimateServiceProvider services, final RootNode rootNode, final SmtManager smtManager, final ILogger logger) 
 			throws AutomataLibraryException {
 		mServices = services;
 		mLogger = logger;
@@ -114,18 +114,18 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 	}
 
 	
-	private RCFGNode extractSomeNodeForErrorReport(RootNode rootNode) {
+	private RCFGNode extractSomeNodeForErrorReport(final RootNode rootNode) {
 		return rootNode.getOutgoingNodes().iterator().next();
 	}
 	
 	
-	private ProgramPoint extractHonda(NestedLassoRun<CodeBlock, IPredicate> run) {
+	private ProgramPoint extractHonda(final NestedLassoRun<CodeBlock, IPredicate> run) {
 		return ((ISLPredicate) run.getLoop().getStateAtPosition(0)).getProgramPoint();
 	}
 	
 
 	private INestedWordAutomaton<CodeBlock, IPredicate> constructCfgAutomaton(
-			RootNode rootNode, SmtManager smtManager) {
+			final RootNode rootNode, final SmtManager smtManager) {
 		final CFG2NestedWordAutomaton cFG2NestedWordAutomaton = 
 				new CFG2NestedWordAutomaton(mServices, true ,smtManager, mLogger);
 		final Collection<ProgramPoint> allNodes = new HashSet<ProgramPoint>();
@@ -143,10 +143,10 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 		private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
 		
 		public LassoAutomatonBuilder(
-				InCaReAlphabet<CodeBlock> alphabet,
-				StateFactory<IPredicate> predicateFactory,
-				NestedWord<CodeBlock> stem,
-				NestedWord<CodeBlock> loop) throws AutomataOperationCanceledException {
+				final InCaReAlphabet<CodeBlock> alphabet,
+				final StateFactory<IPredicate> predicateFactory,
+				final NestedWord<CodeBlock> stem,
+				final NestedWord<CodeBlock> loop) throws AutomataOperationCanceledException {
 			mResult =	new NestedWordAutomaton<CodeBlock, IPredicate>(
 					new AutomataLibraryServices(mServices),
 							alphabet.getInternalAlphabet(),
@@ -180,7 +180,7 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 			}
 		}
 		
-		private List<IPredicate> constructListOfDontCarePredicates(int length) {
+		private List<IPredicate> constructListOfDontCarePredicates(final int length) {
 			final ArrayList<IPredicate> result = new ArrayList<IPredicate>(length);
 			for (int i=0; i<length; i++) {
 				result.add(mSmtManager.getPredicateFactory().newDontCarePredicate(null));
@@ -188,13 +188,13 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 			return result;
 		}
 		
-		private void addSequenceOfStatesButFirstAndLast(List<IPredicate> states) {
+		private void addSequenceOfStatesButFirstAndLast(final List<IPredicate> states) {
 			for (int i=1; i<states.size()-1; i++) {
 				mResult.addState(false, false, states.get(i));
 			}
 		}
 
-		public NestedWordAutomaton<CodeBlock, IPredicate> getResult() {
+		public INestedWordAutomaton<CodeBlock, IPredicate> getResult() {
 			return mResult;
 		}
 	}

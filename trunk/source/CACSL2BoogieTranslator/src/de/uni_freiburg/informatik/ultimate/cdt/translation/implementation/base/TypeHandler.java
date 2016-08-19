@@ -74,8 +74,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
@@ -121,7 +121,7 @@ public class TypeHandler implements ITypeHandler {
     /**
      * Contains all primitive types that occurred in program.
      */
-    private final Set<CPrimitive.PRIMITIVE> mOccurredPrimitiveTypes = new HashSet<>();
+    private final Set<CPrimitive.CPrimitives> mOccurredPrimitiveTypes = new HashSet<>();
     
     /**
      * if true we translate CPrimitives whose general type is INT to int.
@@ -144,7 +144,7 @@ public class TypeHandler implements ITypeHandler {
     
     
 
-    public Set<CPrimitive.PRIMITIVE> getOccurredPrimitiveTypes() {
+    public Set<CPrimitive.CPrimitives> getOccurredPrimitiveTypes() {
 		return mOccurredPrimitiveTypes;
 	}
 
@@ -281,7 +281,7 @@ public class TypeHandler implements ITypeHandler {
         final ILocation loc = LocationFactory.createCLocation(node);
         final String cId = node.getName().toString();
         // values of enum have type int
-        final CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
+        final CPrimitive intType = new CPrimitive(CPrimitives.INT);
         final String enumId = main.mNameHandler.getUniqueIdentifier(node, node.getName().toString(),
         		main.mCHandler.getSymbolTable().getCompoundCounter(), false, intType);
         final int nrFields = node.getEnumerators().length;
@@ -598,7 +598,7 @@ public class TypeHandler implements ITypeHandler {
 			return constructPointerType(loc);
 		} else if (cType instanceof CEnum) {
 //			return new NamedType(loc, ((CEnum) cType).getIdentifier(), new ASTType[0]);
-			return cPrimitive2asttype(loc, new CPrimitive(PRIMITIVE.INT));
+			return cPrimitive2asttype(loc, new CPrimitive(CPrimitives.INT));
 		}
 		throw new UnsupportedSyntaxException(loc, "unknown type");
 	}
@@ -625,7 +625,7 @@ public class TypeHandler implements ITypeHandler {
 		}
     }
     
-    public ASTType bytesize2asttype(ILocation loc, GENERALPRIMITIVE generalprimitive, int bytesize) {
+    public ASTType bytesize2asttype(ILocation loc, CPrimitiveCategory generalprimitive, int bytesize) {
 		switch (generalprimitive) {
 		case VOID:
 			throw new UnsupportedOperationException();

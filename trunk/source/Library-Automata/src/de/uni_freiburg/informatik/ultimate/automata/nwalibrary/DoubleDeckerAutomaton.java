@@ -32,32 +32,41 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor.ReachFinal;
 
-public class DoubleDeckerAutomaton<LETTER, STATE> extends NestedWordAutomaton<LETTER, STATE> 
-							implements IDoubleDeckerAutomaton<LETTER, STATE> {
-	
+public class DoubleDeckerAutomaton<LETTER, STATE>
+		extends NestedWordAutomaton<LETTER, STATE> 
+		implements IDoubleDeckerAutomaton<LETTER, STATE> {
 	
 	private Map<STATE,Map<STATE,ReachFinal>> mUp2Down;
 	
-	public DoubleDeckerAutomaton(AutomataLibraryServices services, 
-			Set<LETTER> internalAlphabet,
-			Set<LETTER> callAlphabet,
-			Set<LETTER> returnAlphabet,
-			   StateFactory<STATE> stateFactory) {
+	/**
+	 * @param services Ultimate services
+	 * @param internalAlphabet internal alphabet
+	 * @param callAlphabet call alphabet
+	 * @param returnAlphabet return alphabet
+	 * @param stateFactory state factory
+	 */
+	public DoubleDeckerAutomaton(final AutomataLibraryServices services, 
+			final Set<LETTER> internalAlphabet,
+			final Set<LETTER> callAlphabet,
+			final Set<LETTER> returnAlphabet,
+			final StateFactory<STATE> stateFactory) {
 		super(services, internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
 	}
 	
-	
+	/**
+	 * @return true iff down state map is set
+	 */
 	public boolean up2DownIsSet() {
 		return mUp2Down != null; 
 	}
 	
 	@Override
 	@Deprecated
-	public Set<STATE> getDownStates(STATE up) {
+	public Set<STATE> getDownStates(final STATE up) {
 		return mUp2Down.get(up).keySet();
 	}
 	
-	public void setUp2Down(Map<STATE,Map<STATE,ReachFinal>> up2Down) {
+	public void setUp2Down(final Map<STATE,Map<STATE,ReachFinal>> up2Down) {
 		if (mUp2Down == null) {
 			mUp2Down = up2Down;
 		} else {
@@ -65,15 +74,13 @@ public class DoubleDeckerAutomaton<LETTER, STATE> extends NestedWordAutomaton<LE
 		}
 	}
 	
-	
-	
 	/**
 	 * Returns true iff there is a reachable configuration in which the 
 	 * automaton is in STATE <i>up</i> and the STATE <i>down</i> is the topmost
 	 * stack element.
 	 */
 	@Override
-	public boolean isDoubleDecker(STATE up, STATE down) {
+	public boolean isDoubleDecker(final STATE up, final STATE down) {
 		if (mUp2Down == null) {
 			throw new AssertionError("up2down not set");
 		} else {

@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.witnessprinter.graphml;
@@ -34,9 +34,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslati
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 
 /**
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  */
 public class GeneratedWitnessEdge<TE, E> {
 
@@ -44,14 +44,17 @@ public class GeneratedWitnessEdge<TE, E> {
 	private final AtomicTraceElement<TE> mATE;
 	private final ProgramState<E> mState;
 	private final IBacktranslationValueProvider<TE, E> mStringProvider;
+	private final boolean mIsEnteringLoopHead;
 
 	GeneratedWitnessEdge(final AtomicTraceElement<TE> traceElement, final ProgramState<E> state,
-			final IBacktranslationValueProvider<TE, E> stringProvider, long currentEdgeId) {
+			final boolean isEnteringLoopHead, final IBacktranslationValueProvider<TE, E> stringProvider,
+			final long currentEdgeId) {
 		assert stringProvider != null;
 		mStringProvider = stringProvider;
 		mId = "E" + String.valueOf(currentEdgeId);
 		mATE = traceElement;
 		mState = state;
+		mIsEnteringLoopHead = isEnteringLoopHead;
 	}
 
 	public boolean isDummy() {
@@ -72,6 +75,10 @@ public class GeneratedWitnessEdge<TE, E> {
 
 	public boolean hasStep() {
 		return mATE != null;
+	}
+
+	public String isEnteringLoopHead() {
+		return mIsEnteringLoopHead ? "true" : null;
 	}
 
 	public String getControl() {
@@ -139,8 +146,8 @@ public class GeneratedWitnessEdge<TE, E> {
 		final String stepAsString = mStringProvider.getStringFromStep(mATE.getStep());
 		final StringBuilder sb = new StringBuilder();
 
-		final boolean isConditional = (mATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)
-				|| mATE.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE));
+		final boolean isConditional =
+				(mATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE) || mATE.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE));
 
 		if (isConditional) {
 			sb.append("[");
@@ -160,7 +167,7 @@ public class GeneratedWitnessEdge<TE, E> {
 		return sb.toString();
 	}
 
-	private void appendValidExpression(E var, E val, StringBuilder sb) {
+	private void appendValidExpression(final E var, final E val, final StringBuilder sb) {
 
 		final String varStr = mStringProvider.getStringFromExpression(var);
 		final String valStr = mStringProvider.getStringFromExpression(val);

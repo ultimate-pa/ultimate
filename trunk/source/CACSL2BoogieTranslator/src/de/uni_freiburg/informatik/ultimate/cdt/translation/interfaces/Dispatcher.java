@@ -294,7 +294,9 @@ public abstract class Dispatcher {
 	 * Whether the memory model is required or not.
 	 * 
 	 * @return whether the memory model is required or not.
+	 * @deprecated use check of MemoryHanlder instead
 	 */
+	@Deprecated
 	public abstract boolean isMMRequired();
 
 	/**

@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.LookaheadPartitionConstructor;
@@ -81,8 +81,8 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public CompareReduceNwaSimulation(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+	public CompareReduceNwaSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand);
 	}
 
@@ -103,10 +103,10 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * simulation.performance.CompareReduceBuchiSimulation#
 	 * verifyAutomatonValidity(de.uni_freiburg.informatik.ultimate.automata.
-	 * nwalibrary.INestedWordAutomatonOldApi)
+	 * nwalibrary.INestedWordAutomaton)
 	 */
 	@Override
-	public void verifyAutomatonValidity(final INestedWordAutomatonOldApi<LETTER, STATE> automaton) {
+	public void verifyAutomatonValidity(final INestedWordAutomaton<LETTER, STATE> automaton) {
 		// Do noting to accept nwa automata
 	}
 
@@ -122,25 +122,29 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	 * long,
 	 * de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory,
 	 * de.uni_freiburg.informatik.ultimate.automata.nwalibrary.
-	 * INestedWordAutomatonOldApi)
+	 * INestedWordAutomaton)
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	protected void measureMethodPerformance(final String name, final ESimulationType type, final boolean useSCCs,
 			final AutomataLibraryServices services, final long timeout, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
+			final INestedWordAutomaton<LETTER, STATE> operandRaw) {
 		final ILogger logger = getLogger();
 		final IProgressAwareTimer progressTimer = services.getProgressMonitorService().getChildTimer(timeout);
 		boolean timedOut = false;
 		boolean outOfMemory = false;
 		Object method = null;
+		if (!(operandRaw instanceof IDoubleDeckerAutomaton)) {
+			throw new IllegalArgumentException(
+					"Input must be of type " + IDoubleDeckerAutomaton.class);
+		}
+		final IDoubleDeckerAutomaton<LETTER, STATE> operand = (IDoubleDeckerAutomaton<LETTER, STATE>) operandRaw;
 
-		Collection<Set<STATE>> possibleEquivalenceClasses = new LookaheadPartitionConstructor<LETTER, STATE>(services,
+		final Collection<Set<STATE>> possibleEquivalenceClasses = new LookaheadPartitionConstructor<LETTER, STATE>(services,
 				operand).getResult();
 
 		try {
 			if (type.equals(ESimulationType.DIRECT)) {
-				Collection<Set<STATE>> possibleEquivalenceClassesForDirect = new LookaheadPartitionConstructor<LETTER, STATE>(services,
+				final Collection<Set<STATE>> possibleEquivalenceClassesForDirect = new LookaheadPartitionConstructor<LETTER, STATE>(services,
 						operand, true).getResult();
 				
 				final DirectNwaGameGraph<LETTER, STATE> graph = new DirectNwaGameGraph<>(services, progressTimer,
@@ -151,7 +155,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				sim.doSimulation();
 				method = sim;
 			} else if (type.equals(ESimulationType.DELAYED)) {
-				final DelayedNwaGameGraph<LETTER, STATE> graph = new DelayedNwaGameGraph<>(services, progressTimer,
+				final DelayedNwaGameGraph<LETTER, STATE> graph = new DelayedNwaGameGraph<LETTER, STATE>(services, progressTimer,
 						logger, operand, stateFactory, possibleEquivalenceClasses);
 				graph.generateGameGraphFromAutomaton();
 				final DelayedNwaSimulation<LETTER, STATE> sim = new DelayedNwaSimulation<>(progressTimer, logger,
@@ -159,7 +163,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				sim.doSimulation();
 				method = sim;
 			} else if (type.equals(ESimulationType.FAIR)) {
-				final FairNwaGameGraph<LETTER, STATE> graph = new FairNwaGameGraph<>(services, progressTimer, logger,
+				final FairNwaGameGraph<LETTER, STATE> graph = new FairNwaGameGraph<LETTER, STATE>(services, progressTimer, logger,
 						operand, stateFactory, possibleEquivalenceClasses);
 				graph.generateGameGraphFromAutomaton();
 				final FairNwaSimulation<LETTER, STATE> sim = new FairNwaSimulation<>(progressTimer, logger, useSCCs,
@@ -183,7 +187,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 					operandAsNwa = new RemoveUnreachable<LETTER, STATE>(services, operand).getResult();
 				}
 				method = new MinimizeNwaMaxSat2<LETTER, STATE>(services, stateFactory, operandAsNwa,
-						possibleEquivalenceClasses);
+						true, possibleEquivalenceClasses);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			}
 		} catch (final AutomataOperationCanceledException e) {

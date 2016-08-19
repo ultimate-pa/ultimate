@@ -19,27 +19,34 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating;
 
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, BitSet>{
+public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, BitSet> {
+	
+	private final NestedWordAutomaton<LETTER, BitSet> mResultAutomaton;
 
-	public AA_DeterminizeReversed(AutomataLibraryServices ultimateServiceProvider, AlternatingAutomaton<LETTER, BitSet> alternatingAutomaton){
-		resultAutomaton = new NestedWordAutomaton<LETTER, BitSet>(
+	public AA_DeterminizeReversed(final AutomataLibraryServices ultimateServiceProvider,
+			final AlternatingAutomaton<LETTER, BitSet> alternatingAutomaton) {
+		mResultAutomaton = new NestedWordAutomaton<LETTER, BitSet>(
 				ultimateServiceProvider,
 				alternatingAutomaton.getAlphabet(),
 				Collections.<LETTER>emptySet(),
@@ -48,48 +55,68 @@ public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, BitSet
 			);
 		final LinkedList<BitSet> newStates = new LinkedList<BitSet>();
 		newStates.add(alternatingAutomaton.getFinalStatesBitVector());
-		while(!newStates.isEmpty()){
+		final List<Pair<BitSet, Pair<LETTER, BitSet>>> transitionsToAdd = new ArrayList<>();
+		while (!newStates.isEmpty()) {
 			final BitSet state = newStates.getFirst();
 			final boolean isInitial = (state == alternatingAutomaton.getFinalStatesBitVector());
 			final boolean isFinal = alternatingAutomaton.getAcceptingFunction().getResult(state);
-			resultAutomaton.addState(isInitial, isFinal, state);
-			for(final LETTER letter : alternatingAutomaton.getAlphabet()){
+			mResultAutomaton.addState(isInitial, isFinal, state);
+			for (final LETTER letter : alternatingAutomaton.getAlphabet()) {
 				final BitSet nextState = (BitSet) state.clone();
 				alternatingAutomaton.resolveLetter(letter, nextState);
-				resultAutomaton.addInternalTransition(state, letter, nextState);
-				if(!resultAutomaton.getStates().contains(nextState)){
-					if(!newStates.contains(nextState)){
+				final boolean addTransitionDirectly;
+				if (!mResultAutomaton.getStates().contains(nextState)) {
+					if (!newStates.contains(nextState)) {
+						addTransitionDirectly = false;
 						newStates.add(nextState);
+					} else {
+						addTransitionDirectly = true;
 					}
+				} else {
+					addTransitionDirectly = true;
+				}
+				/*
+				 * Christian 2016-08-19: fixed a bug: If the state is not in the automaton, adding transitions will
+				 *     fail. That is why I added this list of transitions to add later in the hope that this should fix
+				 *     the problem.
+				 */
+				if (addTransitionDirectly) {
+					mResultAutomaton.addInternalTransition(state, letter, nextState);
+				} else {
+					final Pair<LETTER,BitSet> innerPair = new Pair<LETTER,BitSet>(letter, nextState);
+					transitionsToAdd.add(new Pair<BitSet, Pair<LETTER,BitSet>>(state, innerPair));
 				}
 			}
 			newStates.removeFirst();
 		}
+		for (final Pair<BitSet, Pair<LETTER, BitSet>> transition : transitionsToAdd) {
+			final Pair<LETTER,BitSet> innerPair = transition.getSecond();
+			mResultAutomaton.addInternalTransition(transition.getFirst(), innerPair.getFirst(), innerPair.getSecond());
+		}
 	}
-	private final NestedWordAutomaton<LETTER, BitSet> resultAutomaton;
 	
 	@Override
-	public String operationName(){
+	public String operationName() {
 		return "AA_DeterminizeReversed";
 	}
 
 	@Override
-	public String startMessage(){
+	public String startMessage() {
 		return "Start: " + operationName();
 	}
 
 	@Override
-	public String exitMessage(){
+	public String exitMessage() {
 		return "Exit: " + operationName();
 	}
 
 	@Override
-	public NestedWordAutomaton<LETTER, BitSet> getResult() throws AutomataLibraryException{
-		return resultAutomaton;
+	public INestedWordAutomaton<LETTER, BitSet> getResult() throws AutomataLibraryException {
+		return mResultAutomaton;
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<BitSet> stateFactory) throws AutomataLibraryException{
+	public boolean checkResult(final StateFactory<BitSet> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
 }

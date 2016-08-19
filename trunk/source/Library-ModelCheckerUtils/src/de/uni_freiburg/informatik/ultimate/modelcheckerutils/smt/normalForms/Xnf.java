@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Literal.Polarity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.XJunction.AtomAndNegationException;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
@@ -58,14 +58,13 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  */
 public abstract class Xnf extends Nnf {
 	
-	public Xnf(Script script, IUltimateServiceProvider services, 
-			IFreshTermVariableConstructor freshTermVariableConstructor) {
-		super(script, services, freshTermVariableConstructor, QuantifierHandling.IS_ATOM);
+	public Xnf(final ManagedScript script, final IUltimateServiceProvider services) {
+		super(script, services, QuantifierHandling.IS_ATOM);
 	}
 	
 	protected abstract class XnfTransformerHelper extends NnfTransformerHelper {
 
-		protected XnfTransformerHelper(IUltimateServiceProvider services) {
+		protected XnfTransformerHelper(final IUltimateServiceProvider services) {
 			super(services);
 		}
 		public abstract String innerConnectiveSymbol();
@@ -80,7 +79,7 @@ public abstract class Xnf extends Nnf {
 		public abstract Term[] getOuterJuncts(Term term);
 		
 		@Override
-		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
+		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 			final String functionSymbolName = appTerm.getFunction().getName();
 			Term result;
 			if (functionSymbolName.equals(innerConnectiveSymbol())) {
@@ -107,7 +106,7 @@ public abstract class Xnf extends Nnf {
 		 * @param inputInnerJunction
 		 * @return
 		 */
-		private Term[] applyDistributivityAndOr(Term[] inputInnerJunction) {
+		private Term[] applyDistributivityAndOr(final Term[] inputInnerJunction) {
 
 			ResultInnerJunctions first;
 			{
@@ -189,7 +188,7 @@ public abstract class Xnf extends Nnf {
 		 * into a Set of XJunctions. 
 		 */
 		private Set<XJunction> convertInnerJunctionOfOuterJunctionsToSet(
-				Term[] inputInnerJunction) {
+				final Term[] inputInnerJunction) {
 			final Set<XJunction> result = new HashSet<>();
 			for (final Term inputInnerJunct : inputInnerJunction) {
 				final Term[] inputOuterJunction = getOuterJuncts(inputInnerJunct);
@@ -223,13 +222,13 @@ public abstract class Xnf extends Nnf {
 			private final XJunction mInnerJuncts;
 			private final Set<XJunction> mUnprocessedInnerJunctionOfOuterJunctions;
 			
-			public ResultInnerJunctions(Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
+			public ResultInnerJunctions(final Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
 				final XJunction innerJuncts = new XJunction(); 
 				mUnprocessedInnerJunctionOfOuterJunctions = moveOutwardsAbsorbeAndMpsimplify(innerJuncts, innerJunctionOfOuterJunctions);
 				mInnerJuncts = innerJuncts;
 			}
 			
-			public ResultInnerJunctions(XJunction innerJuncts, Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
+			public ResultInnerJunctions(final XJunction innerJuncts, final Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
 				final XJunction newInnerJuncts = new XJunction();
 				mUnprocessedInnerJunctionOfOuterJunctions = moveOutwardsAbsorbeAndMpsimplify(newInnerJuncts, innerJunctionOfOuterJunctions);
 				mInnerJuncts = XJunction.disjointUnion(innerJuncts, newInnerJuncts);
@@ -286,7 +285,7 @@ public abstract class Xnf extends Nnf {
 			 * is equivalent to the annihilating element of the inner connective
 			 */
 			private Set<XJunction> moveOutwardsAbsorbeAndMpsimplify(
-					XJunction innerJunction, 
+					final XJunction innerJunction, 
 					Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
 				while (true) {
 					final boolean modified = moveSingletonsOutwards(innerJunction, innerJunctionOfOuterJunctions);
@@ -315,8 +314,8 @@ public abstract class Xnf extends Nnf {
 			 * @throws AtomAndNegationException the resulting innerJunction would
 			 * be equivalent to the annihilating element of the inner connective.
 			 */
-			private boolean moveSingletonsOutwards(XJunction innerJunction,
-					Set<XJunction> innerJunctionOfOuterJunctions)
+			private boolean moveSingletonsOutwards(final XJunction innerJunction,
+					final Set<XJunction> innerJunctionOfOuterJunctions)
 							throws AtomAndNegationException {
 				boolean someSingletonContained = false;
 				final Iterator<XJunction> it = innerJunctionOfOuterJunctions.iterator();
@@ -357,8 +356,8 @@ public abstract class Xnf extends Nnf {
 			 * was possible innerJunctionOfOuterJunctions (same Object) is returned
 			 * otherwise a new HashSet is returned.
 			 */
-			private Set<XJunction> applyAbsorbeAndMpsimplify(XJunction innerJunction,
-					Set<XJunction> innerJunctionOfOuterJunctions) {
+			private Set<XJunction> applyAbsorbeAndMpsimplify(final XJunction innerJunction,
+					final Set<XJunction> innerJunctionOfOuterJunctions) {
 				final HashSet<XJunction> newInnerJunctionOfOuterJunctions = new HashSet<XJunction>();
 				boolean modified = false;
 				for (final XJunction outerJunction : innerJunctionOfOuterJunctions) {
@@ -397,8 +396,8 @@ public abstract class Xnf extends Nnf {
 			 * instead. If we do not have to modify it, we return the input
 			 * outerJunction.
 			 */
-			private XJunction applyAbsorbeAndMpsimplify(XJunction innerJunction,
-					XJunction outerJunction) {
+			private XJunction applyAbsorbeAndMpsimplify(final XJunction innerJunction,
+					final XJunction outerJunction) {
 				XJunction resultOuterJunction = outerJunction;
 				for (final Entry<Term, Polarity> literal : innerJunction.entrySet()) {
 					if (outerJunction.contains(literal.getKey(), literal.getValue())) {
@@ -435,7 +434,7 @@ public abstract class Xnf extends Nnf {
 		class XJunctionPosetMinimalElements {
 			private final Set<XJunction> mElements = new HashSet<XJunction>();
 			
-			public void add(XJunction xjunction) {
+			public void add(final XJunction xjunction) {
 				final Iterator<XJunction> it = mElements.iterator();
 				while (it.hasNext()) {
 					final XJunction existing = it.next();

@@ -35,12 +35,12 @@ import java.util.SortedMap;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -60,6 +60,20 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 public class TraceCheckerUtils {
 	
 	/**
+	 * Returns true for {@link Sorts} for which we can obtain values.
+	 * E.g. for arrays we cannot get values that our analysis can process, 
+	 * since arrays are infinite in general. However, if the range Sort of an
+	 * array is bitvector sort we can get values for array cells 
+	 * (resp. the corresponding select term).
+	 */
+	public static boolean isSortForWhichWeCanGetValues(final Sort sort) {
+		return sort.isNumericSort()
+				|| sort.getRealSort().getName().equals("Bool")
+				|| sort.getRealSort().getName().equals("BitVec")
+				|| sort.getRealSort().getName().equals("FloatingPoint");
+	}
+	
+	/**
 	 * Given a trace cb_0,...,cb_n returns the sequence of ProgramPoints 
 	 * that corresponds to this trace. This is the sequence
 	 * pp_0,...,pp_{n+1} such that
@@ -69,7 +83,7 @@ public class TraceCheckerUtils {
 	 * </ul>  
 	 */
 	public static List<ProgramPoint> getSequenceOfProgramPoints(
-											NestedWord<CodeBlock> trace) {
+											final NestedWord<CodeBlock> trace) {
 		final List<ProgramPoint> result = new ArrayList<ProgramPoint>();
 		for (final CodeBlock cb : trace) {
 			final ProgramPoint pp = (ProgramPoint) cb.getSource();
@@ -87,16 +101,16 @@ public class TraceCheckerUtils {
 	 * @param logger 
 	 */
 	public static BackwardCoveringInformation computeCoverageCapability(
-			IUltimateServiceProvider services, 
-			IInterpolantGenerator traceChecker, ILogger logger) {
+			final IUltimateServiceProvider services, 
+			final IInterpolantGenerator traceChecker, final ILogger logger) {
 		final NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) NestedWord.nestedWord(traceChecker.getTrace());
 		final List<ProgramPoint> programPoints = getSequenceOfProgramPoints(trace);
 		return computeCoverageCapability(services, traceChecker, programPoints, logger);
 	}
 	
 	public static BackwardCoveringInformation computeCoverageCapability(
-			IUltimateServiceProvider services, 
-			IInterpolantGenerator interpolantGenerator, List<ProgramPoint> programPoints, ILogger logger) {
+			final IUltimateServiceProvider services, 
+			final IInterpolantGenerator interpolantGenerator, final List<ProgramPoint> programPoints, final ILogger logger) {
 		if (interpolantGenerator.getInterpolants() == null) {
 			throw new AssertionError("We can only build an interpolant "
 					+ "automaton for which interpolants were computed");
@@ -124,7 +138,7 @@ public class TraceCheckerUtils {
 		private final IPredicate mPostcondition;
 		private final List<IPredicate> mInterpolants;
 		
-		public InterpolantsPreconditionPostcondition(IInterpolantGenerator interpolantGenerator) {
+		public InterpolantsPreconditionPostcondition(final IInterpolantGenerator interpolantGenerator) {
 			if (interpolantGenerator.getInterpolants() == null) {
 				throw new AssertionError("We can only build an interpolant "
 						+ "automaton for which interpolants were computed");
@@ -134,15 +148,15 @@ public class TraceCheckerUtils {
 			mInterpolants = Arrays.asList(interpolantGenerator.getInterpolants());
 		}
 		
-		public InterpolantsPreconditionPostcondition(IPredicate precondition,
-				IPredicate postcondition, List<IPredicate> interpolants) {
+		public InterpolantsPreconditionPostcondition(final IPredicate precondition,
+				final IPredicate postcondition, final List<IPredicate> interpolants) {
 			super();
 			mPrecondition = precondition;
 			mPostcondition = postcondition;
 			mInterpolants = interpolants;
 		}
 
-		public IPredicate getInterpolant(int i) {
+		public IPredicate getInterpolant(final int i) {
 			if (i < 0) {
 				throw new AssertionError("index beyond precondition");
 			} else if (i == 0) {
@@ -168,11 +182,11 @@ public class TraceCheckerUtils {
 	 * valid Hoare triple. If all triples are valid, we return true.
 	 * Otherwise an exception is thrown.
 	 */
-	public static boolean checkInterpolantsInductivityForward(List<IPredicate> interpolants, NestedWord<? extends IAction> trace, 
-			IPredicate precondition, IPredicate postcondition, 
-			SortedMap<Integer, IPredicate> pendingContexts, String computation, 
-			ModifiableGlobalVariableManager mgvManager,
-			ILogger logger, ManagedScript managedScript, VariableManager variableManager) {
+	public static boolean checkInterpolantsInductivityForward(final List<IPredicate> interpolants, final NestedWord<? extends IAction> trace, 
+			final IPredicate precondition, final IPredicate postcondition, 
+			final SortedMap<Integer, IPredicate> pendingContexts, final String computation, 
+			final ModifiableGlobalVariableManager mgvManager,
+			final ILogger logger, final ManagedScript managedScript) {
 		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(managedScript, mgvManager);
 		final InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(precondition, postcondition, interpolants);
@@ -196,11 +210,11 @@ public class TraceCheckerUtils {
 	 * 
 	 * @see checkInterpolantsInductivityForward
 	 */
-	public static boolean checkInterpolantsInductivityBackward(List<IPredicate> interpolants, NestedWord<? extends IAction> trace, 
-			IPredicate precondition, IPredicate postcondition, 
-			SortedMap<Integer, IPredicate> pendingContexts, String computation, 
-			ModifiableGlobalVariableManager mgvManager,
-			ILogger logger, ManagedScript managedScript, VariableManager variableManager) {
+	public static boolean checkInterpolantsInductivityBackward(final List<IPredicate> interpolants, final NestedWord<? extends IAction> trace, 
+			final IPredicate precondition, final IPredicate postcondition, 
+			final SortedMap<Integer, IPredicate> pendingContexts, final String computation, 
+			final ModifiableGlobalVariableManager mgvManager,
+			final ILogger logger, final ManagedScript managedScript) {
 		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(managedScript, mgvManager);
 		final InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(precondition, postcondition, interpolants);
@@ -215,12 +229,12 @@ public class TraceCheckerUtils {
 	}
 	
 	
-	private static Validity checkInductivityAtPosition(int i,
-			InterpolantsPreconditionPostcondition ipp,
-			NestedWord<? extends IAction> trace,
-			SortedMap<Integer, IPredicate> pendingContexts,
-			IHoareTripleChecker htc,
-			ILogger logger) {
+	private static Validity checkInductivityAtPosition(final int i,
+			final InterpolantsPreconditionPostcondition ipp,
+			final NestedWord<? extends IAction> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts,
+			final IHoareTripleChecker htc,
+			final ILogger logger) {
 		final IPredicate predecessor = ipp.getInterpolant(i);
 		final IPredicate successor = ipp.getInterpolant(i+1);
 		final IAction cb = trace.getSymbol(i);

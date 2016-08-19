@@ -29,20 +29,19 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import java.util.HashMap;
 
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.ITransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Transitionlet;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
@@ -64,13 +63,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  *            states are labeled e.g. with "q0", "q1", ...
  */
 
-public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE> 
-{
-	private final AutomataLibraryServices mServices;
+public class SuperDifference<LETTER, STATE>
+		extends GeneralOperation<LETTER, STATE>
+		implements IOperation<LETTER, STATE> {
 	/* *** *** *** Fields *** *** *** */
-
-	// For status output
-	private final ILogger mLogger;
 
 	// Automatons
 	private final INestedWordAutomaton<LETTER, STATE> mMinuend;
@@ -81,41 +77,13 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 	private final HashMap<String, STATE> mContainedStatesHashMap;
 	private final StateFactory<STATE> mStateFactory;
 
-	/* *** *** *** Functions *** *** *** */
-	@Override
-	public String operationName() 
-	{
-		return "superDifference";
-	}
-
-	@Override
-	public String startMessage() 
-	{
-		return "Start " + operationName() + ". Minuend "
-				+ mMinuend.sizeInformation() + " Subtrahend "
-				+ mSubtrahend.sizeInformation();
-	}
-
-	@Override
-	public String exitMessage() 
-	{
-		return "Finished " + operationName() + " Result "
-				+ mResult.sizeInformation();
-	}
-
-	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult()
-			throws AutomataLibraryException
-	{
-		return mResult;
-	}
-
 	/**
 	 * Computes the an automaton A' which is the over approximation of the
 	 * difference of the two automatons minuend and subtrahend such that L(A')
 	 * >= L(minuend) - L(subtrahend) and L(A') <= L(minuend) Therefore it needs
 	 * an automaton epimorphism
 	 * 
+	 * @param services Ultimate services
 	 * @param minuend
 	 *            the minuend
 	 * @param subtrahend
@@ -124,24 +92,22 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 	 *            the automaton epimorphism
 	 * @param minimize
 	 *            if true, the resulting automaton will be reduced
-	 * @throws AutomataOperationCanceledException
+	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
 	public SuperDifference(
-			AutomataLibraryServices services,
-			INestedWordAutomaton<LETTER, STATE> minuend,
-			INestedWordAutomaton<LETTER, STATE> subtrahend,
-			AutomatonEpimorphism<STATE> automatonEpimorhpism, 
-			boolean minimize)
-			throws AutomataLibraryException 
-	{
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+			final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER, STATE> minuend,
+			final INestedWordAutomaton<LETTER, STATE> subtrahend,
+			final AutomatonEpimorphism<STATE> automatonEpimorhpism, 
+			final boolean minimize)
+			throws AutomataLibraryException {
+		super(services);
 		mMinuend = minuend;
 		mSubtrahend = subtrahend;
 		mEpimorphism = automatonEpimorhpism;
 		mStateFactory = minuend.getStateFactory();
 		mContainedStatesHashMap = new HashMap<String, STATE>();
-		if(minimize) {
+		if (minimize) {
 			mLogger.error("Minimization not implemented.");
 		}
 
@@ -157,25 +123,45 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 		
 		// initializes the process by adding the initial states. Since there can
 		// be many initial states, it adds all possible initial state pair combinations
-		for (final STATE init_m : mMinuend.getInitialStates()) 
-		{
-			STATE init_s = mEpimorphism.getMapping(init_m);
-			if(init_s == null || !mSubtrahend.getInitialStates().contains(init_s))
-			{
-				init_s = mSinkState;
+		for (final STATE initM : mMinuend.getInitialStates()) {
+			STATE initS = mEpimorphism.getMapping(initM);
+			if (initS == null || !mSubtrahend.getInitialStates().contains(initS)) {
+				initS = mSinkState;
+			} else {
+				assert (mSubtrahend.getStates().contains(initS));
 			}
-			else
-			{
-				assert(mSubtrahend.getStates().contains(init_s));
-			}
-			mLogger.debug("Add initial state:" + init_m + "---" + init_s);			
-			addState(init_m, init_s);
+			mLogger.debug("Add initial state:" + initM + "---" + initS);			
+			addState(initM, initS);
 		}
 		mLogger.info(exitMessage());
 	}
 
-	String bl(boolean b)
-	{
+	/* *** *** *** Functions *** *** *** */
+	@Override
+	public String operationName() {
+		return "superDifference";
+	}
+
+	@Override
+	public String startMessage() {
+		return "Start " + operationName() + ". Minuend "
+				+ mMinuend.sizeInformation() + " Subtrahend "
+				+ mSubtrahend.sizeInformation();
+	}
+
+	@Override
+	public String exitMessage() {
+		return "Finished " + operationName() + " Result "
+				+ mResult.sizeInformation();
+	}
+
+	@Override
+	public INestedWordAutomaton<LETTER, STATE> getResult()
+			throws AutomataLibraryException {
+		return mResult;
+	}
+
+	String bl(final boolean b) {
 		return b ? "T" : "F";
 	}
 	
@@ -190,16 +176,14 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 	 * @return
 	 * 			  the state in the new automaton            
 	 */
-	private STATE addState(STATE r, STATE s) 
-	{
-		assert(mMinuend.getStates().contains(r));		
-		assert(s == mSinkState ||  mSubtrahend.getStates().contains(s));
+	private STATE addState(final STATE r, final STATE s) {
+		assert (mMinuend.getStates().contains(r));		
+		assert (s == mSinkState ||  mSubtrahend.getStates().contains(s));
 		
 		// if it does already exist, return that state
 		final String qLabel = r.toString() + "|" + s.toString();
 		final STATE existingState = mContainedStatesHashMap.get(qLabel);
-		if (existingState != null) 
-		{
+		if (existingState != null) {
 			mLogger.debug("State for " + qLabel + " already exists: "
 					+ existingState.toString());
 			return existingState;
@@ -208,10 +192,10 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 		// if not: create a new state "q" and add it into the superDifference automaton
 		mLogger.debug("Add state: " + qLabel + " created from: " + r.toString() + " and " + s.toString());
 		final STATE intersection = mStateFactory.intersection(r, s);
-		if(intersection == null) {
+		if (intersection == null) {
 			mLogger.error("State factory returned no state!");
 		}
-		mLogger.debug("intersection: " + intersection.toString());
+		mLogger.debug("intersection: " + intersection);
 		mContainedStatesHashMap.put(qLabel, intersection);
 	
 		final boolean isInitial = mMinuend.isInitial(r) && (s == mSinkState || mSubtrahend.isInitial(s));
@@ -223,36 +207,29 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 		mResult.addState(isInitial, isFinal, intersection);
 
 		// get the epimorph state
-		final STATE h_r = mEpimorphism.getMapping(r);
+		final STATE hR = mEpimorphism.getMapping(r);
 		
 		// check if there exists a mapping to r in the epimorphism
-		if (h_r == s) 
-		{
-			mLogger.debug("epimorph state: " + h_r.toString());
+		if (hR == s) {
+			mLogger.debug("epimorph state: " + hR.toString());
 			// Traverse all edges = (r, label, r2) \in \delta
 
-			for(final OutgoingInternalTransition<LETTER, STATE> e : mMinuend.internalSuccessors(r))
-			{
+			for (final OutgoingInternalTransition<LETTER, STATE> e : mMinuend.internalSuccessors(r)) {
 				traverseEdge(e, r, s, intersection, e.getSucc(), 0, null);
 			}
 			
-			for(final OutgoingCallTransition<LETTER, STATE> e : mMinuend.callSuccessors(r))
-			{
+			for (final OutgoingCallTransition<LETTER, STATE> e : mMinuend.callSuccessors(r)) {
 				traverseEdge(e, r, s, intersection, e.getSucc(), 1, null);
 			}
 
-			for(final OutgoingReturnTransition<LETTER, STATE> e : mMinuend.returnSuccessors(r))
-			{
+			for (final OutgoingReturnTransition<LETTER, STATE> e : mMinuend.returnSuccessors(r)) {
 				// get the hier pred (if not exists this could be created)
 				final STATE mapping = mEpimorphism.getMapping(e.getHierPred());
-				if(mapping != null) 
-				{
+				if (mapping != null) {
 					mLogger.debug("found hier pred state mapping:" + mapping.toString());
 					final STATE hierPred = addState(e.getHierPred(), mapping);
 					traverseEdge(e, r, s, intersection, e.getSucc(), 2, hierPred);
-				}
-				else
-				{
+				} else {
 					mLogger.debug("found sink no hier pred mapping, took sink state");
 				}
 				final STATE hierPred = addState(e.getHierPred(), mSinkState);
@@ -260,17 +237,13 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 				mLogger.debug("hier pred is: " + hierPred);
 				traverseEdge(e, r, s, intersection, e.getSucc(), 2, hierPred);
 			}
-			
-		} 
-		else
-		{
+		} else {
 			// we are in the sink state in the subtrahend automaton
 			
-			mLogger.debug("No epimorph state found: hr:" + h_r + " r:" + r + " s: " + s);
+			mLogger.debug("No epimorph state found: hr:" + hR + " r:" + r + " s: " + s);
 			
 			// Traverse all edges = (r, label, r2) \in \delta
-			for(final OutgoingInternalTransition<LETTER, STATE> e : mMinuend.internalSuccessors(r))
-			{
+			for (final OutgoingInternalTransition<LETTER, STATE> e : mMinuend.internalSuccessors(r)) {
 				// we know that we must take the sink state, since there is no epimorph state
 				mLogger.debug("follow label " + e.getLetter() + " and ...");
 				mLogger.debug("add target (sinked) state q2: " + e.getSucc());
@@ -279,8 +252,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 				mResult.addInternalTransition(intersection, e.getLetter(), q2);
 			}
 
-			for(final OutgoingCallTransition<LETTER, STATE> e : mMinuend.callSuccessors(r))
-			{
+			for (final OutgoingCallTransition<LETTER, STATE> e : mMinuend.callSuccessors(r)) {
 				mLogger.debug("follow label " + e.getLetter() + " and ...");
 				mLogger.debug("add target (sinked) state q2: " + e.getSucc());
 				final STATE q2 = addState(e.getSucc(), mSinkState);
@@ -288,14 +260,12 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 				mResult.addCallTransition(intersection, e.getLetter(), q2);
 			}
 			
-			for(final OutgoingReturnTransition<LETTER, STATE> e : mMinuend.returnSuccessors(r))
-			{
+			for (final OutgoingReturnTransition<LETTER, STATE> e : mMinuend.returnSuccessors(r)) {
 				mLogger.debug("follow label " + e.getLetter() + " and ...");
 				mLogger.debug("add target (sinked) state q2: " + e.getSucc());
 				
 				final STATE mapping = mEpimorphism.getMapping(e.getHierPred());
-				if(mapping != null) 
-				{
+				if (mapping != null) {
 					// Add the transition's hierarchical predecessor
 					final STATE hierPred = addState(e.getHierPred(), mapping);				
 					// Add the transition's successor
@@ -311,7 +281,8 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 				// Add the transition 
 				mResult.addReturnTransition(intersection, hierPred, e.getLetter(), q2);
 				
-				mLogger.debug("Traverse in sink state " + intersection + " with " + e.getLetter() + " to " + q2.toString());
+				mLogger.debug("Traverse in sink state " + intersection + " with "
+						+ e.getLetter() + " to " + q2.toString());
 			}			
 		}
 
@@ -329,14 +300,13 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 	 * @param hierPred hierarchical predecessor
 	 */
 	private void traverseEdge(
-			Transitionlet<LETTER,STATE> e,
-			STATE r, 
-			STATE s, 
-			STATE q,
-			STATE target,
-			int edgeType,
-			STATE hierPred) 
-	{
+			final ITransitionlet<LETTER,STATE> e,
+			final STATE r, 
+			final STATE s, 
+			final STATE q,
+			final STATE target,
+			final int edgeType,
+			final STATE hierPred) {
 		final LETTER label = e.getLetter();
 
 		mLogger.debug("Traverse edge: from " + r.toString() + " with " + label + " to " + target.toString());
@@ -344,30 +314,24 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 		// find/construct the target state of the edge
 		STATE q2 = null;
 		// get the target state in the subtrahend automaton
-		final STATE h_r2 = mEpimorphism.getMapping(target);
-		mLogger.debug("mapping of the target is: " + h_r2);
+		final STATE hR2 = mEpimorphism.getMapping(target);
+		mLogger.debug("mapping of the target is: " + hR2);
 		
 		// now we want to check if the subtrahend automaton has an epimorph state as well
 		boolean targetExistsInMinuend = false;
-		if(h_r2 != null)
-		{
-			switch(edgeType)
-			{
+		if (hR2 != null) {
+			switch (edgeType) {
 			case 0:
-				for(final OutgoingInternalTransition<LETTER,STATE> e2 : mSubtrahend.internalSuccessors(s, label))
-				{
-					if(e2.getSucc() == h_r2)
-					{
+				for (final OutgoingInternalTransition<LETTER,STATE> e2 : mSubtrahend.internalSuccessors(s, label)) {
+					if (e2.getSucc() == hR2) {
 						targetExistsInMinuend = true;
 						break;
 					}
 				}
 				break;
 			case 1:
-				for(final OutgoingCallTransition<LETTER,STATE> e2 : mSubtrahend.callSuccessors(s, label))
-				{
-					if(e2.getSucc() == h_r2)
-					{
+				for (final OutgoingCallTransition<LETTER,STATE> e2 : mSubtrahend.callSuccessors(s, label)) {
+					if (e2.getSucc() == hR2) {
 						targetExistsInMinuend = true;
 						break;
 					}
@@ -375,38 +339,34 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 				break;
 			case 2:
 				mLogger.debug("hierPred for " + hierPred);
-				for(final OutgoingReturnTransition<LETTER,STATE> e2 : mSubtrahend.returnSucccessors(s, hierPred, label))
-				{
-					if(e2.getSucc() == h_r2)
-					{
+				for (final OutgoingReturnTransition<LETTER,STATE> e2 : mSubtrahend.returnSuccessors(s, hierPred, label)) {
+					if (e2.getSucc() == hR2) {
 						targetExistsInMinuend = true;
 						break;
 					}
 				}
 				break;
+			default:
+				throw new IllegalArgumentException();
 			}
 		}
 		
 		
 		
 		// make sure that the target state q2 exists
-		if (targetExistsInMinuend) 
-		{
+		if (targetExistsInMinuend) {
 			mLogger.debug("target state exists");
 			// if that state and the corresponding edge with the same label exists
-			q2 = addState(target, h_r2);
-		} 
-		else 
-		{
+			q2 = addState(target, hR2);
+		} else {
 			mLogger.debug("target state exists not");
 			// otherwise we fall in to the sink state
 			q2 = addState(target, mSinkState);
 		}
 
-//				mLogger.debug("Adding the edge from " + q.toString() + " with " + label + " to " + q2.toString());
+//		mLogger.debug("Adding the edge from " + q.toString() + " with " + label + " to " + q2.toString());
 		
-		switch(edgeType)
-		{
+		switch (edgeType) {
 		case 0:
 			mResult.addInternalTransition(q, label, q2);
 			break;
@@ -416,15 +376,8 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 		case 2:
 			mResult.addReturnTransition(q, hierPred, label, q2);
 			break;
+		default:
+			throw new IllegalArgumentException();
 		}
-		
-	}
-
-	@Override
-	public boolean checkResult(StateFactory stateFactory)
-			throws AutomataLibraryException 
-	{
-		// TODO Auto-generated method stub
-		return false;
 	}
 }

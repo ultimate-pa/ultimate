@@ -34,24 +34,31 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
  * 
  * @author Matthias Heizmann
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class NestedLassoRun<LETTER,STATE> {
-	private final NestedRun<LETTER,STATE> stem;
-	private final NestedRun<LETTER,STATE> loop;
-		
-	public NestedLassoRun(NestedRun<LETTER,STATE> stem, NestedRun<LETTER, STATE> loop) {
-		this.stem = stem;
-		this.loop = loop;
+	private final NestedRun<LETTER,STATE> mStem;
+	private final NestedRun<LETTER,STATE> mLoop;
+	
+	/**
+	 * Constructor.
+	 * 
+	 * @param stem stem
+	 * @param loop loop
+	 */
+	public NestedLassoRun(final NestedRun<LETTER,STATE> stem,
+			final NestedRun<LETTER, STATE> loop) {
+		this.mStem = stem;
+		this.mLoop = loop;
 	}
 	
 	public NestedRun<LETTER,STATE> getStem() {
-		return stem;
+		return mStem;
 	}
 	
 	public NestedRun<LETTER,STATE> getLoop() {
-		return loop;
+		return mLoop;
 	}
 	
 	public NestedLassoWord<LETTER> getNestedLassoWord() {
@@ -61,8 +68,6 @@ public class NestedLassoRun<LETTER,STATE> {
 	
 	@Override
 	public String toString() {
-		return "Stem: " + stem + " Loop:" + loop;
+		return "Stem: " + mStem + " Loop:" + mLoop;
 	}
-	
-	
 }

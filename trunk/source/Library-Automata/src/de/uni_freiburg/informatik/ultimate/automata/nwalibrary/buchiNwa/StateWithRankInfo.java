@@ -49,10 +49,11 @@ public class StateWithRankInfo<STATE> {
 	private final STATE mState;
 	private final int mRank;
 	private final boolean mInO;
+	
 	/**
 	 * Constructor for states that have a rank.
 	 */
-	public StateWithRankInfo(STATE state, int rank, boolean inO) {
+	public StateWithRankInfo(final STATE state, final int rank, final boolean inO) {
 		super();
 		mState = state;
 		if (rank < 0) {
@@ -68,7 +69,7 @@ public class StateWithRankInfo<STATE> {
 	/**
 	 * Constructor for states that do not yet have a rank.
 	 */
-	public StateWithRankInfo(STATE state) {
+	public StateWithRankInfo(final STATE state) {
 		super();
 		mState = state;
 		mRank = s_NoRank;
@@ -82,9 +83,11 @@ public class StateWithRankInfo<STATE> {
 	public STATE getState() {
 		return mState;
 	}
+	
 	public int getRank() {
 		return mRank;
 	}
+	
 	public boolean isInO() {
 		return mInO;
 	}
@@ -100,7 +103,7 @@ public class StateWithRankInfo<STATE> {
 	}
 	
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}

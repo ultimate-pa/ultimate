@@ -4,7 +4,7 @@
 assert(!isEmpty(nwa));
 
 print(numberOfStates(nwa));
-int minimizeDFASize = numberOfStates(minimizeDFA(nwa));
+int minimizeDFASize = numberOfStates(minimizeDfaTable(nwa));
 print(minimizeDFASize);
 int minimizeDfaSimulationSize = numberOfStates(minimizeDFASimulation(nwa));
 print(minimizeDfaSimulationSize);

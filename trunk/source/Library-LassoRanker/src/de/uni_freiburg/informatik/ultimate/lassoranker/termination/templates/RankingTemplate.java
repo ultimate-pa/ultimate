@@ -34,11 +34,11 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.InstanceCounting;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -60,7 +60,7 @@ public abstract class RankingTemplate extends InstanceCounting {
 	
 	protected Script mscript = null;
 	protected TerminationArgumentSynthesizer mtas = null;
-	protected Collection<RankVar> mvariables = null;
+	protected Collection<IProgramVar> mvariables = null;
 	
 	private boolean minitialized = false;
 	
@@ -72,7 +72,7 @@ public abstract class RankingTemplate extends InstanceCounting {
 	 * 
 	 * @param tas the parent TerminationArgumentSynthesizer
 	 */
-	public final void init(TerminationArgumentSynthesizer tas) {
+	public final void init(final TerminationArgumentSynthesizer tas) {
 		mtas = tas;
 		mscript = tas.getScript();
 		mvariables = tas.getRankVars();
@@ -114,7 +114,7 @@ public abstract class RankingTemplate extends InstanceCounting {
 	 *          invariants.
 	 */
 	public abstract List<List<LinearInequality>> getConstraints(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars);
+			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars);
 	
 	/**
 	 * Returns a string for every constraint conjunct for annotating
@@ -128,9 +128,10 @@ public abstract class RankingTemplate extends InstanceCounting {
 	public abstract List<String> getAnnotations();
 	
 	/**
-	 * Return all SMT variables used by this template
+	 * Return the coefficients of this template. (These are all SMT variables 
+	 * used by this template)
 	 */
-	public abstract Collection<Term> getVariables();
+	public abstract Collection<Term> getCoefficients();
 	
 	/**
 	 * Returns the degree of the template, i.e, the number of Motzkin
@@ -153,7 +154,7 @@ public abstract class RankingTemplate extends InstanceCounting {
 	 * @param name the new variable's name
 	 * @return the new variable as a term
 	 */
-	protected Term newDelta(String name) {
+	protected Term newDelta(final String name) {
 		final Term delta = mtas.newConstant(name, "Real");
 		final Term t = mscript.term(">", delta, mscript.decimal("0"));
 		mscript.assertTerm(t);

@@ -47,13 +47,14 @@ public class NwaToUltimateModel<LETTER,STATE> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	
-	public NwaToUltimateModel(AutomataLibraryServices services) {
+	public NwaToUltimateModel(final AutomataLibraryServices services) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 	}
 
-	public IElement getUltimateModelOfNwa(INestedWordAutomatonSimple<LETTER,STATE> nwaSimple) throws AutomataOperationCanceledException {
+	public IElement getUltimateModelOfNwa(final INestedWordAutomatonSimple<LETTER,STATE> nwaSimple)
+			throws AutomataOperationCanceledException {
 		final INestedWordAutomaton<LETTER,STATE> nwa;
 		if (nwaSimple instanceof INestedWordAutomaton) {
 			nwa = (INestedWordAutomaton<LETTER, STATE>) nwaSimple;
@@ -86,8 +87,7 @@ public class NwaToUltimateModel<LETTER,STATE> {
 				AutomatonState succVSN;
 				if (constructed.containsKey(succState)) {
 					succVSN = constructed.get(succState);
-				}
-				else {
+				} else {
 					succVSN = new AutomatonState(succState,
 							nwa.isFinal(succState));
 					mLogger.debug("Creating Node: " + succVSN.toString());
@@ -113,7 +113,7 @@ public class NwaToUltimateModel<LETTER,STATE> {
 				}
 				new AutomatonTransition(vsn, Transition.CALL, symbol, null,	succVSN);
 			}
-			for(final STATE hierPredState : nwa.getStates()) {
+			for (final STATE hierPredState : nwa.getStates()) {
 				for (final OutgoingReturnTransition<LETTER, STATE> trans : 
 							nwa.returnSuccessorsGivenHier(state, hierPredState)) {
 					final LETTER symbol = trans.getLetter();

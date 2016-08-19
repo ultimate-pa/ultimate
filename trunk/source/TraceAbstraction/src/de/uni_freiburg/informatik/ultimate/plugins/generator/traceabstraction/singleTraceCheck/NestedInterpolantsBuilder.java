@@ -39,7 +39,6 @@ import java.util.Stack;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -50,10 +49,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
@@ -71,6 +73,8 @@ public class NestedInterpolantsBuilder {
 
 	private final  IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
+	private final SimplicationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	final Script mScriptTc;
 	final SmtManager mSmtManagerTc;
@@ -113,13 +117,16 @@ public class NestedInterpolantsBuilder {
 
 
 
-	public NestedInterpolantsBuilder(SmtManager smtManagerTc, NestedFormulas<Term, Term> annotatdSsa,
-			Map<Term, BoogieVar> mconstants2BoogieVar, PredicateUnifier predicateBuilder,
-			Set<Integer> interpolatedPositions, boolean treeInterpolation,
-			IUltimateServiceProvider services,
-			TraceChecker traceChecker, SmtManager smtManagerPredicates, boolean instantiateArrayExt) {
+	public NestedInterpolantsBuilder(final SmtManager smtManagerTc, final NestedFormulas<Term, Term> annotatdSsa,
+			final Map<Term, IProgramVar> mconstants2BoogieVar, final PredicateUnifier predicateBuilder,
+			final Set<Integer> interpolatedPositions, final boolean treeInterpolation,
+			final IUltimateServiceProvider services,
+			final TraceChecker traceChecker, final SmtManager smtManagerPredicates, final boolean instantiateArrayExt, 
+			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
 		mTreeInterpolation = treeInterpolation;
 		mScriptTc = smtManagerTc.getScript();
 		mSmtManagerTc = smtManagerTc;
@@ -131,13 +138,13 @@ public class NestedInterpolantsBuilder {
 		mTrace = annotatdSsa.getTrace();
 		mInstantiateArrayExt = instantiateArrayExt;
 		final HashMap<Term, Term> const2RepTv = new HashMap<Term, Term>();
-		for (final Entry<Term, BoogieVar> entry : mconstants2BoogieVar.entrySet()) {
+		for (final Entry<Term, IProgramVar> entry : mconstants2BoogieVar.entrySet()) {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
 		if (mSmtManagerTc != smtManagerPredicates) {
 			mConst2RepTvSubst = new TermTransferrer(mSmtManagerPredicates.getScript(), const2RepTv);
 		} else {
-			mConst2RepTvSubst = new SafeSubstitution(mSmtManagerPredicates.getScript(), const2RepTv);
+			mConst2RepTvSubst = new Substitution(mSmtManagerPredicates.getScript(), const2RepTv);
 		}
 
 		computeCraigInterpolants();
@@ -264,7 +271,7 @@ public class NestedInterpolantsBuilder {
 
 	}
 
-	public static int[] integerListToIntArray(List<Integer> integerList) {
+	public static int[] integerListToIntArray(final List<Integer> integerList) {
 		final int[] result = new int[integerList.size()];
 		for (int i = 0; i < integerList.size(); i++) {
 			result[i] = integerList.get(i);
@@ -272,7 +279,7 @@ public class NestedInterpolantsBuilder {
 		return result;
 	}
 
-	private void newInterpolInputFormula(int i) {
+	private void newInterpolInputFormula(final int i) {
 		if (mstackHeightAtLastInterpolatedPosition == mstartOfSubtreeStack.size()) {
 			// everything ok
 		} else {
@@ -303,14 +310,14 @@ public class NestedInterpolantsBuilder {
 		treeStructure.add(startOfCurrentSubtree);
 	}
 
-	private void addToLastInterpolInputFormula(Term term) {
+	private void addToLastInterpolInputFormula(final Term term) {
 		final int lastPosition = interpolInput.size() - 1;
 		final Term newFormula = Util.and(mScriptTc, interpolInput.get(lastPosition), term);
 		assert newFormula != null : "newFormula must be != null";
 		interpolInput.set(lastPosition, newFormula);
 	}
 
-	public boolean isInterpolatedPositio(int i) {
+	public boolean isInterpolatedPositio(final int i) {
 		assert i >= 0;
 		assert i < mTrace.length();
 		if (i == mTrace.length() - 1) {
@@ -553,9 +560,9 @@ public class NestedInterpolantsBuilder {
 						withoutIndices = instantiateArrayExt(withoutIndices);
 					}
 					final Term lessQuantifiers = PartialQuantifierElimination.tryToEliminate(
-							mServices, mLogger, mSmtManagerPredicates.getScript(), 
-							mSmtManagerPredicates.getVariableManager(),
-							withoutIndices);
+							mServices, mLogger, mSmtManagerPredicates.getManagedScript(), 
+							withoutIndices,
+							mSimplificationTechnique, mXnfConversionTechnique);
 					result[resultPos] = mPredicateBuilder.getOrConstructPredicate(lessQuantifiers);
 					withIndices2Predicate.put(withIndices, result[resultPos]);
 				}
@@ -582,9 +589,9 @@ public class NestedInterpolantsBuilder {
 	 * The theory of arrays does not contain this axiom, hence we instantiate
 	 * it for each occurrence.
 	 */
-	private Term instantiateArrayExt(Term interpolantWithoutIndices) {
-		final Term nnf = (new Nnf(mSmtManagerPredicates.getScript(), mServices, 
-				mSmtManagerPredicates.getVariableManager(), QuantifierHandling.PULL)).transform(interpolantWithoutIndices);
+	private Term instantiateArrayExt(final Term interpolantWithoutIndices) {
+		final Term nnf = (new Nnf(mSmtManagerPredicates.getManagedScript(), 
+				mServices, QuantifierHandling.PULL)).transform(interpolantWithoutIndices);
 //		not needed, at the moment our NNF transformation also produces 		
 //		Term prenex = (new PrenexNormalForm(mSmtManagerPredicates.getScript(), mSmtManagerPredicates.getVariableManager())).transform(nnf);
 		final QuantifierSequence qs = new QuantifierSequence(mSmtManagerPredicates.getScript(), nnf);
@@ -608,7 +615,7 @@ public class NestedInterpolantsBuilder {
 			substitutionMapping.put(aet.getArrayExtTerm(), aet.getReplacementTermVariable());
 			offset++;
 		}
-		Term result = (new SafeSubstitution(mSmtManagerPredicates.getScript(), substitutionMapping)).transform(matrix);
+		Term result = (new Substitution(mSmtManagerPredicates.getScript(), substitutionMapping)).transform(matrix);
 		result = Util.and(mSmtManagerPredicates.getScript(), result, Util.and(mSmtManagerPredicates.getScript(), implications));
 		result = mSmtManagerPredicates.getScript().quantifier(QuantifiedFormula.EXISTS, replacingTermVariable, result);
 		result = QuantifierSequence.prependQuantifierSequence(mSmtManagerPredicates.getScript(), qs.getQuantifierBlocks(), result);
@@ -623,7 +630,7 @@ public class NestedInterpolantsBuilder {
 		private final TermVariable mReplacementTermVariable;
 		private final Term mImplication;
 		
-		public ArrayExtTerm(ApplicationTerm arrayExtTerm) {
+		public ArrayExtTerm(final ApplicationTerm arrayExtTerm) {
 			mArrayExtTerm = arrayExtTerm;
 			if (!mArrayExtTerm.getFunction().getName().equals("array-ext")) {
 				throw new IllegalArgumentException("no array-ext Term");
@@ -669,8 +676,8 @@ public class NestedInterpolantsBuilder {
 		
 	}
 
-	private static void dumpInterpolationInput(int offset, Term[] interpolInput, List<Integer> indexTranslation,
-			NestedRun<CodeBlock, IPredicate> run, Script theory, PrintWriter pW, ILogger logger) {
+	private static void dumpInterpolationInput(final int offset, final Term[] interpolInput, final List<Integer> indexTranslation,
+			final NestedRun<CodeBlock, IPredicate> run, final Script theory, final PrintWriter pW, final ILogger logger) {
 		String line;
 		int indentation = 0;
 		int translatedPosition;
@@ -713,8 +720,8 @@ public class NestedInterpolantsBuilder {
 		}
 	}
 
-	private static void dumpInterpolationOutput(int offset, Term[] interpolOutput, List<Integer> indexTranslation,
-			Word<CodeBlock> run, PrintWriter pW, ILogger logger) {
+	private static void dumpInterpolationOutput(final int offset, final Term[] interpolOutput, final List<Integer> indexTranslation,
+			final Word<CodeBlock> run, final PrintWriter pW, final ILogger logger) {
 		@SuppressWarnings("unchecked")
 		final
 		NestedWord<CodeBlock> word = NestedWord.nestedWord(run);
@@ -746,8 +753,8 @@ public class NestedInterpolantsBuilder {
 		}
 	}
 
-	private static void dumpNestedStateFormulas(IPredicate[] stateFormulas, Word<CodeBlock> word, PrintWriter pW,
-			ILogger logger) {
+	private static void dumpNestedStateFormulas(final IPredicate[] stateFormulas, final Word<CodeBlock> word, final PrintWriter pW,
+			final ILogger logger) {
 		@SuppressWarnings("unchecked")
 		final
 		NestedWord<CodeBlock> nw = NestedWord.nestedWord(word);

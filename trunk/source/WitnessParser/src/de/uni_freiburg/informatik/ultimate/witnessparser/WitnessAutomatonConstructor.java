@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE WitnessParser plug-in.
- * 
+ *
  * The ULTIMATE WitnessParser plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE WitnessParser plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE WitnessParser plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE WitnessParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE WitnessParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE WitnessParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.witnessparser;
@@ -65,9 +65,9 @@ import edu.uci.ics.jung.io.graphml.HyperEdgeMetadata;
 import edu.uci.ics.jung.io.graphml.NodeMetadata;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * 
+ *
  */
 public class WitnessAutomatonConstructor {
 
@@ -77,7 +77,7 @@ public class WitnessAutomatonConstructor {
 	private ModelType.Type mWitnessType;
 	private WitnessGraphAnnotation mGraphAnnotation;
 
-	public WitnessAutomatonConstructor(IUltimateServiceProvider services) {
+	public WitnessAutomatonConstructor(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
@@ -93,12 +93,12 @@ public class WitnessAutomatonConstructor {
 			return null;
 		}
 		// find starting element(s)
-		final Set<WitnessNode> initialNodes = graph.getVertices().stream().filter(a -> a.getIncomingEdges().size() == 0)
-				.collect(Collectors.toSet());
+		final Set<WitnessNode> initialNodes =
+				graph.getVertices().stream().filter(a -> a.getIncomingEdges().size() == 0).collect(Collectors.toSet());
 
 		if (initialNodes.size() > 1) {
 			throw new IllegalArgumentException("This file contains a witness with more than one initial location");
-		} else if (initialNodes.size() == 0) {
+		} else if (initialNodes.isEmpty()) {
 			throw new IllegalArgumentException("This file contains a witness without an initial location");
 		}
 
@@ -125,15 +125,15 @@ public class WitnessAutomatonConstructor {
 
 	private void validate(final WitnessNode initial) {
 		//@formatter:off
-		//TODO: Check if witness conforms to "the rules" and if not, throw an exception: 
-		//- TRUE witness darf keine Assumption haben 
-		//- TRUE witness darf keinen Node mit Violation haben 
-		//- FALSE witness muss mindestens einen Node mit Violation haben 
-		//- FALSE witness darf keine Invarianten haben 
+		//TODO: Check if witness conforms to "the rules" and if not, throw an exception:
+		//- TRUE witness darf keine Assumption haben
+		//- TRUE witness darf keinen Node mit Violation haben
+		//- FALSE witness muss mindestens einen Node mit Violation haben
+		//- FALSE witness darf keine Invarianten haben
 		//@formatter:on
 	}
 
-	private void printDebug(WitnessNode initial) {
+	private void printDebug(final WitnessNode initial) {
 		if (!mLogger.isDebugEnabled()) {
 			return;
 		}
@@ -166,12 +166,12 @@ public class WitnessAutomatonConstructor {
 		mLogger.debug("Graph has " + closed.size() + 1 + " nodes and " + edgeCount + " edges");
 	}
 
-	private DirectedSparseGraph<WitnessNode, WitnessEdge> getGraph(File file) {
+	private DirectedSparseGraph<WitnessNode, WitnessEdge> getGraph(final File file) {
 
 		try {
 			mNodes = new HashMap<>();
-			final GraphMLReader2<DirectedSparseGraph<WitnessNode, WitnessEdge>, WitnessNode, WitnessEdge> reader = getGraphMLReader(
-					file);
+			final GraphMLReader2<DirectedSparseGraph<WitnessNode, WitnessEdge>, WitnessNode, WitnessEdge> reader =
+					getGraphMLReader(file);
 			reader.init();
 			return reader.readGraph();
 		} catch (final FileNotFoundException e) {
@@ -182,9 +182,10 @@ public class WitnessAutomatonConstructor {
 		return null;
 	}
 
-	private GraphMLReader2<DirectedSparseGraph<WitnessNode, WitnessEdge>, WitnessNode, WitnessEdge> getGraphMLReader(
-			final File file) throws FileNotFoundException {
-		final Transformer<GraphMetadata, DirectedSparseGraph<WitnessNode, WitnessEdge>> graphTransformer = getGraphTransformer();
+	private GraphMLReader2<DirectedSparseGraph<WitnessNode, WitnessEdge>, WitnessNode, WitnessEdge>
+			getGraphMLReader(final File file) throws FileNotFoundException {
+		final Transformer<GraphMetadata, DirectedSparseGraph<WitnessNode, WitnessEdge>> graphTransformer =
+				getGraphTransformer();
 		final Transformer<NodeMetadata, WitnessNode> vertexTransformer = getVertexTransformer();
 		final Transformer<EdgeMetadata, WitnessEdge> edgeTransformer = getEdgeTransformer();
 		final Transformer<HyperEdgeMetadata, WitnessEdge> hyperEdgeTransformer = getHyperEdgeTransformer();
@@ -195,7 +196,7 @@ public class WitnessAutomatonConstructor {
 	private Transformer<HyperEdgeMetadata, WitnessEdge> getHyperEdgeTransformer() {
 		return new Transformer<HyperEdgeMetadata, WitnessEdge>() {
 			@Override
-			public WitnessEdge transform(HyperEdgeMetadata arg0) {
+			public WitnessEdge transform(final HyperEdgeMetadata arg0) {
 				// there should not be any hyper edges
 				return null;
 			}
@@ -205,7 +206,7 @@ public class WitnessAutomatonConstructor {
 	private Transformer<EdgeMetadata, WitnessEdge> getEdgeTransformer() {
 		return new Transformer<EdgeMetadata, WitnessEdge>() {
 			@Override
-			public WitnessEdge transform(EdgeMetadata data) {
+			public WitnessEdge transform(final EdgeMetadata data) {
 
 				final WitnessNode source = createNode(data.getSource());
 				final WitnessNode target = createNode(data.getTarget());
@@ -225,10 +226,11 @@ public class WitnessAutomatonConstructor {
 
 				//@formatter:off
 				final WitnessEdgeAnnotation annot = new WitnessEdgeAnnotation(
-						data.getProperties().get("negated"),
-						data.getProperties().get("enterFunction"), 
+						transformControlToBooleanString(data.getProperties().get("control")),
+						data.getProperties().get("enterLoopHead"),
+						data.getProperties().get("enterFunction"),
 						data.getProperties().get("returnFrom"),
-						data.getProperties().get("tokens"), 
+						data.getProperties().get("tokens"),
 						data.getProperties().get("assumption")
 				);
 				//@formatter:on
@@ -244,13 +246,13 @@ public class WitnessAutomatonConstructor {
 	private Transformer<NodeMetadata, WitnessNode> getVertexTransformer() {
 		return new Transformer<NodeMetadata, WitnessNode>() {
 			@Override
-			public WitnessNode transform(NodeMetadata data) {
+			public WitnessNode transform(final NodeMetadata data) {
 				final WitnessNode node = createNode(data.getId());
 
 				//@formatter:off
 				final WitnessNodeAnnotation annot = new WitnessNodeAnnotation(
-						getBoolProperty(data, "entry"), 
-						getBoolProperty(data, "violation"), 
+						getBoolProperty(data, "entry"),
+						getBoolProperty(data, "violation"),
 						getBoolProperty(data, "sink"),
 						data.getProperties().get("invariant")
 				);
@@ -268,13 +270,14 @@ public class WitnessAutomatonConstructor {
 		return new Transformer<GraphMetadata, DirectedSparseGraph<WitnessNode, WitnessEdge>>() {
 
 			@Override
-			public DirectedSparseGraph<WitnessNode, WitnessEdge> transform(GraphMetadata gm) {
+			public DirectedSparseGraph<WitnessNode, WitnessEdge> transform(final GraphMetadata gm) {
 				final String sourcecodelang = gm.getProperty("sourcecodelang");
 				final WitnessType witnesstype = (WitnessType) getEnumProperty(WitnessGraphAnnotation.WitnessType.class,
 						gm, "witness-type", WitnessGraphAnnotation.WitnessType.VIOLATION_WITNESS);
 				mGraphAnnotation = new WitnessGraphAnnotation(sourcecodelang, witnesstype);
 
-				final DirectedSparseGraph<WitnessNode, WitnessEdge> graph = new DirectedSparseGraph<WitnessNode, WitnessEdge>();
+				final DirectedSparseGraph<WitnessNode, WitnessEdge> graph =
+						new DirectedSparseGraph<WitnessNode, WitnessEdge>();
 				for (final Entry<Object, NodeMetadata> e : gm.getNodeMap().entrySet()) {
 					graph.addVertex((WitnessNode) e.getKey());
 				}
@@ -285,6 +288,19 @@ public class WitnessAutomatonConstructor {
 				return graph;
 			}
 		};
+	}
+
+	private String transformControlToBooleanString(final String controlString) {
+		if (controlString == null) {
+			return null;
+		}
+		if ("condition-true".equalsIgnoreCase(controlString)) {
+			return "true";
+		}
+		if ("condition-false".equalsIgnoreCase(controlString)) {
+			return "false";
+		}
+		throw new IllegalArgumentException("control cannot have this value: " + controlString);
 	}
 
 	private boolean getBoolProperty(final NodeMetadata data, final String key) {
@@ -302,7 +318,7 @@ public class WitnessAutomatonConstructor {
 		}
 		try {
 			return Enum.valueOf(clazz, entry.toUpperCase());
-		} catch (final Exception ex) {
+		} catch (final IllegalArgumentException ex) {
 			mLogger.error("Your witness contains an illegal value for " + key + " in element type "
 					+ data.getMetadataType() + ": \"" + entry + "\". Assuming default value \"" + defaultValue + "\"");
 			return defaultValue;
@@ -326,7 +342,7 @@ public class WitnessAutomatonConstructor {
 		return value;
 	}
 
-	private WitnessNode createNode(String id) {
+	private WitnessNode createNode(final String id) {
 		WitnessNode node = mNodes.get(id);
 		if (node == null) {
 			node = new WitnessNode(id);

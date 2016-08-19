@@ -48,9 +48,9 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 	private final StateFactory<STATE> mStateFactory;
 	private final STATE mEmptyStackState;
 	
-	private final Map<STATE,Map<STATE,ProductState>> mfst2snd2res =
+	private final Map<STATE,Map<STATE,ProductState>> mFst2snd2res =
 			new HashMap<STATE,Map<STATE,ProductState>>();
-	private final Map<STATE, ProductState> mres2prod = new HashMap<STATE, ProductState>();
+	private final Map<STATE, ProductState> mRes2prod = new HashMap<>();
 	
 	private final boolean mAssumeInSndNonFinalIsTrap;
 
@@ -59,28 +59,29 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 	
 	
 	public class ProductState {
-		private final STATE mfst;
-		private final STATE msnd;
-		private final STATE mres;
+		private final STATE mFst;
+		private final STATE mSnd;
+		private final STATE mRes;
 		private final boolean mIsFinal;
 		
-		ProductState(STATE fst, STATE snd, STATE res, boolean isFinal) {
-			mfst = fst;
-			msnd = snd;
-			mres = res;
+		ProductState(final STATE fst, final STATE snd, final STATE res,
+				final boolean isFinal) {
+			mFst = fst;
+			mSnd = snd;
+			mRes = res;
 			mIsFinal = isFinal;
 		}
 
 		public STATE getFst() {
-			return mfst;
+			return mFst;
 		}
 
 		public STATE getSnd() {
-			return msnd;
+			return mSnd;
 		}
 		
 		public STATE getRes() {
-			return mres;
+			return mRes;
 		}
 
 		public boolean isFinal() {
@@ -89,35 +90,38 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 		
 		@Override
 		public String toString() {
-			return "<" + mfst.toString() + "," + msnd.toString() + ">";
+			return "<" + mFst.toString() + "," + mSnd.toString() + ">";
 		}
 		
 	}
 	
-	
-	public IntersectNwa(INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			INestedWordAutomatonSimple<LETTER, STATE> sndOperand, 
-			StateFactory<STATE> sf, boolean assumeInSndNonFinalIsTrap) throws AutomataLibraryException {
+	/**
+	 * @param fstOperand first operand
+	 * @param sndOperand second operand
+	 * @param stateFactory state factory
+	 * @throws AutomataLibraryException if alphabets differ
+	 */
+	public IntersectNwa(
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand, 
+			final StateFactory<STATE> stateFactory,
+			final boolean assumeInSndNonFinalIsTrap)
+					throws AutomataLibraryException {
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
 		if (!NestedWordAutomaton.sameAlphabet(mFstOperand, mSndOperand)) {
-			throw new AutomataLibraryException(this.getClass(), "Unable to apply operation to automata with different alphabets.");
+			throw new AutomataLibraryException(this.getClass(),
+					"Unable to apply operation to automata with different alphabets.");
 		}
 
-		mStateFactory = sf;
+		mStateFactory = stateFactory;
 		mAssumeInSndNonFinalIsTrap = assumeInSndNonFinalIsTrap;
 		mEmptyStackState = mStateFactory.createEmptyStackState();
 	}
 	
-	
-
-
 	public Map<STATE, Map<STATE, ProductState>> getFst2snd2res() {
-		return mfst2snd2res;
+		return mFst2snd2res;
 	}
-
-
-
 
 	private Set<STATE> constructInitialState() {
 		final Set<STATE> initialStates = new HashSet<STATE>();
@@ -130,11 +134,11 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 		return initialStates;
 	}
 	
-	private STATE getOrConstructState(STATE fst, STATE snd) {
-		Map<STATE, ProductState> snd2res = mfst2snd2res.get(fst);
+	private STATE getOrConstructState(final STATE fst, final STATE snd) {
+		Map<STATE, ProductState> snd2res = mFst2snd2res.get(fst);
 		if (snd2res == null) {
 			snd2res = new HashMap<STATE, ProductState>();
-			mfst2snd2res.put(fst, snd2res);
+			mFst2snd2res.put(fst, snd2res);
 		}
 		ProductState prod = snd2res.get(snd);
 		if (prod == null) {
@@ -142,12 +146,10 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 			final boolean isFinal = mFstOperand.isFinal(fst) && mSndOperand.isFinal(snd);
 			prod = new ProductState(fst, snd, res, isFinal);
 			snd2res.put(snd, prod);
-			mres2prod.put(res, prod);
+			mRes2prod.put(res, prod);
 		}
 		return prod.getRes();
 	}
-	
-	
 	
 	@Override
 	public Iterable<STATE> getInitialStates() {
@@ -179,7 +181,7 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 	}
 	
 	@Override
-	public boolean isInitial(STATE state) {
+	public boolean isInitial(final STATE state) {
 		if (mInitialStates == null) {
 			mInitialStates = constructInitialState();
 		}
@@ -187,8 +189,8 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 	}
 
 	@Override
-	public boolean isFinal(STATE state) {
-		return mres2prod.get(state).isFinal();
+	public boolean isFinal(final STATE state) {
+		return mRes2prod.get(state).isFinal();
 	}
 
 	@Override
@@ -197,28 +199,28 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 	}
 
 	@Override
-	public Set<LETTER> lettersInternal(STATE state) {
-		final STATE fst = mres2prod.get(state).getFst(); 
+	public Set<LETTER> lettersInternal(final STATE state) {
+		final STATE fst = mRes2prod.get(state).getFst(); 
 		return mFstOperand.lettersInternal(fst);
 	}
 
 	@Override
-	public Set<LETTER> lettersCall(STATE state) {
-		final STATE fst = mres2prod.get(state).getFst(); 
+	public Set<LETTER> lettersCall(final STATE state) {
+		final STATE fst = mRes2prod.get(state).getFst(); 
 		return mFstOperand.lettersCall(fst);
 	}
 
 	@Override
-	public Set<LETTER> lettersReturn(STATE state) {
-		final STATE fst = mres2prod.get(state).getFst(); 
+	public Set<LETTER> lettersReturn(final STATE state) {
+		final STATE fst = mRes2prod.get(state).getFst(); 
 		return mFstOperand.lettersReturn(fst);
 	}
 
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
-			STATE state, LETTER letter) {
-		final ProductState prod = mres2prod.get(state);
+			final STATE state, final LETTER letter) {
+		final ProductState prod = mRes2prod.get(state);
 		final STATE fst = prod.getFst();
 		final STATE snd = prod.getSnd();
 		return internalSuccessors(mFstOperand.internalSuccessors(fst,letter), snd);
@@ -226,8 +228,8 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
-			STATE state) {
-		final ProductState prod = mres2prod.get(state);
+			final STATE state) {
+		final ProductState prod = mRes2prod.get(state);
 		final STATE fst = prod.getFst();
 		final STATE snd = prod.getSnd();
 		return internalSuccessors(mFstOperand.internalSuccessors(fst), snd);
@@ -235,8 +237,8 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 
 
 	private Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
-			Iterable<OutgoingInternalTransition<LETTER, STATE>> fstInternalSuccs,
-			STATE snd) {
+			final Iterable<OutgoingInternalTransition<LETTER, STATE>> fstInternalSuccs,
+			final STATE snd) {
 		final Collection<OutgoingInternalTransition<LETTER, STATE>> result = 
 				new ArrayList<OutgoingInternalTransition<LETTER, STATE>>();
 		for (final OutgoingInternalTransition<LETTER, STATE> fstTrans : fstInternalSuccs) {
@@ -259,8 +261,8 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-			STATE state, LETTER letter) {
-		final ProductState prod = mres2prod.get(state);
+			final STATE state, final LETTER letter) {
+		final ProductState prod = mRes2prod.get(state);
 		final STATE fst = prod.getFst();
 		final STATE snd = prod.getSnd();
 		return callSuccessors(mFstOperand.callSuccessors(fst,letter), snd);
@@ -268,8 +270,8 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-			STATE state) {
-		final ProductState prod = mres2prod.get(state);
+			final STATE state) {
+		final ProductState prod = mRes2prod.get(state);
 		final STATE fst = prod.getFst();
 		final STATE snd = prod.getSnd();
 		return callSuccessors(mFstOperand.callSuccessors(fst), snd);
@@ -277,8 +279,8 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 
 
 	private Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-			Iterable<OutgoingCallTransition<LETTER, STATE>> fstCallSuccs,
-			STATE snd) {
+			final Iterable<OutgoingCallTransition<LETTER, STATE>> fstCallSuccs,
+			final STATE snd) {
 		final Collection<OutgoingCallTransition<LETTER, STATE>> result = 
 				new ArrayList<OutgoingCallTransition<LETTER, STATE>>();
 		for (final OutgoingCallTransition<LETTER, STATE> fstTrans : fstCallSuccs) {
@@ -300,41 +302,27 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
-			STATE state, STATE hier, LETTER letter) {
-		final ProductState prodState = mres2prod.get(state);
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+			final STATE state, final STATE hier, final LETTER letter) {
+		final ProductState prodState = mRes2prod.get(state);
 		final STATE fstState = prodState.getFst();
 		final STATE sndState = prodState.getSnd();
-		final ProductState prodHier = mres2prod.get(hier);
+		final ProductState prodHier = mRes2prod.get(hier);
 		final STATE fstHier = prodHier.getFst();
 		final STATE sndHier = prodHier.getSnd();
-		return returnSuccessors(mFstOperand.returnSucccessors(
+		return returnSuccessors(mFstOperand.returnSuccessors(
 							fstState, fstHier, letter), hier, sndState, sndHier);
 	}
 
-	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
-			STATE state, STATE hier) {
-		final ProductState prodState = mres2prod.get(state);
-		final STATE fstState = prodState.getFst();
-		final STATE sndState = prodState.getSnd();
-		final ProductState prodHier = mres2prod.get(hier);
-		final STATE fstHier = prodHier.getFst();
-		final STATE sndHier = prodHier.getSnd();
-		return returnSuccessors(mFstOperand.returnSuccessorsGivenHier(
-							fstState, fstHier), hier, sndState, sndHier);
-	}
-
-
 	private Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-			Iterable<OutgoingReturnTransition<LETTER, STATE>> fstReturnSuccs,
-			STATE hier, STATE sndState, STATE sndHier) {
+			final Iterable<OutgoingReturnTransition<LETTER, STATE>> fstReturnSuccs,
+			final STATE hier, final STATE sndState, final STATE sndHier) {
 		final Collection<OutgoingReturnTransition<LETTER, STATE>> result = 
 				new ArrayList<OutgoingReturnTransition<LETTER, STATE>>();
 		for (final OutgoingReturnTransition<LETTER, STATE> fstTrans : fstReturnSuccs) {
 			final LETTER letter = fstTrans.getLetter();
 			for (final OutgoingReturnTransition<LETTER, STATE> sndTrans : 
-						mSndOperand.returnSucccessors(sndState, sndHier,  letter)) {
+						mSndOperand.returnSuccessors(sndState, sndHier,  letter)) {
 				final STATE fstSucc = fstTrans.getSucc();
 				final STATE sndSucc = sndTrans.getSucc();
 				if (mAssumeInSndNonFinalIsTrap && !mSndOperand.isFinal(sndSucc)) {
@@ -349,8 +337,21 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 	}
 
 	@Override
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
+			final STATE state, final STATE hier) {
+		final ProductState prodState = mRes2prod.get(state);
+		final STATE fstState = prodState.getFst();
+		final STATE sndState = prodState.getSnd();
+		final ProductState prodHier = mRes2prod.get(hier);
+		final STATE fstHier = prodHier.getFst();
+		final STATE sndHier = prodHier.getSnd();
+		return returnSuccessors(mFstOperand.returnSuccessorsGivenHier(
+							fstState, fstHier), hier, sndState, sndHier);
+	}
+
+	@Override
 	public int size() {
-		return mres2prod.size();
+		return mRes2prod.size();
 	}
 
 	@Override

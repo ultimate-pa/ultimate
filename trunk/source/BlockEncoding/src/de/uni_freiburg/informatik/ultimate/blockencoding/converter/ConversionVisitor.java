@@ -66,6 +66,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -77,7 +79,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
 
 /**
  * This special visitor class is responsible for the conversion from MinimizedEdges and MinimizedNodes, back to
@@ -102,7 +104,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 
 	private final Boogie2SMT mBoogie2SMT;
 
-	private final TransFormulaBuilder mTransFormBuilder;
+	private final TransFormulaAdder mTransFormBuilder;
 
 	private final ModifiableGlobalVariableManager mModGlobalVarManager;
 
@@ -119,6 +121,9 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	private final IUltimateServiceProvider mServices;
 
 	private final CodeBlockFactory mCbf;
+	
+	private final SimplicationTechnique mSimplificationTechnique = SimplicationTechnique.SIMPLIFY_DDA;
+	private final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	/**
 	 * Simplify TransFormulas of CodeBlocks
@@ -134,8 +139,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 * @param boogie2smt
 	 * @param root
 	 */
-	public ConversionVisitor(Boogie2SMT boogie2smt, RootNode root, IRatingHeuristic heuristic,
-			IUltimateServiceProvider services, boolean simplify) {
+	public ConversionVisitor(final Boogie2SMT boogie2smt, final RootNode root, final IRatingHeuristic heuristic,
+			final IUltimateServiceProvider services, final boolean simplify) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplify = simplify;
@@ -145,7 +150,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		mVisitedEdges = new HashSet<IMinimizedEdge>();
 		mBoogie2SMT = boogie2smt;
 		mCheckForMultipleFormula = new HashMap<IMinimizedEdge, Integer>();
-		mTransFormBuilder = new TransFormulaBuilder(boogie2smt, mServices);
+		mTransFormBuilder = new TransFormulaAdder(boogie2smt, mServices);
 		mModGlobalVarManager = root.getRootAnnot().getModGlobVarManager();
 		mCbf = root.getRootAnnot().getCodeBlockFactory();
 		mSeqComposedBlocks = new Stack<ArrayList<CodeBlock>>();
@@ -164,12 +169,12 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 * @param startNode
 	 *            initial start point for the conversion
 	 */
-	public void init(ProgramPoint startNode) {
+	public void init(final ProgramPoint startNode) {
 		mStartNode = startNode;
 	}
 
 	@Override
-	public void visitNode(MinimizedNode node) {
+	public void visitNode(final MinimizedNode node) {
 		mVisitedEdges.clear();
 		if (mStartNode == null) {
 			mLogger.warn("Illegal Execution Behaviour," + "init have to be called, before visitNode()!");
@@ -193,7 +198,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 * @param simplify
 	 * @param extPqe
 	 */
-	private void internalVisitNode(MinimizedNode node) {
+	private void internalVisitNode(final MinimizedNode node) {
 		// We have no outgoing edges, so we reached an end of the recursion
 		if (node.getOutgoingEdges() == null) {
 			return;
@@ -237,7 +242,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				} else if (edge instanceof ShortcutErrEdge) {
 					if (cb instanceof ShortcutCodeBlock) {
 						cb = mCbf.constuctInterproceduralSequentialComposition(null, null, false, false,
-								Arrays.asList(((ShortcutCodeBlock) cb).getCodeBlocks()));
+								Arrays.asList(((ShortcutCodeBlock) cb).getCodeBlocks()), mXnfConversionTechnique, mSimplificationTechnique);
 					} else {
 						throw new IllegalArgumentException(
 								"Converted CodeBlock for ShortcutErrEdge" + " is no ShortcutCodeBlock");
@@ -277,7 +282,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 *            the minimized node
 	 * @return the edges which fulfill the rating boundary
 	 */
-	private ArrayList<IMinimizedEdge> getEdgesAccordingToRating(MinimizedNode node) {
+	private ArrayList<IMinimizedEdge> getEdgesAccordingToRating(final MinimizedNode node) {
 		// if we use LBE, we take alway the maximal minimization
 		if (mLBE) {
 			return new ArrayList<IMinimizedEdge>(node.getMinimalOutgoingEdgeLevel());
@@ -309,7 +314,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 *            the minimized Node to convert
 	 * @return the created ProgramPoint
 	 */
-	public ProgramPoint getReferencedNode(MinimizedNode node) {
+	public ProgramPoint getReferencedNode(final MinimizedNode node) {
 		if (mRefNodeMap.containsKey(node)) {
 			return mRefNodeMap.get(node);
 		} else {
@@ -361,7 +366,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 * @param extPqe
 	 * @return a converted CodeBlock
 	 */
-	private CodeBlock convertMinimizedEdge(IMinimizedEdge edge, boolean simplify, boolean extPqe) {
+	private CodeBlock convertMinimizedEdge(final IMinimizedEdge edge, final boolean simplify, final boolean extPqe) {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			return null;
 		}
@@ -447,13 +452,13 @@ public class ConversionVisitor implements IMinimizationVisitor {
 								new CodeBlock[] { replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1)) }, mLogger);
 					}
 					return mCbf.constructSequentialComposition(null, null, simplify, extPqe,
-							Collections.singletonList(replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1))));
+							Collections.singletonList(replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1))), mXnfConversionTechnique, mSimplificationTechnique);
 				}
 				if (edge instanceof ShortcutErrEdge) {
 					return new ShortcutCodeBlock(null, null, composeEdges.toArray(new CodeBlock[0]), mLogger);
 				}
 				return mCbf.constructSequentialComposition(null, null, simplify, extPqe,
-						Collections.unmodifiableList(composeEdges));
+						Collections.unmodifiableList(composeEdges), mXnfConversionTechnique, mSimplificationTechnique);
 			}
 			if (edge instanceof DisjunctionEdge) {
 				final ArrayList<CodeBlock> composeEdges = new ArrayList<CodeBlock>();
@@ -492,7 +497,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				final List<CodeBlock> parallelCodeBlocks = new ArrayList<>();
 				parallelCodeBlocks.add(composeEdges.get(0));
 				parallelCodeBlocks.add(composeEdges.get(1));
-				return mCbf.constructParallelComposition(null, null, parallelCodeBlocks);
+				return mCbf.constructParallelComposition(null, null, parallelCodeBlocks, mXnfConversionTechnique, mSimplificationTechnique);
 			}
 		}
 		// should never reach this end here?
@@ -508,7 +513,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 *            IMinimizedEdge which is a basic edge
 	 * @return corresponding CodeBlock
 	 */
-	private CodeBlock convertBasicEdge(IMinimizedEdge edge) {
+	private CodeBlock convertBasicEdge(final IMinimizedEdge edge) {
 		final CodeBlock cb = ((IBasicEdge) edge).getOriginalEdge();
 		final CodeBlock copyOfCodeBlock;
 		// We need to convert the basic edges, into new ones
@@ -546,7 +551,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 *            maybe somites we have to convert two Goto-Edges
 	 * @return the converted "assume true"
 	 */
-	private CodeBlock replaceGotoEdge(CodeBlock gotoEdge, CodeBlock secondGotoEdge) {
+	private CodeBlock replaceGotoEdge(final CodeBlock gotoEdge, final CodeBlock secondGotoEdge) {
 		StatementSequence replacement = null;
 		if (secondGotoEdge == null) {
 			replacement =
@@ -561,7 +566,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			ModelUtils.copyAnnotations(secondGotoEdge, replacement);
 		}
 		final String procId = gotoEdge.getPreceedingProcedure();
-		mTransFormBuilder.addTransitionFormulas(replacement, procId);
+		mTransFormBuilder.addTransitionFormulas(replacement, procId, mXnfConversionTechnique, mSimplificationTechnique);
 		return replacement;
 	}
 

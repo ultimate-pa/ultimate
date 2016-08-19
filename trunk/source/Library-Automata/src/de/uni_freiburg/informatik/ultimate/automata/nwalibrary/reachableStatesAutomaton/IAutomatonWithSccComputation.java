@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesA
 import java.util.Collection;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.AcceptingComponentsAnalysis.StronglyConnectedComponentWithAcceptanceInformation;
+
 /**
  * Interface for computation of strongly connected components (SCC) for a given 
  * automaton. Objects that implement this interface also allow the computation
@@ -36,7 +38,8 @@ import java.util.Set;
  * 
  * @author Matthias Heizmann
  *
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public interface IAutomatonWithSccComputation<LETTER, STATE> {
 
@@ -44,8 +47,7 @@ public interface IAutomatonWithSccComputation<LETTER, STATE> {
 	 * Computes all balls of given subset of states.
 	 * @param stateSubset subset of the automata's states
 	 * @param startStates states at which the computation of SSCs starts
-	 * @return
 	 */
-	public Collection<AcceptingComponentsAnalysis.StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> computeBalls(Set<STATE> stateSubset, Set<STATE> startStates);
-
+	Collection<StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> computeBalls(
+			Set<STATE> stateSubset, Set<STATE> startStates);
 }

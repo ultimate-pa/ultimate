@@ -26,52 +26,52 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating;
 
-public class BitUtil{
+public class BitUtil {
 	
-	private static final long MASKS_SINGLE_BIT[] = new long[64];
-	static{
-		for(int i=0;i<MASKS_SINGLE_BIT.length;i++){
+	private static final long[] MASKS_SINGLE_BIT = new long[64];
+	
+	static {
+		for (int i = 0; i < MASKS_SINGLE_BIT.length;i++) {
 			MASKS_SINGLE_BIT[i] = (((long) 1) << i);
 		}
 	}
 	
-	public static long setBit(long bitVector, int bitIndex, boolean value){
-        if(value){
+	public static long setBit(final long bitVector, final int bitIndex, final boolean value) {
+        if (value) {
             return setBit(bitVector, bitIndex);
-        }
-        else{
+        } else {
             return unsetBit(bitVector, bitIndex);
         }
     }
 	
-	public static long setBit(long bitVector, int bitIndex){
+	public static long setBit(final long bitVector, final int bitIndex) {
         return (bitVector | MASKS_SINGLE_BIT[bitIndex]);
     }
 	
-	public static long unsetBit(long bitVector, int bitIndex){
+	public static long unsetBit(final long bitVector, final int bitIndex) {
         return (bitVector & (~MASKS_SINGLE_BIT[bitIndex]));
     }
 	
-	public static int getNextSetBit(long bitVector, int offset){
-        for(int i=offset;i<64;i++){
-            if(getBit(bitVector, i)){
+	public static int getNextSetBit(final long bitVector, final int offset) {
+        for (int i = offset; i < 64; i++) {
+            if (getBit(bitVector, i)) {
             	return i;
             }
         }
         return -1;
     }
 	
-	public static boolean getBit(long bitVector, int bitIndex){
+	public static boolean getBit(final long bitVector, final int bitIndex) {
         return ((bitVector & MASKS_SINGLE_BIT[bitIndex]) != 0);
     }
 	
-	public static String getText(long bitVector){
-        String text = "";
-        for(int i=0;i<64;i++){
+	public static String getText(long bitVector) {
+        final StringBuilder text = new StringBuilder();
+        for (int i = 0; i < 64; i++) {
             final long currentBit = (bitVector & 1);
-            text += ((currentBit == 1)?1:0);
+            text.append((currentBit == 1) ? 1 : 0);
             bitVector >>>= 1;
         }
-        return text;
+        return text.toString();
     }
 }

@@ -29,8 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 
-
-
 /**
  * State of an NWA that accepts the language difference of two NWAs.
  * A DifferenceState is a pair whose first entry is a state of the minuend, the
@@ -42,111 +40,111 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IState
  * @param <LETTER> Symbol
  * @param <STATE> Content
  */
-	public class DifferenceState<LETTER,STATE> {
-		private final STATE mMinuendState;
-		private final DeterminizedState<LETTER,STATE> subtrahendDeterminizedState;
-		private final boolean isFinal;
-		private final int mHashCode;
-		private STATE mState;
+public class DifferenceState<LETTER,STATE> {
+	private final STATE mMinuendState;
+	private final DeterminizedState<LETTER,STATE> mSubtrahendDeterminizedState;
+	private final boolean mIsFinal;
+	private final int mHashCode;
+	private STATE mState;
+	
+	
+	public DifferenceState(
+			final STATE minuendState, 
+			final DeterminizedState<LETTER,STATE> subtrahendDeterminizedState,
+			final boolean isFinal) {
 		
-		
-		public DifferenceState(	
-				STATE minuendState, 
-				DeterminizedState<LETTER,STATE> subtrahendDeterminizedState,
-				boolean isFinal) {
-			
-			this.mMinuendState = minuendState;
-			this.subtrahendDeterminizedState = subtrahendDeterminizedState;
-			this.isFinal = isFinal; 
-		//			minuend.isFinal(minuendState) &&
-		//								!subtrahendDeterminizedState.containsFinal();
-			this.mHashCode = computehashCode();
-		}
-		
-		public STATE getMinuendState() {
-			return mMinuendState;
-		}
+		this.mMinuendState = minuendState;
+		this.mSubtrahendDeterminizedState = subtrahendDeterminizedState;
+		this.mIsFinal = isFinal; 
+	//			minuend.isFinal(minuendState) &&
+	//								!subtrahendDeterminizedState.containsFinal();
+		this.mHashCode = computehashCode();
+	}
+	
+	public STATE getMinuendState() {
+		return mMinuendState;
+	}
 
-		public DeterminizedState<LETTER,STATE> getSubtrahendDeterminizedState() {
-			return subtrahendDeterminizedState;
-		}
+	public DeterminizedState<LETTER,STATE> getSubtrahendDeterminizedState() {
+		return mSubtrahendDeterminizedState;
+	}
 
-		public boolean isFinal() {
-			return this.isFinal;
-		}
-		
-		public STATE getState(StateFactory<STATE> stateFactory, 
-				IStateDeterminizer<LETTER, STATE> stateDeterminizer) {
-			if (mState == null) {
-				mState = stateFactory.intersection(
-						this.getMinuendState(),
-						stateDeterminizer.getState(getSubtrahendDeterminizedState()));
-			} 
-			return mState;
-		}
+	public boolean isFinal() {
+		return this.mIsFinal;
+	}
+	
+	public STATE getState(final StateFactory<STATE> stateFactory, 
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) {
+		if (mState == null) {
+			mState = stateFactory.intersection(
+					this.getMinuendState(),
+					stateDeterminizer.getState(getSubtrahendDeterminizedState()));
+		} 
+		return mState;
+	}
 
 
-		/* (non-Javadoc)
-		 * @see java.lang.Object#equals(java.lang.Object)
-		 */
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			final DifferenceState other = (DifferenceState) obj;
-			if (isFinal != other.isFinal) {
-				return false;
-			}
-			if (mMinuendState == null) {
-				if (other.mMinuendState != null) {
-					return false;
-				}
-			} else if (!mMinuendState.equals(other.mMinuendState)) {
-				return false;
-			}
-			if (subtrahendDeterminizedState == null) {
-				if (other.subtrahendDeterminizedState != null) {
-					return false;
-				}
-			} else if (!subtrahendDeterminizedState
-					.equals(other.subtrahendDeterminizedState)) {
-				return false;
-			}
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
 			return true;
 		}
-
-		/* (non-Javadoc)
-		 * @see java.lang.Object#hashCode()
-		 */
-		@Override
-		public int hashCode() {
-			return mHashCode;
+		if (obj == null) {
+			return false;
 		}
-		
-		public int computehashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + (isFinal ? 1231 : 1237);
-			result = prime
-					* result
-					+ ((mMinuendState == null) ? 0 : mMinuendState.hashCode());
-			result = prime
-					* result
-					+ ((subtrahendDeterminizedState == null) ? 0
-							: subtrahendDeterminizedState.hashCode());
-			return result;
+		if (getClass() != obj.getClass()) {
+			return false;
 		}
-		
-		@Override
-		public String toString() {
-			return "<[< " + mMinuendState.toString() + " , "
-					+ subtrahendDeterminizedState.toString() + ">]>";
+		final DifferenceState other = (DifferenceState) obj;
+		if (mIsFinal != other.mIsFinal) {
+			return false;
 		}
+		if (mMinuendState == null) {
+			if (other.mMinuendState != null) {
+				return false;
+			}
+		} else if (!mMinuendState.equals(other.mMinuendState)) {
+			return false;
+		}
+		if (mSubtrahendDeterminizedState == null) {
+			if (other.mSubtrahendDeterminizedState != null) {
+				return false;
+			}
+		} else if (!mSubtrahendDeterminizedState
+				.equals(other.mSubtrahendDeterminizedState)) {
+			return false;
+		}
+		return true;
 	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return mHashCode;
+	}
+	
+	private int computehashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (mIsFinal ? 1231 : 1237);
+		result = prime
+				* result
+				+ ((mMinuendState == null) ? 0 : mMinuendState.hashCode());
+		result = prime
+				* result
+				+ ((mSubtrahendDeterminizedState == null) ? 0
+						: mSubtrahendDeterminizedState.hashCode());
+		return result;
+	}
+	
+	@Override
+	public String toString() {
+		return "<[< " + mMinuendState.toString() + " , "
+				+ mSubtrahendDeterminizedState.toString() + ">]>";
+	}
+}

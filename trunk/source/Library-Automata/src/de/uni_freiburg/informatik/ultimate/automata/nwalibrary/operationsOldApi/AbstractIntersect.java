@@ -38,17 +38,20 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 
 
 
 public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 							implements IOperation<LETTER, STATE> {
 
-	private final INestedWordAutomatonOldApi<LETTER,STATE> mFstNwa;
-	private final INestedWordAutomatonOldApi<LETTER,STATE> mSndNwa;
+	private final INestedWordAutomatonSimple<LETTER,STATE> mFstNwa;
+	private final INestedWordAutomatonSimple<LETTER,STATE> mSndNwa;
 	private final NestedWordAutomaton<LETTER,STATE> mResultNwa;
 	private final StateFactory<STATE> mContentFactory;
 	
@@ -62,48 +65,19 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 	private final Map<STATE,Integer> mResult2track = 
 		new HashMap<STATE,Integer>();
 	
-	Map<STATE,Map<STATE,STATE>> mTrack1_fst2snd2result = 
+	private final Map<STATE,Map<STATE,STATE>> mTrack1_fst2snd2result = 
 		new HashMap<STATE,Map<STATE,STATE>>();
-	Map<STATE,Map<STATE,STATE>> mTrack2_fst2snd2result = 
+	private final Map<STATE,Map<STATE,STATE>> mTrack2_fst2snd2result = 
 		new HashMap<STATE,Map<STATE,STATE>>();
-	
-	@Override
-	public abstract String operationName();
-
-	
-	@Override
-	public String startMessage() {
-		if (mBuchi) {
-			return "Start buchiIntersect. First operand " + 
-			mFstNwa.sizeInformation() + ". Second operand " + 
-			mSndNwa.sizeInformation();
-		}
-		else {
-			return "Start intersect. First operand " + 
-			mFstNwa.sizeInformation() + ". Second operand " + 
-			mSndNwa.sizeInformation();	
-		}
-	}
-
-	@Override
-	public String exitMessage() {
-		if (mBuchi) {
-			return "Finished buchiIntersect. Result " + 
-			mTraversedNwa.sizeInformation();
-		}
-		else {
-			return "Finished intersect. Result " + 
-			mTraversedNwa.sizeInformation();
-		}
-	}
 
 
 	
 
-	public AbstractIntersect(AutomataLibraryServices services,
-			boolean buchiIntersection, boolean minimizeResult,
-					 INestedWordAutomatonOldApi<LETTER,STATE> fstNwa,
-					 INestedWordAutomatonOldApi<LETTER,STATE> sndNwa) throws AutomataLibraryException {
+	public AbstractIntersect(final AutomataLibraryServices services,
+			final boolean buchiIntersection, final boolean minimizeResult,
+			 final INestedWordAutomatonSimple<LETTER,STATE> fstNwa,
+			 final INestedWordAutomatonSimple<LETTER,STATE> sndNwa)
+					 throws AutomataLibraryException {
 		super(services);
 	
 		mBuchi = buchiIntersection;
@@ -111,7 +85,8 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 		mFstNwa = fstNwa;
 		mSndNwa = sndNwa;
 		if (!NestedWordAutomaton.sameAlphabet(mFstNwa, mSndNwa)) {
-			throw new AutomataLibraryException(this.getClass(), "Unable to apply operation to automata with different alphabets.");
+			throw new AutomataLibraryException(this.getClass(),
+					"Unable to apply operation to automata with different alphabets.");
 		}
 
 		mContentFactory = mFstNwa.getStateFactory();
@@ -136,14 +111,40 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 		if (mBuchi) {
 			assert (ResultChecker.buchiIntersect(mServices, mFstNwa, mSndNwa, mResultNwa));
 		}
-		else {
+	}
+	
+	@Override
+	public abstract String operationName();
+
+	
+	@Override
+	public String startMessage() {
+		if (mBuchi) {
+			return "Start buchiIntersect. First operand " + 
+			mFstNwa.sizeInformation() + ". Second operand " + 
+			mSndNwa.sizeInformation();
+		} else {
+			return "Start intersect. First operand " + 
+			mFstNwa.sizeInformation() + ". Second operand " + 
+			mSndNwa.sizeInformation();	
+		}
+	}
+
+	@Override
+	public String exitMessage() {
+		if (mBuchi) {
+			return "Finished buchiIntersect. Result " + 
+			mTraversedNwa.sizeInformation();
+		} else {
+			return "Finished intersect. Result " + 
+			mTraversedNwa.sizeInformation();
 		}
 	}
 	
 	
 	
 	private STATE getOrConstructOnTrack1(
-						STATE fst, STATE snd, boolean isInitial) {
+						final STATE fst, final STATE snd, final boolean isInitial) {
 		Map<STATE, STATE> snd2result = mTrack1_fst2snd2result.get(fst);
 		if (snd2result == null) {
 			snd2result = new HashMap<STATE, STATE>();
@@ -154,18 +155,15 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 			boolean isFinal;
 			if (mBuchi) {
 				isFinal = mFstNwa.isFinal(fst);
-			}
-			else {
+			} else {
 				isFinal = mFstNwa.isFinal(fst) && mSndNwa.isFinal(snd);
 			}
 			
 			if (mBuchi) {
 				state = mContentFactory.intersectBuchi(
 										fst, snd, 1);				
-			}
-			else {
-			state= mContentFactory.intersection(
-											fst, snd);
+			} else {
+				state = mContentFactory.intersection(fst, snd);
 			}
 
 			mResultNwa.addState(isInitial, isFinal, state);
@@ -178,7 +176,7 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 	}
 	
 	private STATE getOrConstructOnTrack2(
-						STATE fst, STATE snd) {
+						final STATE fst, final STATE snd) {
 		Map<STATE, STATE> snd2result = mTrack2_fst2snd2result.get(fst);
 		if (snd2result == null) {
 			snd2result = new HashMap<STATE, STATE>();
@@ -188,7 +186,7 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 		if (state == null) {
 			final boolean isInitial = false;
 			final boolean isFinal = false;
-			assert (mBuchi);
+			assert mBuchi;
 			state = mContentFactory.intersectBuchi(fst, snd, 2);				
 			mResultNwa.addState(isInitial, isFinal, state);
 			snd2result.put(snd,state);
@@ -200,28 +198,24 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 	}
 	
 	
-	private int getSuccTrack(int stateTrack, STATE fstState, STATE sndState) {
+	private int getSuccTrack(final int stateTrack, final STATE fstState, final STATE sndState) {
 		int succTrack;
 		if (mBuchi) {
 			if (stateTrack == 1) {
 				if (mFstNwa.isFinal(fstState)) {
 					succTrack = 2;
-				}
-				else {
+				} else {
 					succTrack = 1;
 				}
-			}
-			else {
-				assert(stateTrack == 2);
+			} else {
+				assert (stateTrack == 2);
 				if (mSndNwa.isFinal(sndState)) {
 					succTrack = 1;
-				}
-				else {
+				} else {
 					succTrack = 2;
 				}
 			}
-		}
-		else {
+		} else {
 			succTrack = 1;
 		}
 		return succTrack;
@@ -231,9 +225,10 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 	
 	@Override
 	protected Collection<STATE> getInitialStates() {
-		final int amount = mFstNwa.getInitialStates().size() *
-										mSndNwa.getInitialStates().size();
-		final Collection<STATE> resInits = new ArrayList<STATE>(amount);
+//		final int amount = mFstNwa.getInitialStates().size() *
+//										mSndNwa.getInitialStates().size();
+//		final Collection<STATE> resInits = new ArrayList<STATE>(amount);
+		final Collection<STATE> resInits = new ArrayList<STATE>();
 		for (final STATE fstInit : mFstNwa.getInitialStates()) {
 			for (final STATE sndInit : mSndNwa.getInitialStates()) {
 				final STATE resInit = getOrConstructOnTrack1(fstInit, sndInit, true);
@@ -248,7 +243,7 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 	
 	@Override
 	protected Collection<STATE> buildInternalSuccessors(
-											DoubleDecker<STATE> doubleDecker) {
+											final DoubleDecker<STATE> doubleDecker) {
 		final STATE resState = doubleDecker.getUp();
 		final STATE fstState = mResult2fst.get(resState);
 		final STATE sndState = mResult2snd.get(resState);
@@ -256,15 +251,16 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 		final int succTrack = getSuccTrack(stateTrack, fstState, sndState);
 		final Collection<STATE> resSuccs = new ArrayList<STATE>();
 		for (final LETTER symbol : mFstNwa.lettersInternal(fstState)) {
-			for (final STATE fstSucc : mFstNwa.succInternal(fstState,symbol)) {
-				for (final STATE sndSucc : mSndNwa.succInternal(sndState,symbol)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> fstTrans :
+					mFstNwa.internalSuccessors(fstState,symbol)) {
+				for (final OutgoingInternalTransition<LETTER, STATE> sndTrans :
+						mSndNwa.internalSuccessors(sndState,symbol)) {
 					STATE resSucc;
 					if (succTrack == 1) {
-						resSucc = getOrConstructOnTrack1(fstSucc,sndSucc,false);
-					}
-					else {
+						resSucc = getOrConstructOnTrack1(fstTrans.getSucc(),sndTrans.getSucc(),false);
+					} else {
 						assert (succTrack == 2);
-						resSucc = getOrConstructOnTrack2(fstSucc, sndSucc);
+						resSucc = getOrConstructOnTrack2(fstTrans.getSucc(), sndTrans.getSucc());
 					}
 					mResultNwa.addInternalTransition(resState, symbol, resSucc);
 					resSuccs.add(resSucc);
@@ -278,7 +274,7 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 
 	@Override
 	protected Collection<STATE> buildCallSuccessors(
-											DoubleDecker<STATE> doubleDecker) {
+											final DoubleDecker<STATE> doubleDecker) {
 		final STATE resState = doubleDecker.getUp();
 		final STATE fstState = mResult2fst.get(resState);
 		final STATE sndState = mResult2snd.get(resState);
@@ -286,15 +282,16 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 		final int succTrack = getSuccTrack(stateTrack, fstState, sndState);
 		final Collection<STATE> resSuccs = new ArrayList<STATE>();
 		for (final LETTER symbol : mFstNwa.lettersCall(fstState)) {
-			for (final STATE fstSucc : mFstNwa.succCall(fstState,symbol)) {
-				for (final STATE sndSucc : mSndNwa.succCall(sndState,symbol)) {
+			for (final OutgoingCallTransition<LETTER, STATE> fstTrans :
+					mFstNwa.callSuccessors(fstState,symbol)) {
+				for (final OutgoingCallTransition<LETTER, STATE> sndTrans :
+						mSndNwa.callSuccessors(sndState,symbol)) {
 					STATE resSucc;
 					if (succTrack == 1) {
-						resSucc = getOrConstructOnTrack1(fstSucc,sndSucc,false);
-					}
-					else {
+						resSucc = getOrConstructOnTrack1(fstTrans.getSucc(),sndTrans.getSucc(),false);
+					} else {
 						assert (succTrack == 2);
-						resSucc = getOrConstructOnTrack2(fstSucc, sndSucc);
+						resSucc = getOrConstructOnTrack2(fstTrans.getSucc(), sndTrans.getSucc());
 					}
 					mResultNwa.addCallTransition(resState, symbol, resSucc);
 					resSuccs.add(resSucc);
@@ -308,7 +305,7 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 
 	@Override
 	protected Collection<STATE> buildReturnSuccessors(
-											DoubleDecker<STATE> doubleDecker) {
+											final DoubleDecker<STATE> doubleDecker) {
 		final Collection<STATE> resSuccs = new ArrayList<STATE>();
 		final STATE resHierPre = doubleDecker.getDown();
 		if (resHierPre == mResultNwa.getEmptyStackState()) {
@@ -323,15 +320,16 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 		final int succTrack = getSuccTrack(stateTrack, fstState, sndState);
 		
 		for (final LETTER symbol : mFstNwa.lettersReturn(fstState)) {
-			for (final STATE fstSucc : mFstNwa.succReturn(fstState,fstHierPre,symbol)) {
-				for (final STATE sndSucc : mSndNwa.succReturn(sndState,sndHierPre,symbol)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> fstTrans :
+					mFstNwa.returnSuccessors(fstState,fstHierPre,symbol)) {
+				for (final OutgoingReturnTransition<LETTER, STATE> sndTrans :
+						mSndNwa.returnSuccessors(sndState,sndHierPre,symbol)) {
 					STATE resSucc;
 					if (succTrack == 1) {
-						resSucc = getOrConstructOnTrack1(fstSucc,sndSucc,false);
-					}
-					else {
+						resSucc = getOrConstructOnTrack1(fstTrans.getSucc(),sndTrans.getSucc(),false);
+					} else {
 						assert (succTrack == 2);
-						resSucc = getOrConstructOnTrack2(fstSucc, sndSucc);
+						resSucc = getOrConstructOnTrack2(fstTrans.getSucc(), sndTrans.getSucc());
 					}
 					mResultNwa.addReturnTransition(resState, resHierPre, symbol, resSucc);
 					resSuccs.add(resSucc);
@@ -340,9 +338,4 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 		}
 		return resSuccs;
 	}
-
-
-
-
-
 }

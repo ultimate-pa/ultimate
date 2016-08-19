@@ -34,7 +34,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
@@ -83,7 +83,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	/**
 	 * The underlying buechi automaton from which the game graph gets generated.
 	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> mBuechi;
+	private final INestedWordAutomaton<LETTER, STATE> mBuechi;
 	/**
 	 * Data structure that allows a fast access to {@link DuplicatorVertex}
 	 * objects by using their representation:<br/>
@@ -175,7 +175,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	public AGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final ILogger logger, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi) throws AutomataOperationCanceledException {
+			final INestedWordAutomaton<LETTER, STATE> buechi) throws AutomataOperationCanceledException {
 		// We assume the automaton has no dead ends, this is a requirement for
 		// the algorithm to work correctly.
 		mBuechi = buechi;
@@ -275,7 +275,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public abstract INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph()
+	public abstract INestedWordAutomaton<LETTER, STATE> generateAutomatonFromGraph()
 			throws AutomataOperationCanceledException;
 
 	/**
@@ -297,7 +297,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	public int getAmountOfEdges() {
 		int amountOfEdges = 0;
-		for (HashSet<Vertex<LETTER, STATE>> successors : mSuccessors.values()) {
+		for (final HashSet<Vertex<LETTER, STATE>> successors : mSuccessors.values()) {
 			amountOfEdges += successors.size();
 		}
 		return amountOfEdges;
@@ -308,7 +308,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * 
 	 * @return The underlying automaton.
 	 */
-	public INestedWordAutomatonOldApi<LETTER, STATE> getAutomaton() {
+	public INestedWordAutomaton<LETTER, STATE> getAutomaton() {
 		return mBuechi;
 	}
 
@@ -422,7 +422,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @throws IllegalArgumentException
 	 *             If the given vertex is <tt>null</tt>.
 	 */
-	public int getPriority(Vertex<LETTER, STATE> vertex) {
+	public int getPriority(final Vertex<LETTER, STATE> vertex) {
 		if (vertex == null) {
 			throw new IllegalArgumentException("The given vertex must not be null.");
 		}
@@ -881,7 +881,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @throws IllegalArgumentException
 	 *             If the given automaton is not valid
 	 */
-	public void verifyAutomatonValidity(final INestedWordAutomatonOldApi<LETTER, STATE> automaton) {
+	public void verifyAutomatonValidity(final INestedWordAutomaton<LETTER, STATE> automaton) {
 		if (!automaton.getCallAlphabet().isEmpty() || !automaton.getReturnAlphabet().isEmpty()) {
 			throw new IllegalArgumentException(
 					"The inputed automaton is no Buechi-automaton. It must have an empty call and return alphabet.");

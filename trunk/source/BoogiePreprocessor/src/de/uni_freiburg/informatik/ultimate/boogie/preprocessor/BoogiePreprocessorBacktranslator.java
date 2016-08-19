@@ -93,7 +93,7 @@ public class BoogiePreprocessorBacktranslator
 	private final IUltimateServiceProvider mServices;
 	private BoogieSymbolTable mSymbolTable;
 
-	protected BoogiePreprocessorBacktranslator(IUltimateServiceProvider services) {
+	BoogiePreprocessorBacktranslator(IUltimateServiceProvider services) {
 		super(BoogieASTNode.class, BoogieASTNode.class, Expression.class, Expression.class);
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -108,7 +108,7 @@ public class BoogiePreprocessorBacktranslator
 		mSymbolTable = symbolTable;
 	}
 
-	protected void addMapping(BoogieASTNode inputNode, BoogieASTNode outputNode) {
+	void addMapping(BoogieASTNode inputNode, BoogieASTNode outputNode) {
 		BoogieASTNode realInputNode = mMapping.get(inputNode);
 		if (realInputNode == null) {
 			realInputNode = inputNode;
@@ -122,13 +122,14 @@ public class BoogiePreprocessorBacktranslator
 	}
 
 	@Override
-	public IProgramExecution<BoogieASTNode, Expression> translateProgramExecution(
-			IProgramExecution<BoogieASTNode, Expression> programExecution) {
+	public IProgramExecution<BoogieASTNode, Expression>
+			translateProgramExecution(final IProgramExecution<BoogieASTNode, Expression> programExecution) {
 
 		final List<BoogieASTNode> newTrace = new ArrayList<>();
 		final List<ProgramState<Expression>> newProgramStates = new ArrayList<>();
 
-		final ProgramState<Expression> newInitialState = backtranslateProgramState(programExecution.getInitialProgramState());
+		final ProgramState<Expression> newInitialState =
+				backtranslateProgramState(programExecution.getInitialProgramState());
 		final int length = programExecution.getLength();
 		for (int i = 0; i < length; ++i) {
 			final BoogieASTNode elem = programExecution.getTraceElement(i).getTraceElement();
@@ -165,14 +166,10 @@ public class BoogiePreprocessorBacktranslator
 			if (elem instanceof EnsuresSpecification) {
 				final EnsuresSpecification spec = (EnsuresSpecification) elem;
 				final Expression formula = spec.getFormula();
-				if (formula instanceof BooleanLiteral) {
-					if (((BooleanLiteral) formula).getValue()) {
-						// this
-						// EnuresSpecification was inserted by RCFG Builder and
-						// does not provide any additional information. We
-						// exclude it from the error path.
-						return null;
-					}
+				if (formula instanceof BooleanLiteral && ((BooleanLiteral) formula).getValue()) {
+					// this EnuresSpecification was inserted by RCFG Builder and
+					// does not provide any additional information. We exclude it from the error path.
+					return null;
 				}
 				reportUnfinishedBacktranslation(
 						"Generated EnsuresSpecification " + BoogiePrettyPrinter.print(spec) + " is not ensure(true)");
@@ -181,9 +178,7 @@ public class BoogiePreprocessorBacktranslator
 			// if there is no mapping, we return the identity (we do not change
 			// everything, so this may be right)
 			return elem;
-		} else if (newElem instanceof Statement) {
-			return newElem;
-		} else if (newElem instanceof LoopInvariantSpecification) {
+		} else if (newElem instanceof Statement || newElem instanceof LoopInvariantSpecification) {
 			return newElem;
 		} else {
 			reportUnfinishedBacktranslation(
@@ -210,22 +205,22 @@ public class BoogiePreprocessorBacktranslator
 				atomicTrace.add(null);
 				continue;
 			}
-			
+
 			final AtomicTraceElement<BoogieASTNode> ate = programExecution.getTraceElement(i);
 
 			if (elem instanceof WhileStatement) {
 				final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 				final WhileStatement stmt = (WhileStatement) elem;
 				final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), 
-						info, stringProvider, ate.getRelevanceInformation()));
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), info, stringProvider,
+						ate.getRelevanceInformation()));
 
 			} else if (elem instanceof IfStatement) {
 				final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 				final IfStatement stmt = (IfStatement) elem;
 				final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), 
-						info, stringProvider, ate.getRelevanceInformation()));
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), info, stringProvider,
+						ate.getRelevanceInformation()));
 
 			} else if (elem instanceof CallStatement) {
 				// for call statements, we simply rely on the stepinfo of our
@@ -233,17 +228,18 @@ public class BoogiePreprocessorBacktranslator
 				// return), else its a procedure call with corresponding return
 
 				if (ate.hasStepInfo(StepInfo.NONE)) {
-					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, StepInfo.FUNC_CALL, 
+					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, StepInfo.FUNC_CALL,
 							stringProvider, ate.getRelevanceInformation()));
 				} else {
-					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem,
-							ate.getStepInfo(), stringProvider, ate.getRelevanceInformation()));
+					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, ate.getStepInfo(), stringProvider,
+							ate.getRelevanceInformation()));
 				}
 
 			} else {
 				// it could be that we missed some cases... revisit this if you
 				// suspect errors in the backtranslation
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, stringProvider, ate.getRelevanceInformation()));
+				atomicTrace.add(
+						new AtomicTraceElement<BoogieASTNode>(elem, stringProvider, ate.getRelevanceInformation()));
 			}
 		}
 
@@ -335,17 +331,18 @@ public class BoogiePreprocessorBacktranslator
 	}
 
 	private <VL> Multigraph<VL, BoogieASTNode> translateCFGEdge(
-			final Map<IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode,?>, Multigraph<VL, BoogieASTNode>> cache,
-			final IMultigraphEdge<?, ?, VL, BoogieASTNode,?> oldEdge, final Multigraph<VL, BoogieASTNode> newSourceNode) {
+			final Map<IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode, ?>, Multigraph<VL, BoogieASTNode>> cache,
+			final IMultigraphEdge<?, ?, VL, BoogieASTNode, ?> oldEdge,
+			final Multigraph<VL, BoogieASTNode> newSourceNode) {
 		final BoogieASTNode newLabel = backtranslateTraceElement(oldEdge.getLabel());
-		final IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode,?> oldTarget = oldEdge.getTarget();
+		final IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode, ?> oldTarget = oldEdge.getTarget();
 		Multigraph<VL, BoogieASTNode> newTarget = cache.get(oldTarget);
 		if (newTarget == null) {
-			newTarget = createWitnessNode(oldTarget);
+			newTarget = createLabeledWitnessNode(oldTarget);
 			cache.put(oldTarget, newTarget);
 		}
-		final MultigraphEdge<VL, BoogieASTNode> newEdge = new MultigraphEdge<VL, BoogieASTNode>(newSourceNode, newLabel,
-				newTarget);
+		final MultigraphEdge<VL, BoogieASTNode> newEdge =
+				new MultigraphEdge<VL, BoogieASTNode>(newSourceNode, newLabel, newTarget);
 		final ConditionAnnotation coan = ConditionAnnotation.getAnnotation(oldEdge.getLabel());
 		if (coan != null) {
 			coan.annotate(newEdge);
@@ -404,6 +401,11 @@ public class BoogiePreprocessorBacktranslator
 		return output.toString();
 	}
 
+	/**
+	 * Backtranslate arbitrary Boogie expressions
+	 * 
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 */
 	private class ExpressionTranslator extends BoogieTransformer {
 
 		@Override
@@ -414,43 +416,44 @@ public class BoogiePreprocessorBacktranslator
 				return expr;
 			}
 
-			if (expr instanceof IdentifierExpression) {
-				final IdentifierExpression ident = (IdentifierExpression) expr;
-				if (ident.getDeclarationInformation() == null) {
-					reportUnfinishedBacktranslation("Identifier has no declaration information, "
-							+ "using identity as back-translation of " + expr);
-					return expr;
-				}
-				if (ident.getDeclarationInformation().getStorageClass() == StorageClass.QUANTIFIED) {
-					// quantified variables do not occur in the program; we use
-					// identity
-					return expr;
-				}
-
-				final Declaration decl = mSymbolTable.getDeclaration(ident);
-
-				if (decl == null) {
-					reportUnfinishedBacktranslation(
-							"No declaration in symboltable, using identity as " + "back-translation of " + expr);
-					return expr;
-				}
-				final BoogieASTNode newDecl = getMapping(decl);
-				if (newDecl instanceof Declaration) {
-					return extractIdentifier((Declaration) newDecl, ident);
-				} else if (newDecl instanceof VarList) {
-					return extractIdentifier(newDecl.getLocation(), (VarList) newDecl, ident);
-				} else {
-					// this is ok, the expression wasnt changed during
-					// preprocessing
-					return expr;
-				}
+			if (!(expr instanceof IdentifierExpression)) {
+				// we only have to translate identifier expressions; so we just descend (using BoogieTransformer)
+				return super.processExpression(expr);
 			}
-			// descend
-			// String pretty = BoogiePrettyPrinter.print(expr);
-			return super.processExpression(expr);
+
+			final IdentifierExpression ident = (IdentifierExpression) expr;
+			if (ident.getDeclarationInformation() == null) {
+				reportUnfinishedBacktranslation("Identifier has no declaration information, "
+						+ "using identity as back-translation of " + expr);
+				return expr;
+			}
+
+			if (ident.getDeclarationInformation().getStorageClass() == StorageClass.QUANTIFIED) {
+				reportUnfinishedBacktranslation(
+						"Identifier is quantified, " + "using identity as back-translation of " + expr);
+				return expr;
+			}
+
+			final Declaration decl = mSymbolTable.getDeclaration(ident);
+			if (decl == null) {
+				reportUnfinishedBacktranslation(
+						"No declaration in symboltable, using identity as " + "back-translation of " + expr);
+				return expr;
+			}
+
+			final BoogieASTNode newDecl = getMapping(decl);
+			if (newDecl instanceof Declaration) {
+				return extractIdentifier((Declaration) newDecl, ident);
+			} else if (newDecl instanceof VarList) {
+				return extractIdentifier(newDecl.getLocation(), (VarList) newDecl, ident);
+			} else {
+				// this is ok, the expression was not changed during preprocessing
+				return expr;
+			}
+
 		}
 
-		private BoogieASTNode getMapping(BoogieASTNode decl) {
+		private BoogieASTNode getMapping(final BoogieASTNode decl) {
 			BoogieASTNode newDecl = mMapping.get(decl);
 			if (newDecl != null) {
 				return newDecl;
@@ -467,7 +470,8 @@ public class BoogiePreprocessorBacktranslator
 			return null;
 		}
 
-		private IdentifierExpression extractIdentifier(Declaration mappedDecl, IdentifierExpression inputExp) {
+		private IdentifierExpression extractIdentifier(final Declaration mappedDecl,
+				final IdentifierExpression inputExp) {
 			IdentifierExpression rtr = inputExp;
 			if (mappedDecl instanceof VariableDeclaration) {
 				final VariableDeclaration mappedVarDecl = (VariableDeclaration) mappedDecl;
@@ -531,59 +535,74 @@ public class BoogiePreprocessorBacktranslator
 
 		}
 
-		private IdentifierExpression extractIdentifier(ILocation mappedLoc, VarList list, IdentifierExpression inputExp,
-				BoogieType type) {
+		private IdentifierExpression extractIdentifier(final ILocation mappedLoc, final VarList list,
+				final IdentifierExpression inputExp, final BoogieType type) {
 			if (type instanceof StructType) {
-				final StructType st = (StructType) type;
-				final String[] inputNames = inputExp.getIdentifier().split("\\.");
-				if (inputNames.length == 1) {
-					// its the struct itself
-					final String inputName = inputExp.getIdentifier();
-					for (final String name : list.getIdentifiers()) {
-						if (inputName.contains(name)) {
-							return new IdentifierExpression(mappedLoc, type, name,
-									inputExp.getDeclarationInformation());
-						}
-					}
-
-				} else if (inputNames.length == 2) {
-					// its a struct field access
-					// first, find the name of the struct
-					String structName = null;
-					final String inputStructName = inputNames[0];
-					for (final String name : list.getIdentifiers()) {
-						if (inputStructName.contains(name)) {
-							structName = name;
-							break;
-						}
-					}
-					if (structName != null) {
-						// if this worked, lets get the field name
-						for (final String fieldName : st.getFieldIds()) {
-							if (inputNames[1].contains(fieldName)) {
-								return new IdentifierExpression(mappedLoc, type, structName + "!" + fieldName,
-										inputExp.getDeclarationInformation());
-							}
-						}
-					}
-				} else {
-					// its a nested struct field access (this sucks)
-					reportUnfinishedBacktranslation("Unfinished Backtranslation: Nested struct field access of VarList "
-							+ BoogiePrettyPrinter.print(list) + " not handled");
-				}
+				return extractStructIdentifier(mappedLoc, list, inputExp, type, (StructType) type);
 			} else if (type instanceof ConstructedType) {
 				final ConstructedType ct = (ConstructedType) type;
-				return extractIdentifier(mappedLoc, list, inputExp, ct.getUnderlyingType());
+				if (ct.equals(ct.getUnderlyingType())) {
+					// this constructed type is a named type
+					return matchIdentifier(mappedLoc, list, inputExp);
+				} else {
+					return extractIdentifier(mappedLoc, list, inputExp, ct.getUnderlyingType());
+				}
 			} else if (type instanceof PrimitiveType) {
+				return matchIdentifier(mappedLoc, list, inputExp);
+			} else {
+				reportUnfinishedBacktranslation("Unfinished Backtranslation: Type" + type + " of VarList "
+						+ BoogiePrettyPrinter.print(list) + " not handled");
+				return inputExp;
+			}
+
+		}
+
+		private IdentifierExpression matchIdentifier(final ILocation mappedLoc, final VarList list,
+				final IdentifierExpression inputExp) {
+			final String inputName = inputExp.getIdentifier();
+			for (final String name : list.getIdentifiers()) {
+				if (inputName.contains(name)) {
+					return new IdentifierExpression(mappedLoc, list.getType().getBoogieType(), name,
+							inputExp.getDeclarationInformation());
+				}
+			}
+			return inputExp;
+		}
+
+		private IdentifierExpression extractStructIdentifier(final ILocation mappedLoc, final VarList list,
+				final IdentifierExpression inputExp, final BoogieType type, final StructType st) {
+			final String[] inputNames = inputExp.getIdentifier().split("\\.");
+			if (inputNames.length == 1) {
+				// its the struct itself
 				final String inputName = inputExp.getIdentifier();
 				for (final String name : list.getIdentifiers()) {
 					if (inputName.contains(name)) {
-						return new IdentifierExpression(mappedLoc, list.getType().getBoogieType(), name,
-								inputExp.getDeclarationInformation());
+						return new IdentifierExpression(mappedLoc, type, name, inputExp.getDeclarationInformation());
+					}
+				}
+			} else if (inputNames.length == 2) {
+				// its a struct field access
+				// first, find the name of the struct
+				String structName = null;
+				final String inputStructName = inputNames[0];
+				for (final String name : list.getIdentifiers()) {
+					if (inputStructName.contains(name)) {
+						structName = name;
+						break;
+					}
+				}
+				if (structName != null) {
+					// if this worked, lets get the field name
+					for (final String fieldName : st.getFieldIds()) {
+						if (inputNames[1].contains(fieldName)) {
+							return new IdentifierExpression(mappedLoc, type, structName + "!" + fieldName,
+									inputExp.getDeclarationInformation());
+						}
 					}
 				}
 			} else {
-				reportUnfinishedBacktranslation("Unfinished Backtranslation: Type" + type + " of VarList "
+				// its a nested struct field access (this sucks)
+				reportUnfinishedBacktranslation("Unfinished Backtranslation: Nested struct field access of VarList "
 						+ BoogiePrettyPrinter.print(list) + " not handled");
 			}
 			return inputExp;

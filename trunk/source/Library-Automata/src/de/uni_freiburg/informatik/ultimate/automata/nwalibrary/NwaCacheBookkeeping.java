@@ -36,7 +36,7 @@ import java.util.Set;
  * If you write a nested word automaton that compute its transitions on demand,
  * then use this class to store which transitions are already computed.
  * 
- * Use this together with NestedWordAutomatonCache.
+ * <p>Use this together with NestedWordAutomatonCache.
  * Problem solved by this class: Assume you query an on demand build automaton
  * for a transition, the automaton checks its cache an returns null.
  * Does this mean there is no such transition or does this mean the transition
@@ -44,6 +44,9 @@ import java.util.Set;
  * some bookkeeping to remember which transition have been already computed.
  * 
  * @author Matthias Heizmann
+ * 
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class NwaCacheBookkeeping<LETTER,STATE> {
 	
@@ -51,7 +54,7 @@ public class NwaCacheBookkeeping<LETTER,STATE> {
 	private final Map<STATE,Set<LETTER>> mCachedCall = new HashMap<STATE,Set<LETTER>>();
 	private final Map<STATE,Map<STATE,Set<LETTER>>> mCachedReturn = new HashMap<STATE,Map<STATE,Set<LETTER>>>();
 	
-	public boolean isCachedInternal(STATE state, LETTER letter) {
+	public boolean isCachedInternal(final STATE state, final LETTER letter) {
 		final Set<LETTER> cbs = mCachedInternal.get(state);
 		if (cbs == null) {
 			return false;
@@ -60,7 +63,7 @@ public class NwaCacheBookkeeping<LETTER,STATE> {
 		}
 	}
 	
-	public boolean isCachedCall(STATE state, LETTER letter) {
+	public boolean isCachedCall(final STATE state, final LETTER letter) {
 		final Set<LETTER> cbs = mCachedCall.get(state);
 		if (cbs == null) {
 			return false;
@@ -69,7 +72,7 @@ public class NwaCacheBookkeeping<LETTER,STATE> {
 		}
 	}
 	
-	public boolean isCachedReturn(STATE state, STATE hier, LETTER letter) {
+	public boolean isCachedReturn(final STATE state, final STATE hier, final LETTER letter) {
 		final Map<STATE, Set<LETTER>> hier2cbs = mCachedReturn.get(state);
 		if (hier2cbs == null) {
 			return false;
@@ -83,7 +86,7 @@ public class NwaCacheBookkeeping<LETTER,STATE> {
 		}
 	}
 	
-	public void reportCachedInternal(STATE state, LETTER letter) {
+	public void reportCachedInternal(final STATE state, final LETTER letter) {
 		Set<LETTER> cbs = mCachedInternal.get(state);
 		if (cbs == null) {
 			cbs = new HashSet<LETTER>();
@@ -93,7 +96,7 @@ public class NwaCacheBookkeeping<LETTER,STATE> {
 		assert modified : "added to cache twice";
 	}
 	
-	public void reportCachedCall(STATE state, LETTER letter) {
+	public void reportCachedCall(final STATE state, final LETTER letter) {
 		Set<LETTER> cbs = mCachedCall.get(state);
 		if (cbs == null) {
 			cbs = new HashSet<LETTER>();
@@ -103,7 +106,7 @@ public class NwaCacheBookkeeping<LETTER,STATE> {
 		assert modified : "added to cache twice";
 	}
 	
-	public void reportCachedReturn(STATE state, STATE hier, LETTER letter) {
+	public void reportCachedReturn(final STATE state, final STATE hier, final LETTER letter) {
 		Map<STATE, Set<LETTER>> hier2cbs = mCachedReturn.get(state);
 		if (hier2cbs == null) {
 			hier2cbs = new HashMap<STATE, Set<LETTER>>();

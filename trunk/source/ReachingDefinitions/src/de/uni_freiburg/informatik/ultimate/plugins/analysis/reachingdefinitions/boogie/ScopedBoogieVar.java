@@ -26,10 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /***
  * Represents a unique Boogie variable based on its declaration.  
@@ -41,10 +41,10 @@ public class ScopedBoogieVar {
 	private final VariableDeclaration mDeclaration;
 	private final String mIdentifier;
 	private final DeclarationInformation mDeclarationInformation;
-	private final BoogieVar mBoogieVar;
+	private final IProgramVar mBoogieVar;
 
 	public ScopedBoogieVar(String identifier, VariableDeclaration declaration,
-			DeclarationInformation declarationInformation, BoogieVar var) {
+			DeclarationInformation declarationInformation, IProgramVar var) {
 		mIdentifier = identifier;
 		mDeclaration = declaration;
 		mDeclarationInformation = declarationInformation;
@@ -63,7 +63,7 @@ public class ScopedBoogieVar {
 		return mDeclarationInformation;
 	}
 
-	public BoogieVar getBoogieVar() {
+	public IProgramVar getBoogieVar() {
 		return mBoogieVar;
 	}
 

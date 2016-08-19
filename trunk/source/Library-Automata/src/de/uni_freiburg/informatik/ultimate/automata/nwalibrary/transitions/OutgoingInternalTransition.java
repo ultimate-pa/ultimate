@@ -34,15 +34,20 @@ import java.text.MessageFormat;
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class OutgoingInternalTransition<LETTER,STATE> implements OutgoingTransitionlet<LETTER,STATE> {
+public class OutgoingInternalTransition<LETTER,STATE>
+		implements IOutgoingTransitionlet<LETTER,STATE> {
 	
 	private final LETTER mLetter; 
 	private final STATE mSucc;
 	
-	public OutgoingInternalTransition(LETTER letter, STATE succ) {
+	/**
+	 * @param letter letter
+	 * @param succ successor state
+	 */
+	public OutgoingInternalTransition(final LETTER letter, final STATE succ) {
 		mLetter = letter;
 		mSucc = succ;
 	}

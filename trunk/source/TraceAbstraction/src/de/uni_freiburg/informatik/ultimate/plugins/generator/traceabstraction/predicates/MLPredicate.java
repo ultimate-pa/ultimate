@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.Arrays;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
@@ -48,7 +48,7 @@ public class MLPredicate extends BasicPredicate implements IMLPredicate {
 	
 	
 	protected MLPredicate(ProgramPoint[] programPoints, int serialNumber, 
-			String[] procedures, Term term, Set<BoogieVar> vars, Term closedFormula) {
+			String[] procedures, Term term, Set<IProgramVar> vars, Term closedFormula) {
 		super(serialNumber,procedures,term,vars,closedFormula);
 		mProgramPoints = programPoints;
 	}
@@ -96,7 +96,7 @@ public class MLPredicate extends BasicPredicate implements IMLPredicate {
 	}
 
 	@Override
-	public Set<BoogieVar> getVars() {
+	public Set<IProgramVar> getVars() {
 		return mVars;
 	}
 	

@@ -32,6 +32,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -44,7 +45,7 @@ public class WitnessModelToAutomatonTransformer {
 	private final WitnessNode mWitnessRoot;
 	private final ArrayDeque<WitnessNode> worklist = new ArrayDeque<WitnessNode>();
 	
-	public WitnessModelToAutomatonTransformer(WitnessNode witnessRoot, IUltimateServiceProvider services) {
+	public WitnessModelToAutomatonTransformer(final WitnessNode witnessRoot, final IUltimateServiceProvider services) {
 		super();
 		mWitnessRoot = witnessRoot;
 		final Set<WitnessEdge> internalAlphabet = new LinkedHashSet<WitnessEdge>();
@@ -56,7 +57,7 @@ public class WitnessModelToAutomatonTransformer {
 		constructAutomaton(internalAlphabet);
 	}
 
-	private void constructAutomaton(Set<WitnessEdge> internalAlphabet) {
+	private void constructAutomaton(final Set<WitnessEdge> internalAlphabet) {
 		addNewState(mWitnessRoot);
 		while (!worklist.isEmpty()) {
 			final WitnessNode current = worklist.removeFirst();
@@ -71,7 +72,7 @@ public class WitnessModelToAutomatonTransformer {
 		}
 	}
 
-	private void addNewState(WitnessNode successor) {
+	private void addNewState(final WitnessNode successor) {
 		final WitnessNodeAnnotation annotation = WitnessNodeAnnotation.getAnnotation(successor);
 		final boolean isInitial = (annotation != null && annotation.isInitial());
 		final boolean isFinal = (annotation != null && annotation.isError());
@@ -79,7 +80,7 @@ public class WitnessModelToAutomatonTransformer {
 		worklist.add(successor);
 	}
 
-	public NestedWordAutomaton<WitnessEdge, WitnessNode> getResult() {
+	public INestedWordAutomaton<WitnessEdge, WitnessNode> getResult() {
 		return mResult;
 	}
 }

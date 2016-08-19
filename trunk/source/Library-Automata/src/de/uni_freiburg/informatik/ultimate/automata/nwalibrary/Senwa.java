@@ -48,46 +48,54 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	
-	
-	Map<STATE,STATE> mState2Entry = new HashMap<STATE,STATE>();
-	Map<STATE,Set<STATE>> mEntry2Module = new HashMap<STATE,Set<STATE>>();
+	private final Map<STATE,STATE> mState2Entry = new HashMap<STATE,STATE>();
+	private final Map<STATE,Set<STATE>> mEntry2Module = new HashMap<STATE,Set<STATE>>();
 	
 	@Deprecated
-	Map<STATE,Set<STATE>> mEntry2CallPredecessors = new HashMap<STATE,Set<STATE>>();
+	private final Map<STATE,Set<STATE>> mEntry2CallPredecessors = new HashMap<STATE,Set<STATE>>();
 
-	public Senwa(AutomataLibraryServices services,
-			Set<LETTER> internalAlphabet,
-			Set<LETTER> callAlphabet, Set<LETTER> returnAlphabet,
-			StateFactory<STATE> stateFactory) {
+	/**
+	 * @param services Ultimate services
+	 * @param internalAlphabet internal alphabet
+	 * @param callAlphabet call alphabet
+	 * @param returnAlphabet return alphabet
+	 * @param stateFactory state factory
+	 */
+	public Senwa(final AutomataLibraryServices services,
+			final Set<LETTER> internalAlphabet,
+			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet,
+			final StateFactory<STATE> stateFactory) {
 		super(services, internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
 		assert isModuleInformationConsistent();
 	}
 	
 	
 	/**
-	 * Returns true iff state is an entry state.
+	 * @return true iff state is an entry state.
 	 */
-	public boolean isEntry(STATE state) {
+	public boolean isEntry(final STATE state) {
 		return getEntry(state) == state;
 	}
 	
 	
 	/**
-	 * Returns the entry state of a given state.
+	 * @return The entry state of a given state.
 	 */
-	public STATE getEntry(STATE state) {
+	public STATE getEntry(final STATE state) {
 		return mState2Entry.get(state);
 	}
 	
 
 	/**
-	 * Return the set of all states which have an outgoing call transition to
-	 * entry.
+	 * @return The set of all states which have an outgoing call transition to
+	 *     entry.
 	 */
-	public Set<STATE> getCallPredecessors(STATE entry) {
+	public Set<STATE> getCallPredecessors(final STATE entry) {
 		assert mEntry2Module.containsKey(entry);
 		assert mEntry2CallPredecessors.containsKey(entry);
 		return mEntry2CallPredecessors.get(entry);
@@ -99,7 +107,7 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	 * element.
 	 */
 	@Override
-	public Set<STATE> getDownStates(STATE up) {
+	public Set<STATE> getDownStates(final STATE up) {
 		final STATE entry = getEntry(up);
 		return getCallPredecessors(entry);
 	}
@@ -110,7 +118,7 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	 * stack element.
 	 */
 	@Override
-	public boolean isDoubleDecker(STATE up, STATE down) {
+	public boolean isDoubleDecker(final STATE up, final STATE down) {
 		final STATE entry = getEntry(up);
 		if (entry == null) {
 			return false;
@@ -122,10 +130,10 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	
 	
 	/**
-	 * Return the set of states s such that entry is the entry of s. 
+	 * @return The set of states s such that entry is the entry of s. 
 	 * 
 	 */
-	public Set<STATE> getModuleStates(STATE entry) {
+	public Set<STATE> getModuleStates(final STATE entry) {
 		assert mEntry2Module.containsKey(entry);
 		return mEntry2Module.get(entry);
 	}
@@ -135,12 +143,12 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	 * Don't use this for the construction of a Senwa. 
 	 */
 	@Override
-	public void addState(boolean isInitial, boolean isFinal, STATE state) {
+	public void addState(final boolean isInitial, final boolean isFinal, final STATE state) {
 		throw new IllegalArgumentException("Specify entry");
 	}
 
-	public void addState(STATE state, boolean isInitial, boolean isFinal, 
-																STATE entry) {
+	public void addState(final STATE state, final boolean isInitial, final boolean isFinal, 
+																final STATE entry) {
 		mState2Entry.put(state, entry);
 		Set<STATE> module = mEntry2Module.get(entry);
 		if (module == null) {
@@ -164,7 +172,7 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	}
 
 	@Override
-	public void removeState(STATE state) {
+	public void removeState(final STATE state) {
 		final STATE entry = mState2Entry.get(state);
 		assert entry != null;
 		final Set<STATE> module = mEntry2Module.get(entry);
@@ -180,7 +188,7 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 		}
 		
 		if (isEntry(state)) {
-			assert module.size() == 0 : "Can only delete entry if it was the last state in module";
+			assert module.isEmpty() : "Can only delete entry if it was the last state in module";
 			mEntry2Module.remove(state);
 			mEntry2CallPredecessors.remove(state);
 		}
@@ -190,12 +198,12 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	}
 
 	@Override
-	public void addInternalTransition(STATE pred, LETTER letter, STATE succ) {
+	public void addInternalTransition(final STATE pred, final LETTER letter, final STATE succ) {
 			final STATE predEntry = mState2Entry.get(pred);
 			assert predEntry != null;
 			final STATE succEntry = mState2Entry.get(succ);
 			assert succEntry != null;
-			if( predEntry != succEntry) {
+			if (predEntry != succEntry) {
 				throw new IllegalArgumentException("Result is no senwa");
 			}
 		super.addInternalTransition(pred, letter, succ);
@@ -203,7 +211,7 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	}
 
 	@Override
-	public void addCallTransition(STATE pred, LETTER letter, STATE succ) {
+	public void addCallTransition(final STATE pred, final LETTER letter, final STATE succ) {
 		final STATE succEntry = mState2Entry.get(succ);
 		assert succ == succEntry;
 		Set<STATE> callPreds = mEntry2CallPredecessors.get(succ);
@@ -217,8 +225,8 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	}
 
 	@Override
-	public void addReturnTransition(STATE pred, STATE hier, LETTER letter,
-			STATE succ) {
+	public void addReturnTransition(final STATE pred, final STATE hier, final LETTER letter,
+			final STATE succ) {
 		final STATE predEntry = mState2Entry.get(pred);
 		assert predEntry != null;
 		final STATE hierEntry = mState2Entry.get(hier);

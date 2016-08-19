@@ -35,18 +35,19 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BiFunction;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
 
 /**
- * Represents a Boogie expression as an affine term of the form
- * {@code Σ ( c_i * x_i ) + c} where c are constants and x are variables.
+ * Represents a Boogie expression as an affine term of the form {@code Σ ( c_i * x_i ) + c} where c are constants and x
+ * are variables.
  * <p>
- * This may be an equivalent transformation of the original expression.
- * {@code null} is used when an expression cannot be transformed into an
- * affine term (either because it is not affine or we do not know if it is affine).
+ * This may be an equivalent transformation of the original expression. {@code null} is used when an expression cannot
+ * be transformed into an affine term (either because it is not affine or we do not know if it is affine).
  * <p>
  * Objects of this class are immutable.
  *
@@ -55,10 +56,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class AffineExpression {
 
 	/**
-	 * Map from the variables of this affine expression to their coefficients.
-	 * Variables with coefficient zero are not stored.
+	 * Map from the variables of this affine expression to their coefficients. Variables with coefficient zero are not
+	 * stored.
 	 */
-	private final Map<String, BigDecimal> mCoefficients;
+	private final Map<IBoogieVar, BigDecimal> mCoefficients;
 
 	/**
 	 * The constant summand of this affine expression.
@@ -69,12 +70,12 @@ public class AffineExpression {
 	 * Constructs a new affine expression of the form {@code Σ ( c_i * x_i ) + c}.
 	 *
 	 * @param coefficients
-	 * 	          Map from variables {@code x_i} to their coefficients {@code c_i}.
-	 *            The original map is used internally. It may be modified by this class, but not from the outside.
+	 *            Map from variables {@code x_i} to their coefficients {@code c_i}. The original map is used internally.
+	 *            It may be modified by this class, but not from the outside.
 	 * @param constant
 	 *            Constant of summand of the affine expression.
 	 */
-	public AffineExpression(final Map<String, BigDecimal> coefficients, final  BigDecimal constant) {
+	public AffineExpression(final Map<IBoogieVar, BigDecimal> coefficients, final BigDecimal constant) {
 		assert coefficients != null && constant != null;
 		mCoefficients = coefficients;
 		mConstant = constant;
@@ -84,9 +85,10 @@ public class AffineExpression {
 	/**
 	 * Constructs a new affine expression of the form {@code c}.
 	 *
-	 * @param constant Constant {@code c} of the affine expression.
+	 * @param constant
+	 *            Constant {@code c} of the affine expression.
 	 */
-	public AffineExpression(final  BigDecimal constant) {
+	public AffineExpression(final BigDecimal constant) {
 		this(new HashMap<>(), constant);
 	}
 
@@ -110,23 +112,24 @@ public class AffineExpression {
 	}
 
 	/**
-	 * Returns the variables and their coefficients from this affine expression.
-	 * All variables have a coefficient other than zero.
+	 * Returns the variables and their coefficients from this affine expression. All variables have a coefficient other
+	 * than zero.
 	 *
 	 * @return Map from variables to their coefficients.
 	 */
-	public Map<String, BigDecimal> getCoefficients() {
+	public Map<IBoogieVar, BigDecimal> getCoefficients() {
 		return Collections.unmodifiableMap(mCoefficients);
 	}
 
 	/**
-	 * Returns the coefficient of the given variable.
-	 * The coefficient is 0 for variables which are not part of this affine expression.
+	 * Returns the coefficient of the given variable. The coefficient is 0 for variables which are not part of this
+	 * affine expression.
 	 *
-	 * @param var Name of a variable.
+	 * @param var
+	 *            Name of a variable.
 	 * @return Coefficient of the given variable.
 	 */
-	public BigDecimal getCoefficient(final String var) {
+	public BigDecimal getCoefficient(final IBoogieVar var) {
 		final BigDecimal factor = mCoefficients.get(var);
 		return (factor == null) ? BigDecimal.ZERO : factor;
 	}
@@ -142,12 +145,12 @@ public class AffineExpression {
 	 * @return This affine expression is of the form {@code c}.
 	 */
 	public boolean isConstant() {
-//		for (BigDecimal factor : mCoefficients.values()) {
-//			if (factor.signum() != 0) {
-//				return false;
-//			}
-//		}
-//		return true;
+		// for (BigDecimal factor : mCoefficients.values()) {
+		// if (factor.signum() != 0) {
+		// return false;
+		// }
+		// }
+		// return true;
 		return mCoefficients.isEmpty();
 	}
 
@@ -163,9 +166,8 @@ public class AffineExpression {
 	}
 
 	/**
-	 * Constructs an equivalent {@link OneVarForm} of this affine expression if possible.
-	 * OneVarForm is an affine expression of the form {@code +/- x + c}
-	 * where {@code x} is a variable and {@code c} is a constant.
+	 * Constructs an equivalent {@link OneVarForm} of this affine expression if possible. OneVarForm is an affine
+	 * expression of the form {@code +/- x + c} where {@code x} is a variable and {@code c} is a constant.
 	 *
 	 * @return OneVarForm of this affine expression or null.
 	 */
@@ -173,7 +175,7 @@ public class AffineExpression {
 		if (mCoefficients.size() != 1) {
 			return null;
 		}
-		final Map.Entry<String, BigDecimal> entry = mCoefficients.entrySet().iterator().next();
+		final Entry<IBoogieVar, BigDecimal> entry = mCoefficients.entrySet().iterator().next();
 		if (entry.getValue().abs().compareTo(BigDecimal.ONE) != 0) {
 			return null;
 		}
@@ -185,9 +187,9 @@ public class AffineExpression {
 	}
 
 	/**
-	 * Constructs an equivalent {@link TwoVarForm} of this affine expression if possible.
-	 * TwoVarForm is an affine expression of the form {@code +/- x_1 +/- x_2 + c}
-	 * where {@code x_1, x_2} are variables and {@code c} is a constant.
+	 * Constructs an equivalent {@link TwoVarForm} of this affine expression if possible. TwoVarForm is an affine
+	 * expression of the form {@code +/- x_1 +/- x_2 + c} where {@code x_1, x_2} are variables and {@code c} is a
+	 * constant.
 	 *
 	 * @return OneVarForm of this affine expression or null.
 	 */
@@ -196,7 +198,7 @@ public class AffineExpression {
 		if (distinctVars < 1 || distinctVars > 2) {
 			return null;
 		}
-		final List<String> vars = new ArrayList<>(distinctVars);
+		final List<IBoogieVar> vars = new ArrayList<>(distinctVars);
 		final List<BigDecimal> coefficients = new ArrayList<>(distinctVars);
 		mCoefficients.entrySet().forEach(entry -> {
 			vars.add(entry.getKey());
@@ -224,20 +226,21 @@ public class AffineExpression {
 		twoVarForm.constant = new OctValue(mConstant);
 		return twoVarForm;
 	}
-	
+
 	/**
 	 * Creates a new affine expression that is the sum of this and another affine expression.
 	 *
-	 * @param summand Affine expression to be added.
+	 * @param summand
+	 *            Affine expression to be added.
 	 * @return {@code this + summand}
 	 */
 	public AffineExpression add(final AffineExpression summand) {
 		final AffineExpression sum = new AffineExpression();
 		sum.mConstant = mConstant.add(summand.mConstant);
-		final Set<String> vars = new HashSet<>();
+		final Set<IBoogieVar> vars = new HashSet<>();
 		vars.addAll(mCoefficients.keySet());
 		vars.addAll(summand.mCoefficients.keySet());
-		for (final String v : vars) {
+		for (final IBoogieVar v : vars) {
 			final BigDecimal sumFactor = getCoefficient(v).add(summand.getCoefficient(v));
 			sum.mCoefficients.put(v, sumFactor);
 		}
@@ -248,7 +251,8 @@ public class AffineExpression {
 	/**
 	 * Creates a new affine expression that is the difference of this and another affine expression.
 	 *
-	 * @param summand Affine expression to be added.
+	 * @param summand
+	 *            Affine expression to be added.
 	 * @return {@code this - summand}
 	 */
 	public AffineExpression subtract(final AffineExpression subtrahend) {
@@ -263,17 +267,18 @@ public class AffineExpression {
 	public AffineExpression negate() {
 		final AffineExpression negation = new AffineExpression();
 		negation.mConstant = mConstant.negate();
-		for (final Map.Entry<String, BigDecimal> entry : mCoefficients.entrySet()) {
+		for (final Entry<IBoogieVar, BigDecimal> entry : mCoefficients.entrySet()) {
 			negation.mCoefficients.put(entry.getKey(), entry.getValue().negate());
 		}
 		return negation;
 	}
 
 	/**
-	 * Creates a new affine expression that is the product of this and another affine expression,
-	 * if the product is affine.
+	 * Creates a new affine expression that is the product of this and another affine expression, if the product is
+	 * affine.
 	 *
-	 * @param factor Affine expression to be multiplicated.
+	 * @param factor
+	 *            Affine expression to be multiplicated.
 	 * @return {@code this * factor} or {@code null}
 	 */
 	public AffineExpression multiply(final AffineExpression factor) {
@@ -293,7 +298,7 @@ public class AffineExpression {
 		}
 		final AffineExpression product = new AffineExpression();
 		product.mConstant = affineFactor.mConstant.multiply(constantFactor.mConstant);
-		for (final Map.Entry<String, BigDecimal> entry : affineFactor.mCoefficients.entrySet()) {
+		for (final Entry<IBoogieVar, BigDecimal> entry : affineFactor.mCoefficients.entrySet()) {
 			final BigDecimal newCoefficent = entry.getValue().multiply(constantFactor.mConstant);
 			product.mCoefficients.put(entry.getKey(), newCoefficent);
 		}
@@ -301,11 +306,13 @@ public class AffineExpression {
 	}
 
 	/**
-	 * Creates a new affine expression that is the quotient of this and another affine expression,
-	 * if the quotient is affine.
+	 * Creates a new affine expression that is the quotient of this and another affine expression, if the quotient is
+	 * affine.
 	 *
-	 * @param divisor Affine expression dividing this affine expression.
-	 * @param integerDivison Calculate the euclidean integer division.
+	 * @param divisor
+	 *            Affine expression dividing this affine expression.
+	 * @param integerDivison
+	 *            Calculate the euclidean integer division.
 	 * @return {@code this / divisor} or {@code null}
 	 */
 	public AffineExpression divide(final AffineExpression divisor, final boolean integerDivison) {
@@ -322,11 +329,14 @@ public class AffineExpression {
 	/**
 	 * Creates a new affine expression that is the quotient of this and a constant, if the quotient is affine.
 	 *
-	 * @param divisor Constant dividing this affine expression.
-	 * @param integerDivison Calculate the euclidean integer division.
+	 * @param divisor
+	 *            Constant dividing this affine expression.
+	 * @param integerDivison
+	 *            Calculate the euclidean integer division.
 	 * @return {@code this / divisor}
 	 *
-	 * @throws ArithmeticException The quotient could not be transformed into an affine expression.
+	 * @throws ArithmeticException
+	 *             The quotient could not be transformed into an affine expression.
 	 */
 	private AffineExpression divideByConstant(final BigDecimal divisor, final boolean integerDivison) {
 		if (isConstant()) {
@@ -342,7 +352,7 @@ public class AffineExpression {
 					integerDivison ? NumUtil::exactDivison : BigDecimal::divide;
 			final AffineExpression quotient = new AffineExpression();
 			quotient.mConstant = divOp.apply(mConstant, divisor);
-			for (final Map.Entry<String, BigDecimal> entry : mCoefficients.entrySet()) {
+			for (final Entry<IBoogieVar, BigDecimal> entry : mCoefficients.entrySet()) {
 				final BigDecimal newCoefficent = divOp.apply(entry.getValue(), divisor);
 				quotient.mCoefficients.put(entry.getKey(), newCoefficent);
 			}
@@ -351,11 +361,13 @@ public class AffineExpression {
 	}
 
 	/**
-	 * Creates a new affine expression that is the remainder of the euclidean division
-	 * of this and another affine expression, if the quotient is affine.
+	 * Creates a new affine expression that is the remainder of the euclidean division of this and another affine
+	 * expression, if the quotient is affine.
 	 *
-	 * @param divisor Constant dividing this affine expression.
-	 * @param integerDivison Calculate the remainder of the euclidean integer division.
+	 * @param divisor
+	 *            Constant dividing this affine expression.
+	 * @param integerDivison
+	 *            Calculate the remainder of the euclidean integer division.
 	 * @return {@code this % divisor} or {@code null}
 	 */
 	public AffineExpression modulo(final AffineExpression divisor) {
@@ -383,11 +395,13 @@ public class AffineExpression {
 		if (mConstant.compareTo(other.mConstant) != 0) {
 			return false;
 		}
-		final Set<String> vars = new HashSet<>();
+		final Set<IBoogieVar> vars = new HashSet<>();
 		vars.addAll(mCoefficients.keySet());
 		vars.addAll(other.mCoefficients.keySet());
-		for (final String v : vars) {
-			if (getCoefficient(v).compareTo(other.getCoefficient(v)) != 0) {
+		for (final IBoogieVar v : vars) {
+			final BigDecimal coeff = getCoefficient(v);
+			final BigDecimal otherCoeff = other.getCoefficient(v);
+			if (coeff.compareTo(otherCoeff) != 0) {
 				return false;
 			}
 		}
@@ -397,7 +411,7 @@ public class AffineExpression {
 	@Override
 	public String toString() {
 		final StringBuilder strBuilder = new StringBuilder();
-		for (final Map.Entry<String, BigDecimal> entry : mCoefficients.entrySet()) {
+		for (final Entry<IBoogieVar, BigDecimal> entry : mCoefficients.entrySet()) {
 			strBuilder.append(entry.getValue());
 			strBuilder.append('\u22C5'); // multiplication dot
 			strBuilder.append(entry.getKey());
@@ -409,14 +423,14 @@ public class AffineExpression {
 
 	/** @see AffineExpression#getOneVarForm() */
 	public static class OneVarForm {
-		public String var;
+		public IBoogieVar var;
 		public boolean negVar;
 		public OctValue constant;
 	}
 
 	/** @see AffineExpression#getTwoVarForm() */
 	public static class TwoVarForm {
-		public String var1, var2;
+		public IBoogieVar var1, var2;
 		public boolean negVar2, negVar1;
 		public OctValue constant;
 	}

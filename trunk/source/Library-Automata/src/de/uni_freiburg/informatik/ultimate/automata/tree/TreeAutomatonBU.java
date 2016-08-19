@@ -1,10 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.automata.tree;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -102,7 +106,6 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 
 	@Override
 	public Set<STATE> getInitialStates() {
-		// TODO Auto-generated method stub
 		return initalStates;
 	}
 
@@ -116,27 +119,115 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 	}
 
 	@Override
-	public Iterable<OutgoingTreeTransition<LETTER, STATE>> getSuccessors(List<STATE> states) {
-		List<OutgoingTreeTransition<LETTER, STATE>> successors = new LinkedList<OutgoingTreeTransition<LETTER, STATE>>();
+	public Iterable<TreeAutomatonRule<LETTER, STATE>> getSuccessors(List<STATE> states) {
+		List<TreeAutomatonRule<LETTER, STATE>> successors = new LinkedList<TreeAutomatonRule<LETTER, STATE>>();
 		for (LETTER letter : parentsMap.get(states).keySet()) {
 			for (STATE state : parentsMap.get(states).get(letter)) {
-				successors.add(new OutgoingTreeTransition<LETTER, STATE>(letter, state));
+				successors.add(new TreeAutomatonRule<LETTER, STATE>(letter, states, state));
 			}
 		}
 		return successors;
 	}
+	
+	@Override
+	public boolean isInitialState(STATE state) {
+		return initalStates.contains(state);
+	}
 
+	public Iterator<TreeAutomatonRule<LETTER, STATE>> getRulesIterator() {
+		
+		final Iterator<STATE> qStates = states.iterator();
+		return new Iterator<TreeAutomatonRule<LETTER, STATE>>() {
+
+			Iterator<LETTER> letters;
+			Iterator<List<STATE>> parents;
+
+			LETTER currentLetter;
+			STATE currentState;
+			List<STATE> currentParent;
+			private boolean initalized = false;
+			
+			private boolean moveNextState() {
+				if (!qStates.hasNext()) {currentState = null; return false;}
+				currentState = qStates.next();
+				letters = getPredecessors(currentState).keySet().iterator();
+				return true;
+			}
+			private boolean moveNextLetter() {
+				if (letters == null || !letters.hasNext()) {
+					if (!moveNextState()) { currentLetter = null; return false; }
+					return moveNextLetter();
+				}
+				currentLetter = letters.next();
+				parents = getPredecessors(currentState, currentLetter).iterator();
+				return true;
+			}
+			private boolean moveNextParent() { 
+				if (parents == null || !parents.hasNext()) {
+					if (!moveNextLetter()) { currentParent = null; return false;}
+					return moveNextParent();
+				}
+				currentParent = parents.next();
+				return true;
+			}
+			private void initalize() {
+				if (!initalized) {
+					initalized = true;
+					moveNextParent();
+				}
+			}
+			public boolean hasNext() {
+				initalize();
+				return currentParent != null;
+			}
+
+			@Override
+			public TreeAutomatonRule<LETTER, STATE> next() {
+				if (!hasNext()) {
+					throw new NoSuchElementException();
+				}
+				TreeAutomatonRule<LETTER, STATE> rule = new TreeAutomatonRule<LETTER, STATE>(currentLetter, currentParent, currentState);
+				moveNextParent();
+				return rule;
+			}
+		};
+	}
+	public Iterable<TreeAutomatonRule<LETTER, STATE>> getRules() {
+
+		ArrayList<TreeAutomatonRule<LETTER, STATE>> list = new ArrayList<>();
+
+		for (STATE child : childrenMap.keySet()) {
+			for (LETTER letter : childrenMap.get(child).keySet()) {
+				for (List<STATE> rule : childrenMap.get(child).get(letter)) {
+					list.add(new TreeAutomatonRule<LETTER, STATE>(letter, rule, child));
+				}
+			}
+		}
+		return list;
+	}
 	@Override
 	public Iterable<STATE> getSuccessors(List<STATE> states, LETTER letter) {
 		return parentsMap.get(states).get(letter);
 	}
 
+	@Override
 	public Map<LETTER, Iterable<List<STATE>>> getPredecessors(STATE state) {
 		return childrenMap.get(state);
 	}
 
+	@Override
 	public Iterable<List<STATE>> getPredecessors(STATE state, LETTER letter) {
 		return childrenMap.get(state).get(letter);
+	}
+	
+	public void complementFinals() {
+		Set<STATE> newFinals = new HashSet<STATE>();
+		for (STATE st : states) {
+			if (!isFinalState(st)) {
+				newFinals.add(st);
+			}
+		}
+		finalStates = newFinals;
 	}
 	public String stateString(STATE state) {
 		String res = state.toString();
@@ -146,7 +237,7 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 			res += "*";
 		return res;
 	}
-	public String DebugString() {
+	public String toString() {
 		String statesString = "";
 		for (STATE state : states) {
 			statesString += stateString(state) + " ";
@@ -155,7 +246,7 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 		for (STATE child : childrenMap.keySet()) {
 			for (LETTER letter : childrenMap.get(child).keySet()) {
 				for (List<STATE> rule : childrenMap.get(child).get(letter)) {
-					rulesString += String.format("%s(%s) ~~> %s\n", letter, rule, stateString(child));
+					rulesString += String.format("%s%s ~~> %s\n", letter, rule, stateString(child));
 				}
 			}
 		}

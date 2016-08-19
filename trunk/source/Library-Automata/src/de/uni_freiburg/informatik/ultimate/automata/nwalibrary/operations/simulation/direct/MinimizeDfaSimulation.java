@@ -36,11 +36,12 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -72,12 +73,12 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	/**
 	 * The inputed buechi automaton.
 	 */
-	private INestedWordAutomatonOldApi<LETTER, STATE> mOperand;
+	private INestedWordAutomaton<LETTER, STATE> mOperand;
 
 	/**
 	 * The resulting possible reduced buechi automaton.
 	 */
-	private INestedWordAutomatonOldApi<LETTER, STATE> mResult;
+	private INestedWordAutomaton<LETTER, STATE> mResult;
 
 	/**
 	 * Service provider of Ultimate framework.
@@ -100,7 +101,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	 *             framework.
 	 */
 	public MinimizeDfaSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand,
 				new DirectSimulation<>(services.getProgressMonitorService(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), true, stateFactory,
@@ -127,7 +128,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	 *             framework.
 	 */
 	protected MinimizeDfaSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final DirectSimulation<LETTER, STATE> simulation)
+			final INestedWordAutomaton<LETTER, STATE> operand, final DirectSimulation<LETTER, STATE> simulation)
 					throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -146,7 +147,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 			final DirectSimulation<LETTER, STATE> nonSccSim = new DirectSimulation<LETTER, STATE>(
 					mServices.getProgressMonitorService(), mLogger, false, stateFactory, graph);
 			nonSccSim.doSimulation();
-			final INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = nonSccSim.getResult();
+			final INestedWordAutomaton<LETTER, STATE> nonSCCresult = nonSccSim.getResult();
 			if (mResult.size() != nonSCCresult.size()) {
 				throw new AssertionError();
 			}
@@ -163,13 +164,16 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	 * uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory)
 	 */
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(mServices, mOperand, mResult, stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(mServices, mResult, mOperand, stateFactory) == null);
+		
+		correct &= new IsIncluded<>(mServices, stateFactory, mOperand, mResult).getResult();
+		correct &= new IsIncluded<>(mServices, stateFactory, mResult, mOperand).getResult();
+		
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
+					operationName() + "Failed", "language is different", mOperand);
 		}
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
@@ -192,7 +196,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
 	 */
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 
@@ -232,7 +236,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	 * 
 	 * @return The inputed automaton.
 	 */
-	protected INestedWordAutomatonOldApi<LETTER, STATE> getOperand() {
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 

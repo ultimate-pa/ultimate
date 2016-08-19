@@ -33,27 +33,53 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Senwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.SenwaWalker.ISuccessorVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, STATE>, IOperation<LETTER, STATE> {
+public class SenwaBuilder<LETTER, STATE>
+		implements ISuccessorVisitor<LETTER, STATE>,
+			IOperation<LETTER, STATE> {
 	
 	private final AutomataLibraryServices mServices;
-	Senwa<LETTER, STATE> mSenwa;
-	INestedWordAutomatonOldApi<LETTER, STATE> mNwa;
-	Set<STATE> mAdded = new HashSet<STATE>();
+	private final Senwa<LETTER, STATE> mSenwa;
+	private final INestedWordAutomaton<LETTER, STATE> mNwa;
+//	private final Set<STATE> mAdded = new HashSet<>();
 	
-	Map<STATE,STATE> mResult2Operand = new HashMap<STATE,STATE>();
-	Map<STATE,Map<STATE,STATE>> mEntry2Operand2Result = new HashMap<STATE,Map<STATE,STATE>>();
+	private final Map<STATE,STATE> mResult2Operand = new HashMap<>();
+	private final Map<STATE,Map<STATE,STATE>> mEntry2Operand2Result = new HashMap<>();
 	
 	
 	private final ILogger mLogger;
+
+	/**
+	 * @param services Ultimate services
+	 * @param nwa nested word automaton
+	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 */
+	public SenwaBuilder(final AutomataLibraryServices services, 
+			final INestedWordAutomaton<LETTER, STATE> nwa)
+					throws AutomataOperationCanceledException {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mNwa = nwa;
+		mLogger.info(startMessage());
+		mSenwa = new Senwa<LETTER, STATE>(mServices,
+				mNwa.getInternalAlphabet(), mNwa.getCallAlphabet(), 
+				mNwa.getReturnAlphabet(), mNwa.getStateFactory());
+		new SenwaWalker<LETTER, STATE>(mServices, mSenwa, this, true);
+		mLogger.info(exitMessage());
+	}
 	
 	
 	@Override
@@ -74,25 +100,7 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	}
 	
 	
-	
-	
-	
-	public SenwaBuilder(AutomataLibraryServices services, 
-			INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mNwa = nwa;
-		mLogger.info(startMessage());
-		mSenwa = new Senwa<LETTER, STATE>(mServices,
-				mNwa.getInternalAlphabet(), mNwa.getCallAlphabet(), 
-				mNwa.getReturnAlphabet(), mNwa.getStateFactory());
-		new SenwaWalker<LETTER, STATE>(mServices, mSenwa, this, true);
-		mLogger.info(exitMessage());
-	}
-	
-	
-	
-	private STATE getOrConstructResultState(STATE opEntry, STATE opState, boolean isInitial) {
+	private STATE getOrConstructResultState(final STATE opEntry, final STATE opState, final boolean isInitial) {
 		assert mNwa.getStates().contains(opState);
 		assert mNwa.getStates().contains(opEntry);
 		Map<STATE, STATE> op2res = mEntry2Operand2Result.get(opEntry);
@@ -112,7 +120,7 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 		return resState;
 	}
 	
-	private STATE getOperandState(STATE resState) {
+	private STATE getOperandState(final STATE resState) {
 		assert mSenwa.getStates().contains(resState);
 		final STATE opState = mResult2Operand.get(resState);
 		assert opState != null;
@@ -131,13 +139,15 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	}
 
 	@Override
-	public Iterable<STATE> visitAndGetInternalSuccessors(STATE resState) {
+	public Iterable<STATE> visitAndGetInternalSuccessors(final STATE resState) {
 		final STATE resEntry = mSenwa.getEntry(resState);
 		final STATE opEntry = getOperandState(resEntry);
 		final Set<STATE> resSuccs = new HashSet<STATE>();
 		final STATE opState = getOperandState(resState);
 		for (final LETTER letter : mNwa.lettersInternal(opState)) {
-			for (final STATE opSucc : mNwa.succInternal(opState, letter)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans :
+					mNwa.internalSuccessors(opState, letter)) {
+				final STATE opSucc = trans.getSucc();
 				final STATE resSucc = getOrConstructResultState(opEntry, opSucc, false);
 				resSuccs.add(resSucc);
 				mSenwa.addInternalTransition(resState, letter, resSucc);
@@ -147,11 +157,13 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	}
 
 	@Override
-	public Iterable<STATE> visitAndGetCallSuccessors(STATE resState) {
+	public Iterable<STATE> visitAndGetCallSuccessors(final STATE resState) {
 		final Set<STATE> resSuccs = new HashSet<STATE>();
 		final STATE opState = getOperandState(resState);
 		for (final LETTER letter : mNwa.lettersCall(opState)) {
-			for (final STATE opSucc : mNwa.succCall(opState, letter)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans :
+					mNwa.callSuccessors(opState, letter)) {
+				final STATE opSucc = trans.getSucc();
 				final STATE resSucc = getOrConstructResultState(opSucc, opSucc, false);
 				resSuccs.add(resSucc);
 				mSenwa.addCallTransition(resState, letter, resSucc);
@@ -161,15 +173,17 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	}
 
 	@Override
-	public Iterable<STATE> visitAndGetReturnSuccessors(STATE resState,
-			STATE resHier) {
+	public Iterable<STATE> visitAndGetReturnSuccessors(final STATE resState,
+			final STATE resHier) {
 		final STATE opState = getOperandState(resState);
 		final STATE opHier = getOperandState(resHier);
 		final STATE resHierEntry = mSenwa.getEntry(resHier);
 		final STATE opHierEntry = getOperandState(resHierEntry);
 		final Set<STATE> resSuccs = new HashSet<STATE>();
 		for (final LETTER letter : mNwa.lettersReturn(opState)) {
-			for (final STATE opSucc : mNwa.succReturn(opState, opHier, letter)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> trans :
+					mNwa.returnSuccessors(opState, opHier, letter)) {
+				final STATE opSucc = trans.getSucc();
 				final STATE resSucc = getOrConstructResultState(opHierEntry, opSucc, false);
 				resSuccs.add(resSucc);
 				mSenwa.addReturnTransition(resState, resHier, letter, resSucc);
@@ -184,14 +198,15 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(mServices, mNwa, mSenwa, stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(mServices, mSenwa, mNwa, stateFactory) == null);
+		correct &= new IsIncluded<>(mServices, stateFactory, mNwa, mSenwa).getResult();
+		correct &= new IsIncluded<>(mServices, stateFactory, mSenwa, mNwa).getResult();
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mNwa);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
+					operationName() + "Failed", "", mNwa);
 		}
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;

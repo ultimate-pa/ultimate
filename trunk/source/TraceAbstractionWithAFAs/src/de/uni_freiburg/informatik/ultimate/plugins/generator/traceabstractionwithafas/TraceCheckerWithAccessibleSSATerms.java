@@ -31,16 +31,16 @@ import java.util.Map;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
@@ -55,7 +55,7 @@ public class TraceCheckerWithAccessibleSSATerms extends TraceChecker {
 			ModifiableGlobalVariableManager modifiedGlobals,
 			AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
-			PredicateUnifier predicateUnifier, INTERPOLATION interpolation) {
+			PredicateUnifier predicateUnifier, InterpolationTechnique interpolation) {
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals, 
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution);
 		mscript = smtManager.getScript();
@@ -73,7 +73,7 @@ public class TraceCheckerWithAccessibleSSATerms extends TraceChecker {
 		return mNsb.getSsa().getFormulaFromNonCallPos(position);
 	}
 	
-	public Map<Term, BoogieVar> getConstantsToBoogieVar() {
+	public Map<Term, IProgramVar> getConstantsToBoogieVar() {
 		return mNsb.getConstants2BoogieVar();
 	}
 }

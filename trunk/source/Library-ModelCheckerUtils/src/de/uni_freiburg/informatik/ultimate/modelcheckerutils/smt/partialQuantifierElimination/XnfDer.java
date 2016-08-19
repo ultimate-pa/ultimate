@@ -38,12 +38,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
@@ -53,12 +53,8 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  */
 public class XnfDer extends XjunctPartialQuantifierElimination {
 
-	private final IFreshTermVariableConstructor mFreshVarConstructor;
-
-	public XnfDer(Script script, IUltimateServiceProvider services, 
-			IFreshTermVariableConstructor freshVarConstructor) {
+	public XnfDer(final ManagedScript script, final IUltimateServiceProvider services) {
 		super(script, services);
-		mFreshVarConstructor = freshVarConstructor;
 	}
 
 	@Override
@@ -78,8 +74,8 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 
 
 	@Override
-	public Term[] tryToEliminate(int quantifier, Term[] inputAtoms,
-			Set<TermVariable> eliminatees) {
+	public Term[] tryToEliminate(final int quantifier, final Term[] inputAtoms,
+			final Set<TermVariable> eliminatees) {
 		Term[] resultAtoms = inputAtoms;
 		boolean someVariableWasEliminated;
 		// an elimination may allow further eliminations
@@ -120,7 +116,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	 * 
 	 * @param logger
 	 */
-	public Term[] derSimple(Script script, int quantifier, Term[] inputAtoms, TermVariable tv, ILogger logger) {
+	public Term[] derSimple(final Script script, final int quantifier, final Term[] inputAtoms, final TermVariable tv, final ILogger logger) {
 		final Term[] resultAtoms;
 		final EqualityInformation eqInfo = EqualityInformation.getEqinfo(script, tv, inputAtoms, null, quantifier, logger);
 		if (eqInfo == null) {
@@ -130,8 +126,8 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 			logger.debug(new DebugMessage("eliminated quantifier via DER for {0}", tv));
 			resultAtoms = new Term[inputAtoms.length - 1];
 			final Map<Term, Term> substitutionMapping = Collections.singletonMap(eqInfo.getVariable(), eqInfo.getTerm());
-			final SafeSubstitution substitution = new SafeSubstitutionWithLocalSimplification(
-					script, mFreshVarConstructor, substitutionMapping);
+			final Substitution substitution = new SubstitutionWithLocalSimplification(
+					mMgdScript, substitutionMapping);
 			for (int i = 0; i < eqInfo.getIndex(); i++) {
 				resultAtoms[i] = substituteAndNormalize(substitution, inputAtoms[i]);
 			}
@@ -145,8 +141,8 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	/**
 	 * Apply substitution to term and normalize afterwards if the substitution modified the term.
 	 */
-	private Term substituteAndNormalize(SafeSubstitution substitution, Term term) {
-		Term result =  substitution.transform(term);
+	private Term substituteAndNormalize(final Substitution substitution, final Term term) {
+		Term result = substitution.transform(term);
 		if (term != result) {
 			try {
 				final AffineRelation afr = new AffineRelation(mScript, result);

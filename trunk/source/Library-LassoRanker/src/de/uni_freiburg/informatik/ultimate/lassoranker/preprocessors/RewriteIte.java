@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IteRemover;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
 /**
@@ -43,15 +44,20 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IteRemover;
  */
 public class RewriteIte extends TransitionPreprocessor {
 	public static final String s_Description = "Remove if-then-else terms.";
+	private final ManagedScript mMgdScript;
 	
+	public RewriteIte(final ManagedScript mgdScript) {
+		mMgdScript = mgdScript;
+	}
+
 	@Override
 	public String getDescription() {
 		return s_Description;
 	}
 	
 	@Override
-	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
-			TransFormulaLR newTF) {
+	protected boolean checkSoundness(final Script script, final TransFormulaLR oldTF,
+			final TransFormulaLR newTF) {
 		final Term old_term = oldTF.getFormula();
 		final Term new_term = newTF.getFormula();
 		return LBool.SAT != Util.checkSat(script,
@@ -59,8 +65,8 @@ public class RewriteIte extends TransitionPreprocessor {
 	}
 	
 	@Override
-	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
-		final IteRemover iteRemover = new IteRemover(script);
+	public TransFormulaLR process(final Script script, final TransFormulaLR tf) throws TermException {
+		final IteRemover iteRemover = new IteRemover(mMgdScript);
 		tf.setFormula(iteRemover.transform(tf.getFormula()));
 		return tf;
 	}

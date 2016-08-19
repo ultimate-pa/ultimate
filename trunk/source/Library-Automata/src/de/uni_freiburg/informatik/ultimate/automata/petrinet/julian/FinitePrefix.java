@@ -29,26 +29,30 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.order;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class FinitePrefix<LETTER,STATE> implements IOperation<LETTER,STATE> {
+public class FinitePrefix<LETTER,STATE>
+		extends UnaryNetOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
 	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-
-	private final PetriNetJulian<LETTER,STATE> mOperand;
 	private final BranchingProcess<LETTER,STATE> mResult;
 	
-	public FinitePrefix(AutomataLibraryServices services, 
-			PetriNetJulian<LETTER,STATE> operand) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mOperand = operand;
+	/**
+	 * Constructor.
+	 * 
+	 * @param services Ultimate services
+	 * @param operand operand
+	 * @throws AutomataLibraryException if construction fails
+	 */
+	public FinitePrefix(final AutomataLibraryServices services, 
+			final PetriNetJulian<LETTER,STATE> operand)
+					throws AutomataLibraryException {
+		super(services, operand);
 		mLogger.info(startMessage());
-		final PetriNetUnfolder<LETTER,STATE> unf = new PetriNetUnfolder<LETTER,STATE>(mServices, operand, order.ERV, true, false);
+		final PetriNetUnfolder<LETTER,STATE> unf =
+				new PetriNetUnfolder<LETTER,STATE>(
+						mServices, operand, order.ERV, true, false);
 		mResult = unf.getFinitePrefix();
 		mLogger.info(exitMessage());
 	}
@@ -57,28 +61,16 @@ public class FinitePrefix<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public String operationName() {
 		return "finitePrefix";
 	}
-
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() +
-			"Operand " + mOperand.sizeInformation();
-	}
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() +
-			" Result " + mResult.sizeInformation();
+		return "Finished " + operationName()
+			+ " Result " + mResult.sizeInformation();
 	}
 
 	@Override
-	public BranchingProcess<LETTER,STATE> getResult() throws AutomataLibraryException {
+	public BranchingProcess<LETTER,STATE> getResult()
+			throws AutomataLibraryException {
 		return mResult;
 	}
-
-	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		return true;
-	}
-
 }

@@ -31,8 +31,8 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Transform Boolean Term into disjunctive normal form.
@@ -41,14 +41,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 public class Dnf extends Xnf {
 	
-	public Dnf(Script script, IUltimateServiceProvider services, 
-			IFreshTermVariableConstructor freshTermVariableConstructor) {
-		super(script, services, freshTermVariableConstructor);
+	public Dnf(final ManagedScript script, final IUltimateServiceProvider services) {
+		super(script, services);
 	}
 	
 	
 	@Override
-	protected NnfTransformerHelper getNnfTransformerHelper(IUltimateServiceProvider services) {
+	protected NnfTransformerHelper getNnfTransformerHelper(final IUltimateServiceProvider services) {
 		return new DnfTransformerHelper(services);
 	}
 
@@ -56,7 +55,7 @@ public class Dnf extends Xnf {
 
 	protected class DnfTransformerHelper extends XnfTransformerHelper {
 		
-		protected DnfTransformerHelper(IUltimateServiceProvider services) {
+		protected DnfTransformerHelper(final IUltimateServiceProvider services) {
 			super(services);
 		}
 
@@ -81,19 +80,19 @@ public class Dnf extends Xnf {
 		}
 
 		@Override
-		public Term innerConnective(Script script, List<Term> params) {
+		public Term innerConnective(final Script script, final List<Term> params) {
 			final Term result = SmtUtils.and(mScript, params);
 			return result;
 		}
 
 		@Override
-		public Term outerConnective(Script script, List<Term> params) {
+		public Term outerConnective(final Script script, final List<Term> params) {
 			final Term result = SmtUtils.or(mScript, params);
 			return result;
 		}
 
 		@Override
-		public Term[] getOuterJuncts(Term term) {
+		public Term[] getOuterJuncts(final Term term) {
 			return SmtUtils.getDisjuncts(term);
 		}
 

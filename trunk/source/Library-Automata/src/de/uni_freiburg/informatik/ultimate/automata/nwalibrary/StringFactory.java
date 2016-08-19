@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.LevelRankingState;
@@ -43,25 +44,26 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class StringFactory extends StateFactory<String> {
 
 	@Override
-	public String intersection(String s1, String s2) {
+	public String intersection(final String s1, final String s2) {
   		final StringBuilder sb = new StringBuilder("[");
   		sb.append(s1).append(", ").append(s2).append("]");
   		return sb.toString();
 	}
 	
 	@Override
-	public String intersectBuchi(String s1, String s2, int track) {
+	public String intersectBuchi(final String s1, final String s2, final int track) {
 		final StringBuilder sb = new StringBuilder("[");
 		sb.append(s1).append(", ").append(s2).append(", track").append(track).append("]");
 		return sb.toString();
 	}
 
 	@Override
-	public String determinize(Map<String, Set<String>> down2up) {
+	public String determinize(final Map<String, Set<String>> down2up) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("{");
-		for (final String down : down2up.keySet()) {
-			final Iterator<String> it = down2up.get(down).iterator();
+		for (final Entry<String, Set<String>> entry : down2up.entrySet()) {
+			final String down = entry.getKey();
+			final Iterator<String> it = entry.getValue().iterator();
 			String up = it.next();
 			sb.append("(").append(down).append(",").append(up).append(")");
 			while (it.hasNext()) {
@@ -107,15 +109,14 @@ public class StringFactory extends StateFactory<String> {
 	
 	
 	@Override
-	public String getContentOnPetriNet2FiniteAutomaton(Marking<?, String> marking) {
+	public String getContentOnPetriNet2FiniteAutomaton(final Marking<?, String> marking) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("{");
 		boolean firstElement = true;
 		for (final Place<?, String> place  : marking) {
 			if (firstElement) {
 				firstElement = false;
-			}
-			else {
+			} else {
 				sb.append(",");
 			}
 			sb.append(place.getContent());
@@ -126,18 +127,18 @@ public class StringFactory extends StateFactory<String> {
 
 
 	@Override
-	public String getBlackContent(String c) {
-		return "Black:"+c;
+	public String getBlackContent(final String c) {
+		return "Black:" + c;
 	}
 
 
 	@Override
-	public String getWhiteContent(String c) {
-		return "White:"+c;
+	public String getWhiteContent(final String c) {
+		return "White:" + c;
 	}
 	
 	@Override
-	public String buchiComplementFKV(LevelRankingState<?, String> compl) {
+	public String buchiComplementFKV(final LevelRankingState<?, String> compl) {
 		if (compl.isNonAcceptingSink()) {
 			return compl.toString();
 		}
@@ -182,7 +183,7 @@ public class StringFactory extends StateFactory<String> {
 	
 	
 	@Override
-	public String buchiComplementNCSB(LevelRankingState<?, String> compl) {
+	public String buchiComplementNCSB(final LevelRankingState<?, String> compl) {
 		if (compl.isNonAcceptingSink()) {
 			return compl.toString();
 		}
@@ -229,7 +230,9 @@ public class StringFactory extends StateFactory<String> {
 	
 	
 
-	private String prettyprintCollectionOfStates(List<Pair<StateWithRankInfo<String>,String>> collection, boolean isNestedWordAutomaton) {
+	private String prettyprintCollectionOfStates(
+			final List<Pair<StateWithRankInfo<String>,String>> collection,
+			final boolean isNestedWordAutomaton) {
 		if (collection.isEmpty()) {
 			return "{}";
 		} else {
@@ -261,28 +264,28 @@ public class StringFactory extends StateFactory<String> {
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ContentFactory#complementBuchiDeterministicNonFinal(java.lang.Object)
 	 */
 	@Override
-	public String complementBuchiDeterministicNonFinal(String c) {
+	public String complementBuchiDeterministicNonFinal(final String c) {
 		// TODO Auto-generated method stub
-		return "NonFinal:"+c;
+		return "NonFinal:" + c;
 	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ContentFactory#complementBuchiDeterministicFinal(java.lang.Object)
 	 */
 	@Override
-	public String complementBuchiDeterministicFinal(String c) {
-		return "Final:"+c;
+	public String complementBuchiDeterministicFinal(final String c) {
+		return "Final:" + c;
 	}
 	
 	@Override
-	public String minimize(Collection<String> states) {
-		if(states == null) {
+	public String minimize(final Collection<String> states) {
+		if (states == null) {
 			return "{}";
 		}
 		final StringBuilder sb = new StringBuilder("{");
-		for(final Iterator<String> it = states.iterator(); it.hasNext(); ) {
+		for (final Iterator<String> it = states.iterator(); it.hasNext(); ) {
 			sb.append(it.next());
-			if(it.hasNext()) {
+			if (it.hasNext()) {
 				sb.append(", ");
 			}
 		}
@@ -290,12 +293,12 @@ public class StringFactory extends StateFactory<String> {
 	}
 
 	@Override
-	public String createDoubleDeckerContent(String down, String up) {
+	public String createDoubleDeckerContent(final String down, final String up) {
 		return "<" + down + "," + up + ">";
 	}
 
 	@Override
-	public String constructBuchiSVWState(Integer stateNb, Integer tmaNb) {
+	public String constructBuchiSVWState(final Integer stateNb, final Integer tmaNb) {
 		final StringBuilder sb = new StringBuilder("(");
 		sb.append(stateNb);
 		sb.append(",");
@@ -305,14 +308,13 @@ public class StringFactory extends StateFactory<String> {
 	}
 
 	@Override
-	public String finitePrefix2net(Condition<?, String> c) {
+	public String finitePrefix2net(final Condition<?, String> c) {
 		return c.toString();
 	}
 	
 	@Override
-	public String senwa(String entry, String state) {
+	public String senwa(final String entry, final String state) {
 		final String result = state + " (entry " + entry + ")";
 		return result;
 	}
-	
 }

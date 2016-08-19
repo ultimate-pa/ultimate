@@ -47,7 +47,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private int mStatesRemovedByMinimization = 0;
 	private int mIterations = 0;
 	private int mAbsIntIterations = 0;
-	private SizeIterationPair mBiggestAbstraction = CegarStatisticsType.getInstance().new SizeIterationPair(-1, -1);
+	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
 	private BackwardCoveringInformation mBCI = new BackwardCoveringInformation(0, 0);
 	private int mAbsIntStrong = 0;
 	private int mTraceHistogramMaximum = 0;
@@ -57,35 +57,35 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		return getBenchmarkType().getKeys();
 	}
 
-	public void setResult(Object result) {
+	public void setResult(final Object result) {
 		mResult = result;
 	}
 
-	public void addEdgeCheckerData(IStatisticsDataProvider ecbd) {
+	public void addEdgeCheckerData(final IStatisticsDataProvider ecbd) {
 		mEcData.aggregateBenchmarkData(ecbd);
 	}
 
-	public void addPredicateUnifierData(IStatisticsDataProvider pubd) {
+	public void addPredicateUnifierData(final IStatisticsDataProvider pubd) {
 		mPuData.aggregateBenchmarkData(pubd);
 	}
 
-	public void addTraceCheckerData(IStatisticsDataProvider tcbd) {
+	public void addTraceCheckerData(final IStatisticsDataProvider tcbd) {
 		mTcData.aggregateBenchmarkData(tcbd);
 	}
 
-	public void addInterpolationConsolidationData(IStatisticsDataProvider tcbd) {
+	public void addInterpolationConsolidationData(final IStatisticsDataProvider tcbd) {
 		mInterpolantConsolidationBenchmarks.aggregateBenchmarkData(tcbd);
 	}
 
-	public void addTotalInterpolationData(IStatisticsDataProvider tibd) {
+	public void addTotalInterpolationData(final IStatisticsDataProvider tibd) {
 		mTiData.aggregateBenchmarkData(tibd);
 	}
 
-	public void addBackwardCoveringInformation(BackwardCoveringInformation bci) {
+	public void addBackwardCoveringInformation(final BackwardCoveringInformation bci) {
 		mBCI = new BackwardCoveringInformation(mBCI, bci);
 	}
 
-	public void announceStatesRemovedByMinimization(int statesRemoved) {
+	public void announceStatesRemovedByMinimization(final int statesRemoved) {
 		mStatesRemovedByMinimization += statesRemoved;
 	}
 
@@ -101,20 +101,20 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		mAbsIntStrong++;
 	}
 
-	public void reportAbstractionSize(int size, int iteration) {
+	public void reportAbstractionSize(final int size, final int iteration) {
 		if (size > mBiggestAbstraction.getSize()) {
-			mBiggestAbstraction = CegarStatisticsType.getInstance().new SizeIterationPair(size, iteration);
+			mBiggestAbstraction = new SizeIterationPair(size, iteration);
 		}
 	}
 	
-	public void reportTraceHistogramMaximum(int maxCurrentTrace) {
+	public void reportTraceHistogramMaximum(final int maxCurrentTrace) {
 		if (maxCurrentTrace > mTraceHistogramMaximum) {
 			mTraceHistogramMaximum = maxCurrentTrace;
 		}
 	}
 
 	@Override
-	public Object getValue(String key) {
+	public Object getValue(final String key) {
 		final CegarLoopStatisticsDefinitions keyEnum = Enum.valueOf(CegarLoopStatisticsDefinitions.class, key);
 		switch (keyEnum) {
 		case Result:

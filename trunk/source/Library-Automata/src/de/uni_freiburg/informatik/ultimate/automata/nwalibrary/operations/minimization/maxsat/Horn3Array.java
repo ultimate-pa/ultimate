@@ -37,42 +37,42 @@ import java.util.Iterator;
  */
 final class Horn3Array implements Iterable<Horn3Clause> {
 
-	private final int numVars;
+	private final int mNumVars;
 
-	private final IntArray ax;
-	private final IntArray ay;
-	private final IntArray az;
+	private final IntArray mAx;
+	private final IntArray mAy;
+	private final IntArray mAz;
 
-	Horn3Array(int numVars) {
-		this.numVars = numVars;
+	Horn3Array(final int numVars) {
+		this.mNumVars = numVars;
 
-		ax = new IntArray();
-		ay = new IntArray();
-		az = new IntArray();
+		mAx = new IntArray();
+		mAy = new IntArray();
+		mAz = new IntArray();
 	}
 
-	void add(int x, int y, int z) {
-		assert 0 <= x && x < numVars;
-		assert 0 <= y && y < numVars;
-		assert 0 <= z && z < numVars;
+	void add(final int x, final int y, final int z) {
+		assert 0 <= x && x < mNumVars;
+		assert 0 <= y && y < mNumVars;
+		assert 0 <= z && z < mNumVars;
 
-		ax.add(x);
-		ay.add(y);
-		az.add(z);
+		mAx.add(x);
+		mAy.add(y);
+		mAz.add(z);
 	}
 
 	int size() {
-		return ax.size();
+		return mAx.size();
 	}
 
-	Horn3Clause get(int idx, Horn3Clause out) {
-		if (idx < 0 || idx >= ax.size()) {
+	Horn3Clause get(final int idx, final Horn3Clause out) {
+		if (idx < 0 || idx >= mAx.size()) {
 			throw new ArrayIndexOutOfBoundsException();
 		}
 
-		out.x = ax.get(idx);
-		out.y = ay.get(idx);
-		out.z = az.get(idx);
+		out.mX = mAx.get(idx);
+		out.mY = mAy.get(idx);
+		out.mZ = mAz.get(idx);
 
 		return out;
 	}
@@ -91,27 +91,27 @@ final class Horn3Array implements Iterable<Horn3Clause> {
 	 *
 	 * @author stimpflj
 	 */
-	static private final class Horn3Iterator implements Iterator<Horn3Clause> {
+	private static final class Horn3Iterator implements Iterator<Horn3Clause> {
 
-		private final Horn3Clause h3c;
-		private final Horn3Array h3a;
-		private int idx;
+		private final Horn3Clause mH3c;
+		private final Horn3Array mH3a;
+		private int mIdx;
 
-		Horn3Iterator(Horn3Array h3a) {
-			this.h3a = h3a;
-			h3c = new Horn3Clause(-1,-1,-1);
-			idx = 0;
+		Horn3Iterator(final Horn3Array h3a) {
+			this.mH3a = h3a;
+			mH3c = new Horn3Clause(-1,-1,-1);
+			mIdx = 0;
 		}
 
 		@Override
 		public boolean hasNext() {
-			return idx < h3a.size();
+			return mIdx < mH3a.size();
 		}
 
 		@Override
 		public Horn3Clause next() {
-			h3a.get(idx++, h3c);
-			return h3c;
+			mH3a.get(mIdx++, mH3c);
+			return mH3c;
 		}
 	}
 }

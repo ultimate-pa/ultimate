@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 
@@ -25,7 +25,7 @@ public class ProcedureSignature {
 			final ASTType type = main.mTypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), ip.getType());
 			inParams.add(type);
 		}
-		if (cf.getResultType() instanceof CPrimitive && ((CPrimitive) cf.getResultType()).getType() == PRIMITIVE.VOID) {
+		if (cf.getResultType() instanceof CPrimitive && ((CPrimitive) cf.getResultType()).getType() == CPrimitives.VOID) {
 			returnType = null;
 		} else {
 			returnType = main.mTypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), cf.getResultType());

@@ -19,7 +19,7 @@ popd
 ./createZipAutomizer.sh linux
 ./createZipAutomizer.sh win32
 ./createZipCodeCheck.sh
-#scp *.zip revision $CURRENTUSER@sotec.informatik.uni-freiburg.de:/export/server/httpd/ultimate/downloads/svcomp2016/.
-rm *.zip 
-rm revision
+scp -oHostKeyAlgorithms=+ssh-dss *.zip $CURRENTUSER@sotec.informatik.uni-freiburg.de:/export/server/httpd/ultimate/downloads/svcomp2016/.
+#rm *.zip 
+#rm revision
 

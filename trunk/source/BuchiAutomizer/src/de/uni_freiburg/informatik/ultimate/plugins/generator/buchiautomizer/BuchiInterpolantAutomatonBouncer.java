@@ -36,12 +36,14 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.AbstractInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -102,21 +104,26 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 	private final PredicateUnifier mAcceptingPU;
 
 	private final IUltimateServiceProvider mServices;
+	private final SimplicationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 
-	public BuchiInterpolantAutomatonBouncer(SmtManager smtManager, BinaryStatePredicateManager bspm,
-			BuchiHoareTripleChecker bhtc, boolean emtpyStem, Set<IPredicate> stemInterpolants,
-			Set<IPredicate> loopInterpolants, CodeBlock hondaEntererStem, CodeBlock hondaEntererLoop,
-			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, boolean scroogeNondeterminismStem,
-			boolean scroogeNondeterminismLoop, boolean hondaBouncerStem, boolean hondaBouncerLoop,
-			PredicateFactoryForInterpolantAutomata predicateFactory, PredicateUnifier stemPU, PredicateUnifier loopPU,
-			IPredicate falsePredicate, IUltimateServiceProvider services) {
+	public BuchiInterpolantAutomatonBouncer(final SmtManager smtManager, final BinaryStatePredicateManager bspm,
+			final BuchiHoareTripleChecker bhtc, final boolean emtpyStem, final Set<IPredicate> stemInterpolants,
+			final Set<IPredicate> loopInterpolants, final CodeBlock hondaEntererStem, final CodeBlock hondaEntererLoop,
+			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction, final boolean scroogeNondeterminismStem,
+			final boolean scroogeNondeterminismLoop, final boolean hondaBouncerStem, final boolean hondaBouncerLoop,
+			final PredicateFactoryForInterpolantAutomata predicateFactory, final PredicateUnifier stemPU, final PredicateUnifier loopPU,
+			final IPredicate falsePredicate, final IUltimateServiceProvider services, 
+			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super(services, smtManager, bhtc, false, abstraction, falsePredicate, null, services.getLoggingService().getLogger(
 				Activator.PLUGIN_ID));
 		mServices = services;
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
 		mBspm = bspm;
-		mStemPU = new PredicateUnifier(mServices, mSmtManager, falsePredicate);
-		mLoopPU = new PredicateUnifier(mServices, mSmtManager, falsePredicate);
-		mAcceptingPU = new PredicateUnifier(mServices, mSmtManager, falsePredicate);
+		mStemPU = new PredicateUnifier(mServices, mSmtManager, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
+		mLoopPU = new PredicateUnifier(mServices, mSmtManager, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
+		mAcceptingPU = new PredicateUnifier(mServices, mSmtManager, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
 		IPredicate initialPredicate;
 		if (emtpyStem) {
 			final Set<IPredicate> empty = Collections.emptySet();
@@ -148,8 +155,8 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		mLogger.info(startMessage());
 	}
 
-	private void initializeConstruction(boolean emtpyStem, BinaryStatePredicateManager bspm,
-			Set<IPredicate> stemInterpolants, Set<IPredicate> loopInterpolants) {
+	private void initializeConstruction(final boolean emtpyStem, final BinaryStatePredicateManager bspm,
+			final Set<IPredicate> stemInterpolants, final Set<IPredicate> loopInterpolants) {
 		final IPredicate precondition = bspm.getStemPrecondition();
 		if (!emtpyStem) {
 			mInputStemPredicates.add(precondition);
@@ -220,7 +227,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 	}
 
 	@Override
-	protected void computeSuccs(IPredicate resPred, IPredicate resHier, CodeBlock letter, SuccessorComputationHelper sch) {
+	protected void computeSuccs(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter, final SuccessorComputationHelper sch) {
 		if (isPredHierLetterFalse(resPred, resHier, letter, sch)) {
 			if (!mAlreadyConstrucedAutomaton.contains(mIaFalseState)) {
 				mAlreadyConstrucedAutomaton.addState(false, true, mIaFalseState);
@@ -245,8 +252,8 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		sch.reportSuccsComputed(resPred, resHier, letter);
 	}
 
-	private boolean isPredHierLetterFalse(IPredicate resPred, IPredicate resHier, CodeBlock letter,
-			SuccessorComputationHelper sch) {
+	private boolean isPredHierLetterFalse(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+			final SuccessorComputationHelper sch) {
 		final boolean result;
 		if (letter.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
 			result = true;
@@ -260,7 +267,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		return result;
 	}
 
-	private boolean isFalseSucc(IPredicate resPred, IPredicate resHier, CodeBlock letter, SuccessorComputationHelper sch) {
+	private boolean isFalseSucc(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter, final SuccessorComputationHelper sch) {
 		final boolean result;
 		final Validity validity = sch.computeSuccWithSolver(resPred, resHier, letter, mIaFalseState);
 		if (validity == Validity.VALID) {
@@ -271,8 +278,8 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		return result;
 	}
 
-	private void computeSuccsStem(IPredicate resPred, IPredicate resHier, CodeBlock letter,
-			SuccessorComputationHelper sch) {
+	private void computeSuccsStem(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+			final SuccessorComputationHelper sch) {
 		IPredicate acceptingSucc;
 		if (mayEnterAcceptingFromStem(letter)) {
 			acceptingSucc = addAcceptingSuccStem(resPred, resHier, letter, sch);
@@ -284,8 +291,8 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		}
 	}
 
-	private IPredicate addAcceptingSuccStem(IPredicate resPred, IPredicate resHier, CodeBlock letter,
-			SuccessorComputationHelper sch) {
+	private IPredicate addAcceptingSuccStem(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+			final SuccessorComputationHelper sch) {
 		final Set<IPredicate> inputSuccsWithoutAux = new HashSet<IPredicate>();
 		for (final IPredicate succCand : mInputAuxFreePredicates) {
 			final Validity validity = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
@@ -298,7 +305,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		return resSucc;
 	}
 
-	private IPredicate getOrConstructAcceptingPredicate(Set<IPredicate> inputSuccsWithoutAuxVar, boolean isInitial) {
+	private IPredicate getOrConstructAcceptingPredicate(final Set<IPredicate> inputSuccsWithoutAuxVar, final boolean isInitial) {
 		final IPredicate withoutAux = getOrConstructPredicate(inputSuccsWithoutAuxVar, mStemPU,
 				mWithoutAuxInputPreds2ResultPreds, mWithoutAuxPred2InputPreds);
 		final Set<IPredicate> inputSuccsRankDecreaseAndBound = new HashSet<IPredicate>(inputSuccsWithoutAuxVar);
@@ -316,7 +323,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		return rankDecreaseAndBound;
 	}
 
-	private IPredicate getOrConstructStemPredicate(Set<IPredicate> inputSuccs, boolean isInitial) {
+	private IPredicate getOrConstructStemPredicate(final Set<IPredicate> inputSuccs, final boolean isInitial) {
 		final IPredicate resSucc = getOrConstructPredicate(inputSuccs, mStemPU, mStemInputPreds2ResultPreds,
 				mStemResPred2InputPreds);
 		if (!mAlreadyConstrucedAutomaton.contains(resSucc)) {
@@ -325,7 +332,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		return resSucc;
 	}
 
-	private IPredicate getOrConstructLoopPredicate(Set<IPredicate> inputSuccs, boolean isInitial) {
+	private IPredicate getOrConstructLoopPredicate(final Set<IPredicate> inputSuccs, final boolean isInitial) {
 		final IPredicate resSucc = getOrConstructPredicate(inputSuccs, mLoopPU, mLoopInputPreds2ResultPreds,
 				mLoopResPred2InputPreds);
 		if (!mAlreadyConstrucedAutomaton.contains(resSucc)) {
@@ -334,8 +341,8 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		return resSucc;
 	}
 
-	private void addNonAcceptingSuccStem(IPredicate resPred, IPredicate resHier, CodeBlock letter,
-			SuccessorComputationHelper sch) {
+	private void addNonAcceptingSuccStem(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+			final SuccessorComputationHelper sch) {
 		final Set<IPredicate> inputSuccs = new HashSet<IPredicate>();
 		for (final IPredicate succCand : mInputStemPredicates) {
 			final Validity validity = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
@@ -349,8 +356,8 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		}
 	}
 
-	private void computeSuccsLoop(IPredicate resPred, IPredicate resHier, CodeBlock letter,
-			SuccessorComputationHelper sch) {
+	private void computeSuccsLoop(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+			final SuccessorComputationHelper sch) {
 		IPredicate acceptingSucc;
 		if (mayEnterAcceptingFromLoop(letter)) {
 			acceptingSucc = addAcceptingSuccLoop(resPred, resHier, letter, sch);
@@ -362,8 +369,8 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		}
 	}
 
-	private IPredicate addAcceptingSuccLoop(IPredicate resPred, IPredicate resHier, CodeBlock letter,
-			SuccessorComputationHelper sch) {
+	private IPredicate addAcceptingSuccLoop(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+			final SuccessorComputationHelper sch) {
 		final Validity validityDecr = sch.computeSuccWithSolver(resPred, resHier, letter, mBspm.getRankDecreaseAndBound());
 		if (validityDecr != Validity.VALID) {
 			return null;
@@ -380,8 +387,8 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		return resSucc;
 	}
 
-	private void addNonAcceptingSuccLoop(IPredicate resPred, IPredicate resHier, CodeBlock letter,
-			SuccessorComputationHelper sch) {
+	private void addNonAcceptingSuccLoop(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+			final SuccessorComputationHelper sch) {
 		final Set<IPredicate> inputSuccs = new HashSet<IPredicate>();
 		for (final IPredicate succCand : mInputLoopPredicates) {
 			final Validity validity = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
@@ -395,9 +402,9 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		}
 	}
 
-	private IPredicate getOrConstructPredicate(Set<IPredicate> succs, PredicateUnifier predicateUnifier,
-			Map<Set<IPredicate>, IPredicate> inputPreds2ResultPreds,
-			HashRelation<IPredicate, IPredicate> resPred2InputPreds) {
+	private IPredicate getOrConstructPredicate(final Set<IPredicate> succs, final PredicateUnifier predicateUnifier,
+			final Map<Set<IPredicate>, IPredicate> inputPreds2ResultPreds,
+			final HashRelation<IPredicate, IPredicate> resPred2InputPreds) {
 		IPredicate resSucc = inputPreds2ResultPreds.get(succs);
 		if (resSucc == null) {
 			final Term conjunction = mSmtManager.getPredicateFactory().and(succs);
@@ -418,7 +425,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 	 * @param letter
 	 * @return
 	 */
-	protected boolean mayEnterAcceptingFromLoop(CodeBlock letter) {
+	protected boolean mayEnterAcceptingFromLoop(final CodeBlock letter) {
 		return !mHondaBouncerLoop || letter.equals(mHondaEntererLoop);
 	}
 
@@ -429,7 +436,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 	 * @param letter
 	 * @return
 	 */
-	protected boolean mayEnterAcceptingFromStem(CodeBlock letter) {
+	protected boolean mayEnterAcceptingFromStem(final CodeBlock letter) {
 		return !mHondaBouncerStem || letter.equals(mHondaEntererStem);
 	}
 

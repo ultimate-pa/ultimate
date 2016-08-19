@@ -7,7 +7,7 @@ assert(!isEmpty(a));
 //Before
 //print(a);
 //After
-print(minimizeIncompleteDFA(a));
+print(minimizeDfaHopcroftLists(a));
 
 //Use a random automaton
 //print(minimizeIncompleteDFA(removeDeadEnds(getRandomDfa(10, 2, 5))));

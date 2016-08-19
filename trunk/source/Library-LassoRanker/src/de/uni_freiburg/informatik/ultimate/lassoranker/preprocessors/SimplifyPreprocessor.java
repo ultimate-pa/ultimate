@@ -34,9 +34,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
 /**
@@ -48,13 +50,18 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 	private final boolean mUseSMTInterpolForSimplification = !true;
+	private final ManagedScript mMgdScript;
+	private final SimplicationTechnique mXnfConversionTechnique;
 	
 	public static final String s_Description = "Simplify formula using SimplifyDDA";
 	
-	public SimplifyPreprocessor(IUltimateServiceProvider services, IToolchainStorage storage) {
+	public SimplifyPreprocessor(final IUltimateServiceProvider services, final IToolchainStorage storage, 
+			final ManagedScript mgdScript, final SimplicationTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
 		mStorage = storage;
+		mMgdScript = mgdScript;
+		mXnfConversionTechnique = xnfConversionTechnique;
 	}
 	
 	@Override
@@ -63,13 +70,13 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 	}
 	
 	@Override
-	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
-			TransFormulaLR newTF) {
+	protected boolean checkSoundness(final Script script, final TransFormulaLR oldTF,
+			final TransFormulaLR newTF) {
 		return true;
 	}
 	
 	@Override
-	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
+	public TransFormulaLR process(final Script script, final TransFormulaLR tf) throws TermException {
 		final Term simplified;
 		if (mUseSMTInterpolForSimplification) {
 			final Settings settings = new SolverBuilder.Settings(false, "", 10 * 1000, null, false, null, null);
@@ -77,12 +84,13 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 			simplificationScript.setLogic(Logics.QF_UFLIRA);
 			final TermTransferrer towards = new TermTransferrer(simplificationScript);
 			final Term foreign = towards.transform(tf.getFormula());
-			final Term foreignsimplified = SmtUtils.simplify(simplificationScript, foreign, mServices);
+			final Term foreignsimplified = SmtUtils.simplify(mMgdScript, foreign, 
+					mServices, mXnfConversionTechnique);
 			simplificationScript.exit();
 			final TermTransferrer back = new TermTransferrer(script);
 			simplified = back.transform(foreignsimplified);
 		} else {
-			simplified = SmtUtils.simplify(script, tf.getFormula(), mServices);
+			simplified = SmtUtils.simplify(mMgdScript, tf.getFormula(), mServices, mXnfConversionTechnique);
 		}
 		tf.setFormula(simplified);
 		return tf;

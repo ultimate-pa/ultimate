@@ -31,8 +31,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizeUnderappox;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
@@ -43,10 +44,10 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
-	private final INestedWordAutomatonOldApi<LETTER,STATE> mOperand;
-	private INestedWordAutomatonOldApi<LETTER,STATE> mResult;
+	private final INestedWordAutomaton<LETTER,STATE> mOperand;
+	private INestedWordAutomaton<LETTER,STATE> mResult;
 	
-	private boolean mbuchiComplementREApplicable;
+	private boolean mBuchiComplementREApplicable;
 	
 	@Override
 	public String operationName() {
@@ -61,7 +62,7 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 
 	@Override
 	public String exitMessage() {
-		if (mbuchiComplementREApplicable) {
+		if (mBuchiComplementREApplicable) {
 			return "Finished " + operationName() + " Result " + 
 				mResult.sizeInformation();
 		} else {
@@ -70,8 +71,8 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 	}
 
 	@Override
-	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws AutomataLibraryException {
-		if (mbuchiComplementREApplicable) {
+	public INestedWordAutomaton<LETTER,STATE> getResult() throws AutomataLibraryException {
+		if (mBuchiComplementREApplicable) {
 			return mResult;
 		} else {
 			assert mResult == null;
@@ -80,37 +81,35 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 	}
 	
 	
-	public BuchiComplementRE(AutomataLibraryServices services,
-			StateFactory<STATE> stateFactory,
-			INestedWordAutomatonOldApi<LETTER,STATE> operand) throws AutomataLibraryException {
+	public BuchiComplementRE(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER,STATE> operand) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
 		mLogger.info(startMessage());
-		final INestedWordAutomatonOldApi<LETTER,STATE> operandWithoutNonLiveStates = 
+		final INestedWordAutomaton<LETTER,STATE> operandWithoutNonLiveStates = 
 				(new ReachableStatesCopy<LETTER,STATE>(mServices, operand, false, false, false, true)).getResult();
-		if (operandWithoutNonLiveStates.isDeterministic()) {
+		if (new IsDeterministic<>(mServices, operandWithoutNonLiveStates).getResult()) {
 			mLogger.info("Rüdigers determinization knack not necessary, already deterministic");
 			mResult = (new BuchiComplementDeterministic<LETTER,STATE>(mServices, operandWithoutNonLiveStates)).getResult();
-		}
-		else {
+		} else {
 			final PowersetDeterminizer<LETTER,STATE> pd = 
 					new PowersetDeterminizer<LETTER,STATE>(operandWithoutNonLiveStates, true, stateFactory);
-			final INestedWordAutomatonOldApi<LETTER,STATE> determinized = 
+			final INestedWordAutomaton<LETTER,STATE> determinized = 
 					(new DeterminizeUnderappox<LETTER,STATE>(mServices, operandWithoutNonLiveStates,pd)).getResult();
-			final INestedWordAutomatonOldApi<LETTER,STATE> determinizedComplement =
+			final INestedWordAutomaton<LETTER,STATE> determinizedComplement =
 					(new BuchiComplementDeterministic<LETTER,STATE>(mServices, determinized)).getResult();
-			final INestedWordAutomatonOldApi<LETTER,STATE> intersectionWithOperand =
+			final INestedWordAutomaton<LETTER,STATE> intersectionWithOperand =
 					(new BuchiIntersectDD<LETTER,STATE>(mServices, operandWithoutNonLiveStates, determinizedComplement, true)).getResult();
 			final NestedLassoRun<LETTER,STATE> run = (new BuchiIsEmpty<LETTER,STATE>(mServices, intersectionWithOperand)).getAcceptingNestedLassoRun();
 			if (run == null) {
 				mLogger.info("Rüdigers determinization knack applicable");
-				mbuchiComplementREApplicable = true;
+				mBuchiComplementREApplicable = true;
 				mResult = determinizedComplement;
-			}
-			else {
+			} else {
 				mLogger.info("Rüdigers determinization knack not applicable");
-				mbuchiComplementREApplicable = false;
+				mBuchiComplementREApplicable = false;
 				mResult = null;
 			}
 		}
@@ -125,11 +124,11 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 	 * Return true if buchiComplementRE was applicable on the input.
 	 */
 	public boolean applicable() {
-		return mbuchiComplementREApplicable;
+		return mBuchiComplementREApplicable;
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return ResultChecker.buchiComplement(mServices, mOperand, mResult);
 	}

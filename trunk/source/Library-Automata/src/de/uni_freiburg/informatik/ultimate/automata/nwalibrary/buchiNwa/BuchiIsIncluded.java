@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -40,25 +40,25 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * 
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
-	private final INestedWordAutomatonOldApi<LETTER, STATE> mOperand1;
-	private final INestedWordAutomatonOldApi<LETTER, STATE> mOperand2;
+	private final INestedWordAutomaton<LETTER, STATE> mOperand1;
+	private final INestedWordAutomaton<LETTER, STATE> mOperand2;
 
 	private final Boolean mResult;
 
 	private final NestedLassoRun<LETTER, STATE> mCounterexample;
 
-	public BuchiIsIncluded(AutomataLibraryServices services,
-			StateFactory<STATE> stateFactory,
-			INestedWordAutomatonOldApi<LETTER, STATE> nwa1,
-			INestedWordAutomatonOldApi<LETTER, STATE> nwa2)
+	public BuchiIsIncluded(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> nwa1,
+			final INestedWordAutomaton<LETTER, STATE> nwa2)
 			throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -66,9 +66,9 @@ public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> 
 		mOperand2 = nwa2;
 		mLogger.info(startMessage());
 
-		final INestedWordAutomatonOldApi<LETTER, STATE> sndComplement = (new BuchiComplementFKV<LETTER, STATE>(
+		final INestedWordAutomaton<LETTER, STATE> sndComplement = (new BuchiComplementFKV<LETTER, STATE>(
 				mServices, stateFactory, mOperand2)).getResult();
-		final INestedWordAutomatonOldApi<LETTER, STATE> difference = (new BuchiIntersectDD<LETTER, STATE>(
+		final INestedWordAutomaton<LETTER, STATE> difference = (new BuchiIntersectDD<LETTER, STATE>(
 				mServices, mOperand1, sndComplement, true)).getResult();
 		final BuchiIsEmpty<LETTER, STATE> emptinessCheck = new BuchiIsEmpty<LETTER, STATE>(
 				mServices, difference);
@@ -106,7 +106,7 @@ public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> 
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}

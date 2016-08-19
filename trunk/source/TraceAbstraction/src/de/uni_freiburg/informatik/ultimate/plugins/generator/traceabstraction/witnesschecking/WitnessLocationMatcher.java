@@ -30,8 +30,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -63,9 +63,9 @@ public class WitnessLocationMatcher {
 	private final ArrayList<WitnessEdge> mUnmatchedWitnessLetters;
 
 	public WitnessLocationMatcher(
-			IUltimateServiceProvider services,
-			INestedWordAutomatonSimple<CodeBlock, IPredicate> controlFlowAutomaton,
-			NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
+			final IUltimateServiceProvider services,
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> controlFlowAutomaton,
+			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		partitionEdges(witnessAutomaton.getInternalAlphabet());
@@ -85,26 +85,26 @@ public class WitnessLocationMatcher {
 		mLogger.info(mMultiLineLocations.size() + " multi line locations");
 	}
 
-	public boolean isMatchedWitnessEdge(WitnessEdge wal) {
+	public boolean isMatchedWitnessEdge(final WitnessEdge wal) {
 		return mWitnessLetters2SingleLineLocations.getDomain().contains(wal);
 	}
 	
-	public boolean isCompatible(ILocation loc, WitnessEdge wal) {
+	public boolean isCompatible(final ILocation loc, final WitnessEdge wal) {
 		return mSingleLineLocation2WitnessLetters.containsPair(loc, wal);
 	}
 	
-	public Set<ILocation> getCorrespondingLocations(WitnessEdge wal) {
+	public Set<ILocation> getCorrespondingLocations(final WitnessEdge wal) {
 		return mWitnessLetters2SingleLineLocations.getImage(wal);
 	}
 
-	private void partitionEdges(Set<WitnessEdge> internalAlphabet) {
+	private void partitionEdges(final Set<WitnessEdge> internalAlphabet) {
 		for (final WitnessEdge we : internalAlphabet) {
 			final int startline = we.getLocation().getStartLine();
 			mLineNumber2WitnessLetter.addPair(startline, we);
 		}
 	}
 	
-	private void matchLocations(Set<CodeBlock> internalAlphabet) {
+	private void matchLocations(final Set<CodeBlock> internalAlphabet) {
 		for (final CodeBlock cb : internalAlphabet) {
 			matchLocations(cb);
 		}
@@ -112,7 +112,7 @@ public class WitnessLocationMatcher {
 	}
 	
 	
-	private void matchLocations(CodeBlock cb) {
+	private void matchLocations(final CodeBlock cb) {
 		if (cb instanceof Call) {
 			final Call call = (Call) cb;
 			matchLocations(call);
@@ -140,11 +140,11 @@ public class WitnessLocationMatcher {
 	}
 
 	
-	private void matchLocations(Call call) {
+	private void matchLocations(final Call call) {
 		matchLocations(call.getCallStatement());
 	}
 	
-	private void matchLocations(InterproceduralSequentialComposition isc) {
+	private void matchLocations(final InterproceduralSequentialComposition isc) {
 		for (final CodeBlock cb : isc.getCodeBlocks()) {
 			matchLocations(cb);
 		}
@@ -152,23 +152,23 @@ public class WitnessLocationMatcher {
 	
 
 
-	private void matchLocations(ParallelComposition pc) {
+	private void matchLocations(final ParallelComposition pc) {
 		for (final CodeBlock cb : pc.getCodeBlocks()) {
 			matchLocations(cb);
 		}
 	}
 	
-	private void matchLocations(Return ret) {
+	private void matchLocations(final Return ret) {
 		matchLocations(ret.getPayload().getLocation());
 	}
 	
-	private void matchLocations(SequentialComposition sc) {
+	private void matchLocations(final SequentialComposition sc) {
 		for (final CodeBlock cb : sc.getCodeBlocks()) {
 			matchLocations(cb);
 		}
 	}
 	
-	private void matchLocations(StatementSequence ss) {
+	private void matchLocations(final StatementSequence ss) {
 		for (final Statement st : ss.getStatements()) {
 			matchLocations(st);
 		}
@@ -176,7 +176,7 @@ public class WitnessLocationMatcher {
 
 
 
-	private void matchLocations(Statement st) {
+	private void matchLocations(final Statement st) {
 		if (st instanceof AssumeStatement) {
 			matchLocations(((AssumeStatement) st).getFormula().getLocation());
 		} else {
@@ -186,7 +186,7 @@ public class WitnessLocationMatcher {
 
 
 
-	private void matchLocations(ILocation location) {
+	private void matchLocations(final ILocation location) {
 		if (location.getStartLine() == location.getEndLine()) {
 			final Set<WitnessEdge> witnessLetters = mLineNumber2WitnessLetter.getImage(location.getStartLine());
 			if (witnessLetters != null) {

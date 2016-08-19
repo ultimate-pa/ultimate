@@ -55,19 +55,19 @@ public final class ComparisonTables {
 	/**
 	 * Factor that, if multiplied with, converts seconds to milliseconds.
 	 */
-	public final static int SECONDS_TO_MILLIS = 1000;
+	public static final int SECONDS_TO_MILLIS = 1000;
 	/**
 	 * Decimal places to round duration of a method to.
 	 */
-	private final static int DECIMAL_PLACES = 3;
+	private static final int DECIMAL_PLACES = 3;
 	/**
 	 * Represents the value for full percentage.
 	 */
-	private final static int FULL_PERCENTAGE = 100;
+	private static final int FULL_PERCENTAGE = 100;
 	/**
 	 * Amount of states at which a buechi automaton has a small size.
 	 */
-	private final static int SMALL_BUCHI_SIZE = 20;
+	private static final int SMALL_BUCHI_SIZE = 20;
 
 	/**
 	 * Creates a table that holds information about the actual work the
@@ -277,7 +277,7 @@ public final class ComparisonTables {
 
 			String row = entry.getKey().getFirst() + separator + entry.getKey().getSecond();
 
-			Map<SimulationPerformance, Boolean> ignoreThisPerformance = new HashMap<>();
+			final Map<SimulationPerformance, Boolean> ignoreThisPerformance = new HashMap<>();
 			if (filtered || filterOnlyNwa) {
 				for (final SimulationPerformance performance : entry.getValue()) {
 					if (filtered) {
@@ -285,7 +285,7 @@ public final class ComparisonTables {
 						// comparison if
 						// the automaton is empty, a simulation had OOM or timed
 						// out
-						int size = performance.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES);
+						final int size = performance.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES);
 						if (performance.hasTimedOut() || performance.isOutOfMemory() || size == 0
 								|| size == SimulationPerformance.NO_COUNTING_RESULT) {
 							ignoreThisPerformance.put(performance, true);
@@ -294,7 +294,7 @@ public final class ComparisonTables {
 					if (filterOnlyNwa) {
 						// In this case every automaton that has no return
 						// transitions should get removed
-						int returnTransitions = performance
+						final int returnTransitions = performance
 								.getCountingMeasureResult(ECountingMeasure.BUCHI_TRANSITIONS_RETURN);
 						if (returnTransitions == 0 || returnTransitions == SimulationPerformance.NO_COUNTING_RESULT) {
 							ignoreThisPerformance.put(performance, true);
@@ -350,7 +350,7 @@ public final class ComparisonTables {
 					valueAsString = NO_VALUE;
 				}
 				if (convertTransitionDensityToDouble) {
-					Double sumOfAllValuesAsDouble = convertTransitionDensityToDouble(measure, sumOfAllValues);
+					final Double sumOfAllValuesAsDouble = convertTransitionDensityToDouble(measure, sumOfAllValues);
 					if (sumOfAllValuesAsDouble != null) {
 						final double averageOfValuesAsDouble = sumOfAllValuesAsDouble / amountOfValues;
 						valueAsString = averageOfValuesAsDouble + "";
@@ -659,7 +659,7 @@ public final class ComparisonTables {
 				if (filtered) {
 					// If filtering, we are not interested in this comparison if
 					// the automaton is empty, a simulation had OOM or timed out
-					int size = performanceOfSimulation.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES);
+					final int size = performanceOfSimulation.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES);
 					if (performanceOfSimulation.hasTimedOut() || performanceOfSimulation.isOutOfMemory() || size == 0
 							|| size == SimulationPerformance.NO_COUNTING_RESULT) {
 						break;
@@ -668,7 +668,7 @@ public final class ComparisonTables {
 				if (filterOnlyNwa) {
 					// In this case every automaton that has no return
 					// transitions should get removed
-					int returnTransitions = performanceOfSimulation
+					final int returnTransitions = performanceOfSimulation
 							.getCountingMeasureResult(ECountingMeasure.BUCHI_TRANSITIONS_RETURN);
 					if (returnTransitions == 0 || returnTransitions == SimulationPerformance.NO_COUNTING_RESULT) {
 						break;
@@ -702,7 +702,7 @@ public final class ComparisonTables {
 						valueAsString = NO_VALUE;
 					} else {
 						if (convertTransitionDensityToDouble) {
-							Double valueAsDouble = convertTransitionDensityToDouble(measure, value);
+							final Double valueAsDouble = convertTransitionDensityToDouble(measure, value);
 							if (valueAsDouble != null) {
 								valueAsString = valueAsDouble + "";
 							}
@@ -1079,7 +1079,7 @@ public final class ComparisonTables {
 				|| measure == ECountingMeasure.RESULT_TRANSITION_INTERNAL_DENSITY_MILLION
 				|| measure == ECountingMeasure.RESULT_TRANSITION_CALL_DENSITY_MILLION
 				|| measure == ECountingMeasure.RESULT_TRANSITION_RETURN_DENSITY_MILLION) {
-			double million = 1_000_000.0;
+			final double million = 1_000_000.0;
 			return (sumOfAllValues + 0.0) / million;
 		} else {
 			return null;

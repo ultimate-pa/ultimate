@@ -30,11 +30,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaWalker.SymbolVisitor;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * Traverse a Term top-down and replace all subterms which occur as key of
@@ -53,13 +53,13 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class PredicateConstructionVisitor implements SymbolVisitor {
 
-	Map<Term, BoogieVar> mterm2BoogieVars;
+	Map<Term, IProgramVar> mterm2BoogieVars;
 	
-	Set<BoogieVar> mVars;
+	Set<IProgramVar> mVars;
 	Set<String> mProcedures;
 	
 	
-	public PredicateConstructionVisitor(Map<Term, BoogieVar> term2BoogieVars)
+	public PredicateConstructionVisitor(Map<Term, IProgramVar> term2BoogieVars)
 	{
 		mterm2BoogieVars = term2BoogieVars;
 		mVars = null;
@@ -67,11 +67,11 @@ public class PredicateConstructionVisitor implements SymbolVisitor {
 	}
 
 	public void clearVarsAndProc() {
-		mVars = new HashSet<BoogieVar>();
+		mVars = new HashSet<IProgramVar>();
 		mProcedures = new HashSet<String>();
 	}
 	
-	public Set<BoogieVar> getVars() {
+	public Set<IProgramVar> getVars() {
 		return mVars;
 	}
 	
@@ -88,7 +88,7 @@ public class PredicateConstructionVisitor implements SymbolVisitor {
 	@Override
 	public Term term (Term input) {
 		if (mterm2BoogieVars.containsKey(input)) {
-			final BoogieVar bv = mterm2BoogieVars.get(input);
+			final IProgramVar bv = mterm2BoogieVars.get(input);
 			assert bv != null;
 			if (bv.getProcedure() != null) {
 				mProcedures.add(bv.getProcedure());

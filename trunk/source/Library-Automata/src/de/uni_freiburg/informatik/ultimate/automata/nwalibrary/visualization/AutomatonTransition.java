@@ -33,29 +33,39 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  * Ultimate model of an automaton transition.
  * @author heizmann@informatik.uni-freiburg.de 
  */
-
-public class AutomatonTransition extends ModifiableMultigraphEdge<AutomatonState, AutomatonTransition,AutomatonState, AutomatonTransition> {
+public class AutomatonTransition
+		extends ModifiableMultigraphEdge<AutomatonState, AutomatonTransition, AutomatonState, AutomatonTransition> {
 
 	private static final long serialVersionUID = -2531826841396458461L;
 	
-	public enum Transition { CALL, INTERNAL, RETURN, INITIAL };
+	public enum Transition {
+		CALL, INTERNAL, RETURN, INITIAL
+	}
 	
 	private String mName;
 	
-	public AutomatonTransition(AutomatonState state,
-							   Transition type,
-							   Object transitionLabel,
-							   String linPred,
-							   AutomatonState succState) {
+	public AutomatonTransition(final AutomatonState state,
+							   final Transition type,
+							   final Object transitionLabel,
+							   final String linPred,
+							   final AutomatonState succState) {
 		super(state, succState);
-		assert(type == Transition.RETURN || linPred ==null);
-		assert(type != Transition.RETURN || linPred != null);
+		assert (type == Transition.RETURN || linPred == null);
+		assert (type != Transition.RETURN || linPred != null);
 		switch (type) {
-		case CALL: mName = "Call"; break;
-		case INTERNAL: mName = "Internal"; break;
-		case RETURN: mName = "Return"; break;
-		case INITIAL: mName = ""; break;
-		default: throw new IllegalArgumentException();
+			case CALL:
+				mName = "Call";
+				break;
+			case INTERNAL:
+				mName = "Internal";
+				break;
+			case RETURN:
+				mName = "Return";
+				break;
+			case INITIAL:
+				mName = "";
+				break;
+			default: throw new IllegalArgumentException();
 		}
 		mName = mName + ": " + transitionLabel;
 		if (type == Transition.RETURN) {
@@ -68,10 +78,12 @@ public class AutomatonTransition extends ModifiableMultigraphEdge<AutomatonState
 		state.addOutgoing(this);
 		succState.addIncoming(this);
 	}
+	
 	@Override
 	public String toString() {
 		return mName;
 	}
+	
 	@Override
 	public AutomatonTransition getLabel() {
 		return this;

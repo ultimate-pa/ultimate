@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
@@ -184,7 +184,7 @@ public class TypeSizeAndOffsetComputer {
 				return mTypeSizePointer;
 			} else if (underlyingType instanceof CEnum) { 
 				// an Enum contains constants of type int
-				return computeSize(loc, new CPrimitive(PRIMITIVE.INT));
+				return computeSize(loc, new CPrimitive(CPrimitives.INT));
 			} else {
 				SizeTValue sizeTValue = mTypeSizeCache.get(underlyingType);
 				if (sizeTValue == null) {
@@ -482,7 +482,7 @@ public class TypeSizeAndOffsetComputer {
 		 * TODO: maybe this class is not the right place. 
 		 */
 		public CPrimitive getSize_T() {
-			return new CPrimitive(PRIMITIVE.INT);
+			return new CPrimitive(CPrimitives.INT);
 		}
 
 		public LinkedHashSet<ConstDeclaration> getConstants() {

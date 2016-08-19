@@ -35,8 +35,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieOldVar;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
@@ -50,9 +48,13 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -82,10 +84,12 @@ public class HoareAnnotation extends SPredicate {
 	
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private final SimplicationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	private final Script mScript;
 	private final Boogie2SmtSymbolTable mSymbolTable;
-	private final IFreshTermVariableConstructor mFreshVariableConstructor;
+	private final ManagedScript mMgdScript;
 	private final PredicateFactory mPredicateFactory;
 	private final ModifiableGlobalVariableManager mModifiableGlobals;
 
@@ -97,18 +101,21 @@ public class HoareAnnotation extends SPredicate {
 	private static final boolean s_AvoidImplications = true;
 	
 
-	public HoareAnnotation(ProgramPoint programPoint, int serialNumber, 
-			Boogie2SmtSymbolTable symbolTable, PredicateFactory predicateFactory, 
-			ModifiableGlobalVariableManager modifiableGlobals,
-			IFreshTermVariableConstructor freshVariableConstructor,
-			Script script,
-			IUltimateServiceProvider services) {
+	public HoareAnnotation(final ProgramPoint programPoint, final int serialNumber, 
+			final Boogie2SmtSymbolTable symbolTable, final PredicateFactory predicateFactory, 
+			final ModifiableGlobalVariableManager modifiableGlobals,
+			final ManagedScript mgdScript,
+			final Script script,
+			final IUltimateServiceProvider services, 
+			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, script.term(
-				"true"), new HashSet<BoogieVar>(), null);
+				"true"), new HashSet<IProgramVar>(), null);
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mServices = services;
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
 		mSymbolTable = symbolTable;
-		mFreshVariableConstructor = freshVariableConstructor;
+		mMgdScript = mgdScript;
 		mPredicateFactory = predicateFactory;
 		mScript = script;
 		mModifiableGlobals = modifiableGlobals;
@@ -127,7 +134,7 @@ public class HoareAnnotation extends SPredicate {
 	}
 
 	@Override
-	protected Object getFieldValue(String field) {
+	protected Object getFieldValue(final String field) {
 		if (field == "Precondition2InvariantMapping") {
 			return mPrecondition2Invariant;
 		} else if (field == "StateIsUnknown") {
@@ -139,7 +146,7 @@ public class HoareAnnotation extends SPredicate {
 		}
 	}
 
-	public void addInvariant(IPredicate procPrecond, IPredicate locInvar) {
+	public void addInvariant(final IPredicate procPrecond, final IPredicate locInvar) {
 		if (mFormulaHasBeenComputed) {
 			throw new UnsupportedOperationException("Once Formula has been"
 					+ " computed it is not allowed to add new Formulas");
@@ -188,17 +195,17 @@ public class HoareAnnotation extends SPredicate {
 	private void computeFormula() {
 		for (final Term precond : getPrecondition2Invariant().keySet()) {
 			Term invariant = getPrecondition2Invariant().get(precond);
-			invariant = SmtUtils.simplify(mScript, invariant, mServices); 
+			invariant = SmtUtils.simplify(mMgdScript, invariant, mServices, mSimplificationTechnique); 
 			Term precondTerm = Util.implies(mScript, precond, invariant);
 			if (s_AvoidImplications) {
-				precondTerm = (new Nnf(mScript, mServices, mFreshVariableConstructor, QuantifierHandling.KEEP)).transform(precondTerm);
+				precondTerm = (new Nnf(mMgdScript, mServices, QuantifierHandling.KEEP)).transform(precondTerm);
 			}
 			mLogger.debug("In " + this + " holds " + invariant + " for precond " + precond);
 			mFormula = Util.and(mScript, mFormula, precondTerm);
 		}
 		mFormula = substituteOldVarsOfNonModifiableGlobals(getProgramPoint().getProcedure(), mVars,
 				mFormula);
-		mFormula = SmtUtils.simplify(mScript, mFormula, mServices); 
+		mFormula = SmtUtils.simplify(mMgdScript, mFormula, mServices, mSimplificationTechnique); 
 		mFormula = getPositiveNormalForm(mFormula);
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(mFormula, mScript, mSymbolTable);
 		mClosedFormula = PredicateUtils.computeClosedFormula(tvp.getFormula(), tvp.getVars(), mScript);
@@ -210,19 +217,19 @@ public class HoareAnnotation extends SPredicate {
 	 * substitute the oldVar by the corresponding globalVar in term and remove
 	 * the oldvar from vars.
 	 */
-	public Term substituteOldVarsOfNonModifiableGlobals(String proc, Set<BoogieVar> vars, Term term) {
-		final Set<BoogieVar> oldVarsOfmodifiableGlobals = mModifiableGlobals.getOldVarsAssignment(proc)
+	public Term substituteOldVarsOfNonModifiableGlobals(final String proc, final Set<IProgramVar> vars, final Term term) {
+		final Set<IProgramVar> oldVarsOfmodifiableGlobals = mModifiableGlobals.getOldVarsAssignment(proc)
 				.getAssignedVars();
-		final List<BoogieVar> replacedOldVars = new ArrayList<BoogieVar>();
+		final List<IProgramVar> replacedOldVars = new ArrayList<IProgramVar>();
 
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 
-		for (final BoogieVar bv : vars) {
-			if (bv instanceof BoogieOldVar) {
+		for (final IProgramVar bv : vars) {
+			if (bv instanceof IProgramOldVar) {
 				if (!oldVarsOfmodifiableGlobals.contains(bv)) {
 					replacees.add(bv.getTermVariable());
-					replacers.add((((BoogieOldVar) bv).getNonOldVar()).getTermVariable());
+					replacers.add((((IProgramOldVar) bv).getNonOldVar()).getTermVariable());
 					replacedOldVars.add(bv);
 				}
 			}
@@ -233,15 +240,15 @@ public class HoareAnnotation extends SPredicate {
 		Term result = mScript.let(substVars, substValues, term);
 		result = (new FormulaUnLet()).unlet(result);
 
-		for (final BoogieVar bv : replacedOldVars) {
+		for (final IProgramVar bv : replacedOldVars) {
 			vars.remove(bv);
-			vars.add(((BoogieOldVar) bv).getNonOldVar());
+			vars.add(((IProgramOldVar) bv).getNonOldVar());
 		}
 		return result;
 	}
 	
 
-	private Term getPositiveNormalForm(Term term) {
+	private Term getPositiveNormalForm(final Term term) {
 		final Script script = mScript;
 		final Term result = (new AffineSubtermNormalizer(mScript, mLogger)).transform(term);
 		assert (Util.checkSat(script, script.term("distinct", term, result)) != LBool.SAT);
@@ -268,24 +275,24 @@ public class HoareAnnotation extends SPredicate {
 		return result;
 	}
 	
-	public void annotate(IElement node) {
+	public void annotate(final IElement node) {
 		if (node instanceof ProgramPoint) {
 			annotate((ProgramPoint) node);
 		}
 	}
 
-	public void annotate(ProgramPoint node) {
+	public void annotate(final ProgramPoint node) {
 		node.getPayload().getAnnotations().put(KEY, this);
 	}
 
-	public static HoareAnnotation getAnnotation(IElement node) {
+	public static HoareAnnotation getAnnotation(final IElement node) {
 		if (node instanceof ProgramPoint) {
 			return getAnnotation((ProgramPoint) node);
 		}
 		return null;
 	}
 
-	public static HoareAnnotation getAnnotation(ProgramPoint node) {
+	public static HoareAnnotation getAnnotation(final ProgramPoint node) {
 		if (node.hasPayload()) {
 			final IPayload payload = node.getPayload();
 			if (payload.hasAnnotation()) {

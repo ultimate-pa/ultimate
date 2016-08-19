@@ -57,12 +57,9 @@ public class Event<S, C> implements Serializable {
 	 * the net system it is mapped to by the homomorphism. Its successor
 	 * conditions are automatically created. The given set not be referenced
 	 * directly, but copied.
-	 * 
-	 * @param predecessors
-	 * @param transition
 	 */
-	public Event(Collection<Condition<S, C>> predecessors,
-			Transition<S, C> transition) {
+	public Event(final Collection<Condition<S, C>> predecessors,
+			final Transition<S, C> transition) {
 		assert conditionToPlaceEqual(predecessors, transition.getPredecessors()) : "An event was created with inappropriate predecessors.\n  "
 				+ "transition: "
 				+ transition.toString()
@@ -107,11 +104,8 @@ public class Event<S, C> implements Serializable {
 
 	/**
 	 * returns the Set of all successor conditions of {@code events}
-	 * 
-	 * @param events
-	 * @return
 	 */
-	public static <S, C> Set<Condition<S, C>> getDot(Set<Event<S, C>> events) {
+	public static <S, C> Set<Condition<S, C>> getDot(final Set<Event<S, C>> events) {
 		final HashSet<Condition<S, C>> result = new HashSet<Condition<S, C>>();
 		for (final Event<S, C> e : events) {
 			result.addAll(e.getSuccessorConditions());
@@ -134,12 +128,9 @@ public class Event<S, C> implements Serializable {
 	/**
 	 * returns the Set of all successor events of all successor conditions of
 	 * {@code events}
-	 * 
-	 * @param events
-	 * @return
 	 */
 	public static <S, C> Set<Event<S, C>> getSuccessorEvents(
-			Set<Event<S, C>> events) {
+			final Set<Event<S, C>> events) {
 		final HashSet<Event<S, C>> result = new HashSet<Event<S, C>>();
 		for (final Event<S, C> e : events) {
 			result.addAll(e.getSuccessorEvents());
@@ -150,12 +141,9 @@ public class Event<S, C> implements Serializable {
 	/**
 	 * returns the Set of all predecessor events of all predecessor conditions
 	 * of {@code events}
-	 * 
-	 * @param events
-	 * @return
 	 */
 	public static <S, C> Set<Event<S, C>> getPredecessorEvents(
-			Set<Event<S, C>> events) {
+			final Set<Event<S, C>> events) {
 		final HashSet<Event<S, C>> result = new HashSet<Event<S, C>>();
 		for (final Event<S, C> e : events) {
 			result.addAll(e.getPredecessorEvents());
@@ -179,13 +167,9 @@ public class Event<S, C> implements Serializable {
 	 * returns true, if the homomorphism h of the corresponding branching
 	 * process reduced to conditions and places is a well defined isomorphism.
 	 * this is a helper method used only for assertions.
-	 * 
-	 * @param conditions
-	 * @param places
-	 * @return
 	 */
 	private boolean conditionToPlaceEqual(
-			Collection<Condition<S, C>> conditions,
+			final Collection<Condition<S, C>> conditions,
 			Collection<Place<S, C>> places) {
 		places = new HashSet<Place<S, C>>(places);
 		for (final Condition<S, C> c : conditions) {
@@ -198,10 +182,8 @@ public class Event<S, C> implements Serializable {
 
 	/**
 	 * Creates a dummy event. Used as the root of a branchingprocess.
-	 * 
-	 * @param mSuccessors
 	 */
-	public Event(PetriNetJulian<S, C> net) {
+	public Event(final PetriNetJulian<S, C> net) {
 		this.mTransition = null;
 		this.mLocalConfiguration = new Configuration<S, C>(
 				new HashSet<Event<S, C>>());
@@ -256,14 +238,12 @@ public class Event<S, C> implements Serializable {
 	 * <ul>
 	 * <li>e and e' belong to the same transition</li>
 	 * </ul>
-	 * which will produce fewer cut-off events and a bigger prefix hence.
-	 * However, we assume the blowup is not so big TODO: check this claim.
-	 * (maybe linear? with respect to what?)
-	 * 
-	 * @return
+	 *     which will produce fewer cut-off events and a bigger prefix hence.
+	 *     However, we assume the blowup is not so big TODO: check this claim.
+	 *     (maybe linear? with respect to what?)
 	 */
-	public boolean checkCutOffSetCompanion(Event<S, C> e,
-			Comparator<Event<S, C>> order, boolean sameTransitionCutOff) {
+	public boolean checkCutOffSetCompanion(final Event<S, C> e,
+			final Comparator<Event<S, C>> order, final boolean sameTransitionCutOff) {
 		if (sameTransitionCutOff) {
 			// additional requirement for cut-off events.
 			// TODO: tests to compare prefix sizes.
@@ -284,10 +264,8 @@ public class Event<S, C> implements Serializable {
 	/**
 	 * set this.companion to e, or, if e is a cut-off event itself to the
 	 * companion of e.
-	 * 
-	 * @param e
 	 */
-	private void setCompanion(Event<S, C> e) {
+	private void setCompanion(final Event<S, C> e) {
 		assert this.mCompanion == null;
 		if (e.getCompanion() == null) {
 			this.mCompanion = e;
@@ -305,7 +283,6 @@ public class Event<S, C> implements Serializable {
 	 * </p>
 	 * 
 	 * @see BranchingProcess#isCutoffEvent(Event, Comparator)
-	 * @return
 	 */
 	public boolean isCutoffEvent() {
 		return this.mCompanion != null;
@@ -314,8 +291,6 @@ public class Event<S, C> implements Serializable {
 	/**
 	 * returns the size of the local configuration, that is the number of
 	 * ancestor events.
-	 * 
-	 * @return
 	 */
 	public int getAncestors() {
 		return mLocalConfiguration.size();

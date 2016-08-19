@@ -31,30 +31,29 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.TransitionConsitenceCheck;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.TransitionConsistencyCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
+public class RemoveDeadEnds<LETTER,STATE>
+		extends UnaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER,STATE> {
 	
-	private final AutomataLibraryServices mServices;
-	private final INestedWordAutomatonSimple<LETTER,STATE> mInput;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> mReach;
-	private final INestedWordAutomatonOldApi<LETTER,STATE> mResult;
-
-	private final ILogger mLogger;
+	private final IDoubleDeckerAutomaton<LETTER,STATE> mResult;
 
 	/**
 	 * Given an INestedWordAutomaton nwa return a nested word automaton that has
@@ -64,64 +63,57 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * Each state of the result also occurred in the input. Only the auxiliary
 	 * empty stack state of the result is different. 
 	 * 
-	 * @param nwa
-	 * @throws AutomataOperationCanceledException
+	 * @param services Ultimate services
+	 * @param operand operand
+	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
-	public RemoveDeadEnds(AutomataLibraryServices services,
-			INestedWordAutomatonSimple<LETTER,STATE> nwa)
+	public RemoveDeadEnds(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER,STATE> operand)
 			throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mInput = nwa;
+		super(services, operand);
 		mLogger.info(startMessage());
 		try {
-			mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mInput);
+			mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(
+					mServices, mOperand);
 			mReach.computeDeadEnds();
-			mResult = new NestedWordAutomatonFilteredStates<LETTER, STATE>(mServices, mReach, mReach.getWithOutDeadEnds());
+			mResult = new NestedWordAutomatonFilteredStates<LETTER, STATE>(
+					mServices, mReach, mReach.getWithOutDeadEnds());
 		} catch (final AutomataOperationCanceledException oce) {
 			throw new AutomataOperationCanceledException(getClass());
 		}
 		mLogger.info(exitMessage());
-		assert (new TransitionConsitenceCheck<LETTER, STATE>(mResult)).consistentForAll();
+		assert (new TransitionConsistencyCheck<LETTER, STATE>(mResult)).consistentForAll();
 	}
 	
-
 	@Override
 	public String operationName() {
 		return "removeDeadEnds";
 	}
 
 	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Input "
-				+ mInput.sizeInformation();
-	}
-
-	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Reduced from " 
-				+ mInput.sizeInformation() + " to "
+				+ mOperand.sizeInformation() + " to "
 				+ mResult.sizeInformation();
 	}
 
-
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
+	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
 		return mResult;
 	}
 	
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
+	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
 		mLogger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
 //		correct &= (ResultChecker.nwaLanguageInclusion(mInput, mResult) == null);
 //		correct &= (ResultChecker.nwaLanguageInclusion(mResult, mInput) == null);
 		assert correct;
-		INestedWordAutomatonOldApi<LETTER, STATE> input;
-		if (mInput instanceof INestedWordAutomatonOldApi) {
-			input = (INestedWordAutomatonOldApi<LETTER, STATE>) mInput;
+		INestedWordAutomaton<LETTER, STATE> input;
+		if (mOperand instanceof INestedWordAutomaton) {
+			input = (INestedWordAutomaton<LETTER, STATE>) mOperand;
 		} else {
-			input = (new RemoveUnreachable<LETTER, STATE>(mServices, mInput)).getResult(); 
+			input = (new RemoveUnreachable<LETTER, STATE>(mServices, mOperand)).getResult(); 
 		}
 		final ReachableStatesCopy<LETTER, STATE> rsc = 
 				(new ReachableStatesCopy<LETTER, STATE>(mServices, input, false, false, false, false));
@@ -138,8 +130,10 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 //		correct &= ResultChecker.isSubset(rscEntries,rsaEntries);
 //		assert correct;
 		rsc.removeDeadEnds();
-		final DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = (DoubleDeckerAutomaton<LETTER, STATE>) rsc.getResult();
-		correct &= mResult.getStates().isEmpty() || ResultChecker.isSubset(reachalbeStatesCopy.getStates(),mResult.getStates());
+		final DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy =
+				(DoubleDeckerAutomaton<LETTER, STATE>) rsc.getResult();
+		correct &= mResult.getStates().isEmpty()
+				|| ResultChecker.isSubset(reachalbeStatesCopy.getStates(),mResult.getStates());
 		assert correct;
 		correct &= ResultChecker.isSubset(mResult.getStates(),reachalbeStatesCopy.getStates());
 		assert correct;
@@ -169,15 +163,18 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				assert correct;
 			}
 			for (final OutgoingCallTransition<LETTER, STATE> outTrans : mResult.callSuccessors(state)) {
-				correct &= reachalbeStatesCopy.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
+				correct &= reachalbeStatesCopy.containsCallTransition(state,
+						outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : mResult.returnSuccessors(state)) {
-				correct &= reachalbeStatesCopy.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
+				correct &= reachalbeStatesCopy.containsReturnTransition(state,
+						outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
 			final Set<STATE> rCSdownStates = reachalbeStatesCopy.getDownStates(state);
-			final Set<STATE> rCAdownStates = mReach.getWithOutDeadEnds().getDownStates(state);
+			final Set<STATE> rCAdownStates =
+					mReach.getWithOutDeadEnds().getDownStates(state);
 			correct &= ResultChecker.isSubset(rCAdownStates, rCSdownStates);
 			assert correct;
 			// After enhanced non-live/dead end removal the following does not
@@ -186,11 +183,11 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			assert correct;
 		}
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mInput);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
+					operationName() + "Failed", "language is different",
+					mOperand);
 		}
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
-
-
 }

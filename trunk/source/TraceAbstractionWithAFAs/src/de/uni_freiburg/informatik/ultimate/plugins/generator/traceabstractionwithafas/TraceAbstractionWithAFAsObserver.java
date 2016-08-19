@@ -80,20 +80,21 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 
 	private final ILogger mLogger;
 
-	public TraceAbstractionWithAFAsObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
+	public TraceAbstractionWithAFAsObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		mServices = services;
 		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 	}
 
 	@Override
-	public boolean process(IElement root) {
+	public boolean process(final IElement root) {
 
 		final RootNode rootNode = (RootNode) root;
 		final RootAnnot rootAnnot = rootNode.getRootAnnot();
-		final SmtManager smtManager = new SmtManager(rootAnnot.getScript(), rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices, false, rootAnnot.getManagedScript());
-		final TraceAbstractionBenchmarks taBenchmarks = new TraceAbstractionBenchmarks(rootAnnot);
 		final TAPreferences taPrefs = new TAPreferences(mServices);
+		final SmtManager smtManager = new SmtManager(rootAnnot.getScript(), rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices, false, rootAnnot.getManagedScript(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+		final TraceAbstractionBenchmarks taBenchmarks = new TraceAbstractionBenchmarks(rootAnnot);
+		
 
 		final Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
 		final Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<ProgramPoint>();
@@ -129,7 +130,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 	}
 	
 	
-	private <T> void reportBenchmark(ICsvProviderProvider<T> benchmark) {
+	private <T> void reportBenchmark(final ICsvProviderProvider<T> benchmark) {
 		final String shortDescription = "Ultimate CodeCheck benchmark data";
 		final BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.s_PLUGIN_NAME, shortDescription, benchmark);
 		// s_Logger.warn(res.getLongDescription());
@@ -137,7 +138,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		reportResult(res);
 	}
 
-	private void reportPositiveResults(Collection<ProgramPoint> errorLocs) {
+	private void reportPositiveResults(final Collection<ProgramPoint> errorLocs) {
 		final String longDescription;
 		if (errorLocs.isEmpty()) {
 			longDescription = "We were not able to verify any"
@@ -155,7 +156,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		mLogger.info(result.getShortDescription() + " " + result.getLongDescription());
 	}
 
-	private void reportCounterexampleResult(RcfgProgramExecution pe) {
+	private void reportCounterexampleResult(final RcfgProgramExecution pe) {
 		if (!pe.getOverapproximations().isEmpty()) {
 			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
@@ -165,21 +166,21 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 				mServices.getBacktranslationService(), pe));
 	}
 
-	private void reportUnproveableResult(RcfgProgramExecution pe, List<UnprovabilityReason> unproabilityReasons) {
+	private void reportUnproveableResult(final RcfgProgramExecution pe, final List<UnprovabilityReason> unproabilityReasons) {
 		final ProgramPoint errorPP = getErrorPP(pe);
 		final UnprovableResult<RcfgElement, RCFGEdge, Expression> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Expression>(
 				Activator.s_PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 
-	public ProgramPoint getErrorPP(RcfgProgramExecution rcfgProgramExecution) {
+	public ProgramPoint getErrorPP(final RcfgProgramExecution rcfgProgramExecution) {
 		final int lastPosition = rcfgProgramExecution.getLength() - 1;
 		final RCFGEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
 		final ProgramPoint errorPP = (ProgramPoint) last.getTarget();
 		return errorPP;
 	}
 	
-	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs) {
+	private void reportTimeoutResult(final Collection<ProgramPoint> errorLocs) {
 		for (final ProgramPoint errorIpp : errorLocs) {
 			final ProgramPoint errorLoc = errorIpp;
 			final ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
@@ -193,7 +194,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		}
 	}
 
-	private void reportResult(IResult res) {
+	private void reportResult(final IResult res) {
 		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, res);
 	}
 

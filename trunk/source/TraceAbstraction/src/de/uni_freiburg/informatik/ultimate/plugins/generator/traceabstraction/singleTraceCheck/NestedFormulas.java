@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 
 /**
  * Class that represents a sequence of formulas (of type F) along a trace (given

@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -39,11 +39,11 @@ public class GetAcceptedLassoWord<LETTER, STATE> implements IOperation<LETTER,ST
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
-	private final INestedWordAutomatonOldApi<LETTER, STATE> mOperand;
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final NestedLassoWord<LETTER> mAcceptedWord;
 
-	public GetAcceptedLassoWord(AutomataLibraryServices services,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
+	public GetAcceptedLassoWord(final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
@@ -82,7 +82,7 @@ public class GetAcceptedLassoWord<LETTER, STATE> implements IOperation<LETTER,ST
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}

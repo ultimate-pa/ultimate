@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -44,7 +44,7 @@ public class SPredicateWithWitnessNode extends SPredicate {
 	
 	protected SPredicateWithWitnessNode(ProgramPoint programPoint,
 			int serialNumber, String[] procedures, Term term,
-			Set<BoogieVar> vars, Term closedFormula, WitnessNode witnessNode, Integer stutteringSteps) {
+			Set<IProgramVar> vars, Term closedFormula, WitnessNode witnessNode, Integer stutteringSteps) {
 		super(programPoint, serialNumber, procedures, term, vars, closedFormula);
 		mWitnessNode = witnessNode;
 		mStutteringSteps = stutteringSteps;

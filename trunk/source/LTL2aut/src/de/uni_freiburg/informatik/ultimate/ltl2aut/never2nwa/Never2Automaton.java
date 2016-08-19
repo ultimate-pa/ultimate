@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -98,8 +99,8 @@ public class Never2Automaton {
 	 * @param cbf
 	 * @throws Exception
 	 */
-	public Never2Automaton(AstNode ast, BoogieSymbolTable boogieSymbolTable, Map<String, CheckableExpression> irs,
-			ILogger logger, IUltimateServiceProvider services, CodeBlockFactory cbf) throws Exception {
+	public Never2Automaton(final AstNode ast, final BoogieSymbolTable boogieSymbolTable, final Map<String, CheckableExpression> irs,
+			final ILogger logger, final IUltimateServiceProvider services, final CodeBlockFactory cbf) throws Exception {
 		mServices = services;
 		mLogger = logger;
 		mNeverClaim = ast;
@@ -126,7 +127,7 @@ public class Never2Automaton {
 	 * 
 	 * @return automaton
 	 */
-	public NestedWordAutomaton<CodeBlock, String> getAutomaton() {
+	public INestedWordAutomaton<CodeBlock, String> getAutomaton() {
 		return mAutomaton;
 	}
 
@@ -187,7 +188,7 @@ public class Never2Automaton {
 		return symbols;
 	}
 
-	private void visitAstForSymbols(AstNode branch, Set<CodeBlock> symbols) throws Exception {
+	private void visitAstForSymbols(final AstNode branch, final Set<CodeBlock> symbols) throws Exception {
 		if (branch instanceof BoolLiteral) {
 			return;
 		} else if (branch instanceof SkipStatement) {
@@ -210,7 +211,7 @@ public class Never2Automaton {
 		return ss;
 	}
 
-	private List<CodeBlock> getAssume(AstNode condition) throws Exception {
+	private List<CodeBlock> getAssume(final AstNode condition) throws Exception {
 		if (condition instanceof Name) {
 			// this may be already translated by the IRS
 			final Name name = (Name) condition;
@@ -228,7 +229,7 @@ public class Never2Automaton {
 		return getAssumeFromCheckableExpression(checkExpr);
 	}
 
-	private List<CodeBlock> getAssumeFromCheckableExpression(CheckableExpression checkExpr) {
+	private List<CodeBlock> getAssumeFromCheckableExpression(final CheckableExpression checkExpr) {
 		final ArrayList<CodeBlock> rtr = new ArrayList<>();
 		final List<Statement> preStmts = new ArrayList<>();
 		if (checkExpr.getStatements() != null) {
@@ -262,7 +263,7 @@ public class Never2Automaton {
 	 * @return root node of the proposition as Boogie ASTNodes
 	 * @throws Exception
 	 */
-	public CheckableExpression toBoogieAst(AstNode branch) throws Exception {
+	public CheckableExpression toBoogieAst(final AstNode branch) throws Exception {
 		if (branch instanceof BinaryOperator) {
 			final BinaryOperator ncBinOp = (BinaryOperator) branch;
 			BinaryExpression.Operator op;
@@ -349,7 +350,7 @@ public class Never2Automaton {
 				branch.getClass().toString()));
 	}
 
-	private List<Statement> mergeStatements(CheckableExpression... exprs) {
+	private List<Statement> mergeStatements(final CheckableExpression... exprs) {
 		final List<Statement> rtr = new ArrayList<>();
 		for (final CheckableExpression expr : exprs) {
 			if (expr.getStatements() != null) {
@@ -364,7 +365,7 @@ public class Never2Automaton {
 		mAutomaton.addInternalTransition(predecessor, letter, successor);
 	}
 
-	private void addState(String state) {
+	private void addState(final String state) {
 		if (!mAutomaton.getStates().contains(state)) {
 			mAutomaton.addState(state.endsWith("init"), state.startsWith("accept"), state);
 		}

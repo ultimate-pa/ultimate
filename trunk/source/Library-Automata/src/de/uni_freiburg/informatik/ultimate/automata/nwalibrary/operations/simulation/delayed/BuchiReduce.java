@@ -22,9 +22,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -69,11 +69,11 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	/**
 	 * The inputed buechi automaton.
 	 */
-	private INestedWordAutomatonOldApi<LETTER, STATE> mOperand;
+	private INestedWordAutomaton<LETTER, STATE> mOperand;
 	/**
 	 * The resulting possible reduced buechi automaton.
 	 */
-	private INestedWordAutomatonOldApi<LETTER, STATE> mResult;
+	private INestedWordAutomaton<LETTER, STATE> mResult;
 	/**
 	 * Service provider of Ultimate framework.
 	 */
@@ -95,7 +95,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 *             framework.
 	 */
 	public BuchiReduce(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand,
 				new DelayedSimulation<>(services.getProgressMonitorService(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), true, stateFactory,
@@ -122,7 +122,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 *             framework.
 	 */
 	protected BuchiReduce(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final DelayedSimulation<LETTER, STATE> simulation)
+			final INestedWordAutomaton<LETTER, STATE> operand, final DelayedSimulation<LETTER, STATE> simulation)
 					throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -141,7 +141,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			final DelayedSimulation<LETTER, STATE> nonSccSim = new DelayedSimulation<>(mServices.getProgressMonitorService(),
 					mLogger, false, stateFactory, graph);
 			nonSccSim.doSimulation();
-			final INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = nonSccSim.getResult();
+			final INestedWordAutomaton<LETTER, STATE> nonSCCresult = nonSccSim.getResult();
 			if (mResult.size() != nonSCCresult.size()) {
 				throw new AssertionError();
 			}
@@ -158,7 +158,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory)
 	 */
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return ResultChecker.reduceBuchi(mServices, mOperand, mResult);
 	}
 
@@ -179,7 +179,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
 	 */
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 
@@ -191,7 +191,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 */
 	@Override
 	public String operationName() {
-		return "reduceBuchi";
+		return "BuchiReduce";
 	}
 
 	/*
@@ -219,7 +219,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * 
 	 * @return The inputed automaton.
 	 */
-	protected INestedWordAutomatonOldApi<LETTER, STATE> getOperand() {
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 

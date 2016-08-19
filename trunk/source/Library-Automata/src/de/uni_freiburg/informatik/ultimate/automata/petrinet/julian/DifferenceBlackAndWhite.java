@@ -33,38 +33,28 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
+public class DifferenceBlackAndWhite<S,C>
+		extends GeneralOperation<S, C>
+		implements IOperation<S,C> {
 	
-	private final AutomataLibraryServices mServices;
-	
-	@Override
-	public String operationName() {
-		return "differenceBlackAndWhite";
-	}
-	
-	private final ILogger mLogger;
-	
-	
-	
-	private final PetriNetJulian<S,C> mNet;
+	private final PetriNetJulian<S,C> mOperand;
 	private final NestedWordAutomaton<S,C> mNwa;
 	private final StateFactory<C> mContentFactory;
 	
-	PetriNetJulian<S,C> mResult;
+	private PetriNetJulian<S,C> mResult;
 	
 	private final Map<Place<S,C>,Place<S,C>> mOldPlace2NewPlace =
 		new HashMap<Place<S,C>,Place<S,C>>();
@@ -80,28 +70,18 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 	private final Map<C,Place<S,C>> mBlackPlace =
 		new HashMap<C,Place<S,C>>();
 	
-	
-
-	
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() +
-			"First Operand " + mNet.sizeInformation() +
-			"Second Operand " + mNwa.sizeInformation();
-	}
-	
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() +
-			" Result " + mResult.sizeInformation();
-	}
-	
-	public DifferenceBlackAndWhite(AutomataLibraryServices services,
-									PetriNetJulian<S,C> net, 
-								   NestedWordAutomaton<S,C> nwa) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mNet = net;
+	/**
+	 * Constructor.
+	 * 
+	 * @param services Ultimate services
+	 * @param net Petri net
+	 * @param nwa nested word automaton
+	 */
+	public DifferenceBlackAndWhite(final AutomataLibraryServices services,
+									final PetriNetJulian<S,C> net, 
+								   final NestedWordAutomaton<S,C> nwa) {
+		super(services);
+		mOperand = net;
 		mNwa = nwa;
 		mContentFactory = net.getStateFactory();
 		
@@ -117,7 +97,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 			throw new UnsupportedOperationException("DifferenceBlackAndWhite" +
 					" needs an automaton with exactly one inital state");
 		}
-		if(!nwa.finalIsTrap()) {
+		if (!nwa.finalIsTrap()) {
 			throw new UnsupportedOperationException("Second operand has to" +
 					"closed under concatenation with sigma star");
 			//otherwise the result won't be the intersection of languages
@@ -125,21 +105,41 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 		final C nwaInitialState = nwa.getInitialStates().iterator().next();
 		classifySymbols();
 //		mSymbol2AutomatonTransition = createSymbol2AutomatonTransitionMap();
-		if(nwa.isFinal(nwaInitialState)) {
+		if (nwa.isFinal(nwaInitialState)) {
 			// case where nwa accepts everything. Result will be a net that
 			// accepts the empty language
-			mResult = new PetriNetJulian<S,C>(mServices, mNet.getAlphabet(),
-					mNet.getStateFactory(),
+			mResult = new PetriNetJulian<S,C>(mServices, mOperand.getAlphabet(),
+					mOperand.getStateFactory(),
 					true);
 			final C sinkContent = mContentFactory.createSinkStateContent();
 			mResult.addPlace(sinkContent, true, false);
-		}
-		else {		
-			copyNet_StatesOnly();
+		} else {		
+			copyNetStatesOnly();
 			addBlackAndWhitePlaces();
 			addTransitions();
 		}
 		mLogger.info(exitMessage());
+	}
+	
+	@Override
+	public String operationName() {
+		return "differenceBlackAndWhite";
+	}
+	
+	
+
+	
+	@Override
+	public String startMessage() {
+		return "Start " + operationName() +
+			"First Operand " + mOperand.sizeInformation() +
+			"Second Operand " + mNwa.sizeInformation();
+	}
+	
+	@Override
+	public String exitMessage() {
+		return "Finished " + operationName() +
+			" Result " + mResult.sizeInformation();
 	}
 	
 	
@@ -164,8 +164,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 				}
 				if (successors.contains(state)) {
 					selfloopStates.add(state);
-				}
-				else {
+				} else {
 					changerStates.add(state);
 				}
 			}
@@ -207,18 +206,18 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 //	}
 	
 	
-	private void copyNet_StatesOnly() {
+	private void copyNetStatesOnly() {
 		
 		// difference black and white preserves the constantTokenAmount invariant
-		final boolean constantTokenAmount = mNet.constantTokenAmount();
-		mResult = new PetriNetJulian<S,C>(mServices, mNet.getAlphabet(),
-											mNet.getStateFactory(),
+		final boolean constantTokenAmount = mOperand.constantTokenAmount();
+		mResult = new PetriNetJulian<S,C>(mServices, mOperand.getAlphabet(),
+											mOperand.getStateFactory(),
 											constantTokenAmount);
 		
-		for (final Place<S,C> oldPlace : mNet.getPlaces()) {
+		for (final Place<S,C> oldPlace : mOperand.getPlaces()) {
 			final C content = oldPlace.getContent();
-			final boolean isInitial = mNet.getInitialMarking().contains(oldPlace);
-			final boolean isAccepting = mNet.getAcceptingPlaces().contains(oldPlace);
+			final boolean isInitial = mOperand.getInitialMarking().contains(oldPlace);
+			final boolean isAccepting = mOperand.getAcceptingPlaces().contains(oldPlace);
 			final Place<S,C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
 			mOldPlace2NewPlace.put(oldPlace, newPlace);
 		}
@@ -241,7 +240,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 	}
 	
 	private void addTransitions() {
-		for (final ITransition<S, C> oldTrans : mNet.getTransitions()) {
+		for (final ITransition<S, C> oldTrans : mOperand.getTransitions()) {
 			final S symbol = oldTrans.getSymbol();
 			
 			// A copy for each changer
@@ -261,9 +260,9 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 					final Place<S,C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					predecessors.add(newPlace);
 				}
-				assert(mWhitePlace.containsKey(predState));
+				assert (mWhitePlace.containsKey(predState));
 				predecessors.add(mWhitePlace.get(predState));
-				assert(mWhitePlace.containsKey(succState));
+				assert (mWhitePlace.containsKey(succState));
 				predecessors.add(mBlackPlace.get(succState));
 				
 				final Collection<Place<S,C>> successors = 
@@ -272,9 +271,9 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 					final Place<S,C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					successors.add(newPlace);
 				}
-				assert(mWhitePlace.containsKey(succState));
+				assert (mWhitePlace.containsKey(succState));
 				successors.add(mWhitePlace.get(succState));
-				assert(mBlackPlace.containsKey(predState));
+				assert (mBlackPlace.containsKey(predState));
 				successors.add(mBlackPlace.get(predState));
 				
 				mResult.addTransition(oldTrans.getSymbol(), predecessors, successors);
@@ -344,15 +343,15 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 	
 	
 	
-	private boolean isPreSuccPlaceInNet(PetriNetJulian<S,C> net) {
+	private boolean isPreSuccPlaceInNet(final PetriNetJulian<S,C> net) {
 		for (final ITransition<S,C> trans : net.getTransitions()) {
 			for (final Place<S,C> place : trans.getPredecessors()) {
-				if(!net.getPlaces().contains(place)) {
+				if (!net.getPlaces().contains(place)) {
 					return false;
 				}
 			}
 			for (final Place<S,C> place : trans.getSuccessors()) {
-				if(!net.getPlaces().contains(place)) {
+				if (!net.getPlaces().contains(place)) {
 					return false;
 				}
 			}
@@ -362,15 +361,15 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 	
 	
 	
-	private boolean isPreSuccTransitionInNet(PetriNetJulian<S,C> net) {
+	private boolean isPreSuccTransitionInNet(final PetriNetJulian<S,C> net) {
 		for (final Place<S,C> place : net.getPlaces()) {
 			for (final ITransition<S,C> trans : place.getPredecessors()) {
-				if(!net.getTransitions().contains(trans)) {
+				if (!net.getTransitions().contains(trans)) {
 					return false;
 				}
 			}
 			for (final ITransition<S,C> trans : place.getSuccessors()) {
-				if(!net.getTransitions().contains(trans)) {
+				if (!net.getTransitions().contains(trans)) {
 					return false;
 				}
 			}
@@ -379,16 +378,20 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<C> stateFactory)
+	public boolean checkResult(final StateFactory<C> stateFactory)
 			throws AutomataLibraryException {
 		mLogger.info("Testing correctness of differenceBlackAndWhite");
 
-		final INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(mServices, mNet)).getResult();
-		final INestedWordAutomatonOldApi rcResult = (new DifferenceDD(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
-		final INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(mServices, mResult)).getResult();
+		final INestedWordAutomaton<S, C> op1AsNwa =
+				(new PetriNet2FiniteAutomaton<S, C>(mServices, mOperand)).getResult();
+		final INestedWordAutomaton<S, C> rcResult =
+				(new DifferenceDD<S, C>(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
+		final INestedWordAutomaton<S, C> resultAsNwa =
+				(new PetriNet2FiniteAutomaton<S, C>(mServices, mResult)).getResult();
+		
 		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(mServices, resultAsNwa,rcResult,stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(mServices, rcResult,resultAsNwa,stateFactory) == null);
+		correct &= new IsIncluded<>(mServices, stateFactory, resultAsNwa, rcResult).getResult();
+		correct &= new IsIncluded<>(mServices, stateFactory, rcResult, resultAsNwa).getResult();
 
 		mLogger.info("Finished testing correctness of differenceBlackAndWhite");
 		return correct;

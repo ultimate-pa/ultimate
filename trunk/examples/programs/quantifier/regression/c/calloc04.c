@@ -3,7 +3,7 @@
  * Bug: modifies not transitive.
  * 
  * Date: 2016-05-15
- * Author: heizmann@informtik.uni-freiburg.de
+ * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
 

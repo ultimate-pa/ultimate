@@ -36,11 +36,14 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -60,19 +63,23 @@ public abstract class CFG2Automaton {
 
 	protected final ILogger mLogger;
 	protected final IUltimateServiceProvider mServices;
+	private final SimplicationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	private final RootAnnot mRootAnnot;
 	private final SmtManager mSmtManager;
 	private final StateFactory<IPredicate> mContentFactory;
-	protected ArrayList<NestedWordAutomaton<CodeBlock, IPredicate>> mAutomata;
+	protected ArrayList<INestedWordAutomaton<CodeBlock, IPredicate>> mAutomata;
 
 	private CodeBlock mSharedVarsInit;
 	private static final String mInitProcedure = "~init";
 
-	public CFG2Automaton(RootNode rootNode, StateFactory<IPredicate> contentFactory, SmtManager smtManager,
-			IUltimateServiceProvider services) {
+	public CFG2Automaton(final RootNode rootNode, final StateFactory<IPredicate> contentFactory, final SmtManager smtManager,
+			final IUltimateServiceProvider services, final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
 		// mRootNode = rootNode;
 		mRootAnnot = rootNode.getRootAnnot();
 		mContentFactory = contentFactory;
@@ -103,7 +110,7 @@ public abstract class CFG2Automaton {
 		}
 		mLogger.debug("Found " + numberOfProcedures + "Procedures");
 
-		mAutomata = new ArrayList<NestedWordAutomaton<CodeBlock, IPredicate>>(numberOfProcedures);
+		mAutomata = new ArrayList<INestedWordAutomaton<CodeBlock, IPredicate>>(numberOfProcedures);
 
 		mSharedVarsInit = extractPrecondition();
 
@@ -133,14 +140,14 @@ public abstract class CFG2Automaton {
 			codeBlocks.add(succSS);
 			current = (ProgramPoint) succSS.getTarget();
 		}
-		return mRootAnnot.getCodeBlockFactory().constructSequentialComposition(entry, exit, true, false, codeBlocks);
+		return mRootAnnot.getCodeBlockFactory().constructSequentialComposition(entry, exit, true, false, codeBlocks, mXnfConversionTechnique, mSimplificationTechnique);
 	}
 
 	/**
 	 * Build NestedWordAutomaton for all code reachable from initial Node which is in the same procedure as initial
 	 * Node. Initial Node does not have to be the enty Node of a procedure.
 	 */
-	private NestedWordAutomaton<CodeBlock, IPredicate> getNestedWordAutomaton(ProgramPoint initialNode) {
+	private INestedWordAutomaton<CodeBlock, IPredicate> getNestedWordAutomaton(final ProgramPoint initialNode) {
 
 		mLogger.debug("Step: Collect all LocNodes corresponding to" + " this procedure");
 

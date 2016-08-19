@@ -31,13 +31,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -59,10 +57,10 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 	/**
 	 * Default constructor.
 	 */
-	protected SignPostOperator(IUltimateServiceProvider services) {
+	protected SignPostOperator(ILogger logger, SignDomainStatementProcessor stmtProcessor) {
 		mStatementExtractor = new RcfgStatementExtractor();
-		mStatementProcessor = new SignDomainStatementProcessor(services);
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mStatementProcessor = stmtProcessor;
+		mLogger = logger;
 	}
 
 	/**
@@ -99,12 +97,12 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 	}
 
 	@Override
-	public List<SignDomainState> apply(final SignDomainState stateBeforeLeaving, final SignDomainState stateAfterLeaving,
-	        final CodeBlock transition) {
+	public List<SignDomainState> apply(final SignDomainState stateBeforeLeaving,
+			final SignDomainState stateAfterLeaving, final CodeBlock transition) {
 		assert transition instanceof Call || transition instanceof Return;
 
 		final List<SignDomainState> returnList = new ArrayList<>();
-		
+
 		if (transition instanceof Call) {
 			// nothing changes during this switch
 			returnList.add(stateAfterLeaving);
@@ -113,13 +111,13 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 			final Return ret = (Return) transition;
 			final CallStatement correspondingCall = ret.getCallStatement();
 			mLogger.error("SignDomain does not handle returns correctly: " + ret + " for "
-			        + BoogiePrettyPrinter.print(correspondingCall));
+					+ BoogiePrettyPrinter.print(correspondingCall));
 			returnList.add(stateAfterLeaving);
 		} else {
 			throw new UnsupportedOperationException(
-			        "SignDomain does not support context switches other than Call and Return (yet)");
+					"SignDomain does not support context switches other than Call and Return (yet)");
 		}
-		
+
 		return returnList;
 	}
 

@@ -29,6 +29,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,21 +49,24 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.ModelExtractionUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.MotzkinTransformation;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Transition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 /**
@@ -98,7 +102,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	/**
 	 * The pattern coefficients, that is the program- and helper variables.
 	 */
-	private final Set<RankVar> patternCoefficients;
+	private final Set<IProgramVar> patternCoefficients;
 	private Map<Term, Rational> valuation;
 	private Collection<Collection<LinearPatternBase>> entryInvariantPattern;
 	private Collection<Collection<LinearPatternBase>> exitInvariantPattern;
@@ -107,6 +111,12 @@ public final class LinearInequalityInvariantPatternProcessor
 	private int maxRounds;
 	private final boolean mUseNonlinearConstraints; 
 	private final boolean mSimplifySatisfyingAssignment = true;
+	/**
+	 * If set to true, we always construct two copies of each invariant
+	 * pattern, one strict inequality and one non-strict inequality.
+	 * If set to false we use only one non-strict inequality.
+	 */
+	private final boolean mAlwaysStrictAndNonStrictCopies = false;
 
 	/**
 	 * Creates a pattern processor using linear inequalities as patterns.
@@ -115,7 +125,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 *            Service provider to use, for example for logging and timeouts
 	 * @param predicateUnifier
 	 *            the predicate unifier to unify final predicates with
-	 * @param smtManager
+	 * @param predicateScript
 	 *            the smt manager to use with the predicateUnifier
 	 * @param solver
 	 *            SMT solver to use
@@ -131,17 +141,23 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @param useNonlinearConstraints
 	 * 			  Kind of constraints that are used to specify invariant.
 	 * @param storage 
+	 * @param simplicationTechnique 
+	 * @param xnfConversionTechnique 
+	 * @param axioms 
 	 */
 	public LinearInequalityInvariantPatternProcessor(
 			final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
 			final PredicateUnifier predicateUnifier,
-			final SmtManager smtManager, final Script solver,
+			final ManagedScript predicateScript, final Collection<Term> axioms, 
+			final Script solver,
 			final ControlFlowGraph cfg, final IPredicate precondition,
 			final IPredicate postcondition,
 			final ILinearInequalityInvariantPatternStrategy strategy,
-			final boolean useNonlinearConstraints) {
-		super(predicateUnifier, smtManager);
+			final boolean useNonlinearConstraints, 
+			final SimplicationTechnique simplicationTechnique, 
+			final XnfConversionTechnique xnfConversionTechnique) {
+		super(predicateUnifier, predicateScript);
 		this.services = services;
 		logger = services.getLoggingService().getLogger(
 				Activator.PLUGIN_ID);
@@ -152,12 +168,12 @@ public final class LinearInequalityInvariantPatternProcessor
 		patternVariables = new ArrayList<>();
 		patternCoefficients = new HashSet<>();
 
-		linearizer = new CachedTransFormulaLinearizer(services, smtManager, storage);
-		final Boogie2SMT boogie2smt = smtManager.getBoogie2Smt();
-		this.precondition = linearizer.linearize(new TransFormula(precondition,
-				boogie2smt));
-		this.postcondition = linearizer.linearize(new TransFormula(
-				postcondition, boogie2smt));
+		linearizer = new CachedTransFormulaLinearizer(services, 
+				predicateScript, axioms, storage, simplicationTechnique, xnfConversionTechnique);
+		this.precondition = linearizer.linearize(
+				TransFormulaBuilder.constructTransFormulaFromPredicate(precondition, predicateScript));
+		this.postcondition = linearizer.linearize(
+				TransFormulaBuilder.constructTransFormulaFromPredicate(postcondition, predicateScript));
 		
 		currentRound = -1;
 		maxRounds = strategy.getMaxRounds();
@@ -168,7 +184,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void startRound(int round) {
+	public void startRound(final int round) {
 		reinitializeSolver();
 		patternVariables.clear();
 		entryInvariantPattern = null;
@@ -229,7 +245,13 @@ public final class LinearInequalityInvariantPatternProcessor
 				final Collection<LinearPatternBase> conjunction = new ArrayList<>(
 						dimensions[1]);
 				for (int j = 0; j < dimensions[1]; j++) {
-					for (final boolean strict : new boolean[] { true, false }) {
+					final boolean[] invariantPatternCopies;
+					if (mAlwaysStrictAndNonStrictCopies ) {
+						invariantPatternCopies = new boolean[] { false, true }; 
+					} else {
+						invariantPatternCopies = new boolean[] { false };
+					}
+					for (final boolean strict : invariantPatternCopies) {
 						final LinearPatternBase inequality = new LinearPatternBase(
 								solver, patternCoefficients, newPrefix(), strict);
 						patternVariables.addAll(inequality.getVariables());
@@ -253,7 +275,7 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	/**
 	 * Transforms a pattern into a DNF of linear inequalities relative to a
-	 * given mapping of {@link RankVar}s involved.
+	 * given mapping of {@link IProgramVar}s involved.
 	 * 
 	 * @param pattern
 	 *            the pattern to transform
@@ -263,7 +285,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private static Collection<Collection<LinearInequality>> mapPattern(
 			final Collection<Collection<LinearPatternBase>> pattern,
-			final Map<RankVar, Term> mapping) {
+			final Map<IProgramVar, Term> mapping) {
 		final Collection<Collection<LinearInequality>> result = new ArrayList<>(
 				pattern.size());
 		for (final Collection<LinearPatternBase> conjunct : pattern) {
@@ -280,7 +302,7 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	/**
 	 * Transforms and negates a pattern into a DNF of linear inequalities
-	 * relative to a given mapping of {@link RankVar}s involved.
+	 * relative to a given mapping of {@link IProgramVar}s involved.
 	 * 
 	 * @param pattern
 	 *            the pattern to transform
@@ -291,7 +313,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private static Collection<Collection<LinearInequality>> mapAndNegatePattern(
 			final Collection<Collection<LinearPatternBase>> pattern,
-			final Map<RankVar, Term> mapping) {
+			final Map<IProgramVar, Term> mapping) {
 		// This is the trivial algorithm (expanding). Feel free to optimize ;)
 		// 1. map Pattern, result is dnf
 		final Collection<Collection<LinearInequality>> mappedPattern = mapPattern(
@@ -386,7 +408,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @return a new dnf equivalent to a /\ b
 	 */
 	private static <E> Collection<Collection<E>> expandConjunctionSingle(
-			Collection<Collection<E>> a, Collection<Collection<E>> b) {
+			final Collection<Collection<E>> a, final Collection<Collection<E>> b) {
 		final Collection<Collection<E>> result = new ArrayList<>();
 		for (final Collection<E> aItem : a) {
 			for (final Collection<E> bItem : b) {
@@ -483,10 +505,10 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @param mapping
 	 *            mapping to add auxiliary terms to
 	 */
-	protected void completeMapping(Map<RankVar, Term> mapping) {
+	protected void completeMapping(final Map<IProgramVar, Term> mapping) {
 		final String prefix = newPrefix() + "replace_";
 		int index = 0;
-		for (final RankVar coefficient : patternCoefficients) {
+		for (final IProgramVar coefficient : patternCoefficients) {
 			if (mapping.containsKey(coefficient)) {
 				continue;
 			}
@@ -510,9 +532,9 @@ public final class LinearInequalityInvariantPatternProcessor
 	 *            mapping to get auxiliary terms from, must contain one entry
 	 *            for each coefficient
 	 */
-	protected void completeMapping(Map<RankVar, Term> mapping,
-			Map<RankVar, Term> source) {
-		for (final RankVar coefficient : patternCoefficients) {
+	protected void completeMapping(final Map<IProgramVar, Term> mapping,
+			final Map<IProgramVar, Term> source) {
+		for (final IProgramVar coefficient : patternCoefficients) {
 			if (mapping.containsKey(coefficient)) {
 				continue;
 			}
@@ -536,7 +558,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private Term buildImplicationTerm(final LinearTransition condition,
 			final Collection<Collection<LinearPatternBase>> pattern) {
-		final Map<RankVar, Term> primedMapping = new HashMap<RankVar, Term>(
+		final Map<IProgramVar, Term> primedMapping = new HashMap<IProgramVar, Term>(
 				condition.getOutVars());
 		completeMapping(primedMapping);
 
@@ -576,7 +598,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private Term buildBackwardImplicationTerm(final LinearTransition condition,
 			final Collection<Collection<LinearPatternBase>> pattern) {
-		final Map<RankVar, Term> primedMapping = new HashMap<RankVar, Term>(
+		final Map<IProgramVar, Term> primedMapping = new HashMap<IProgramVar, Term>(
 				condition.getOutVars());
 		completeMapping(primedMapping);
 
@@ -618,10 +640,10 @@ public final class LinearInequalityInvariantPatternProcessor
 			final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate) {
 		final LinearTransition transition = linearizer.linearize(predicate
 				.getTransition());
-		final Map<RankVar, Term> unprimedMapping = new HashMap<RankVar, Term>(
+		final Map<IProgramVar, Term> unprimedMapping = new HashMap<IProgramVar, Term>(
 				transition.getInVars());
 		completeMapping(unprimedMapping);
-		final Map<RankVar, Term> primedMapping = new HashMap<RankVar, Term>(
+		final Map<IProgramVar, Term> primedMapping = new HashMap<IProgramVar, Term>(
 				transition.getOutVars());
 		completeMapping(primedMapping, unprimedMapping);
 
@@ -709,10 +731,11 @@ public final class LinearInequalityInvariantPatternProcessor
 	@Override
 	protected Term getTermForPattern(
 			final Collection<Collection<LinearPatternBase>> pattern) {
-		final Map<RankVar, Term> definitionMap = new HashMap<RankVar, Term>(
+		final Map<IProgramVar, Term> definitionMap = new HashMap<IProgramVar, Term>(
 				patternCoefficients.size());
-		for (final RankVar coefficient : patternCoefficients) {
-			definitionMap.put(coefficient, coefficient.getDefinition());
+		for (final IProgramVar coefficient : patternCoefficients) {
+			final Term definition = ReplacementVarUtils.getDefinition(coefficient);
+			definitionMap.put(coefficient, definition);
 		}
 
 		final Collection<Term> conjunctions = new ArrayList<Term>(
@@ -733,13 +756,12 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * Takes a pattern and generates a term with the smtManager.getScript()
 	 * script where the variables are valuated with the values in this.valuation
 	 * @param pattern the pattern for which the term is generated
-	 * @return a term correspondending to the cnf of LinearInequalites of
+	 * @return a term corresponding to the cnf of LinearInequalites of
 	 * the pattern, valueted with the values from this.valuation
 	 */
 	protected Term getValuatedTermForPattern(
 			final Collection<Collection<LinearPatternBase>> pattern) {
-		final Script script = smtManager.getScript();
-		final Term zero = script.numeral(BigInteger.ZERO);
+		final Script script = mScript.getScript();
 		final Collection<Term> conjunctions = new ArrayList<Term>(
 				pattern.size());
 		for (final Collection<LinearPatternBase> conjunct : pattern) {
@@ -749,17 +771,28 @@ public final class LinearInequalityInvariantPatternProcessor
 				final Term affineFunctionTerm = inequality.getAffineFunction(
 						valuation).asTerm(script);
 				if (inequality.isStrict()) {
-					inequalities.add(SmtUtils.less(script, zero,
+					inequalities.add(SmtUtils.less(script, 
+							constructZero(script, affineFunctionTerm.getSort()),
 							affineFunctionTerm));
 				} else {
-					inequalities.add(SmtUtils.leq(script, zero,
+					inequalities.add(SmtUtils.leq(script,
+							constructZero(script, affineFunctionTerm.getSort()),
 							affineFunctionTerm));
 				}
 			}
-			conjunctions
-					.add(SmtUtils.and(smtManager.getScript(), inequalities));
+			conjunctions.add(SmtUtils.and(mScript.getScript(), inequalities));
 		}
-		return SmtUtils.or(smtManager.getScript(), conjunctions);
+		return SmtUtils.or(mScript.getScript(), conjunctions);
+	}
+	
+	private static Term constructZero(final Script script, final Sort sort) {
+		if (sort.getRealSort().getName().equals("Int")) {
+			return script.numeral(BigInteger.ZERO);
+		} else if (sort.getRealSort().getName().equals("Real")) {
+			return script.decimal(BigDecimal.ZERO);
+		} else {
+			throw new IllegalArgumentException("unsupported sort " + sort);
+		}
 	}
 
 	/**
@@ -795,7 +828,7 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	@Override
 	public IPredicate applyConfiguration(
-			Collection<Collection<LinearPatternBase>> pattern) {
+			final Collection<Collection<LinearPatternBase>> pattern) {
 		final Term term = getValuatedTermForPattern(pattern);
 		return predicateUnifier.getOrConstructPredicate(term);
 	}
