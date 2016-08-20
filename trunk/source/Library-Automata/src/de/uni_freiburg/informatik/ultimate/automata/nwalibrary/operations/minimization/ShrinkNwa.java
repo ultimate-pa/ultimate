@@ -95,6 +95,9 @@ public class ShrinkNwa<LETTER, STATE>
 
 	// size information before return splits
 	private static final boolean STAT_RETURN_SIZE = false;
+	
+	// size suggestion for random splits of blocks for efficiency reasons
+	public static final int SUGGESTED_RANDOM_SPLIT_SIZE = 200;
 
 	// old automaton
 	private IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;

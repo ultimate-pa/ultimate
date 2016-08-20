@@ -709,6 +709,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case NWA_MAX_SAT2:
 		case RAQ_DIRECT_SIMULATION:
 		case NWA_COMBINATOR:
+		case NWA_COMBINATOR_EVERY_KTH:
 			minimizeAbstraction(mStateFactoryForRefinement, mPredicateFactoryResultChecking, minimization);
 			break;
 		default:
@@ -780,53 +781,63 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		try {
 			// output of minimization
 			final IMinimizeNwa<CodeBlock, IPredicate> newAbstractionRaw;
+			final AutomataLibraryServices services = new AutomataLibraryServices(mServices);
 			final boolean wasMinimized;
 			switch (minimization) {
 			case MINIMIZE_SEVPA: {
-				newAbstractionRaw = new MinimizeSevpa<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+				newAbstractionRaw = new MinimizeSevpa<CodeBlock, IPredicate>(services,
 						oldAbstraction, partition, predicateFactoryRefinement, mComputeHoareAnnotation);
 				wasMinimized = true;
 				break;
 			}
 			case SHRINK_NWA: {
-				newAbstractionRaw = new ShrinkNwa<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+				newAbstractionRaw = new ShrinkNwa<CodeBlock, IPredicate>(services,
 						predicateFactoryRefinement, oldAbstraction, partition, mComputeHoareAnnotation, false, false,
-						200, false, 0, false, false);
+						ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0, false, false);
 				wasMinimized = true;
 				break;
 			}
 			case NWA_COMBINATOR: {
 				newAbstractionRaw = new MinimizeNwaCombinator<CodeBlock, IPredicate>(
-						new AutomataLibraryServices(mServices), predicateFactoryRefinement,
+						services, predicateFactoryRefinement,
 						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction, partition,
 						mComputeHoareAnnotation, mIteration);
 				// it can happen that no minimization took place
 				wasMinimized = (newAbstractionRaw == oldAbstraction);
 				break;
 			}
+			case NWA_COMBINATOR_EVERY_KTH: {
+				newAbstractionRaw = new MinimizeNwaCombinator<CodeBlock, IPredicate>(
+						services, predicateFactoryRefinement,
+						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction, partition,
+						mComputeHoareAnnotation, 10, mIteration);
+				// it can happen that no minimization took place
+				wasMinimized = (newAbstractionRaw == oldAbstraction);
+				break;
+			}
 			case DFA_HOPCROFT_ARRAYS: {
 				newAbstractionRaw =
-						new MinimizeDfaHopcroftArrays<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+						new MinimizeDfaHopcroftArrays<CodeBlock, IPredicate>(services,
 								oldAbstraction, predicateFactoryRefinement, partition, mComputeHoareAnnotation);
 				wasMinimized = true;
 				break;
 			}
 			case DFA_HOPCROFT_LISTS: {
 				newAbstractionRaw =
-						new MinimizeDfaHopcroftLists<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+						new MinimizeDfaHopcroftLists<CodeBlock, IPredicate>(services,
 								oldAbstraction, predicateFactoryRefinement, partition, mComputeHoareAnnotation);
 				wasMinimized = true;
 				break;
 			}
 			case NWA_MAX_SAT: {
-				newAbstractionRaw = new MinimizeNwaMaxSAT<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+				newAbstractionRaw = new MinimizeNwaMaxSAT<CodeBlock, IPredicate>(services,
 						predicateFactoryRefinement, oldAbstraction);
 				wasMinimized = true;
 				break;
 			}
 			case NWA_MAX_SAT2: {
 				newAbstractionRaw = new MinimizeNwaMaxSat2<CodeBlock, IPredicate>(
-						new AutomataLibraryServices(mServices), predicateFactoryRefinement,
+						services, predicateFactoryRefinement,
 						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction, mComputeHoareAnnotation,
 						partition);
 				wasMinimized = true;
@@ -837,7 +848,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				 * TODO Christian 2016-08-05: add initial partition
 				 */
 				newAbstractionRaw = new ReduceNwaDirectSimulation<CodeBlock, IPredicate>(
-						new AutomataLibraryServices(mServices), predicateFactoryRefinement,
+						services, predicateFactoryRefinement,
 						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction);
 				wasMinimized = true;
 				break;

@@ -43,12 +43,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * repeated.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class MinimizeNwaCombinator<LETTER, STATE>
 		extends AbstractMinimizeNwaDd<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
+	private static final String UNDEFINED_ENUM_STATE_MESSAGE = "Undefined enum state.";
+
 	/**
 	 * Possible minimization algorithms.
 	 */
@@ -66,12 +70,24 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 	private final Object mCurrent;
 	
 	/**
-	 * AutomataScript constructor
+	 * AutomataScript constructor with default settings.
+	 * <ul>
+	 * <li>no initial partition</li>
+	 * <li>no mapping 'old state -> new state'</li>
+	 * <li>default pattern</li>
+	 * </ul>
+	 * <p>
+	 * NOTE: It makes little sense to use this operation from the AutomataScript interface as only the first operation
+	 * is executed.
 	 * 
-	 * @param services services
-	 * @param stateFactory state factory
-	 * @param operand input automaton
-	 * @throws AutomataLibraryException thrown by minimization methods
+	 * @param services
+	 *            services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            input automaton
+	 * @throws AutomataLibraryException
+	 *             thrown by minimization methods
 	 */
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
@@ -81,15 +97,22 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 	}
 	
 	/**
-	 * constructor with default pattern
+	 * Constructor with default pattern.
 	 * 
-	 * @param services services
-	 * @param stateFactory state factory
-	 * @param operand input automaton
-	 * @param partition pre-defined partition of states
-	 * @param addMapOldState2newState add map old state 2 new state?
-	 * @param iteration index in the pattern
-	 * @throws AutomataLibraryException thrown by minimization methods
+	 * @param services
+	 *            services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            input automaton
+	 * @param partition
+	 *            pre-defined partition of states
+	 * @param addMapOldState2newState
+	 *            add map old state 2 new state?
+	 * @param iteration
+	 *            index in the pattern
+	 * @throws AutomataLibraryException
+	 *             thrown by minimization methods
 	 */
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
@@ -98,24 +121,60 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 			final boolean addMapOldState2newState,
 			final int iteration)
 					throws AutomataLibraryException {
-		this(services, stateFactory, operand, partition, addMapOldState2newState,
-				new EMinimizations[] {
-					EMinimizations.NONE, EMinimizations.MINIMIZE_SEVPA,
-					EMinimizations.NONE, EMinimizations.MINIMIZE_SEVPA,
-					EMinimizations.NONE, EMinimizations.SHRINK_NWA }, iteration);
+		this(services, stateFactory, operand, partition, addMapOldState2newState, getDefaultPattern(), iteration);
 	}
 	
 	/**
-	 * constructor with user-defined pattern
+	 * Constructor using only one minimization operation every {@code k}th iteration.
 	 * 
-	 * @param services services
-	 * @param stateFactory state factory
-	 * @param operand input automaton
-	 * @param partition pre-defined partition of states
-	 * @param addMapOldState2newState add map old state 2 new state?
-	 * @param pattern minimization methods pattern
-	 * @param iteration index in the pattern
-	 * @throws AutomataLibraryException thrown by minimization methods
+	 * @param services
+	 *            services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            input automaton
+	 * @param partition
+	 *            pre-defined partition of states
+	 * @param addMapOldState2newState
+	 *            add map old state 2 new state?
+	 * @param indexForMinimization
+	 *            iteration index at which minimization should be used
+	 * @param iteration
+	 *            index in the pattern
+	 * @throws AutomataLibraryException
+	 *             thrown by minimization methods
+	 */
+	public MinimizeNwaCombinator(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final Collection<Set<STATE>> partition,
+			final boolean addMapOldState2newState,
+			final int indexForMinimization,
+			final int iteration)
+					throws AutomataLibraryException {
+		this(services, stateFactory, operand, partition, addMapOldState2newState,
+				getEveryNthPattern(indexForMinimization), iteration);
+	}
+	
+	/**
+	 * Constructor with user-defined pattern.
+	 * 
+	 * @param services
+	 *            services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            input automaton
+	 * @param partition
+	 *            pre-defined partition of states
+	 * @param addMapOldState2newState
+	 *            add map old state 2 new state?
+	 * @param pattern
+	 *            minimization methods pattern
+	 * @param iteration
+	 *            index in the pattern
+	 * @throws AutomataLibraryException
+	 *             thrown by minimization methods
 	 */
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
@@ -136,16 +195,42 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 			case SHRINK_NWA:
 				mCurrent = new ShrinkNwa<LETTER, STATE>(services, stateFactory,
 						operand, partition, addMapOldState2newState, false,
-						false, 200, false, 0, false, false);
+						false, ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0, false, false);
 				break;
 				
 			case NONE:
+				mLogger.info("No minimization is used.");
 				mCurrent = operand;
 				break;
 				
 			default:
-				throw new IllegalArgumentException("Undefined enum state.");
+				throw new IllegalArgumentException(UNDEFINED_ENUM_STATE_MESSAGE);
 		}
+	}
+	
+	/**
+	 * Creates a pattern where minimization is only used in each {@code k}th iteration.
+	 * 
+	 * @param indexForMinimization index at which the minimization should actually be used
+	 * @return pattern
+	 */
+	private static EMinimizations[] getEveryNthPattern(final int indexForMinimization) {
+		final EMinimizations[] pattern = new EMinimizations[indexForMinimization];
+		pattern[indexForMinimization - 1] = EMinimizations.MINIMIZE_SEVPA;
+		for (int i = indexForMinimization - 2; i >= 0; --i) {
+			pattern[i] = EMinimizations.NONE;
+		}
+		return pattern;
+	}
+	
+	/**
+	 * @return The default pattern.
+	 */
+	private static EMinimizations[] getDefaultPattern() {
+		return new EMinimizations[] {
+				EMinimizations.NONE, EMinimizations.MINIMIZE_SEVPA,
+				EMinimizations.NONE, EMinimizations.MINIMIZE_SEVPA,
+				EMinimizations.NONE, EMinimizations.SHRINK_NWA };
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -162,7 +247,7 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 				return (IDoubleDeckerAutomaton<LETTER, STATE>) mCurrent;
 				
 			default:
-				throw new IllegalArgumentException("Undefined enum state.");
+				throw new IllegalArgumentException(UNDEFINED_ENUM_STATE_MESSAGE);
 		}
 	}
 	
@@ -171,19 +256,35 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 	public Map<STATE, STATE> getOldState2newState() {
 		switch (mPattern[mCounter]) {
 			case MINIMIZE_SEVPA:
-				return ((MinimizeSevpa<LETTER, STATE>) mCurrent)
-						.getOldState2newState();
+				return ((MinimizeSevpa<LETTER, STATE>) mCurrent).getOldState2newState();
 						
 			case SHRINK_NWA:
-				return ((ShrinkNwa<LETTER, STATE>) mCurrent)
-						.getOldState2newState();
+				return ((ShrinkNwa<LETTER, STATE>) mCurrent).getOldState2newState();
 						
 			case NONE:
 				throw new IllegalArgumentException(
 						"Do not ask for Hoare annotation if no minimization was used.");
 						
 			default:
-				throw new IllegalArgumentException("Undefined enum state.");
+				throw new IllegalArgumentException(UNDEFINED_ENUM_STATE_MESSAGE);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		switch (mPattern[mCounter]) {
+			case MINIMIZE_SEVPA:
+				return ((MinimizeSevpa<LETTER, STATE>) mCurrent).checkResult(stateFactory);
+						
+			case SHRINK_NWA:
+				return ((ShrinkNwa<LETTER, STATE>) mCurrent).checkResult(stateFactory);
+						
+			case NONE:
+				return true;
+						
+			default:
+				throw new IllegalArgumentException(UNDEFINED_ENUM_STATE_MESSAGE);
 		}
 	}
 }
