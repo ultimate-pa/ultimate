@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2008-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2008-2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2008-2016 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
  *
  * This file is part of the ULTIMATE BoogiePreprocessor plug-in.
  *
@@ -29,12 +30,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -106,20 +104,24 @@ import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
  * This class is a AST-Visitor for creating textual representations of the tree. It creates a String.
+ *
+ * @author Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  */
 public class TypeChecker extends BaseObserver {
 	private TypeManager mTypeManager;
 	private HashMap<String, FunctionInfo> mDeclaredFunctions;
 	private HashMap<String, ProcedureInfo> mDeclaredProcedures;
 	private HashMap<String, VariableInfo> mDeclaredVars;
-	private Stack<VariableInfo[]> mVarScopes;
+	private ScopedHashMap<String, VariableInfo> mVarScopes;
+	
 	/**
 	 * Maps a procedure identifier to all variables that occur in a modifies clause of this procedure.
 	 */
-	Map<String, Set<String>> mProc2ModfiedGlobals = new HashMap<String, Set<String>>();
+	private final Map<String, Set<String>> mProc2ModfiedGlobals = new HashMap<String, Set<String>>();
 	
 	/**
 	 * Identifier of procedure that is checked at the moment.
@@ -160,15 +162,11 @@ public class TypeChecker extends BaseObserver {
 	}
 	
 	private VariableInfo findVariable(final String name) {
-		final ListIterator<VariableInfo[]> it = mVarScopes.listIterator(mVarScopes.size());
-		while (it.hasPrevious()) {
-			for (final VariableInfo vi : it.previous()) {
-				if (vi.getName().equals(name)) {
-					return vi;
-				}
-			}
+		final VariableInfo rtr = mVarScopes.get(name);
+		if (rtr == null) {
+			return mDeclaredVars.get(name);
 		}
-		return mDeclaredVars.get(name);
+		return rtr;
 	}
 	
 	private BoogieType typecheckExpression(final Expression expr) {
@@ -447,25 +445,24 @@ public class TypeChecker extends BaseObserver {
 			
 			final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.QUANTIFIED, null);
 			final VarList[] parameters = quant.getParameters();
-			final List<VariableInfo> vinfo = new ArrayList<VariableInfo>();
+			
+			mVarScopes.beginScope();
 			for (final VarList p : parameters) {
 				final BoogieType type = mTypeManager.resolveType(p.getType());
 				for (final String id : p.getIdentifiers()) {
-					vinfo.add(new VariableInfo(true, null, id, type, declInfo));
+					mVarScopes.put(id, new VariableInfo(true, null, id, type, declInfo));
 				}
 			}
 			if (!typeParams.fullyUsed()) {
 				typeError(expr, "Type args not fully used in variable types: " + expr);
 			}
 			
-			final VariableInfo[] scope = vinfo.toArray(new VariableInfo[vinfo.size()]);
-			mVarScopes.push(scope);
 			typecheckAttributes(quant.getAttributes());
 			final BoogieType t = typecheckExpression(quant.getSubformula());
 			if (!t.equals(BoogieType.TYPE_ERROR) && !t.equals(BoogieType.TYPE_BOOL)) {
 				typeError(expr, "Type check error in: " + expr);
 			}
-			mVarScopes.pop();
+			mVarScopes.endScope();
 			mTypeManager.popTypeScope();
 			resultType = BoogieType.TYPE_BOOL;
 		} else if (expr instanceof WildcardExpression) {
@@ -672,20 +669,20 @@ public class TypeChecker extends BaseObserver {
 		final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, name);
 		mTypeManager.pushTypeScope(typeParams);
 		final FunctionSignature fs = fi.getSignature();
-		final List<VariableInfo> vinfo = new ArrayList<VariableInfo>();
+		mVarScopes.beginScope();
 		final int paramCount = fs.getParamCount();
 		for (int i = 0; i < paramCount; i++) {
-			if (fs.getParamName(i) != null) {
-				vinfo.add(new VariableInfo(true, null, fs.getParamName(i), fs.getParamType(i), declInfo));
+			final String paramName = fs.getParamName(i);
+			if (paramName != null) {
+				mVarScopes.put(paramName,
+						new VariableInfo(true, null, fs.getParamName(i), fs.getParamType(i), declInfo));
 			}
 		}
-		final VariableInfo[] scope = vinfo.toArray(new VariableInfo[vinfo.size()]);
-		mVarScopes.push(scope);
 		final BoogieType valueType = typecheckExpression(funcDecl.getBody());
 		if (!valueType.equals(BoogieType.TYPE_ERROR) && !valueType.equals(fs.getResultType())) {
 			typeError(funcDecl, "Return type of function doesn't match body");
 		}
-		mVarScopes.pop();
+		mVarScopes.endScope();
 		mTypeManager.popTypeScope();
 	}
 	
@@ -727,15 +724,13 @@ public class TypeChecker extends BaseObserver {
 			}
 		}
 		
-		final VariableInfo[] allParams = new VariableInfo[inParams.size() + outParams.size()];
-		int i = 0;
+		mVarScopes.beginScope();
 		for (final VariableInfo vi : inParams) {
-			allParams[i++] = vi;
+			mVarScopes.put(vi.getName(), vi);
 		}
 		for (final VariableInfo vi : outParams) {
-			allParams[i++] = vi;
+			mVarScopes.put(vi.getName(), vi);
 		}
-		mVarScopes.push(allParams);
 		for (final VarList vl : proc.getInParams()) {
 			if (vl.getWhereClause() != null) {
 				final BoogieType t = typecheckExpression(vl.getWhereClause());
@@ -786,7 +781,7 @@ public class TypeChecker extends BaseObserver {
 				internalError("Unknown Procedure specification: " + s);
 			}
 		}
-		mVarScopes.pop();
+		mVarScopes.endScope();
 		mTypeManager.popTypeScope();
 		
 		final ProcedureInfo pi =
@@ -1043,7 +1038,7 @@ public class TypeChecker extends BaseObserver {
 	
 	private void processBody(final Body body, final String prodecureId) {
 		final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.LOCAL, prodecureId);
-		final LinkedList<VariableInfo> localVarList = new LinkedList<VariableInfo>();
+		mVarScopes.beginScope();
 		for (final VariableDeclaration decl : body.getLocalVars()) {
 			for (final VarList vl : decl.getVariables()) {
 				final BoogieType type = mTypeManager.resolveType(vl.getType());
@@ -1053,11 +1048,11 @@ public class TypeChecker extends BaseObserver {
 				for (final String id : vl.getIdentifiers()) {
 					checkIfAlreadyInOutLocal(vl, id);
 					mLocalVars.add(id);
-					localVarList.add(new VariableInfo(false, decl, id, type, declInfo));
+					mVarScopes.put(id, new VariableInfo(false, decl, id, type, declInfo));
 				}
 			}
 		}
-		mVarScopes.push(localVarList.toArray(new VariableInfo[localVarList.size()]));
+
 		/* Now check where clauses */
 		for (final VariableDeclaration decl : body.getLocalVars()) {
 			for (final VarList vl : decl.getVariables()) {
@@ -1075,7 +1070,7 @@ public class TypeChecker extends BaseObserver {
 		processLabels(labels, body.getBlock());
 		/* Finally check statements */
 		typecheckBlock(new Stack<String>(), labels, body.getBlock());
-		mVarScopes.pop();
+		mVarScopes.endScope();
 	}
 	
 	private void processImplementation(final Procedure impl) {
@@ -1108,7 +1103,7 @@ public class TypeChecker extends BaseObserver {
 			declInfoInParam = new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, impl.getIdentifier());
 			declInfoOutParam = new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, impl.getIdentifier());
 		}
-		final LinkedList<VariableInfo> allParams = new LinkedList<VariableInfo>();
+		mVarScopes.beginScope();
 		final VariableInfo[] procInParams = procInfo.getInParams();
 		final VariableInfo[] procOutParams = procInfo.getOutParams();
 		int i = 0;
@@ -1122,7 +1117,7 @@ public class TypeChecker extends BaseObserver {
 				}
 				checkIfAlreadyInOutLocal(vl, id);
 				mInParams.add(id);
-				allParams.add(new VariableInfo(true /* in params are rigid */, impl, id, type, declInfoInParam));
+				mVarScopes.put(id, new VariableInfo(true /* in params are rigid */, impl, id, type, declInfoInParam));
 			}
 		}
 		if (i < procInParams.length) {
@@ -1142,7 +1137,7 @@ public class TypeChecker extends BaseObserver {
 				}
 				checkIfAlreadyInOutLocal(vl, id);
 				mOutParams.add(id);
-				allParams.add(new VariableInfo(false, impl, id, type, declInfoOutParam));
+				mVarScopes.put(id, new VariableInfo(false, impl, id, type, declInfoOutParam));
 				
 			}
 		}
@@ -1150,11 +1145,9 @@ public class TypeChecker extends BaseObserver {
 			typeError(impl, "Too few output parameters in " + impl);
 		}
 		
-		mVarScopes.push(allParams.toArray(new VariableInfo[allParams.size()]));
-		
 		processBody(impl.getBody(), impl.getIdentifier());
 		
-		mVarScopes.pop();
+		mVarScopes.endScope();
 		mTypeManager.popTypeScope();
 	}
 	
@@ -1180,7 +1173,7 @@ public class TypeChecker extends BaseObserver {
 			mDeclaredVars = new HashMap<String, VariableInfo>();
 			mDeclaredFunctions = new HashMap<String, FunctionInfo>();
 			mDeclaredProcedures = new HashMap<String, ProcedureInfo>();
-			mVarScopes = new Stack<VariableInfo[]>();
+			mVarScopes = new ScopedHashMap<>();
 			// pass1: parse type declarations
 			mTypeManager = new TypeManager(unit.getDeclarations(),
 					mServices.getLoggingService().getLogger(Activator.PLUGIN_ID));
