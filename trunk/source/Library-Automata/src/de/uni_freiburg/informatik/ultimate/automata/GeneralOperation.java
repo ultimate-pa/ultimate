@@ -65,12 +65,12 @@ public abstract class GeneralOperation<LETTER, STATE>
 	/**
 	 * Should be called regularly by subclasses to check for timeouts.
 	 * A subclass which does not do this is a bad subclass!
-	 * A good practice is to call this method after each sub-call to other {@code IOperation}s and inside (expensive)
+	 * A good practice is to call this method after each sub-call to other {@link IOperation}s and inside (expensive)
 	 * loops.
 	 * <p>
-	 * If a timeout was requested, the subclass should immediately throw an {@code AutomataOperationCanceledException}.
+	 * If a timeout was requested, the subclass should immediately throw an {@link AutomataOperationCanceledException}.
 	 * 
-	 * @return true iff {@code AutomataLibraryServices} object requests cancellation
+	 * @return true iff {@link AutomataLibraryServices} object requests cancellation
 	 */
 	protected final boolean isCancelationRequested() {
 		return !mServices.getProgressMonitorService().continueProcessing();

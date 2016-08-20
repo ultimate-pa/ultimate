@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 
 /**
  * Interface for automata operations.<br>
@@ -35,22 +36,24 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * <li>each operation is defined in its own class
  * <li>for every application of the operation a new instance of this class is
  * constructed
- * <li>the result is returned via the getResult() method
+ * <li>the result is returned via the {@link #getResult()} method
  * <li>start and end of the operation are reported to the logger using log
  * level <tt>INFO</tt>
  * <li>correctness checks for this operation are implemented in the
  * checkResult method. Whoever executes this operation should add an
- * {@code assert checkResult()}
- * in his code.
+ * <blockquote>
+ * {@code assert} {@link #checkResult()}
+ * </blockquote>
+ * in the code.
  * </ul>
  * By convention the constructor of an IOperation has the following parameters.
  * <ul>
- * <li>The fist parameter are the {@code AutomataLibraryServices}. If the operation
+ * <li>The fist parameter are the {@link AutomataLibraryServices}. If the operation
  * is executed by the automata script interpreter, the interpreter will use
- * the {@code AutomataLibraryServices} of the current toolchain as an argument.
- * <li>If the IOperation requires a {@code StateFactory}, the {@code StateFactory} should
- * be the second parameter. If the second parameter is a {@code StateFactory}, the
- * automata script interpreter uses a {@code StringFactory} as argument.
+ * the {@link AutomataLibraryServices} of the current toolchain as an argument.
+ * <li>If the IOperation requires a {@link StateFactory}, the {@link StateFactory} should
+ * be the second parameter. If the second parameter is a {@link StateFactory}, the
+ * automata script interpreter uses a {@link StringFactory} as argument.
  * <li>The remaining parameters of the constructor are the parameters of the
  * operation (i.e., the parameters for which you provide arguments in an
  * .ats file). It is good practice to have a default constructor with a minimal number of arguments, and optionally
@@ -87,7 +90,7 @@ public interface IOperation<LETTER, STATE> {
 	String exitMessage();
 	
 	/**
-	 * @return Return the result of the operation.
+	 * @return The result of the operation.
 	 * @throws AutomataLibraryException
 	 *             if operation fails
 	 */

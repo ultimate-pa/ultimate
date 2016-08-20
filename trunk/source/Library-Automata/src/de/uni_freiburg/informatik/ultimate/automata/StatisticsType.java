@@ -29,10 +29,9 @@ package de.uni_freiburg.informatik.ultimate.automata;
 
 /**
  * Type of statistics that can be reported to the
- * {@link de.uni_freiburg.informatik.ultimate.automata.
- * AutomataOperationStatistics} class.
- * 
- * <p>Used as keys in the statistics map.
+ * {@link de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics AutomataOperationStatistics} class.
+ * <p>
+ * The fields are used as keys in the statistics map.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)

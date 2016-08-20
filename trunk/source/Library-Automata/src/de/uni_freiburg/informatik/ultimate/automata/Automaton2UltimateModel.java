@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
- * Converts an automaton (type {@code IAutomaton}) to an Ultimate model.
+ * Converts an automaton (type {@link IAutomaton}) to an Ultimate model (type {@link IElement}).
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Markus Pomrehn
@@ -53,7 +53,7 @@ public final class Automaton2UltimateModel {
 	}
 	
 	/**
-	 * Converts an {@code IAutomaton} object to an Ultimate model.
+	 * Converts an automaton ({@link IAutomaton}) object to an Ultimate model ({@link IElement}).
 	 * 
 	 * @param services
 	 *            Ultimate services
@@ -70,7 +70,7 @@ public final class Automaton2UltimateModel {
 	public static <LETTER, STATE> IElement ultimateModel(
 			final AutomataLibraryServices services,
 			final IAutomaton<LETTER, STATE> automaton)
-			throws AutomataOperationCanceledException {
+					throws AutomataOperationCanceledException {
 		if (automaton instanceof INestedWordAutomatonSimple) {
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa = (INestedWordAutomatonSimple<LETTER, STATE>) automaton;
 			final NwaToUltimateModel<LETTER, STATE> transformer = new NwaToUltimateModel<LETTER, STATE>(services);
