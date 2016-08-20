@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
@@ -31,11 +31,12 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Operation that checks if the language of the first Buchi automaton is 
+ * Operation that checks if the language of the first Buchi automaton is
  * included in the language of the second Buchi automaton.
  * 
  * @author heizmann@informatik.uni-freiburg.de
@@ -48,8 +49,8 @@ public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> 
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
-	private final INestedWordAutomaton<LETTER, STATE> mOperand1;
-	private final INestedWordAutomaton<LETTER, STATE> mOperand2;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand1;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand2;
 
 	private final Boolean mResult;
 
@@ -57,8 +58,8 @@ public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> 
 
 	public BuchiIsIncluded(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> nwa1,
-			final INestedWordAutomaton<LETTER, STATE> nwa2)
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa1,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa2)
 			throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
