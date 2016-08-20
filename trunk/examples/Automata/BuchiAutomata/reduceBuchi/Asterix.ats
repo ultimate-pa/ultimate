@@ -8,7 +8,7 @@
 
 NestedWordAutomaton reduced = buchiReduce(nwa);
 print(numberOfStates(reduced));
-assert(numberOfStates(reduced) == 13);
+assert(numberOfStates(reduced) == 9);
 
 
 NestedWordAutomaton nwa = (
