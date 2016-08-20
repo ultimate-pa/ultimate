@@ -34,7 +34,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
@@ -179,7 +178,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 		return nestedLassoRuns;
 	}
 	
-	public void computeShortNestedLassoRun() throws AutomataLibraryException {
+	public void computeShortNestedLassoRun() throws AutomataOperationCanceledException {
 		StateContainer<LETTER, STATE> lowestSerialNumber = null;
 		StateContainer<LETTER, STATE> newlowestSerialNumber = null;
 		StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> sccOfLowest = null;
@@ -232,7 +231,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 		}
 	}
 	
-	public NestedLassoRun<LETTER, STATE> getNestedLassoRun() throws AutomataLibraryException {
+	public NestedLassoRun<LETTER, STATE> getNestedLassoRun() throws AutomataOperationCanceledException {
 		if (buchiIsEmpty()) {
 			return null;
 		} else {

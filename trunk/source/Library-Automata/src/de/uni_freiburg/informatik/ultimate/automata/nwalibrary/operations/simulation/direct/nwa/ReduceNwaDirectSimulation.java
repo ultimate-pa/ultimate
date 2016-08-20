@@ -19,16 +19,14 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa;
 
 import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -36,14 +34,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.LassoExtractor;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.TestBuchiEquivalence;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.IMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.MinimizeDfaSimulation;
@@ -148,63 +141,13 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE>
 								stateFactory, possibleEquivalenceClasses)));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.direct.MinimizeDfaSimulation#checkResult(de.uni_freiburg.
-	 * informatik.ultimate.automata.nwalibrary.StateFactory)
-	 */
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		getLogger().info("Start testing correctness of " + operationName());
-		boolean correct = true;
-
-		final AutomataLibraryServices services = getServices();
-		final INestedWordAutomaton<LETTER, STATE> operand = getOperand();
-		final INestedWordAutomaton<LETTER, STATE> result = getResult();
-
-		// This is a semi-test, if it returns false, the result can also be
-		// correct though
-		correct &= (new IsIncluded<LETTER, STATE>(services, stateFactory, operand, result)).getResult();
-		correct &= (new IsIncluded<LETTER, STATE>(services, stateFactory, result, operand)).getResult();
-
-		// Try using some random lasso-words to prove a possible incorrectness
-		if (!correct) {
-			final List<NestedLassoWord<LETTER>> nestedLassoWords = new LinkedList<>();
-			nestedLassoWords.addAll((new LassoExtractor<LETTER, STATE>(services, operand)).getResult());
-			nestedLassoWords.addAll((new LassoExtractor<LETTER, STATE>(services, result)).getResult());
-
-			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
-			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
-			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
-			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
-			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
-			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 1));
-
-			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
-			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
-			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
-			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
-			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
-			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
-			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
-			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
-			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
-			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
-			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(result, 2));
-
-			correct = true;
-			for (final NestedLassoWord<LETTER> nestedLassoWord : nestedLassoWords) {
-				final boolean op = (new BuchiAccepts<LETTER, STATE>(services, operand, nestedLassoWord)).getResult();
-				final boolean res = (new BuchiAccepts<LETTER, STATE>(services, operand, nestedLassoWord)).getResult();
-				correct &= (op == res);
-			}
-		}
+		final boolean correct =
+				(new TestBuchiEquivalence<LETTER, STATE>(getServices(),stateFactory, getOperand(), getResult()))
+						.getResult();
 		getLogger().info("Finished testing correctness of " + operationName());
-
-		// We may assume the result is correct as the chance of it being not
-		// covered by the test is comparable small
 		return correct;
 	}
 

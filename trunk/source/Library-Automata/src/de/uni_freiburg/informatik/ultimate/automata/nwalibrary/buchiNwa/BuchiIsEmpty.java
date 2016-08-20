@@ -56,7 +56,7 @@ public class BuchiIsEmpty<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	final Boolean mResult;
 	
 	public BuchiIsEmpty(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mNwa = nwa;

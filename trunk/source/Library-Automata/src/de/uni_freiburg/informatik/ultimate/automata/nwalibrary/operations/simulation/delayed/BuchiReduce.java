@@ -39,9 +39,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.TestBuchiEquivalence;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -150,16 +150,14 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		mLogger.info(exitMessage());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#checkResult(de.
-	 * uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory)
-	 */
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		return ResultChecker.reduceBuchi(mServices, mOperand, mResult);
+		mLogger.info("Start testing correctness of " + operationName());
+		final boolean correct =
+				(new TestBuchiEquivalence<LETTER, STATE>(mServices, stateFactory, getOperand(), getResult()))
+						.getResult();
+		mLogger.info("Finished testing correctness of " + operationName());
+		return correct;
 	}
 
 	/*

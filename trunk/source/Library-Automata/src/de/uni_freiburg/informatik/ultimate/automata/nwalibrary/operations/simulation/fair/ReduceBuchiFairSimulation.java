@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair;
@@ -36,11 +36,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.TestBuchiEquivalence;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
@@ -607,17 +607,11 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		mLogger.info(exitMessage());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#checkResult(
-	 * de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory)
-	 */
-	@SuppressWarnings("deprecation")
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
-		final boolean correct = ResultChecker.reduceBuchi(mServices, mOperand, mResult);
+		final boolean correct =
+				(new TestBuchiEquivalence<LETTER, STATE>(mServices, stateFactory, mOperand, mResult)).getResult();
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}

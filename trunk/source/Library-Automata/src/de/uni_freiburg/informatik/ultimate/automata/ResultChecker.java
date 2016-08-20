@@ -63,53 +63,6 @@ public final class ResultChecker {
 		return sResultCheckStackHeight > 0;
 	}
 	
-	public static <LETTER, STATE> boolean reduceBuchi(
-			final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand,
-			final INestedWordAutomaton<LETTER, STATE> result)
-					throws AutomataLibraryException {
-		final ILogger logger =
-				services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-				
-		if (sResultCheckStackHeight >= MAX_RESULT_CHECK_STACK_HEIGHT) {
-			return true;
-		}
-		sResultCheckStackHeight++;
-		logger.debug("Testing correctness of reduceBuchi");
-		
-		/*
-		 * TODO Christian 2016-08-01: I removed this minimization call for new
-		 *      API inclusion; also, it is not reasonable to use this old
-		 *      minimization here.
-		 */
-		final INestedWordAutomaton<LETTER, STATE> minimizedOperand =
-//				(new MinimizeDfa(services, operand)).getResult();
-				operand;
-				
-		boolean correct = true;
-		final StateFactory<STATE> stateFactory = operand.getStateFactory();
-		final NestedLassoRun<LETTER, STATE> inOperandButNotInResultBuchi =
-				nwaBuchiLanguageInclusion(services, stateFactory,
-						minimizedOperand, result);
-		if (inOperandButNotInResultBuchi != null) {
-			logger.error("Lasso word accepted by operand, but not by result: "
-					+ inOperandButNotInResultBuchi.getNestedLassoWord());
-			correct = false;
-		}
-		final NestedLassoRun<LETTER, STATE> inResultButNotInOperatndBuchi =
-				nwaBuchiLanguageInclusion(services, stateFactory, result,
-						minimizedOperand);
-		if (inResultButNotInOperatndBuchi != null) {
-			logger.error("Lasso word accepted by result, but not by operand: "
-					+ inResultButNotInOperatndBuchi.getNestedLassoWord());
-			correct = false;
-		}
-		
-		logger.debug("Finished testing correctness of reduceBuchi");
-		sResultCheckStackHeight--;
-		return correct;
-	}
-	
 	// public static boolean buchiEmptiness(INestedWordAutomatonOldApi operand,
 	// NestedLassoRun result) {
 	// if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
