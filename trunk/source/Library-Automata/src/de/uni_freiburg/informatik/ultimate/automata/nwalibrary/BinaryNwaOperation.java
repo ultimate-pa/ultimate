@@ -19,23 +19,25 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
-import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 
 /**
  * Abstract operation taking two automata as input.
  * The most common methods are provided but can also be overwritten.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public abstract class BinaryNwaOperation<LETTER, STATE>
 		extends GeneralOperation<LETTER, STATE> {
@@ -50,9 +52,14 @@ public abstract class BinaryNwaOperation<LETTER, STATE>
 	protected final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	
 	/**
-	 * @param services Ultimate services
-	 * @param fstOperand first operand
-	 * @param sndOperand second operand
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param fstOperand
+	 *            first operand
+	 * @param sndOperand
+	 *            second operand
 	 */
 	public BinaryNwaOperation(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
@@ -67,5 +74,21 @@ public abstract class BinaryNwaOperation<LETTER, STATE>
 		return "Start " + operationName() + ". First operand "
 				+ mFstOperand.sizeInformation() + " Second operand "
 				+ mSndOperand.sizeInformation();
+	}
+	
+	/**
+	 * @return true iff the alphabets of the two operands differ.
+	 */
+	protected boolean alphabetsDiffer() {
+		if (!mFstOperand.getInternalAlphabet().equals(mSndOperand.getInternalAlphabet())) {
+			return true;
+		}
+		if (!mFstOperand.getCallAlphabet().equals(mSndOperand.getCallAlphabet())) {
+			return true;
+		}
+		if (!mFstOperand.getReturnAlphabet().equals(mSndOperand.getReturnAlphabet())) {
+			return true;
+		}
+		return false;
 	}
 }
