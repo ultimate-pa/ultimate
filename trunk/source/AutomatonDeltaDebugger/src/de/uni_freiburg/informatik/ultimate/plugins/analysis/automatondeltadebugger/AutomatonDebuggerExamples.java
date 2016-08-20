@@ -37,32 +37,35 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat.MinimizeNwaMaxSAT;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.BuchiReduce;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.nwa.ReduceNwaDelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * Examples used by delta debugger.
- * 
  * NOTE: Users may insert their sample code as a new method and leave it here.
  * 
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
+@SuppressWarnings("squid:S00112")
 public class AutomatonDebuggerExamples<LETTER, STATE> {
-	private final IUltimateServiceProvider mServices;
+	private final AutomataLibraryServices mServices;
 	
 	/**
-	 * @param services Ultimate services
+	 * @param services
+	 *            Ultimate services
 	 */
 	public AutomatonDebuggerExamples(final IUltimateServiceProvider services) {
-		this.mServices = services;
+		mServices = new AutomataLibraryServices(services);
 	}
 	
 	/**
 	 * implemented operations for quick usage
-	 * 
 	 * NOTE: If another operation is supported, add a value here.
 	 */
 	public enum EOperationType {
@@ -70,15 +73,20 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 		MINIMIZE_NWA_MAXSAT2,
 		REDUCE_NWA_DIRECT_SIMULATION,
 		REDUCE_NWA_DELAYED_SIMULATION,
-		SHRINK_NWA
+		SHRINK_NWA,
+		BUCHI_REDUCE
 	}
 	
 	/**
-	 * @param type operation type
-	 * @param automaton nested word automaton
-	 * @param factory state factory
+	 * @param type
+	 *            operation type
+	 * @param automaton
+	 *            nested word automaton
+	 * @param factory
+	 *            state factory
 	 * @return operation corresponding to type
-	 * @throws Throwable when operation fails
+	 * @throws Throwable
+	 *             when operation fails
 	 */
 	public IOperation<LETTER, STATE> getOperation(final EOperationType type,
 			final INestedWordAutomaton<LETTER, STATE> automaton,
@@ -86,110 +94,126 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 		switch (type) {
 			case MINIMIZE_NWA_MAXSAT:
 				return minimizeNwaMaxSAT(automaton, factory);
-
+				
 			case MINIMIZE_NWA_MAXSAT2:
 				return minimizeNwaMaxSAT2(automaton, factory);
-
+				
 			case REDUCE_NWA_DIRECT_SIMULATION:
 				return reduceNwaDirectSimulation(automaton, factory);
-
+				
 			case REDUCE_NWA_DELAYED_SIMULATION:
 				return reduceNwaDelayedSimulation(automaton, factory);
-
+				
 			case SHRINK_NWA:
 				return shrinkNwa(automaton, factory);
-			
+				
+			case BUCHI_REDUCE:
+				return buchiReduce(automaton, factory);
+				
 			default:
 				throw new IllegalArgumentException("Unknown operation.");
 		}
 	}
 	
 	/**
-	 * @param automaton automaton
-	 * @param factory state factory
+	 * @param automaton
+	 *            automaton
+	 * @param factory
+	 *            state factory
 	 * @return new <code>MinimizeNwaMaxSAT()</code> instance
-	 * @throws Throwable when error occurs
+	 * @throws Throwable
+	 *             when error occurs
 	 */
-	@SuppressWarnings("squid:S00112")
 	public IOperation<LETTER, STATE> minimizeNwaMaxSAT(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final StateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
-				new RemoveUnreachable<LETTER, STATE>(
-						new AutomataLibraryServices(mServices), automaton)
-								.getResult();
-		return new MinimizeNwaMaxSAT<LETTER, STATE>(
-				new AutomataLibraryServices(mServices), factory, preprocessed);
+				new RemoveUnreachable<LETTER, STATE>(mServices, automaton).getResult();
+		return new MinimizeNwaMaxSAT<LETTER, STATE>(mServices, factory, preprocessed);
 	}
 	
 	/**
-	 * @param automaton automaton
-	 * @param factory state factory
+	 * @param automaton
+	 *            automaton
+	 * @param factory
+	 *            state factory
 	 * @return new <code>MinimizeNwaMaxSAT2()</code> instance
-	 * @throws Throwable when error occurs
+	 * @throws Throwable
+	 *             when error occurs
 	 */
-	@SuppressWarnings("squid:S00112")
 	public IOperation<LETTER, STATE> minimizeNwaMaxSAT2(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final StateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
-				(IDoubleDeckerAutomaton<LETTER, STATE>) new RemoveDeadEnds<LETTER, STATE>(
-						new AutomataLibraryServices(mServices), automaton).getResult();
-		return new MinimizeNwaMaxSat2<LETTER, STATE>(
-				new AutomataLibraryServices(mServices), factory, preprocessed);
+				new RemoveDeadEnds<LETTER, STATE>(mServices, automaton).getResult();
+		return new MinimizeNwaMaxSat2<LETTER, STATE>(mServices, factory, preprocessed);
 	}
 	
 	/**
-	 * @param automaton automaton
-	 * @param factory state factory
+	 * @param automaton
+	 *            automaton
+	 * @param factory
+	 *            state factory
 	 * @return new <code>ReduceNwaDirectSimulation()</code> instance
-	 * @throws Throwable when error occurs
+	 * @throws Throwable
+	 *             when error occurs
 	 */
-	@SuppressWarnings("squid:S00112")
 	public IOperation<LETTER, STATE> reduceNwaDirectSimulation(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final StateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
-				new RemoveDeadEnds<LETTER, STATE>(
-						new AutomataLibraryServices(mServices), automaton).getResult();
-		return new ReduceNwaDirectSimulation<LETTER, STATE>(
-				new AutomataLibraryServices(mServices), factory, preprocessed,
-					false);
+				new RemoveDeadEnds<LETTER, STATE>(mServices, automaton).getResult();
+		return new ReduceNwaDirectSimulation<LETTER, STATE>(mServices, factory, preprocessed, false);
 	}
 	
 	/**
-	 * @param automaton automaton
-	 * @param factory state factory
+	 * @param automaton
+	 *            automaton
+	 * @param factory
+	 *            state factory
 	 * @return new <code>ReduceNwaDelayedSimulation()</code> instance
-	 * @throws Throwable when error occurs
+	 * @throws Throwable
+	 *             when error occurs
 	 */
-	@SuppressWarnings("squid:S00112")
 	public IOperation<LETTER, STATE> reduceNwaDelayedSimulation(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final StateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
-				new RemoveDeadEnds<LETTER, STATE>(
-						new AutomataLibraryServices(mServices), automaton).getResult();
-		return new ReduceNwaDelayedSimulation<LETTER, STATE>(
-				new AutomataLibraryServices(mServices), factory, preprocessed,
-					false);
+				new RemoveDeadEnds<LETTER, STATE>(mServices, automaton).getResult();
+		return new ReduceNwaDelayedSimulation<LETTER, STATE>(mServices, factory, preprocessed, false);
 	}
 	
 	/**
-	 * @param automaton automaton
-	 * @param factory state factory
+	 * @param automaton
+	 *            automaton
+	 * @param factory
+	 *            state factory
 	 * @return new <code>ReduceNwaDirectSimulation()</code> instance
-	 * @throws Throwable when error occurs
+	 * @throws Throwable
+	 *             when error occurs
 	 */
-	@SuppressWarnings("squid:S00112")
 	public IOperation<LETTER, STATE> shrinkNwa(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final StateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
-				new RemoveUnreachable<LETTER, STATE>(
-						new AutomataLibraryServices(mServices), automaton)
-								.getResult();
-		return new ShrinkNwa<LETTER, STATE>(
-				new AutomataLibraryServices(mServices), factory, preprocessed);
+				new RemoveUnreachable<LETTER, STATE>(mServices, automaton).getResult();
+		return new ShrinkNwa<LETTER, STATE>(mServices, factory, preprocessed);
+	}
+	
+	/**
+	 * @param automaton
+	 *            automaton
+	 * @param factory
+	 *            state factory
+	 * @return new <code>BuchiReduce()</code> instance
+	 * @throws Throwable
+	 *             when error occurs
+	 */
+	public IOperation<LETTER, STATE> buchiReduce(
+			final INestedWordAutomaton<LETTER, STATE> automaton,
+			final StateFactory<STATE> factory) throws Throwable {
+		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
+				new RemoveDeadEnds<LETTER, STATE>(mServices, automaton).getResult();
+		return new BuchiReduce<LETTER, STATE>(mServices, factory, preprocessed);
 	}
 }
