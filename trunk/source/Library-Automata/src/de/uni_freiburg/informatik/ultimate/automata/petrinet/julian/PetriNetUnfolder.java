@@ -238,7 +238,7 @@ public class PetriNetUnfolder<S, C>
 			// assert (false);
 			// }
 
-			if (isCancelationRequested()) {
+			if (isCancellationRequested()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}

@@ -96,7 +96,7 @@ public class Accepts<S, C>
 		}
 		
 		
-		if (isCancelationRequested()) {
+		if (isCancellationRequested()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 

@@ -166,7 +166,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 		// internals and calls
 		while (mWorkList.hasNext()) {
 			// cancel if signal is received
-			if (isCancelationRequested()) {
+			if (isCancellationRequested()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 			

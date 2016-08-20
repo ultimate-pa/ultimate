@@ -19,17 +19,17 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
-import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 
 /**
@@ -37,8 +37,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncl
  * The most common methods are provided but can also be overwritten.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public abstract class UnaryNwaOperation<LETTER, STATE>
 		extends GeneralOperation<LETTER, STATE> {
@@ -50,8 +52,10 @@ public abstract class UnaryNwaOperation<LETTER, STATE>
 	/**
 	 * Constructor.
 	 * 
-	 * @param services Ultimate services
-	 * @param operand operand
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
 	 */
 	public UnaryNwaOperation(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
@@ -61,13 +65,16 @@ public abstract class UnaryNwaOperation<LETTER, STATE>
 	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Operand "
-				+ mOperand.sizeInformation();
+		return "Start " + operationName() + ". Operand " + mOperand.sizeInformation();
 	}
 	
 	/**
 	 * This implementation can be used in the checkResult() method.
-	 * It checks language equivalence between the operand and the result.
+	 * It checks (finite word) language equivalence between the operand and the result.
+	 * <p>
+	 * NOTE: The operation relies on the method
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult() getResult()} being a constant-time
+	 * operation.
 	 */
 	protected boolean checkLanguageEquivalence(
 			final StateFactory<STATE> stateFactory)
@@ -75,25 +82,22 @@ public abstract class UnaryNwaOperation<LETTER, STATE>
 		mLogger.info("Start testing correctness of " + operationName());
 		
 		// type-check and cast result to nested word automaton
-		if (! (getResult() instanceof INestedWordAutomatonSimple)) {
+		if (!(getResult() instanceof INestedWordAutomatonSimple)) {
 			throw new UnsupportedOperationException(
-					"The default checkResult() method assumes the result is a"
-							+ " nested word automaton.");
+					"The default checkResult() method assumes the result is a nested word automaton.");
 		}
 		@SuppressWarnings("unchecked")
 		final INestedWordAutomatonSimple<LETTER, STATE> result =
 				(INestedWordAutomatonSimple<LETTER, STATE>) getResult();
-		
+				
 		// check language equivalence via two inclusion checks
 		final String message;
 		boolean correct = true;
-		if (! new IsIncluded<LETTER, STATE>(mServices, stateFactory, mOperand,
-				result).getResult()) {
+		if (!new IsIncluded<LETTER, STATE>(mServices, stateFactory, mOperand, result).getResult()) {
 			message = "The result recognizes more words than before.";
 			correct = false;
 			assert false;
-		} else if (! new IsIncluded<LETTER, STATE>(mServices, stateFactory,
-				result, mOperand).getResult()) {
+		} else if (!new IsIncluded<LETTER, STATE>(mServices, stateFactory, result, mOperand).getResult()) {
 			message = "The result recognizes less words than before.";
 			correct = false;
 		} else {
@@ -101,9 +105,8 @@ public abstract class UnaryNwaOperation<LETTER, STATE>
 		}
 		
 		mLogger.info("Finished testing correctness of " + operationName());
-		if (! correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
-					operationName() + "Failed", message, mOperand);
+		if (!correct) {
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed", message, mOperand);
 		}
 		return correct;
 	}

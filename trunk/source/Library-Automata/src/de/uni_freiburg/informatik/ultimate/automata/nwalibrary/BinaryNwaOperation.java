@@ -71,8 +71,7 @@ public abstract class BinaryNwaOperation<LETTER, STATE>
 	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". First operand "
-				+ mFstOperand.sizeInformation() + " Second operand "
+		return "Start " + operationName() + ". First operand " + mFstOperand.sizeInformation() + " Second operand "
 				+ mSndOperand.sizeInformation();
 	}
 	

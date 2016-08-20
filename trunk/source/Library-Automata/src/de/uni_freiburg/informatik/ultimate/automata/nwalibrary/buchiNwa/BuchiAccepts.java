@@ -133,7 +133,7 @@ public class BuchiAccepts<LETTER,STATE>
 			for (int i = 0; i < mStem.length(); i++) {
 				currentConfigs = successorConfigurations(currentConfigs, mStem, i,
 						mOperand, false);
-				if (isCancelationRequested()) {
+				if (isCancellationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
@@ -147,7 +147,7 @@ public class BuchiAccepts<LETTER,STATE>
 			for (int i = 0; i < mLoop.length(); i++) {
 				currentConfigs = successorConfigurations(
 						currentConfigs, mLoop, i, mOperand, false);
-				if (isCancelationRequested()) {
+				if (isCancellationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
@@ -196,7 +196,7 @@ public class BuchiAccepts<LETTER,STATE>
 				final Set<ArrayDeque<STATE>> justVisitedAccepting =
 						removeAcceptingConfigurations(currentConfigsNotVisitedAccepting, mOperand);
 				currentConfigsVisitedAccepting.addAll(justVisitedAccepting);
-				if (isCancelationRequested()) {
+				if (isCancellationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}

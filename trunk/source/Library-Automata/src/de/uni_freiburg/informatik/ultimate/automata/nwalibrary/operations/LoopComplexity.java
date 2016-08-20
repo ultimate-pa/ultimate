@@ -161,7 +161,7 @@ public class LoopComplexity<LETTER, STATE>
 
 			for (final STATE stateOut : nonchainStates) {
 				// Check for cancel button.
-				if (isCancelationRequested()) {
+				if (isCancellationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 

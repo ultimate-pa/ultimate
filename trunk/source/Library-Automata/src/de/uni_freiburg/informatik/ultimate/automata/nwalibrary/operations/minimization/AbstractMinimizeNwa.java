@@ -479,7 +479,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 */
 	protected final void checkForContinuation()
 			throws AutomataOperationCanceledException {
-		if (isCancelationRequested()) {
+		if (isCancellationRequested()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 	}

@@ -182,7 +182,7 @@ public class MinimizeSevpa<LETTER, STATE>
 					throws AutomataOperationCanceledException {
 					
 		// cancel if signal is received
-		if (isCancelationRequested()) {
+		if (isCancellationRequested()) {
 			throw new AutomataOperationCanceledException(getClass());
 		}
 		
@@ -412,7 +412,7 @@ public class MinimizeSevpa<LETTER, STATE>
 				a.delete();
 				
 				// cancel iteration iff cancel signal is received
-				if (isCancelationRequested()) {
+				if (isCancellationRequested()) {
 					throw new AutomataOperationCanceledException(getClass());
 				}
 			}

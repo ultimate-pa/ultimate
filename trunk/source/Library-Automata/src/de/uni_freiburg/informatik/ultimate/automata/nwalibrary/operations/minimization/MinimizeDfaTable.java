@@ -145,7 +145,7 @@ public class MinimizeDfaTable<LETTER,STATE>
 						}
 					}
 				}
-				if (isCancelationRequested()) {
+				if (isCancellationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}

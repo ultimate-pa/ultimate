@@ -46,7 +46,7 @@ public abstract class GeneralOperation<LETTER, STATE>
 	protected final AutomataLibraryServices mServices;
 	
 	/**
-	 * logger.
+	 * Logger.
 	 */
 	protected final ILogger mLogger;
 	
@@ -58,8 +58,7 @@ public abstract class GeneralOperation<LETTER, STATE>
 	 */
 	public GeneralOperation(final AutomataLibraryServices services) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(
-				LibraryIdentifiers.PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 	}
 	
 	/**
@@ -72,7 +71,7 @@ public abstract class GeneralOperation<LETTER, STATE>
 	 * 
 	 * @return true iff {@link AutomataLibraryServices} object requests cancellation
 	 */
-	protected final boolean isCancelationRequested() {
+	protected final boolean isCancellationRequested() {
 		return !mServices.getProgressMonitorService().continueProcessing();
 	}
 	
@@ -95,8 +94,7 @@ public abstract class GeneralOperation<LETTER, STATE>
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		mLogger.warn("No result check for " + operationName()
-				+ " available yet.");
+		mLogger.warn("No result check for " + operationName() + " available yet.");
 		return true;
 	}
 }

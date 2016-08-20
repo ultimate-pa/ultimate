@@ -412,7 +412,7 @@ public class ShrinkNwa<LETTER, STATE>
 			// iterative refinement
 			while (mWorkListIntCall.hasNext()) {
 				// cancel if signal is received
-				if (isCancelationRequested()) {
+				if (isCancellationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 				
@@ -428,7 +428,7 @@ public class ShrinkNwa<LETTER, STATE>
 			// iterative refinement
 			outer: while (true) {
 				// cancel if signal is received
-				if (isCancelationRequested()) {
+				if (isCancellationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 				
@@ -459,7 +459,7 @@ public class ShrinkNwa<LETTER, STATE>
 				}
 				
 				// cancel if signal is received
-				if (isCancelationRequested()) {
+				if (isCancellationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 				

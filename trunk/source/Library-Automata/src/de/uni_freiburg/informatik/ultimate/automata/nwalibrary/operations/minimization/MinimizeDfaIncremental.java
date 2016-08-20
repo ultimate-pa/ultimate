@@ -282,7 +282,7 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 					return;
 				}
 				
-				if (isCancelationRequested()) {
+				if (isCancellationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 				
