@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
@@ -43,15 +43,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-	
-
 /**
- * Buchi Complementation based on 
- * 2004ATVA - Friedgut,Kupferman,Vardi - Büchi Complementation Made Tighter
+ * Buchi Complementation based on
+ * 2004ATVA - Friedgut,Kupferman,Vardi - Büchi Complementation Made Tighter.
+ * 
  * @author heizmann@informatik.uni-freiburg.de
- *
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
-public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE> {
+public class BuchiComplementFKV<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
@@ -63,46 +63,39 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	 */
 	private final int mUserDefinedMaxRank;
 	
-	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private final StateFactory<STATE> mStateFactory;
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 	private final BuchiComplementFKVNwa<LETTER, STATE> mComplemented;
-	private final FkvOptimization mOptimization;	
-	
-	
+	private final FkvOptimization mOptimization;
 	
 	@Override
 	public String operationName() {
 		return "buchiComplementFKV";
 	}
 	
-	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + " with optimization " + mOptimization 
-				+ ". Operand " +	mOperand.sizeInformation();
+		return "Start " + operationName() + " with optimization " + mOptimization
+				+ ". Operand " + mOperand.sizeInformation();
 	}
-	
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " with optimization " + mOptimization 
-				+ ". Operand " + 
-				mOperand.sizeInformation() + " Result " + 
-				mResult.sizeInformation() + 
-				mComplemented.getPowersetStates() + " powerset states" +
-				mComplemented.getRankStates() + " rank states" +
-			" the highest rank that occured is " + mComplemented.getHighesRank();
+		return "Finished " + operationName() + " with optimization " + mOptimization
+				+ ". Operand " + mOperand.sizeInformation() + " Result " + mResult.sizeInformation()
+				+ mComplemented.getPowersetStates() + " powerset states" + mComplemented.getRankStates()
+				+ " rank states. The highest rank that occured is " + mComplemented.getHighesRank();
 	}
 	
 	public int getHighestRank() {
 		return mComplemented.getHighesRank();
 	}
-
+	
 	public BuchiComplementFKV(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory, 
-			final INestedWordAutomatonSimple<LETTER,STATE> input,
+			final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> input,
 			final String optimization,
 			final int userDefinedMaxRank) throws AutomataLibraryException {
 		mServices = services;
@@ -113,20 +106,22 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		this.mUserDefinedMaxRank = userDefinedMaxRank;
 		this.mOptimization = FkvOptimization.valueOf(optimization);
 		mLogger.info(startMessage());
-		mComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(mServices, input,mStateDeterminizer,mStateFactory, mOptimization, mUserDefinedMaxRank);
+		mComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(mServices, input, mStateDeterminizer, mStateFactory,
+				mOptimization, mUserDefinedMaxRank);
 		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mComplemented);
 		mLogger.info(exitMessage());
 	}
 	
 	public BuchiComplementFKV(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory, 
-			final INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
+			final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> input) throws AutomataLibraryException {
 		this(services, stateFactory, input, FkvOptimization.HeiMat2.toString(), Integer.MAX_VALUE);
 		
 	}
 	
 	public BuchiComplementFKV(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER,STATE> input, final IStateDeterminizer<LETTER, STATE> stateDeterminizier) throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> input,
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizier) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.mStateDeterminizer = stateDeterminizier;
@@ -135,16 +130,12 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		this.mUserDefinedMaxRank = Integer.MAX_VALUE;
 		this.mOptimization = FkvOptimization.HeiMat2;
 		mLogger.info(startMessage());
-		mComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(mServices, input,mStateDeterminizer,mStateFactory, mOptimization, mUserDefinedMaxRank);
+		mComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(mServices, input, mStateDeterminizer, mStateFactory,
+				mOptimization, mUserDefinedMaxRank);
 		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mComplemented);
 		mLogger.info(exitMessage());
 	}
 	
-	
-	
-	
-
-
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
@@ -187,7 +178,7 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
 		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mOperand)).getResult());
 		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mResult)).getResult());
-
+		
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
@@ -200,7 +191,6 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
 		
-
 		for (final NestedLassoWord<LETTER> nlw : lassoWords) {
 			boolean thistime = checkAcceptance(nlw, mOperand, underApproximationOfComplement);
 			if (!thistime) {
@@ -209,7 +199,7 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 			correct &= thistime;
 //			assert correct;
 		}
-
+		
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
 					operationName() + "Failed", "language is different",
@@ -219,9 +209,8 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		return correct;
 	}
 	
-	
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand , 
+			final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final boolean underApproximationOfComplement)
 					throws AutomataLibraryException {
 		final boolean op =
@@ -237,11 +226,10 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 //		assert correct : operationName() + " wrong result!";
 		return correct;
 	}
-
-
+	
 	@Override
 	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult() throws AutomataLibraryException {
 		return mResult;
 	}
-
+	
 }

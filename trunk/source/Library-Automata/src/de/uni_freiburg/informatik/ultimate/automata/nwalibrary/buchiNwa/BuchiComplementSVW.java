@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
@@ -37,25 +37,27 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Büchi complementation based on the method of Sistla, Vardi, Wolper:
- * 
- * <p>“The Complementation Problem for Büchi Automata with Applications to
- *      Temporal Logic” (Elsevier, 1987)
- *      
- * <p>The actual implementation of this complementation method is located in the
+ * Büchi complementation based on the method of Sistla, Vardi, Wolper.
+ * <p>
+ * “The Complementation Problem for Büchi Automata with Applications to
+ * Temporal Logic” (Elsevier, 1987)
+ * <p>
+ * The actual implementation of this complementation method is located in the
  * class {@code BuchiComplementAutomatonSVW}.
  * 
  * @author Fabian Reiter
- *
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE> {
+public class BuchiComplementSVW<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	
-	private final INestedWordAutomaton<LETTER,STATE> mOperand;
-	private final BuchiComplementAutomatonSVW<LETTER,STATE> mResult;
-
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+	private final BuchiComplementAutomatonSVW<LETTER, STATE> mResult;
 	
 	@Override
 	public String operationName() {
@@ -64,19 +66,17 @@ public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE
 	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Operand " +
-				mOperand.sizeInformation();
+		return "Start " + operationName() + ". Operand " + mOperand.sizeInformation();
 	}
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Result " + 
-				mResult.sizeInformation();
+		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
 	}
-		
+	
 	public BuchiComplementSVW(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER,STATE> operand)
-			throws AutomataLibraryException {
+			final INestedWordAutomaton<LETTER, STATE> operand)
+					throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
@@ -84,13 +84,13 @@ public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE
 		mResult = new BuchiComplementAutomatonSVW<LETTER, STATE>(mServices, operand);
 		mLogger.info(exitMessage());
 	}
-
+	
 	@Override
-	public INestedWordAutomaton<LETTER,STATE> getResult()
+	public INestedWordAutomaton<LETTER, STATE> getResult()
 			throws AutomataLibraryException {
 		return mResult;
 	}
-
+	
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {

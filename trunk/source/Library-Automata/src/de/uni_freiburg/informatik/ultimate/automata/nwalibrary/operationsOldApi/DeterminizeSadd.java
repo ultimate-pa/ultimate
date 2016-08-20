@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi;
@@ -47,37 +47,36 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
+public class DeterminizeSadd<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	
-	private final Map<Macrostate,STATE> mMacrostate2detState =
-		new HashMap<Macrostate, STATE>();
-	private final Map<STATE,Macrostate> mDetState2macrostate =
-		new HashMap<STATE, Macrostate>();
-	private final Map<STATE,Set<STATE>> mSummary = 
-		new HashMap<STATE, Set<STATE>>();
+	private final Map<Macrostate, STATE> mMacrostate2detState =
+			new HashMap<Macrostate, STATE>();
+	private final Map<STATE, Macrostate> mDetState2macrostate =
+			new HashMap<STATE, Macrostate>();
+	private final Map<STATE, Set<STATE>> mSummary =
+			new HashMap<STATE, Set<STATE>>();
 	private final STATE mAuxiliaryEmptyStackState;
-	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
-	private final NestedWordAutomaton<LETTER,STATE> mResult;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final NestedWordAutomaton<LETTER, STATE> mResult;
 	
 	private final List<StatePair> mQueue = new LinkedList<StatePair>();
 	
 	// set of pairs that has been visited. The first state of the pair can be any automaton
 	// state, the second state is a state that has an outgoing call transition.
-	private final Map<STATE,Set<STATE>> mVisited = 
-		new HashMap<STATE, Set<STATE>>();
-
-	
+	private final Map<STATE, Set<STATE>> mVisited =
+			new HashMap<STATE, Set<STATE>>();
+			
 	public DeterminizeSadd(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER,STATE> nwa) {
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = nwa;
 		mLogger.info(startMessage());
-		mResult = new NestedWordAutomaton<LETTER,STATE>(
-				mServices, 
+		mResult = new NestedWordAutomaton<LETTER, STATE>(
+				mServices,
 				mOperand.getInternalAlphabet(),
 				mOperand.getCallAlphabet(),
 				mOperand.getReturnAlphabet(),
@@ -92,22 +91,20 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		return "determinizeSadd";
 	}
 	
-	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + " Operand " + 
-			mOperand.sizeInformation();
+		return "Start " + operationName() + " Operand "
+				+ mOperand.sizeInformation();
 	}
-	
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + 
-			mResult.sizeInformation();
+		return "Finished " + operationName() + " Result "
+				+ mResult.sizeInformation();
 	}
 	
 	@Override
-	public INestedWordAutomaton<LETTER,STATE> getResult() throws AutomataLibraryException {
+	public INestedWordAutomaton<LETTER, STATE> getResult() throws AutomataLibraryException {
 		return mResult;
 	}
 	
@@ -138,12 +135,10 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		summarySuccessors.add(summarySucc);
 	}
 	
-	
-	
 	public void enqueueAndMark(final STATE state, final STATE callerState) {
 		if (!wasVisited(state, callerState)) {
 			markVisited(state, callerState);
-			final StatePair statePair = new StatePair(state,callerState);
+			final StatePair statePair = new StatePair(state, callerState);
 			mQueue.add(statePair);
 		}
 	}
@@ -160,7 +155,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private void determinize() {
 		mLogger.debug("Starting determinizeSadd. Operand " + mOperand.sizeInformation());
 		final Macrostate initialMacroState = new Macrostate();
-
+		
 		for (final STATE state : mOperand.getInitialStates()) {
 			initialMacroState.addPair(state, mAuxiliaryEmptyStackState);
 		}
@@ -168,7 +163,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		mResult.addState(true, initialMacroState.mIsFinal, initialDetState);
 		mMacrostate2detState.put(initialMacroState, initialDetState);
 		mDetState2macrostate.put(initialDetState, initialMacroState);
-		enqueueAndMark(initialDetState,mAuxiliaryEmptyStackState);
+		enqueueAndMark(initialDetState, mAuxiliaryEmptyStackState);
 		
 		while (!mQueue.isEmpty()) {
 			final StatePair statePair = mQueue.remove(0);
@@ -184,9 +179,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		assert mResult.isDeterministic();
 	}
 	
-	
 //	private void processSummary(IState<LETTER,STATE> summaryPred, IState<LETTER,STATE> summaryPredCaller)
-	
 	
 	private void processStatePair(final StatePair statePair) {
 		final STATE detState = statePair.mState;
@@ -209,8 +202,6 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			enqueueAndMark(succDetState, statePair.mCallerState);
 		}
 		
-		
-		
 		final Set<LETTER> symbolsCall = new HashSet<LETTER>();
 		for (final STATE state : macrostate.getStates()) {
 			symbolsCall.addAll(mOperand.lettersCall(state));
@@ -228,10 +219,9 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			enqueueAndMark(succDetState, detState);
 		}
 		
-		
 		final STATE detLinPred = statePair.mCallerState;
 		if (detLinPred != mAuxiliaryEmptyStackState) {
-		
+			
 			final Set<LETTER> symbolsReturn = new HashSet<LETTER>();
 			for (final STATE state : macrostate.getStates()) {
 				symbolsReturn.addAll(mOperand.lettersReturn(state));
@@ -253,75 +243,67 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 						enqueueAndMark(succDetState, detLinPredCallerState);
 					}
 				}
-
+				
 			}
-		
+			
 		}
-
 		
 	}
 	
-	
 	/**
 	 * Compute successor Macrostate under internal transition of a Macrostate
-	 * and symbol. 
+	 * and symbol.
 	 */
 	private Macrostate internalSuccMacrostate(final Macrostate macrostate, final LETTER symbol) {
 		final Macrostate succMacrostate = new Macrostate();
 		for (final STATE state : macrostate.getStates()) {
-			for (final OutgoingInternalTransition<LETTER, STATE> trans :
-					mOperand.internalSuccessors(state, symbol)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(state, symbol)) {
 				final STATE succ = trans.getSucc();
 				final Set<STATE> callerStates = macrostate.getCallerStates(state);
-				succMacrostate.addPairs(succ,callerStates);
+				succMacrostate.addPairs(succ, callerStates);
 			}
 		}
-		return succMacrostate;	
+		return succMacrostate;
 	}
 	
 	/**
 	 * Compute successor Macrostate under call transition of a Macrostate
-	 * and symbol. 
+	 * and symbol.
 	 */
 	private Macrostate callSuccMacrostate(final Macrostate macrostate, final LETTER symbol) {
 		final Macrostate succMacrostate = new Macrostate();
 		for (final STATE state : macrostate.getStates()) {
-			for (final OutgoingCallTransition<LETTER, STATE> trans :
-					mOperand.callSuccessors(state, symbol)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(state, symbol)) {
 				final STATE succ = trans.getSucc();
-				succMacrostate.addPair(succ,state);
+				succMacrostate.addPair(succ, state);
 			}
 		}
-		return succMacrostate;	
+		return succMacrostate;
 	}
-
 	
 	/**
 	 * Compute successor Macrostate under return transition of a Macrostate,
-	 * a linear predecessor Macrostate and a symbol. 
+	 * a linear predecessor Macrostate and a symbol.
 	 */
 	private Macrostate returnSuccMacrostate(final Macrostate macrostate,
-								final Macrostate linPredMacrostate, final LETTER symbol) {
+			final Macrostate linPredMacrostate, final LETTER symbol) {
 		final Macrostate succMacrostate = new Macrostate();
 		for (final STATE state : macrostate.getStates()) {
 			for (final STATE linPred : macrostate.getCallerStates(state)) {
-				for (final OutgoingReturnTransition<LETTER, STATE> trans :
-						mOperand.returnSuccessors(state, linPred, symbol)) {
+				for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(state, linPred,
+						symbol)) {
 					final STATE succ = trans.getSucc();
-					final Set<STATE> callerStates = 
-						linPredMacrostate.getCallerStates(linPred);
+					final Set<STATE> callerStates =
+							linPredMacrostate.getCallerStates(linPred);
 					if (callerStates != null) {
-						succMacrostate.addPairs(succ,callerStates);
+						succMacrostate.addPairs(succ, callerStates);
 					}
 				}
 			}
 		}
-		return succMacrostate;	
+		return succMacrostate;
 	}
 	
-
-
-
 	private class StatePair {
 		private final STATE mState;
 		private final STATE mCallerState;
@@ -330,7 +312,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		public StatePair(final STATE state, final STATE callerState) {
 			this.mState = state;
 			this.mCallerState = callerState;
-			mHashCode = computeHashCode(); 
+			mHashCode = computeHashCode();
 		}
 		
 		@Override
@@ -345,8 +327,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				return false;
 			}
 			@SuppressWarnings("unchecked")
-			final
-			StatePair other = (StatePair) obj;
+			final StatePair other = (StatePair) obj;
 			if (!getOuterType().equals(other.getOuterType())) {
 				return false;
 			}
@@ -371,7 +352,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		public int hashCode() {
 			return mHashCode;
 		}
-
+		
 		public int computeHashCode() {
 			final int prime = 31;
 			int hc = 1;
@@ -386,7 +367,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		public String toString() {
 			return "CallerState: " + mCallerState + "  State: " + mState;
 		}
-
+		
 		private DeterminizeSadd getOuterType() {
 			return DeterminizeSadd.this;
 		}
@@ -394,13 +375,10 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	/**
 	 * List of pairs of States.
-	 *
-	 * @param <LETTER> Symbol
-	 * @param <STATE> Content
 	 */
 	private class Macrostate {
-		private final Map<STATE,Set<STATE>> mPairList =
-			new HashMap<STATE, Set<STATE>>();
+		private final Map<STATE, Set<STATE>> mPairList =
+				new HashMap<STATE, Set<STATE>>();
 		private boolean mIsFinal = false;
 		
 		Set<STATE> getStates() {
@@ -431,8 +409,8 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			callerStates.add(callerState);
 		}
 		
-		private void addPairs(final STATE state, 
-											final Set<STATE> newCallerStates) {
+		private void addPairs(final STATE state,
+				final Set<STATE> newCallerStates) {
 			if (mOperand.isFinal(state)) {
 				mIsFinal = true;
 			}
@@ -444,7 +422,6 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			callerStates.addAll(newCallerStates);
 		}
 		
-
 		@SuppressWarnings("unchecked")
 		@Override
 		public boolean equals(final Object obj) {
@@ -455,7 +432,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				return false;
 			}
 		}
-
+		
 		@Override
 		public int hashCode() {
 			return mPairList.hashCode();
@@ -464,17 +441,17 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		@Override
 		public String toString() {
 			return mPairList.toString();
-		}		
+		}
 	}
-
+	
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		mLogger.info("Testing correctness of determinization");
 		boolean correct = true;
 		
-		final INestedWordAutomaton<LETTER,STATE> resultDD =
-				(new DeterminizeDD<LETTER,STATE>(mServices, stateFactory,mOperand)).getResult();
+		final INestedWordAutomaton<LETTER, STATE> resultDD =
+				(new DeterminizeDD<LETTER, STATE>(mServices, stateFactory, mOperand)).getResult();
 		correct &= new IsIncluded<>(mServices, stateFactory, resultDD, mResult).getResult();
 		correct &= new IsIncluded<>(mServices, stateFactory, mResult, resultDD).getResult();
 		mLogger.info("Finished testing correctness of determinization");

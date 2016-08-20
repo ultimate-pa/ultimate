@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization;
@@ -34,10 +34,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 
 /**
  * Ultimate model of an automaton state.
- * @author heizmann@informatik.uni-freiburg.de 
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class AutomatonState
-		extends ModifiableExplicitEdgesMultigraph<AutomatonState, AutomatonTransition,AutomatonState, AutomatonTransition> {
+		extends
+		ModifiableExplicitEdgesMultigraph<AutomatonState, AutomatonTransition, AutomatonState, AutomatonTransition> {
 	private static final long serialVersionUID = 264254789648279608L;
 	
 	private final String mName;
@@ -45,8 +47,8 @@ public class AutomatonState
 	public AutomatonState(final Object content, final boolean isAccepting) {
 		
 		final DefaultAnnotations acceptance = new DefaultAnnotations();
-		acceptance.put("isAccepting",isAccepting);
-		final Map<String,IAnnotations> annotations = getPayload().getAnnotations();
+		acceptance.put("isAccepting", isAccepting);
+		final Map<String, IAnnotations> annotations = getPayload().getAnnotations();
 		annotations.put("isAccepting", acceptance);
 		
 		if (content instanceof IAnnotations) {
@@ -60,7 +62,7 @@ public class AutomatonState
 	public String toString() {
 		return mName;
 	}
-
+	
 	@Override
 	public AutomatonState getLabel() {
 		return this;

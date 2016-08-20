@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
@@ -37,31 +37,33 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-	
-
 /**
  * Increase the number of accepting states without changing the language.
  * 
  * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
+public class BuchiClosure<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
-
-	private final INestedWordAutomaton<LETTER,STATE> mOperand;
+	
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final INestedWordAutomaton<LETTER, STATE> mResult;
 	
-
 	/**
-	 * @param services Ultimate services
-	 * @param operand operand
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
 	 */
 	public BuchiClosure(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER,STATE> operand) {
+			final INestedWordAutomaton<LETTER, STATE> operand) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
@@ -70,31 +72,25 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		mLogger.info(exitMessage());
 	}
 	
-	
-	
 	@Override
 	public String operationName() {
 		return "buchiClosure";
 	}
 	
-	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + " Operand " + 
-			mOperand.sizeInformation() + " thereof " + 
-			mOperand.getFinalStates().size() + " accepting";
+		return "Start " + operationName() + " Operand "
+				+ mOperand.sizeInformation() + " thereof "
+				+ mOperand.getFinalStates().size() + " accepting";
 	}
-	
 	
 	@Override
 	public String exitMessage() {
-		return "Start " + operationName() + " Operand " + 
-				mResult.sizeInformation() + " thereof " + 
-				mResult.getFinalStates().size() + " accepting";
+		return "Start " + operationName() + " Operand "
+				+ mResult.sizeInformation() + " thereof "
+				+ mResult.getFinalStates().size() + " accepting";
 	}
 	
-
-
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
@@ -121,9 +117,6 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		return correct;
 	}
 	
-
-
-
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() throws AutomataLibraryException {
 		return mResult;

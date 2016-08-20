@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton;
@@ -49,7 +49,7 @@ class LassoConstructor<LETTER, STATE> {
     private final StateContainer<LETTER,STATE> mGoal;
     private final Set<StateContainer<LETTER,STATE>> mVisited =
                     new HashSet<StateContainer<LETTER,STATE>>();
-    private final ArrayList<Map<StateContainer<LETTER,STATE>,SuccessorInfo>> mSuccInfos = 
+    private final ArrayList<Map<StateContainer<LETTER,STATE>,SuccessorInfo>> mSuccInfos =
     		new ArrayList<Map<StateContainer<LETTER,STATE>,SuccessorInfo>>();
     private final StronglyConnectedComponent<StateContainer<LETTER, STATE>> mScc;
     private final boolean mFindAcceptingSummary;
@@ -59,8 +59,8 @@ class LassoConstructor<LETTER, STATE> {
     private final NestedRun<LETTER, STATE> mStem;
     private final NestedLassoRun<LETTER, STATE> mLasso;
     
-	public LassoConstructor(final AutomataLibraryServices services, 
-			final NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
+	public LassoConstructor(final AutomataLibraryServices services,
+			final NestedWordAutomatonReachableStates<LETTER, STATE> nwars,
 			final StateContainer<LETTER, STATE> goal,
 			final StronglyConnectedComponent<StateContainer<LETTER, STATE>> scc)
 					throws AutomataOperationCanceledException {
@@ -72,7 +72,7 @@ class LassoConstructor<LETTER, STATE> {
 		//first, find a run, while doing a backward breadth first search
 		{
 			mIteration = 0;
-			final Map<StateContainer<LETTER, STATE>, SuccessorInfo> map = 
+			final Map<StateContainer<LETTER, STATE>, SuccessorInfo> map =
 					new HashMap<StateContainer<LETTER,STATE>,SuccessorInfo>();
 			mSuccInfos.add(map);
 			addPredecessors(mGoal, map);
@@ -84,7 +84,7 @@ class LassoConstructor<LETTER, STATE> {
 	}
 	
 	public LassoConstructor(final AutomataLibraryServices services,
-			final NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
+			final NestedWordAutomatonReachableStates<LETTER, STATE> nwars,
 			final Summary<LETTER, STATE> summary,
 			final StronglyConnectedComponent<StateContainer<LETTER, STATE>> scc)
 					throws AutomataOperationCanceledException {
@@ -96,7 +96,7 @@ class LassoConstructor<LETTER, STATE> {
 		//first, find a run, while doing a backward breadth first search
 		{
 			mIteration = 0;
-			final Map<StateContainer<LETTER, STATE>, SuccessorInfo> map = 
+			final Map<StateContainer<LETTER, STATE>, SuccessorInfo> map =
 					new HashMap<StateContainer<LETTER,STATE>,SuccessorInfo>();
 			mSuccInfos.add(map);
 			final SuccessorInfo succInfo = new SuccessorInfo(
@@ -112,7 +112,7 @@ class LassoConstructor<LETTER, STATE> {
 
 	
 	/**
-	 * Check iteratively precedessors and add SuccInfos to mSuccInfos
+	 * Check iteratively precedessors and add SuccInfos to mSuccInfos.
 	 */
 	private void findRunBackwards() {
 		while (!mGoalFound) {
@@ -121,7 +121,7 @@ class LassoConstructor<LETTER, STATE> {
 			}
 			assert mSuccInfos.size() == mIteration + 1;
 			mIteration++;
-			final Map<StateContainer<LETTER, STATE>, SuccessorInfo> map = 
+			final Map<StateContainer<LETTER, STATE>, SuccessorInfo> map =
 					new HashMap<StateContainer<LETTER,STATE>,SuccessorInfo>();
 			mSuccInfos.add(map);
 			for (final StateContainer<LETTER, STATE> sc  : mSuccInfos.get(mIteration - 1).keySet()) {
@@ -225,7 +225,8 @@ class LassoConstructor<LETTER, STATE> {
 		private final ITransitionlet<LETTER, STATE> mTransition;
 		private final StateContainer<LETTER,STATE> mSuccessor;
 		
-		public SuccessorInfo(final ITransitionlet<LETTER, STATE> transition, final StateContainer<LETTER, STATE> successor) {
+		public SuccessorInfo(final ITransitionlet<LETTER, STATE> transition,
+				final StateContainer<LETTER, STATE> successor) {
 			super();
 			mTransition = transition;
 			mSuccessor = successor;

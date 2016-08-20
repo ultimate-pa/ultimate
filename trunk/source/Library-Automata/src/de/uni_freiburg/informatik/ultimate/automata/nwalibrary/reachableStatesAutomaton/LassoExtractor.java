@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton;
@@ -51,40 +51,43 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
-
 /**
- * Class for obtaining NestedLassoRun which are accepted by a 
+ * Class for obtaining NestedLassoRun which are accepted by a
  * NestedWordAutomatonReachableStates.
- * 
- * <p>This class is buggy, old and superseded by the class LassoConstructor.
+ * <p>
+ * This class is buggy, old and superseded by the class LassoConstructor.
  *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 class LassoExtractor<LETTER, STATE> {
 	
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
-
+	
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mNwars;
-
+	
 	private final NestedLassoRun<LETTER, STATE> mNlr;
-
-	public LassoExtractor(final AutomataLibraryServices services, 
+	
+	public LassoExtractor(final AutomataLibraryServices services,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> nwars,
-			final StateContainer<LETTER, STATE> honda, 
-			final StronglyConnectedComponent<StateContainer<LETTER, STATE>> scc, 
+			final StateContainer<LETTER, STATE> honda,
+			final StronglyConnectedComponent<StateContainer<LETTER, STATE>> scc,
 			final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> acceptingSummaries)
 					throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mNwars = nwars;
 		final Set<SuccInfo> forbiddenSummaries = Collections.emptySet();
-		final LoopFinder lf = new LoopFinder(honda, scc, true, 
+		final LoopFinder lf = new LoopFinder(honda, scc, true,
 				acceptingSummaries, forbiddenSummaries);
 		final NestedRun<LETTER, STATE> loop = lf.getNestedRun();
 		assert loop.getLength() > 1 : "looping epsilon transition";
-		final NestedRun<LETTER, STATE> stem = (new RunConstructor<LETTER, STATE>(mServices, mNwars, honda)).constructRun();
+		final NestedRun<LETTER, STATE> stem =
+				(new RunConstructor<LETTER, STATE>(mServices, mNwars, honda)).constructRun();
 		mLogger.debug("Stem length: " + stem.getLength());
 		mLogger.debug("Loop length: " + loop.getLength());
 		mNlr = new NestedLassoRun<LETTER, STATE>(stem, loop);
@@ -96,60 +99,60 @@ class LassoExtractor<LETTER, STATE> {
 			throw new AssertionError(e);
 		}
 	}
-
+	
 	NestedLassoRun<LETTER, STATE> getNestedLassoRun() {
 		return mNlr;
 	}
-
+	
 	class LoopFinder extends RunFinder {
 		private final StronglyConnectedComponent<StateContainer<LETTER, STATE>> mScc;
-
+		
 		public LoopFinder(final StateContainer<LETTER, STATE> goal,
-				final StronglyConnectedComponent<StateContainer<LETTER, STATE>> scc, 
-				final boolean visitAccepting, 
-				final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> acceptingSummaries, 
+				final StronglyConnectedComponent<StateContainer<LETTER, STATE>> scc,
+				final boolean visitAccepting,
+				final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> acceptingSummaries,
 				final Set<SuccInfo> forbiddenSummaries) {
 			super(goal, goal, visitAccepting, acceptingSummaries, forbiddenSummaries);
 			mScc = scc;
 		}
-
+		
 		@Override
 		protected int getMaximalIterationNumber() {
 			return mScc.getNodes().size();
 		}
-
+		
 		@Override
-		protected SuccInfo possiblePredecessor(final StateContainer<LETTER, STATE> succSc, 
+		protected SuccInfo possiblePredecessor(final StateContainer<LETTER, STATE> succSc,
 				final IncomingReturnTransition<LETTER, STATE> inTrans,
 				final boolean summaryUsed, final boolean isGuaranteed) {
 			final StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getHierPred());
 			final StateContainer<LETTER, STATE> linPredSc = mNwars.obtainSC(inTrans.getLinPred());
-			return possiblePredecessor(predSc, inTrans.getLetter(), succSc, 
+			return possiblePredecessor(predSc, inTrans.getLetter(), succSc,
 					InCaRe.SUMMARY, linPredSc, true, isGuaranteed);
 		}
-
+		
 		@Override
-		protected SuccInfo possiblePredecessor(final StateContainer<LETTER, STATE> succSc, 
+		protected SuccInfo possiblePredecessor(final StateContainer<LETTER, STATE> succSc,
 				final IncomingCallTransition<LETTER, STATE> inTrans,
 				final boolean summaryUsed, final boolean isGuaranteed) {
 			final StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getPred());
-			return possiblePredecessor(predSc, inTrans.getLetter(), succSc, 
+			return possiblePredecessor(predSc, inTrans.getLetter(), succSc,
 					InCaRe.CALL, null, summaryUsed, isGuaranteed);
 		}
-
+		
 		@Override
-		protected SuccInfo possiblePredecessor(final StateContainer<LETTER, STATE> succSc, 
+		protected SuccInfo possiblePredecessor(final StateContainer<LETTER, STATE> succSc,
 				final IncomingInternalTransition<LETTER, STATE> inTrans,
 				final boolean summaryUsed, final boolean isGuaranteed) {
 			final StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getPred());
-			return possiblePredecessor(predSc, inTrans.getLetter(), succSc, 
+			return possiblePredecessor(predSc, inTrans.getLetter(), succSc,
 					InCaRe.INTERNAL, null, summaryUsed, isGuaranteed);
 		}
-
+		
 		private SuccInfo possiblePredecessor(final StateContainer<LETTER, STATE> predSc,
 				final LETTER letter,
-				final StateContainer<LETTER, STATE> succSc, final InCaRe type, 
-				final StateContainer<LETTER, STATE> linPred, 
+				final StateContainer<LETTER, STATE> succSc, final InCaRe type,
+				final StateContainer<LETTER, STATE> linPred,
 				final boolean summaryUsed, final boolean isGuaranteedSucc) {
 			if (!mScc.getNodes().contains(predSc)) {
 				return null;
@@ -164,15 +167,13 @@ class LassoExtractor<LETTER, STATE> {
 			}
 			final boolean goalFound = mGoal.equals(predSc) && isGuaranteedPred;
 			final boolean guaranteeChanger = isGuaranteedSucc ^ isGuaranteedPred;
-			final SuccInfo succInfo = new SuccInfo(succSc, letter, type, linPred, 
+			final SuccInfo succInfo = new SuccInfo(succSc, letter, type, linPred,
 					isGuaranteedPred, goalFound, guaranteeChanger);
 			super.markVisited(predSc, summaryUsed, isGuaranteedPred);
 			return succInfo;
 		}
 	}
-
-
-
+	
 	class SuccInfo {
 		private final StateContainer<LETTER, STATE> mSuccessor;
 		private final LETTER mLetter;
@@ -317,11 +318,11 @@ class LassoExtractor<LETTER, STATE> {
 			return LassoExtractor.this;
 		}
 	}
-
+	
 	abstract class RunFinder {
-
+		
 		protected final Set<SuccInfo> mForbiddenSummaries;
-
+		
 		protected final StateContainer<LETTER, STATE> mStart;
 		protected final StateContainer<LETTER, STATE> mGoal;
 		/**
@@ -331,68 +332,67 @@ class LassoExtractor<LETTER, STATE> {
 		/**
 		 * Successor mapping. If you build a path starting with this mapping
 		 * it is guaranteed that the requirement (e.g., final state visited)
-		 * is fulfilled. If you are rebuilding a run and requirement is 
-		 * already met, my may need mSuccessorsNoGuarantee for the 
+		 * is fulfilled. If you are rebuilding a run and requirement is
+		 * already met, my may need mSuccessorsNoGuarantee for the
 		 * remainder of the run.
-		 * If there is no requirement all successor informations are in 
+		 * If there is no requirement all successor informations are in
 		 * these Maps.
 		 */
 		//	protected final List<Map<STATE, Object>> mSuccessorsWithGuarantee;
-
+		
 		/**
-		 * States that have already been visited (without start state) from 
+		 * States that have already been visited (without start state) from
 		 * which there is a run to the start state (of this search) such the
 		 * equirement (e.g., final state visited) is fulfilled.
 		 */
 		//	protected final Set<STATE> mVisitedWithGuarantee;
-
+		
 		/**
 		 * Successor mapping. I you use this to build a run, it is not
 		 * guaranteed that the requirement (e.g., final state visited) is
 		 * fulfilled.
 		 */
 		//	protected final List<Map<STATE, Object>> mSuccessorsNoGuarantee;
-
+		
 		/**
-		 * States that have already been visited (without start state) from 
+		 * States that have already been visited (without start state) from
 		 * which there is a run to the start state (of this search) it is not
 		 * guaranteed that the requirement (e.g., final state visited) is
 		 * fulfilled.
 		 */
 		//	protected final Set<STATE> mVisitedNoGuarantee;
-
+		
 		/**
 		 * Contains a pair of states (pre,post) if there is an run from
 		 * pre to post such that
 		 * - this run visits an accepting state
 		 * - this run starts with a call
 		 * - this run ends with a return
-		 * 
-		 * <p>May be null if visiting an accepting state is not required.
+		 * <p>
+		 * May be null if visiting an accepting state is not required.
 		 */
 		private final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> mAcceptingSummaries;
-
-
-		protected final List<Map<StateContainer<LETTER,STATE>, SuccInfo>> mSuccessorsWithSummary;
-		protected final List<Map<StateContainer<LETTER,STATE>, SuccInfo>> mSuccessorsWithoutSummary;
-
-		private final Set<StateContainer<LETTER,STATE>> mVisited_WithoutSummary_WithoutGuarantee = 
-				new HashSet<StateContainer<LETTER,STATE>>();
-		private final Set<StateContainer<LETTER,STATE>> mVisited_WithSummary_WithoutGuarantee = 
-				new HashSet<StateContainer<LETTER,STATE>>();
-		private final Set<StateContainer<LETTER,STATE>> mVisited_WithoutSummary_WithGuarantee = 
-				new HashSet<StateContainer<LETTER,STATE>>();
-		private final Set<StateContainer<LETTER,STATE>> mVisited_WithSummary_WithGuarantee = 
-				new HashSet<StateContainer<LETTER,STATE>>();
-
+		
+		protected final List<Map<StateContainer<LETTER, STATE>, SuccInfo>> mSuccessorsWithSummary;
+		protected final List<Map<StateContainer<LETTER, STATE>, SuccInfo>> mSuccessorsWithoutSummary;
+		
+		private final Set<StateContainer<LETTER, STATE>> mVisited_WithoutSummary_WithoutGuarantee =
+				new HashSet<StateContainer<LETTER, STATE>>();
+		private final Set<StateContainer<LETTER, STATE>> mVisited_WithSummary_WithoutGuarantee =
+				new HashSet<StateContainer<LETTER, STATE>>();
+		private final Set<StateContainer<LETTER, STATE>> mVisited_WithoutSummary_WithGuarantee =
+				new HashSet<StateContainer<LETTER, STATE>>();
+		private final Set<StateContainer<LETTER, STATE>> mVisited_WithSummary_WithGuarantee =
+				new HashSet<StateContainer<LETTER, STATE>>();
+				
 		protected boolean mFoundWithSummary = false;
 		protected boolean mFoundWithoutSummary = false;
-
+		
 		protected int mIteration;
 		private int mIterationFoundWithSummary;
-
+		
 		public RunFinder(final StateContainer<LETTER, STATE> start,
-				final StateContainer<LETTER, STATE> goal, final boolean visitAccepting, 
+				final StateContainer<LETTER, STATE> goal, final boolean visitAccepting,
 				final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> acceptingSummaries,
 				final Set<SuccInfo> forbiddenSummaries) {
 			assert (start != null);
@@ -402,12 +402,12 @@ class LassoExtractor<LETTER, STATE> {
 			mVisitAccepting = visitAccepting;
 			mAcceptingSummaries = acceptingSummaries;
 			mForbiddenSummaries = forbiddenSummaries;
-			mSuccessorsWithSummary = new ArrayList<Map<StateContainer<LETTER,STATE>, SuccInfo>>();
-			mSuccessorsWithoutSummary = new ArrayList<Map<StateContainer<LETTER,STATE>, SuccInfo>>();
+			mSuccessorsWithSummary = new ArrayList<Map<StateContainer<LETTER, STATE>, SuccInfo>>();
+			mSuccessorsWithoutSummary = new ArrayList<Map<StateContainer<LETTER, STATE>, SuccInfo>>();
 			mIterationFoundWithSummary = -1;
 			mIteration = 0;
 		}
-
+		
 		public NestedRun<LETTER, STATE> getNestedRun() {
 			find(mStart);
 			if (mFoundWithoutSummary) {
@@ -416,7 +416,7 @@ class LassoExtractor<LETTER, STATE> {
 				return constructRun(mIterationFoundWithSummary, true);
 			}
 		}
-
+		
 		protected boolean isAcceptingSummary(final StateContainer<LETTER, STATE> predSc,
 				final StateContainer<LETTER, STATE> succSc) {
 			final Set<Summary<LETTER, STATE>> summaries = mAcceptingSummaries.getImage(predSc);
@@ -427,82 +427,85 @@ class LassoExtractor<LETTER, STATE> {
 					if (summary.getSucc().equals(succSc)) {
 						return true;
 					}
-
+					
 				}
 				return false;
 			}
 		}
-
+		
 		private boolean continueSearch() {
 			if (mFoundWithoutSummary) {
 				return false;
 			}
-			if (mSuccessorsWithSummary.get(mIteration).isEmpty() 
+			if (mSuccessorsWithSummary.get(mIteration).isEmpty()
 					&& mSuccessorsWithoutSummary.get(mIteration).isEmpty()) {
 				return false;
 			}
 			return true;
 		}
-
-		private void find(final StateContainer<LETTER,STATE> start) {
-			mSuccessorsWithoutSummary.add(new HashMap<StateContainer<LETTER,STATE>,SuccInfo>());
-			mSuccessorsWithSummary.add(new HashMap<StateContainer<LETTER,STATE>,SuccInfo>());
+		
+		private void find(final StateContainer<LETTER, STATE> start) {
+			mSuccessorsWithoutSummary.add(new HashMap<StateContainer<LETTER, STATE>, SuccInfo>());
+			mSuccessorsWithSummary.add(new HashMap<StateContainer<LETTER, STATE>, SuccInfo>());
 			findPredecessors(start, !mVisitAccepting || mNwars.isFinal(start.getState()), false);
 			while (continueSearch()) {
 				assert (mIteration <= getMaximalIterationNumber()) : "too many iterations";
 				mIteration++;
-				mSuccessorsWithoutSummary.add(new HashMap<StateContainer<LETTER,STATE>,SuccInfo>());
-				mSuccessorsWithSummary.add(new HashMap<StateContainer<LETTER,STATE>,SuccInfo>());
+				mSuccessorsWithoutSummary.add(new HashMap<StateContainer<LETTER, STATE>, SuccInfo>());
+				mSuccessorsWithSummary.add(new HashMap<StateContainer<LETTER, STATE>, SuccInfo>());
 				if (!mFoundWithSummary) {
-					for (final StateContainer<LETTER,STATE> sc : mSuccessorsWithSummary.get(mIteration - 1).keySet()) {
+					for (final StateContainer<LETTER, STATE> sc : mSuccessorsWithSummary.get(mIteration - 1).keySet()) {
 						final boolean isGuaranteed = mSuccessorsWithSummary.get(mIteration - 1).get(sc).isGuarantee();
 						findPredecessors(sc, isGuaranteed, true);
 					}
 				}
-				for (final StateContainer<LETTER,STATE> sc : mSuccessorsWithoutSummary.get(mIteration - 1).keySet()) {
+				for (final StateContainer<LETTER, STATE> sc : mSuccessorsWithoutSummary.get(mIteration - 1).keySet()) {
 					final boolean isGuaranteed = mSuccessorsWithoutSummary.get(mIteration - 1).get(sc).isGuarantee();
 					findPredecessors(sc, isGuaranteed, false);
 				}
-
+				
 			}
-			assert (mFoundWithSummary || mFoundWithoutSummary) :
-				"Bug in run reconstruction of new emptiness test.";
+			assert (mFoundWithSummary || mFoundWithoutSummary) : "Bug in run reconstruction of new emptiness test.";
 		}
-
+		
 		protected abstract int getMaximalIterationNumber();
-
+		
 		protected abstract SuccInfo possiblePredecessor(
 				StateContainer<LETTER, STATE> succSc,
 				IncomingReturnTransition<LETTER, STATE> inTrans,
 				boolean summaryUsed, boolean isGuaranteed);
-		
+				
 		protected abstract SuccInfo possiblePredecessor(
 				StateContainer<LETTER, STATE> succSc,
 				IncomingCallTransition<LETTER, STATE> inTrans,
 				boolean summaryUsed, boolean isGuaranteed);
-		
+				
 		protected abstract SuccInfo possiblePredecessor(
 				StateContainer<LETTER, STATE> succSc,
 				IncomingInternalTransition<LETTER, STATE> inTrans,
 				boolean summaryUsed, boolean isGuaranteed);
-
-
+				
 		/**
 		 * Add for a predecessor predSc information about successors to succMap.
 		 * If there is already a successor information that is as good as this
 		 * (requirement already fulfilled) nothing is added.
-		 * @param type call, internal, or summary
-		 * @param linPred linear predecessor if type is summary
-		 * @param succSc successor state
-		 * @param isGuranteed is the requirement (e.g., accepting state) visited
-		 *     guaranteed?
+		 * 
+		 * @param type
+		 *            call, internal, or summary
+		 * @param linPred
+		 *            linear predecessor if type is summary
+		 * @param succSc
+		 *            successor state
+		 * @param isGuranteed
+		 *            is the requirement (e.g., accepting state) visited
+		 *            guaranteed?
 		 */
-		private void addSuccessorInformation(final StateContainer<LETTER,STATE> predSc, 
+		private void addSuccessorInformation(final StateContainer<LETTER, STATE> predSc,
 				final boolean summaryUsed,
 				final SuccInfo newSuccInfo) {
-			Map<StateContainer<LETTER,STATE>, SuccInfo> succMap;
+			Map<StateContainer<LETTER, STATE>, SuccInfo> succMap;
 			if (summaryUsed) {
-			    	mFoundWithSummary |= newSuccInfo.goalFound();
+				mFoundWithSummary |= newSuccInfo.goalFound();
 				succMap = mSuccessorsWithSummary.get(mIteration);
 			} else {
 				mFoundWithoutSummary |= newSuccInfo.goalFound();
@@ -522,8 +525,8 @@ class LassoExtractor<LETTER, STATE> {
 				return;
 			}
 		}
-
-		private void markVisited(final StateContainer<LETTER,STATE> sc,
+		
+		private void markVisited(final StateContainer<LETTER, STATE> sc,
 				final boolean summaryUsed, final boolean isGuranteed) {
 			if (summaryUsed) {
 				if (isGuranteed) {
@@ -539,8 +542,8 @@ class LassoExtractor<LETTER, STATE> {
 				}
 			}
 		}
-
-		protected boolean alreadyVisited(final StateContainer<LETTER,STATE> sc,
+		
+		protected boolean alreadyVisited(final StateContainer<LETTER, STATE> sc,
 				final boolean summaryUsed, final boolean isGuranteed) {
 			if (summaryUsed) {
 				if (isGuranteed) {
@@ -556,8 +559,8 @@ class LassoExtractor<LETTER, STATE> {
 				}
 			}
 		}
-
-		protected void findPredecessors(final StateContainer<LETTER,STATE> sc,
+		
+		protected void findPredecessors(final StateContainer<LETTER, STATE> sc,
 				final boolean isGuaranteed, final boolean summaryUsed) {
 			for (final IncomingInternalTransition<LETTER, STATE> inTrans : mNwars.internalPredecessors(sc.getState())) {
 				final SuccInfo succInfo = possiblePredecessor(sc, inTrans, summaryUsed, isGuaranteed);
@@ -584,12 +587,7 @@ class LassoExtractor<LETTER, STATE> {
 				mIterationFoundWithSummary = mIteration;
 			}
 		}
-
-
-
-
-
-
+		
 		/**
 		 * Construct the run that has been found.
 		 * 
@@ -597,8 +595,8 @@ class LassoExtractor<LETTER, STATE> {
 		 */
 		private NestedRun<LETTER, STATE> constructRun(final int iteration, final boolean foundWithSummary) {
 			boolean visitAcceptingStillRequired = mVisitAccepting;
-			NestedRun<LETTER, STATE> result = new NestedRun<LETTER,STATE>(mGoal.getState());
-
+			NestedRun<LETTER, STATE> result = new NestedRun<LETTER, STATE>(mGoal.getState());
+			
 			for (int i = iteration; i >= 0; i--) {
 				final StateContainer<LETTER, STATE> currentState =
 						mNwars.obtainSC(result.getStateAtPosition(result.getLength() - 1));
@@ -615,18 +613,19 @@ class LassoExtractor<LETTER, STATE> {
 				assert succs != null : "No successor found!";
 				NestedRun<LETTER, STATE> newSuffix;
 				if (succs.getType() == InCaRe.INTERNAL) {
-					newSuffix = new NestedRun<LETTER, STATE>(currentState.getState(), 
+					newSuffix = new NestedRun<LETTER, STATE>(currentState.getState(),
 							succs.getLetter(),
-							NestedWord.INTERNAL_POSITION, 
+							NestedWord.INTERNAL_POSITION,
 							succs.getSuccessor().getState());
 				} else if (succs.getType() == InCaRe.CALL) {
-					newSuffix = new NestedRun<LETTER, STATE>(currentState.getState(), 
-							succs.getLetter(), 
-							NestedWord.PLUS_INFINITY, 
+					newSuffix = new NestedRun<LETTER, STATE>(currentState.getState(),
+							succs.getLetter(),
+							NestedWord.PLUS_INFINITY,
 							succs.getSuccessor().getState());
 				} else if (succs.getType() == InCaRe.SUMMARY) {
 					boolean findAcceptingSummary;
-					if (visitAcceptingStillRequired && succs.isGuaranteeChanger() && !mNwars.isFinal(currentState.getState())) {
+					if (visitAcceptingStillRequired && succs.isGuaranteeChanger()
+							&& !mNwars.isFinal(currentState.getState())) {
 						assert (isAcceptingSummary(currentState, succs.getSuccessor()));
 						findAcceptingSummary = true;
 					} else {
@@ -637,15 +636,15 @@ class LassoExtractor<LETTER, STATE> {
 					assert !forbiddenSummaries.contains(succs);
 					forbiddenSummaries.add(succs);
 					final SummaryFinder summaryFinder = new SummaryFinder(
-							succs.getLinPred(), currentState, 
-							findAcceptingSummary, mAcceptingSummaries, 
+							succs.getLinPred(), currentState,
+							findAcceptingSummary, mAcceptingSummaries,
 							forbiddenSummaries);
 					newSuffix = summaryFinder.getNestedRun();
-					final NestedRun<LETTER, STATE> retSuffix = 
+					final NestedRun<LETTER, STATE> retSuffix =
 							new NestedRun<LETTER, STATE>(
-									succs.getLinPred().getState(), 
-									succs.getLetter(), 
-									NestedWord.MINUS_INFINITY, 
+									succs.getLinPred().getState(),
+									succs.getLetter(),
+									NestedWord.MINUS_INFINITY,
 									succs.getSuccessor().getState());
 					newSuffix = newSuffix.concatenate(retSuffix);
 					if (findAcceptingSummary) {
@@ -659,24 +658,24 @@ class LassoExtractor<LETTER, STATE> {
 			return result;
 		}
 	}
-
+	
 	class SummaryFinder extends RunFinder {
-
+		
 		public SummaryFinder(final StateContainer<LETTER, STATE> returnPredecessor,
-				final StateContainer<LETTER, STATE> callPredecessor, 
-				final boolean visitAccepting,	
+				final StateContainer<LETTER, STATE> callPredecessor,
+				final boolean visitAccepting,
 				final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> acceptingSummaries,
 				final Set<SuccInfo> forbiddenSummaries) {
 			super(returnPredecessor, callPredecessor, visitAccepting, acceptingSummaries, forbiddenSummaries);
 		}
-
+		
 		@Override
 		protected int getMaximalIterationNumber() {
 			return mNwars.size();
 		}
-
+		
 		@Override
-		protected SuccInfo possiblePredecessor(final StateContainer<LETTER, STATE> succSc, 
+		protected SuccInfo possiblePredecessor(final StateContainer<LETTER, STATE> succSc,
 				final IncomingInternalTransition<LETTER, STATE> inTrans,
 				final boolean summaryUsed, final boolean isGuaranteedSucc) {
 			final StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getPred());
@@ -689,28 +688,28 @@ class LassoExtractor<LETTER, STATE> {
 				return null;
 			}
 			final boolean guaranteeChanger = isGuaranteedPred ^ isGuaranteedSucc;
-			final SuccInfo succInfo = new SuccInfo(succSc, inTrans.getLetter(), 
+			final SuccInfo succInfo = new SuccInfo(succSc, inTrans.getLetter(),
 					InCaRe.INTERNAL, null, isGuaranteedPred, false, guaranteeChanger);
 			super.markVisited(predSc, summaryUsed, isGuaranteedPred);
 			return succInfo;
 		}
-
+		
 		@Override
-		protected SuccInfo possiblePredecessor(final StateContainer<LETTER, STATE> succSc, 
+		protected SuccInfo possiblePredecessor(final StateContainer<LETTER, STATE> succSc,
 				final IncomingCallTransition<LETTER, STATE> inTrans,
 				final boolean summaryUsed, final boolean isGuaranteedSucc) {
 			final StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getPred());
 			if (!isGuaranteedSucc || !mGoal.equals(predSc)) {
 				return null;
 			}
-			final SuccInfo succInfo = new SuccInfo(succSc, inTrans.getLetter(), 
+			final SuccInfo succInfo = new SuccInfo(succSc, inTrans.getLetter(),
 					InCaRe.CALL, null, isGuaranteedSucc, true, false);
 			super.markVisited(predSc, summaryUsed, isGuaranteedSucc);
 			return succInfo;
 		}
-
+		
 		@Override
-		protected SuccInfo possiblePredecessor(final StateContainer<LETTER, STATE> succSc, 
+		protected SuccInfo possiblePredecessor(final StateContainer<LETTER, STATE> succSc,
 				final IncomingReturnTransition<LETTER, STATE> inTrans,
 				final boolean summaryUsed, final boolean isGuaranteedSucc) {
 			final StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getHierPred());
@@ -725,7 +724,7 @@ class LassoExtractor<LETTER, STATE> {
 			}
 			final boolean guaranteeChanger = isGuaranteedPred ^ isGuaranteedSucc;
 			final StateContainer<LETTER, STATE> linPredSc = mNwars.obtainSC(inTrans.getLinPred());
-			final SuccInfo succInfo = new SuccInfo(succSc, inTrans.getLetter(), 
+			final SuccInfo succInfo = new SuccInfo(succSc, inTrans.getLetter(),
 					InCaRe.SUMMARY, linPredSc, isGuaranteedPred, false, guaranteeChanger);
 			if (mForbiddenSummaries.contains(succInfo)) {
 				return null;
@@ -733,22 +732,19 @@ class LassoExtractor<LETTER, STATE> {
 			super.markVisited(predSc, true, isGuaranteedPred);
 			return succInfo;
 		}
-
-		private boolean goalIsDownState(final StateContainer<LETTER,STATE> predSc, final boolean isGuranteed) {
+		
+		private boolean goalIsDownState(final StateContainer<LETTER, STATE> predSc, final boolean isGuranteed) {
 			if (!predSc.getDownStates().containsKey(mGoal.getState())) {
 				return false;
 			}
 			if (isGuranteed) {
 				return true;
 			} else {
-				return predSc.hasDownProp(mGoal.getState(), 
+				return predSc.hasDownProp(mGoal.getState(),
 						DownStateProp.REACHABLE_FROM_FINAL_WITHOUT_CALL);
 			}
 		}
-
+		
 	}
-
+	
 }
-
-
-

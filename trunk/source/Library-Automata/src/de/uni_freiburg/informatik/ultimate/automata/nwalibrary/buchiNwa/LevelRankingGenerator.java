@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
@@ -35,18 +35,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Builder used by buchiComplementFKV to obtain TightLevelRankingStateGenerators.
+ * 
  * @author Matthias Heizmann
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public abstract class LevelRankingGenerator<LETTER, STATE, CONSTRAINT extends LevelRankingConstraint<LETTER, STATE>> {
-
+	
 	protected final AutomataLibraryServices mServices;
 	protected final ILogger mLogger;
 	protected final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	protected final int mUserDefinedMaxRank;
-
+	
 	public LevelRankingGenerator(
 			final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand,
@@ -58,6 +60,6 @@ public abstract class LevelRankingGenerator<LETTER, STATE, CONSTRAINT extends Le
 		mUserDefinedMaxRank = userDefinedMaxRank;
 	}
 	
-	
-	public abstract Collection<LevelRankingState<LETTER, STATE>> generateLevelRankings(CONSTRAINT constraint, boolean predecessorIsSubsetComponent);
+	public abstract Collection<LevelRankingState<LETTER, STATE>> generateLevelRankings(CONSTRAINT constraint,
+			boolean predecessorIsSubsetComponent);
 }

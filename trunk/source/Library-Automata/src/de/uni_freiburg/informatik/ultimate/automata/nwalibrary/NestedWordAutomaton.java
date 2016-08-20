@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
@@ -60,23 +60,24 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * interface.
  * 
  * @author heizmann@informatik.uni-freiburg.de
- * 
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class NestedWordAutomaton<LETTER, STATE>
 		implements INestedWordAutomatonOldApi<LETTER, STATE>,
-			INestedWordAutomaton<LETTER, STATE> {
-
+		INestedWordAutomaton<LETTER, STATE> {
+		
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
-
+	
 	private final Set<LETTER> mInternalAlphabet;
 	private final Set<LETTER> mCallAlphabet;
 	private final Set<LETTER> mReturnAlphabet;
-
+	
 	protected final StateFactory<STATE> mStateFactory;
-
+	
 	/**
 	 * Set of internal transitions PREs x LETTERs x SUCCs stored as map PREs ->
 	 * LETTERs -> SUCCs The keySet of this map is used to store the set of
@@ -84,66 +85,70 @@ public class NestedWordAutomaton<LETTER, STATE>
 	 */
 	private final Map<STATE, Map<LETTER, Set<STATE>>> mInternalOut =
 			new HashMap<>();
-
+			
 	/**
 	 * Set of internal transitions PREs x LETTERs x SUCCs stored as map SUCCs ->
-	 * LETTERs -> PREs
+	 * LETTERs -> PREs.
 	 */
 	private final Map<STATE, Map<LETTER, Set<STATE>>> mInternalIn =
 			new HashMap<>();
-
+			
 	/**
 	 * Set of call transitions PREs x LETTERs x SUCCs stored as map PREs ->
-	 * LETTERs -> SUCCs
+	 * LETTERs -> SUCCs.
 	 */
 	private final Map<STATE, Map<LETTER, Set<STATE>>> mCallOut =
 			new HashMap<>();
-
+			
 	/**
 	 * Set of call transitions PREs x LETTERs x SUCCs stored as map SUCCs ->
-	 * LETTERs -> PREs
+	 * LETTERs -> PREs.
 	 */
 	private final Map<STATE, Map<LETTER, Set<STATE>>> mCallIn =
 			new HashMap<>();
-
+			
 	/**
 	 * Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as
-	 * map LinPREs -> LETTERs -> HierPREs -> SUCCs
-	 * 
+	 * map LinPREs -> LETTERs -> HierPREs -> SUCCs.
 	 */
 	private final Map<STATE, Map<LETTER, Map<STATE, Set<STATE>>>> mReturnOut =
 			new HashMap<>();
-
+			
 	/**
 	 * Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as
-	 * map HierPREs -> LETTERs -> LinPREs -> SUCCs
-	 * 
+	 * map HierPREs -> LETTERs -> LinPREs -> SUCCs.
 	 */
 	private final Map<STATE, Map<LETTER, Map<STATE, Set<STATE>>>> mReturnSummary =
 			new HashMap<>();
-
+			
 	/**
 	 * Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as
-	 * map SUCCs -> LETTERs -> HierPREs -> LinPREs
-	 * 
+	 * map SUCCs -> LETTERs -> HierPREs -> LinPREs.
 	 */
 	private final Map<STATE, Map<LETTER, Map<STATE, Set<STATE>>>> mReturnIn =
 			new HashMap<>();
-
+			
 	private final Set<STATE> mInitialStates = new HashSet<STATE>();
 	private final Set<STATE> mFinalStates = new HashSet<STATE>();
-
+	
 	protected final STATE mEmptyStackState;
 	
 	private final Set<LETTER> mEmptySetOfLetters = Collections.unmodifiableSet(new HashSet<LETTER>(0));
 	private final Set<STATE> mEmptySetOfStates = Collections.unmodifiableSet(new HashSet<STATE>(0));
 	
 	/**
-	 * @param services Ultimate services
-	 * @param internalAlphabet internal alphabet
-	 * @param callAlphabet call alphabet
-	 * @param returnAlphabet return alphabet
-	 * @param stateFactory state factory
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param internalAlphabet
+	 *            internal alphabet
+	 * @param callAlphabet
+	 *            call alphabet
+	 * @param returnAlphabet
+	 *            return alphabet
+	 * @param stateFactory
+	 *            state factory
 	 */
 	public NestedWordAutomaton(final AutomataLibraryServices services,
 			final Set<LETTER> internalAlphabet, final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet,
@@ -162,77 +167,78 @@ public class NestedWordAutomaton<LETTER, STATE>
 		this.mStateFactory = stateFactory;
 		this.mEmptyStackState = mStateFactory.createEmptyStackState();
 	}
-
+	
 	@Override
 	public Set<LETTER> getInternalAlphabet() {
 		return mInternalAlphabet;
 	}
-
+	
 	@Override
 	public Set<LETTER> getCallAlphabet() {
 		return mCallAlphabet == null ? new HashSet<LETTER>(0) : mCallAlphabet;
 	}
-
+	
 	@Override
 	public Set<LETTER> getReturnAlphabet() {
 		return mReturnAlphabet == null ? new HashSet<LETTER>(0) : mReturnAlphabet;
 	}
-
+	
 	@Override
 	public Set<STATE> getStates() {
 		return Collections.unmodifiableSet(this.mInternalOut.keySet());
 	}
-
+	
 	@Override
 	public STATE getEmptyStackState() {
 		return this.mEmptyStackState;
 	}
-
+	
 	@Override
 	public StateFactory<STATE> getStateFactory() {
 		return this.mStateFactory;
 	}
-
+	
 	/**
-	 * @param state state
+	 * @param state
+	 *            state
 	 * @return true iff state is in automaton
 	 */
 	public boolean contains(final STATE state) {
 		return mInternalOut.containsKey(state);
 	}
-
+	
 	@Override
 	public int size() {
 		return mInternalOut.size();
 	}
-
+	
 	@Override
 	public Set<LETTER> getAlphabet() {
 		return getInternalAlphabet();
 	}
-
+	
 	@Override
 	public Set<STATE> getInitialStates() {
 		return Collections.unmodifiableSet(mInitialStates);
 	}
-
+	
 	@Override
 	public boolean isInitial(final STATE state) {
 		assert contains(state);
 		return mInitialStates.contains(state);
 	}
-
+	
 	@Override
 	public boolean isFinal(final STATE state) {
 		assert contains(state);
 		return mFinalStates.contains(state);
 	}
-
+	
 	@Override
 	public Collection<STATE> getFinalStates() {
 		return Collections.unmodifiableSet(mFinalStates);
 	}
-
+	
 	public void addState(final boolean isInitial, final boolean isFinal, final STATE state) {
 		assert (state != null);
 		if (mInternalOut.containsKey(state)) {
@@ -241,7 +247,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		assert (!mInternalIn.containsKey(state));
 		// FIXME others
 		mInternalOut.put(state, null);
-
+		
 		if (isInitial) {
 			mInitialStates.add(state);
 		}
@@ -252,7 +258,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		// return state;
 		// assert checkTransitionsReturnedConsistent();
 	}
-
+	
 	@Override
 	public Set<LETTER> lettersInternal(final STATE state) {
 		if (!contains(state)) {
@@ -261,7 +267,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		final Map<LETTER, Set<STATE>> map = mInternalOut.get(state);
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
-
+	
 	@Override
 	public Set<LETTER> lettersInternalIncoming(final STATE state) {
 		if (!contains(state)) {
@@ -270,7 +276,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		final Map<LETTER, Set<STATE>> map = mInternalIn.get(state);
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
-
+	
 	@Override
 	public Set<LETTER> lettersCall(final STATE state) {
 		if (!contains(state)) {
@@ -279,7 +285,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		final Map<LETTER, Set<STATE>> map = mCallOut.get(state);
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
-
+	
 	@Override
 	public Set<LETTER> lettersCallIncoming(final STATE state) {
 		if (!contains(state)) {
@@ -288,7 +294,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		final Map<LETTER, Set<STATE>> map = mCallIn.get(state);
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
-
+	
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {
 		if (!contains(state)) {
@@ -297,7 +303,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		final Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnOut.get(state);
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
-
+	
 	@Override
 	public Set<LETTER> lettersReturnIncoming(final STATE state) {
 		if (!contains(state)) {
@@ -306,7 +312,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		final Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnIn.get(state);
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
-
+	
 	@Override
 	public Set<LETTER> lettersReturnSummary(final STATE state) {
 		if (!contains(state)) {
@@ -315,7 +321,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		final Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnSummary.get(state);
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
-
+	
 	@Override
 	public Set<STATE> succInternal(final STATE state, final LETTER letter) {
 		assert contains(state);
@@ -326,7 +332,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		final Set<STATE> result = map.get(letter);
 		return result == null ? mEmptySetOfStates : result;
 	}
-
+	
 	@Override
 	public Set<STATE> predInternal(final STATE state, final LETTER letter) {
 		assert contains(state);
@@ -337,7 +343,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		final Set<STATE> result = map.get(letter);
 		return result == null ? mEmptySetOfStates : result;
 	}
-
+	
 	@Override
 	public Set<STATE> succCall(final STATE state, final LETTER letter) {
 		assert contains(state);
@@ -348,7 +354,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		final Set<STATE> result = map.get(letter);
 		return result == null ? mEmptySetOfStates : result;
 	}
-
+	
 	@Override
 	public Set<STATE> predCall(final STATE state, final LETTER letter) {
 		assert contains(state);
@@ -359,7 +365,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		final Set<STATE> result = map.get(letter);
 		return result == null ? mEmptySetOfStates : result;
 	}
-
+	
 	@Override
 	public Set<STATE> hierPred(final STATE state, final LETTER letter) {
 		assert contains(state);
@@ -370,7 +376,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		final Map<STATE, Set<STATE>> hier2succs = map.get(letter);
 		return hier2succs == null ? mEmptySetOfStates : hier2succs.keySet();
 	}
-
+	
 	@Override
 	public Set<STATE> succReturn(final STATE state, final STATE hier, final LETTER letter) {
 		assert contains(state);
@@ -386,7 +392,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		final Set<STATE> result = hier2succs.get(hier);
 		return result == null ? mEmptySetOfStates : result;
 	}
-
+	
 	private Set<STATE> predReturnLin(final STATE state, final LETTER letter, final STATE hier) {
 		assert contains(state);
 		assert contains(hier);
@@ -401,7 +407,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		final Set<STATE> result = hier2preds.get(hier);
 		return result == null ? mEmptySetOfStates : result;
 	}
-
+	
 	private Set<STATE> predReturnHier(final STATE state, final LETTER letter) {
 		assert contains(state);
 		final Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2preds = mReturnIn.get(state);
@@ -414,10 +420,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 		}
 		return hier2preds.keySet();
 	}
-
+	
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(final STATE hier, final LETTER letter) {
-		final Set<SummaryReturnTransition<LETTER, STATE>> result = new HashSet<SummaryReturnTransition<LETTER, STATE>>();
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(final STATE hier,
+			final LETTER letter) {
+		final Set<SummaryReturnTransition<LETTER, STATE>> result =
+				new HashSet<SummaryReturnTransition<LETTER, STATE>>();
 		final Map<LETTER, Map<STATE, Set<STATE>>> letter2pred2succs = mReturnSummary.get(hier);
 		if (letter2pred2succs == null) {
 			return result;
@@ -440,7 +448,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		}
 		return result;
 	}
-
+	
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(final STATE hier) {
 		return new Iterable<SummaryReturnTransition<LETTER, STATE>>() {
@@ -454,11 +462,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 					private Iterator<LETTER> mLetterIterator;
 					private LETTER mCurrentLetter;
 					private Iterator<SummaryReturnTransition<LETTER, STATE>> mCurrentIterator;
+					
 					{
 						mLetterIterator = lettersReturnSummary(hier).iterator();
 						nextLetter();
 					}
-
+					
 					private void nextLetter() {
 						if (mLetterIterator.hasNext()) {
 							do {
@@ -474,12 +483,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 							mCurrentIterator = null;
 						}
 					}
-
+					
 					@Override
 					public boolean hasNext() {
 						return mCurrentLetter != null;
 					}
-
+					
 					@Override
 					public SummaryReturnTransition<LETTER, STATE> next() {
 						if (mCurrentLetter == null) {
@@ -492,7 +501,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 							return result;
 						}
 					}
-
+					
 					@Override
 					public void remove() {
 						throw new UnsupportedOperationException();
@@ -502,7 +511,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		};
 	}
-
+	
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ,
 			final LETTER letter) {
@@ -512,6 +521,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 				final Iterator<IncomingInternalTransition<LETTER, STATE>> iterator =
 						new Iterator<IncomingInternalTransition<LETTER, STATE>>() {
 					private Iterator<STATE> mIterator;
+					
 					{
 						final Map<LETTER, Set<STATE>> letter2pred = mInternalIn.get(succ);
 						if (letter2pred != null) {
@@ -524,12 +534,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 							mIterator = null;
 						}
 					}
-
+					
 					@Override
 					public boolean hasNext() {
 						return mIterator != null && mIterator.hasNext();
 					}
-
+					
 					@Override
 					public IncomingInternalTransition<LETTER, STATE> next() {
 						if (mIterator == null) {
@@ -539,7 +549,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 							return new IncomingInternalTransition<LETTER, STATE>(pred, letter);
 						}
 					}
-
+					
 					@Override
 					public void remove() {
 						throw new UnsupportedOperationException();
@@ -549,7 +559,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		};
 	}
-
+	
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ) {
 		return new Iterable<IncomingInternalTransition<LETTER, STATE>>() {
@@ -565,11 +575,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 					private Iterator<LETTER> mLetterIterator;
 					private LETTER mCurrentLetter;
 					private Iterator<IncomingInternalTransition<LETTER, STATE>> mCurrentIterator;
+					
 					{
 						mLetterIterator = lettersInternalIncoming(succ).iterator();
 						nextLetter();
 					}
-
+					
 					private void nextLetter() {
 						if (mLetterIterator.hasNext()) {
 							do {
@@ -585,12 +596,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 							mCurrentIterator = null;
 						}
 					}
-
+					
 					@Override
 					public boolean hasNext() {
 						return mCurrentLetter != null;
 					}
-
+					
 					@Override
 					public IncomingInternalTransition<LETTER, STATE> next() {
 						if (mCurrentLetter == null) {
@@ -603,7 +614,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 							return result;
 						}
 					}
-
+					
 					@Override
 					public void remove() {
 						throw new UnsupportedOperationException();
@@ -613,7 +624,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		};
 	}
-
+	
 	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ, final LETTER letter) {
 		return new Iterable<IncomingCallTransition<LETTER, STATE>>() {
@@ -622,6 +633,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 				final Iterator<IncomingCallTransition<LETTER, STATE>> iterator =
 						new Iterator<IncomingCallTransition<LETTER, STATE>>() {
 					private Iterator<STATE> mIterator;
+					
 					{
 						final Map<LETTER, Set<STATE>> letter2pred = mCallIn.get(succ);
 						if (letter2pred != null) {
@@ -634,12 +646,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 							mIterator = null;
 						}
 					}
-
+					
 					@Override
 					public boolean hasNext() {
 						return mIterator != null && mIterator.hasNext();
 					}
-
+					
 					@Override
 					public IncomingCallTransition<LETTER, STATE> next() {
 						if (mIterator == null) {
@@ -649,7 +661,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 							return new IncomingCallTransition<LETTER, STATE>(pred, letter);
 						}
 					}
-
+					
 					@Override
 					public void remove() {
 						throw new UnsupportedOperationException();
@@ -659,7 +671,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		};
 	}
-
+	
 	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ) {
 		return new Iterable<IncomingCallTransition<LETTER, STATE>>() {
@@ -675,11 +687,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 					private Iterator<LETTER> mLetterIterator;
 					private LETTER mCurrentLetter;
 					private Iterator<IncomingCallTransition<LETTER, STATE>> mCurrentIterator;
+					
 					{
 						mLetterIterator = lettersCallIncoming(succ).iterator();
 						nextLetter();
 					}
-
+					
 					private void nextLetter() {
 						if (mLetterIterator.hasNext()) {
 							do {
@@ -695,12 +708,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 							mCurrentIterator = null;
 						}
 					}
-
+					
 					@Override
 					public boolean hasNext() {
 						return mCurrentLetter != null;
 					}
-
+					
 					@Override
 					public IncomingCallTransition<LETTER, STATE> next() {
 						if (mCurrentLetter == null) {
@@ -713,7 +726,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 							return result;
 						}
 					}
-
+					
 					@Override
 					public void remove() {
 						throw new UnsupportedOperationException();
@@ -723,7 +736,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		};
 	}
-
+	
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final STATE hier,
 			final LETTER letter) {
@@ -733,6 +746,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 				final Iterator<IncomingReturnTransition<LETTER, STATE>> iterator =
 						new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
 					private Iterator<STATE> mIterator;
+					
 					{
 						final Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2pred = mReturnIn.get(succ);
 						if (letter2hier2pred != null) {
@@ -750,12 +764,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 							mIterator = null;
 						}
 					}
-
+					
 					@Override
 					public boolean hasNext() {
 						return mIterator != null && mIterator.hasNext();
 					}
-
+					
 					@Override
 					public IncomingReturnTransition<LETTER, STATE> next() {
 						if (mIterator == null) {
@@ -765,7 +779,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 							return new IncomingReturnTransition<LETTER, STATE>(pred, hier, letter);
 						}
 					}
-
+					
 					@Override
 					public void remove() {
 						throw new UnsupportedOperationException();
@@ -775,7 +789,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		};
 	}
-
+	
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final LETTER letter) {
 		return new Iterable<IncomingReturnTransition<LETTER, STATE>>() {
@@ -791,11 +805,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 					private Iterator<STATE> mHierIterator;
 					private STATE mCurrentHier;
 					private Iterator<IncomingReturnTransition<LETTER, STATE>> mCurrentIterator;
+					
 					{
 						mHierIterator = predReturnHier(succ, letter).iterator();
 						nextHier();
 					}
-
+					
 					private void nextHier() {
 						if (mHierIterator.hasNext()) {
 							do {
@@ -811,12 +826,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 							mCurrentIterator = null;
 						}
 					}
-
+					
 					@Override
 					public boolean hasNext() {
 						return mCurrentHier != null;
 					}
-
+					
 					@Override
 					public IncomingReturnTransition<LETTER, STATE> next() {
 						if (mCurrentHier == null) {
@@ -829,7 +844,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 							return result;
 						}
 					}
-
+					
 					@Override
 					public void remove() {
 						throw new UnsupportedOperationException();
@@ -839,7 +854,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		};
 	}
-
+	
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ) {
 		return new Iterable<IncomingReturnTransition<LETTER, STATE>>() {
@@ -855,11 +870,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 					private Iterator<LETTER> mLetterIterator;
 					private LETTER mCurrentLetter;
 					private Iterator<IncomingReturnTransition<LETTER, STATE>> mCurrentIterator;
+					
 					{
 						mLetterIterator = lettersReturnIncoming(succ).iterator();
 						nextLetter();
 					}
-
+					
 					private void nextLetter() {
 						if (mLetterIterator.hasNext()) {
 							do {
@@ -875,12 +891,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 							mCurrentIterator = null;
 						}
 					}
-
+					
 					@Override
 					public boolean hasNext() {
 						return mCurrentLetter != null;
 					}
-
+					
 					@Override
 					public IncomingReturnTransition<LETTER, STATE> next() {
 						if (mCurrentLetter == null) {
@@ -893,7 +909,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 							return result;
 						}
 					}
-
+					
 					@Override
 					public void remove() {
 						throw new UnsupportedOperationException();
@@ -903,15 +919,17 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		};
 	}
-
+	
 	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state, final LETTER letter) {
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
+			final LETTER letter) {
 		return new Iterable<OutgoingInternalTransition<LETTER, STATE>>() {
 			@Override
 			public Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator() {
 				final Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator =
 						new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
 					private Iterator<STATE> mIterator;
+					
 					{
 						final Map<LETTER, Set<STATE>> letter2succ = mInternalOut.get(state);
 						if (letter2succ != null) {
@@ -924,12 +942,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 							mIterator = null;
 						}
 					}
-
+					
 					@Override
 					public boolean hasNext() {
 						return mIterator != null && mIterator.hasNext();
 					}
-
+					
 					@Override
 					public OutgoingInternalTransition<LETTER, STATE> next() {
 						if (mIterator == null) {
@@ -939,7 +957,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 							return new OutgoingInternalTransition<LETTER, STATE>(letter, succ);
 						}
 					}
-
+					
 					@Override
 					public void remove() {
 						throw new UnsupportedOperationException();
@@ -949,7 +967,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		};
 	}
-
+	
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
 		return new Iterable<OutgoingInternalTransition<LETTER, STATE>>() {
@@ -965,11 +983,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 					private Iterator<LETTER> mLetterIterator;
 					private LETTER mCurrentLetter;
 					private Iterator<OutgoingInternalTransition<LETTER, STATE>> mCurrentIterator;
+					
 					{
 						mLetterIterator = lettersInternal(state).iterator();
 						nextLetter();
 					}
-
+					
 					private void nextLetter() {
 						if (mLetterIterator.hasNext()) {
 							do {
@@ -985,12 +1004,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 							mCurrentIterator = null;
 						}
 					}
-
+					
 					@Override
 					public boolean hasNext() {
 						return mCurrentLetter != null;
 					}
-
+					
 					@Override
 					public OutgoingInternalTransition<LETTER, STATE> next() {
 						if (mCurrentLetter == null) {
@@ -1003,7 +1022,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 							return result;
 						}
 					}
-
+					
 					@Override
 					public void remove() {
 						throw new UnsupportedOperationException();
@@ -1013,7 +1032,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		};
 	}
-
+	
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
 		return new Iterable<OutgoingCallTransition<LETTER, STATE>>() {
@@ -1022,6 +1041,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 				final Iterator<OutgoingCallTransition<LETTER, STATE>> iterator =
 						new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
 					private Iterator<STATE> mIterator;
+					
 					{
 						final Map<LETTER, Set<STATE>> letter2succ = mCallOut.get(state);
 						if (letter2succ != null) {
@@ -1034,12 +1054,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 							mIterator = null;
 						}
 					}
-
+					
 					@Override
 					public boolean hasNext() {
 						return mIterator != null && mIterator.hasNext();
 					}
-
+					
 					@Override
 					public OutgoingCallTransition<LETTER, STATE> next() {
 						if (mIterator == null) {
@@ -1049,7 +1069,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 							return new OutgoingCallTransition<LETTER, STATE>(letter, succ);
 						}
 					}
-
+					
 					@Override
 					public void remove() {
 						throw new UnsupportedOperationException();
@@ -1059,7 +1079,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		};
 	}
-
+	
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
 		return new Iterable<OutgoingCallTransition<LETTER, STATE>>() {
@@ -1075,11 +1095,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 					private Iterator<LETTER> mLetterIterator;
 					private LETTER mCurrentLetter;
 					private Iterator<OutgoingCallTransition<LETTER, STATE>> mCurrentIterator;
+					
 					{
 						mLetterIterator = lettersCall(state).iterator();
 						nextLetter();
 					}
-
+					
 					private void nextLetter() {
 						if (mLetterIterator.hasNext()) {
 							do {
@@ -1095,12 +1116,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 							mCurrentIterator = null;
 						}
 					}
-
+					
 					@Override
 					public boolean hasNext() {
 						return mCurrentLetter != null;
 					}
-
+					
 					@Override
 					public OutgoingCallTransition<LETTER, STATE> next() {
 						if (mCurrentLetter == null) {
@@ -1113,7 +1134,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 							return result;
 						}
 					}
-
+					
 					@Override
 					public void remove() {
 						throw new UnsupportedOperationException();
@@ -1123,7 +1144,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		};
 	}
-
+	
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
 			final LETTER letter) {
@@ -1133,6 +1154,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 				final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator =
 						new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
 					private Iterator<STATE> mIterator;
+					
 					{
 						final Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2succ = mReturnOut.get(state);
 						if (letter2hier2succ != null) {
@@ -1150,12 +1172,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 							mIterator = null;
 						}
 					}
-
+					
 					@Override
 					public boolean hasNext() {
 						return mIterator != null && mIterator.hasNext();
 					}
-
+					
 					@Override
 					public OutgoingReturnTransition<LETTER, STATE> next() {
 						if (mIterator == null) {
@@ -1165,7 +1187,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 							return new OutgoingReturnTransition<LETTER, STATE>(hier, letter, succ);
 						}
 					}
-
+					
 					@Override
 					public void remove() {
 						throw new UnsupportedOperationException();
@@ -1175,7 +1197,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		};
 	}
-
+	
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final LETTER letter) {
 		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
@@ -1191,11 +1213,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 					private Iterator<STATE> mHierIterator;
 					private STATE mCurrentHier;
 					private Iterator<OutgoingReturnTransition<LETTER, STATE>> mCurrentIterator;
+					
 					{
 						mHierIterator = hierPred(state, letter).iterator();
 						nextHier();
 					}
-
+					
 					private void nextHier() {
 						if (mHierIterator.hasNext()) {
 							do {
@@ -1211,12 +1234,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 							mCurrentIterator = null;
 						}
 					}
-
+					
 					@Override
 					public boolean hasNext() {
 						return mCurrentHier != null;
 					}
-
+					
 					@Override
 					public OutgoingReturnTransition<LETTER, STATE> next() {
 						if (mCurrentHier == null) {
@@ -1229,7 +1252,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 							return result;
 						}
 					}
-
+					
 					@Override
 					public void remove() {
 						throw new UnsupportedOperationException();
@@ -1239,7 +1262,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		};
 	}
-
+	
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
 		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
@@ -1255,11 +1278,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 					private Iterator<LETTER> mLetterIterator;
 					private LETTER mCurrentLetter;
 					private Iterator<OutgoingReturnTransition<LETTER, STATE>> mCurrentIterator;
+					
 					{
 						mLetterIterator = lettersReturn(state).iterator();
 						nextLetter();
 					}
-
+					
 					private void nextLetter() {
 						if (mLetterIterator.hasNext()) {
 							do {
@@ -1275,12 +1299,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 							mCurrentIterator = null;
 						}
 					}
-
+					
 					@Override
 					public boolean hasNext() {
 						return mCurrentLetter != null;
 					}
-
+					
 					@Override
 					public OutgoingReturnTransition<LETTER, STATE> next() {
 						if (mCurrentLetter == null) {
@@ -1293,7 +1317,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 							return result;
 						}
 					}
-
+					
 					@Override
 					public void remove() {
 						throw new UnsupportedOperationException();
@@ -1303,7 +1327,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		};
 	}
-
+	
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
 			final STATE hier) {
@@ -1321,11 +1345,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 					private Iterator<LETTER> mLetterIterator;
 					private LETTER mCurrentLetter;
 					private Iterator<OutgoingReturnTransition<LETTER, STATE>> mCurrentIterator;
+					
 					{
 						mLetterIterator = lettersReturn(state).iterator();
 						nextLetter();
 					}
-
+					
 					private void nextLetter() {
 						if (mLetterIterator.hasNext()) {
 							do {
@@ -1341,12 +1366,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 							mCurrentIterator = null;
 						}
 					}
-
+					
 					@Override
 					public boolean hasNext() {
 						return mCurrentLetter != null;
 					}
-
+					
 					@Override
 					public OutgoingReturnTransition<LETTER, STATE> next() {
 						if (mCurrentLetter == null) {
@@ -1359,7 +1384,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 							return result;
 						}
 					}
-
+					
 					@Override
 					public void remove() {
 						throw new UnsupportedOperationException();
@@ -1369,7 +1394,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		};
 	}
-
+	
 	private boolean checkTransitionsReturnedConsistent() {
 		boolean result = true;
 		for (final STATE state : getStates()) {
@@ -1400,10 +1425,10 @@ public class NestedWordAutomaton<LETTER, STATE>
 				assert result;
 			}
 		}
-
+		
 		return result;
 	}
-
+	
 	public boolean containsInternalTransition(final STATE state, final LETTER letter, final STATE succ) {
 		assert contains(state);
 		final Map<LETTER, Set<STATE>> map = mInternalOut.get(state);
@@ -1413,7 +1438,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		final Set<STATE> result = map.get(letter);
 		return result == null ? false : result.contains(succ);
 	}
-
+	
 	public boolean containsCallTransition(final STATE state, final LETTER letter, final STATE succ) {
 		assert contains(state);
 		final Map<LETTER, Set<STATE>> map = mCallOut.get(state);
@@ -1423,8 +1448,9 @@ public class NestedWordAutomaton<LETTER, STATE>
 		final Set<STATE> result = map.get(letter);
 		return result == null ? false : result.contains(succ);
 	}
-
-	public boolean containsReturnTransition(final STATE state, final STATE hier, final LETTER letter, final STATE succ) {
+	
+	public boolean containsReturnTransition(final STATE state, final STATE hier, final LETTER letter,
+			final STATE succ) {
 		assert contains(state);
 		assert contains(hier);
 		final Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnOut.get(state);
@@ -1438,7 +1464,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		final Set<STATE> result = hier2succs.get(hier);
 		return result == null ? false : result.contains(succ);
 	}
-
+	
 	public void makeStateNonIntial(final STATE state) {
 		if (!contains(state)) {
 			throw new IllegalArgumentException("State " + state + " unknown");
@@ -1448,28 +1474,28 @@ public class NestedWordAutomaton<LETTER, STATE>
 		}
 		mInitialStates.remove(state);
 	}
-
+	
 	public void removeState(final STATE state) {
 		if (!contains(state)) {
 			throw new IllegalArgumentException("State " + state + " unknown");
 		}
 		mFinalStates.remove(state);
 		mInitialStates.remove(state);
-
+		
 		for (final LETTER letter : lettersCall(state)) {
 			for (final STATE succ : succCall(state, letter)) {
 				removeCallIn(state, letter, succ);
 			}
 		}
 		mCallOut.remove(state);
-
+		
 		for (final LETTER letter : lettersCallIncoming(state)) {
 			for (final STATE pred : predCall(state, letter)) {
 				removeCallOut(pred, letter, state);
 			}
 		}
 		mCallIn.remove(state);
-
+		
 		for (final LETTER letter : lettersReturn(state)) {
 			for (final STATE hier : hierPred(state, letter)) {
 				for (final STATE succ : succReturn(state, hier, letter)) {
@@ -1479,7 +1505,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		}
 		mReturnOut.remove(state);
-
+		
 		final Map<LETTER, Map<STATE, Set<STATE>>> letter2pred2succs = mReturnSummary.get(state);
 		if (letter2pred2succs != null) {
 			for (final Entry<LETTER, Map<STATE, Set<STATE>>> entry1 : letter2pred2succs.entrySet()) {
@@ -1500,7 +1526,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		}
 		mReturnSummary.remove(state);
-
+		
 		for (final LETTER letter : lettersReturnIncoming(state)) {
 			final Map<STATE, Set<STATE>> hier2pred = mReturnIn.get(state).get(letter);
 			if (hier2pred != null) {
@@ -1513,26 +1539,26 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		}
 		mReturnIn.remove(state);
-
+		
 		for (final LETTER letter : lettersInternalIncoming(state)) {
 			for (final STATE pred : predInternal(state, letter)) {
 				removeInternalOut(pred, letter, state);
 			}
 		}
 		mInternalIn.remove(state);
-
+		
 		for (final LETTER letter : lettersInternal(state)) {
 			for (final STATE succ : succInternal(state, letter)) {
 				removeInternalIn(state, letter, succ);
 			}
 		}
 		mInternalOut.remove(state);
-
+		
 		// assert checkTransitionsStoredConsistent();
 		assert checkTransitionsReturnedConsistent();
 		assert sizeInformation().length() > 0;
 	}
-
+	
 	private void removeInternalIn(final STATE pred, final LETTER letter, final STATE succ) {
 		final Map<LETTER, Set<STATE>> letter2preds = mInternalIn.get(succ);
 		final Set<STATE> preds = letter2preds.get(letter);
@@ -1545,7 +1571,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		}
 	}
-
+	
 	private void removeInternalOut(final STATE pred, final LETTER letter, final STATE succ) {
 		final Map<LETTER, Set<STATE>> letter2succs = mInternalOut.get(pred);
 		final Set<STATE> succs = letter2succs.get(letter);
@@ -1560,7 +1586,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		}
 	}
-
+	
 	private void removeCallIn(final STATE pred, final LETTER letter, final STATE succ) {
 		final Map<LETTER, Set<STATE>> letter2preds = mCallIn.get(succ);
 		final Set<STATE> preds = letter2preds.get(letter);
@@ -1573,7 +1599,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		}
 	}
-
+	
 	private void removeCallOut(final STATE pred, final LETTER letter, final STATE succ) {
 		final Map<LETTER, Set<STATE>> letter2succs = mCallOut.get(pred);
 		final Set<STATE> succs = letter2succs.get(letter);
@@ -1586,7 +1612,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		}
 	}
-
+	
 	private void removeReturnIn(final STATE pred, final STATE hier, final LETTER letter, final STATE succ) {
 		final Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2preds = mReturnIn.get(succ);
 		final Map<STATE, Set<STATE>> hier2preds = letter2hier2preds.get(letter);
@@ -1603,7 +1629,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		}
 	}
-
+	
 	private void removeReturnOut(final STATE pred, final STATE hier, final LETTER letter, final STATE succ) {
 		final Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2succs = mReturnOut.get(pred);
 		final Map<STATE, Set<STATE>> hier2succs = letter2hier2succs.get(letter);
@@ -1620,7 +1646,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		}
 	}
-
+	
 	private void removeReturnSummary(final STATE pred, final STATE hier, final LETTER letter, final STATE succ) {
 		final Map<LETTER, Map<STATE, Set<STATE>>> letter2pred2succs = mReturnSummary.get(hier);
 		final Map<STATE, Set<STATE>> pred2succs = letter2pred2succs.get(letter);
@@ -1637,7 +1663,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		}
 	}
-
+	
 	private boolean checkTransitionsStoredConsistent() {
 		boolean result = true;
 		for (final Entry<STATE, Map<LETTER, Set<STATE>>> entry1 : mInternalOut.entrySet()) {
@@ -1788,7 +1814,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		}
 		return result;
 	}
-
+	
 	private int numberIncomingInternalTransitions(final STATE state) {
 		int result = 0;
 		for (final IncomingInternalTransition<LETTER, STATE> inTrans : internalPredecessors(state)) {
@@ -1796,7 +1822,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		}
 		return result;
 	}
-
+	
 	private int numberIncomingCallTransitions(final STATE state) {
 		int result = 0;
 		for (final IncomingCallTransition<LETTER, STATE> caTrans : callPredecessors(state)) {
@@ -1804,7 +1830,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		}
 		return result;
 	}
-
+	
 	private int numberIncomingReturnTransitions(final STATE state) {
 		int result = 0;
 		for (final IncomingReturnTransition<LETTER, STATE> reTrans : returnPredecessors(state)) {
@@ -1812,7 +1838,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		}
 		return result;
 	}
-
+	
 	@Override
 	public String sizeInformation() {
 		final boolean verbose = false;
@@ -1873,7 +1899,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 			assert (callPredOfSucc == numberIncomingCallTransitions(succ));
 			callPredecessors += callPredOfSucc;
-
+			
 		}
 		int statesWithReturnSuccessor = 0;
 		int returnSuccessors = 0;
@@ -1923,17 +1949,19 @@ public class NestedWordAutomaton<LETTER, STATE>
 				.append(" states have internal successors, (").append(internalSuccessors).append("), ")
 				.append(statesWithInternalPredecessors).append(" states have internal predecessors, (")
 				.append(internalPredecessors).append("), ").append(
-
-				statesWithCallSuccessors).append(" states have call successors, (").append(callSuccessors)
+						
+						statesWithCallSuccessors)
+				.append(" states have call successors, (").append(callSuccessors)
 				.append("), ").append(statesWithCallPredecessors).append(" states have call predecessors, (")
 				.append(callPredecessors).append("), ").append(
-
-				statesWithReturnSuccessor).append(" states have return successors, (").append(returnSuccessors)
+						
+						statesWithReturnSuccessor)
+				.append(" states have return successors, (").append(returnSuccessors)
 				.append("), ").append(statesWithReturnLinearPredecessors).append(" states have call predecessors, (")
 				.append(returnLinearPredecessors).append("), " + statesWithReturnHierarchicalSuccessor)
 				.append(" states have call successors, (").append(returnHierarchicalSuccessors).append(")");
 		return sb.toString();
-
+		
 		// return " has " + mInternalOut.size() + " states, " +
 		// statesWithInternalSuccessors + " states have internal successors, ("
 		// + internalSuccessors + "), " +
@@ -1955,7 +1983,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		// " states have call successors, (" + returnHierarchicalSuccessors +
 		// ")";
 	}
-
+	
 	public void addInternalTransition(final STATE pred, final LETTER letter, final STATE succ) {
 		if (!mInternalAlphabet.contains(letter)) {
 			throw new IllegalArgumentException("Letter " + letter + " not in internal alphabet");
@@ -1976,7 +2004,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			letter2succs.put(letter, succs);
 		}
 		succs.add(succ);
-
+		
 		Map<LETTER, Set<STATE>> letter2preds = mInternalIn.get(succ);
 		if (letter2preds == null) {
 			letter2preds = new HashMap<LETTER, Set<STATE>>();
@@ -1990,12 +2018,12 @@ public class NestedWordAutomaton<LETTER, STATE>
 		preds.add(pred);
 		// assert checkTransitionsStoredConsistent();
 	}
-
+	
 	public void addCallTransition(final STATE pred, final LETTER letter, final STATE succ) {
 		if (!mCallAlphabet.contains(letter)) {
 			throw new IllegalArgumentException("Letter " + letter + " not in call alphabet");
 		}
-
+		
 		assert contains(pred) : "State " + pred + " not in automaton";
 		assert contains(succ) : "State " + succ + " not in automaton";
 		Map<LETTER, Set<STATE>> letter2succs = mCallOut.get(pred);
@@ -2009,7 +2037,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			letter2succs.put(letter, succs);
 		}
 		succs.add(succ);
-
+		
 		Map<LETTER, Set<STATE>> letter2preds = mCallIn.get(succ);
 		if (letter2preds == null) {
 			letter2preds = new HashMap<LETTER, Set<STATE>>();
@@ -2023,7 +2051,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		preds.add(pred);
 		// assert checkTransitionsStoredConsistent();
 	}
-
+	
 	public void addReturnTransition(final STATE pred, final STATE hier, final LETTER letter, final STATE succ) {
 		if (!mReturnAlphabet.contains(letter)) {
 			throw new IllegalArgumentException("Letter " + letter + " not in return alphabet");
@@ -2047,7 +2075,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			hier2succs.put(hier, succs);
 		}
 		succs.add(succ);
-
+		
 		Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2preds = mReturnIn.get(succ);
 		if (letter2hier2preds == null) {
 			letter2hier2preds = new HashMap<LETTER, Map<STATE, Set<STATE>>>();
@@ -2064,7 +2092,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			hier2preds.put(hier, preds);
 		}
 		preds.add(pred);
-
+		
 		Map<LETTER, Map<STATE, Set<STATE>>> letter2pred2succs = mReturnSummary.get(hier);
 		if (letter2pred2succs == null) {
 			letter2pred2succs = new HashMap<LETTER, Map<STATE, Set<STATE>>>();
@@ -2083,7 +2111,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		succS.add(succ);
 		// assert checkTransitionsStoredConsistent();
 	}
-
+	
 	// @Deprecated
 	// public NestedWordAutomaton(INestedWordAutomaton<LETTER,STATE> nwa,
 	// boolean totalize,
@@ -2197,7 +2225,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 	//
 	// }
 	// }
-
+	
 	/**
 	 * Return true iff this automaton is deterministic.
 	 */
@@ -2227,7 +2255,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		}
 		return true;
 	}
-
+	
 	/**
 	 * Return true iff this automaton is total.
 	 */
@@ -2257,15 +2285,15 @@ public class NestedWordAutomaton<LETTER, STATE>
 		}
 		return true;
 	}
-
+	
 	@Deprecated
 	public NestedRun<LETTER, STATE> getAcceptingNestedRun() throws AutomataLibraryException {
 		final NestedRun<LETTER, STATE> result = (new IsEmpty<LETTER, STATE>(mServices, this).getNestedRun());
 		return result;
 	}
-
+	
 	/**
-	 * maximize set of accepting states
+	 * Maximize set of accepting states.
 	 */
 	public void buchiClosure() {
 		mLogger.info("Accepting states before buchiClosure: " + getFinalStates().size());
@@ -2307,7 +2335,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		}
 		mLogger.info("Accepting states after buchiClosure: " + getFinalStates().size());
 	}
-
+	
 	/**
 	 * Return true iff all successors of state state are accepting states.
 	 */
@@ -2337,9 +2365,9 @@ public class NestedWordAutomaton<LETTER, STATE>
 		}
 		return true;
 	}
-
+	
 	/**
-	 * Change status of state from non-accepting to accepting
+	 * Change status of state from non-accepting to accepting.
 	 */
 	private void makeStateAccepting(final STATE state) {
 		if (!contains(state)) {
@@ -2350,16 +2378,16 @@ public class NestedWordAutomaton<LETTER, STATE>
 		}
 		mFinalStates.add(state);
 	}
-
+	
 	public INestedWordAutomaton<LETTER, STATE> concurrentProduct(final INestedWordAutomaton<LETTER, STATE> nwa) {
 		return (new ConcurrentProduct<LETTER, STATE>(mServices, this, nwa, false)).getResult();
 	}
-
+	
 	public INestedWordAutomaton<LETTER, STATE> concurrentPrefixProduct(
 			final INestedWordAutomaton<LETTER, STATE> nwa) {
 		return (new ConcurrentProduct<LETTER, STATE>(mServices, this, nwa, true)).getResult();
 	}
-
+	
 	/**
 	 * @return true iff the language of this automaton is closed under
 	 *         concatenation with sigma star.
@@ -2373,7 +2401,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		if (!this.getReturnAlphabet().isEmpty()) {
 			throw new UnsupportedOperationException("only finite automata supported");
 		}
-
+		
 		for (final STATE finalState : mFinalStates) {
 			for (final LETTER symbol : this.getInternalAlphabet()) {
 				final Collection<STATE> succs = succInternal(finalState, symbol);
@@ -2389,7 +2417,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		}
 		return true;
 	}
-
+	
 	public int numberOfOutgoingInternalTransitions(final STATE state) {
 		int result = 0;
 		for (final LETTER letter : lettersInternal(state)) {
@@ -2399,7 +2427,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		}
 		return result;
 	}
-
+	
 	public int numberOfIncomingInternalTransitions(final STATE state) {
 		int result = 0;
 		for (final LETTER letter : lettersInternalIncoming(state)) {
@@ -2409,7 +2437,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		}
 		return result;
 	}
-
+	
 	public static <LETTER, STATE> boolean sameAlphabet(final INestedWordAutomatonSimple<LETTER, STATE> nwa1,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa2) {
 		boolean result = true;
@@ -2421,7 +2449,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		result &= nwa1.getReturnAlphabet().equals(nwa2.getReturnAlphabet());
 		return result;
 	}
-
+	
 	// public InternalTransitions
 	// getInternalTransitions(IAuxiliaryStateContainer<LETTER,STATE> state,
 	// LETTER symbol) {
@@ -2469,7 +2497,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 	// successor + " )";
 	// }
 	// }
-
+	
 	// public class InternalTransitions implements Iterable<InternalTransition>
 	// {
 	// private final boolean fixedPredecessor;
@@ -2611,12 +2639,13 @@ public class NestedWordAutomaton<LETTER, STATE>
 	// }
 	//
 	// }
-
+	
 	@Override
 	public String toString() {
-		return (new AutomatonDefinitionPrinter<String, String>(mServices, "nwa", Format.ATS, this)).getDefinitionAsString();
+		return (new AutomatonDefinitionPrinter<String, String>(mServices, "nwa", Format.ATS, this))
+				.getDefinitionAsString();
 	}
-
+	
 	/**
 	 * Given a nested word (without pending returns) a_0,...,a_n and a sequence
 	 * of states q_0,...,q_{n+1}, add for each i
@@ -2635,7 +2664,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			final LETTER symbol = nw.getSymbol(i);
 			final STATE pred = stateList.get(i);
 			final STATE succ = stateList.get(i + 1);
-
+			
 			if (nw.isCallPosition(i)) {
 				addCallTransition(pred, symbol, succ);
 			} else if (nw.isReturnPosition(i)) {
@@ -2649,5 +2678,4 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		}
 	}
-
 }

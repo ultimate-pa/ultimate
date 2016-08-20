@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -42,34 +41,38 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.TransitionConsistencyCheck;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 
-public class RemoveDeadEnds<LETTER,STATE>
+public class RemoveDeadEnds<LETTER, STATE>
 		extends UnaryNwaOperation<LETTER, STATE>
-		implements IOperation<LETTER,STATE> {
+		implements IOperation<LETTER, STATE> {
+		
+	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
+	private final IDoubleDeckerAutomaton<LETTER, STATE> mResult;
 	
-	private final NestedWordAutomatonReachableStates<LETTER,STATE> mReach;
-	private final IDoubleDeckerAutomaton<LETTER,STATE> mResult;
-
 	/**
 	 * Given an INestedWordAutomaton nwa return a nested word automaton that has
 	 * the same states, but all states that are not reachable or dead ends are
-	 * omitted. (A dead end is a state from which no accepting state can be 
+	 * omitted. (A dead end is a state from which no accepting state can be
 	 * reached).
 	 * Each state of the result also occurred in the input. Only the auxiliary
-	 * empty stack state of the result is different. 
+	 * empty stack state of the result is different.
 	 * 
-	 * @param services Ultimate services
-	 * @param operand operand
-	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if timeout exceeds
 	 */
 	public RemoveDeadEnds(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER,STATE> operand)
-			throws AutomataOperationCanceledException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand)
+					throws AutomataOperationCanceledException {
 		super(services, operand);
 		mLogger.info(startMessage());
 		try {
@@ -89,14 +92,14 @@ public class RemoveDeadEnds<LETTER,STATE>
 	public String operationName() {
 		return "removeDeadEnds";
 	}
-
+	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Reduced from " 
+		return "Finished " + operationName() + " Reduced from "
 				+ mOperand.sizeInformation() + " to "
 				+ mResult.sizeInformation();
 	}
-
+	
 	@Override
 	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
 		return mResult;
@@ -113,9 +116,9 @@ public class RemoveDeadEnds<LETTER,STATE>
 		if (mOperand instanceof INestedWordAutomaton) {
 			input = (INestedWordAutomaton<LETTER, STATE>) mOperand;
 		} else {
-			input = (new RemoveUnreachable<LETTER, STATE>(mServices, mOperand)).getResult(); 
+			input = (new RemoveUnreachable<LETTER, STATE>(mServices, mOperand)).getResult();
 		}
-		final ReachableStatesCopy<LETTER, STATE> rsc = 
+		final ReachableStatesCopy<LETTER, STATE> rsc =
 				(new ReachableStatesCopy<LETTER, STATE>(mServices, input, false, false, false, false));
 //		Set<UpDownEntry<STATE>> rsaEntries = new HashSet<UpDownEntry<STATE>>();
 //		for (UpDownEntry<STATE> rde : mReach.getRemovedUpDownEntry()) {
@@ -133,33 +136,36 @@ public class RemoveDeadEnds<LETTER,STATE>
 		final DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy =
 				(DoubleDeckerAutomaton<LETTER, STATE>) rsc.getResult();
 		correct &= mResult.getStates().isEmpty()
-				|| ResultChecker.isSubset(reachalbeStatesCopy.getStates(),mResult.getStates());
+				|| ResultChecker.isSubset(reachalbeStatesCopy.getStates(), mResult.getStates());
 		assert correct;
-		correct &= ResultChecker.isSubset(mResult.getStates(),reachalbeStatesCopy.getStates());
+		correct &= ResultChecker.isSubset(mResult.getStates(), reachalbeStatesCopy.getStates());
 		assert correct;
 		final Collection<STATE> rsaStates = mResult.getStates();
 		final Collection<STATE> rscStates = reachalbeStatesCopy.getStates();
-		correct &= ResultChecker.isSubset(rsaStates,rscStates);
+		correct &= ResultChecker.isSubset(rsaStates, rscStates);
 		assert correct;
-		correct &= ResultChecker.isSubset(rscStates,rsaStates);
+		correct &= ResultChecker.isSubset(rscStates, rsaStates);
 		assert correct;
 		for (final STATE state : reachalbeStatesCopy.getStates()) {
-			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.internalSuccessors(state)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : reachalbeStatesCopy
+					.internalSuccessors(state)) {
 				correct &= mReach.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingCallTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.callSuccessors(state)) {
 				// TODO: fix or remove
-				 correct &= mReach.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
+				correct &= mReach.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				// ignore call transitions
 				assert correct;
 			}
 			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.returnSuccessors(state)) {
-				correct &= mReach.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
+				correct &= mReach.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(),
+						outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mResult.internalSuccessors(state)) {
-				correct &= reachalbeStatesCopy.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
+				correct &=
+						reachalbeStatesCopy.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingCallTransition<LETTER, STATE> outTrans : mResult.callSuccessors(state)) {

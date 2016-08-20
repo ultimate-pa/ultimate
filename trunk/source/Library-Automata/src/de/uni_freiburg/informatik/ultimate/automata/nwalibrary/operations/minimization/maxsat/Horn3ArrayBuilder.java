@@ -64,7 +64,7 @@ final class Horn3ArrayBuilder {
 		return mSingle[x] == SETFALSE;
 	}
 
-	void addClauseF(int x) {
+	void addClauseFalse(int x) {
 		if (mSingle[x] == UNSET) {
 			mArray.add(TRUEVAR, x, FALSEVAR);
 			mSingle[x] = SETFALSE;
@@ -73,7 +73,7 @@ final class Horn3ArrayBuilder {
 		}
 	}
 
-	void addClauseT(int x) {
+	void addClauseTrue(int x) {
 		if (mSingle[x] == UNSET) {
 			mArray.add(TRUEVAR, TRUEVAR, x);
 			mSingle[x] = SETTRUE;
@@ -82,29 +82,29 @@ final class Horn3ArrayBuilder {
 		}
 	}
 
-	void addClauseFF(int x, int y) {
+	void addClauseFalseFalse(int x, int y) {
 		if (x > y) {
-			addClauseFF(y, x);
+			addClauseFalseFalse(y, x);
 		} else if (mSingle[x] == SETFALSE) {
 			// satisfied
 		} else if (mSingle[x] == SETTRUE) {
-			addClauseF(y);
+			addClauseFalse(y);
 		} else if (mSingle[y] == SETFALSE) {
 			// satisfied
 		} else if (mSingle[y] == SETTRUE) {
-			addClauseF(x);
+			addClauseFalse(x);
 		} else {
 			mArray.add(x, y, FALSEVAR);
 		}
 	}
 
-	void addClauseFT(int y, int z) {
+	void addClauseFalseTrue(int y, int z) {
 		if (mSingle[y] == SETFALSE) {
 			// satisfied
 		} else if (mSingle[y] == SETTRUE) {
-			addClauseT(z);
+			addClauseTrue(z);
 		} else if (mSingle[z] == SETFALSE) {
-			addClauseF(y);
+			addClauseFalse(y);
 		} else if (mSingle[z] == SETTRUE) {
 			// satisfied
 		} else {
@@ -112,19 +112,19 @@ final class Horn3ArrayBuilder {
 		}
 	}
 
-	void addClauseFFT(int x, int y, int z) {
+	void addClauseFalseFalseTrue(int x, int y, int z) {
 		if (x > y) {
-			addClauseFFT(y, x, z);
+			addClauseFalseFalseTrue(y, x, z);
 		} else if (mSingle[x] == SETFALSE) {
 			// satisfied
 		} else if (mSingle[x] == SETTRUE) {
-			addClauseFT(y, z);
+			addClauseFalseTrue(y, z);
 		} else if (mSingle[y] == SETFALSE) {
 			// satisfied
 		} else if (mSingle[y] == SETTRUE) {
-			addClauseFT(x, z);
+			addClauseFalseTrue(x, z);
 		} else if (mSingle[z] == SETFALSE) {
-			addClauseFF(x, y);
+			addClauseFalseFalse(x, y);
 		} else if (mSingle[z] == SETTRUE) {
 			// satisfied
 		} else {

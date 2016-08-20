@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi;
@@ -37,47 +37,47 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class ComplementSadd<LETTER, STATE> implements IOperation<LETTER, STATE> {
-
+	
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
-
+	
 	protected INestedWordAutomaton<LETTER, STATE> mOperand;
 	protected INestedWordAutomaton<LETTER, STATE> mDeterminizedOperand;
 	protected INestedWordAutomaton<LETTER, STATE> mResult;
-
+	
 	@Override
 	public String operationName() {
 		return "complementSadd";
 	}
-
+	
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " Operand "
 				+ mOperand.sizeInformation();
 	}
-
+	
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result "
 				+ mResult.sizeInformation();
 	}
-
+	
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult()
-											throws AutomataLibraryException {
+			throws AutomataLibraryException {
 		return mResult;
 	}
-
+	
 	public ComplementSadd(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand)
-											throws AutomataLibraryException {
+					throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
-
+		
 		mLogger.info(startMessage());
-		if (! new IsDeterministic<LETTER, STATE>(services, mOperand).getResult()) {
-			mDeterminizedOperand = 
+		if (!new IsDeterministic<LETTER, STATE>(services, mOperand).getResult()) {
+			mDeterminizedOperand =
 					(new DeterminizeSadd<LETTER, STATE>(mServices, mOperand)).getResult();
 		} else {
 			mDeterminizedOperand = mOperand;
@@ -87,16 +87,17 @@ public class ComplementSadd<LETTER, STATE> implements IOperation<LETTER, STATE> 
 				mServices, mDeterminizedOperand, true, true, false, false).getResult();
 		mLogger.info(exitMessage());
 	}
-
+	
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		mLogger.debug("Testing correctness of complement");
 		boolean correct = true;
-		final INestedWordAutomaton<LETTER, STATE> intersectionOperandResult = (new IntersectDD<LETTER, STATE>(mServices, false, mOperand, mResult)).getResult();
-		correct &=  ((new IsEmpty<LETTER, STATE>(mServices, intersectionOperandResult)).getResult() == true);
+		final INestedWordAutomaton<LETTER, STATE> intersectionOperandResult =
+				(new IntersectDD<LETTER, STATE>(mServices, false, mOperand, mResult)).getResult();
+		correct &= ((new IsEmpty<LETTER, STATE>(mServices, intersectionOperandResult)).getResult() == true);
 		mLogger.debug("Finished testing correctness of complement");
 		return correct;
 	}
-
+	
 }

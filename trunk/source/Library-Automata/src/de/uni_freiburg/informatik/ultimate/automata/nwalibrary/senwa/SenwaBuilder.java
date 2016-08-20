@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa;
@@ -63,11 +63,13 @@ public class SenwaBuilder<LETTER, STATE>
 	private final ILogger mLogger;
 
 	/**
+	 * Constructor.
+	 * 
 	 * @param services Ultimate services
 	 * @param nwa nested word automaton
 	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
-	public SenwaBuilder(final AutomataLibraryServices services, 
+	public SenwaBuilder(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> nwa)
 					throws AutomataOperationCanceledException {
 		mServices = services;
@@ -75,7 +77,7 @@ public class SenwaBuilder<LETTER, STATE>
 		mNwa = nwa;
 		mLogger.info(startMessage());
 		mSenwa = new Senwa<LETTER, STATE>(mServices,
-				mNwa.getInternalAlphabet(), mNwa.getCallAlphabet(), 
+				mNwa.getInternalAlphabet(), mNwa.getCallAlphabet(),
 				mNwa.getReturnAlphabet(), mNwa.getStateFactory());
 		new SenwaWalker<LETTER, STATE>(mServices, mSenwa, this, true);
 		mLogger.info(exitMessage());
@@ -89,14 +91,12 @@ public class SenwaBuilder<LETTER, STATE>
 	
 	@Override
 	public String startMessage() {
-			return "Start " + operationName() + ". Input has " + 
-					mNwa.sizeInformation();	
+			return "Start " + operationName() + ". Input has " + mNwa.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result has " + 
-				mSenwa.sizeInformation();
+		return "Finished " + operationName() + " Result has " + mSenwa.sizeInformation();
 	}
 	
 	
@@ -132,8 +132,8 @@ public class SenwaBuilder<LETTER, STATE>
 	public Iterable<STATE> getInitialStates() {
 		final Set<STATE> resInits = new HashSet<STATE>();
 		for (final STATE opState : mNwa.getInitialStates()) {
-			final STATE resSTATE = getOrConstructResultState(opState, opState, true);
-			resInits.add(resSTATE);
+			final STATE resState = getOrConstructResultState(opState, opState, true);
+			resInits.add(resState);
 		}
 		return resInits;
 	}

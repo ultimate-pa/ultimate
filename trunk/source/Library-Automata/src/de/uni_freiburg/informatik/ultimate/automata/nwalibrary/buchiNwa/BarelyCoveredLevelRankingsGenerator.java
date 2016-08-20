@@ -26,9 +26,9 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 	public BarelyCoveredLevelRankingsGenerator(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand, final int userDefinedMaxRank,
 			final boolean allowRankZero,
-			final boolean allowEmptyLevelRanking, 
-			final boolean restrictToElasticLevelRankings, 
-			final boolean voluntaryDecreaseOnlyForStatesInO, 
+			final boolean allowEmptyLevelRanking,
+			final boolean restrictToElasticLevelRankings,
+			final boolean voluntaryDecreaseOnlyForStatesInO,
 			final boolean allowDelayedRankDecrease) {
 		super(services, operand, userDefinedMaxRank);
 		mAllowRankZero = allowRankZero;
@@ -40,7 +40,8 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 
 	@Override
 	public Collection<LevelRankingState<LETTER, STATE>> generateLevelRankings(
-			final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint, final boolean predecessorIsSubsetComponent) {
+			final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
+			final boolean predecessorIsSubsetComponent) {
 		if (!mAllowEmptyLevelRanking && constraint.isEmpty()) {
 			return Collections.emptyList();
 		}
@@ -65,7 +66,7 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 			}
 			
 		}
-		final Iterator<Set<DoubleDecker<StateWithRankInfo<STATE>>>> it = 
+		final Iterator<Set<DoubleDecker<StateWithRankInfo<STATE>>>> it =
 				new PowersetIterator<DoubleDecker<StateWithRankInfo<STATE>>>(doubleDeckersEligibleForVoluntaryDecrease);
 		while (it.hasNext()) {
 			final Set<DoubleDecker<StateWithRankInfo<STATE>>> subset = it.next();
@@ -100,7 +101,8 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 //					}
 //					break;
 //				case 2:
-//					if (doubleDeckersWithVoluntaryDecrease.contains(new DoubleDecker<StateWithRankInfo<STATE>>(down, up))) {
+//					if (doubleDeckersWithVoluntaryDecrease.contains(
+//							new DoubleDecker<StateWithRankInfo<STATE>>(down, up))) {
 //						rank = 1;
 //						inO = false;
 //					} else {

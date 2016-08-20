@@ -47,30 +47,32 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 /**
  * This class implements the incremental DFA minimization algorithm by Almeida,
  * Moreira, and Reis ('Incremental DFA minimisation').
- * 
- * <p>The basic idea is to check equivalence of each pair of states exactly once
+ * <p>
+ * The basic idea is to check equivalence of each pair of states exactly once
  * (with an order on the states even only once per two states, so
  * <code>q, q'</code> we either check as <code>(q, q')</code> or
  * <code>(q', q)</code>).
- * 
- * <p>Initially each state is not equivalent to all states that have a different
+ * <p>
+ * Initially each state is not equivalent to all states that have a different
  * final status (<code>q !~ q' <=> (q in F <=> q' not in F)</code>).
  * Also it is clear that each state is equivalent to itself.
- * 
- * <p>If for a pair of states it is not clear whether they are equivalent, then
+ * <p>
+ * If for a pair of states it is not clear whether they are equivalent, then
  * the they are equivalent if and only if all successor states (wrt. a symbol)
  * are equivalent, so we shift the task for one level. Loops are avoided by
  * storing the visited pairs.
- * 
- * <p>If the result was finally found for a pair of states, typically some more
+ * <p>
+ * If the result was finally found for a pair of states, typically some more
  * pairs of states were investigated. If the answer was positive, all pairs of
  * states that were tested are equivalent. If the answer was negative, some
  * pairs of states were not equivalent. All those pairs are stored and the
  * information is then propagated to avoid checking these states later.
  * 
  * @author Christian
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class MinimizeDfaIncremental<LETTER, STATE>
 		extends AbstractMinimizeIncremental<LETTER, STATE>
@@ -118,12 +120,12 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 	/**
 	 * Option:
 	 * Separate states with different transitions.
-	 * 
-	 * <p>That is, if there is a letter {@code l} where one of the states has
+	 * <p>
+	 * That is, if there is a letter {@code l} where one of the states has
 	 * an outgoing transitions with {@code l} and one has not (hence this
 	 * transition would go to an implicit sink state.
-	 * 
-	 * <p>NOTE: This is only reasonable if the input automaton is not total.
+	 * <p>
+	 * NOTE: This is only reasonable if the input automaton is not total.
 	 * Furthermore, the method becomes incomplete (i.e., may not find the
 	 * minimum) if dead ends have not been removed beforehand.
 	 */
@@ -134,34 +136,41 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 	/**
 	 * GUI Constructor.
 	 * 
-	 * @param services Ultimate services
-	 * @param stateFactory state factory
-	 * @param operand input automaton (DFA)
-	 * @throws AutomataOperationCanceledException thrown when execution is cancelled
-	 * @throws AutomataLibraryException thrown by DFA check
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            input automaton (DFA)
+	 * @throws AutomataLibraryException
+	 *             thrown by DFA check or if execution is cancelled
 	 */
 	public MinimizeDfaIncremental(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
-			throws AutomataLibraryException {
+					throws AutomataLibraryException {
 		this(services, stateFactory, operand, null);
 	}
 	
 	/**
 	 * Constructor.
 	 * 
-	 * @param services Ultimate services
-	 * @param stateFactory state factory
-	 * @param operand input automaton (DFA)
-	 * @param interrupt interrupt
-	 * @throws AutomataOperationCanceledException thrown when execution is cancelled
-	 * @throws AutomataLibraryException thrown by DFA check
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            input automaton (DFA)
+	 * @param interrupt
+	 *            interrupt
+	 * @throws AutomataLibraryException
+	 *             thrown by DFA check or if execution is cancelled
 	 */
 	public MinimizeDfaIncremental(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt)
-			throws AutomataLibraryException {
+					throws AutomataLibraryException {
 		super(services, stateFactory, "MinimizeAMR", operand, interrupt);
 		
 		assert super.isDfa() : "The input automaton is no DFA.";
@@ -170,47 +179,47 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 		assert (mSize >= 0) : "The automaton size must be nonnegative.";
 		
 		// trivial special cases
-    	if (mSize <= 1) {
-    		mState2int = null;
-    		mInt2state = null;
-    		mUnionFind = null;
-    		mNeq = null;
-    		mEquiv = null;
-    		mPath = null;
-    		mStack = null;
-    		mHashCapNoTuples = 0;
-    		
-    		directResultConstruction(mOperand);
-    	} else {
-    		mState2int = new HashMap<STATE, Integer>(mSize);
-    		mInt2state = new ArrayList<STATE>(mSize);
-    		mUnionFind = new int[mSize];
-    		
-    		/*
-    		 * The maximum number of pairs of states without considering the
-    		 * order is (n^2 - n)/2.
-    		 * 
-    		 * This can easily be more than the maximum integer number.
-    		 * In that case the constant is set to this bound.
-    		 */
-    		int possibleOverflow = (mSize * (mSize - 1)) / 2;
-    		if (possibleOverflow > 0) {
-    			possibleOverflow = computeHashCap(possibleOverflow);
-    			if (possibleOverflow > 0) {
-    				mHashCapNoTuples = possibleOverflow;
-    			} else {
-    				mHashCapNoTuples = Integer.MAX_VALUE;
-    			}
-    		} else {
-    			mHashCapNoTuples = Integer.MAX_VALUE;
-    		}
-    		
-    		mNeq = new HashSet<Tuple>(mHashCapNoTuples);
-    		mEquiv = new SetList();
-    		mPath = new SetList();
-    		mStack = new ArrayDeque<StackElem>();
-    		
-    		minimize();
+		if (mSize <= 1) {
+			mState2int = null;
+			mInt2state = null;
+			mUnionFind = null;
+			mNeq = null;
+			mEquiv = null;
+			mPath = null;
+			mStack = null;
+			mHashCapNoTuples = 0;
+			
+			directResultConstruction(mOperand);
+		} else {
+			mState2int = new HashMap<STATE, Integer>(mSize);
+			mInt2state = new ArrayList<STATE>(mSize);
+			mUnionFind = new int[mSize];
+			
+			/*
+			 * The maximum number of pairs of states without considering the
+			 * order is (n^2 - n)/2.
+			 * 
+			 * This can easily be more than the maximum integer number.
+			 * In that case the constant is set to this bound.
+			 */
+			int possibleOverflow = (mSize * (mSize - 1)) / 2;
+			if (possibleOverflow > 0) {
+				possibleOverflow = computeHashCap(possibleOverflow);
+				if (possibleOverflow > 0) {
+					mHashCapNoTuples = possibleOverflow;
+				} else {
+					mHashCapNoTuples = Integer.MAX_VALUE;
+				}
+			} else {
+				mHashCapNoTuples = Integer.MAX_VALUE;
+			}
+			
+			mNeq = new HashSet<Tuple>(mHashCapNoTuples);
+			mEquiv = new SetList();
+			mPath = new SetList();
+			mStack = new ArrayDeque<StackElem>();
+			
+			minimize();
 		}
 		mLogger.info(exitMessage());
 	}
@@ -218,7 +227,8 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 	/**
 	 * This method invokes the minimization process.
 	 * 
-	 * @throws AutomataOperationCanceledException thrown when execution is cancelled
+	 * @throws AutomataOperationCanceledException
+	 *             thrown when execution is cancelled
 	 */
 	private void minimize() throws AutomataOperationCanceledException {
 		// initialize data structures
@@ -236,29 +246,28 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 	 * vice versa.
 	 */
 	private void preprocess() {
-		int i = -1;
+		int stateId = -1;
 		for (final STATE state : mOperand.getStates()) {
 			mInt2state.add(state);
 			
-			assert (mState2int.get(state) == null) :
-				"The state is already in the map.";
-			mState2int.put(state, ++i);
+			assert (mState2int.get(state) == null) : "The state is already in the map.";
+			mState2int.put(state, ++stateId);
 		}
 		
-		assert ((mState2int.size() == mInt2state.size()) &&
-				(mState2int.size() == mSize)) :
-					"The mappings do not have the same size as the input "
-					+ "automaton";
+		assert ((mState2int.size() == mInt2state.size())
+				&& (mState2int.size() == mSize)) : "The mappings do not have the same size as the input automaton";
 	}
 	
 	/**
 	 * This method is the main method of the minimization. As long as it runs,
 	 * it finds for each pair of states whether they are equivalent or not.
+	 * <p>
+	 * It terminates automatically, but can also be halted at any time.
+	 * <p>
+	 * pseudocode name: MIN-INCR
 	 * 
-	 * <p>It terminates automatically, but can also be halted at any time.
-	 * 
-	 * <p>pseudocode name: MIN-INCR
-	 * @throws AutomataOperationCanceledException when execution is cancelled
+	 * @throws AutomataOperationCanceledException
+	 *             when execution is cancelled
 	 */
 	private void findEquiv() throws AutomataOperationCanceledException {
 		// initialization
@@ -315,10 +324,10 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 	/**
 	 * This method initializes the set of pairs of states which are definitely
 	 * not equivalent.
-	 * 
-	 * <p>The certain candidates are pairs where exactly one state is final.
-	 * 
-	 * <p>There is a global option for separating states with different outgoing
+	 * <p>
+	 * The certain candidates are pairs where exactly one state is final.
+	 * <p>
+	 * There is a global option for separating states with different outgoing
 	 * transitions.
 	 * 
 	 * @return set of pairs of states not equivalent to each other
@@ -340,20 +349,18 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 					 * transitions
 					 */
 					final HashSet<LETTER> letters = new HashSet<LETTER>();
-					for (final OutgoingInternalTransition<LETTER, STATE> out :
-							mOperand.internalSuccessors(state1)) {
+					for (final OutgoingInternalTransition<LETTER, STATE> out : mOperand.internalSuccessors(state1)) {
 						letters.add(out.getLetter());
 					}
 					boolean broken = false;
-					for (final OutgoingInternalTransition<LETTER, STATE> out :
-    						mOperand.internalSuccessors(state2)) {
-						if (! letters.remove(out.getLetter())) {
+					for (final OutgoingInternalTransition<LETTER, STATE> out : mOperand.internalSuccessors(state2)) {
+						if (!letters.remove(out.getLetter())) {
 							mNeq.add(new Tuple(i, j));
 							broken = true;
 							break;
 						}
 					}
-					if (! (broken || letters.isEmpty())) {
+					if (!(broken || letters.isEmpty())) {
 						mNeq.add(new Tuple(i, j));
 					}
 				}
@@ -365,12 +372,13 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 	 * This method originally recursively calls itself to find out whether two
 	 * states are equivalent. It uses the global set lists to store the paths
 	 * it searched through.
+	 * <p>
+	 * The recursion was transformed to an explicit form using a stack.
+	 * <p>
+	 * pseudocode name: EQUIV-P
 	 * 
-	 * <p>The recursion was transformed to an explicit form using a stack.
-	 * 
-	 * <p>pseudocode name: EQUIV-P
-	 * 
-	 * @param origTuple tuple to check equivalence of
+	 * @param origTuple
+	 *            tuple to check equivalence of
 	 * @return true iff the pair of states is equivalent
 	 */
 	private boolean isPairEquiv(final Tuple origTuple) {
@@ -380,7 +388,7 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 		// NOTE: This line was moved here for faster termination.
 		mEquiv.add(origTuple);
 		
-		assert (! mStack.isEmpty()) : "The stack must not be empty.";
+		assert (!mStack.isEmpty()) : "The stack must not be empty.";
 		do {
 			final StackElem elem = mStack.peekLast();
 			final Tuple eTuple = elem.mTuple;
@@ -413,13 +421,13 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 				
 				mPath.add(eTuple);
 				
-				if (! putSuccOnStack(eTuple)) {
+				if (!putSuccOnStack(eTuple)) {
 					// one transition is only possible from one state
 					mStack.clear();
 					return false;
 				}
 			}
-		} while (! mStack.isEmpty());
+		} while (!mStack.isEmpty());
 		
 		// no witness was found why the states should not be equivalent
 		// mequiv.add(origTuple); // NOTE: This line was moved upwards.
@@ -429,14 +437,15 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 	/**
 	 * This method handles the case of {@link #isPairEquiv(Tuple)}
 	 * when the pair of states has not yet been expanded.
-	 * 
-	 * <p>It pushes the pairs of successor states on the stack.
-	 * 
-	 * <p>If the states have not been separated wrt. different outgoing
+	 * <p>
+	 * It pushes the pairs of successor states on the stack.
+	 * <p>
+	 * If the states have not been separated wrt. different outgoing
 	 * transitions at the beginning, this is checked here and then possibly a
 	 * reason for non-equivalence is found.
 	 * 
-	 * @param tuple pair of states
+	 * @param tuple
+	 *            pair of states
 	 * @return true iff no reason for non-equivalence was found
 	 */
 	private boolean putSuccOnStack(final Tuple tuple) {
@@ -446,31 +455,28 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 		/*
 		 * NOTE: This could be problematic with nondeterministic automata.
 		 */
-		for (final OutgoingInternalTransition<LETTER, STATE> out :
-				mOperand.internalSuccessors(firstState)) {
+		for (final OutgoingInternalTransition<LETTER, STATE> out : mOperand.internalSuccessors(firstState)) {
 			final LETTER letter = out.getLetter();
 			assert (mOperand.internalSuccessors(secondState, letter) != null);
 			
 			int succQ;
 			if (OPTION_NEQ_TRANS) {
 				assert (mOperand.internalSuccessors(secondState,
-							letter).iterator().hasNext()) :
-					"States with different outgoing transitions " +
-					"should have been marked as not equivalent.";
-				
+						letter).iterator().hasNext()) : "States with different outgoing transitions "
+								+ "should have been marked as not equivalent.";
+								
 				succQ = find(mState2int.get(mOperand.internalSuccessors(
 						secondState, letter).iterator().next().getSucc()));
 			} else {
-				final Iterator<OutgoingInternalTransition<LETTER, STATE>> out2
-						= mOperand.internalSuccessors(
-								secondState, letter).iterator();
+				final Iterator<OutgoingInternalTransition<LETTER, STATE>> out2 = mOperand.internalSuccessors(
+						secondState, letter).iterator();
 				if (out2.hasNext()) {
 					succQ = find(mState2int.get(out2.next().getSucc()));
 				} else {
 					return false;
 				}
 			}
-
+			
 			int succP = find(mState2int.get(out.getSucc()));
 			if (succP != succQ) {
 				if (succP > succQ) {
@@ -480,7 +486,7 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 				}
 				final Tuple successorTuple = new Tuple(succP, succQ);
 				
-				if (! mEquiv.contains(successorTuple)) {
+				if (!mEquiv.contains(successorTuple)) {
 					mEquiv.add(successorTuple);
 					
 					// break recursion: add to stack
@@ -489,10 +495,9 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 			}
 		}
 		
-		if (! OPTION_NEQ_TRANS) {
-			for (final OutgoingInternalTransition<LETTER, STATE> out :
-					mOperand.internalSuccessors(secondState)) {
-				if (! mOperand.internalSuccessors(
+		if (!OPTION_NEQ_TRANS) {
+			for (final OutgoingInternalTransition<LETTER, STATE> out : mOperand.internalSuccessors(secondState)) {
+				if (!mOperand.internalSuccessors(
 						firstState, out.getLetter()).iterator().hasNext()) {
 					return false;
 				}
@@ -510,25 +515,22 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 		// mapping from states to their representative
 		final HashMap<Integer, ? extends Collection<STATE>> state2equivStates =
 				computeMapState2Equiv();
-		
+				
 		// mapping from old state to new state
 		final HashMap<Integer, STATE> oldState2newState =
 				new HashMap<Integer, STATE>(
 						computeHashCap(state2equivStates.size()));
-		
+						
 		// add states
-		assert (mOperand.getInitialStates().iterator().hasNext()) :
-			"There is no initial state in the automaton.";
+		assert (mOperand.getInitialStates().iterator().hasNext()) : "There is no initial state in the automaton.";
 		final int initRepresentative = find(mState2int.get(
 				mOperand.getInitialStates().iterator().next()));
 		startResultConstruction();
-		for (final Entry<Integer, ? extends Collection<STATE>> entry :
-				state2equivStates.entrySet()) {
+		for (final Entry<Integer, ? extends Collection<STATE>> entry : state2equivStates.entrySet()) {
 			final int representative = entry.getKey();
 			final Collection<STATE> equivStates = entry.getValue();
 			final boolean isInitial = (representative == initRepresentative);
-			assert (equivStates.iterator().hasNext()) :
-				"There is no equivalent state in the collection.";
+			assert (equivStates.iterator().hasNext()) : "There is no equivalent state in the collection.";
 			final boolean isFinal =
 					mOperand.isFinal(equivStates.iterator().next());
 			final STATE newSTate = addState(isInitial, isFinal, equivStates);
@@ -541,9 +543,8 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 		 * NOTE: This exploits the fact that the input is deterministic.
 		 */
 		for (final Integer oldStateInt : state2equivStates.keySet()) {
-			for (final OutgoingInternalTransition<LETTER, STATE> out :
-					mOperand.internalSuccessors(
-							mInt2state.get(oldStateInt))) {
+			for (final OutgoingInternalTransition<LETTER, STATE> out : mOperand.internalSuccessors(
+					mInt2state.get(oldStateInt))) {
 				addInternalTransition(
 						oldState2newState.get(oldStateInt),
 						out.getLetter(),
@@ -564,16 +565,16 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 		final HashMap<Integer, LinkedList<STATE>> state2equivStates =
 				new HashMap<Integer, LinkedList<STATE>>(
 						computeHashCap(mSize));
-        for (int i = mSize - 1; i >= 0; --i) {
-        	final int representative = find(i);
-        	LinkedList<STATE> equivStates =
-        			state2equivStates.get(representative);
-        	if (equivStates == null) {
-        		equivStates = new LinkedList<STATE>();
-        		state2equivStates.put(representative, equivStates);
-        	}
-        	equivStates.add(mInt2state.get(i));
-        }
+		for (int i = mSize - 1; i >= 0; --i) {
+			final int representative = find(i);
+			LinkedList<STATE> equivStates =
+					state2equivStates.get(representative);
+			if (equivStates == null) {
+				equivStates = new LinkedList<STATE>();
+				state2equivStates.put(representative, equivStates);
+			}
+			equivStates.add(mInt2state.get(i));
+		}
 		return state2equivStates;
 	}
 	
@@ -581,10 +582,10 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 	
 	/**
 	 * This method initializes the Union-Find data structure.
-	 * 
-	 * <p>That is, each state points to itself.
-	 * 
-	 * <p>pseudocode name: MAKE in for-loop
+	 * <p>
+	 * That is, each state points to itself.
+	 * <p>
+	 * pseudocode name: MAKE in for-loop
 	 */
 	private void initializeUnionFind() {
 		for (int i = mUnionFind.length - 1; i >= 0; --i) {
@@ -595,14 +596,15 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 	/**
 	 * This method implements the find operation of the Union-Find data
 	 * structure.
-	 * 
-	 * <p>That is, the representative chain is searched and afterwards all
+	 * <p>
+	 * That is, the representative chain is searched and afterwards all
 	 * intermediate representatives in this chain are updated accordingly
 	 * for faster future find operations.
+	 * <p>
+	 * pseudocode name: FIND
 	 * 
-	 * <p>pseudocode name: FIND
-	 * 
-	 * @param oldRepresentative state
+	 * @param oldRepresentative
+	 *            state
 	 * @return representative of the given state
 	 */
 	private int find(int oldRepresentative) {
@@ -629,17 +631,18 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 	/**
 	 * This method implements the union operation of the Union-Find data
 	 * structure.
-	 * 
-	 * <p>That is, the representative of the second state is set to the
+	 * <p>
+	 * That is, the representative of the second state is set to the
 	 * representative of the first state.
+	 * <p>
+	 * NOTE: The find operation is used in order to safe one update later on.
+	 * This way the direct representatives are certainly the true
+	 * representatives.
+	 * <p>
+	 * pseudocode name: UNION
 	 * 
-	 * <p>NOTE: The find operation is used in order to safe one update later on.
-	 *       This way the direct representatives are certainly the true
-	 *       representatives.
-	 * 
-	 * <p>pseudocode name: UNION
-	 * 
-	 * @param tuple pair of states that shall be united
+	 * @param tuple
+	 *            pair of states that shall be united
 	 */
 	private void union(final Tuple tuple) {
 		mUnionFind[find(tuple.mSecond)] = find(tuple.mFirst);
@@ -663,8 +666,10 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 		/**
 		 * Constructor.
 		 * 
-		 * @param first first state
-		 * @param second second state
+		 * @param first
+		 *            first state
+		 * @param second
+		 *            second state
 		 */
 		public Tuple(final int first, final int second) {
 			assert (first < second) : "The first entry must be the smaller one";
@@ -681,10 +686,10 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 		@SuppressWarnings("unchecked")
 		@Override
 		public boolean equals(final Object other) {
-			if (! (other instanceof MinimizeDfaIncremental.Tuple)) {
+			if (!(other instanceof MinimizeDfaIncremental.Tuple)) {
 				return false;
 			}
-			final Tuple o = (Tuple)other;
+			final Tuple o = (Tuple) other;
 			return (o.mFirst == this.mFirst) && (o.mSecond == this.mSecond);
 		}
 		
@@ -703,16 +708,16 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 	/**
 	 * This is a data structure containing a map and a list for fast operations
 	 * on the data (tuples, i.e., pairs of states).
-	 * 
-	 * <p>The map holds pairs(tuple, list node), i.e., it maps a pair of states to
+	 * <p>
+	 * The map holds pairs(tuple, list node), i.e., it maps a pair of states to
 	 * the list node containing it. For iteration the list is used.
-	 * 
-	 * <p>Insertion and removal both work in {@code O(1)}. The problem here is
+	 * <p>
+	 * Insertion and removal both work in {@code O(1)}. The problem here is
 	 * that hash maps must be initialized and this takes time {@code O(size)}.
 	 * Since {@code size} is in {@code O(n^2)} throughout the execution and the
 	 * sets are repeatedly recreated, this comes with a big cost.
-	 * 
-	 * <p>To avoid this, the map is instead cleaned for all entries, which might
+	 * <p>
+	 * To avoid this, the map is instead cleaned for all entries, which might
 	 * hopefully be much less than all possible entries.
 	 */
 	private final class SetList {
@@ -738,18 +743,18 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 		
 		/**
 		 * This method adds a pair of states.
-		 * 
-		 * <p>NOTE: The original pseudocode allows elements to be present
+		 * <p>
+		 * NOTE: The original pseudocode allows elements to be present
 		 * beforehand and removes them first. That is avoided by this
 		 * implementation.
-    	 * 
-    	 * <p>pseudocode name: SET-INSERT
+		 * <p>
+		 * pseudocode name: SET-INSERT
 		 * 
-		 * @param tuple pair of states
+		 * @param tuple
+		 *            pair of states
 		 */
 		void add(final Tuple tuple) {
-			assert (! mMap.containsKey(tuple)) :
-				"Elements should not be contained twice.";
+			assert (!mMap.containsKey(tuple)) : "Elements should not be contained twice.";
 			
 			// insert new pair of states
 			mMap.put(tuple, mList.add(tuple));
@@ -757,17 +762,17 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 		
 		/**
 		 * This method removes a pair of states.
-		 * 
-		 * <p>NOTE: The original pseudocode allows elements to not be present
+		 * <p>
+		 * NOTE: The original pseudocode allows elements to not be present
 		 * beforehand. That is avoided by this implementation.
-    	 * 
-    	 * <p>pseudocode name: SET-REMOVE
+		 * <p>
+		 * pseudocode name: SET-REMOVE
 		 * 
-		 * @param tuple pair of states
+		 * @param tuple
+		 *            pair of states
 		 */
 		void remove(final Tuple tuple) {
-			assert (mMap.containsKey(tuple)) :
-				"Only elements contained should be removed.";
+			assert (mMap.containsKey(tuple)) : "Only elements contained should be removed.";
 			
 			// remove pair of states
 			mList.remove(mMap.remove(tuple));
@@ -775,10 +780,11 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 		
 		/**
 		 * This method checks containment of a pair of states.
-    	 * 
-    	 * <p>pseudocode name: SET-SEARCH
+		 * <p>
+		 * pseudocode name: SET-SEARCH
 		 * 
-		 * @param tuple pair of states
+		 * @param tuple
+		 *            pair of states
 		 * @return true iff pair of states is contained
 		 */
 		boolean contains(final Tuple tuple) {
@@ -787,8 +793,8 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 		
 		/**
 		 * This method returns an iterator of all contained elements.
-    	 * 
-    	 * <p>pseudocode name: SET-ELEMENTS
+		 * <p>
+		 * pseudocode name: SET-ELEMENTS
 		 * 
 		 * @return iterator
 		 */
@@ -800,20 +806,18 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 		 * To avoid re-allocation of the whole memory (and default
 		 * initialization), the map is instead cleaned for all entries in the
 		 * list.
-    	 * 
-    	 * <p>pseudocode name: SET-MAKE
+		 * <p>
+		 * pseudocode name: SET-MAKE
 		 */
 		void clean() {
 			if (mIsInitialized) {
 				final Iterator<Tuple> it = mList.iterator(mMap.size());
 				while (it.hasNext()) {
 					final Tuple t = it.next();
-					assert (mMap.containsKey(t)) :
-						"The element was not in the map: " + t.toString();
+					assert (mMap.containsKey(t)) : "The element was not in the map: " + t.toString();
 					mMap.remove(t);
 				}
-				assert (mMap.size() == 0) :
-					"There are elements left in the map after cleaning.";
+				assert (mMap.size() == 0) : "There are elements left in the map after cleaning.";
 			} else {
 				mIsInitialized = true;
 				mMap = new HashMap<Tuple, ListNode>(mHashCapNoTuples);
@@ -854,7 +858,8 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 			/**
 			 * Constructor.
 			 * 
-			 * @param tuple pair of states
+			 * @param tuple
+			 *            pair of states
 			 */
 			public ListNode(final Tuple tuple, final ListNode prev,
 					final ListNode next) {
@@ -896,17 +901,16 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 			 * This method adds a new pair of states to the end of the list in
 			 * {@code O(1)}.
 			 * 
-			 * @param tuple pair of states
+			 * @param tuple
+			 *            pair of states
 			 * @return the new list node
 			 */
 			ListNode add(final Tuple tuple) {
-				assert (tuple != null) :
-					"null should not be inserted in the list.";
+				assert (tuple != null) : "null should not be inserted in the list.";
 				
 				// first node
 				if (mLast == null) {
-					assert (mFirst == null) :
-						"The last list element is null unexpectedly.";
+					assert (mFirst == null) : "The last list element is null unexpectedly.";
 					
 					mFirst = new ListNode(tuple, null, null);
 					mFirst.mPrev = mFirst;
@@ -914,8 +918,7 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 					mLast = mFirst;
 				} else {
 					// further node
-					assert (mFirst != null) :
-						"The first list element is null unexpectedly.";
+					assert (mFirst != null) : "The first list element is null unexpectedly.";
 					
 					final ListNode prev = mLast;
 					mLast = new ListNode(tuple, prev, mFirst);
@@ -930,11 +933,11 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 			/**
 			 * This method removes a given list node in {@code O(1)}.
 			 * 
-			 * @param listNode list node
+			 * @param listNode
+			 *            list node
 			 */
 			void remove(final ListNode listNode) {
-				assert (listNode != null) :
-					"null cannot not be removed from the list.";
+				assert (listNode != null) : "null cannot not be removed from the list.";
 				
 				// only node
 				if (listNode.mNext == listNode) {
@@ -942,29 +945,29 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 					mLast = null;
 				} else {
 					// further node
-    				final ListNode prev = listNode.mPrev;
-    				final ListNode next = listNode.mNext;
-    				prev.mNext = next;
-    				next.mPrev = prev;
-    				
-    				if (listNode == mFirst) {
-    					mFirst = next;
-    					
-    					assert (listNode != mLast) :
-    						"The node must not be first and last element.";
-    				} else if (listNode == mLast) {
-    					mLast = prev;
-    				}
+					final ListNode prev = listNode.mPrev;
+					final ListNode next = listNode.mNext;
+					prev.mNext = next;
+					next.mPrev = prev;
+					
+					if (listNode == mFirst) {
+						mFirst = next;
+						
+						assert (listNode != mLast) : "The node must not be first and last element.";
+					} else if (listNode == mLast) {
+						mLast = prev;
+					}
 				}
 			}
 			
 			/**
 			 * This method returns an iterator of the list elements.
+			 * <p>
+			 * NOTE: It is assumed that the list is not modified during
+			 * iteration.
 			 * 
-			 * <p>NOTE: It is assumed that the list is not modified during
-			 *       iteration.
-			 * 
-			 * @param size the size of the list (known by the set)
+			 * @param size
+			 *            the size of the list (known by the set)
 			 * @return iterator of list elements
 			 */
 			Iterator<Tuple> iterator(final int size) {
@@ -982,22 +985,19 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 					public boolean hasNext() {
 						return (mItSize > 0);
 					}
-
+					
 					@Override
 					public Tuple next() {
-						assert (mItSize > 0) :
-							"The next method must not be called when finished.";
+						assert (mItSize > 0) : "The next method must not be called when finished.";
 						--mItSize;
-						assert (mItNext != null) :
-							"An empty list should not be asked for the next " +
-								"element.";
+						assert (mItNext != null) : "An empty list should not be asked for the next "
+								+ "element.";
 						mItNext = mItNext.mNext;
-						assert (mItNext != null) :
-							"An empty list should not be asked for the next " +
-								"element.";
+						assert (mItNext != null) : "An empty list should not be asked for the next "
+								+ "element.";
 						return mItNext.mTuple;
 					}
-
+					
 					@Override
 					public void remove() {
 						throw new UnsupportedOperationException(
@@ -1012,12 +1012,12 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 				builder.append("{");
 				if (mFirst != null) {
 					builder.append(mFirst.toString());
-    				ListNode node = mFirst.mNext;
-    				while (node != mFirst) {
-        				builder.append(", ");
-        				builder.append(node.toString());
-        				node = node.mNext;
-    				}
+					ListNode node = mFirst.mNext;
+					while (node != mFirst) {
+						builder.append(", ");
+						builder.append(node.toString());
+						node = node.mNext;
+					}
 				}
 				builder.append("}");
 				return builder.toString();
@@ -1045,7 +1045,8 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 		/**
 		 * Constructor.
 		 * 
-		 * @param tuple pair of states
+		 * @param tuple
+		 *            pair of states
 		 */
 		public StackElem(final Tuple tuple) {
 			mTuple = tuple;

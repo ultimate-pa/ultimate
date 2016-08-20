@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
@@ -45,11 +45,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-
 /**
  * Check if down states of an automaton are stored consistent.
  * This operation is only useful for debugging.
+ * 
  * @author heizmann@informatik.uni-freiburg.de
+ * @param <LETTER> letter type
+ * @param <STATE> state type
  */
 public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
@@ -58,33 +60,29 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	
-	public DownStateConsistencyCheck(AutomataLibraryServices services, 
-			IDoubleDeckerAutomaton<LETTER, STATE> nwa) throws AutomataOperationCanceledException {
+	public DownStateConsistencyCheck(final AutomataLibraryServices services,
+			final IDoubleDeckerAutomaton<LETTER, STATE> nwa) throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = nwa;
 		mResult = consistentForAll();
 	}
 	
-	
 	@Override
 	public String operationName() {
 		return "DownStateConsistencyCheck";
 	}
-
+	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + " Operand " + 
-			mOperand.sizeInformation();
+		return "Start " + operationName() + " Operand " + mOperand.sizeInformation();
 	}
-	
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + 
-				mResult;
+		return "Finished " + operationName() + " Result " + mResult;
 	}
-
+	
 	@Override
 	public Boolean getResult() {
 		return mResult;
@@ -111,8 +109,8 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 		assert result : "down states inconsistent";
 		return result;
 	}
-
-	private boolean consistentForState(STATE state) {
+	
+	private boolean consistentForState(final STATE state) {
 		boolean result = true;
 		final Set<STATE> downStates = mOperand.getDownStates(state);
 		result &= getIsComparison(state, downStates);
@@ -122,17 +120,17 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 		return result;
 	}
 	
-	private boolean checkIfEachDownStateIsJustified(STATE state, Set<STATE> downStates) {
+	private boolean checkIfEachDownStateIsJustified(final STATE state, Set<STATE> downStates) {
 		downStates = new HashSet<STATE>(downStates);
 		for (final IncomingInternalTransition<LETTER, STATE> t : mOperand.internalPredecessors(state)) {
 			final Set<STATE> preDown = mOperand.getDownStates(t.getPred());
 			downStates.removeAll(preDown);
 		}
-
+		
 		for (final IncomingCallTransition<LETTER, STATE> t : mOperand.callPredecessors(state)) {
 			downStates.remove(t.getPred());
 		}
-
+		
 		for (final IncomingReturnTransition<LETTER, STATE> t : mOperand.returnPredecessors(state)) {
 			final Set<STATE> predDownStates = mOperand.getDownStates(t.getLinPred());
 			if (predDownStates.contains(t.getHierPred())) {
@@ -146,13 +144,13 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 			downStates.remove(mOperand.getEmptyStackState());
 		}
 		if (!downStates.isEmpty()) {
-			mLogger.warn("State " + state + " has unjustified down states " + downStates );
+			mLogger.warn("State " + state + " has unjustified down states " + downStates);
 		}
 		return downStates.isEmpty();
 	}
-
-	private boolean checkIfDownStatesArePassedToSuccessors(STATE state,
-			Set<STATE> downStates) {
+	
+	private boolean checkIfDownStatesArePassedToSuccessors(final STATE state,
+			final Set<STATE> downStates) {
 		boolean result = true;
 		for (final OutgoingInternalTransition<LETTER, STATE> t : mOperand.internalSuccessors(state)) {
 			final Set<STATE> succDownStates = mOperand.getDownStates(t.getSucc());
@@ -181,25 +179,24 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 		}
 		return result;
 	}
-
+	
 	/**
-	 * Check if {@link IDoubleDeckerAutomaton#getDownStates(Object)} and 
+	 * Check if {@link IDoubleDeckerAutomaton#getDownStates(Object)} and
 	 * {@link IDoubleDeckerAutomaton#isDoubleDecker(Object, Object)} are
 	 * consistent.
 	 */
-	private boolean getIsComparison(STATE state, Set<STATE> downStates) {
-		return getIsComparison1(state, downStates) 
+	private boolean getIsComparison(final STATE state, final Set<STATE> downStates) {
+		return getIsComparison1(state, downStates)
 				&& getIsComparison2(state, downStates);
 	}
-
 	
 	/**
-	 * Check if doubleDeckers claimed by 
+	 * Check if doubleDeckers claimed by
 	 * {@link IDoubleDeckerAutomaton#isDoubleDecker(Object, Object)}
 	 * are a superset of the doubleDeckers claimed by
-	 * {@link IDoubleDeckerAutomaton#getDownStates(Object)}
+	 * {@link IDoubleDeckerAutomaton#getDownStates(Object)}.
 	 */
-	private boolean getIsComparison1(STATE state, Set<STATE> downStates) {
+	private boolean getIsComparison1(final STATE state, final Set<STATE> downStates) {
 		boolean result = true;
 		for (final STATE down : downStates) {
 			result &= mOperand.isDoubleDecker(state, down);
@@ -208,14 +205,13 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 	}
 	
 	/**
-	 * Check if doubleDeckers claimed by 
+	 * Check if doubleDeckers claimed by
 	 * {@link IDoubleDeckerAutomaton#getDownStates(Object)}
 	 * are a superset of the doubleDeckers claimed by
 	 * {@link IDoubleDeckerAutomaton#isDoubleDecker(Object, Object)}
 	 * This check is expensive, because we have to iterate over all states.
-	 * 
 	 */
-	private boolean getIsComparison2(STATE state, Set<STATE> downStates) {
+	private boolean getIsComparison2(final STATE state, final Set<STATE> downStates) {
 		boolean result = true;
 		for (final STATE down : mOperand.getStates()) {
 			if (mOperand.isDoubleDecker(state, down)) {
@@ -224,14 +220,12 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 		}
 		return result;
 	}
-
-
-
+	
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		// I don't know a useful check
 		return true;
 	}
-
+	
 }

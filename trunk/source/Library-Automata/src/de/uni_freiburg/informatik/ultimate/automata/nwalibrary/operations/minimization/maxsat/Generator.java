@@ -77,7 +77,7 @@ final class Generator {
 
 	/**
 	 * @param services Ultimate services
-	 * @param inNWA
+	 * @param inNwa
 	 *            input NWA.
 	 *
 	 * @param history
@@ -88,8 +88,8 @@ final class Generator {
 	 * @throws AutomataOperationCanceledException if operation was canceled
 	 */
 	static Horn3Array generateClauses(final AutomataLibraryServices services,
-			final NwaWithArrays inNWA, ArrayList<Hist> history) throws AutomataOperationCanceledException {
-		assert Hist.checkConsistency(inNWA, history);
+			final NwaWithArrays inNwa, ArrayList<Hist> history) throws AutomataOperationCanceledException {
+		assert Hist.checkConsistency(inNwa, history);
 
 		// "assert" that there are no transitions which are never taken
 		{
@@ -97,25 +97,25 @@ final class Generator {
 			for (final Hist h : history) {
 				hs.add(h);
 			}
-			for (final RTrans x : inNWA.mRTrans) {
+			for (final RTrans x : inNwa.mRTrans) {
 				assert hs.contains(new Hist(x.mSrc, x.mTop));
 			}
 		}
 
 		// some "namespace imports"
-		final int numStates = inNWA.mNumStates;
+		final int numStates = inNwa.mNumStates;
 		//@SuppressWarnings("unused") int numISyms = inNWA.numISyms;
 		//@SuppressWarnings("unused") int numCSyms = inNWA.numCSyms;
 		//@SuppressWarnings("unused") int numRSyms = inNWA.numRSyms;
 		//@SuppressWarnings("unused") boolean[] isInitial = inNWA.isInitial;
-		final boolean[] isFinal = inNWA.mIsFinal;
-		final int numITrans = inNWA.mITrans.length;
-		final int numCTrans = inNWA.mCTrans.length;
-		final int numRTrans = inNWA.mRTrans.length;
-		final ITrans[] iTrans = inNWA.mITrans.clone();
-		final CTrans[] cTrans = inNWA.mCTrans.clone();
-		final RTrans[] rTrans = inNWA.mRTrans.clone();
-		final RTrans[] rTransTop = inNWA.mRTrans.clone();
+		final boolean[] isFinal = inNwa.mIsFinal;
+		final int numITrans = inNwa.mITrans.length;
+		final int numCTrans = inNwa.mCTrans.length;
+		final int numRTrans = inNwa.mRTrans.length;
+		final ITrans[] iTrans = inNwa.mITrans.clone();
+		final CTrans[] cTrans = inNwa.mCTrans.clone();
+		final RTrans[] rTrans = inNwa.mRTrans.clone();
+		final RTrans[] rTransTop = inNwa.mRTrans.clone();
 
 		history = new ArrayList<Hist>(history);
 
@@ -268,7 +268,7 @@ final class Generator {
 
 		for (int i = 0; i < numStates; i++) {
 			final int eq1 = calc.eqVar(i, i);
-			builder.addClauseT(eq1);
+			builder.addClauseTrue(eq1);
 		}
 
 		for (int i = 0; i < numStates; i++) {
@@ -277,7 +277,7 @@ final class Generator {
 			for (int j = i + 1; j < numStates; j++) {
 				if (isFinal[i] != isFinal[j]) {
 					final int eq1 = calc.eqVar(i, j);
-					builder.addClauseF(eq1);
+					builder.addClauseFalse(eq1);
 				}
 			}
 		}
@@ -293,7 +293,7 @@ final class Generator {
 				}
 
 				if (!iSet[i].equals(iSet[j]) || !cSet[i].equals(cSet[j])) {
-					builder.addClauseF(eq1);
+					builder.addClauseFalse(eq1);
 				} else {
 					// rule 1
 					for (int x = 0, y = 0; x < iTransOut.get(i).size() && y < iTransOut.get(j).size();) {
@@ -305,7 +305,7 @@ final class Generator {
 							y++;
 						} else {
 							final int eq2 = calc.eqVar(t1.mDst, t2.mDst);
-							builder.addClauseFT(eq1, eq2);
+							builder.addClauseFalseTrue(eq1, eq2);
 							x++;
 							y++;
 						}
@@ -320,7 +320,7 @@ final class Generator {
 							y++;
 						} else {
 							final int eq2 = calc.eqVar(t1.mDst, t2.mDst);
-							builder.addClauseFT(eq1, eq2);
+							builder.addClauseFalseTrue(eq1, eq2);
 							x++;
 							y++;
 						}
@@ -330,13 +330,13 @@ final class Generator {
 				for (final int k : rTop[i]) {
 					for (final int l : hSet[j]) {
 						final int eq2 = calc.eqVar(k, l);
-						builder.addClauseFF(eq1, eq2);
+						builder.addClauseFalseFalse(eq1, eq2);
 					}
 				}
 				for (final int k : hSet[i]) {
 					for (final int l : rTop[j]) {
 						final int eq2 = calc.eqVar(k, l);
-						builder.addClauseFF(eq1, eq2);
+						builder.addClauseFalseFalse(eq1, eq2);
 					}
 				}
 				for (final int s1 : rSet[i]) {
@@ -345,7 +345,7 @@ final class Generator {
 							for (final RTrans t2 : bySrcSym.get(new SrcSym(j, s2))) {
 								final int eq2 = calc.eqVar(t1.mTop, t2.mTop);
 								final int eq3 = calc.eqVar(t1.mDst, t2.mDst);
-								builder.addClauseFFT(eq1, eq2, eq3);
+								builder.addClauseFalseFalseTrue(eq1, eq2, eq3);
 							}
 						}
 					}
@@ -388,7 +388,7 @@ final class Generator {
 				for (final int k : possible[j]) {
 					final int eq2 = calc.eqVar(j, k);
 					final int eq3 = calc.eqVar(i, k);
-					builder.addClauseFFT(eq1, eq2, eq3);
+					builder.addClauseFalseFalseTrue(eq1, eq2, eq3);
 				}
 			}
 		}

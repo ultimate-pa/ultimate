@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
@@ -38,19 +38,19 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
-
+public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER, STATE> {
+	
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
-
+	
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
-
+	
 	private final List<NestedLassoRun<LETTER, STATE>> mNestedLassoRuns;
 	private final List<NestedLassoWord<LETTER>> mNestedLassoWords;
-
-	public LassoExtractor(AutomataLibraryServices services,
-			INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataLibraryException {
+	
+	public LassoExtractor(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
@@ -66,39 +66,38 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 		if (mNestedLassoRuns.isEmpty() && mReach.getOrComputeAcceptingComponents().getNestedLassoRun() == null) {
 			assert (new BuchiIsEmpty<LETTER, STATE>(mServices, mReach)).getResult();
 		} else {
-			for (final NestedLassoRun<LETTER, STATE> nlr  : mNestedLassoRuns) {
+			for (final NestedLassoRun<LETTER, STATE> nlr : mNestedLassoRuns) {
 				mNestedLassoWords.add(nlr.getNestedLassoWord());
 			}
 		}
 		mLogger.info(exitMessage());
 	}
-
+	
 	@Override
 	public List<NestedLassoWord<LETTER>> getResult() throws AutomataLibraryException {
 		return mNestedLassoWords;
 	}
-
+	
 	@Override
 	public String operationName() {
 		return "getSomeAcceptedLassoRuns";
 	}
-
+	
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand "
 				+ mOperand.sizeInformation();
 	}
-
+	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Found " + 
-					mNestedLassoRuns.size() + " examples of accepted words.";
+		return "Finished " + operationName() + ". Found " + mNestedLassoRuns.size() + " examples of accepted words.";
 	}
-
+	
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}
-
+	
 }

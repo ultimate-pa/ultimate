@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
@@ -38,15 +38,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-
 /**
- * Class that provides the Buchi emptiness check for nested word automata. 
+ * Class that provides the Buchi emptiness check for nested word automata.
  * 
- * @param <LETTER> Symbol. Type of the symbols used as alphabet.
- * @param <STATE> Content. Type of the labels (the content) of the automata states. 
+ * @param <LETTER>
+ *            Symbol. Type of the symbols used as alphabet.
+ * @param <STATE>
+ *            Content. Type of the labels (the content) of the automata states.
  * @version 2010-12-18
  */
-public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
+public class BuchiIsEmpty<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	private final AutomataLibraryServices mServices;
 	INestedWordAutomatonSimple<LETTER, STATE> mNwa;
@@ -54,8 +55,8 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	AcceptingComponentsAnalysis<LETTER, STATE> mSccs;
 	final Boolean mResult;
 	
-	public BuchiIsEmpty(AutomataLibraryServices services,
-			INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
+	public BuchiIsEmpty(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mNwa = nwa;
@@ -78,28 +79,25 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public String operationName() {
 		return "buchiIsEmpty";
 	}
-
+	
 	@Override
 	public String startMessage() {
-			return "Start " + operationName() + ". Operand " + 
-			mNwa.sizeInformation();	
+		return "Start " + operationName() + ". Operand " + mNwa.sizeInformation();
 	}
-
+	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result is " + mResult; 
+		return "Finished " + operationName() + " Result is " + mResult;
 	}
-
+	
 	@Override
 	public Boolean getResult() throws AutomataLibraryException {
 		return mResult;
 	}
 	
-
 	private final ILogger mLogger;
 	
-	
-	public NestedLassoRun<LETTER,STATE> getAcceptingNestedLassoRun() throws AutomataLibraryException {
+	public NestedLassoRun<LETTER, STATE> getAcceptingNestedLassoRun() throws AutomataLibraryException {
 		if (mResult) {
 			mLogger.info("There is no accepting nested lasso run");
 			return null;
@@ -108,13 +106,11 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			return mReach.getOrComputeAcceptingComponents().getNestedLassoRun();
 		}
 	}
-
+	
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}
-
-
-
+	
 }

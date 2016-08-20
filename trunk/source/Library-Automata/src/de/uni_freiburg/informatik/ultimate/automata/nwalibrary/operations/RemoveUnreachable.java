@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
@@ -34,11 +34,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
@@ -55,7 +55,7 @@ public class RemoveUnreachable<LETTER,STATE>
 	 * Given an INestedWordAutomaton nwa return a NestedWordAutomaton that has
 	 * the same states, but all states that are not reachable are omitted.
 	 * Each state of the result also occurred in the input. Only the auxiliary
-	 * empty stack state of the result is different. 
+	 * empty stack state of the result is different.
 	 * 
 	 * @param services Ultimate services
 	 * @param operand operand
@@ -98,9 +98,9 @@ public class RemoveUnreachable<LETTER,STATE>
 			// correct &= (ResultChecker.nwaLanguageInclusion(mResult, mInput)
 			// == null);
 			assert correct;
-			final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy = 
+			final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy =
 					(DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy(
-					mServices, (INestedWordAutomaton<LETTER, STATE>) mOperand, false, false, false,
+					mServices, mOperand, false, false, false,
 					false)).getResult();
 			correct &=
 			ResultChecker.isSubset(reachableStatesCopy.getStates(),mResult.getStates());
@@ -109,7 +109,8 @@ public class RemoveUnreachable<LETTER,STATE>
 			ResultChecker.isSubset(mResult.getStates(),reachableStatesCopy.getStates());
 			assert correct;
 			for (final STATE state : reachableStatesCopy.getStates()) {
-				for (final OutgoingInternalTransition<LETTER, STATE> outTrans : reachableStatesCopy.internalSuccessors(state)) {
+				for (final OutgoingInternalTransition<LETTER, STATE> outTrans : reachableStatesCopy
+						.internalSuccessors(state)) {
 					correct &= mResult.containsInternalTransition(state, outTrans.getLetter(),
 							outTrans.getSucc());
 					assert correct;
@@ -119,7 +120,8 @@ public class RemoveUnreachable<LETTER,STATE>
 							outTrans.getSucc());
 					assert correct;
 				}
-				for (final OutgoingReturnTransition<LETTER, STATE> outTrans : reachableStatesCopy.returnSuccessors(state)) {
+				for (final OutgoingReturnTransition<LETTER, STATE> outTrans :
+							reachableStatesCopy.returnSuccessors(state)) {
 					correct &= mResult.containsReturnTransition(state, outTrans.getHierPred(),
 							outTrans.getLetter(), outTrans.getSucc());
 					assert correct;
@@ -148,7 +150,7 @@ public class RemoveUnreachable<LETTER,STATE>
 				assert correct;
 			}
 			if (!correct) {
-				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, 
+				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
 						operationName() + "Failed", "language is different",
 						mOperand);
 			}

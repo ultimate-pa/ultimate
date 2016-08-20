@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi;
@@ -52,64 +52,58 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 
-
-
 /**
  * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
  * DifferenceAutomatonBuilder can compute a NWA nwa_difference
  * such that nwa_difference accepts all words that are accepted by nwa_minuend
- * but not by Psi(nwa_subtrahend), i.e. 
+ * but not by Psi(nwa_subtrahend), i.e.
  * L(nwa_difference) = L(nwa_minuend) \ L( Psi(nwa_subtrahend) ),
  * where Psi is a transformation of the automaton nwa_subtrahend that is defined
  * by an implementation of IStateDeterminizer.
  * 
- * 
  * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <LETTER> Symbol. Type of the elements of the alphabet over which the
- *     automata are defined. 
- * @param <STATE> Content. Type of the labels that are assigned to the states of
- *     automata. In many cases you want to use String as STATE and your states are
- *     labeled e.g. with "q0", "q1", ... 
+ * @param <LETTER>
+ *            Symbol. Type of the elements of the alphabet over which the
+ *            automata are defined.
+ * @param <STATE>
+ *            Content. Type of the labels that are assigned to the states of
+ *            automata. In many cases you want to use String as STATE and your states are
+ *            labeled e.g. with "q0", "q1", ...
  */
 //TODO: Optimization for special case where subtrahend is closed under
 // concatenation with Sigma^*. Use only one DeterminizedState detFin state that
 // represents all final states. Each successor of detFin is detFin itself.
-public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE> 
-							 implements IOperation<LETTER,STATE> {
+public class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, STATE>
+		implements IOperation<LETTER, STATE> {
 	/**
 	 * If set the language of the subtrahend is closed under concatenation with
 	 * sigma star. This means for determinized subtrahends: Once in the final
 	 * state you can never escape the final states. Hence the result can omit
-	 * all states where the subtrahend is final. 
+	 * all states where the subtrahend is final.
 	 */
 	private final boolean mSubtrahendSigmaStarClosed;
 	
-	private final INestedWordAutomatonSimple<LETTER,STATE> mMinuend;
-	private final INestedWordAutomatonSimple<LETTER,STATE> mSubtrahend;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mMinuend;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mSubtrahend;
 	
-	private final IStateDeterminizer<LETTER,STATE> mStateDeterminizer;
+	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 	
 	/**
 	 * Maps a DifferenceState to its representative in the resulting automaton.
 	 */
-	private final Map<DifferenceState<LETTER,STATE>,STATE> mDiff2res =
-		new HashMap<DifferenceState<LETTER,STATE>, STATE>();
-	
+	private final Map<DifferenceState<LETTER, STATE>, STATE> mDiff2res =
+			new HashMap<DifferenceState<LETTER, STATE>, STATE>();
+			
 	/**
 	 * Maps a state in resulting automaton to the DifferenceState for which it
 	 * was created.
 	 */
-	private final Map<STATE,DifferenceState<LETTER,STATE>> mRes2diff =
-		new HashMap<STATE, DifferenceState<LETTER,STATE>>();
-	
+	private final Map<STATE, DifferenceState<LETTER, STATE>> mRes2diff =
+			new HashMap<STATE, DifferenceState<LETTER, STATE>>();
+			
 	private final StateFactory<STATE> mStateFactoryForIntersection;
 	
-	
-//	private INestedWordAutomaton<LETTER,DeterminizedState<LETTER,STATE>> 
-//													mDeterminizedSubtrahend;
-
-	
+//	private INestedWordAutomaton<LETTER,DeterminizedState<LETTER,STATE>> mDeterminizedSubtrahend;
 	
 	private int mInternalSuccs = 0;
 	private int mInternalSuccsCache = 0;
@@ -119,24 +113,23 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 	private int mReturnSuccsCache = 0;
 	private int mUnnecessary = 0;
 	
-	
-	private final Map<DeterminizedState<LETTER,STATE>,DeterminizedState<LETTER,STATE>> mDetStateCache =
-		new HashMap<>();
-	
-	private final Map<DeterminizedState<LETTER,STATE>,
-		Map<LETTER,DeterminizedState<LETTER,STATE>>> mInternalSuccessorCache = new HashMap<>();
-	
-	private final Map<DeterminizedState<LETTER,STATE>,
-	Map<LETTER,DeterminizedState<LETTER,STATE>>> mCallSuccessorCache = new HashMap<>();
-	
-	private final Map<DeterminizedState<LETTER,STATE>,Map<DeterminizedState<LETTER,STATE>,
-		Map<LETTER,DeterminizedState<LETTER,STATE>>>> mReturnSuccessorCache = new HashMap<>();
-
+	private final Map<DeterminizedState<LETTER, STATE>, DeterminizedState<LETTER, STATE>> mDetStateCache =
+			new HashMap<>();
+			
+	private final Map<DeterminizedState<LETTER, STATE>, Map<LETTER, DeterminizedState<LETTER, STATE>>>
+		mInternalSuccessorCache = new HashMap<>();
+			
+	private final Map<DeterminizedState<LETTER, STATE>, Map<LETTER, DeterminizedState<LETTER, STATE>>>
+		mCallSuccessorCache = new HashMap<>();
+			
+	private final Map<DeterminizedState<LETTER, STATE>, Map<DeterminizedState<LETTER, STATE>,
+		Map<LETTER, DeterminizedState<LETTER, STATE>>>> mReturnSuccessorCache = new HashMap<>();
+			
 	public DifferenceDD(
 			final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER,STATE> minuend,
-			final INestedWordAutomatonSimple<LETTER,STATE> subtrahend,
-			final IStateDeterminizer<LETTER,STATE> stateDeterminizer,
+			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
+			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend,
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
 			final StateFactory<STATE> stateFactoryForIntersection,
 			final boolean removeDeadEnds,
 			final boolean subtrahendSigmaStarClosed) throws AutomataLibraryException {
@@ -151,22 +144,22 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		}
 		mLogger.info(startMessage());
 		this.mStateDeterminizer = stateDeterminizer;
-		super.mTraversedNwa = new DoubleDeckerAutomaton<LETTER,STATE>(
-				mServices, 
+		super.mTraversedNwa = new DoubleDeckerAutomaton<LETTER, STATE>(
+				mServices,
 				minuend.getInternalAlphabet(),
 				minuend.getCallAlphabet(),
 				minuend.getReturnAlphabet(),
 				mStateFactoryForIntersection);
 		super.mRemoveDeadEnds = removeDeadEnds;
 		
-//		mDeterminizedSubtrahend = 
+//		mDeterminizedSubtrahend =
 //			new NestedWordAutomaton<LETTER,DeterminizedState<LETTER,STATE>>(
-//					minuend.getInternalAlphabet(), 
-//					minuend.getCallAlphabet(), 
-//					minuend.getReturnAlphabet(), 
+//					minuend.getInternalAlphabet(),
+//					minuend.getCallAlphabet(),
+//					minuend.getReturnAlphabet(),
 //					null);
 		traverseDoubleDeckerGraph();
-		((DoubleDeckerAutomaton<LETTER,STATE>) super.mTraversedNwa).setUp2Down(getUp2DownMapping());
+		((DoubleDeckerAutomaton<LETTER, STATE>) super.mTraversedNwa).setUp2Down(getUp2DownMapping());
 		mLogger.info(exitMessage());
 		mLogger.info("Computed internal successors:" + mInternalSuccs);
 		mLogger.info("Internal successors via cache:" + mInternalSuccsCache);
@@ -174,19 +167,19 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		mLogger.info("Call successors via cache:" + mCallSuccsCache);
 		mLogger.info("Computed return successors:" + mReturnSuccs);
 		mLogger.info("Return successors via cache:" + mReturnSuccsCache);
-		mLogger.info(mUnnecessary + " times subtrahend state of successor " +
-				"was accepting (use sigma star concat closure?)");
+		mLogger.info(mUnnecessary + " times subtrahend state of successor "
+				+ "was accepting (use sigma star concat closure?)");
 	}
 	
 	/**
-	 * 
-	 * @param stateFactory {@link StateFactory} that is used for intersection
-	 * and determinization
+	 * @param stateFactory
+	 *            {@link StateFactory} that is used for intersection
+	 *            and determinization
 	 */
 	public DifferenceDD(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER,STATE> minuend,
-			final INestedWordAutomatonSimple<LETTER,STATE> subtrahend) throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
+			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend) throws AutomataLibraryException {
 		super(services);
 		this.mSubtrahendSigmaStarClosed = false;
 		mStateFactoryForIntersection = stateFactory;
@@ -198,9 +191,9 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		}
 		mLogger.info(startMessage());
 		this.mStateDeterminizer =
-			new PowersetDeterminizer<LETTER,STATE>(subtrahend, true, stateFactory);
-		super.mTraversedNwa = new DoubleDeckerAutomaton<LETTER,STATE>(
-				mServices, 
+				new PowersetDeterminizer<LETTER, STATE>(subtrahend, true, stateFactory);
+		super.mTraversedNwa = new DoubleDeckerAutomaton<LETTER, STATE>(
+				mServices,
 				minuend.getInternalAlphabet(),
 				minuend.getCallAlphabet(),
 				minuend.getReturnAlphabet(),
@@ -217,17 +210,16 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		newReturns.addAll(minuend.getReturnAlphabet());
 		newReturns.retainAll(subtrahend.getReturnAlphabet());
 		
-//		mDeterminizedSubtrahend = 
+//		mDeterminizedSubtrahend =
 //			new NestedWordAutomaton<LETTER,DeterminizedState<LETTER,STATE>>(
-//					minuend.getInternalAlphabet(), 
-//					minuend.getCallAlphabet(), 
-//					minuend.getReturnAlphabet(), 
+//					minuend.getInternalAlphabet(),
+//					minuend.getCallAlphabet(),
+//					minuend.getReturnAlphabet(),
 //					null);
 		traverseDoubleDeckerGraph();
-		((DoubleDeckerAutomaton<LETTER,STATE>) super.mTraversedNwa).setUp2Down(getUp2DownMapping());
+		((DoubleDeckerAutomaton<LETTER, STATE>) super.mTraversedNwa).setUp2Down(getUp2DownMapping());
 		mLogger.info(exitMessage());
 	}
-	
 	
 	@Override
 	public String operationName() {
@@ -236,26 +228,24 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 	
 	@Override
 	public String startMessage() {
-			return "Start " + operationName() + ". Minuend " + 
-			mMinuend.sizeInformation() + ". Subtrahend " + 
-			mSubtrahend.sizeInformation();	
+		return "Start " + operationName() + ". Minuend "
+				+ mMinuend.sizeInformation() + ". Subtrahend "
+				+ mSubtrahend.sizeInformation();
 	}
-
+	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + 
-		mTraversedNwa.sizeInformation() + ". Max degree of Nondeterminism is " + 
-		mStateDeterminizer.getMaxDegreeOfNondeterminism() +
-		". DeterminizedStates: " + mDetStateCache.size();
+		return "Finished " + operationName() + " Result "
+				+ mTraversedNwa.sizeInformation() + ". Max degree of Nondeterminism is "
+				+ mStateDeterminizer.getMaxDegreeOfNondeterminism()
+				+ ". DeterminizedStates: " + mDetStateCache.size();
 	}
 	
-	
-	
-	private DeterminizedState<LETTER,STATE> internalSuccessorCache(
-			final DeterminizedState<LETTER,STATE>  state,
+	private DeterminizedState<LETTER, STATE> internalSuccessorCache(
+			final DeterminizedState<LETTER, STATE> state,
 			final LETTER symbol) {
-		final Map<LETTER, DeterminizedState<LETTER,STATE>> symbol2succ = 
-			mInternalSuccessorCache.get(state);
+		final Map<LETTER, DeterminizedState<LETTER, STATE>> symbol2succ =
+				mInternalSuccessorCache.get(state);
 		if (symbol2succ == null) {
 			return null;
 		}
@@ -263,25 +253,23 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 	}
 	
 	private void putInternalSuccessorCache(
-			final DeterminizedState<LETTER,STATE>  state,
+			final DeterminizedState<LETTER, STATE> state,
 			final LETTER symbol,
-			final DeterminizedState<LETTER,STATE>  succ) {
-		Map<LETTER, DeterminizedState<LETTER,STATE>> symbol2succ = 
-			mInternalSuccessorCache.get(state);
+			final DeterminizedState<LETTER, STATE> succ) {
+		Map<LETTER, DeterminizedState<LETTER, STATE>> symbol2succ =
+				mInternalSuccessorCache.get(state);
 		if (symbol2succ == null) {
-			symbol2succ = new HashMap<LETTER,DeterminizedState<LETTER,STATE>>();
+			symbol2succ = new HashMap<LETTER, DeterminizedState<LETTER, STATE>>();
 			mInternalSuccessorCache.put(state, symbol2succ);
 		}
-		symbol2succ.put(symbol, succ);	
+		symbol2succ.put(symbol, succ);
 	}
 	
-	
-	
-	private DeterminizedState<LETTER,STATE> callSuccessorCache(
-			final DeterminizedState<LETTER,STATE>  state,
+	private DeterminizedState<LETTER, STATE> callSuccessorCache(
+			final DeterminizedState<LETTER, STATE> state,
 			final LETTER symbol) {
-		final Map<LETTER, DeterminizedState<LETTER,STATE>> symbol2succ = 
-			mCallSuccessorCache.get(state);
+		final Map<LETTER, DeterminizedState<LETTER, STATE>> symbol2succ =
+				mCallSuccessorCache.get(state);
 		if (symbol2succ == null) {
 			return null;
 		}
@@ -289,29 +277,29 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 	}
 	
 	private void putCallSuccessorCache(
-			final DeterminizedState<LETTER,STATE>  state,
+			final DeterminizedState<LETTER, STATE> state,
 			final LETTER symbol,
-			final DeterminizedState<LETTER,STATE>  succ) {
-		Map<LETTER, DeterminizedState<LETTER,STATE>> symbol2succ = 
-			mCallSuccessorCache.get(state);
+			final DeterminizedState<LETTER, STATE> succ) {
+		Map<LETTER, DeterminizedState<LETTER, STATE>> symbol2succ =
+				mCallSuccessorCache.get(state);
 		if (symbol2succ == null) {
-			symbol2succ = new HashMap<LETTER,DeterminizedState<LETTER,STATE>>();
+			symbol2succ = new HashMap<LETTER, DeterminizedState<LETTER, STATE>>();
 			mCallSuccessorCache.put(state, symbol2succ);
 		}
-		symbol2succ.put(symbol, succ);	
+		symbol2succ.put(symbol, succ);
 	}
 	
-	private DeterminizedState<LETTER,STATE> returnSuccessorCache(
-			final DeterminizedState<LETTER,STATE>  state,
-			final DeterminizedState<LETTER,STATE> linPred,
+	private DeterminizedState<LETTER, STATE> returnSuccessorCache(
+			final DeterminizedState<LETTER, STATE> state,
+			final DeterminizedState<LETTER, STATE> linPred,
 			final LETTER symbol) {
-		final Map<DeterminizedState<LETTER,STATE>,Map<LETTER, DeterminizedState<LETTER,STATE>>> linPred2symbol2succ =
-			mReturnSuccessorCache.get(linPred);
+		final Map<DeterminizedState<LETTER, STATE>, Map<LETTER, DeterminizedState<LETTER, STATE>>> linPred2symbol2succ =
+				mReturnSuccessorCache.get(linPred);
 		if (linPred2symbol2succ == null) {
 			return null;
 		}
-		final Map<LETTER, DeterminizedState<LETTER,STATE>> symbol2succ = 
-			linPred2symbol2succ.get(state);
+		final Map<LETTER, DeterminizedState<LETTER, STATE>> symbol2succ =
+				linPred2symbol2succ.get(state);
 		if (symbol2succ == null) {
 			return null;
 		}
@@ -319,83 +307,68 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 	}
 	
 	private void putReturnSuccessorCache(
-			final DeterminizedState<LETTER,STATE>  state,
-			final DeterminizedState<LETTER,STATE> linPred,
+			final DeterminizedState<LETTER, STATE> state,
+			final DeterminizedState<LETTER, STATE> linPred,
 			final LETTER symbol,
-			final DeterminizedState<LETTER,STATE>  succ) {
-		Map<DeterminizedState<LETTER,STATE>,Map<LETTER, DeterminizedState<LETTER,STATE>>> linPred2symbol2succ =
-			mReturnSuccessorCache.get(linPred);
+			final DeterminizedState<LETTER, STATE> succ) {
+		Map<DeterminizedState<LETTER, STATE>, Map<LETTER, DeterminizedState<LETTER, STATE>>> linPred2symbol2succ =
+				mReturnSuccessorCache.get(linPred);
 		if (linPred2symbol2succ == null) {
-			linPred2symbol2succ = 
-				new HashMap<DeterminizedState<LETTER,STATE>,Map<LETTER, DeterminizedState<LETTER,STATE>>>();
+			linPred2symbol2succ =
+					new HashMap<DeterminizedState<LETTER, STATE>, Map<LETTER, DeterminizedState<LETTER, STATE>>>();
 			mReturnSuccessorCache.put(linPred, linPred2symbol2succ);
 		}
-		Map<LETTER, DeterminizedState<LETTER,STATE>> symbol2succ = 
-			linPred2symbol2succ.get(state);
+		Map<LETTER, DeterminizedState<LETTER, STATE>> symbol2succ =
+				linPred2symbol2succ.get(state);
 		if (symbol2succ == null) {
-			symbol2succ = new HashMap<LETTER,DeterminizedState<LETTER,STATE>>();
+			symbol2succ = new HashMap<LETTER, DeterminizedState<LETTER, STATE>>();
 			linPred2symbol2succ.put(state, symbol2succ);
 		}
-		symbol2succ.put(symbol, succ);	
+		symbol2succ.put(symbol, succ);
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-
 	@Override
 	protected Collection<STATE> getInitialStates() {
-//		final ArrayList<STATE> resInitials = 
-//				new ArrayList<>(subtrahend.getInitialStates().size());
+//		final ArrayList<STATE> resInitials = new ArrayList<>(subtrahend.getInitialStates().size());
 		final ArrayList<STATE> resInitials = new ArrayList<>();
-		final DeterminizedState<LETTER,STATE> detState = mStateDeterminizer.initialState();
+		final DeterminizedState<LETTER, STATE> detState = mStateDeterminizer.initialState();
 		mDetStateCache.put(detState, detState);
 		for (final STATE minuState : mMinuend.getInitialStates()) {
-			final boolean isFinal = mMinuend.isFinal(minuState) &&
-											!detState.containsFinal();
-			final DifferenceState<LETTER,STATE> diffState = 
-				new DifferenceState<LETTER,STATE>(minuState, detState, isFinal);
+			final boolean isFinal = mMinuend.isFinal(minuState)
+					&& !detState.containsFinal();
+			final DifferenceState<LETTER, STATE> diffState =
+					new DifferenceState<LETTER, STATE>(minuState, detState, isFinal);
 			final STATE resState = mStateFactoryForIntersection.intersection(
-					diffState.getMinuendState(), 
+					diffState.getMinuendState(),
 					mStateDeterminizer.getState(diffState.getSubtrahendDeterminizedState()));
 			((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(true, diffState.isFinal(), resState);
-			mDiff2res.put(diffState,resState);
+			mDiff2res.put(diffState, resState);
 			mRes2diff.put(resState, diffState);
 			resInitials.add(resState);
 		}
 		return resInitials;
 	}
-
-
 	
 	@Override
 	protected Collection<STATE> buildInternalSuccessors(
-											final DoubleDecker<STATE> doubleDecker) {
+			final DoubleDecker<STATE> doubleDecker) {
 		final List<STATE> resInternalSuccessors = new LinkedList<STATE>();
 		final STATE resState = doubleDecker.getUp();
-		final DifferenceState<LETTER,STATE> diffState = mRes2diff.get(resState);
-		final STATE minuState = 
-			diffState.getMinuendState();
-		final DeterminizedState<LETTER,STATE> detState = 
-			diffState.getSubtrahendDeterminizedState();
+		final DifferenceState<LETTER, STATE> diffState = mRes2diff.get(resState);
+		final STATE minuState =
+				diffState.getMinuendState();
+		final DeterminizedState<LETTER, STATE> detState =
+				diffState.getSubtrahendDeterminizedState();
 				
 		for (final LETTER symbol : mMinuend.lettersInternal(minuState)) {
 			if (!mSubtrahend.getInternalAlphabet().contains(symbol)) {
 				continue;
 			}
-			DeterminizedState<LETTER,STATE> detSucc = 
-									internalSuccessorCache(detState, symbol);
+			DeterminizedState<LETTER, STATE> detSucc =
+					internalSuccessorCache(detState, symbol);
 			if (detState.containsFinal()) {
 				mUnnecessary++;
-			} 
+			}
 			if (detSucc == null) {
 				mInternalSuccs++;
 				detSucc = mStateDeterminizer.internalSuccessor(detState, symbol);
@@ -407,14 +380,14 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 				putInternalSuccessorCache(detState, symbol, detSucc);
 			} else {
 				mInternalSuccsCache++;
-			}	
-			for (final OutgoingInternalTransition<LETTER, STATE> trans :
-					mMinuend.internalSuccessors(minuState, symbol)) {
+			}
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : mMinuend.internalSuccessors(minuState,
+					symbol)) {
 				final STATE minuSucc = trans.getSucc();
-				final boolean isFinal = mMinuend.isFinal(minuSucc) &&
-						!detSucc.containsFinal();
-				final DifferenceState<LETTER,STATE> diffSucc = 
-						new DifferenceState<LETTER,STATE>(minuSucc, detSucc, isFinal);
+				final boolean isFinal = mMinuend.isFinal(minuSucc)
+						&& !detSucc.containsFinal();
+				final DifferenceState<LETTER, STATE> diffSucc =
+						new DifferenceState<LETTER, STATE>(minuSucc, detSucc, isFinal);
 				final STATE resSucc = getResState(diffSucc);
 				((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addInternalTransition(resState, symbol, resSucc);
 				resInternalSuccessors.add(resSucc);
@@ -422,30 +395,24 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		}
 		return resInternalSuccessors;
 	}
-
-
-
-
-
-
-
+	
 	@Override
 	protected Collection<STATE> buildCallSuccessors(
 			final DoubleDecker<STATE> doubleDecker) {
 		final List<STATE> resCallSuccessors = new LinkedList<STATE>();
 		final STATE resState = doubleDecker.getUp();
-		final DifferenceState<LETTER,STATE> diffState = mRes2diff.get(resState);
-		final STATE minuState = 
-			diffState.getMinuendState();
-		final DeterminizedState<LETTER,STATE> detState = 
-			diffState.getSubtrahendDeterminizedState(); 
-		
+		final DifferenceState<LETTER, STATE> diffState = mRes2diff.get(resState);
+		final STATE minuState =
+				diffState.getMinuendState();
+		final DeterminizedState<LETTER, STATE> detState =
+				diffState.getSubtrahendDeterminizedState();
+				
 		for (final LETTER symbol : mMinuend.lettersCall(minuState)) {
 			if (!mSubtrahend.getCallAlphabet().contains(symbol)) {
 				continue;
 			}
-			DeterminizedState<LETTER,STATE> detSucc = 
-									callSuccessorCache(detState, symbol);
+			DeterminizedState<LETTER, STATE> detSucc =
+					callSuccessorCache(detState, symbol);
 			if (detState.containsFinal()) {
 				mUnnecessary++;
 			}
@@ -461,16 +428,15 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 			} else {
 				mCallSuccsCache++;
 			}
-			for (final OutgoingCallTransition<LETTER, STATE> trans :
-					mMinuend.callSuccessors(minuState, symbol)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : mMinuend.callSuccessors(minuState, symbol)) {
 				final STATE minuSucc = trans.getSucc();
 				if (mSubtrahendSigmaStarClosed && detSucc.containsFinal()) {
 					continue;
 				}
-				final boolean isFinal = mMinuend.isFinal(minuSucc) &&
-						!detSucc.containsFinal();
-				final DifferenceState<LETTER,STATE> diffSucc = 
-						new DifferenceState<LETTER,STATE>(minuSucc, detSucc, isFinal);
+				final boolean isFinal = mMinuend.isFinal(minuSucc)
+						&& !detSucc.containsFinal();
+				final DifferenceState<LETTER, STATE> diffSucc =
+						new DifferenceState<LETTER, STATE>(minuSucc, detSucc, isFinal);
 				final STATE resSucc = getResState(diffSucc);
 				((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addCallTransition(resState, symbol, resSucc);
 				resCallSuccessors.add(resSucc);
@@ -478,15 +444,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		}
 		return resCallSuccessors;
 	}
-
-
-
-
-
-
-
-
-
+	
 	@Override
 	protected Collection<STATE> buildReturnSuccessors(
 			final DoubleDecker<STATE> doubleDecker) {
@@ -497,23 +455,23 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		}
 		
 		final STATE resState = doubleDecker.getUp();
-		final DifferenceState<LETTER,STATE> diffState = mRes2diff.get(resState);
-		final STATE minuState = 
+		final DifferenceState<LETTER, STATE> diffState = mRes2diff.get(resState);
+		final STATE minuState =
 				diffState.getMinuendState();
-			final DeterminizedState<LETTER,STATE> detState = 
-				diffState.getSubtrahendDeterminizedState(); 
-		
-		final DifferenceState<LETTER,STATE> diffLinPred = mRes2diff.get(resLinPred);
+		final DeterminizedState<LETTER, STATE> detState =
+				diffState.getSubtrahendDeterminizedState();
+				
+		final DifferenceState<LETTER, STATE> diffLinPred = mRes2diff.get(resLinPred);
 		final STATE minuLinPred = diffLinPred.getMinuendState();
 		
-		final DeterminizedState<LETTER,STATE> detLinPred = 
-			diffLinPred.getSubtrahendDeterminizedState();
-		
+		final DeterminizedState<LETTER, STATE> detLinPred =
+				diffLinPred.getSubtrahendDeterminizedState();
+				
 		for (final LETTER symbol : mMinuend.lettersReturn(minuState)) {
 			
 			final Iterable<OutgoingReturnTransition<LETTER, STATE>> minuTransitions =
 					mMinuend.returnSuccessors(minuState, minuLinPred, symbol);
-			
+					
 			// do nothing if there will be no successor difference state
 			if (!minuTransitions.iterator().hasNext()) {
 				continue;
@@ -523,15 +481,15 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 				continue;
 			}
 			
-			DeterminizedState<LETTER,STATE> detSucc = 
-							returnSuccessorCache(detState, detLinPred, symbol);
+			DeterminizedState<LETTER, STATE> detSucc =
+					returnSuccessorCache(detState, detLinPred, symbol);
 			if (detState.containsFinal()) {
 				mUnnecessary++;
 			}
 			if (detSucc == null) {
 				mReturnSuccs++;
 				detSucc = mStateDeterminizer.returnSuccessor(
-												detState, detLinPred, symbol);
+						detState, detLinPred, symbol);
 //				mLogger.debug("Successor of state " + detState + " symbol " +
 //						symbol + " linPred " + detLinPred + " is " + detSucc);
 				
@@ -543,34 +501,29 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 				putReturnSuccessorCache(detState, detLinPred, symbol, detSucc);
 			} else {
 				mReturnSuccsCache++;
-			}			
+			}
 			
 			for (final OutgoingReturnTransition<LETTER, STATE> trans : minuTransitions) {
 				final STATE minuSucc = trans.getSucc();
-				final boolean isFinal = mMinuend.isFinal(minuSucc) &&
-											!detSucc.containsFinal();
-				final DifferenceState<LETTER,STATE> diffSucc = 
-					new DifferenceState<LETTER,STATE>(minuSucc, detSucc, isFinal);
+				final boolean isFinal = mMinuend.isFinal(minuSucc)
+						&& !detSucc.containsFinal();
+				final DifferenceState<LETTER, STATE> diffSucc =
+						new DifferenceState<LETTER, STATE>(minuSucc, detSucc, isFinal);
 				final STATE resSucc = getResState(diffSucc);
 				((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addReturnTransition(
-										resState, resLinPred, symbol, resSucc);
+						resState, resLinPred, symbol, resSucc);
 				resReturnSuccessors.add(resSucc);
 			}
 		}
 		return resReturnSuccessors;
 	}
-
-
-
-
-	
 	
 	/**
 	 * Get the state in the resulting automaton that represents a
 	 * DifferenceState. If this state in the resulting automaton does not exist
 	 * yet, construct it.
 	 */
-	STATE getResState(final DifferenceState<LETTER,STATE> diffState) {
+	STATE getResState(final DifferenceState<LETTER, STATE> diffState) {
 		if (mDiff2res.containsKey(diffState)) {
 			return mDiff2res.get(diffState);
 		} else {
@@ -578,21 +531,21 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 					diffState.getMinuendState(),
 					mStateDeterminizer.getState(diffState.getSubtrahendDeterminizedState()));
 			((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(false, diffState.isFinal(), resState);
-			mDiff2res.put(diffState,resState);
-			mRes2diff.put(resState,diffState);
+			mDiff2res.put(diffState, resState);
+			mRes2diff.put(resState, diffState);
 			return resState;
 		}
 	}
-
+	
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
-
-			final INestedWordAutomaton<LETTER,STATE> resultSadd = 
-					(new DifferenceSadd<LETTER,STATE>(mServices, stateFactory, mMinuend, mSubtrahend)).getResult();
+			
+			final INestedWordAutomaton<LETTER, STATE> resultSadd =
+					(new DifferenceSadd<LETTER, STATE>(mServices, stateFactory, mMinuend, mSubtrahend)).getResult();
 			correct &= new IsIncluded<>(mServices, stateFactory, resultSadd, mTraversedNwa).getResult();
 			correct &= new IsIncluded<>(mServices, stateFactory, mTraversedNwa, resultSadd).getResult();
 			if (!correct) {
@@ -606,5 +559,5 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		}
 		return correct;
 	}
-
+	
 }

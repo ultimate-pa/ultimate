@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
@@ -33,10 +33,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
@@ -44,19 +44,21 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
 
 /**
- * Check if an automaton is 
+ * Check if an automaton is
  * <a href="https://en.wikipedia.org/wiki/Semi-deterministic_B%C3%BCchi_automaton">Semi-deterministic</a>.
- * @author Matthias Heizmann
  * 
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author Matthias Heizmann
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class IsSemiDeterministic<LETTER,STATE>
-		extends UnaryNwaOperation<LETTER, STATE> 
-		implements IOperation<LETTER,STATE> {
-	
+public class IsSemiDeterministic<LETTER, STATE>
+		extends UnaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER, STATE> {
+		
 	private final Set<STATE> mNondeterministicSuccessorOfAccepting = new HashSet<>();
-
+	
 	private final boolean mResult;
 	
 	/*
@@ -65,14 +67,18 @@ public class IsSemiDeterministic<LETTER,STATE>
 	 */
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mOperand;
 	
-
 	/**
-	 * @param services Ultimate services
-	 * @param operand operand
-	 * @throws AutomataLibraryException if construction fails
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @throws AutomataLibraryException
+	 *             if construction fails
 	 */
 	public IsSemiDeterministic(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER,STATE> operand) throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataLibraryException {
 		super(services, operand);
 		if (operand instanceof NestedWordAutomatonReachableStates) {
 			mOperand = (NestedWordAutomatonReachableStates<LETTER, STATE>) operand;
@@ -92,10 +98,10 @@ public class IsSemiDeterministic<LETTER,STATE>
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Operand is " 
-					+ (mResult ? "" : "not") + "semideterministic."
-					+ " There are " + mNondeterministicSuccessorOfAccepting
-					+ "nondeterministic non-strict successor of accepting states."; 
+		return "Finished " + operationName() + " Operand is "
+				+ (mResult ? "" : "not") + "semideterministic."
+				+ " There are " + mNondeterministicSuccessorOfAccepting
+				+ "nondeterministic non-strict successor of accepting states.";
 	}
 	
 	public void iterate() {
@@ -122,8 +128,8 @@ public class IsSemiDeterministic<LETTER,STATE>
 				}
 			}
 		}
-
-		// step two: start with yet visited DoubleDeckers, 
+		
+		// step two: start with yet visited DoubleDeckers,
 		//           add all non-return successors
 		{
 			worklist.addAll(visited);
@@ -153,8 +159,7 @@ public class IsSemiDeterministic<LETTER,STATE>
 		}
 		return result;
 	}
-
-
+	
 	private static <LETTER, STATE> Set<DoubleDecker<STATE>> getNonCallSuccessors(
 			final DoubleDecker<STATE> dd, final NestedWordAutomatonReachableStates<LETTER, STATE> nwa) {
 		final Set<DoubleDecker<STATE>> succs = new HashSet<DoubleDecker<STATE>>();
@@ -164,15 +169,14 @@ public class IsSemiDeterministic<LETTER,STATE>
 		for (final SummaryReturnTransition<LETTER, STATE> out : nwa.returnSummarySuccessor(dd.getUp())) {
 			succs.add(new DoubleDecker<STATE>(dd.getDown(), out.getSucc()));
 		}
-		for (final OutgoingReturnTransition<LETTER, STATE> out :
-				nwa.returnSuccessorsGivenHier(dd.getUp(), dd.getDown())) {
+		for (final OutgoingReturnTransition<LETTER, STATE> out : nwa.returnSuccessorsGivenHier(dd.getUp(),
+				dd.getDown())) {
 			for (final STATE downOfHier : nwa.getDownStates(dd.getDown())) {
 				succs.add(new DoubleDecker<STATE>(downOfHier, out.getSucc()));
 			}
 		}
 		return succs;
 	}
-	
 	
 	private static <LETTER, STATE> Set<DoubleDecker<STATE>> getNonReturnSuccessors(
 			final DoubleDecker<STATE> dd, final NestedWordAutomatonReachableStates<LETTER, STATE> nwa) {
@@ -188,14 +192,13 @@ public class IsSemiDeterministic<LETTER,STATE>
 		}
 		return succs;
 	}
-
 	
-
 	public static <LETTER, STATE> boolean isNondeterministic(
 			final DoubleDecker<STATE> dd, final NestedWordAutomatonReachableStates<LETTER, STATE> traversedNwa) {
 		final boolean isNondeterministicInternal = isNondeterministicInternal(dd.getUp(), traversedNwa);
 		final boolean isNondeterministicCall = isNondeterministicCall(dd.getUp(), traversedNwa);
-		final boolean isNondeterministicReturn = isNondeterministicReturnGivenHier(dd.getUp(), dd.getDown(), traversedNwa);
+		final boolean isNondeterministicReturn =
+				isNondeterministicReturnGivenHier(dd.getUp(), dd.getDown(), traversedNwa);
 		return isNondeterministicInternal || isNondeterministicCall || isNondeterministicReturn;
 	}
 	
@@ -203,8 +206,8 @@ public class IsSemiDeterministic<LETTER,STATE>
 			final STATE state, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		for (final LETTER letter : nwa.lettersInternal(state)) {
 			int numberOfSuccs = 0;
-			for (@SuppressWarnings("unused") final OutgoingInternalTransition<LETTER, STATE> out :
-					nwa.internalSuccessors(state, letter)) {
+			for (@SuppressWarnings("unused")
+			final OutgoingInternalTransition<LETTER, STATE> out : nwa.internalSuccessors(state, letter)) {
 				numberOfSuccs++;
 			}
 			if (numberOfSuccs > 1) {
@@ -214,13 +217,12 @@ public class IsSemiDeterministic<LETTER,STATE>
 		return false;
 	}
 	
-	
 	public static <LETTER, STATE> boolean isNondeterministicCall(
 			final STATE state, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		for (final LETTER letter : nwa.lettersCall(state)) {
 			int numberOfSuccs = 0;
-			for (@SuppressWarnings("unused") final OutgoingCallTransition<LETTER, STATE> out :
-					nwa.callSuccessors(state, letter)) {
+			for (@SuppressWarnings("unused")
+			final OutgoingCallTransition<LETTER, STATE> out : nwa.callSuccessors(state, letter)) {
 				numberOfSuccs++;
 			}
 			if (numberOfSuccs > 1) {
@@ -234,8 +236,8 @@ public class IsSemiDeterministic<LETTER,STATE>
 			final STATE state, final STATE hier, final INestedWordAutomaton<LETTER, STATE> nwa) {
 		for (final LETTER letter : nwa.lettersReturn(state)) {
 			int numberOfSuccs = 0;
-			for (@SuppressWarnings("unused") final OutgoingReturnTransition<LETTER, STATE> out :
-					nwa.returnSuccessors(state, hier, letter)) {
+			for (@SuppressWarnings("unused")
+			final OutgoingReturnTransition<LETTER, STATE> out : nwa.returnSuccessors(state, hier, letter)) {
 				numberOfSuccs++;
 			}
 			if (numberOfSuccs > 1) {
@@ -250,8 +252,8 @@ public class IsSemiDeterministic<LETTER,STATE>
 		for (final LETTER letter : nwa.lettersReturn(state)) {
 			for (final STATE hier : nwa.hierPred(state, letter)) {
 				int numberOfSuccs = 0;
-				for (@SuppressWarnings("unused") final OutgoingReturnTransition<LETTER, STATE> out :
-						nwa.returnSuccessors(state, hier, letter)) {
+				for (@SuppressWarnings("unused")
+				final OutgoingReturnTransition<LETTER, STATE> out : nwa.returnSuccessors(state, hier, letter)) {
 					numberOfSuccs++;
 				}
 				if (numberOfSuccs > 1) {
@@ -267,4 +269,3 @@ public class IsSemiDeterministic<LETTER,STATE>
 		return mResult;
 	}
 }
-

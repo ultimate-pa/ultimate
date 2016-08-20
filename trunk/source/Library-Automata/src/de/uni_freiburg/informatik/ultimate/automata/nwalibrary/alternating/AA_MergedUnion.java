@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating;
@@ -39,7 +39,8 @@ public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	
 	private final AlternatingAutomaton<LETTER, STATE> mResultAutomaton;
 
-	public AA_MergedUnion(final AlternatingAutomaton<LETTER, STATE> automaton1, final AlternatingAutomaton<LETTER, STATE> automaton2) {
+	public AA_MergedUnion(final AlternatingAutomaton<LETTER, STATE> automaton1,
+			final AlternatingAutomaton<LETTER, STATE> automaton2) {
 		assert automaton1.getAlphabet().equals(automaton2.getAlphabet());
 		assert (automaton1.isReversed() == automaton2.isReversed());
 		mResultAutomaton = new AlternatingAutomaton<>(automaton1.getAlphabet(), automaton1.getStateFactory());
@@ -64,8 +65,8 @@ public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			for (int i = 0; i < automaton1.getStates().size(); i++) {
 				if (entry.getValue()[i] != null) {
 					mResultAutomaton.addTransition(
-							entry.getKey(), 
-							automaton1.getStates().get(i), 
+							entry.getKey(),
+							automaton1.getStates().get(i),
 							entry.getValue()[i].cloneShifted(shiftMap1, newSize));
 				}
 			}
@@ -74,8 +75,8 @@ public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			for (int i = 0; i < automaton2.getStates().size(); i++) {
 				if (entry.getValue()[i] != null) {
 					mResultAutomaton.addTransition(
-							entry.getKey(), 
-							automaton2.getStates().get(i), 
+							entry.getKey(),
+							automaton2.getStates().get(i),
 							entry.getValue()[i].cloneShifted(shiftMap2, newSize));
 				}
 			}

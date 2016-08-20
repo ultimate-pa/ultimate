@@ -40,9 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * TODO Christian 2016-08-20: unfinished documentation
  * 
  * @author Jan Hättig (haettigj@informatik.uni-freiburg.de)
- * @param <LETTER>
- *            Symbol. Type of the elements of the alphabet over which the
- *            automata are defined.
  * @param <STATE>
  *            Content. Type of the labels that are assigned to the states of the
  *            automata. In many cases you want to use {@link String} as {@link STATE} and your

@@ -75,7 +75,7 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 		convertLog.info("starting conversion");
 		final Converter<LETTER, STATE> converter =
 				new Converter<LETTER, STATE>(services, stateFactory, automaton);
-		final NwaWithArrays nwa = converter.getNWA();
+		final NwaWithArrays nwa = converter.getNwa();
 		// it shouldn't be like this, but...
 		final ArrayList<Hist> history = converter.computeHistoryStates();
 		convertLog.info(

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization;
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.Aut
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class NwaToUltimateModel<LETTER,STATE> {
+public class NwaToUltimateModel<LETTER, STATE> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	
@@ -52,53 +52,35 @@ public class NwaToUltimateModel<LETTER,STATE> {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 	}
-
-	public IElement getUltimateModelOfNwa(final INestedWordAutomatonSimple<LETTER,STATE> nwaSimple)
+	
+	public IElement getUltimateModelOfNwa(final INestedWordAutomatonSimple<LETTER, STATE> nwaSimple)
 			throws AutomataOperationCanceledException {
-		final INestedWordAutomaton<LETTER,STATE> nwa;
+		final INestedWordAutomaton<LETTER, STATE> nwa;
 		if (nwaSimple instanceof INestedWordAutomaton) {
 			nwa = (INestedWordAutomaton<LETTER, STATE>) nwaSimple;
 		} else {
 			nwa = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, nwaSimple);
 		}
-		final AutomatonState graphroot = new AutomatonState("Sucessors of this node are the" +
-					" initial states",false);	
-		final Map<STATE,AutomatonState> constructed =	new HashMap<STATE,AutomatonState>();
+		final AutomatonState graphroot =
+				new AutomatonState("Sucessors of this node are the initial states", false);
+		final Map<STATE, AutomatonState> constructed = new HashMap<STATE, AutomatonState>();
 		final LinkedList<STATE> queue = new LinkedList<STATE>();
-	
+		
 		// add all initial states to model - all are successors of the graphroot
 		for (final STATE state : nwa.getInitialStates()) {
 			queue.add(state);
 			final AutomatonState vsn = new AutomatonState(state,
-									nwa.isFinal(state));
-			constructed.put(state,vsn);
+					nwa.isFinal(state));
+			constructed.put(state, vsn);
 			new AutomatonTransition(graphroot,
-											Transition.INTERNAL,"", null, vsn);
+					Transition.INTERNAL, "", null, vsn);
 		}
 		
 		while (!queue.isEmpty()) {
 			final STATE state = queue.removeFirst();
 			final AutomatonState vsn = constructed.get(state);
 			
-			for (final OutgoingInternalTransition<LETTER, STATE> trans : 
-												nwa.internalSuccessors(state)) {
-				final LETTER symbol = trans.getLetter();
-				final STATE succState = trans.getSucc();
-				AutomatonState succVSN;
-				if (constructed.containsKey(succState)) {
-					succVSN = constructed.get(succState);
-				} else {
-					succVSN = new AutomatonState(succState,
-							nwa.isFinal(succState));
-					mLogger.debug("Creating Node: " + succVSN.toString());
-					constructed.put(succState,succVSN);
-					queue.add(succState);
-				}
-				new AutomatonTransition(vsn,Transition.INTERNAL,symbol,null,succVSN);
-			}
-			
-			for (final OutgoingCallTransition<LETTER, STATE> trans : 
-													nwa.callSuccessors(state)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : nwa.internalSuccessors(state)) {
 				final LETTER symbol = trans.getLetter();
 				final STATE succState = trans.getSucc();
 				AutomatonState succVSN;
@@ -111,18 +93,34 @@ public class NwaToUltimateModel<LETTER,STATE> {
 					constructed.put(succState, succVSN);
 					queue.add(succState);
 				}
-				new AutomatonTransition(vsn, Transition.CALL, symbol, null,	succVSN);
+				new AutomatonTransition(vsn, Transition.INTERNAL, symbol, null, succVSN);
+			}
+			
+			for (final OutgoingCallTransition<LETTER, STATE> trans : nwa.callSuccessors(state)) {
+				final LETTER symbol = trans.getLetter();
+				final STATE succState = trans.getSucc();
+				AutomatonState succVSN;
+				if (constructed.containsKey(succState)) {
+					succVSN = constructed.get(succState);
+				} else {
+					succVSN = new AutomatonState(succState,
+							nwa.isFinal(succState));
+					mLogger.debug("Creating Node: " + succVSN.toString());
+					constructed.put(succState, succVSN);
+					queue.add(succState);
+				}
+				new AutomatonTransition(vsn, Transition.CALL, symbol, null, succVSN);
 			}
 			for (final STATE hierPredState : nwa.getStates()) {
-				for (final OutgoingReturnTransition<LETTER, STATE> trans : 
-							nwa.returnSuccessorsGivenHier(state, hierPredState)) {
+				for (final OutgoingReturnTransition<LETTER, STATE> trans : nwa.returnSuccessorsGivenHier(state,
+						hierPredState)) {
 					final LETTER symbol = trans.getLetter();
 					final STATE succState = trans.getSucc();
 					AutomatonState succVSN;
 					if (constructed.containsKey(succState)) {
 						succVSN = constructed.get(succState);
 					} else {
-						succVSN = new AutomatonState(succState,nwa.isFinal(succState));
+						succVSN = new AutomatonState(succState, nwa.isFinal(succState));
 						mLogger.debug("Creating Node: " + succVSN.toString());
 						constructed.put(succState, succVSN);
 						queue.add(succState);
@@ -135,5 +133,4 @@ public class NwaToUltimateModel<LETTER,STATE> {
 		return graphroot;
 	}
 	
-
 }

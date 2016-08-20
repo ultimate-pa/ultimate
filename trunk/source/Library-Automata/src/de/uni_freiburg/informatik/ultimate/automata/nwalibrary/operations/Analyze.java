@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
@@ -36,8 +36,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
@@ -47,15 +47,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * A user should use the respective getters to obtain individual data.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * 
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class Analyze<LETTER, STATE>
 		extends UnaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 	/**
-	 * type of symbol
+	 * Type of symbol.
 	 */
 	public enum ESymbolType {
 		INTERNAL,
@@ -69,7 +70,7 @@ public class Analyze<LETTER, STATE>
 	 * It shadows the superclass field with the same name.
 	 */
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-
+	
 	private boolean mNumberOfStatesComputed;
 	private int mNumberOfStates;
 	
@@ -92,8 +93,12 @@ public class Analyze<LETTER, STATE>
 	private int mNumberOfNondeterministicStates;
 	
 	/**
-	 * @param services Ultimate services
-	 * @param operand input NWA
+	 * Base constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            input NWA
 	 */
 	public Analyze(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
@@ -101,11 +106,15 @@ public class Analyze<LETTER, STATE>
 	}
 	
 	/**
-	 * @param services Ultimate services
-	 * @param operand input NWA
+	 * Extended constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            input NWA
 	 * @param computeEverything
-	 *        true: information is computed at construction time;
-	 *        false: information is computed at access time
+	 *            true: information is computed at construction time;
+	 *            false: information is computed at access time
 	 */
 	public Analyze(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand,
@@ -122,25 +131,26 @@ public class Analyze<LETTER, STATE>
 			getNumberOfNondeterministicStates();
 		}
 	}
-
+	
 	// --- getter methods ---
 	
 	/**
-	 * @return number of states
+	 * @return Number of states.
 	 */
 	public int getNumberOfStates() {
-		if (! mNumberOfStatesComputed) {
+		if (!mNumberOfStatesComputed) {
 			computeNumberOfStates();
 		}
 		return mNumberOfStates;
 	}
 	
 	/**
-	 * @param type symbol type
+	 * @param type
+	 *            symbol type
 	 * @return number of symbols
 	 */
 	public int getNumberOfSymbols(final ESymbolType type) {
-		if (! mNumberOfSymbolsComputed) {
+		if (!mNumberOfSymbolsComputed) {
 			computeNumberOfSymbols();
 		}
 		final int result;
@@ -158,8 +168,7 @@ public class Analyze<LETTER, STATE>
 				break;
 				
 			case TOTAL:
-				result = mNumberOfInternalSymbols +
-						mNumberOfCallSymbols + mNumberOfReturnSymbols;
+				result = mNumberOfInternalSymbols + mNumberOfCallSymbols + mNumberOfReturnSymbols;
 				break;
 				
 			default:
@@ -169,11 +178,12 @@ public class Analyze<LETTER, STATE>
 	}
 	
 	/**
-	 * @param type symbol type
+	 * @param type
+	 *            symbol type
 	 * @return number of transitions
 	 */
 	public int getNumberOfTransitions(final ESymbolType type) {
-		if (! mNumberOfTransitionsComputed) {
+		if (!mNumberOfTransitionsComputed) {
 			computeNumberOfTransitions();
 		}
 		final int result;
@@ -191,8 +201,7 @@ public class Analyze<LETTER, STATE>
 				break;
 				
 			case TOTAL:
-				result = mNumberOfInternalTransitions +
-						mNumberOfCallTransitions + mNumberOfReturnTransitions;
+				result = mNumberOfInternalTransitions + mNumberOfCallTransitions + mNumberOfReturnTransitions;
 				break;
 				
 			default:
@@ -206,16 +215,17 @@ public class Analyze<LETTER, STATE>
 	 * <code>T</code> divided by the number of states <code>S</code> and the
 	 * number of symbols <code>L</code>. <br>
 	 * transition density = <code>T / (S * L)</code> <br>
-	 * 
-	 * <p>In particular, for return transitions the number of symbols
+	 * <p>
+	 * In particular, for return transitions the number of symbols
 	 * <code>L</code> is the number of return symbol multiplied by the number
 	 * of states.
 	 * 
-	 * @param type symbol type
+	 * @param type
+	 *            symbol type
 	 * @return transition density
 	 */
 	public double getTransitionDensity(final ESymbolType type) {
-		if (! mTransitionDensityComputed) {
+		if (!mTransitionDensityComputed) {
 			computeTransitionDensity();
 		}
 		final double result;
@@ -233,8 +243,7 @@ public class Analyze<LETTER, STATE>
 				break;
 				
 			case TOTAL:
-				result = (mInternalTransitionDensity +
-						mCallTransitionDensity + mReturnTransitionDensity) / 3;
+				result = (mInternalTransitionDensity + mCallTransitionDensity + mReturnTransitionDensity) / 3;
 				break;
 				
 			default:
@@ -246,14 +255,14 @@ public class Analyze<LETTER, STATE>
 	/**
 	 * A state is nondeterministic if it contains at least two outgoing
 	 * transitions with the same symbol. <br>
-	 * 
-	 * <p>In particular, for return transitions the same return symbol and
+	 * <p>
+	 * In particular, for return transitions the same return symbol and
 	 * hierarchical predecessor state must occur twice.
 	 * 
 	 * @return number of nondeterministic states
 	 */
 	public int getNumberOfNondeterministicStates() {
-		if (! mNumberOfNondeterministicStatesComputed) {
+		if (!mNumberOfNondeterministicStatesComputed) {
 			computeDegreeOfNondeterminism();
 		}
 		return mNumberOfNondeterministicStates;
@@ -341,18 +350,18 @@ public class Analyze<LETTER, STATE>
 		mInternalTransitionDensity = (denominator == 0d
 				? 0d
 				: (mNumberOfInternalTransitions / denominator));
-		
+				
 		denominator = (mNumberOfStates * mNumberOfCallSymbols);
 		mCallTransitionDensity = (denominator == 0d
 				? 0d
 				: (mNumberOfCallTransitions / denominator));
-		
+				
 		denominator =
 				(mNumberOfStates * mNumberOfStates * mNumberOfReturnSymbols);
 		mReturnTransitionDensity = (denominator == 0d
 				? 0d
 				: (mNumberOfReturnTransitions / denominator));
-		
+				
 		mTransitionDensityComputed = true;
 	}
 	
@@ -361,10 +370,9 @@ public class Analyze<LETTER, STATE>
 		
 		final Set<STATE> dummySet = Collections.emptySet();
 		final Map<LETTER, Set<STATE>> symbolsVisited = new HashMap<>();
-		outer : for (final STATE state : mOperand.getStates()) {
+		outer: for (final STATE state : mOperand.getStates()) {
 			symbolsVisited.clear();
-			for (final OutgoingInternalTransition<LETTER, STATE> trans :
-					mOperand.internalSuccessors(state)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(state)) {
 				if (symbolsVisited.put(trans.getLetter(), dummySet) != null) {
 					++mNumberOfNondeterministicStates;
 					continue outer;
@@ -372,8 +380,7 @@ public class Analyze<LETTER, STATE>
 			}
 			
 			symbolsVisited.clear();
-			for (final OutgoingCallTransition<LETTER, STATE> trans :
-					mOperand.callSuccessors(state)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(state)) {
 				if (symbolsVisited.put(trans.getLetter(), dummySet) != null) {
 					++mNumberOfNondeterministicStates;
 					continue outer;
@@ -385,15 +392,14 @@ public class Analyze<LETTER, STATE>
 			 * predecessor
 			 */
 			symbolsVisited.clear();
-			for (final OutgoingReturnTransition<LETTER, STATE> trans :
-					mOperand.returnSuccessors(state)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(state)) {
 				final LETTER letter = trans.getLetter();
 				Set<STATE> set = symbolsVisited.get(letter);
 				if (set == null) {
 					set = new HashSet<STATE>();
 					symbolsVisited.put(letter, set);
 				}
-				if (! set.add(trans.getHierPred())) {
+				if (!set.add(trans.getHierPred())) {
 					++mNumberOfNondeterministicStates;
 					continue outer;
 				}

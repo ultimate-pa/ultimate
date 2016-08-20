@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
@@ -40,23 +40,20 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-
-public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
-
+public class BuchiIntersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
+	
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	
-	private final INestedWordAutomatonSimple<LETTER,STATE> mFstOperand;
-	private final INestedWordAutomatonSimple<LETTER,STATE> mSndOperand;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private BuchiIntersectNwa<LETTER, STATE> mIntersect;
-	private NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
+	private NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private final StateFactory<STATE> mStateFactory;
 	
-	
 	public BuchiIntersect(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand
-			) throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mFstOperand = fstOperand;
@@ -66,8 +63,8 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	public BuchiIntersect(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
 			final StateFactory<STATE> sf) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -82,19 +79,15 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		return "buchiIntersect";
 	}
 	
-	
 	@Override
 	public String startMessage() {
-		return "Start intersect. First operand " + 
-				mFstOperand.sizeInformation() + ". Second operand " + 
-				mSndOperand.sizeInformation();	
+		return "Start intersect. First operand " + mFstOperand.sizeInformation() + ". Second operand "
+				+ mSndOperand.sizeInformation();
 	}
-	
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + 
-				mResult.sizeInformation();
+		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}
 	
 	private void doIntersect() throws AutomataLibraryException {
@@ -109,7 +102,7 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			throws AutomataLibraryException {
 		return mResult;
 	}
-
+	
 	@Override
 	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
@@ -130,25 +123,25 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	private boolean resultCheckWithRandomWords() throws AutomataLibraryException {
-		final List<NestedLassoWord<LETTER>> lassoWords = 
+		final List<NestedLassoWord<LETTER>> lassoWords =
 				new ArrayList<NestedLassoWord<LETTER>>();
-		final BuchiIsEmpty<LETTER, STATE> resultEmptiness = 
+		final BuchiIsEmpty<LETTER, STATE> resultEmptiness =
 				new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
 		if (!resultEmptiness.getResult()) {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		final BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness = 
+		final BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness =
 				new BuchiIsEmpty<LETTER, STATE>(mServices, mFstOperand);
 		if (fstOperandEmptiness.getResult()) {
 			assert resultEmptiness.getResult();
 		} else {
 			lassoWords.add(fstOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		final BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness = 
+		final BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness =
 				new BuchiIsEmpty<LETTER, STATE>(mServices, mSndOperand);
 		if (sndOperandEmptiness.getResult()) {
 			assert resultEmptiness.getResult();
-		} else 	{
+		} else {
 			lassoWords.add(sndOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));

@@ -45,7 +45,6 @@ import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -63,23 +62,25 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 
 /**
  * This class minimizes nested word automata.
- * 
- * <p>It is based on Hopcroft's minimization for deterministic finite automata.
- * 
- * <p>Basically we do an over-approximation of the language by merging all states.
+ * <p>
+ * It is based on Hopcroft's minimization for deterministic finite automata.
+ * <p>
+ * Basically we do an over-approximation of the language by merging all states.
  * Then iteratively the so-called
  * equivalence classes are split until no more witness for a split is found.
- * 
- * <p>For DFAs the algorithm just performs Hopcroft's algorithm.
+ * <p>
+ * For DFAs the algorithm just performs Hopcroft's algorithm.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class ShrinkNwa<LETTER, STATE>
 		extends AbstractMinimizeNwaDd<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
-
+		
 	// TODO<debug>
 	// general output
 	private static final boolean DEBUG = false;
@@ -89,16 +90,16 @@ public class ShrinkNwa<LETTER, STATE>
 	private static final boolean DEBUG3 = false;
 	// naive return split
 	private static final boolean DEBUG4 = false;
-
+	
 	// TODO<statistics>
 	private static final boolean STATISTICS = false;
-
+	
 	// size information before return splits
 	private static final boolean STAT_RETURN_SIZE = false;
 	
 	// size suggestion for random splits of blocks for efficiency reasons
 	public static final int SUGGESTED_RANDOM_SPLIT_SIZE = 200;
-
+	
 	// old automaton
 	private IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;
 	// partition object
@@ -120,30 +121,30 @@ public class ShrinkNwa<LETTER, STATE>
 	private final boolean mSplitOutgoing;
 	private final OutgoingHelperInternal mOutInternal;
 	private final OutgoingHelperCall mOutCall;
-
+	
 	/* optional random splits before the return split to keep matrices small */
 	// true iff before the first return split some random splits are executed
 	private boolean mRandomReturnSplit;
 	// maximum size of equivalence classes with outgoing calls/returns
 	private final int mTreshold;
-
+	
 	// true iff first return split is not finished yet
 	private boolean mFirstReturnSplit;
 	// map for first return split (open check)
 	private HashMap<EquivalenceClass, HashSet<STATE>> mFirstReturnLin2Hiers;
-
+	
 	// temporarily activate alternative return split before the first run
 	private boolean mFirstReturnSplitAlternative;
 	// also do the hierarchical split without a matrix
 	private boolean mFirstReturnSplitHierAlternative;
-
+	
 	/* split all call predecessors to avoid one dimension in the matrix */
 	private boolean mSplitAllCallPreds;
-
+	
 	/* naive return split (needs another split for correctness) */
 	private boolean mReturnSplitNaive;
 	private HashSet<EquivalenceClass> mReturnSplitCorrectnessEcs;
-
+	
 	private int mSplitsWithChange = 0;
 	private int mSplitsWithoutChange = 0;
 	private int mIncomingTransitions = 0;
@@ -156,12 +157,12 @@ public class ShrinkNwa<LETTER, STATE>
 	private long mReturnFirstTime = 0;
 	private long mReturnFirstTimeAlternative = 0;
 	private long mReturnFirstTimeHierAlternative = 0;
-
+	
 	private final BufferedWriter mWriter1;
 	private final BufferedWriter mWriter2;
 	
 	private static final int HIER_PRED_MAX_SIZE = 150;
-
+	
 	/**
 	 * This constructor creates a copy of the operand.
 	 * 
@@ -175,10 +176,10 @@ public class ShrinkNwa<LETTER, STATE>
 	 *             if cancel signal is received
 	 */
 	public ShrinkNwa(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, false, 0, false, 0, false, false);
 	}
-
+	
 	/**
 	 * This constructor creates a copy of the operand with additional options.
 	 * 
@@ -206,11 +207,11 @@ public class ShrinkNwa<LETTER, STATE>
 	public ShrinkNwa(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final boolean splitOutgoing, final int splitRandomSize,
 			final boolean firstReturnSplit, final int firstReturnSplitAlternative, final boolean splitAllCallPreds,
-			final boolean returnSplitNaive) throws AutomataLibraryException {
+			final boolean returnSplitNaive) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null, false, false, splitOutgoing, splitRandomSize, firstReturnSplit,
 				firstReturnSplitAlternative, splitAllCallPreds, returnSplitNaive);
 	}
-
+	
 	/**
 	 * This constructor creates a copy of the operand with an initial partition.
 	 * 
@@ -254,7 +255,7 @@ public class ShrinkNwa<LETTER, STATE>
 			final int firstReturnSplitAlternative,
 			final boolean splitAllCallPreds,
 			final boolean returnSplitNaive)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		super(services, stateFactory, "shrinkNwa", operand);
 		if (STAT_RETURN_SIZE) {
 			try {
@@ -267,13 +268,13 @@ public class ShrinkNwa<LETTER, STATE>
 			mWriter1 = null;
 			mWriter2 = null;
 		}
-
+		
 		if (mOperand instanceof IDoubleDeckerAutomaton) {
 			mDoubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>) mOperand;
 		} else {
-			if (! isFiniteAutomaton()) {
+			if (!isFiniteAutomaton()) {
 				throw new IllegalArgumentException(
-					"The input must either be a finite automaton or an IDoubleDeckerAutomaton.");
+						"The input must either be a finite automaton or an IDoubleDeckerAutomaton.");
 			}
 			mDoubleDecker = null;
 		}
@@ -287,7 +288,7 @@ public class ShrinkNwa<LETTER, STATE>
 		mNegativeSet.add(mNegativeClass);
 		mSingletonMatrix = new Matrix();
 		mDownStateMap = new DummyMap();
-
+		
 		/* options */
 		mSplitOutgoing = splitOutgoing;
 		if (mSplitOutgoing) {
@@ -297,56 +298,58 @@ public class ShrinkNwa<LETTER, STATE>
 			mOutInternal = null;
 			mOutCall = null;
 		}
-
+		
 		mTreshold = splitRandomSize;
 		mRandomReturnSplit = (splitRandomSize > 0);
-
+		
 		mFirstReturnSplit = firstReturnSplit;
 		mFirstReturnLin2Hiers = (mFirstReturnSplit ? new HashMap<EquivalenceClass, HashSet<STATE>>(2) : null);
-
+		
 		switch (firstReturnSplitAlternative) {
-		case 0:
-			mFirstReturnSplitAlternative = false;
-			mFirstReturnSplitHierAlternative = false;
-			break;
-		case 1:
-			mFirstReturnSplitAlternative = true;
-			mFirstReturnSplitHierAlternative = false;
-			break;
-		case 2:
-			mFirstReturnSplitAlternative = true;
-			mFirstReturnSplitHierAlternative = true;
-			break;
-		default:
-			throw new IllegalArgumentException("firstReturnSplitAlternative must be one of 0, 1, 2.");
+			case 0:
+				mFirstReturnSplitAlternative = false;
+				mFirstReturnSplitHierAlternative = false;
+				break;
+			case 1:
+				mFirstReturnSplitAlternative = true;
+				mFirstReturnSplitHierAlternative = false;
+				break;
+			case 2:
+				mFirstReturnSplitAlternative = true;
+				mFirstReturnSplitHierAlternative = true;
+				break;
+			default:
+				throw new IllegalArgumentException("firstReturnSplitAlternative must be one of 0, 1, 2.");
 		}
 		if (mFirstReturnSplitAlternative) {
 			mWorkListRetHier = new WorkListRetHier();
 		}
-
+		
 		mSplitAllCallPreds = splitAllCallPreds;
-
+		
 		mReturnSplitNaive = returnSplitNaive;
 		if (mReturnSplitNaive) {
 			mReturnSplitCorrectnessEcs = new HashSet<EquivalenceClass>();
 		}
-
+		
 		// must be the last part of the constructor
 		minimize(isFiniteAutomaton, equivalenceClasses, addMapOldState2newState);
 		constructAutomaton(addMapOldState2newState);
-
+		
 		mLogger.info(exitMessage());
-
+		
 		if (STATISTICS) {
 			mWholeTime += new GregorianCalendar().getTimeInMillis();
-
+			
 			mLogger.info("positive splits: " + mSplitsWithChange);
 			mLogger.info("negative splits: " + mSplitsWithoutChange);
-			mLogger.info("quota (p/n): " + (mSplitsWithoutChange == 0 ? "--"
+			mLogger.info("quota (p/n): " + (mSplitsWithoutChange == 0
+					? "--"
 					: (((double) mSplitsWithChange) / ((double) mSplitsWithoutChange))));
 			mLogger.info("incoming transition checks : " + mIncomingTransitions);
 			mLogger.info("no incoming transitions found : " + mNoIncomingTransitions);
-			mLogger.info("quota (p/n): " + (mNoIncomingTransitions == 0 ? "--"
+			mLogger.info("quota (p/n): " + (mNoIncomingTransitions == 0
+					? "--"
 					: (((double) mIncomingTransitions) / ((double) mNoIncomingTransitions))));
 			mLogger.info("ignored return splits due to singletons: " + mIgnoredReturnSingletons1x1);
 			mLogger.info("time consumption (ms): return separation: " + mReturnSeparateTime + ", matrix time: "
@@ -369,14 +372,15 @@ public class ShrinkNwa<LETTER, STATE>
 					+ (mWholeTime == 0 ? "--" : (((double) mReturnFirstTimeAlternative) / ((double) mWholeTime)))
 					+ ", without: " + (mWholeTime - mReturnFirstTimeAlternative) + " ms");
 			mLogger.info("quota (altHier/all): "
-							+ (mWholeTime == 0 ? "--"
-									: (((double) mReturnFirstTimeHierAlternative) / ((double) mWholeTime)))
-							+ ", without: " + (mWholeTime - mReturnFirstTimeHierAlternative) + " ms");
+					+ (mWholeTime == 0
+							? "--"
+							: (((double) mReturnFirstTimeHierAlternative) / ((double) mWholeTime)))
+					+ ", without: " + (mWholeTime - mReturnFirstTimeHierAlternative) + " ms");
 		}
 	}
-
+	
 	// --- [start] main methods --- //
-
+	
 	/**
 	 * This is the main method that merges states not distinguishable (based on Hopcroft's algorithm).
 	 * 
@@ -390,19 +394,19 @@ public class ShrinkNwa<LETTER, STATE>
 	 *             if cancel signal is received
 	 */
 	private void minimize(final boolean isFiniteAutomaton, final Iterable<Set<STATE>> modules,
-			final boolean includeMapping) throws AutomataLibraryException {
+			final boolean includeMapping) throws AutomataOperationCanceledException {
 		if (STATISTICS) {
 			mWholeTime -= new GregorianCalendar().getTimeInMillis();
 		}
-
+		
 		if (DEBUG) {
 			mLogger.debug("---------------START---------------");
 		}
 		// initialize the partition object
 		initialize(modules);
-
+		
 		final InternalTransitionIterator internalIterator = new InternalTransitionIterator();
-
+		
 		// for DFAs only the internal split is both necessary and sufficient
 		if (isFiniteAutomaton) {
 			// iterative refinement
@@ -411,16 +415,16 @@ public class ShrinkNwa<LETTER, STATE>
 				if (isCancelationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
-
+				
 				final EquivalenceClass a = mWorkListIntCall.next();
-
+				
 				// internal split
 				splitInternalOrCallPredecessors(a, internalIterator, true);
 			}
 		} else {
 			// more complicated splitting
 			final CallTransitionIterator callIterator = new CallTransitionIterator();
-
+			
 			// iterative refinement
 			outer: while (true) {
 				// cancel if signal is received
@@ -430,9 +434,9 @@ public class ShrinkNwa<LETTER, STATE>
 				
 				// internals and calls
 				while (mWorkListIntCall.hasNext()) {
-
+					
 					final EquivalenceClass a = mWorkListIntCall.next();
-
+					
 					// internal split
 					if (a.mIncomingInt == EIncomingStatus.IN_WORKLIST) {
 						a.mIncomingInt = EIncomingStatus.UNKNOWN;
@@ -441,7 +445,7 @@ public class ShrinkNwa<LETTER, STATE>
 						}
 						splitInternalOrCallPredecessors(a, internalIterator, true);
 					}
-
+					
 					// call split
 					if (a.mIncomingCall == EIncomingStatus.IN_WORKLIST) {
 						a.mIncomingCall = EIncomingStatus.UNKNOWN;
@@ -461,7 +465,7 @@ public class ShrinkNwa<LETTER, STATE>
 				
 				// return predecessors
 				if (mWorkListRet.hasNext()) {
-
+					
 					// optional random split
 					if (mRandomReturnSplit) {
 						mRandomReturnSplit = false;
@@ -476,11 +480,11 @@ public class ShrinkNwa<LETTER, STATE>
 						}
 						continue outer;
 					}
-
+					
 					if (STATISTICS) {
 						mReturnTime -= new GregorianCalendar().getTimeInMillis();
 					}
-
+					
 					if (STAT_RETURN_SIZE) {
 						try {
 							final GregorianCalendar date = new GregorianCalendar();
@@ -491,23 +495,23 @@ public class ShrinkNwa<LETTER, STATE>
 									+ mWorkListRet.mQueue.size() + " ECs\n");
 							final int[] sizes = new int[mWorkListRet.mQueue.size()];
 							mWriter2.append("\n\nnew round with " + sizes.length + " ECs");
-
-							int i = -1;
+							
+							int idx = -1;
 							for (final EquivalenceClass ec : mWorkListRet.mQueue) {
-								sizes[++i] = ec.mStates.size();
+								sizes[++idx] = ec.mStates.size();
 							}
 							Arrays.sort(sizes);
-							for (i = 0; i < sizes.length; ++i) {
-								if (i % 15 == 0) {
+							for (idx = 0; idx < sizes.length; ++idx) {
+								if (idx % 15 == 0) {
 									mWriter2.append("\n");
 								}
-								mWriter2.append(sizes[i] + ", ");
+								mWriter2.append(sizes[idx] + ", ");
 							}
 						} catch (final IOException e) {
 							throw new RuntimeException(e);
 						}
 					}
-
+					
 					// optional first linear split
 					if (mFirstReturnSplit) {
 						splitReturnPredecessorsFirstTime();
@@ -522,11 +526,11 @@ public class ShrinkNwa<LETTER, STATE>
 							splitReturnPredecessors();
 						}
 					}
-
+					
 					if (STATISTICS) {
 						mReturnTime += new GregorianCalendar().getTimeInMillis();
 					}
-
+					
 					if (STAT_RETURN_SIZE) {
 						try {
 							final GregorianCalendar date = new GregorianCalendar();
@@ -544,7 +548,7 @@ public class ShrinkNwa<LETTER, STATE>
 							if (DEBUG4) {
 								mLogger.debug("hierarchical split");
 							}
-
+							
 							if (mWorkListRetHier.hasNext()) {
 								mReturnFirstTimeHierAlternative -= new GregorianCalendar().getTimeInMillis();
 								splitReturnHierAlt();
@@ -557,7 +561,7 @@ public class ShrinkNwa<LETTER, STATE>
 							if (DEBUG4) {
 								mLogger.debug("ALTERNATIVE FINISHED");
 							}
-
+							
 							mFirstReturnSplitAlternative = false;
 							mWorkListRet.fillWithAll();
 							continue outer;
@@ -574,7 +578,7 @@ public class ShrinkNwa<LETTER, STATE>
 					}
 				}
 			}
-
+			
 			if (STAT_RETURN_SIZE) {
 				try {
 					mWriter1.close();
@@ -588,7 +592,7 @@ public class ShrinkNwa<LETTER, STATE>
 			mLogger.debug("----------------END----------------");
 		}
 	}
-
+	
 	/**
 	 * This method does a naive linear return split. All states that reach the splitter class with the same hierarchical
 	 * state and return letter are split from the rest. Additionally, the hierarchical states are considered. This seems
@@ -621,7 +625,7 @@ public class ShrinkNwa<LETTER, STATE>
 				lins.add(transition.getLinPred());
 			}
 		}
-
+		
 		// remember that this equivalence class has no incoming transitions
 		if (letter2hierEc2lin.isEmpty()) {
 			a.mIncomingRet = EIncomingStatus.NONE;
@@ -632,7 +636,7 @@ public class ShrinkNwa<LETTER, STATE>
 			if (STATISTICS) {
 				++mIncomingTransitions;
 			}
-
+			
 			// split each map value (set of predecessor states)
 			for (final HashMap<EquivalenceClass, HashSet<STATE>> hierEc2lin : letter2hierEc2lin.values()) {
 				for (final HashSet<STATE> lins : hierEc2lin.values()) {
@@ -642,20 +646,20 @@ public class ShrinkNwa<LETTER, STATE>
 			}
 		}
 	}
-
+	
 	/**
 	 * This method does a naive linear return split. All states that reach the splitter class with the same hierarchical
 	 * state and return letter are split from the rest. Additionally, the hierarchical states are considered. This seems
 	 * to be worse for the resulting size.
 	 * 
-	 * @param a
+	 * @param ec
 	 *            the splitter equivalence class
 	 */
-	private void splitReturnNaiveHierarchicalStates(final EquivalenceClass a) {
+	private void splitReturnNaiveHierarchicalStates(final EquivalenceClass ec) {
 		// create a hash map from letter to respective predecessor states
 		final HashMap<LETTER, HashMap<STATE, HashSet<STATE>>> letter2hier2lin =
 				new HashMap<LETTER, HashMap<STATE, HashSet<STATE>>>();
-		for (final STATE state : a.mStates) {
+		for (final STATE state : ec.mStates) {
 			final Iterator<IncomingReturnTransition<LETTER, STATE>> transitions =
 					mOperand.returnPredecessors(state).iterator();
 			while (transitions.hasNext()) {
@@ -675,10 +679,10 @@ public class ShrinkNwa<LETTER, STATE>
 				lins.add(transition.getLinPred());
 			}
 		}
-
+		
 		// remember that this equivalence class has no incoming transitions
 		if (letter2hier2lin.isEmpty()) {
-			a.mIncomingRet = EIncomingStatus.NONE;
+			ec.mIncomingRet = EIncomingStatus.NONE;
 			if (STATISTICS) {
 				++mNoIncomingTransitions;
 			}
@@ -686,7 +690,7 @@ public class ShrinkNwa<LETTER, STATE>
 			if (STATISTICS) {
 				++mIncomingTransitions;
 			}
-
+			
 			// split each map value (set of predecessor states)
 			for (final HashMap<STATE, HashSet<STATE>> hier2lin : letter2hier2lin.values()) {
 				for (final HashSet<STATE> lins : hier2lin.values()) {
@@ -696,18 +700,18 @@ public class ShrinkNwa<LETTER, STATE>
 			}
 		}
 	}
-
+	
 	/**
 	 * This method does a naive linear return split. All states that reach the splitter class with the same hierarchical
 	 * state and return letter are split from the rest. Hierarchical states are ignored.
 	 * 
-	 * @param a
+	 * @param ec
 	 *            the splitter equivalence class
 	 */
-	private void splitReturnNaive(final EquivalenceClass a) {
+	private void splitReturnNaive(final EquivalenceClass ec) {
 		// create a hash map from letter to respective predecessor states
 		final HashMap<LETTER, HashSet<STATE>> letter2states = new HashMap<LETTER, HashSet<STATE>>();
-		for (final STATE state : a.mStates) {
+		for (final STATE state : ec.mStates) {
 			final Iterator<IncomingReturnTransition<LETTER, STATE>> transitions =
 					mOperand.returnPredecessors(state).iterator();
 			while (transitions.hasNext()) {
@@ -721,10 +725,10 @@ public class ShrinkNwa<LETTER, STATE>
 				predecessorSet.add(transition.getLinPred());
 			}
 		}
-
+		
 		// remember that this equivalence class has no incoming transitions
 		if (letter2states.isEmpty()) {
-			a.mIncomingRet = EIncomingStatus.NONE;
+			ec.mIncomingRet = EIncomingStatus.NONE;
 			if (STATISTICS) {
 				++mNoIncomingTransitions;
 			}
@@ -732,7 +736,7 @@ public class ShrinkNwa<LETTER, STATE>
 			if (STATISTICS) {
 				++mIncomingTransitions;
 			}
-
+			
 			// split each map value (set of predecessor states)
 			for (final HashSet<STATE> predecessorSet : letter2states.values()) {
 				assert (!predecessorSet.isEmpty());
@@ -740,11 +744,11 @@ public class ShrinkNwa<LETTER, STATE>
 			}
 		}
 	}
-
+	
 	/**
 	 * This method assures correctness for the naive return split.
-	 * 
-	 * <p>Currently it just executes the old return split, which seems to be too expensive.
+	 * <p>
+	 * Currently it just executes the old return split, which seems to be too expensive.
 	 * 
 	 * @param linEc
 	 *            the linear equivalence class
@@ -753,7 +757,7 @@ public class ShrinkNwa<LETTER, STATE>
 		if (DEBUG2) {
 			mLogger.debug("\nNEW CORRECTNESS RETURN SPLITTING");
 		}
-
+		
 		final HashMap<STATE, HashSet<STATE>> lin2hier = new HashMap<STATE, HashSet<STATE>>();
 		for (final STATE lin : linEc.mStates) {
 			final HashSet<STATE> hiers = new HashSet<STATE>();
@@ -766,32 +770,32 @@ public class ShrinkNwa<LETTER, STATE>
 				lin2hier.put(lin, hiers);
 			}
 		}
-
+		
 		HashMap<EquivalenceClass, HashSet<EquivalenceClass>> linEc2hierEc = splitReturnEcTranslation(lin2hier);
-
+		
 		splitReturnForwardsAnalysis(linEc2hierEc, true);
-
-		while (! mSplitEcsReturn.isEmpty()) {
+		
+		while (!mSplitEcsReturn.isEmpty()) {
 			assert (assertSetProperty(mSplitEcsReturn));
 			splitReturnExecute(mSplitEcsReturn);
 			linEc2hierEc = splitReturnEcTranslation(lin2hier);
 			mSplitEcsReturn = new LinkedList<EquivalenceClass>();
 			splitReturnForwardsAnalysis(linEc2hierEc, true);
 		}
-
+		
 		splitReturnForwardsAnalysis(linEc2hierEc, false);
-
-		if (! mSplitEcsReturn.isEmpty()) {
+		
+		if (!mSplitEcsReturn.isEmpty()) {
 			assert (assertSetProperty(mSplitEcsReturn));
 			splitReturnExecute(mSplitEcsReturn);
 			mSplitEcsReturn = new LinkedList<EquivalenceClass>();
 		}
 	}
-
+	
 	/**
 	 * This method assures correctness for the naive return split.
-	 * 
-	 * <p>Currently it just executes the old return split, which seems to be too expensive.
+	 * <p>
+	 * Currently it just executes the old return split, which seems to be too expensive.
 	 * Hierarchical states are not
 	 * analyzed.
 	 * 
@@ -802,7 +806,7 @@ public class ShrinkNwa<LETTER, STATE>
 		if (DEBUG2) {
 			mLogger.debug("\nNEW CORRECTNESS RETURN SPLITTING");
 		}
-
+		
 		final HashMap<STATE, HashSet<STATE>> lin2hier = new HashMap<STATE, HashSet<STATE>>();
 		for (final STATE lin : linEc.mStates) {
 			final HashSet<STATE> hiers = new HashSet<STATE>();
@@ -815,18 +819,18 @@ public class ShrinkNwa<LETTER, STATE>
 				lin2hier.put(lin, hiers);
 			}
 		}
-
+		
 		final HashMap<EquivalenceClass, HashSet<EquivalenceClass>> linEc2hierEc = splitReturnEcTranslation(lin2hier);
-
+		
 		splitReturnForwardsAnalysis(linEc2hierEc, false);
-
-		if (! mSplitEcsReturn.isEmpty()) {
+		
+		if (!mSplitEcsReturn.isEmpty()) {
 			assert (assertSetProperty(mSplitEcsReturn));
 			splitReturnExecute(mSplitEcsReturn);
 			mSplitEcsReturn = new LinkedList<EquivalenceClass>();
 		}
 	}
-
+	
 	/**
 	 * This method assures correctness for the naive return split. No matrix is constructed. Currently, the hierarchical
 	 * split is missing. The runtime indicates that this method is not reasonable.
@@ -838,7 +842,7 @@ public class ShrinkNwa<LETTER, STATE>
 		if (DEBUG2) {
 			mLogger.debug("\nNEW CORRECTNESS RETURN SPLITTING");
 		}
-
+		
 		// find all hierarchical predecessor equivalence classes
 		final HashSet<EquivalenceClass> hierEcs = new HashSet<EquivalenceClass>();
 		for (final STATE lin : linEc.mStates) {
@@ -848,7 +852,7 @@ public class ShrinkNwa<LETTER, STATE>
 				hierEcs.add(mPartition.mState2EquivalenceClass.get(transitions.next().getHierPred()));
 			}
 		}
-
+		
 		// linear split
 		for (final EquivalenceClass hierEc : hierEcs) {
 			for (final STATE hier : hierEc.mStates) {
@@ -883,7 +887,7 @@ public class ShrinkNwa<LETTER, STATE>
 						lins.add(lin);
 					}
 				}
-
+				
 				// split linear states
 				for (final HashMap<EquivalenceClass, HashSet<STATE>> succEc2lins : letter2succEc2lins.values()) {
 					final Collection<HashSet<STATE>> values = succEc2lins.values();
@@ -891,16 +895,16 @@ public class ShrinkNwa<LETTER, STATE>
 						hierEc.markSplit(values);
 					}
 				}
-				if (! mSplitEcsReturn.isEmpty()) {
+				if (!mSplitEcsReturn.isEmpty()) {
 					splitReturnExecute(mSplitEcsReturn);
 					mSplitEcsReturn = new LinkedList<EquivalenceClass>();
 				}
 			}
 		}
-
+		
 		// hierarchical split (missing)
 	}
-
+	
 	/**
 	 * The partition object is initialized. Final states are separated from non-final states. For the passed modules
 	 * this is assumed.
@@ -913,7 +917,7 @@ public class ShrinkNwa<LETTER, STATE>
 		if (modules == null) {
 			final HashSet<STATE> finals = new HashSet<STATE>();
 			final HashSet<STATE> nonfinals = new HashSet<STATE>();
-
+			
 			for (final STATE state : mOperand.getStates()) {
 				if (mSplitAllCallPreds && (mOperand.callSuccessors(state).iterator().hasNext())) {
 					mPartition.addEcInitialization(Collections.singleton(state));
@@ -923,15 +927,15 @@ public class ShrinkNwa<LETTER, STATE>
 					nonfinals.add(state);
 				}
 			}
-
+			
 			if (mSplitOutgoing) {
 				splitOutgoing(finals, nonfinals);
 			} else {
 				// only separate final and non-final states
-				if (! finals.isEmpty()) {
+				if (!finals.isEmpty()) {
 					mPartition.addEcInitialization(finals);
 				}
-				if (! nonfinals.isEmpty()) {
+				if (!nonfinals.isEmpty()) {
 					mPartition.addEcInitialization(nonfinals);
 				}
 			}
@@ -943,45 +947,45 @@ public class ShrinkNwa<LETTER, STATE>
 				mPartition.addEcInitialization(module);
 			}
 		}
-
+		
 		if (mSplitAllCallPreds) {
 			for (final EquivalenceClass ec : mPartition.mEquivalenceClasses) {
 				ec.mIncomingCall = EIncomingStatus.NONE;
 			}
 		}
-
+		
 		if (mReturnSplitCorrectnessEcs != null) {
 			mReturnSplitCorrectnessEcs.addAll(mPartition.mEquivalenceClasses);
 		}
-
+		
 		if (DEBUG) {
 			mLogger.debug("starting with " + mPartition.mEquivalenceClasses.size() + " equivalence classes");
 		}
 	}
-
+	
 	/**
 	 * For each state and internal or call symbol respectively do the usual Hopcroft backwards split.
-	 * 
-	 * <p>First all predecessor sets (with respect to a single symbol) are found and then for each such set the states are
+	 * <p>
+	 * First all predecessor sets (with respect to a single symbol) are found and then for each such set the states are
 	 * split from their equivalence classes.
 	 * 
-	 * @param a
+	 * @param ec
 	 *            the splitter equivalence class
 	 * @param iterator
 	 *            the iterator abstracting from the letter type
 	 * @param isInternal
 	 *            true iff split is internal
 	 */
-	private void splitInternalOrCallPredecessors(final EquivalenceClass a,
+	private void splitInternalOrCallPredecessors(final EquivalenceClass ec,
 			final ITransitionIterator<LETTER, STATE> iterator, final boolean isInternal) {
 		assert ((isInternal && (iterator instanceof ShrinkNwa.InternalTransitionIterator)
-				&& (a.mIncomingInt != EIncomingStatus.IN_WORKLIST))
+				&& (ec.mIncomingInt != EIncomingStatus.IN_WORKLIST))
 				|| (!isInternal) && ((iterator instanceof ShrinkNwa.CallTransitionIterator)
-						&& (a.mIncomingCall != EIncomingStatus.IN_WORKLIST)));
-
+						&& (ec.mIncomingCall != EIncomingStatus.IN_WORKLIST)));
+						
 		// create a hash map from letter to respective predecessor states
 		final HashMap<LETTER, HashSet<STATE>> letter2states = new HashMap<LETTER, HashSet<STATE>>();
-		for (final STATE state : a.mStates) {
+		for (final STATE state : ec.mStates) {
 			iterator.nextState(state);
 			while (iterator.hasNext()) {
 				final LETTER letter = iterator.nextAndLetter();
@@ -993,13 +997,13 @@ public class ShrinkNwa<LETTER, STATE>
 				predecessorSet.add(iterator.getPred());
 			}
 		}
-
+		
 		// remember that this equivalence class has no incoming transitions
 		if (letter2states.isEmpty()) {
 			if (isInternal) {
-				a.mIncomingInt = EIncomingStatus.NONE;
+				ec.mIncomingInt = EIncomingStatus.NONE;
 			} else {
-				a.mIncomingCall = EIncomingStatus.NONE;
+				ec.mIncomingCall = EIncomingStatus.NONE;
 			}
 			if (STATISTICS) {
 				++mNoIncomingTransitions;
@@ -1008,7 +1012,7 @@ public class ShrinkNwa<LETTER, STATE>
 			if (STATISTICS) {
 				++mIncomingTransitions;
 			}
-
+			
 			// split each map value (set of predecessor states)
 			for (final HashSet<STATE> predecessorSet : letter2states.values()) {
 				assert (!predecessorSet.isEmpty());
@@ -1016,11 +1020,11 @@ public class ShrinkNwa<LETTER, STATE>
 			}
 		}
 	}
-
+	
 	/**
 	 * This method implements the return split.
-	 * 
-	 * <p>For each return symbol respectively first find the predecessor states (both linear and hierarchical). Then do the
+	 * <p>
+	 * For each return symbol respectively first find the predecessor states (both linear and hierarchical). Then do the
 	 * following first for the linear and then for the hierarchical states: Mark the simple splits, then find violations
 	 * due to the neutral states and break ties on which states to split there.
 	 */
@@ -1028,30 +1032,30 @@ public class ShrinkNwa<LETTER, STATE>
 		if (DEBUG2) {
 			mLogger.debug("\nNEW RETURN SPLITTING ROUND");
 		}
-
+		
 		final HashMap<STATE, HashSet<STATE>> lin2hier = splitReturnBackwardsAnalysis();
-
+		
 		HashMap<EquivalenceClass, HashSet<EquivalenceClass>> linEc2hierEc = splitReturnEcTranslation(lin2hier);
-
+		
 		splitReturnForwardsAnalysis(linEc2hierEc, true);
-
-		while (! mSplitEcsReturn.isEmpty()) {
+		
+		while (!mSplitEcsReturn.isEmpty()) {
 			assert (assertSetProperty(mSplitEcsReturn));
 			splitReturnExecute(mSplitEcsReturn);
 			linEc2hierEc = splitReturnEcTranslation(lin2hier);
 			mSplitEcsReturn = new LinkedList<EquivalenceClass>();
 			splitReturnForwardsAnalysis(linEc2hierEc, true);
 		}
-
+		
 		splitReturnForwardsAnalysis(linEc2hierEc, false);
-
-		if (! mSplitEcsReturn.isEmpty()) {
+		
+		if (!mSplitEcsReturn.isEmpty()) {
 			assert (assertSetProperty(mSplitEcsReturn));
 			splitReturnExecute(mSplitEcsReturn);
 			mSplitEcsReturn = new LinkedList<EquivalenceClass>();
 		}
 	}
-
+	
 	/**
 	 * This method finds all involved linear and hierarchical equivalence classes for all successor equivalence classes
 	 * currently in the work list for the return split.
@@ -1064,12 +1068,12 @@ public class ShrinkNwa<LETTER, STATE>
 		}
 		final HashMap<STATE, HashSet<STATE>> lin2hier =
 				new HashMap<STATE, HashSet<STATE>>(computeHashCap(mPartition.mEquivalenceClasses.size()));
-
+				
 		// find all involved linear and hierarchical states
 		while (mWorkListRet.hasNext()) {
 			final EquivalenceClass succEc = mWorkListRet.next();
 			boolean incomingReturns = false;
-
+			
 			for (final STATE succ : succEc.mStates) {
 				final Iterator<IncomingReturnTransition<LETTER, STATE>> edges =
 						mOperand.returnPredecessors(succ).iterator();
@@ -1087,7 +1091,7 @@ public class ShrinkNwa<LETTER, STATE>
 					} while (edges.hasNext());
 				}
 			}
-
+			
 			// no return transitions found, remember that
 			if (!incomingReturns) {
 				succEc.mIncomingRet = EIncomingStatus.NONE;
@@ -1095,7 +1099,7 @@ public class ShrinkNwa<LETTER, STATE>
 					++mNoIncomingTransitions;
 				}
 			}
-
+			
 			if (DEBUG2) {
 				mLogger.debug(
 						" succEc: " + succEc.toStringShort() + " has " + (incomingReturns ? "" : "no ") + "returns");
@@ -1103,7 +1107,7 @@ public class ShrinkNwa<LETTER, STATE>
 		}
 		return lin2hier;
 	}
-
+	
 	/**
 	 * This method translates the mapping of linear to hierarchical states to a mapping of linear to hierarchical
 	 * equivalence classes.
@@ -1117,7 +1121,7 @@ public class ShrinkNwa<LETTER, STATE>
 		if (DEBUG2) {
 			mLogger.debug("\ntranslating to ECs");
 		}
-
+		
 		final HashMap<EquivalenceClass, HashSet<EquivalenceClass>> linEc2hierEcs =
 				new HashMap<EquivalenceClass, HashSet<EquivalenceClass>>(computeHashCap(lin2hier.size()));
 		for (final Entry<STATE, HashSet<STATE>> entry : lin2hier.entrySet()) {
@@ -1131,14 +1135,14 @@ public class ShrinkNwa<LETTER, STATE>
 				hierEcs.add(mPartition.mState2EquivalenceClass.get(hier));
 			}
 		}
-
+		
 		if (DEBUG2) {
 			mLogger.debug("resulting map: " + linEc2hierEcs);
 		}
-
+		
 		return linEc2hierEcs;
 	}
-
+	
 	/**
 	 * This method triggers for each given pair of linear and hierarchical equivalence classes the linear and the
 	 * hierarchical return split.
@@ -1154,11 +1158,11 @@ public class ShrinkNwa<LETTER, STATE>
 			final EquivalenceClass linEc = entry.getKey();
 			final boolean linEcSingleton = linEc.mStates.size() == 1;
 			final HashSet<EquivalenceClass> hierEcs = entry.getValue();
-
+			
 			if (DEBUG2) {
 				mLogger.debug("\nlinEc: " + linEc.toStringShort());
 			}
-
+			
 			// get matrix
 			Matrix matrix = linEc.mMatrix;
 			if (matrix == null) {
@@ -1169,34 +1173,34 @@ public class ShrinkNwa<LETTER, STATE>
 				if (DEBUG2) {
 					mLogger.debug(" ignoring matrix: " + matrix);
 				}
-
+				
 				continue;
 			}
-
+			
 			if (DEBUG2) {
 				mLogger.debug("matrix: " + matrix);
 			}
-
+			
 			final HashMap<STATE, HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>> hier2lin2letter2succ =
 					matrix.mHier2lin2letter2succ;
-
+					
 			for (final EquivalenceClass hierEc : hierEcs) {
 				if (DEBUG2) {
 					mLogger.debug(" hierEc: " + hierEc.toStringShort());
 				}
-
+				
 				if (linEcSingleton && hierEc.mStates.size() == 1) {
 					if (DEBUG2) {
 						mLogger.debug("  ignoring singletons");
 					}
-
+					
 					if (STATISTICS) {
 						++mIgnoredReturnSingletons1x1;
 					}
-
+					
 					continue;
 				}
-
+				
 				/*
 				 * find relevant rows (avoids duplicate computations for the hierarchical split)
 				 */
@@ -1211,11 +1215,11 @@ public class ShrinkNwa<LETTER, STATE>
 						}
 					}
 				}
-
+				
 				if (DEBUG2) {
 					mLogger.debug(" relevant rows: " + relevantRows);
 				}
-
+				
 				// linear states analysis
 				if (linearAnalysis) {
 					if (!linEcSingleton) {
@@ -1230,14 +1234,14 @@ public class ShrinkNwa<LETTER, STATE>
 			}
 		}
 	}
-
+	
 	/**
 	 * This method checks and potentially triggers a linear return split.
-	 *
-	 * <p>TODO(nondeterminism) at most one successor for deterministic automata,
-	 *     offer improved version (no Set of STATE , no Set of EquivalenceClass)?
-	 * 
-	 * <p>TODO(ignoreMarked) ignore already marked pairs
+	 * <p>
+	 * TODO(nondeterminism) at most one successor for deterministic automata,
+	 * offer improved version (no Set of STATE , no Set of EquivalenceClass)?
+	 * <p>
+	 * TODO(ignoreMarked) ignore already marked pairs
 	 * 
 	 * @param hier2lin2letter2succ
 	 *            map hier. to lin. to letter to succ. state
@@ -1252,21 +1256,21 @@ public class ShrinkNwa<LETTER, STATE>
 		if (DEBUG2) {
 			mLogger.debug("-linear analysis");
 		}
-
+		
 		for (final MatrixRow row : rows) {
 			final HashMap<STATE, HashMap<LETTER, HashSet<STATE>>> lin2letter2succ = row.mLin2letter2succ;
 			if (DEBUG2) {
 				mLogger.debug(" hier " + row.mHier + " -> " + lin2letter2succ);
 			}
-
+			
 			if (lin2letter2succ.size() == 1) {
 				if (DEBUG2) {
 					mLogger.debug("  only one entry, ignore");
 				}
-
+				
 				continue;
 			}
-
+			
 			final int size = computeHashCap(lin2letter2succ.size());
 			final HashMap<HashMap<LETTER, HashSet<EquivalenceClass>>, HashSet<STATE>> letter2succEc2lin =
 					new HashMap<HashMap<LETTER, HashSet<EquivalenceClass>>, HashSet<STATE>>(size);
@@ -1275,60 +1279,60 @@ public class ShrinkNwa<LETTER, STATE>
 				final STATE lin = entry.getKey();
 				assert (linEc.mStates.contains(lin));
 				final HashMap<LETTER, HashSet<STATE>> letter2succ = entry.getValue();
-
+				
 				if (DEBUG2) {
 					mLogger.debug("   lin: " + lin);
 				}
-
+				
 				if (letter2succ == mDownStateMap) {
 					if (DEBUG2) {
 						mLogger.debug("   no transition, but DS");
 					}
-
+					
 					noTransitions.add(lin);
 					continue;
 				}
-
+				
 				final HashMap<LETTER, HashSet<EquivalenceClass>> letter2succEc =
 						new HashMap<LETTER, HashSet<EquivalenceClass>>(computeHashCap(letter2succ.size()));
 				for (final Entry<LETTER, HashSet<STATE>> innerEntry : letter2succ.entrySet()) {
 					final LETTER letter = innerEntry.getKey();
 					final HashSet<STATE> succs = innerEntry.getValue();
-
+					
 					final HashSet<EquivalenceClass> succEcs =
 							new HashSet<EquivalenceClass>(computeHashCap(succs.size()));
-
+							
 					if (DEBUG2) {
 						mLogger.debug("   letter: " + letter + ", succs: " + succs);
 					}
-
+					
 					for (final STATE succ : succs) {
 						succEcs.add(mPartition.mState2EquivalenceClass.get(succ));
 					}
-
+					
 					letter2succEc.put(letter, succEcs);
 				}
-
+				
 				HashSet<STATE> lins = letter2succEc2lin.get(letter2succEc);
 				if (lins == null) {
 					lins = new HashSet<STATE>();
 					letter2succEc2lin.put(letter2succEc, lins);
 				}
 				lins.add(lin);
-
+				
 				if (DEBUG2) {
 					mLogger.debug("   adding: " + lin + " to " + letter2succEc);
 				}
 			}
-
+			
 			if (DEBUG2) {
 				mLogger.debug("    receiving: " + letter2succEc2lin + " and {{DS}=" + noTransitions + "}");
 			}
-
-			if (! noTransitions.isEmpty()) {
+			
+			if (!noTransitions.isEmpty()) {
 				letter2succEc2lin.put(null, noTransitions);
 			}
-
+			
 			if (letter2succEc2lin.size() <= 1) {
 				if (DEBUG2) {
 					mLogger.debug("    no linear split");
@@ -1338,17 +1342,17 @@ public class ShrinkNwa<LETTER, STATE>
 					mLogger.debug(
 							"    mark linear split of " + linEc.toStringShort() + ": " + letter2succEc2lin.values());
 				}
-
+				
 				linEc.markSplit(letter2succEc2lin.values());
 			}
 		}
 	}
-
+	
 	/**
 	 * This method checks and potentially triggers a hierarchical return split.
-	 * 
-	 * <p>TODO(nondeterminism) at most one successor for deterministic automata,
-	 *      offer improved version (no Set of STATE, no Set of EquivalenceClass)?
+	 * <p>
+	 * TODO(nondeterminism) at most one successor for deterministic automata,
+	 * offer improved version (no Set of STATE, no Set of EquivalenceClass)?
 	 * 
 	 * @param hier2lin2letter2succ
 	 *            map hier. to lin. to letter to succ. state
@@ -1363,43 +1367,43 @@ public class ShrinkNwa<LETTER, STATE>
 		if (DEBUG2) {
 			mLogger.debug("-hierarchical analysis");
 		}
-
+		
 		final int size = rows.size();
-
+		
 		if (DEBUG2) {
 			mLogger.debug("  rows remaining: " + size);
 		}
-
+		
 		if (size <= 1) {
 			if (DEBUG2) {
 				mLogger.debug("   ignore");
 			}
-
+			
 			return;
 		}
-
+		
 		final int modSize = computeHashCap(size);
 		final HashMap<HashMap<LETTER, HashSet<EquivalenceClass>>, HashSet<STATE>> letter2succEc2hier =
 				new HashMap<HashMap<LETTER, HashSet<EquivalenceClass>>, HashSet<STATE>>(modSize);
 		final HashSet<STATE> noTransitions = new HashSet<STATE>(modSize);
 		final int hierEcModSize = computeHashCap(hierEc.mStates.size());
-
+		
 		// go through rows (each entry per row behaves the same)
 		for (int i = 0; i < size; ++i) {
 			final MatrixRow row = rows.get(i);
 			final STATE hier = row.mHier;
 			// choose the first entry in this row
 			final HashMap<LETTER, HashSet<STATE>> letter2succ = row.mLin2letter2succ.values().iterator().next();
-
+			
 			if (DEBUG2) {
 				mLogger.debug(" hier " + hier + " -> " + letter2succ);
 			}
-
+			
 			if (letter2succ == mDownStateMap) {
 				noTransitions.add(hier);
 				continue;
 			}
-
+			
 			// translate to map with equivalence class
 			final HashMap<LETTER, HashSet<EquivalenceClass>> letter2succEc =
 					new HashMap<LETTER, HashSet<EquivalenceClass>>(computeHashCap(letter2succ.size()));
@@ -1416,7 +1420,7 @@ public class ShrinkNwa<LETTER, STATE>
 			if (DEBUG2) {
 				mLogger.debug("  letter2succEc: " + letter2succEc);
 			}
-
+			
 			HashSet<STATE> hiers = letter2succEc2hier.get(letter2succEc);
 			if (hiers == null) {
 				hiers = new HashSet<STATE>(hierEcModSize);
@@ -1424,30 +1428,30 @@ public class ShrinkNwa<LETTER, STATE>
 			}
 			hiers.add(hier);
 		}
-
+		
 		if (DEBUG2) {
 			mLogger.debug("    receiving: " + letter2succEc2hier + " and {{DS}=" + noTransitions + "}");
 		}
-
-		if (! noTransitions.isEmpty()) {
+		
+		if (!noTransitions.isEmpty()) {
 			letter2succEc2hier.put(null, noTransitions);
 		}
-
+		
 		if (letter2succEc2hier.size() > 1) {
 			if (DEBUG2) {
 				mLogger.debug("    mark hierarchical split of " + hierEc.toStringShort() + ": "
 						+ letter2succEc2hier.values());
 			}
-
+			
 			hierEc.markSplit(letter2succEc2hier.values());
 		}
 	}
-
+	
 	/**
 	 * This method executes the return splits for all passed equivalence classes. The input has information of which
 	 * states must be separated. The goal is to come up with a splitting that satisfies the separations.
-	 * 
-	 * <p>The general solution is algorithmically hard, so here the following heuristic is used: The general rule is to
+	 * <p>
+	 * The general solution is algorithmically hard, so here the following heuristic is used: The general rule is to
 	 * assign a state to an existing group of states if possible. If there is more than one possible group, the first
 	 * one found is chosen.
 	 *
@@ -1458,30 +1462,30 @@ public class ShrinkNwa<LETTER, STATE>
 		if (DEBUG2) {
 			mLogger.debug("\n-- executing return splits");
 		}
-
+		
 		if (STATISTICS) {
 			mReturnSeparateTime -= new GregorianCalendar().getTimeInMillis();
 		}
-
+		
 		for (final EquivalenceClass oldEc : splitEquivalenceClasses) {
 			final HashMap<STATE, HashSet<STATE>> state2separatedSet = oldEc.mState2SeparatedSet;
 			assert (state2separatedSet != null);
-
+			
 			if (DEBUG2) {
 				mLogger.debug(oldEc + " : " + state2separatedSet);
 			}
-
+			
 			// map: color to associated states and blocked states
 			int statesRemaining = oldEc.mStates.size();
 			final ArrayList<ColorSet> colorSets = new ArrayList<ColorSet>(statesRemaining);
-
+			
 			// for each state find a color
 			outer: for (final Entry<STATE, HashSet<STATE>> stateEntry : state2separatedSet.entrySet()) {
 				final STATE state = stateEntry.getKey();
 				final HashSet<STATE> separatedSet = stateEntry.getValue();
-
+				
 				assert (oldEc.mStates.contains(state)) && (separatedSet != null);
-
+				
 				// find fitting color
 				for (int i = 0; i < colorSets.size(); ++i) {
 					// found a fitting color
@@ -1493,22 +1497,22 @@ public class ShrinkNwa<LETTER, STATE>
 						continue outer;
 					}
 				}
-
+				
 				// no color available, use a new one
 				colorSets.add(new ColorSet(statesRemaining, state, separatedSet));
 				--statesRemaining;
 			}
-
+			
 			/*
 			 * States without any separation information behave like the states in the group that remains without a
 			 * split.
 			 */
 			assert (statesRemaining >= 0);
-
+			
 			if (DEBUG2) {
 				mLogger.debug("colorSets: " + colorSets);
 			}
-
+			
 			/*
 			 * If there are no states without any group preference, keep the biggest set from splitting. Else keep the
 			 * smallest set from splitting, since those states will stay there. This is to reduce the size of the
@@ -1538,66 +1542,66 @@ public class ShrinkNwa<LETTER, STATE>
 					}
 				}
 			}
-
+			
 			// finally split the equivalence class
-			int i = colorSets.size();
+			int colorIndex = colorSets.size();
 			while (true) {
-				if (--i == remainingColor) {
-					--i;
+				if (--colorIndex == remainingColor) {
+					--colorIndex;
 				}
-				if (i < 0) {
+				if (colorIndex < 0) {
 					break;
 				}
-
-				final EquivalenceClass newEc = mPartition.addEcReturn(colorSets.get(i).mContent, oldEc);
-
+				
+				final EquivalenceClass newEc = mPartition.addEcReturn(colorSets.get(colorIndex).mContent, oldEc);
+				
 				if (STATISTICS) {
 					++mSplitsWithChange;
 				}
-
+				
 				if (DEBUG2) {
 					mLogger.debug("new equivalence class: " + newEc.toStringShort());
 				}
 			}
-
+			
 			// reset separation mapping
 			oldEc.mState2SeparatedSet = null;
 		}
-
+		
 		if (STATISTICS) {
 			mReturnSeparateTime += new GregorianCalendar().getTimeInMillis();
 		}
 	}
-
+	
 	/**
 	 * This method is an alternative linear return split.
 	 */
 	private void splitReturnLinearAlt() {
 		final EquivalenceClass succEc = mWorkListRet.next();
-
+		
 		if (DEBUG4) {
 			mLogger.debug("L succEc " + succEc.toStringShort());
 		}
-
+		
 		final HashMap<EquivalenceClass, HashSet<IncomingReturnTransition<LETTER, STATE>>> linEc2trans =
 				splitReturnFindTransitionsAlt(succEc);
-
+				
 		if (linEc2trans.isEmpty()) {
 			succEc.mIncomingRet = EIncomingStatus.NONE;
 			return;
 		}
-
+		
 		if (DEBUG4) {
 			mLogger.debug("linEc2trans " + linEc2trans);
 		}
-
+		
 		for (final Entry<EquivalenceClass, HashSet<IncomingReturnTransition<LETTER, STATE>>> entry : linEc2trans
 				.entrySet()) {
 			splitReturnLinearAltHelper(entry.getKey(), entry.getValue());
-
+			
 		}
 	}
-
+	
 	/**
 	 * This method finds the transitions for the alternative linear return split.
 	 * 
@@ -1610,7 +1614,7 @@ public class ShrinkNwa<LETTER, STATE>
 		final HashMap<EquivalenceClass, HashSet<IncomingReturnTransition<LETTER, STATE>>> linEc2trans =
 				new HashMap<EquivalenceClass, HashSet<IncomingReturnTransition<LETTER, STATE>>>();
 		final HashMap<STATE, EquivalenceClass> state2ec = mPartition.mState2EquivalenceClass;
-
+		
 		for (final STATE succ : succEc.mStates) {
 			for (final IncomingReturnTransition<LETTER, STATE> edge : mOperand.returnPredecessors(succ)) {
 				final EquivalenceClass linEc = state2ec.get(edge.getLinPred());
@@ -1624,7 +1628,7 @@ public class ShrinkNwa<LETTER, STATE>
 		}
 		return linEc2trans;
 	}
-
+	
 	/**
 	 * This method helps the alternative linear return split.
 	 * 
@@ -1638,19 +1642,19 @@ public class ShrinkNwa<LETTER, STATE>
 		if (DEBUG4) {
 			mLogger.debug("linEc " + linEc + ", transitions " + transitions);
 		}
-
+		
 		final Set<STATE> linStates = linEc.mStates;
 		final int linEcSize = linStates.size();
 		if (linEcSize == 1) {
 			return;
 		}
-
+		
 		final HashSet<STATE> linsVisited = new HashSet<STATE>(computeHashCap(linEcSize));
 		final HashMap<STATE, HashMap<LETTER, HashSet<STATE>>> hier2letters2lins =
 				new HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>(computeHashCap(transitions.size()));
-
+				
 		linEc.mState2SeparatedSet = new HashMap<STATE, HashSet<STATE>>(computeHashCap(linEcSize));
-
+		
 		// find all linear predecessors
 		for (final IncomingReturnTransition<LETTER, STATE> trans : transitions) {
 			final STATE hier = trans.getHierPred();
@@ -1669,12 +1673,12 @@ public class ShrinkNwa<LETTER, STATE>
 			lins.add(lin);
 			linsVisited.add(lin);
 		}
-
+		
 		if (DEBUG4) {
 			mLogger.debug(" hier2letters2lins " + hier2letters2lins);
 			mLogger.debug(" linsVisited " + linsVisited);
 		}
-
+		
 		// (linear) states not visited
 		final ArrayList<STATE> linsUnvisited = new ArrayList<STATE>(linEcSize - linsVisited.size());
 		for (final STATE lin : linStates) {
@@ -1682,15 +1686,15 @@ public class ShrinkNwa<LETTER, STATE>
 				linsUnvisited.add(lin);
 			}
 		}
-
+		
 		// mark: all visited from each other and from all non-visited with DS
 		for (final Entry<STATE, HashMap<LETTER, HashSet<STATE>>> outerEntry : hier2letters2lins.entrySet()) {
 			final STATE hier = outerEntry.getKey();
-
+			
 			if (DEBUG4) {
 				mLogger.debug("  hier " + hier);
 			}
-
+			
 			// compute sets of DS/no DS states
 			final int modSize = computeHashCap(linEcSize - linsVisited.size());
 			final HashSet<STATE> noDsStates = new HashSet<STATE>(modSize);
@@ -1698,7 +1702,7 @@ public class ShrinkNwa<LETTER, STATE>
 			for (final STATE lin : linsUnvisited) {
 				if (mDoubleDecker.isDoubleDecker(lin, hier)) {
 					dsStates.add(lin);
-
+					
 					// mark returns from non-returns
 					for (final STATE linPos : linsVisited) {
 						linEc.markPair(lin, linPos);
@@ -1707,33 +1711,33 @@ public class ShrinkNwa<LETTER, STATE>
 					noDsStates.add(lin);
 				}
 			}
-
+			
 			if (DEBUG4) {
 				mLogger.debug("  dsStates " + dsStates);
 				mLogger.debug("  noDsStates " + noDsStates);
 			}
-
+			
 			for (final Entry<LETTER, HashSet<STATE>> innerEntry : outerEntry.getValue().entrySet()) {
 				final HashSet<STATE> lins = innerEntry.getValue();
-
+				
 				if (DEBUG4) {
 					mLogger.debug("  lins " + lins);
 				}
-
+				
 				if (lins.size() == linsVisited.size()) {
 					if (DEBUG4) {
 						mLogger.debug("   ignore");
 					}
-
+					
 					continue;
 				}
-
+				
 				for (final STATE lin : linsVisited) {
 					if ((!lins.contains(lin)) && (mDoubleDecker.isDoubleDecker(lin, hier))) {
 						if (DEBUG4) {
 							mLogger.debug("   later split");
 						}
-
+						
 						// mark different returns
 						for (final STATE linPos : lins) {
 							linEc.markPair(lin, linPos);
@@ -1742,12 +1746,12 @@ public class ShrinkNwa<LETTER, STATE>
 				}
 			}
 		}
-
+		
 		if (linEc.mState2SeparatedSet.size() > 0) {
 			if (DEBUG4) {
 				mLogger.debug(" SPLIT");
 			}
-
+			
 			mSplitEcsReturn.add(linEc);
 			splitReturnExecute(mSplitEcsReturn);
 			mSplitEcsReturn = new LinkedList<EquivalenceClass>();
@@ -1758,7 +1762,7 @@ public class ShrinkNwa<LETTER, STATE>
 		}
 		linEc.mState2SeparatedSet = null;
 	}
-
+	
 	/**
 	 * This method is an alternative hierarchical return split.
 	 */
@@ -1774,28 +1778,28 @@ public class ShrinkNwa<LETTER, STATE>
 				break;
 			}
 		}
-
+		
 		if (DEBUG4) {
 			mLogger.debug("H succEc " + succEc.toStringShort());
 		}
-
+		
 		final HashMap<EquivalenceClass, HashSet<EquivalenceClass>> hierEc2linEcs =
 				splitReturnFindOutgoingTransitions(succEc);
-
+				
 		if (hierEc2linEcs.isEmpty()) {
 			succEc.mIncomingRet = EIncomingStatus.NONE;
 			return;
 		}
-
+		
 		if (DEBUG4) {
 			mLogger.debug("linEc2hierEcs " + hierEc2linEcs);
 		}
-
+		
 		for (final Entry<EquivalenceClass, HashSet<EquivalenceClass>> entry : hierEc2linEcs.entrySet()) {
 			splitReturnHierAltHelper(entry.getKey(), entry.getValue());
 		}
 	}
-
+	
 	/**
 	 * This method finds the transitions for the alternative hierarchical return split.
 	 * 
@@ -1808,7 +1812,7 @@ public class ShrinkNwa<LETTER, STATE>
 		final HashMap<EquivalenceClass, HashSet<EquivalenceClass>> hierEc2linEcs =
 				new HashMap<EquivalenceClass, HashSet<EquivalenceClass>>();
 		final HashMap<STATE, EquivalenceClass> state2ec = mPartition.mState2EquivalenceClass;
-
+		
 		for (final STATE succ : succEc.mStates) {
 			for (final IncomingReturnTransition<LETTER, STATE> edge : mOperand.returnPredecessors(succ)) {
 				final EquivalenceClass hierEc = state2ec.get(edge.getHierPred());
@@ -1822,7 +1826,7 @@ public class ShrinkNwa<LETTER, STATE>
 		}
 		return hierEc2linEcs;
 	}
-
+	
 	/**
 	 * This method helps the alternative hierarchical return split.
 	 * 
@@ -1835,28 +1839,28 @@ public class ShrinkNwa<LETTER, STATE>
 		if (DEBUG4) {
 			mLogger.debug("hierEc " + hierEc + ", linEcs " + linEcs);
 		}
-
+		
 		final Set<STATE> hierStates = hierEc.mStates;
 		final int hierEcSize = hierStates.size();
 		if (hierEcSize == 1) {
 			if (DEBUG4) {
 				mLogger.debug("   ignore");
 			}
-
+			
 			return;
 		}
-
+		
 		hierEc.mState2SeparatedSet = new HashMap<STATE, HashSet<STATE>>(computeHashCap(hierEcSize));
 		final HashMap<STATE, EquivalenceClass> state2ec = mPartition.mState2EquivalenceClass;
-
+		
 		for (final EquivalenceClass linEc : linEcs) {
 			final HashMap<HashMap<EquivalenceClass, HashSet<LETTER>>, HashSet<STATE>> succEc2letter2hiers =
 					new HashMap<HashMap<EquivalenceClass, HashSet<LETTER>>, HashSet<STATE>>();
-
+					
 			for (final STATE hier : hierStates) {
 				final HashMap<EquivalenceClass, HashSet<LETTER>> succEc2letters =
 						new HashMap<EquivalenceClass, HashSet<LETTER>>(computeHashCap(hierEcSize));
-
+						
 				inner: for (final STATE lin : linEc.mStates) {
 					if (mDoubleDecker.isDoubleDecker(lin, hier)) {
 						final Iterator<OutgoingReturnTransition<LETTER, STATE>> edges =
@@ -1879,7 +1883,7 @@ public class ShrinkNwa<LETTER, STATE>
 						}
 					}
 				}
-
+				
 				assert (!succEc2letters.isEmpty());
 				HashSet<STATE> hiers = succEc2letter2hiers.get(succEc2letters);
 				if (hiers == null) {
@@ -1888,17 +1892,17 @@ public class ShrinkNwa<LETTER, STATE>
 				}
 				hiers.add(hier);
 			}
-
+			
 			if (succEc2letter2hiers.size() > 1) {
 				hierEc.markSplit(succEc2letter2hiers.values());
 			}
 		}
-
+		
 		if (hierEc.mState2SeparatedSet.size() > 0) {
 			if (DEBUG4) {
 				mLogger.debug(" SPLIT");
 			}
-
+			
 			mSplitEcsReturn.add(hierEc);
 			splitReturnExecute(mSplitEcsReturn);
 			mSplitEcsReturn = new LinkedList<EquivalenceClass>();
@@ -1909,11 +1913,11 @@ public class ShrinkNwa<LETTER, STATE>
 		}
 		hierEc.mState2SeparatedSet = null;
 	}
-
+	
 	/**
 	 * This method implements an optional first linear return split before considering the real return split.
-	 * 
-	 * <p>NOTE: The split is not perfect in the sense that once an equivalence class has been split, its return
+	 * <p>
+	 * NOTE: The split is not perfect in the sense that once an equivalence class has been split, its return
 	 * predecessors are not reconsidered. This could be added, but is currently not the case, since this is only meant
 	 * as a preprocessing step.
 	 */
@@ -1921,22 +1925,22 @@ public class ShrinkNwa<LETTER, STATE>
 		if (DEBUG2) {
 			mLogger.debug("\nNEW RETURN SPLITTING ROUND");
 		}
-
+		
 		if (DEBUG3) {
 			if (mPartition.mEquivalenceClasses.size() == mWorkListRet.mQueue.size()) {
-				mLogger.debug("first return split, starting with " +
-						mPartition.mEquivalenceClasses.size() + " ECs");
+				mLogger.debug("first return split, starting with "
+						+ mPartition.mEquivalenceClasses.size() + " ECs");
 			}
 		}
-
+		
 		if (STATISTICS) {
 			mReturnFirstTime -= new GregorianCalendar().getTimeInMillis();
 		}
-
+		
 		EquivalenceClass linEc;
 		HashSet<STATE> hiers;
 		final Set<Entry<EquivalenceClass, HashSet<STATE>>> entrySet = mFirstReturnLin2Hiers.entrySet();
-
+		
 		while (true) {
 			// continue from last time
 			if (!entrySet.isEmpty()) {
@@ -1949,23 +1953,23 @@ public class ShrinkNwa<LETTER, STATE>
 			} else {
 				break;
 			}
-
+			
 			if (DEBUG3) {
 				mLogger.debug("linEc size: " + linEc.mStates.size());
 			}
-
+			
 			// singleton equivalence classes are ignored
 			if (linEc.mStates.size() == 1) {
 				if (DEBUG3) {
 					mLogger.debug(" ignoring");
 				}
-
+				
 				continue;
 			}
-
+			
 			// analyse linear equivalence class
 			hiers = splitReturnPredecessorsFirstTimeRepeat(linEc, new HashSet<STATE>());
-
+			
 			while ((hiers != null) && (!hiers.isEmpty())) {
 				// new internal and call splits available, prefer them
 				if (mWorkListIntCall.hasNext()) {
@@ -1973,35 +1977,35 @@ public class ShrinkNwa<LETTER, STATE>
 					mFirstReturnLin2Hiers.put(linEc, hiers);
 					break;
 				}
-
+				
 				// singleton equivalence classes are ignored
 				if (linEc.mStates.size() == 1) {
 					if (DEBUG3) {
 						mLogger.debug(" ignoring");
 					}
-
+					
 					continue;
 				}
-
+				
 				// analyse linear equivalence class
 				hiers = splitReturnPredecessorsFirstTimeRepeat(linEc, hiers);
 			}
 		}
-
+		
 		// no equivalence classes left, switch to normal return split
 		mFirstReturnSplit = false;
 		mWorkListRet.fillWithAll();
-
+		
 		if (STATISTICS) {
 			mReturnFirstTime += new GregorianCalendar().getTimeInMillis();
 		}
-
+		
 		if (DEBUG3) {
 			mLogger.debug(
 					"first return split executed, now having " + mPartition.mEquivalenceClasses.size() + " ECs");
 		}
 	}
-
+	
 	/**
 	 * This method is repeated in the loop of the optional first return split.
 	 * 
@@ -2015,13 +2019,13 @@ public class ShrinkNwa<LETTER, STATE>
 			HashSet<STATE> oldHiers) {
 		// analyse linear equivalence class
 		oldHiers = splitReturnPredecessorsFirstTimeAnalyze(linEc, oldHiers);
-
+		
 		// if there are reasons for a split, execute it
 		if (mSplitEcsReturn.size() == 1) {
 			if (DEBUG3) {
 				mLogger.debug("splitting EC of size " + linEc.mStates.size());
 			}
-
+			
 			assert (mSplitEcsReturn.get(0) == linEc);
 			splitReturnExecute(mSplitEcsReturn);
 			mSplitEcsReturn.clear();
@@ -2030,11 +2034,11 @@ public class ShrinkNwa<LETTER, STATE>
 		}
 		return oldHiers;
 	}
-
+	
 	/**
 	 * This method checks whether the given equivalence class must be split linearly. If so, the states are marked.
-	 * 
-	 * <p>This is a mixture of a full and a random split, since only a fixed number of hierarchical predecessor states is
+	 * <p>
+	 * This is a mixture of a full and a random split, since only a fixed number of hierarchical predecessor states is
 	 * considered at one time. If there are more of them, they are considered in a later iteration.
 	 * 
 	 * @param linEc
@@ -2046,7 +2050,7 @@ public class ShrinkNwa<LETTER, STATE>
 	private HashSet<STATE> splitReturnPredecessorsFirstTimeAnalyze(final EquivalenceClass linEc,
 			HashSet<STATE> oldHiers) {
 		final Set<STATE> lins = linEc.mStates;
-
+		
 		// collect all relevant hierarchical predecessors
 		final HashSet<STATE> newHiers = new HashSet<STATE>();
 		boolean broke = (oldHiers.isEmpty());
@@ -2066,7 +2070,7 @@ public class ShrinkNwa<LETTER, STATE>
 		if (!broke) {
 			oldHiers = null;
 		}
-
+		
 		final int modSize = computeHashCap(lins.size());
 		for (final STATE hier : newHiers) {
 			final HashMap<HashMap<LETTER, HashSet<STATE>>, HashSet<STATE>> trans2lin =
@@ -2076,7 +2080,7 @@ public class ShrinkNwa<LETTER, STATE>
 				if (!mDoubleDecker.isDoubleDecker(lin, hier)) {
 					continue;
 				}
-
+				
 				final Iterator<OutgoingReturnTransition<LETTER, STATE>> edges =
 						mOperand.returnSuccessorsGivenHier(lin, hier).iterator();
 				if (edges.hasNext()) {
@@ -2091,7 +2095,7 @@ public class ShrinkNwa<LETTER, STATE>
 						}
 						succs.add(edge.getSucc());
 					} while (edges.hasNext());
-
+					
 					HashSet<STATE> otherLins = trans2lin.get(transitions);
 					if (otherLins == null) {
 						otherLins = new HashSet<STATE>();
@@ -2102,49 +2106,49 @@ public class ShrinkNwa<LETTER, STATE>
 					noTransitions.add(lin);
 				}
 			}
-
-			if (! noTransitions.isEmpty()) {
+			
+			if (!noTransitions.isEmpty()) {
 				trans2lin.put(null, noTransitions);
 			}
 			if (trans2lin.size() > 1) {
 				linEc.markSplit(trans2lin.values());
 			}
 		}
-
+		
 		return oldHiers;
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	private void splitReturnExecuteOld(final Collection<EquivalenceClass> splitEquivalenceClasses) {
 		if (DEBUG2) {
 			mLogger.debug("\n-- executing return splits");
 		}
-
+		
 		long time;
 		if (STATISTICS) {
 			time = new GregorianCalendar().getTimeInMillis();
 		}
-
+		
 		for (final EquivalenceClass oldEc : splitEquivalenceClasses) {
 			final HashMap<STATE, HashSet<STATE>> state2separatedSet = oldEc.mState2SeparatedSet;
 			assert (state2separatedSet != null);
-
+			
 			if (DEBUG2) {
 				mLogger.debug(oldEc + " : " + state2separatedSet);
 			}
-
+			
 			// mapping: state to associated color
 			final HashMap<STATE, Integer> state2color =
 					new HashMap<STATE, Integer>(computeHashCap(oldEc.mStates.size()));
 			// current number of colors
 			int colors = 0;
-
+			
 			for (final Entry<STATE, HashSet<STATE>> entry : state2separatedSet.entrySet()) {
 				final STATE state = entry.getKey();
 				final HashSet<STATE> separatedSet = entry.getValue();
-
+				
 				assert (oldEc.mStates.contains(state)) && (separatedSet != null);
-
+				
 				// first color can be directly assigned
 				if (colors == 0) {
 					state2color.put(state, 0);
@@ -2152,7 +2156,7 @@ public class ShrinkNwa<LETTER, STATE>
 				} else {
 					// find fitting color or use a new one
 					final HashSet<Integer> blockedColors = new HashSet<Integer>(computeHashCap(colors));
-
+					
 					for (final STATE separated : separatedSet) {
 						final Integer color = state2color.get(separated);
 						if (color != null) {
@@ -2162,7 +2166,7 @@ public class ShrinkNwa<LETTER, STATE>
 							}
 						}
 					}
-
+					
 					// no color available, use a new one
 					if (blockedColors.size() == colors) {
 						state2color.put(state, colors++);
@@ -2182,7 +2186,7 @@ public class ShrinkNwa<LETTER, STATE>
 				}
 			}
 			assert (colors > 1);
-
+			
 			// index 0 is ignored
 			final HashSet<STATE>[] newEcs = new HashSet[colors];
 			for (int i = colors - 1; i > 0; --i) {
@@ -2194,41 +2198,41 @@ public class ShrinkNwa<LETTER, STATE>
 					newEcs[color].add(entry.getKey());
 				}
 			}
-
+			
 			if (DEBUG2) {
 				mLogger.debug("state2color: " + state2color);
 			}
-
+			
 			// finally split the equivalence class
 			for (int i = newEcs.length - 1; i > 0; --i) {
 				final HashSet<STATE> newStates = newEcs[i];
 				final EquivalenceClass newEc = mPartition.addEcReturn(newStates, oldEc);
-
+				
 				if (STATISTICS) {
 					++mSplitsWithChange;
 				}
-
+				
 				if (DEBUG2) {
 					mLogger.debug("new equivalence class: " + newEc.toStringShort());
 				}
 			}
-
+			
 			// reset separation mapping
 			oldEc.mState2SeparatedSet = null;
 		}
-
+		
 		if (STATISTICS) {
 			time = new GregorianCalendar().getTimeInMillis() - time;
 			mReturnSeparateTime += time;
 		}
 	}
-
+	
 	/**
 	 * This method randomly splits the given equivalence class.
-	 * 
-	 * <p>If it has outgoing call transitions, it is split into equally sized blocks of states.
-	 * 
-	 * <p>Otherwise (without any outgoing call transitions) it keeps states with no outgoing return transitions together,
+	 * <p>
+	 * If it has outgoing call transitions, it is split into equally sized blocks of states.
+	 * <p>
+	 * Otherwise (without any outgoing call transitions) it keeps states with no outgoing return transitions together,
 	 * since these states will never take part in any matrix and hence can be kept together.
 	 * 
 	 * @param ec
@@ -2241,7 +2245,7 @@ public class ShrinkNwa<LETTER, STATE>
 			splitRandomReturns(ec);
 		}
 	}
-
+	
 	/**
 	 * This method randomly splits an equivalence class into equally sized blocks of states.
 	 * 
@@ -2253,17 +2257,17 @@ public class ShrinkNwa<LETTER, STATE>
 		final int size = computeHashCap(mTreshold);
 		while (oldStates.size() > mTreshold) {
 			final HashSet<STATE> newStates = new HashSet<STATE>(size);
-			int i = mTreshold;
+			int index = mTreshold;
 			for (final STATE state : oldStates) {
 				newStates.add(state);
-				if (--i == 0) {
+				if (--index == 0) {
 					mPartition.addEcReturn(newStates, ec);
 					break;
 				}
 			}
 		}
 	}
-
+	
 	/**
 	 * This method randomly splits an equivalence class into equally sized blocks of states, with one exception: It
 	 * keeps states without any outgoing return transitions together.
@@ -2275,7 +2279,7 @@ public class ShrinkNwa<LETTER, STATE>
 		final Set<STATE> oldStates = ec.mStates;
 		final int size = computeHashCap(mTreshold);
 		final LinkedList<HashSet<STATE>> newClasses = new LinkedList<HashSet<STATE>>();
-
+		
 		HashSet<STATE> returns = new HashSet<STATE>(size);
 		for (final STATE state : oldStates) {
 			if (mOperand.returnSuccessors(state).iterator().hasNext()) {
@@ -2286,26 +2290,26 @@ public class ShrinkNwa<LETTER, STATE>
 				}
 			}
 		}
-		if (! returns.isEmpty()) {
+		if (!returns.isEmpty()) {
 			newClasses.add(returns);
 		} else if (newClasses.isEmpty()) {
 			return;
 		}
-
+		
 		int numberOfStates = oldStates.size();
 		for (final HashSet<STATE> states : newClasses) {
-			assert (! states.isEmpty());
+			assert (!states.isEmpty());
 			numberOfStates -= states.size();
-
+			
 			// no state without return transitions, do not split last class
 			if (numberOfStates == 0) {
 				break;
 			}
-
+			
 			mPartition.addEcReturn(states, ec);
 		}
 	}
-
+	
 	/**
 	 * For each remaining equivalence class create a new state. Also remove all other objects references.
 	 * 
@@ -2316,12 +2320,12 @@ public class ShrinkNwa<LETTER, STATE>
 		if (DEBUG) {
 			mLogger.info("finished splitting, constructing result");
 		}
-
+		
 		mPartition.markInitials();
-
+		
 		// construct result with library method
 		constructResultFromPartition(mPartition, addMapping);
-
+		
 		// clean up
 		if (DEBUG) {
 			mLogger.info("finished construction");
@@ -2331,9 +2335,9 @@ public class ShrinkNwa<LETTER, STATE>
 		mWorkListIntCall = null;
 		mWorkListRet = null;
 	}
-
+	
 	// --- [end] main methods --- //
-
+	
 	/**
 	 * This method checks that the states in each equivalence class initially passed in the constructor are all either
 	 * final or non-final.
@@ -2355,7 +2359,7 @@ public class ShrinkNwa<LETTER, STATE>
 		}
 		return true;
 	}
-
+	
 	/**
 	 * This method checks the assertion that a given list contains an element only once.
 	 * 
@@ -2370,7 +2374,7 @@ public class ShrinkNwa<LETTER, STATE>
 		set.addAll(list);
 		return (set.size() == list.size());
 	}
-
+	
 	/**
 	 * This method does an extra split with outgoing transitions for internal and call symbols at the beginning. This is
 	 * totally fine, since these splits would occur later anyway. The reason for this split overhead is that the regular
@@ -2383,28 +2387,28 @@ public class ShrinkNwa<LETTER, STATE>
 	 */
 	private void splitOutgoing(final HashSet<STATE> finals, final HashSet<STATE> nonfinals) {
 		HashSet<STATE> states = finals;
-
+		
 		for (int i = 0; i < 2; ++i) {
 			if (states.isEmpty()) {
 				continue;
 			}
-
+			
 			final HashMap<Collection<LETTER>, Collection<STATE>> callSplit = splitOutgoingHelper(states, mOutCall);
 			for (final Collection<STATE> callStates : callSplit.values()) {
 				final HashMap<Collection<LETTER>, Collection<STATE>> internalSplit =
 						splitOutgoingHelper(callStates, mOutInternal);
-
+						
 				// split states
 				for (final Collection<STATE> newStates : internalSplit.values()) {
-					assert (! newStates.isEmpty()) && (newStates instanceof HashSet<?>);
+					assert (!newStates.isEmpty()) && (newStates instanceof HashSet<?>);
 					mPartition.addEcInitialization((HashSet<STATE>) newStates);
 				}
 			}
-
+			
 			states = nonfinals;
 		}
 	}
-
+	
 	/**
 	 * This is a helper method that sets up data structures for splits by outgoing transitions.
 	 *
@@ -2418,7 +2422,7 @@ public class ShrinkNwa<LETTER, STATE>
 			final IOutgoingHelper<LETTER, STATE> helper) {
 		final HashMap<Collection<LETTER>, Collection<STATE>> letterSet2stateSet =
 				new HashMap<Collection<LETTER>, Collection<STATE>>(computeHashCap(helper.size()));
-
+				
 		// set up mapping letters to states
 		for (final STATE state : states) {
 			final Set<LETTER> letters = helper.letters(state);
@@ -2429,10 +2433,10 @@ public class ShrinkNwa<LETTER, STATE>
 			}
 			statesSet.add(state);
 		}
-
+		
 		return letterSet2stateSet;
 	}
-
+	
 	/**
 	 * This enum is used to tell for an equivalence class whether it contains incoming transitions. Since it is
 	 * expensive to compute this each time, only the answer "no" is correct. This status is inherited by the two
@@ -2441,16 +2445,16 @@ public class ShrinkNwa<LETTER, STATE>
 	 * search for transitions.
 	 */
 	private enum EIncomingStatus {
-		/** unknown whether there are incoming transitions */
+		/** Unknown whether there are incoming transitions. */
 		UNKNOWN,
-
-		/** equivalence class is in work list */
+		
+		/** Equivalence class is in work list. */
 		IN_WORKLIST,
-
-		/** there are no incoming transitions */
+		
+		/** There are no incoming transitions. */
 		NONE
 	}
-
+	
 	/**
 	 * A transition iterator is used for splitting internal and call predecessors.
 	 *
@@ -2468,27 +2472,27 @@ public class ShrinkNwa<LETTER, STATE>
 		 * @return the next predecessor
 		 */
 		void nextState(final STATE state);
-
+		
 		/**
 		 * The iterator is told to consider the next transition.
 		 * 
 		 * @return the letter of the next transition
 		 */
 		LETTER nextAndLetter();
-
+		
 		/**
 		 * Tells whether the iterator has another transition.
 		 *
 		 * @return true iff there is another transition left
 		 */
 		boolean hasNext();
-
+		
 		/**
-		 * @return the predecessor state
+		 * @return The predecessor state.
 		 */
 		STATE getPred();
 	}
-
+	
 	/**
 	 * This is the implementation for internal transitions.
 	 */
@@ -2497,29 +2501,29 @@ public class ShrinkNwa<LETTER, STATE>
 		private Iterator<IncomingInternalTransition<LETTER, STATE>> mIterator;
 		// current transition
 		private IncomingInternalTransition<LETTER, STATE> mTransition;
-
+		
 		@Override
 		public void nextState(final STATE state) {
 			mIterator = mOperand.internalPredecessors(state).iterator();
 		}
-
+		
 		@Override
 		public STATE getPred() {
 			return mTransition.getPred();
 		}
-
+		
 		@Override
 		public LETTER nextAndLetter() {
 			mTransition = mIterator.next();
 			return mTransition.getLetter();
 		}
-
+		
 		@Override
 		public boolean hasNext() {
 			return mIterator.hasNext();
 		}
 	}
-
+	
 	/**
 	 * This is the implementation for call transitions.
 	 */
@@ -2528,32 +2532,37 @@ public class ShrinkNwa<LETTER, STATE>
 		private Iterator<IncomingCallTransition<LETTER, STATE>> mIterator;
 		// current transition
 		private IncomingCallTransition<LETTER, STATE> mTransition;
-
+		
 		@Override
 		public void nextState(final STATE state) {
 			mIterator = mOperand.callPredecessors(state).iterator();
 		}
-
+		
 		@Override
 		public LETTER nextAndLetter() {
 			mTransition = mIterator.next();
 			return mTransition.getLetter();
 		}
-
+		
 		@Override
 		public STATE getPred() {
 			return mTransition.getPred();
 		}
-
+		
 		@Override
 		public boolean hasNext() {
 			return mIterator.hasNext();
 		}
 	}
-
+	
 	/**
 	 * This interface is used for the outgoing split at the beginning to abstract from whether internal or call symbols
 	 * are considered.
+	 * 
+	 * @param <LETTER>
+	 *            letter type
+	 * @param <STATE>
+	 *            state type
 	 */
 	private interface IOutgoingHelper<LETTER, STATE> {
 		/**
@@ -2562,7 +2571,7 @@ public class ShrinkNwa<LETTER, STATE>
 		 * @return size of the alphabet
 		 */
 		int size();
-
+		
 		/**
 		 * This method returns a set of outgoing letters for a given state.
 		 * 
@@ -2571,15 +2580,15 @@ public class ShrinkNwa<LETTER, STATE>
 		 * @return all outgoing letters
 		 */
 		Set<LETTER> letters(final STATE state);
-
+		
 		/**
 		 * This method returns a new collection. This is for efficiency reasons,
-		 *    since first only a list is needed, where later a set is needed.
+		 * since first only a list is needed, where later a set is needed.
 		 *
 		 * @return new collection
 		 */
 		Collection<STATE> newCollection();
-
+		
 		/**
 		 * This method only checks that the symbols are correctly returned by the API.
 		 *
@@ -2589,7 +2598,7 @@ public class ShrinkNwa<LETTER, STATE>
 		 */
 		boolean assertLetters(final STATE state);
 	}
-
+	
 	/**
 	 * This is the implementation for the outgoing internal split helper.
 	 */
@@ -2598,30 +2607,30 @@ public class ShrinkNwa<LETTER, STATE>
 		public int size() {
 			return mOperand.getInternalAlphabet().size();
 		}
-
+		
 		@Override
 		public Set<LETTER> letters(final STATE state) {
 			assert (assertLetters(state));
-
+			
 			return mOperand.lettersInternal(state);
 		}
-
+		
 		@Override
 		public Collection<STATE> newCollection() {
 			return new HashSet<STATE>();
 		}
-
+		
 		@Override
 		public boolean assertLetters(final STATE state) {
 			final Collection<LETTER> model = mOperand.lettersInternal(state);
-
+			
 			final HashSet<LETTER> checker = new HashSet<LETTER>(computeHashCap(model.size()));
 			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it =
 					mOperand.internalSuccessors(state).iterator();
 			while (it.hasNext()) {
 				checker.add(it.next().getLetter());
 			}
-
+			
 			if (checker.size() != model.size()) {
 				return false;
 			}
@@ -2630,11 +2639,11 @@ public class ShrinkNwa<LETTER, STATE>
 					return false;
 				}
 			}
-
+			
 			return true;
 		}
 	}
-
+	
 	/**
 	 * This is the implementation for the alternative call split helper.
 	 */
@@ -2643,29 +2652,29 @@ public class ShrinkNwa<LETTER, STATE>
 		public int size() {
 			return mOperand.getCallAlphabet().size();
 		}
-
+		
 		@Override
 		public Set<LETTER> letters(final STATE state) {
 			assert assertLetters(state);
-
+			
 			return mOperand.lettersCall(state);
 		}
-
+		
 		@Override
 		public Collection<STATE> newCollection() {
 			return new LinkedList<STATE>();
 		}
-
+		
 		@Override
 		public boolean assertLetters(final STATE state) {
 			final Collection<LETTER> model = mOperand.lettersCall(state);
-
+			
 			final HashSet<LETTER> checker = new HashSet<LETTER>(computeHashCap(model.size()));
 			final Iterator<OutgoingCallTransition<LETTER, STATE>> it = mOperand.callSuccessors(state).iterator();
 			while (it.hasNext()) {
 				checker.add(it.next().getLetter());
 			}
-
+			
 			if (checker.size() != model.size()) {
 				return false;
 			}
@@ -2674,11 +2683,11 @@ public class ShrinkNwa<LETTER, STATE>
 					return false;
 				}
 			}
-
+			
 			return true;
 		}
 	}
-
+	
 	/**
 	 * This class represents a return split matrix. The columns are the linear and the rows are the hierarchical
 	 * predecessor states. The implementation is not really a matrix, but rather a hash map, since the matrix would be
@@ -2686,7 +2695,7 @@ public class ShrinkNwa<LETTER, STATE>
 	 */
 	private class Matrix {
 		private final HashMap<STATE, HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>> mHier2lin2letter2succ;
-
+		
 		/**
 		 * @param size
 		 *            number of non-singleton
@@ -2695,20 +2704,20 @@ public class ShrinkNwa<LETTER, STATE>
 			mHier2lin2letter2succ =
 					new HashMap<STATE, HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>>(computeHashCap(size));
 		}
-
+		
 		/**
 		 * This constructor is only used for the useless 1x1-matrix.
 		 */
 		private Matrix() {
 			mHier2lin2letter2succ = null;
 		}
-
+		
 		@Override
 		public String toString() {
 			return (mHier2lin2letter2succ == null) ? "{1x1-matrix}" : mHier2lin2letter2succ.toString();
 		}
 	}
-
+	
 	/**
 	 * This class represents a matrix row. It knows its associated hierarchical predecessor state and the matrix entries
 	 * of this row.
@@ -2716,7 +2725,7 @@ public class ShrinkNwa<LETTER, STATE>
 	private class MatrixRow {
 		private final STATE mHier;
 		private final HashMap<STATE, HashMap<LETTER, HashSet<STATE>>> mLin2letter2succ;
-
+		
 		/**
 		 * @param hier
 		 *            the hierarchical state
@@ -2728,30 +2737,30 @@ public class ShrinkNwa<LETTER, STATE>
 			assert (!lin2letter2succ.isEmpty());
 			mLin2letter2succ = lin2letter2succ;
 		}
-
+		
 		@Override
 		public String toString() {
 			return mHier + " -> " + mLin2letter2succ;
 		}
 	}
-
+	
 	/**
 	 * This class is a dummy map. It is currently used for the empty return split matrix row.
 	 */
 	private class DummyMap extends HashMap<LETTER, HashSet<STATE>> {
 		private static final long serialVersionUID = 1L;
-
+		
 		@Override
 		public HashSet<STATE> get(final Object key) {
 			return null;
 		}
-
+		
 		@Override
 		public String toString() {
 			return "{dummy map}";
 		}
 	}
-
+	
 	/**
 	 * This class stores all states for a certain color and all states that are blocked for this color.
 	 */
@@ -2759,7 +2768,7 @@ public class ShrinkNwa<LETTER, STATE>
 		// associated states
 		protected final HashSet<STATE> mContent;
 		protected final HashSet<STATE> mBlocked;
-
+		
 		/**
 		 * @param size
 		 *            size of the equivalence class
@@ -2774,11 +2783,11 @@ public class ShrinkNwa<LETTER, STATE>
 			mBlocked = blocked;
 		}
 	}
-
+	
 	// --- [end] helper methods and classes --- //
-
+	
 	// --- [start] important inner classes --- //
-
+	
 	/**
 	 * The partition is the main object of the procedure. It contains and handles the equivalence classes and works as
 	 * the resulting automaton.
@@ -2790,15 +2799,15 @@ public class ShrinkNwa<LETTER, STATE>
 		private final HashMap<STATE, EquivalenceClass> mState2EquivalenceClass;
 		
 		/**
-		 * constructor
+		 * Constructor.
 		 */
 		public Partition() {
 			mEquivalenceClasses = new LinkedList<EquivalenceClass>();
 			mState2EquivalenceClass = new HashMap<STATE, EquivalenceClass>(computeHashCap(mOperand.size()));
 		}
-
+		
 		/**
-		 * marks all respective equivalence classes as initial
+		 * Marks all respective equivalence classes as initial.
 		 */
 		public void markInitials() {
 			/*
@@ -2809,7 +2818,7 @@ public class ShrinkNwa<LETTER, STATE>
 				ec.markAsInitial();
 			}
 		}
-
+		
 		/**
 		 * This method adds an equivalence class (also to the work list) during the initialization phase.
 		 *
@@ -2823,7 +2832,7 @@ public class ShrinkNwa<LETTER, STATE>
 				mState2EquivalenceClass.put(state, ec);
 			}
 		}
-
+		
 		/**
 		 * This method adds an equivalence class to the partition that resulted from an internal or call split.
 		 *
@@ -2844,7 +2853,7 @@ public class ShrinkNwa<LETTER, STATE>
 			}
 			return ec;
 		}
-
+		
 		/**
 		 * This method adds an equivalence class to the partition that resulted from a return split.
 		 *
@@ -2857,18 +2866,18 @@ public class ShrinkNwa<LETTER, STATE>
 		private EquivalenceClass addEcReturn(final Set<STATE> states, final EquivalenceClass parent) {
 			final EquivalenceClass ec = new EquivalenceClass(states, parent);
 			mEquivalenceClasses.add(ec);
-
+			
 			// update mapping
 			for (final STATE state : states) {
 				assert (parent.mStates.contains(state)) && (mState2EquivalenceClass.get(state) == parent);
-
+				
 				parent.mStates.remove(state);
 				mState2EquivalenceClass.put(state, ec);
 			}
-
+			
 			return ec;
 		}
-
+		
 		/**
 		 * This method splits a state from its equivalence class during the internal and call split. The equivalence
 		 * class is remembered.
@@ -2880,7 +2889,7 @@ public class ShrinkNwa<LETTER, STATE>
 		 */
 		private void splitState(final STATE state, final LinkedList<EquivalenceClass> splitEcs) {
 			final EquivalenceClass ec = mState2EquivalenceClass.get(state);
-
+			
 			// first occurrence of the equivalence class, mark it
 			if (ec.mIntersection.isEmpty()) {
 				assert (!splitEcs.contains(ec));
@@ -2888,14 +2897,14 @@ public class ShrinkNwa<LETTER, STATE>
 			} else {
 				assert (splitEcs.contains(ec));
 			}
-
+			
 			// move state to intersection set
 			ec.mIntersection.add(state);
-
+			
 			// remove state from old set
 			ec.mStates.remove(state);
 		}
-
+		
 		/**
 		 * This method finally splits the marked equivalence classes into two (for the internal and call split). The
 		 * states have already been split in the equivalence class before. Only if there are states remaining the split
@@ -2908,7 +2917,7 @@ public class ShrinkNwa<LETTER, STATE>
 		public boolean splitEquivalenceClasses(final Iterable<STATE> states) {
 			boolean splitOccurred = false;
 			final LinkedList<EquivalenceClass> splitEcs = new LinkedList<EquivalenceClass>();
-
+			
 			// process splits
 			for (final STATE state : states) {
 				if (DEBUG) {
@@ -2916,7 +2925,7 @@ public class ShrinkNwa<LETTER, STATE>
 				}
 				splitState(state, splitEcs);
 			}
-
+			
 			// check and finalize splits
 			for (final EquivalenceClass ec : splitEcs) {
 				// split removed every state, restore equivalence class
@@ -2932,18 +2941,18 @@ public class ShrinkNwa<LETTER, STATE>
 						mLogger.info("EC was split " + ec);
 					}
 					++mSplitsWithChange;
-
+					
 					splitOccurred = true;
 					addEcIntCall(ec);
 				}
-
+				
 				// reset equivalence class
 				ec.reset();
 			}
-
+			
 			return splitOccurred;
 		}
-
+		
 		@Override
 		public String toString() {
 			final StringBuilder builder = new StringBuilder();
@@ -2957,28 +2966,28 @@ public class ShrinkNwa<LETTER, STATE>
 			builder.append("}");
 			return builder.toString();
 		}
-
+		
 		@Override
 		public IBlock<STATE> getBlock(final STATE state) {
 			return mState2EquivalenceClass.get(state);
 		}
-
+		
 		@Override
 		public int size() {
 			return mEquivalenceClasses.size();
 		}
-
+		
 		@Override
 		public Iterator<IBlock<STATE>> blocksIterator() {
 			return new Iterator<IBlock<STATE>>() {
 				private final Iterator<EquivalenceClass> mIt =
 						mEquivalenceClasses.iterator();
-
+						
 				@Override
 				public boolean hasNext() {
 					return mIt.hasNext();
 				}
-
+				
 				@Override
 				public IBlock<STATE> next() {
 					return mIt.next();
@@ -2986,11 +2995,11 @@ public class ShrinkNwa<LETTER, STATE>
 			};
 		}
 	}
-
+	
 	/**
 	 * An equivalence class contains states and knows whether it is in the work list.
-	 * 
-	 * <p>Two equivalence class objects are equal iff they share the same pointer.
+	 * <p>
+	 * Two equivalence class objects are equal iff they share the same pointer.
 	 */
 	private class EquivalenceClass implements IBlock<STATE> {
 		// unique ID (useful for hashCode and so for deterministic runs)
@@ -3011,7 +3020,7 @@ public class ShrinkNwa<LETTER, STATE>
 		private EIncomingStatus mOutgoingRet;
 		// does the equivalence class contain an initial state?
 		private boolean mIsInitial;
-
+		
 		/**
 		 * This is a partial constructor which is used for both initialization and splitting.
 		 * 
@@ -3027,7 +3036,7 @@ public class ShrinkNwa<LETTER, STATE>
 			mStates = states;
 			reset();
 		}
-
+		
 		/**
 		 * This constructor is reserved for the placeholder equivalence class.
 		 */
@@ -3036,7 +3045,7 @@ public class ShrinkNwa<LETTER, STATE>
 			mStates = null;
 			mIntersection = null;
 		}
-
+		
 		/**
 		 * This constructor is used for the initialization.
 		 * 
@@ -3056,7 +3065,7 @@ public class ShrinkNwa<LETTER, STATE>
 			}
 			mMatrix = null;
 		}
-
+		
 		/**
 		 * This constructor is used during a split.
 		 * 
@@ -3067,75 +3076,75 @@ public class ShrinkNwa<LETTER, STATE>
 		 */
 		public EquivalenceClass(final Set<STATE> states, final EquivalenceClass parent) {
 			this(states, true);
-
+			
 			switch (parent.mIncomingInt) {
-			case UNKNOWN:
-			case IN_WORKLIST:
-				mIncomingInt = EIncomingStatus.IN_WORKLIST;
-				mWorkListIntCall.add(this);
-				break;
-			case NONE:
-				mIncomingInt = EIncomingStatus.NONE;
-				break;
-			default:
-				throw new IllegalArgumentException();
-			}
-
-			switch (parent.mIncomingCall) {
-			case UNKNOWN:
-			case IN_WORKLIST:
-				mIncomingCall = EIncomingStatus.IN_WORKLIST;
-				if (mIncomingInt != EIncomingStatus.IN_WORKLIST) {
-					mWorkListIntCall.add(this);
-				}
-				break;
-			case NONE:
-				mIncomingCall = EIncomingStatus.NONE;
-				break;
-			default:
-				throw new IllegalArgumentException();
-			}
-
-			switch (parent.mIncomingRet) {
-			case UNKNOWN:
-			case IN_WORKLIST:
-				mIncomingRet = EIncomingStatus.IN_WORKLIST;
-				mWorkListRet.add(this);
-				break;
-			case NONE:
-				mIncomingRet = EIncomingStatus.NONE;
-				break;
-			default:
-				throw new IllegalArgumentException();
-			}
-
-			if (mFirstReturnSplitAlternative) {
-				switch (parent.mOutgoingRet) {
 				case UNKNOWN:
 				case IN_WORKLIST:
-					mOutgoingRet = EIncomingStatus.IN_WORKLIST;
-					mWorkListRetHier.add(this);
+					mIncomingInt = EIncomingStatus.IN_WORKLIST;
+					mWorkListIntCall.add(this);
 					break;
 				case NONE:
-					mOutgoingRet = EIncomingStatus.NONE;
+					mIncomingInt = EIncomingStatus.NONE;
 					break;
 				default:
 					throw new IllegalArgumentException();
+			}
+			
+			switch (parent.mIncomingCall) {
+				case UNKNOWN:
+				case IN_WORKLIST:
+					mIncomingCall = EIncomingStatus.IN_WORKLIST;
+					if (mIncomingInt != EIncomingStatus.IN_WORKLIST) {
+						mWorkListIntCall.add(this);
+					}
+					break;
+				case NONE:
+					mIncomingCall = EIncomingStatus.NONE;
+					break;
+				default:
+					throw new IllegalArgumentException();
+			}
+			
+			switch (parent.mIncomingRet) {
+				case UNKNOWN:
+				case IN_WORKLIST:
+					mIncomingRet = EIncomingStatus.IN_WORKLIST;
+					mWorkListRet.add(this);
+					break;
+				case NONE:
+					mIncomingRet = EIncomingStatus.NONE;
+					break;
+				default:
+					throw new IllegalArgumentException();
+			}
+			
+			if (mFirstReturnSplitAlternative) {
+				switch (parent.mOutgoingRet) {
+					case UNKNOWN:
+					case IN_WORKLIST:
+						mOutgoingRet = EIncomingStatus.IN_WORKLIST;
+						mWorkListRetHier.add(this);
+						break;
+					case NONE:
+						mOutgoingRet = EIncomingStatus.NONE;
+						break;
+					default:
+						throw new IllegalArgumentException();
 				}
 			}
-
+			
 			if (mReturnSplitCorrectnessEcs != null) {
 				// own predecessors
 				for (final STATE state : mStates) {
-					for (final IncomingReturnTransition<LETTER, STATE> transition :
-							mOperand.returnPredecessors(state)) {
+					for (final IncomingReturnTransition<LETTER, STATE> transition : mOperand
+							.returnPredecessors(state)) {
 						mReturnSplitCorrectnessEcs.add(mPartition.mState2EquivalenceClass.get(transition.getLinPred()));
 					}
 				}
 				// parent predecessors
 				for (final STATE state : parent.mStates) {
-					for (final IncomingReturnTransition<LETTER, STATE> transition :
-							mOperand.returnPredecessors(state)) {
+					for (final IncomingReturnTransition<LETTER, STATE> transition : mOperand
+							.returnPredecessors(state)) {
 						mReturnSplitCorrectnessEcs.add(mPartition.mState2EquivalenceClass.get(transition.getLinPred()));
 					}
 				}
@@ -3146,14 +3155,14 @@ public class ShrinkNwa<LETTER, STATE>
 			}
 			resetMatrix(parent);
 		}
-
+		
 		/**
-		 * sets the equivalence class as initial
+		 * Sets the equivalence class as initial.
 		 */
 		void markAsInitial() {
 			mIsInitial = true;
 		}
-
+		
 		@Override
 		public int hashCode() {
 			return mId;
@@ -3171,7 +3180,7 @@ public class ShrinkNwa<LETTER, STATE>
 			final EquivalenceClass other = (EquivalenceClass) obj;
 			return (mId == other.mId);
 		}
-
+		
 		/**
 		 * This method initializes the matrix. This is not done at the beginning to avoid creating a huge but sparse
 		 * matrix, since other splits can be executed first.
@@ -3184,9 +3193,9 @@ public class ShrinkNwa<LETTER, STATE>
 			if (STATISTICS) {
 				mMatrixTime -= new GregorianCalendar().getTimeInMillis();
 			}
-
+			
 			final Collection<EquivalenceClass> hierEcsUsed;
-
+			
 			// ignore singletons
 			if (mStates.size() == 1) {
 				hierEcsUsed = new ArrayList<EquivalenceClass>(hierEcs.size());
@@ -3200,7 +3209,7 @@ public class ShrinkNwa<LETTER, STATE>
 				hierEcsUsed = hierEcs;
 			}
 			final int size = hierEcsUsed.size();
-
+			
 			/*
 			 * The matrix has only one column and only one-liners for each hierarchical equivalence class - ignore that.
 			 */
@@ -3208,49 +3217,49 @@ public class ShrinkNwa<LETTER, STATE>
 				if (DEBUG2) {
 					mLogger.debug("--creating 1x1 dummy matrix");
 				}
-
+				
 				mMatrix = mSingletonMatrix;
-
+				
 				if (STATISTICS) {
 					mMatrixTime += new GregorianCalendar().getTimeInMillis();
 				}
 				return;
 			}
-
+			
 			mMatrix = new Matrix(size);
 			final HashMap<STATE, HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>> hier2lin2letter2succ =
 					mMatrix.mHier2lin2letter2succ;
-
+					
 			if (DEBUG2) {
 				mLogger.debug("--adding entries");
 			}
-
+			
 			// add entries
 			final int mapSize = computeHashCap(mStates.size());
-
+			
 			for (final EquivalenceClass hierEc : hierEcsUsed) {
 				for (final STATE hier : hierEc.mStates) {
 					final HashMap<STATE, HashMap<LETTER, HashSet<STATE>>> lin2letter2succ =
 							new HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>(mapSize);
-
+							
 					if (DEBUG2) {
 						mLogger.debug(" consider hier: " + hier);
 					}
-
+					
 					for (final STATE lin : mStates) {
 						if (DEBUG2) {
 							mLogger.debug("  and lin: " + lin);
 						}
-
+						
 						// first check whether hier is a down state
 						if (!mDoubleDecker.isDoubleDecker(lin, hier)) {
 							if (DEBUG2) {
 								mLogger.debug("  no DS");
 							}
-
+							
 							continue;
 						}
-
+						
 						final Iterator<OutgoingReturnTransition<LETTER, STATE>> edges =
 								mOperand.returnSuccessorsGivenHier(lin, hier).iterator();
 						if (edges.hasNext()) {
@@ -3272,7 +3281,7 @@ public class ShrinkNwa<LETTER, STATE>
 								}
 								succs.add(edge.getSucc());
 							} while (edges.hasNext());
-
+							
 							if (DEBUG2) {
 								mLogger.debug("  transitions: " + return2succ);
 							}
@@ -3280,11 +3289,11 @@ public class ShrinkNwa<LETTER, STATE>
 							if (DEBUG2) {
 								mLogger.debug("  DS");
 							}
-
+							
 							lin2letter2succ.put(lin, mDownStateMap);
 						}
 					}
-
+					
 					if (lin2letter2succ.size() > 0) {
 						hier2lin2letter2succ.put(hier, lin2letter2succ);
 					}
@@ -3294,12 +3303,12 @@ public class ShrinkNwa<LETTER, STATE>
 			if (STATISTICS) {
 				mMatrixTime += new GregorianCalendar().getTimeInMillis();
 			}
-
+			
 			if (DEBUG2) {
 				mLogger.debug("--finished creating matrix");
 			}
 		}
-
+		
 		/**
 		 * This method checks whether a parent equivalence class (after a split) had a matrix. If so, the split states
 		 * are shifted to the new child equivalence class.
@@ -3312,12 +3321,12 @@ public class ShrinkNwa<LETTER, STATE>
 			if ((oldMatrix == null) || (oldMatrix == mSingletonMatrix)) {
 				return;
 			}
-
+			
 			if (DEBUG2) {
 				mLogger.debug(
 						"shifting matrix from " + parent.toStringShort() + "(" + oldMatrix + ") to " + toStringShort());
 			}
-
+			
 			final HashMap<STATE, HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>> oldHier2lin2letter2succ =
 					oldMatrix.mHier2lin2letter2succ;
 			final LinkedList<STATE> removeHiers = new LinkedList<STATE>();
@@ -3325,8 +3334,8 @@ public class ShrinkNwa<LETTER, STATE>
 			mMatrix = new Matrix(oldHier2lin2letter2succ.size());
 			final HashMap<STATE, HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>> hier2lin2letter2succ =
 					mMatrix.mHier2lin2letter2succ;
-			for (final Entry<STATE, HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>> outerEntry : oldHier2lin2letter2succ
-					.entrySet()) {
+			for (final Entry<STATE, HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>> outerEntry :
+					oldHier2lin2letter2succ.entrySet()) {
 				final HashMap<STATE, HashMap<LETTER, HashSet<STATE>>> oldLin2letter2succ = outerEntry.getValue();
 				final Iterator<Entry<STATE, HashMap<LETTER, HashSet<STATE>>>> it =
 						oldLin2letter2succ.entrySet().iterator();
@@ -3340,7 +3349,7 @@ public class ShrinkNwa<LETTER, STATE>
 										computeHashCap(oldLin2letter2succ.size()));
 						newLin2letter2succ.put(lin, innerEntry.getValue());
 						removeLins.add(lin);
-
+						
 						while (it.hasNext()) {
 							innerEntry = it.next();
 							lin = innerEntry.getKey();
@@ -3349,7 +3358,7 @@ public class ShrinkNwa<LETTER, STATE>
 								removeLins.add(lin);
 							}
 						}
-
+						
 						final STATE hier = outerEntry.getKey();
 						hier2lin2letter2succ.put(hier, newLin2letter2succ);
 						if (oldLin2letter2succ.size() == 0) {
@@ -3368,11 +3377,11 @@ public class ShrinkNwa<LETTER, STATE>
 					}
 				}
 			}
-
+			
 			for (final STATE hier : removeHiers) {
 				oldHier2lin2letter2succ.remove(hier);
 			}
-
+			
 			if (oldHier2lin2letter2succ.size() <= 1) {
 				if (oldHier2lin2letter2succ.size() == 0) {
 					parent.mMatrix = null;
@@ -3380,7 +3389,7 @@ public class ShrinkNwa<LETTER, STATE>
 					parent.mMatrix = mSingletonMatrix;
 				}
 			}
-
+			
 			if (hier2lin2letter2succ.size() <= 1) {
 				if (hier2lin2letter2succ.size() == 0) {
 					mMatrix = null;
@@ -3388,12 +3397,12 @@ public class ShrinkNwa<LETTER, STATE>
 					mMatrix = mSingletonMatrix;
 				}
 			}
-
+			
 			if (DEBUG2) {
 				mLogger.debug("resulting in matrices: parent: " + parent.mMatrix + ", child: " + mMatrix);
 			}
 		}
-
+		
 		/**
 		 * This method marks the pairs of splits necessary for given sets of states, but does not invoke the splits yet.
 		 *
@@ -3403,16 +3412,16 @@ public class ShrinkNwa<LETTER, STATE>
 		public void markSplit(final Collection<HashSet<STATE>> splitSets) {
 			assert (splitSets.size() > 1) : "Splits with " + splitSets.size()
 					+ " set are not sensible and should be caught beforehand.";
-
+					
 			if (mState2SeparatedSet == null) {
 				mState2SeparatedSet = new HashMap<STATE, HashSet<STATE>>(computeHashCap(mStates.size()));
 				mSplitEcsReturn.add(this);
 			} else {
 				assert (mSplitEcsReturn.contains(this));
 			}
-
+			
 			final HashSet<Iterable<STATE>> visited = new HashSet<Iterable<STATE>>();
-
+			
 			for (final Iterable<STATE> set : splitSets) {
 				for (final Iterable<STATE> oldSet : visited) {
 					for (final STATE oldState : oldSet) {
@@ -3424,7 +3433,7 @@ public class ShrinkNwa<LETTER, STATE>
 				visited.add(set);
 			}
 		}
-
+		
 		/**
 		 * This method marks a pair of states to be separated.
 		 *
@@ -3437,16 +3446,16 @@ public class ShrinkNwa<LETTER, STATE>
 			if (DEBUG2) {
 				mLogger.debug("separate " + state1 + " " + state2);
 			}
-
+			
 			assert ((state1 != state2) && (mStates.contains(state1)) && (mStates.contains(state2)));
-
+			
 			HashSet<STATE> separated = mState2SeparatedSet.get(state1);
 			if (separated == null) {
 				separated = new HashSet<STATE>();
 				mState2SeparatedSet.put(state1, separated);
 			}
 			separated.add(state2);
-
+			
 			separated = mState2SeparatedSet.get(state2);
 			if (separated == null) {
 				separated = new HashSet<STATE>();
@@ -3454,7 +3463,7 @@ public class ShrinkNwa<LETTER, STATE>
 			}
 			separated.add(state1);
 		}
-
+		
 		/**
 		 * This method resets the intersection set.
 		 */
@@ -3462,20 +3471,20 @@ public class ShrinkNwa<LETTER, STATE>
 			mIntersection = new HashSet<STATE>(computeHashCap(mStates.size()));
 			mState2SeparatedSet = null;
 		}
-
+		
 		@Override
 		public String toString() {
 			if (mStates == null) {
 				return "negative equivalence class";
 			}
-
+			
 			if (!DEBUG && (DEBUG2 || DEBUG3 || DEBUG4)) {
 				return toStringShort();
 			}
-
+			
 			final StringBuilder builder = new StringBuilder();
 			String append = "";
-
+			
 			builder.append("<[");
 			builder.append(mIncomingInt);
 			builder.append(",");
@@ -3502,7 +3511,7 @@ public class ShrinkNwa<LETTER, STATE>
 			builder.append("]>");
 			return builder.toString();
 		}
-
+		
 		/**
 		 * This method returns a short representation of the equivalence class with only the states. States in the
 		 * intersection are not visible.
@@ -3513,10 +3522,10 @@ public class ShrinkNwa<LETTER, STATE>
 			if (mStates == null) {
 				return "negative equivalence class";
 			}
-
+			
 			final StringBuilder builder = new StringBuilder();
 			String append = "";
-
+			
 			builder.append("<");
 			for (final STATE state : mStates) {
 				builder.append(append);
@@ -3524,46 +3533,46 @@ public class ShrinkNwa<LETTER, STATE>
 				builder.append(state);
 			}
 			builder.append(">");
-
+			
 			return builder.toString();
 		}
-
+		
 		@Override
 		public boolean isInitial() {
 			return mIsInitial;
 		}
-
+		
 		@Override
 		public boolean isFinal() {
 			return mOperand.isFinal(mStates.iterator().next());
 		}
-
+		
 		@Override
 		public STATE minimize(final StateFactory<STATE> stateFactory) {
 			return stateFactory.minimize(mStates);
 		}
-
+		
 		@Override
 		public Iterator<STATE> statesIterator() {
 			return mStates.iterator();
 		}
-
+		
 		@Override
 		public boolean isRepresentativeIndependentInternalsCalls() {
 			return true;
 		}
 	}
-
+	
 	/**
 	 * The work list has a priority queue of equivalence classes.
-	 * 
-	 * <p>Since the size of the equivalence classes may change due to splitting, it is not guaranteed that the order is
+	 * <p>
+	 * Since the size of the equivalence classes may change due to splitting, it is not guaranteed that the order is
 	 * correct over time, but since it is a heuristic rather than a rule to prefer smaller splitters first, this is not
 	 * considered bad and additional overhead is avoided.
 	 */
 	private abstract class AWorkList implements Iterator<EquivalenceClass> {
 		protected final PriorityQueue<EquivalenceClass> mQueue;
-
+		
 		public AWorkList() {
 			mQueue = new PriorityQueue<EquivalenceClass>(Math.max(mOperand.size(), 1),
 					new Comparator<EquivalenceClass>() {
@@ -3573,7 +3582,7 @@ public class ShrinkNwa<LETTER, STATE>
 						}
 					});
 		}
-
+		
 		/**
 		 * This method adds an equivalence class to the work list. The caller asserts that the class is not already in
 		 * the work list and must inform the equivalence class beforehand.
@@ -3585,20 +3594,20 @@ public class ShrinkNwa<LETTER, STATE>
 			assert (!mQueue.contains(ec));
 			mQueue.add(ec);
 		}
-
+		
 		@Override
 		public boolean hasNext() {
 			return (!mQueue.isEmpty());
 		}
-
+		
 		@Override
 		public abstract EquivalenceClass next();
-
+		
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException("Removing is not supported.");
 		}
-
+		
 		@Override
 		public String toString() {
 			final StringBuilder builder = new StringBuilder();
@@ -3606,7 +3615,7 @@ public class ShrinkNwa<LETTER, STATE>
 			builder.append(">>");
 			return builder.toString();
 		}
-
+		
 		/**
 		 * This method constructs most of the string representation.
 		 *
@@ -3623,7 +3632,7 @@ public class ShrinkNwa<LETTER, STATE>
 			}
 		}
 	}
-
+	
 	/**
 	 * This class implements the work list for internal and call splits.
 	 */
@@ -3636,7 +3645,7 @@ public class ShrinkNwa<LETTER, STATE>
 			}
 			return ec;
 		}
-
+		
 		@Override
 		public void add(final EquivalenceClass ec) {
 			assert ((ec.mIncomingInt == EIncomingStatus.IN_WORKLIST)
@@ -3647,7 +3656,7 @@ public class ShrinkNwa<LETTER, STATE>
 			super.add(ec);
 		}
 	}
-
+	
 	/**
 	 * This class implements the work list for predecessor return splits.
 	 */
@@ -3661,7 +3670,7 @@ public class ShrinkNwa<LETTER, STATE>
 			}
 			return ec;
 		}
-
+		
 		@Override
 		public void add(final EquivalenceClass ec) {
 			assert (ec.mIncomingRet == EIncomingStatus.IN_WORKLIST);
@@ -3670,7 +3679,7 @@ public class ShrinkNwa<LETTER, STATE>
 			}
 			super.add(ec);
 		}
-
+		
 		/**
 		 * This method fills the queue with all equivalence classes so far. It is used exactly once when the first
 		 * return split has finished.
@@ -3684,7 +3693,7 @@ public class ShrinkNwa<LETTER, STATE>
 			}
 		}
 	}
-
+	
 	/**
 	 * This class implements the work list for predecessor return splits.
 	 */
@@ -3698,7 +3707,7 @@ public class ShrinkNwa<LETTER, STATE>
 			}
 			return ec;
 		}
-
+		
 		@Override
 		public void add(final EquivalenceClass ec) {
 			assert (ec.mOutgoingRet == EIncomingStatus.IN_WORKLIST);
@@ -3708,6 +3717,6 @@ public class ShrinkNwa<LETTER, STATE>
 			super.add(ec);
 		}
 	}
-
+	
 	// --- [end] important inner classes --- //
 }

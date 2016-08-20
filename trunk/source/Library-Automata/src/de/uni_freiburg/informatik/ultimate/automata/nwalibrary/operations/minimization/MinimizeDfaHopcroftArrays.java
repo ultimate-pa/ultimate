@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
@@ -44,8 +44,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 
 /**
  * @author Björn Hagemeister
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 		extends AbstractMinimizeNwaDd<LETTER, STATE>
@@ -57,7 +59,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 	private ArrayList<LETTER> mInt2letter;
 	private HashMap<LETTER, Integer> mLetter2int;
 	
-	/*******************************************************************//**
+	/**
 	 * necessary data elements for the minimization algorithm.
 	 */
 	// labels of transitions.
@@ -90,31 +92,29 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 	private Partition mBlocks;
 	// cords (consist of transitions).
 	private Partition mCords;
-	/**********************************************************************/	
-
-	/*******************************************************************//**
+	
+	/**
 	 * Constructor.
 	 */
-	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services, 
+	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final StateFactory<STATE> stateFactory,
 			final boolean addMapping) {
 		this(services, operand, stateFactory, null, addMapping);
 	}
 	
-	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services, 
+	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final StateFactory<STATE> stateFactory,
 			final Collection<Set<STATE>> initialPartition, final boolean addMapping) {
 		super(services, stateFactory, "MinimizeDfaHopcroftPaper", operand);
 		
 		// added by Christian
-		if ((operand.getCallAlphabet().size() > 0) ||
-				(operand.getReturnAlphabet().size() > 0)) {
+		if (!isFiniteAutomaton()) {
 			throw new UnsupportedOperationException(
-				"This class only supports minimization of finite automata.");
+					"This class only supports minimization of finite automata.");
 		}
-
+		
 		if (mOperand.size() > 0) {
 			// Start minimization.
 			minimizeDfaHopcroft(initialPartition, addMapping);
@@ -128,12 +128,12 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 	/**
 	 * Constructor without state factory.
 	 */
-	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services, 
+	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		this(services, operand, operand.getStateFactory(), false);
 	}
 	
-	/*******************************************************************//**
+	/**
 	 * Step by Step implementation of minimizing finite automaton by Hopcroft.
 	 */
 	private void minimizeDfaHopcroft(final Collection<Set<STATE>> initialPartition,
@@ -163,8 +163,8 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 		makeAdjacent(mLabelHeads);
 		
 		/***************************************************************//**
-		 * The core of the Hopcroft - algorithm.
-		 */
+																			 * The core of the Hopcroft - algorithm.
+																			 */
 		mLogger.info("Start with Hopcroft - algorithm");
 		int blockIterator = 1;
 		int cordsIterator = 0;
@@ -174,9 +174,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 		// --> pick each letter of alphabet (see Hopcroft algorithm).
 		while (cordsIterator < mCords.mNumberOfSets) {
 			// Iterate over transitions of each block.
-			for (i = mCords.mFirst[cordsIterator];
-					i < mCords.mPast[cordsIterator];
-					++i) {
+			for (i = mCords.mFirst[cordsIterator]; i < mCords.mPast[cordsIterator]; ++i) {
 				// Mark all states, which are tails of the transitions with
 				// the same letter. --> Getting path to current state.
 				mBlocks.mark(mLabelTails[mCords.mElements[i]]);
@@ -184,19 +182,15 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 			// Split all blocks with marked elements into blocks of marked
 			// and non-marked states. --> new blocks are created.
 			mBlocks.split();
-
+			
 			cordsIterator++;
 			// Iterate over all blocks of states.
 			while (blockIterator < mBlocks.mNumberOfSets) {
 				// Iterate over all states of each block.
-				for (i = mBlocks.mFirst[blockIterator];
-						i < mBlocks.mPast[blockIterator];
-						++i) {
+				for (i = mBlocks.mFirst[blockIterator]; i < mBlocks.mPast[blockIterator]; ++i) {
 					// Get all outgoing transitions of each state and mark
 					// them in the transition partition.
-					for (j = mF[mBlocks.mElements[i]];
-							j < mF[mBlocks.mElements[i] + 1];
-							++j) {
+					for (j = mF[mBlocks.mElements[i]]; j < mF[mBlocks.mElements[i] + 1]; ++j) {
 						mCords.mark(mAdjacent[j]);
 					}
 				}
@@ -210,8 +204,8 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 		// New automaton should be ready. Build result automaton.
 		buildResult(addMapping);
 	}
-
-	/*******************************************************************//**
+	
+	/**
 	 * Get number of states and labels for calling initializeMappings and
 	 * initializeLables.
 	 */
@@ -219,7 +213,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 		mNumberOfFinalStates = mOperand.getFinalStates().size();
 		mFinalStates = new int[mNumberOfFinalStates];
 		mNumberOfStates = mOperand.size();
-		mNumberOfLetters = mOperand.getInternalAlphabet().size();			
+		mNumberOfLetters = mOperand.getInternalAlphabet().size();
 		
 		initializeMappings();
 		initializeLables();
@@ -230,10 +224,10 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 		while (it.hasNext()) {
 			mFinalStates[++index] = mState2int.get(it.next());
 		}
-
+		
 	}
 	
-	/*******************************************************************//**
+	/**
 	 * Method for mapping STATE/LETTER to int and vice versa.
 	 */
 	private void initializeMappings() {
@@ -244,7 +238,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 		mInt2letter = new ArrayList<LETTER>(mNumberOfLetters);
 		mLetter2int = new HashMap<LETTER, Integer>(
 				computeHashCap(mNumberOfLetters));
-
+				
 		int index = -1;
 		for (final STATE state : mOperand.getStates()) {
 			mInt2state.add(state);
@@ -256,8 +250,8 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 			mLetter2int.put(letter, ++index);
 		}
 	}
-
-	/*******************************************************************//**
+	
+	/**
 	 * Initialize structure for labels.
 	 * Iterate over all states and get their OutgoingInternalTransistion
 	 * for storing nOfLabel, headOfLabel and tailOfLabel.
@@ -273,7 +267,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 		for (int i = 0; i < mInt2state.size(); ++i) {
 			final STATE st = mInt2state.get(i);
 			// Get outgoing transition.
-			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it = 
+			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it =
 					mOperand.internalSuccessors(st).iterator();
 			// hasNext? --> add to labels.
 			while (it.hasNext()) {
@@ -297,8 +291,8 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 			mLabelTails[i] = tails.get(i);
 		}
 	}
-
-	/*******************************************************************//**
+	
+	/**
 	 * Make initial partition mblocks. Therefor allocate memory for arrays
 	 * and set number of final states as marked states.
 	 */
@@ -310,7 +304,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 			
 			// Is there any finalState?
 			if (mNumberOfFinalStates > 0) {
-				// Before splitting mark final state for splitting final states 
+				// Before splitting mark final state for splitting final states
 				// and non - final states.
 				for (int i = 0; i < mFinalStates.length; ++i) {
 					mBlocks.mark(mFinalStates[i]);
@@ -328,7 +322,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 		}
 	}
 	
-	/*******************************************************************//**
+	/**
 	 * Create transition partition mcords.
 	 */
 	private void makeTransitionPartition() {
@@ -371,7 +365,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 		}
 	}
 	
-	/*******************************************************************//**
+	/**
 	 * Create adjacent transitions. Computes either the outgoing or incoming
 	 * transitions of states.
 	 * Using labelHeads[] as K[] --> computes incoming transitions.
@@ -396,7 +390,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 		}
 	}
 	
-	/*******************************************************************//**
+	/**
 	 * Implementation of partition data structure out of paper:
 	 * "Fast brief practical DFA minimization".
 	 */
@@ -408,9 +402,11 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 		private int[] mFirst;
 		private int[] mPast;
 		
-		/***************************************************************//**
+		/**
 		 * Method for initializing partition.
-		 * @param numberOfStates number of states
+		 * 
+		 * @param numberOfStates
+		 *            number of states
 		 */
 		public void init(final int numberOfStates) {
 			// After initialization, partition contains either one
@@ -426,7 +422,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 			// Elements e of block b are stored in an unspecified order in
 			// E[f], E[f + 1], ... , E[p - 1] where f = F[b], p = P[b]
 			
-			 // first element e of block.
+			// first element e of block.
 			this.mFirst = new int[numberOfStates];
 			// first element e of next block
 			this.mPast = new int[numberOfStates];
@@ -450,9 +446,11 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 			// every element e in mElements belongs to block 0.
 		}
 		
-		/***************************************************************//**
+		/**
 		 * Method for marking an element e.
-		 * @param element element
+		 * 
+		 * @param element
+		 *            element
 		 */
 		public void mark(final int element) {
 			// # block, element e belongs to.
@@ -478,7 +476,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 			
 		}
 		
-		/***************************************************************//**
+		/**
 		 * Method for splitting blocks with marked elements.
 		 */
 		public void split() {
@@ -499,7 +497,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 				if (mNumberOfMarkedElemInSet[set] <= (mPast[set] - firstUnmarked)) {
 					// block with marked elements is smaller --> new block
 					this.mFirst[this.mNumberOfSets] = this.mFirst[set];
-					this.mPast[this.mNumberOfSets ] = this.mFirst[set] = firstUnmarked;
+					this.mPast[this.mNumberOfSets] = this.mFirst[set] = firstUnmarked;
 				} else {
 					// block with marked elements is bigger --> remain as old block.
 					// --> new one consists of non-marked elements.
@@ -516,11 +514,11 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 				// Set changed block and new block as blocks with non-marked elements.
 				mNumberOfMarkedElemInSet[set] = mNumberOfMarkedElemInSet[this.mNumberOfSets++] = 0;
 			}
-
+			
 		}
 	}
 	
-	/*******************************************************************//**
+	/**
 	 * Method for building the result automaton with reduced states
 	 * and transitions.
 	 */
@@ -536,7 +534,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 		final Map<STATE, STATE> mOldState2newState = addMapping
 				? new HashMap<STATE, STATE>(computeHashCap(mOperand.size()))
 				: null;
-		
+				
 		startResultConstruction();
 		// Iterate over number of blocks for getting every first element.
 		for (int i = 0; i < mBlocks.mNumberOfSets; ++i) {
@@ -587,7 +585,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 			// for the new transition.
 			final STATE newPred = newStates.get(i);
 			// Get the outgoing transitions of the STATE st.
-			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it = 
+			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it =
 					mOperand.internalSuccessors(st).iterator();
 			// Iterate over outgoing transitions of each block and add the
 			// transition to the new automaton.
@@ -604,6 +602,6 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 				addInternalTransition(newPred, next.getLetter(), newSucc);
 			}
 			finishResultConstruction(mOldState2newState, true);
-		}	
+		}
 	}
 }

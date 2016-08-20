@@ -54,14 +54,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * This class minimizes nested word automata.
- * 
- * <p>It is based on Hopcroft's minimization for deterministic finite automata. All
+ * <p>
+ * It is based on Hopcroft's minimization for deterministic finite automata. All
  * nested edges (calls and returns) are seen as fresh symbols consisting of the
  * tuple <code>(symbol, hierarchical state)</code>
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class ShrinkNwaAsDfa<LETTER, STATE>
 		extends AbstractMinimizeNwa<LETTER, STATE>
@@ -78,37 +80,48 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 	/**
 	 * This constructor creates a copy of the operand.
 	 * 
-	 * @param services Ultimate services
-	 * @param stateFactory state factory
-	 * @param operand preprocessed nested word automaton preprocessing: dead end
-	 *        and unreachable states/transitions removed
-	 * @throws AutomataOperationCanceledException if cancel signal is received
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            preprocessed nested word automaton preprocessing: dead end
+	 *            and unreachable states/transitions removed
+	 * @throws AutomataOperationCanceledException
+	 *             if cancel signal is received
 	 */
 	public ShrinkNwaAsDfa(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null, false, false);
 	}
 	
 	/**
 	 * This constructor creates a copy of the operand with an initial partition.
 	 * 
-	 * @param services Ultimate services
-	 * @param operand preprocessed nested word automaton preprocessing: dead end
-	 *        and unreachable states/transitions removed
-	 * @param equivalenceClasses represent initial equivalence classes
-	 * @param stateFactory used for Hoare annotation
-	 * @param addMapping true iff mapping old to new state is needed
-	 * @param considerNeutralStates true iff neutral states should be considered
-	 * @throws AutomataOperationCanceledException if cancel signal is received
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            preprocessed nested word automaton preprocessing: dead end
+	 *            and unreachable states/transitions removed
+	 * @param equivalenceClasses
+	 *            represent initial equivalence classes
+	 * @param stateFactory
+	 *            used for Hoare annotation
+	 * @param addMapping
+	 *            true iff mapping old to new state is needed
+	 * @param considerNeutralStates
+	 *            true iff neutral states should be considered
+	 * @throws AutomataOperationCanceledException
+	 *             if cancel signal is received
 	 */
 	public ShrinkNwaAsDfa(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Collection<Set<STATE>> equivalenceClasses,
 			final boolean addMapping, final boolean considerNeutralStates)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		super(services, stateFactory, "shrinkNwaAsDfa", operand);
 		
 		mDoubleDecker = considerNeutralStates
@@ -129,13 +142,17 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 	 * This is the main method that merges states not distinguishable (based on
 	 * Hopcroft's algorithm).
 	 * 
-	 * @param isFiniteAutomaton true iff automaton is a finite automaton
-	 * @param modules predefined modules that must be split
-	 * @param addMapping true iff mapping old to new state is needed
-	 * @throws AutomataOperationCanceledException if cancel signal is received
+	 * @param isFiniteAutomaton
+	 *            true iff automaton is a finite automaton
+	 * @param modules
+	 *            predefined modules that must be split
+	 * @param addMapping
+	 *            true iff mapping old to new state is needed
+	 * @throws AutomataOperationCanceledException
+	 *             if cancel signal is received
 	 */
 	private void minimize(final Iterable<Set<STATE>> modules,
-			final boolean addMapping) throws AutomataLibraryException {
+			final boolean addMapping) throws AutomataOperationCanceledException {
 		// initialize the partition object
 		initialize(modules);
 		
@@ -175,8 +192,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 			}
 		}
 		
-		mLogger.info("Finished analysis, constructing result of size " +
-				mPartition.mEquivalenceClasses.size());
+		mLogger.info("Finished analysis, constructing result of size "
+				+ mPartition.mEquivalenceClasses.size());
 				
 		// automaton construction
 		constructAutomaton(addMapping);
@@ -186,7 +203,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 	 * The partition object is initialized. Final states are separated from
 	 * non-final states. For the passed modules this is assumed.
 	 * 
-	 * @param modules modules that must be split
+	 * @param modules
+	 *            modules that must be split
 	 */
 	private void initialize(final Iterable<Set<STATE>> modules) {
 		// split final from non-final states
@@ -202,17 +220,17 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 				}
 			}
 			
-			if (! finals.isEmpty()) {
+			if (!finals.isEmpty()) {
 				mPartition.addEcInitialization(finals);
 			}
-			if (! nonfinals.isEmpty()) {
+			if (!nonfinals.isEmpty()) {
 				mPartition.addEcInitialization(nonfinals);
 			}
 		} else {
 			// predefined modules are already split with respect to final states
 			assert assertStatesSeparation(
-					modules) : "The states in the initial modules are not separated with " +
-							"respect to their final status.";
+					modules) : "The states in the initial modules are not separated with "
+							+ "respect to their final status.";
 			for (final Set<STATE> module : modules) {
 				mPartition.addEcInitialization(module);
 			}
@@ -222,32 +240,36 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 	/**
 	 * For each state and symbol respectively do the usual Hopcroft backwards
 	 * split.
-	 * 
-	 * <p>First all predecessor sets (with respect to a single symbol) are found
+	 * <p>
+	 * First all predecessor sets (with respect to a single symbol) are found
 	 * and then for each such set the states are split from their equivalence
 	 * classes.
 	 * 
-	 * @param a the splitter equivalence class
-	 * @param iterator the iterator abstracting from the letter type
-	 * @param isInternal true iff split is internal
+	 * @param ec
+	 *            the splitter equivalence class
+	 * @param iterator
+	 *            the iterator abstracting from the letter type
+	 * @param isInternal
+	 *            true iff split is internal
 	 */
-	private void splitPredecessors(final EquivalenceClass a,
+	private void splitPredecessors(final EquivalenceClass ec,
 			final ITransitionIterator<LETTER, STATE> iterator,
 			final ETransitionType type) {
-		assert ((type == ETransitionType.INTERNAL &&
-				(iterator instanceof ShrinkNwaAsDfa.InternalTransitionIterator) &&
-				(a.mIncomingInt != EIncomingStatus.IN_WL)) ||
-				(type == ETransitionType.CALL &&
-						(iterator instanceof ShrinkNwaAsDfa.CallTransitionIterator) &&
-						(a.mIncomingCall != EIncomingStatus.IN_WL)) ||
-				(type == ETransitionType.RETURN &&
-						(iterator instanceof ShrinkNwaAsDfa.ReturnTransitionIterator) &&
-						(a.mIncomingRet != EIncomingStatus.IN_WL)));
+		assert ((type == ETransitionType.INTERNAL
+				&& (iterator instanceof ShrinkNwaAsDfa.InternalTransitionIterator)
+				&& (ec.mIncomingInt != EIncomingStatus.IN_WL))
+				|| (type == ETransitionType.CALL
+						&& (iterator instanceof ShrinkNwaAsDfa.CallTransitionIterator)
+						&& (ec.mIncomingCall != EIncomingStatus.IN_WL))
+				||
+				(type == ETransitionType.RETURN
+						&& (iterator instanceof ShrinkNwaAsDfa.ReturnTransitionIterator)
+						&& (ec.mIncomingRet != EIncomingStatus.IN_WL)));
 						
 		// create a hash map from letter to respective predecessor states
 		final HashMap<Pair<LETTER, STATE>, HashSet<STATE>> letter2states =
 				new HashMap<Pair<LETTER, STATE>, HashSet<STATE>>();
-		for (final STATE state : a.mStates) {
+		for (final STATE state : ec.mStates) {
 			iterator.nextState(state);
 			while (iterator.hasNext()) {
 				final Pair<LETTER, STATE> letter = iterator.nextAndLetter();
@@ -264,15 +286,15 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 		if (letter2states.isEmpty()) {
 			switch (type) {
 				case INTERNAL:
-					a.mIncomingInt = EIncomingStatus.NONE;
+					ec.mIncomingInt = EIncomingStatus.NONE;
 					break;
 					
 				case CALL:
-					a.mIncomingCall = EIncomingStatus.NONE;
+					ec.mIncomingCall = EIncomingStatus.NONE;
 					break;
 					
 				case RETURN:
-					a.mIncomingRet = EIncomingStatus.NONE;
+					ec.mIncomingRet = EIncomingStatus.NONE;
 					break;
 				default:
 					throw new IllegalArgumentException();
@@ -310,11 +332,13 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 	 * For each remaining equivalence class create a new state. Also remove all
 	 * other objects references.
 	 * 
-	 * @param addMapping true iff mapping old to new state is needed
-	 * @throws AutomataLibraryException thrown by superclass
+	 * @param addMapping
+	 *            true iff mapping old to new state is needed
+	 * @throws AutomataLibraryException
+	 *             thrown by superclass
 	 */
 	private void constructAutomaton(final boolean addMapping)
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		// marks all respective equivalence classes as initial
 		for (final STATE state : mOperand.getInitialStates()) {
 			final EquivalenceClass ec = mPartition.mState2EquivalenceClass.get(state);
@@ -327,13 +351,13 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 		mPartition = null;
 		mWorkList = null;
 	}
-
+	
 	// --- [end] main methods --- //
 	
 	// --- [start] helper methods and classes --- //
 	
 	/**
-	 * type of a transition/symbol
+	 * Type of a transition/symbol.
 	 */
 	private enum ETransitionType {
 		INTERNAL,
@@ -351,13 +375,13 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 	 * after the search for transitions.
 	 */
 	private enum EIncomingStatus {
-		/** unknown whether there are incoming transitions */
+		/** Unknown whether there are incoming transitions. */
 		UNKNOWN,
 		
-		/** equivalence class is in work list */
+		/** Equivalence class is in work list. */
 		IN_WL,
 		
-		/** there are no incoming transitions */
+		/** There are no incoming transitions. */
 		NONE
 	}
 	
@@ -365,14 +389,17 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 	 * A transition iterator is used for splitting internal and call
 	 * predecessors.
 	 *
-	 * @param <STATE> state type
-	 * @param <LETTER> letter type
+	 * @param <STATE>
+	 *            state type
+	 * @param <LETTER>
+	 *            letter type
 	 */
 	private interface ITransitionIterator<LETTER, STATE> {
 		/**
 		 * A new successor state is considered.
 		 *
-		 * @param state the successor state
+		 * @param state
+		 *            the successor state
 		 * @return the next predecessor
 		 */
 		void nextState(final STATE state);
@@ -392,7 +419,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 		boolean hasNext();
 		
 		/**
-		 * @return the predecessor state
+		 * @return The predecessor state.
 		 */
 		STATE getPred();
 	}
@@ -501,7 +528,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 	 * This method checks that the states in each equivalence class initially
 	 * passed in the constructor are all either final or non-final.
 	 *
-	 * @param equivalenceClasses partition passed in constructor
+	 * @param equivalenceClasses
+	 *            partition passed in constructor
 	 * @return true iff equivalence classes respect final status of states
 	 */
 	private boolean assertStatesSeparation(
@@ -535,7 +563,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 		private final HashMap<STATE, EquivalenceClass> mState2EquivalenceClass;
 		
 		/**
-		 * constructor
+		 * Constructor.
 		 */
 		public Partition() {
 			mEquivalenceClasses = new LinkedList<EquivalenceClass>();
@@ -547,7 +575,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 		 * This method adds an equivalence class (also to the work list) during
 		 * the initialization phase.
 		 *
-		 * @param module the states in the equivalence class
+		 * @param module
+		 *            the states in the equivalence class
 		 */
 		private void addEcInitialization(final Set<STATE> module) {
 			final EquivalenceClass ec = new EquivalenceClass(module);
@@ -561,7 +590,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 		 * This method adds an equivalence class to the partition that resulted
 		 * from a split.
 		 *
-		 * @param parent the parent equivalence class
+		 * @param parent
+		 *            the parent equivalence class
 		 * @return the equivalence class
 		 */
 		private EquivalenceClass addEcSplit(final EquivalenceClass parent) {
@@ -582,8 +612,10 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 		 * This method splits a state from its equivalence class during the
 		 * internal and call split. The equivalence class is remembered.
 		 * 
-		 * @param state the state
-		 * @param splitEcs the list of split equivalence classes
+		 * @param state
+		 *            the state
+		 * @param splitEcs
+		 *            the list of split equivalence classes
 		 */
 		private void splitState(final STATE state,
 				final LinkedList<EquivalenceClass> splitEcs) {
@@ -604,8 +636,10 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 		 * This method splits a state for a given equivalence class without any
 		 * further considerations.
 		 * 
-		 * @param state state
-		 * @param ec equivalence class
+		 * @param state
+		 *            state
+		 * @param ec
+		 *            equivalence class
 		 */
 		private void splitStateFast(final STATE state,
 				final EquivalenceClass ec) {
@@ -623,8 +657,10 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 		 * the split is executed, otherwise the old equivalence class is
 		 * restored.
 		 * 
-		 * @param states set of states to split
-		 * @param letter pair (letter, state) used for splitting
+		 * @param states
+		 *            set of states to split
+		 * @param letter
+		 *            pair (letter, state) used for splitting
 		 * @return true iff a split occurred
 		 */
 		public boolean splitEquivalenceClasses(final Iterable<STATE> states,
@@ -681,28 +717,28 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 			builder.append("}");
 			return builder.toString();
 		}
-
+		
 		@Override
 		public IBlock<STATE> getBlock(final STATE state) {
 			return mState2EquivalenceClass.get(state);
 		}
-
+		
 		@Override
 		public int size() {
 			return mEquivalenceClasses.size();
 		}
-
+		
 		@Override
 		public Iterator<IBlock<STATE>> blocksIterator() {
 			return new Iterator<IBlock<STATE>>() {
 				private final Iterator<EquivalenceClass> mIt =
 						mEquivalenceClasses.iterator();
-
+						
 				@Override
 				public boolean hasNext() {
 					return mIt.hasNext();
 				}
-
+				
 				@Override
 				public IBlock<STATE> next() {
 					return mIt.next();
@@ -714,8 +750,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 	/**
 	 * An equivalence class contains states and knows whether it is in the work
 	 * list.
-	 * 
-	 * <p>Two equivalence class objects are equal iff they share the same pointer.
+	 * <p>
+	 * Two equivalence class objects are equal iff they share the same pointer.
 	 */
 	private class EquivalenceClass implements IBlock<STATE> {
 		// unique ID (useful for hashCode and so for deterministic runs)
@@ -735,28 +771,31 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 		 * This is a partial constructor which is used for both initialization
 		 * and splitting.
 		 * 
-		 * @param states the set of states for the equivalence class
-		 * @param fromSplit flag currently ignored (necessary for overloading)
+		 * @param states
+		 *            the set of states for the equivalence class
+		 * @param fromSplit
+		 *            flag currently ignored (necessary for overloading)
 		 */
 		private EquivalenceClass(final Set<STATE> states,
 				final boolean fromSplit) {
-			assert (! states.isEmpty());
+			assert (!states.isEmpty());
 			mId = ++mIds;
 			mStates = states;
 			reset();
 		}
 		
 		/**
-		 * sets the equivalence class as initial
+		 * Sets the equivalence class as initial.
 		 */
 		private void markAsInitial() {
 			mIsInitial = true;
 		}
-
+		
 		/**
 		 * This constructor is used for the initialization.
 		 * 
-		 * @param states the set of states for the equivalence class
+		 * @param states
+		 *            the set of states for the equivalence class
 		 */
 		public EquivalenceClass(final Set<STATE> states) {
 			this(states, false);
@@ -769,8 +808,10 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 		/**
 		 * This constructor is used during a split.
 		 * 
-		 * @param states the set of states for the equivalence class
-		 * @param parent the parent equivalence class
+		 * @param states
+		 *            the set of states for the equivalence class
+		 * @param parent
+		 *            the parent equivalence class
 		 */
 		public EquivalenceClass(final Set<STATE> states,
 				final EquivalenceClass parent) {
@@ -899,27 +940,27 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 			
 			return builder.toString();
 		}
-
+		
 		@Override
 		public boolean isInitial() {
 			return mIsInitial;
 		}
-
+		
 		@Override
 		public boolean isFinal() {
 			return mOperand.isFinal(mStates.iterator().next());
 		}
-
+		
 		@Override
 		public Object minimize(final StateFactory stateFactory) {
 			return stateFactory.minimize(mStates);
 		}
-
+		
 		@Override
 		public Iterator statesIterator() {
 			return mStates.iterator();
 		}
-
+		
 		@Override
 		public boolean isRepresentativeIndependentInternalsCalls() {
 			return true;
@@ -928,8 +969,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 	
 	/**
 	 * The work list has a priority queue of equivalence classes.
-	 * 
-	 * <p>Since the size of the equivalence classes may change due to splitting, it
+	 * <p>
+	 * Since the size of the equivalence classes may change due to splitting, it
 	 * is not guaranteed that the order is correct over time, but since it is a
 	 * heuristic rather than a rule to prefer smaller splitters first, this is
 	 * not considered bad and additional overhead is avoided.
@@ -954,7 +995,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 		 * asserts that the class is not already in the work list and must
 		 * inform the equivalence class beforehand.
 		 *
-		 * @param ec the equivalence class
+		 * @param ec
+		 *            the equivalence class
 		 */
 		public void add(final EquivalenceClass ec) {
 			assert (!mQueue.contains(ec));
@@ -986,7 +1028,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 		/**
 		 * This method constructs most of the string representation.
 		 *
-		 * @param builder the string builder
+		 * @param builder
+		 *            the string builder
 		 */
 		protected void toStringHelper(final StringBuilder builder) {
 			builder.append("<<");
@@ -1011,9 +1054,9 @@ public class ShrinkNwaAsDfa<LETTER, STATE>
 		
 		@Override
 		public void add(final EquivalenceClass ec) {
-			assert ((ec.mIncomingInt == EIncomingStatus.IN_WL) ||
-					(ec.mIncomingCall == EIncomingStatus.IN_WL) ||
-					(ec.mIncomingRet == EIncomingStatus.IN_WL));
+			assert ((ec.mIncomingInt == EIncomingStatus.IN_WL)
+					|| (ec.mIncomingCall == EIncomingStatus.IN_WL)
+					|| (ec.mIncomingRet == EIncomingStatus.IN_WL));
 			super.add(ec);
 		}
 	}

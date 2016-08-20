@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * of the alphabet.
  * 
  * @author Daniel Tischner
- *
  * @param <LETTER>
  *            Class of the letters from the automata
  * @param <STATE>
@@ -104,8 +103,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 	/**
 	 * Mapping for state to incoming edges.
 	 */
-	private final HashMap<Integer, Iterable<
-		IncomingInternalTransition<LETTER, STATE>>> mStateToIncomingEdges;
+	private final HashMap<Integer, Iterable<IncomingInternalTransition<LETTER, STATE>>> mStateToIncomingEdges;
 //	/**
 //	 * Mapping for state to outgoing edges.
 //	 * Christian: not used anymore
@@ -130,10 +128,9 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 		super(services, stateFactory, "minimizeIncompleteDFA", operand);
 		
 		// added by Christian
-		if ((operand.getCallAlphabet().size() > 0) ||
-				(operand.getReturnAlphabet().size() > 0)) {
+		if (!isFiniteAutomaton()) {
 			throw new UnsupportedOperationException(
-				"This class only supports minimization of finite automata.");
+					"This class only supports minimization of finite automata.");
 		}
 		
 		mBlockToId = new HashMap<LinkedHashSet<Integer>, Integer>(
@@ -145,22 +142,21 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 		mStateToId = new HashMap<STATE, Integer>(stateAmount);
 		mStateToBlockId = new HashMap<Integer, Integer>(stateAmount);
 		mStateToIncomingEdges =
-				new HashMap<Integer,
-				Iterable<IncomingInternalTransition<LETTER, STATE>>>(
-				stateAmount);
+				new HashMap<Integer, Iterable<IncomingInternalTransition<LETTER, STATE>>>(
+						stateAmount);
 		// Christian: not used anymore
 //		stateToOutgoingEdges = new HashMap<Integer,
 //				Iterable<OutgoingInternalTransition<LETTER, STATE>>>(
 //				stateAmount);
 		final int letterAmount = operand.getInternalAlphabet().size();
 		mLetterToId = new HashMap<LETTER, Integer>(letterAmount);
-
+		
 		init(stateAmount, letterAmount);
 		
-		minimizeICDFA(initialPartition, addMapping);
+		minimizeIcdfa(initialPartition, addMapping);
 		mLogger.info(exitMessage());
 	}
-
+	
 	/**
 	 * Minimizes a given incomplete DFAs (Deterministic Finite Automaton).<br/>
 	 * Runtime is in:<br/>
@@ -178,12 +174,13 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		this(services, operand, operand.getStateFactory(), null, false);
 	}
-
+	
 	/**
 	 * Builds the minimized automaton using the block
 	 * representation of all nodes.
+	 * 
 	 * @param addMapping
-	 *           true iff mapping old state -> new state should be included
+	 *            true iff mapping old state -> new state should be included
 	 */
 	private void buildMinimizedAutomaton(final boolean addMapping) {
 		// Select a representative state for every block
@@ -223,7 +220,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 			blockToNewState.put(blockId, newState);
 			addState(initialBlocks.contains(blockId),
 					mOperand.isFinal(representative), newState);
-			
+					
 			// update mapping 'old state -> new state'
 			if (addMapping) {
 				for (final STATE oldState : allStates) {
@@ -233,8 +230,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 		}
 		//Add adjusted outgoing transitions of every representative
 		for (final STATE oldSrcState : representatives) {
-			for (final OutgoingInternalTransition<LETTER, STATE> trans :
-				mOperand.internalSuccessors(oldSrcState)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(oldSrcState)) {
 				//Redirect the destination to the representative of the block
 				final int oldSrc = mStateToId.get(oldSrcState);
 				final int oldDest = mStateToId.get(trans.getSucc());
@@ -256,7 +252,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 //			STATE state = idToState.get(stateId);
 //			representatives.add(stateId);
 //			blockToRepresentatives.put(stateToBlockId.get(stateId), stateId);
-//			
+//
 //			// Determine if the block contains an initial state
 //			// If yes, the block also must be initial
 //			Collection<STATE> initialStates = moperand.getInitialStates();
@@ -271,7 +267,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 //					}
 //				}
 //			}
-//			
+//
 //			result.addState(isBlockInitial, moperand.isFinal(state), state);
 //		}
 //		//Add adjusted outgoing transitions of every representative
@@ -282,7 +278,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 //                int oldDest = stateToId.get(trans.getSucc());
 //                int destRepresentative = blockToRepresentatives.get(
 //                                stateToBlockId.get(oldDest));
-//                
+//
 //                STATE predState = idToState.get(state);
 //                LETTER letter = trans.getLetter();
 //                STATE succState = idToState.get(destRepresentative);
@@ -291,7 +287,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 //        }
 		finishResultConstruction(oldState2newState, true);
 	}
-
+	
 	/**
 	 * Gets a usable unique id for a block.
 	 * 
@@ -302,7 +298,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 		mBlockId++;
 		return curId;
 	}
-
+	
 	/**
 	 * Maps state and letter to id and state to edge structures.
 	 * 
@@ -310,7 +306,6 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 	 *            amount of states
 	 * @param letterAmount
 	 *            amount of letters
-	 * 
 	 */
 	private void init(final int stateAmount, final int letterAmount) {
 		int maxAmount = stateAmount;
@@ -349,11 +344,11 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 	 * size of the alphabet.
 	 * 
 	 * @param initialPartition
-	 *            Initial partition of states 
+	 *            Initial partition of states
 	 * @param addMapping
 	 *            true iff mapping old state -> new state should be included
 	 */
-	private void minimizeICDFA(
+	private void minimizeIcdfa(
 			final Collection<Set<STATE>> initialPartition,
 			final boolean addMapping) {
 		// Initial blocks
@@ -364,7 +359,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 		// List also known as "L"
 		final LinkedHashSet<LinkedHashSet<Integer>> splitCandidates =
 				new LinkedHashSet<LinkedHashSet<Integer>>();
-		
+				
 		if (initialPartition == null) {
 			for (final STATE state : allStates) {
 				if (mOperand.isFinal(state)) {
@@ -395,7 +390,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 				mBlockToId.put(otherStatesBlock, otherStatesBlockId);
 				mIdToBlock.put(otherStatesBlockId, otherStatesBlock);
 			}
-	
+			
 			for (final STATE state : allStates) {
 				if (mOperand.isFinal(state)) {
 					mStateToBlockId.put(mStateToId.get(state), finalStatesBlockId);
@@ -409,7 +404,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 			if (existsOther) {
 				mBlocks.add(otherStatesBlock);
 			}
-
+			
 			// Initial split candidates
 			if (existsFinal) {
 				splitCandidates.add(finalStatesBlock);
@@ -440,7 +435,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 			Iterator<LinkedHashSet<Integer>> splitCandidatesIter =
 					splitCandidates.iterator();
 			LinkedHashSet<Integer> splitter = splitCandidatesIter.next();
-
+			
 			// If splitter block was deleted during a previous split, skip it
 			boolean noElementWithContentLeft = false;
 			while (splitter == null || mBlockToId.get(splitter) == null) {
@@ -457,18 +452,18 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 			if (noElementWithContentLeft) {
 				break;
 			}
-
+			
 			splitCandidates.remove(splitter);
 			
 			final LinkedList<LinkedHashSet<Integer>> splitCandidatesToAppend =
 					split(splitter, mOperand.getInternalAlphabet().size());
-			
+					
 			splitCandidates.addAll(splitCandidatesToAppend);
 		}
 		
 		buildMinimizedAutomaton(addMapping);
 	}
-
+	
 	/**
 	 * Splits blocks in order to find blocks that can be left out for
 	 * minimizing.
@@ -484,7 +479,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 			final LinkedHashSet<Integer> splitter,
 			final int letterAmount) {
 		// Initialize needed structures
-
+		
 		// Represents the set of letters that belong to edges incoming in the
 		// splitter block. (Also known as "l").
 		final LinkedList<Integer> letterList = new LinkedList<Integer>();
@@ -513,20 +508,20 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 		// (Also known as "t" or "t[a]").
 		final HashMap<Integer, LinkedList<Integer>> splitStatesOfLetter =
 				new HashMap<Integer, LinkedList<Integer>>();
-		
+				
 		// Step 1
 		// Iterate over all states in the splitter block
 		// and setup some data structures
 		for (final int stateInSplitter : splitter) {
 			final Iterator<IncomingInternalTransition<LETTER, STATE>> incomingTransitions =
 					mStateToIncomingEdges.get(stateInSplitter).iterator();
-
+					
 			while (incomingTransitions.hasNext()) {
 				final IncomingInternalTransition<LETTER, STATE> incomingTrans =
 						incomingTransitions.next();
 				final int incomingState = mStateToId.get(incomingTrans.getPred());
 				final int incomingLetter = mLetterToId.get(incomingTrans.getLetter());
-
+				
 				// Incoming edges, accessible by incoming letter
 				if (!stateListByLetter.containsKey(incomingLetter)) {
 					stateListByLetter.put(incomingLetter,
@@ -556,7 +551,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 				final LinkedList<Integer> signature = signatures.get(state);
 				signature.add(letter);
 				signatures.put(state, signature);
-
+				
 				// Track maximal signature size
 				if (signature.size() > maxSignatureSize) {
 					maxSignatureSize = signature.size();
@@ -602,7 +597,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 				} else {
 					curSignatureIter = signaturesIter.get(state);
 				}
-
+				
 				// Skip this position for the letter because it
 				// is not that long
 				if (!curSignatureIter.hasNext()) {
@@ -610,7 +605,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 				}
 				
 				final Integer curSigLetter = curSignatureIter.next();
-
+				
 				// Add state to the state list of this letter
 				if (!splitStatesOfLetter.containsKey(curSigLetter)) {
 					splitStatesOfLetter.put(curSigLetter,
@@ -623,7 +618,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 				statesOfLetter.add(state);
 				splitStatesOfLetter.put(curSigLetter, statesOfLetter);
 			}
-
+			
 			// Clear and update the split states list
 			splitStates.clear();
 			for (final Integer letter : splitLetters) {
@@ -634,7 +629,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 		
 		// Step 4
 		// Split the blocks
-
+		
 		// Change the format of the split information into a better usable
 		// where the content is separated by blocks.
 		// Also remove duplicate content by using a set.
@@ -685,15 +680,14 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 		curBlockContent = null;
 		// splitStatesBlockWrapper now contains split
 		// information once per block
-
+		
 		// Save blockNumber of current splitter (before it gets removed)
 		final int splitterBlockNumber = mBlockToId.get(splitter);
 		final LinkedList<LinkedHashSet<Integer>> splitCandidatesToAppend =
 				new LinkedList<LinkedHashSet<Integer>>();
-
+				
 		// Iterate over block content and determine splittings
-		for (final LinkedHashSet<Integer> blockContent
-				: splitStatesBlockWrapper.values()) {
+		for (final LinkedHashSet<Integer> blockContent : splitStatesBlockWrapper.values()) {
 			// Setup splittings
 			final LinkedList<LinkedHashSet<Integer>> splittings =
 					new LinkedList<LinkedHashSet<Integer>>();
@@ -714,7 +708,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 			}
 			splittings.add(curSplit);
 			curSplit = null;
-
+			
 			// If there are missing states also add them as separate split
 			LinkedHashSet<Integer> originalBlock = mIdToBlock.get(mStateToBlockId
 					.get(blockContent.iterator().next()));
@@ -729,7 +723,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 					splittings.add(new LinkedHashSet<Integer>(missingStates));
 				}
 			}
-
+			
 			// If there are more than one set a splits must be done
 			if (splittings.size() > 1) {
 				
@@ -739,12 +733,12 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 				mBlockToId.remove(originalBlock);
 				mBlocks.remove(originalBlock);
 				originalBlock = null;
-
+				
 				// Track maximal size of split parts to not add the
 				// biggest part as split candidate
 				final int maxSplitPartSize = -1;
 				LinkedHashSet<Integer> biggestSplitPart = null;
-
+				
 				// Create new blocks
 				for (final LinkedHashSet<Integer> splitBlockPart : splittings) {
 					final int nextBlockId = getUniqueBlocKId();
@@ -754,7 +748,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 					for (final int state : splitBlockPart) {
 						mStateToBlockId.put(state, nextBlockId);
 					}
-
+					
 					// Append block to candidate list
 					splitCandidatesToAppend.add(splitBlockPart);
 					// Update maximal split part size
@@ -766,7 +760,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 						biggestSplitPart = splitBlockPart;
 					}
 				}
-
+				
 				// Remove biggest split part if splitter got split
 				if (oldBlockId == splitterBlockNumber) {
 					splitCandidatesToAppend.remove(biggestSplitPart);

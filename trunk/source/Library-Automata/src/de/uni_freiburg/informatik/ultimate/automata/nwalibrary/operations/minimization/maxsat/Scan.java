@@ -51,7 +51,7 @@ final class Scan {
 	 *			  where to scan from
 	 * @return parsed <code>NWA</code> or <code>null</code>
 	 */
-	static NwaWithArrays scanNWA(final Reader reader) throws IOException {
+	static NwaWithArrays scanNwa(final Reader reader) throws IOException {
 		int numStates;
 		int numISyms;
 		int numCSyms;
@@ -73,31 +73,31 @@ final class Scan {
 		try {
 			expectString(in, "numStates");
 			numStates = parseInt(in);
-			expectEOL(in);
+			expectEol(in);
 			expectString(in, "numISyms");
 			numISyms = parseInt(in);
-			expectEOL(in);
+			expectEol(in);
 			expectString(in, "numCSyms");
 			numCSyms = parseInt(in);
-			expectEOL(in);
+			expectEol(in);
 			expectString(in, "numRSyms");
 			numRSyms = parseInt(in);
-			expectEOL(in);
+			expectEol(in);
 			expectString(in, "numInitial");
 			numInitial = parseInt(in);
-			expectEOL(in);
+			expectEol(in);
 			expectString(in, "numFinal");
 			numFinal = parseInt(in);
-			expectEOL(in);
+			expectEol(in);
 			expectString(in, "numITrans");
 			numITrans = parseInt(in);
-			expectEOL(in);
+			expectEol(in);
 			expectString(in, "numCTrans");
 			numCTrans = parseInt(in);
-			expectEOL(in);
+			expectEol(in);
 			expectString(in, "numRTrans");
 			numRTrans = parseInt(in);
-			expectEOL(in);
+			expectEol(in);
 
 			isInitial = new boolean[numStates];
 			isFinal = new boolean[numStates];
@@ -109,14 +109,14 @@ final class Scan {
 				expectString(in, "initial");
 				final int x = parseInt(in, numStates);
 				isInitial[x] = true;
-				expectEOL(in);
+				expectEol(in);
 			}
 
 			for (int i = 0; i < numFinal; i++) {
 				expectString(in, "final");
 				final int x = parseInt(in, numStates);
 				isFinal[x] = true;
-				expectEOL(in);
+				expectEol(in);
 			}
 
 			for (int i = 0; i < numITrans; i++) {
@@ -125,7 +125,7 @@ final class Scan {
 				final int sym = parseInt(in, numISyms);
 				final int dst = parseInt(in, numStates);
 				inTrans[i] = new ITrans(src, sym, dst);
-				expectEOL(in);
+				expectEol(in);
 			}
 
 			for (int i = 0; i < numCTrans; i++) {
@@ -134,7 +134,7 @@ final class Scan {
 				final int sym = parseInt(in, numCSyms);
 				final int dst = parseInt(in, numStates);
 				caTrans[i] = new CTrans(src, sym, dst);
-				expectEOL(in);
+				expectEol(in);
 			}
 
 			for (int i = 0; i < numRTrans; i++) {
@@ -144,12 +144,12 @@ final class Scan {
 				final int top = parseInt(in, numStates);
 				final int dst = parseInt(in, numStates);
 				reTrans[i] = new RTrans(src, sym, top, dst);
-				expectEOL(in);
+				expectEol(in);
 			}
 
-			expectEOF(in);
+			expectEof(in);
 
-		} catch (final ParseNWAException exc) {
+		} catch (final ParseNwaException exc) {
 			System.err.println(exc.mProblem);
 			return null;
 		}
@@ -181,63 +181,63 @@ final class Scan {
 	static NwaWithArrays inputAsRelations(final String filepath) throws IOException {
 		final InputStream inputStream = new FileInputStream(filepath);
 		final Reader reader = new InputStreamReader(inputStream);
-		return scanNWA(reader);
+		return scanNwa(reader);
 	}
 
 	/* shitty helpers for inputAsRelations()
 	 */
 
 	@SuppressWarnings("serial")
-	static final class ParseNWAException extends Exception {
+	static final class ParseNwaException extends Exception {
 		public final String mProblem;
 
-		ParseNWAException(final String problem) {
+		ParseNwaException(final String problem) {
 			this.mProblem = problem;
 		}
 	}
 
 	private static void expectString(final java.io.StreamTokenizer in, final String x)
-			throws java.io.IOException, ParseNWAException {
+			throws java.io.IOException, ParseNwaException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_WORD || !in.sval.equals(x)) {
-			throw new ParseNWAException("expected " + x + ", but got " + in.sval);
+			throw new ParseNwaException("expected " + x + ", but got " + in.sval);
 		}
 	}
 
-	private static void expectEOL(final java.io.StreamTokenizer in)
-			throws java.io.IOException, ParseNWAException {
+	private static void expectEol(final java.io.StreamTokenizer in)
+			throws java.io.IOException, ParseNwaException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_EOL) {
-			throw new ParseNWAException("expected EOL");
+			throw new ParseNwaException("expected EOL");
 		}
 	}
 
-	private static void expectEOF(final java.io.StreamTokenizer in)
-			throws java.io.IOException, ParseNWAException {
+	private static void expectEof(final java.io.StreamTokenizer in)
+			throws java.io.IOException, ParseNwaException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_EOF) {
-			throw new ParseNWAException("expected EOF");
+			throw new ParseNwaException("expected EOF");
 		}
 	}
 
 	private static int parseInt(final java.io.StreamTokenizer in)
-			throws java.io.IOException, ParseNWAException {
+			throws java.io.IOException, ParseNwaException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_NUMBER) {
-			throw new ParseNWAException("expected number");
+			throw new ParseNwaException("expected number");
 		}
 		return (int) in.nval;
 	}
 
 	private static int parseInt(final java.io.StreamTokenizer in, final int max)
-			throws java.io.IOException, ParseNWAException {
+			throws java.io.IOException, ParseNwaException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_NUMBER) {
-			throw new ParseNWAException("expected number");
+			throw new ParseNwaException("expected number");
 		}
 		final int n = (int) in.nval;
 		if (n < 0 || n >= max) {
-			throw new ParseNWAException(
+			throw new ParseNwaException(
 					"expected number between 0 and " + Integer.toString(max)
 					+ ", but got " + Integer.toString(n));
 		}

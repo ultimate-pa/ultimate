@@ -34,7 +34,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 
 /**
- * A few static print methods
+ * A few static print methods.
  *
  * @author stimpflj
  *
@@ -76,7 +76,7 @@ final class Print {
 	 *            readonly NWA. Must have no null fields and must be constrained
 	 *            as suggested
 	 */
-	static void printNWA(final Writer writer, final NwaWithArrays nwa) {
+	static void printNwa(final Writer writer, final NwaWithArrays nwa) {
 		final ArrayList<Integer> initialStates = NwaWithArrays.computeInitialStates(nwa);
 		final ArrayList<Integer> finalStates = NwaWithArrays.computeFinalStates(nwa);
 
@@ -119,7 +119,7 @@ final class Print {
 
 	static String makeString(final NwaWithArrays nwa) {
 		final StringWriter w = new StringWriter();
-		Print.printNWA(w,  nwa);
+		Print.printNwa(w,  nwa);
 		return w.toString();
 	}
 }
