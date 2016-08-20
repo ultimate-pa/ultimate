@@ -39,16 +39,26 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRan
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 
 /**
- * Sufficient semi-test for language equivalence of two Buchi automata or Buchi nested word automata.
+ * Test for language equivalence of two Buchi automata or Buchi nested word automata.
  * <p>
+ * There are two options available:
+ * <ul>
+ * <li>a cheap and sufficient semi-test,</li>
+ * <li>an expensive and complete test.</li>
+ * </ul>
+ * <p>
+ * The semi-test is characterized as follows.
  * If the test finds a counterexample, the languages differ.
  * If the test does not find a counterexample, the result is uncertain, in which case we assume the languages are
- * equivalent.
- * <p>
+ * equivalent.<br>
+ * The semi-test works as follows.
  * First the finite language is compared.
  * If this test fails, we extract words from one automaton and test them on the other automaton.
  * If this test succeeds, we generate random words and compare the behavior of the two automata.
  * If this test succeeds, we give up and assume that the languages are equivalent.
+ * <p>
+ * The complete test checks language inclusion in both directions, which is a very expensive operation for Buchi
+ * automata.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -62,7 +72,7 @@ public class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperation<LETT
 	private final boolean mResult;
 	
 	/**
-	 * Constructor.
+	 * Constructor which performs a sufficient but cheaper equivalence test.
 	 * 
 	 * @param services
 	 *            Ultimate services
@@ -79,18 +89,67 @@ public class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperation<LETT
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
+		this(services, stateFactory, fstOperand, sndOperand, false);
+	}
+	
+	/**
+	 * General constructor with the option to perform an expensive but complete test.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param fstOperand
+	 *            first operand
+	 * @param sndOperand
+	 *            second operand
+	 * @param completeTest
+	 *            true iff a complete but expensive test should be applied
+	 * @throws AutomataLibraryException
+	 *             if some operation fails
+	 */
+	public TestBuchiEquivalence(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
+			final boolean completeTest) throws AutomataLibraryException {
 		super(services, fstOperand, sndOperand);
 		mStateFactory = stateFactory;
 		
 		if (alphabetsDiffer()) {
 			throw new IllegalArgumentException("The operands have different alphabets.");
 		}
-		mResult = checkEquivalence();
+		
+		mLogger.info(startMessage());
+		if (completeTest) {
+			mResult = checkEquivalencePrecisely();
+		} else {
+			mResult = checkEquivalence();
+		}
+		mLogger.info(exitMessage());
 	}
 	
 	@Override
 	public Boolean getResult() throws AutomataLibraryException {
 		return mResult;
+	}
+	
+	private boolean checkEquivalencePrecisely() throws AutomataLibraryException {
+		boolean correct = true;
+		
+		NestedLassoRun<LETTER, STATE> counterexample;
+		
+		// check inclusion of first operand language in second operand language
+		counterexample = (new BuchiIsIncluded<LETTER, STATE>(mServices, mStateFactory, mFstOperand, mSndOperand))
+				.getCounterexample();
+		correct &= (counterexample == null);
+		
+		// check inclusion of second operand language in first operand language
+		counterexample = (new BuchiIsIncluded<LETTER, STATE>(mServices, mStateFactory, mSndOperand, mFstOperand))
+				.getCounterexample();
+		correct &= (counterexample == null);
+		
+		return correct;
 	}
 	
 	private boolean checkEquivalence() throws AutomataLibraryException {
@@ -113,7 +172,6 @@ public class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperation<LETT
 			// generate some small random lasso words and compare acceptance of the two automata
 			correct &= generateAndCompareRandomLassoWords();
 		}
-		mLogger.info("Finished testing Buchi language equivalence.");
 		
 		return correct;
 	}
@@ -146,7 +204,8 @@ public class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperation<LETT
 	
 	/**
 	 * @return Some small random lasso words.
-	 * @throws AutomataLibraryException if lasso word generation fails
+	 * @throws AutomataLibraryException
+	 *             if lasso word generation fails
 	 */
 	private boolean generateAndCompareRandomLassoWords() throws AutomataLibraryException {
 		final List<NestedLassoWord<LETTER>> randomNestedLassoWords = new ArrayList<>();
