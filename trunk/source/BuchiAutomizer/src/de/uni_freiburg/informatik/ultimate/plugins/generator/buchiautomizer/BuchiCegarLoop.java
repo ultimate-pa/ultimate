@@ -963,8 +963,13 @@ public class BuchiCegarLoop {
 	}
 	
 	private static boolean automatonUsesISLPredicates(final INestedWordAutomaton<CodeBlock, IPredicate> nwa) {
-		final IPredicate someState = nwa.getStates().iterator().next();
-		return (someState instanceof ISLPredicate);
+		final Set<IPredicate> states = nwa.getStates();
+		if (states.isEmpty()) {
+			return true;
+		} else {
+			final IPredicate someState = states.iterator().next();
+			return (someState instanceof ISLPredicate);
+		}
 	}
 
 }
