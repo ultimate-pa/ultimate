@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
@@ -30,11 +30,21 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
+/**
+ * A collection of states.
+ * 
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * @param <STATE>
+ *            state type
+ */
 public class CompoundState<STATE> {
 	private final Collection<STATE> mStates;
 	
 	/**
-	 * @param states states
+	 * Constructor.
+	 * 
+	 * @param states
+	 *            states
 	 */
 	public CompoundState(final Collection<STATE> states) {
 		mStates = states;
@@ -48,26 +58,24 @@ public class CompoundState<STATE> {
 	public Collection<STATE> getStates() {
 		return mStates;
 	}
-
+	
 	@Override
-	public boolean equals(final Object arg0) {
-		if (arg0 == null) {
+	public boolean equals(final Object obj) {
+		if (obj == null) {
 			return this == null;
 		}
-		if (getClass() != arg0.getClass()) {
+		if (getClass() != obj.getClass()) {
 			return false;
-		} 
-		return ((CompoundState<?>) arg0).getStates().equals(this.getStates());
+		}
+		return ((CompoundState<?>) obj).getStates().equals(this.getStates());
 	}
-
+	
 	@Override
 	public int hashCode() {
 		int hc = 0;
-		for (final STATE s : mStates) {
-			hc += HashUtils.hashJenkins(31, s);
+		for (final STATE state : mStates) {
+			hc += HashUtils.hashJenkins(31, state);
 		}
 		return hc;
 	}
-	
-	
 }
