@@ -134,6 +134,7 @@ import org.eclipse.cdt.internal.core.dom.parser.IASTAmbiguousExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
 
+import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
@@ -614,7 +615,11 @@ public class MainDispatcher extends Dispatcher {
 				acslNode = Parser.parseComment("lstart\n assert " + invariant.getInvariant() + ";",
 						invariant.getStartline(), invariant.getEndline(), mLogger);
 			} catch (final Exception e) {
-				throw new IllegalArgumentException(e);
+				if (e instanceof ACSLSyntaxErrorException) {
+					throw new UnsupportedSyntaxException(loc, e.getMessage());
+				} else {
+					throw new AssertionError(e);
+				}
 			}
 			final Result translationResult = dispatch(acslNode);
 			final List<AssertStatement> invariants = new ArrayList<>();
