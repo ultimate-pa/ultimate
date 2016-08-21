@@ -105,10 +105,12 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
  * "RETURN". It is necessary to implement the "continue" and "break" function for loops.
  * 
  * @author musab@informatik.uni-freiburg.de
- * 
  */
 enum Flow {
-	NORMAL, BREAK, CONTINUE, RETURN;
+	NORMAL,
+	BREAK,
+	CONTINUE,
+	RETURN;
 }
 
 /**
@@ -117,15 +119,13 @@ enum Flow {
  * Generation and output of the results
  * 
  * @author musab@informatik.uni-freiburg.de
- * 
  */
 public class TestFileInterpreter implements IMessagePrinter {
-
+	
 	/**
 	 * This class implements a static type checker for the automatascript files.
 	 * 
 	 * @author musab@informatik.uni-freiburg.de
-	 * 
 	 */
 	class AutomataScriptTypeChecker {
 		/**
@@ -133,7 +133,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		 * variable assignment.
 		 */
 		private final Map<String, Class<?>> mLocalVariables = new HashMap<String, Class<?>>();
-
+		
 		/**
 		 * Checks the test file for type errors and for undeclared variables.
 		 * 
@@ -147,7 +147,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			}
 			checkType(n);
 		}
-
+		
 		private void checkType(final AtsASTNode n) throws InterpreterException {
 			if (n instanceof AssignmentExpressionAST) {
 				checkType((AssignmentExpressionAST) n);
@@ -178,9 +178,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 			} else if (n instanceof WhileStatementAST) {
 				checkType((WhileStatementAST) n);
 			}
-
+			
 		}
-
+		
 		private void checkType(final AssignmentExpressionAST as) throws InterpreterException {
 			final List<AtsASTNode> children = as.getOutgoingNodes();
 			final ILocation errorLocation = as.getLocation();
@@ -194,7 +194,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			// Check the type of children
 			checkType(children.get(0));
 			checkType(children.get(1));
-
+			
 			final VariableExpressionAST var = (VariableExpressionAST) children.get(0);
 			// Check whether the right-hand side has expected type.
 			for (final Class<?> c : getTypes(children.get(1))) {
@@ -209,9 +209,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 					+ children.get(1).getReturnType().getSimpleName() + "");
 			final String longDescription = message;
 			throw new InterpreterException(errorLocation, longDescription);
-
+			
 		}
-
+		
 		private void checkType(final BinaryExpressionAST be) throws InterpreterException {
 			final List<AtsASTNode> children = be.getOutgoingNodes();
 			final ILocation errorLocation = be.getLocation();
@@ -224,14 +224,14 @@ public class TestFileInterpreter implements IMessagePrinter {
 			// Check children for correct type
 			checkType(children.get(0));
 			checkType(children.get(1));
-
+			
 			// If the return type of this binary expression is 'String', we do
 			// not need to type check the operands
 			// because we just call the toString-Method of every operand.
 			if (be.getReturnType() == String.class) {
 				return;
 			}
-
+			
 			// Check whether first child has expected type.
 			boolean firstChildHasCorrectType = false;
 			for (final Class<?> c : getTypes(children.get(0))) {
@@ -239,7 +239,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 					firstChildHasCorrectType = true;
 				}
 			}
-
+			
 			if (!firstChildHasCorrectType) {
 				String message = "Left operand of \"" + be.getOperatorAsString() + "\" has incorrect type."
 						+ System.getProperty("line.separator");
@@ -248,7 +248,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
 			}
-
+			
 			// Check whether second child has expected type.
 			for (final Class<?> c : getTypes(children.get(1))) {
 				if (AssignableTest.isAssignableFrom(be.getReturnType(), c)) {
@@ -262,7 +262,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			final String longDescription = message;
 			throw new InterpreterException(errorLocation, longDescription);
 		}
-
+		
 		private void checkType(final ConditionalBooleanExpressionAST cbe) throws InterpreterException {
 			final List<AtsASTNode> children = cbe.getOutgoingNodes();
 			final ILocation errorLocation = cbe.getLocation();
@@ -316,7 +316,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 		}
-
+		
 		private void checkType(final ForStatementAST fs) throws InterpreterException {
 			final List<AtsASTNode> children = fs.getOutgoingNodes();
 			final ILocation errorLocation = fs.getLocation();
@@ -336,13 +336,14 @@ public class TestFileInterpreter implements IMessagePrinter {
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 		}
-
+		
 		private void checkType(final IfElseStatementAST is) throws InterpreterException {
 			final List<AtsASTNode> children = is.getOutgoingNodes();
 			final ILocation errorLocation = is.getLocation();
 			if (children.size() != 3) {
-				String message = "IfElseStatement should have 3 operands (Condition) { Thenstatements} {Elsestatements})"
-						+ System.getProperty("line.separator");
+				String message =
+						"IfElseStatement should have 3 operands (Condition) { Thenstatements} {Elsestatements})"
+								+ System.getProperty("line.separator");
 				message = message.concat("Num of operands: " + children.size());
 				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
@@ -358,7 +359,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 		}
-
+		
 		private void checkType(final IfStatementAST is) throws InterpreterException {
 			final List<AtsASTNode> children = is.getOutgoingNodes();
 			final ILocation errorLocation = is.getLocation();
@@ -380,7 +381,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 		}
-
+		
 		private void checkType(final OperationInvocationExpressionAST oe) throws InterpreterException {
 			final ILocation errorLocation = oe.getLocation();
 			final String opName = oe.getOperationName().toLowerCase();
@@ -414,9 +415,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 				arr = types.toArray(arr);
 				oe.setType(arr[0]);
 			}
-
+			
 		}
-
+		
 		private void checkType(final RelationalExpressionAST re) throws InterpreterException {
 			final List<AtsASTNode> children = re.getOutgoingNodes();
 			final ILocation errorLocation = re.getLocation();
@@ -455,7 +456,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			final String longDescription = message;
 			throw new InterpreterException(errorLocation, longDescription);
 		}
-
+		
 		private void checkType(final UnaryExpressionAST ue) throws InterpreterException {
 			final List<AtsASTNode> children = ue.getOutgoingNodes();
 			final ILocation errorLocation = ue.getLocation();
@@ -467,7 +468,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			}
 			// Check children for correct type
 			checkType(children.get(0));
-
+			
 			if (!(children.get(0) instanceof VariableExpressionAST)) {
 				final String message = "Unary operators are applicable only on variables."
 						+ System.getProperty("line.separator") + "You want to apply it on "
@@ -488,7 +489,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			final String longDescription = message;
 			throw new InterpreterException(errorLocation, longDescription);
 		}
-
+		
 		private void checkType(final VariableExpressionAST v) throws InterpreterException {
 			final ILocation errorLocation = v.getLocation();
 			if (mLocalVariables.containsKey(v.getIdentifier())) {
@@ -502,7 +503,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				throw new InterpreterException(errorLocation, shortDescription, longDescription);
 			}
 		}
-
+		
 		private void checkType(final VariableDeclarationAST vd) throws InterpreterException {
 			final List<AtsASTNode> children = vd.getOutgoingNodes();
 			final ILocation errorLocation = vd.getLocation();
@@ -518,7 +519,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			if (children.size() == 0) {
 				return;
 			}
-
+			
 			// Check type of the right-hand side of the variable assignment.
 			checkType(children.get(0));
 			for (final Class<?> c : getTypes(children.get(0))) {
@@ -526,13 +527,14 @@ public class TestFileInterpreter implements IMessagePrinter {
 					return;
 				}
 			}
-			final String message = "Operand on the right side has incorrect type." + System.getProperty("line.separator")
-					+ "Expected: " + vd.getExpectingType().getSimpleName() + "\tGot: "
-					+ children.get(0).getReturnType().getSimpleName();
+			final String message =
+					"Operand on the right side has incorrect type." + System.getProperty("line.separator")
+							+ "Expected: " + vd.getExpectingType().getSimpleName() + "\tGot: "
+							+ children.get(0).getReturnType().getSimpleName();
 			final String longDescription = message;
 			throw new InterpreterException(errorLocation, longDescription);
 		}
-
+		
 		private void checkType(final WhileStatementAST ws) throws InterpreterException {
 			final List<AtsASTNode> children = ws.getOutgoingNodes();
 			final ILocation errorLocation = ws.getLocation();
@@ -551,7 +553,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 		}
-
+		
 		/**
 		 * Returns the possible types for the given AST node. Only operations can potentially have more return types,
 		 * because there could operations with different return types, but with the same name.
@@ -595,9 +597,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 				return returnType;
 			}
 		}
-
+		
 	}
-
+	
 	/**
 	 * Contains the declared variables, automata variables too. It is a map from variable name to the object it
 	 * represents.
@@ -632,18 +634,24 @@ public class TestFileInterpreter implements IMessagePrinter {
 	private boolean mPrintAutomataToFile = false;
 	private PrintWriter mPrintWriter;
 	private String mPath = ".";
-
+	
 	public enum LoggerSeverity {
-		INFO, WARNING, ERROR, DEBUG
+		INFO,
+		WARNING,
+		ERROR,
+		DEBUG
 	};
-
+	
 	private enum Finished {
-		FINISHED, TIMEOUT, ERROR, OUTOFMEMORY
+		FINISHED,
+		TIMEOUT,
+		ERROR,
+		OUTOFMEMORY
 	};
-
+	
 	public static final String sAssertionHoldsMessage = "Assertion holds.";
 	public static final String sAssertionViolatedMessage = "Assertion violated!";
-
+	
 	/**
 	 * If an error occurred during the interpretation this is set to true and further interpretation is aborted.
 	 */
@@ -651,7 +659,6 @@ public class TestFileInterpreter implements IMessagePrinter {
 	private final IUltimateServiceProvider mServices;
 	private final boolean mProvideBenchmarkResults = false;
 	
-
 	public TestFileInterpreter(final IUltimateServiceProvider services) {
 		assert services != null;
 		mServices = services;
@@ -675,19 +682,19 @@ public class TestFileInterpreter implements IMessagePrinter {
 			}
 		}
 	}
-
+	
 	private void readPreferences() {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mPrintAutomataToFile = prefs.getBoolean(PreferenceInitializer.Name_WriteToFile);
 		mPath = prefs.getString(PreferenceInitializer.Name_Path);
 	}
-
+	
 	private static String getDateTime() {
 		final DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 		final Date date = new Date();
 		return dateFormat.format(date);
 	}
-
+	
 	/**
 	 * Method to interpret an automatascript test file. The interpretation is done in 4 steps. Step 1: Interpret
 	 * automata defintions. Step 2: Check the automatascript test file for correct types and undeclared variables. (Type
@@ -720,7 +727,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			interpretationFinished = Finished.ERROR;
 			errorMessage = e.getMessage();
 		}
-
+		
 		if (interpretationFinished == Finished.FINISHED) {
 			// Put all defined automata into variables map
 			mVariables.putAll(mAutomataInterpreter.getAutomata());
@@ -743,7 +750,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				errorMessage = e.getLongDescription();
 			}
 		}
-
+		
 		Object result = null;
 		if (interpretationFinished == Finished.FINISHED) {
 			// Interpreting test file
@@ -774,11 +781,12 @@ public class TestFileInterpreter implements IMessagePrinter {
 				}
 			}
 		}
-		if (mProvideBenchmarkResults ) {
+		if (mProvideBenchmarkResults) {
 			mLogger.info("reporting benchmark results");
 			final ICsvProviderProvider bench = null;
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-					new BenchmarkResult<Object>(Activator.PLUGIN_ID, "automata script interpreter benchmark results", bench));
+					new BenchmarkResult<Object>(Activator.PLUGIN_ID, "automata script interpreter benchmark results",
+							bench));
 		}
 		reportToLogger(LoggerSeverity.DEBUG, "Reporting results...");
 		reportResult(interpretationFinished, errorMessage);
@@ -787,7 +795,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return result;
 	}
-
+	
 	/**
 	 * Gets the automaton which was lastly printed by a print-operation.
 	 * 
@@ -796,7 +804,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	public IAutomaton<?, ?> getLastPrintedAutomaton() {
 		return mLastPrintedAutomaton;
 	}
-
+	
 	private Object interpret(final AssignmentExpressionAST as) throws InterpreterException {
 		final List<AtsASTNode> children = as.getOutgoingNodes();
 		final VariableExpressionAST var = (VariableExpressionAST) children.get(0);
@@ -807,45 +815,45 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		final Object oldValue = mVariables.get(var.getIdentifier());
 		final Object newValue = interpret(children.get(1));
-
+		
 		if (newValue == null) {
 			final String longDescr = "Var \"" + var.getIdentifier() + "\" is assigned \"null\".";
 			throw new InterpreterException(as.getLocation(), longDescr);
 		}
-
+		
 		switch (as.getOperator()) {
-		case ASSIGN:
-			mVariables.put(var.getIdentifier(), newValue);
-			break;
-		case PLUSASSIGN: {
-			final Integer assignValue = ((Integer) oldValue) + ((Integer) newValue);
-			mVariables.put(var.getIdentifier(), assignValue);
-			break;
-		}
-		case MINUSASSIGN: {
-			final Integer assignValue = ((Integer) oldValue) - ((Integer) newValue);
-			mVariables.put(var.getIdentifier(), assignValue);
-			break;
-		}
-		case MULTASSIGN: {
-			final Integer assignValue = ((Integer) oldValue) * ((Integer) newValue);
-			mVariables.put(var.getIdentifier(), assignValue);
-			break;
-		}
-		case DIVASSIGN: {
-			final Integer assignValue = ((Integer) oldValue) / ((Integer) newValue);
-			mVariables.put(var.getIdentifier(), assignValue);
-			break;
-		}
-		default: {
-			throw new InterpreterException(as.getLocation(),
-					"AssignmentExpression: This type of operator is not supported: " + as.getOperator());
-		}
-
+			case ASSIGN:
+				mVariables.put(var.getIdentifier(), newValue);
+				break;
+			case PLUSASSIGN: {
+				final Integer assignValue = ((Integer) oldValue) + ((Integer) newValue);
+				mVariables.put(var.getIdentifier(), assignValue);
+				break;
+			}
+			case MINUSASSIGN: {
+				final Integer assignValue = ((Integer) oldValue) - ((Integer) newValue);
+				mVariables.put(var.getIdentifier(), assignValue);
+				break;
+			}
+			case MULTASSIGN: {
+				final Integer assignValue = ((Integer) oldValue) * ((Integer) newValue);
+				mVariables.put(var.getIdentifier(), assignValue);
+				break;
+			}
+			case DIVASSIGN: {
+				final Integer assignValue = ((Integer) oldValue) / ((Integer) newValue);
+				mVariables.put(var.getIdentifier(), assignValue);
+				break;
+			}
+			default: {
+				throw new InterpreterException(as.getLocation(),
+						"AssignmentExpression: This type of operator is not supported: " + as.getOperator());
+			}
+			
 		}
 		return oldValue;
 	}
-
+	
 	private Object interpret(final AtsASTNode node) throws InterpreterException {
 		Object result = null;
 		if (node instanceof AssignmentExpressionAST) {
@@ -889,7 +897,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return result;
 	}
-
+	
 	private Object interpret(final BinaryExpressionAST be) throws InterpreterException {
 		final List<AtsASTNode> children = be.getOutgoingNodes();
 		// If the return type is 'String', we just call the toString method of
@@ -902,70 +910,70 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		final Integer v1 = (Integer) interpret(children.get(0));
 		final Integer v2 = (Integer) interpret(children.get(1));
-
+		
 		switch (be.getOperator()) {
-		case PLUS:
-			return v1 + v2;
-		case MINUS:
-			return v1 - v2;
-		case MULTIPLICATION:
-			return v1 * v2;
-		case DIVISION:
-			return v1 / v2;
-		default:
-			throw new InterpreterException(be.getLocation(),
-					" BinaryExpression: This type of operator is not supported: " + be.getOperator());
+			case PLUS:
+				return v1 + v2;
+			case MINUS:
+				return v1 - v2;
+			case MULTIPLICATION:
+				return v1 * v2;
+			case DIVISION:
+				return v1 / v2;
+			default:
+				throw new InterpreterException(be.getLocation(),
+						" BinaryExpression: This type of operator is not supported: " + be.getOperator());
 		}
 	}
-
+	
 	private Object interpret(final BreakStatementAST bst) {
 		// Change the flow
 		mFlow = Flow.BREAK;
 		return null;
 	}
-
+	
 	private Boolean interpret(final ConditionalBooleanExpressionAST cbe) throws InterpreterException {
 		final List<AtsASTNode> children = cbe.getOutgoingNodes();
 		switch (cbe.getOperator()) {
-		case NOT:
-			return !((Boolean) interpret(children.get(0)));
-		case AND: {
-			final Boolean v1 = (Boolean) interpret(children.get(0));
-			if (!v1) {
-				return false;
-			} // Short-circuit and
-			final Boolean v2 = (Boolean) interpret(children.get(1));
-			return v2;
-		}
-		case OR: {
-			final Boolean v1 = (Boolean) interpret(children.get(0));
-			if (v1) {
-				return true;
-			} // Short-circuit or
-			final Boolean v2 = (Boolean) interpret(children.get(1));
-			return v2;
-		}
-		default: {
-			final String message = "ConditionalBooleanExpression: This type of operator is not supported: "
-					+ cbe.getOperator();
-			throw new InterpreterException(cbe.getLocation(), message);
-		}
+			case NOT:
+				return !((Boolean) interpret(children.get(0)));
+			case AND: {
+				final Boolean v1 = (Boolean) interpret(children.get(0));
+				if (!v1) {
+					return false;
+				} // Short-circuit and
+				final Boolean v2 = (Boolean) interpret(children.get(1));
+				return v2;
+			}
+			case OR: {
+				final Boolean v1 = (Boolean) interpret(children.get(0));
+				if (v1) {
+					return true;
+				} // Short-circuit or
+				final Boolean v2 = (Boolean) interpret(children.get(1));
+				return v2;
+			}
+			default: {
+				final String message = "ConditionalBooleanExpression: This type of operator is not supported: "
+						+ cbe.getOperator();
+				throw new InterpreterException(cbe.getLocation(), message);
+			}
 		}
 	}
-
+	
 	private Object interpret(final ConstantExpressionAST ce) {
 		return ce.getValue();
 	}
-
+	
 	private Object interpret(final ContinueStatementAST cst) {
 		// Change the flow
 		mFlow = Flow.CONTINUE;
 		return null;
 	}
-
+	
 	private Object interpret(final ForStatementAST fs) throws InterpreterException {
 		final List<AtsASTNode> children = fs.getOutgoingNodes();
-
+		
 		Boolean loopCondition = false;
 		// If the loopcondition is missing, we just execute the loop forever
 		if (children.get(0) == null) {
@@ -982,17 +990,17 @@ public class TestFileInterpreter implements IMessagePrinter {
 					interpret(statementList.get(i));
 					if (mFlow != Flow.NORMAL) {
 						switch (mFlow) {
-						case BREAK:
-						case RETURN: {
-							mFlow = Flow.NORMAL;
-							return null;
-						}
-						case CONTINUE: {
-							mFlow = Flow.NORMAL;
-							break secondLoop;
-						}
-						default:
-							throw new UnsupportedOperationException();
+							case BREAK:
+							case RETURN: {
+								mFlow = Flow.NORMAL;
+								return null;
+							}
+							case CONTINUE: {
+								mFlow = Flow.NORMAL;
+								break secondLoop;
+							}
+							default:
+								throw new UnsupportedOperationException();
 						}
 					}
 				}
@@ -1008,17 +1016,17 @@ public class TestFileInterpreter implements IMessagePrinter {
 					interpret(statementList.get(i));
 					if (mFlow != Flow.NORMAL) {
 						switch (mFlow) {
-						case BREAK:
-						case RETURN: {
-							mFlow = Flow.NORMAL;
-							return null;
-						}
-						case CONTINUE: {
-							mFlow = Flow.NORMAL;
-							break secondLoop;
-						}
-						default:
-							throw new UnsupportedOperationException();
+							case BREAK:
+							case RETURN: {
+								mFlow = Flow.NORMAL;
+								return null;
+							}
+							case CONTINUE: {
+								mFlow = Flow.NORMAL;
+								break secondLoop;
+							}
+							default:
+								throw new UnsupportedOperationException();
 						}
 					}
 				}
@@ -1030,10 +1038,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return null;
 	}
-
+	
 	private Object interpret(final IfElseStatementAST is) throws InterpreterException {
 		final List<AtsASTNode> children = is.getOutgoingNodes();
-
+		
 		// children(0) is the condition
 		if ((Boolean) interpret(children.get(0))) {
 			interpret(children.get(1));
@@ -1042,7 +1050,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return null;
 	}
-
+	
 	private Object interpret(final IfStatementAST is) throws InterpreterException {
 		final List<AtsASTNode> children = is.getOutgoingNodes();
 		if ((Boolean) interpret(children.get(0))) {
@@ -1052,17 +1060,17 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return null;
 	}
-
+	
 	private NestedWord<String> interpret(final NestedwordAST nw) {
 		return new NestedWord<String>(nw.getWordSymbols(), nw.getNestingRelation());
 	}
-
+	
 	private NestedLassoWord<String> interpret(final NestedLassowordAST nw) {
 		final NestedWord<String> stem = interpret(nw.getStem());
 		final NestedWord<String> loop = interpret(nw.getLoop());
 		return new NestedLassoWord<String>(stem, loop);
 	}
-
+	
 	private Object interpret(final OperationInvocationExpressionAST oe) throws InterpreterException {
 		final List<AtsASTNode> children = oe.getOutgoingNodes();
 		if (children.size() != 1) {
@@ -1070,7 +1078,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			message = message.concat("Num of children: " + children.size());
 			throw new InterpreterException(oe.getLocation(), message);
 		}
-
+		
 		ArrayList<Object> arguments = null;
 		List<AtsASTNode> argsToInterpret = null;
 		if (children.get(0) != null) {
@@ -1081,9 +1089,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 				arguments.add(interpret(argsToInterpret.get(i)));
 			}
 		}
-
+		
 		Object result = null;
-
+		
 		if (oe.getOperationName().equalsIgnoreCase("assert") && arguments.size() == 1) {
 			result = arguments.get(0);
 			if (result instanceof Boolean) {
@@ -1183,33 +1191,33 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return result;
 	}
-
+	
 	private Boolean interpret(final RelationalExpressionAST re) throws InterpreterException {
 		final List<AtsASTNode> children = re.getOutgoingNodes();
 		if (re.getExpectingType() == Integer.class) {
 			final int v1 = (Integer) interpret(children.get(0));
 			final int v2 = (Integer) interpret(children.get(1));
 			switch (re.getOperator()) {
-			case GREATERTHAN:
-				return v1 > v2;
-			case LESSTHAN:
-				return v1 < v2;
-			case GREATER_EQ_THAN:
-				return v1 >= v2;
-			case LESS_EQ_THAN:
-				return v1 <= v2;
-			case EQ:
-				return v1 == v2;
-			case NOT_EQ:
-				return v1 != v2;
-			default:
-				throw new InterpreterException(re.getLocation(), "This type of operator is not supported: "
-						+ re.getOperator());
+				case GREATERTHAN:
+					return v1 > v2;
+				case LESSTHAN:
+					return v1 < v2;
+				case GREATER_EQ_THAN:
+					return v1 >= v2;
+				case LESS_EQ_THAN:
+					return v1 <= v2;
+				case EQ:
+					return v1 == v2;
+				case NOT_EQ:
+					return v1 != v2;
+				default:
+					throw new InterpreterException(re.getLocation(), "This type of operator is not supported: "
+							+ re.getOperator());
 			}
 		}
 		return null;
 	}
-
+	
 	private Object interpret(final ReturnStatementAST rst) throws InterpreterException {
 		final List<AtsASTNode> children = rst.getOutgoingNodes();
 		// Change the flow
@@ -1220,52 +1228,52 @@ public class TestFileInterpreter implements IMessagePrinter {
 			return interpret(children.get(0));
 		}
 	}
-
+	
 	private Object interpret(final StatementListAST stmtList) throws InterpreterException {
 		for (final AtsASTNode stmt : stmtList.getOutgoingNodes()) {
 			interpret(stmt);
 		}
 		return null;
 	}
-
+	
 	private Integer interpret(final UnaryExpressionAST ue) throws InterpreterException {
 		final List<AtsASTNode> children = ue.getOutgoingNodes();
-
+		
 		final VariableExpressionAST var = (VariableExpressionAST) children.get(0);
 		final Integer oldVal = (Integer) interpret(var);
-
+		
 		switch (ue.getOperator()) {
-		case EXPR_PLUSPLUS: {
-			mVariables.put(var.getIdentifier(), oldVal + 1);
-			return oldVal;
-		}
-		case EXPR_MINUSMINUS: {
-			mVariables.put(var.getIdentifier(), oldVal - 1);
-			return oldVal;
-		}
-		case PLUSPLUS_EXPR: {
-			mVariables.put(var.getIdentifier(), oldVal + 1);
-			return oldVal + 1;
-		}
-		case MINUSMINUS_EXPR: {
-			mVariables.put(var.getIdentifier(), oldVal - 1);
-			return oldVal - 1;
-		}
-		default: {
-			final String message = ue.getLocation().getStartLine()
-					+ ": UnaryExpression: This type of operator is not supported: " + ue.getOperator();
-			throw new InterpreterException(ue.getLocation(), message);
-		}
+			case EXPR_PLUSPLUS: {
+				mVariables.put(var.getIdentifier(), oldVal + 1);
+				return oldVal;
+			}
+			case EXPR_MINUSMINUS: {
+				mVariables.put(var.getIdentifier(), oldVal - 1);
+				return oldVal;
+			}
+			case PLUSPLUS_EXPR: {
+				mVariables.put(var.getIdentifier(), oldVal + 1);
+				return oldVal + 1;
+			}
+			case MINUSMINUS_EXPR: {
+				mVariables.put(var.getIdentifier(), oldVal - 1);
+				return oldVal - 1;
+			}
+			default: {
+				final String message = ue.getLocation().getStartLine()
+						+ ": UnaryExpression: This type of operator is not supported: " + ue.getOperator();
+				throw new InterpreterException(ue.getLocation(), message);
+			}
 		}
 	}
-
+	
 	private Object interpret(final VariableDeclarationAST vd) throws InterpreterException {
 		final List<AtsASTNode> children = vd.getOutgoingNodes();
 		Object value = null;
 		if (children.size() == 1) {
 			value = interpret(children.get(0));
 		}
-
+		
 		for (final String id : vd.getIdentifiers()) {
 			if (value == null) {
 				final String longDescr = "Var \"" + id + "\" is assigned \"null\".";
@@ -1275,7 +1283,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return null;
 	}
-
+	
 	private Object interpret(final VariableExpressionAST v) throws InterpreterException {
 		if (!mVariables.containsKey(v.getIdentifier())) {
 			final String longDescr = "Variable \"" + v.getIdentifier() + "\" was not declared before.";
@@ -1283,7 +1291,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return mVariables.get(v.getIdentifier());
 	}
-
+	
 	private Object interpret(final WhileStatementAST ws) throws InterpreterException {
 		final List<AtsASTNode> children = ws.getOutgoingNodes();
 		Boolean loopCondition = (Boolean) interpret(children.get(0));
@@ -1293,17 +1301,17 @@ public class TestFileInterpreter implements IMessagePrinter {
 				interpret(statementList.get(i));
 				if (mFlow != Flow.NORMAL) {
 					switch (mFlow) {
-					case BREAK:
-					case RETURN: {
-						mFlow = Flow.NORMAL;
-						return null;
-					}
-					case CONTINUE: {
-						mFlow = Flow.NORMAL;
-						break secondLoop;
-					}
-					default:
-						throw new UnsupportedOperationException();
+						case BREAK:
+						case RETURN: {
+							mFlow = Flow.NORMAL;
+							return null;
+						}
+						case CONTINUE: {
+							mFlow = Flow.NORMAL;
+							break secondLoop;
+						}
+						default:
+							throw new UnsupportedOperationException();
 					}
 				}
 			}
@@ -1311,7 +1319,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return null;
 	}
-
+	
 	/**
 	 * Reports the results of assert statements to the ILogger and to Ultimate as a GenericResult.
 	 * 
@@ -1351,18 +1359,20 @@ public class TestFileInterpreter implements IMessagePrinter {
 		} else {
 			throw new AssertionError();
 		}
-		final IResult result = new AutomataScriptInterpreterOverallResult(Activator.PLUGIN_ID, overallResult, errorMessage);
+		final IResult result =
+				new AutomataScriptInterpreterOverallResult(Activator.PLUGIN_ID, overallResult, errorMessage);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		reportToLogger(loggerSeverity, result.getLongDescription());
 	}
-
+	
 	@Override
-	public void printMessage(final Severity severityForResult, final LoggerSeverity severityForLogger, final String longDescr,
+	public void printMessage(final Severity severityForResult, final LoggerSeverity severityForLogger,
+			final String longDescr,
 			final String shortDescr, final AtsASTNode node) {
 		reportToUltimate(severityForResult, longDescr, shortDescr, node);
 		reportToLogger(severityForLogger, longDescr);
 	}
-
+	
 	/**
 	 * Reports the given string with the given severity to Ultimate as a GenericResult
 	 * 
@@ -1373,7 +1383,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * @param node
 	 *            AtsASTNode for which this String is reported
 	 */
-	private void reportToUltimate(final Severity sev, final String longDescr, final String shortDescr, final AtsASTNode node) {
+	private void reportToUltimate(final Severity sev, final String longDescr, final String shortDescr,
+			final AtsASTNode node) {
 		IResult result;
 		if (node == null) {
 			result = new GenericResult(Activator.PLUGIN_ID, shortDescr, longDescr, sev);
@@ -1383,7 +1394,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 	}
-
+	
 	/**
 	 * Reports the given string with the given severity to the logger
 	 * 
@@ -1394,23 +1405,23 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 */
 	private void reportToLogger(final LoggerSeverity sev, final String toPrint) {
 		switch (sev) {
-		case ERROR:
-			mLogger.error(toPrint);
-			break;
-		case INFO:
-			mLogger.info(toPrint);
-			break;
-		case WARNING:
-			mLogger.warn(toPrint);
-			break;
-		case DEBUG:
-			mLogger.debug(toPrint);
-			break;
-		default:
-			mLogger.info(toPrint);
+			case ERROR:
+				mLogger.error(toPrint);
+				break;
+			case INFO:
+				mLogger.info(toPrint);
+				break;
+			case WARNING:
+				mLogger.warn(toPrint);
+				break;
+			case DEBUG:
+				mLogger.debug(toPrint);
+				break;
+			default:
+				mLogger.info(toPrint);
 		}
 	}
-
+	
 	/**
 	 * Gets an object of an automata operation indicated by OperationInvocationExpression, if the operation exists and
 	 * all arguments have correct type. Otherwise it returns null.
@@ -1425,7 +1436,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * @throws UnsupportedOperationException
 	 *             if the operation does not exist
 	 */
-
+	
 	@SuppressWarnings("unchecked")
 	private IOperation<String, String> getAutomataOperation(final OperationInvocationExpressionAST oe,
 			final ArrayList<Object> arguments) throws InterpreterException {
@@ -1471,9 +1482,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 			}
 		} else {
 			final String allOperations = (new ListExistingOperations(mExistingOperations)).prettyPrint();
-			final String longDescr = "Unsupported operation \"" + operationName + "\"" + System.getProperty("line.separator")
-					+ "We support only the following operations " + System.getProperty("line.separator")
-					+ allOperations;
+			final String longDescr =
+					"Unsupported operation \"" + operationName + "\"" + System.getProperty("line.separator")
+							+ "We support only the following operations " + System.getProperty("line.separator")
+							+ allOperations;
 			throw new InterpreterException(oe.getLocation(), longDescr);
 		}
 		assert (result == null);
@@ -1490,9 +1502,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			throw new InterpreterException(oe.getLocation(), longDescr);
 		}
 	}
-
-
-
+	
 	/**
 	 * Prepend mServices to args if AutomataLibraryServices is the first parameter of the constructor. FIXME: This is
 	 * only a workaround! In the future AutomataLibraryServices will be the first argument of each IOperation and we
@@ -1517,7 +1527,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return result;
 	}
-
+	
 	/**
 	 * Return args.toArray(), but prepend a new StringFactory if the first parameter of the Constructor c is a
 	 * StateFacotry.
@@ -1531,8 +1541,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 			firstParameterIsStateFactory = false;
 		}
 		boolean firstParameterIsServicesAndSecondParameterIsStateFactory;
-		firstParameterIsServicesAndSecondParameterIsStateFactory = firstParameterIsServicesAndSecondParameterIsStateFactory(
-				c, fstParam);
+		firstParameterIsServicesAndSecondParameterIsStateFactory =
+				firstParameterIsServicesAndSecondParameterIsStateFactory(
+						c, fstParam);
 		Object result[];
 		if (firstParameterIsStateFactory || firstParameterIsServicesAndSecondParameterIsStateFactory) {
 			result = new Object[args.size() + 1];
@@ -1547,12 +1558,13 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return result;
 	}
-
+	
 	/**
 	 * TODO: get rid of this workaround Workaround that is necessary as long as not all operations use Services as their
 	 * first parameter.
 	 */
-	private boolean firstParameterIsServicesAndSecondParameterIsStateFactory(final Constructor<?> c, final Class<?> fstParam) {
+	private boolean firstParameterIsServicesAndSecondParameterIsStateFactory(final Constructor<?> c,
+			final Class<?> fstParam) {
 		boolean firstParameterIsServicesAndSecondParameterIsStateFactory;
 		if (c.getParameterTypes().length < 2) {
 			firstParameterIsServicesAndSecondParameterIsStateFactory = false;
@@ -1570,7 +1582,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return firstParameterIsServicesAndSecondParameterIsStateFactory;
 	}
-
+	
 	/**
 	 * Checks if all arguments have the correct type.
 	 * 
@@ -1595,7 +1607,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			return false;
 		}
 	}
-
+	
 	/**
 	 * Finds all automata operations implementing the IOperation interface. It maps the operation names to set of class
 	 * objects, because there may exist different classes for the same operation. E.g. accepts-operation for
@@ -1616,10 +1628,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 				"de.uni_freiburg.informatik.ultimate.automata.tree.operations",
 				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa",
 				"de.uni_freiburg.informatik.ultimate.automata.petrinet"
-				};
+		};
 		for (final String packageName : packages) {
 			final Collection<File> files = filesInDirectory(getPathFromPackageName(packageName));
-
+			
 			for (final File file : files) {
 				final String filename = file.getName();
 				if (filename.endsWith(".class")) {
@@ -1636,7 +1648,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return result;
 	}
-
+	
 	private Class<?> getClassFromFile(final String packageName, final File file) {
 		final String qualifiedName = getQualifiedNameFromFile(packageName, file);
 		final Class<?> clazz;
@@ -1648,7 +1660,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return clazz;
 	}
-
+	
 	private boolean tryAdd(final Map<String, Set<Class<?>>> result, final Class<?> clazz) {
 		final String opName = clazz.getSimpleName().toLowerCase();
 		Set<Class<?>> set = result.get(opName);
@@ -1659,10 +1671,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 		set.add(clazz);
 		return true;
 	}
-
+	
 	/**
 	 * Tries to resolve the fully qualified name from the package name and the found file.
-	 * 
 	 * If the package is a.b.c.d and we found a class with the path /foo/bar/a/b/c/d/huh/OurClass.class, then the fully
 	 * qualified name is a.b.c.d.huh.OurClass
 	 * 
@@ -1673,20 +1684,20 @@ public class TestFileInterpreter implements IMessagePrinter {
 	private String getQualifiedNameFromFile(final String packageName, final File file) {
 		assert file != null;
 		assert file.getName().endsWith(".class");
-
+		
 		final String fullname = file.getAbsolutePath();
 		final String filenameWithoutSuffix = fullname.substring(0, fullname.length() - 6);
 		final String knownPath = getPathFromPackageName(packageName);
 		final int validAfter = filenameWithoutSuffix.indexOf(knownPath);
 		assert validAfter != -1;
-
+		
 		return filenameWithoutSuffix.substring(validAfter).replace(File.separatorChar, '.');
 	}
-
+	
 	private String getPathFromPackageName(final String packageName) {
 		return packageName.replace(".", File.separator);
 	}
-
+	
 	/**
 	 * Checks if the given class object implements the IOperation interface.
 	 * 
@@ -1703,7 +1714,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return false;
 	}
-
+	
 	/**
 	 * Return the filenames of the files in the given directory. We use the classloader to get the URL of this folder.
 	 * We support only URLs with protocol <i>file</i> and <i>bundleresource</i>. At the moment these are the only ones
@@ -1737,7 +1748,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return resolveDirectories(Arrays.asList(dirFile));
 	}
-
+	
 	private Collection<File> resolveDirectories(final Collection<File> files) {
 		final ArrayDeque<File> worklist = new ArrayDeque<File>();
 		final ArrayList<File> rtr = new ArrayList<File>();
@@ -1752,25 +1763,24 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return rtr;
 	}
-
+	
 	/**
 	 * Exception that is thrown if the interpreter has found an error in the ats file. The short description may be null
 	 * which means that no short description is provided.
-	 * 
 	 */
 	private static class InterpreterException extends Exception {
 		private static final long serialVersionUID = -7514869048479460179L;
 		private final ILocation mLocation;
 		private final String mShortDescription;
 		private final String mLongDescription;
-
+		
 		public InterpreterException(final ILocation location, final String longDescription) {
 			super();
 			mLocation = location;
 			mLongDescription = longDescription;
 			mShortDescription = null;
 		}
-
+		
 		public InterpreterException(final ILocation location, final String longDescription,
 				final String shortDescription) {
 			super();
@@ -1794,16 +1804,15 @@ public class TestFileInterpreter implements IMessagePrinter {
 				return throwable.getClass().getSimpleName() + ": " + throwable.getMessage();
 			}
 		}
-
-
+		
 		public ILocation getLocation() {
 			return mLocation;
 		}
-
+		
 		public String getLongDescription() {
 			return mLongDescription;
 		}
-
+		
 		public String getShortDescription() {
 			return mShortDescription;
 		}
