@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AutomataScriptInterpreter plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AutomataScriptInterpreter plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AutomataScriptInterpreter plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter;
@@ -1164,7 +1164,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			reportToLogger(LoggerSeverity.INFO,
 					"Writing " + argsAsString + " to file " + filename + " in " + format + " format.");
 			new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "ats", filename,
-					format, "hello", automaton);
+					format, "output according to \"write\" command", automaton);
 		} else {
 			final IOperation<String, String> op = getAutomataOperation(oe, arguments);
 			if (op != null) {
@@ -1615,7 +1615,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating",
 				"de.uni_freiburg.informatik.ultimate.automata.tree.operations",
 				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa",
-				"de.uni_freiburg.informatik.ultimate.automata.petrinet" 
+				"de.uni_freiburg.informatik.ultimate.automata.petrinet"
 				};
 		for (final String packageName : packages) {
 			final Collection<File> files = filesInDirectory(getPathFromPackageName(packageName));
