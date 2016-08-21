@@ -261,12 +261,12 @@ public class BuchiCegarLoop {
 		// mRootNode.getRootAnnot().getBoogie2SMT());
 
 		mPref = taPrefs;
-		mDefaultStateFactory = new PredicateFactoryForInterpolantAutomata(mSmtManager, mPref);
+		mDefaultStateFactory = new PredicateFactoryForInterpolantAutomata(mSmtManager, mPref.computeHoareAnnotation());
 		mPredicateFactoryResultChecking = new PredicateFactoryResultChecking(mSmtManager);
 
 		mHaf = new HoareAnnotationFragments(mLogger, null, null);
 		mStateFactoryForRefinement = new PredicateFactoryRefinement(mRootNode.getRootAnnot().getProgramPoints(),
-				mSmtManager, mPref, mPref.computeHoareAnnotation(), mHaf, null);
+				mSmtManager, false, mHaf, null, mPref.getHoareAnnotationPositions());
 
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 

@@ -158,9 +158,9 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				); 
 
 
-		final PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(mSmtManager, mTaPrefs);
+		final PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(mSmtManager, mTaPrefs.computeHoareAnnotation());
 
-		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(mSmtManager, mTaPrefs);
+		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(mSmtManager, mTaPrefs.computeHoareAnnotation());
 
 		final PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
 				interpolantAutomatonDeterminized, true, predicateFactoryInterpolantAutomata);
@@ -473,7 +473,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 
 
-		final StateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(smtManager, taPrefs);
+		final StateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(smtManager, taPrefs.computeHoareAnnotation());
 
 		final NestedWordAutomaton<CodeBlock, IPredicate> nwa  = new NestedWordAutomaton<CodeBlock, IPredicate>(   new AutomataLibraryServices(services), 
 				internalAlphabet,

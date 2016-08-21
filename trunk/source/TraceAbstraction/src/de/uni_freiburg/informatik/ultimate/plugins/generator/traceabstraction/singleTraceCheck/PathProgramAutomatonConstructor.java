@@ -68,8 +68,8 @@ public class PathProgramAutomatonConstructor {
 	/**
 	 * Construct a path automaton (finite) from the given path.
 	 */
-	public INestedWordAutomaton<CodeBlock, IPredicate> constructAutomatonFromGivenPath(NestedWord<CodeBlock> path, IUltimateServiceProvider services, SmtManager smtManager,
-			TAPreferences taPrefs) {
+	public INestedWordAutomaton<CodeBlock, IPredicate> constructAutomatonFromGivenPath(final NestedWord<CodeBlock> path, final IUltimateServiceProvider services, final SmtManager smtManager,
+			final TAPreferences taPrefs) {
 		// Set the alphabet
 		final Set<CodeBlock> internalAlphabet = new HashSet<CodeBlock>();
 		final Set<CodeBlock> callAlphabet = new HashSet<CodeBlock>();
@@ -86,7 +86,7 @@ public class PathProgramAutomatonConstructor {
 			}
 		}
 		
-		final StateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(smtManager, taPrefs);
+		final StateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(smtManager, taPrefs.computeHoareAnnotation());
 		// Create the automaton
 		final NestedWordAutomaton<CodeBlock, IPredicate> pathPA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet, returnAlphabet, predicateFactory);
 		
