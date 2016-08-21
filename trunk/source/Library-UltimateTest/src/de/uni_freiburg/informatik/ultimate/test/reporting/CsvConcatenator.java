@@ -63,8 +63,8 @@ public class CsvConcatenator implements ITestSummary {
 	private final Class<? extends ICsvProviderProvider<? extends Object>> mBenchmark;
 	private ICsvProvider<Object> mCsvProvider;
 
-	public CsvConcatenator(Class<? extends UltimateTestSuite> ultimateTestSuite,
-			Class<? extends ICsvProviderProvider<? extends Object>> benchmark) {
+	public CsvConcatenator(final Class<? extends UltimateTestSuite> ultimateTestSuite,
+			final Class<? extends ICsvProviderProvider<? extends Object>> benchmark) {
 		super();
 		mUltimateTestSuite = ultimateTestSuite;
 		mBenchmark = benchmark;
@@ -94,8 +94,8 @@ public class CsvConcatenator implements ITestSummary {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult, String category,
-			String message, String testname, IResultService resultService) {
+	public void addResult(final UltimateRunDefinition ultimateRunDefinition, final TestResult threeValuedResult, final String category,
+			final String message, final String testname, final IResultService resultService) {
 		if (resultService == null) {
 			return;
 		}
@@ -109,12 +109,12 @@ public class CsvConcatenator implements ITestSummary {
 		}
 	}
 
-	private void add(ICsvProvider<Object> benchmarkCsvWithRunDefinition) {
+	private void add(final ICsvProvider<Object> benchmarkCsvWithRunDefinition) {
 		mCsvProvider = CsvUtils.concatenateRows(mCsvProvider, benchmarkCsvWithRunDefinition);
 	}
 
-	private ICsvProvider<Object> addUltimateRunDefinition(UltimateRunDefinition ultimateRunDefinition,
-			ICsvProvider<Object> benchmark, String category, String message) {
+	private ICsvProvider<Object> addUltimateRunDefinition(final UltimateRunDefinition ultimateRunDefinition,
+			final ICsvProvider<Object> benchmark, final String category, final String message) {
 		final List<String> resultColumns = new ArrayList<>();
 		resultColumns.add("File");
 		resultColumns.add("Settings");
@@ -125,7 +125,7 @@ public class CsvConcatenator implements ITestSummary {
 		for (int i = 0; i < rows; i++) {
 			final List<Object> resultRow = new ArrayList<>();
 			resultRow.add(ultimateRunDefinition.getInputFileNames().replace(",", ";"));
-			resultRow.add(ultimateRunDefinition.getSettings().getAbsolutePath());
+			resultRow.add(ultimateRunDefinition.getSettingsAbsolutePath());
 			resultRow.add(ultimateRunDefinition.getToolchain().getAbsolutePath());
 			resultRow.addAll(benchmark.getRow(i));
 			result.addRow(resultRow);
