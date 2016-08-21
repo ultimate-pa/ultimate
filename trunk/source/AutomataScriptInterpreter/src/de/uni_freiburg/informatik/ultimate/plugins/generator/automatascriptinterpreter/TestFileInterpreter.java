@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
@@ -657,7 +658,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 */
 	private final List<GenericResultAtElement<AtsASTNode>> mResultOfAssertStatements;
 	private final IUltimateServiceProvider mServices;
-	private final boolean mProvideBenchmarkResults = !false;
+	private final boolean mProvideStatisticsResults = true;
 	
 	public TestFileInterpreter(final IUltimateServiceProvider services) {
 		assert services != null;
@@ -1167,15 +1168,19 @@ public class TestFileInterpreter implements IMessagePrinter {
 			new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "ats", filename,
 					format, "output according to \"write\" command", automaton);
 		} else {
+			final SimpleTimer timer = new SimpleTimer();
 			final IOperation<String, String> op = getAutomataOperation(oe, arguments);
 			if (op != null) {
 				try {
-					if (mProvideBenchmarkResults) {
+					if (mProvideStatisticsResults) {
 						mLogger.info("reporting benchmark results");
 						AutomataOperationStatistics statistics = op.getAutomataOperationStatistics();
 						if (statistics == null) {
 							statistics = new AutomataOperationStatistics();
 						}
+						statistics.addKeyValuePair(StatisticsType.ATS_ID, oe.getAsString());
+						statistics.addKeyValuePair(StatisticsType.OPERATION_NAME, oe.getOperationName());
+						statistics.addKeyValuePair(StatisticsType.RUNTIME_TOTAL, timer.checkTime());
 						final BenchmarkResult<?> br = new BenchmarkResult<>(Activator.PLUGIN_ID, "automata script interpreter benchmark results", statistics);
 						mServices.getResultService().reportResult(Activator.PLUGIN_ID, br);
 					}
@@ -1817,6 +1822,16 @@ public class TestFileInterpreter implements IMessagePrinter {
 		
 		public String getShortDescription() {
 			return mShortDescription;
+		}
+	}
+	
+	public static class SimpleTimer {
+		long mStartTime;
+		public SimpleTimer() {
+			mStartTime = System.nanoTime();
+		}
+		public long checkTime() {
+			return System.nanoTime() - mStartTime;
 		}
 	}
 }
