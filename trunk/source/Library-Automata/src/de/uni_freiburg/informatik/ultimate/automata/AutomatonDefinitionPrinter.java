@@ -71,7 +71,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @see Format available output modes
  */
 public class AutomatonDefinitionPrinter<LETTER, STATE> {
+	private static final int ONE = 1;
 	private static final String UNSUPPORTED_LABELING = "Unsupported labeling.";
+	private static final String ATS_EXTENSION = "ats";
+	private static final char QUOTE = '\"';
 	
 	/**
 	 * Output format types.
@@ -81,18 +84,18 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		 * Automata script.<br>
 		 * The {@link #toString()} representation of {@link LETTER} and {@link STATE} is used.
 		 */
-		ATS("ats"),
+		ATS(ATS_EXTENSION),
 		/**
 		 * Automata script.<br>
 		 * The {@link #toString()} representations of {@link LETTER} and {@link STATE} are ignored.
 		 * The {@link TestFileWriter} introduces new names, e.g. the letters of the alphabet are <tt>a0, ..., an</tt>.
 		 */
-		ATS_NUMERATE("ats"),
+		ATS_NUMERATE(ATS_EXTENSION),
 		/**
 		 * Automata script.<br>
 		 * The {@link #toString()} representation of {@link LETTER} and {@link STATE} plus a number is used.
 		 */
-		ATS_QUOTED("ats"),
+		ATS_QUOTED(ATS_EXTENSION),
 		/**
 		 * The <tt>BA</tt> format which is also used by some tools of Yu-Fang Chen.
 		 */
@@ -201,7 +204,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		this(services);
 		mStringWriter = new StringWriter();
 		mPrintWriter = new PrintWriter(mStringWriter);
-		printAutomatonToStringWriter(automatonName, automaton, format);
+		printAutomaton(automatonName, automaton, format);
 	}
 	
 	/**
@@ -309,11 +312,11 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			default:
 				throw new IllegalArgumentException(UNSUPPORTED_LABELING);
 		}
-		if (automata.length == 1) {
-			printAutomatonToStringWriter(automatonName, automata[0], format);
+		if (automata.length == ONE) {
+			printAutomaton(automatonName, automata[0], format);
 		}
 		for (int i = 0; i < automata.length; i++) {
-			printAutomatonToStringWriter(automatonName + String.valueOf(i), automata[i], format);
+			printAutomaton(automatonName + i, automata[i], format);
 		}
 	}
 	
@@ -328,10 +331,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 *            output format
 	 */
 	@SuppressWarnings("unchecked")
-	private void printAutomatonToStringWriter(
-			final String name,
-			final IAutomaton<?, ?> automaton,
-			final Format format) {
+	private void printAutomaton(final String name, final IAutomaton<?, ?> automaton, final Format format) {
 		if (automaton instanceof INestedWordAutomatonSimple) {
 			printNestedWordAutomaton(name, (INestedWordAutomatonSimple<LETTER, STATE>) automaton, format);
 		} else if (automaton instanceof IPetriNet) {
@@ -360,16 +360,28 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		mPrintWriter.println(string);
 	}
 	
-	private void println(final char string) {
-		mPrintWriter.println(string);
+	private void println(final char character) {
+		mPrintWriter.println(character);
 	}
 	
 	private void print(final String string) {
 		mPrintWriter.print(string);
 	}
 	
-	private void print(final char string) {
-		mPrintWriter.print(string);
+	private void print(final char character) {
+		mPrintWriter.print(character);
+	}
+	
+	private void print(final StringBuilder builder) {
+		mPrintWriter.print(builder);
+	}
+	
+	private void printAutomatonPrefix() {
+		println(" = (");
+	}
+	
+	private void printAutomatonSuffix() {
+		println(");");
 	}
 	
 	private String getCollectionPrefix(final String string) {
@@ -418,8 +430,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			nwa = (INestedWordAutomaton<LETTER, STATE>) automaton;
 		} else {
 			try {
-				nwa = new NestedWordAutomatonReachableStates<LETTER, STATE>(
-						mServices, automaton);
+				nwa = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, automaton);
 			} catch (final AutomataLibraryException e) {
 				throw new AssertionError("Timeout while preparing automaton for printing.");
 			}
@@ -427,13 +438,13 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		
 		switch (format) {
 			case ATS:
-				new NwaTestFileWriterToString(name, nwa);
+				new NwaWriterToString(name, nwa);
 				break;
 			case ATS_QUOTED:
-				new NwaTestFileWriterToStringWithHash(name, nwa);
+				new NwaWriterToStringWithHash(name, nwa);
 				break;
 			case ATS_NUMERATE:
-				new NwaTestFileWriterUniqueId(name, nwa);
+				new NwaWriterUniqueId(name, nwa);
 				break;
 			case BA:
 				new BaFormatWriter(nwa);
@@ -449,12 +460,16 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		}
 	}
 	
-	private String quoteAndReplaceBackSlashes(final Object input) {
-		return '\"' + input.toString().replaceAll("\"", "\\\"") + '\"';
+	private String replaceBackslashes(final Object input) {
+		return input.toString().replaceAll("\"", "\\\"");
 	}
 	
-	private String quoteAndReplaceBackSlashes(final Object input, final String suffix) {
-		return '\"' + input.toString().replaceAll("\"", "\\\"") + suffix + '\"';
+	private String quoteAndReplaceBackslashes(final Object input) {
+		return QUOTE + replaceBackslashes(input) + QUOTE;
+	}
+	
+	private String quoteAndReplaceBackslashes(final Object input, final String suffix) {
+		return QUOTE + replaceBackslashes(input) + suffix + QUOTE;
 	}
 	
 	/**
@@ -476,7 +491,9 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			mStateMapping = getStateMapping(mNwa.getStates());
 			
 			// automata script format for NestedWordAutomaton
-			println("NestedWordAutomaton " + name + " = (");
+			print("NestedWordAutomaton ");
+			print(name);
+			printAutomatonPrefix();
 			printAlphabets();
 			printStates();
 			printInitialStates(mNwa.getInitialStates());
@@ -484,8 +501,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			printCallTransitions(mNwa.getStates());
 			printInternalTransitions(mNwa.getStates());
 			printReturnTransitions(mNwa.getStates());
-			println(");");
-			mPrintWriter.close();
+			printAutomatonSuffix();
 		}
 		
 		/**
@@ -601,9 +617,9 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 * Prints an {@link INestedWordAutomaton}.
 	 * In this version letters and states are represented by a default symbol and a unique ID.
 	 */
-	private class NwaTestFileWriterUniqueId extends NwaTestFileWriter {
+	private final class NwaWriterUniqueId extends NwaTestFileWriter {
 		
-		public NwaTestFileWriterUniqueId(final String name, final INestedWordAutomaton<LETTER, STATE> nwa) {
+		public NwaWriterUniqueId(final String name, final INestedWordAutomaton<LETTER, STATE> nwa) {
 			super(name, nwa);
 		}
 		
@@ -634,9 +650,9 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 * Prints an {@link INestedWordAutomaton}.
 	 * In this version letters and states are represented by their {@link #toString()} method.
 	 */
-	private class NwaTestFileWriterToString extends NwaTestFileWriter {
+	private final class NwaWriterToString extends NwaTestFileWriter {
 		
-		public NwaTestFileWriterToString(final String name, final INestedWordAutomaton<LETTER, STATE> nwa) {
+		public NwaWriterToString(final String name, final INestedWordAutomaton<LETTER, STATE> nwa) {
 			super(name, nwa);
 		}
 		
@@ -644,7 +660,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		protected Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet, final char symbol) {
 			final Map<LETTER, String> alphabetMapping = new HashMap<LETTER, String>();
 			for (final LETTER letter : alphabet) {
-				alphabetMapping.put(letter, quoteAndReplaceBackSlashes(letter));
+				alphabetMapping.put(letter, quoteAndReplaceBackslashes(letter));
 			}
 			return alphabetMapping;
 		}
@@ -653,7 +669,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		protected Map<STATE, String> getStateMapping(final Collection<STATE> states) {
 			final Map<STATE, String> stateMapping = new HashMap<STATE, String>();
 			for (final STATE state : states) {
-				stateMapping.put(state, quoteAndReplaceBackSlashes(state));
+				stateMapping.put(state, quoteAndReplaceBackslashes(state));
 			}
 			return stateMapping;
 		}
@@ -663,9 +679,9 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 * Prints an {@link INestedWordAutomaton}.
 	 * In this version letters and states are represented by their {@link #toString()} and {@link #hashCode()} methods.
 	 */
-	private class NwaTestFileWriterToStringWithHash extends NwaTestFileWriter {
+	private final class NwaWriterToStringWithHash extends NwaTestFileWriter {
 		
-		public NwaTestFileWriterToStringWithHash(final String name, final INestedWordAutomaton<LETTER, STATE> nwa) {
+		public NwaWriterToStringWithHash(final String name, final INestedWordAutomaton<LETTER, STATE> nwa) {
 			super(name, nwa);
 		}
 		
@@ -674,7 +690,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			final Map<LETTER, String> alphabetMapping = new HashMap<LETTER, String>();
 			for (final LETTER letter : alphabet) {
 				alphabetMapping.put(letter,
-						quoteAndReplaceBackSlashes(letter, Integer.toString(letter.hashCode() / sHashDivisor)));
+						quoteAndReplaceBackslashes(letter, Integer.toString(letter.hashCode() / sHashDivisor)));
 			}
 			return alphabetMapping;
 		}
@@ -684,7 +700,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			final Map<STATE, String> stateMapping = new HashMap<STATE, String>();
 			for (final STATE state : states) {
 				stateMapping.put(state,
-						quoteAndReplaceBackSlashes(state, Integer.toString(state.hashCode() / sHashDivisor)));
+						quoteAndReplaceBackslashes(state, Integer.toString(state.hashCode() / sHashDivisor)));
 			}
 			return stateMapping;
 		}
@@ -703,13 +719,13 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		
 		switch (format) {
 			case ATS:
-				new NetTestFileWriterToString(name, castNet);
+				new NetWriterToString(name, castNet);
 				break;
 			case ATS_QUOTED:
-				new NetTestFileWriterToStringWithUniqueNumber(name, castNet);
+				new NetWriterToStringWithUniqueNumber(name, castNet);
 				break;
 			case ATS_NUMERATE:
-				new NetTestFileWriterUniqueId(name, castNet);
+				new NetWriterUniqueId(name, castNet);
 				break;
 			default:
 				throw new AssertionError(UNSUPPORTED_LABELING);
@@ -719,30 +735,31 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	/**
 	 * Prints a {@link PetriNetJulian}.
 	 */
-	private abstract class NetTestFileWriter {
+	private abstract class NetWriter {
 		
 		private final Map<LETTER, String> mAlphabet;
 		private final Map<Place<LETTER, STATE>, String> mPlacesMapping;
 		
-		public NetTestFileWriter(final String name, final PetriNetJulian<LETTER, STATE> net) {
+		public NetWriter(final String name, final PetriNetJulian<LETTER, STATE> net) {
 			mAlphabet = getAlphabetMapping(net.getAlphabet());
 			mPlacesMapping = getPlacesMapping(net.getPlaces());
 			
-			println("PetriNet " + name + " = (");
+			print("PetriNet ");
+			print(name);
+			printAutomatonPrefix();
 			printAlphabet();
 			printPlaces();
 			printTransitions(net.getTransitions());
 			printInitialMarking(net.getInitialMarking());
 			printAcceptingPlaces(net.getAcceptingPlaces());
-			println(")");
-			mPrintWriter.close();
+			printAutomatonSuffix();
 		}
 		
 		protected abstract Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet);
 		
 		protected abstract Map<Place<LETTER, STATE>, String>
 				getPlacesMapping(final Collection<Place<LETTER, STATE>> places);
-		
+				
 		private void printAlphabet() {
 			printCollectionPrefix("alphabet");
 			printValues(mAlphabet);
@@ -785,7 +802,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		private void printInitialMarking(final Marking<LETTER, STATE> initialMarking) {
 			printElementPrefix("initialMarking");
 			printMarking(initialMarking);
-			print(",\n");
+			println(',');
 		}
 		
 		private void printAcceptingPlaces(final Collection<Place<LETTER, STATE>> acceptingPlaces) {
@@ -799,9 +816,9 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 * Prints a {@link PetriNetJulian}.
 	 * In this version letters and places are represented by a default symbol and a unique ID.
 	 */
-	private class NetTestFileWriterUniqueId extends NetTestFileWriter {
+	private final class NetWriterUniqueId extends NetWriter {
 		
-		public NetTestFileWriterUniqueId(final String name, final PetriNetJulian<LETTER, STATE> net) {
+		public NetWriterUniqueId(final String name, final PetriNetJulian<LETTER, STATE> net) {
 			super(name, net);
 		}
 		
@@ -834,9 +851,9 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 * Prints a {@link PetriNetJulian}.
 	 * In this version letters and places are represented by their {@link #toString()} method.
 	 */
-	private class NetTestFileWriterToString extends NetTestFileWriter {
+	private final class NetWriterToString extends NetWriter {
 		
-		public NetTestFileWriterToString(final String name, final PetriNetJulian<LETTER, STATE> net) {
+		public NetWriterToString(final String name, final PetriNetJulian<LETTER, STATE> net) {
 			super(name, net);
 		}
 		
@@ -844,7 +861,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		protected Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet) {
 			final Map<LETTER, String> alphabetMapping = new HashMap<LETTER, String>();
 			for (final LETTER letter : alphabet) {
-				alphabetMapping.put(letter, quoteAndReplaceBackSlashes(letter));
+				alphabetMapping.put(letter, quoteAndReplaceBackslashes(letter));
 			}
 			return alphabetMapping;
 		}
@@ -855,7 +872,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			final HashMap<Place<LETTER, STATE>, String> placesMapping =
 					new HashMap<>();
 			for (final Place<LETTER, STATE> place : places) {
-				placesMapping.put(place, quoteAndReplaceBackSlashes(place));
+				placesMapping.put(place, quoteAndReplaceBackslashes(place));
 			}
 			return placesMapping;
 		}
@@ -865,9 +882,9 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 * Prints a {@link PetriNetJulian}.
 	 * In this version letters and places are represented by their {@link #toString()} method and a unique number.
 	 */
-	private class NetTestFileWriterToStringWithUniqueNumber extends NetTestFileWriter {
+	private final class NetWriterToStringWithUniqueNumber extends NetWriter {
 		
-		public NetTestFileWriterToStringWithUniqueNumber(final String name, final PetriNetJulian<LETTER, STATE> net) {
+		public NetWriterToStringWithUniqueNumber(final String name, final PetriNetJulian<LETTER, STATE> net) {
 			super(name, net);
 		}
 		
@@ -876,7 +893,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			int counter = 0;
 			final Map<LETTER, String> alphabetMapping = new HashMap<LETTER, String>();
 			for (final LETTER letter : alphabet) {
-				alphabetMapping.put(letter, quoteAndReplaceBackSlashes(letter, Integer.toString(counter)));
+				alphabetMapping.put(letter, quoteAndReplaceBackslashes(letter, Integer.toString(counter)));
 				counter++;
 			}
 			return alphabetMapping;
@@ -889,7 +906,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			final HashMap<Place<LETTER, STATE>, String> placesMapping =
 					new HashMap<>();
 			for (final Place<LETTER, STATE> place : places) {
-				placesMapping.put(place, quoteAndReplaceBackSlashes(place, Integer.toString(counter)));
+				placesMapping.put(place, quoteAndReplaceBackslashes(place, Integer.toString(counter)));
 				counter++;
 			}
 			return placesMapping;
@@ -903,7 +920,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			final Format format) {
 		switch (format) {
 			case ATS:
-				new AaTestFileWriter(name, alternating);
+				new AaWriter(name, alternating);
 				break;
 			default:
 				throw new AssertionError(UNSUPPORTED_LABELING);
@@ -913,25 +930,25 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	/**
 	 * Constructor takes a AlternatingAutomaton and writes it to a testfile.
 	 */
-	private class AaTestFileWriter {
+	private class AaWriter {
 		
 		private final AlternatingAutomaton<LETTER, STATE> mAa;
 		
-		public AaTestFileWriter(final String name, final AlternatingAutomaton<LETTER, STATE> alternating) {
+		public AaWriter(final String name, final AlternatingAutomaton<LETTER, STATE> alternating) {
 			
 			mAa = alternating;
 			
-			mPrintWriter.println("Alternating Automaton " + name + " = (");
-			mPrintWriter.println(mAa.toString());
+			print("AlternatingAutomaton ");
+			print(name);
+			printAutomatonPrefix();
+			println(mAa.toString());
 //			printAlphabet(mAa.getAlphabet());
 //			printExistentialStates(mAa.getExistentialStates());
 //			printUniversalStates(mAa.getUniversalStates());
 //			printInitialStates(mAa.getInitialStates());
 //			printFinalStates(mAa.getFinalStates());
 //			printInternalTransitions(mAa.getTransitionsMap());
-			
-			mPrintWriter.println(')');
-			mPrintWriter.close();
+			printAutomatonSuffix();
 		}
 		
 		/*
@@ -1057,10 +1074,9 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			final StringBuilder initStateSb = getStateString(mNwa.getInitialStates(), mStateMapping);
 			final StringBuilder transSb = getTransitionString(mNwa, mStateMapping, mAlphabetMapping);
 			final StringBuilder finalStateSb = getStateString(mNwa.getFinalStates(), mStateMapping);
-			mPrintWriter.print(initStateSb);
-			mPrintWriter.print(transSb);
-			mPrintWriter.print(finalStateSb);
-			mPrintWriter.close();
+			print(initStateSb);
+			print(transSb);
+			print(finalStateSb);
 		}
 		
 		private StringBuilder getStateString(
@@ -1068,10 +1084,12 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 				final Map<STATE, String> stateMapping) {
 			final StringBuilder result = new StringBuilder();
 			for (final STATE state : initialStates) {
-				result.append('[');
-				result.append(stateMapping.get(state));
-				result.append(']');
-				result.append(NEW_LINE);
+				// @formatter:off
+				result.append('[')
+						.append(stateMapping.get(state))
+						.append(']')
+						.append(NEW_LINE);
+				// @formatter:on
 			}
 			return result;
 		}
@@ -1083,13 +1101,15 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			final StringBuilder result = new StringBuilder();
 			for (final STATE state : nwa.getStates()) {
 				for (final OutgoingInternalTransition<LETTER, STATE> outTrans : nwa.internalSuccessors(state)) {
-					result.append(alphabetMapping.get(outTrans.getLetter()));
-					result.append(",[");
-					result.append(stateMapping.get(state));
-					result.append("]->[");
-					result.append(stateMapping.get(outTrans.getSucc()));
-					result.append(']');
-					result.append(NEW_LINE);
+					// @formatter:off
+					result.append(alphabetMapping.get(outTrans.getLetter()))
+							.append(",[")
+							.append(stateMapping.get(state))
+							.append("]->[")
+							.append(stateMapping.get(outTrans.getSucc()))
+							.append(']')
+							.append(NEW_LINE);
+					// @formatter:on
 				}
 			}
 			return result;
@@ -1116,44 +1136,44 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		}
 		
 		protected void doPrint() {
-			final String header = constructHeader();
-			mPrintWriter.print(header);
+			final StringBuilder header = constructHeader();
+			print(header);
 			final String bodyToken = "--BODY--";
-			mPrintWriter.print(bodyToken);
-			mPrintWriter.print(NEW_LINE);
-			final String body = constructBody();
-			mPrintWriter.print(body);
+			print(bodyToken);
+			print(NEW_LINE);
+			final StringBuilder body = constructBody();
+			print(body);
 			final String endToken = "--END--";
-			mPrintWriter.print(endToken);
-			mPrintWriter.close();
+			print(endToken);
 		}
 		
-		private String constructHeader() {
+		private StringBuilder constructHeader() {
 			final StringBuilder builder = new StringBuilder();
-			builder.append("HOA: v1");
-			builder.append(NEW_LINE);
-			
-			builder.append("States: ");
-			builder.append(mNwa.getStates().size());
-			builder.append(NEW_LINE);
-			
+			// @formatter:off
+			builder.append("HOA: v1")
+					.append(NEW_LINE)
+					//
+					.append("States: ")
+					.append(mNwa.getStates().size())
+					.append(NEW_LINE);
+					
 			for (final STATE state : mNwa.getInitialStates()) {
-				builder.append("Start: ");
-				builder.append(mStateMapping.get(state));
-				builder.append(NEW_LINE);
+				builder.append("Start: ")
+						.append(mStateMapping.get(state))
+						.append(NEW_LINE);
 			}
 			
-			builder.append("AP: ");
-			builder.append(mNwa.getInternalAlphabet().size());
+			builder.append("AP: ")
+					.append(mNwa.getInternalAlphabet().size());
 			for (final LETTER letter : mNwa.getInternalAlphabet()) {
-				builder.append(" \"p");
-				builder.append(mLetterConverter.convert(letter) + '\"');
+				builder.append(" \"p")
+						.append(mLetterConverter.convert(letter) + QUOTE);
 			}
 			builder.append(NEW_LINE);
 			
 			for (final LETTER letter : mNwa.getInternalAlphabet()) {
-				builder.append("Alias: @");
-				builder.append(mAlphabetMapping.get(letter));
+				builder.append("Alias: @")
+						.append(mAlphabetMapping.get(letter));
 				boolean firstOther = true;
 				for (final LETTER otherLetter : mNwa.getInternalAlphabet()) {
 					if (firstOther) {
@@ -1163,39 +1183,40 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 					}
 					// comparison with '==' is fine here as the letters come from a set
 					if (otherLetter == letter) {
-						builder.append(' ');
-						builder.append(mAlphabetMapping.get(otherLetter));
+						builder.append(' ')
+								.append(mAlphabetMapping.get(otherLetter));
 					} else {
-						builder.append(" !");
-						builder.append(mAlphabetMapping.get(otherLetter));
-						
+						builder.append(" !")
+								.append(mAlphabetMapping.get(otherLetter));
 					}
 				}
 				builder.append(NEW_LINE);
 			}
 			
-			builder.append("Acceptance: 1 Inf(0)");
-			builder.append(NEW_LINE);
+			builder.append("Acceptance: 1 Inf(0)")
+					.append(NEW_LINE)
+					//
+					.append("acc-name: Buchi")
+					.append(NEW_LINE)
+					//
+					.append("tool: \"Ultimate Automata Library\"")
+					.append(NEW_LINE);
+			// @formatter:on
 			
-			builder.append("acc-name: Buchi");
-			builder.append(NEW_LINE);
-			
-			builder.append("tool: \"Ultimate Automata Library\"");
-			builder.append(NEW_LINE);
-			
-			return builder.toString();
+			return builder;
 		}
 		
-		private String constructBody() {
+		private StringBuilder constructBody() {
 			final StringBuilder builder = new StringBuilder();
 			
 			for (final STATE state : mNwa.getStates()) {
-				builder.append("State: ");
-				builder.append(mStateMapping.get(state));
+				// @formatter:off
+				builder.append("State: ")
+						.append(mStateMapping.get(state));
 				if (USE_LABELS) {
-					builder.append(" \"");
-					builder.append(state);
-					builder.append(" \"");
+					builder.append(" \"")
+							.append(state)
+							.append(QUOTE);
 				}
 				if (mNwa.isFinal(state)) {
 					builder.append(" {0}");
@@ -1203,15 +1224,16 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 				builder.append(NEW_LINE);
 				for (final LETTER letter : mNwa.lettersInternal(state)) {
 					for (final OutgoingInternalTransition<LETTER, STATE> tes : mNwa.internalSuccessors(state, letter)) {
-						builder.append("[@");
-						builder.append(mAlphabetMapping.get(tes.getLetter()));
-						builder.append("] ");
-						builder.append(mStateMapping.get(tes.getSucc()));
-						builder.append(NEW_LINE);
+						builder.append("[@")
+								.append(mAlphabetMapping.get(tes.getLetter()))
+								.append("] ")
+								.append(mStateMapping.get(tes.getSucc()))
+								.append(NEW_LINE);
 					}
 				}
+				// @formatter:on
 			}
-			return builder.toString();
+			return builder;
 		}
 	}
 	
@@ -1220,6 +1242,8 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 */
 	private class GoalFormatWriter extends CommonExternalFormatWriter {
 		
+		private static final String STATE_ID_CLOSE = "</StateID>";
+		private static final String STATE_ID_OPEN = "<StateID>";
 		private final IConverter<LETTER> mLetterConverter;
 		private final IConverter<STATE> mStateConverter;
 		
@@ -1234,119 +1258,132 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		
 		protected void doPrint() {
 			final StringBuilder builder = new StringBuilder();
-			builder.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>");
-			builder.append(NEW_LINE);
-			builder.append("<Structure label-on=\"Transition\" type=\"FiniteStateAutomaton\">");
-			builder.append(NEW_LINE);
-			constuctAlphabetSection(builder);
-			constuctStateSection(builder);
-			constuctInitialStateSection(builder);
-			constuctTransitionSection(builder);
-			constuctAcceptingStateSection(builder);
-			builder.append("</Structure>");
-			builder.append(NEW_LINE);
+			// @formatter:off
+			builder.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>")
+					.append(NEW_LINE)
+					.append("<Structure label-on=\"Transition\" type=\"FiniteStateAutomaton\">")
+					.append(NEW_LINE);
+			// @formatter:on
+			constructAlphabetSection(builder);
+			constructStateSection(builder);
+			constructInitialStateSection(builder);
+			constructTransitionSection(builder);
+			constructAcceptingStateSection(builder);
+			// @formatter:off
+			builder.append("</Structure>")
+					.append(NEW_LINE);
+			// @formatter:on
 			
-			mPrintWriter.print(builder.toString());
-			mPrintWriter.close();
+			print(builder);
 		}
 		
-		private void constuctAlphabetSection(final StringBuilder builder) {
-			builder.append(TAB);
-			builder.append("<Alphabet type=\"Classical\">");
-			builder.append(NEW_LINE);
+		private void constructAlphabetSection(final StringBuilder builder) {
+			// @formatter:off
+			builder.append(TAB)
+					.append("<Alphabet type=\"Classical\">")
+					.append(NEW_LINE);
 			for (final LETTER letter : mNwa.getInternalAlphabet()) {
-				builder.append(TAB);
-				builder.append(TAB);
-				builder.append("<Symbol>");
-				builder.append(mLetterConverter.convert(letter));
-				builder.append("</Symbol>");
-				builder.append(NEW_LINE);
+				builder.append(TAB)
+						.append(TAB)
+						.append("<Symbol>")
+						.append(mLetterConverter.convert(letter))
+						.append("</Symbol>")
+						.append(NEW_LINE);
 			}
-			builder.append(TAB);
-			builder.append("</Alphabet>");
-			builder.append(NEW_LINE);
+			builder.append(TAB)
+					.append("</Alphabet>")
+					.append(NEW_LINE);
+			// @formatter:on
 		}
 		
-		private void constuctStateSection(final StringBuilder builder) {
-			builder.append(TAB);
-			builder.append("<StateSet>");
-			builder.append(NEW_LINE);
+		private void constructStateSection(final StringBuilder builder) {
+			// @formatter:off
+			builder.append(TAB)
+					.append("<StateSet>")
+					.append(NEW_LINE);
 			for (final STATE state : mNwa.getStates()) {
-				builder.append(TAB);
-				builder.append(TAB);
-				builder.append("<State sid=\"");
-				builder.append(mStateConverter.convert(state));
-				builder.append("\" />");
-				builder.append(NEW_LINE);
+				builder.append(TAB)
+						.append(TAB)
+						.append("<State sid=\"")
+						.append(mStateConverter.convert(state))
+						.append("\" />")
+						.append(NEW_LINE);
 			}
-			builder.append(TAB);
-			builder.append("</StateSet>");
-			builder.append(NEW_LINE);
+			builder.append(TAB)
+					.append("</StateSet>")
+					.append(NEW_LINE);
+			// @formatter:on
 		}
 		
-		private void constuctInitialStateSection(final StringBuilder builder) {
-			builder.append(TAB);
-			builder.append("<InitialStateSet>");
-			builder.append(NEW_LINE);
+		private void constructInitialStateSection(final StringBuilder builder) {
+			// @formatter:off
+			builder.append(TAB)
+					.append("<InitialStateSet>")
+					.append(NEW_LINE);
 			for (final STATE state : mNwa.getInitialStates()) {
-				builder.append(TAB);
-				builder.append(TAB);
-				builder.append("<StateID>");
-				builder.append(mStateConverter.convert(state));
-				builder.append("</StateID>");
-				builder.append(NEW_LINE);
+				builder.append(TAB)
+						.append(TAB)
+						.append(STATE_ID_OPEN)
+						.append(mStateConverter.convert(state))
+						.append(STATE_ID_CLOSE)
+						.append(NEW_LINE);
 			}
-			builder.append(TAB);
-			builder.append("</InitialStateSet>");
-			builder.append(NEW_LINE);
+			builder.append(TAB)
+					.append("</InitialStateSet>")
+					.append(NEW_LINE);
+			// @formatter:on
 		}
 		
-		private void constuctTransitionSection(final StringBuilder builder) {
+		private void constructTransitionSection(final StringBuilder builder) {
 			int tid = 0;
-			builder.append(TAB);
-			builder.append("<TransitionSet complete=\"false\">");
-			builder.append(NEW_LINE);
+			// @formatter:off
+			builder.append(TAB)
+					.append("<TransitionSet complete=\"false\">")
+					.append(NEW_LINE);
 			for (final STATE state : mNwa.getStates()) {
 				for (final OutgoingInternalTransition<LETTER, STATE> trans : mNwa.internalSuccessors(state)) {
-					builder.append(TAB);
-					builder.append(TAB);
-					builder.append("<Transition tid=\"");
-					builder.append(tid);
-					builder.append("\">");
-					builder.append("<From>");
-					builder.append(mStateConverter.convert(state));
-					builder.append("</From>");
-					builder.append("<To>");
-					builder.append(mStateConverter.convert(trans.getSucc()));
-					builder.append("</To>");
-					builder.append("<Label>");
-					builder.append(mLetterConverter.convert(trans.getLetter()));
-					builder.append("</Label>");
-					builder.append("</Transition>");
-					builder.append(NEW_LINE);
+					builder.append(TAB)
+							.append(TAB)
+							.append("<Transition tid=\"")
+							.append(tid)
+							.append("\">")
+							.append("<From>")
+							.append(mStateConverter.convert(state))
+							.append("</From>")
+							.append("<To>")
+							.append(mStateConverter.convert(trans.getSucc()))
+							.append("</To>")
+							.append("<Label>")
+							.append(mLetterConverter.convert(trans.getLetter()))
+							.append("</Label>")
+							.append("</Transition>")
+							.append(NEW_LINE);
 					tid++;
 				}
 			}
-			builder.append(TAB);
-			builder.append("</TransitionSet>");
-			builder.append(NEW_LINE);
+			builder.append(TAB)
+					.append("</TransitionSet>")
+					.append(NEW_LINE);
+			// @formatter:on
 		}
 		
-		private void constuctAcceptingStateSection(final StringBuilder builder) {
-			builder.append(TAB);
-			builder.append("<Acc type=\"Buchi\">");
-			builder.append(NEW_LINE);
+		private void constructAcceptingStateSection(final StringBuilder builder) {
+			// @formatter:off
+			builder.append(TAB)
+					.append("<Acc type=\"Buchi\">")
+					.append(NEW_LINE);
 			for (final STATE state : mNwa.getFinalStates()) {
-				builder.append(TAB);
-				builder.append(TAB);
-				builder.append("<StateID>");
-				builder.append(mStateConverter.convert(state));
-				builder.append("</StateID>");
-				builder.append(NEW_LINE);
+				builder.append(TAB)
+						.append(TAB)
+						.append(STATE_ID_OPEN)
+						.append(mStateConverter.convert(state))
+						.append(STATE_ID_CLOSE)
+						.append(NEW_LINE);
 			}
-			builder.append(TAB);
-			builder.append("</Acc>");
-			builder.append(NEW_LINE);
+			builder.append(TAB)
+					.append("</Acc>")
+					.append(NEW_LINE);
+			// @formatter:on
 		}
 	}
 	
