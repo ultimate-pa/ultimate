@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.graph;
@@ -1512,12 +1512,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			}
 			// Patch the source to a winning sink for Spoiler
 			if (runsInDuplicatorDeadEnd) {
-				addSpoilerWinningSinkExtended((SpoilerNwaVertex<LETTER, STATE>) mergedSummarySource);
+				addSpoilerWinningSinkExtended(mergedSummarySource);
 			}
 			// Create and add the merged summaries
 			for (final Entry<STATE, Set<Pair<STATE, Boolean>>> choiceEntry : spoilerToDuplicatorChoices.entrySet()) {
 				final STATE spoilerChoice = choiceEntry.getKey();
-				addSummarizeEdge((SpoilerNwaVertex<LETTER, STATE>) mergedSummarySource, spoilerChoice,
+				addSummarizeEdge(mergedSummarySource, spoilerChoice,
 						choiceEntry.getValue());
 			}
 		}
@@ -2528,7 +2528,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * @return If the given up state has the given down state.
 	 */
 	private boolean hasDownState(final STATE upState, final STATE downState) {
-		return mNwa.getDownStates(upState).contains(downState);
+		return mNwa.isDoubleDecker(upState, downState);
 	}
 
 	/**

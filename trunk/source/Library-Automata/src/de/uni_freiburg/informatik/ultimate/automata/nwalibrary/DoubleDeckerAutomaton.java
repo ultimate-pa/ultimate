@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
@@ -32,20 +32,36 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor.ReachFinal;
 
+/**
+ * Basic implementation of the {@linkIDoubleDeckerAutomaton} interface based on the {@link NestedWordAutomaton}.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
 public class DoubleDeckerAutomaton<LETTER, STATE>
-		extends NestedWordAutomaton<LETTER, STATE> 
+		extends NestedWordAutomaton<LETTER, STATE>
 		implements IDoubleDeckerAutomaton<LETTER, STATE> {
-	
-	private Map<STATE,Map<STATE,ReachFinal>> mUp2Down;
+		
+	private Map<STATE, Map<STATE, ReachFinal>> mUp2Down;
 	
 	/**
-	 * @param services Ultimate services
-	 * @param internalAlphabet internal alphabet
-	 * @param callAlphabet call alphabet
-	 * @param returnAlphabet return alphabet
-	 * @param stateFactory state factory
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param internalAlphabet
+	 *            internal alphabet
+	 * @param callAlphabet
+	 *            call alphabet
+	 * @param returnAlphabet
+	 *            return alphabet
+	 * @param stateFactory
+	 *            state factory
 	 */
-	public DoubleDeckerAutomaton(final AutomataLibraryServices services, 
+	public DoubleDeckerAutomaton(final AutomataLibraryServices services,
 			final Set<LETTER> internalAlphabet,
 			final Set<LETTER> callAlphabet,
 			final Set<LETTER> returnAlphabet,
@@ -54,19 +70,22 @@ public class DoubleDeckerAutomaton<LETTER, STATE>
 	}
 	
 	/**
-	 * @return true iff down state map is set
+	 * @return true iff down state map is set.
 	 */
 	public boolean up2DownIsSet() {
-		return mUp2Down != null; 
+		return mUp2Down != null;
 	}
 	
 	@Override
-	@Deprecated
-	public Set<STATE> getDownStates(final STATE up) {
-		return mUp2Down.get(up).keySet();
+	public Set<STATE> getDownStates(final STATE upState) {
+		return mUp2Down.get(upState).keySet();
 	}
 	
-	public void setUp2Down(final Map<STATE,Map<STATE,ReachFinal>> up2Down) {
+	/**
+	 * @param up2Down
+	 *            New map (up state -> down state).
+	 */
+	public void setUp2Down(final Map<STATE, Map<STATE, ReachFinal>> up2Down) {
 		if (mUp2Down == null) {
 			mUp2Down = up2Down;
 		} else {
@@ -74,26 +93,23 @@ public class DoubleDeckerAutomaton<LETTER, STATE>
 		}
 	}
 	
-	/**
-	 * Returns true iff there is a reachable configuration in which the 
-	 * automaton is in STATE <i>up</i> and the STATE <i>down</i> is the topmost
-	 * stack element.
-	 */
 	@Override
-	public boolean isDoubleDecker(final STATE up, final STATE down) {
+	public boolean isDoubleDecker(final STATE upState, final STATE downState) {
 		if (mUp2Down == null) {
 			throw new AssertionError("up2down not set");
 		} else {
-			if (getStates().contains(up)) {
-				final Map<STATE, ReachFinal> downStates = mUp2Down.get(up);
-				if (getStates().contains(down)) {
-					return downStates.get(down) != null;
-				} else {
-					return false;
+			/**
+			 * TODO Christian 2016-08-21: Should the "getStates().contains()" tests be made assertions for efficiency
+			 * reasons? In particular, this can be expensive for on-the-fly constructions.
+			 */
+			if (getStates().contains(upState)) {
+				final Map<STATE, ReachFinal> downStates = mUp2Down.get(upState);
+				if (getStates().contains(downState)) {
+					return downStates.get(downState) != null;
 				}
-			} else {
 				return false;
 			}
+			return false;
 		}
 	}
 }

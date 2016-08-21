@@ -19,27 +19,48 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
 import java.util.Set;
 
-public interface IDoubleDeckerAutomaton<LETTER, STATE> extends INestedWordAutomaton<LETTER,STATE> {
-
+/**
+ * A nested word automaton interface which provides additional information about {@link DoubleDecker}s.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ * @see INestedWordAutomaton
+ * @see DoubleDecker
+ */
+public interface IDoubleDeckerAutomaton<LETTER, STATE> extends INestedWordAutomaton<LETTER, STATE> {
 	/**
-	 * @param up up state
-	 * @param down down state
-	 * @return true iff (up, down) forms a DoubleDecker
+	 * Provides the information whether there is a reachable configuration in which the automaton is in state
+	 * <tt>upState</tt> and the state <tt>downState</tt> is the topmost stack element, resp. the current hierarchical
+	 * predecessor.
+	 * 
+	 * @param upState
+	 *            up state
+	 * @param downState
+	 *            down state
+	 * @return true iff <tt>(upState, downState)</tt> forms a {@link DoubleDecker}
 	 */
-	boolean isDoubleDecker(STATE up, STATE down);
+	boolean isDoubleDecker(STATE upState, STATE downState);
 	
 	/**
-	 * @param up up state
-	 * @return all down states of 'up'
+	 * Provides all states <tt>downState</tt> such that <tt>(upState, downState)</tt> is a {@link DoubleDecker}.
+	 * 
+	 * @param upState
+	 *            up state
+	 * @return all down states of <tt>upState</tt>
+	 * @deprecated Use the {@link #isDoubleDecker(Object, Object) isDoubleDecker(up, down)} check instead.
 	 */
-	Set<STATE> getDownStates(STATE up);
+	@Deprecated
+			Set<STATE> getDownStates(STATE upState);
 }

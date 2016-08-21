@@ -133,50 +133,50 @@ public class RemoveNonLiveStates<LETTER, STATE>
 //		correct &= ResultChecker.isSubset(rscEntries,rsaEntries);
 //		assert correct;
 		rsc.removeNonLiveStates();
-		final DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy =
+		final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy =
 				(DoubleDeckerAutomaton<LETTER, STATE>) rsc.getResult();
 //		correct &= mResult.getStates().isEmpty() ||
-		ResultChecker.isSubset(reachalbeStatesCopy.getStates(), mResult.getStates());
+		ResultChecker.isSubset(reachableStatesCopy.getStates(), mResult.getStates());
 //		assert correct;
-		correct &= ResultChecker.isSubset(mResult.getStates(), reachalbeStatesCopy.getStates());
+		correct &= ResultChecker.isSubset(mResult.getStates(), reachableStatesCopy.getStates());
 		assert correct;
 		final Collection<STATE> rsaStates = mResult.getStates();
-		final Collection<STATE> rscStates = reachalbeStatesCopy.getStates();
+		final Collection<STATE> rscStates = reachableStatesCopy.getStates();
 		correct &= ResultChecker.isSubset(rsaStates, rscStates);
 		assert correct;
 		// does not hold. Old non-live removal has bugs, see 'removeNonLive-Bug05.ats' example
 //		correct &= ResultChecker.isSubset(rscStates,rsaStates);
 //		assert correct;
 		for (final STATE state : mResult.getStates()) {
-			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : reachalbeStatesCopy
+			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : reachableStatesCopy
 					.internalSuccessors(state)) {
 				correct &= mReach.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
-			for (final OutgoingCallTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.callSuccessors(state)) {
+			for (final OutgoingCallTransition<LETTER, STATE> outTrans : reachableStatesCopy.callSuccessors(state)) {
 				correct &= mReach.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
-			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.returnSuccessors(state)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : reachableStatesCopy.returnSuccessors(state)) {
 				correct &= mReach.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(),
 						outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mResult.internalSuccessors(state)) {
 				correct &=
-						reachalbeStatesCopy.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
+						reachableStatesCopy.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingCallTransition<LETTER, STATE> outTrans : mResult.callSuccessors(state)) {
-				correct &= reachalbeStatesCopy.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
+				correct &= reachableStatesCopy.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : mResult.returnSuccessors(state)) {
-				correct &= reachalbeStatesCopy.containsReturnTransition(
+				correct &= reachableStatesCopy.containsReturnTransition(
 						state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
-			final Set<STATE> rCSdownStates = reachalbeStatesCopy.getDownStates(state);
+			final Set<STATE> rCSdownStates = reachableStatesCopy.getDownStates(state);
 			final Set<STATE> rCAdownStates = mReach.getOnlyLiveStates().getDownStates(state);
 			correct &= ResultChecker.isSubset(rCAdownStates, rCSdownStates);
 			assert correct;
