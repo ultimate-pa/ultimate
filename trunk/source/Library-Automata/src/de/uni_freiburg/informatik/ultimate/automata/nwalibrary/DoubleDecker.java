@@ -79,7 +79,7 @@ public class DoubleDecker<STATE> {
 			return true;
 		}
 		if (obj == null) {
-			return this == null;
+			return false;
 		}
 		if (getClass() != obj.getClass()) {
 			return false;

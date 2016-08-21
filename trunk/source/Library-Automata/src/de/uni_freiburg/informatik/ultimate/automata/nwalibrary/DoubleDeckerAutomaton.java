@@ -45,6 +45,8 @@ public class DoubleDeckerAutomaton<LETTER, STATE>
 		extends NestedWordAutomaton<LETTER, STATE>
 		implements IDoubleDeckerAutomaton<LETTER, STATE> {
 		
+	private static final String UP2DOWN_NOT_SET = "up2down not set";
+	
 	private Map<STATE, Map<STATE, ReachFinal>> mUp2Down;
 	
 	/**
@@ -67,6 +69,7 @@ public class DoubleDeckerAutomaton<LETTER, STATE>
 			final Set<LETTER> returnAlphabet,
 			final StateFactory<STATE> stateFactory) {
 		super(services, internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
+		mUp2Down = null;
 	}
 	
 	/**
@@ -78,7 +81,11 @@ public class DoubleDeckerAutomaton<LETTER, STATE>
 	
 	@Override
 	public Set<STATE> getDownStates(final STATE upState) {
-		return mUp2Down.get(upState).keySet();
+		if (up2DownIsSet()) {
+			return mUp2Down.get(upState).keySet();
+		} else {
+			throw new AssertionError(UP2DOWN_NOT_SET);
+		}
 	}
 	
 	/**
@@ -86,18 +93,16 @@ public class DoubleDeckerAutomaton<LETTER, STATE>
 	 *            New map (up state -> down state).
 	 */
 	public void setUp2Down(final Map<STATE, Map<STATE, ReachFinal>> up2Down) {
-		if (mUp2Down == null) {
-			mUp2Down = up2Down;
-		} else {
+		if (up2DownIsSet()) {
 			throw new AssertionError("up2down already set");
+		} else {
+			mUp2Down = up2Down;
 		}
 	}
 	
 	@Override
 	public boolean isDoubleDecker(final STATE upState, final STATE downState) {
-		if (mUp2Down == null) {
-			throw new AssertionError("up2down not set");
-		} else {
+		if (up2DownIsSet()) {
 			/**
 			 * TODO Christian 2016-08-21: Should the "getStates().contains()" tests be made assertions for efficiency
 			 * reasons? In particular, this can be expensive for on-the-fly constructions.
@@ -110,6 +115,8 @@ public class DoubleDeckerAutomaton<LETTER, STATE>
 				return false;
 			}
 			return false;
+		} else {
+			throw new AssertionError(UP2DOWN_NOT_SET);
 		}
 	}
 }

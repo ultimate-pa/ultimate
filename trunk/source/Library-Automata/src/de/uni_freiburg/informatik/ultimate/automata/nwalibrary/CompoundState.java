@@ -62,7 +62,7 @@ public class CompoundState<STATE> {
 	@Override
 	public boolean equals(final Object obj) {
 		if (obj == null) {
-			return this == null;
+			return false;
 		}
 		if (getClass() != obj.getClass()) {
 			return false;
