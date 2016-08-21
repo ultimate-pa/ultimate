@@ -56,6 +56,7 @@ import org.eclipse.core.runtime.FileLocator;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
@@ -98,7 +99,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableDeclarationAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableExpressionAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.WhileStatementAST;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 /**
  * This enum represents the current flow of the program. It could have the values "NORMAL", "BREAK", "CONTINUE", and
@@ -657,7 +657,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 */
 	private final List<GenericResultAtElement<AtsASTNode>> mResultOfAssertStatements;
 	private final IUltimateServiceProvider mServices;
-	private final boolean mProvideBenchmarkResults = false;
+	private final boolean mProvideBenchmarkResults = !false;
 	
 	public TestFileInterpreter(final IUltimateServiceProvider services) {
 		assert services != null;
@@ -780,13 +780,6 @@ public class TestFileInterpreter implements IMessagePrinter {
 							"Interpretation of ats file failed", node);
 				}
 			}
-		}
-		if (mProvideBenchmarkResults) {
-			mLogger.info("reporting benchmark results");
-			final ICsvProviderProvider bench = null;
-			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-					new BenchmarkResult<Object>(Activator.PLUGIN_ID, "automata script interpreter benchmark results",
-							bench));
 		}
 		reportToLogger(LoggerSeverity.DEBUG, "Reporting results...");
 		reportResult(interpretationFinished, errorMessage);
@@ -1177,6 +1170,15 @@ public class TestFileInterpreter implements IMessagePrinter {
 			final IOperation<String, String> op = getAutomataOperation(oe, arguments);
 			if (op != null) {
 				try {
+					if (mProvideBenchmarkResults) {
+						mLogger.info("reporting benchmark results");
+						AutomataOperationStatistics statistics = op.getAutomataOperationStatistics();
+						if (statistics == null) {
+							statistics = new AutomataOperationStatistics();
+						}
+						final BenchmarkResult<?> br = new BenchmarkResult<>(Activator.PLUGIN_ID, "automata script interpreter benchmark results", statistics);
+						mServices.getResultService().reportResult(Activator.PLUGIN_ID, br);
+					}
 					assert op.checkResult(new StringFactory()) : "Result of operation " + op.operationName()
 							+ " is wrong (according to its checkResult method)";
 					result = op.getResult();
