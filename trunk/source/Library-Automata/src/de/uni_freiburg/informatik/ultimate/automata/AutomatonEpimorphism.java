@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class AutomatonEpimorphism<STATE> {
 	
-	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	
 	private final Map<STATE, STATE> mEpimorphism;
@@ -61,8 +60,7 @@ public class AutomatonEpimorphism<STATE> {
 	 *            Ultimate services
 	 */
 	public AutomatonEpimorphism(final AutomataLibraryServices services) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mEpimorphism = new HashMap<STATE, STATE>();
 	}
 	
@@ -85,50 +83,37 @@ public class AutomatonEpimorphism<STATE> {
 	 */
 	public static AutomatonEpimorphism<String> createFromAutomatonLabels(
 			final AutomataLibraryServices services,
-			
 			final INestedWordAutomaton<String, String> nwa1,
 			final INestedWordAutomaton<String, String> nwa2) {
-		final ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		final AutomatonEpimorphism<String> epimorphism = new AutomatonEpimorphism<String>(services);
 		
 		// traversing the states
 		for (final String state1 : nwa1.getStates()) {
 			final int indexOfUnderscore = state1.indexOf('_');
-			if (indexOfUnderscore != -1) {
-				
-				// check that '_' is not the last char in the string
-				if (indexOfUnderscore + 1 == state1.length()) {
-					logger.error(INVALID_STATE_NAME_MESSAGE + state1);
-				}
-				
-				// get the name of the epimorph state
-				final String epimorphState = state1.substring(indexOfUnderscore + 1);
-				
-				// check that '_' does not occur multiple times
-				if (epimorphState.indexOf('_') != -1) {
-					logger.error(INVALID_STATE_NAME_MESSAGE + state1);
-				}
-				
-				// search the state in a2
-				/**
-				 * TODO Christian 2016-08-20: This is nonsense: It is the slow version of a simple {@code contains()}
-				 * test.
-				 */
-				String state2 = null;
-				for (final String s : nwa2.getStates()) {
-					if (s.equals(epimorphState)) {
-						state2 = s;
-					}
-				}
-				
-				// if it is not found, error
-				if (state2 == null) {
-					logger.error("Missing epimorphism partner for: " + state1);
-				}
-				
-				// set the mapping from state1 to state2
-				epimorphism.mEpimorphism.put(state1, state2);
+			if (indexOfUnderscore == -1) {
+				continue;
 			}
+			
+			// check that '_' is not the last char in the string
+			if (indexOfUnderscore + 1 == state1.length()) {
+				throw new IllegalArgumentException(INVALID_STATE_NAME_MESSAGE + state1);
+			}
+			
+			// get the name of the epimorph state
+			final String state2 = state1.substring(indexOfUnderscore + 1);
+			
+			// check that '_' does not occur multiple times
+			if (state2.indexOf('_') != -1) {
+				throw new IllegalArgumentException(INVALID_STATE_NAME_MESSAGE + state1);
+			}
+			
+			// search the state in nwa2; if it is not found, error
+			if (!nwa2.getStates().contains(state2)) {
+				throw new IllegalArgumentException("Missing epimorphism partner for: " + state1);
+			}
+			
+			// set the mapping from state1 to state2
+			epimorphism.mEpimorphism.put(state1, state2);
 		}
 		
 		return epimorphism;
@@ -148,13 +133,13 @@ public class AutomatonEpimorphism<STATE> {
 	/**
 	 * Inserts a new mapping of two states.
 	 * 
-	 * @param from
+	 * @param source
 	 *            mapping from this state
-	 * @param to
+	 * @param target
 	 *            mapping to this state
 	 */
-	public void insert(final STATE from, final STATE to) {
-		mEpimorphism.put(from, to);
+	public void insert(final STATE source, final STATE target) {
+		mEpimorphism.put(source, target);
 	}
 	
 	/**

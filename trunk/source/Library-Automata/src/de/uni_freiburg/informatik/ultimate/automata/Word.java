@@ -35,7 +35,8 @@ import java.util.List;
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <LETTER> symbol type
+ * @param <LETTER>
+ *            symbol type
  */
 public class Word<LETTER> implements Iterable<LETTER> {
 	/**
@@ -108,13 +109,13 @@ public class Word<LETTER> implements Iterable<LETTER> {
 	
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append('[');
+		final StringBuilder builder = new StringBuilder();
+		builder.append('[');
 		for (int i = 0; i < length(); i++) {
-			sb.append(getSymbol(i));
+			builder.append(getSymbol(i));
 		}
-		sb.append(']');
-		return sb.toString();
+		builder.append(']');
+		return builder.toString();
 	}
 	
 	@Override

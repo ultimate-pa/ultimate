@@ -94,7 +94,9 @@ public abstract class GeneralOperation<LETTER, STATE>
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		mLogger.warn("No result check for " + operationName() + " available yet.");
+		if (mLogger.isWarnEnabled()) {
+			mLogger.warn("No result check for " + operationName() + " available yet.");
+		}
 		return true;
 	}
 }

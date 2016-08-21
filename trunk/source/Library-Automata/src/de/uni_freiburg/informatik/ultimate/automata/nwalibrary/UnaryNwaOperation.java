@@ -79,7 +79,9 @@ public abstract class UnaryNwaOperation<LETTER, STATE>
 	protected boolean checkLanguageEquivalence(
 			final StateFactory<STATE> stateFactory)
 					throws AutomataLibraryException {
-		mLogger.info("Start testing correctness of " + operationName());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Start testing correctness of " + operationName());
+		}
 		
 		// type-check and cast result to nested word automaton
 		if (!(getResult() instanceof INestedWordAutomatonSimple)) {
@@ -93,18 +95,21 @@ public abstract class UnaryNwaOperation<LETTER, STATE>
 		// check language equivalence via two inclusion checks
 		final String message;
 		boolean correct = true;
-		if (!new IsIncluded<LETTER, STATE>(mServices, stateFactory, mOperand, result).getResult()) {
+		if (new IsIncluded<LETTER, STATE>(mServices, stateFactory, mOperand, result).getResult()) {
+			if (new IsIncluded<LETTER, STATE>(mServices, stateFactory, result, mOperand).getResult()) {
+				message = null;
+			} else {
+				message = "The result recognizes less words than before.";
+				correct = false;
+			}
+		} else {
 			message = "The result recognizes more words than before.";
 			correct = false;
-			assert false;
-		} else if (!new IsIncluded<LETTER, STATE>(mServices, stateFactory, result, mOperand).getResult()) {
-			message = "The result recognizes less words than before.";
-			correct = false;
-		} else {
-			message = null;
 		}
 		
-		mLogger.info("Finished testing correctness of " + operationName());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of " + operationName());
+		}
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed", message, mOperand);
 		}

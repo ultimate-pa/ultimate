@@ -72,10 +72,10 @@ public class CompoundState<STATE> {
 	
 	@Override
 	public int hashCode() {
-		int hc = 0;
+		int hashCode = 0;
 		for (final STATE state : mStates) {
-			hc += HashUtils.hashJenkins(31, state);
+			hashCode += HashUtils.hashJenkins(31, state);
 		}
-		return hc;
+		return hashCode;
 	}
 }

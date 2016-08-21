@@ -119,56 +119,57 @@ public class DNFAsBitSetList {
 	/**
 	 * Helper method for {@link #rewriteWithNewStateList()}.
 	 */
-	private <STATE> BitSet rewriteBitSet(final BitSet bs, final ArrayList<STATE> oldStateList,
+	private <STATE> BitSet rewriteBitSet(final BitSet bitSet, final ArrayList<STATE> oldStateList,
 			final Map<STATE, Integer> newStateToIndex) {
-		final BitSet newBs = new BitSet();
-		int setBit = bs.nextSetBit(0);
+		final BitSet newBitSet = new BitSet();
+		int setBit = bitSet.nextSetBit(0);
 		while (setBit != -1) {
-			newBs.set(newStateToIndex.get(oldStateList.get(setBit)));
-			setBit = bs.nextSetBit(setBit + 1);
+			newBitSet.set(newStateToIndex.get(oldStateList.get(setBit)));
+			setBit = bitSet.nextSetBit(setBit + 1);
 		}
-		return newBs;
+		return newBitSet;
 	}
 	
 	/**
 	 * Pretty printer to a provided {@link StringBuilder}.
 	 * 
-	 * @param sb
+	 * @param builder
 	 *            string builder
 	 * @param stateList
 	 *            list of states
 	 * @param <STATE>
 	 *            state type
 	 */
-	public <STATE> void prettyPrintDnf(final StringBuilder sb, final List<STATE> stateList) {
-		if (sb.length() == 0) {
-			sb.append(" \\/ (");
+	public <STATE> void prettyPrintDnf(final StringBuilder builder, final List<STATE> stateList) {
+		if (builder.length() == 0) {
+			builder.append(" \\/ (");
 		}
 		
 		String comma = "";
-		final Iterator<STATE> it = stateList.iterator();
+		final Iterator<STATE> iterator = stateList.iterator();
 		for (int i = 0; i < stateList.size(); i++) {
-			final STATE state = it.next();
+			final STATE state = iterator.next();
 			if (!mAlpha.isEmpty() && i == 0) {
-				sb.append(" /\\ {");
+				builder.append(" /\\ {");
 			}
 			final boolean isStateVariablePresent = mAlpha.get(i);
 			final boolean isStateVariablePositive = mBeta.get(i);
 			if (isStateVariablePresent) {
 				if (!isStateVariablePositive) {
-					sb.append(" not");
+					builder.append(" not");
 				}
-				sb.append(comma + state);
+				builder.append(comma);
+				builder.append(state);
 				comma = ", ";
 			}
 			if (!mAlpha.isEmpty() && i == stateList.size() - 1) {
-				sb.append("}, ");
+				builder.append("}, ");
 			}
 		}
-		if (mNext != null) {
-			mNext.prettyPrintDnf(sb, stateList);
+		if (mNext == null) {
+			builder.append(")\n");
 		} else {
-			sb.append(")\n");
+			mNext.prettyPrintDnf(builder, stateList);
 		}
 	}
 	
@@ -179,13 +180,13 @@ public class DNFAsBitSetList {
 	 * The idea (Salomaa 2010) is as follows:<br>
 	 * <tt>f(u) = 1 <-> (alpha & u) xor beta == 0</tt>
 	 * 
-	 * @param u
+	 * @param argumentU
 	 *            bit set to apply to
 	 * @return result of function application
 	 */
-	public boolean applyTo(final BitSet u) {
+	public boolean applyTo(final BitSet argumentU) {
 		final BitSet alphaAndUxorBeta = (BitSet) mAlpha.clone();
-		alphaAndUxorBeta.and(u);
+		alphaAndUxorBeta.and(argumentU);
 		alphaAndUxorBeta.xor(mBeta);
 		
 		if (alphaAndUxorBeta.isEmpty()) {
@@ -193,7 +194,7 @@ public class DNFAsBitSetList {
 		} else if (mNext == null) {
 			return false;
 		} else {
-			return mNext.applyTo(u);
+			return mNext.applyTo(argumentU);
 		}
 	}
 }

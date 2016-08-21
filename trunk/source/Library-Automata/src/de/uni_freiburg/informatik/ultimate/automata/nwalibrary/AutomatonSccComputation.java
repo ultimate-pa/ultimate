@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * @param <STATE>
  *            state type
  */
+@SuppressWarnings("squid:CycleBetweenPackages")
 public class AutomatonSccComputation<LETTER, STATE> {
 	
 	// result
@@ -78,6 +79,7 @@ public class AutomatonSccComputation<LETTER, STATE> {
 	 * @param startStates
 	 *            states at which the computation of SSCs starts
 	 */
+	@SuppressWarnings("fb-contrib:OCP_OVERLY_CONCRETE_PARAMETER")
 	public AutomatonSccComputation(
 			final AutomataLibraryServices services,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> operand,
@@ -120,17 +122,17 @@ public class AutomatonSccComputation<LETTER, STATE> {
 		}
 		
 		private <E extends IOutgoingTransitionlet<LETTER, STATE>> Iterator<STATE>
-				getStateContainerIterator(final Iterator<E> it) {
+				getStateContainerIterator(final Iterator<E> iterator) {
 			return new Iterator<STATE>() {
 				
 				@Override
 				public boolean hasNext() {
-					return it.hasNext();
+					return iterator.hasNext();
 				}
 				
 				@Override
 				public STATE next() {
-					return it.next().getSucc();
+					return iterator.next().getSucc();
 				}
 			};
 		}

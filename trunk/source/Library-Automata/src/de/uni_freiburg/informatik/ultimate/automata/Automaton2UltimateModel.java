@@ -82,21 +82,22 @@ public final class Automaton2UltimateModel {
 			return transformer.getUltimateModelOfPetriNet(net);
 			
 		} else if (automaton instanceof BranchingProcess) {
-			final BranchingProcess<LETTER, STATE> bp = (BranchingProcess<LETTER, STATE>) automaton;
+			final BranchingProcess<LETTER, STATE> branchingProcess = (BranchingProcess<LETTER, STATE>) automaton;
 			final BranchingProcessToUltimateModel<LETTER, STATE> transformer =
 					new BranchingProcessToUltimateModel<LETTER, STATE>();
-			return transformer.getUltimateModelOfBranchingProcess(bp);
+			return transformer.getUltimateModelOfBranchingProcess(branchingProcess);
 			
 		} else if (automaton instanceof AlternatingAutomaton) {
-			final AlternatingAutomaton<LETTER, STATE> aa = (AlternatingAutomaton<LETTER, STATE>) automaton;
+			final AlternatingAutomaton<LETTER, STATE> alternatingAutomaton =
+					(AlternatingAutomaton<LETTER, STATE>) automaton;
 			final AAToUltimateModel<LETTER, STATE> transformer = new AAToUltimateModel<LETTER, STATE>();
-			return transformer.getUltimateModelOfAA(aa);
+			return transformer.getUltimateModelOfAA(alternatingAutomaton);
 			
 		} else if (automaton instanceof ITreeAutomaton) {
-			final ITreeAutomaton<LETTER, STATE> ta = (ITreeAutomaton<LETTER, STATE>) automaton;
+			final ITreeAutomaton<LETTER, STATE> treeAutomaton = (ITreeAutomaton<LETTER, STATE>) automaton;
 			final TreeAutomatonToUltimateModel<LETTER, STATE> transformer =
 					new TreeAutomatonToUltimateModel<LETTER, STATE>();
-			return transformer.getUltimateModelOfAA(ta);
+			return transformer.getUltimateModelOfAA(treeAutomaton);
 			
 		} else {
 			throw new IllegalArgumentException(
