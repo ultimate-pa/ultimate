@@ -79,7 +79,7 @@ public class NestedwordAST extends AtsASTNode {
 		mWord = new ArrayList<String>();
 		mNestingRelation = new ArrayList<Integer>();
 		msizeOfWordSymbols = 0;
-		setType(de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord.class);
+		setType(de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord.class);
 	}
 	
 	public void addSymbol(CallSymbolAST c) {

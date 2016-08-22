@@ -31,7 +31,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;

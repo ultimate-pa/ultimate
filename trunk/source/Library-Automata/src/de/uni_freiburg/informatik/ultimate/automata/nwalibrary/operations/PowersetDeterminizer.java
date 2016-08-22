@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.oldapi.DeterminizedState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;

@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Standard implementation of the
- * #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton}
+ * #{@link de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton}
  * interface.
  * 
  * @author heizmann@informatik.uni-freiburg.de

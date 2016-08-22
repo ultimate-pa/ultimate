@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
 
 /**
  * General minimization interface.

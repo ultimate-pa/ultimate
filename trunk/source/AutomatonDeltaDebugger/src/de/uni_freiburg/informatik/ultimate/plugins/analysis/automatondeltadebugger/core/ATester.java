@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 
 /**
  * Executes the respective method which should be debugged and compares to the designated error.<br>

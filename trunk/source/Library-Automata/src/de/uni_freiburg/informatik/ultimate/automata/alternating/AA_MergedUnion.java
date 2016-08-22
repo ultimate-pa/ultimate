@@ -33,7 +33,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
 
 public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	

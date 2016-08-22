@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.SortedMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;

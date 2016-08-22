@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**

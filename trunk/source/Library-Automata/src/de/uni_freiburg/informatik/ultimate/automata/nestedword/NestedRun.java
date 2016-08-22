@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import java.util.ArrayList;
 
@@ -97,28 +97,28 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 	}
 
 	/**
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord#isCallPosition(int)
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord#isCallPosition(int)
 	 */
 	public boolean isCallPosition(final int i) {
 		return mNestedWord.isCallPosition(i);
 	}
 
 	/**
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord#isInternalPosition(int)
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord#isInternalPosition(int)
 	 */
 	public boolean isInternalPosition(final int i) {
 		return mNestedWord.isInternalPosition(i);
 	}
 
 	/**
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord#isReturnPosition(int)
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord#isReturnPosition(int)
 	 */
 	public boolean isReturnPosition(final int i) {
 		return mNestedWord.isReturnPosition(i);
 	}
 
 	/**
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord#isPendingCall(int)
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord#isPendingCall(int)
 	 */
 	public boolean isPendingCall(final int i) {
 		return mNestedWord.isPendingCall(i);

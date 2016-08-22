@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchi;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 
 /**
  * Infinite run of a Büchi nested word automaton for a nested word of the

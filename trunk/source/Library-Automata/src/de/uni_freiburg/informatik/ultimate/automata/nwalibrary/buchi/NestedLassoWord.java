@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchi;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 
 public class NestedLassoWord<LETTER> {
 	private final NestedWord<LETTER> mStem;

@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.oldap
 import java.text.MessageFormat;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 
 public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 	

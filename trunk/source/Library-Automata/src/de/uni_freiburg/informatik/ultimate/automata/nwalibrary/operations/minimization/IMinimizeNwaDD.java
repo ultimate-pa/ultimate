@@ -28,11 +28,11 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 
 /**
  * General minimization interface which returns an
- * #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton}
+ * #{@link de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton}
  * result.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)

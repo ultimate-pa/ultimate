@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.automata.tree.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 

@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import java.util.Collection;
 import java.util.Set;
@@ -64,7 +64,7 @@ public interface INestedWordAutomaton<LETTER, STATE>
 	 * @return The set of states of this automaton. <b>Use with caution!</b>
 	 *     Some implementations (e.g., automaton which represents result of
 	 *     a complementation) construct their set of states on the fly. Use the
-	 *     #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple#isFinal(Object)}
+	 *     #{@link de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple#isFinal(Object)}
 	 *     method to check if a specific state is final.
 	 */
 	Collection<STATE> getFinalStates();

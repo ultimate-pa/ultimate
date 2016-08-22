@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 
 import java.util.Iterator;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
 
 /**
  * Interface for a general block data structure inside a partition.

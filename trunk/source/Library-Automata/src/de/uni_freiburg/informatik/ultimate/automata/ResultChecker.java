@@ -28,12 +28,12 @@ package de.uni_freiburg.informatik.ultimate.automata;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchi.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchi.BuchiIsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchi.NestedLassoRun;
@@ -342,7 +342,7 @@ public final class ResultChecker {
 	
 	/**
 	 * @deprecated unused legacy code; operations should support
-	 *             #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple}
+	 *             #{@link de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple}
 	 *             directly
 	 */
 	@Deprecated

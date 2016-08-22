@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 /**
  * Part of a {@link NestedWordAutomaton}'s configuration. <tt>up</tt> is the state in which the automaton is.

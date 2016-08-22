@@ -27,13 +27,13 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
 
 /**
  * Minimization method which returns an
- * #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton}
+ * #{@link de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton}
  * as result.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
@@ -64,7 +64,7 @@ public abstract class AbstractMinimizeNwaDd<LETTER, STATE>
 	
 	/**
 	 * @return result as
-	 *     #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton}
+	 *     #{@link de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton}
 	 */
 	@Override
 	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
