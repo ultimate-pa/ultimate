@@ -131,6 +131,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
  */
 public class BasicCegarLoop extends AbstractCegarLoop {
 
+	private static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
 	private static final boolean DIFFERENCE_INSTEAD_OF_INTERSECTION = true;
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	protected static final boolean TRACE_HISTOGRAMM_BAILOUT = false;
@@ -810,7 +811,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				newAbstractionRaw = new MinimizeNwaCombinator<CodeBlock, IPredicate>(
 						services, predicateFactoryRefinement,
 						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction, partition,
-						mComputeHoareAnnotation, 10, mIteration);
+						mComputeHoareAnnotation, MINIMIZE_EVERY_KTH_ITERATION, mIteration);
 				// it can happen that no minimization took place
 				wasMinimized = (newAbstractionRaw == oldAbstraction);
 				break;
