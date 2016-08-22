@@ -4,12 +4,23 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import org.eclipse.osgi.internal.messages.Msg;
+
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -19,40 +30,41 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 
 public class ParallelDfgGeneratorObserver extends BaseObserver {
 
-	public ParallelDfgGeneratorObserver(ILogger logger) {
+	final private ILogger mLogger;
+	final private IUltimateServiceProvider mServices;
+
+	public ParallelDfgGeneratorObserver(ILogger logger, IUltimateServiceProvider services) {
 		mLogger = logger;
-//		logger.debug(msg);
+		mServices = services;
 	}
 
-	private ILogger mLogger;
 
 	@Override
 	public boolean process(IElement root) throws Throwable {
 		
 		// rootNode is the dummy note with edges leading to every procedure entry point
-		RootNode r = (RootNode) root;
+		RootNode rootNode = (RootNode) root;
 		// n = number of threads. Carefull with init procedure
-		int n = r.getOutgoingEdges().size();
+		int n = rootNode.getOutgoingEdges().size();
 		mLogger.debug("Number of Threads: " + (n-1));
 		
+		IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, ProgramPoint> dataflowAnalysisResult = 
+				obtainDataflowAnalysisResult(rootNode);
 		
-		// explanations to get Reaching Definition at the trg location of a statement
-		RCFGEdge out1 = r.getOutgoingEdges().get(0);
-		RCFGNode node = out1.getTarget();
-		RCFGEdge edge = node.getOutgoingEdges().get(0);
-		// typically our nodes are also ProgramPoints (roughly: locations)
-		ProgramPoint pp = (ProgramPoint) node;
-		// typically our nodes are also CodeBlocks (roughly: statements)
-		CodeBlock cb = (CodeBlock) edge;
-		// get an annotation through edge->payload->annotations[keyword]
-		IAnnotations annot = edge.getPayload().getAnnotations().get("ReachingDefinition Default");
 		
+		// the result aiRes can be queried for each state as follows
+		// (replace null by a ProgramPoint)
+		DataflowState dfs = dataflowAnalysisResult.getLoc2State().get(null);
+		// query the state at each ProgramPoint for the dataflow results as follows 
+		// (replace null by a real variable)
+		Set<ProgramPoint> nwls = dfs.getNowriteLocations((IProgramVar) null);
+		Set<CodeBlock> rd = dfs.getReachingDefinitions((IProgramVar) null);
 		
 		
 		
 		// look for asserts in the RCFG
 		List<RCFGNode> nodes = new ArrayList<RCFGNode>();
-		for (RCFGEdge e: r.getOutgoingEdges()){
+		for (RCFGEdge e: rootNode.getOutgoingEdges()){
 			List<RCFGNode> a = nodesInGraph(e.getTarget());
 			nodes.addAll(a);
 		}
@@ -88,6 +100,17 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		
 		
 		return false;
+	}
+
+
+	private IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, ProgramPoint> obtainDataflowAnalysisResult(RootNode r) {
+		List<CodeBlock> edges = new ArrayList<>();
+		r.getRootAnnot().getEntryNodes();
+		for (Entry<String, ProgramPoint> en : r.getRootAnnot().getEntryNodes().entrySet())
+			edges.add((CodeBlock) en.getValue().getOutgoingEdges().get(0));
+		
+		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
+		return AbstractInterpreter.runFuture(r, edges, timer, mServices, false);
 	}
 	
 	
