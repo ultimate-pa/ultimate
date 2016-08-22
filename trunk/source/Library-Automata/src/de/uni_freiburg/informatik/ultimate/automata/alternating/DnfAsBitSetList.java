@@ -40,10 +40,10 @@ import java.util.Map;
  * 
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
-public class DNFAsBitSetList {
+public class DnfAsBitSetList {
 	private BitSet mAlpha;
 	private final BitSet mBeta;
-	private DNFAsBitSetList mNext;
+	private DnfAsBitSetList mNext;
 	
 	/**
 	 * Standard constructor.
@@ -55,7 +55,7 @@ public class DNFAsBitSetList {
 	 * @param next
 	 *            next conjunction (next-pointer in the list)
 	 */
-	public DNFAsBitSetList(final BitSet alpha, final BitSet beta, final DNFAsBitSetList next) {
+	public DnfAsBitSetList(final BitSet alpha, final BitSet beta, final DnfAsBitSetList next) {
 		mAlpha = alpha;
 		mBeta = beta;
 		mNext = next;
@@ -67,16 +67,16 @@ public class DNFAsBitSetList {
 	 * @param obj
 	 *            object to copy
 	 */
-	public DNFAsBitSetList(final DNFAsBitSetList obj) {
+	public DnfAsBitSetList(final DnfAsBitSetList obj) {
 		this((BitSet) obj.mAlpha.clone(), (BitSet) obj.mBeta.clone(), null);
 		/*
 		 * TODO Christian 2016-08-20: I fixed this, the pointer of the object should be used, this.mNext was set to
 		 *      'null'. Remove this comment and the following commented line after testing/agreeing.
 		 */
 		// DNFAsBitSetList nextEl = mNext;
-		DNFAsBitSetList nextEl = obj.mNext;
+		DnfAsBitSetList nextEl = obj.mNext;
 		while (nextEl != null) {
-			insert(new DNFAsBitSetList((BitSet) nextEl.mAlpha.clone(), (BitSet) nextEl.mBeta.clone(), null));
+			insert(new DnfAsBitSetList((BitSet) nextEl.mAlpha.clone(), (BitSet) nextEl.mBeta.clone(), null));
 			nextEl = nextEl.mNext;
 		}
 	}
@@ -85,7 +85,7 @@ public class DNFAsBitSetList {
 	 * @param elem
 	 *            Element to insert.
 	 */
-	public void insert(final DNFAsBitSetList elem) {
+	public final void insert(final DnfAsBitSetList elem) {
 		if (mNext == null) {
 			mNext = elem;
 		} else {
@@ -105,10 +105,10 @@ public class DNFAsBitSetList {
 	 *            state type
 	 * @return new DNF
 	 */
-	public <STATE> DNFAsBitSetList rewriteWithNewStateList(
+	public <STATE> DnfAsBitSetList rewriteWithNewStateList(
 			final ArrayList<STATE> oldStateList,
 			final Map<STATE, Integer> newStateToIndex) {
-		DNFAsBitSetList current = new DNFAsBitSetList(this);
+		DnfAsBitSetList current = new DnfAsBitSetList(this);
 		do {
 			current.mAlpha = rewriteBitSet(mAlpha, oldStateList, newStateToIndex);
 			current = current.mNext;

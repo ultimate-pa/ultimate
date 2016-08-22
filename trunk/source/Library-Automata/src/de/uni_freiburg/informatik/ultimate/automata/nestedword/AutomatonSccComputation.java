@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * @param <STATE>
  *            state type
  */
-@SuppressWarnings("squid:CycleBetweenPackages")
 public class AutomatonSccComputation<LETTER, STATE> {
 	
 	// result

@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DoubleDeckerVisitor.ReachFinal;
 
 /**
- * Basic implementation of the {@linkIDoubleDeckerAutomaton} interface based on the {@link NestedWordAutomaton}.
+ * Basic implementation of the {@link IDoubleDeckerAutomaton} interface based on the {@link NestedWordAutomaton}.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
