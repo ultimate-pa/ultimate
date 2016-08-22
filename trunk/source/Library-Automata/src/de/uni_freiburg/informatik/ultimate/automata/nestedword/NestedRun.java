@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
@@ -30,106 +30,158 @@ import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 
+/**
+ * A run over a nested word.
+ * 
+ * @see NestedWord
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
 public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
-
+	
 	private NestedWord<LETTER> mNestedWord;
 	private ArrayList<STATE> mStateSequence;
-
+	
+	private static final char BLANK = ' ';
+	
 	/**
-	 * @param nw nested word
-	 * @param stateSequence sequence of states
+	 * Constructor with a nested word and a sequence of states.
+	 * 
+	 * @param nestedWord
+	 *            nested word
+	 * @param stateSequence
+	 *            sequence of states
 	 */
-	public NestedRun(final NestedWord<LETTER> nw,
-			final ArrayList<STATE> stateSequence) {
-		if (nw.length() + 1 == stateSequence.size()) {
-			this.mNestedWord = nw;
-			this.mStateSequence = stateSequence;
+	public NestedRun(final NestedWord<LETTER> nestedWord, final ArrayList<STATE> stateSequence) {
+		if (nestedWord.length() + 1 == stateSequence.size()) {
+			mNestedWord = nestedWord;
+			mStateSequence = stateSequence;
 		} else {
 			throw new IllegalArgumentException(
-					"In a run the length of the" + " sequence of states is length of the word plus 1.");
+					"In a run the length of the sequence of states is the length of the word plus 1.");
 		}
 	}
-
+	
 	/**
 	 * Constructor for a run of length 1.
+	 * 
+	 * @param state
+	 *            the only state
 	 */
 	public NestedRun(final STATE state) {
-		mStateSequence = new ArrayList<STATE>(1);
-		mStateSequence.add(state);
 		@SuppressWarnings("unchecked")
 		final LETTER[] word = (LETTER[]) new Object[] {};
 		final int[] nestingRelation = {};
 		mNestedWord = new NestedWord<LETTER>(word, nestingRelation);
+		
+		mStateSequence = new ArrayList<STATE>(1);
+		mStateSequence.add(state);
 	}
-
+	
 	/**
 	 * Constructor for a run of length 2.
+	 * 
+	 * @param state0
+	 *            first state
+	 * @param symbol
+	 *            symbol
+	 * @param position
+	 *            position in the nested word
+	 * @param state1
+	 *            second state
 	 */
-	public NestedRun(final STATE q0, final LETTER symbol, final int position, final STATE q1) {
+	public NestedRun(final STATE state0, final LETTER symbol, final int position, final STATE state1) {
 		if (position != NestedWord.INTERNAL_POSITION && position != NestedWord.MINUS_INFINITY
 				&& position != NestedWord.PLUS_INFINITY) {
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException("Wrong position in the nested word.");
 		}
 		@SuppressWarnings("unchecked")
 		final LETTER[] word = (LETTER[]) new Object[] { symbol };
 		final int[] nestingRelation = { position };
 		mNestedWord = new NestedWord<LETTER>(word, nestingRelation);
+		
 		mStateSequence = new ArrayList<STATE>(2);
-		mStateSequence.add(q0);
-		mStateSequence.add(q1);
+		mStateSequence.add(state0);
+		mStateSequence.add(state1);
 	}
-
+	
 	@Override
 	public NestedWord<LETTER> getWord() {
-		return this.mNestedWord;
+		return mNestedWord;
 	}
-
+	
 	public ArrayList<STATE> getStateSequence() {
-		return this.mStateSequence;
+		return mStateSequence;
 	}
-
+	
 	/**
-	 * Length of this runs state sequence.
+	 * @return Length of this run's state sequence.
 	 */
 	@Override
 	public int getLength() {
-		return this.mStateSequence.size();
+		return mStateSequence.size();
 	}
-
+	
 	/**
+	 * @param position
+	 *            The position.
+	 * @return true iff the position is a call position
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord#isCallPosition(int)
+	 *      NestedWord.isCallPosition(int)
 	 */
-	public boolean isCallPosition(final int i) {
-		return mNestedWord.isCallPosition(i);
+	public boolean isCallPosition(final int position) {
+		return mNestedWord.isCallPosition(position);
 	}
-
+	
 	/**
+	 * @param position
+	 *            The position.
+	 * @return true iff the position is an internal position
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord#isInternalPosition(int)
+	 *      NestedWord.isInternalPosition(int)
 	 */
-	public boolean isInternalPosition(final int i) {
-		return mNestedWord.isInternalPosition(i);
+	public boolean isInternalPosition(final int position) {
+		return mNestedWord.isInternalPosition(position);
 	}
-
+	
 	/**
+	 * @param position
+	 *            The position.
+	 * @return true iff the position is a return position
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord#isReturnPosition(int)
+	 *      NestedWord.isReturnPosition(int)
 	 */
-	public boolean isReturnPosition(final int i) {
-		return mNestedWord.isReturnPosition(i);
+	public boolean isReturnPosition(final int position) {
+		return mNestedWord.isReturnPosition(position);
 	}
-
+	
 	/**
+	 * @param position
+	 *            The position.
+	 * @return true iff the position is a pending return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord#isPendingCall(int)
+	 *      NestedWord.isPendingCall(int)
 	 */
-	public boolean isPendingCall(final int i) {
-		return mNestedWord.isPendingCall(i);
+	public boolean isPendingCall(final int position) {
+		return mNestedWord.isPendingCall(position);
 	}
-
+	
+	/**
+	 * Concatenate another nested run.
+	 * 
+	 * @param run
+	 *            another nested run
+	 * @return new nested run being the concatenation
+	 */
 	public NestedRun<LETTER, STATE> concatenate(final NestedRun<LETTER, STATE> run) {
 		final STATE lastStateOfThis = mStateSequence.get(mStateSequence.size() - 1);
 		final STATE firstStateOfRun = run.mStateSequence.get(0);
-
+		
 		if (lastStateOfThis.equals(firstStateOfRun)) {
-
+			
 			final NestedWord<LETTER> concatNestedWord = mNestedWord.concatenate(run.getWord());
 			final ArrayList<STATE> concatStateSeq = new ArrayList<STATE>(mStateSequence);
 			for (int i = 1; i < run.getStateSequence().size(); i++) {
@@ -142,31 +194,42 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 					+ " sequence is the same state as the last element of the" + " second runs statement sequence.");
 		}
 	}
-
-	public STATE getStateAtPosition(final int i) {
-		return mStateSequence.get(i);
+	
+	/**
+	 * @param position Position.
+	 * @return the state at the given position in the run
+	 */
+	public STATE getStateAtPosition(final int position) {
+		return mStateSequence.get(position);
 	}
-
+	
 	@Override
-	public LETTER getSymbol(final int i) {
-		return mNestedWord.getSymbolAt(i);
+	public LETTER getSymbol(final int position) {
+		return mNestedWord.getSymbolAt(position);
 	}
-
+	
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
+		final StringBuilder builder = new StringBuilder();
+		// @formatter:off
 		for (int i = 0; i < mNestedWord.length(); i++) {
-			sb.append(getStateAtPosition(i) + " ");
+			builder.append(getStateAtPosition(i))
+					.append(BLANK);
 			if (mNestedWord.isInternalPosition(i)) {
-				sb.append(mNestedWord.getSymbolAt(i) + " ");
+				builder.append(mNestedWord.getSymbolAt(i))
+						.append(BLANK);
 			} else if (mNestedWord.isCallPosition(i)) {
-				sb.append(mNestedWord.getSymbolAt(i) + "< ");
+				builder.append(mNestedWord.getSymbolAt(i))
+						.append("< ");
 			} else if (mNestedWord.isReturnPosition(i)) {
-				sb.append(">" + mNestedWord.getSymbolAt(i) + " ");
+				builder.append('>')
+						.append(mNestedWord.getSymbolAt(i))
+						.append(BLANK);
 			}
 		}
-		sb.append(getStateAtPosition(mStateSequence.size() - 1) + " ");
-		return sb.toString();
+		builder.append(getStateAtPosition(mStateSequence.size() - 1))
+				.append(BLANK);
+		// @formatter:on
+		return builder.toString();
 	}
-
 }
