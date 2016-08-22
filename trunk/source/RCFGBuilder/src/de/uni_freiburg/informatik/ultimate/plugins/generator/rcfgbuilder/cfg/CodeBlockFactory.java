@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE RCFGBuilder plug-in.
- * 
+ *
  * The ULTIMATE RCFGBuilder plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE RCFGBuilder plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE RCFGBuilder plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE RCFGBuilder plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
@@ -43,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 /**
  * Factory for the construction of CodeBlocks. Every CodeBlock has to be constructed via this factory, because every
  * CodeBlock need a unique serial number. Every control flow graph has to provide one CodeBlockFactory
- * 
+ *
  * @author Matthias Heizmann
  *
  */
@@ -53,9 +54,6 @@ public class CodeBlockFactory implements IStorable {
 	private final ILogger mLogger;
 	private final ManagedScript mMgdScript;
 	private final ModifiableGlobalVariableManager mMgvManager;
-
-	public final static String s_CodeBlockFactoryKeyInToolchainStorage = "CodeBlockFactory";
-
 	private int mSerialNumberCounter = 0;
 
 	public CodeBlockFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
@@ -72,9 +70,10 @@ public class CodeBlockFactory implements IStorable {
 	}
 
 	public InterproceduralSequentialComposition constuctInterproceduralSequentialComposition(final ProgramPoint source,
-			final ProgramPoint target, final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks,final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
-		return new InterproceduralSequentialComposition(mSerialNumberCounter++, source, target, mMgdScript,
-				mMgvManager, simplify, extPqe, codeBlocks, mLogger, mServices, xnfConversionTechnique, simplificationTechnique);
+			final ProgramPoint target, final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks,
+			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
+		return new InterproceduralSequentialComposition(mSerialNumberCounter++, source, target, mMgdScript, mMgvManager,
+				simplify, extPqe, codeBlocks, mLogger, mServices, xnfConversionTechnique, simplificationTechnique);
 	}
 
 	public GotoEdge constructGotoEdge(final ProgramPoint source, final ProgramPoint target) {
@@ -82,8 +81,10 @@ public class CodeBlockFactory implements IStorable {
 	}
 
 	public ParallelComposition constructParallelComposition(final ProgramPoint source, final ProgramPoint target,
-			final List<CodeBlock> codeBlocks,final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
-		return new ParallelComposition(mSerialNumberCounter++, source, target, mMgdScript, mServices, codeBlocks, xnfConversionTechnique);
+			final List<CodeBlock> codeBlocks, final XnfConversionTechnique xnfConversionTechnique,
+			final SimplicationTechnique simplificationTechnique) {
+		return new ParallelComposition(mSerialNumberCounter++, source, target, mMgdScript, mServices, codeBlocks,
+				xnfConversionTechnique);
 	}
 
 	public Return constructReturn(final ProgramPoint source, final ProgramPoint target, final Call correspondingCall) {
@@ -91,22 +92,24 @@ public class CodeBlockFactory implements IStorable {
 	}
 
 	public SequentialComposition constructSequentialComposition(final ProgramPoint source, final ProgramPoint target,
-			final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks,final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
+			final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks,
+			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
 		return new SequentialComposition(mSerialNumberCounter++, source, target, mMgdScript, mMgvManager, simplify,
 				extPqe, mServices, codeBlocks, xnfConversionTechnique, simplificationTechnique);
 	}
 
-	public StatementSequence constructStatementSequence(final ProgramPoint source, final ProgramPoint target, final Statement st) {
+	public StatementSequence constructStatementSequence(final ProgramPoint source, final ProgramPoint target,
+			final Statement st) {
 		return new StatementSequence(mSerialNumberCounter++, source, target, st, mLogger);
 	}
 
-	public StatementSequence constructStatementSequence(final ProgramPoint source, final ProgramPoint target, final Statement st,
-			final Origin origin) {
+	public StatementSequence constructStatementSequence(final ProgramPoint source, final ProgramPoint target,
+			final Statement st, final Origin origin) {
 		return new StatementSequence(mSerialNumberCounter++, source, target, st, origin, mLogger);
 	}
 
-	public StatementSequence constructStatementSequence(final ProgramPoint source, final ProgramPoint target, final List<Statement> stmts,
-			final Origin origin) {
+	public StatementSequence constructStatementSequence(final ProgramPoint source, final ProgramPoint target,
+			final List<Statement> stmts, final Origin origin) {
 		return new StatementSequence(mSerialNumberCounter++, source, target, stmts, origin, mLogger);
 	}
 
@@ -147,6 +150,14 @@ public class CodeBlockFactory implements IStorable {
 	@Override
 	public void destroy() {
 		// nothing to destroy
+	}
+
+	public static CodeBlockFactory getFactory(final IToolchainStorage storage) {
+		return (CodeBlockFactory) storage.getStorable(CodeBlockFactory.class.getName());
+	}
+
+	public void storeFactory(final IToolchainStorage storage) {
+		storage.putStorable(CodeBlockFactory.class.getName(), this);
 	}
 
 }
