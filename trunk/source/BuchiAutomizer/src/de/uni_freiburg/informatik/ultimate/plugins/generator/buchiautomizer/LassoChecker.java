@@ -805,13 +805,13 @@ public class LassoChecker {
 
 		TerminationArgument firstTerminationArgument = null;
 		for (final RankingTemplate rft : rankingFunctionTemplates) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				throw new ToolchainCanceledException(this.getClass(), generateRunningTaskInfo(stemTF, loopTF, withStem, rft));
-			}
 			TerminationArgument termArg;
 			try {
 				final TerminationAnalysisSettings settings = constructTASettings();
 				termArg = la.tryTemplate(rft, settings);
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
+					throw new ToolchainCanceledException(this.getClass(), generateRunningTaskInfo(stemTF, loopTF, withStem, rft));
+				}
 				final List<TerminationAnalysisBenchmark> benchs = la.getTerminationAnalysisBenchmarks();
 				mTerminationAnalysisBenchmarks.addAll(benchs);
 				if (mTemplateBenchmarkMode) {
