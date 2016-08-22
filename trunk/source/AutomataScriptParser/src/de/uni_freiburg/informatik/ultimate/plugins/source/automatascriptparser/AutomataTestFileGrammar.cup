@@ -5,8 +5,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.*;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AutomataScriptLocation; 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
@@ -382,9 +382,9 @@ type	::=     INT
         |       STRING
                 {: RESULT = String.class; :}
         |       NESTED_WORD
-        		{: RESULT = de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord.class; :}
+        		{: RESULT = de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord.class; :}
         |       NESTED_LASSO_WORD
-        		{: RESULT = de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord.class; :}
+        		{: RESULT = de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord.class; :}
         |       NESTEDWORD_AUTOMATA
                 {: RESULT = INestedWordAutomaton.class; :}
         |       PETRINET_AUTOMATA         
