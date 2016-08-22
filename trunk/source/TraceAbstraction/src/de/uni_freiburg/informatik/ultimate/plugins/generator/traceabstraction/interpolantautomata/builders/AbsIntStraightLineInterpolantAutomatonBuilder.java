@@ -93,7 +93,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 		for (int i = 0; i < wordlength; i++) {
 			final CodeBlock symbol = word.getSymbol(i);
 
-			final IAbstractState<?, ?, ?> nextState = aiResult.getLoc2State().get(symbol.getTarget());
+			final IAbstractState<?, ?, ?> nextState = aiResult.getLoc2SingleStates().get(symbol.getTarget());
 			final IPredicate target;
 
 			if (nextState == null) {

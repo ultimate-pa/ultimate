@@ -159,11 +159,13 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	@Override
-	public Map<LOCATION, STATE> getLoc2State(final CodeBlock initialTransition) {
+	public Map<LOCATION, Deque<STATE>> getLoc2States(final CodeBlock initialTransition) {
+		return getStatesOfAllChildren(initialTransition);
+	}
+	
+	@Override
+	public Map<LOCATION, STATE> getLoc2SingleStates(final CodeBlock initialTransition) {
 		final Map<LOCATION, StateDecorator> states = getMergedStatesOfAllChildren(initialTransition);
-		// TODO: Maybe get rid of the filter here for API reasons. The user of this method does not see that only
-		// locations are filtered which have an actual abstract state. Rather return a new location to state mapping
-		// where state is some bottom state.
 		return states.entrySet().stream().filter(e -> e.getValue().mState != null)
 				.collect(Collectors.toMap(Map.Entry::getKey, decorator -> decorator.getValue().mState));
 	}
@@ -226,6 +228,42 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 				currentState = alreadyKnownState.merge(currentState);
 			}
 			rtr.put(postLoc, currentState);
+		}
+		return rtr;
+	}
+	
+	private Map<LOCATION, Deque<STATE>> getStatesOfAllChildren(final CodeBlock initialTransition) {
+		final Map<LOCATION, Deque<STATE>> rtr = new HashMap<>();
+		final Deque<CodeBlock> worklist = new ArrayDeque<>();
+		final Set<CodeBlock> closed = new HashSet<>();
+		
+		worklist.add(initialTransition);
+		
+		while (!worklist.isEmpty()) {
+			final CodeBlock current = worklist.remove();
+			
+			if (!closed.add(current)) {
+				continue;
+			}
+			
+			final LOCATION postLoc = mTransProvider.getTarget(current);
+			
+			for (final CodeBlock outgoing : mTransProvider.getSuccessorActions(postLoc)) {
+				if (!(outgoing instanceof CodeBlock)) {
+					continue;
+				}
+				worklist.add(outgoing);
+			}
+			
+			Deque<STATE> alreadyKnownStates = rtr.get(postLoc);
+			if (alreadyKnownStates == null) {
+				alreadyKnownStates = new ArrayDeque<>();
+				rtr.put(postLoc, alreadyKnownStates);
+			}
+			
+			final Deque<STATE> states = getPostStates(current);
+			alreadyKnownStates.addAll(states);
+			// TODO: Add only states that are new to the list.
 		}
 		return rtr;
 	}

@@ -54,7 +54,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		
 		// the result aiRes can be queried for each state as follows
 		// (replace null by a ProgramPoint)
-		DataflowState dfs = dataflowAnalysisResult.getLoc2State().get(null);
+		DataflowState dfs = dataflowAnalysisResult.getLoc2SingleStates().get(null);
 		// query the state at each ProgramPoint for the dataflow results as follows 
 		// (replace null by a real variable)
 		Set<ProgramPoint> nwls = dfs.getNowriteLocations((IProgramVar) null);

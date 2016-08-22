@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,8 +58,10 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTIO
 	IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> createStorage();
 
 	Map<LOCATION, Term> getLoc2Term(final ACTION initialTransition, final Script script, final Boogie2SMT bpl2smt);
+
+	Map<LOCATION, Deque<STATE>> getLoc2States(final ACTION initialTransition);
 	
-	Map<LOCATION, STATE> getLoc2State(final ACTION initialTransition);
+	Map<LOCATION, STATE> getLoc2SingleStates(final ACTION initialTransition);
 
 	Set<Term> getTerms(final ACTION initialTransition, final Script script, final Boogie2SMT bpl2smt);
 }
