@@ -19,32 +19,46 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
+/**
+ * A {@link DoubleDecker} enhanced by a Boolean flag.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <STATE>
+ *            state type
+ */
 public class FlaggedDoubleDecker<STATE> extends DoubleDecker<STATE> {
-
+	
 	private final boolean mFlag;
 	
 	/**
-	 * @param down down state
-	 * @param up up state
-	 * @param flag flag
+	 * Constructor.
+	 * 
+	 * @param downState
+	 *            down state
+	 * @param upState
+	 *            up state
+	 * @param flag
+	 *            flag
 	 */
-	public FlaggedDoubleDecker(final STATE down, final STATE up,
-			final boolean flag) {
-		super(down, up);
+	public FlaggedDoubleDecker(final STATE downState, final STATE upState, final boolean flag) {
+		super(downState, upState);
 		mFlag = flag;
 	}
 	
-	public boolean getFlag() {
+	/**
+	 * @return Status of the flag.
+	 */
+	public boolean isFlagTrue() {
 		return mFlag;
 	}
-
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -53,7 +67,6 @@ public class FlaggedDoubleDecker<STATE> extends DoubleDecker<STATE> {
 		return result;
 	}
 	
-	@SuppressWarnings("squid:S2259")
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -65,10 +78,7 @@ public class FlaggedDoubleDecker<STATE> extends DoubleDecker<STATE> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final FlaggedDoubleDecker other = (FlaggedDoubleDecker) obj;
-		if (mFlag != other.mFlag) {
-			return false;
-		}
-		return true;
+		final FlaggedDoubleDecker<?> other = (FlaggedDoubleDecker<?>) obj;
+		return mFlag == other.mFlag;
 	}
 }

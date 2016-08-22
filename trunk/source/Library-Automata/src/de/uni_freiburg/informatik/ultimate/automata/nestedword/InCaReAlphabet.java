@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
  * can increase the performance of operations but is not necessary.
  * 
  * @author Matthias Heizmann
- *
- * @param <LETTER> Type of the Objects that can be used as letters.
+ * @param <LETTER>
+ *            Type of the Objects that can be used as letters.
  */
 public class InCaReAlphabet<LETTER> {
 	private final Set<LETTER> mInternalAlphabet;
@@ -47,9 +47,14 @@ public class InCaReAlphabet<LETTER> {
 	private final Set<LETTER> mReturnAlphabet;
 	
 	/**
-	 * @param internalAlphabet internal alphabet
-	 * @param callAlphabet call alphabet
-	 * @param returnAlphabet return alphabet
+	 * Constructor with direct passing of alphabets.
+	 * 
+	 * @param internalAlphabet
+	 *            internal alphabet
+	 * @param callAlphabet
+	 *            call alphabet
+	 * @param returnAlphabet
+	 *            return alphabet
 	 */
 	public InCaReAlphabet(final Set<LETTER> internalAlphabet,
 			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet) {
@@ -60,11 +65,14 @@ public class InCaReAlphabet<LETTER> {
 	}
 	
 	/**
-	 * @param automaton automaton
+	 * Constructor which takes the alphabets from an automaton.
+	 * 
+	 * @param automaton
+	 *            automaton
 	 */
 	public InCaReAlphabet(final IAutomaton<LETTER, ?> automaton) {
 		if (automaton instanceof INestedWordAutomaton) {
-			final INestedWordAutomaton<LETTER, ?> nwa = 
+			final INestedWordAutomaton<LETTER, ?> nwa =
 					(INestedWordAutomaton<LETTER, ?>) automaton;
 			mInternalAlphabet = nwa.getInternalAlphabet();
 			mCallAlphabet = nwa.getCallAlphabet();

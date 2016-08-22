@@ -27,10 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 /**
- * TODO Check and/or add documentation. Christian's guess:
- * 
- * <p>Encapsulates three stopwatches, one for internal, one for call, and one
- * for return transitions.
+ * Encapsulates three stopwatches, one for internal, one for call, and one for return transitions.
  * Only one stopwatch may run at the same time.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -118,24 +115,27 @@ public class InCaReTimer {
 	/**
 	 * Pretty-prints nano seconds in seconds.
 	 * 
-	 * @param time time in nano seconds
+	 * @param time
+	 *            time in nano seconds
 	 * @return pretty-printed time
 	 */
 	public static String prettyprintNanoseconds(final long time) {
 		final long seconds = time / 1000000000;
 		final long tenthDigit = (time / 100000000) % 10;
-		return seconds + "." + tenthDigit + "s";
+		return Long.toString(seconds) + '.' + Long.toString(tenthDigit) + 's';
 	}
 	
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(prettyprintNanoseconds(mInternal));
-		sb.append("In");
-		sb.append(prettyprintNanoseconds(mCall));
-		sb.append("Ca");
-		sb.append(prettyprintNanoseconds(mReturn));
-		sb.append("Re");
-		return sb.toString();
+		final StringBuilder builder = new StringBuilder();
+		// @formatter:off
+		builder.append(prettyprintNanoseconds(mInternal))
+				.append("In")
+				.append(prettyprintNanoseconds(mCall))
+				.append("Ca")
+				.append(prettyprintNanoseconds(mReturn))
+				.append("Re");
+		// @formatter:on
+		return builder.toString();
 	}
 }
