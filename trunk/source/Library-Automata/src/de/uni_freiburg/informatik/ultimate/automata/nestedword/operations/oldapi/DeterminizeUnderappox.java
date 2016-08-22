@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi;
@@ -31,7 +31,7 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IState
 /**
  * Determinization where a DeterminizedState is only accepting if all its
  * states are accepting. The language of the resulting automaton is a subset
- * of the language of the original automaton. 
+ * of the language of the original automaton.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
@@ -48,7 +48,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IState
  * @param <STATE> state type
  */
 
-public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, STATE> {
+public class DeterminizeUnderappox<LETTER, STATE> extends DeterminizeDD<LETTER, STATE>
+		implements IOperation<LETTER, STATE> {
 
 	public DeterminizeUnderappox(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER,STATE> input,
@@ -68,7 +69,7 @@ public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, S
 	 */
 	@Override
 	protected Collection<STATE> getInitialStates() {
-//		final ArrayList<STATE> resInitials = 
+//		final ArrayList<STATE> resInitials =
 //				new ArrayList<>(mOperand.getInitialStates().size());
 		final ArrayList<STATE> resInitials = new ArrayList<>();
 		final DeterminizedState<LETTER,STATE> detState = mStateDeterminizer.initialState();
@@ -84,7 +85,7 @@ public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, S
 	
 	
 	/**
-	 * Get the state in the resulting automaton that represents a 
+	 * Get the state in the resulting automaton that represents a
 	 * DeterminizedState. If this state in the resulting automaton does not
 	 * exist yet, construct it. Opposed to Determinize, here a Determinized
 	 * state is only accepting if all its states are accepting.
@@ -103,8 +104,7 @@ public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, S
 	}
 	
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult()
-			throws AutomataOperationCanceledException {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mTraversedNwa;
 	}
 

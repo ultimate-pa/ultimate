@@ -31,6 +31,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -59,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncl
  * <p>
  * The complete test checks language inclusion in both directions, which is a very expensive operation for Buchi
  * automata.
+ * <p>
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -66,7 +68,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncl
  * @param <STATE>
  *            state type
  */
-public class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
+public class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE>
+		implements IOperation<LETTER, STATE>{
 	private final StateFactory<STATE> mStateFactory;
 	
 	private final boolean mResult;
@@ -130,7 +133,7 @@ public class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperation<LETT
 	}
 	
 	@Override
-	public Boolean getResult() throws AutomataLibraryException {
+	public Boolean getResult() {
 		return mResult;
 	}
 	

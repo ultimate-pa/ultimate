@@ -633,7 +633,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
 	 */
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() throws AutomataLibraryException {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 

@@ -98,8 +98,7 @@ public class BuchiIntersect<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	}
 	
 	@Override
-	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult()
-			throws AutomataLibraryException {
+	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult() {
 		return mResult;
 	}
 	

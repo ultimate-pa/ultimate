@@ -283,7 +283,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	}
 	
 	@Override
-	public Senwa<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
+	public Senwa<LETTER, STATE> getResult() {
 		return mSenwa;
 	}
 	

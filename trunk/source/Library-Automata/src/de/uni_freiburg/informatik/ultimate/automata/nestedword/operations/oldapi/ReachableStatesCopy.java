@@ -250,7 +250,7 @@ public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETT
 	}
 	
 	@Override
-	public final INestedWordAutomaton<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
+	public final INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mTraversedNwa;
 	}
 	

@@ -118,7 +118,7 @@ public class BuchiClosure<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() throws AutomataLibraryException {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 }

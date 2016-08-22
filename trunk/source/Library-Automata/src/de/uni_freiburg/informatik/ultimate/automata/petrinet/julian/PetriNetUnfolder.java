@@ -413,7 +413,7 @@ public class PetriNetUnfolder<S, C>
 	}
 
 	@Override
-	public BranchingProcess<S, C> getResult() throws AutomataLibraryException {
+	public BranchingProcess<S, C> getResult() {
 		return mUnfolding;
 	}
 

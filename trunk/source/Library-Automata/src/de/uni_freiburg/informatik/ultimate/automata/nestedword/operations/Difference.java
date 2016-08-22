@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
@@ -81,7 +81,7 @@ public class Difference<LETTER,STATE>
 	 * @throws AutomataLibraryException if construction fails
 	 */
 	public Difference(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory, 
+			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand)
 					throws AutomataLibraryException {
@@ -130,7 +130,7 @@ public class Difference<LETTER,STATE>
 			final IntersectNwa<LETTER, STATE> intersect =
 					new IntersectNwa<LETTER, STATE>(mFstOperand,
 							sndComplemented, mStateFactory, finalIsTrap);
-			final NestedWordAutomatonReachableStates<LETTER, STATE> result = 
+			final NestedWordAutomatonReachableStates<LETTER, STATE> result =
 					new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, intersect);
 			if (!sndTotalized.nonDeterminismInInputDetected()) {
 				mSndComplemented = sndComplemented;
@@ -160,8 +160,7 @@ public class Difference<LETTER,STATE>
 
 
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult()
-			throws AutomataOperationCanceledException {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		if (mResultWOdeadEnds == null) {
 			return mResult;
 		} else {
@@ -174,8 +173,8 @@ public class Difference<LETTER,STATE>
 	@Override
 	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
-		final INestedWordAutomaton<LETTER, STATE> resultDD = 
-				(new DifferenceDD<LETTER, STATE>(mServices, mFstOperand, mSndOperand, 
+		final INestedWordAutomaton<LETTER, STATE> resultDD =
+				(new DifferenceDD<LETTER, STATE>(mServices, mFstOperand, mSndOperand,
 						new PowersetDeterminizer<LETTER, STATE>(mSndOperand,true, sf),
 						sf, false, false)).getResult();
 		boolean correct = true;

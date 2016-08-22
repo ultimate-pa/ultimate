@@ -101,7 +101,7 @@ public class RemoveDeadEnds<LETTER, STATE>
 	}
 	
 	@Override
-	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
+	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 	

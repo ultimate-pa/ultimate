@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Utility class that provides an interface for constructing a list of INestedWordAutomatons.  
+ * Utility class that provides an interface for constructing a list of INestedWordAutomatons.
  * @author jefferyyjhsu@iis.sinica.edu.tw
  */
 
@@ -47,7 +47,7 @@ public class NwaList<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	ArrayList<INestedWordAutomaton<LETTER,STATE>> automataCollection;
 	private static ILogger mLogger;
 	
-	public NwaList(AutomataLibraryServices services,INestedWordAutomaton<LETTER,STATE> orginalAutomata, INestedWordAutomaton<LETTER,STATE> newAutomata){
+	public NwaList(final AutomataLibraryServices services,final INestedWordAutomaton<LETTER,STATE> orginalAutomata, final INestedWordAutomaton<LETTER,STATE> newAutomata){
 		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mLogger.info(startMessage());
 		automataCollection = new ArrayList<INestedWordAutomaton<LETTER,STATE>>();
@@ -56,14 +56,14 @@ public class NwaList<LETTER,STATE> implements IOperation<LETTER,STATE>{
 		mLogger.info(exitMessage());
 	}
 	
-	public NwaList(AutomataLibraryServices services,ArrayList<INestedWordAutomaton<LETTER,STATE>> orginalAutomataCollection, INestedWordAutomaton<LETTER,STATE> newAutomata){
+	public NwaList(final AutomataLibraryServices services,final ArrayList<INestedWordAutomaton<LETTER,STATE>> orginalAutomataCollection, final INestedWordAutomaton<LETTER,STATE> newAutomata){
 		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mLogger.info(startMessage());
 		automataCollection = orginalAutomataCollection;
 		automataCollection.add(newAutomata);
 		mLogger.info(exitMessage());
 	}
-	public NwaList(AutomataLibraryServices services,INestedWordAutomaton<LETTER,STATE> newAutomata,ArrayList<INestedWordAutomaton<LETTER,STATE>> orginalAutomataCollection){
+	public NwaList(final AutomataLibraryServices services,final INestedWordAutomaton<LETTER,STATE> newAutomata,final ArrayList<INestedWordAutomaton<LETTER,STATE>> orginalAutomataCollection){
 		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mLogger.info(startMessage());
 		automataCollection = orginalAutomataCollection;
@@ -74,7 +74,7 @@ public class NwaList<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	/**
 	 * Constructs a list that consists of a single automaton.
 	 */
-	public NwaList(AutomataLibraryServices services,INestedWordAutomaton<LETTER,STATE> newAutomata){
+	public NwaList(final AutomataLibraryServices services,final INestedWordAutomaton<LETTER,STATE> newAutomata){
 		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mLogger.info(startMessage());
 		automataCollection = new ArrayList<INestedWordAutomaton<LETTER,STATE>>();
@@ -98,7 +98,7 @@ public class NwaList<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	}
 	
 	@Override
-	public ArrayList<INestedWordAutomaton<LETTER,STATE>> getResult() throws AutomataLibraryException {
+	public ArrayList<INestedWordAutomaton<LETTER,STATE>> getResult() {
 		return automataCollection;
 	}
 	/*public String getResult() throws OperationCanceledException {
@@ -106,7 +106,7 @@ public class NwaList<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	}*/
 	
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}

@@ -176,7 +176,7 @@ public class BuchiComplementNCSB<LETTER, STATE> implements IOperation<LETTER, ST
 	}
 	
 	@Override
-	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult() throws AutomataLibraryException {
+	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult() {
 		return mResult;
 	}
 	

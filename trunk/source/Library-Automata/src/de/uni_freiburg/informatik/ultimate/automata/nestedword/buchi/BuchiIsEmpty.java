@@ -91,7 +91,7 @@ public class BuchiIsEmpty<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	@Override
-	public Boolean getResult() throws AutomataLibraryException {
+	public Boolean getResult() {
 		return mResult;
 	}
 	

@@ -19,14 +19,12 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.alternating;
-
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 
 public class TestUnion {
 
@@ -34,14 +32,10 @@ public class TestUnion {
 		final TestAutomaton_1 automaton1 = new TestAutomaton_1();
 		final TestAutomaton_2 automaton2 = new TestAutomaton_2();
 		final AA_MergedUnion<String, String> union = new AA_MergedUnion<String, String>(automaton1, automaton2);
-		try {
-			final AlternatingAutomaton<String, String> resultAutomaton = union.getResult();
-			final long startNanoTime = System.nanoTime();
-			TestCase.test(resultAutomaton, TestAutomaton_1.TEST_CASES);
-			TestCase.test(resultAutomaton, TestAutomaton_2.TEST_CASES);
-			System.out.println(((System.nanoTime() - startNanoTime) / 1000000f) + " ms");
-		} catch (final AutomataLibraryException ex) {
-			ex.printStackTrace();
-		}
+		final AlternatingAutomaton<String, String> resultAutomaton = union.getResult();
+		final long startNanoTime = System.nanoTime();
+		TestCase.test(resultAutomaton, TestAutomaton_1.TEST_CASES);
+		TestCase.test(resultAutomaton, TestAutomaton_2.TEST_CASES);
+		System.out.println(((System.nanoTime() - startNanoTime) / 1000000f) + " ms");
 	}
 }

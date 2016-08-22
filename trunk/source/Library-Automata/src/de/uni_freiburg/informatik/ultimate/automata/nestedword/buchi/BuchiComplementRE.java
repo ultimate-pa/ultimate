@@ -69,7 +69,7 @@ public class BuchiComplementRE<LETTER, STATE> implements IOperation<LETTER, STAT
 	}
 	
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() throws AutomataLibraryException {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		if (mBuchiComplementREApplicable) {
 			return mResult;
 		} else {

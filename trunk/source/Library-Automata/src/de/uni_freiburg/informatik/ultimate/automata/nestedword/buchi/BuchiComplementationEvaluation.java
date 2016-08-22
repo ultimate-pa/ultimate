@@ -151,7 +151,7 @@ public class BuchiComplementationEvaluation<LETTER, STATE> implements IOperation
 	}
 	
 	@Override
-	public String getResult() throws AutomataLibraryException {
+	public String getResult() {
 		return mResult;
 	}
 	

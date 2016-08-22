@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
@@ -58,7 +58,7 @@ public class IsIncluded<LETTER, STATE>
 	 */
 	public IsIncluded(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand, 
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand)
 					throws AutomataLibraryException {
 		super(services, fstOperand, sndOperand);
@@ -78,12 +78,12 @@ public class IsIncluded<LETTER, STATE>
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Language is " 
+		return "Finished " + operationName() + ". Language is "
 				+ (mResult ? "" : "not ") + "included";
 	}
 
 	@Override
-	public Boolean getResult() throws AutomataLibraryException {
+	public Boolean getResult() {
 		return mResult;
 	}
 

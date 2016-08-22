@@ -228,7 +228,7 @@ public class BuchiComplementFKV<LETTER, STATE> implements IOperation<LETTER, STA
 	}
 	
 	@Override
-	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult() throws AutomataLibraryException {
+	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult() {
 		return mResult;
 	}
 	

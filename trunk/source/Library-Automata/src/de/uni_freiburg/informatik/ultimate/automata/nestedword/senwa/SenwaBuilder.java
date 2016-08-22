@@ -193,7 +193,7 @@ public class SenwaBuilder<LETTER, STATE>
 	}
 	
 	@Override
-	public Senwa<LETTER,STATE> getResult() throws AutomataLibraryException {
+	public Senwa<LETTER,STATE> getResult() {
 		return mSenwa;
 	}
 

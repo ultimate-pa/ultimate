@@ -111,7 +111,7 @@ public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, BitSet
 	}
 
 	@Override
-	public INestedWordAutomaton<LETTER, BitSet> getResult() throws AutomataLibraryException {
+	public INestedWordAutomaton<LETTER, BitSet> getResult() {
 		return mResultAutomaton;
 	}
 

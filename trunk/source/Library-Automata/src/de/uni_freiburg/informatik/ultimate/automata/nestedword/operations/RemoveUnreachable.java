@@ -84,7 +84,7 @@ public class RemoveUnreachable<LETTER,STATE>
 
 
 	@Override
-	public NestedWordAutomatonReachableStates<LETTER,STATE> getResult() throws AutomataOperationCanceledException {
+	public NestedWordAutomatonReachableStates<LETTER,STATE> getResult() {
 		return mResult;
 	}
 	

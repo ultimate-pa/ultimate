@@ -33,7 +33,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -286,7 +285,7 @@ public class Analyze<LETTER, STATE>
 	}
 	
 	@Override
-	public Object getResult() throws AutomataLibraryException {
+	public Object getResult() {
 		return "NWA analysis result";
 	}
 	

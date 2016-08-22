@@ -704,7 +704,7 @@ public class IsEmpty<LETTER, STATE>
 	}
 	
 	@Override
-	public Boolean getResult() throws AutomataLibraryException {
+	public Boolean getResult() {
 		return mAcceptingRun == null;
 	}
 	

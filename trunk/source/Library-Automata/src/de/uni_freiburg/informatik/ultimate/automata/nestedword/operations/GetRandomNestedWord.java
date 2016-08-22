@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
@@ -83,8 +83,8 @@ public class GetRandomNestedWord<LETTER, STATE>
 	public String startMessage() {
 		return MessageFormat.format("Start {0}. Internal alphabet has {1}"
 				+ " letters, call alphabet has {2} letters, return alphabet"
-				+ " has {3} letters", 
-				operationName(), 
+				+ " has {3} letters",
+				operationName(),
 				mInternalAlphabet.size(),
 				mCallAlphabet.size(),
 				mReturnAlphabet.size());
@@ -96,7 +96,7 @@ public class GetRandomNestedWord<LETTER, STATE>
 	}
 	
 	@Override
-	public NestedWord<LETTER> getResult() throws AutomataLibraryException {
+	public NestedWord<LETTER> getResult() {
 		return mResult;
 	}
 
@@ -106,9 +106,9 @@ public class GetRandomNestedWord<LETTER, STATE>
 		return true;
 	}
 	
-	private NestedWord<LETTER> generateNestedWord(final int length, 
+	private NestedWord<LETTER> generateNestedWord(final int length,
 							final double probabilityCall, final double probabilityReturn) {
-		final String errorMessage = 
+		final String errorMessage =
 				"probability for call and return both have to between 0 and 1"
 				+ " also the sum has to be between 0 and 1";
 		if (probabilityCall < 0) {
@@ -190,7 +190,7 @@ public class GetRandomNestedWord<LETTER, STATE>
 		return letter;
 	}
 	
-	public NestedLassoWord<LETTER> generateNestedLassoWord(final int lengthStem, 
+	public NestedLassoWord<LETTER> generateNestedLassoWord(final int lengthStem,
 			final int lengthLoop, final double probabilityCall, final double probabilityReturn) {
 		NestedLassoWord<LETTER> result;
 		final NestedWord<LETTER> stem = generateNestedWord(
@@ -201,7 +201,7 @@ public class GetRandomNestedWord<LETTER, STATE>
 		return result;
 	}
 	
-	public NestedLassoWord<LETTER> generateNestedLassoWord(final int lengthStemAndLoop, 
+	public NestedLassoWord<LETTER> generateNestedLassoWord(final int lengthStemAndLoop,
 			final double probabilityCall, final double probabilityReturn) {
 		final int lengthStem = mRandom.nextInt(lengthStemAndLoop);
 		final int lengthLoop = lengthStemAndLoop - lengthStem + 1;

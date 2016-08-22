@@ -260,7 +260,7 @@ public class LoopComplexity<LETTER, STATE>
 	}
 
 	@Override
-	public Integer getResult() throws AutomataLibraryException {
+	public Integer getResult() {
 		return mResult;
 	}
 }

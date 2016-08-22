@@ -76,7 +76,7 @@ public interface IOperation<LETTER, STATE> {
 	String operationName();
 	
 	/**
-	 * @return Message that should be logged when the operation is stated.<br>
+	 * @return Message that should be logged when the operation is started.<br>
 	 *         Use some information like: "Started operation intersection. First
 	 *         operand has 2394 states, second operand has 9374 states."
 	 */
@@ -91,10 +91,8 @@ public interface IOperation<LETTER, STATE> {
 	
 	/**
 	 * @return The result of the operation.
-	 * @throws AutomataLibraryException
-	 *             if operation fails
 	 */
-	Object getResult() throws AutomataLibraryException;
+	Object getResult();
 	
 	/**
 	 * Run some checks to test correctness of the result.
@@ -103,7 +101,7 @@ public interface IOperation<LETTER, STATE> {
 	 *            If new automata have to be built, use this state factory.
 	 * @return true iff all checks succeeded.
 	 * @throws AutomataLibraryException
-	 *             when checks fail
+	 *             if checks fail or timeout was requested
 	 */
 	boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException;
 	

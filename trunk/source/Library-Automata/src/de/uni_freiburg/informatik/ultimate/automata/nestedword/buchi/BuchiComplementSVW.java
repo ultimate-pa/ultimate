@@ -86,8 +86,7 @@ public class BuchiComplementSVW<LETTER, STATE> implements IOperation<LETTER, STA
 	}
 	
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult()
-			throws AutomataLibraryException {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 	

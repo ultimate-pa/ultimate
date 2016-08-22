@@ -317,7 +317,7 @@ public class DifferenceBlackAndWhite<S, C>
 //	}
 	
 	@Override
-	public PetriNetJulian<S, C> getResult() throws AutomataLibraryException {
+	public PetriNetJulian<S, C> getResult() {
 		assert (isPreSuccPlaceInNet(mResult));
 		assert (isPreSuccTransitionInNet(mResult));
 		return mResult;

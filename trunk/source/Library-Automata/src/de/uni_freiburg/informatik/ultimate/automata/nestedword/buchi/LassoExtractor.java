@@ -74,7 +74,7 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	}
 	
 	@Override
-	public List<NestedLassoWord<LETTER>> getResult() throws AutomataLibraryException {
+	public List<NestedLassoWord<LETTER>> getResult() {
 		return mNestedLassoWords;
 	}
 	

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
@@ -58,8 +58,8 @@ public class Complement<LETTER,STATE>
 	 * @throws AutomataLibraryException if construction fails
 	 */
 	public Complement(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER,STATE> operand, 
-			final IStateDeterminizer<LETTER,STATE> stateDeterminizer, 
+			final INestedWordAutomatonSimple<LETTER,STATE> operand,
+			final IStateDeterminizer<LETTER,STATE> stateDeterminizer,
 			final StateFactory<STATE> stateFactory)
 					throws AutomataLibraryException {
 		super(services, operand);
@@ -77,7 +77,7 @@ public class Complement<LETTER,STATE>
 	 * @throws AutomataLibraryException if construction fails
 	 */
 	public Complement(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory, 
+			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER,STATE> operand)
 					throws AutomataLibraryException {
 		this(services, operand,
@@ -91,7 +91,7 @@ public class Complement<LETTER,STATE>
 			mComplement = new ComplementDeterministicNwa<LETTER, STATE>(mDeterminized);
 			mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mComplement);
 			return;
-		} 
+		}
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			final boolean success = tryWithoutDeterminization();
 			if (success) {
@@ -111,7 +111,7 @@ public class Complement<LETTER,STATE>
 				new TotalizeNwa<LETTER, STATE>(mOperand, mStateFactory);
 		final ComplementDeterministicNwa<LETTER,STATE> complemented =
 				new ComplementDeterministicNwa<LETTER, STATE>(totalized);
-		final NestedWordAutomatonReachableStates<LETTER, STATE> result = 
+		final NestedWordAutomatonReachableStates<LETTER, STATE> result =
 				new NestedWordAutomatonReachableStates<LETTER, STATE>(
 						mServices, complemented);
 		if (!totalized.nonDeterminismInInputDetected()) {
@@ -141,8 +141,7 @@ public class Complement<LETTER,STATE>
 	}
 
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult()
-			throws AutomataLibraryException {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 	
@@ -154,10 +153,10 @@ public class Complement<LETTER,STATE>
 			mLogger.info("Start testing correctness of " + operationName());
 
 			// intersection of operand and result should be empty
-			final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult = 
+			final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
 					(new IntersectDD<LETTER, STATE>(mServices, mOperand, mResult)).getResult();
 			correct &= (new IsEmpty<LETTER, STATE>(mServices, intersectionOperandResult)).getResult();
-			final INestedWordAutomatonSimple<LETTER, STATE> resultDD = 
+			final INestedWordAutomatonSimple<LETTER, STATE> resultDD =
 					(new ComplementDD<LETTER, STATE>(mServices, sf, mOperand)).getResult();
 			
 			// should have same number of states as old complementation

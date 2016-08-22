@@ -101,7 +101,7 @@ public class RemoveNonLiveStates<LETTER, STATE>
 	}
 	
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 	

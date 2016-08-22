@@ -85,7 +85,7 @@ public class Accepts<S, C>
 	}
 
 	@Override
-	public Boolean getResult() throws AutomataLibraryException {
+	public Boolean getResult() {
 		return mResult;
 	}
 

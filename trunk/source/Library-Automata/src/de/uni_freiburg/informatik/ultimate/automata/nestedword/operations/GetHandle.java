@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 
 /**
  * Class that computes a handle of an automaton.
- * We call an initial run of an automaton a <i>handle</i> if 
+ * We call an initial run of an automaton a <i>handle</i> if
  * <ul>
  * <li> there is exactly one initial state
  * <li> each state but the last of the run has exactly one successor
@@ -120,7 +120,7 @@ public class GetHandle<LETTER, STATE>
 		NestedRun<LETTER,STATE> result = null;
 		for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mOperand.internalSuccessors(state)) {
 			if (result == null) {
-				result = new NestedRun<LETTER, STATE>(state, 
+				result = new NestedRun<LETTER, STATE>(state,
 						outTrans.getLetter(), NestedWord.INTERNAL_POSITION,
 						outTrans.getSucc());
 			} else {
@@ -130,7 +130,7 @@ public class GetHandle<LETTER, STATE>
 		}
 		for (final OutgoingCallTransition<LETTER, STATE> outTrans : mOperand.callSuccessors(state)) {
 			if (result == null) {
-				result = new NestedRun<LETTER, STATE>(state, 
+				result = new NestedRun<LETTER, STATE>(state,
 						outTrans.getLetter(), NestedWord.PLUS_INFINITY,
 						outTrans.getSucc());
 			} else {
@@ -140,7 +140,7 @@ public class GetHandle<LETTER, STATE>
 		}
 		for (final OutgoingReturnTransition<LETTER, STATE> outTrans : mOperand.returnSuccessors(state)) {
 			if (result == null) {
-				result = new NestedRun<LETTER, STATE>(state, 
+				result = new NestedRun<LETTER, STATE>(state,
 						outTrans.getLetter(), NestedWord.MINUS_INFINITY,
 						outTrans.getSucc());
 			} else {
@@ -186,7 +186,7 @@ public class GetHandle<LETTER, STATE>
 	}
 
 	@Override
-	public NestedRun<LETTER,STATE> getResult() throws AutomataOperationCanceledException {
+	public NestedRun<LETTER,STATE> getResult() {
 		return mHandle;
 	}
 

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.incrementalinclusion;
@@ -78,7 +78,7 @@ public class InclusionViaDifference<LETTER, STATE>
 	/**
 	 * Constructor that uses different stateFactories for intersection and
 	 * determinization. This is currently needed when we use the inclusion
-	 * check in program verification. 
+	 * check in program verification.
 	 * @param services Ultimate services
 	 * @param stateFactoryIntersect state factory for intersection
 	 * @param stateFactoryDeterminize state factory for determinization
@@ -99,7 +99,7 @@ public class InclusionViaDifference<LETTER, STATE>
 	}
 
 	@Override
-	public NestedRun<LETTER, STATE> getCounterexample() throws AutomataOperationCanceledException {
+	public NestedRun<LETTER, STATE> getCounterexample() {
 		return mAcceptingRun;
 	}
 
@@ -107,7 +107,7 @@ public class InclusionViaDifference<LETTER, STATE>
 	public void addSubtrahend(final INestedWordAutomatonSimple<LETTER, STATE> nwa)
 			throws AutomataLibraryException {
 		super.addSubtrahend(nwa);
-		final INestedWordAutomatonSimple<LETTER, STATE> determinized = 
+		final INestedWordAutomatonSimple<LETTER, STATE> determinized =
 				new DeterminizeNwa<>(mServices, nwa, new PowersetDeterminizer<>(
 						nwa, true, mStateFactoryDeterminize), mStateFactoryDeterminize, null, true);
 		final INestedWordAutomatonSimple<LETTER, STATE> complemented =

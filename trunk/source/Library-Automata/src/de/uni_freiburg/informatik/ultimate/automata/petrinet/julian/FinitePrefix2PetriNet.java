@@ -227,7 +227,7 @@ public class FinitePrefix2PetriNet<L, C>
 	}
 	
 	@Override
-	public PetriNetJulian<L, C> getResult() throws AutomataLibraryException {
+	public PetriNetJulian<L, C> getResult() {
 		return mNet;
 	}
 	

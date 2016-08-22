@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
@@ -37,10 +37,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.increm
 
 public class IncrementalInclusionCheckDifference<LETTER, STATE> extends InclusionViaDifference<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	public  IncrementalInclusionCheckDifference(
-			AutomataLibraryServices services, 
-			StateFactory<STATE> stateFactory, 
-			INestedWordAutomatonSimple<LETTER, STATE> a, 
-			List<INestedWordAutomatonSimple<LETTER, STATE>> b) throws AutomataLibraryException {
+			final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> a,
+			final List<INestedWordAutomatonSimple<LETTER, STATE>> b) throws AutomataLibraryException {
 		super(services,stateFactory,a);
 		mLogger.info(startMessage());
 		for (final INestedWordAutomatonSimple<LETTER, STATE> bi : b) {
@@ -63,11 +63,11 @@ public class IncrementalInclusionCheckDifference<LETTER, STATE> extends Inclusio
 		return "Exit " + operationName() + ". Result has " + size() + " states.";
 	}
 	@Override
-	public Boolean getResult() throws AutomataLibraryException{
+	public Boolean getResult() {
 		return getCounterexample() == null;
 	}
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		// TODO Auto-generated method stub
 		return true;

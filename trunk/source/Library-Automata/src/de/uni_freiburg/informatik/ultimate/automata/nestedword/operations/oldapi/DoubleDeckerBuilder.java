@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi;
@@ -31,14 +31,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 
 public abstract class DoubleDeckerBuilder<LETTER,STATE>
-		extends DoubleDeckerVisitor<LETTER,STATE> 
+		extends DoubleDeckerVisitor<LETTER,STATE>
 		implements IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 
 	Set<STATE> mSuccessorsConstructedIn = new HashSet<STATE>();
@@ -112,7 +111,7 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE>
 			DoubleDecker<STATE> doubleDecker);
 	
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mTraversedNwa;
 	}
 

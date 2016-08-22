@@ -168,7 +168,7 @@ public class EmptinessPetruchio<S, C> implements IOperation<S, C> {
 	}
 	
 	@Override
-	public NestedRun<S, C> getResult() throws AutomataLibraryException {
+	public NestedRun<S, C> getResult() {
 		return mAcceptedRun;
 	}
 	

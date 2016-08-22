@@ -169,7 +169,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 	}
 	
-	public Object getResult() throws AutomataOperationCanceledException {
+	public Object getResult() {
 		return mTraversedNwa;
 	}
 	
