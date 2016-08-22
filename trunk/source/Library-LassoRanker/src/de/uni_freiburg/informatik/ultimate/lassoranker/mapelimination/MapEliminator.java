@@ -824,6 +824,7 @@ public class MapEliminator {
 	}
 
 	private String niceTermString(final Term term) {
+		final String result;
 		if (SmtUtils.isFunctionApplication(term, "select")) {
 			final StringBuilder stringBuilder = new StringBuilder();
 			final MultiDimensionalSelect select = new MultiDimensionalSelect(term);
@@ -832,13 +833,11 @@ public class MapEliminator {
 			for (int i = 0; i < index.size(); i++) {
 				stringBuilder.append(niceTermString(index.get(i))).append(i == index.size() - 1 ? ']' : ',');
 			}
-			return stringBuilder.toString();
-		}
-		if (term instanceof TermVariable) {
+			result = stringBuilder.toString();
+		} else if (term instanceof TermVariable) {
 			final TermVariable termVariable = (TermVariable) term;
-			return termVariable.getName();
-		}
-		if (term instanceof ApplicationTerm) {
+			result = termVariable.getName();
+		} else if (term instanceof ApplicationTerm) {
 			final StringBuilder stringBuilder = new StringBuilder();
 			final ApplicationTerm applicationTerm = (ApplicationTerm) term;
 			final FunctionSymbol function = applicationTerm.getFunction();
@@ -850,10 +849,11 @@ public class MapEliminator {
 			for (int i = 0; i < params.length; i++) {
 				stringBuilder.append(niceTermString(params[i])).append(i == params.length - 1 ? ')' : ' ');
 			}
-			return stringBuilder.toString();
-
+			result = stringBuilder.toString();
+		} else {
+			result = term.toString();
 		}
-		return SmtUtils.removeSmtQuoteCharacters(term.toString());
+		return SmtUtils.removeSmtQuoteCharacters(result);
 	}
 
 	private Set<Doubleton<Term>> computeDoubletons(
