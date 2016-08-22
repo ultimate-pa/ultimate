@@ -1125,6 +1125,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	@SuppressWarnings("squid:S1698")
 	private class HanoiFormatWriter extends CommonExternalFormatWriter {
 		
+		private static final int MINIMUM_HEADER_SIZE = 137;
 		private static final int MINIMUM_STATE_SIZE = 15;
 		
 		private static final boolean USE_LABELS = false;
@@ -1153,7 +1154,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		}
 		
 		private StringBuilder constructHeader() {
-			final StringBuilder builder = new StringBuilder();
+			final StringBuilder builder = new StringBuilder(MINIMUM_HEADER_SIZE);
 			// @formatter:off
 			builder.append("HOA: v1")
 					.append(NEW_LINE)
@@ -1247,6 +1248,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 */
 	private class GoalFormatWriter extends CommonExternalFormatWriter {
 		
+		private static final int MINIMUM_SKELETON_SIZE = 130;
 		private static final String STATE_ID_CLOSE = "</StateID>";
 		private static final String STATE_ID_OPEN = "<StateID>";
 		private final IConverter<LETTER> mLetterConverter;
@@ -1262,7 +1264,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		}
 		
 		protected void doPrint() {
-			final StringBuilder builder = new StringBuilder();
+			final StringBuilder builder = new StringBuilder(MINIMUM_SKELETON_SIZE);
 			// @formatter:off
 			builder.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>")
 					.append(NEW_LINE)
@@ -1351,17 +1353,13 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 							.append(TAB)
 							.append("<Transition tid=\"")
 							.append(tid)
-							.append("\">")
-							.append("<From>")
+							.append("\"><From>")
 							.append(mStateConverter.convert(state))
-							.append("</From>")
-							.append("<To>")
+							.append("</From><To>")
 							.append(mStateConverter.convert(trans.getSucc()))
-							.append("</To>")
-							.append("<Label>")
+							.append("</To><Label>")
 							.append(mLetterConverter.convert(trans.getLetter()))
-							.append("</Label>")
-							.append("</Transition>")
+							.append("</Label></Transition>")
 							.append(NEW_LINE);
 					tid++;
 				}
