@@ -38,6 +38,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
@@ -227,23 +228,22 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 *            letter type
 	 * @param <STATE>
 	 *            state type
-	 * @return true iff automaton writing was enabled
 	 */
 	@SafeVarargs
 	@SuppressWarnings("squid:S1848")
-	public static <LETTER, STATE> boolean writeToFileIfPreferred(
+	public static <LETTER, STATE> void writeToFileIfPreferred(
 			final AutomataLibraryServices services,
 			final String fileNamePrefix,
 			final String message,
 			final IAutomaton<?, ?>... automata) {
 		if (!DUMP_AUTOMATON) {
-			return false;
+			return;
 		}
 		final String workingDirectory = System.getProperty("user.dir");
 		final String fileName = workingDirectory + File.separator + fileNamePrefix + getDateTimeFileName();
 		new AutomatonDefinitionPrinter<LETTER, STATE>(services,
 				fileNamePrefix, fileName, Format.ATS_NUMERATE, message, automata);
-		return true;
+		return;
 	}
 	
 	/**
@@ -290,7 +290,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	}
 	
 	private static String getDateTimeFromFormat(final String format) {
-		final DateFormat dateFormat = new SimpleDateFormat(format);
+		final DateFormat dateFormat = new SimpleDateFormat(format, Locale.ENGLISH);
 		final Date date = new Date();
 		return dateFormat.format(date);
 	}
@@ -1065,6 +1065,9 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 */
 	private class BaFormatWriter extends CommonExternalFormatWriter {
 		
+		private static final int MINIMUM_STATE_SIZE = 4;
+		private static final int MINIMUM_TRANSITION_SIZE = 11;
+		
 		public BaFormatWriter(final INestedWordAutomaton<LETTER, STATE> nwa) {
 			super(nwa);
 			doPrint();
@@ -1082,7 +1085,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		private StringBuilder getStateString(
 				final Collection<STATE> initialStates,
 				final Map<STATE, String> stateMapping) {
-			final StringBuilder result = new StringBuilder();
+			final StringBuilder result = new StringBuilder(MINIMUM_STATE_SIZE * initialStates.size());
 			for (final STATE state : initialStates) {
 				// @formatter:off
 				result.append('[')
@@ -1098,7 +1101,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 				final INestedWordAutomaton<LETTER, STATE> nwa,
 				final Map<STATE, String> stateMapping,
 				final Map<LETTER, String> alphabetMapping) {
-			final StringBuilder result = new StringBuilder();
+			final StringBuilder result = new StringBuilder(MINIMUM_TRANSITION_SIZE * nwa.size());
 			for (final STATE state : nwa.getStates()) {
 				for (final OutgoingInternalTransition<LETTER, STATE> outTrans : nwa.internalSuccessors(state)) {
 					// @formatter:off
@@ -1121,6 +1124,8 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 */
 	@SuppressWarnings("squid:S1698")
 	private class HanoiFormatWriter extends CommonExternalFormatWriter {
+		
+		private static final int MINIMUM_STATE_SIZE = 15;
 		
 		private static final boolean USE_LABELS = false;
 		private final IConverter<LETTER> mLetterConverter;
@@ -1207,7 +1212,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		}
 		
 		private StringBuilder constructBody() {
-			final StringBuilder builder = new StringBuilder();
+			final StringBuilder builder = new StringBuilder(MINIMUM_STATE_SIZE * mNwa.size());
 			
 			for (final STATE state : mNwa.getStates()) {
 				// @formatter:off
