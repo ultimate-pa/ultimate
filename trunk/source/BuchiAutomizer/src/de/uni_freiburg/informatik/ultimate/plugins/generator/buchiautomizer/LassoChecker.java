@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -805,7 +806,7 @@ public class LassoChecker {
 		TerminationArgument firstTerminationArgument = null;
 		for (final RankingTemplate rft : rankingFunctionTemplates) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				throw new ToolchainCanceledException(this.getClass());
+				throw new ToolchainCanceledException(this.getClass(), generateRunningTaskInfo(stemTF, loopTF, withStem, rft));
 			}
 			TerminationArgument termArg;
 			try {
@@ -858,6 +859,13 @@ public class LassoChecker {
 		} else {
 			return null;
 		}
+	}
+
+	private String generateRunningTaskInfo(final TransFormula stemTF, final TransFormula loopTF, final boolean withStem,
+			final RankingTemplate rft) {
+		return "applying " + rft.getName() + " template (degree " + rft.getDegree() + 
+				"), stem dagsize " + new DagSizePrinter(stemTF.getFormula()) + 
+				", loop dagsize " +  new DagSizePrinter(loopTF.getFormula());
 	}
 
 	// private List<LassoRankerParam> getLassoRankerParameters() {
