@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.ConcurrentProduct;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
@@ -51,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -2441,12 +2441,9 @@ public class NestedWordAutomaton<LETTER, STATE>
 	public static <LETTER, STATE> boolean sameAlphabet(final INestedWordAutomatonSimple<LETTER, STATE> nwa1,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa2) {
 		boolean result = true;
-		final Collection<LETTER> in1 = nwa1.getInternalAlphabet();
-		final Collection<LETTER> in2 = nwa2.getInternalAlphabet();
-		result &= in1.equals(in2);
-		result &= nwa1.getInternalAlphabet().equals(nwa2.getInternalAlphabet());
-		result &= nwa1.getCallAlphabet().equals(nwa2.getCallAlphabet());
-		result &= nwa1.getReturnAlphabet().equals(nwa2.getReturnAlphabet());
+		result = result && nwa1.getInternalAlphabet().equals(nwa2.getInternalAlphabet());
+		result = result && nwa1.getCallAlphabet().equals(nwa2.getCallAlphabet());
+		result = result && nwa1.getReturnAlphabet().equals(nwa2.getReturnAlphabet());
 		return result;
 	}
 	
