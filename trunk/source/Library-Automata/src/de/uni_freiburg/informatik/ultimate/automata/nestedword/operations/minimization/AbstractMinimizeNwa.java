@@ -36,7 +36,9 @@ import java.util.NoSuchElementException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -52,14 +54,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  * This is the superclass of most minimization classes.
  * It provides a correctness check for all subclasses and an optional DFA check
  * for subclasses that only work for DFAs.
- * 
- * <p>All subclasses must implement the
+ * <p>
+ * All subclasses must implement the
  * #{@link de.uni_freiburg.informatik.ultimate.automata.IOperation} interface
  * in order to be found by the <code>AutomataScriptInterpreter</code>.
  * 
  * @author Christian Schilling
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public abstract class AbstractMinimizeNwa<LETTER, STATE>
 		extends UnaryNwaOperation<LETTER, STATE>
@@ -73,7 +77,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 * The operation name.
 	 */
 	protected final String mName;
-
+	
 	/**
 	 * StateFactory for the construction of states of the resulting automaton.
 	 */
@@ -90,7 +94,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 * A map 'old state -> new state'.
 	 */
 	private Map<STATE, STATE> mOldState2NewState;
-
+	
 	/**
 	 * This constructor should be called by all subclasses and only by them.
 	 * 
@@ -137,18 +141,18 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	}
 	
 	/* ------ interface methods ------ */
-
+	
 	@Override
 	public final String operationName() {
 		return mName;
 	}
-
+	
 	@Override
 	public final String exitMessage() {
 		return "Finished " + operationName() + ". Reduced states from "
 				+ mOperand.size() + " to " + getResult().size() + '.';
 	}
-
+	
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		if (mResult == null) {
@@ -157,21 +161,41 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 		return mResult;
 	}
 	
+	/**
+	 * Subclasses which need to add specific data should call this method first and extend the result.
+	 */
+	@Override
+	public AutomataOperationStatistics getAutomataOperationStatistics() {
+		final AutomataOperationStatistics result = new AutomataOperationStatistics();
+		
+		final int inputSize = mOperand.size();
+		final int outputSize = mResult.size();
+		
+		result.addKeyValuePair(StatisticsType.STATES_INPUT, inputSize);
+		result.addKeyValuePair(StatisticsType.STATES_OUTPUT, outputSize);
+		result.addDifferenceData(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
+				StatisticsType.STATES_REDUCTION_ABSOLUTE);
+		result.addPercentageData(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
+				StatisticsType.STATES_REDUCTION_RELATIVE, true);
+		
+		return result;
+	}
+	
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return checkLanguageEquivalence(stateFactory);
 	}
-
+	
 	/**
 	 * Returns a Map from states of the input automaton to states of the output
 	 * automaton. The output results from merging states. The image of a state
 	 * <i>oldState</i> is the block of merged states containing <i>oldState</i>.
 	 * This method can only be used when the minimization has finished.
-	 * 
-	 * <p>NOTE: The map must be robust against queries for states which did not
-	 *       exist in the input automaton. The expected value is 'null', but
-	 *       not, e.g., a NullPointerException.
+	 * <p>
+	 * NOTE: The map must be robust against queries for states which did not
+	 * exist in the input automaton. The expected value is 'null', but
+	 * not, e.g., a NullPointerException.
 	 * 
 	 * @return map from input automaton states to output automaton states
 	 */
@@ -188,7 +212,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * Passes the result directly.
 	 * 
-	 * @param result result automaton
+	 * @param result
+	 *            result automaton
 	 */
 	protected final void directResultConstruction(
 			final INestedWordAutomaton<LETTER, STATE> result) {
@@ -205,13 +230,14 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * Constructs the result from a partition.
 	 * 
-	 * @param partition partition data structure
-	 * @param addMapping true iff mapping 'old state -> new state' is added
+	 * @param partition
+	 *            partition data structure
+	 * @param addMapping
+	 *            true iff mapping 'old state -> new state' is added
 	 */
 	protected void constructResultFromPartition(
 			final IPartition<STATE> partition, final boolean addMapping) {
-		assert (mOperand instanceof IDoubleDeckerAutomaton) :
-			"Operand must be an IDoubleDeckerAutomaton.";
+		assert (mOperand instanceof IDoubleDeckerAutomaton) : "Operand must be an IDoubleDeckerAutomaton.";
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
 				new QuotientNwaConstructor<>(mServices, mStateFactory,
 						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand,
@@ -222,14 +248,15 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * Constructs the result from a partition.
 	 * 
-	 * @param unionFind union-find data structure
-	 * @param addMapping true iff mapping 'old state -> new state' is added
+	 * @param unionFind
+	 *            union-find data structure
+	 * @param addMapping
+	 *            true iff mapping 'old state -> new state' is added
 	 */
 	protected void constructResultFromUnionFind(
 			final UnionFind<STATE> unionFind,
 			final boolean addMapping) {
-		assert (mOperand instanceof IDoubleDeckerAutomaton) :
-			"Operand must be an IDoubleDeckerAutomaton.";
+		assert (mOperand instanceof IDoubleDeckerAutomaton) : "Operand must be an IDoubleDeckerAutomaton.";
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
 				new QuotientNwaConstructor<>(mServices, mStateFactory,
 						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand,
@@ -242,7 +269,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 * #{@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.QuotientNwaConstructor}
 	 * .
 	 * 
-	 * @param constructor quotient constructor
+	 * @param constructor
+	 *            quotient constructor
 	 */
 	private void constructResultFromQuotientConstructor(
 			final QuotientNwaConstructor<LETTER, STATE> constructor) {
@@ -272,9 +300,12 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * Adds a state.
 	 * 
-	 * @param isInitial is the state initial?
-	 * @param isFinal is the state accepting?
-	 * @param state state
+	 * @param isInitial
+	 *            is the state initial?
+	 * @param isFinal
+	 *            is the state accepting?
+	 * @param state
+	 *            state
 	 */
 	protected final void addState(final boolean isInitial,
 			final boolean isFinal, final STATE state) {
@@ -284,9 +315,12 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * Adds a state from a collection of states.
 	 * 
-	 * @param isInitial is the state initial?
-	 * @param isFinal is the state accepting?
-	 * @param oldStates collection of states
+	 * @param isInitial
+	 *            is the state initial?
+	 * @param isFinal
+	 *            is the state accepting?
+	 * @param oldStates
+	 *            collection of states
 	 * @return new state (automatically added to the result)
 	 */
 	protected final STATE addState(final boolean isInitial,
@@ -300,9 +334,12 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * Adds an internal transition.
 	 * 
-	 * @param pred predecessor
-	 * @param letter letter
-	 * @param succ successor
+	 * @param pred
+	 *            predecessor
+	 * @param letter
+	 *            letter
+	 * @param succ
+	 *            successor
 	 */
 	protected final void addInternalTransition(final STATE pred,
 			final LETTER letter, final STATE succ) {
@@ -312,9 +349,12 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * Adds a call transition.
 	 * 
-	 * @param pred predecessor
-	 * @param letter letter
-	 * @param succ successor
+	 * @param pred
+	 *            predecessor
+	 * @param letter
+	 *            letter
+	 * @param succ
+	 *            successor
 	 */
 	protected final void addCallTransition(final STATE pred,
 			final LETTER letter, final STATE succ) {
@@ -324,10 +364,14 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * Adds a return transition.
 	 * 
-	 * @param pred predecessor
-	 * @param hier hierarchical predecessor
-	 * @param letter letter
-	 * @param succ successor
+	 * @param pred
+	 *            predecessor
+	 * @param hier
+	 *            hierarchical predecessor
+	 * @param letter
+	 *            letter
+	 * @param succ
+	 *            successor
 	 */
 	protected final void addReturnTransition(final STATE pred,
 			final STATE hier, final LETTER letter, final STATE succ) {
@@ -337,7 +381,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * Finishes construction of result (must be called last).
 	 * 
-	 * @param oldState2newState map 'old state -> new state'
+	 * @param oldState2newState
+	 *            map 'old state -> new state'
 	 */
 	protected final void finishResultConstruction(
 			final Map<STATE, STATE> oldState2newState,
@@ -360,18 +405,14 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 */
 	@SuppressWarnings("squid:S1698")
 	private void constructDoubleDeckerInformation() {
-		assert (mTemporaryResult instanceof DoubleDeckerAutomaton) :
-			"The result must be a DoubleDeckerAutomaton.";
+		assert (mTemporaryResult instanceof DoubleDeckerAutomaton) : "The result must be a DoubleDeckerAutomaton.";
 		final DoubleDeckerAutomaton<LETTER, STATE> result =
 				(DoubleDeckerAutomaton<LETTER, STATE>) mTemporaryResult;
-		assert (mOperand instanceof IDoubleDeckerAutomaton) :
-			"The operand must be an IDoubleDeckerAutomaton.";
+		assert (mOperand instanceof IDoubleDeckerAutomaton) : "The operand must be an IDoubleDeckerAutomaton.";
 		final IDoubleDeckerAutomaton<LETTER, STATE> operand =
 				(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand;
-		assert (! result.up2DownIsSet()) :
-			"The down state map was already set.";
-		assert (mOldState2NewState != null) :
-			"Need the mapping for construction.";
+		assert (!result.up2DownIsSet()) : "The down state map was already set.";
+		assert (mOldState2NewState != null) : "Need the mapping for construction.";
 		
 		final Map<STATE, Map<STATE, ReachFinal>> up2Down = new HashMap<>();
 		result.setUp2Down(up2Down);
@@ -412,7 +453,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * Setter for map 'old state -> new state'.
 	 * 
-	 * @param oldState2newState map 'old state -> new state'
+	 * @param oldState2newState
+	 *            map 'old state -> new state'
 	 */
 	protected final void setOld2NewStateMap(
 			final Map<STATE, STATE> oldState2newState) {
@@ -427,11 +469,11 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	}
 	
 	/* ------ other helper methods ------ */
-
+	
 	/**
 	 * This method checks whether the input automaton is a DFA.
-	 * 
-	 * <p>That means the automaton must be deterministic and must not contain
+	 * <p>
+	 * That means the automaton must be deterministic and must not contain
 	 * any call and return transitions.
 	 * 
 	 * @return true iff input automaton is a DFA
@@ -441,7 +483,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	protected final boolean isDfa() throws AutomataLibraryException {
 		return (isDeterministic() && isFiniteAutomaton());
 	}
-
+	
 	/**
 	 * This method checks whether the input automaton is deterministic.
 	 * 
@@ -453,15 +495,15 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 			throws AutomataLibraryException {
 		return new IsDeterministic<LETTER, STATE>(mServices, mOperand).getResult();
 	}
-
+	
 	/**
 	 * This method checks whether the automaton is a finite automaton.
 	 * That means it must not contain any call and return letter.
-	 * 
-	 * <p>NOTE: Return transitions would not do any harm when no call
+	 * <p>
+	 * NOTE: Return transitions would not do any harm when no call
 	 * transitions exist, but they are considered bad nevertheless.
-	 * 
-	 * <p>NOTE: The method checks something stronger, namely that the respective
+	 * <p>
+	 * NOTE: The method checks something stronger, namely that the respective
 	 * alphabets are empty.
 	 * 
 	 * @return true iff automaton contains no call and return letters
@@ -470,7 +512,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 		return ((mOperand.getCallAlphabet().size() == 0)
 				&& (mOperand.getReturnAlphabet().size() == 0));
 	}
-
+	
 	/**
 	 * This method throws an exception iff the operation should be terminated.
 	 * 
@@ -483,7 +525,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 	}
-
+	
 	/**
 	 * This method computes the capacity size for hash sets and hash maps given
 	 * the expected number of elements to avoid resizing.

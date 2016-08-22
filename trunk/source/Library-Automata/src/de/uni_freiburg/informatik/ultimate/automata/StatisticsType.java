@@ -49,4 +49,20 @@ public enum StatisticsType {
 	 * Total runtime.
 	 */
 	RUNTIME_TOTAL,
+	/**
+	 * Number of states in the input.
+	 */
+	STATES_INPUT,
+	/**
+	 * Number of states in the input.
+	 */
+	STATES_OUTPUT,
+	/**
+	 * Absolute difference in the number of states between input and output.
+	 */
+	STATES_REDUCTION_ABSOLUTE,
+	/**
+	 * Relative difference in the number of states between input and output.
+	 */
+	STATES_REDUCTION_RELATIVE,
 }
