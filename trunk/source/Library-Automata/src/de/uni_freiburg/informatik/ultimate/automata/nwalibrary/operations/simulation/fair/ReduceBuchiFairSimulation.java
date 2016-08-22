@@ -40,9 +40,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.StringFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchi.TestBuchiEquivalence;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomDfa;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.TestBuchiEquivalence;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomDfa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;

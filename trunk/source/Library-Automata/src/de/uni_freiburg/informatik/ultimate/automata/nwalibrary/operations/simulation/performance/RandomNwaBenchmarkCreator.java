@@ -34,9 +34,9 @@ import java.util.Date;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Analyze.ESymbolType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.ESymbolType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 
 /**

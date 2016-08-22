@@ -29,14 +29,14 @@ package de.uni_freiburg.informatik.ultimate.automata;
 
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.AAToUltimateModel;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.NwaToUltimateModel;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.TreeAutomatonToUltimateModel;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.AAToUltimateModel;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.PetriNetToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.tree.visualization.TreeAutomatonToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**

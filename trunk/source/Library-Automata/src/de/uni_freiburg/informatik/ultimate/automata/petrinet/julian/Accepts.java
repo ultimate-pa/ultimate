@@ -139,7 +139,7 @@ public class Accepts<S, C>
 
 		final NestedWord<S> nw = NestedWord.nestedWord(mWord);
 		final boolean resultAutomata =
-				(new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts<S, C>(
+				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts<S, C>(
 						mServices,
 						(new PetriNet2FiniteAutomaton<S, C>(mServices, mOperand)).getResult(),
 						nw)).getResult();

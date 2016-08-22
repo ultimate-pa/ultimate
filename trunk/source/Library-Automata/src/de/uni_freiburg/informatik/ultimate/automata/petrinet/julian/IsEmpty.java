@@ -82,7 +82,7 @@ public class IsEmpty<LETTER,STATE>
 		final INestedWordAutomaton<LETTER, STATE> finiteAutomaton =
 				(new PetriNet2FiniteAutomaton<>(mServices, mOperand)).getResult();
 		final boolean automatonEmpty =
-				(new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty<LETTER, STATE>(
+				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty<LETTER, STATE>(
 						mServices, finiteAutomaton)).getResult();
 		return (mResult == automatonEmpty);
 	}

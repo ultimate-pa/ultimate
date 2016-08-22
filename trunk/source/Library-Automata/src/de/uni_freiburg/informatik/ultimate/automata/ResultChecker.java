@@ -34,17 +34,17 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchi.BuchiAccepts;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchi.BuchiIsIncluded;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchi.NestedLassoRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchi.NestedLassoWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomNestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.oldapi.DifferenceDD;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -310,7 +310,7 @@ public final class ResultChecker {
 	
 	/**
 	 * @deprecated unused legacy code; use
-	 *             #{@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded}
+	 *             #{@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded}
 	 *             directly if possible
 	 */
 	@Deprecated

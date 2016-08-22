@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.StringFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwa;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
