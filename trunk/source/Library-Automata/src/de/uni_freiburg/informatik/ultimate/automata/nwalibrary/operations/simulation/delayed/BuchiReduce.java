@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.TestBuchiEquivalence;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchi.TestBuchiEquivalence;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**

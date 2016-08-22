@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult.OverallResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
@@ -1181,7 +1181,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 						statistics.addKeyValuePair(StatisticsType.ATS_ID, oe.getAsString());
 						statistics.addKeyValuePair(StatisticsType.OPERATION_NAME, oe.getOperationName());
 						statistics.addKeyValuePair(StatisticsType.RUNTIME_TOTAL, timer.checkTime());
-						final BenchmarkResult<?> br = new BenchmarkResult<>(Activator.PLUGIN_ID, "automata script interpreter benchmark results", statistics);
+						final BenchmarkResult<?> br = new BenchmarkResult<>(Activator.PLUGIN_ID,
+								"automata script interpreter benchmark results", statistics);
 						mServices.getResultService().reportResult(Activator.PLUGIN_ID, br);
 					}
 					assert op.checkResult(new StringFactory()) : "Result of operation " + op.operationName()
@@ -1827,9 +1828,11 @@ public class TestFileInterpreter implements IMessagePrinter {
 	
 	public static class SimpleTimer {
 		long mStartTime;
+		
 		public SimpleTimer() {
 			mStartTime = System.nanoTime();
 		}
+		
 		public long checkTime() {
 			return System.nanoTime() - mStartTime;
 		}
