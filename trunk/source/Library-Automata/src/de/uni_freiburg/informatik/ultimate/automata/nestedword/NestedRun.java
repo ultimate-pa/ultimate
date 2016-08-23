@@ -33,12 +33,12 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 /**
  * A run over a nested word.
  * 
- * @see NestedWord
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
  * @param <STATE>
  *            state type
+ * @see NestedWord
  */
 public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 	
