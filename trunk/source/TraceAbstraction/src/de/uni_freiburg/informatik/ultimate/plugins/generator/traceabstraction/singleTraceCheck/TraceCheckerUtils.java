@@ -35,7 +35,6 @@ import java.util.SortedMap;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
@@ -58,20 +57,6 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  *
  */
 public class TraceCheckerUtils {
-	
-	/**
-	 * Returns true for {@link Sorts} for which we can obtain values.
-	 * E.g. for arrays we cannot get values that our analysis can process, 
-	 * since arrays are infinite in general. However, if the range Sort of an
-	 * array is bitvector sort we can get values for array cells 
-	 * (resp. the corresponding select term).
-	 */
-	public static boolean isSortForWhichWeCanGetValues(final Sort sort) {
-		return sort.isNumericSort()
-				|| sort.getRealSort().getName().equals("Bool")
-				|| sort.getRealSort().getName().equals("BitVec")
-				|| sort.getRealSort().getName().equals("FloatingPoint");
-	}
 	
 	/**
 	 * Given a trace cb_0,...,cb_n returns the sequence of ProgramPoints 

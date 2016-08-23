@@ -52,8 +52,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -572,7 +570,7 @@ public class TraceChecker {
 			}
 		}
 		for (final IProgramVar bv : nsb.getIndexedVarRepresentative().keySet()) {
-			if (TraceCheckerUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
+			if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
 				for (final Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
 					final Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);
 					Term valueT = getValue(indexedVar);
@@ -596,21 +594,7 @@ public class TraceChecker {
 	}
 
 	private Term getValue(final Term term) {
-		final Term[] arr = { term };
-		final Map<Term, Term> map = mTcSmtManager.getScript().getValue(arr);
-		final Term value = map.get(term);
-		/*
-		 * Some solvers, e.g., Z3 return -1 not as a literal but as a unary minus of a positive literal. We use our
-		 * affine term to obtain the negative literal.
-		 */
-		final AffineTerm affineTerm = (AffineTerm) (new AffineTermTransformer(mTcSmtManager.getScript()))
-				.transform(value);
-		if (affineTerm.isErrorTerm()) {
-			return value;
-		} else {
-			return affineTerm.toTerm(mTcSmtManager.getScript());
-		}
-
+		return SmtUtils.getValues(mTcSmtManager.getScript(), Collections.singleton(term)).get(term);
 	}
 
 	private Boolean getBooleanValue(final Term term) {

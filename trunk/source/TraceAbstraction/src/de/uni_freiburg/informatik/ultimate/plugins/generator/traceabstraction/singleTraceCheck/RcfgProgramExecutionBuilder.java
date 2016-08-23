@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
@@ -151,7 +152,7 @@ public class RcfgProgramExecutionBuilder {
 		final Map<IProgramVar, Expression> result = new HashMap<IProgramVar, Expression>();
 		final Set<IProgramVar> vars = mRelevantVariables.getForwardRelevantVariables()[position + 1];
 		for (final IProgramVar bv : vars) {
-			if (TraceCheckerUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
+			if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
 				final int assignPos = indexWhereVarWasAssignedTheLastTime(bv, position);
 				final Expression value = mvar2pos2value.get(bv).get(assignPos);
 				assert value != null;
