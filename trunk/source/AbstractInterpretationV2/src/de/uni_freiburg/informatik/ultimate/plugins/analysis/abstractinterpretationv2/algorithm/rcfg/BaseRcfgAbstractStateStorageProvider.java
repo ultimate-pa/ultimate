@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, LOCATION, VARDECL>
-		implements IAbstractStateStorage<STATE, CodeBlock, VARDECL, LOCATION> {
+        implements IAbstractStateStorage<STATE, CodeBlock, VARDECL, LOCATION> {
 
 	private final IAbstractStateBinaryOperator<STATE> mMergeOperator;
 	private final IUltimateServiceProvider mServices;
@@ -64,7 +64,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	private final ITransitionProvider<CodeBlock, LOCATION> mTransProvider;
 
 	public BaseRcfgAbstractStateStorageProvider(final IAbstractStateBinaryOperator<STATE> mergeOperator,
-			final IUltimateServiceProvider services, final ITransitionProvider<CodeBlock, LOCATION> transProvider) {
+	        final IUltimateServiceProvider services, final ITransitionProvider<CodeBlock, LOCATION> transProvider) {
 		assert mergeOperator != null;
 		assert services != null;
 		assert transProvider != null;
@@ -125,7 +125,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 
 	@Override
 	public List<STATE> widenPostState(final CodeBlock transition, final IAbstractStateBinaryOperator<STATE> wideningOp,
-			final STATE operand) {
+	        final STATE operand) {
 		assert transition != null;
 		final Deque<STATE> states = getPostStates(transition);
 		final Iterator<STATE> iterator = states.iterator();
@@ -150,7 +150,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 
 	@Override
 	public Map<LOCATION, Term> getLoc2Term(final CodeBlock initialTransition, final Script script,
-			final Boogie2SMT bpl2smt) {
+	        final Boogie2SMT bpl2smt) {
 		// TODO: What shall we do about different scopes? Currently, states at the same location are merged and later
 		// converted to terms. This leads to loss of precision, so that tools relying on those terms cannot prove
 		// absence of errors with the terms alone, even if AI was able to prove it.
@@ -159,15 +159,17 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	@Override
-	public Map<LOCATION, Deque<STATE>> getLoc2States(final CodeBlock initialTransition) {
-		return getStatesOfAllChildren(initialTransition);
+	public Map<LOCATION, Set<STATE>> getLoc2States(final CodeBlock initialTransition) {
+		final Map<LOCATION, Set<STATE>> states = getStatesOfAllChildren(initialTransition);
+		return states.entrySet().stream().filter(e -> e.getValue() != null && !e.getValue().isEmpty())
+		        .collect(Collectors.toMap(e -> e.getKey(), v -> v.getValue()));
 	}
-	
+
 	@Override
 	public Map<LOCATION, STATE> getLoc2SingleStates(final CodeBlock initialTransition) {
 		final Map<LOCATION, StateDecorator> states = getMergedStatesOfAllChildren(initialTransition);
 		return states.entrySet().stream().filter(e -> e.getValue().mState != null)
-				.collect(Collectors.toMap(Map.Entry::getKey, decorator -> decorator.getValue().mState));
+		        .collect(Collectors.toMap(Map.Entry::getKey, decorator -> decorator.getValue().mState));
 	}
 
 	@Override
@@ -184,6 +186,14 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		Map<LOCATION, StateDecorator> states = getMergedLocalStates(initialTransition);
 		for (final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> child : mChildStores) {
 			states = mergeMaps(states, child.getMergedStatesOfAllChildren(initialTransition));
+		}
+		return states;
+	}
+	
+	private Map<LOCATION, Set<STATE>> getStatesOfAllChildren(final CodeBlock initialTransition) {
+		Map<LOCATION, Set<STATE>> states = getLocalStates(initialTransition);
+		for (final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> child : mChildStores) {
+			states = mergeStatesMaps(states, child.getStatesOfAllChildren(initialTransition));
 		}
 		return states;
 	}
@@ -231,45 +241,44 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		}
 		return rtr;
 	}
-	
-	private Map<LOCATION, Deque<STATE>> getStatesOfAllChildren(final CodeBlock initialTransition) {
-		final Map<LOCATION, Deque<STATE>> rtr = new HashMap<>();
+
+	private Map<LOCATION, Set<STATE>> getLocalStates(final CodeBlock initialTransition) {
+		final Map<LOCATION, Set<STATE>> rtr = new HashMap<>();
 		final Deque<CodeBlock> worklist = new ArrayDeque<>();
 		final Set<CodeBlock> closed = new HashSet<>();
-		
+
 		worklist.add(initialTransition);
-		
+
 		while (!worklist.isEmpty()) {
 			final CodeBlock current = worklist.remove();
-			
+
 			if (!closed.add(current)) {
 				continue;
 			}
-			
+
 			final LOCATION postLoc = mTransProvider.getTarget(current);
-			
+
 			for (final CodeBlock outgoing : mTransProvider.getSuccessorActions(postLoc)) {
 				if (!(outgoing instanceof CodeBlock)) {
 					continue;
 				}
 				worklist.add(outgoing);
 			}
-			
-			Deque<STATE> alreadyKnownStates = rtr.get(postLoc);
+
+			Set<STATE> alreadyKnownStates = rtr.get(postLoc);
 			if (alreadyKnownStates == null) {
-				alreadyKnownStates = new ArrayDeque<>();
+				alreadyKnownStates = new HashSet<>();
 				rtr.put(postLoc, alreadyKnownStates);
 			}
-			
+
 			final Deque<STATE> states = getPostStates(current);
 			alreadyKnownStates.addAll(states);
-			// TODO: Add only states that are new to the list.
 		}
 		return rtr;
 	}
 
 	private Set<Term> getLocalTerms(final CodeBlock initialTransition, final Script script, final Boogie2SMT bpl2smt,
-			final Set<Term> terms) {
+	        final Set<Term> terms) {
 		final Deque<CodeBlock> worklist = new ArrayDeque<>();
 		final Set<CodeBlock> closed = new LinkedHashSet<>();
 
@@ -310,7 +319,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	private Map<LOCATION, StateDecorator> mergeMaps(final Map<LOCATION, StateDecorator> a,
-			final Map<LOCATION, StateDecorator> b) {
+	        final Map<LOCATION, StateDecorator> b) {
 		final Map<LOCATION, StateDecorator> rtr = new HashMap<>();
 
 		for (final Entry<LOCATION, StateDecorator> entryA : a.entrySet()) {
@@ -333,9 +342,39 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 
 		return rtr;
 	}
+	
+	private Map<LOCATION, Set<STATE>> mergeStatesMaps(final Map<LOCATION, Set<STATE>> a,
+			final Map<LOCATION, Set<STATE>> b) {
+		final Map<LOCATION, Set<STATE>> rtr = new HashMap<>();
+		
+		for (final Entry<LOCATION, Set<STATE>> entryA : a.entrySet()) {
+			final Set<STATE> val = b.get(entryA.getKey());
+			if (val == null) {
+				rtr.put(entryA.getKey(), entryA.getValue());
+			} else {
+				// Clone the entry set to stay immutable, at least on set-level (note that entries are still mutable)
+				final Set<STATE> newSet = new HashSet<>();
+				newSet.addAll(val);
+				
+				entryA.getValue().forEach(v -> newSet.add(v));
+				rtr.put(entryA.getKey(), newSet);
+			}
+		}
+		
+		for (final Entry<LOCATION, Set<STATE>> entryB : b.entrySet()) {
+			final Set<STATE> val = a.get(entryB.getKey());
+			if (val == null) {
+				rtr.put(entryB.getKey(), entryB.getValue());
+			} else {
+				// First loop should have handled this case already.
+			}
+		}
+		
+		return rtr;
+	}
 
 	private Map<LOCATION, Term> convertStates2Terms(final Map<LOCATION, StateDecorator> states, final Script script,
-			final Boogie2SMT bpl2smt) {
+	        final Boogie2SMT bpl2smt) {
 		final Map<LOCATION, Term> rtr = new HashMap<>();
 
 		for (final Entry<LOCATION, StateDecorator> entry : states.entrySet()) {
@@ -389,6 +428,11 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 				return other;
 			}
 			return new StateDecorator(mMergeOperator.apply(mState, other.mState));
+		}
+
+		@Override
+		public String toString() {
+			return mState == null ? "null" : "\"" + mState.toLogString() + "\"";
 		}
 	}
 }

@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool;
 
-import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,7 +26,7 @@ public interface IAbstractInterpretationResult<STATE extends IAbstractState<STAT
 	 * @return a {@link Map} mapping each location that was reachable during the analysis of the computed fixpoint to
 	 *         the corresponding abstract states.
 	 */
-	Map<LOCATION, Deque<STATE>> getLoc2States();
+	Map<LOCATION, Set<STATE>> getLoc2States();
 
 	/**
 	 * @return a {@link Map} mapping each location that was reachable during the analysis of the computed fixpoint to

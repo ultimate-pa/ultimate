@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,7 +30,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	private final List<AbstractCounterexample<STATE, ACTION, VARDECL, LOCATION>> mCounterexamples;
 	private final AbstractInterpretationBenchmark<ACTION, LOCATION> mBenchmark;
 	private final Map<LOCATION, Term> mLoc2Term;
-	private final Map<LOCATION, Deque<STATE>> mLoc2States;
+	private final Map<LOCATION, Set<STATE>> mLoc2States;
 	private final Map<LOCATION, STATE> mLoc2SingleStates;
 	private final Set<Term> mTerms;
 
@@ -84,7 +83,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	}
 
 	@Override
-	public Map<LOCATION, Deque<STATE>> getLoc2States() {
+	public Map<LOCATION, Set<STATE>> getLoc2States() {
 		return mLoc2States;
 	}
 	

@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  */
 public class AbsIntStraightLineInterpolantAutomatonBuilder
-		implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
+        implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
 
 	private static final long PRINT_PREDS_LIMIT = 30;
 
@@ -48,11 +48,11 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 	private final IRun<CodeBlock, IPredicate> mCurrentCounterExample;
 
 	public AbsIntStraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
-			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
-			final PredicateUnifier predUnifier, final SmtManager smtManager,
-			final IRun<CodeBlock, IPredicate> currentCounterExample,
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
+	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
+	        final PredicateUnifier predUnifier, final SmtManager smtManager,
+	        final IRun<CodeBlock, IPredicate> currentCounterExample,
+	        final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSmtManager = smtManager;
@@ -66,15 +66,15 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> constructAutomaton(
-			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
-			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
-			final PredicateUnifier predicateUnifier) {
+	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
+	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
+	        final PredicateUnifier predicateUnifier) {
 
 		mLogger.info("Creating automaton from AI predicates.");
 
 		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<CodeBlock, IPredicate>(
-				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
-				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
+		        new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
+		        oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
 
 		final NestedRun<CodeBlock, IPredicate> cex = (NestedRun<CodeBlock, IPredicate>) mCurrentCounterExample;
 		final Word<CodeBlock> word = cex.getWord();
@@ -93,14 +93,27 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 		for (int i = 0; i < wordlength; i++) {
 			final CodeBlock symbol = word.getSymbol(i);
 
-			final IAbstractState<?, ?, ?> nextState = aiResult.getLoc2SingleStates().get(symbol.getTarget());
-			final IPredicate target;
+			@SuppressWarnings("unchecked")
+			final Set<IAbstractState<?, ?, ?>> nextStates = (Set<IAbstractState<?, ?, ?>>) aiResult.getLoc2States()
+			        .get(symbol.getTarget());
 
-			if (nextState == null) {
+			final IPredicate target;
+			if (nextStates == null) {
 				target = falsePredicate;
 			} else {
-				target = predicateUnifier.getOrConstructPredicate(
-						nextState.getTerm(mSmtManager.getScript(), mSmtManager.getBoogie2Smt()));
+				target = predicateUnifier.getOrConstructPredicateForDisjunction(
+				        nextStates.stream().map(s -> s.getTerm(mSmtManager.getScript(), mSmtManager.getBoogie2Smt()))
+				                .map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
+
+				if (mLogger.isDebugEnabled()) {
+					if (i == 0) {
+						mLogger.debug("------------------------------------------------");
+					}
+					mLogger.debug("Transition: " + symbol);
+					mLogger.debug("Original Target States: " + nextStates);
+					mLogger.debug("Target Term: " + target);
+					mLogger.debug("------------------------------------------------");
+				}
 			}
 
 			if (alreadyThereAsState.add(target)) {
@@ -132,12 +145,12 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 
 		if (PRINT_PREDS_LIMIT < alreadyThereAsState.size()) {
 			mLogger.info("Using "
-					+ alreadyThereAsState.size() + " predicates from AI: " + String.join(",", alreadyThereAsState
-							.stream().limit(PRINT_PREDS_LIMIT).map(a -> a.toString()).collect(Collectors.toList()))
-					+ "...");
+			        + alreadyThereAsState.size() + " predicates from AI: " + String.join(",", alreadyThereAsState
+			                .stream().limit(PRINT_PREDS_LIMIT).map(a -> a.toString()).collect(Collectors.toList()))
+			        + "...");
 		} else {
 			mLogger.info("Using " + alreadyThereAsState.size() + " predicates from AI: " + String.join(",",
-					alreadyThereAsState.stream().map(a -> a.toString()).collect(Collectors.toList())));
+			        alreadyThereAsState.stream().map(a -> a.toString()).collect(Collectors.toList())));
 		}
 
 		return result;
