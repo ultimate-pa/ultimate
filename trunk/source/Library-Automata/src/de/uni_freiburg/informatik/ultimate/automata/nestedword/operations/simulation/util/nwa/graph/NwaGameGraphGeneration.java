@@ -1386,7 +1386,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			final GameSpoilerNwaVertex<LETTER, STATE> gameNwaVertex = new GameSpoilerNwaVertex<>(spoilerNwaVertex);
 
 			final Iterable<SummaryReturnTransition<GameLetter<LETTER, STATE>, IGameState>> summariesOfSource = gameAutomatonWithSummaries
-					.returnSummarySuccessor(gameNwaVertex);
+					.summarySuccessors(gameNwaVertex);
 			if (summariesOfSource.iterator().hasNext()) {
 				summarySources.add(gameNwaVertex);
 			}
@@ -1450,7 +1450,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			boolean runsInDuplicatorDeadEnd = false;
 			// Collect all summarize edges
 			for (final SummaryReturnTransition<GameLetter<LETTER, STATE>, IGameState> summary : gameAutomatonWithMergedSummaries
-					.returnSummarySuccessor(mergedSummarySourceAsGameState)) {
+					.summarySuccessors(mergedSummarySourceAsGameState)) {
 				final IGameState summaryDestinationAsGameState = summary.getSucc();
 				final GameDoubleDeckerSet summaryDestinationAsDD = (GameDoubleDeckerSet) summaryDestinationAsGameState;
 				final Set<IGameState> summaryDestinationUpStates = summaryDestinationAsDD.getUpStates(emptyStackState);

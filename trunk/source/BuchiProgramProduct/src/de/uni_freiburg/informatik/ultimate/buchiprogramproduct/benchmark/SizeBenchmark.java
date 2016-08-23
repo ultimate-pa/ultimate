@@ -66,7 +66,7 @@ public class SizeBenchmark implements ICsvProviderProvider<Integer> {
 			for (final OutgoingReturnTransition<E, V> out : nwa.returnSuccessors(state)) {
 				++edges;
 			}
-			for (final SummaryReturnTransition<E, V> out : nwa.returnSummarySuccessor(state)) {
+			for (final SummaryReturnTransition<E, V> out : nwa.summarySuccessors(state)) {
 				++edges;
 			}
 		}

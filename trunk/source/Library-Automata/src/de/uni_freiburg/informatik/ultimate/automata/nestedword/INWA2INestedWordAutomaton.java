@@ -136,20 +136,20 @@ public class INWA2INestedWordAutomaton<LETTER, STATE>
 	}
 
 	@Override
-	public Set<LETTER> lettersReturnSummary(final STATE state) {
-		return mNwa.lettersReturnSummary(state);
+	public Set<LETTER> lettersSummary(final STATE state) {
+		return mNwa.lettersSummary(state);
 	}
 
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(
 			final STATE hier, final LETTER letter) {
-		return mNwa.returnSummarySuccessor(hier, letter);
+		return mNwa.summarySuccessors(hier, letter);
 	}
 	
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(
 			final STATE hier) {
-		return mNwa.returnSummarySuccessor(hier);
+		return mNwa.summarySuccessors(hier);
 	}
 
 	@Override
@@ -253,7 +253,7 @@ public class INWA2INestedWordAutomaton<LETTER, STATE>
 	}
 
 	@Override
-	public Iterable<STATE> hierPred(final STATE state, final LETTER letter) {
+	public Iterable<STATE> hierarchicalPredecessorsOutgoing(final STATE state, final LETTER letter) {
 		// TODO Auto-generated method stub
 		return null;
 	}

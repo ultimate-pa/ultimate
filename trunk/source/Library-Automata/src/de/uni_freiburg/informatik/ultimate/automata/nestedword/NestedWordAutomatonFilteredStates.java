@@ -257,9 +257,9 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE>
 	}
 	
 	@Override
-	public Set<LETTER> lettersReturnSummary(final STATE state) {
+	public Set<LETTER> lettersSummary(final STATE state) {
 		final Set<LETTER> letters = new HashSet<LETTER>();
-		for (final SummaryReturnTransition<LETTER, STATE> outTrans : returnSummarySuccessor(state)) {
+		for (final SummaryReturnTransition<LETTER, STATE> outTrans : summarySuccessors(state)) {
 			letters.add(outTrans.getLetter());
 		}
 		return letters;
@@ -281,7 +281,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE>
 	}
 	
 	@Override
-	public Iterable<STATE> hierPred(final STATE state, final LETTER letter) {
+	public Iterable<STATE> hierarchicalPredecessorsOutgoing(final STATE state, final LETTER letter) {
 		final Set<STATE> result = new HashSet<STATE>();
 		for (final OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessors(state, letter)) {
 			if (mRemainingStates.contains(outTrans.getHierPred()) && mRemainingStates.contains(outTrans.getSucc())) {
@@ -502,19 +502,19 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE>
 	}
 	
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(
 			final STATE hier, final LETTER letter) {
 		final IPredicate<SummaryReturnTransition<LETTER, STATE>> predicate =
 				mTransitionFilter.getReturnSummaryPredicate();
 		return new FilteredIterable<SummaryReturnTransition<LETTER, STATE>>(
-				mNwa.returnSummarySuccessor(hier, letter), predicate);
+				mNwa.summarySuccessors(hier, letter), predicate);
 	}
 	
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(final STATE hier) {
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier) {
 		final IPredicate<SummaryReturnTransition<LETTER, STATE>> predicate =
 				mTransitionFilter.getReturnSummaryPredicate();
-		return new FilteredIterable<SummaryReturnTransition<LETTER, STATE>>(mNwa.returnSummarySuccessor(hier),
+		return new FilteredIterable<SummaryReturnTransition<LETTER, STATE>>(mNwa.summarySuccessors(hier),
 				predicate);
 	}
 	

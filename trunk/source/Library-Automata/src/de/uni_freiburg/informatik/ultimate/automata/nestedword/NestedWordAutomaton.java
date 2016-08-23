@@ -314,7 +314,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 	}
 	
 	@Override
-	public Set<LETTER> lettersReturnSummary(final STATE state) {
+	public Set<LETTER> lettersSummary(final STATE state) {
 		if (!contains(state)) {
 			throw new IllegalArgumentException("State " + state + " unknown");
 		}
@@ -367,7 +367,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 	}
 	
 	@Override
-	public Set<STATE> hierPred(final STATE state, final LETTER letter) {
+	public Set<STATE> hierarchicalPredecessorsOutgoing(final STATE state, final LETTER letter) {
 		assert contains(state);
 		final Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnOut.get(state);
 		if (map == null) {
@@ -422,7 +422,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 	}
 	
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(final STATE hier,
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier,
 			final LETTER letter) {
 		final Set<SummaryReturnTransition<LETTER, STATE>> result =
 				new HashSet<SummaryReturnTransition<LETTER, STATE>>();
@@ -450,7 +450,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 	}
 	
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(final STATE hier) {
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier) {
 		return new Iterable<SummaryReturnTransition<LETTER, STATE>>() {
 			/**
 			 * Iterates over all SummaryReturnTransition of hier.
@@ -464,7 +464,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 					private Iterator<SummaryReturnTransition<LETTER, STATE>> mCurrentIterator;
 					
 					{
-						mLetterIterator = lettersReturnSummary(hier).iterator();
+						mLetterIterator = lettersSummary(hier).iterator();
 						nextLetter();
 					}
 					
@@ -472,7 +472,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 						if (mLetterIterator.hasNext()) {
 							do {
 								mCurrentLetter = mLetterIterator.next();
-								mCurrentIterator = returnSummarySuccessor(hier, mCurrentLetter).iterator();
+								mCurrentIterator = summarySuccessors(hier, mCurrentLetter).iterator();
 							} while (!mCurrentIterator.hasNext() && mLetterIterator.hasNext());
 							if (!mCurrentIterator.hasNext()) {
 								mCurrentLetter = null;
@@ -1215,7 +1215,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 					private Iterator<OutgoingReturnTransition<LETTER, STATE>> mCurrentIterator;
 					
 					{
-						mHierIterator = hierPred(state, letter).iterator();
+						mHierIterator = hierarchicalPredecessorsOutgoing(state, letter).iterator();
 						nextHier();
 					}
 					
@@ -1497,7 +1497,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 		mCallIn.remove(state);
 		
 		for (final LETTER letter : lettersReturn(state)) {
-			for (final STATE hier : hierPred(state, letter)) {
+			for (final STATE hier : hierarchicalPredecessorsOutgoing(state, letter)) {
 				for (final STATE succ : succReturn(state, hier, letter)) {
 					removeReturnIn(state, hier, letter, succ);
 					removeReturnSummary(state, hier, letter, succ);
@@ -2246,7 +2246,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 				}
 			}
 			for (final LETTER symbol : lettersReturn(state)) {
-				for (final STATE hier : hierPred(state, symbol)) {
+				for (final STATE hier : hierarchicalPredecessorsOutgoing(state, symbol)) {
 					if (succReturn(state, hier, symbol).size() > 1) {
 						return false;
 					}
@@ -2324,7 +2324,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 				}
 			}
 			for (final LETTER symbol : lettersReturn(state)) {
-				for (final STATE hier : hierPred(state, symbol)) {
+				for (final STATE hier : hierarchicalPredecessorsOutgoing(state, symbol)) {
 					for (final STATE succ : succReturn(state, hier, symbol)) {
 						if (!getFinalStates().contains(succ)) {
 							worklist.add(succ);
@@ -2355,7 +2355,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 			}
 		}
 		for (final LETTER symbol : lettersReturn(state)) {
-			for (final STATE hier : hierPred(state, symbol)) {
+			for (final STATE hier : hierarchicalPredecessorsOutgoing(state, symbol)) {
 				for (final STATE succ : succReturn(state, hier, symbol)) {
 					if (!getFinalStates().contains(succ)) {
 						return false;

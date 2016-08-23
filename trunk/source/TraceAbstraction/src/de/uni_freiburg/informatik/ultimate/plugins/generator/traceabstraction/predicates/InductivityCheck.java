@@ -115,7 +115,7 @@ public class InductivityCheck {
 				}
 			}
 			for (final CodeBlock cb : nwa.lettersReturn(state)) {
-				for (final IPredicate hier : nwa.hierPred(state, cb)) {
+				for (final IPredicate hier : nwa.hierarchicalPredecessorsOutgoing(state, cb)) {
 					for (final OutgoingReturnTransition<CodeBlock, IPredicate> outTrans : nwa.returnSuccessors(state, hier,
 							cb)) {
 						final Validity inductivity = mHoareTripleChecker.checkReturn(state, hier, (IReturnAction) cb, outTrans.getSucc());

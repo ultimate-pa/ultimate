@@ -442,7 +442,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 							
 			final Iterator<StateContainer<LETTER, STATE>> returnSummaryTransitionsIterator =
 					getStateContainerIterator(new FilteredIterable<SummaryReturnTransition<LETTER, STATE>>(
-							mNestedWordAutomatonReachableStates.returnSummarySuccessor(
+							mNestedWordAutomatonReachableStates.summarySuccessors(
 									sc.getState()),
 							mTransitionFilter.getReturnSummaryPredicate()).iterator());
 							

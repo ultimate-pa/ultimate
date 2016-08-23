@@ -174,7 +174,7 @@ public class LineCoverageCalculator {
 				addCodeblock(rtr, open, nwa.callSuccessors(current));
 				addCodeblock(rtr, open, nwa.internalSuccessors(current));
 				addCodeblock(rtr, open, nwa.returnSuccessors(current));
-				addCodeblock(rtr, open, nwa.returnSummarySuccessor(current));
+				addCodeblock(rtr, open, nwa.summarySuccessors(current));
 			}
 		}
 		return rtr;

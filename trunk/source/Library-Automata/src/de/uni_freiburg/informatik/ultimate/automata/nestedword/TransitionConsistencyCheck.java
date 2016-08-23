@@ -94,7 +94,7 @@ public class TransitionConsistencyCheck<LETTER, STATE> {
 			assert result;
 		}
 		for (final LETTER letter : mNwa.getReturnAlphabet()) {
-			for (final SummaryReturnTransition<LETTER, STATE> t : mNwa.returnSummarySuccessor(state, letter)) {
+			for (final SummaryReturnTransition<LETTER, STATE> t : mNwa.summarySuccessors(state, letter)) {
 				result &= returnIn(t.getLinPred(), state, t.getLetter(), t.getSucc());
 				assert result;
 				result &= returnOut(t.getLinPred(), state, t.getLetter(), t.getSucc());
@@ -175,7 +175,7 @@ public class TransitionConsistencyCheck<LETTER, STATE> {
 	
 	private boolean returnSummary(final STATE state, final STATE hier,
 			final LETTER letter, final STATE succ) {
-		for (final SummaryReturnTransition<LETTER, STATE> t : mNwa.returnSummarySuccessor(hier, letter)) {
+		for (final SummaryReturnTransition<LETTER, STATE> t : mNwa.summarySuccessors(hier, letter)) {
 			final boolean contains = state.equals(t.getLinPred())
 					&& succ.equals(t.getSucc());
 			if (contains) {

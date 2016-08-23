@@ -166,7 +166,7 @@ public class IsSemiDeterministic<LETTER, STATE>
 		for (final OutgoingInternalTransition<LETTER, STATE> out : nwa.internalSuccessors(dd.getUp())) {
 			succs.add(new DoubleDecker<STATE>(dd.getDown(), out.getSucc()));
 		}
-		for (final SummaryReturnTransition<LETTER, STATE> out : nwa.returnSummarySuccessor(dd.getUp())) {
+		for (final SummaryReturnTransition<LETTER, STATE> out : nwa.summarySuccessors(dd.getUp())) {
 			succs.add(new DoubleDecker<STATE>(dd.getDown(), out.getSucc()));
 		}
 		for (final OutgoingReturnTransition<LETTER, STATE> out : nwa.returnSuccessorsGivenHier(dd.getUp(),
@@ -184,7 +184,7 @@ public class IsSemiDeterministic<LETTER, STATE>
 		for (final OutgoingInternalTransition<LETTER, STATE> out : nwa.internalSuccessors(dd.getUp())) {
 			succs.add(new DoubleDecker<STATE>(dd.getDown(), out.getSucc()));
 		}
-		for (final SummaryReturnTransition<LETTER, STATE> out : nwa.returnSummarySuccessor(dd.getUp())) {
+		for (final SummaryReturnTransition<LETTER, STATE> out : nwa.summarySuccessors(dd.getUp())) {
 			succs.add(new DoubleDecker<STATE>(dd.getDown(), out.getSucc()));
 		}
 		for (final OutgoingCallTransition<LETTER, STATE> out : nwa.callSuccessors(dd.getUp())) {
@@ -250,7 +250,7 @@ public class IsSemiDeterministic<LETTER, STATE>
 	public static <LETTER, STATE> boolean isNondeterministicReturn(
 			final STATE state, final INestedWordAutomaton<LETTER, STATE> nwa) {
 		for (final LETTER letter : nwa.lettersReturn(state)) {
-			for (final STATE hier : nwa.hierPred(state, letter)) {
+			for (final STATE hier : nwa.hierarchicalPredecessorsOutgoing(state, letter)) {
 				int numberOfSuccs = 0;
 				for (@SuppressWarnings("unused")
 				final OutgoingReturnTransition<LETTER, STATE> out : nwa.returnSuccessors(state, hier, letter)) {

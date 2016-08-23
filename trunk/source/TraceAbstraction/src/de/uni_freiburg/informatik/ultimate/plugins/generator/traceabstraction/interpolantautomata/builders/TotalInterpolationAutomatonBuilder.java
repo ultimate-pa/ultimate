@@ -349,7 +349,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 		final SortedMap<Integer, IPredicate> result = new TreeMap<>();
 		for (final int pendingReturnPos : run.getWord().getPendingReturns().keySet()) {
 			final IPredicate linPred = run.getStateAtPosition(pendingReturnPos);
-			final Iterable<IPredicate> hierPreds = mAbstraction.hierPred(linPred, run.getSymbol(pendingReturnPos));
+			final Iterable<IPredicate> hierPreds = mAbstraction.hierarchicalPredecessorsOutgoing(linPred, run.getSymbol(pendingReturnPos));
 			final IPredicate hierPred = getSomeAnnotatedState(hierPreds);
 			if (hierPred == null) {
 				throw new AssertionError("found nothing");

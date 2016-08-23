@@ -832,7 +832,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 			}
 		}
 		for (final LETTER symbol : mTraversedNwa.lettersReturn(state)) {
-			for (final STATE hier : mTraversedNwa.hierPred(state, symbol)) {
+			for (final STATE hier : mTraversedNwa.hierarchicalPredecessorsOutgoing(state, symbol)) {
 				if (mTraversedNwa.returnSuccessors(state, hier, symbol).iterator().hasNext()) {
 					return true;
 				}

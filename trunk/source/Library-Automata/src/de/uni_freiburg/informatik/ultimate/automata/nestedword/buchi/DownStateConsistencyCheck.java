@@ -172,7 +172,7 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 				// nothing to check, we cannot take this transition
 			}
 		}
-		for (final SummaryReturnTransition<LETTER, STATE> t : mOperand.returnSummarySuccessor(state)) {
+		for (final SummaryReturnTransition<LETTER, STATE> t : mOperand.summarySuccessors(state)) {
 			final Set<STATE> succDownStates = mOperand.getDownStates(t.getSucc());
 			result &= succDownStates.containsAll(downStates);
 			assert result : "down states inconsistent";

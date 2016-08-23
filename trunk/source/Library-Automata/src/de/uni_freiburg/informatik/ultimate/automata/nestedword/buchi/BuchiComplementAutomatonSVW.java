@@ -481,7 +481,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 	}
 	
 	@Override
-	public Set<LETTER> lettersReturnSummary(final STATE state) {
+	public Set<LETTER> lettersSummary(final STATE state) {
 		return new HashSet<LETTER>(0);
 	}
 	
@@ -491,7 +491,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 	}
 	
 	@Override
-	public Collection<STATE> hierPred(final STATE state, final LETTER letter) {
+	public Collection<STATE> hierarchicalPredecessorsOutgoing(final STATE state, final LETTER letter) {
 		throw new UnsupportedOperationException(mUnsupportedOperationMessage);
 	}
 	
@@ -506,13 +506,13 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 	}
 	
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(final STATE hier,
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier,
 			final LETTER letter) {
 		throw new UnsupportedOperationException(mUnsupportedOperationMessage);
 	}
 	
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(
 			final STATE hier) {
 		// TODO Auto-generated method stub
 		return null;

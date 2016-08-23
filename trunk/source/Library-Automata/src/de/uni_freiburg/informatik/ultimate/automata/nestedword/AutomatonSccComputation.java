@@ -148,7 +148,7 @@ public class AutomatonSccComputation<LETTER, STATE> {
 			final Iterator<STATE> returnSummaryTransitionsIterator =
 					getStateContainerIterator(
 							new FilteredIterable<SummaryReturnTransition<LETTER, STATE>>(
-									mOperand.returnSummarySuccessor(state),
+									mOperand.summarySuccessors(state),
 									mTransitionFilter.getReturnSummaryPredicate()).iterator());
 									
 			final Iterator<STATE> callTransitionsIterator =

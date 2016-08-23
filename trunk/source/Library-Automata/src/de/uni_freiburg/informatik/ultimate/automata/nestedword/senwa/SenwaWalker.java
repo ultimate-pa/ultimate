@@ -508,7 +508,7 @@ public class SenwaWalker<LETTER, STATE> {
 			}
 		}
 		for (final LETTER symbol : mTraversedSenwa.lettersReturn(state)) {
-			for (final STATE hier : mTraversedSenwa.hierPred(state, symbol)) {
+			for (final STATE hier : mTraversedSenwa.hierarchicalPredecessorsOutgoing(state, symbol)) {
 				if (!mTraversedSenwa.succReturn(state, hier, symbol).isEmpty()) {
 					return true;
 				}

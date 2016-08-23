@@ -1849,9 +1849,9 @@ public class MinimizeSevpa<LETTER, STATE>
 				}
 				
 				// successors via hierarchical edge
-				for (final LETTER letter : mParentOperand.lettersReturnSummary(state)) {
+				for (final LETTER letter : mParentOperand.lettersSummary(state)) {
 					final Iterable<SummaryReturnTransition<LETTER, STATE>> succs =
-							mParentOperand.returnSummarySuccessor(
+							mParentOperand.summarySuccessors(
 									state, letter);
 					for (final SummaryReturnTransition<LETTER, STATE> t : succs) {
 						final EquivalenceClass ec = getEquivalenceClass(
@@ -1915,7 +1915,7 @@ public class MinimizeSevpa<LETTER, STATE>
 		}
 		
 		Iterable<STATE> hierPred(final STATE state, final LETTER letter) {
-			return mParentOperand.hierPred(state, letter);
+			return mParentOperand.hierarchicalPredecessorsOutgoing(state, letter);
 		}
 		
 		Iterable<IncomingReturnTransition<LETTER, STATE>> linPredIncoming(
@@ -2000,7 +2000,7 @@ public class MinimizeSevpa<LETTER, STATE>
 		
 		void addSuccReturnHier(final STATE state, final LETTER letter, final PredecessorSet predSet) {
 			final HashSet<STATE> hierSet = new HashSet<STATE>();
-			for (final STATE hier : mParentOperand.hierPred(state, letter)) {
+			for (final STATE hier : mParentOperand.hierarchicalPredecessorsOutgoing(state, letter)) {
 				hierSet.add(hier);
 			}
 			addNeighborsEfficient(hierSet, predSet);
