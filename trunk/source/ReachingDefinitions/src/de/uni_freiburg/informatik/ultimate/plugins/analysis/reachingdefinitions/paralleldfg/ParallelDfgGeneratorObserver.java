@@ -59,8 +59,10 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		DataflowState dfs = dataflowAnalysisResult.getLoc2SingleStates().get(null);
 		// query the state at each ProgramPoint for the dataflow results as follows 
 		// (replace null by a real variable)
+		/*
 		Set<ProgramPoint> nwls = dfs.getNowriteLocations((IProgramVar) null);
 		Set<CodeBlock> rd = dfs.getReachingDefinitions((IProgramVar) null);
+		*/
 
 		// look for asserts in the RCFG
 		List<RCFGNode> nodes = new ArrayList<RCFGNode>();
