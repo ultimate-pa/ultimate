@@ -685,6 +685,7 @@ public class LassoChecker {
 		// }
 
 		final boolean doNonterminationAnalysis = !(s_AvoidNonterminationCheckIfArraysAreContained && containsArrays);
+//		new FixpointCheck(mServices, mLogger, mSmtManager.getManagedScript(), modifiableGlobalsAtHonda, stemTF, loopTF);
 
 		NonTerminationArgument nonTermArgument = null;
 		if (doNonterminationAnalysis) {
