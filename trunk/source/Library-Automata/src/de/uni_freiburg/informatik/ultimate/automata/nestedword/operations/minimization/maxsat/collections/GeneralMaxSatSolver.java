@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections;
@@ -40,21 +40,24 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * MAX-SAT solver for propositional logic clauses.
- * The satisfying assignment returned by this solver is a locally optimal 
+ * The satisfying assignment returned by this solver is a locally optimal
  * solution in the following sense. If you replace one false-assignment to
  * a variable by a true-assignment then the resulting mapping is not a valid
  * assignment anymore. <br>
  * There is no guarantee that this locally optimal solution does not have to
  * be a globally optimal solution (which is a solution in which the number
  * of true-assigned variables is maximal).
- * 
- * <p>TODO add resolution to solver
- * 
- * <p>TODO detect clause duplicates
+ * <p>
+ * TODO add resolution to solver
+ * <p>
+ * TODO ignore temporary data structures before first decision
+ * <p>
+ * TODO detect clause duplicates
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <V> variable type
+ * @param <V>
+ *            variable type
  */
 @SuppressWarnings("squid:UselessParenthesesCheck")
 public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
@@ -74,7 +77,8 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	/**
 	 * Constructor.
 	 * 
-	 * @param services Ultimate services
+	 * @param services
+	 *            Ultimate services
 	 */
 	public GeneralMaxSatSolver(final AutomataLibraryServices services) {
 		super(services);
@@ -82,7 +86,7 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		mStack = new SolverStack();
 		synchronizeStack();
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public void addHornClause(final V[] negativeAtoms, final V positiveAtom) {
@@ -90,11 +94,11 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		if (positiveAtom == null) {
 			positiveAtoms = (V[]) new Object[0];
 		} else {
-			positiveAtoms = (V[]) new Object[]{ positiveAtom };
+			positiveAtoms = (V[]) new Object[] { positiveAtom };
 		}
 		addClause(negativeAtoms, positiveAtoms);
 	}
-
+	
 	@Override
 	public void addClause(final V[] negativeAtoms, final V[] positiveAtoms) {
 		if (mDecisions > 0) {
@@ -120,32 +124,32 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 				mConjunctionEquivalentToFalse = true;
 				throw new UnsupportedOperationException(
 						"clause set is equivalent to false");
-			} else  {
-				for (final V var :clause.getNegativeAtoms()) {
+			} else {
+				for (final V var : clause.getNegativeAtoms()) {
 					mOccursNegative.addPair(var, clause);
 				}
-				for (final V var :clause.getPositiveAtoms()) {
+				for (final V var : clause.getPositiveAtoms()) {
 					mOccursPositive.addPair(var, clause);
 				}
 				if (clause.isPseudoUnit()) {
 					final Pair<V, Boolean> propagatee = clause.getPropagatee();
 					mPropagatees.put(propagatee.getFirst(), propagatee.getSecond());
 					propagateAll();
-				} else if (! clause.isHorn()) {
+				} else if (!clause.isHorn()) {
 					incrementNumberOfNonHornClauses();
 				}
 			}
 		}
 	}
-
+	
 	@Override
 	protected Boolean getPersistentAssignment(final V var) {
 		final Boolean result = mVariablesIrrevocablySet.get(var);
-		assert (result == null) || (! mStack.getVarTempSet().containsKey(var)) :
-				"Unsynchronized assignment data structures.";
+		assert (result == null)
+				|| (!mStack.getVarTempSet().containsKey(var)) : "Unsynchronized assignment data structures.";
 		return result;
 	}
-
+	
 	@SuppressWarnings("squid:S2447")
 	@Override
 	protected VariableStatus getTemporaryAssignment(final V var) {
@@ -154,8 +158,7 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 			final Map<V, Boolean> map = it.next();
 			final Boolean result = map.get(var);
 			if (result != null) {
-				assert (! mVariablesIrrevocablySet.containsKey(var)) :
-					"Unsynchronized assignment data structures.";
+				assert (!mVariablesIrrevocablySet.containsKey(var)) : "Unsynchronized assignment data structures.";
 				// TODO cache result
 				
 				return result
@@ -165,7 +168,7 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		}
 		return VariableStatus.UNSET;
 	}
-
+	
 	@Override
 	protected void decideOne() {
 		final V var = getUnsetVariable();
@@ -185,12 +188,12 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 				backtrackFurther(var);
 			}
 		}
-		if (! mConjunctionEquivalentToFalse) {
+		if (!mConjunctionEquivalentToFalse) {
 			makeModificationsPersistentIfAllowed();
-		}	
+		}
 	}
-
-		@Override
+	
+	@Override
 	protected void setVariable(final V var, final boolean newStatus) {
 		if (mShowExpensiveDebugLogs && mLogger.isDebugEnabled()) {
 			mLogger.debug("setting variable " + var + " to " + newStatus);
@@ -206,7 +209,7 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		reEvaluateStatusOfAllClauses(var);
 //		assert checkClausesConsistent() : "clauses inconsistent";
 	}
-
+	
 	@Override
 	protected void makeAssignmentPersistent() {
 		mLogger.debug("making current solver state persistent");
@@ -233,11 +236,11 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		}
 //		mLogger.debug("finished making solver state persistent");
 	}
-
+	
 	@Override
 	protected void backtrack(final V var) {
 		mLogger.debug("backtracking");
-		mWrongDecisions ++;
+		mWrongDecisions++;
 		final Set<V> variablesIncorrectlySet = mStack.getVarTempSet().keySet();
 		popStack();
 		
@@ -265,15 +268,14 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	protected void decrementNumberOfNonHornClauses() {
 		mNumberOfNonHornClauses--;
 		mLogger.debug("NumberOfNonHornClauses: " + mNumberOfNonHornClauses);
-		assert mNumberOfNonHornClauses >= 0 :
-			"Number of non-Horn clauses became negative.";
+		assert mNumberOfNonHornClauses >= 0 : "Number of non-Horn clauses became negative.";
 	}
 	
 	@Override
 	protected void firstDecisionOrStop() {
 		mMaxNonHornClauses = mNumberOfNonHornClauses;
 	}
-
+	
 	@Override
 	protected void log() {
 		final StringBuilder sb = new StringBuilder();
@@ -285,7 +287,7 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		sb.append(" (thereof " + mWrongDecisions + " wrong decisions)");
 		mLogger.info(sb.toString());
 	}
-
+	
 	private void makeModificationsPersistentIfAllowed() {
 		// true iff backtracking past this point is never necessary
 		final boolean makeReallyPersistent =
@@ -299,10 +301,9 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 			}
 		}
 	}
-
+	
 	private void backtrackFurther(final V var) {
-		assert (mNumberOfNonHornClauses > 0) :
-			"For Horn clauses backtracking should not be necessary for more than one level.";
+		assert (mNumberOfNonHornClauses > 0) : "For Horn clauses backtracking should not be necessary for more than one level.";
 		assert (var != null);
 		V nextVar = var;
 		do {
@@ -314,9 +315,9 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 			nextVar = mStack.getDecision();
 			assert (nextVar != null);
 			backtrack(nextVar);
-		} while (mConjunctionEquivalentToFalse && (! mStack.isLowestStackLevel()));
+		} while (mConjunctionEquivalentToFalse && (!mStack.isLowestStackLevel()));
 	}
-
+	
 	private boolean hasOnlyHornClauses() {
 		// TODO implement for optimization
 		return mNumberOfNonHornClauses == 0;
@@ -349,7 +350,7 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 //			mLogger.debug("-A stack level " + mStack.size() + ": " + mStack.peek());
 //		}
 		final boolean poppedLowestLevel = mStack.pop();
-
+		
 		synchronizeStack();
 //		if (mLogger.isDebugEnabled()) {
 //			mLogger.debug("-B stack level " + mStack.size() + ": " + mStack.peek());
@@ -377,7 +378,7 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		 * @return true iff stack is empty afterward
 		 */
 		public boolean pop() {
-			if (! mStackInner.isEmpty()) {
+			if (!mStackInner.isEmpty()) {
 				mStackInner.pop();
 				mIsLowestLevel = mStackInner.isEmpty();
 				return false;
@@ -390,7 +391,8 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		/**
 		 * Pushes a new stack level.
 		 * 
-		 * @param var current decision
+		 * @param var
+		 *            current decision
 		 */
 		public void push(final V var) {
 			mStackInner.push(new StackContent(var));
@@ -403,50 +405,27 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		}
 		
 		public Map<V, Boolean> getVarTempSet() {
-			return getCurrentLevel().mVariablesTemporarilySet;
+			return getCurrentLevel().getVariablesTemporarilySet();
 		}
 		
 		public V getDecision() {
-			return getCurrentLevel().mVariableDecision;
+			return getCurrentLevel().getVariableDecision();
 		}
 		
 		public Set<Clause<V>> getMarkedClauses() {
-			return getCurrentLevel().mClausesMarkedForRemoval;
+			return getCurrentLevel().getClausesMarkedForRemoval();
 		}
 		
 		/**
 		 * NOTE: Must be used by alternation of <code>hasNext()</code> and
 		 * <code>next()</code>. <br>
-		 * 
-		 * <p>NOTE: Do not edit the stack during iteration!
+		 * <p>
+		 * NOTE: Do not edit the stack during iteration!
 		 * 
 		 * @return unsynchronized iterator over all temporary maps
 		 */
 		public Iterator<Map<V, Boolean>> iterator() {
-			return new Iterator<Map<V, Boolean>>() {
-				private final Iterator<StackContent> mIt = mStackInner.iterator();
-				private boolean mIsAtBottom;
-	
-				@Override
-				public boolean hasNext() {
-					final boolean hasStackNext = mIt.hasNext();
-					if (hasStackNext) {
-						return true;
-					} else if (mIsAtBottom) {
-						return false;
-					}
-					mIsAtBottom = true;
-					return true;
-				}
-	
-				@Override
-				public Map<V, Boolean> next() {
-					final StackContent level = mIsAtBottom
-							? mLowestLevel
-							: mIt.next();
-					return level.mVariablesTemporarilySet;
-				}
-			};
+			return new StackIterator(mStackInner.iterator(), mLowestLevel);
 		}
 		
 		private StackContent getCurrentLevel() {
@@ -454,6 +433,42 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 					? mLowestLevel
 					: mStackInner.peek();
 			return sc;
+		}
+		
+		/**
+		 * Iterator through the stack.
+		 * 
+		 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+		 */
+		private class StackIterator implements Iterator<Map<V, Boolean>> {
+			private final Iterator<StackContent> mIt;
+			private boolean mIsAtBottom;
+			private final StackContent mLowestLevelStack;
+			
+			public StackIterator(final Iterator<StackContent> iterator, final StackContent lowestLevel) {
+				mIt = iterator;
+				mLowestLevelStack = lowestLevel;
+			}
+			
+			@Override
+			public boolean hasNext() {
+				final boolean hasStackNext = mIt.hasNext();
+				if (hasStackNext) {
+					return true;
+				} else if (mIsAtBottom) {
+					return false;
+				}
+				mIsAtBottom = true;
+				return true;
+			}
+			
+			@Override
+			public Map<V, Boolean> next() {
+				final StackContent level = mIsAtBottom
+						? mLowestLevelStack
+						: mIt.next();
+				return level.getVariablesTemporarilySet();
+			}
 		}
 		
 		/**
@@ -478,6 +493,18 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 				this.mVariableDecision = variable;
 				this.mVariablesTemporarilySet = new HashMap<>();
 				this.mClausesMarkedForRemoval = new LinkedHashSet<Clause<V>>();
+			}
+			
+			public V getVariableDecision() {
+				return mVariableDecision;
+			}
+			
+			public Map<V, Boolean> getVariablesTemporarilySet() {
+				return mVariablesTemporarilySet;
+			}
+			
+			public Set<Clause<V>> getClausesMarkedForRemoval() {
+				return mClausesMarkedForRemoval;
 			}
 			
 			@Override
