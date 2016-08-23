@@ -33,10 +33,16 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 
 	final private ILogger mLogger;
 	final private IUltimateServiceProvider mServices;
+	IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, ProgramPoint> mDataflowAnalysisResult;
+	private Integer mEdgeCount;
+	private Integer mNodeCount;
 
 	public ParallelDfgGeneratorObserver(ILogger logger, IUltimateServiceProvider services) {
 		mLogger = logger;
 		mServices = services;
+		mDataflowAnalysisResult = null;
+		mEdgeCount = 0;
+		mNodeCount = 0;
 	}
 
 
@@ -50,16 +56,15 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		mLogger.debug("Number of Threads: " + (n-1));
 		
 
-		IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, ProgramPoint> dataflowAnalysisResult = 
+		IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, ProgramPoint> mDataflowAnalysisResult = 
 				obtainDataflowAnalysisResult(rootNode);
 		
-		
+		/*
 		// the result aiRes can be queried for each state as follows
 		// (replace null by a ProgramPoint)
 		DataflowState dfs = dataflowAnalysisResult.getLoc2SingleStates().get(null);
 		// query the state at each ProgramPoint for the dataflow results as follows 
 		// (replace null by a real variable)
-		/*
 		Set<ProgramPoint> nwls = dfs.getNowriteLocations((IProgramVar) null);
 		Set<CodeBlock> rd = dfs.getReachingDefinitions((IProgramVar) null);
 		*/
@@ -94,9 +99,12 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		mLogger.debug("Number of start nodes: " + starts.size());
 		
 		// Algorithm with the start Locations
+		mNodeCount = starts.size();
 		collectDFGEdges(starts);
 		
 		
+		mLogger.debug("Number of nodes in the Parallel DFG: " + mNodeCount);
+		mLogger.debug("Number of edges in the Parallel DFG: " + mEdgeCount);
 		
 		return false;
 	}
@@ -121,14 +129,13 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		while(!Q.isEmpty()){
 			ParallelDataflowgraph<RCFGEdge> node = Q.get(0);
 			Q.remove(0);
-			IAnnotations annot = node.getNodeLabel().getPayload().getAnnotations().get("ReachingDefinition Default");
-			mLogger.debug("Annotation " + annot.toString());
-			
-			
-			// TODO get the use of the Reaching Definition
-			List<ScopedBoogieVar> use = new ArrayList<ScopedBoogieVar>();
-			
-			for (ScopedBoogieVar x: use){
+			// get the use of the Reaching Definition
+			CodeBlock cb = (CodeBlock) node.getNodeLabel();
+			// better would be .entrySet();
+			Set<IProgramVar> use = cb.getTransitionFormula().getInVars().keySet(); 
+			mLogger.debug("Explain " + use.size() + " variable(s) for the statement " + cb.toString());
+			for (IProgramVar x: use){
+				mLogger.debug("   explain the variable " + x.toString());
 				List<ParallelDataflowgraph<RCFGEdge>> sources = explain(x, node);
 				for (ParallelDataflowgraph<RCFGEdge> s : sources){
 					if (!visited.contains(s)){
@@ -138,12 +145,13 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 					// Add an edge
 					s.addOutgoingNode(node, x);
 					node.addIncomingNode(s);
+					mEdgeCount++;
 				}
 			}	
 		}
 	}
 
-	private List<ParallelDataflowgraph<RCFGEdge>> explain(ScopedBoogieVar var, ParallelDataflowgraph node){
+	private List<ParallelDataflowgraph<RCFGEdge>> explain(IProgramVar var, ParallelDataflowgraph node){
 		// TODO handle the special case init in the Reaching Definition
 		// init is only inserted as an edge, if init is in all the Reaching Definitions of threads
 		// otherwise there is a thread which overwrites the variable and init does not reach this oint.
@@ -153,10 +161,14 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		for (String proc: procedures){
 			Set<ProgramPoint> locations = node.getLocations(proc);
 			for (ProgramPoint pp : locations){
-				// TODO insert Reaching Definition
+				// TODO Reaching Definition
 				// statements = RD(x, pp);
-				Set<RCFGEdge> statements = new HashSet<RCFGEdge>();
-				for (RCFGEdge s: statements){
+				DataflowState dfs = mDataflowAnalysisResult.getLoc2SingleStates().get(pp);
+				Set<CodeBlock> rd = dfs.getReachingDefinitions((IProgramVar) var);
+				
+				// Set<RCFGEdge> statements = new HashSet<RCFGEdge>();
+				for (RCFGEdge s: rd){
+					mLogger.debug("      by the statement " + s.toString());
 					Map< String, Set<ProgramPoint>> loc = new HashMap< String, Set<ProgramPoint>>(nowriteLocs);
 					Set<ProgramPoint> srcSet = new HashSet<ProgramPoint>();
 					ProgramPoint sourceLoc = (ProgramPoint) s.getSource();
@@ -170,7 +182,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	}
 	
 	
-	private Map< String, Set<ProgramPoint>> computeLocationSets(ScopedBoogieVar var, Map< String, Set<ProgramPoint>> locations){
+	private Map< String, Set<ProgramPoint>> computeLocationSets(IProgramVar var, Map< String, Set<ProgramPoint>> locations){
 		Map< String, Set<ProgramPoint>> nowriteLocs = new HashMap< String, Set<ProgramPoint>>();
 		for (String procedue: locations.keySet()){
 			Set<ProgramPoint> L = new HashSet<ProgramPoint>(locations.get(procedue));
