@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableLabeledEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
@@ -10,26 +12,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 
 public class ParallelDataflowgraph<T> extends ModifiableLabeledEdgesMultigraph<ParallelDataflowgraph<T>, ScopedBoogieVar>{
 
+	private Map< String, Set<ProgramPoint>> locations;
+	private final T mNodeLabel;
 	
-	public ParallelDataflowgraph(T stmt, List<ProgramPoint> setOfLocations) {
+	public ParallelDataflowgraph(T stmt, Map< String, Set<ProgramPoint>> locations) {
 		mNodeLabel = stmt;
-		setLocations(new ArrayList<ProgramPoint>());
+		setLocations(locations);
 	}
 	
 	public T getNodeLabel() {
 		return mNodeLabel;
 	}
 	
-	public List<ProgramPoint> getLocations() {
+	public Map< String, Set<ProgramPoint>> getLocations() {
 		return locations;
 	}
-
-	private void setLocations(List<ProgramPoint> locations) {
-		this.locations = locations;
+	
+	public Set<ProgramPoint>  getLocations(String procedure){
+		return locations.get(procedure);
 	}
 
-	private List<ProgramPoint> locations;
-	private final T mNodeLabel;
-	
+	private void setLocations(Map< String, Set<ProgramPoint>> locations) {
+		this.locations = locations;
+	}
 
 }

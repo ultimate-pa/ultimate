@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.paralleldfg;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		int n = rootNode.getOutgoingEdges().size();
 		mLogger.debug("Number of Threads: " + (n-1));
 		
+
 		IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, ProgramPoint> dataflowAnalysisResult = 
 				obtainDataflowAnalysisResult(rootNode);
 		
@@ -59,42 +61,37 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		// (replace null by a real variable)
 		Set<ProgramPoint> nwls = dfs.getNowriteLocations((IProgramVar) null);
 		Set<CodeBlock> rd = dfs.getReachingDefinitions((IProgramVar) null);
-		
-		
-		
+
 		// look for asserts in the RCFG
 		List<RCFGNode> nodes = new ArrayList<RCFGNode>();
-		for (RCFGEdge e: rootNode.getOutgoingEdges()){
-			List<RCFGNode> a = nodesInGraph(e.getTarget());
+
+		// ignore the first edge from the dummy root to the function entry
+		for (RCFGEdge e: r.getOutgoingEdges()){
+			Set<RCFGNode> a = nodesInGraph(e.getTarget());
+
 			nodes.addAll(a);
 		}
 		
-		// function that computes both error locations and then end locations
+		// compute end and error locations
 		List<List<RCFGNode>> endError = getEndErrorLocations(nodes);
 		List<RCFGNode> assertLocs = endError.get(0);
 		List<RCFGNode> endLocs = endError.get(1);
 		mLogger.debug("Number of Asserts: " + assertLocs.size());
-		if (n == endLocs.size()){mLogger.debug("More than one return per Thread: False");}
-		else{mLogger.debug("More than one return per Thread: True");}
-		
-		if (assertLocs.size() == 0){
+		if (n == endLocs.size()){
+			mLogger.debug("More than one return per Thread: False");
+			}
+		else {
+			mLogger.debug("More than one return per Thread: True");
+			}
+		if (assertLocs.isEmpty()){
 			// no asserts,  nothing to check
 			return false;
 		}
+		// compute Start Locations
+		List<ParallelDataflowgraph<RCFGEdge>> starts = computeStartLocs(assertLocs, endLocs);
+		mLogger.debug("Number of start nodes: " + starts.size());
 		
-		// compute the List of starting nodes for the parallel DFG
-		List<ParallelDataflowgraph<RCFGEdge>> starts = new ArrayList<ParallelDataflowgraph<RCFGEdge>>();
-		for (RCFGNode error: assertLocs){
-			// for every error location in the found asserts
-			// compute the locations for the node
-			List<ProgramPoint> locs = computeLocVector(error, endLocs);
-			// assume each error location has exactly one incoming edge
-			assert error.getIncomingEdges().size() == 1;
-			RCFGEdge stmt = error.getIncomingEdges().get(0);
-			ParallelDataflowgraph<RCFGEdge> newNode = new ParallelDataflowgraph<RCFGEdge>(stmt, locs);
-			starts.add(newNode);
-		}
-		
+		// Algorithm with the start Locations
 		collectDFGEdges(starts);
 		
 		
@@ -115,16 +112,18 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	
 	
 	// Algorithm
-	
 	private void collectDFGEdges(List<ParallelDataflowgraph<RCFGEdge>> starts){
+		// compute the edges
 		List<ParallelDataflowgraph<RCFGEdge>> Q = starts;
 		Set<ParallelDataflowgraph<RCFGEdge>> visited = new HashSet<ParallelDataflowgraph<RCFGEdge>>();
 		while(!Q.isEmpty()){
 			ParallelDataflowgraph<RCFGEdge> node = Q.get(0);
 			Q.remove(0);
-			
 			IAnnotations annot = node.getNodeLabel().getPayload().getAnnotations().get("ReachingDefinition Default");
-			// get the use!
+			mLogger.debug("Annotation " + annot.toString());
+			
+			
+			// TODO get the use of the Reaching Definition
 			List<ScopedBoogieVar> use = new ArrayList<ScopedBoogieVar>();
 			
 			for (ScopedBoogieVar x: use){
@@ -138,56 +137,60 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 					s.addOutgoingNode(node, x);
 					node.addIncomingNode(s);
 				}
-			}
-			
-			
-			
-			mLogger.debug("Annotation " + annot.toString());
-			
+			}	
 		}
-
 	}
 
-	private List<ParallelDataflowgraph<RCFGEdge>> explain(ScopedBoogieVar x, ParallelDataflowgraph<RCFGEdge> node){
+	private List<ParallelDataflowgraph<RCFGEdge>> explain(ScopedBoogieVar var, ParallelDataflowgraph node){
+		// TODO handle the special case init in the Reaching Definition
+		// init is only inserted as an edge, if init is in all the Reaching Definitions of threads
+		// otherwise there is a thread which overwrites the variable and init does not reach this oint.
 		List<ParallelDataflowgraph<RCFGEdge>> sources = new ArrayList<ParallelDataflowgraph<RCFGEdge>>();
-		for (ProgramPoint loc: node.getLocations()){
-			ProgramPoint pp = (ProgramPoint) node.getNodeLabel().getSource();
-			if (loc.getProcedure() == pp.getProcedure()){
-				// old Reaching Definition
-				
+		Map< String, Set<ProgramPoint>> nowriteLocs = computeLocationSets(var, node.getLocations());
+		Set<String> procedures =  node.getLocations().keySet();
+		for (String proc: procedures){
+			Set<ProgramPoint> locations = node.getLocations(proc);
+			for (ProgramPoint pp : locations){
+				// TODO insert Reaching Definition
+				// statements = RD(x, pp);
+				Set<RCFGEdge> statements = new HashSet<RCFGEdge>();
+				for (RCFGEdge s: statements){
+					Map< String, Set<ProgramPoint>> loc = new HashMap< String, Set<ProgramPoint>>(nowriteLocs);
+					Set<ProgramPoint> srcSet = new HashSet<ProgramPoint>();
+					ProgramPoint sourceLoc = (ProgramPoint) s.getSource();
+					srcSet.add(sourceLoc);
+					loc.put(proc, srcSet);
+				}
 			}
-			else {
-				// new Reaching Definition
-				
-			}
-			// special case init?
-			
 		}
+		
 		return sources;
 	}
 	
-	private List<ProgramPoint> insertLocation(List<ProgramPoint> locations, ProgramPoint loc){
-		// can be optimized!
-		// for the case that there are several returns in the thread of loc
-		for (ProgramPoint l: locations){
-			if (l.getProcedure() == loc.getProcedure()){
-				locations.remove(l);
-			}
+	
+	private Map< String, Set<ProgramPoint>> computeLocationSets(ScopedBoogieVar var, Map< String, Set<ProgramPoint>> locations){
+		Map< String, Set<ProgramPoint>> nowriteLocs = new HashMap< String, Set<ProgramPoint>>();
+		for (String procedue: locations.keySet()){
+			Set<ProgramPoint> L = new HashSet<ProgramPoint>(locations.get(procedue));
+			// TODO compute L with nowrites
+			Set<ProgramPoint> Lnew = new HashSet<ProgramPoint>();
+			nowriteLocs.put(procedue, Lnew);
 		}
-		locations.add(loc);
-		return locations;
+		return nowriteLocs;
 	}
+	
 	
 	
 	// Functions for the procedure
 	
-	private List<RCFGNode> nodesInGraph(RCFGNode root){
+	
+	
+	private Set<RCFGNode> nodesInGraph(RCFGNode root){
 		// Returns a list of all the nodes in the graph
 		// memorize, which elements have been visited
-		List<RCFGNode> visited = new ArrayList<RCFGNode>();
+		Set<RCFGNode> visited = new HashSet<RCFGNode>();
 		List<RCFGNode> tovisit = new ArrayList<RCFGNode>();
 		tovisit.add(root);
-		
 		// iterate over tovisit node list
 		while(!tovisit.isEmpty()){
 			// get the first element and insert in visited
@@ -209,8 +212,9 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	
 	
 	private List<List<RCFGNode>> getEndErrorLocations(List<RCFGNode> nodes){
-		// Function getAsserts and getEndLocations in one
-		// given a list of nodes, all asserts are returned
+		// getAsserts and getEndLocations in one function
+		// first return: asserts, second return: end locations
+		// given a list of nodes, all asserts and errors are returned
 		List<RCFGNode> asserts = new ArrayList<RCFGNode>();
 		// given a list of nodes, all end locations are returned
 		List<RCFGNode> endLocations = new ArrayList<RCFGNode>();
@@ -230,56 +234,43 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		return list;
 	}
 	
-	private List<RCFGNode> getAsserts(List<RCFGNode> nodes){
-		// given a list of nodes, all asserts are returned
-		List<RCFGNode> asserts = new ArrayList<RCFGNode>();
-		for(RCFGNode node : nodes){
-			// Check if the node is an Assert Violation = error location
+	
+	
+	private List<ParallelDataflowgraph<RCFGEdge>> computeStartLocs(List<RCFGNode> assertLocs, List<RCFGNode> endLocs){
+		List<ParallelDataflowgraph<RCFGEdge>> starts = new ArrayList<ParallelDataflowgraph<RCFGEdge>>();
+		Map< String, Set<ProgramPoint>> locations = new HashMap< String, Set<ProgramPoint>>();
+		// compute all mappings procedure -> set of all end locations
+		for (RCFGNode node: endLocs){
 			ProgramPoint pp = (ProgramPoint) node;
-			if(pp.isErrorLocation()){
-				asserts.add(node);
+			// if the procedure is already in the map
+			if (locations.containsKey( pp.getProcedure())){
+				// add the found end Location to the set in the mapping
+				locations.get(pp.getProcedure()).add(pp);
+			}
+			else if(pp.getProcedure() != "~init"){
+				// the init procedure is ignored
+				Set<ProgramPoint> loc = new HashSet<ProgramPoint>();
+				loc.add(pp);
+				locations.put(pp.getProcedure(), loc);
 			}
 		}
-		return asserts;
-	}
-
-	private List<RCFGNode> getEndLocations(List<RCFGNode> nodes){
-		// given a list of nodes, all end locations are returned
-		List<RCFGNode> endLocations = new ArrayList<RCFGNode>();
-		for(RCFGNode node : nodes){
-			// CHeck if the node has outgoing edges and is no Error location
-			ProgramPoint pp = (ProgramPoint) node;
-			if(node.getOutgoingEdges().size() == 0 && !pp.isErrorLocation()){
-				endLocations.add(node);
-			}
+		// compute the start nodes
+		for (RCFGNode error: assertLocs){
+			ProgramPoint pp = (ProgramPoint) error;
+			// assume each error location has exactly one incoming edge
+			assert error.getIncomingEdges().size() == 1;
+			RCFGEdge stmt = error.getIncomingEdges().get(0);
+			Map< String, Set<ProgramPoint>> locMap = new HashMap< String, Set<ProgramPoint>>(locations);
+			// construct a set with only the error location
+			Set<ProgramPoint> value = new HashSet<ProgramPoint>();
+			value.add(pp);
+			// overwrite the end location set with the set of the error location
+			locMap.put(pp.getProcedure(), value);
+			ParallelDataflowgraph<RCFGEdge> newNode = new ParallelDataflowgraph<RCFGEdge>(stmt, locMap);
+			starts.add(newNode);
 		}
-		return endLocations;
+		return starts;
 	}
-	
-	
-	
-	private List<ProgramPoint> computeLocVector(RCFGNode errorLoc, List<RCFGNode> endLoc){
-		// given an vector of endLocations return the set of locations
-		// necessary for the initialization of the node of the Parallel DFG
-		// convert to ProgramPoints
-		List<ProgramPoint> points = new ArrayList<ProgramPoint>();
-		ProgramPoint  errorPoint= (ProgramPoint) errorLoc;
-		points.add(errorPoint);
-		
-		for (RCFGNode node : endLoc){
-			ProgramPoint pp = (ProgramPoint) node;
-			if (pp.getProcedure() != "~init"){
-				// ignore init procedure
-				if (pp.getProcedure() != errorPoint.getProcedure()){
-					// all other procedures take their end location.
-					points.add(pp);
-				}
-			}
-		}
-		return points;
-	}
-	
-	
 	
 	
 
