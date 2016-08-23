@@ -447,6 +447,11 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		succS.add(succ);
 	}
 	
+	public Collection<LETTER> lettersSummaryNoAssertion(final STATE hier) {
+		final Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnSummary.get(hier);
+		return map == null ? mEmptySetOfLetters : map.keySet();
+	}
+	
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier,
 			final LETTER letter) {
@@ -490,7 +495,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 					private Iterator<SummaryReturnTransition<LETTER, STATE>> mCurrentIterator;
 					
 					{
-						mLetterIterator = lettersSummary(hier).iterator();
+						mLetterIterator = lettersSummaryNoAssertion(hier).iterator();
 						nextLetter();
 					}
 					
