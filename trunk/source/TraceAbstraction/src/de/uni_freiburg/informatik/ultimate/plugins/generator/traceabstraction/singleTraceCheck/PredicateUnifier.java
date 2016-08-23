@@ -296,9 +296,14 @@ public class PredicateUnifier {
 			final Set<IPredicate> coveredByPredi = getCoverageRelation().getCoveredPredicates(predi);
 			for (int j=i+1; j<list.size(); j++) {
 				final IPredicate predj= list.get(j);
-				if (coveredByPredi.contains(predj)) {
-					minimalSubset.remove(predi);
-					continue;
+				if (minimalSubset.contains(predj)) {
+					if (coveredByPredi.contains(predj)) {
+						minimalSubset.remove(predi);
+						continue;
+					}
+				} else {
+					// continue, we care only about covered predicates that
+					// are still in the minimal subset
 				}
 			}
 		}
@@ -325,9 +330,14 @@ public class PredicateUnifier {
 			final Set<IPredicate> coveringPredi = getCoverageRelation().getCoveringPredicates(predi);
 			for (int j=i+1; j<list.size(); j++) {
 				final IPredicate predj= list.get(j);
-				if (coveringPredi.contains(predj)) {
-					minimalSubset.remove(predi);
-					continue;
+				if (minimalSubset.contains(predj)) {
+					if (coveringPredi.contains(predj)) {
+						minimalSubset.remove(predi);
+						continue;
+					}
+				} else {
+					// continue, we care only about covering predicates that
+					// are still in the minimal subset
 				}
 			}
 		}
