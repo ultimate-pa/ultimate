@@ -379,8 +379,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		if (!mStates.containsKey(state)) {
 			throw new IllegalArgumentException("State " + state + " unknown");
 		}
-		final Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnSummary.get(state);
-		return map == null ? mEmptySetOfLetters : map.keySet();
+		return lettersSummaryNoAssertion(state);
 	}
 	
 	@Override
@@ -447,7 +446,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		succS.add(succ);
 	}
 	
-	public Collection<LETTER> lettersSummaryNoAssertion(final STATE hier) {
+	public Set<LETTER> lettersSummaryNoAssertion(final STATE hier) {
 		final Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnSummary.get(hier);
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
