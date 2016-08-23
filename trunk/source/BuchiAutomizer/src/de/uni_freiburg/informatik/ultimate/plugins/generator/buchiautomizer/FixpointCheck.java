@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  *
  * This file is part of the ULTIMATE BuchiAutomizer plug-in.
  *
@@ -28,8 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -45,9 +48,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.SynthesisResult;
 
+/**
+ * Check if a Lasso given as a stem and a loop has a fixpoint (i.e., a
+ * nonterminating execution in which the same state is repeated after each
+ * execution of the loop).
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ */
 public class FixpointCheck {
+	
+	public enum HasFixpoint { YES, NO, UNKNOWN };
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -56,10 +67,13 @@ public class FixpointCheck {
 	private final String mProcedureHonda;
 	private final TransFormula mStem;
 	private final TransFormula mLoop;
+	private final HasFixpoint mResult;
+	private Map<Term, Term> mValuesAtInit;
+	private Map<Term, Term> mValuesAtHonda;
 	
 	public FixpointCheck(final IUltimateServiceProvider services, final ILogger logger, final ManagedScript managedScript,
-			final ModifiableGlobalVariableManager modifiableGlobalVariableManager, final String procedureHonda, final TransFormula stem,
-			final TransFormula loop) {
+			final ModifiableGlobalVariableManager modifiableGlobalVariableManager, final String procedureHonda, 
+			final TransFormula stem, final TransFormula loop) {
 		super();
 		mServices = services;
 		mLogger = logger;
@@ -68,13 +82,16 @@ public class FixpointCheck {
 		mProcedureHonda = procedureHonda;
 		mStem = stem;
 		mLoop = loop;
+		mResult = checkForFixpoint();
 	}
 
 	
-	private void doSomething() {
+	private HasFixpoint checkForFixpoint() {
 		mManagedScript.lock(this);
-		final Map<Term, Term> substitutionMappingStem = constructSubtitutionMapping(mStem, this::getConstantAtInit, this::getConstantAtHonda);
-		final Map<Term, Term> substitutionMappingLoop = constructSubtitutionMapping(mLoop, this::getConstantAtHonda, this::getConstantAtHonda);
+		final Map<Term, Term> substitutionMappingStem = 
+				constructSubtitutionMapping(mStem, this::getConstantAtInit, this::getConstantAtHonda);
+		final Map<Term, Term> substitutionMappingLoop = 
+				constructSubtitutionMapping(mLoop, this::getConstantAtHonda, this::getConstantAtHonda);
 		final Term renamedStem = new Substitution(mManagedScript, substitutionMappingStem).transform(mStem.getFormula());
 		final Term renamedLoop = new Substitution(mManagedScript, substitutionMappingStem).transform(mLoop.getFormula());
 		mManagedScript.push(this, 1);
@@ -82,21 +99,60 @@ public class FixpointCheck {
 		mManagedScript.assertTerm(this, renamedStem);
 		mManagedScript.assertTerm(this, renamedLoop);
 		final LBool lbool = mManagedScript.checkSat(this);
-		SynthesisResult result;
+		HasFixpoint result;
 		switch (lbool) {
 		case SAT:
-			result = SynthesisResult.NONTERMINATING;
+			result = HasFixpoint.YES;
+			final Set<Term> wantValues = computeTermsForWhichWeWantValues(substitutionMappingStem, substitutionMappingLoop);
+			final Map<Term, Term> valueMap = SmtUtils.getValues(mManagedScript.getScript(), wantValues);
+			mValuesAtInit = computeValuesAtInit(valueMap);
+			mValuesAtHonda = computeValuesAtHonda(valueMap);
 			break;
 		case UNKNOWN:
-			result = SynthesisResult.UNKNOWN;
+			result = HasFixpoint.UNKNOWN;
 			break;
 		case UNSAT:
-			result = SynthesisResult.UNKNOWN;
+			result = HasFixpoint.NO;
 			break;
 		default:
-			break;
+			throw new AssertionError(lbool);
 		}
-		
+		mManagedScript.echo(this, new QuotedObject("Finished fixpoint check"));
+		mManagedScript.unlock(this);
+		return result;
+	}
+
+
+	private Map<Term, Term> computeValuesAtHonda(final Map<Term, Term> valueMap) {
+		final Map<Term, Term> valuesAtHonda = new HashMap<>();
+		for (final IProgramVar pv : mStem.getOutVars().keySet()) {
+			valuesAtHonda.put(pv.getTermVariable(), valueMap.get(getConstantAtHonda(pv)));
+		}
+		for (final IProgramVar pv : mLoop.getInVars().keySet()) {
+			valuesAtHonda.put(pv.getTermVariable(), valueMap.get(getConstantAtHonda(pv)));
+		}
+		for (final IProgramVar pv : mLoop.getOutVars().keySet()) {
+			valuesAtHonda.put(pv.getTermVariable(), valueMap.get(getConstantAtHonda(pv)));
+		}
+		return valuesAtHonda;
+	}
+
+
+	private Map<Term, Term> computeValuesAtInit(final Map<Term, Term> valueMap) {
+		final Map<Term, Term> valuesAtInit = new HashMap<>();
+		for (final IProgramVar pv : mStem.getInVars().keySet()) {
+			valuesAtInit.put(pv.getTermVariable(), valueMap.get(getConstantAtInit(pv)));
+		}
+		return valuesAtInit;
+	}
+	
+	private Set<Term> computeTermsForWhichWeWantValues(
+			final Map<Term, Term> substitutionMappingStem, final Map<Term, Term> substitutionMappingLoop) {
+		final Set<Term> result = new HashSet<>();
+		final Predicate<Term> predicate = x -> SmtUtils.isSortForWhichWeCanGetValues(x.getSort());
+		result.addAll(substitutionMappingStem.values().stream().filter(predicate).collect(Collectors.toList()));
+		result.addAll(substitutionMappingLoop.values().stream().filter(predicate).collect(Collectors.toList()));
+		return result;
 	}
 
 	private IProgramVar replaceOldByNonOld(final IProgramVar pv) {
@@ -107,13 +163,14 @@ public class FixpointCheck {
 		}
 	}
 	
-	private Map<Term, Term> constructSubtitutionMapping(final TransFormula tf, final IConstantMapper before, final IConstantMapper after) {
+	private Map<Term, Term> constructSubtitutionMapping(final TransFormula tf, 
+			final IConstantMapper inVarMapping, final IConstantMapper outVarMapping) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-			substitutionMapping.put(entry.getValue(), before.getConstant(entry.getKey()));
+			substitutionMapping.put(entry.getValue(), inVarMapping.getConstant(entry.getKey()));
 		}
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-			substitutionMapping.put(entry.getValue(), after.getConstant(entry.getKey()));
+			substitutionMapping.put(entry.getValue(), outVarMapping.getConstant(entry.getKey()));
 		}
 		for (final TermVariable auxVar : tf.getAuxVars()) {
 			substitutionMapping.put(auxVar, SmtUtils.termVariable2constant(mManagedScript.getScript(), auxVar, false));
@@ -150,7 +207,15 @@ public class FixpointCheck {
 	
 	
 	@FunctionalInterface
-	public interface IConstantMapper {
+	private interface IConstantMapper {
 		public Term getConstant(final IProgramVar key);
+	}
+
+
+	/**
+	 * @return the result
+	 */
+	public HasFixpoint getResult() {
+		return mResult;
 	}
 }
