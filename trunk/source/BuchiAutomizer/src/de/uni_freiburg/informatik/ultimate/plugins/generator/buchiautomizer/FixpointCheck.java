@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
@@ -63,8 +62,7 @@ public class FixpointCheck {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
-	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
-	private final String mProcedureHonda;
+	private final Set<IProgramVar> mModifiableGlobalsAtHonda;
 	private final TransFormula mStem;
 	private final TransFormula mLoop;
 	private final HasFixpoint mResult;
@@ -72,14 +70,13 @@ public class FixpointCheck {
 	private Map<Term, Term> mValuesAtHonda;
 	
 	public FixpointCheck(final IUltimateServiceProvider services, final ILogger logger, final ManagedScript managedScript,
-			final ModifiableGlobalVariableManager modifiableGlobalVariableManager, final String procedureHonda, 
+			final Set<IProgramVar> modifiableGlobalsAtHonda, 
 			final TransFormula stem, final TransFormula loop) {
 		super();
 		mServices = services;
 		mLogger = logger;
 		mManagedScript = managedScript;
-		mModifiableGlobalVariableManager = modifiableGlobalVariableManager;
-		mProcedureHonda = procedureHonda;
+		mModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
 		mStem = stem;
 		mLoop = loop;
 		mResult = checkForFixpoint();
@@ -93,7 +90,7 @@ public class FixpointCheck {
 		final Map<Term, Term> substitutionMappingLoop = 
 				constructSubtitutionMapping(mLoop, this::getConstantAtHonda, this::getConstantAtHonda);
 		final Term renamedStem = new Substitution(mManagedScript, substitutionMappingStem).transform(mStem.getFormula());
-		final Term renamedLoop = new Substitution(mManagedScript, substitutionMappingStem).transform(mLoop.getFormula());
+		final Term renamedLoop = new Substitution(mManagedScript, substitutionMappingLoop).transform(mLoop.getFormula());
 		mManagedScript.push(this, 1);
 		mManagedScript.echo(this, new QuotedObject("Start fixpoint check"));
 		mManagedScript.assertTerm(this, renamedStem);
@@ -190,7 +187,7 @@ public class FixpointCheck {
 		final IProgramVar updated;
 		if (pv.isOldvar()) {
 			final IProgramNonOldVar nonOld = ((IProgramOldVar) pv).getNonOldVar();
-			if (mModifiableGlobalVariableManager.isModifiable(nonOld, mProcedureHonda)) {
+			if (mModifiableGlobalsAtHonda.contains(nonOld)) {
 				updated = pv;
 			} else {
 				updated = nonOld;
