@@ -66,7 +66,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		List<RCFGNode> nodes = new ArrayList<RCFGNode>();
 
 		// ignore the first edge from the dummy root to the function entry
-		for (RCFGEdge e: r.getOutgoingEdges()){
+		for (RCFGEdge e: rootNode.getOutgoingEdges()){
 			Set<RCFGNode> a = nodesInGraph(e.getTarget());
 
 			nodes.addAll(a);
