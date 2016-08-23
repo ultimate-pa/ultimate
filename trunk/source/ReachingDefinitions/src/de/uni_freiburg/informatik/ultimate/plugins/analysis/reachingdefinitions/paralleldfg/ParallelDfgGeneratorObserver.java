@@ -53,11 +53,10 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		RootNode rootNode = (RootNode) root;
 		// n = number of threads. Carefull with init procedure
 		int n = rootNode.getOutgoingEdges().size();
-		mLogger.debug("Number of Threads: " + (n-1));
+		
 		
 
-		IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, ProgramPoint> mDataflowAnalysisResult = 
-				obtainDataflowAnalysisResult(rootNode);
+		mDataflowAnalysisResult = obtainDataflowAnalysisResult(rootNode);
 		
 		/*
 		// the result aiRes can be queried for each state as follows
@@ -83,6 +82,19 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		List<List<RCFGNode>> endError = getEndErrorLocations(nodes);
 		List<RCFGNode> assertLocs = endError.get(0);
 		List<RCFGNode> endLocs = endError.get(1);
+		
+		if (assertLocs.isEmpty()){
+			// no asserts,  nothing to check
+			return false;
+		}
+		// compute Start Locations
+		List<ParallelDataflowgraph<RCFGEdge>> starts = computeStartLocs(assertLocs, endLocs);
+		mNodeCount = starts.size();
+		
+		
+		
+		// Debug info before computation of DFG
+		mLogger.debug("Number of Threads: " + (n-1));
 		mLogger.debug("Number of Asserts: " + assertLocs.size());
 		if (n == endLocs.size()){
 			mLogger.debug("More than one return per Thread: False");
@@ -90,21 +102,21 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		else {
 			mLogger.debug("More than one return per Thread: True");
 			}
-		if (assertLocs.isEmpty()){
-			// no asserts,  nothing to check
-			return false;
-		}
-		// compute Start Locations
-		List<ParallelDataflowgraph<RCFGEdge>> starts = computeStartLocs(assertLocs, endLocs);
 		mLogger.debug("Number of start nodes: " + starts.size());
+		mLogger.debug("Start node(s):  " );
+		for (ParallelDataflowgraph<RCFGEdge> s : starts){
+			mLogger.debug("  " + s.toString());
+		}
+		
 		
 		// Algorithm with the start Locations
-		mNodeCount = starts.size();
 		collectDFGEdges(starts);
 		
 		
-		mLogger.debug("Number of nodes in the Parallel DFG: " + mNodeCount);
-		mLogger.debug("Number of edges in the Parallel DFG: " + mEdgeCount);
+		// Debug info after the algorithm
+		mLogger.debug("Total number of nodes in the Parallel DFG: " + mNodeCount);
+		mLogger.debug("Total number of edges in the Parallel DFG: " + mEdgeCount);
+		
 		
 		return false;
 	}
@@ -163,10 +175,23 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 			for (ProgramPoint pp : locations){
 				// TODO Reaching Definition
 				// statements = RD(x, pp);
-				DataflowState dfs = mDataflowAnalysisResult.getLoc2SingleStates().get(pp);
-				Set<CodeBlock> rd = dfs.getReachingDefinitions((IProgramVar) var);
+				Map<ProgramPoint, DataflowState> singleState = mDataflowAnalysisResult.getLoc2SingleStates();
+				mLogger.debug("ProgramPoint " + pp.toString());
+
+				for(Entry<ProgramPoint, DataflowState> entry : singleState.entrySet()){
+					mLogger.debug("In Map " + entry.getKey().toString());
+					if (entry.getValue() == null){
+						mLogger.debug("  NULL");
+					}
+					else {
+						mLogger.debug("  " + entry.getValue().toString());
+					}
+				}
+
+				// DataflowState dfs = mDataflowAnalysisResult.getLoc2SingleStates().get(pp);
+				// Set<CodeBlock> rd = dfs.getReachingDefinitions((IProgramVar) var);
 				
-				// Set<RCFGEdge> statements = new HashSet<RCFGEdge>();
+				Set<RCFGEdge> rd = new HashSet<RCFGEdge>();
 				for (RCFGEdge s: rd){
 					mLogger.debug("      by the statement " + s.toString());
 					Map< String, Set<ProgramPoint>> loc = new HashMap< String, Set<ProgramPoint>>(nowriteLocs);
