@@ -215,4 +215,14 @@ public class FixpointCheck {
 	public HasFixpoint getResult() {
 		return mResult;
 	}
+
+
+	/**
+	 * @return the terminationArgument
+	 */
+	public InfiniteFixpointRepetition getTerminationArgument() {
+		return mTerminationArgument;
+	}
+	
+	
 }

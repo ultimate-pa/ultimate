@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLasso
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.FixpointNonTerminationResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GeometricNonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.LTLFiniteCounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.LTLInfiniteCounterExampleResult;
@@ -59,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.GeometricNonTerminationArgument;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.InfiniteFixpointRepetition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -161,7 +163,11 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					honda, Activator.PLUGIN_NAME, initHondaRays.get(0), initHondaRays.get(1),
 					initHondaRays.subList(2, initHondaRays.size()), gnta.getLambdas(), gnta.getNus(),
 					getBacktranslationService(), Term.class);
-			
+		} else if (nta instanceof InfiniteFixpointRepetition) {
+			final InfiniteFixpointRepetition ifr = (InfiniteFixpointRepetition) nta;
+			result = new FixpointNonTerminationResult<RcfgElement, Term>(
+					honda, Activator.PLUGIN_NAME, ifr.getValuesAtInit(), ifr.getValuesAtHonda(), 
+					getBacktranslationService(), Term.class);
 		} else {
 			throw new IllegalArgumentException("unknown TerminationArgument");
 		}
@@ -378,6 +384,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				mGEVZero = gevZero;
 				mNtar = (isFixpoint() ? "Fixpoint " : "Unbounded Execution ") + "Lambdas: " + lambdas + " GEVs: "
 						+ (mGEVZero ? "is zero" : "is not zero");
+			} else if (nta instanceof InfiniteFixpointRepetition) {
+				mNtar = "Fixpoint";
+				mLambdaZero = true;
+				mGEVZero = true;
 			} else {
 				throw new IllegalArgumentException("unknown NonTerminationArgument");
 			}
