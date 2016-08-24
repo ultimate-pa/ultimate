@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
@@ -149,15 +151,18 @@ public class DifferenceBlackAndWhite<S, C>
 					// do not occur in the result anyway
 					continue;
 				}
-				final Collection<C> successors = mNwa.succInternal(state, symbol);
-				if (successors.isEmpty()) {
+				
+				final Iterator<OutgoingInternalTransition<S, C>> successorsIt =
+						mNwa.internalSuccessors(state, symbol).iterator();
+				if (!successorsIt.hasNext()) {
 					continue;
 				}
-				if (successors.size() > 1) {
+				final C succState = successorsIt.next().getSucc();
+				if (successorsIt.hasNext()) {
 					throw new IllegalArgumentException(
 							"Only deterministic automata supported");
 				}
-				if (successors.contains(state)) {
+				if (succState.equals(state)) {
 					selfloopStates.add(state);
 				} else {
 					changerStates.add(state);
@@ -237,9 +242,11 @@ public class DifferenceBlackAndWhite<S, C>
 			
 			// A copy for each changer
 			for (final C predState : mStateChanger.get(symbol)) {
-				final Collection<C> succStates = mNwa.succInternal(predState, symbol);
-				assert (succStates.size() == 1);
-				final C succState = succStates.iterator().next();
+				final Iterator<OutgoingInternalTransition<S, C>> succStatesIt =
+						mNwa.internalSuccessors(predState, symbol).iterator();
+				assert succStatesIt.hasNext();
+				final C succState = succStatesIt.next().getSucc();
+				assert !succStatesIt.hasNext();
 				
 				// omit transitions to final states
 				if (mNwa.isFinal(succState)) {
