@@ -22,6 +22,22 @@ public class ParallelDataflowgraph<T> extends ModifiableLabeledEdgesMultigraph<P
 		setLocations(locations);
 	}
 	
+	public Boolean compare(T label, Map< String, Set<ProgramPoint>> l){
+		// for comparing two this data flow nodes with a not yet constructed node
+		if (label == mNodeLabel && l.equals(locations)){
+			return true;
+		}
+		return false;
+	}
+	
+	public Boolean compare(ParallelDataflowgraph<T> node){
+		// for comparing two data flow nodes
+		if (node.getNodeLabel() == mNodeLabel && node.getLocations().equals(locations)){
+			return true;
+		}
+		return false;
+	}
+	
 	public String toString(){
 		String s = "Statement: " + mNodeLabel.toString() + " Locations: ";
 		for (Entry<String, Set<ProgramPoint>> entry : locations.entrySet()){

@@ -97,10 +97,10 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		mLogger.debug("Number of Threads: " + (n-1));
 		mLogger.debug("Number of Asserts: " + assertLocs.size());
 		if (n == endLocs.size()){
-			mLogger.debug("More than one return per Thread: False");
+			mLogger.debug("Exactly one return per Thread");
 			}
 		else {
-			mLogger.debug("More than one return per Thread: True");
+			mLogger.debug("More than one return per Thread.");
 			}
 		mLogger.debug("Number of start nodes: " + starts.size());
 		mLogger.debug("Start node(s):  " );
@@ -138,6 +138,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		// compute the edges
 		List<ParallelDataflowgraph<RCFGEdge>> Q = starts;
 		Set<ParallelDataflowgraph<RCFGEdge>> visited = new HashSet<ParallelDataflowgraph<RCFGEdge>>();
+		Set<RCFGEdge> visitedStmts = new HashSet<RCFGEdge>();
 		while(!Q.isEmpty()){
 			ParallelDataflowgraph<RCFGEdge> node = Q.get(0);
 			Q.remove(0);
@@ -150,57 +151,80 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 				mLogger.debug("   explain the variable " + x.toString());
 				List<ParallelDataflowgraph<RCFGEdge>> sources = explain(x, node);
 				for (ParallelDataflowgraph<RCFGEdge> s : sources){
-					if (!visited.contains(s)){
+					mLogger.debug("      by the statement " + s.getNodeLabel().toString());
+					Boolean sourceInGraph = false;
+					if (visitedStmts.contains(s.getNodeLabel())){
+						for (ParallelDataflowgraph<RCFGEdge> n : visited){
+							// is it already in the graph?
+							if (n.compare(s)){
+								// the node is already there
+								// the constructed sourceNode s is set to this node.
+								// TODO does this work to set s to n?
+								s = n;
+								sourceInGraph = true;
+							}
+						}
+					}
+					if (sourceInGraph == false){
 						Q.add(s);
 						visited.add(s);
+						visitedStmts.add(s.getNodeLabel());
+						mLogger.debug("       Added a Node!");
+						mNodeCount++;
 					}
 					// Add an edge
 					s.addOutgoingNode(node, x);
 					node.addIncomingNode(s);
+					mLogger.debug("       Added an Edge!");
 					mEdgeCount++;
 				}
 			}	
 		}
 	}
 
-	private List<ParallelDataflowgraph<RCFGEdge>> explain(IProgramVar var, ParallelDataflowgraph node){
+	private List<ParallelDataflowgraph<RCFGEdge>> explain(IProgramVar var, ParallelDataflowgraph<RCFGEdge> node){
 		// TODO handle the special case init in the Reaching Definition
 		// init is only inserted as an edge, if init is in all the Reaching Definitions of threads
-		// otherwise there is a thread which overwrites the variable and init does not reach this oint.
+		// otherwise there is a thread which overwrites the variable and init does not reach this point.
+		// idea: init is not in the RD, but can be determined by nowrites
+		// make a special init node a member var of this class and check in 
 		List<ParallelDataflowgraph<RCFGEdge>> sources = new ArrayList<ParallelDataflowgraph<RCFGEdge>>();
 		Map< String, Set<ProgramPoint>> nowriteLocs = computeLocationSets(var, node.getLocations());
-		Set<String> procedures =  node.getLocations().keySet();
-		for (String proc: procedures){
-			Set<ProgramPoint> locations = node.getLocations(proc);
-			for (ProgramPoint pp : locations){
-				// TODO Reaching Definition
-				// statements = RD(x, pp);
-				Map<ProgramPoint, DataflowState> singleState = mDataflowAnalysisResult.getLoc2SingleStates();
-				mLogger.debug("ProgramPoint " + pp.toString());
-
-				for(Entry<ProgramPoint, DataflowState> entry : singleState.entrySet()){
-					mLogger.debug("In Map " + entry.getKey().toString());
-					if (entry.getValue() == null){
-						mLogger.debug("  NULL");
-					}
-					else {
-						mLogger.debug("  " + entry.getValue().toString());
-					}
+		Boolean initInRD = true;
+		for (Entry<String, Set<ProgramPoint>> entry: node.getLocations().entrySet()){
+			// check for every Procedure if there exists a pp which has init in nowrtie(x,pp)
+			Boolean initInRDProc = false;
+			for (ProgramPoint pp : entry.getValue()){
+				// get the RD
+				DataflowState dfs = mDataflowAnalysisResult.getLoc2SingleStates().get(pp);
+				if (pp.toString().contains("ENTRY")){
+					// mLogger.debug("Do not compute RD for " + pp.toString());
+					continue;
 				}
-
-				// DataflowState dfs = mDataflowAnalysisResult.getLoc2SingleStates().get(pp);
-				// Set<CodeBlock> rd = dfs.getReachingDefinitions((IProgramVar) var);
-				
-				Set<RCFGEdge> rd = new HashSet<RCFGEdge>();
+				Set<CodeBlock> rd = dfs.getReachingDefinitions((IProgramVar) var);
 				for (RCFGEdge s: rd){
-					mLogger.debug("      by the statement " + s.toString());
+					// mLogger.debug("      by the statement(explain) " + s.toString());
+					// construct a new node
 					Map< String, Set<ProgramPoint>> loc = new HashMap< String, Set<ProgramPoint>>(nowriteLocs);
 					Set<ProgramPoint> srcSet = new HashSet<ProgramPoint>();
 					ProgramPoint sourceLoc = (ProgramPoint) s.getSource();
 					srcSet.add(sourceLoc);
-					loc.put(proc, srcSet);
+					loc.put(entry.getKey(), srcSet);
+					ParallelDataflowgraph<RCFGEdge> sourceNode = new ParallelDataflowgraph<RCFGEdge>(s, loc);
+					sources.add(sourceNode);
 				}
+				// this pp has init in nowrite(x,pp)
+				// if (mInitNode.getLocations(proc) in nowrite(x, pp)){initRDProc=true}
 			}
+			// if there was no pp which set the varaiable initInRDProc for the procedure to true
+			// then init is not a source node
+			if(initInRDProc == false){
+				initInRD = false;
+			}
+		}
+		if (initInRD){
+			// insert init as a sourceNode
+			// sources.add(mInit);
 		}
 		
 		return sources;
@@ -209,11 +233,23 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	
 	private Map< String, Set<ProgramPoint>> computeLocationSets(IProgramVar var, Map< String, Set<ProgramPoint>> locations){
 		Map< String, Set<ProgramPoint>> nowriteLocs = new HashMap< String, Set<ProgramPoint>>();
-		for (String procedue: locations.keySet()){
-			Set<ProgramPoint> L = new HashSet<ProgramPoint>(locations.get(procedue));
-			// TODO compute L with nowrites
-			Set<ProgramPoint> Lnew = new HashSet<ProgramPoint>();
-			nowriteLocs.put(procedue, Lnew);
+		for (Entry<String, Set<ProgramPoint>> entry : locations.entrySet()){
+			Set<ProgramPoint> L = new HashSet<ProgramPoint>();
+			// L always includes the old L set.
+			L.addAll(entry.getValue());
+			// compute with nowrites
+			for (ProgramPoint pp : entry.getValue()){
+				if (!pp.toString().contains("ENTRY")){
+					DataflowState dfs = mDataflowAnalysisResult.getLoc2SingleStates().get(pp);
+					Set<ProgramPoint> nwls = dfs.getNowriteLocations((IProgramVar) var);
+					L.addAll(nwls);
+				}
+				else {
+					// mLogger.debug("Do not compute nowrite for "+pp.toString() );
+				}
+				
+			}
+			nowriteLocs.put(entry.getKey(), L);
 		}
 		return nowriteLocs;
 	}
@@ -302,7 +338,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 			Map< String, Set<ProgramPoint>> locMap = new HashMap< String, Set<ProgramPoint>>(locations);
 			// construct a set with only the error location
 			Set<ProgramPoint> value = new HashSet<ProgramPoint>();
-			value.add(pp);
+			value.add((ProgramPoint) stmt.getSource());
 			// overwrite the end location set with the set of the error location
 			locMap.put(pp.getProcedure(), value);
 			ParallelDataflowgraph<RCFGEdge> newNode = new ParallelDataflowgraph<RCFGEdge>(stmt, locMap);
