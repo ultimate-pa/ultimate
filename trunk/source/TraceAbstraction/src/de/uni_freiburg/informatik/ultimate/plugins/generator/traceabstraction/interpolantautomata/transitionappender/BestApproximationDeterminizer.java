@@ -35,6 +35,9 @@ import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizedState;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -319,9 +322,9 @@ public class BestApproximationDeterminizer
 	}
 	
 	/**
-	 * Returns true iff (state,symbol,succ) is inductive. Fist the interpolant
+	 * Returns true iff (state,symbol,succ) is inductive. First the interpolant
 	 * automaton is queried for a yes-answer, afterwards the solver is
-	 * queried for a yes/no/unknown-answer. We querying the interpolant
+	 * queried for a yes/no/unknown-answer. We query the interpolant
 	 * automaton for two reasons:
 	 * <ul>
 	 * <li> a query to the solver is expensive
@@ -333,8 +336,8 @@ public class BestApproximationDeterminizer
 			final IPredicate  state,
 			final CodeBlock symbol,
 			final IPredicate  succ) {
-		for (final IPredicate succInt : mNwa.succInternal(state, symbol)) {
-			if (succInt.equals(succ)) {
+		for (final OutgoingInternalTransition<CodeBlock, IPredicate> trans : mNwa.internalSuccessors(state, symbol)) {
+			if (trans.getSucc().equals(succ)) {
 				mAnswerInternalAutomaton++;
 				return true;
 			}
@@ -353,9 +356,9 @@ public class BestApproximationDeterminizer
 	}
 	
 	/**
-	 * Returns true iff (state,symbol,succ) is inductive. Fist the interpolant
+	 * Returns true iff (state,symbol,succ) is inductive. First the interpolant
 	 * automaton is queried for a yes-answer, afterwards the solver is
-	 * queried for a yes/no/unknown-answer. We querying the interpolant
+	 * queried for a yes/no/unknown-answer. We query the interpolant
 	 * automaton for two reasons:
 	 * <ul>
 	 * <li> a query to the solver is expensive
@@ -367,8 +370,8 @@ public class BestApproximationDeterminizer
 			final IPredicate  state,
 			final Call symbol,
 			final IPredicate  succ) {
-		for (final IPredicate succCall : mNwa.succCall(state,symbol)) {
-			if (succCall.equals(succ)) {
+		for (final OutgoingCallTransition<CodeBlock, IPredicate> trans : mNwa.callSuccessors(state,symbol)) {
+			if (trans.getSucc().equals(succ)) {
 				mAnswerCallAutomaton++;
 				return true;
 			}
@@ -465,8 +468,8 @@ public class BestApproximationDeterminizer
 	
 	/**
 	 * Returns true iff (state,callerState,symbol,succ) is inductive.
-	 * Fist the interpolant automaton is queried for a yes-answer, afterwards
-	 * the solver is queried for a yes/no/unknown-answer. We querying the
+	 * First the interpolant automaton is queried for a yes-answer, afterwards
+	 * the solver is queried for a yes/no/unknown-answer. We query the
 	 * interpolant automaton for two reasons:
 	 * <ul>
 	 * <li> a query to the solver is expensive
@@ -479,8 +482,9 @@ public class BestApproximationDeterminizer
 			final IPredicate  callerState,
 			final Return symbol,
 			final IPredicate  succ) {
-		for (final IPredicate succRet : mNwa.succReturn(state,callerState, symbol)) {
-			if (succRet.equals(succ)) {
+		for (final OutgoingReturnTransition<CodeBlock, IPredicate> trans : mNwa.returnSuccessors(state,callerState,
+				symbol)) {
+			if (trans.getSucc().equals(succ)) {
 				mAnswerReturnAutomaton++;
 				return true;
 			}
