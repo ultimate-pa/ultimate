@@ -42,7 +42,10 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.Senwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -256,13 +259,10 @@ public class SenwaWalker<LETTER, STATE> {
 			}
 			
 			final STATE entry = mTraversedSenwa.getEntry(state);
-			for (final LETTER call : mTraversedSenwa.lettersCallIncoming(entry)) {
-				for (final STATE hier : mTraversedSenwa.predCall(entry, call)) {
-					final Iterable<STATE> returnSuccs =
-							mSuccVisit.visitAndGetReturnSuccessors(state, hier);
-					for (final STATE retSucc : returnSuccs) {
-						enqueueAndMark(retSucc);
-					}
+			for (final IncomingCallTransition<LETTER, STATE> trans : mTraversedSenwa.callPredecessors(entry)) {
+				final Iterable<STATE> returnSuccs = mSuccVisit.visitAndGetReturnSuccessors(state, trans.getPred());
+				for (final STATE retSucc : returnSuccs) {
+					enqueueAndMark(retSucc);
 				}
 			}
 			
@@ -315,18 +315,18 @@ public class SenwaWalker<LETTER, STATE> {
 		
 		for (final STATE state : emptyAutomaton.getStates()) {
 			for (final LETTER letter : emptyAutomaton.getInternalAlphabet()) {
-				if (emptyAutomaton.succInternal(state, letter).isEmpty()) {
+				if (!emptyAutomaton.internalSuccessors(state, letter).iterator().hasNext()) {
 					emptyAutomaton.addInternalTransition(state, letter, sinkState);
 				}
 			}
 			for (final LETTER letter : emptyAutomaton.getCallAlphabet()) {
-				if (emptyAutomaton.succCall(state, letter).isEmpty()) {
+				if (!emptyAutomaton.callSuccessors(state, letter).iterator().hasNext()) {
 					emptyAutomaton.addCallTransition(state, letter, sinkState);
 				}
 			}
 			for (final LETTER symbol : emptyAutomaton.getReturnAlphabet()) {
 				for (final STATE hier : emptyAutomaton.getStates()) {
-					if (emptyAutomaton.succReturn(state, hier, symbol).isEmpty()) {
+					if (!emptyAutomaton.returnSuccessors(state, hier, symbol).iterator().hasNext()) {
 						emptyAutomaton.addReturnTransition(state, hier, symbol, sinkState);
 					}
 				}
@@ -362,20 +362,16 @@ public class SenwaWalker<LETTER, STATE> {
 		while (!ancestorSearchWorklist.isEmpty()) {
 			final STATE state = ancestorSearchWorklist.removeFirst();
 			statesNeverReachFinal.remove(state);
-			for (final LETTER letter : mTraversedSenwa.lettersInternalIncoming(state)) {
-				for (final STATE pred : mTraversedSenwa.predInternal(state, letter)) {
-					final boolean wasContained = statesNeverReachFinal.remove(pred);
-					if (wasContained) {
-						ancestorSearchWorklist.add(pred);
-					}
+			for (final IncomingInternalTransition<LETTER, STATE> trans : mTraversedSenwa.internalPredecessors(state)) {
+				final boolean wasContained = statesNeverReachFinal.remove(trans.getPred());
+				if (wasContained) {
+					ancestorSearchWorklist.add(trans.getPred());
 				}
 			}
-			for (final LETTER letter : mTraversedSenwa.lettersCallIncoming(state)) {
-				for (final STATE pred : mTraversedSenwa.predCall(state, letter)) {
-					final boolean wasContained = statesNeverReachFinal.remove(pred);
-					if (wasContained) {
-						ancestorSearchWorklist.add(pred);
-					}
+			for (final IncomingCallTransition<LETTER, STATE> trans : mTraversedSenwa.callPredecessors(state)) {
+				final boolean wasContained = statesNeverReachFinal.remove(trans.getPred());
+				if (wasContained) {
+					ancestorSearchWorklist.add(trans.getPred());
 				}
 			}
 			for (final IncomingReturnTransition<LETTER, STATE> inTrans : mTraversedSenwa.returnPredecessors(state)) {
@@ -486,8 +482,8 @@ public class SenwaWalker<LETTER, STATE> {
 	private Set<STATE> computeState2CallSuccs(final STATE state) {
 		final Set<STATE> callSuccs = new HashSet<STATE>();
 		if (state != mTraversedSenwa.getEmptyStackState()) {
-			for (final LETTER letter : mTraversedSenwa.lettersCall(state)) {
-				callSuccs.addAll(mTraversedSenwa.succCall(state, letter));
+			for (final OutgoingCallTransition<LETTER, STATE> trans : mTraversedSenwa.callSuccessors(state)) {
+				callSuccs.add(trans.getSucc());
 			}
 		}
 		return callSuccs;
@@ -497,24 +493,13 @@ public class SenwaWalker<LETTER, STATE> {
 	 * @return true iff state has successors.
 	 */
 	private boolean hasSuccessors(final STATE state) {
-		for (final LETTER symbol : mTraversedSenwa.lettersInternal(state)) {
-			if (!mTraversedSenwa.succInternal(state, symbol).isEmpty()) {
-				return true;
-			}
+		if (mTraversedSenwa.internalSuccessors(state).iterator().hasNext()) {
+			return true;
 		}
-		for (final LETTER symbol : mTraversedSenwa.lettersCall(state)) {
-			if (!mTraversedSenwa.succCall(state, symbol).isEmpty()) {
-				return true;
-			}
+		if (mTraversedSenwa.callSuccessors(state).iterator().hasNext()) {
+			return true;
 		}
-		for (final LETTER symbol : mTraversedSenwa.lettersReturn(state)) {
-			for (final STATE hier : mTraversedSenwa.hierarchicalPredecessorsOutgoing(state, symbol)) {
-				if (!mTraversedSenwa.succReturn(state, hier, symbol).isEmpty()) {
-					return true;
-				}
-			}
-		}
-		return false;
+		return mTraversedSenwa.returnSuccessors(state).iterator().hasNext();
 	}
 	
 	/**
