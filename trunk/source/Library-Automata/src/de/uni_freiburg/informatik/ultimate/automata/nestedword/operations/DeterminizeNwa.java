@@ -315,8 +315,8 @@ public class DeterminizeNwa<LETTER, STATE>
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			final STATE state, final LETTER letter) {
-		final Collection<STATE> succs = mCache.succCall(state, letter);
-		if (succs == null || succs.isEmpty()) {
+		final Iterator<OutgoingCallTransition<LETTER, STATE>> succs = mCache.callSuccessors(state, letter).iterator();
+		if (!succs.hasNext()) {
 			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
 			assert (detState != null);
 			final DeterminizedState<LETTER, STATE> detSucc =
@@ -341,8 +341,9 @@ public class DeterminizeNwa<LETTER, STATE>
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			final STATE state, final STATE hier, final LETTER letter) {
-		final Collection<STATE> succs = mCache.succReturn(state, hier, letter);
-		if (succs == null || succs.isEmpty()) {
+		final Iterator<OutgoingReturnTransition<LETTER, STATE>> succs =
+				mCache.returnSuccessors(state, hier, letter).iterator();
+		if (!succs.hasNext()) {
 			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
 			assert (detState != null);
 			final DeterminizedState<LETTER, STATE> detHier = mRes2det.get(hier);
