@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections;
@@ -125,7 +125,7 @@ public abstract class AbstractMaxSatSolver<V> {
 	/**
 	 * Add a new Horn clause. We call the variables on the left-hand side
 	 * negativeAtoms and the variable on the right-hand side the positive
-	 * atom. 
+	 * atom.
 	 * @param negativeAtoms array of non-null variables
 	 * @param positiveAtom variable that may be null. If the variable is null
 	 *     it considered as true. If you want to assert only a negative atom, you
@@ -142,7 +142,7 @@ public abstract class AbstractMaxSatSolver<V> {
 	/**
 	 * Add a new clause. We call the variables on the left-hand side
 	 * negativeAtoms and the variables on the right-hand side the positive
-	 * atoms. 
+	 * atoms.
 	 * @param negativeAtoms array of non-null variables considered negative
 	 * @param positiveAtoms array of non-null variables considered positive.
 	 *     If you want to assert only a negative atom, you have to use an empty
@@ -237,6 +237,19 @@ public abstract class AbstractMaxSatSolver<V> {
 	 * @return assignment status
 	 */
 	protected abstract VariableStatus getTemporaryAssignment(V var);
+	
+	protected VariableStatus getCurrentVariableStatus(final V var) {
+		assert mVariables.contains(var);
+		final Boolean irr = getPersistentAssignment(var);
+		if (irr != null) {
+			if (irr) {
+				return VariableStatus.TRUE;
+			} else {
+				return VariableStatus.FALSE;
+			}
+		}
+		return getTemporaryAssignment(var);
+	}
 
 	/**
 	 * Backtracking mechanism.
@@ -273,10 +286,10 @@ public abstract class AbstractMaxSatSolver<V> {
 	 * <p>TODO other policies
 	 *      The only goal for optimization here is to find contradictions faster.
 	 *      If no contradiction is found, all policies should take the same time.
-	 *      
+	 * 
 	 *      <p>One policy could be to prefer clauses with positive/negative
 	 *      variable, but it is not clear whether this makes sense.
-	 *      
+	 * 
 	 *      <p>Another possibility could be to prefer variables which also
 	 *      occur in a non-Horn clause to remove the number of such clauses.
 	 * 

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections;
@@ -95,7 +95,7 @@ class Clause<V> {
 		boolean unitIsPositive = false;
 		for (int i = 0; i < mPositiveAtoms.length; ++i) {
 			final V var = mPositiveAtoms[i];
-			final VariableStatus status = getCurrentVariableStatus(var, solver);
+			final VariableStatus status = solver.getCurrentVariableStatus(var);
 			switch (status) {
 			case FALSE:
 				// do nothing
@@ -119,7 +119,7 @@ class Clause<V> {
 		if (clauseStatus == ClauseStatus.NEITHER) {
 			for (int i = 0; i < mNegativeAtoms.length; ++i) {
 				final V var = mNegativeAtoms[i];
-				final VariableStatus status = getCurrentVariableStatus(var, solver);
+				final VariableStatus status = solver.getCurrentVariableStatus(var);
 				switch (status) {
 				case FALSE:
 					clauseStatus = ClauseStatus.TRUE;
@@ -177,19 +177,6 @@ class Clause<V> {
 		return new Pair<V, Boolean>(var, propagateeIsPositive);
 	}
 	
-	private VariableStatus getCurrentVariableStatus(final V var, final AbstractMaxSatSolver<V> solver) {
-		assert solver.mVariables.contains(var);
-		final Boolean irr = solver.getPersistentAssignment(var);
-		if (irr != null) {
-			if (irr) {
-				return VariableStatus.TRUE;
-			} else {
-				return VariableStatus.FALSE;
-			}
-		}
-		return solver.getTemporaryAssignment(var);
-	}
-
 	public boolean isEquivalentToFalse() {
 		return mClauseCondition.getClauseStatus() == ClauseStatus.FALSE;
 	}
@@ -233,7 +220,7 @@ class Clause<V> {
 			throw new IllegalArgumentException("not only one unset Atom");
 		} else {
 			for (final V var : mPositiveAtoms) {
-				final VariableStatus status = getCurrentVariableStatus(var, solver);
+				final VariableStatus status = solver.getCurrentVariableStatus(var);
 				switch (status) {
 				case TRUE:
 				case FALSE:
@@ -246,7 +233,7 @@ class Clause<V> {
 				}
 			}
 			for (final V var : mNegativeAtoms) {
-				final VariableStatus status = getCurrentVariableStatus(var, solver);
+				final VariableStatus status = solver.getCurrentVariableStatus(var);
 				switch (status) {
 				case TRUE:
 				case FALSE:
@@ -313,7 +300,7 @@ class Clause<V> {
 	public boolean isHornCurrent(final AbstractMaxSatSolver<V> solver) {
 		boolean foundFirst = false;
 		for (final V var : mPositiveAtoms) {
-			final VariableStatus status = getCurrentVariableStatus(var, solver);
+			final VariableStatus status = solver.getCurrentVariableStatus(var);
 			switch (status) {
 				case UNSET:
 					if (foundFirst) {
