@@ -39,9 +39,9 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GeometricNonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.LTLFiniteCounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.LTLInfiniteCounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NonTerminationArgumentResult;
@@ -153,7 +153,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		states.addAll(nta.getGEVs());
 		final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(term2expression, states);
 
-		final NonTerminationArgumentResult<RcfgElement, Term> result = new NonTerminationArgumentResult<RcfgElement, Term>(
+		final NonTerminationArgumentResult<RcfgElement, Term> result = new GeometricNonTerminationArgumentResult<RcfgElement, Term>(
 				honda, Activator.PLUGIN_NAME, initHondaRays.get(0), initHondaRays.get(1),
 				initHondaRays.subList(2, initHondaRays.size()), nta.getLambdas(), nta.getNus(),
 				getBacktranslationService(), Term.class);

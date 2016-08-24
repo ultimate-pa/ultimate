@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GeometricNonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NoResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentResult;
@@ -442,7 +443,7 @@ public class LassoRankerStarter {
 		states.addAll(nta.getGEVs());
 		final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(term2expression, states);
 
-		final NonTerminationArgumentResult<RcfgElement, Term> result = new NonTerminationArgumentResult<RcfgElement, Term>(
+		final NonTerminationArgumentResult<RcfgElement, Term> result = new GeometricNonTerminationArgumentResult<RcfgElement, Term>(
 				mHonda, Activator.PLUGIN_NAME, initHondaRays.get(0), initHondaRays.get(1),
 				initHondaRays.subList(2, initHondaRays.size()), nta.getLambdas(), nta.getNus(), getTranslatorSequence(),
 				Term.class);
