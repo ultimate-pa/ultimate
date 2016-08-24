@@ -11,4 +11,6 @@ u2b05_broadcast_guards_vars_UNSAFE.bpl : v != 2
 u2b06_batman_intermittent_no_power_SAFE.bpl : MEDIUM_1$sendCount <= 1
 u2b06_batman_intermittent_no_power_UNSAFE.bpl : MEDIUM_1$sendCount != 1
 u2b07_batman_intermittent_power_SAFE.bpl : time <= 20.0 ==> MAC_1$power < 1000.0
-u2b07_batman_intermittent_power_UNSAFE.bpl : time <= 9600.0 ==> MAC_1$power < 100.0
+u2b07_batman_intermittent_power_UNSAFE.bpl : time <= 400.0 ==> MAC_1$power < 100.0
+u2b08_batman_intermittent_power_1slot_SAFE.bpl : time <= 20.0 ==> MAC_1$power < 1000.0
+u2b08_batman_intermittent_power_1slot_UNSAFE.bpl : time <= 400.0 ==> MAC_1$power < 100.0
