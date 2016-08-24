@@ -1,7 +1,7 @@
-First, configure the inpute sequences to try by setting the constants
+First, configure the input sequences to try by setting the constants
 
 INPUT_LENGTH    The maximum length of the input sequences
-INPUT_MIN       The smalles value of the input
+INPUT_MIN       The smallest value of the input
 INPUT_MAX       The largest value of the input
 
 To compile (For example Problem17):
