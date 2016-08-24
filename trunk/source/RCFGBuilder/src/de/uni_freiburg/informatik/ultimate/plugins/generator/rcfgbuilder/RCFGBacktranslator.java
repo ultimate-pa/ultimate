@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -341,22 +340,6 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 		return rtr;
 	}
 	
-	private ProgramState<Expression> translateProgramState(final ProgramState<Term> oldProgramState) {
-		if (oldProgramState == null) {
-			return null;
-		}
-		final Map<Expression, Collection<Expression>> variable2Values = new HashMap<>();
-		for (final Term oldVariable : oldProgramState.getVariables()) {
-			final Collection<Expression> newValues = new ArrayList<>(); 
-			for (final Term oldValue : oldProgramState.getValues(oldVariable)) {
-				newValues.add(mTerm2Expression.translate(oldValue));
-			}
-			final Expression newVariable = mTerm2Expression.translate(oldVariable);
-			variable2Values.put(newVariable, newValues);
-		}
-		return new ProgramState<>(variable2Values );
-	}
-
 	@Override
 	public Expression translateExpression(final Term term) {
 		return mTerm2Expression.translate(term);

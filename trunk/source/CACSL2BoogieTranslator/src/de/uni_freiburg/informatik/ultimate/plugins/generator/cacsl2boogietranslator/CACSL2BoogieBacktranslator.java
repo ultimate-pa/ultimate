@@ -386,7 +386,9 @@ public class CACSL2BoogieBacktranslator
 		}
 	}
 
-	private ProgramState<IASTExpression> translateProgramState(final ProgramState<Expression> programState) {
+	
+	@Override
+	public ProgramState<IASTExpression> translateProgramState(final ProgramState<Expression> programState) {
 		if (programState == null) {
 			// cannot translate nothin'
 			return null;

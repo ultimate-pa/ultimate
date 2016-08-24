@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.core.lib.translation;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -406,4 +408,23 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	public interface IFunction<P1, P2, P3, R> {
 		R create(P1 p1, P2 p2, P3 p3);
 	}
+	
+	@Override
+	public ProgramState<TE> translateProgramState(final ProgramState<SE> oldProgramState) {
+		if (oldProgramState == null) {
+			return null;
+		}
+		final Map<TE, Collection<TE>> variable2Values = new HashMap<>();
+		for (final SE oldVariable : oldProgramState.getVariables()) {
+			final Collection<TE> newValues = new ArrayList<>(); 
+			for (final SE oldValue : oldProgramState.getValues(oldVariable)) {
+				newValues.add(translateExpression(oldValue));
+			}
+			final TE newVariable = translateExpression(oldVariable);
+			variable2Values.put(newVariable, newValues);
+		}
+		return new ProgramState<>(variable2Values );
+	}
+	
+
 }
