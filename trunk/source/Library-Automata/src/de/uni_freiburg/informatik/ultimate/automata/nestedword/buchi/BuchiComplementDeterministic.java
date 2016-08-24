@@ -106,22 +106,16 @@ public class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDeckerVis
 	}
 	
 	STATE getOrConstructNewState(final STATE oldState, final boolean isInitial, final boolean isFinal) {
-		STATE newState;
-		STATE newContent;
-		if (isFinal) {
-			newState = mOld2Final.get(oldState);
-			newContent = mContentFactory.complementBuchiDeterministicFinal(oldState);
-		} else {
-			newState = mOld2NonFinal.get(oldState);
-			newContent = mContentFactory.complementBuchiDeterministicNonFinal(oldState);
-		}
+		STATE newState = isFinal
+				? mOld2Final.get(oldState)
+				: mOld2NonFinal.get(oldState);
 		if (newState == null) {
 			if (isFinal) {
-				newState = newContent;
+				newState = mContentFactory.complementBuchiDeterministicFinal(oldState);
 				((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(isInitial, isFinal, newState);
 				mOld2Final.put(oldState, newState);
 			} else {
-				newState = newContent;
+				newState = mContentFactory.complementBuchiDeterministicNonFinal(oldState);
 				((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(isInitial, isFinal, newState);
 				mOld2NonFinal.put(oldState, newState);
 			}
