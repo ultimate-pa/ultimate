@@ -42,7 +42,11 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class AutomataOperationStatistics implements ICsvProviderProvider<Object> {
-	
+	/**
+	 * Used to indicate an invalid percentage (if the base is zero).
+	 */
+	private static final int INVALID_PERCENTAGE = -1;
+
 	private final LinkedHashMap<StatisticsType, Object> mKeyValueMap = new LinkedHashMap<>();
 	
 	private static final String FIRST_INSERT_THE_VALUE_FOR_KEY = "First insert the value for key ";
@@ -89,6 +93,10 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 			final StatisticsType resultKey, final boolean invert) {
 		final int fst = getInteger(fstBaseKey);
 		final int snd = getInteger(sndBaseKey);
+		if (fst == 0) {
+			addKeyValuePair(resultKey, INVALID_PERCENTAGE);
+			return;
+		}
 		final int percentageRaw = 100 * snd / fst;
 		final Integer percentage = invert ? 100 - percentageRaw : percentageRaw;
 		addKeyValuePair(resultKey, percentage);
