@@ -874,26 +874,28 @@ public abstract class ASimulation<LETTER, STATE> {
 				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.TOTAL) * 1_000_000));
 
 		// Output automaton
-		final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, mResult, true);
-		final int outputStates = outputAnalyzer.getNumberOfStates();
-		final int outputTransitions = outputAnalyzer.getNumberOfTransitions(ESymbolType.TOTAL);
-		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_STATES, outputStates);
-		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_NONDETERMINISTIC_STATES,
-				outputAnalyzer.getNumberOfNondeterministicStates());
+		if (mResult != null) {
+			final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, mResult, true);
+			final int outputStates = outputAnalyzer.getNumberOfStates();
+			final int outputTransitions = outputAnalyzer.getNumberOfTransitions(ESymbolType.TOTAL);
+			mPerformance.setCountingMeasure(ECountingMeasure.RESULT_STATES, outputStates);
+			mPerformance.setCountingMeasure(ECountingMeasure.RESULT_NONDETERMINISTIC_STATES,
+					outputAnalyzer.getNumberOfNondeterministicStates());
 
-		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE,
-				outputAnalyzer.getNumberOfSymbols(ESymbolType.TOTAL));
-		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS, outputTransitions);
-		mPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_DENSITY_MILLION,
-				(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.TOTAL) * 1_000_000));
+			mPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE,
+					outputAnalyzer.getNumberOfSymbols(ESymbolType.TOTAL));
+			mPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS, outputTransitions);
+			mPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_DENSITY_MILLION,
+					(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.TOTAL) * 1_000_000));
 
-		// General metrics
-		mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, graph.getSize());
-		mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES, graph.getAmountOfEdges());
+			// General metrics
+			mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, graph.getSize());
+			mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES, graph.getAmountOfEdges());
 
-		mPerformance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, graph.getGlobalInfinity());
-		mPerformance.setCountingMeasure(ECountingMeasure.REMOVED_STATES, inputStates - outputStates);
-		mPerformance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS, inputTransitions - outputTransitions);
+			mPerformance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, graph.getGlobalInfinity());
+			mPerformance.setCountingMeasure(ECountingMeasure.REMOVED_STATES, inputStates - outputStates);
+			mPerformance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS, inputTransitions - outputTransitions);
+		}
 	}
 
 	/**

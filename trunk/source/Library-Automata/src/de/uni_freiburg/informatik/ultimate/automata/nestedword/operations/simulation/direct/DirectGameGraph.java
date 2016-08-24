@@ -151,6 +151,11 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					similarStates.addPair(state1, state2);
 				}
 			}
+			
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+				getLogger().debug("Stopped in generateBuchiAutomatonFromGraph/filling table");
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
 		}
 		// Merge states if they simulate each other
 		for (final STATE state1 : similarStates.getDomain()) {
@@ -160,11 +165,11 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					uf.union(state1, state2);
 				}
 			}
-		}
-
-		if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-			getLogger().debug("Stopped in generateBuchiAutomatonFromGraph/table filled");
-			throw new AutomataOperationCanceledException(this.getClass());
+			
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+				getLogger().debug("Stopped in generateBuchiAutomatonFromGraph/marking table");
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
 		}
 
 		// Merge states
@@ -228,7 +233,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			}
 
 			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-				getLogger().debug("Stopped in generateGameGraphFromBuechi/calculating v0 und v1");
+				getLogger().debug("Stopped in generateGameGraphFromBuechi/calculating v1");
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
@@ -261,11 +266,11 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 						}
 					}
 				}
-			}
-
-			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-				getLogger().debug("Stopped in generateGameGraphFromBuechi/calculating v0 und v1");
-				throw new AutomataOperationCanceledException(this.getClass());
+				
+				if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+					getLogger().debug("Stopped in generateGameGraphFromBuechi/calculating v0 and edges");
+					throw new AutomataOperationCanceledException(this.getClass());
+				}
 			}
 		}
 		// global infinity = (# of pr==1 nodes) + 1

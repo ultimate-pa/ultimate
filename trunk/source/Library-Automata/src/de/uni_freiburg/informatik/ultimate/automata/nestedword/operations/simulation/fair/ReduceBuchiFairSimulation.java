@@ -457,7 +457,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 */
 	public ReduceBuchiFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, true, Collections.emptyList(), false);
+		this(services, stateFactory, operand, false, Collections.emptyList(), false);
 	}
 
 	/**

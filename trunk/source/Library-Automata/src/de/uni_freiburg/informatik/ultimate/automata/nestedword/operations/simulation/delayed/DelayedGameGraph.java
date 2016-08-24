@@ -164,11 +164,11 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					table[states.indexOf(v.getQ0())][states.indexOf(v.getQ1())] = true;
 				}
 			}
-		}
-
-		if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-			getLogger().debug("Stopped in generateBuchiAutomaton/table filled");
-			throw new AutomataOperationCanceledException(this.getClass());
+			
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+				getLogger().debug("Stopped in generateBuchiAutomaton/filling table");
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
 		}
 
 		// Merge states
@@ -205,11 +205,11 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			}
 			result.addState(isInitial, isFinal, minimizedStateName);
 			marker[i] = true;
-		}
-
-		if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-			getLogger().debug("Stopped in generateBuchiAutomaton/states added to result BA");
-			throw new AutomataOperationCanceledException(this.getClass());
+			
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+				getLogger().debug("Stopped in generateBuchiAutomaton/adding states to result BA");
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
 		}
 
 		// Add edges
@@ -221,6 +221,11 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					final STATE newSucc = oldSNames2newSNames.get(trans.getSucc());
 					result.addInternalTransition(newPred, s, newSucc);
 				}
+			}
+			
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+				getLogger().debug("Stopped in generateBuchiAutomaton/adding edges");
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
 
@@ -255,7 +260,7 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 				}
 			}
 			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-				getLogger().debug("Stopped in generateGameGraph/calculating v0 und v1");
+				getLogger().debug("Stopped in generateGameGraph/calculating v1");
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
@@ -313,10 +318,11 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					}
 				}
 				countedTransitionsForQ0 = true;
-			}
-			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-				getLogger().debug("Stopped in generateGameGraph/calculating v0 und v1");
-				throw new AutomataOperationCanceledException(this.getClass());
+				
+				if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+					getLogger().debug("Stopped in generateGameGraph/calculating v0 and edges");
+					throw new AutomataOperationCanceledException(this.getClass());
+				}
 			}
 		}
 		// global infinity = (# of pr==1 nodes) + 1

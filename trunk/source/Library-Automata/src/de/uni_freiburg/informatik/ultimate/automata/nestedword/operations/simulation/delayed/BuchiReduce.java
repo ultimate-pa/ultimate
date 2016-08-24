@@ -98,7 +98,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand,
 				new DelayedSimulation<>(services.getProgressMonitorService(),
-						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), true, stateFactory,
+						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), false, stateFactory,
 						new DelayedGameGraph<>(services, services.getProgressMonitorService(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory)));

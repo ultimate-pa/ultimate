@@ -104,7 +104,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand,
 				new DirectSimulation<>(services.getProgressMonitorService(),
-						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), true, stateFactory,
+						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), false, stateFactory,
 						new DirectGameGraph<>(services, services.getProgressMonitorService(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory)));

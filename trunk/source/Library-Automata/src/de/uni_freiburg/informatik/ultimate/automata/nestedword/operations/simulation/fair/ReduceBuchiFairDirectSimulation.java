@@ -71,7 +71,7 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
 					throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, true, Collections.emptyList());
+		this(services, stateFactory, operand, false, Collections.emptyList());
 	}
 
 	/**
