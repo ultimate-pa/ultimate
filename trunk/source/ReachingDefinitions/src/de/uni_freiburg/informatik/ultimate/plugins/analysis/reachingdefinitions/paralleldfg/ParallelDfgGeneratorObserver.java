@@ -194,6 +194,10 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		for (Entry<String, Set<ProgramPoint>> entry: node.getLocations().entrySet()){
 			// check for every Procedure if there exists a pp which has init in nowrtie(x,pp)
 			Boolean initInRDProc = false;
+			if (var.isGlobal()== false && var.getProcedure() != entry.getKey()){
+				// if var is local and not in the procedure, continue to the next procedure
+				continue;
+			}
 			for (ProgramPoint pp : entry.getValue()){
 				// get the RD
 				DataflowState dfs = mDataflowAnalysisResult.getLoc2SingleStates().get(pp);
@@ -238,6 +242,10 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 			// L always includes the old L set.
 			L.addAll(entry.getValue());
 			// compute with nowrites
+			if (var.isGlobal()== false && var.getProcedure() != entry.getKey()){
+				// if var is local and not in the procedure, continue to the next procedure
+				continue;
+			}
 			for (ProgramPoint pp : entry.getValue()){
 				if (!pp.toString().contains("ENTRY")){
 					DataflowState dfs = mDataflowAnalysisResult.getLoc2SingleStates().get(pp);
