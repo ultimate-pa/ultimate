@@ -151,12 +151,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		states.add(nta.getStateInit());
 		states.add(nta.getStateHonda());
 		states.addAll(nta.getGEVs());
-		final List<Map<Expression, Rational>> initHondaRays = BacktranslationUtil.rank2Boogie(term2expression, states);
+		final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(term2expression, states);
 
-		final NonTerminationArgumentResult<RcfgElement, Expression> result = new NonTerminationArgumentResult<RcfgElement, Expression>(
+		final NonTerminationArgumentResult<RcfgElement, Term> result = new NonTerminationArgumentResult<RcfgElement, Term>(
 				honda, Activator.PLUGIN_NAME, initHondaRays.get(0), initHondaRays.get(1),
 				initHondaRays.subList(2, initHondaRays.size()), nta.getLambdas(), nta.getNus(),
-				getBacktranslationService(), Expression.class);
+				getBacktranslationService(), Term.class);
 		reportResult(result);
 	}
 
