@@ -55,22 +55,26 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	// @formatter:off
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
-			//### BPL
+			//### BPL 
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_noPredAbs.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_refineAlways.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
 
-			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1_Debug.epf"),
-//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+//			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+//			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
@@ -106,12 +110,13 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
 //			"examples/programs/abstractInterpretation/congruence.bpl",
-			"examples/programs/abstractInterpretation/regression",
+//			"examples/programs/abstractInterpretation/regression",
 //			"examples/programs/abstractInterpretation/regression/all",
 //			"examples/programs/abstractInterpretation/regression/all/procedure-Call-bools.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/loop-nested-unsafe.bpl",
 //			"examples/programs/abstractInterpretation/regression/globals-easy-1-safe.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/loop-110517_Martin01.bpl",
+			"examples/programs/abstractInterpretation/regression/loop-procedure.bpl",
 
 //			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
 //			"examples/programs/abstractInterpretation/regression/bla.bpl",
@@ -139,16 +144,29 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/svcomp/product-lines/email_spec11_productSimulator_false-unreach-call.cil.c",
 //			"examples/svcomp/product-lines/email_spec4_product32_false-unreach-call.cil.c",
 //			"examples/svcomp/loop-invgen/down_true-unreach-call.i",
+//			"examples/svcomp/loop-invgen/",
+//			"examples/svcomp/loops/",
+//			"examples/svcomp/loop-lit/",
+//			"examples/svcomp/loop-new/",
+//			"examples/svcomp/loop-acceleration/",
+//			"examples/svcomp/loop-new/nested_true-unreach-call.i",
 //			"examples/svcomp/loop-lit/css2003_true-unreach-call.c.i",
 //			"examples/svcomp/loop-invgen/string_concat-noarr_true-unreach-call.i",
+//			"examples/programs/toy/tooDifficultLoopInvariant/GasCake01.bpl",
+//			"examples/programs/toy/tooDifficultLoopInvariant/GasCake01HardcodedInput.bpl",
+//			"examples/programs/toy/tooDifficultLoopInvariant/GasCake01InvariantCheck.bpl",
+//			"examples/programs/toy/tooDifficultLoopInvariant/GasCakeWithJohoFractions01.bpl",
+//			"examples/programs/toy/tooDifficultLoopInvariant/GasCakeWithJohoFractions01FixedInput.bpl",
+//			"examples/programs/toy/tooDifficultLoopInvariant/GasCakeWithJohoFractions01HardcodedInput.bpl",
+//			"examples/programs/toy/tooDifficultLoopInvariant/GasCakeWithJohoFractions01InvariantCheck.bpl",
 	};
 
 	// @formatter:on
 
 	@Override
 	protected long getTimeout() {
-		// return 30 * 1000 * 1000;
-		return 30 * 1000;
+//		 return 30 * 1000 * 1000;
+		return 90 * 1000;
 		// return 60 * 1000 * 10;
 	}
 
