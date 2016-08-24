@@ -78,20 +78,21 @@ public class FixpointCheck {
 		mModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
 		mStem = stem;
 		mLoop = loop;
+		mManagedScript.lock(this);
 		mResult = checkForFixpoint();
+		mManagedScript.unlock(this);
 	}
 
 	
 	private HasFixpoint checkForFixpoint() {
-		mManagedScript.lock(this);
 		final Map<Term, Term> substitutionMappingStem = 
 				constructSubtitutionMapping(mStem, this::getConstantAtInit, this::getConstantAtHonda);
 		final Map<Term, Term> substitutionMappingLoop = 
 				constructSubtitutionMapping(mLoop, this::getConstantAtHonda, this::getConstantAtHonda);
 		final Term renamedStem = new Substitution(mManagedScript, substitutionMappingStem).transform(mStem.getFormula());
 		final Term renamedLoop = new Substitution(mManagedScript, substitutionMappingLoop).transform(mLoop.getFormula());
-		mManagedScript.push(this, 1);
 		mManagedScript.echo(this, new QuotedObject("Start fixpoint check"));
+		mManagedScript.push(this, 1);
 		mManagedScript.assertTerm(this, renamedStem);
 		mManagedScript.assertTerm(this, renamedLoop);
 		final LBool lbool = mManagedScript.checkSat(this);
@@ -114,8 +115,8 @@ public class FixpointCheck {
 		default:
 			throw new AssertionError(lbool);
 		}
+		mManagedScript.pop(this, 1);
 		mManagedScript.echo(this, new QuotedObject("Finished fixpoint check"));
-		mManagedScript.unlock(this);
 		return result;
 	}
 
@@ -123,13 +124,25 @@ public class FixpointCheck {
 	private Map<Term, Term> computeValuesAtHonda(final Map<Term, Term> valueMap) {
 		final Map<Term, Term> valuesAtHonda = new HashMap<>();
 		for (final IProgramVar pv : mStem.getOutVars().keySet()) {
-			valuesAtHonda.put(pv.getTermVariable(), valueMap.get(getConstantAtHonda(pv)));
+			if (SmtUtils.isSortForWhichWeCanGetValues(pv.getTermVariable().getSort())) {
+				final Term value = valueMap.get(getConstantAtHonda(pv));
+				assert value != null;
+				valuesAtHonda.put(pv.getTermVariable(), value);
+			}
 		}
 		for (final IProgramVar pv : mLoop.getInVars().keySet()) {
-			valuesAtHonda.put(pv.getTermVariable(), valueMap.get(getConstantAtHonda(pv)));
+			if (SmtUtils.isSortForWhichWeCanGetValues(pv.getTermVariable().getSort())) {
+				final Term value = valueMap.get(getConstantAtHonda(pv));
+				assert value != null;
+				valuesAtHonda.put(pv.getTermVariable(), value);
+			}
 		}
 		for (final IProgramVar pv : mLoop.getOutVars().keySet()) {
-			valuesAtHonda.put(pv.getTermVariable(), valueMap.get(getConstantAtHonda(pv)));
+			if (SmtUtils.isSortForWhichWeCanGetValues(pv.getTermVariable().getSort())) {
+				final Term value = valueMap.get(getConstantAtHonda(pv));
+				assert value != null;
+				valuesAtHonda.put(pv.getTermVariable(), value);
+			}
 		}
 		return valuesAtHonda;
 	}
@@ -138,7 +151,11 @@ public class FixpointCheck {
 	private Map<Term, Term> computeValuesAtInit(final Map<Term, Term> valueMap) {
 		final Map<Term, Term> valuesAtInit = new HashMap<>();
 		for (final IProgramVar pv : mStem.getInVars().keySet()) {
-			valuesAtInit.put(pv.getTermVariable(), valueMap.get(getConstantAtInit(pv)));
+			if (SmtUtils.isSortForWhichWeCanGetValues(pv.getTermVariable().getSort())) {
+				final Term value = valueMap.get(getConstantAtInit(pv));
+				assert value != null;
+				valuesAtInit.put(pv.getTermVariable(), value);
+			}
 		}
 		return valuesAtInit;
 	}
