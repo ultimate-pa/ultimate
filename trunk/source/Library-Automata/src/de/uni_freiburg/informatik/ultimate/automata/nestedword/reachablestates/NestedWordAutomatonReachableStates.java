@@ -1547,10 +1547,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				private Set<STATE> computeState2CallSuccs(final STATE state) {
 					final Set<STATE> callSuccs = new HashSet<STATE>();
 					if (state != getEmptyStackState()) {
-						for (final LETTER letter : lettersCall(state)) {
-							for (final STATE succ : succCall(state, letter)) {
-								callSuccs.add(succ);
-							}
+						for (final OutgoingCallTransition<LETTER, STATE> trans : callSuccessors(state)) {
+							callSuccs.add(trans.getSucc());
 						}
 					}
 					return callSuccs;
@@ -1773,37 +1771,25 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			// }
 			// }
 			
-			for (final LETTER letter : lettersInternal(state)) {
-				for (final STATE succ : succInternal(state, letter)) {
-					result &= containsInternalTransition(state, letter, succ);
-					assert result;
-				}
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : internalSuccessors(state)) {
+				result &= containsInternalTransition(state, trans.getLetter(), trans.getSucc());
+				assert result;
 			}
-			for (final LETTER letter : lettersCall(state)) {
-				for (final STATE succ : succCall(state, letter)) {
-					result &= containsCallTransition(state, letter, succ);
-					assert result;
-				}
+			for (final OutgoingCallTransition<LETTER, STATE> trans : callSuccessors(state)) {
+				result &= containsCallTransition(state, trans.getLetter(), trans.getSucc());
+				assert result;
 			}
-			for (final LETTER letter : lettersReturn(state)) {
-				for (final STATE hier : hierarchicalPredecessorsOutgoing(state, letter)) {
-					for (final STATE succ : succReturn(state, hier, letter)) {
-						result &= containsReturnTransition(state, hier, letter, succ);
-						assert result;
-					}
-				}
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : returnSuccessors(state)) {
+				result &= containsReturnTransition(state, trans.getHierPred(), trans.getLetter(), trans.getSucc());
+				assert result;
 			}
-			for (final LETTER letter : lettersInternalIncoming(state)) {
-				for (final STATE pred : predInternal(state, letter)) {
-					result &= containsInternalTransition(pred, letter, state);
-					assert result;
-				}
+			for (final IncomingInternalTransition<LETTER, STATE> trans : internalPredecessors(state)) {
+				result &= containsInternalTransition(trans.getPred(), trans.getLetter(), state);
+				assert result;
 			}
-			for (final LETTER letter : lettersCallIncoming(state)) {
-				for (final STATE pred : predCall(state, letter)) {
-					result &= containsCallTransition(pred, letter, state);
-					assert result;
-				}
+			for (final IncomingCallTransition<LETTER, STATE> trans : callPredecessors(state)) {
+				result &= containsCallTransition(trans.getPred(), trans.getLetter(), state);
+				assert result;
 			}
 			for (final IncomingReturnTransition<LETTER, STATE> inTrans : returnPredecessors(state)) {
 				result &= containsReturnTransition(inTrans.getLinPred(), inTrans.getHierPred(), inTrans.getLetter(),
