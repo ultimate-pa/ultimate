@@ -193,7 +193,9 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				}
 				
 			}
-			mLogger.info(stateContainerInformation());
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(stateContainerInformation());
+			}
 			// assert (new TransitionConsitenceCheck<LETTER,
 			// STATE>(this)).consistentForAll();
 			
@@ -808,7 +810,11 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		}
 		
 		private boolean candidateForOutgoingReturn(final STATE state) {
-			return !mOperand.lettersReturn(state).isEmpty();
+			if (mReturnAlphabet.isEmpty()) {
+				return false;
+			} else {
+				return !mOperand.lettersReturn(state).isEmpty();
+			}
 		}
 		
 		private void addInternalsAndSuccessors(final StateContainer<LETTER, STATE> cont) {
