@@ -232,8 +232,8 @@ public final class SimulationPerformance {
 	public AutomataOperationStatistics exportToAutomataOperationStatistics() {
 		AutomataOperationStatistics stats = new AutomataOperationStatistics();
 		// Meta data
-		stats.addKeyValuePair(StatisticsType.OPERATION_NAME, mSimType);
-		stats.addKeyValuePair(StatisticsType.ATS_ID, mName);
+		stats.addKeyValuePair(StatisticsType.OPERATION_NAME, getSimType());
+		stats.addKeyValuePair(StatisticsType.ATS_ID, getName());
 		stats.addKeyValuePair(StatisticsType.HAS_TIMED_OUT, hasTimedOut());
 		stats.addKeyValuePair(StatisticsType.IS_OUT_OF_MEMORY, isOutOfMemory());
 		stats.addKeyValuePair(StatisticsType.IS_USING_SCCS, isUsingSCCs());
@@ -254,7 +254,7 @@ public final class SimulationPerformance {
 			}
 		}
 
-		return null;
+		return stats;
 	}
 
 	/**
