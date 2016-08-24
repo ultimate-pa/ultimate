@@ -49,6 +49,8 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.AnalysisTec
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.FixpointCheck;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.FixpointCheck.HasFixpoint;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.NonterminationAnalysisBenchmark;
@@ -683,9 +685,15 @@ public class LassoChecker {
 		// s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " +
 		// loopVars);
 		// }
+		
+		final FixpointCheck fixpointCheck = new FixpointCheck(mServices, mLogger, mSmtManager.getManagedScript(), modifiableGlobalsAtHonda, stemTF, loopTF);
+		if (fixpointCheck.getResult() == HasFixpoint.YES) {
+			mNonterminationArgument = fixpointCheck.getTerminationArgument();
+			return SynthesisResult.NONTERMINATING;
+		}
 
 		final boolean doNonterminationAnalysis = !(s_AvoidNonterminationCheckIfArraysAreContained && containsArrays);
-//		new FixpointCheck(mServices, mLogger, mSmtManager.getManagedScript(), modifiableGlobalsAtHonda, stemTF, loopTF);
+		
 
 		NonTerminationArgument nonTermArgument = null;
 		if (doNonterminationAnalysis) {
