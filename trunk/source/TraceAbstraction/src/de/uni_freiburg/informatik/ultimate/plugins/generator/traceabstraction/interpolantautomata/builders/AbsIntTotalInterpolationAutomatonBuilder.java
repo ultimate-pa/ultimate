@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.i
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -37,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
+@SuppressWarnings({ "unchecked", "rawtypes" })
 public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
 
 	private static final long PRINT_PREDS_LIMIT = 30;
@@ -90,7 +92,6 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 		for (int i = 0; i < wordLength; i++) {
 			final CodeBlock symbol = word.getSymbol(i);
 
-			@SuppressWarnings("unchecked")
 			final Set<IAbstractState<?, CodeBlock, IBoogieVar>> nextStates = (Set<IAbstractState<?, CodeBlock, IBoogieVar>>) aiResult
 			        .getLoc2States().get(symbol.getTarget());
 
@@ -155,7 +156,6 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 		}
 
 		final IAbstractPostOperator<?, CodeBlock, IBoogieVar> postOperator = aiResult.getUsedDomain().getPostOperator();
-
 		final Iterator<CodeBlock> letterIterator = oldAbstraction.getAlphabet().iterator();
 
 		final Set<IAbstractState<?, CodeBlock, IBoogieVar>> allStates = stateToPredicate.keySet();
@@ -166,8 +166,13 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 			final Iterator<IAbstractState<?, CodeBlock, IBoogieVar>> stateIterator = allStates.iterator();
 			while (stateIterator.hasNext()) {
 				final IAbstractState<?, CodeBlock, IBoogieVar> current = stateIterator.next();
+				final List<IAbstractState> post = applyPostInternally(current, postOperator, currentLetter);
 
-				// postOperator.apply(current, currentLetter);
+				for (final IAbstractState postState : post) {
+					if (allStates.contains(postState)) {
+						throw new UnsupportedOperationException("YASADDASD");
+					}
+				}
 			}
 		}
 
@@ -179,4 +184,8 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 		return mResult;
 	}
 
+	private static List<IAbstractState> applyPostInternally(final IAbstractState<?, CodeBlock, IBoogieVar> currentState,
+	        final IAbstractPostOperator postOperator, final CodeBlock transition) {
+		return postOperator.apply(currentState, transition);
+	}
 }
