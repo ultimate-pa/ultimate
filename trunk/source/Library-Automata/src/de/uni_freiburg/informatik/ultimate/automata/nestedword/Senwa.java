@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 
 /**
  * Special case of NestedWordAutomaton in which we can partition the set of

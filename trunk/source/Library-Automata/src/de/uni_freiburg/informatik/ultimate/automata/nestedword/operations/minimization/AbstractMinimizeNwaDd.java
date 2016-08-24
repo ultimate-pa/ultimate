@@ -27,9 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
 
 /**
  * Minimization method which returns an

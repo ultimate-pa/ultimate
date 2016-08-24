@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.StateWithRankInfo;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;

@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nestedword;
+package de.uni_freiburg.informatik.ultimate.automata;
 
 import java.util.Collection;
 import java.util.Map;

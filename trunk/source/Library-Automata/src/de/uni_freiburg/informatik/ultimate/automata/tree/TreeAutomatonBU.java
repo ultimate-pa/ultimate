@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 /*
  * A Bottom-up TreeAutomaton. The rules have the form f(q1,...,qn) ~> q
  * 

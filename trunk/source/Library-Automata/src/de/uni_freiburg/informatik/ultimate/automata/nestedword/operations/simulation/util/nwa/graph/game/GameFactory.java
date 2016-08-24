@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 
 /**
  * Implementation of a StateFactory for game automaton used for summarize edge

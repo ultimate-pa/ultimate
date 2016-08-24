@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.DirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.ECountingMeasure;

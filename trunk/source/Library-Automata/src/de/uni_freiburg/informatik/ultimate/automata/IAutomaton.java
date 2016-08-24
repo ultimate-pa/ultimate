@@ -28,8 +28,6 @@ package de.uni_freiburg.informatik.ultimate.automata;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
-
 /**
  * All automata have to implement this interface.
  * 
