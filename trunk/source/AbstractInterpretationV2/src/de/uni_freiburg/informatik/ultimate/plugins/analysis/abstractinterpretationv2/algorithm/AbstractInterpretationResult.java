@@ -27,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public final class AbstractInterpretationResult<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>
         implements IAbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> {
 
+	private final IAbstractDomain<STATE, ACTION, VARDECL> mAbstractDomain;
 	private final List<AbstractCounterexample<STATE, ACTION, VARDECL, LOCATION>> mCounterexamples;
 	private final AbstractInterpretationBenchmark<ACTION, LOCATION> mBenchmark;
 	private final Map<LOCATION, Term> mLoc2Term;
@@ -34,7 +35,9 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	private final Map<LOCATION, STATE> mLoc2SingleStates;
 	private final Set<Term> mTerms;
 
-	protected AbstractInterpretationResult() {
+	protected AbstractInterpretationResult(final IAbstractDomain<STATE, ACTION, VARDECL> abstractDomain) {
+		assert abstractDomain != null;
+		mAbstractDomain = abstractDomain;
 		mCounterexamples = new ArrayList<>();
 		mBenchmark = new AbstractInterpretationBenchmark<>();
 		mLoc2Term = new HashMap<>();
@@ -86,7 +89,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	public Map<LOCATION, Set<STATE>> getLoc2States() {
 		return mLoc2States;
 	}
-	
+
 	@Override
 	public Map<LOCATION, STATE> getLoc2SingleStates() {
 		return mLoc2SingleStates;
@@ -134,6 +137,6 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 
 	@Override
 	public IAbstractDomain<STATE, ACTION, VARDECL> getUsedDomain() {
-		throw new UnsupportedOperationException();
+		return mAbstractDomain;
 	}
 }

@@ -215,7 +215,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	public enum AbstractInterpretationMode {
-		NONE, USE_PREDICATES, USE_PATH_PROGRAM
+		NONE, USE_PREDICATES, USE_PATH_PROGRAM, USE_CANONICAL, USE_TOTAL,
 	}
 
 	public enum InterpolantAutomaton {
