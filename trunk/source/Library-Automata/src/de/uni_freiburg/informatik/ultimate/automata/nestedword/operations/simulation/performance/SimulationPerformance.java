@@ -31,6 +31,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
+import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
 
@@ -51,6 +53,42 @@ public final class SimulationPerformance {
 	 * Value for a non valid time result.
 	 */
 	public static final long NO_TIME_RESULT = -1;
+
+	/**
+	 * Converts a given counting measure type to its equivalent statistics type.
+	 * 
+	 * @param countingMeasure
+	 *            Time measure to convert
+	 * @return The equivalent statistics type object
+	 */
+	public static StatisticsType convertCountingMeasureToStatistic(final ECountingMeasure countingMeasure) {
+		if (countingMeasure.equals(ECountingMeasure.BUCHI_STATES)) {
+			return StatisticsType.STATES_INPUT;
+		} else if (countingMeasure.equals(ECountingMeasure.RESULT_STATES)) {
+			return StatisticsType.STATES_OUTPUT;
+		} else if (countingMeasure.equals(ECountingMeasure.REMOVED_STATES)) {
+			return StatisticsType.STATES_REDUCTION_ABSOLUTE;
+		}
+
+		// Try to find a type with an equal name
+		return StatisticsType.valueOf(countingMeasure.name());
+	}
+
+	/**
+	 * Converts a given time measure type to its equivalent statistics type.
+	 * 
+	 * @param timeMeasure
+	 *            Time measure to convert
+	 * @return The equivalent statistics type object
+	 */
+	public static StatisticsType convertTimeMeasureToStatistic(final ETimeMeasure timeMeasure) {
+		if (timeMeasure.equals(ETimeMeasure.OVERALL)) {
+			return StatisticsType.RUNTIME_TOTAL;
+		}
+
+		// Try to find a type with an equal name
+		return StatisticsType.valueOf(timeMeasure.name());
+	}
 
 	/**
 	 * Creates an empty simulation performance object that is out of memory.
@@ -87,6 +125,7 @@ public final class SimulationPerformance {
 	 * Holds all counting measures that are monitored.
 	 */
 	private final LinkedHashMap<ECountingMeasure, Integer> mCountingMeasures;
+
 	/**
 	 * If the simulation uses SCC optimization or not.
 	 */
@@ -108,11 +147,11 @@ public final class SimulationPerformance {
 	 * If the performance object represents a simulation that has timed out.
 	 */
 	private boolean mTimedOut;
-
 	/**
 	 * Holds all time measures that are monitored.
 	 */
 	private final LinkedHashMap<ETimeMeasure, List<Long>> mTimeMeasures;
+
 	/**
 	 * Holds all starting timestamps for monitored time measures.
 	 */
@@ -181,6 +220,41 @@ public final class SimulationPerformance {
 			mTimeMeasures.put(type, new LinkedList<>());
 		}
 		mTimeMeasures.get(type).add(duration);
+	}
+
+	/**
+	 * Exports this simulation performance object to an
+	 * AutomataOperationStatistics object.
+	 * 
+	 * @return An AutomataOperationStatistics object holding the equivalent data
+	 *         than this object
+	 */
+	public AutomataOperationStatistics exportToAutomataOperationStatistics() {
+		AutomataOperationStatistics stats = new AutomataOperationStatistics();
+		// Meta data
+		stats.addKeyValuePair(StatisticsType.OPERATION_NAME, mSimType);
+		stats.addKeyValuePair(StatisticsType.ATS_ID, mName);
+		stats.addKeyValuePair(StatisticsType.HAS_TIMED_OUT, hasTimedOut());
+		stats.addKeyValuePair(StatisticsType.IS_OUT_OF_MEMORY, isOutOfMemory());
+		stats.addKeyValuePair(StatisticsType.IS_USING_SCCS, isUsingSCCs());
+
+		// Time measures
+		for (ETimeMeasure measure : getTimeMeasures().keySet()) {
+			long value = getTimeMeasureResult(measure, EMultipleDataOption.ADDITIVE);
+			if (value != NO_TIME_RESULT) {
+				stats.addKeyValuePair(convertTimeMeasureToStatistic(measure), value);
+			}
+		}
+
+		// Counting measures
+		for (ECountingMeasure measure : getCountingMeasures().keySet()) {
+			int value = getCountingMeasureResult(measure);
+			if (value != NO_COUNTING_RESULT) {
+				stats.addKeyValuePair(convertCountingMeasureToStatistic(measure), value);
+			}
+		}
+
+		return null;
 	}
 
 	/**

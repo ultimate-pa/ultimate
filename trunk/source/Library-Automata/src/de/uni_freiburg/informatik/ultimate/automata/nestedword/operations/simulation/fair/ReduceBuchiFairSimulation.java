@@ -34,6 +34,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
@@ -63,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  *            State class of buechi automaton
  */
 public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETTER, STATE> {
-
 	/**
 	 * Demo usage of fair simulation in general. Also used for debugging
 	 * purpose.
@@ -413,10 +413,12 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 * The logger used by the Ultimate framework.
 	 */
 	private final ILogger mLogger;
+
 	/**
 	 * The inputed buechi automaton.
 	 */
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+
 	/**
 	 * The resulting possible reduced buechi automaton.
 	 */
@@ -433,7 +435,10 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 * State factory used for state creation.
 	 */
 	private final StateFactory<STATE> mStateFactory;
-
+	/**
+	 * Performance statistics of this operation.
+	 */
+	private final AutomataOperationStatistics mStatistics;
 	/**
 	 * If the simulation calculation should be optimized using SCC, Strongly
 	 * Connected Components.
@@ -590,6 +595,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		mSimulation = simulation;
 		simulation.doSimulation();
 		mResult = mSimulation.getResult();
+		mStatistics = simulation.getSimulationPerformance().exportToAutomataOperationStatistics();
 
 		// Debugging flag
 		if (checkOperationDeeply) {
@@ -610,8 +616,8 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
-		final boolean correct =
-				(new TestBuchiEquivalence<LETTER, STATE>(mServices, stateFactory, mOperand, mResult)).getResult();
+		final boolean correct = (new TestBuchiEquivalence<LETTER, STATE>(mServices, stateFactory, mOperand, mResult))
+				.getResult();
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
@@ -625,6 +631,17 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#
+	 * getAutomataOperationStatistics()
+	 */
+	@Override
+	public AutomataOperationStatistics getAutomataOperationStatistics() {
+		return mStatistics;
 	}
 
 	/*

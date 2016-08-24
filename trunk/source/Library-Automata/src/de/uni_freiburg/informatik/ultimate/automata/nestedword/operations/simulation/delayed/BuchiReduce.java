@@ -37,6 +37,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
@@ -78,6 +79,10 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * Service provider of Ultimate framework.
 	 */
 	private final AutomataLibraryServices mServices;
+	/**
+	 * Performance statistics of this operation.
+	 */
+	private final AutomataOperationStatistics mStatistics;
 
 	/**
 	 * Creates a new buechi reduce object that starts reducing the given buechi
@@ -132,14 +137,15 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		simulation.getGameGraph().generateGameGraphFromAutomaton();
 		simulation.doSimulation();
 		mResult = simulation.getResult();
+		mStatistics = simulation.getSimulationPerformance().exportToAutomataOperationStatistics();
 
 		final boolean compareWithNonSccResult = false;
 		if (compareWithNonSccResult) {
 			final DelayedGameGraph<LETTER, STATE> graph = new DelayedGameGraph<>(mServices,
 					mServices.getProgressMonitorService(), mLogger, mOperand, stateFactory);
 			graph.generateGameGraphFromAutomaton();
-			final DelayedSimulation<LETTER, STATE> nonSccSim = new DelayedSimulation<>(mServices.getProgressMonitorService(),
-					mLogger, false, stateFactory, graph);
+			final DelayedSimulation<LETTER, STATE> nonSccSim = new DelayedSimulation<>(
+					mServices.getProgressMonitorService(), mLogger, false, stateFactory, graph);
 			nonSccSim.doSimulation();
 			final INestedWordAutomaton<LETTER, STATE> nonSCCresult = nonSccSim.getResult();
 			if (mResult.size() != nonSCCresult.size()) {
@@ -153,9 +159,8 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
-		final boolean correct =
-				(new TestBuchiEquivalence<LETTER, STATE>(mServices, stateFactory, getOperand(), getResult()))
-						.getResult();
+		final boolean correct = (new TestBuchiEquivalence<LETTER, STATE>(mServices, stateFactory, getOperand(),
+				getResult())).getResult();
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
@@ -169,6 +174,17 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#
+	 * getAutomataOperationStatistics()
+	 */
+	@Override
+	public AutomataOperationStatistics getAutomataOperationStatistics() {
+		return mStatistics;
 	}
 
 	/*

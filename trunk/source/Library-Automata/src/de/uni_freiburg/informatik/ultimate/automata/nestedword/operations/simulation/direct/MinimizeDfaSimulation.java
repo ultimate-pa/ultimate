@@ -36,6 +36,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
@@ -84,6 +85,10 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	 * Service provider of Ultimate framework.
 	 */
 	private final AutomataLibraryServices mServices;
+	/**
+	 * Performance statistics of this operation.
+	 */
+	private final AutomataOperationStatistics mStatistics;
 
 	/**
 	 * Creates a new buechi reduce object that starts reducing the given buechi
@@ -138,6 +143,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 		simulation.getGameGraph().generateGameGraphFromAutomaton();
 		simulation.doSimulation();
 		mResult = simulation.getResult();
+		mStatistics = simulation.getSimulationPerformance().exportToAutomataOperationStatistics();
 
 		final boolean compareWithNonSccResult = false;
 		if (compareWithNonSccResult) {
@@ -167,13 +173,13 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
-		
+
 		correct &= new IsIncluded<>(mServices, stateFactory, mOperand, mResult).getResult();
 		correct &= new IsIncluded<>(mServices, stateFactory, mResult, mOperand).getResult();
-		
+
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
-					operationName() + "Failed", "language is different", mOperand);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+					"language is different", mOperand);
 		}
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
@@ -188,6 +194,17 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#
+	 * getAutomataOperationStatistics()
+	 */
+	@Override
+	public AutomataOperationStatistics getAutomataOperationStatistics() {
+		return mStatistics;
 	}
 
 	/*
