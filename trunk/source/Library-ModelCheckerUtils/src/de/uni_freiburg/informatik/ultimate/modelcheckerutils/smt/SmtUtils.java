@@ -1207,17 +1207,21 @@ public class SmtUtils {
 	 * a possible value in the current satisfying model.
 	 */
 	public static Map<Term, Term> getValues(final Script script, final Collection<Term> terms) {
-		final Term[] asArray = terms.toArray(new Term[terms.size()]);
-		final Map<Term, Term> mapFromSolver = script.getValue(asArray);
-		/*
-		 * Some solvers, e.g., Z3 return -1 not as a literal but as a unary minus of a positive literal. We use our
-		 * affine term to obtain the negative literal.
-		 */
-		final Map<Term, Term> copyWithNiceValues = new HashMap<Term, Term>();
-		for(final Entry<Term, Term> entry : mapFromSolver.entrySet()) {
-			copyWithNiceValues.put(entry.getKey(), makeAffineIfPossible(script, entry.getValue()));
+		if (terms.isEmpty()) {
+			return Collections.emptyMap();
+		} else {
+			final Term[] asArray = terms.toArray(new Term[terms.size()]);
+			final Map<Term, Term> mapFromSolver = script.getValue(asArray);
+			/*
+			 * Some solvers, e.g., Z3 return -1 not as a literal but as a unary minus of a positive literal. We use our
+			 * affine term to obtain the negative literal.
+			 */
+			final Map<Term, Term> copyWithNiceValues = new HashMap<Term, Term>();
+			for(final Entry<Term, Term> entry : mapFromSolver.entrySet()) {
+				copyWithNiceValues.put(entry.getKey(), makeAffineIfPossible(script, entry.getValue()));
+			}
+			return Collections.unmodifiableMap(copyWithNiceValues);
 		}
-		return copyWithNiceValues;
 	}
 	
 	private static Term makeAffineIfPossible(final Script script, final Term term) {
