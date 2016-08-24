@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
@@ -33,18 +33,19 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 
 /**
  * Special case of NestedWordAutomaton in which we can partition the set of
  * states into modules. Each module has an unique entry state.
  * <ul>
- * <li> The entry state is the only state of a module which may have incoming 
- * call transitions. 
+ * <li> The entry state is the only state of a module which may have incoming
+ * call transitions.
  * <li> The entry state is the only state of the module which may be an initial
  * state.
  * </ul>
  * ( I think 2012-09-17 the following should also apply:
- * Each entry state must be an initial state or has at least one incoming call 
+ * Each entry state must be an initial state or has at least one incoming call
  * transition.)
  * 
  * @author heizmann@informatik.uni-freiburg.de
@@ -114,7 +115,7 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	}
 	
 	/**
-	 * Returns true iff there is a reachable configuration in which the 
+	 * Returns true iff there is a reachable configuration in which the
 	 * automaton is in STATE <i>up</i> and the STATE <i>down</i> is the topmost
 	 * stack element.
 	 */
@@ -131,7 +132,7 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	
 	
 	/**
-	 * @return The set of states s such that entry is the entry of s. 
+	 * @return The set of states s such that entry is the entry of s.
 	 * 
 	 */
 	public Set<STATE> getModuleStates(final STATE entry) {
@@ -141,14 +142,14 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	
 	
 	/**
-	 * Don't use this for the construction of a Senwa. 
+	 * Don't use this for the construction of a Senwa.
 	 */
 	@Override
 	public void addState(final boolean isInitial, final boolean isFinal, final STATE state) {
 		throw new IllegalArgumentException("Specify entry");
 	}
 
-	public void addState(final STATE state, final boolean isInitial, final boolean isFinal, 
+	public void addState(final STATE state, final boolean isInitial, final boolean isFinal,
 																final STATE entry) {
 		mState2Entry.put(state, entry);
 		Set<STATE> module = mEntry2Module.get(entry);
@@ -180,12 +181,11 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 		final boolean success = module.remove(state);
 		assert success : "State was not in module";
 		
-		for (final LETTER letter : lettersCall(state)) {
-			for (final STATE succ : succCall(state, letter)) {
-				assert (isEntry(succ));
-				final Set<STATE> callPreds = mEntry2CallPredecessors.get(succ);
-				callPreds.remove(state);
-			}
+		for (final OutgoingCallTransition<LETTER, STATE> trans : callSuccessors(state)) {
+			final STATE succ = trans.getSucc();
+			assert (isEntry(succ));
+			final Set<STATE> callPreds = mEntry2CallPredecessors.get(succ);
+			callPreds.remove(state);
 		}
 		
 		if (isEntry(state)) {
