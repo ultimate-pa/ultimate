@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -222,7 +223,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			reportResult(new BenchmarkResult<String>(Activator.PLUGIN_NAME, "NonterminationBenchmark",
 					new NonterminationBenchmark(nta)));
 
-			final Map<Integer, ProgramState<Expression>> partialProgramStateMapping = Collections.emptyMap();
+			final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
 			@SuppressWarnings("unchecked")
 			final
 			RcfgProgramExecution stemPE = new RcfgProgramExecution(counterexample.getStem().getWord().asList(),
@@ -231,7 +232,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final
 			RcfgProgramExecution loopPE = new RcfgProgramExecution(counterexample.getLoop().getWord().asList(),
 					partialProgramStateMapping, new Map[counterexample.getLoop().getLength()]);
-			final IResult ntreportRes = new NonterminatingLassoResult<RcfgElement, RCFGEdge, Expression>(honda,
+			final IResult ntreportRes = new NonterminatingLassoResult<RcfgElement, RCFGEdge, Term>(honda,
 					Activator.PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE,
 					honda.getPayload().getLocation());
 			reportResult(ntreportRes);
@@ -258,7 +259,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 		if (isFinite) {
 			// TODO: Make some attempt at getting the values
-			final Map<Integer, ProgramState<Expression>> partialProgramStateMapping = Collections.emptyMap();
+			final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
 			final List<CodeBlock> combined = new ArrayList<CodeBlock>();
 			combined.addAll(stem);
 
@@ -275,7 +276,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					mServices.getBacktranslationService(), cex, ltlAnnot));
 		} else {
 			// TODO: Make some attempt at getting the values
-			final Map<Integer, ProgramState<Expression>> partialProgramStateMapping = Collections.emptyMap();
+			final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
 
 			@SuppressWarnings("unchecked")
 			final
@@ -285,7 +286,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final
 			RcfgProgramExecution loopPE = new RcfgProgramExecution(loop, partialProgramStateMapping,
 					new Map[loop.size()]);
-			reportResult(new LTLInfiniteCounterExampleResult<>(position, Activator.PLUGIN_ID,
+			reportResult(new LTLInfiniteCounterExampleResult<RcfgElement, RCFGEdge, Term>(position, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), stemPE, loopPE, position.getPayload().getLocation(),
 					ltlAnnot.getLTLProperty()));
 		}

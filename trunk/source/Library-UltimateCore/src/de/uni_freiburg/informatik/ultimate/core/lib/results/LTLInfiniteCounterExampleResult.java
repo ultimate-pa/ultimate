@@ -39,13 +39,13 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class LTLInfiniteCounterExampleResult<ELEM extends IElement, TE extends IElement, E extends IElement> extends
+public class LTLInfiniteCounterExampleResult<ELEM extends IElement, TE extends IElement, E> extends
 		NonterminatingLassoResult<ELEM, TE, E> {
 
 	private final String mLTLProperty;
 
-	public LTLInfiniteCounterExampleResult(ELEM position, String plugin, IBacktranslationService translatorSequence,
-			IProgramExecution<TE, E> stem, IProgramExecution<TE, E> loop, ILocation location, String ltlproperty) {
+	public LTLInfiniteCounterExampleResult(final ELEM position, final String plugin, final IBacktranslationService translatorSequence,
+			final IProgramExecution<TE, E> stem, final IProgramExecution<TE, E> loop, final ILocation location, final String ltlproperty) {
 		super(position, plugin, translatorSequence, stem, loop, location);
 		mLTLProperty = ltlproperty;
 	}

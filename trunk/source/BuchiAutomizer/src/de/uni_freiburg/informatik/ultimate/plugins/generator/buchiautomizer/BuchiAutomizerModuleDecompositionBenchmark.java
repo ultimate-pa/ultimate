@@ -31,10 +31,10 @@ import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -55,27 +55,27 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 	private boolean mRemainderModuleNonterminationKnown;
 	private final IBacktranslationService mBacktranslationService;
 
-	public BuchiAutomizerModuleDecompositionBenchmark(IBacktranslationService service) {
+	public BuchiAutomizerModuleDecompositionBenchmark(final IBacktranslationService service) {
 		mBacktranslationService = service;
 	}
 
-	void reportTrivialModule(Integer iteration, Integer size) {
+	void reportTrivialModule(final Integer iteration, final Integer size) {
 		mModuleSizeTrivial.put(iteration, size);
 	}
 
-	void reportDeterminsticModule(Integer iteration, Integer size) {
+	void reportDeterminsticModule(final Integer iteration, final Integer size) {
 		mModuleSizeDeterministic.put(iteration, size);
 	}
 
-	void reportNonDeterminsticModule(Integer iteration, Integer size) {
+	void reportNonDeterminsticModule(final Integer iteration, final Integer size) {
 		mModuleSizeNondeterministic.put(iteration, size);
 	}
 
-	void reportRankingFunction(Integer iteration, TerminationArgumentResult<RcfgElement, Expression> tar) {
+	void reportRankingFunction(final Integer iteration, final TerminationArgumentResult<RcfgElement, Term> tar) {
 		mRankingFunction.put(iteration, prettyPrintRankingFunction(tar));
 	}
 
-	void reportRemainderModule(int numberLocations, boolean nonterminationKnown) {
+	void reportRemainderModule(final int numberLocations, final boolean nonterminationKnown) {
 		assert mHasRemainderModule == null : "remainder module already reported";
 		mHasRemainderModule = true;
 		mRemainderModuleLocations = numberLocations;
@@ -87,9 +87,9 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		mHasRemainderModule = false;
 	}
 
-	private String prettyPrintRankingFunction(TerminationArgumentResult<RcfgElement, Expression> tar) {
+	private String prettyPrintRankingFunction(final TerminationArgumentResult<RcfgElement, Term> tar) {
 		return tar.getRankingFunctionDescription() + " ranking function " + ResultUtil
-				.translateExpressionToString(mBacktranslationService, Expression.class, tar.getRankingFunction());
+				.translateExpressionToString(mBacktranslationService, Term.class, tar.getRankingFunction());
 	}
 
 	@Override
@@ -247,7 +247,7 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		return rtr;
 	}
 
-	private MinAvgMax getMinAvgMax(TreeMap<Integer, Integer> map) {
+	private MinAvgMax getMinAvgMax(final TreeMap<Integer, Integer> map) {
 		final MinAvgMax rtr = new MinAvgMax();
 
 		if (map == null || map.entrySet().size() == 0) {

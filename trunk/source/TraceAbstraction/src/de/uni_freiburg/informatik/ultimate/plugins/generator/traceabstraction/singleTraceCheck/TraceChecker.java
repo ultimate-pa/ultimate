@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
@@ -536,7 +535,7 @@ public class TraceChecker {
 	 * trace check is UNKNOWN).
 	 */
 	private RcfgProgramExecution computeRcfgProgramExecutionCaseUNKNOWN() {
-		final Map<Integer, ProgramState<Expression>> emptyMap = Collections.emptyMap();
+		final Map<Integer, ProgramState<Term>> emptyMap = Collections.emptyMap();
 		@SuppressWarnings("unchecked")
 		final
 		Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
@@ -577,8 +576,7 @@ public class TraceChecker {
 					if (mSmtManager != mTcSmtManager) {
 						valueT = new TermTransferrer(mSmtManager.getScript()).transform(valueT);
 					}
-					final Expression valueE = mSmtManager.getBoogie2Smt().getTerm2Expression().translate(valueT);
-					rpeb.addValueAtVarAssignmentPosition(bv, index, valueE);
+					rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
 				}
 			}
 		}

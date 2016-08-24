@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -53,7 +54,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslate
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IToString;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
@@ -70,14 +73,26 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 
-public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNode, Expression, Expression> {
+public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNode, Term, Expression> {
 
 	private final ILogger mLogger;
+	private Term2Expression mTerm2Expression;
 
 	public RCFGBacktranslator(final ILogger logger) {
-		super(RCFGEdge.class, BoogieASTNode.class, Expression.class, Expression.class);
+		super(RCFGEdge.class, BoogieASTNode.class, Term.class, Expression.class);
 		mLogger = logger;
 	}
+	
+	
+
+	/**
+	 * @param term2Expression the term2Expression to set
+	 */
+	public void setTerm2Expression(final Term2Expression term2Expression) {
+		mTerm2Expression = term2Expression;
+	}
+
+
 
 	/**
 	 * Mapping from auxiliary CodeBlocks to source BoogieAstNodes. For assert, the requires assumed at begin of
@@ -182,7 +197,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 
 	@Override
 	public IProgramExecution<BoogieASTNode, Expression>
-			translateProgramExecution(final IProgramExecution<RCFGEdge, Expression> programExecution) {
+			translateProgramExecution(final IProgramExecution<RCFGEdge, Term> programExecution) {
 		if (!(programExecution instanceof RcfgProgramExecution)) {
 			throw new IllegalArgumentException();
 		}
@@ -193,7 +208,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 				new HashMap<Integer, ProgramState<Expression>>();
 
 		if (rcfgProgramExecution.getInitialProgramState() != null) {
-			programStateMapping.put(-1, rcfgProgramExecution.getInitialProgramState());
+			programStateMapping.put(-1, translateProgramState(rcfgProgramExecution.getInitialProgramState()));
 		}
 		for (int i = 0; i < rcfgProgramExecution.getLength(); i++) {
 			final AtomicTraceElement<RCFGEdge> codeBlock = rcfgProgramExecution.getTraceElement(i);
@@ -205,8 +220,8 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 						codeBlock.getRelevanceInformation());
 			}
 			final int posInNewTrace = trace.size() - 1;
-			final ProgramState<Expression> programState = rcfgProgramExecution.getProgramState(i);
-			programStateMapping.put(posInNewTrace, programState);
+			final ProgramState<Term> programState = rcfgProgramExecution.getProgramState(i);
+			programStateMapping.put(posInNewTrace, translateProgramState(programState));
 		}
 		return new BoogieProgramExecution(programStateMapping, trace);
 	}
@@ -325,4 +340,24 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 		ModelUtils.copyAnnotations(old, rtr);
 		return rtr;
 	}
+	
+	private ProgramState<Expression> translateProgramState(final ProgramState<Term> oldProgramState) {
+		final Map<Expression, Collection<Expression>> variable2Values = new HashMap<>();
+		for (final Term oldVariable : oldProgramState.getVariables()) {
+			final Collection<Expression> newValues = new ArrayList<>(); 
+			for (final Term oldValue : oldProgramState.getValues(oldVariable)) {
+				newValues.add(mTerm2Expression.translate(oldValue));
+			}
+			final Expression newVariable = mTerm2Expression.translate(oldVariable);
+			variable2Values.put(newVariable, newValues);
+		}
+		return new ProgramState<>(variable2Values );
+	}
+
+	@Override
+	public Expression translateExpression(final Term term) {
+		return mTerm2Expression.translate(term);
+	}
+	
+	
 }

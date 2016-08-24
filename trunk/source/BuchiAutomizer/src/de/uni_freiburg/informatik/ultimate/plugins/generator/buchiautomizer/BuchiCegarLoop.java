@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
@@ -62,9 +63,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.BuchiReduce;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.ReduceBuchiFairDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.ReduceBuchiFairSimulation;
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -75,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTermina
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
@@ -453,7 +453,7 @@ public class BuchiCegarLoop {
 					}
 					final ISLPredicate hondaISLP = (ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0);
 					final ProgramPoint hondaPP = hondaISLP.getProgramPoint();
-					final TerminationArgumentResult<RcfgElement, Expression> tar = constructTAResult(
+					final TerminationArgumentResult<RcfgElement, Term> tar = constructTAResult(
 							bspm.getTerminationArgument(), hondaPP, mCounterexample.getStem().getWord(),
 							mCounterexample.getLoop().getWord());
 					mMDBenchmark.reportRankingFunction(mIteration, tar);
@@ -484,7 +484,7 @@ public class BuchiCegarLoop {
 					}
 					final ISLPredicate hondaISLP = (ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0);
 					final ProgramPoint hondaPP = hondaISLP.getProgramPoint();
-					final TerminationArgumentResult<RcfgElement, Expression> tar = constructTAResult(
+					final TerminationArgumentResult<RcfgElement, Term> tar = constructTAResult(
 							bspm.getTerminationArgument(), hondaPP, mCounterexample.getStem().getWord(),
 							mCounterexample.getLoop().getWord());
 					mMDBenchmark.reportRankingFunction(mIteration, tar);
@@ -871,23 +871,21 @@ public class BuchiCegarLoop {
 						mRootNode.getRootAnnot().getModGlobVarManager()))).getResult();
 	}
 
-	private TerminationArgumentResult<RcfgElement, Expression> constructTAResult(
+	private TerminationArgumentResult<RcfgElement, Term> constructTAResult(
 			final TerminationArgument terminationArgument, final ProgramPoint honda, final NestedWord<CodeBlock> stem,
 			final NestedWord<CodeBlock> loop) {
 		final RankingFunction rf = terminationArgument.getRankingFunction();
 		final Collection<SupportingInvariant> si_list = terminationArgument.getSupportingInvariants();
-		final Expression[] supporting_invariants = new Expression[si_list.size()];
+		final Term[] supporting_invariants = new Term[si_list.size()];
 		int i = 0;
 		for (final SupportingInvariant si : terminationArgument.getSupportingInvariants()) {
-			supporting_invariants[i] = si.asExpression(mSmtManager.getScript(),
-					mRootNode.getRootAnnot().getBoogie2SMT().getTerm2Expression());
+			supporting_invariants[i] = si.asTerm(mSmtManager.getScript());
 			++i;
 		}
-		final TerminationArgumentResult<RcfgElement, Expression> result = new TerminationArgumentResult<RcfgElement, Expression>(
+		final TerminationArgumentResult<RcfgElement, Term> result = new TerminationArgumentResult<RcfgElement, Term>(
 				honda, Activator.PLUGIN_NAME,
-				rf.asLexExpression(mSmtManager.getScript(),
-						mRootNode.getRootAnnot().getBoogie2SMT().getTerm2Expression()),
-				rf.getName(), supporting_invariants, mServices.getBacktranslationService(), Expression.class);
+				rf.asLexTerm(mSmtManager.getScript()),
+				rf.getName(), supporting_invariants, mServices.getBacktranslationService(), Term.class);
 		return result;
 	}
 
