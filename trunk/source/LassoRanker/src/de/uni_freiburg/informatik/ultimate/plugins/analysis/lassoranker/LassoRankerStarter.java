@@ -59,8 +59,8 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.GeometricNonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
-import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
@@ -186,7 +186,7 @@ public class LassoRankerStarter {
 				.getNonTerminationAnalysisSettings(mServices);
 		if (nontermination_settings.analysis != AnalysisType.Disabled) {
 			try {
-				final NonTerminationArgument nta = laNT.checkNonTermination(nontermination_settings);
+				final GeometricNonTerminationArgument nta = laNT.checkNonTermination(nontermination_settings);
 				if (nta != null) {
 					if (!lassoWasOverapproximated().isEmpty()) {
 						reportFailBecauseOfOverapproximationResult();
@@ -432,7 +432,7 @@ public class LassoRankerStarter {
 	 * 
 	 * @param arg
 	 */
-	private void reportNonTerminationResult(final NonTerminationArgument nta) {
+	private void reportNonTerminationResult(final GeometricNonTerminationArgument nta) {
 		// TODO: translate also the rational coefficients to Expressions?
 		// mRootAnnot.getBoogie2Smt().translate(term)
 		final Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();

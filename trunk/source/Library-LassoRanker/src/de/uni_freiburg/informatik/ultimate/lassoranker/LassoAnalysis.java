@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.GeometricNonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
-import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.AddAxioms;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.CommuHashPreprocessor;
@@ -412,11 +412,11 @@ public class LassoAnalysis {
 	 *         have one
 	 * @throws IOException
 	 */
-	public NonTerminationArgument checkNonTermination(final NonTerminationAnalysisSettings settings)
+	public GeometricNonTerminationArgument checkNonTermination(final NonTerminationAnalysisSettings settings)
 			throws SMTLIBException, TermException, IOException {
 		mLogger.info("Checking for nontermination...");
 
-		final List<NonTerminationArgument> ntas = new ArrayList<NonTerminationArgument>(mlassos.size());
+		final List<GeometricNonTerminationArgument> ntas = new ArrayList<GeometricNonTerminationArgument>(mlassos.size());
 		if (mlassos.size() == 0) {
 			mlassos.add(new Lasso(LinearTransition.getTranstionTrue(), LinearTransition.getTranstionTrue()));
 		}
@@ -435,7 +435,7 @@ public class LassoAnalysis {
 
 			if (constraintSat == LBool.SAT) {
 				mLogger.info("Proved nontermination for one component.");
-				final NonTerminationArgument nta = nas.getArgument();
+				final GeometricNonTerminationArgument nta = nas.getArgument();
 				ntas.add(nta);
 				mLogger.info(nta);
 			} else if (constraintSat == LBool.UNKNOWN) {
@@ -455,7 +455,7 @@ public class LassoAnalysis {
 
 		// Join nontermination arguments
 		assert ntas.size() > 0;
-		NonTerminationArgument nta = ntas.get(0);
+		GeometricNonTerminationArgument nta = ntas.get(0);
 		for (int i = 1; i < ntas.size(); ++i) {
 			nta = nta.join(ntas.get(i));
 		}

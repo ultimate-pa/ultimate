@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.GeometricNonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -143,20 +144,27 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	 * Report a nontermination argument back to Ultimate's toolchain
 	 */
 	private void reportNonTerminationResult(final ProgramPoint honda, final NonTerminationArgument nta) {
-		// TODO: translate also the rational coefficients to Expressions?
-		// mRootAnnot.getBoogie2Smt().translate(term)
-		final Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
+		final NonTerminationArgumentResult<RcfgElement, Term> result;
+		if (nta instanceof GeometricNonTerminationArgument) {
+			final GeometricNonTerminationArgument gnta = (GeometricNonTerminationArgument) nta;
+			// TODO: translate also the rational coefficients to Expressions?
+			// mRootAnnot.getBoogie2Smt().translate(term)
+			final Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
 
-		final List<Map<IProgramVar, Rational>> states = new ArrayList<Map<IProgramVar, Rational>>();
-		states.add(nta.getStateInit());
-		states.add(nta.getStateHonda());
-		states.addAll(nta.getGEVs());
-		final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(term2expression, states);
+			final List<Map<IProgramVar, Rational>> states = new ArrayList<Map<IProgramVar, Rational>>();
+			states.add(gnta.getStateInit());
+			states.add(gnta.getStateHonda());
+			states.addAll(gnta.getGEVs());
+			final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(term2expression, states);
 
-		final NonTerminationArgumentResult<RcfgElement, Term> result = new GeometricNonTerminationArgumentResult<RcfgElement, Term>(
-				honda, Activator.PLUGIN_NAME, initHondaRays.get(0), initHondaRays.get(1),
-				initHondaRays.subList(2, initHondaRays.size()), nta.getLambdas(), nta.getNus(),
-				getBacktranslationService(), Term.class);
+			result = new GeometricNonTerminationArgumentResult<RcfgElement, Term>(
+					honda, Activator.PLUGIN_NAME, initHondaRays.get(0), initHondaRays.get(1),
+					initHondaRays.subList(2, initHondaRays.size()), gnta.getLambdas(), gnta.getNus(),
+					getBacktranslationService(), Term.class);
+			
+		} else {
+			throw new IllegalArgumentException("unknown TerminationArgument");
+		}
 		reportResult(result);
 	}
 
@@ -356,18 +364,23 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		private final boolean mGEVZero;
 
 		public NonterminationBenchmark(final NonTerminationArgument nta) {
-			boolean lambdaZero = true;
-			boolean gevZero = true;
-			final List<Rational> lambdas = nta.getLambdas();
-			for (int i = 0; i < nta.getNumberOfGEVs(); ++i) {
-				lambdaZero &= (nta.getLambdas().get(i).numerator().equals(BigInteger.ZERO));
-				gevZero &= isZero(nta.getGEVs().get(i));
-			}
+			if (nta instanceof GeometricNonTerminationArgument) {
+				final GeometricNonTerminationArgument gnta = (GeometricNonTerminationArgument) nta;
+				boolean lambdaZero = true;
+				boolean gevZero = true;
+				final List<Rational> lambdas = gnta.getLambdas();
+				for (int i = 0; i < gnta.getNumberOfGEVs(); ++i) {
+					lambdaZero &= (gnta.getLambdas().get(i).numerator().equals(BigInteger.ZERO));
+					gevZero &= isZero(gnta.getGEVs().get(i));
+				}
 
-			mLambdaZero = lambdaZero;
-			mGEVZero = gevZero;
-			mNtar = (isFixpoint() ? "Fixpoint " : "Unbounded Execution ") + "Lambdas: " + lambdas + " GEVs: "
-					+ (mGEVZero ? "is zero" : "is not zero");
+				mLambdaZero = lambdaZero;
+				mGEVZero = gevZero;
+				mNtar = (isFixpoint() ? "Fixpoint " : "Unbounded Execution ") + "Lambdas: " + lambdas + " GEVs: "
+						+ (mGEVZero ? "is zero" : "is not zero");
+			} else {
+				throw new IllegalArgumentException("unknown NonTerminationArgument");
+			}
 		}
 
 		private boolean isFixpoint() {
