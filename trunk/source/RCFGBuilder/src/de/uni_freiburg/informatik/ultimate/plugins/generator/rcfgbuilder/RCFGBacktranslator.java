@@ -342,6 +342,9 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 	}
 	
 	private ProgramState<Expression> translateProgramState(final ProgramState<Term> oldProgramState) {
+		if (oldProgramState == null) {
+			return null;
+		}
 		final Map<Expression, Collection<Expression>> variable2Values = new HashMap<>();
 		for (final Term oldVariable : oldProgramState.getVariables()) {
 			final Collection<Expression> newValues = new ArrayList<>(); 
