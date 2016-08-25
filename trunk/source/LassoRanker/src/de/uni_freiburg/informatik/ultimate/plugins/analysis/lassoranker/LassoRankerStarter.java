@@ -40,7 +40,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GeometricNonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NoResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NonTerminationArgumentResult;
@@ -412,18 +411,17 @@ public class LassoRankerStarter {
 		final Collection<SupportingInvariant> si_list = arg.getSupportingInvariants();
 
 		final Script script = mRootAnnot.getScript();
-		final Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
 
-		final Expression[] supporting_invariants = new Expression[si_list.size()];
+		final Term[] supporting_invariants = new Term[si_list.size()];
 		int i = 0;
 		for (final SupportingInvariant si : si_list) {
-			supporting_invariants[i] = si.asExpression(script, term2expression);
+			supporting_invariants[i] = si.asTerm(script);
 			++i;
 		}
 
-		final TerminationArgumentResult<RcfgElement, Expression> result = new TerminationArgumentResult<RcfgElement, Expression>(
-				mHonda, Activator.PLUGIN_NAME, rf.asLexExpression(script, term2expression), rf.getName(),
-				supporting_invariants, getTranslatorSequence(), Expression.class);
+		final TerminationArgumentResult<RcfgElement, Term> result = new TerminationArgumentResult<RcfgElement, Term>(
+				mHonda, Activator.PLUGIN_NAME, rf.asLexTerm(script), rf.getName(),
+				supporting_invariants, getTranslatorSequence(), Term.class);
 		reportResult(result);
 	}
 
