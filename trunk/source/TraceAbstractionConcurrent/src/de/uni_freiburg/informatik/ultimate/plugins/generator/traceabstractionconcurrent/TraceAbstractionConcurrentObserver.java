@@ -145,7 +145,6 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		}
 		}
 
-		mLogger.info("Statistics - number of theorem prover calls: " + smtManager.getNontrivialSatQueries());
 		mLogger.info("Statistics - iterations: " + abstractCegarLoop.getIteration());
 		// s_Logger.info("Statistics - biggest abstraction: " +
 		// abstractCegarLoop.mBiggestAbstractionSize + " states");
@@ -161,8 +160,6 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		stat += errNodesOfAllProc.size();
 		stat += " error locations.";
 		stat += " Satisfiability queries: ";
-		stat += smtManager.getTrivialSatQueries() + " tivial, ";
-		stat += smtManager.getNontrivialSatQueries() + " nontrivial.";
 		// stat += " Biggest abstraction occured in iteration " +
 		// abstractCegarLoop.mBiggestAbstractionIteration + " had ";
 		// stat += abstractCegarLoop.mBiggestAbstractionSize;
