@@ -178,11 +178,6 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			throw new IllegalArgumentException();
 		}
 		mLogger.warn(stat);
-		mLogger.warn("PC#: " + smtManager.getInterpolQueries());
-		mLogger.warn("TIME#: " + smtManager.getInterpolQuriesTime());
-		mLogger.warn("EC#: " + smtManager.getNontrivialSatQueries());
-		mLogger.warn("TIME#: " + smtManager.getSatCheckSolverTime());
-		mLogger.warn("ManipulationTIME#: " + smtManager.getSatCheckTime());
 		switch (result) {
 		case SAFE:
 			mLogger.warn("Program is correct");
