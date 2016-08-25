@@ -36,6 +36,9 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, ProgramPoint> mDataflowAnalysisResult;
 	private Integer mEdgeCount;
 	private Integer mNodeCount;
+	private Integer mCFGEdgeCount;
+	private Integer mCFGNodeCount;
+	private ParallelDataflowgraph<RCFGEdge> mInitNode;
 
 	public ParallelDfgGeneratorObserver(ILogger logger, IUltimateServiceProvider services) {
 		mLogger = logger;
@@ -43,6 +46,9 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		mDataflowAnalysisResult = null;
 		mEdgeCount = 0;
 		mNodeCount = 0;
+		mCFGEdgeCount= 0;
+		mCFGNodeCount=0;
+		mInitNode = null;
 	}
 
 
@@ -53,31 +59,18 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		RootNode rootNode = (RootNode) root;
 		// n = number of threads. Carefull with init procedure
 		int n = rootNode.getOutgoingEdges().size();
-		
-		
-
 		mDataflowAnalysisResult = obtainDataflowAnalysisResult(rootNode);
 		
-		/*
-		// the result aiRes can be queried for each state as follows
-		// (replace null by a ProgramPoint)
-		DataflowState dfs = dataflowAnalysisResult.getLoc2SingleStates().get(null);
-		// query the state at each ProgramPoint for the dataflow results as follows 
-		// (replace null by a real variable)
-		Set<ProgramPoint> nwls = dfs.getNowriteLocations((IProgramVar) null);
-		Set<CodeBlock> rd = dfs.getReachingDefinitions((IProgramVar) null);
-		*/
-
+		
+		computeInitNode(rootNode);
 		// look for asserts in the RCFG
 		List<RCFGNode> nodes = new ArrayList<RCFGNode>();
 
 		// ignore the first edge from the dummy root to the function entry
 		for (RCFGEdge e: rootNode.getOutgoingEdges()){
 			Set<RCFGNode> a = nodesInGraph(e.getTarget());
-
 			nodes.addAll(a);
 		}
-		
 		// compute end and error locations
 		List<List<RCFGNode>> endError = getEndErrorLocations(nodes);
 		List<RCFGNode> assertLocs = endError.get(0);
@@ -89,11 +82,12 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		}
 		// compute Start Locations
 		List<ParallelDataflowgraph<RCFGEdge>> starts = computeStartLocs(assertLocs, endLocs);
-		mNodeCount = starts.size();
+		mNodeCount += starts.size();
 		
 		
 		
 		// Debug info before computation of DFG
+		mLogger.debug("The init Node is " + mInitNode.toString());
 		mLogger.debug("Number of Threads: " + (n-1));
 		mLogger.debug("Number of Asserts: " + assertLocs.size());
 		if (n == endLocs.size()){
@@ -114,8 +108,10 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		
 		
 		// Debug info after the algorithm
-		mLogger.debug("Total number of nodes in the Parallel DFG: " + mNodeCount);
-		mLogger.debug("Total number of edges in the Parallel DFG: " + mEdgeCount);
+		mLogger.debug("Total number of data flow nodes in the Parallel DFG: " + mNodeCount);
+		mLogger.debug("Total number of data flow edges in the Parallel DFG: " + mEdgeCount);
+		mLogger.debug("Total number of control flow nodes in the original Program: " + mCFGNodeCount);
+		mLogger.debug("Total number of control flowe dges in the original Program: " + mCFGEdgeCount);
 		
 		
 		return false;
@@ -153,7 +149,11 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 				for (ParallelDataflowgraph<RCFGEdge> s : sources){
 					mLogger.debug("      by the statement " + s.getNodeLabel().toString());
 					Boolean sourceInGraph = false;
-					if (visitedStmts.contains(s.getNodeLabel())){
+					if (mInitNode.compare(s)){
+						// s is the init node
+						sourceInGraph = true;
+					}
+					else if (visitedStmts.contains(s.getNodeLabel())){
 						for (ParallelDataflowgraph<RCFGEdge> n : visited){
 							// is it already in the graph?
 							if (n.compare(s)){
@@ -169,13 +169,13 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 						Q.add(s);
 						visited.add(s);
 						visitedStmts.add(s.getNodeLabel());
-						mLogger.debug("       Added a Node!");
+						mLogger.debug("       Added a node " + s.toString());
 						mNodeCount++;
 					}
 					// Add an edge
 					s.addOutgoingNode(node, x);
 					node.addIncomingNode(s);
-					mLogger.debug("       Added an Edge!");
+					mLogger.debug("       Added an edge " + node.toString() + "->" + x +" "+ s.toString());
 					mEdgeCount++;
 				}
 			}	
@@ -202,9 +202,25 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 				// get the RD
 				DataflowState dfs = mDataflowAnalysisResult.getLoc2SingleStates().get(pp);
 				if (pp.toString().contains("ENTRY")){
-					// mLogger.debug("Do not compute RD for " + pp.toString());
+					initInRDProc=true;
 					continue;
 				}
+				
+				// this pp has init in nowrite(x,pp)
+				// TODO does not work
+				Set<ProgramPoint> nwls = dfs.getNowriteLocations((IProgramVar) var);
+				Set<ProgramPoint> entryPoint = mInitNode.getLocations(entry.getKey());
+				ProgramPoint en = null;
+				for (ProgramPoint e : entryPoint){
+					en = e;
+				}
+				if (nwls.contains(en)){
+					initInRDProc=true;
+				}
+				
+				
+				
+				// Reaching Definition
 				Set<CodeBlock> rd = dfs.getReachingDefinitions((IProgramVar) var);
 				for (RCFGEdge s: rd){
 					// mLogger.debug("      by the statement(explain) " + s.toString());
@@ -217,18 +233,16 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 					ParallelDataflowgraph<RCFGEdge> sourceNode = new ParallelDataflowgraph<RCFGEdge>(s, loc);
 					sources.add(sourceNode);
 				}
-				// this pp has init in nowrite(x,pp)
-				// if (mInitNode.getLocations(proc) in nowrite(x, pp)){initRDProc=true}
 			}
-			// if there was no pp which set the varaiable initInRDProc for the procedure to true
+			// if there was no pp which set the variable initInRDProc for the procedure to true
 			// then init is not a source node
-			if(initInRDProc == false){
+			if(initInRDProc.equals(false)){
 				initInRD = false;
 			}
 		}
 		if (initInRD){
 			// insert init as a sourceNode
-			// sources.add(mInit);
+			sources.add(mInitNode);
 		}
 		
 		return sources;
@@ -271,6 +285,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	private Set<RCFGNode> nodesInGraph(RCFGNode root){
 		// Returns a list of all the nodes in the graph
 		// memorize, which elements have been visited
+		Integer countEdges = 0;
 		Set<RCFGNode> visited = new HashSet<RCFGNode>();
 		List<RCFGNode> tovisit = new ArrayList<RCFGNode>();
 		tovisit.add(root);
@@ -283,6 +298,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 			// for all outgoing edges of node
 			List<RCFGEdge> out1 = node.getOutgoingEdges();
 			for(RCFGEdge e: out1){
+				countEdges++;
 				// check it target node is already in visited/tovisit
 				RCFGNode trgNode = e.getTarget();
 				if((!visited.contains(trgNode)) && (!tovisit.contains(trgNode)) ){
@@ -290,6 +306,8 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 				}
 			}
 		}
+		mCFGEdgeCount += countEdges;
+		mCFGNodeCount += visited.size();
 		return visited;
 	}
 	
@@ -355,6 +373,29 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		return starts;
 	}
 	
+	
+	private void computeInitNode(RootNode r){
+		Map< String, Set<ProgramPoint>> locations = new HashMap< String, Set<ProgramPoint>>();
+		RCFGEdge stmt = null;
+		for (RCFGEdge n :r.getOutgoingEdges()){
+			RCFGNode s = n.getTarget();
+			ProgramPoint pp = (ProgramPoint) s;
+			if (pp.getProcedure() == "~init"){
+				// walk to the last statement?
+				stmt = n;
+				while (! stmt.getTarget().getOutgoingEdges().isEmpty()){
+					stmt = stmt.getTarget().getOutgoingEdges().get(0);
+				}
+			}
+			else {
+				Set<ProgramPoint> set = new HashSet<ProgramPoint>();
+				set.add(pp);
+				locations.put(pp.getProcedure(), set);
+			}
+		}
+		mInitNode = new ParallelDataflowgraph<RCFGEdge>(stmt, locations);
+		mNodeCount++;
+	}
 	
 
 }

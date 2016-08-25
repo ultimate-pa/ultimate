@@ -39,7 +39,13 @@ public class ParallelDataflowgraph<T> extends ModifiableLabeledEdgesMultigraph<P
 	}
 	
 	public String toString(){
-		String s = "Statement: " + mNodeLabel.toString() + " Locations: ";
+		String s = "Statement: ";
+		if (mNodeLabel == null){
+			s =  s+ "no statement"  + " Locations: ";
+		}
+		else {
+			s = s+ mNodeLabel.toString() + " Locations: ";
+		}
 		for (Entry<String, Set<ProgramPoint>> entry : locations.entrySet()){
 			s += entry.getKey() + entry.getValue().toString();
 		}
