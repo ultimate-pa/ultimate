@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -40,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
  * Stores a single row of a CSV as a key-value map.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class AutomataOperationStatistics implements ICsvProviderProvider<Object> {
 	/**
