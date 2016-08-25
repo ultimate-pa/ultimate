@@ -387,7 +387,6 @@ public class BuchiCegarLoop {
 
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			mLogger.info("======== Iteration " + mIteration + "============");
-			mSmtManager.setIteration(mIteration);
 			mBenchmarkGenerator.announceNextIteration();
 
 			boolean abstractionCorrect;

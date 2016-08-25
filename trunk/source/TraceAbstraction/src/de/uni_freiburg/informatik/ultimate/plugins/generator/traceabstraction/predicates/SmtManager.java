@@ -244,7 +244,7 @@ public class SmtManager {
 		return mVarSetMinimalComputationTime;
 	}
 
-	public void setIteration(final int iteration) {
+	private void setIteration(final int iteration) {
 		msatProbNumber = 0;
 	}
 
