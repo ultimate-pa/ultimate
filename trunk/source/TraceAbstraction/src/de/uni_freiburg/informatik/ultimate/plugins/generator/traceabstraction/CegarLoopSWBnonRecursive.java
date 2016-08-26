@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -33,7 +33,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -565,8 +564,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		mLogger.debug("Try to add trace: " + pre.toString() + " -- " + word + " --> " + post);
 
 		final SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<Integer, IPredicate>();
-		for (final Entry<Integer, CodeBlock> e : word.getPendingReturns().entrySet()) {
-			final int pos = e.getKey();
+		for (final int pos : word.getPendingReturns().keySet()) {
 			final IPredicate target = mActualPath.get(pos + 1);
 			final IPredicate source = mActualPath.get(pos);
 			for (final IncomingReturnTransition<CodeBlock, IPredicate> irt : mNestedAbstraction
