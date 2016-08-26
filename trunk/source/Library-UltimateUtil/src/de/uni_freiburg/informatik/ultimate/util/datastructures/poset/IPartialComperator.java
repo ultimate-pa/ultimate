@@ -35,7 +35,7 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.poset;
  */
 public interface IPartialComperator<T> {
 	
-	public enum ComparisonResult { SMALLER, EQUAL, GREATER, UNCOMPERABLE }
+	public enum ComparisonResult { STRICTLY_SMALLER, EQUAL, STRICTLY_GREATER, INCOMPARABLE }
 	
 	public ComparisonResult compare(T o1, T o2);
 

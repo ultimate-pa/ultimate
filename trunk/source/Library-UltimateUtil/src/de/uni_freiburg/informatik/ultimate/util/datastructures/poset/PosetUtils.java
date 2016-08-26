@@ -27,7 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures.poset;
 
 import java.util.Collection;
-import java.util.Set;
+import java.util.stream.Stream;
+
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComperator.ComparisonResult;
 
 /**
  * Provides static methods for partially ordered sets.
@@ -36,9 +38,38 @@ import java.util.Set;
  */
 public class PosetUtils {
 	
-	public <T> Set<T> computeMaximalElements(final Collection<T> elements) {
-		return null;
-		
+	/**
+	 * Return true iff there is no element in allElement that is strictly
+	 * greater than element with respect to IPartialComperator comp.
+	 */
+	public static <T> boolean isMaximalElement(final T elem, final Stream<T> allElems, final IPartialComperator<T> comp) {
+		return allElems.allMatch(x -> comp.compare(x, elem) != ComparisonResult.STRICTLY_GREATER);
 	}
+	
+	/**
+	 * Return true iff there is no element in allElement that is strictly
+	 * smaller than element with respect to IPartialComperator comp.
+	 */
+	public static <T> boolean isMinimalElement(final T eleme, final Stream<T> allElems, final IPartialComperator<T> comp) {
+		return allElems.allMatch(x -> comp.compare(x, eleme) != ComparisonResult.STRICTLY_SMALLER);
+	}
+	
+	/**
+	 * Returns a Stream that contains only the maximal elements with respect to 
+	 * IPartialComperator comp.
+	 */
+	public static <T> Stream<T> filterMaximalElements(final Collection<T> allElems, final IPartialComperator<T> comp) {
+		return allElems.stream().filter(x -> isMaximalElement(x, allElems.stream(), comp));
+	}
+
+	/**
+	 * Returns a Stream that contains only the minimal elements with respect to 
+	 * IPartialComperator comp.
+	 */
+	public static <T> Stream<T> filterMinimalElements(final Collection<T> allElems, final IPartialComperator<T> comp) {
+		return allElems.stream().filter(x -> isMinimalElement(x, allElems.stream(), comp));
+	}
+
+
 	
 }
