@@ -121,7 +121,11 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 *            The game graph generation object to add the edge to
 	 */
 	public SummarizeEdge(final SpoilerNwaVertex<LETTER, STATE> src, final STATE spoilerChoice,
-			final Set<Pair<STATE, Boolean>> duplicatorChoices, final NwaGameGraphGeneration<LETTER, STATE> graphGeneration) {
+			final Set<Pair<STATE, Boolean>> duplicatorChoices,
+			final NwaGameGraphGeneration<LETTER, STATE> graphGeneration) {
+		// TODO This object can not handle Sink-targets because Duplicator and
+		// Spoiler choices then are null. Evaluate if this should be fixed or
+		// not.
 		mGraphGeneration = graphGeneration;
 		mSrc = src;
 		mSpoilerChoice = spoilerChoice;
@@ -325,10 +329,10 @@ public final class SummarizeEdge<LETTER, STATE> {
 		for (final Pair<STATE, Boolean> choiceEntry : mDuplicatorChoices) {
 			final STATE choice = choiceEntry.getFirst();
 			final boolean choiceBit = choiceEntry.getSecond();
-			
+
 			// Spoiler auxiliary that holds the priority
-			final SpoilerNwaVertex<LETTER, STATE> spoilerAux = new SpoilerNwaVertex<LETTER, STATE>(NO_PRIORITY, choiceBit, null,
-					choice, this);
+			final SpoilerNwaVertex<LETTER, STATE> spoilerAux = new SpoilerNwaVertex<LETTER, STATE>(NO_PRIORITY,
+					choiceBit, null, choice, this);
 			mChoiceToSpoilerAux.put(choiceEntry, spoilerAux);
 
 			// Duplicator auxiliary that is the end
@@ -338,8 +342,8 @@ public final class SummarizeEdge<LETTER, STATE> {
 			mChoiceToDuplicatorAux.put(choiceEntry, duplicatorAux);
 
 			// Destination
-			final SpoilerVertex<LETTER, STATE> dest = mGraphGeneration.getSpoilerVertex(mSpoilerChoice, choice, choiceBit, null,
-					null);
+			final SpoilerVertex<LETTER, STATE> dest = mGraphGeneration.getSpoilerVertex(mSpoilerChoice, choice,
+					choiceBit, null, null);
 			if (dest instanceof SpoilerNwaVertex<?, ?>) {
 				mChoiceToDestination.put(choiceEntry, (SpoilerNwaVertex<LETTER, STATE>) dest);
 			}
@@ -356,7 +360,8 @@ public final class SummarizeEdge<LETTER, STATE> {
 				if (!predAsDuplicatorNwa.getTransitionType().equals(ETransitionType.RETURN)) {
 					continue;
 				}
-				// We do not consider return-predecessor that have no predecessor
+				// We do not consider return-predecessor that have no
+				// predecessor
 				final Set<Vertex<LETTER, STATE>> possibleSpoilerInvokers = graph.getPredecessors(predAsDuplicatorNwa);
 				if (possibleSpoilerInvokers == null) {
 					continue;

@@ -1473,7 +1473,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						continue;
 					}
 				}
-
 				for (final IGameState summaryDestinationUpState : summaryDestinationUpStates) {
 					// If an up state represents Duplicator running in a
 					// dead-end but there also are other up states, Duplicator
@@ -2147,7 +2146,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					duplicatorChoices, this);
 			summarizeEdge.addToGameGraph();
 			mSrcDestToSummarizeEdges.put(src, new Pair<>(spoilerChoice, duplicatorChoices), summarizeEdge);
-
 			mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.SUMMARIZE_EDGES);
 			int currentAmountOfSubSummarize = mSimulationPerformance
 					.getCountingMeasureResult(ECountingMeasure.SUB_SUMMARIZE_EDGES);
