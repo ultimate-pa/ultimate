@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
@@ -160,7 +160,7 @@ public class NestedSsaBuilder {
 	
 	/**
 	 * True iff the NestedSsaBuilder has to use a different Script than the
-	 * Script that was used to construct the Term that occur in the 
+	 * Script that was used to construct the Term that occur in the
 	 * NestedFormulas that are the input for the SSA construction.
 	 */
 	private final boolean mTransferToScriptNeeded;
@@ -168,14 +168,14 @@ public class NestedSsaBuilder {
 	
 	/**
 	 * Counter that helps us to ensure that we construct a fresh constant
-	 * for each occurrence of an aux var. 
+	 * for each occurrence of an aux var.
 	 */
-	private final MultiElementCounter<TermVariable> mConstForTvCounter = 
+	private final MultiElementCounter<TermVariable> mConstForTvCounter =
 			new MultiElementCounter<TermVariable>();
 	
 
 	public NestedSsaBuilder(final NestedWord<? extends IAction> trace, final SmtManager smtManager,
-			final NestedFormulas<TransFormula, IPredicate> nestedTransFormulas, 
+			final NestedFormulas<TransFormula, IPredicate> nestedTransFormulas,
 			final ModifiableGlobalVariableManager globModVarManager, final ILogger logger,
 			final boolean transferToScriptNeeded) {
 		mLogger = logger;
@@ -202,7 +202,8 @@ public class NestedSsaBuilder {
 		 * we need the oldVarAssignment and the globalVarAssignment they will
 		 * link the pending context with the pending return.
 		 */
-		final Integer[] pendingReturns = mFormulas.getTrace().getPendingReturns().keySet().toArray(new Integer[0]);
+		final Set<Integer> pendingReturnsRaw = mFormulas.getTrace().getPendingReturns().keySet();
+		final Integer[] pendingReturns = pendingReturnsRaw.toArray(new Integer[pendingReturnsRaw.size()]);
 		final int numberPendingContexts = pendingReturns.length;
 
 		startOfCallingContext = -1 - numberPendingContexts;
@@ -559,7 +560,7 @@ public class NestedSsaBuilder {
 		}
 		assert !index2constant.containsKey(index) : "version was already constructed";
 		final Sort sort = transferToCurrentScriptIfNecessary(bv.getTermVariable()).getSort();
-		final Term constant = PredicateUtils.getIndexedConstant(bv.getGloballyUniqueId(), 
+		final Term constant = PredicateUtils.getIndexedConstant(bv.getGloballyUniqueId(),
 				sort, index, mIndexedConstants, mScript);
 		index2constant.put(index, constant);
 		return constant;

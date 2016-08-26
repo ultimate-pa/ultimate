@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * Check implication between two formulas that each represent a set of 
@@ -55,13 +56,28 @@ public class MonolithicImplicationChecker {
 	}
 	
 	
-	public Validity checkImplication(final Term antecedent, final Term antecedentClosedFormula, final boolean antecedentStrictlyWeakerThanFalse,
-			final Term succedent, final Term succedentClosedFormula, final boolean succedentStrictlyStrongerThanTrue) {
-		if (antecedentStrictlyWeakerThanFalse && succedentStrictlyStrongerThanTrue) {
+	/**
+	 * Check if implication  antecedent ==> succedent  is valid. 
+	 */
+	public Validity checkImplication(final IPredicate antecedent, final boolean affirmAntecedentNeitherValidNorUnsat,
+			final IPredicate succedent, final boolean affirmSuccedentNeitherValidNorUnsat) {
+		return checkImplication(antecedent.getFormula(), antecedent.getClosedFormula(),	affirmAntecedentNeitherValidNorUnsat, 
+				succedent.getFormula(), succedent.getClosedFormula(), affirmSuccedentNeitherValidNorUnsat);
+	}
+	
+	/**
+	 * Check if implication  antecedent ==> succedent  is valid. 
+	 */
+	public Validity checkImplication(final Term antecedent, final Term antecedentClosedFormula, final boolean affirmAntecedentNeitherValidNorUnsat,
+			final Term succedent, final Term succedentClosedFormula, final boolean affirmSuccedentNeitherValidNorUnsat) {
+		if (affirmAntecedentNeitherValidNorUnsat && affirmSuccedentNeitherValidNorUnsat) {
 			final Validity dataflowAnalysisResult = dataflowBasedImplicationCheck(antecedent, succedent);
 			if (dataflowAnalysisResult == Validity.INVALID) {
 				return dataflowAnalysisResult;
 			}
+		}
+		if (mManagedScript.isLocked()) {
+			mManagedScript.requestLockRelease();
 		}
 		mManagedScript.lock(this);
 		mManagedScript.echo(this, new QuotedObject("Start implication check"));

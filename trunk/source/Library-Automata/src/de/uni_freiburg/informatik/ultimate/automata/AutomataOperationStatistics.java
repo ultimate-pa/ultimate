@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -27,9 +28,9 @@
 package de.uni_freiburg.informatik.ultimate.automata;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -40,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
  * Stores a single row of a CSV as a key-value map.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class AutomataOperationStatistics implements ICsvProviderProvider<Object> {
 	/**
@@ -47,7 +49,7 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	 */
 	private static final int INVALID_PERCENTAGE = -1;
 
-	private final LinkedHashMap<StatisticsType, Object> mKeyValueMap = new LinkedHashMap<>();
+	private final TreeMap<StatisticsType, Object> mKeyValueMap = new TreeMap<>();
 	
 	private static final String FIRST_INSERT_THE_VALUE_FOR_KEY = "First insert the value for key ";
 	private static final String MUST_BE_OF_NUMBER_TYPE = "must be of number type.";

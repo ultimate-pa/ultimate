@@ -302,7 +302,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected LBool isCounterexampleFeasible() {
 		final PredicateUnifier predicateUnifier =
-				new PredicateUnifier(mServices, mSmtManager, mSimplificationTechnique, mXnfConversionTechnique);
+				new PredicateUnifier(mServices, mSmtManager.getManagedScript(), 
+						mSmtManager.getPredicateFactory(), mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), 
+						mSimplificationTechnique, mXnfConversionTechnique);
 		final IPredicate truePredicate = predicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
 
@@ -1056,25 +1058,25 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 	}
 
-	public void howDifferentAreInterpolants(final Collection<IPredicate> predicates) {
-		int implications = 0;
-		int biimplications = 0;
-		final IPredicate[] array = predicates.toArray(new IPredicate[0]);
-		for (int i = 0; i < array.length; i++) {
-			for (int j = 0; j < i; j++) {
-				final boolean implies = (mSmtManager.isCovered(array[i], array[j]) == LBool.UNSAT);
-				final boolean explies = (mSmtManager.isCovered(array[j], array[i]) == LBool.UNSAT);
-				if (implies && explies) {
-					biimplications++;
-				} else if (implies ^ explies) {
-					implications++;
-				}
-
-			}
-		}
-		mLogger.warn(
-				array.length + "Interpolants. " + implications + " implications " + biimplications + " biimplications");
-	}
+//	private void howDifferentAreInterpolants(final Collection<IPredicate> predicates) {
+//		int implications = 0;
+//		int biimplications = 0;
+//		final IPredicate[] array = predicates.toArray(new IPredicate[0]);
+//		for (int i = 0; i < array.length; i++) {
+//			for (int j = 0; j < i; j++) {
+//				final boolean implies = (mSmtManager.isCovered(array[i], array[j]) == LBool.UNSAT);
+//				final boolean explies = (mSmtManager.isCovered(array[j], array[i]) == LBool.UNSAT);
+//				if (implies && explies) {
+//					biimplications++;
+//				} else if (implies ^ explies) {
+//					implications++;
+//				}
+//
+//			}
+//		}
+//		mLogger.warn(
+//				array.length + "Interpolants. " + implications + " implications " + biimplications + " biimplications");
+//	}
 
 	protected static boolean accepts(final IUltimateServiceProvider services,
 			final INestedWordAutomaton<CodeBlock, IPredicate> nia, final Word<CodeBlock> word)

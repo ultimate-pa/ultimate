@@ -94,7 +94,7 @@ public interface INestedWordAutomaton<LETTER, STATE>
 	 * @param state
 	 *            state
 	 * @return All letters <tt>a</tt> such that <tt>state</tt> has an incoming call
-	 *         transition labeled with letter a.
+	 *         transition labeled with letter <tt>a</tt>.
 	 */
 	Set<LETTER> lettersCallIncoming(STATE state);
 	

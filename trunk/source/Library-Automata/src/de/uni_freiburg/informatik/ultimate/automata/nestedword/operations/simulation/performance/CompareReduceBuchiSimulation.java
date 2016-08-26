@@ -919,7 +919,6 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	 * @param operand
 	 *            The buechi automaton to reduce
 	 */
-	@SuppressWarnings("unchecked")
 	protected void measureMethodPerformance(final String name, final ESimulationType type, final boolean useSCCs,
 			final AutomataLibraryServices services, final long timeout, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
@@ -983,8 +982,6 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 		} catch (final AutomataOperationCanceledException e) {
 			mLogger.info("Method timed out.");
 			timedOut = true;
-		} catch (final AutomataLibraryException e) {
-			e.printStackTrace();
 		} catch (final OutOfMemoryError e) {
 			mLogger.info("Method has thrown an out of memory error.");
 			outOfMemory = true;

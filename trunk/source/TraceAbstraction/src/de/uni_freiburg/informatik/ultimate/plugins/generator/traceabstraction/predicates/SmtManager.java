@@ -441,7 +441,7 @@ public class SmtManager {
 	 *         holds, SMT_SAT if the inclusion does not hold and SMT_UNKNOWN if
 	 *         the theorem prover was not able to give an answer.
 	 */
-	public LBool isCovered(final IPredicate ps1, final IPredicate ps2) {
+	private LBool isCovered(final IPredicate ps1, final IPredicate ps2) {
 		final long startTime = System.nanoTime();
 
 		if (getPredicateFactory().isDontCare(ps1) || getPredicateFactory().isDontCare(ps2)) {
@@ -495,7 +495,7 @@ public class SmtManager {
 		return result;
 	}
 
-	public Validity isCovered(final Object caller, final Term formula1, final Term formula2) {
+	private Validity isCovered(final Object caller, final Term formula1, final Term formula2) {
 		assert (mManagedScript.isLockOwner(caller)) : "only lock owner may call";
 		final long startTime = System.nanoTime();
 

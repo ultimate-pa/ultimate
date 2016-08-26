@@ -178,7 +178,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				mServices, false, rootAnnot.getManagedScript(), mSimplificationTechnique, mXnfConversionTechnique);
 
 		mPredicateUnifier =
-				new PredicateUnifier(mServices, mSmtManager, mSimplificationTechnique, mXnfConversionTechnique);
+				new PredicateUnifier(mServices, mSmtManager.getManagedScript(), 
+						mSmtManager.getPredicateFactory(), mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), 
+						mSimplificationTechnique, mXnfConversionTechnique);
 
 		mEdgeChecker =
 				new MonolithicHoareTripleChecker(mSmtManager.getManagedScript(), mSmtManager.getModifiableGlobals());
@@ -417,7 +419,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[] {}));
 
 					if (GlobalSettings._instance._predicateUnification == PredicateUnification.PER_ITERATION) {
-						mPredicateUnifier = new PredicateUnifier(mServices, mSmtManager, mSimplificationTechnique,
+						mPredicateUnifier = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), 
+								mSmtManager.getPredicateFactory(), mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), 
+								mSimplificationTechnique,
 								mXnfConversionTechnique);
 					}
 

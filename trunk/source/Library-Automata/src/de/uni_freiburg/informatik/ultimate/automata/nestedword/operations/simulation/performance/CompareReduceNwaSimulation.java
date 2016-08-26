@@ -193,8 +193,6 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 		} catch (final AutomataOperationCanceledException e) {
 			logger.info("Method timed out.");
 			timedOut = true;
-		} catch (final AutomataLibraryException e) {
-			e.printStackTrace();
 		} catch (final OutOfMemoryError e) {
 			logger.info("Method has thrown an out of memory error.");
 			outOfMemory = true;
