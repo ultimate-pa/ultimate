@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -72,6 +73,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComperator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PosetUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -210,7 +213,8 @@ public class PredicateUnifier {
 	 * construction by (resp. declared in) this PredicateUnifier. 
 	 */
 	public IPredicate getOrConstructPredicateForConjunction(final Collection<IPredicate> conjunction) {
-		final Set<IPredicate> minimalSubset = computeMinimalEquivalentSubset_Conjunction(conjunction);
+		final Set<IPredicate> minimalSubset = PosetUtils.filterMinimalElements(conjunction, 
+				mCoverageRelation.getPartialComperator()).collect(Collectors.toSet());
 		if (minimalSubset.size() == 1) {
 			return minimalSubset.iterator().next();
 		} else {
@@ -247,7 +251,8 @@ public class PredicateUnifier {
 	 * constructed by (resp. declared in) this PredicateUnifier. 
 	 */
 	public IPredicate getOrConstructPredicateForDisjunction(final Collection<IPredicate> disjunction) {
-		final Set<IPredicate> minimalSubset = computeMinimalEquivalentSubset_Disjunction(disjunction);
+		final Set<IPredicate> minimalSubset = PosetUtils.filterMaximalElements(disjunction, 
+				mCoverageRelation.getPartialComperator()).collect(Collectors.toSet());
 		if (minimalSubset.size() == 1) {
 			return minimalSubset.iterator().next();
 		} else {
@@ -280,74 +285,6 @@ public class PredicateUnifier {
 	}
 
 	
-	/**
-	 * Compute a minimal subset of IPredicates for a given conjunction in the
-	 * following sense. The conjunction of the subset is equivalent to the
-	 * input conjunction and no two elements in the subset imply each other.
-	 * I.e., if a predicate of in input conjunction is implied by another 
-	 * predicate it is removed.
-	 * @param conjunction of predicates that was constructed by this predicate unifier. 
-	 * @return
-	 */
-	private Set<IPredicate> computeMinimalEquivalentSubset_Conjunction(final Collection<IPredicate> conjunction) {
-		final List<IPredicate> list = new ArrayList<IPredicate>(conjunction);
-		final Set<IPredicate> minimalSubset = new HashSet<IPredicate>(conjunction);
-		for (int i=0; i<list.size(); i++) {
-			final IPredicate predi = list.get(i);
-			if (!mKnownPredicates.contains(predi)) {
-				throw new IllegalArgumentException(predi + " not constructed by this predicate unifier");
-			}
-			final Set<IPredicate> coveredByPredi = getCoverageRelation().getCoveredPredicates(predi);
-			for (int j=i+1; j<list.size(); j++) {
-				final IPredicate predj= list.get(j);
-				if (minimalSubset.contains(predj)) {
-					if (coveredByPredi.contains(predj)) {
-						minimalSubset.remove(predi);
-						continue;
-					}
-				} else {
-					// continue, we care only about covered predicates that
-					// are still in the minimal subset
-				}
-			}
-		}
-		return minimalSubset;
-	}
-	
-	/**
-	 * Compute a minimal subset of IPredicates for a given disjunction in the
-	 * following sense. The disjunction of the subset is equivalent to the
-	 * input disjunction and no two elements in the subset imply each other.
-	 * I.e., if a predicate of in input disjunction is implies another 
-	 * predicate it is removed.
-	 * @param disjunction of predicates that was constructed by this predicate unifier. 
-	 * @return
-	 */
-	private Set<IPredicate> computeMinimalEquivalentSubset_Disjunction(final Collection<IPredicate> disjunction) {
-		final List<IPredicate> list = new ArrayList<IPredicate>(disjunction);
-		final Set<IPredicate> minimalSubset = new HashSet<IPredicate>(disjunction);
-		for (int i=0; i<list.size(); i++) {
-			final IPredicate predi = list.get(i);
-			if (!mKnownPredicates.contains(predi)) {
-				throw new IllegalArgumentException(predi + " not constructed by this predicate unifier");
-			}
-			final Set<IPredicate> coveringPredi = getCoverageRelation().getCoveringPredicates(predi);
-			for (int j=i+1; j<list.size(); j++) {
-				final IPredicate predj= list.get(j);
-				if (minimalSubset.contains(predj)) {
-					if (coveringPredi.contains(predj)) {
-						minimalSubset.remove(predi);
-						continue;
-					}
-				} else {
-					// continue, we care only about covering predicates that
-					// are still in the minimal subset
-				}
-			}
-		}
-		return minimalSubset;
-	}
-
 	/**
 	 * Returns true iff each free variables corresponds to a BoogieVar in vars.
 	 * Throws an Exception otherwise.
@@ -950,6 +887,42 @@ public class PredicateUnifier {
 				}
 			}
 			return nothingMissing;
+		}
+
+		@Override
+		public IPartialComperator<IPredicate> getPartialComperator() {
+			return new IPartialComperator<IPredicate>() {
+
+				@Override
+				public ComparisonResult compare(final IPredicate o1, final IPredicate o2) {
+					if (o1 == o2) {
+						return ComparisonResult.EQUAL;
+					} else {
+						final Validity implies = mLhs2RhsValidity.get(o1, o2);
+						if (implies == null) {
+							throw new AssertionError("one of the predicates is unknown");
+						}
+						final Validity explies = mLhs2RhsValidity.get(o2, o1);
+						if (explies == null) {
+							throw new AssertionError("one of the predicates is unknown");
+						}
+						if (implies == Validity.VALID) {
+							if (explies == Validity.VALID) {
+								return ComparisonResult.EQUAL;
+							} else {
+								return ComparisonResult.STRICTLY_SMALLER;
+							}
+						} else {
+							if (explies == Validity.VALID) {
+								return ComparisonResult.STRICTLY_GREATER;
+							} else {
+								return ComparisonResult.INCOMPARABLE;
+							}
+
+						}
+					}
+				}
+			};
 		}
 	}
 	
