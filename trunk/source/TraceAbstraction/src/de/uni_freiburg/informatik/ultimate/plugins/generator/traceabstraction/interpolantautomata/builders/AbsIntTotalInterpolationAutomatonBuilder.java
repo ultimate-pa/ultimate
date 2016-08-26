@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -121,19 +120,11 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 					mLogger.debug("------------------------------------------------");
 				}
 			} else {
-				final Map<IAbstractState<?, CodeBlock, IBoogieVar>, IPredicate> map = nextStates.stream()
-				        .collect(Collectors.toMap(Function.identity(), s -> predicateUnifier.getOrConstructPredicate(
-				                s.getTerm(mSmtManager.getScript(), mSmtManager.getBoogie2Smt()))));
-				// stateToPredicate.putAll(map);
-
 				target = predicateUnifier.getOrConstructPredicateForDisjunction(
 				        nextStates.stream().map(s -> s.getTerm(mSmtManager.getScript(), mSmtManager.getBoogie2Smt()))
 				                .map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
 
 				nextStates.forEach(state -> stateToPredicate.put(state, target));
-
-				// target = predicateUnifier
-				// .getOrConstructPredicateForDisjunction(map.values().stream().collect(Collectors.toSet()));
 
 				if (mLogger.isDebugEnabled()) {
 					if (i == 0) {
@@ -219,12 +210,12 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 					if (postState.isBottom()) {
 						continue;
 					}
-					// TODO: Only add transition if not already present!
 					allStates.stream().forEach(s -> {
 						// if post state \subseteq one of the states already found before.
 						if (isSubsetInternally(postState, s)) {
-							result.addInternalTransition(stateToPredicate.get(current), currentLetter,
-					                stateToPredicate.get(s));
+							final IPredicate prestate = stateToPredicate.get(current);
+							final IPredicate poststate = stateToPredicate.get(s);
+							result.addInternalTransition(prestate, currentLetter, poststate);
 						}
 					});
 				}
