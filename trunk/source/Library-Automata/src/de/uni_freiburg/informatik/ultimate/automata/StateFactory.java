@@ -240,7 +240,7 @@ public abstract class StateFactory<STATE> {
 	}
 	
 	/**
-	 * State in {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.Senwa Senwa}.
+	 * State in {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.Senwa Senwa}.
 	 * 
 	 * @param entry
 	 *            entry

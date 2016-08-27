@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.Senwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;

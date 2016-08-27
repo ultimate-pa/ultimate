@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nestedword;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,6 +33,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 
 /**
