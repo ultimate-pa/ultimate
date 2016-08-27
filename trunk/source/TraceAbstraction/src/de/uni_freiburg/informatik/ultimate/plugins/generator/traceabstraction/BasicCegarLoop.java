@@ -569,11 +569,15 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						final PowersetDeterminizer<CodeBlock, IPredicate> psd2 =
 								new PowersetDeterminizer<CodeBlock, IPredicate>(determinized, true,
 										mPredicateFactoryInterpolantAutomata);
-
-						diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-								oldAbstraction, determinized, psd2, mStateFactoryForRefinement,
-								explointSigmaStarConcatOfIA);
-						determinized.switchToReadonlyMode();
+						try {
+							diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+									oldAbstraction, determinized, psd2, mStateFactoryForRefinement,
+									explointSigmaStarConcatOfIA);
+						} catch (final AutomataOperationCanceledException aoce) {
+							throw aoce;
+						} finally {
+							determinized.switchToReadonlyMode();
+						}
 						final INestedWordAutomaton<CodeBlock, IPredicate> completelyBuiltInterpolantAutomaton =
 								(new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 										determinized)).getResult();
@@ -611,9 +615,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					final PowersetDeterminizer<CodeBlock, IPredicate> psd2 =
 							new PowersetDeterminizer<CodeBlock, IPredicate>(nondet, true,
 									mPredicateFactoryInterpolantAutomata);
-					diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), oldAbstraction,
-							nondet, psd2, mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
-					nondet.switchToReadonlyMode();
+					try {
+						diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), oldAbstraction,
+								nondet, psd2, mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
+					} catch (final AutomataOperationCanceledException aoce) {
+						throw aoce;
+					} finally {
+						nondet.switchToReadonlyMode();
+					}
 					final INestedWordAutomaton<CodeBlock, IPredicate> test =
 							(new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 									nondet)).getResult();
