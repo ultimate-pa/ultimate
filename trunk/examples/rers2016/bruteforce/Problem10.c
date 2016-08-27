@@ -10,8 +10,10 @@
 #define INPUT_MIN 1
 #define INPUT_MAX 5
 
+#define ERR_INVALID_INPUT 999
 // Flag that contains the number of the label reached, or negative if none
-int ERR; 
+int ERR;
+
 // Position of the input that triggered the error = length of the sequence
 int ERR_POS;
 // Array of inputs
@@ -97,8 +99,10 @@ void main() {
         for (long i = 0; i < ninputs; i++) {
                 int result = loop(INPUT_LENGTH, INPUTS);
                 if (ERR >= 0) {
-                        fprintf(stderr," -> ");
-                        print_inputs();
+                        if (ERR != ERR_INVALID_INPUT) {
+                                fprintf(stderr," -> ");
+                                print_inputs();
+                        }
                         // Skip all sequences with the same prefix
                         increment_inputs(ERR_POS);
                         reset_inputs(ERR_POS + 1);
@@ -1780,6 +1784,8 @@ void main() {
     } 
     errorCheck();
 
-    if( cf==1 ) 
-    	fprintf(stdout, "Invalid input: %d\n", input); 
+    if( cf==1 ) {
+    	fprintf(stdout, "Invalid input: %d\n", input);
+    	ERR = ERR_INVALID_INPUT;
+    }
 }
