@@ -40,10 +40,10 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Utility class for minimizing incomplete DFAs (Deterministic Finite
@@ -122,7 +122,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE>
 	public MinimizeDfaHopcroftLists(
 			final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final Collection<Set<STATE>> initialPartition,
 			final boolean addMapping) {
 		super(services, stateFactory, "minimizeIncompleteDFA", operand);

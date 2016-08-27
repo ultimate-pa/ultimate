@@ -35,13 +35,13 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizedState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class DeterminizeNwa<LETTER, STATE>
@@ -53,7 +53,7 @@ public class DeterminizeNwa<LETTER, STATE>
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomaton<LETTER, STATE> mCache;
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
-	private final StateFactory<STATE> mStateFactory;
+	private final IStateFactory<STATE> mStateFactory;
 	private final Set<STATE> mPredefinedInitials;
 	private final boolean mMakeAutomatonTotal;
 	
@@ -73,7 +73,7 @@ public class DeterminizeNwa<LETTER, STATE>
 	public DeterminizeNwa(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final Set<STATE> predefinedInitials,
 			final boolean makeAutomatonTotal) {
 		mServices = services;
@@ -98,7 +98,7 @@ public class DeterminizeNwa<LETTER, STATE>
 	public DeterminizeNwa(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
-			final StateFactory<STATE> stateFactory) {
+			final IStateFactory<STATE> stateFactory) {
 		this(services, operand, stateDeterminizer, stateFactory, null, false);
 	}
 	
@@ -217,7 +217,7 @@ public class DeterminizeNwa<LETTER, STATE>
 	}
 
 	@Override
-	public StateFactory<STATE> getStateFactory() {
+	public IStateFactory<STATE> getStateFactory() {
 		return mStateFactory;
 	}
 	

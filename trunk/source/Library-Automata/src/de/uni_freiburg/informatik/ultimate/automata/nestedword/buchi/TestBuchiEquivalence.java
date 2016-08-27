@@ -32,12 +32,12 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Test for language equivalence of two Buchi automata or Buchi nested word automata.
@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncl
  */
 public class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER, STATE>{
-	private final StateFactory<STATE> mStateFactory;
+	private final IStateFactory<STATE> mStateFactory;
 	
 	private final boolean mResult;
 	
@@ -89,7 +89,7 @@ public class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperation<LETT
 	 *             if some operation fails
 	 */
 	public TestBuchiEquivalence(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		this(services, stateFactory, fstOperand, sndOperand, false);
@@ -112,7 +112,7 @@ public class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperation<LETT
 	 *             if some operation fails
 	 */
 	public TestBuchiEquivalence(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
 			final boolean completeTest) throws AutomataLibraryException {

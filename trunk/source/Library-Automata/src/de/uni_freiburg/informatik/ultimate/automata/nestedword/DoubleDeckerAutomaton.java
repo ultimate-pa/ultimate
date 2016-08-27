@@ -30,8 +30,8 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DoubleDeckerVisitor.ReachFinal;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Basic implementation of the {@link IDoubleDeckerAutomaton} interface based on the {@link NestedWordAutomaton}.
@@ -68,7 +68,7 @@ public class DoubleDeckerAutomaton<LETTER, STATE>
 			final Set<LETTER> internalAlphabet,
 			final Set<LETTER> callAlphabet,
 			final Set<LETTER> returnAlphabet,
-			final StateFactory<STATE> stateFactory) {
+			final IStateFactory<STATE> stateFactory) {
 		super(services, internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
 		mUp2Down = null;
 	}

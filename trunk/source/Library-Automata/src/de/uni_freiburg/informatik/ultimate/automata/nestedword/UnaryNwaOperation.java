@@ -30,8 +30,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Abstract operation taking one nested word automaton as input.
@@ -78,7 +78,7 @@ public abstract class UnaryNwaOperation<LETTER, STATE>
 	 * operation.
 	 */
 	protected boolean checkLanguageEquivalence(
-			final StateFactory<STATE> stateFactory)
+			final IStateFactory<STATE> stateFactory)
 					throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start testing correctness of " + operationName());

@@ -28,12 +28,12 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizedState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 
 /**
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 public class PowersetDeterminizer<LETTER,STATE> 
 			implements IStateDeterminizer<LETTER,STATE> {
 
-	private final StateFactory<STATE> mStateFactory;
+	private final IStateFactory<STATE> mStateFactory;
 	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
 	private final boolean mUseDoubleDeckers;
 	private int mMaxDegreeOfNondeterminism = 0;
@@ -63,7 +63,7 @@ public class PowersetDeterminizer<LETTER,STATE>
 	public PowersetDeterminizer(
 			final INestedWordAutomatonSimple<LETTER,STATE> operand, 
 			final boolean useDoubleDeckers,
-			final StateFactory<STATE> stateFactory) { 
+			final IStateFactory<STATE> stateFactory) { 
 		mOperand = operand;
 		mUseDoubleDeckers = useDoubleDeckers;
 		this.mStateFactory = stateFactory;

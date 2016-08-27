@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * General minimization interface.
@@ -49,6 +49,6 @@ public interface IMinimizeNwa<LETTER, STATE> {
 	 * @return true iff all tests succeeded
 	 * @throws AutomataLibraryException when tests call failing methods
 	 */
-	boolean checkResult(final StateFactory<STATE> stateFactory)
+	boolean checkResult(final IStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException;
 }

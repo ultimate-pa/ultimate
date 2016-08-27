@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.StateBasedTransitionFilterPredicateProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.FilteredIterable;
@@ -169,7 +169,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE>
 	}
 	
 	@Override
-	public StateFactory<STATE> getStateFactory() {
+	public IStateFactory<STATE> getStateFactory() {
 		return mNwa.getStateFactory();
 	}
 	

@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.automata.alternating;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 public class AA_Accept<LETTER,STATE>
 		implements IOperation<LETTER,STATE> {
@@ -64,7 +64,7 @@ public class AA_Accept<LETTER,STATE>
 	}
 
 	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory)
+	public boolean checkResult(final IStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}

@@ -34,8 +34,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
@@ -150,7 +150,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 			@Override
 			public void execute(final INestedWordAutomaton<LETTER, STATE> automaton)
 					throws Throwable {
-				final StateFactory<STATE> factory = automaton.getStateFactory();
+				final IStateFactory<STATE> factory = automaton.getStateFactory();
 
 				getIOperation(automaton, factory);
 			}
@@ -171,7 +171,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 			@Override
 			public void execute(final INestedWordAutomaton<LETTER, STATE> automaton)
 					throws Throwable {
-				final StateFactory<STATE> factory = automaton.getStateFactory();
+				final IStateFactory<STATE> factory = automaton.getStateFactory();
 
 				final IOperation<LETTER, STATE> op =
 						getIOperation(automaton, factory);
@@ -193,7 +193,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	@SuppressWarnings("squid:S00112")
 	private IOperation<LETTER, STATE> getIOperation(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
-			final StateFactory<STATE> factory) throws Throwable {
+			final IStateFactory<STATE> factory) throws Throwable {
 		final AutomatonDebuggerExamples<LETTER, STATE> examples =
 				new AutomatonDebuggerExamples<LETTER, STATE>(mServices);
 

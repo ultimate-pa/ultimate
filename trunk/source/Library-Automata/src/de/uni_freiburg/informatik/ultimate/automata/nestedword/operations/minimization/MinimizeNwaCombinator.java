@@ -34,8 +34,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * NWA minimization which can be used in a loop which just calls the next
@@ -90,7 +90,7 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 	 *             thrown by minimization methods
 	 */
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataLibraryException {
 		this(services, stateFactory, operand, null, false, 0);
@@ -115,7 +115,7 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 	 *             thrown by minimization methods
 	 */
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final Collection<Set<STATE>> partition,
 			final boolean addMapOldState2newState,
@@ -145,7 +145,7 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 	 *             thrown by minimization methods
 	 */
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final Collection<Set<STATE>> partition,
 			final boolean addMapOldState2newState,
@@ -177,7 +177,7 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 	 *             thrown by minimization methods
 	 */
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final Collection<Set<STATE>> partition,
 			final boolean addMapOldState2newState,
@@ -280,7 +280,7 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		switch (mPattern[mCounter]) {
 			case MINIMIZE_SEVPA:
 				return ((MinimizeSevpa<LETTER, STATE>) mCurrent).checkResult(stateFactory);

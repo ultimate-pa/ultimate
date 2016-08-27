@@ -61,11 +61,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult.OverallResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
@@ -1543,7 +1543,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	private Object[] prependStateFactoryIfNecessary(final Constructor<?> c, final List<Object> args) {
 		boolean firstParameterIsStateFactory;
 		final Class<?> fstParam = c.getParameterTypes()[0];
-		if (StateFactory.class.isAssignableFrom(fstParam)) {
+		if (IStateFactory.class.isAssignableFrom(fstParam)) {
 			firstParameterIsStateFactory = true;
 		} else {
 			firstParameterIsStateFactory = false;
@@ -1579,7 +1579,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		} else {
 			final Class<?> sndParam = c.getParameterTypes()[1];
 			if (AutomataLibraryServices.class.isAssignableFrom(fstParam)) {
-				if (StateFactory.class.isAssignableFrom(sndParam)) {
+				if (IStateFactory.class.isAssignableFrom(sndParam)) {
 					firstParameterIsServicesAndSecondParameterIsStateFactory = true;
 				} else {
 					firstParameterIsServicesAndSecondParameterIsStateFactory = false;

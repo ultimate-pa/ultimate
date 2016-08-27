@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.incre
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -39,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Inters
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * This is an implementation of our incremental inclusion check based on a
@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
  */
 public class InclusionViaDifference<LETTER, STATE>
 		extends AbstractIncrementalInclusionCheck<LETTER, STATE> {
-	private final StateFactory<STATE> mStateFactoryIntersect;
-	private final StateFactory<STATE> mStateFactoryDeterminize;
+	private final IStateFactory<STATE> mStateFactoryIntersect;
+	private final IStateFactory<STATE> mStateFactoryDeterminize;
 	private INestedWordAutomatonSimple<LETTER, STATE> mDifference;
 	private NestedRun<LETTER, STATE> mAcceptingRun;
 	
@@ -68,7 +68,7 @@ public class InclusionViaDifference<LETTER, STATE>
 	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
 	public InclusionViaDifference(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> a)
 					throws AutomataOperationCanceledException {
 		this(services, stateFactory, stateFactory, a);
@@ -86,8 +86,8 @@ public class InclusionViaDifference<LETTER, STATE>
 	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
 	public InclusionViaDifference(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactoryIntersect,
-			final StateFactory<STATE> stateFactoryDeterminize,
+			final IStateFactory<STATE> stateFactoryIntersect,
+			final IStateFactory<STATE> stateFactoryDeterminize,
 			final INestedWordAutomatonSimple<LETTER, STATE> a)
 					throws AutomataOperationCanceledException {
 		super(services, a);

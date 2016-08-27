@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 
 /**
  * 
@@ -57,7 +57,7 @@ public class Jeffery_Test_4<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	String folder;
 	static long faster_i = 0, slower_i = 0;
 	static long timeBuffer1, timeBuffer2;
-	public Jeffery_Test_4(AutomataLibraryServices services, StateFactory<STATE> sf,
+	public Jeffery_Test_4(AutomataLibraryServices services, IStateFactory<STATE> sf,
 			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b) throws AutomataLibraryException, IOException{
 		folder = "/media/user_data/Java/trunk/examples/Automata/finiteAutomata/incrementalInclusion/randomCasesDumpedResults/";
 		timeBuffer1 = (new Date()).getTime();
@@ -121,7 +121,7 @@ public class Jeffery_Test_4<LETTER,STATE> implements IOperation<LETTER,STATE>{
 		
 	}
 	
-	public Jeffery_Test_4(AutomataLibraryServices services, StateFactory<STATE> sf,
+	public Jeffery_Test_4(AutomataLibraryServices services, IStateFactory<STATE> sf,
 			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b, String folderInput) throws AutomataLibraryException, IOException{
 		folder = folderInput;
 		timeBuffer1 = (new Date()).getTime();
@@ -210,7 +210,7 @@ public class Jeffery_Test_4<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	}*/
 	
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
+	public boolean checkResult(IStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}

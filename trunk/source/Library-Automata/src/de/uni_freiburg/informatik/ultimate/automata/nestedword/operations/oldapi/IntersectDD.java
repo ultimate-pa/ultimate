@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldap
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
@@ -57,7 +57,7 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 	}
 
 	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory)
+	public boolean checkResult(final IStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		mLogger.warn("Correctness of result was not tested");
 		return true;

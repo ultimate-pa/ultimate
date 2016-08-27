@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
@@ -40,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.BuchiReduce;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.nwa.ReduceNwaDelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
@@ -90,7 +90,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	 */
 	public IOperation<LETTER, STATE> getOperation(final EOperationType type,
 			final INestedWordAutomaton<LETTER, STATE> automaton,
-			final StateFactory<STATE> factory) throws Throwable {
+			final IStateFactory<STATE> factory) throws Throwable {
 		switch (type) {
 			case MINIMIZE_NWA_MAXSAT:
 				return minimizeNwaMaxSAT(automaton, factory);
@@ -126,7 +126,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	 */
 	public IOperation<LETTER, STATE> minimizeNwaMaxSAT(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
-			final StateFactory<STATE> factory) throws Throwable {
+			final IStateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveUnreachable<LETTER, STATE>(mServices, automaton).getResult();
 		return new MinimizeNwaMaxSAT<LETTER, STATE>(mServices, factory, preprocessed);
@@ -143,7 +143,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	 */
 	public IOperation<LETTER, STATE> minimizeNwaMaxSAT2(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
-			final StateFactory<STATE> factory) throws Throwable {
+			final IStateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveDeadEnds<LETTER, STATE>(mServices, automaton).getResult();
 		return new MinimizeNwaMaxSat2<LETTER, STATE>(mServices, factory, preprocessed);
@@ -160,7 +160,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	 */
 	public IOperation<LETTER, STATE> reduceNwaDirectSimulation(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
-			final StateFactory<STATE> factory) throws Throwable {
+			final IStateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveDeadEnds<LETTER, STATE>(mServices, automaton).getResult();
 		return new ReduceNwaDirectSimulation<LETTER, STATE>(mServices, factory, preprocessed, false);
@@ -177,7 +177,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	 */
 	public IOperation<LETTER, STATE> reduceNwaDelayedSimulation(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
-			final StateFactory<STATE> factory) throws Throwable {
+			final IStateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveDeadEnds<LETTER, STATE>(mServices, automaton).getResult();
 		return new ReduceNwaDelayedSimulation<LETTER, STATE>(mServices, factory, preprocessed, false);
@@ -194,7 +194,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	 */
 	public IOperation<LETTER, STATE> shrinkNwa(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
-			final StateFactory<STATE> factory) throws Throwable {
+			final IStateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveUnreachable<LETTER, STATE>(mServices, automaton).getResult();
 		return new ShrinkNwa<LETTER, STATE>(mServices, factory, preprocessed);
@@ -211,7 +211,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	 */
 	public IOperation<LETTER, STATE> buchiReduce(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
-			final StateFactory<STATE> factory) throws Throwable {
+			final IStateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveDeadEnds<LETTER, STATE>(mServices, automaton).getResult();
 		return new BuchiReduce<LETTER, STATE>(mServices, factory, preprocessed);

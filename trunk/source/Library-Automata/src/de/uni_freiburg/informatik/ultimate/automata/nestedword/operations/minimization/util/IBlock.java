@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 
 import java.util.Iterator;
 
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Interface for a general block data structure inside a partition.
@@ -52,7 +52,7 @@ public interface IBlock<STATE> {
 	 * @param stateFactory state factory
 	 * @return state constructed by state factory
 	 */
-	STATE minimize(final StateFactory<STATE> stateFactory);
+	STATE minimize(final IStateFactory<STATE> stateFactory);
 	
 	/**
 	 * @return iterator over all states

@@ -38,10 +38,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.StringFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 
 /**
  * Class that provides the method {@code generateAutomaton()} for randomly
@@ -223,7 +223,7 @@ public class GetRandomNwa
 		// If both, callTransitionProbability and returnTransitionProbability 
 		// are 0 we set callAlphabet and returnAlphabet to null.
 		//
-		final StateFactory<String> stateFactory = new StringFactory();
+		final IStateFactory<String> stateFactory = new StringFactory();
 		NestedWordAutomaton<String,String> result;
 		final boolean isFiniteAutomaton = (callTransitionProbability == 0 
 				&& returnTransitionProbability == 0);

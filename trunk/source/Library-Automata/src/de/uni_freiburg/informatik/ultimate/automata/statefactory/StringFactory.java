@@ -19,12 +19,12 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nestedword;
+package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.StateWithRankInfo;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -42,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class StringFactory extends StateFactory<String> {
+public class StringFactory implements IStateFactory<String> {
 
 	@Override
 	public String intersection(final String s1, final String s2) {
@@ -70,7 +69,7 @@ public class StringFactory extends StateFactory<String> {
 			while (it.hasNext()) {
 				up = it.next();
 				sb.append(", ");
-				sb.append("(").append(down).append(",").append(up).append(")");				
+				sb.append("(").append(down).append(",").append(up).append(")");
 			}
 		}
 		sb.append("}");
@@ -144,7 +143,7 @@ public class StringFactory extends StateFactory<String> {
 			return compl.toString();
 		}
 		
-		final boolean isNestedWordAutomaton = 
+		final boolean isNestedWordAutomaton =
 				!compl.getOperand().getCallAlphabet().isEmpty();
 		final StringBuilder sb = new StringBuilder();
 		sb.append("{");
@@ -174,7 +173,7 @@ public class StringFactory extends StateFactory<String> {
 				} else {
 					sb.append("∞");
 				}
-				sb.append(")");					
+				sb.append(")");
 			}
 		}
 		sb.append("}");
@@ -214,7 +213,7 @@ public class StringFactory extends StateFactory<String> {
 				}
 			}
 		}
-		final boolean isNestedWordAutomaton = 
+		final boolean isNestedWordAutomaton =
 				!compl.getOperand().getCallAlphabet().isEmpty();
 		final StringBuilder sb = new StringBuilder();
 		sb.append("(");

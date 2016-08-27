@@ -40,9 +40,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * This class implements the incremental DFA minimization algorithm by Almeida,
@@ -146,7 +146,7 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 	 *             thrown by DFA check or if execution is cancelled
 	 */
 	public MinimizeDfaIncremental(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
 					throws AutomataLibraryException {
 		this(services, stateFactory, operand, null);
@@ -167,7 +167,7 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 	 *             thrown by DFA check or if execution is cancelled
 	 */
 	public MinimizeDfaIncremental(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt)
 					throws AutomataLibraryException {

@@ -43,11 +43,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeIncremental;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.Interrupt;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * This class implements the incremental DFA minimization algorithm by Almeida,
@@ -177,7 +177,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE>
 	 *             thrown when execution is cancelled
 	 */
 	public MinimizeDfaIncrementalParallel(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataLibraryException {
 		this(services, stateFactory, operand, new Interrupt());
@@ -196,7 +196,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE>
 	 *             thrown when execution is cancelled
 	 */
 	public MinimizeDfaIncrementalParallel(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt) throws AutomataLibraryException {
 		super(services, stateFactory, "MinimizeAMR", operand, interrupt);
@@ -226,7 +226,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE>
 	 *             thrown by DFA check
 	 */
 	public MinimizeDfaIncrementalParallel(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt, final ArrayList<STATE> int2state,
 			final HashMap<STATE, Integer> state2int)

@@ -28,12 +28,12 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 
 /**
@@ -89,7 +89,7 @@ public class ComplementDeterministicNwa<LETTER, STATE>
 	}
 
 	@Override
-	public StateFactory<STATE> getStateFactory() {
+	public IStateFactory<STATE> getStateFactory() {
 		return mOperand.getStateFactory();
 	}
 	

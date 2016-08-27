@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata;
+package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
 import java.util.Collection;
 import java.util.Map;
@@ -43,7 +43,8 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
  * @param <STATE>
  *            state type
  */
-public abstract class StateFactory<STATE> {
+@SuppressWarnings("squid:S1172")
+public interface IStateFactory<STATE> {
 	/**
 	 * Intersection of two states ("product construction").
 	 * 
@@ -53,7 +54,7 @@ public abstract class StateFactory<STATE> {
 	 *            second state
 	 * @return state representing the intersection
 	 */
-	public STATE intersection(final STATE state1, final STATE state2) {
+	default STATE intersection(final STATE state1, final STATE state2) {
 		return null;
 	}
 	
@@ -68,7 +69,7 @@ public abstract class StateFactory<STATE> {
 	 *            track
 	 * @return state representing the intersection
 	 */
-	public STATE intersectBuchi(final STATE state1, final STATE state2, final int track) {
+	default STATE intersectBuchi(final STATE state1, final STATE state2, final int track) {
 		return intersection(state1, state2);
 	}
 	
@@ -79,21 +80,21 @@ public abstract class StateFactory<STATE> {
 	 *            mapping (down state -> up states)
 	 * @return state representing the determinization
 	 */
-	public STATE determinize(final Map<STATE, Set<STATE>> down2up) {
+	default STATE determinize(final Map<STATE, Set<STATE>> down2up) {
 		return null;
 	}
 	
 	/**
 	 * @return The sink state.
 	 */
-	public STATE createSinkStateContent() {
+	default STATE createSinkStateContent() {
 		return null;
 	}
 	
 	/**
 	 * @return The empty stack state/symbol.
 	 */
-	public STATE createEmptyStackState() {
+	default STATE createEmptyStackState() {
 		return null;
 	}
 	
@@ -104,7 +105,7 @@ public abstract class StateFactory<STATE> {
 	 *            Petri net marking
 	 * @return state representing the marking
 	 */
-	public STATE getContentOnPetriNet2FiniteAutomaton(
+	default STATE getContentOnPetriNet2FiniteAutomaton(
 			final Marking<?, STATE> marking) {
 		return null;
 	}
@@ -118,7 +119,7 @@ public abstract class StateFactory<STATE> {
 	 *            second content
 	 * @return state representing the concurrent product
 	 */
-	public STATE getContentOnConcurrentProduct(final STATE content1, final STATE content2) {
+	default STATE getContentOnConcurrentProduct(final STATE content1, final STATE content2) {
 		return intersection(content1, content2);
 	}
 	
@@ -129,7 +130,7 @@ public abstract class StateFactory<STATE> {
 	 *            content
 	 * @return state representing the white content
 	 */
-	public STATE getWhiteContent(final STATE content) {
+	default STATE getWhiteContent(final STATE content) {
 		return content;
 	}
 	
@@ -140,7 +141,7 @@ public abstract class StateFactory<STATE> {
 	 *            content
 	 * @return state representing the black content
 	 */
-	public STATE getBlackContent(final STATE content) {
+	default STATE getBlackContent(final STATE content) {
 		return content;
 	}
 	
@@ -151,7 +152,7 @@ public abstract class StateFactory<STATE> {
 	 *            complement state
 	 * @return state representing the state in the complement automaton
 	 */
-	public STATE buchiComplementFKV(final LevelRankingState<?, STATE> complementState) {
+	default STATE buchiComplementFKV(final LevelRankingState<?, STATE> complementState) {
 		return null;
 	}
 	
@@ -162,7 +163,7 @@ public abstract class StateFactory<STATE> {
 	 *            complement state
 	 * @return state representing the state in the complement automaton
 	 */
-	public STATE buchiComplementNCSB(final LevelRankingState<?, STATE> complementState) {
+	default STATE buchiComplementNCSB(final LevelRankingState<?, STATE> complementState) {
 		return null;
 	}
 	
@@ -173,7 +174,7 @@ public abstract class StateFactory<STATE> {
 	 *            non-final state
 	 * @return state representing the state in the complement automaton
 	 */
-	public STATE complementBuchiDeterministicNonFinal(final STATE state) {
+	default STATE complementBuchiDeterministicNonFinal(final STATE state) {
 		return null;
 	}
 	
@@ -184,7 +185,7 @@ public abstract class StateFactory<STATE> {
 	 *            final state
 	 * @return state representing the state in the complement automaton
 	 */
-	public STATE complementBuchiDeterministicFinal(final STATE state) {
+	default STATE complementBuchiDeterministicFinal(final STATE state) {
 		return null;
 	}
 	
@@ -195,7 +196,7 @@ public abstract class StateFactory<STATE> {
 	 *            states
 	 * @return state representing the minimization
 	 */
-	public STATE minimize(final Collection<STATE> states) {
+	default STATE minimize(final Collection<STATE> states) {
 		return null;
 	}
 	
@@ -210,7 +211,7 @@ public abstract class StateFactory<STATE> {
 	 * @deprecated currently not used
 	 */
 	@Deprecated
-	public STATE createDoubleDeckerContent(final STATE downState, final STATE upState) {
+	default STATE createDoubleDeckerContent(final STATE downState, final STATE upState) {
 		return null;
 	}
 	
@@ -223,7 +224,7 @@ public abstract class StateFactory<STATE> {
 	 *            number of the TMA instance
 	 * @return state representing the TMA
 	 */
-	public STATE constructBuchiSVWState(final Integer stateNb, final Integer tmaNb) {
+	default STATE constructBuchiSVWState(final Integer stateNb, final Integer tmaNb) {
 		return null;
 	}
 	
@@ -235,7 +236,7 @@ public abstract class StateFactory<STATE> {
 	 *            condition
 	 * @return state representing the condition
 	 */
-	public STATE finitePrefix2net(final Condition<?, STATE> condition) {
+	default STATE finitePrefix2net(final Condition<?, STATE> condition) {
 		return null;
 	}
 	
@@ -248,7 +249,7 @@ public abstract class StateFactory<STATE> {
 	 *            state
 	 * @return state representing a Senwa state
 	 */
-	public STATE senwa(final STATE entry, final STATE state) {
+	default STATE senwa(final STATE entry, final STATE state) {
 		return null;
 	}
 }

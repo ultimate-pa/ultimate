@@ -35,10 +35,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Abstract superclass of Buchi difference operations.
@@ -54,7 +54,7 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 	
 	protected BuchiIntersectNwa<LETTER, STATE> mIntersect;
 	protected NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
-	protected final StateFactory<STATE> mStateFactory;
+	protected final IStateFactory<STATE> mStateFactory;
 	
 	/**
 	 * Constructor.
@@ -65,7 +65,7 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 	 * @param sndOperand second operand
 	 */
 	public AbstractBuchiDifference(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) {
 		super(services, fstOperand, sndOperand);
@@ -101,7 +101,7 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 	}
 	
 	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory)
+	public boolean checkResult(final IStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		final boolean underApproximationOfComplement = false;
 		boolean correct = true;

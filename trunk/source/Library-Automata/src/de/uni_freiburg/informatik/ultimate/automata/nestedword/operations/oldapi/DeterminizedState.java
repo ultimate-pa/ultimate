@@ -31,8 +31,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 import java.util.Set;
 
@@ -109,7 +109,7 @@ public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTE
 	/**
 	 * By the contentFactory created content for the determinized state.
 	 */
-	public STATE getContent(final StateFactory<STATE> stateFactory) {
+	public STATE getContent(final IStateFactory<STATE> stateFactory) {
 		if (mCachedResultingState == null) {
 			mCachedResultingState = stateFactory.determinize(mCaller2presents);
 		}

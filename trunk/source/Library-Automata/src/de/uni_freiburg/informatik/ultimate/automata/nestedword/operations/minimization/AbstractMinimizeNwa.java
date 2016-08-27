@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
@@ -48,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IPartition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DoubleDeckerVisitor.ReachFinal;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 /**
@@ -81,7 +81,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * StateFactory for the construction of states of the resulting automaton.
 	 */
-	protected final StateFactory<STATE> mStateFactory;
+	protected final IStateFactory<STATE> mStateFactory;
 	/**
 	 * The result automaton.
 	 */
@@ -108,7 +108,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 *            input automaton
 	 */
 	protected AbstractMinimizeNwa(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory, final String name,
+			final IStateFactory<STATE> stateFactory, final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services, operand);
 		mOperand = operand;
@@ -182,7 +182,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	}
 	
 	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory)
+	public boolean checkResult(final IStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return checkLanguageEquivalence(stateFactory);
 	}

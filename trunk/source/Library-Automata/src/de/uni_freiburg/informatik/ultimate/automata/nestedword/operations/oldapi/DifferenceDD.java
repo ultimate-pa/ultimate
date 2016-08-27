@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -51,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
@@ -101,7 +101,7 @@ public class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, STA
 	private final Map<STATE, DifferenceState<LETTER, STATE>> mRes2diff =
 			new HashMap<STATE, DifferenceState<LETTER, STATE>>();
 			
-	private final StateFactory<STATE> mStateFactoryForIntersection;
+	private final IStateFactory<STATE> mStateFactoryForIntersection;
 	
 //	private INestedWordAutomaton<LETTER,DeterminizedState<LETTER,STATE>> mDeterminizedSubtrahend;
 	
@@ -130,7 +130,7 @@ public class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, STA
 			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
-			final StateFactory<STATE> stateFactoryForIntersection,
+			final IStateFactory<STATE> stateFactoryForIntersection,
 			final boolean removeDeadEnds,
 			final boolean subtrahendSigmaStarClosed) throws AutomataLibraryException {
 		super(services);
@@ -173,11 +173,11 @@ public class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, STA
 	
 	/**
 	 * @param stateFactory
-	 *            {@link StateFactory} that is used for intersection
+	 *            {@link IStateFactory} that is used for intersection
 	 *            and determinization
 	 */
 	public DifferenceDD(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend) throws AutomataLibraryException {
 		super(services);
@@ -538,7 +538,7 @@ public class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, STA
 	}
 	
 	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory)
+	public boolean checkResult(final IStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {

@@ -48,7 +48,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IBlock;
@@ -59,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * This class minimizes nested word automata.
@@ -175,7 +175,7 @@ public class ShrinkNwa<LETTER, STATE>
 	 * @throws AutomataOperationCanceledException
 	 *             if cancel signal is received
 	 */
-	public ShrinkNwa(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+	public ShrinkNwa(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, false, 0, false, 0, false, false);
 	}
@@ -204,7 +204,7 @@ public class ShrinkNwa<LETTER, STATE>
 	 * @throws AutomataOperationCanceledException
 	 *             if cancel signal is received
 	 */
-	public ShrinkNwa(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+	public ShrinkNwa(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final boolean splitOutgoing, final int splitRandomSize,
 			final boolean firstReturnSplit, final int firstReturnSplitAlternative, final boolean splitAllCallPreds,
 			final boolean returnSplitNaive) throws AutomataOperationCanceledException {
@@ -244,7 +244,7 @@ public class ShrinkNwa<LETTER, STATE>
 	 */
 	public ShrinkNwa(
 			final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Collection<Set<STATE>> equivalenceClasses,
 			final boolean addMapOldState2newState,
@@ -3548,7 +3548,7 @@ public class ShrinkNwa<LETTER, STATE>
 		}
 		
 		@Override
-		public STATE minimize(final StateFactory<STATE> stateFactory) {
+		public STATE minimize(final IStateFactory<STATE> stateFactory) {
 			return stateFactory.minimize(mStates);
 		}
 		

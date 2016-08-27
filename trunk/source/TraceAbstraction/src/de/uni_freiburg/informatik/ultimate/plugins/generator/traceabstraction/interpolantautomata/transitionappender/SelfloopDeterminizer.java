@@ -26,11 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender;
 
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizedState;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -58,7 +58,7 @@ public class SelfloopDeterminizer
 	PowersetDeterminizer<CodeBlock, IPredicate> mPowersetDeterminizer;
 	
 	INestedWordAutomaton<CodeBlock, IPredicate> mInterpolantAutomaton;
-	private final StateFactory<IPredicate> mStateFactory;
+	private final IStateFactory<IPredicate> mStateFactory;
 	IPredicate mInterpolantAutomatonFinalState;
 	
 	DeterminizedState<CodeBlock, IPredicate> mResultFinalState;
@@ -75,7 +75,7 @@ public class SelfloopDeterminizer
 	public SelfloopDeterminizer(SmtManager mSmtManager,
 			TAPreferences taPreferences,
 			INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutom,
-			StateFactory<IPredicate> stateFactory) {
+			IStateFactory<IPredicate> stateFactory) {
 		super();
 		mHoareTriplechecker = new MonolithicHoareTripleChecker(
 				mSmtManager.getManagedScript(), mSmtManager.getModifiableGlobals());

@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 import java.util.Collection;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
@@ -37,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 public class INWA2INestedWordAutomaton<LETTER, STATE>
 		implements INestedWordAutomaton<LETTER, STATE> {
@@ -77,7 +77,7 @@ public class INWA2INestedWordAutomaton<LETTER, STATE>
 	}
 
 	@Override
-	public StateFactory<STATE> getStateFactory() {
+	public IStateFactory<STATE> getStateFactory() {
 		return mNwa.getStateFactory();
 	}
 

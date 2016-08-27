@@ -37,10 +37,10 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
@@ -105,7 +105,7 @@ public class DelayedSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE>
 	 *             framework.
 	 */
 	public DelayedSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory, final DelayedGameGraph<LETTER, STATE> game)
+			final IStateFactory<STATE> stateFactory, final DelayedGameGraph<LETTER, STATE> game)
 					throws AutomataOperationCanceledException {
 		super(progressTimer, logger, useSCCs, stateFactory, ESimulationType.DELAYED);
 

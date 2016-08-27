@@ -28,6 +28,8 @@ package de.uni_freiburg.informatik.ultimate.automata;
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+
 /**
  * All automata have to implement this interface.
  * 
@@ -49,7 +51,7 @@ public interface IAutomaton<LETTER, STATE> {
 	 * @deprecated Automata should not provide their state factory anymore.
 	 */
 	@Deprecated
-			StateFactory<STATE> getStateFactory();
+			IStateFactory<STATE> getStateFactory();
 			
 	/**
 	 * @return Size of the automaton. E.g., the number of states.

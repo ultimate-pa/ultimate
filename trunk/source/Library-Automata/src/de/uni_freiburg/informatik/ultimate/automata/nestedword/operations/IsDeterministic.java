@@ -31,10 +31,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 
 public class IsDeterministic<LETTER,STATE>
@@ -43,7 +43,7 @@ public class IsDeterministic<LETTER,STATE>
 	
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
 	private final boolean mResult;
-	private final StateFactory<STATE> mStateFactory;
+	private final IStateFactory<STATE> mStateFactory;
 	private final boolean mNondeterministicTransitions;
 	private final boolean mNondeterministicInitials;
 	
@@ -97,7 +97,7 @@ public class IsDeterministic<LETTER,STATE>
 	}
 
 	@Override
-	public boolean checkResult(final StateFactory<STATE> sf)
+	public boolean checkResult(final IStateFactory<STATE> sf)
 			throws AutomataLibraryException {
 		boolean correct = true;
 		if (mResult) {

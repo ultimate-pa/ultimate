@@ -26,7 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.StringFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 
 /**
  * Interface for automata operations.<br>
@@ -50,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.StringFactory;
  * <li>The fist parameter are the {@link AutomataLibraryServices}. If the operation
  * is executed by the automata script interpreter, the interpreter will use
  * the {@link AutomataLibraryServices} of the current toolchain as an argument.
- * <li>If the IOperation requires a {@link StateFactory}, the {@link StateFactory} should
- * be the second parameter. If the second parameter is a {@link StateFactory}, the
+ * <li>If the IOperation requires a {@link IStateFactory}, the {@link IStateFactory} should
+ * be the second parameter. If the second parameter is a {@link IStateFactory}, the
  * automata script interpreter uses a {@link StringFactory} as argument.
  * <li>The remaining parameters of the constructor are the parameters of the
  * operation (i.e., the parameters for which you provide arguments in an
@@ -102,7 +103,7 @@ public interface IOperation<LETTER, STATE> {
 	 * @throws AutomataLibraryException
 	 *             if checks fail or timeout was requested
 	 */
-	boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException;
+	boolean checkResult(IStateFactory<STATE> stateFactory) throws AutomataLibraryException;
 	
 	/**
 	 * Get information about the runtime and resource consumption of the

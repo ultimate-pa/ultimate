@@ -31,13 +31,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizedState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -54,7 +54,7 @@ public class BestApproximationDeterminizer
 	
 	IHoareTripleChecker mHoareTriplechecker;
 	TAPreferences mTaPreferences;
-	StateFactory<IPredicate> mStateFactory;
+	IStateFactory<IPredicate> mStateFactory;
 	NestedWordAutomaton<CodeBlock, IPredicate> mNwa;
 	public int mAnswerInternalSolver = 0;
 	public int mAnswerInternalAutomaton = 0;
@@ -80,7 +80,7 @@ public class BestApproximationDeterminizer
 	public BestApproximationDeterminizer(final SmtManager mSmtManager,
 			final TAPreferences taPreferences,
 			final NestedWordAutomaton<CodeBlock, IPredicate> nwa,
-			final StateFactory<IPredicate> stateFactory) {
+			final IStateFactory<IPredicate> stateFactory) {
 		super();
 		mHoareTriplechecker = new MonolithicHoareTripleChecker(
 				mSmtManager.getManagedScript(), mSmtManager.getModifiableGlobals());

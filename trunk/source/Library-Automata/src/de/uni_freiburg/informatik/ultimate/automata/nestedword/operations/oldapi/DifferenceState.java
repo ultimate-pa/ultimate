@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi;
 
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * State of an NWA that accepts the language difference of two NWAs.
@@ -73,7 +73,7 @@ public class DifferenceState<LETTER,STATE> {
 		return this.mIsFinal;
 	}
 	
-	public STATE getState(final StateFactory<STATE> stateFactory, 
+	public STATE getState(final IStateFactory<STATE> stateFactory, 
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) {
 		if (mState == null) {
 			mState = stateFactory.intersection(

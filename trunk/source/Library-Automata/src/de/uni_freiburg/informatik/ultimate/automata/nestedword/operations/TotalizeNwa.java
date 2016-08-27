@@ -31,11 +31,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Totalized automaton of input. Expects that input is deterministic.
@@ -50,7 +50,7 @@ public class TotalizeNwa<LETTER, STATE>
 		implements INestedWordAutomatonSimple<LETTER, STATE> {
 	
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
-	private final StateFactory<STATE> mStateFactory;
+	private final IStateFactory<STATE> mStateFactory;
 	private final STATE mSinkState;
 	private boolean mNondeterministicTransitionsDetected = false;
 	private boolean mNondeterministicInitialsDetected = false;
@@ -60,7 +60,7 @@ public class TotalizeNwa<LETTER, STATE>
 	 * @param stateFactory state factory
 	 */
 	public TotalizeNwa(final INestedWordAutomatonSimple<LETTER, STATE> operand, 
-			final StateFactory<STATE> stateFactory) {
+			final IStateFactory<STATE> stateFactory) {
 		mOperand = operand;
 		mStateFactory = stateFactory;
 		mSinkState = stateFactory.createSinkStateContent();
@@ -114,7 +114,7 @@ public class TotalizeNwa<LETTER, STATE>
 	}
 
 	@Override
-	public StateFactory<STATE> getStateFactory() {
+	public IStateFactory<STATE> getStateFactory() {
 		return mStateFactory;
 	}
 	

@@ -35,13 +35,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Convert a <code>INestedWordAutomaton</code> to a <code>NWA</code> structure.
@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 final class Converter<LETTER, STATE> {
 	
 	private final AutomataLibraryServices mServices;
-	private final StateFactory<STATE> mFactory;
+	private final IStateFactory<STATE> mFactory;
 	private final INestedWordAutomaton<LETTER, STATE> mAutomaton;
 	
 	/* LETTERs are shared between old (input) and new (output) automaton
@@ -104,7 +104,7 @@ final class Converter<LETTER, STATE> {
 	 */
 	Converter(
 			final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
 			
 		this.mServices = services;

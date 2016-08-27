@@ -35,9 +35,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class BuchiIntersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
@@ -49,7 +49,7 @@ public class BuchiIntersect<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private BuchiIntersectNwa<LETTER, STATE> mIntersect;
 	private NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
-	private final StateFactory<STATE> mStateFactory;
+	private final IStateFactory<STATE> mStateFactory;
 	
 	public BuchiIntersect(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
@@ -65,7 +65,7 @@ public class BuchiIntersect<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	public BuchiIntersect(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
-			final StateFactory<STATE> sf) throws AutomataLibraryException {
+			final IStateFactory<STATE> sf) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mFstOperand = fstOperand;
@@ -103,7 +103,7 @@ public class BuchiIntersect<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	}
 	
 	@Override
-	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> sf) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
 //		final INestedWordAutomaton<LETTER, STATE> resultDD =

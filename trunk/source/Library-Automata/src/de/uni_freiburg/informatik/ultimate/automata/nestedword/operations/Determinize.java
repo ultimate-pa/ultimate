@@ -34,12 +34,12 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 
 public class Determinize<LETTER,STATE>
@@ -49,7 +49,7 @@ public class Determinize<LETTER,STATE>
 	private final DeterminizeNwa<LETTER, STATE> mDeterminized;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
 	private final IStateDeterminizer<LETTER,STATE> mStateDeterminizer;
-	private final StateFactory<STATE> mStateFactory;
+	private final IStateFactory<STATE> mStateFactory;
 	
 	/**
 	 * @param services Ultimate services
@@ -58,7 +58,7 @@ public class Determinize<LETTER,STATE>
 	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
 	public Determinize(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory, 
+			final IStateFactory<STATE> stateFactory, 
 			final INestedWordAutomatonSimple<LETTER,STATE> operand)
 					throws AutomataOperationCanceledException {
 		super(services, operand);
@@ -80,7 +80,7 @@ public class Determinize<LETTER,STATE>
 	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
 	public Determinize(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory, 
+			final IStateFactory<STATE> stateFactory, 
 			final INestedWordAutomatonSimple<LETTER,STATE> operand,
 			final Set<STATE> predefinedInitials)
 					throws AutomataOperationCanceledException {
@@ -114,7 +114,7 @@ public class Determinize<LETTER,STATE>
 
 
 	@Override
-	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> sf) throws AutomataLibraryException {
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());

@@ -44,7 +44,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.ESymbolType;
@@ -56,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.VertexPmReverseComparator;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.util.scc.DefaultStronglyConnectedComponentFactory;
@@ -139,7 +139,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	/**
 	 * The state factory used for creating states.
 	 */
-	private final StateFactory<STATE> mStateFactory;
+	private final IStateFactory<STATE> mStateFactory;
 	/**
 	 * If the simulation calculation should be optimized using SCC, Strongly
 	 * Connected Components.
@@ -183,7 +183,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *             framework.
 	 */
 	public ASimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory, final ESimulationType simType)
+			final IStateFactory<STATE> stateFactory, final ESimulationType simType)
 					throws AutomataOperationCanceledException {
 		mProgressTimer = progressTimer;
 		mLogger = logger;
@@ -276,7 +276,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * 
 	 * @return The state factory used for creating states.
 	 */
-	public StateFactory<STATE> getStateFactory() {
+	public IStateFactory<STATE> getStateFactory() {
 		return mStateFactory;
 	}
 

@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
@@ -41,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 
 public class Difference<LETTER,STATE>
@@ -54,10 +54,10 @@ public class Difference<LETTER,STATE>
 	private IntersectNwa<LETTER, STATE> mIntersect;
 	private NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
 	private NestedWordAutomatonFilteredStates<LETTER, STATE> mResultWOdeadEnds;
-	private final StateFactory<STATE> mStateFactory;
+	private final IStateFactory<STATE> mStateFactory;
 	
 	private Difference(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
@@ -81,7 +81,7 @@ public class Difference<LETTER,STATE>
 	 * @throws AutomataLibraryException if construction fails
 	 */
 	public Difference(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand)
 					throws AutomataLibraryException {
@@ -104,7 +104,7 @@ public class Difference<LETTER,STATE>
 			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final boolean finalIsTrap) throws AutomataLibraryException {
 		this(services, stateFactory, fstOperand, sndOperand, stateDeterminizer,
 				false);
@@ -171,7 +171,7 @@ public class Difference<LETTER,STATE>
 
 	
 	@Override
-	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> sf) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
 		final INestedWordAutomaton<LETTER, STATE> resultDD =
 				(new DifferenceDD<LETTER, STATE>(mServices, mFstOperand, mSndOperand,

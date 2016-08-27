@@ -35,9 +35,9 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, BitSet> {
@@ -116,7 +116,7 @@ public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, BitSet
 	}
 
 	@Override
-	public boolean checkResult(final StateFactory<BitSet> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<BitSet> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
 }

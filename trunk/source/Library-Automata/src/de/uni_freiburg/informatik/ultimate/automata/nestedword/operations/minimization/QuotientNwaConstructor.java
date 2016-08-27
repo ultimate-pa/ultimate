@@ -36,7 +36,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IBlock;
@@ -45,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 public class QuotientNwaConstructor<LETTER, STATE>  {
 	
 	private final AutomataLibraryServices mServices;
-	private final StateFactory<STATE> mStateFactory;
+	private final IStateFactory<STATE> mStateFactory;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final DoubleDeckerAutomaton<LETTER, STATE> mResult;
 //	private final Map<STATE, STATE> mOldState2NewState;
@@ -83,7 +83,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 * @param newSize size of new (to be constructed) automaton
 	 */
 	private QuotientNwaConstructor(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final boolean addMapOldState2newState,
 			final int newSize) {
@@ -112,7 +112,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 * @param addMapOldState2newState add a map from old to new states?
 	 */
 	public QuotientNwaConstructor(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final IPartition<STATE> partition,
 			final boolean addMapOldState2newState) {
@@ -155,7 +155,7 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 	 * @param addMapOldState2newState add a map from old to new states?
 	 */
 	public QuotientNwaConstructor(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final UnionFind<STATE> unionFind,
 			final boolean addMapOldState2newState) {

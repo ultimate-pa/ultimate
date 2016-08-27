@@ -34,14 +34,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 public class AlternatingAutomaton<LETTER, STATE>
 		implements IAutomaton<LETTER, STATE> {
 
 	private final Set<LETTER> mAlphabet;
-	private final StateFactory<STATE> mStateFactory;
+	private final IStateFactory<STATE> mStateFactory;
 	private final ArrayList<STATE> mStates = new ArrayList<STATE>();
 	private final HashMap<STATE, Integer> mStatesIndices = new HashMap<STATE, Integer>();
 	private final HashMap<LETTER, BooleanExpression[]> mTransitionFunction =
@@ -55,7 +55,7 @@ public class AlternatingAutomaton<LETTER, STATE>
 	 * @param stateFactory state factory
 	 */
 	public AlternatingAutomaton(final Set<LETTER> alphabet,
-			final StateFactory<STATE> stateFactory) {
+			final IStateFactory<STATE> stateFactory) {
 		this.mAlphabet = alphabet;
 		this.mStateFactory = stateFactory;
 	}
@@ -179,7 +179,7 @@ public class AlternatingAutomaton<LETTER, STATE>
 	}
 
 	@Override
-	public StateFactory<STATE> getStateFactory() {
+	public IStateFactory<STATE> getStateFactory() {
 		return mStateFactory;
 	}
 

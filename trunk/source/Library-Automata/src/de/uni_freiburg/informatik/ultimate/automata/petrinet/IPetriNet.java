@@ -30,8 +30,8 @@ import java.util.Collection;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 public interface IPetriNet<S,C> extends IAutomaton<S,C> {
 	
@@ -39,7 +39,7 @@ public interface IPetriNet<S,C> extends IAutomaton<S,C> {
 	Set<S> getAlphabet(); 
 	
 	@Override
-	StateFactory<C> getStateFactory();
+	IStateFactory<C> getStateFactory();
 	
 	Collection<Place<S,C>> getPlaces();
 	

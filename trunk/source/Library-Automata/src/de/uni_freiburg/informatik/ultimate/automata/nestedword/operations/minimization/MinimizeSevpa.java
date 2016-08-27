@@ -41,7 +41,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IBlock;
@@ -53,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Minimizer for special type of nested word automata used in Ultimate.
@@ -140,7 +140,7 @@ public class MinimizeSevpa<LETTER, STATE>
 			final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Collection<Set<STATE>> equivalenceClasses,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final boolean addMapOldState2newState)
 					throws AutomataOperationCanceledException {
 		super(services, stateFactory, "minimizeSevpa", operand);
@@ -1669,7 +1669,7 @@ public class MinimizeSevpa<LETTER, STATE>
 		}
 		
 		@Override
-		public STATE minimize(final StateFactory<STATE> stateFactory) {
+		public STATE minimize(final IStateFactory<STATE> stateFactory) {
 			return stateFactory.minimize(mCollection);
 		}
 		

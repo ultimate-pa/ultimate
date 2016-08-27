@@ -31,10 +31,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwa;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -82,7 +82,7 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> implements IOpera
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public CompareWithRandomNwaAutomata(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+	public CompareWithRandomNwaAutomata(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -91,7 +91,7 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> implements IOpera
 		mLogger.info(startMessage());
 
 		// Use operation with random automata
-		final StateFactory<String> snf = new StringFactory();
+		final IStateFactory<String> snf = new StringFactory();
 
 		final int n = 10;
 		final int k = 3;
@@ -127,7 +127,7 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> implements IOpera
 	 * de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory)
 	 */
 	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
 

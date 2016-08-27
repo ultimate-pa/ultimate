@@ -30,13 +30,13 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 
 public class Complement<LETTER,STATE>
@@ -47,7 +47,7 @@ public class Complement<LETTER,STATE>
 	private ComplementDeterministicNwa<LETTER,STATE> mComplement;
 	private NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
-	private final StateFactory<STATE> mStateFactory;
+	private final IStateFactory<STATE> mStateFactory;
 	
 	
 	/**
@@ -60,7 +60,7 @@ public class Complement<LETTER,STATE>
 	public Complement(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER,STATE> operand,
 			final IStateDeterminizer<LETTER,STATE> stateDeterminizer,
-			final StateFactory<STATE> stateFactory)
+			final IStateFactory<STATE> stateFactory)
 					throws AutomataLibraryException {
 		super(services, operand);
 		mStateDeterminizer = stateDeterminizer;
@@ -77,7 +77,7 @@ public class Complement<LETTER,STATE>
 	 * @throws AutomataLibraryException if construction fails
 	 */
 	public Complement(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER,STATE> operand)
 					throws AutomataLibraryException {
 		this(services, operand,
@@ -147,7 +147,7 @@ public class Complement<LETTER,STATE>
 	
 	
 	@Override
-	public boolean checkResult(final StateFactory<STATE> sf) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> sf) throws AutomataLibraryException {
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());

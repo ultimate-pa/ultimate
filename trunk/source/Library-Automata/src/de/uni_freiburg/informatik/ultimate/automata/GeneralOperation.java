@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -91,7 +92,7 @@ public abstract class GeneralOperation<LETTER, STATE>
 	}
 	
 	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory)
+	public boolean checkResult(final IStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		if (mLogger.isWarnEnabled()) {
 			mLogger.warn("No result check for " + operationName() + " available yet.");

@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 @Deprecated
@@ -283,14 +284,14 @@ public final class ResultChecker {
 	/**
 	 * @deprecated unused legacy code; use
 	 *             {@link #nwaLanguageInclusion(AutomataLibraryServices, INestedWordAutomaton, INestedWordAutomaton,
-	 * 			StateFactory)} if possible
+	 * 			IStateFactory)} if possible
 	 */
 	@Deprecated
 	public static <LETTER, STATE> NestedRun<LETTER, STATE> nwaLanguageInclusionOldApi(
 			final AutomataLibraryServices services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> nwa1,
 			final INestedWordAutomatonOldApi<LETTER, STATE> nwa2,
-			final StateFactory<STATE> stateFactory)
+			final IStateFactory<STATE> stateFactory)
 					throws AutomataLibraryException {
 		final IStateDeterminizer<LETTER, STATE> stateDeterminizer =
 				new PowersetDeterminizer<LETTER, STATE>(nwa2, true, stateFactory);
@@ -317,7 +318,7 @@ public final class ResultChecker {
 			final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> nwa1,
 			final INestedWordAutomaton<LETTER, STATE> nwa2,
-			final StateFactory<STATE> stateFactory)
+			final IStateFactory<STATE> stateFactory)
 					throws AutomataLibraryException {
 		return new IsIncluded<>(services, stateFactory, nwa1, nwa2).getCounterexample();
 	}
@@ -358,7 +359,7 @@ public final class ResultChecker {
 	
 	private static <LETTER, STATE> NestedLassoRun<LETTER, STATE> nwaBuchiLanguageInclusion(
 			final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> nwa1,
 			final INestedWordAutomaton<LETTER, STATE> nwa2)
 					throws AutomataLibraryException {

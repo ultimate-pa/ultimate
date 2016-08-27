@@ -27,11 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.nwa;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.DelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.NwaSimulationUtil;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
@@ -80,7 +80,7 @@ public final class DelayedNwaSimulation<LETTER, STATE> extends DelayedSimulation
 	 *             framework.
 	 */
 	public DelayedNwaSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory, final DelayedNwaGameGraph<LETTER, STATE> game)
+			final IStateFactory<STATE> stateFactory, final DelayedNwaGameGraph<LETTER, STATE> game)
 					throws AutomataOperationCanceledException {
 		super(progressTimer, logger, useSCCs, stateFactory, game);
 	}

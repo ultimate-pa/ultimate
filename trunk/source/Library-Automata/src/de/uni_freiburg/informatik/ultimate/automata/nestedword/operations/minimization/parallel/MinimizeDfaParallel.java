@@ -36,10 +36,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.Interrupt;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * This class manages the parallel computation of minimization by Hopcroft's and
@@ -128,7 +128,7 @@ public final class MinimizeDfaParallel<LETTER, STATE>
 	 * 			input automaton
 	 */
 	public MinimizeDfaParallel(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory,
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services, stateFactory, "MinimizeDfaParallel", operand);
 		
