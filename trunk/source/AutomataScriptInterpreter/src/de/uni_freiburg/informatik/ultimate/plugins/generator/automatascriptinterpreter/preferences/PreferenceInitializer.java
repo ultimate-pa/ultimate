@@ -1,7 +1,8 @@
 /*
- * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2013-2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2013-2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2013-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE AutomataScriptInterpreter plug-in.
  * 
@@ -35,6 +36,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinter
 
 /**
  * Class used to initialize default preference values.
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	
