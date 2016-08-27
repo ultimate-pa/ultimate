@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
@@ -34,70 +34,92 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
 
-
 /**
- * Check if transitions of an automaton are stored consistently. This is slow!
- * Use only for testing on small examples.
+ * Check if transitions of an automaton are stored consistently.
+ * <p>
+ * Consistency here means that an outgoing transition from state <tt>p</tt> to state <tt>q</tt> is also an incoming
+ * transition for <tt>q</tt> from <tt>p</tt>.
+ * <p>
+ * This is slow! Use only for testing on small examples.
  * 
- * @author heizmann@informatik.uni-freiburg.de
- * 
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class TransitionConsistencyCheck<LETTER, STATE> {
 	
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mNwa;
 	
 	/**
-	 * @param nwa double decker automaton
+	 * Constructor.
+	 * 
+	 * @param nwa
+	 *            double decker automaton
 	 */
 	public TransitionConsistencyCheck(final IDoubleDeckerAutomaton<LETTER, STATE> nwa) {
 		mNwa = nwa;
 	}
 	
+	/**
+	 * @return true iff automaton transitions are stored consistently for all states.
+	 */
 	public boolean consistentForAll() {
 		boolean result = true;
 		for (final STATE state : mNwa.getStates()) {
-			result &= consistentForState(state);
+			result = result && consistentForState(state);
 		}
 		return result;
 	}
 	
+	/**
+	 * TODO Christian 2016-08-27: This could be made much more efficient by
+	 * <ol>
+	 * <li>storing all transitions in a list/map and removing from it<br>
+	 * (the memory overhead should be negligible as it is only for one state);</li>
+	 * <li>using the transition methods with a given letter<br>
+	 * (this may go against the idea of the class, discuss this).</li>
+	 * </ol>
+	 * 
+	 * @param state state
+	 * @return true iff all transitions are stored consistently for the given state.
+	 */
 	private boolean consistentForState(final STATE state) {
 		boolean result = true;
-		for (final OutgoingInternalTransition<LETTER, STATE> t : mNwa.internalSuccessors(state)) {
-			result &= internalIn(state, t.getLetter(), t.getSucc());
+		for (final OutgoingInternalTransition<LETTER, STATE> trans : mNwa.internalSuccessors(state)) {
+			result = result && internalIn(state, trans.getLetter(), trans.getSucc());
 			assert result;
 		}
-		for (final IncomingInternalTransition<LETTER, STATE> t : mNwa.internalPredecessors(state)) {
-			result &= internalOut(t.getPred(), t.getLetter(), state);
+		for (final IncomingInternalTransition<LETTER, STATE> trans : mNwa.internalPredecessors(state)) {
+			result = result && internalOut(trans.getPred(), trans.getLetter(), state);
 			assert result;
 		}
-		for (final OutgoingCallTransition<LETTER, STATE> t : mNwa.callSuccessors(state)) {
-			result &= callIn(state, t.getLetter(), t.getSucc());
+		for (final OutgoingCallTransition<LETTER, STATE> trans : mNwa.callSuccessors(state)) {
+			result = result && callIn(state, trans.getLetter(), trans.getSucc());
 			assert result;
 		}
-		for (final IncomingCallTransition<LETTER, STATE> t : mNwa.callPredecessors(state)) {
-			result &= callOut(t.getPred(), t.getLetter(), state);
+		for (final IncomingCallTransition<LETTER, STATE> trans : mNwa.callPredecessors(state)) {
+			result = result && callOut(trans.getPred(), trans.getLetter(), state);
 			assert result;
 		}
-		for (final OutgoingReturnTransition<LETTER, STATE> t : mNwa.returnSuccessors(state)) {
-			result &= returnIn(state, t.getHierPred(), t.getLetter(), t.getSucc());
+		for (final OutgoingReturnTransition<LETTER, STATE> trans : mNwa.returnSuccessors(state)) {
+			result = result && returnIn(state, trans.getHierPred(), trans.getLetter(), trans.getSucc());
 			assert result;
-			result &= returnSummary(state, t.getHierPred(), t.getLetter(), t.getSucc());
+			result = result && returnSummary(state, trans.getHierPred(), trans.getLetter(), trans.getSucc());
 			assert result;
 		}
-		for (final IncomingReturnTransition<LETTER, STATE> t : mNwa.returnPredecessors(state)) {
-			result &= returnOut(t.getLinPred(), t.getHierPred(), t.getLetter(), state);
+		for (final IncomingReturnTransition<LETTER, STATE> trans : mNwa.returnPredecessors(state)) {
+			result = result && returnOut(trans.getLinPred(), trans.getHierPred(), trans.getLetter(), state);
 			assert result;
-			result &= returnSummary(t.getLinPred(), t.getHierPred(), t.getLetter(), state);
+			result = result && returnSummary(trans.getLinPred(), trans.getHierPred(), trans.getLetter(), state);
 			assert result;
 		}
 		for (final LETTER letter : mNwa.getReturnAlphabet()) {
-			for (final SummaryReturnTransition<LETTER, STATE> t : mNwa.summarySuccessors(state, letter)) {
-				result &= returnIn(t.getLinPred(), state, t.getLetter(), t.getSucc());
+			for (final SummaryReturnTransition<LETTER, STATE> trans : mNwa.summarySuccessors(state, letter)) {
+				result = result && returnIn(trans.getLinPred(), state, trans.getLetter(), trans.getSucc());
 				assert result;
-				result &= returnOut(t.getLinPred(), state, t.getLetter(), t.getSucc());
+				result = result && returnOut(trans.getLinPred(), state, trans.getLetter(), trans.getSucc());
 				assert result;
 			}
 		}
@@ -105,9 +127,9 @@ public class TransitionConsistencyCheck<LETTER, STATE> {
 	}
 	
 	private boolean internalOut(final STATE state, final LETTER letter, final STATE succ) {
-		for (final OutgoingInternalTransition<LETTER, STATE> t : mNwa.internalSuccessors(state)) {
-			final boolean contains = letter.equals(t.getLetter())
-					&& succ.equals(t.getSucc());
+		for (final OutgoingInternalTransition<LETTER, STATE> trans : mNwa.internalSuccessors(state)) {
+			final boolean contains = letter.equals(trans.getLetter())
+					&& succ.equals(trans.getSucc());
 			if (contains) {
 				return true;
 			}
@@ -116,9 +138,9 @@ public class TransitionConsistencyCheck<LETTER, STATE> {
 	}
 	
 	private boolean internalIn(final STATE pred, final LETTER letter, final STATE succ) {
-		for (final IncomingInternalTransition<LETTER, STATE> t : mNwa.internalPredecessors(succ)) {
-			final boolean contains = pred.equals(t.getPred())
-					&& letter.equals(t.getLetter());
+		for (final IncomingInternalTransition<LETTER, STATE> trans : mNwa.internalPredecessors(succ)) {
+			final boolean contains = pred.equals(trans.getPred())
+					&& letter.equals(trans.getLetter());
 			if (contains) {
 				return true;
 			}
@@ -127,9 +149,9 @@ public class TransitionConsistencyCheck<LETTER, STATE> {
 	}
 	
 	private boolean callOut(final STATE state, final LETTER letter, final STATE succ) {
-		for (final OutgoingCallTransition<LETTER, STATE> t : mNwa.callSuccessors(state)) {
-			final boolean contains = letter.equals(t.getLetter())
-					&& succ.equals(t.getSucc());
+		for (final OutgoingCallTransition<LETTER, STATE> trans : mNwa.callSuccessors(state)) {
+			final boolean contains = letter.equals(trans.getLetter())
+					&& succ.equals(trans.getSucc());
 			if (contains) {
 				return true;
 			}
@@ -138,9 +160,9 @@ public class TransitionConsistencyCheck<LETTER, STATE> {
 	}
 	
 	private boolean callIn(final STATE pred, final LETTER letter, final STATE succ) {
-		for (final IncomingCallTransition<LETTER, STATE> t : mNwa.callPredecessors(succ)) {
-			final boolean contains = pred.equals(t.getPred())
-					&& letter.equals(t.getLetter());
+		for (final IncomingCallTransition<LETTER, STATE> trans : mNwa.callPredecessors(succ)) {
+			final boolean contains = pred.equals(trans.getPred())
+					&& letter.equals(trans.getLetter());
 			if (contains) {
 				return true;
 			}
@@ -148,12 +170,11 @@ public class TransitionConsistencyCheck<LETTER, STATE> {
 		return false;
 	}
 	
-	
 	private boolean returnOut(final STATE state, final STATE hier,
 			final LETTER letter, final STATE succ) {
-		for (final OutgoingReturnTransition<LETTER, STATE> t : mNwa.returnSuccessors(state)) {
-			final boolean contains = hier.equals(t.getHierPred())
-					&& letter.equals(t.getLetter()) && succ.equals(t.getSucc());
+		for (final OutgoingReturnTransition<LETTER, STATE> trans : mNwa.returnSuccessors(state)) {
+			final boolean contains = hier.equals(trans.getHierPred())
+					&& letter.equals(trans.getLetter()) && succ.equals(trans.getSucc());
 			if (contains) {
 				return true;
 			}
@@ -163,9 +184,9 @@ public class TransitionConsistencyCheck<LETTER, STATE> {
 	
 	private boolean returnIn(final STATE state, final STATE hier,
 			final LETTER letter, final STATE succ) {
-		for (final IncomingReturnTransition<LETTER, STATE> t : mNwa.returnPredecessors(succ)) {
-			final boolean contains = state.equals(t.getLinPred())
-					&& hier.equals(t.getHierPred()) && letter.equals(t.getLetter());
+		for (final IncomingReturnTransition<LETTER, STATE> trans : mNwa.returnPredecessors(succ)) {
+			final boolean contains = state.equals(trans.getLinPred())
+					&& hier.equals(trans.getHierPred()) && letter.equals(trans.getLetter());
 			if (contains) {
 				return true;
 			}
@@ -175,15 +196,13 @@ public class TransitionConsistencyCheck<LETTER, STATE> {
 	
 	private boolean returnSummary(final STATE state, final STATE hier,
 			final LETTER letter, final STATE succ) {
-		for (final SummaryReturnTransition<LETTER, STATE> t : mNwa.summarySuccessors(hier, letter)) {
-			final boolean contains = state.equals(t.getLinPred())
-					&& succ.equals(t.getSucc());
+		for (final SummaryReturnTransition<LETTER, STATE> trans : mNwa.summarySuccessors(hier, letter)) {
+			final boolean contains = state.equals(trans.getLinPred())
+					&& succ.equals(trans.getSucc());
 			if (contains) {
 				return true;
 			}
 		}
 		return false;
 	}
-
-
 }
