@@ -632,9 +632,15 @@ public class TestFileInterpreter implements IMessagePrinter {
 	/**
 	 * Indicates whether the automaton, which is output by a print operation, should also be printed to a .ats-file.
 	 */
-	private boolean mPrintAutomataToFile = false;
+	private boolean mPrintAutomataToFile;
 	private PrintWriter mPrintWriter;
 	private String mPath = ".";
+	/**
+	 * Indicates whether all commands in .ats file(s) should be ignored and instead the specified command should be
+	 * executed.
+	 */
+	private boolean mIgnoreOperationsAndExecuteCommandInstead;
+	private String mCommandToExecute;
 	
 	public enum LoggerSeverity {
 		INFO,
@@ -688,6 +694,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mPrintAutomataToFile = prefs.getBoolean(PreferenceInitializer.Name_WriteToFile);
 		mPath = prefs.getString(PreferenceInitializer.Name_Path);
+		mIgnoreOperationsAndExecuteCommandInstead = prefs.getBoolean(PreferenceInitializer.Name_ExecuteCommandFlag);
+		mCommandToExecute = prefs.getString(PreferenceInitializer.Name_ExecuteCommandString);
 	}
 	
 	private static String getDateTime() {
@@ -729,13 +737,21 @@ public class TestFileInterpreter implements IMessagePrinter {
 			errorMessage = e.getMessage();
 		}
 		
+		final AtsASTNode statements;
+		if (mIgnoreOperationsAndExecuteCommandInstead) {
+			// TODO here we need the interpreted command, how? for now, nothing happens
+			statements = null;
+		} else {
+			statements = ats.getStatementList();
+		}
+		
 		if (interpretationFinished == Finished.FINISHED) {
 			// Put all defined automata into variables map
 			mVariables.putAll(mAutomataInterpreter.getAutomata());
 			reportToLogger(LoggerSeverity.DEBUG, "Typechecking of test file...");
 			// Type checking
 			try {
-				mTypeChecker.checkTestFile(ats.getStatementList());
+				mTypeChecker.checkTestFile(statements);
 			} catch (final InterpreterException e) {
 				reportToLogger(LoggerSeverity.INFO, "Error: " + e.getMessage());
 				if (e instanceof InterpreterException) {
@@ -756,12 +772,12 @@ public class TestFileInterpreter implements IMessagePrinter {
 		if (interpretationFinished == Finished.FINISHED) {
 			// Interpreting test file
 			reportToLogger(LoggerSeverity.DEBUG, "Interpreting test file...");
-			if (ats.getStatementList() == null) {
+			if (statements == null) {
 				// File contains only automata definitions no testcases.
 				result = null;
 			} else {
 				try {
-					result = interpret(ats.getStatementList());
+					result = interpret(statements);
 				} catch (final InterpreterException e) {
 					final Throwable cause = e.getCause();
 					if (cause != null) {
@@ -1085,7 +1101,6 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		
 		Object result = null;
-		
 		if (oe.getOperationName().equalsIgnoreCase("assert") && arguments.size() == 1) {
 			result = arguments.get(0);
 			if (result instanceof Boolean) {
