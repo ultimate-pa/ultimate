@@ -5,7 +5,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Define input sequences
-#define INPUT_LENGTH 12
+#define INPUT_LENGTH 10
 #define INPUT_MIN 1
 #define INPUT_MAX 5
 
