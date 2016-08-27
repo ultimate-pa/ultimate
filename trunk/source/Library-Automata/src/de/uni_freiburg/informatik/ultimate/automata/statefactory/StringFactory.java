@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2010-2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2010-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2009-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -34,8 +35,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.naming.spi.StateFactory;
-
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.StateWithRankInfo;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -44,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * A {@link StateFactory} for {@link String}s.
+ * A {@link IStateFactory} for {@link String}s.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
