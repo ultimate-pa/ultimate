@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.MultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -177,6 +178,13 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 			if (branchEncoders == null) {
 				final CodeBlock someBranch = bi2cb.entrySet().iterator().next().getValue();
 				addCodeBlock(someBranch, trace, branchEncoders, relevanceInformation);
+				final IPayload p = cb.getSource().getPayload();
+				if (p == null) {
+					mLogger.error("unable to determine which branch was taken, unable to determine the location");
+				} else {
+					mLogger.warn("unable to determine which branch was taken at " + p.getLocation());
+				}
+				return;
 			} else {
 				for (final Entry<TermVariable, CodeBlock> entry : bi2cb.entrySet()) {
 					final boolean taken = branchEncoders.get(entry.getKey());
