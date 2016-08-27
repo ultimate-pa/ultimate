@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -52,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * MAX-SAT based minimization for NWAs. This operation is a re-implementation of
@@ -79,7 +81,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class MinimizeNwaMaxSat2<LETTER, STATE>
 		extends AbstractMinimizeNwaDd<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
-	
+		
 	private final NestedMap2<STATE, STATE, Doubleton<STATE>> mStatePairs = new NestedMap2<>();
 	private final AbstractMaxSatSolver<Doubleton<STATE>> mSolver;
 	private final Collection<Set<STATE>> mInitialEquivalenceClasses;
@@ -96,14 +98,6 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 	 * be similar in this case.
 	 */
 	private final boolean mUseTransitionHornClauses;
-	/**
-	 * This flag indicates whether the new and more general solver should be
-	 * used. The flag should only be set when dealing with deterministic
-	 * transition clauses; otherwise the clauses are not of Horn form anymore.
-	 * <p>
-	 * TODO In the long term, we want to remove the old solver and hence this flag.
-	 */
-	private final boolean mUseHornSolver;
 	
 	/**
 	 * Constructor that should be called by the automata script interpreter.
@@ -121,7 +115,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 			final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand)
-			throws AutomataOperationCanceledException {
+					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, true,
 				new LookaheadPartitionConstructor<LETTER, STATE>(services, operand).getResult());
 	}
@@ -149,7 +143,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final boolean addMapOldState2newState,
 			final Collection<Set<STATE>> initialEquivalenceClasses)
-			throws AutomataOperationCanceledException {
+					throws AutomataOperationCanceledException {
 		/*
 		 * TODO change fourth-to-last flag to 'false' to use the more general transition clauses
 		 * <p>
@@ -205,7 +199,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 			final boolean useHornSolver,
 			final boolean useTransitivityGenerator,
 			final boolean usePathCompression)
-			throws AutomataOperationCanceledException {
+					throws AutomataOperationCanceledException {
 		super(services, stateFactory, "minimizeNwaMaxSat2", operand);
 		mOperand = operand;
 		// if (!new IsDeterministic<>(mServices, operand).getResult()) {
@@ -214,13 +208,12 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 		mUseFinalStateConstraints = useFinalStateConstraints;
 		mInitialEquivalenceClasses = initialEquivalenceClasses;
 		mUseTransitionHornClauses = useTransitionHornClauses;
-		mUseHornSolver = useHornSolver;
-		if (!mUseTransitionHornClauses && mUseHornSolver) {
+		if (!mUseTransitionHornClauses && useHornSolver) {
 			throw new IllegalArgumentException(
 					"For using the Horn solver you must use Horn clauses.");
 		}
 		ScopedTransitivityGenerator<STATE> transitivityGenerator = null;
-		if (mUseHornSolver) {
+		if (useHornSolver) {
 			mSolver = new HornMaxSatSolver<Doubleton<STATE>>(mServices);
 		} else {
 			if (useTransitivityGenerator) {
@@ -261,11 +254,32 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 		constructResultFromUnionFind(resultingEquivalenceClasses, addMapOldState2newState);
 	}
 	
+	@Override
+	protected Pair<Boolean, String> checkResultHelper(final IStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
+		// check language equivalence
+		final Pair<Boolean, String> result1 = checkLanguageEquivalence(stateFactory);
+		if (!result1.getFirst()) {
+			return result1;
+		}
+		
+		// check that automaton cannot be minimized by merging states (incomplete check!)
+		final int minimizedAgainSize =
+				new ShrinkNwa<LETTER, STATE>(mServices, stateFactory, getResult()).getResult().size();
+		final int resultSize = getResult().size();
+		if (resultSize != minimizedAgainSize) {
+			return new Pair<Boolean, String>(Boolean.FALSE, String.format(
+					"The result was still mergable from %d states to %d states.", resultSize, minimizedAgainSize));
+		}
+		return new Pair<Boolean, String>(Boolean.TRUE, "");
+	}
+	
 	@SuppressWarnings("squid:S1698")
 	private boolean haveSimilarEquivalenceClass(final STATE inputState1, final STATE inputState2) {
 		return mState2EquivalenceClass.get(inputState1) == mState2EquivalenceClass.get(inputState2);
 	}
 	
+	@SuppressWarnings("unchecked")
 	private STATE[] constructStateArray(final Collection<STATE> states) {
 		return states.toArray((STATE[]) new Object[states.size()]);
 	}
@@ -362,7 +376,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 					
 					final Doubleton<STATE> predDoubleton =
 							getDoubleton(state1, state2, predPairKnowToBeSimilar);
-					
+							
 					if (mUseTransitionHornClauses) {
 						generateTransitionConstraint_Internal_Horn(
 								state1, state2, predDoubleton);
@@ -780,6 +794,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	private Doubleton<STATE>[] consArr(final Doubleton<STATE>... doubletons) {
 		return doubletons;
 	}
