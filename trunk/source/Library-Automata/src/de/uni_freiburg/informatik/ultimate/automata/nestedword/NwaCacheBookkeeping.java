@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
@@ -31,29 +31,40 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-
 /**
- * If you write a nested word automaton that compute its transitions on demand,
- * then use this class to store which transitions are already computed.
- * 
- * <p>Use this together with NestedWordAutomatonCache.
- * Problem solved by this class: Assume you query an on demand build automaton
- * for a transition, the automaton checks its cache an returns null.
+ * If you write a nested word automaton that computes its transitions on demand,
+ * then use this class to store which transitions have already been computed.
+ * <p>
+ * Use this together with {@link NestedWordAutomatonCache}.<br>
+ * Problem solved by this class: Assume you query an on-demand built automaton
+ * for a transition, the automaton checks its cache and returns null.
  * Does this mean there is no such transition or does this mean the transition
- * was not yet computed? If you want to distinguish both cases you have to do
- * some bookkeeping to remember which transition have been already computed.
+ * was not yet computed? If you want to distinguish both cases, you have to do
+ * some bookkeeping to remember which transitions have already been computed.
  * 
- * @author Matthias Heizmann
- * 
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class NwaCacheBookkeeping<LETTER,STATE> {
+public class NwaCacheBookkeeping<LETTER, STATE> {
 	
-	private final Map<STATE,Set<LETTER>> mCachedInternal = new HashMap<STATE,Set<LETTER>>();
-	private final Map<STATE,Set<LETTER>> mCachedCall = new HashMap<STATE,Set<LETTER>>();
-	private final Map<STATE,Map<STATE,Set<LETTER>>> mCachedReturn = new HashMap<STATE,Map<STATE,Set<LETTER>>>();
+	private static final String ADDED_TO_CACHE_TWICE = "The letter was added to the cache twice.";
 	
+	private final Map<STATE, Set<LETTER>> mCachedInternal = new HashMap<>();
+	private final Map<STATE, Set<LETTER>> mCachedCall = new HashMap<>();
+	private final Map<STATE, Map<STATE, Set<LETTER>>> mCachedReturn = new HashMap<>();
+	
+	/**
+	 * Checks whether an internal transition has been computed.
+	 * 
+	 * @param state
+	 *            state
+	 * @param letter
+	 *            letter
+	 * @return true iff this transition has already been computed
+	 */
 	public boolean isCachedInternal(final STATE state, final LETTER letter) {
 		final Set<LETTER> cbs = mCachedInternal.get(state);
 		if (cbs == null) {
@@ -63,6 +74,15 @@ public class NwaCacheBookkeeping<LETTER,STATE> {
 		}
 	}
 	
+	/**
+	 * Checks whether a call transition has been computed.
+	 * 
+	 * @param state
+	 *            state
+	 * @param letter
+	 *            letter
+	 * @return true iff this transition has already been computed
+	 */
 	public boolean isCachedCall(final STATE state, final LETTER letter) {
 		final Set<LETTER> cbs = mCachedCall.get(state);
 		if (cbs == null) {
@@ -72,6 +92,17 @@ public class NwaCacheBookkeeping<LETTER,STATE> {
 		}
 	}
 	
+	/**
+	 * Checks whether a return transition has been computed.
+	 * 
+	 * @param state
+	 *            state
+	 * @param hier
+	 *            hierarchical predecessor state
+	 * @param letter
+	 *            letter
+	 * @return true iff this transition has already been computed
+	 */
 	public boolean isCachedReturn(final STATE state, final STATE hier, final LETTER letter) {
 		final Map<STATE, Set<LETTER>> hier2cbs = mCachedReturn.get(state);
 		if (hier2cbs == null) {
@@ -86,39 +117,64 @@ public class NwaCacheBookkeeping<LETTER,STATE> {
 		}
 	}
 	
+	/**
+	 * Reports that all internal transitions have been computed.
+	 * 
+	 * @param state
+	 *            state
+	 * @param letter
+	 *            letter
+	 */
 	public void reportCachedInternal(final STATE state, final LETTER letter) {
 		Set<LETTER> cbs = mCachedInternal.get(state);
 		if (cbs == null) {
-			cbs = new HashSet<LETTER>();
+			cbs = new HashSet<>();
 			mCachedInternal.put(state, cbs);
 		}
 		final boolean modified = cbs.add(letter);
-		assert modified : "added to cache twice";
+		assert modified : ADDED_TO_CACHE_TWICE;
 	}
 	
+	/**
+	 * Reports that all call transitions have been computed.
+	 * 
+	 * @param state
+	 *            state
+	 * @param letter
+	 *            letter
+	 */
 	public void reportCachedCall(final STATE state, final LETTER letter) {
 		Set<LETTER> cbs = mCachedCall.get(state);
 		if (cbs == null) {
-			cbs = new HashSet<LETTER>();
+			cbs = new HashSet<>();
 			mCachedCall.put(state, cbs);
 		}
 		final boolean modified = cbs.add(letter);
-		assert modified : "added to cache twice";
+		assert modified : ADDED_TO_CACHE_TWICE;
 	}
 	
+	/**
+	 * Reports that all return transitions have been computed.
+	 * 
+	 * @param state
+	 *            state
+	 * @param hier
+	 *            hierarchical predecessor state
+	 * @param letter
+	 *            letter
+	 */
 	public void reportCachedReturn(final STATE state, final STATE hier, final LETTER letter) {
 		Map<STATE, Set<LETTER>> hier2cbs = mCachedReturn.get(state);
 		if (hier2cbs == null) {
-			hier2cbs = new HashMap<STATE, Set<LETTER>>();
+			hier2cbs = new HashMap<>();
 			mCachedReturn.put(state, hier2cbs);
 		}
 		Set<LETTER> cbs = hier2cbs.get(hier);
 		if (cbs == null) {
-			cbs = new HashSet<LETTER>();
+			cbs = new HashSet<>();
 			hier2cbs.put(hier, cbs);
 		}
 		final boolean modified = cbs.add(letter);
-		assert modified : "added to cache twice";
+		assert modified : ADDED_TO_CACHE_TWICE;
 	}
-
 }
