@@ -6,7 +6,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Define input sequences
-#define INPUT_LENGTH 8
+#define INPUT_LENGTH 12
 #define INPUT_MIN 1
 #define INPUT_MAX 5
 
@@ -87,9 +87,9 @@ void print_inputs() {
         fprintf(stderr,"\n");
 }
 
-void main() {
+int main() {
         // Initialize input vector and calculate the max number of sequences 
-        long ninputs = 1;
+        unsigned long long ninputs = 1;
         for (int i = 0; i < INPUT_LENGTH; ++i) {
                 INPUTS[i] = INPUT_MIN;
                 ninputs *= INPUT_MAX - INPUT_MIN + 1;
@@ -97,7 +97,7 @@ void main() {
         
         // Try input sequences
         for (long i = 0; i < ninputs; i++) {
-                int result = loop(INPUT_LENGTH, INPUTS);
+                int result = loop();
                 if (ERR >= 0) {
                         if (ERR != ERR_INVALID_INPUT) {
                                 fprintf(stderr," -> ");
@@ -110,6 +110,7 @@ void main() {
                         increment_inputs(INPUT_LENGTH - 1);
                 }
         }
+	return 0;
 }
 
 // Don't forget to:
