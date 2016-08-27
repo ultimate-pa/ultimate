@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 
 /**
@@ -93,10 +94,14 @@ public class Totalize<LETTER,STATE>
 		mLogger.info("Start testing correctness of " + operationName());
 		
 		final String message;
-		boolean correct = true;
-		if (! checkLanguageEquivalence(stateFactory)) {
+		final boolean correct;
+		
+		// check language equivalence
+		final Pair<Boolean, String> equivalenceResult = checkLanguageEquivalence(stateFactory);
+		
+		if (! equivalenceResult.getFirst()) {
 			// language equivalence check failed
-			message = "The result language differs.";
+			message = equivalenceResult.getSecond();
 			correct = false;
 			assert false;
 		} else if (! new IsTotal<LETTER, STATE>(mServices, mResult).getResult()) {
@@ -106,6 +111,7 @@ public class Totalize<LETTER,STATE>
 			assert false;
 		} else {
 			message = null;
+			correct = true;
 		}
 		
 		mLogger.info("Finished testing correctness of " + operationName());

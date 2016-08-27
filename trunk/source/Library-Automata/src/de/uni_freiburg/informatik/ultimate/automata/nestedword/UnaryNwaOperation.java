@@ -28,10 +28,10 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Abstract operation taking one nested word automaton as input.
@@ -77,13 +77,9 @@ public abstract class UnaryNwaOperation<LETTER, STATE>
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult() getResult()} being a constant-time
 	 * operation.
 	 */
-	protected boolean checkLanguageEquivalence(
+	protected Pair<Boolean, String> checkLanguageEquivalence(
 			final IStateFactory<STATE> stateFactory)
 					throws AutomataLibraryException {
-		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Start testing correctness of " + operationName());
-		}
-		
 		// type-check and cast result to nested word automaton
 		if (!(getResult() instanceof INestedWordAutomatonSimple)) {
 			throw new UnsupportedOperationException(
@@ -108,12 +104,6 @@ public abstract class UnaryNwaOperation<LETTER, STATE>
 			correct = false;
 		}
 		
-		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Finished testing correctness of " + operationName());
-		}
-		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed", message, mOperand);
-		}
-		return correct;
+		return new Pair<Boolean, String>(correct, message);
 	}
 }

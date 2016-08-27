@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
@@ -49,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DoubleDeckerVisitor.ReachFinal;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * This is the superclass of most minimization classes.
@@ -177,14 +179,28 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 				StatisticsType.STATES_REDUCTION_ABSOLUTE);
 		result.addPercentageData(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
 				StatisticsType.STATES_REDUCTION_RELATIVE, true);
-		
+				
 		return result;
 	}
 	
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		return checkLanguageEquivalence(stateFactory);
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Start testing correctness of " + operationName());
+		}
+		
+		// call submethod to enable overriding by subclasses
+		final Pair<Boolean, String> equivalenceResult = checkResultHelper(stateFactory);
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of " + operationName());
+		}
+		if (!equivalenceResult.getFirst()) {
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+					equivalenceResult.getSecond(), mOperand);
+		}
+		return equivalenceResult.getFirst();
 	}
 	
 	/**
@@ -524,6 +540,25 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 		if (isCancellationRequested()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
+	}
+	
+	/**
+	 * Performs the real {@link #checkResult(IStateFactory) result check}.
+	 * <p>
+	 * Subclasses can override this method for more specific result checks.<br>
+	 * By default language equivalence between operand and result is checked.
+	 * 
+	 * @param stateFactory
+	 *            state factory
+	 * @return pair <tt>(b, m)</tt> where <tt>b = true</tt> iff result check succeeded, otherwise <tt>m</tt> contains an
+	 *         error message
+	 * @throws AutomataLibraryException
+	 *             when tests call failing methods
+	 */
+	protected Pair<Boolean, String> checkResultHelper(final IStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
+		// by default only check language equivalence
+		return checkLanguageEquivalence(stateFactory);
 	}
 	
 	/**
