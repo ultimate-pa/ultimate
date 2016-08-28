@@ -9,12 +9,13 @@ To compile (For example Problem17):
         gcc -o Problem17 Problem17.c
 
 ** This will take a minute or two (more like 5)
+NOTE: clang is a lot faster
 
 To run:
 
 First, execute the program:
 
-        ./Problem17 2> output17.txt 1> /dev/null
+        ./Problem17 INPUT_LENGTH 2> output17.txt 1> /dev/null
         
 ** How long this needs depends on your configuration above, a length of 5 is 
    fairly quick

@@ -6,7 +6,6 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Define input sequences
-#define INPUT_LENGTH 10
 #define INPUT_MIN 1
 #define INPUT_MAX 5
 
@@ -17,7 +16,8 @@ int ERR;
 // Position of the input that triggered the error = length of the sequence
 int ERR_POS;
 // Array of inputs
-int INPUTS[INPUT_LENGTH];
+int INPUT_LENGTH; // will be read from command line arguments
+int* INPUTS; // array of inputs, initialized in main()
 
 void __VERIFIER_error(int i) {
     fprintf(stderr, "error_%d ", i);
@@ -87,16 +87,21 @@ void print_inputs() {
         fprintf(stderr,"\n");
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+        if(argc <= 1) {
+                printf("Missing input length.\n");
+                exit(1);
+        }
+        INPUT_LENGTH = atoi(argv[1]);
+        INPUTS = malloc(INPUT_LENGTH * sizeof(int));
+
         // Initialize input vector and calculate the max number of sequences 
-        unsigned long long ninputs = 1;
         for (int i = 0; i < INPUT_LENGTH; ++i) {
                 INPUTS[i] = INPUT_MIN;
-                ninputs *= INPUT_MAX - INPUT_MIN + 1;
         }
         
-        // Try input sequences
-        for (long i = 0; i < ninputs; i++) {
+        // Try input sequences (stops when increment_inputs() detects overflow)
+        while (1) {
                 int result = loop();
                 if (ERR >= 0) {
                         if (ERR != ERR_INVALID_INPUT) {
@@ -106,11 +111,11 @@ int main() {
                         // Skip all sequences with the same prefix
                         increment_inputs(ERR_POS);
                         reset_inputs(ERR_POS + 1);
-                } else {                       
+                } else {
                         increment_inputs(INPUT_LENGTH - 1);
                 }
         }
-	return 0;
+        return 0;
 }
 
 // Don't forget to:

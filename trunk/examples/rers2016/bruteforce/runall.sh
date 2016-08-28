@@ -1,5 +1,9 @@
 #!/bin/sh
 
+echo "Do not use this script anymore."
+echo "Programs accept input length as an argument"
+echo "and do not need to be compiled over and over again."
+
 for i in `seq 10 18`; 
 do
         echo -n "Compiling Problem$i..."
