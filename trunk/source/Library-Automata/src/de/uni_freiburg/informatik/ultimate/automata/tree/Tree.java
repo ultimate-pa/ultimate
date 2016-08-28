@@ -12,19 +12,30 @@ public class Tree<LETTER> {
 	private final List<Tree<LETTER>> children;
 	private final LETTER symbol;
 	
-	public Tree(LETTER symbol) {
-		this.children = new ArrayList<Tree<LETTER>>();
-		this.symbol = symbol;
+	/**
+	 * Construct a tree with root symbol.
+	 * @param symbol
+	 */
+	public Tree(final LETTER symbol) {
+		this(symbol, new ArrayList<>());
 	}
-	
-	public Tree(LETTER symbol, List<Tree<LETTER>> children) {
-		this.children = new ArrayList<Tree<LETTER>>();
-		for (Tree<LETTER> child : children) {
+	/**
+	 * Construct a tree with root symbol, and children trees.
+	 * @param symbol
+	 * @param children
+	 */
+	public Tree(final LETTER symbol, final List<Tree<LETTER>> children) {
+		this.children = new ArrayList<>();
+		for (final Tree<LETTER> child : children) {
 			if (child != null && child.symbol != null) {
 				this.children.add(child);
 			}
 		}
 		this.symbol = symbol;
+	}
+	
+	public LETTER getSymbol() {
+		return this.symbol;
 	}
 	
 	public List<Tree<LETTER>> getChildren() {

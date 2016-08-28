@@ -6,14 +6,21 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 
+/**
+ *  Complements a given treeAutomaton.
+ * @author mostafa (mostafa.amin93@gmail.com)
+ *
+ * @param <LETTER> letter of the tree automaton.
+ * @param <STATE> state of the tree automaton.
+ */
 public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private final ITreeAutomaton<LETTER, STATE> treeAutomaton;
-	protected final ITreeAutomaton<LETTER, STATE> result;
-	
 	private final StateFactory<STATE> stateFactory;
 	
-	public Complement(final ITreeAutomaton<LETTER, STATE> tree, StateFactory<STATE> factory) {
+	protected final ITreeAutomaton<LETTER, STATE> result;
+	
+	public Complement(final ITreeAutomaton<LETTER, STATE> tree, final StateFactory<STATE> factory) {
 		treeAutomaton = tree;
 		stateFactory = factory;
 		
@@ -35,7 +42,7 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	private ITreeAutomaton<LETTER, STATE> computeResult() {
-		final Determinize<LETTER, STATE> op = new Determinize<LETTER, STATE>(treeAutomaton, stateFactory);
+		final Determinize<LETTER, STATE> op = new Determinize<>(treeAutomaton, stateFactory);
 		final TreeAutomatonBU<LETTER, STATE> res = (TreeAutomatonBU<LETTER, STATE>) op.getResult();
 		res.complementFinals();
 		

@@ -6,17 +6,34 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * A run of a tree automaton.
+ * @author mostafa (mostafa.amin93@gmail.com)
+ *
+ * @param <LETTER> Symbols of the automaton
+ * @param <STATE> States of the automaton.
+ */
 public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 
-	private STATE state;
-	private LETTER letter;
-	private List<TreeRun<LETTER, STATE>> children;
+	private final STATE state;
+	private final LETTER letter;
+	private final List<TreeRun<LETTER, STATE>> children;
 	
-	public TreeRun(STATE state) {
-		this.state = state;
-		children = new ArrayList<>();
+	/**
+	 * Constructs a run that consists of one state, and no transitions.
+	 * @param state
+	 */
+	public TreeRun(final STATE state) {
+		this(state, null, new ArrayList<>());
 	}
-	public TreeRun(STATE state, LETTER letter, List<TreeRun<LETTER, STATE>> children) {
+	/**
+	 * Constructs a run, by the final state, transition symbol, transition children.
+	 * Run := letter(childrenRuns) ~> state
+	 * @param state: final state of the computation.
+	 * @param letter: the letter taken by the final transition.
+	 * @param children: The children runs.
+	 */
+	public TreeRun(final STATE state, final LETTER letter, final List<TreeRun<LETTER, STATE>> children) {
 		this.state = state;
 		this.letter = letter;
 		this.children = children;
@@ -27,11 +44,11 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 	}
 	
 	private Collection<TreeAutomatonRule<LETTER, STATE>> getRules() {
-		Set<TreeAutomatonRule<LETTER, STATE>> res = new HashSet<TreeAutomatonRule<LETTER, STATE>>();
+		final Set<TreeAutomatonRule<LETTER, STATE>> res = new HashSet<>();
 		
 		if (!children.isEmpty()) {
-			List<STATE> src = new ArrayList<>();
-			for (TreeRun<LETTER, STATE> run : children) {
+			final List<STATE> src = new ArrayList<>();
+			for (final TreeRun<LETTER, STATE> run : children) {
 				src.add(run.state); // Index States
 				res.addAll(run.getRules());
 			}
@@ -40,16 +57,16 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 		return res;
 	}
 	private Collection<STATE> getStates() {
-		Set<STATE> res = new HashSet<STATE>();
+		final Set<STATE> res = new HashSet<>();
 		res.add(state);
-		for (TreeRun<LETTER, STATE> st : children) {
+		for (final TreeRun<LETTER, STATE> st : children) {
 			res.addAll(st.getStates());
 		}
 		return res;
 	}
 	
 	private Collection<STATE> getInitialStates() {
-		Set<STATE> res = new HashSet<STATE>();
+		Set<STATE> res = new HashSet<>();
 		if (children.isEmpty()) {
 			res.add(state);
 		} else {
@@ -64,11 +81,11 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 	public ITreeAutomaton<LETTER, STATE> getAutomaton() {
 		TreeAutomatonBU<LETTER, STATE> treeAutomaton = new TreeAutomatonBU<>();
 		
-		for (STATE state : getStates()) {
-			treeAutomaton.addState(state);
+		for (final STATE st : getStates()) {
+			treeAutomaton.addState(st);
 		}
-		for (STATE state : getInitialStates()) {
-			treeAutomaton.addInitialState(state);
+		for (final STATE st : getInitialStates()) {
+			treeAutomaton.addInitialState(st);
 		}
 		treeAutomaton.addFinalState(state);
 		
@@ -84,11 +101,11 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 		if (children.isEmpty()) {
 			return null;
 		}
-		List<Tree<LETTER>> children = new ArrayList<>();
-		for (TreeRun<LETTER, STATE> run : this.children) {
-			children.add(run.getTree());
+		final List<Tree<LETTER>> treeChildren = new ArrayList<>();
+		for (final TreeRun<LETTER, STATE> run : this.children) {
+			treeChildren.add(run.getTree());
 		}
-		return new Tree<LETTER>(letter, children);
+		return new Tree<>(letter, treeChildren);
 	}
 
 	@Override
@@ -96,11 +113,12 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 		return state;
 	}
 	
+	@Override
 	public String toString() {
 		if (children.isEmpty())
 			return "";
 		String res = "";
-		for (TreeRun<LETTER, STATE> st : children) {
+		for (final TreeRun<LETTER, STATE> st : children) {
 			if (!res.isEmpty()) {
 				res += ", ";
 			}

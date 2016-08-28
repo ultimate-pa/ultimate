@@ -17,14 +17,20 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 
+/**
+ * Determinize a given tree automaton.
+ * @author mostafa (mostafa.amin93@gmail.com)
+ *
+ * @param <LETTER> letter of the tree automaton.
+ * @param <STATE> state of the tree automaton.
+ */
 public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private final ITreeAutomaton<LETTER, STATE> treeAutomaton;
-	protected final ITreeAutomaton<LETTER, STATE> result;
-
 	private final StateFactory<STATE> stateFactory;
-	private Map<Set<STATE>, STATE> reducedStates;
+	private final Map<Set<STATE>, STATE> reducedStates;
 	
+	protected final ITreeAutomaton<LETTER, STATE> result;
 
 	public Determinize(final ITreeAutomaton<LETTER, STATE> tree, final StateFactory<STATE> factory) {
 		reducedStates = new HashMap<>();
@@ -96,14 +102,14 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 			}
 		}
-		final Set<Set<STATE>> visited = new HashSet<Set<STATE>>();
+		final Set<Set<STATE>> visited = new HashSet<>();
 		while (!worklist.isEmpty()) {
 			final Set<STATE> state = worklist.poll();
 			if (visited.contains(state))  {
 				continue;
 			}
 			visited.add(state);
-			final Map<LETTER, Map<List<Set<STATE>>, Set<Set<STATE>>>> newRules = new HashMap<LETTER, Map<List<Set<STATE>>, Set<Set<STATE>>>>();
+			final Map<LETTER, Map<List<Set<STATE>>, Set<Set<STATE>>>> newRules = new HashMap<>();
 			for (final LETTER letter : rules.keySet()) {
 				if (!newRules.containsKey(letter)) {
 					newRules.put(letter, new HashMap<>());
@@ -133,7 +139,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				for (final List<Set<STATE>> st : mp.keySet()) {
 				
 					final Set<Set<STATE>> dest = mp.get(st);
-					final Set<STATE> uni = new HashSet<STATE>();
+					final Set<STATE> uni = new HashSet<>();
 					for (final Set<STATE> s : dest) {
 						uni.addAll(s);
 					}

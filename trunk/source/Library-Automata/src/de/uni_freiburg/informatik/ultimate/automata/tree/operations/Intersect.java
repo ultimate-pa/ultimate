@@ -17,6 +17,13 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * Intersect 2 tree automatons. 
+ * @author mostafa (mostafa.amin93@gmail.com)
+ *
+ * @param <LETTER> letter of the tree automatons.
+ * @param <STATE> state of the tree automatons.
+ */
 public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	private final ITreeAutomaton<LETTER, STATE> treeA;
@@ -24,8 +31,8 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	protected final ITreeAutomaton<LETTER, STATE> result;
 	
 	private final StateFactory<STATE> stateFactory;
-	private Map<STATE, Map<STATE, Pair<STATE, STATE>>> pairsMap;
-	private Map<Pair<STATE, STATE>, STATE> reducedStates;
+	private final Map<STATE, Map<STATE, Pair<STATE, STATE>>> pairsMap;
+	private final Map<Pair<STATE, STATE>, STATE> reducedStates;
 
 	public Intersect(final ITreeAutomaton<LETTER, STATE> t1, final ITreeAutomaton<LETTER, STATE> t2, final StateFactory<STATE> factory) {
 		reducedStates = new HashMap<>();
@@ -72,15 +79,15 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		// Minimal states intersection.
 		final TreeAutomatonBU<LETTER, Pair<STATE, STATE>> res = new TreeAutomatonBU<>();
 		
-		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> symbolToRuleA = new HashMap<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>>();
-		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> symbolToRuleB = new HashMap<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>>();
+		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> symbolToRuleA = new HashMap<>();
+		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> symbolToRuleB = new HashMap<>();
 		
 		for (final TreeAutomatonRule<LETTER, STATE> ruleA : treeA.getRules()) {
 			Collection<TreeAutomatonRule<LETTER, STATE>> rules;
 			if (symbolToRuleA.containsKey(ruleA.getLetter())) {
 				rules = symbolToRuleA.get(ruleA.getLetter());
 			} else {
-				rules = new LinkedList<TreeAutomatonRule<LETTER, STATE>>();
+				rules = new LinkedList<>();
 				symbolToRuleA.put(ruleA.getLetter(), rules);
 			}
 			rules.add(ruleA);
@@ -90,7 +97,7 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			if (symbolToRuleB.containsKey(ruleB.getLetter())) {
 				rules = symbolToRuleB.get(ruleB.getLetter());
 			} else {
-				rules = new LinkedList<TreeAutomatonRule<LETTER, STATE>>();
+				rules = new LinkedList<>();
 				symbolToRuleB.put(ruleB.getLetter(), rules);
 			}
 			rules.add(ruleB);
@@ -127,17 +134,17 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 		}
 		
-		TreeAutomatonBU<LETTER, STATE> reducedResult = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<LETTER, STATE> reducedResult = new TreeAutomatonBU<>();
 		
-		for (TreeAutomatonRule<LETTER, Pair<STATE, STATE>> rule : res.getRules()) {
+		for (final TreeAutomatonRule<LETTER, Pair<STATE, STATE>> rule : res.getRules()) {
 			List<STATE> src = new ArrayList<>();
-			for (Pair<STATE, STATE> pr : rule.getSource()) {
+			for (final Pair<STATE, STATE> pr : rule.getSource()) {
 				src.add(reduceState(pr));
 			}
 			reducedResult.addRule(rule.getLetter(), src, reduceState(rule.getDest()));
 		}
 		
-		for (Pair<STATE, STATE> state : res.getStates()) {
+		for (final Pair<STATE, STATE> state : res.getStates()) {
 			reducedResult.addState(reduceState(state));
 			if (res.isInitialState(state)) {
 				reducedResult.addInitialState(reduceState(state));

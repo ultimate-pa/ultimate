@@ -15,7 +15,13 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
-
+/**
+ * Check emptiness of a tree automaton. The output is TreeRun.
+ * @author mostafa
+ *
+ * @param <LETTER> letter class of tree automaton.
+ * @param <STATE> state class of tree automaton.
+ */
 public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private final ITreeAutomaton<LETTER, STATE> treeAutomaton;
@@ -41,9 +47,9 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 	}
 	
 	private TreeRun<LETTER, STATE> computeResult() {
-		final LinkedList<TreeAutomatonRule<LETTER, STATE>> worklist = new LinkedList<TreeAutomatonRule<LETTER, STATE>>();
+		final LinkedList<TreeAutomatonRule<LETTER, STATE>> worklist = new LinkedList<>();
 
-		final Map<STATE, Collection<TreeAutomatonRule<LETTER, STATE>>> rulesBySource = new HashMap<STATE, Collection<TreeAutomatonRule<LETTER, STATE>>>();
+		final Map<STATE, Collection<TreeAutomatonRule<LETTER, STATE>>> rulesBySource = new HashMap<>();
 		
 		final Map<STATE, TreeRun<LETTER, STATE>> soltree = new HashMap<>();
 		
@@ -60,7 +66,7 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 				if (rulesBySource.containsKey(sourceState)) {
 					sourceRules = rulesBySource.get(sourceState);
 				} else {
-					sourceRules = new LinkedList<TreeAutomatonRule<LETTER, STATE>>();
+					sourceRules = new LinkedList<>();
 					rulesBySource.put(sourceState, sourceRules);
 				}
 				sourceRules.add(rule);
@@ -74,35 +80,37 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 			final TreeAutomatonRule<LETTER, STATE> rule = worklist.poll();
 			final STATE dest = rule.getDest();
 			
-			final List<TreeRun<LETTER, STATE>> subTrees = new LinkedList<TreeRun<LETTER, STATE>>();
-			if (!soltree.containsKey(dest)) {
+			final List<TreeRun<LETTER, STATE>> subTrees = new LinkedList<>();
+			if (soltree.containsKey(dest)) {
+				// Already computed.
+				continue;
+			}
 				
-				boolean allMarked = true;
-				for (final STATE q: rule.getSource()) {
-					if (!soltree.containsKey(q)) {
-						allMarked = false;
-						break;
-					} else {
-						subTrees.add(soltree.get(q));
-					}
+			boolean allMarked = true;
+			for (final STATE q: rule.getSource()) {
+				if (!soltree.containsKey(q)) {
+					allMarked = false;
+					break;
+				} else {
+					subTrees.add(soltree.get(q));
 				}
-				if (allMarked) {
-					final TreeRun<LETTER, STATE> newTree = new TreeRun<LETTER, STATE>(dest, rule.getLetter(), subTrees);
-					soltree.put(dest, newTree);
-					
-					if (treeAutomaton.isFinalState(dest)) {
-						return newTree;
-					} else {
-						if (rulesBySource.containsKey(dest)) {
-							for (final TreeAutomatonRule<LETTER, STATE> considerNext: rulesBySource.get(dest))
-							 {
-								worklist.add(considerNext);
-								//worklist.push(considerNext); // depth first
-							}
+			}
+			if (allMarked) {
+				final TreeRun<LETTER, STATE> newTree = new TreeRun<LETTER, STATE>(dest, rule.getLetter(), subTrees);
+				soltree.put(dest, newTree);
+				
+				if (treeAutomaton.isFinalState(dest)) {
+					return newTree;
+				} else {
+					if (rulesBySource.containsKey(dest)) {
+						for (final TreeAutomatonRule<LETTER, STATE> considerNext: rulesBySource.get(dest)) {
+							worklist.add(considerNext);
+							//worklist.push(considerNext); // depth first
 						}
 					}
 				}
 			}
+		
 		}
 		return null;
 	}
