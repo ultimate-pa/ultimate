@@ -744,10 +744,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 		
 		final AtsASTNode statements;
 		if (mIgnoreOperationsAndExecuteCommandInstead) {
-			final String commandFromSettingsFile = null;
 			final String fakeFilename = "mySettingsFileGivenStringDoesNotHaveFilename";
 			final String fakeFileAbsolutePath = "mySettingsFileGivenStringDoesNotHaveFileAbsolutePath";
-			final InputStream is = new ByteArrayInputStream(commandFromSettingsFile.getBytes());
+			final InputStream is = new ByteArrayInputStream(mCommandToExecute.getBytes());
 			final Reader reader = new InputStreamReader(is);
 			final AutomataTestFileAST astNode = new AutomataScriptParserRun(mServices, mLogger, reader, fakeFilename, fakeFileAbsolutePath).getResult();
 			statements = astNode.getStatementList();
