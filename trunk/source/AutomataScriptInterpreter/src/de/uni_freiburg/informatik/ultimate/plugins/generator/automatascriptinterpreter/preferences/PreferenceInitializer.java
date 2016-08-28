@@ -53,7 +53,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final boolean Default_ExecuteCommandFlag = false;
 	
 	public static final String Name_ExecuteCommandString = "Command";
-	public static final String Default_ExecuteCommandString = "print($1)";
+	public static final String Default_ExecuteCommandString = "print($1);";
 	
 	
 	public PreferenceInitializer() {
