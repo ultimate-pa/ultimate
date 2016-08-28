@@ -28,10 +28,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -79,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AutomataScriptParserRun;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AssignmentExpressionAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.BinaryExpressionAST;
@@ -739,8 +744,13 @@ public class TestFileInterpreter implements IMessagePrinter {
 		
 		final AtsASTNode statements;
 		if (mIgnoreOperationsAndExecuteCommandInstead) {
-			// TODO here we need the interpreted command, how? for now, nothing happens
-			statements = null;
+			final String commandFromSettingsFile = null;
+			final String fakeFilename = "mySettingsFileGivenStringDoesNotHaveFilename";
+			final String fakeFileAbsolutePath = "mySettingsFileGivenStringDoesNotHaveFileAbsolutePath";
+			final InputStream is = new ByteArrayInputStream(commandFromSettingsFile.getBytes());
+			final Reader reader = new InputStreamReader(is);
+			final AutomataTestFileAST astNode = new AutomataScriptParserRun(mServices, mLogger, reader, fakeFilename, fakeFileAbsolutePath).getResult();
+			statements = astNode.getStatementList();
 		} else {
 			statements = ats.getStatementList();
 		}
