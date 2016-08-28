@@ -52,6 +52,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -85,7 +86,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinter
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AutomataScriptParserRun;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AssignmentExpressionAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitionsAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.BinaryExpressionAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.BreakStatementAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.ConditionalBooleanExpressionAST;
@@ -744,11 +747,13 @@ public class TestFileInterpreter implements IMessagePrinter {
 		
 		final AtsASTNode statements;
 		if (mIgnoreOperationsAndExecuteCommandInstead) {
+			final String commandAdapted = substituteAutomataNames(mCommandToExecute, ats.getAutomataDefinitions());
 			final String fakeFilename = "mySettingsFileGivenStringDoesNotHaveFilename";
 			final String fakeFileAbsolutePath = "mySettingsFileGivenStringDoesNotHaveFileAbsolutePath";
-			final InputStream is = new ByteArrayInputStream(mCommandToExecute.getBytes());
+			final InputStream is = new ByteArrayInputStream(commandAdapted.getBytes());
 			final Reader reader = new InputStreamReader(is);
-			final AutomataTestFileAST astNode = new AutomataScriptParserRun(mServices, mLogger, reader, fakeFilename, fakeFileAbsolutePath).getResult();
+			final AutomataTestFileAST astNode = new AutomataScriptParserRun(
+					mServices, mLogger, reader, fakeFilename, fakeFileAbsolutePath).getResult();
 			statements = astNode.getStatementList();
 		} else {
 			statements = ats.getStatementList();
@@ -815,6 +820,43 @@ public class TestFileInterpreter implements IMessagePrinter {
 		return result;
 	}
 	
+	/**
+	 * Replaces <tt>$i</tt> by the <tt>i</tt>th automaton name (e.g., <tt>$5</tt> by the fifth automaton name).
+	 * 
+	 * @param command
+	 *            input command containing placeholders
+	 * @param automataDefinitions
+	 *            all automata found
+	 * @return command with placeholders replaced by respective automaton name
+	 */
+	private String substituteAutomataNames(final String command, final AutomataDefinitionsAST automataDefinitions) {
+		String result = command;
+		final List<AutomatonAST> automata = automataDefinitions.getListOfAutomataDefinitions();
+		int i = automata.size();
+		final ListIterator<AutomatonAST> reverseIt = automata.listIterator(i);
+		while (reverseIt.hasPrevious()) {
+			final AutomatonAST automatonAst = reverseIt.previous();
+			final String oldName = "\\$" + i;
+			final String newName = automatonAst.getName();
+			result = result.replaceAll(oldName, newName);
+			--i;
+		}
+		if (result.contains("$")) {
+			final String message = "The command contained an illegal automaton reference.";
+			final int size = automata.size();
+			if (size == 0) {
+				throw new IllegalArgumentException(message + " There were no automata found in the input.");
+			} else if (size == 1) {
+				throw new IllegalArgumentException(message
+						+ " There was only 1 automaton found, so only $1 is legal.");
+			} else {
+				throw new IllegalArgumentException(String.format(
+						"%s There were only %d automata found, so only $1 to $%d are legal.", message, size, size));
+			}
+		}
+		return result;
+	}
+
 	/**
 	 * Gets the automaton which was lastly printed by a print-operation.
 	 * 
