@@ -880,9 +880,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					 * TODO Christian 2016-08-05: remove RemoveUnreachable() call (test thoroughly first!)
 					 */
 					// DoubleDecker information already present in output
-					newAbstraction =
-							(new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-									newAbstractionRaw.getResult())).getResult();
+					newAbstraction = (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) newAbstractionRaw.getResult();
+//							(new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+//									newAbstractionRaw.getResult())).getResult();
 				} else {
 					// compute DoubleDecker information
 					newAbstraction =
