@@ -40,19 +40,22 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 /**
  * Shrinks an automaton according to a certain criterion while still producing
  * the same error.
- * 
  * A shrinker can be seen as a rule according to which the debugger tries to
  * shrink an automaton. For this purpose the shrinker defines a list of objects
  * which are to be removed and then applies binary search on this list.
- * 
  * Implementing subclasses should make certain that no exception is thrown
  * during construction of shrunk automata. Otherwise this might lead to unwanted
  * behavior, namely the debugger might return an automaton object which has
  * crashed during construction (e.g., a transition was inserted whose state or
  * letter was not present).
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
- * @param <T> type of objects to be removed, e.g., states
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <T>
+ *            type of objects to be removed, e.g., states
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public abstract class AShrinker<T, LETTER, STATE> {
 	protected INestedWordAutomaton<LETTER, STATE> mAutomaton;
@@ -60,15 +63,14 @@ public abstract class AShrinker<T, LETTER, STATE> {
 	
 	/**
 	 * Creates an automaton.
-	 * 
 	 * NOTE: Implementing subclasses must store the automaton.
 	 * 
-	 * @param list list of objects to be removed
+	 * @param list
+	 *            list of objects to be removed
 	 * @return automaton according to (complement of the) list
 	 */
-	public abstract INestedWordAutomaton<LETTER, STATE>
-			createAutomaton(final List<T> list);
-			
+	public abstract INestedWordAutomaton<LETTER, STATE> createAutomaton(final List<T> list);
+	
 	/**
 	 * Extracts a list of objects containing all respective objects of the
 	 * current automaton.
@@ -78,9 +80,10 @@ public abstract class AShrinker<T, LETTER, STATE> {
 	public abstract List<T> extractList();
 	
 	/**
-	 * Called when the error still occurs for a shrunk automaton (-> success).
+	 * Called when the error still occurs for a shrunk automaton (i.e., success).
 	 * 
-	 *  @param newAutomaton new automaton
+	 * @param newAutomaton
+	 *            new automaton
 	 */
 	public void error(final INestedWordAutomaton<LETTER, STATE> newAutomaton) {
 		// use shrunk automaton henceforth
@@ -88,12 +91,12 @@ public abstract class AShrinker<T, LETTER, STATE> {
 	}
 	
 	/**
-	 * Called when no error occurs for a shrunk automaton (-> failure).
+	 * Called when no error occurs for a shrunk automaton (i.e., failure).
 	 * 
-	 * @param newAutomaton new automaton
+	 * @param newAutomaton
+	 *            new automaton
 	 */
-	public void
-			noError(final INestedWordAutomaton<LETTER, STATE> newAutomaton) {
+	public void noError(final INestedWordAutomaton<LETTER, STATE> newAutomaton) {
 		// no action for standard shrinker
 	}
 	
@@ -101,34 +104,67 @@ public abstract class AShrinker<T, LETTER, STATE> {
 	 * Runs a binary search according to the shrinking rule implemented by this
 	 * shrinker.
 	 * 
-	 * @param automaton automaton
-	 * @param tester tester
-	 * @param factory automaton factory
-	 * @param policy debug policy
+	 * @param automaton
+	 *            automaton
+	 * @param tester
+	 *            tester
+	 * @param factory
+	 *            automaton factory
+	 * @param policyUser
+	 *            debug policy provided by the user
 	 * @return new automaton iff automaton could be shrunk
 	 */
-	public INestedWordAutomaton<LETTER, STATE> runSearch(
+	public final INestedWordAutomaton<LETTER, STATE> runSearch(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final ATester<LETTER, STATE> tester,
 			final AAutomatonFactory<LETTER, STATE> factory,
-			final EDebugPolicy policy) {
+			final EDebugPolicy policyUser) {
 		mAutomaton = automaton;
 		mFactory = factory;
 		final ADebug<T, LETTER, STATE> debugger;
+		
+		// check for policy override
+		final EDebugPolicy policy = isPolicyOverridden() ? getPolicy() : policyUser;
+		
 		switch (policy) {
 			case SINGLE:
 				debugger = new SingleDebug<T, LETTER, STATE>(tester, this);
 				break;
-			
 			case BINARY:
 				debugger = new BinaryDebug<T, LETTER, STATE>(tester, this);
 				break;
-			
 			default:
 				throw new IllegalArgumentException("Unknown policy.");
 		}
 		final boolean isReduced = debugger.run();
 		return isReduced ? mAutomaton : null;
+	}
+	
+	/**
+	 * @return true iff this shrinker demands a special policy.
+	 */
+	public boolean isPolicyOverridden() {
+		// default: do not override user policy
+		return false;
+	}
+	
+	/**
+	 * If {@link #isPolicyOverridden()} returns <tt>true</tt>, this method returns the demanded policy. Otherwise a
+	 * shrinker may just define its preferred shrinker here, which is only respected if the user allows that.
+	 * 
+	 * @return The policy preferred by this shrinker.
+	 */
+	public EDebugPolicy getPolicy() {
+		// default: use binary search
+		return EDebugPolicy.BINARY;
+	}
+	
+	/**
+	 * @return true iff this shrinker requests that the current shrinking process be terminated.
+	 */
+	public boolean isCancelRequested() {
+		// default: never cancel
+		return false;
 	}
 	
 	@Override
