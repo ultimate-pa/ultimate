@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
@@ -44,9 +45,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 
 /**
  * Examples used by delta debugger.
+ * <p>
  * NOTE: Users may insert their sample code as a new method and leave it here.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
  * @param <STATE>
@@ -57,6 +59,8 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	private final AutomataLibraryServices mServices;
 	
 	/**
+	 * Constructor.
+	 * 
 	 * @param services
 	 *            Ultimate services
 	 */
@@ -74,10 +78,13 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 		REDUCE_NWA_DIRECT_SIMULATION,
 		REDUCE_NWA_DELAYED_SIMULATION,
 		SHRINK_NWA,
-		BUCHI_REDUCE
+		BUCHI_REDUCE,
+		COMPLEMENT
 	}
 	
 	/**
+	 * Getter for an {@link IOperation}.
+	 * 
 	 * @param type
 	 *            operation type
 	 * @param automaton
@@ -93,23 +100,26 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 			final IStateFactory<STATE> factory) throws Throwable {
 		switch (type) {
 			case MINIMIZE_NWA_MAXSAT:
-				return minimizeNwaMaxSAT(automaton, factory);
-				
+				return minimizeNwaMaxSat(automaton, factory);
+			
 			case MINIMIZE_NWA_MAXSAT2:
-				return minimizeNwaMaxSAT2(automaton, factory);
-				
+				return minimizeNwaMaxSat2(automaton, factory);
+			
 			case REDUCE_NWA_DIRECT_SIMULATION:
 				return reduceNwaDirectSimulation(automaton, factory);
-				
+			
 			case REDUCE_NWA_DELAYED_SIMULATION:
 				return reduceNwaDelayedSimulation(automaton, factory);
-				
+			
 			case SHRINK_NWA:
 				return shrinkNwa(automaton, factory);
-				
+			
 			case BUCHI_REDUCE:
 				return buchiReduce(automaton, factory);
-				
+			
+			case COMPLEMENT:
+				return complement(automaton, factory);
+			
 			default:
 				throw new IllegalArgumentException("Unknown operation.");
 		}
@@ -117,14 +127,14 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	
 	/**
 	 * @param automaton
-	 *            automaton
+	 *            The automaton.
 	 * @param factory
 	 *            state factory
 	 * @return new <code>MinimizeNwaMaxSAT()</code> instance
 	 * @throws Throwable
 	 *             when error occurs
 	 */
-	public IOperation<LETTER, STATE> minimizeNwaMaxSAT(
+	public IOperation<LETTER, STATE> minimizeNwaMaxSat(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final IStateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
@@ -134,14 +144,14 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	
 	/**
 	 * @param automaton
-	 *            automaton
+	 *            The automaton.
 	 * @param factory
 	 *            state factory
 	 * @return new <code>MinimizeNwaMaxSAT2()</code> instance
 	 * @throws Throwable
 	 *             when error occurs
 	 */
-	public IOperation<LETTER, STATE> minimizeNwaMaxSAT2(
+	public IOperation<LETTER, STATE> minimizeNwaMaxSat2(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final IStateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
@@ -151,7 +161,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	
 	/**
 	 * @param automaton
-	 *            automaton
+	 *            The automaton.
 	 * @param factory
 	 *            state factory
 	 * @return new <code>ReduceNwaDirectSimulation()</code> instance
@@ -168,7 +178,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	
 	/**
 	 * @param automaton
-	 *            automaton
+	 *            The automaton.
 	 * @param factory
 	 *            state factory
 	 * @return new <code>ReduceNwaDelayedSimulation()</code> instance
@@ -185,7 +195,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	
 	/**
 	 * @param automaton
-	 *            automaton
+	 *            The automaton.
 	 * @param factory
 	 *            state factory
 	 * @return new <code>ReduceNwaDirectSimulation()</code> instance
@@ -202,7 +212,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	
 	/**
 	 * @param automaton
-	 *            automaton
+	 *            The automaton.
 	 * @param factory
 	 *            state factory
 	 * @return new <code>BuchiReduce()</code> instance
@@ -215,5 +225,19 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveDeadEnds<LETTER, STATE>(mServices, automaton).getResult();
 		return new BuchiReduce<LETTER, STATE>(mServices, factory, preprocessed);
+	}
+	
+	/**
+	 * @param automaton
+	 *            The automaton.
+	 * @param factory
+	 *            state factory
+	 * @return new {@code Complement()} instance
+	 * @throws Throwable
+	 *             when error occurs
+	 */
+	public IOperation<LETTER, STATE> complement(final INestedWordAutomaton<LETTER, STATE> automaton,
+			final IStateFactory<STATE> factory) throws Throwable {
+		return new Complement<>(mServices, factory, automaton);
 	}
 }
