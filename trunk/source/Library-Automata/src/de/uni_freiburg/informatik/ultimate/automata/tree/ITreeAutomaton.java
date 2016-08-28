@@ -8,9 +8,9 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 
 /**
  * Interface to create a tree automaton
- * 
- * @author grugelt@uni-freiburg.de
+ * @author mostafa.amin93@gmail.com, grugelt@uni-freiburg.de
  */
+
 public interface ITreeAutomaton<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
 
 	
@@ -52,7 +52,7 @@ public interface ITreeAutomaton<LETTER, STATE> extends IAutomaton<LETTER, STATE>
 	
 	/**
 	 * 
-	 * @return Get the 
+	 * @return Get the rules of the automaton.
 	 */
 	public Iterable<TreeAutomatonRule<LETTER, STATE>> getRules();
 }

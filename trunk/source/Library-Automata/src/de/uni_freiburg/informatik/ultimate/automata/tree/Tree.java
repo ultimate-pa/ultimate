@@ -5,9 +5,9 @@ import java.util.List;
 
 /**
  * Class to create a tree for the tree automaton.
- * @author grugelt@uni-freiburg.de
+ * @author mostafa.amin93@gmail.com, grugelt@uni-freiburg.de
  */
-public class Tree<LETTER> implements ITreeRun<LETTER> {
+public class Tree<LETTER> {
 
 	private final List<Tree<LETTER>> children;
 	private final LETTER symbol;
@@ -17,36 +17,26 @@ public class Tree<LETTER> implements ITreeRun<LETTER> {
 		this.symbol = symbol;
 	}
 	
-	
 	public Tree(LETTER symbol, List<Tree<LETTER>> children) {
-		this.children = children;
+		this.children = new ArrayList<Tree<LETTER>>();
+		for (Tree<LETTER> child : children) {
+			if (child != null && child.symbol != null) {
+				this.children.add(child);
+			}
+		}
 		this.symbol = symbol;
-	}
-	
-	public void addChild(Tree<LETTER> child) {
-		children.add(child);
 	}
 	
 	public List<Tree<LETTER>> getChildren() {
 		return this.children;
 	}
-	
 
 	public String toString() {
 		String res = symbol.toString();
 		if (!getChildren().isEmpty()) {
-			res += " ( ";
-			for (Tree<LETTER> child : getChildren()) {
-				res += child.toString() + ", ";
-			}
-			res += " ) ";
+			res += getChildren();
 		}
 		return res;
-	}
-
-	@Override
-	public LETTER getRoot() {
-		return symbol;
 	}
 	
  }

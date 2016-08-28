@@ -8,14 +8,16 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 
 public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
-	private final ITreeAutomaton<LETTER, STATE> tree;
+	private final ITreeAutomaton<LETTER, STATE> treeAutomaton;
+	protected final ITreeAutomaton<LETTER, STATE> result;
 	
-	protected final ITreeAutomaton<LETTER, STATE> res;
+	private final StateFactory<STATE> stateFactory;
 	
-	public Complement(final ITreeAutomaton<LETTER, STATE> tree) {
-		this.tree = tree;
+	public Complement(final ITreeAutomaton<LETTER, STATE> tree, StateFactory<STATE> factory) {
+		treeAutomaton = tree;
+		stateFactory = factory;
 		
-		this.res = computeResult();
+		result = computeResult();
 	}
 	@Override
 	public String operationName() {
@@ -32,22 +34,22 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return "Exiting complementing";
 	}
 	
-	private TreeAutomatonBU<LETTER, STATE> computeResult() {
-		final Determinize<LETTER, STATE> op = new Determinize<LETTER, STATE>(tree);
-		final TreeAutomatonBU<LETTER, STATE> res = (TreeAutomatonBU<LETTER, STATE>) op.res;
+	private ITreeAutomaton<LETTER, STATE> computeResult() {
+		final Determinize<LETTER, STATE> op = new Determinize<LETTER, STATE>(treeAutomaton, stateFactory);
+		final TreeAutomatonBU<LETTER, STATE> res = (TreeAutomatonBU<LETTER, STATE>) op.getResult();
 		res.complementFinals();
 		
 		return res;
 	}
+	
 	@Override
-	public Object getResult() {
-		return res;
+	public ITreeAutomaton<LETTER, STATE> getResult() {
+		return result;
 	}
 
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		// TODO Auto-generated method stub
 		return false;
 	}
-
 }

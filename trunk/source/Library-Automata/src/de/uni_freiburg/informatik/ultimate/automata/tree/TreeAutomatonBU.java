@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.tree;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -19,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <LETTER> is the type of the alphabet.
  * @param <STATE> is the type of the states.
  * 
- * @author Mostafa M.A.
+ * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  */
 public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, STATE> {
 	
@@ -36,7 +35,10 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 		finalStates = new HashSet<STATE>();
 		states = new HashSet<STATE>();
 		initalStates = new HashSet<STATE>();
-		
+	}
+	
+	public void addRule(TreeAutomatonRule<LETTER, STATE> rule) {
+		addRule(rule.getLetter(), rule.getSource(), rule.getDest());
 	}
 	public void addRule(LETTER letter, List<STATE> src, STATE dest) {
 		// f(q1,...,qn) -> q
@@ -114,7 +116,6 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 	}
 	@Override
 	public boolean isFinalState(STATE state) {
-		// TODO Auto-generated method stub
 		return finalStates.contains(state);
 	}
 
@@ -229,6 +230,7 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 		}
 		finalStates = newFinals;
 	}
+	
 	public String stateString(STATE state) {
 		String res = state.toString();
 		if (initalStates.contains(state))
@@ -237,7 +239,7 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 			res += "*";
 		return res;
 	}
-	public String toString() {
+	public String DebugString() {
 		String statesString = "";
 		for (STATE state : states) {
 			statesString += stateString(state) + " ";
@@ -251,5 +253,56 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 			}
 		}
 		return statesString + "\n" + rulesString;
+	}
+	public String toString() {
+		
+		String alphabet = "";
+		for (LETTER letter : this.alphabet) {
+			if (!alphabet.isEmpty()) {
+				alphabet += " ";
+			}
+			alphabet += letter.toString();
+		}
+		
+		String states = "";
+		for (STATE state : this.states) {
+			if (!states.isEmpty()) {
+				states += " ";
+			}
+			states += state.toString();
+		}
+		
+		String initialStates = "";
+		for (STATE state : this.initalStates) {
+			if (!initialStates.isEmpty()) {
+				initialStates += " ";
+			}
+			initialStates += state.toString();
+		}
+		
+		String finalStates = "";
+		for (STATE state : this.finalStates) {
+			if (!finalStates.isEmpty()) {
+				finalStates += " ";
+			}
+			finalStates += state.toString();
+		}
+		
+		String transitionTable = "";
+		for (TreeAutomatonRule<LETTER, STATE> rule : getRules()) {
+			if (!transitionTable.isEmpty()) {
+				transitionTable += "\n";
+			}
+			String src = "";
+			for (STATE st : rule.getSource()) {
+				if (!src.isEmpty()) {
+					src += " ";
+				}
+				src += st.toString();
+			}
+			transitionTable += String.format("\t\t((%s) %s %s)", src, rule.getLetter(), rule.getDest());
+		}
+		return String.format("TreeAutomaton %s = {\n\talphabet = {%s},\n\tstates = {%s},\n\tinitialStates = {%s},\n\tfinalStates = {%s},\n\ttransitionTable = {\n%s\n\t}\n}", "ta" + this.hashCode() % 1000000 , alphabet, states, initialStates, finalStates, transitionTable);
+		
 	}
 }
