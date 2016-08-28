@@ -146,6 +146,7 @@ public class ChangeInitialStatesShrinker<LETTER, STATE> extends BridgeShrinker<P
 	@Override
 	public void noError(final INestedWordAutomaton<LETTER, STATE> newAutomaton) {
 		super.noError(newAutomaton);
+		mFactory.setAutomaton(mAutomatonBackup);
 		mPairs.remove(0);
 	}
 }
