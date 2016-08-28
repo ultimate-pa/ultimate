@@ -42,7 +42,7 @@ for i in {10..18};  do
 	color2 "Problem$i"
 	color3 "Running benchmarks"
 		
-	inputlength=22
+	inputlength=0
 	t=0
 	maxgrowth=1
 	while (( t < maxbenchmarktime )); do
@@ -54,7 +54,6 @@ for i in {10..18};  do
 		tprev="$t"
 		t="$(( tend - tstart ))"
 		if (( tprev > 0 )) && (( t > 0 )); then
-			(( n++ ))
 			growth=$(perl -e "print $t / $tprev")
 			if perl -e "exit !($growth > $maxgrowth)"; then
 				maxgrowth="$growth";
