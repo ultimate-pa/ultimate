@@ -154,7 +154,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 		 * TODO change last flag to 'true' to use the transitivity on-the-fly with path compression
 		 */
 		this(services, stateFactory, operand, addMapOldState2newState,
-				initialEquivalenceClasses, true, true, true, false, false);
+				initialEquivalenceClasses, true, false, false, false, false);
 	}
 	
 	/**
@@ -263,13 +263,17 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 			return result1;
 		}
 		
-		// check that automaton cannot be minimized by merging states (incomplete check!)
-		final int minimizedAgainSize =
-				new ShrinkNwa<LETTER, STATE>(mServices, stateFactory, getResult()).getResult().size();
-		final int resultSize = getResult().size();
-		if (resultSize != minimizedAgainSize) {
-			return new Pair<Boolean, String>(Boolean.FALSE, String.format(
-					"The result was still mergable from %d states to %d states.", resultSize, minimizedAgainSize));
+		if (!mUseTransitionHornClauses) {
+			// check that automaton cannot be minimized by merging states (incomplete check!)
+			final MinimizeSevpa<LETTER, STATE> minimizedAgain =
+					new MinimizeSevpa<LETTER, STATE>(mServices, getResult(), null, stateFactory, false);
+			final int minimizedAgainSize = minimizedAgain.getResult().size();
+					assert minimizedAgain.checkResult(stateFactory);
+			final int resultSize = getResult().size();
+			if (resultSize != minimizedAgainSize) {
+				return new Pair<Boolean, String>(Boolean.FALSE, String.format(
+						"The result was still mergable from %d states to %d states.", resultSize, minimizedAgainSize));
+			}
 		}
 		return new Pair<Boolean, String>(Boolean.TRUE, "");
 	}
