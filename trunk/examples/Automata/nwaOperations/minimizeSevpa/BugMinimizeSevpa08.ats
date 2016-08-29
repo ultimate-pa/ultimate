@@ -7,7 +7,7 @@ print(minimizeSevpaSize);
 assert(minimizeSevpaSize == 5633);
 int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
 print(shrinkNwaSize);
-assert(shrinkNwaSize == 2162);
+assert(shrinkNwaSize == 2161);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"call351" "call349" "call347" "call395" "call393" "call387" "call385" "call391" "call389" "call373" "call375" "call369" "call371" "call381" "call383" "call377" "call379" "call357" "call359" "call353" "call355" "call365" "call367" "call361" "call363" },
