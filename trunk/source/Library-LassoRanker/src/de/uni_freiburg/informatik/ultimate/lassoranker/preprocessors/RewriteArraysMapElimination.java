@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarF
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -66,8 +66,8 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 	private final ManagedScript mManagedScript;
 	private final Boogie2SmtSymbolTable mSymbolTable;
 	private final ReplacementVarFactory mReplacementVarFactory;
-	private final TransFormula mOriginalStem;
-	private final TransFormula mOriginalLoop;
+	private final UnmodifiableTransFormula mOriginalStem;
+	private final UnmodifiableTransFormula mOriginalLoop;
 	private final Set<IProgramVar> mModifiableGlobalsAtHonda;
 	private final SimplicationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
@@ -75,7 +75,7 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 	
 	public RewriteArraysMapElimination(final IUltimateServiceProvider services, final ManagedScript managedScript,
 			final Boogie2SmtSymbolTable symbolTable, final ReplacementVarFactory replacementVarFactory,
-			final TransFormula originalStem, final TransFormula originalLoop,
+			final UnmodifiableTransFormula originalStem, final UnmodifiableTransFormula originalLoop,
 			final Set<IProgramVar> modifiableGlobalsAtHonda, final SimplicationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final Set<Term> arrayIndexSupportingInvariants) {
 		mServices = services;

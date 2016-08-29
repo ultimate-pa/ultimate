@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRati
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
@@ -129,7 +129,7 @@ public class BasicEdge extends
 		if (originalEdge.getTransitionFormula() == null) {
 			return false;
 		}
-		final TransFormula tFormula = originalEdge.getTransitionFormula();
+		final UnmodifiableTransFormula tFormula = originalEdge.getTransitionFormula();
 		return checkBoogieVarSetForOldVar(tFormula.getAssignedVars())
 				|| checkBoogieVarSetForOldVar(tFormula.getInVars().keySet())
 				|| checkBoogieVarSetForOldVar(tFormula.getOutVars().keySet());

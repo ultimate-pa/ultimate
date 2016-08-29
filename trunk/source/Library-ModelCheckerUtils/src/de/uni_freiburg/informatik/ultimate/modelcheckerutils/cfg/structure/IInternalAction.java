@@ -26,14 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Classes that implement this interface represent an {@link IAction} which
  * <ul>
  * <li> does not change the context/procedure, or
  * <li> does change the context/procedure but all information about the 
- * context switch are encoded in a single {@link TransFormula}.
+ * context switch are encoded in a single {@link UnmodifiableTransFormula}.
  * </ul> 
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -44,5 +44,5 @@ public interface IInternalAction extends IAction {
 	 * @return Transformula which defines how the system/program's variables 
 	 * are modified while executing this action.
 	 */
-	public TransFormula getTransformula();
+	public UnmodifiableTransFormula getTransformula();
 }

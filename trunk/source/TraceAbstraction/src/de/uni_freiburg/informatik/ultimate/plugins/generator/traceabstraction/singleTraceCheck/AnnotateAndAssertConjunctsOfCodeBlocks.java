@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryNumericRelation;
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCodeBlocks {
 	
-	protected final NestedFormulas<TransFormula, IPredicate> mNestedFormulas;
+	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mNestedFormulas;
 	private final Map<Term,Term> mAnnotated2Original = new HashMap<Term,Term>();
 	private final SplitEqualityMapping mSplitEqualityMapping = new SplitEqualityMapping();
 	private final SmtManager mSmtManagerPredicates;
@@ -65,7 +65,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 
 	public AnnotateAndAssertConjunctsOfCodeBlocks(SmtManager smtManager, 
 			NestedFormulas<Term, Term> nestedSSA, 
-			NestedFormulas<TransFormula, IPredicate> nestedFormulas, ILogger logger,
+			NestedFormulas<UnmodifiableTransFormula, IPredicate> nestedFormulas, ILogger logger,
 			SmtManager smtManagerPredicates) {
 		super(smtManager, nestedSSA,logger);
 		mNestedFormulas = nestedFormulas;

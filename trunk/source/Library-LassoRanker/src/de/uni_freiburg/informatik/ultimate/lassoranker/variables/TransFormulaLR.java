@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -107,7 +107,7 @@ public class TransFormulaLR implements Serializable {
 	 * all existing in- and outVars in the process.
 	 * @param oldTf the TransFormula
 	 */
-	public static TransFormulaLR buildTransFormula(final TransFormula oldTf,
+	public static TransFormulaLR buildTransFormula(final UnmodifiableTransFormula oldTf,
 			final ReplacementVarFactory replacementVarFactory, final ManagedScript mgdScript) {
 		// construct copies of auxVars
 		final Set<TermVariable> auxVars = new HashSet<>();

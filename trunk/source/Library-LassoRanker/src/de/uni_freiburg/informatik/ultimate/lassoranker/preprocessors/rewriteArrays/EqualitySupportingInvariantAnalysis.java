@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
@@ -86,8 +86,8 @@ public class EqualitySupportingInvariantAnalysis {
 	private final Set<Doubleton<Term>> mEqualDoubletons = new HashSet<>();
 	private final Set<Doubleton<Term>> mUnknownDoubletons = new HashSet<>();
 	
-	private final TransFormula mOriginalStem;
-	private final TransFormula mOriginalLoop;
+	private final UnmodifiableTransFormula mOriginalStem;
+	private final UnmodifiableTransFormula mOriginalLoop;
 	private final Set<IProgramVar> mModifiableGlobalsAtStart;
 	private final Set<IProgramVar> mModifiableGlobalsAtHonda;
 	
@@ -105,8 +105,8 @@ public class EqualitySupportingInvariantAnalysis {
 	public EqualitySupportingInvariantAnalysis(final Set<Doubleton<Term>> doubletons,
 			final Boogie2SmtSymbolTable symbolTable, 
 			final Script script, 
-			final TransFormula originalStem,
-			final TransFormula originalLoop, final Set<IProgramVar> modifiableGlobalsAtHonda) {
+			final UnmodifiableTransFormula originalStem,
+			final UnmodifiableTransFormula originalLoop, final Set<IProgramVar> modifiableGlobalsAtHonda) {
 		super();
 		mSymbolTable = symbolTable;
 		mScript = script;

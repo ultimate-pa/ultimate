@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Edge in a recursive control flow graph that represents a procedure call.
@@ -97,7 +97,7 @@ public class Call extends CodeBlock implements ICallAction {
 	}
 
 	@Override
-	public TransFormula getLocalVarsAssignment() {
+	public UnmodifiableTransFormula getLocalVarsAssignment() {
 		return getTransitionFormula();
 	}
 

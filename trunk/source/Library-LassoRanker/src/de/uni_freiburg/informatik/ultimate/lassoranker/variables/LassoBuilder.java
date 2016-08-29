@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPrepro
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
@@ -99,8 +99,8 @@ public class LassoBuilder {
 	 * @param stem the stem transition
 	 * @param loop the loop transition
 	 */
-	public LassoBuilder(final ILogger logger, final Script script, final ManagedScript mgdScript, final TransFormula stem,
-			final TransFormula loop, final NlaHandling nlaHandling) {
+	public LassoBuilder(final ILogger logger, final Script script, final ManagedScript mgdScript, final UnmodifiableTransFormula stem,
+			final UnmodifiableTransFormula loop, final NlaHandling nlaHandling) {
 		assert script != null;
 		assert mgdScript != null;
 		mLogger = logger;

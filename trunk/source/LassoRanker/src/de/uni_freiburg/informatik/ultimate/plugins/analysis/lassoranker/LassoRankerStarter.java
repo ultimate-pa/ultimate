@@ -79,7 +79,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -156,14 +156,14 @@ public class LassoRankerStarter {
 		final ManagedScript script = mRootAnnot.getManagedScript();
 
 		final TermVariableRenamer tvr = new TermVariableRenamer(script);
-		TransFormula stemTF;
+		UnmodifiableTransFormula stemTF;
 		if (mStem == null) {
 			stemTF = null;
 		} else {
 			stemTF = constructTransformula(mStem);
 			stemTF = tvr.renameVars(stemTF, "Stem");
 		}
-		TransFormula loopTf = constructTransformula(mLoop);
+		UnmodifiableTransFormula loopTf = constructTransformula(mLoop);
 		loopTf = tvr.renameVars(loopTf, "Loop");
 
 		final Term[] axioms = mRootAnnot.getBoogie2SMT().getAxioms().toArray(new Term[0]);
@@ -262,7 +262,7 @@ public class LassoRankerStarter {
 		return overapproximations;
 	}
 
-	public TransFormula constructTransformula(final NestedWord<CodeBlock> nw) {
+	public UnmodifiableTransFormula constructTransformula(final NestedWord<CodeBlock> nw) {
 		final ManagedScript boogie2smt = mRootAnnot.getBoogie2SMT().getManagedScript();
 		final ModifiableGlobalVariableManager modGlobVarManager = mRootAnnot.getModGlobVarManager();
 		final boolean simplify = true;
@@ -365,7 +365,7 @@ public class LassoRankerStarter {
 		return templates.toArray(new RankingTemplate[0]);
 	}
 
-	private boolean isTerminationArgumentCorrect(final TerminationArgument arg, final TransFormula stemTF, final TransFormula loopTf) {
+	private boolean isTerminationArgumentCorrect(final TerminationArgument arg, final UnmodifiableTransFormula stemTF, final UnmodifiableTransFormula loopTf) {
 
 		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mSmtManager, mServices, mSimplificationTechnique, mXnfConversionTechnique);
 		final Set<IProgramVar> modifiableGlobals = mRootAnnot.getModGlobVarManager()

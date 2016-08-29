@@ -69,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
@@ -355,7 +355,7 @@ public class LassoChecker {
 			} else {
 				if (mStemFeasibility == TraceCheckResult.INFEASIBLE) {
 					assert (mTryTwofoldRefinement);
-					final TransFormula loopTF = computeLoopTF();
+					final UnmodifiableTransFormula loopTF = computeLoopTF();
 					mLoopTermination = checkLoopTermination(loopTF);
 					mConcatFeasibility = TraceCheckResult.UNCHECKED;
 					mLassoTermination = SynthesisResult.UNCHECKED;
@@ -372,7 +372,7 @@ public class LassoChecker {
 					if (mConcatFeasibility == TraceCheckResult.INFEASIBLE) {
 						mLassoTermination = SynthesisResult.UNCHECKED;
 						if (mTryTwofoldRefinement) {
-							final TransFormula loopTF = computeLoopTF();
+							final UnmodifiableTransFormula loopTF = computeLoopTF();
 							mLoopTermination = checkLoopTermination(loopTF);
 							if (mLoopTermination == SynthesisResult.TERMINATING) {
 								mContinueDirective = ContinueDirective.REFINE_BOTH;
@@ -388,7 +388,7 @@ public class LassoChecker {
 						}
 					} else {
 						// concat feasible
-						final TransFormula loopTF = computeLoopTF();
+						final UnmodifiableTransFormula loopTF = computeLoopTF();
 						// checking loop termination before we check lasso
 						// termination is a workaround.
 						// We want to avoid supporting invariants in possible
@@ -402,7 +402,7 @@ public class LassoChecker {
 							mContinueDirective = ContinueDirective.REFINE_BUCHI;
 							return;
 						} else {
-							final TransFormula stemTF = computeStemTF();
+							final UnmodifiableTransFormula stemTF = computeStemTF();
 							mLassoTermination = checkLassoTermination(stemTF, loopTF);
 							if (mLassoTermination == SynthesisResult.TERMINATING) {
 								mContinueDirective = ContinueDirective.REFINE_BUCHI;
@@ -496,7 +496,7 @@ public class LassoChecker {
 			return result;
 		}
 
-		private SynthesisResult checkLoopTermination(final TransFormula loopTF) throws IOException {
+		private SynthesisResult checkLoopTermination(final UnmodifiableTransFormula loopTF) throws IOException {
 			assert !mBspm.providesPredicates() : "termination already checked";
 			final boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula());
 			if (containsArrays) {
@@ -508,7 +508,7 @@ public class LassoChecker {
 			}
 		}
 
-		private SynthesisResult checkLassoTermination(final TransFormula stemTF, final TransFormula loopTF)
+		private SynthesisResult checkLassoTermination(final UnmodifiableTransFormula stemTF, final UnmodifiableTransFormula loopTF)
 				throws IOException {
 			assert !mBspm.providesPredicates() : "termination already checked";
 			assert loopTF != null;
@@ -546,10 +546,10 @@ public class LassoChecker {
 	/**
 	 * Compute TransFormula that represents the stem.
 	 */
-	protected TransFormula computeStemTF() {
+	protected UnmodifiableTransFormula computeStemTF() {
 		final NestedWord<CodeBlock> stem = mCounterexample.getStem().getWord();
 		try {
-			final TransFormula stemTF = computeTF(stem, mSimplifyStemAndLoop, true, false);
+			final UnmodifiableTransFormula stemTF = computeTF(stem, mSimplifyStemAndLoop, true, false);
 			return stemTF;
 		} catch (final ToolchainCanceledException tce) {
 			throw new ToolchainCanceledException(getClass(),
@@ -560,10 +560,10 @@ public class LassoChecker {
 	/**
 	 * Compute TransFormula that represents the loop.
 	 */
-	protected TransFormula computeLoopTF() {
+	protected UnmodifiableTransFormula computeLoopTF() {
 		final NestedWord<CodeBlock> loop = mCounterexample.getLoop().getWord();
 		try {
-			final TransFormula loopTF = computeTF(loop, mSimplifyStemAndLoop, true, false);
+			final UnmodifiableTransFormula loopTF = computeTF(loop, mSimplifyStemAndLoop, true, false);
 			return loopTF;
 		} catch (final ToolchainCanceledException tce) {
 			throw new ToolchainCanceledException(getClass(),
@@ -574,10 +574,10 @@ public class LassoChecker {
 	/**
 	 * Compute TransFormula that represents the NestedWord word.
 	 */
-	private TransFormula computeTF(final NestedWord<CodeBlock> word, final boolean simplify,
+	private UnmodifiableTransFormula computeTF(final NestedWord<CodeBlock> word, final boolean simplify,
 			final boolean extendedPartialQuantifierElimination, final boolean withBranchEncoders) {
 		final boolean toCNF = false;
-		final TransFormula tf = SequentialComposition.getInterproceduralTransFormula(mSmtManager.getBoogie2Smt().getManagedScript(),
+		final UnmodifiableTransFormula tf = SequentialComposition.getInterproceduralTransFormula(mSmtManager.getBoogie2Smt().getManagedScript(),
 				mModifiableGlobalVariableManager, simplify, extendedPartialQuantifierElimination, toCNF,
 				withBranchEncoders, mLogger, mServices, word.asList(), mXnfConversionTechnique,
 				mSimplificationTechnique);
@@ -664,7 +664,7 @@ public class LassoChecker {
 		return settings;
 	}
 
-	private SynthesisResult synthesize(final boolean withStem, TransFormula stemTF, final TransFormula loopTF,
+	private SynthesisResult synthesize(final boolean withStem, UnmodifiableTransFormula stemTF, final UnmodifiableTransFormula loopTF,
 			final boolean containsArrays) throws IOException {
 		if (mSmtManager.isLocked()) {
 			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
@@ -805,7 +805,7 @@ public class LassoChecker {
 	 * @throws IOException
 	 */
 	private TerminationArgument tryTemplatesAndComputePredicates(final boolean withStem, final LassoAnalysis la,
-			final List<RankingTemplate> rankingFunctionTemplates, final TransFormula stemTF, final TransFormula loopTF)
+			final List<RankingTemplate> rankingFunctionTemplates, final UnmodifiableTransFormula stemTF, final UnmodifiableTransFormula loopTF)
 			throws AssertionError, IOException {
 		final String hondaProcedure =
 				((ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure();
@@ -870,7 +870,7 @@ public class LassoChecker {
 		}
 	}
 
-	private String generateRunningTaskInfo(final TransFormula stemTF, final TransFormula loopTF, final boolean withStem,
+	private String generateRunningTaskInfo(final UnmodifiableTransFormula stemTF, final UnmodifiableTransFormula loopTF, final boolean withStem,
 			final RankingTemplate rft) {
 		return "applying " + rft.getName() + " template (degree " + rft.getDegree() + 
 				"), stem dagsize " + new DagSizePrinter(stemTF.getFormula()) + 

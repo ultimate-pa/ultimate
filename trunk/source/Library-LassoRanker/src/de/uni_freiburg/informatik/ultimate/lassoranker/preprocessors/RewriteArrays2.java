@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -84,8 +84,8 @@ public class RewriteArrays2 extends LassoPreprocessor {
 	private final ManagedScript mScript;
 
 	// private final boolean mSearchAdditionalSupportingInvariants;
-	private final TransFormula mOriginalStem;
-	private final TransFormula mOriginalLoop;
+	private final UnmodifiableTransFormula mOriginalStem;
+	private final UnmodifiableTransFormula mOriginalLoop;
 	private final Set<Term> mArrayIndexSupportingInvariants;
 	private final Set<IProgramVar> mModifiableGlobalsAtHonda;
 
@@ -95,8 +95,8 @@ public class RewriteArrays2 extends LassoPreprocessor {
 
 	private final boolean mOverapproximateByOmmitingDisjointIndices;
 
-	public RewriteArrays2(final boolean overapproximateByOmmitingDisjointIndices, final TransFormula originalStem,
-			final TransFormula originalLoop, final Set<IProgramVar> modifiableGlobalsAtHonda,
+	public RewriteArrays2(final boolean overapproximateByOmmitingDisjointIndices, final UnmodifiableTransFormula originalStem,
+			final UnmodifiableTransFormula originalLoop, final Set<IProgramVar> modifiableGlobalsAtHonda,
 			final IUltimateServiceProvider services, final Set<Term> arrayIndexSupportingInvariants,
 			final Boogie2SmtSymbolTable boogie2smt, final ManagedScript mgdScript, final ReplacementVarFactory ReplacementVarFactory,
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {

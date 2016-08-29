@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Default implementation of {@link IInternalAction}. 
@@ -34,15 +34,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
  *
  */
 public class BasicInternalAction extends AbstractBasicAction implements IInternalAction {
-	private final TransFormula mTransFormula;
+	private final UnmodifiableTransFormula mTransFormula;
 	
-	public BasicInternalAction(String preceedingProcedure, String succeedingProcedure, TransFormula transFormula) {
+	public BasicInternalAction(String preceedingProcedure, String succeedingProcedure, UnmodifiableTransFormula transFormula) {
 		super(preceedingProcedure, succeedingProcedure);
 		mTransFormula = transFormula;
 	}
 
 	@Override
-	public TransFormula getTransformula() {
+	public UnmodifiableTransFormula getTransformula() {
 		return mTransFormula;
 	}
 }
