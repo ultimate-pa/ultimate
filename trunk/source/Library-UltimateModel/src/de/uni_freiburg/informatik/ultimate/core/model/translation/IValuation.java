@@ -32,9 +32,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.model.translation;
 
-import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 
@@ -58,6 +58,5 @@ public interface IValuation {
 	 *            the current position on the failure path.
 	 * @return the values as Strings for the variables.
 	 */
-	Map<String, SimpleEntry<IType, List<String>>> getValuesForFailurePathIndex(int index);
-
+	Map<String, Entry<IType, List<String>>> getValuesForFailurePathIndex(final int index);
 }

@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -96,7 +97,7 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	public IValuation getValuation(final List<ITranslator<?, ?, ?, ?, ?, ?>> translatorSequence) {
 		return new IValuation() {
 			@Override
-			public Map<String, SimpleEntry<IType, List<String>>> getValuesForFailurePathIndex(final int index) {
+			public Map<String, Entry<IType, List<String>>> getValuesForFailurePathIndex(final int index) {
 				final ProgramState<Expression> ps = getProgramState(index);
 				if (ps == null) {
 					return getEmtpyProgramState();
@@ -105,14 +106,12 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 				}
 			}
 
-			public Map<String, SimpleEntry<IType, List<String>>> getEmtpyProgramState() {
+			public Map<String, Entry<IType, List<String>>> getEmtpyProgramState() {
 				return Collections.emptyMap();
 			}
 
-			public Map<String, SimpleEntry<IType, List<String>>>
-					translateProgramState(final ProgramState<Expression> ps) {
-				final Map<String, SimpleEntry<IType, List<String>>> result =
-						new HashMap<String, SimpleEntry<IType, List<String>>>();
+			public Map<String, Entry<IType, List<String>>> translateProgramState(final ProgramState<Expression> ps) {
+				final Map<String, Entry<IType, List<String>>> result = new HashMap<>();
 				for (final Expression var : ps.getVariables()) {
 					final String varString = backtranslationWorkaround(translatorSequence, var);
 					final List<String> valuesString = exprSet2StringList(ps.getValues(var));

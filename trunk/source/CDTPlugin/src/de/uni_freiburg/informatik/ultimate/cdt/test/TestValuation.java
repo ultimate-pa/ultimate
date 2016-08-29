@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
@@ -49,9 +50,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IValuation;
 public class TestValuation implements IValuation {
 
 	@Override
-	public Map<String, SimpleEntry<IType, List<String>>> getValuesForFailurePathIndex(final int index) {
-		final Map<String, SimpleEntry<IType, List<String>>> map =
-				new HashMap<String, SimpleEntry<IType, List<String>>>();
+	public Map<String, Entry<IType, List<String>>> getValuesForFailurePathIndex(final int index) {
+		final Map<String, Entry<IType, List<String>>> map = new HashMap<>();
 		switch (index) {
 		case 0:
 			map.put("x", new SimpleEntry<IType, List<String>>(BoogieType.TYPE_INT,
