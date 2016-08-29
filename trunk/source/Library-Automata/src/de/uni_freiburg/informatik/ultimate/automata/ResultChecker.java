@@ -34,8 +34,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsIncluded;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
@@ -355,15 +353,6 @@ public final class ResultChecker {
 		} else {
 			return (new RemoveUnreachable<LETTER, STATE>(services, nwa)).getResult();
 		}
-	}
-	
-	private static <LETTER, STATE> NestedLassoRun<LETTER, STATE> nwaBuchiLanguageInclusion(
-			final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> nwa1,
-			final INestedWordAutomaton<LETTER, STATE> nwa2)
-					throws AutomataLibraryException {
-		return (new BuchiIsIncluded<LETTER, STATE>(services, stateFactory, nwa1, nwa2)).getCounterexample();
 	}
 	
 	public static <LETTER, STATE> NestedLassoWord<LETTER> getRandomNestedLassoWord(
