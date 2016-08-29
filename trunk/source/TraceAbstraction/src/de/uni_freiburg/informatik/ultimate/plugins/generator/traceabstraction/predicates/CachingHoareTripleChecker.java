@@ -58,15 +58,15 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 	private final boolean mUnknownIfSomeExtendedCacheCheckIsUnknown = true;
 	
 	public CachingHoareTripleChecker(
-			IHoareTripleChecker protectedHoareTripleChecker,
-			PredicateUnifier predicateUnifer) {
+			final IHoareTripleChecker protectedHoareTripleChecker,
+			final PredicateUnifier predicateUnifer) {
 		super();
 		mComputingHoareTripleChecker = protectedHoareTripleChecker;
 		mPredicateUnifer = predicateUnifer;
 	}
 
 	@Override
-	public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
+	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
 		Validity result = mInternalCache.get(pre, act, succ);
 		if (result == null) {
 			result = extendedCacheCheckInternal(pre,act,succ);
@@ -78,11 +78,14 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 		return result;
 	}
 
-	private Validity extendedCacheCheckInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
+	private Validity extendedCacheCheckInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
 		boolean someResultWasUnknown = false;
 		{
 			final Set<IPredicate> strongerThanPre = mPredicateUnifer.getCoverageRelation().getCoveredPredicates(pre);
 			final Set<IPredicate> weakerThanSucc = mPredicateUnifer.getCoverageRelation().getCoveringPredicates(succ);
+//			if (strongerThanPre.size() * weakerThanSucc.size() > 100) {
+//				System.out.println("costly cache lookup: " + strongerThanPre.size() * weakerThanSucc.size());
+//			}
 			for (final IPredicate strengthenedPre : strongerThanPre) {
 				for (final IPredicate weakenedSucc : weakerThanSucc) {
 					final Validity result = mInternalCache.get(strengthenedPre, act, weakenedSucc);
@@ -108,6 +111,9 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 		{
 			final Set<IPredicate> weakerThanPre = mPredicateUnifer.getCoverageRelation().getCoveringPredicates(pre);
 			final Set<IPredicate> strongerThanSucc = mPredicateUnifer.getCoverageRelation().getCoveredPredicates(succ);
+			if (weakerThanPre.size() * strongerThanSucc.size() > 100) {
+				System.out.println("costly cache lookup: " + weakerThanPre.size() * strongerThanSucc.size());
+			}
 			for (final IPredicate weakenedPre : weakerThanPre) {
 				for (final IPredicate strengthenedSucc : strongerThanSucc) {
 					final Validity result = mInternalCache.get(weakenedPre, act, strengthenedSucc);
@@ -138,13 +144,13 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	@Override
-	public Validity checkCall(IPredicate pre, ICallAction act, IPredicate succ) {
+	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
 		return mComputingHoareTripleChecker.checkCall(pre, act, succ);
 	}
 
 	@Override
-	public Validity checkReturn(IPredicate preLin, IPredicate preHier,
-			IReturnAction act, IPredicate succ) {
+	public Validity checkReturn(final IPredicate preLin, final IPredicate preHier,
+			final IReturnAction act, final IPredicate succ) {
 		return mComputingHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
 	}
 	
