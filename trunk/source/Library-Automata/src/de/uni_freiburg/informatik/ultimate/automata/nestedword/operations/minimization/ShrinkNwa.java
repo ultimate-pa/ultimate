@@ -122,6 +122,8 @@ public class ShrinkNwa<LETTER, STATE>
 	private final OutgoingHelperInternal mOutInternal;
 	private final OutgoingHelperCall mOutCall;
 	
+	private final boolean mNondeterministicTransitions;
+	
 	/* optional random splits before the return split to keep matrices small */
 	// true iff before the first return split some random splits are executed
 	private boolean mRandomReturnSplit;
@@ -209,7 +211,7 @@ public class ShrinkNwa<LETTER, STATE>
 			final boolean firstReturnSplit, final int firstReturnSplitAlternative, final boolean splitAllCallPreds,
 			final boolean returnSplitNaive) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null, false, false, splitOutgoing, splitRandomSize, firstReturnSplit,
-				firstReturnSplitAlternative, splitAllCallPreds, returnSplitNaive);
+				firstReturnSplitAlternative, splitAllCallPreds, returnSplitNaive, true);
 	}
 	
 	/**
@@ -254,7 +256,8 @@ public class ShrinkNwa<LETTER, STATE>
 			final boolean firstReturnSplit,
 			final int firstReturnSplitAlternative,
 			final boolean splitAllCallPreds,
-			final boolean returnSplitNaive)
+			final boolean returnSplitNaive,
+			final boolean nondeterministicTransitions)
 					throws AutomataOperationCanceledException {
 		super(services, stateFactory, "shrinkNwa", operand);
 		if (STAT_RETURN_SIZE) {
@@ -331,6 +334,8 @@ public class ShrinkNwa<LETTER, STATE>
 		if (mReturnSplitNaive) {
 			mReturnSplitCorrectnessEcs = new HashSet<EquivalenceClass>();
 		}
+		
+		mNondeterministicTransitions = nondeterministicTransitions;
 		
 		// must be the last part of the constructor
 		minimize(isFiniteAutomaton, equivalenceClasses, addMapOldState2newState);

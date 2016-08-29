@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -184,7 +185,7 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 			final MinimizationMethods[] pattern, final int iteration)
 			throws AutomataLibraryException {
 		super(services, stateFactory, "MinimizeNwaCombinator", operand);
-		mPattern = pattern;
+		mPattern = Arrays.copyOf(pattern, pattern.length);
 		mCounter = iteration % mPattern.length;
 		switch (mPattern[mCounter]) {
 			case MINIMIZE_SEVPA:
@@ -195,7 +196,7 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 			case SHRINK_NWA:
 				mCurrent = new ShrinkNwa<LETTER, STATE>(services, stateFactory,
 						operand, partition, addMapOldState2newState, false,
-						false, ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0, false, false);
+						false, ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0, false, false, true);
 				break;
 			
 			case NONE:
@@ -214,11 +215,8 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 	 * @param indexForMinimization
 	 *            index at which the minimization should actually be used
 	 * @return pattern
-	 * @throws IllegalArgumentException
-	 *             if the index is less than or equal to <tt>0</tt>
 	 */
-	private static MinimizationMethods[] getEveryNthPattern(final int indexForMinimization)
-			throws IllegalArgumentException {
+	private static MinimizationMethods[] getEveryNthPattern(final int indexForMinimization) {
 		if (indexForMinimization <= 0) {
 			throw new IllegalArgumentException("The minimization index must be strictly positive.");
 		}

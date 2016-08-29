@@ -302,8 +302,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected LBool isCounterexampleFeasible() {
 		final PredicateUnifier predicateUnifier =
-				new PredicateUnifier(mServices, mSmtManager.getManagedScript(), 
-						mSmtManager.getPredicateFactory(), mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), 
+				new PredicateUnifier(mServices, mSmtManager.getManagedScript(),
+						mSmtManager.getPredicateFactory(), mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(),
 						mSimplificationTechnique, mXnfConversionTechnique);
 		final IPredicate truePredicate = predicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
@@ -805,7 +805,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			case SHRINK_NWA: {
 				newAbstractionRaw = new ShrinkNwa<CodeBlock, IPredicate>(services,
 						predicateFactoryRefinement, oldAbstraction, partition, mComputeHoareAnnotation, false, false,
-						ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0, false, false);
+						ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0, false, false, true);
 				wasMinimized = true;
 				break;
 			}
