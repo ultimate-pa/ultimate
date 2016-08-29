@@ -51,7 +51,6 @@ public class CachingHoareTripleChecker_Iterative extends CachingHoareTripleCheck
 			new NestedMap3<>();
 	private final NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, Validity> mReturnCache =
 			new NestedMap4<>();
-	private final boolean mUnknownIfSomeExtendedCacheCheckIsUnknown = true;
 	
 	public CachingHoareTripleChecker_Iterative(
 			final IUltimateServiceProvider services, final IHoareTripleChecker protectedHoareTripleChecker,
