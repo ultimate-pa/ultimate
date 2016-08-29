@@ -50,7 +50,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IValuation;
 public class TestValuation implements IValuation {
 
 	@Override
-	public Map<String, Entry<IType, List<String>>> getValuesForFailurePathIndex(final int index) {
+	public Map<String, Entry<de.uni_freiburg.informatik.ultimate.core.model.models.IType, List<String>>>
+			getValuesForFailurePathIndex(final int index) {
 		final Map<String, Entry<IType, List<String>>> map = new HashMap<>();
 		switch (index) {
 		case 0:
