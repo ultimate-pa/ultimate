@@ -112,66 +112,21 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 
 	private static final String[] INPUT = new String[] {
-			/* ULTIMATE repo */
-//			"examples/programs/abstractInterpretation/congruence.bpl",
-			"examples/programs/abstractInterpretation/regression",
+//			"examples/programs/abstractInterpretation/regression",
 //			"examples/programs/abstractInterpretation/regression/all",
-//			"examples/programs/abstractInterpretation/regression/all/procedure-Call-bools.bpl",
-//			"examples/programs/abstractInterpretation/regression/all/loop-nested-unsafe.bpl",
-//			"examples/programs/abstractInterpretation/regression/globals-easy-1-safe.bpl",
-//			"examples/programs/abstractInterpretation/regression/all/loop-110517_Martin01.bpl",
-//			"examples/programs/abstractInterpretation/regression/loop-procedure.bpl",
-
-//			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
-//			"examples/programs/abstractInterpretation/regression/bla.bpl",
-//			"examples/programs/abstractInterpretation/regression/modulo-assume-bug-npe.bpl",
-//			"examples/programs/abstractInterpretation/regression/division-zero-1.bpl",
-//			"examples/programs/abstractInterpretation/regression/division-inequality-bug.bpl",
-//			"examples/programs/abstractInterpretation/regression/division-inequality-bug-2.bpl",
-//			"examples/programs/abstractInterpretation/regression/modulo-assume-bug.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-Collatz.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count_incorrect.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
-//			"examples/programs/abstractInterpretation/regression/varupdate-multiplication.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
-
-//			"examples/programs/abstractInterpretation/regression/unary-minus-bug.bpl",
-//			"examples/programs/abstractInterpretation/regression/loop-CountTillBound-2.bpl",
-//			"examples/programs/abstractInterpretation/regression/loop-nested-assume-safe.bpl",
-//			"examples/programs/abstractInterpretation/regression/loop-procedure.bpl",
-//			"examples/programs/abstractInterpretation/regression/procedure-Loops.bpl",
-//			"examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-termination.cil.c"
-//			"examples/svcomp/bitvector-loops/overflow_false-unreach-call1.i",
-//			"examples/svcomp/bitvector-loops/diamond_false-unreach-call2.i",
-//			"examples/svcomp/product-lines/email_spec11_productSimulator_false-unreach-call.cil.c",
-//			"examples/svcomp/product-lines/email_spec4_product32_false-unreach-call.cil.c",
-//			"examples/svcomp/loop-invgen/down_true-unreach-call.i",
-//			"examples/svcomp/loop-invgen/",
-//			"examples/svcomp/loops/",
-//			"examples/svcomp/loop-lit/",
-//			"examples/svcomp/loop-new/",
-//			"examples/svcomp/loop-acceleration/",
-//			"examples/svcomp/loop-new/nested_true-unreach-call.i",
-//			"examples/svcomp/loop-lit/css2003_true-unreach-call.c.i",
-//			"examples/svcomp/loop-invgen/string_concat-noarr_true-unreach-call.i",
-//			"examples/programs/toy/tooDifficultLoopInvariant/GasCake01.bpl",
-//			"examples/programs/toy/tooDifficultLoopInvariant/GasCake01HardcodedInput.bpl",
-//			"examples/programs/toy/tooDifficultLoopInvariant/GasCake01InvariantCheck.bpl",
-//			"examples/programs/toy/tooDifficultLoopInvariant/GasCakeWithJohoFractions01.bpl",
-//			"examples/programs/toy/tooDifficultLoopInvariant/GasCakeWithJohoFractions01FixedInput.bpl",
-//			"examples/programs/toy/tooDifficultLoopInvariant/GasCakeWithJohoFractions01HardcodedInput.bpl",
-//			"examples/programs/toy/tooDifficultLoopInvariant/GasCakeWithJohoFractions01InvariantCheck.bpl",
+			"examples/programs/abstractInterpretation/regression/all/loop-nested-assume-unsafe.bpl",
+			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
+			"examples/programs/abstractInterpretation/regression/loop-nested-assume-safe.bpl",
+			"examples/programs/abstractInterpretation/regression/procedure-Loops.bpl",
+			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
 	};
 
 	// @formatter:on
 
 	@Override
 	protected long getTimeout() {
-		// return 30 * 1000 * 1000;
+		// return 90 * 1000 * 1000;
 		return 90 * 1000;
-		// return 60 * 1000 * 10;
 	}
 
 	@Override
