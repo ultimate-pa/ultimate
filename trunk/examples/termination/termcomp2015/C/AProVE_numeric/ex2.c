@@ -5,7 +5,7 @@ int rec2(int j);
 int rec1(int i) {
 	if(i <= 0)
 		return 0;
-	rec2(rec1(i+1));	
+	return rec2(rec1(i+1));
 }
 
 int rec2(int j) {

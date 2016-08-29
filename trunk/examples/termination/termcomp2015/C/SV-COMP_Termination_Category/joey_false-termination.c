@@ -12,7 +12,8 @@ int rec(int x) {
 	} else if (x%2 == 0) {
       return rec(x/2);
     } else {
-      return rec(++x) + rec(--x);
+      int store = rec(++x);
+      return store + rec(--x);
     }
 }
 

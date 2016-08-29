@@ -25,7 +25,7 @@ int main() {
     while (x + y >= 0 && x <= n) {
         x = 2*x + y;
         y = z;
-        z = z++;
+        z = z + 1;
     }
     return 0;
 }
