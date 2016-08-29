@@ -4,9 +4,9 @@
 # All numbers are passes as one argument. Example: thisScript "10 11 12"
 numseq="$([ -z "$1" ] && seq -s' ' 10 18 || echo "$1")"
 # Maximal benchmark time (in seconds) per run (actual benchmark takes longer)
-maxbenchmarktime="$(( 20 ))"
+maxbenchmarktime="$(( 6 ))"
 # Desired runtime (in seconds) per problem
-targettime="$(( 120  ))"
+targettime="$(( 36 ))"
 
 function logdate {
 	printf "%s    " "$(date +'%Y-%m-%d %H:%M:%S')"
@@ -63,7 +63,7 @@ for i in $numseq;  do
 		(( inputlength++ ))
 		logdate; echo "Benchmark with input length $inputlength"
 		tstart="$(timeseconds)"
-		./Problem"$i" "$inputlength" &> /dev/null
+		./Problem"$i" "$inputlength" > /dev/null
 		tend="$(timeseconds)"
 		tprev="$t"
 		t="$(( tend - tstart ))"
@@ -89,7 +89,7 @@ for i in $numseq;  do
 
 	logdate; echo "Running with input length $inputlength ..."
 	tstart="$(timeseconds)"
-	./Problem"$i" "$inputlength" 1> /dev/null 2> output"$i".txt
+	./Problem"$i" "$inputlength" > output"$i".txt
 	tend="$(timeseconds)"
 	t="$(( tend - tstart ))"
 	logdate; echo "... done (took $(s2hms $t))"
