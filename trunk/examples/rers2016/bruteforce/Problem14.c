@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
                 int result = loop();
                 if (ERR >= 0) {
                         if (ERR != ERR_INVALID_INPUT) {
-                                fprintf(stderr," -> ");
+                                fprintf(stderr,"-> ");
                                 print_inputs();
                         }
                         // Skip all sequences with the same prefix
