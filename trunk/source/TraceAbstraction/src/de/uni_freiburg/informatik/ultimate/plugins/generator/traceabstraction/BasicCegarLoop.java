@@ -96,6 +96,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.SelfloopDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker_Iterative;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
@@ -488,7 +489,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		} else {
 			final IHoareTripleChecker ehtc = getEfficientHoareTripleChecker(mServices, mPref.getHoareTripleChecks(),
 					mSmtManager, mModGlobVarManager, mInterpolantGenerator.getPredicateUnifier());
-			htc = new CachingHoareTripleChecker(ehtc, mInterpolantGenerator.getPredicateUnifier());
+			htc = new CachingHoareTripleChecker_Iterative(mServices, ehtc, mInterpolantGenerator.getPredicateUnifier());
 		}
 		try {
 			if (DIFFERENCE_INSTEAD_OF_INTERSECTION) {
