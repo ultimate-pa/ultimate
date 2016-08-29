@@ -1,0 +1,42 @@
+// The first automaton shows a bug in ReachableStatesCopy, namely that the sink
+// state was not made the initial state when no other state was initial.
+// 
+// The second automaton shows a bug in DownStateConsistencyCheck, namely that
+// the empty stack symbol was tried to be removed but due to strange creation
+// the String objects were not equal and hence the removal did nothing.
+// 
+// author: Christian Schilling (schillic@informatik.uni-freiburg.de)
+// date: 2016-08-29
+
+complement(nwa1);
+complement(nwa2);
+
+NestedWordAutomaton nwa1 = (
+	callAlphabet = {},
+	internalAlphabet = {"a"},
+	returnAlphabet = {},
+	states = {},
+	initialStates = {},
+	finalStates = {},
+	callTransitions = {
+	},
+	internalTransitions = {
+	},
+	returnTransitions = {
+	}
+);
+
+NestedWordAutomaton nwa2 = (
+	callAlphabet = {},
+	internalAlphabet = {},
+	returnAlphabet = {},
+	states = {},
+	initialStates = {},
+	finalStates = {},
+	callTransitions = {
+	},
+	internalTransitions = {
+	},
+	returnTransitions = {
+	}
+);
