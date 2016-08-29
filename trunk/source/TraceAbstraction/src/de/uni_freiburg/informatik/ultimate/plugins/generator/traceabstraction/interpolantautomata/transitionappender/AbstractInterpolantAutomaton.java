@@ -190,7 +190,11 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 
 	@Override
 	public final String sizeInformation() {
-		return mInputInterpolantAutomaton.sizeInformation();
+		if (mInputInterpolantAutomaton == null) {
+			return "yet neither states nor transitions";
+		} else {
+			return mInputInterpolantAutomaton.sizeInformation();
+		}
 	}
 
 	@Override
