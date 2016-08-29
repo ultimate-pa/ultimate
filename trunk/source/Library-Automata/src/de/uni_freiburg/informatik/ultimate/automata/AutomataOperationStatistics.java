@@ -89,18 +89,52 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	 *            second key
 	 * @param resultKey
 	 *            result key
-	 * @param invert true iff percentage should be inverted, i.e., instead of <tt>x</tt> we add <tt>100 - x</tt>
 	 */
 	public void addPercentageData(final StatisticsType fstBaseKey, final StatisticsType sndBaseKey,
+			final StatisticsType resultKey) {
+		addPercentageDataHelper(fstBaseKey, sndBaseKey, resultKey, false);
+	}
+	
+	/**
+	 * Adds another key-value pair with the content being the percentage of the first key <tt>sndBaseKey</tt> wrt. the
+	 * second key <tt>fstBaseKey</tt>.
+	 * <p>
+	 * The percentage is inverted, i.e., instead of <tt>x</tt> we add <tt>100 - x</tt>.
+	 * 
+	 * @param fstBaseKey
+	 *            first key
+	 * @param sndBaseKey
+	 *            second key
+	 * @param resultKey
+	 *            result key
+	 */
+	public void addPercentageDataInverted(final StatisticsType fstBaseKey, final StatisticsType sndBaseKey,
+			final StatisticsType resultKey) {
+		addPercentageDataHelper(fstBaseKey, sndBaseKey, resultKey, true);
+	}
+	
+	/**
+	 * Adds another key-value pair with the content being the percentage of the first key <tt>sndBaseKey</tt> wrt. the
+	 * second key <tt>fstBaseKey</tt>.
+	 * 
+	 * @param fstBaseKey
+	 *            first key
+	 * @param sndBaseKey
+	 *            second key
+	 * @param resultKey
+	 *            result key
+	 * @param invert true iff percentage should be inverted, i.e., instead of <tt>x</tt> we add <tt>100 - x</tt>
+	 */
+	private void addPercentageDataHelper(final StatisticsType fstBaseKey, final StatisticsType sndBaseKey,
 			final StatisticsType resultKey, final boolean invert) {
 		final int fst = getInteger(fstBaseKey);
-		final int snd = getInteger(sndBaseKey);
 		if (fst == 0) {
 			addKeyValuePair(resultKey, INVALID_PERCENTAGE);
 			return;
 		}
+		final int snd = getInteger(sndBaseKey);
 		final int percentageRaw = 100 * snd / fst;
-		final Integer percentage = invert ? 100 - percentageRaw : percentageRaw;
+		final Integer percentage = invert ? (100 - percentageRaw) : percentageRaw;
 		addKeyValuePair(resultKey, percentage);
 	}
 	

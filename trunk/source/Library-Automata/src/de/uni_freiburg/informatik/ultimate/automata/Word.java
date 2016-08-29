@@ -104,7 +104,7 @@ public class Word<LETTER> implements Iterable<LETTER> {
 		for (int i = 0; i < lengthWord2; i++) {
 			concatenationSymbols[lengthWord1 + i] = otherWord.getSymbol(i);
 		}
-		return new Word<LETTER>(concatenationSymbols);
+		return new Word<>(concatenationSymbols);
 	}
 	
 	@Override

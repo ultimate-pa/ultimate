@@ -183,7 +183,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		if (word instanceof NestedWord) {
 			return (NestedWord<LETTER>) word;
 		} else {
-			return new NestedWord<LETTER>(word);
+			return new NestedWord<>(word);
 		}
 	}
 	
@@ -204,7 +204,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * @return All call positions.
 	 */
 	private Set<Integer> computeCallPositions() {
-		final Set<Integer> result = new LinkedHashSet<Integer>();
+		final Set<Integer> result = new LinkedHashSet<>();
 		for (int i = 0; i < mNestingRelation.length; i++) {
 			if (isCallPosition(i)) {
 				result.add(i);
@@ -227,7 +227,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	}
 	
 	private SortedMap<Integer, LETTER> computePendingReturnPositions() {
-		final SortedMap<Integer, LETTER> result = new TreeMap<Integer, LETTER>();
+		final SortedMap<Integer, LETTER> result = new TreeMap<>();
 		for (int i = 0; i < mNestingRelation.length; i++) {
 			if (isPendingReturn(i)) {
 				result.put(i, mWord[i]);
@@ -464,7 +464,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		// copy word
 		final LETTER[] subwordAsArray = Arrays.copyOfRange(mWord, firstIndex, lastIndex + 1);
 		
-		return new NestedWord<LETTER>(subwordAsArray, newNestingRelation);
+		return new NestedWord<>(subwordAsArray, newNestingRelation);
 	}
 	
 	/**
@@ -529,7 +529,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		System.arraycopy(mWord, 0, concatWord, 0, mWord.length);
 		System.arraycopy(word2, 0, concatWord, mWord.length, word2.length);
 		
-		return new NestedWord<LETTER>(concatWord, concatNestingRelation);
+		return new NestedWord<>(concatWord, concatNestingRelation);
 	}
 	
 	/**

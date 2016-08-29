@@ -104,6 +104,6 @@ public abstract class UnaryNwaOperation<LETTER, STATE>
 			correct = false;
 		}
 		
-		return new Pair<Boolean, String>(correct, message);
+		return new Pair<>(correct, message);
 	}
 }

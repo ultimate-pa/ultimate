@@ -73,30 +73,30 @@ public final class Automaton2UltimateModel {
 					throws AutomataOperationCanceledException {
 		if (automaton instanceof INestedWordAutomatonSimple) {
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa = (INestedWordAutomatonSimple<LETTER, STATE>) automaton;
-			final NwaToUltimateModel<LETTER, STATE> transformer = new NwaToUltimateModel<LETTER, STATE>(services);
+			final NwaToUltimateModel<LETTER, STATE> transformer = new NwaToUltimateModel<>(services);
 			return transformer.getUltimateModelOfNwa(nwa);
 			
 		} else if (automaton instanceof IPetriNet) {
 			final IPetriNet<LETTER, STATE> net = (IPetriNet<LETTER, STATE>) automaton;
-			final PetriNetToUltimateModel<LETTER, STATE> transformer = new PetriNetToUltimateModel<LETTER, STATE>();
+			final PetriNetToUltimateModel<LETTER, STATE> transformer = new PetriNetToUltimateModel<>();
 			return transformer.getUltimateModelOfPetriNet(net);
 			
 		} else if (automaton instanceof BranchingProcess) {
 			final BranchingProcess<LETTER, STATE> branchingProcess = (BranchingProcess<LETTER, STATE>) automaton;
 			final BranchingProcessToUltimateModel<LETTER, STATE> transformer =
-					new BranchingProcessToUltimateModel<LETTER, STATE>();
+					new BranchingProcessToUltimateModel<>();
 			return transformer.getUltimateModelOfBranchingProcess(branchingProcess);
 			
 		} else if (automaton instanceof AlternatingAutomaton) {
 			final AlternatingAutomaton<LETTER, STATE> alternatingAutomaton =
 					(AlternatingAutomaton<LETTER, STATE>) automaton;
-			final AAToUltimateModel<LETTER, STATE> transformer = new AAToUltimateModel<LETTER, STATE>();
+			final AAToUltimateModel<LETTER, STATE> transformer = new AAToUltimateModel<>();
 			return transformer.getUltimateModelOfAA(alternatingAutomaton);
 			
 		} else if (automaton instanceof ITreeAutomaton) {
 			final ITreeAutomaton<LETTER, STATE> treeAutomaton = (ITreeAutomaton<LETTER, STATE>) automaton;
 			final TreeAutomatonToUltimateModel<LETTER, STATE> transformer =
-					new TreeAutomatonToUltimateModel<LETTER, STATE>();
+					new TreeAutomatonToUltimateModel<>();
 			return transformer.getUltimateModelOfAA(treeAutomaton);
 			
 		} else {

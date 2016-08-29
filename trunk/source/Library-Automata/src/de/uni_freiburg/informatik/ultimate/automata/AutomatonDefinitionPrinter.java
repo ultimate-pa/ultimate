@@ -430,7 +430,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			nwa = (INestedWordAutomaton<LETTER, STATE>) automaton;
 		} else {
 			try {
-				nwa = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, automaton);
+				nwa = new NestedWordAutomatonReachableStates<>(mServices, automaton);
 			} catch (final AutomataLibraryException e) {
 				throw new AssertionError("Timeout while preparing automaton for printing.");
 			}
@@ -626,7 +626,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		@Override
 		protected Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet, final char symbol) {
 			int counter = 0;
-			final Map<LETTER, String> alphabetMapping = new LinkedHashMap<LETTER, String>();
+			final Map<LETTER, String> alphabetMapping = new LinkedHashMap<>();
 			for (final LETTER letter : alphabet) {
 				alphabetMapping.put(letter, symbol + Integer.toString(counter));
 				counter++;
@@ -637,7 +637,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		@Override
 		protected Map<STATE, String> getStateMapping(final Collection<STATE> states) {
 			int counter = 0;
-			final Map<STATE, String> stateMapping = new LinkedHashMap<STATE, String>();
+			final Map<STATE, String> stateMapping = new LinkedHashMap<>();
 			for (final STATE state : states) {
 				stateMapping.put(state, 's' + Integer.toString(counter));
 				counter++;
@@ -658,7 +658,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		
 		@Override
 		protected Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet, final char symbol) {
-			final Map<LETTER, String> alphabetMapping = new HashMap<LETTER, String>();
+			final Map<LETTER, String> alphabetMapping = new HashMap<>();
 			for (final LETTER letter : alphabet) {
 				alphabetMapping.put(letter, quoteAndReplaceBackslashes(letter));
 			}
@@ -667,7 +667,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		
 		@Override
 		protected Map<STATE, String> getStateMapping(final Collection<STATE> states) {
-			final Map<STATE, String> stateMapping = new HashMap<STATE, String>();
+			final Map<STATE, String> stateMapping = new HashMap<>();
 			for (final STATE state : states) {
 				stateMapping.put(state, quoteAndReplaceBackslashes(state));
 			}
@@ -687,7 +687,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		
 		@Override
 		protected Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet, final char symbol) {
-			final Map<LETTER, String> alphabetMapping = new HashMap<LETTER, String>();
+			final Map<LETTER, String> alphabetMapping = new HashMap<>();
 			for (final LETTER letter : alphabet) {
 				alphabetMapping.put(letter,
 						quoteAndReplaceBackslashes(letter, Integer.toString(letter.hashCode() / sHashDivisor)));
@@ -825,7 +825,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		@Override
 		protected Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet) {
 			int counter = 0;
-			final Map<LETTER, String> alphabetMapping = new HashMap<LETTER, String>();
+			final Map<LETTER, String> alphabetMapping = new HashMap<>();
 			for (final LETTER letter : alphabet) {
 				alphabetMapping.put(letter, 'a' + Integer.toString(counter));
 				counter++;
@@ -859,7 +859,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		
 		@Override
 		protected Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet) {
-			final Map<LETTER, String> alphabetMapping = new HashMap<LETTER, String>();
+			final Map<LETTER, String> alphabetMapping = new HashMap<>();
 			for (final LETTER letter : alphabet) {
 				alphabetMapping.put(letter, quoteAndReplaceBackslashes(letter));
 			}
@@ -891,7 +891,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		@Override
 		protected Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet) {
 			int counter = 0;
-			final Map<LETTER, String> alphabetMapping = new HashMap<LETTER, String>();
+			final Map<LETTER, String> alphabetMapping = new HashMap<>();
 			for (final LETTER letter : alphabet) {
 				alphabetMapping.put(letter, quoteAndReplaceBackslashes(letter, Integer.toString(counter)));
 				counter++;
@@ -1134,9 +1134,9 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		public HanoiFormatWriter(final INestedWordAutomaton<LETTER, STATE> nwa) {
 			super(nwa);
 			if (USE_LABELS) {
-				mLetterConverter = new ToStringConverter<LETTER>();
+				mLetterConverter = new ToStringConverter<>();
 			} else {
-				mLetterConverter = new MapBasedConverter<LETTER, String>(mAlphabetMapping, "");
+				mLetterConverter = new MapBasedConverter<>(mAlphabetMapping, "");
 			}
 			doPrint();
 		}
@@ -1258,8 +1258,8 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		
 		public GoalFormatWriter(final INestedWordAutomaton<LETTER, STATE> nwa) {
 			super(nwa);
-			mLetterConverter = new MapBasedConverter<LETTER, String>(mAlphabetMapping, "");
-			mStateConverter = new MapBasedConverter<STATE, String>(mStateMapping, "");
+			mLetterConverter = new MapBasedConverter<>(mAlphabetMapping, "");
+			mStateConverter = new MapBasedConverter<>(mStateMapping, "");
 			doPrint();
 		}
 		

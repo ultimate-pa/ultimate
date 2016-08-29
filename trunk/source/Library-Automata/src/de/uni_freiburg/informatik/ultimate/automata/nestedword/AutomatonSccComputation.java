@@ -84,7 +84,7 @@ public class AutomatonSccComputation<LETTER, STATE> {
 			final NestedWordAutomatonReachableStates<LETTER, STATE> operand,
 			final Set<STATE> stateSubset, final Set<STATE> startStates) {
 		mSccComputation =
-				new DefaultSccComputation<STATE>(services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
+				new DefaultSccComputation<>(services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
 						new InSumCaSuccessorProvider(operand, stateSubset),
 						stateSubset.size(), startStates);
 	}
@@ -162,7 +162,7 @@ public class AutomatonSccComputation<LETTER, STATE> {
 			iteratorList.add(returnSummaryTransitionsIterator);
 			iteratorList.add(callTransitionsIterator);
 			
-			return new IteratorConcatenation<STATE>(iteratorList);
+			return new IteratorConcatenation<>(iteratorList);
 		}
 	}
 }

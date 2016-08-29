@@ -61,7 +61,7 @@ public class AutomatonEpimorphism<STATE> {
 	 */
 	public AutomatonEpimorphism(final AutomataLibraryServices services) {
 		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mEpimorphism = new HashMap<STATE, STATE>();
+		mEpimorphism = new HashMap<>();
 	}
 	
 	/**
@@ -85,7 +85,7 @@ public class AutomatonEpimorphism<STATE> {
 			final AutomataLibraryServices services,
 			final INestedWordAutomaton<String, String> nwa1,
 			final INestedWordAutomaton<String, String> nwa2) {
-		final AutomatonEpimorphism<String> epimorphism = new AutomatonEpimorphism<String>(services);
+		final AutomatonEpimorphism<String> epimorphism = new AutomatonEpimorphism<>(services);
 		
 		// traversing the states
 		for (final String state1 : nwa1.getStates()) {
