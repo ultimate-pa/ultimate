@@ -120,7 +120,7 @@ public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETT
 	
 	private void makeAutomatonTotal() throws AutomataOperationCanceledException {
 		final STATE sinkState = mTraversedNwa.getStateFactory().createSinkStateContent();
-		final boolean isInitial = false; //mInput.getInitial().isEmpty();
+		final boolean isInitial = !mOperand.getInitialStates().iterator().hasNext();
 		final boolean isFinal = mComplement;
 		((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(isInitial, isFinal, sinkState);
 		
