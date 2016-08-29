@@ -41,7 +41,7 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 	private String mErrorMessage;
 
 	@Override
-	public TestResult getTestResult(IUltimateServiceProvider  services) {
+	public TestResult getTestResult(final IUltimateServiceProvider  services) {
 		AutomataScriptInterpreterOverallResult asior = null;
 		final Map<String, List<IResult>> allResults = services.getResultService().getResults();
 		for (final Entry<String, List<IResult>> entry : allResults.entrySet()) {
@@ -52,7 +52,7 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 			}
 		}
 		if (asior == null) {
-			throw new AssertionError("no overall result");
+			throw new AssertionError("no overall result - interpretation of ats file failed");
 		} else {
 			mCategory = asior.getOverallResult();
 			if (mCategory == OverallResult.EXCEPTION_OR_ERROR) {
@@ -65,7 +65,7 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(IUltimateServiceProvider service, Throwable e) {
+	public TestResult getTestResult(final IUltimateServiceProvider service, final Throwable e) {
 		mCategory = OverallResult.EXCEPTION_OR_ERROR;
 		return getTestResultFromCategory(mCategory);
 	}
@@ -85,7 +85,7 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 	}
 
 	@Override
-	public boolean getJUnitSuccess(TestResult actualResult) {
+	public boolean getJUnitSuccess(final TestResult actualResult) {
 		switch (actualResult) {
 		case SUCCESS:
 		case UNKNOWN:
@@ -97,7 +97,7 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 		}
 	}
 
-	private TestResult getTestResultFromCategory(OverallResult category) {
+	private TestResult getTestResultFromCategory(final OverallResult category) {
 		switch (category) {
 		case ALL_ASSERTIONS_HOLD:
 		case NO_ASSERTION:

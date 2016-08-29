@@ -35,8 +35,8 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IOutgoingTransitionlet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -174,7 +174,7 @@ public class LineCoverageCalculator {
 				addCodeblock(rtr, open, nwa.callSuccessors(current));
 				addCodeblock(rtr, open, nwa.internalSuccessors(current));
 				addCodeblock(rtr, open, nwa.returnSuccessors(current));
-				addCodeblock(rtr, open, nwa.returnSummarySuccessor(current));
+				addCodeblock(rtr, open, nwa.summarySuccessors(current));
 			}
 		}
 		return rtr;

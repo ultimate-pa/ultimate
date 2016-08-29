@@ -1,7 +1,7 @@
 // Testfile dumped by Ultimate at 2011/12/14 15:24:37
 
 //print(nwa);
-print(minimizeDFA(nwa));
+print(minimizeDfaTable(nwa));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {},

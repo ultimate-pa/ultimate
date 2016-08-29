@@ -32,7 +32,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
@@ -50,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
@@ -145,7 +145,6 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		}
 		}
 
-		mLogger.info("Statistics - number of theorem prover calls: " + smtManager.getNontrivialSatQueries());
 		mLogger.info("Statistics - iterations: " + abstractCegarLoop.getIteration());
 		// s_Logger.info("Statistics - biggest abstraction: " +
 		// abstractCegarLoop.mBiggestAbstractionSize + " states");
@@ -161,8 +160,6 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		stat += errNodesOfAllProc.size();
 		stat += " error locations.";
 		stat += " Satisfiability queries: ";
-		stat += smtManager.getTrivialSatQueries() + " tivial, ";
-		stat += smtManager.getNontrivialSatQueries() + " nontrivial.";
 		// stat += " Biggest abstraction occured in iteration " +
 		// abstractCegarLoop.mBiggestAbstractionIteration + " had ";
 		// stat += abstractCegarLoop.mBiggestAbstractionSize;
@@ -178,11 +175,6 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			throw new IllegalArgumentException();
 		}
 		mLogger.warn(stat);
-		mLogger.warn("PC#: " + smtManager.getInterpolQueries());
-		mLogger.warn("TIME#: " + smtManager.getInterpolQuriesTime());
-		mLogger.warn("EC#: " + smtManager.getNontrivialSatQueries());
-		mLogger.warn("TIME#: " + smtManager.getSatCheckSolverTime());
-		mLogger.warn("ManipulationTIME#: " + smtManager.getSatCheckTime());
 		switch (result) {
 		case SAFE:
 			mLogger.warn("Program is correct");
@@ -236,7 +228,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
 		}
-		reportResult(new CounterExampleResult<RcfgElement, RCFGEdge, Expression>(getErrorPP(pe),
+		reportResult(new CounterExampleResult<RcfgElement, RCFGEdge, Term>(getErrorPP(pe),
 				Activator.PLUGIN_NAME, mServices.getBacktranslationService(), pe));
 	}
 
@@ -256,7 +248,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 	private void reportUnproveableResult(final RcfgProgramExecution pe, final List<UnprovabilityReason> unproabilityReasons) {
 		final ProgramPoint errorPP = getErrorPP(pe);
-		final UnprovableResult<RcfgElement, RCFGEdge, Expression> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Expression>(
+		final UnprovableResult<RcfgElement, RCFGEdge, Term> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Term>(
 				Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}

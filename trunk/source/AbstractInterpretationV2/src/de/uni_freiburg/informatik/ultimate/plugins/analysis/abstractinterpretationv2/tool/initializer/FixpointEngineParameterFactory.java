@@ -17,8 +17,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngineParameters;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IDebugHelper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IVariableProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.FutureRcfgVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgAbstractStateStorageProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgDebugHelper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgVariableProvider;
@@ -74,31 +77,54 @@ public class FixpointEngineParameterFactory {
 		final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, ProgramPoint> storageProvider =
 				new RcfgAbstractStateStorageProvider<STATE, ProgramPoint, IBoogieVar>(domain.getMergeOperator(),
 						mServices, transitionProvider);
-		final RcfgVariableProvider<STATE> variableProvider = new RcfgVariableProvider<>(mSymbolTable,
-				rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), mServices);
-		final RcfgDebugHelper<STATE, IBoogieVar, ProgramPoint> debugHelper =
+		final IVariableProvider<STATE, CodeBlock, IBoogieVar> variableProvider = new RcfgVariableProvider<>(
+				mSymbolTable, rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), mServices);
+		final IDebugHelper<STATE, CodeBlock, IBoogieVar, ProgramPoint> debugHelper =
 				new RcfgDebugHelper<>(rootAnnot, mServices);
 		return new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression>(mServices)
 				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
 				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
 				.setDebugHelper(debugHelper).setTimer(timer);
-
 	}
 
-	public IAbstractDomain<?, CodeBlock, IProgramVar> selectDomainFutureCfg() {
+	@SuppressWarnings("unchecked")
+	public <STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>>
+			FixpointEngineParameters<STATE, CodeBlock, IProgramVar, ProgramPoint, Expression>
+			createParamsFuture(final IProgressAwareTimer timer,
+					final ITransitionProvider<CodeBlock, ProgramPoint> transitionProvider,
+					final ILoopDetector<CodeBlock> loopDetector) {
+		final RootAnnot rootAnnot = mRoot.getRootAnnot();
+
+		final IAbstractDomain<STATE, CodeBlock, IProgramVar> domain =
+				(IAbstractDomain<STATE, CodeBlock, IProgramVar>) selectDomainFutureCfg();
+		final IAbstractStateStorage<STATE, CodeBlock, IProgramVar, ProgramPoint> storageProvider =
+				new RcfgAbstractStateStorageProvider<STATE, ProgramPoint, IProgramVar>(domain.getMergeOperator(),
+						mServices, transitionProvider);
+		final IVariableProvider<STATE, CodeBlock, IProgramVar> variableProvider = new FutureRcfgVariableProvider<>(
+				mSymbolTable, rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), mServices);
+		final IDebugHelper<STATE, CodeBlock, IProgramVar, ProgramPoint> debugHelper =
+				new RcfgDebugHelper<>(rootAnnot, mServices);
+
+		return new FixpointEngineParameters<STATE, CodeBlock, IProgramVar, ProgramPoint, Expression>(mServices)
+				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
+				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
+				.setDebugHelper(debugHelper).setTimer(timer);
+	}
+
+	private IAbstractDomain<?, CodeBlock, IProgramVar> selectDomainFutureCfg() {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final String selectedDomain = prefs.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN);
-		// final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		if (EmptyDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new EmptyDomain<>();
 		} else if (DataflowDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new DataflowDomain();
+			return new DataflowDomain(logger);
 		}
 		throw new UnsupportedOperationException(getFailureString(selectedDomain));
 	}
 
-	public IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain() {
+	private IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain() {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final String selectedDomain = prefs.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN);
 		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);

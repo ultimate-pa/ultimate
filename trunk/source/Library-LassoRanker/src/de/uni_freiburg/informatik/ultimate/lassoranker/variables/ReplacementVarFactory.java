@@ -46,8 +46,8 @@ public class ReplacementVarFactory {
 	private final ManagedScript mVariableManager;
 	private final Map<Term, ReplacementVar> mRepVarMapping = 
 			new HashMap<Term, ReplacementVar>();
-	private final Map<Term, Map<Object, LocalReplacementVar>> mLocalRepVarMapping = 
-			new HashMap<Term, Map<Object, LocalReplacementVar>>();
+	private final Map<Term, Map<Object, ReplacementVarWithRestrictedDefinition>> mRepVarWRDefMapping = 
+			new HashMap<Term, Map<Object, ReplacementVarWithRestrictedDefinition>>();
 	private final Map<String, TermVariable> mAuxVarMapping = 
 			new HashMap<String, TermVariable>();
 
@@ -74,15 +74,15 @@ public class ReplacementVarFactory {
 	 * definition at the ProgramPoint location. 
 	 * Construct this LocalReplacementVar if it does not exist yet.
 	 */
-	public ReplacementVar getOrConstuctLocalReplacementVar(final Term definition, final Object location) {
-		Map<Object, LocalReplacementVar> locToRepVar = mLocalRepVarMapping.get(definition);
+	public ReplacementVar getOrConstuctReplacementVarWithRestrictedDefinition(final Term definition, final Object location) {
+		Map<Object, ReplacementVarWithRestrictedDefinition> locToRepVar = mRepVarWRDefMapping.get(definition);
 		if (definition == null) {
-			locToRepVar = new HashMap<Object, LocalReplacementVar>();
-			mLocalRepVarMapping.put(definition, locToRepVar);
+			locToRepVar = new HashMap<Object, ReplacementVarWithRestrictedDefinition>();
+			mRepVarWRDefMapping.put(definition, locToRepVar);
 		}
-		LocalReplacementVar repVar = locToRepVar.get(location);
+		ReplacementVarWithRestrictedDefinition repVar = locToRepVar.get(location);
 		if (repVar == null) {
-			repVar = new LocalReplacementVar(definition.toString(), definition, location);
+			repVar = new ReplacementVarWithRestrictedDefinition(definition.toString(), definition, location);
 			locToRepVar.put(location, repVar);
 		}
 		return repVar;

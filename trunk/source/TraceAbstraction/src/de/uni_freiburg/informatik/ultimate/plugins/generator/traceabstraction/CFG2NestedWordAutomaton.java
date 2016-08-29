@@ -34,9 +34,9 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -82,7 +82,7 @@ public class CFG2NestedWordAutomaton {
 	 */
 	public INestedWordAutomaton<CodeBlock,IPredicate> getNestedWordAutomaton(
 							final RootNode rootNode,
-							final StateFactory<IPredicate> tAContentFactory,
+							final IStateFactory<IPredicate> tAContentFactory,
 							final Collection<ProgramPoint> errorLocs) {
 		final Set<ProgramPoint> initialNodes = new HashSet<ProgramPoint>();
 		final Set<ProgramPoint> allNodes = new HashSet<ProgramPoint>();

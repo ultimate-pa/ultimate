@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 
@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
 
 /**
  * This class controls all aspects of the application's execution.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUltimatePlugin {
@@ -100,7 +100,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 
 	/**
 	 * Method which is called by Eclipse framework. Compare to "main"-method.
-	 * 
+	 *
 	 * @param context
 	 *            Eclipse application context.
 	 * @return Should return IPlatformRunnable.EXIT_OK or s.th. similar.
@@ -109,7 +109,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 	 *             May throw any exception
 	 */
 	@Override
-	public final Object start(IApplicationContext context) throws Exception {
+	public final Object start(final IApplicationContext context) throws Exception {
 		// initializing variables, loggers,...
 		mCoreStorage = new ToolchainStorage();
 		mLoggingService = mCoreStorage.getLoggingService();
@@ -152,7 +152,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 
 	/**
 	 * Delegates control to the controller.
-	 * 
+	 *
 	 * @return Ultimate's exit code.
 	 */
 	private int activateController() {
@@ -190,13 +190,13 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 	}
 
 	@Override
-	public void loadPreferences(String absolutePath) {
+	public void loadPreferences(final String absolutePath) {
 		mSettingsManager.loadPreferencesFromFile(this, absolutePath);
 		mLoggingService.refreshLoggingService();
 	}
 
 	@Override
-	public void savePreferences(String filename) {
+	public void savePreferences(final String filename) {
 		mSettingsManager.savePreferences(this, filename);
 	}
 
@@ -211,7 +211,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 	}
 
 	@Override
-	public void releaseToolchain(IToolchain<ToolchainListType> toolchain) {
+	public void releaseToolchain(final IToolchain<ToolchainListType> toolchain) {
 		mToolchainManager.releaseToolchain(toolchain);
 
 	}
@@ -221,7 +221,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 		mLogger.warn("Received 'Stop'-Command, ignoring...");
 	}
 
-	private void setCurrentController(IController<ToolchainListType> controller) {
+	private void setCurrentController(final IController<ToolchainListType> controller) {
 		if (mCurrentController != null) {
 			if (controller == null) {
 				mLogger.warn("Controller already set! Using " + mCurrentController.getPluginName()
@@ -251,7 +251,8 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 		if (sPluginNames == null) {
 			final List<String> lil = new ArrayList<>();
 			for (final String ep : ExtensionPoints.PLUGIN_EPS) {
-				for (final IConfigurationElement elem : Platform.getExtensionRegistry().getConfigurationElementsFor(ep)) {
+				for (final IConfigurationElement elem : Platform.getExtensionRegistry()
+						.getConfigurationElementsFor(ep)) {
 					final String classname = elem.getAttribute("class");
 					lil.add(classname.substring(0, classname.lastIndexOf(".")));
 				}
@@ -262,7 +263,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 	}
 
 	@Override
-	public IToolchainData<ToolchainListType> createToolchainData(String filename)
+	public IToolchainData<ToolchainListType> createToolchainData(final String filename)
 			throws FileNotFoundException, JAXBException, SAXException {
 		if (!new File(filename).exists()) {
 			throw new FileNotFoundException("The specified toolchain file " + filename + " was not found");
@@ -299,7 +300,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 	}
 
 	@Override
-	public IPreferenceProvider getPreferenceProvider(String pluginId) {
+	public IPreferenceProvider getPreferenceProvider(final String pluginId) {
 		return mCoreStorage.getPreferenceProvider(pluginId);
 	}
 
@@ -311,7 +312,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 		}
 
 		@Override
-		public void done(IJobChangeEvent event) {
+		public void done(final IJobChangeEvent event) {
 			if (event == null) {
 				return;
 			}

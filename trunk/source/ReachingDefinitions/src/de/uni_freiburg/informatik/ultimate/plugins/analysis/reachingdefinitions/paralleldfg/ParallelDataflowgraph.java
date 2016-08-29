@@ -2,34 +2,70 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableLabeledEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAG;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
-public class ParallelDataflowgraph<T> extends ModifiableLabeledEdgesMultigraph<ParallelDataflowgraph<T>, ScopedBoogieVar>{
+public class ParallelDataflowgraph<T> extends ModifiableLabeledEdgesMultigraph<ParallelDataflowgraph<T>, IProgramVar>{
 
+	private Map< String, Set<ProgramPoint>> locations;
+	private final T mNodeLabel;
 	
-	public ParallelDataflowgraph(T stmt, List<ProgramPoint> setOfLocations) {
+	public ParallelDataflowgraph(T stmt, Map< String, Set<ProgramPoint>> locations) {
 		mNodeLabel = stmt;
-		setLocations(new ArrayList<ProgramPoint>());
+		setLocations(locations);
+	}
+	
+	public Boolean compare(T label, Map< String, Set<ProgramPoint>> l){
+		// for comparing two this data flow nodes with a not yet constructed node
+		if (label == mNodeLabel && l.equals(locations)){
+			return true;
+		}
+		return false;
+	}
+	
+	public Boolean compare(ParallelDataflowgraph<T> node){
+		// for comparing two data flow nodes
+		if (node.getNodeLabel() == mNodeLabel && node.getLocations().equals(locations)){
+			return true;
+		}
+		return false;
+	}
+	
+	public String toString(){
+		String s = "Statement: ";
+		if (mNodeLabel == null){
+			s =  s+ "no statement"  + " Locations: ";
+		}
+		else {
+			s = s+ mNodeLabel.toString() + " Locations: ";
+		}
+		for (Entry<String, Set<ProgramPoint>> entry : locations.entrySet()){
+			s += entry.getKey() + entry.getValue().toString();
+		}
+		return s;
 	}
 	
 	public T getNodeLabel() {
 		return mNodeLabel;
 	}
 	
-	public List<ProgramPoint> getLocations() {
+	public Map< String, Set<ProgramPoint>> getLocations() {
 		return locations;
 	}
-
-	private void setLocations(List<ProgramPoint> locations) {
-		this.locations = locations;
+	
+	public Set<ProgramPoint>  getLocations(String procedure){
+		return locations.get(procedure);
 	}
 
-	private List<ProgramPoint> locations;
-	private final T mNodeLabel;
-	
+	private void setLocations(Map< String, Set<ProgramPoint>> locations) {
+		this.locations = locations;
+	}
 
 }

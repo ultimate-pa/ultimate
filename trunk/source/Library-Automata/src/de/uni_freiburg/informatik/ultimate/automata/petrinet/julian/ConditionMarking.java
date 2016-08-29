@@ -40,9 +40,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
  * A Marking of an occurencenet which is a set of conditions.
  * 
  * @author heizmann@informatik.uni-freiburg.de
- * 
- * @param <S>
- * @param <C>
  */
 
 public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
@@ -51,29 +48,22 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 
 	private final Set<Condition<S, C>> mConditions;
 
-	public ConditionMarking(Set<Condition<S, C>> conditions) {
+	public ConditionMarking(final Set<Condition<S, C>> conditions) {
 		mConditions = conditions;
 	}
 
-	/**
-	 * @param o
-	 * @return
-	 */
-	public boolean contains(Condition<S, C> p) {
+	public boolean contains(final Condition<S, C> p) {
 		return mConditions.contains(p);
 	}
 
 	/**
-	 * @param c
-	 * @return
 	 * @see java.util.Set#containsAll(java.util.Collection)
 	 */
-	public boolean containsAll(Collection<?> c) {
+	public boolean containsAll(final Collection<?> c) {
 		return mConditions.containsAll(c);
 	}
 
 	/**
-	 * @return
 	 * @see java.util.Set#isEmpty()
 	 */
 	public boolean isEmpty() {
@@ -81,7 +71,6 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 	}
 
 	/**
-	 * @return
 	 * @see java.util.Set#iterator()
 	 */
 	@Override
@@ -90,7 +79,6 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 	}
 
 	/**
-	 * @return
 	 * @see java.util.Set#size()
 	 */
 	public int size() {
@@ -104,7 +92,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -143,37 +131,30 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 	 * 
 	 * @return true, if the marking enables the specified transition.
 	 */
-	public boolean isEventEnabled(Event<S, C> event) {
+	public boolean isEventEnabled(final Event<S, C> event) {
 		return mConditions.containsAll(event.getPredecessorConditions());
 	}
 
 	/**
 	 * Adds the conditions of another marking.
-	 * 
-	 * @param other
 	 */
-	public void add(ConditionMarking<S, C> other) {
+	public void add(final ConditionMarking<S, C> other) {
 		mConditions.addAll(other.mConditions);
 	}
 	
 	/**
 	 * Adds the markings conditions to another set.
-	 * 
-	 * @param other
 	 */
-	public void addTo(Set<Condition<S, C>> other) {
+	public void addTo(final Set<Condition<S, C>> other) {
 		other.addAll(mConditions);
 	}
 
 	/**
 	 * returns the marking to which the occurrence of the specified transition
 	 * leads.
-	 * 
-	 * @param event
-	 * @return
 	 */
-	public ConditionMarking<S, C> fireEvent(Event<S, C> event) {
-		assert(isEventEnabled(event));
+	public ConditionMarking<S, C> fireEvent(final Event<S, C> event) {
+		assert (isEventEnabled(event));
 		final HashSet<Condition<S, C>> resultSet = new HashSet<Condition<S, C>>(
 				mConditions);
 		resultSet.removeAll(event.getPredecessorConditions());
@@ -183,11 +164,8 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 
 	/**
 	 * revokes the occurence of the specified transition if valid.
-	 * 
-	 * @param event
-	 * @return true if the
 	 */
-	public boolean undoEvent(Event<S, C> event) {
+	public boolean undoEvent(final Event<S, C> event) {
 		if (!mConditions.containsAll(event.getSuccessorConditions())) {
 			return false;
 		}
@@ -204,8 +182,6 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 	/**
 	 * Creates and returns a new marking containing the places corresponding to
 	 * the conditionMarkings Conditions.
-	 * 
-	 * @return
 	 */
 	public Marking<S, C> getMarking() {
 		final HashSet<Place<S, C>> mark = new HashSet<Place<S, C>>();
@@ -215,5 +191,4 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>,
 		}
 		return new Marking<S, C>(mark);
 	}
-
 }

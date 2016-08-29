@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BuchiProgramProduct plug-in.
- * 
+ *
  * The ULTIMATE BuchiProgramProduct plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BuchiProgramProduct plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BuchiProgramProduct plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiProgramProduct plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct;
@@ -52,19 +52,21 @@ public abstract class BaseProductOptimizer {
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
 	protected final SimplicationTechnique mSimplificationTechnique = SimplicationTechnique.SIMPLIFY_DDA;
-	protected final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+	protected final XnfConversionTechnique mXnfConversionTechnique =
+			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	protected final RootNode mResult;
 	protected int mRemovedEdges;
 	protected int mRemovedLocations;
 	protected final CodeBlockFactory mCbf;
 
-	public BaseProductOptimizer(final RootNode product, final IUltimateServiceProvider services, final IToolchainStorage storage) {
+	public BaseProductOptimizer(final RootNode product, final IUltimateServiceProvider services,
+			final IToolchainStorage storage) {
 		assert services != null;
 		assert product != null;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mCbf = (CodeBlockFactory) storage.getStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage);
+		mCbf = CodeBlockFactory.getFactory(storage);
 		mRemovedEdges = 0;
 		mRemovedLocations = 0;
 		init(product, services);
@@ -93,7 +95,7 @@ public abstract class BaseProductOptimizer {
 		for (final Entry<String, Map<String, ProgramPoint>> procPair : root.getRootAnnot().getProgramPoints()
 				.entrySet()) {
 			for (final Entry<String, ProgramPoint> pointPair : procPair.getValue().entrySet()) {
-				if (pointPair.getValue().getIncomingEdges().size() == 0) {
+				if (pointPair.getValue().getIncomingEdges().isEmpty()) {
 					toRemove.add(pointPair.getValue());
 				}
 			}
@@ -121,7 +123,7 @@ public abstract class BaseProductOptimizer {
 		final String procName = toRemove.getProcedure();
 		final String locName = toRemove.getPosition();
 		final ProgramPoint removed = rootAnnot.getProgramPoints().get(procName).remove(locName);
-		assert removed == toRemove;
+		assert toRemove.equals(removed);
 		mRemovedLocations++;
 	}
 
@@ -132,7 +134,8 @@ public abstract class BaseProductOptimizer {
 	protected void generateTransFormula(final RootNode root, final StatementSequence ss) {
 		final Boogie2SMT b2smt = root.getRootAnnot().getBoogie2SMT();
 		final TransFormulaAdder tfb = new TransFormulaAdder(b2smt, mServices);
-		tfb.addTransitionFormulas(ss, ((ProgramPoint) ss.getSource()).getProcedure(), mXnfConversionTechnique, mSimplificationTechnique);
+		tfb.addTransitionFormulas(ss, ((ProgramPoint) ss.getSource()).getProcedure(), mXnfConversionTechnique,
+				mSimplificationTechnique);
 		assert ss.getTransitionFormula() != null;
 	}
 }

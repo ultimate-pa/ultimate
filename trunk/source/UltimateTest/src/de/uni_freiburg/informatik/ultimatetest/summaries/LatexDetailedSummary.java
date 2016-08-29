@@ -319,7 +319,7 @@ public class LatexDetailedSummary extends LatexSummary {
 			}
 			sb.append(removeInvalidCharsForLatex(result.getKey().getInputFileNames()));
 			sb.append(sep);
-			sb.append(removeInvalidCharsForLatex(result.getKey().getSettings().getName()));
+			sb.append(removeInvalidCharsForLatex(result.getKey().getSettingsName()));
 			sb.append(sep);
 
 			ICsvProvider<String> csv = makePrintCsvProviderFromResults(Collections.singleton(result),

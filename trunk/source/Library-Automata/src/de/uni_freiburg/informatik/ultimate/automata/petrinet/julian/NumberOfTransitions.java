@@ -19,31 +19,39 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 
 /**
- * Operation that returns the number of transitions of a petri net.
+ * Operation that returns the number of transitions of a Petri net.
+ * 
  * @author heizmann@informatik.uni-freiburg.de
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> letter type
+ * @param <PLACE> place type
  */
-public class NumberOfTransitions<LETTER, STATE> implements IOperation<LETTER,STATE> {
+public class NumberOfTransitions<LETTER, PLACE>
+		extends UnaryNetOperation<LETTER, PLACE>
+		implements IOperation<LETTER,PLACE> {
 	
-	IPetriNet<LETTER, STATE> mNet;
-	
-	public NumberOfTransitions(IPetriNet<LETTER, STATE> nwa) {
-		mNet = nwa;
+	/**
+	 * Constructor.
+	 * 
+	 * @param services Ultimate services
+	 * @param operand operand
+	 */
+	public NumberOfTransitions(final AutomataLibraryServices services,
+			final IPetriNet<LETTER, PLACE> operand) {
+		super(services, operand);
 	}
 
 	@Override
@@ -52,24 +60,7 @@ public class NumberOfTransitions<LETTER, STATE> implements IOperation<LETTER,STA
 	}
 
 	@Override
-	public String startMessage() {
-		throw new UnsupportedOperationException();
+	public Integer getResult() {
+		return mOperand.getTransitions().size();
 	}
-
-	@Override
-	public String exitMessage() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Integer getResult() throws AutomataLibraryException {
-		return mNet.getTransitions().size();
-	}
-
-	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		return true;
-	}
-
 }

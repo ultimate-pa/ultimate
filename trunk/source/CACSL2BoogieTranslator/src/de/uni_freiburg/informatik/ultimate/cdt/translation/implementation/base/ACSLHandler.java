@@ -100,6 +100,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assertion;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assigns;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnotStmt;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Contract;
@@ -107,6 +108,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ContractStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Ensures;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FieldAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FreeableExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAssigns;
@@ -998,4 +1000,36 @@ public class ACSLHandler implements IACSLHandler {
         return new ExpressionResult(stmt, new RValue(e, new CPrimitive(CPrimitives.INT)), decl, auxVars, overappr);
         //return new Result(e);
     }
+
+	@Override
+	public Result visit(final Dispatcher main, final CastExpression node) {
+		final ILocation loc = LocationFactory.createACSLLocation(node);
+		final CPrimitive resultType = AcslTypeUtils.translateAcslTypeToCType(node.getCastedType());
+		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getExpression());
+        final MemoryHandler memoryHandler = ((CHandler) main.mCHandler).getMemoryHandler();
+        final StructHandler structHandler = ((CHandler) main.mCHandler).mStructHandler;
+		expr = expr.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+    	final AExpressionTranslation expressionTranslation = 
+    			((CHandler) main.mCHandler).getExpressionTranslation();
+    	expressionTranslation.convertIfNecessary(loc, expr, resultType);
+		return expr;
+	}
+
+	@Override
+	public Result visit(final Dispatcher main, final IfThenElseExpression node) {
+		final ILocation loc = LocationFactory.createACSLLocation(node);
+		assert node.getChildren().size() == 4;
+		
+        final MemoryHandler memoryHandler = ((CHandler) main.mCHandler).getMemoryHandler();
+        final StructHandler structHandler = ((CHandler) main.mCHandler).mStructHandler;
+		
+		ExpressionResult opCondition = (ExpressionResult) main.dispatch(node.getCondition());
+		opCondition = opCondition.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		ExpressionResult opPositive = (ExpressionResult) main.dispatch(node.getThenPart());
+		opPositive = opPositive.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		ExpressionResult opNegative = (ExpressionResult) main.dispatch(node.getElsePart());
+		opNegative = opNegative.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		return ((CHandler) main.mCHandler).handleConditionalOperator(loc, opCondition, opPositive, opNegative);
+	}
+
 }

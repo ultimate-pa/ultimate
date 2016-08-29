@@ -32,9 +32,9 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
@@ -51,7 +51,7 @@ public class WitnessModelToAutomatonTransformer {
 		final Set<WitnessEdge> internalAlphabet = new LinkedHashSet<WitnessEdge>();
 		final Set<WitnessEdge> callAlphabet = Collections.emptySet();
 		final Set<WitnessEdge> returnAlphabet = Collections.emptySet();
-		final StateFactory<WitnessNode> stateFactory = new StateFactory<WitnessNode>() {
+		final IStateFactory<WitnessNode> stateFactory = new IStateFactory<WitnessNode>() {
 		};
 		mResult = new NestedWordAutomaton<WitnessEdge, WitnessNode>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
 		constructAutomaton(internalAlphabet);

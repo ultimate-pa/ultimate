@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2011-2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2009-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -19,84 +19,101 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 
 /**
- * Interface for operations for automata.
+ * Interface for automata operations.<br>
  * If possible,
  * <ul>
- *  <li> each operation is defined in its own class
- *  <li> for every application of the operation a new instance of this class is
- *      constructed
- *  <li> the result is returned via the getResult() method
- *  <li> start and end of the operation are reported to the logger using log
- *   level info
- *  <li> correctness checks for this operation are implemented in the
- *  checkResult method. Whoever executes this operation should add an
- *  assert checkResult()
- *  in his code.
+ * <li>each operation is defined in its own class
+ * <li>for every application of the operation a new instance of this class is
+ * constructed
+ * <li>the result is returned via the {@link #getResult()} method
+ * <li>start and end of the operation are reported to the logger using log
+ * level <tt>INFO</tt>
+ * <li>correctness checks for this operation are implemented in the
+ * checkResult method. Whoever executes this operation should add an
+ * <blockquote>
+ * {@code assert} {@link #checkResult()}
+ * </blockquote>
+ * in the code.
  * </ul>
  * By convention the constructor of an IOperation has the following parameters.
  * <ul>
- *   <li> The fist parameter is the AutomataLibraryServices. If the operation
- *   is executed by the automata script interpreter, the interpreter will use
- *   the AutomataLibraryServices of the current toolchain as an argument.
- *   <li> If the IOperation requires a StateFactory, the StateFactory should
- *   be the second parameter. If the second parameter is a StateFactory, the
- *   automtata script interpreter uses a StringFactory as argument.
- *   <li> The remaining parameters of the constructor are the parameters of the
- *   operation (i.e., the parameters for which you provide arguments in an
- *   .ats file).
+ * <li>The fist parameter are the {@link AutomataLibraryServices}. If the operation
+ * is executed by the automata script interpreter, the interpreter will use
+ * the {@link AutomataLibraryServices} of the current toolchain as an argument.
+ * <li>If the IOperation requires a {@link IStateFactory}, the {@link IStateFactory} should
+ * be the second parameter. If the second parameter is a {@link IStateFactory}, the
+ * automata script interpreter uses a {@link StringFactory} as argument.
+ * <li>The remaining parameters of the constructor are the parameters of the
+ * operation (i.e., the parameters for which you provide arguments in an
+ * .ats file). It is good practice to have a default constructor with a minimal number of arguments, and optionally
+ * other constructors with more arguments. The minimal constructor should be considered the default for .ats files.
  * </ul>
  * 
- * @author heizmann@informatik.uni-freiburg.de
- * 
- * @param <LETTER> Type of objects that are contained in the alphabet.
- * @param <STATE> Type of objects that are used to label states (resp. places
- * for PetriNet)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            Type of objects that are contained in the alphabet.
+ * @param <STATE>
+ *            Type of objects that are used to label states (resp. places
+ *            for PetriNet)
  */
 public interface IOperation<LETTER, STATE> {
 	
 	/**
-	 * @return Name of the operation.
-	 * This name should also be used in the test grammar.
+	 * @return Name of the operation.<br>
+	 *         This name should also be used in the test grammar.
 	 */
 	String operationName();
 	
 	/**
-	 * @return Message that should be logged when the operation is stated.
-	 * Use some information like: "starting operation intersection. First
-	 * operand has 2394 states, second operand has 9374 states" 
+	 * @return Message that should be logged when the operation is started.<br>
+	 *         Use some information like: "Started operation intersection. First
+	 *         operand has 2394 states, second operand has 9374 states."
 	 */
 	String startMessage();
 	
 	/**
-	 * @return Message that should be logged when the operation is finished.
-	 * Use some information like: "finished operation intersection result has
-	 * 345 states"
+	 * @return Message that should be logged when the operation is finished.<br>
+	 *         Use some information like: "Finished operation intersection. Result has
+	 *         345 states."
 	 */
 	String exitMessage();
 	
 	/**
-	 * @return Return the result of the operation.
-	 * @throws AutomataLibraryException 
+	 * @return The result of the operation.
 	 */
-	Object getResult() throws AutomataLibraryException;
+	Object getResult();
 	
 	/**
 	 * Run some checks to test correctness of the result.
-	 * @param stateFactory If new automata have to be built, use this state
-	 *        factory.
-	 * @return true iff all tests succeeded.
-	 * @throws AutomataLibraryException when checks fails
+	 * 
+	 * @param stateFactory
+	 *            If new automata have to be built, use this state factory.
+	 * @return true iff all checks succeeded.
+	 * @throws AutomataLibraryException
+	 *             if checks fail or timeout was requested
 	 */
-	boolean checkResult(StateFactory<STATE> stateFactory) 
-			throws AutomataLibraryException;
+	boolean checkResult(IStateFactory<STATE> stateFactory) throws AutomataLibraryException;
+	
+	/**
+	 * Get information about the runtime and resource consumption of the
+	 * operation.
+	 * <p>
+	 * Delivering this information is optional.
+	 * 
+	 * @return statistics object
+	 */
+	default AutomataOperationStatistics getAutomataOperationStatistics() {
+		return null;
+	}
 }

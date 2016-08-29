@@ -387,9 +387,9 @@ lexpr::=
 | lexpr:e1 HAT lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITXOR, e1, e2); setLineNumber(e1$,e2$,RESULT);:}
 | lexpr:e1 BIMPLIES lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITIMPLIES, e1, e2); setLineNumber(e1$,e2$,RESULT);:}
 | lexpr:e1 BIFF lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITIFF, e1, e2); setLineNumber(e1$,e2$,RESULT);:}
-| lexpr QUESTION lexpr:e1 COLON2 lexpr:e2 {: RESULT = new NotDefinedExpression(); setLineNumber(e1$,e2$,RESULT);:}  %prec prec_question 
+| lexpr:e1 QUESTION lexpr:e2 COLON lexpr:e3 {: RESULT = new IfThenElseExpression(e1, e2, e3); setLineNumber(e1$,e2$,RESULT);:}  %prec prec_question 
 /* both terms and predicates */
-| any_identifier:id COLON lexpr:expr {: RESULT = new SyntacticNamingExpression(id, expr); :} %prec prec_named 
+| any_identifier:id COLON2 lexpr:expr {: RESULT = new SyntacticNamingExpression(id, expr); :} %prec prec_named 
 | lexpr_rel:expr {: RESULT = expr; setLineNumber(expr$,expr$,RESULT);:} %prec prec_rel_list 
 ;
 

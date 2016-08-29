@@ -30,7 +30,7 @@ import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 
 
 /**
@@ -46,18 +46,18 @@ public class PetriNetRun<S,C> implements IRun<S,C> {
 	private final ArrayList<Marking<S,C>> mMarkingSequence;
 	
 	/**
-	 * Construct PetriNet run of length 0
+	 * Construct PetriNet run of length 0.
 	 */
-	public PetriNetRun(Marking<S,C> m0) {
+	public PetriNetRun(final Marking<S,C> m0) {
 		mWord = new NestedWord<S>();
 		mMarkingSequence = new ArrayList<Marking<S,C>>();
 		mMarkingSequence.add(m0);
 	}
 
 	/**
-	 * Construct PetriNet run of length 1
+	 * Construct PetriNet run of length 1.
 	 */
-	public PetriNetRun(Marking<S,C> m0, S symbol, Marking<S,C> m1) {
+	public PetriNetRun(final Marking<S,C> m0, final S symbol, final Marking<S,C> m1) {
 		mWord = new NestedWord<S>(symbol, NestedWord.INTERNAL_POSITION);
 		mMarkingSequence = new ArrayList<Marking<S,C>>();
 		mMarkingSequence.add(m0);
@@ -67,9 +67,9 @@ public class PetriNetRun<S,C> implements IRun<S,C> {
 	/**
 	 * Construct PetriNet run of arbitrary length 1
 	 */
-	public PetriNetRun(ArrayList<Marking<S,C>> sequenceOfMarkings, 
-					   Word<S> word) {
-		if (sequenceOfMarkings.size() -1 != word.length()) {
+	public PetriNetRun(final ArrayList<Marking<S,C>> sequenceOfMarkings, 
+					   final Word<S> word) {
+		if (sequenceOfMarkings.size() - 1 != word.length()) {
 			throw new IllegalArgumentException(
 									"run consists of word length +1 markings");
 		}
@@ -78,7 +78,7 @@ public class PetriNetRun<S,C> implements IRun<S,C> {
 	}
 
 	@Override
-	public S getSymbol(int i) {
+	public S getSymbol(final int i) {
 		return mWord.getSymbol(i);
 	}
 	
@@ -87,7 +87,7 @@ public class PetriNetRun<S,C> implements IRun<S,C> {
 		return mWord;
 	}
 	
-	public Marking<S,C> getMarking(int i) {
+	public Marking<S,C> getMarking(final int i) {
 		return mMarkingSequence.get(i);
 	}
 	
@@ -100,19 +100,19 @@ public class PetriNetRun<S,C> implements IRun<S,C> {
 	 * Returns a new run which is the concatenation of this and run2.
 	 * This is not changed.
 	 */
-	public PetriNetRun<S,C> concatenate(PetriNetRun<S,C> run2) {
+	public PetriNetRun<S,C> concatenate(final PetriNetRun<S,C> run2) {
 		final Word<S> concatWord = mWord.concatenate(run2.getWord());
 		final ArrayList<Marking<S, C>> concatMarkingSequence = 
 												new ArrayList<Marking<S,C>>();
-		for (int i=0; i<this.mMarkingSequence.size(); i++){
+		for (int i = 0; i < mMarkingSequence.size(); i++) {
 			concatMarkingSequence.add(this.getMarking(i));
 		}
-		if (!getMarking(mMarkingSequence.size()-1).equals(run2.getMarking(0))) {
-			throw new IllegalArgumentException("can only concatenate runs " +
-					"where last Marking of first run and first Marking of" +
-					"second run coincide"); 
+		if (!getMarking(mMarkingSequence.size() - 1).equals(run2.getMarking(0))) {
+			throw new IllegalArgumentException("can only concatenate runs "
+					+ "where last Marking of first run and first Marking of"
+					+ "second run coincide"); 
 		}
-		for (int i=1; i<run2.mMarkingSequence.size(); i++){
+		for (int i = 1; i < run2.mMarkingSequence.size(); i++) {
 			concatMarkingSequence.add(run2.getMarking(i));
 		}
 		return new PetriNetRun<S, C>(concatMarkingSequence, concatWord);
@@ -126,11 +126,11 @@ public class PetriNetRun<S,C> implements IRun<S,C> {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		for (int i = 0; i<mWord.length(); i++) {
+		for (int i = 0; i < mWord.length(); i++) {
 			sb.append(mMarkingSequence.get(i) + " ");
-			sb.append(mWord.getSymbol(i)+" ");
+			sb.append(mWord.getSymbol(i) + " ");
 		}
-		sb.append(mMarkingSequence.get(mMarkingSequence.size()-1));
+		sb.append(mMarkingSequence.get(mMarkingSequence.size() - 1));
 		return sb.toString();
 	}
 

@@ -30,12 +30,10 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
@@ -78,19 +76,4 @@ public abstract class RankingFunction implements Serializable {
 	 * @param script the current script
 	 */
 	public abstract Term[] asLexTerm(Script script) throws SMTLIBException;
-	
-	/**
-	 * Return the ranking function as a Boogie AST expression
-	 * @param script the current script
-	 * @param smt2boogie the variable translation
-	 * @return ranking function as boolean term
-	 */
-	public Expression[] asLexExpression(Script script, Term2Expression term2expr) {
-		final Term[] lex = asLexTerm(script);
-		final Expression[] lexExpressions = new Expression[lex.length];
-		for (int i = 0; i < lex.length; ++i) {
-			lexExpressions[i] = term2expr.translate(lex[i]);
-		}
-		return lexExpressions;
-	}
 }

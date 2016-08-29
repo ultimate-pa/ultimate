@@ -298,7 +298,7 @@ public abstract class AExpressionTranslation {
 	 * Convert ResultExpression to resultType if its type is not already
 	 * resultType.
 	 */
-	private void convertIfNecessary(final ILocation loc, final ExpressionResult operand,
+	public void convertIfNecessary(final ILocation loc, final ExpressionResult operand,
 			final CPrimitive resultType) {
 		if (operand.lrVal.getCType().equals(resultType)) {
 			// do nothing

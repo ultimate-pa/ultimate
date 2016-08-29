@@ -256,7 +256,7 @@ public class ColumnDefinitionUtil {
 			final List<String> resultRow = new ArrayList<>();
 			resultRow.add(urd.getInputFileFolders());
 			resultRow.add(urd.getInputFileNames());
-			resultRow.add(urd.getSettings().getName());
+			resultRow.add(urd.getSettingsName());
 			resultRow.add(urd.getToolchain().getName());
 			resultRow.add(extendedResult.getResult().toString());
 			resultRow.add(extendedResult.getCategory());

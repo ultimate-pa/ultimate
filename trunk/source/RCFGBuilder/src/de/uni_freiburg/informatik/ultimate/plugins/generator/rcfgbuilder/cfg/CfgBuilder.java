@@ -2,27 +2,27 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE RCFGBuilder plug-in.
- * 
+ *
  * The ULTIMATE RCFGBuilder plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE RCFGBuilder plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE RCFGBuilder plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE RCFGBuilder plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
@@ -94,7 +93,7 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  * Interpolants) from an Boogie AST which contains only unstructured Code (i.e., no while (and others??) statements).
  * The input for this classs has to be unstructured Boogie Code (e.g., no while loops) for example the output of the
  * BoogiePreprocessor.
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
  */
 
@@ -131,7 +130,8 @@ public class CfgBuilder {
 	private final CodeBlockFactory mCbf;
 
 	private final SimplicationTechnique mSimplificationTechnique = SimplicationTechnique.SIMPLIFY_DDA;
-	private final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+	private final XnfConversionTechnique mXnfConversionTechnique =
+			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	public CfgBuilder(final Unit unit, final RCFGBacktranslator backtranslator, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) throws IOException {
@@ -156,8 +156,7 @@ public class CfgBuilder {
 		mBoogie2smt = new Boogie2SMT(maScript, mBoogieDeclarations, blackHolesArrays, bitvectorInsteadInt, mServices);
 		mRootAnnot = new RootAnnot(mServices, mBoogieDeclarations, mBoogie2smt, mBacktranslator);
 		mCbf = mRootAnnot.getCodeBlockFactory();
-		storage.putStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage, mCbf);
-
+		mCbf.storeFactory(storage);
 	}
 
 	/**
@@ -165,15 +164,15 @@ public class CfgBuilder {
 	 * @param storage
 	 * @param filename
 	 */
-	private Script constructAndInitializeSolver(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final String filename) {
+	private Script constructAndInitializeSolver(final IUltimateServiceProvider services,
+			final IToolchainStorage storage, final String filename) {
 		final SolverMode solverMode = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
 
 		final boolean dumpSmtScriptToFile = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
-		final String pathOfDumpedScript = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
-				.getString(RcfgPreferenceInitializer.LABEL_Path);
+		final String pathOfDumpedScript =
+				(mServices.getPreferenceProvider(Activator.PLUGIN_ID)).getString(RcfgPreferenceInitializer.LABEL_Path);
 
 		final String commandExternalSolver = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
@@ -186,17 +185,16 @@ public class CfgBuilder {
 
 		final String logicForExternalSolver = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
-		final Settings solverSettings = SolverBuilder.constructSolverSettings(
-				filename, solverMode, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
+		final Settings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
+				commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 
-		return SolverBuilder.buildAndInitializeSolver(services, storage, solverMode, solverSettings, 
-				dumpUsatCoreTrackBenchmark, dumpMainTrackBenchmark,
-				logicForExternalSolver, "CfgBuilderScript");
+		return SolverBuilder.buildAndInitializeSolver(services, storage, solverMode, solverSettings,
+				dumpUsatCoreTrackBenchmark, dumpMainTrackBenchmark, logicForExternalSolver, "CfgBuilderScript");
 	}
 
 	/**
 	 * Build a recursive control flow graph for an unstructured boogie program.
-	 * 
+	 *
 	 * @param Unit
 	 *            that encodes a program.
 	 * @return RootNode of a recursive control flow graph.
@@ -247,7 +245,7 @@ public class CfgBuilder {
 		if (mCodeBlockSize == CodeBlockSize.LoopFreeBlock) {
 			new LargeBlockEncoding();
 		}
-		
+
 		return mGraphroot;
 	}
 
@@ -255,7 +253,7 @@ public class CfgBuilder {
 		if (expr == null) {
 			return null;
 		} else {
-			return new UnaryExpression(expr.getLocation(), PrimitiveType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG,
+			return new UnaryExpression(expr.getLocation(), BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG,
 					expr);
 		}
 	}
@@ -263,12 +261,14 @@ public class CfgBuilder {
 	/**
 	 * Add CallEdge from SummaryEdge source to the entry location of the called procedure. Add ReturnEdge from the
 	 * called procedures exit node to the summary edges target.
-	 * @param simplificationTechnique 
 	 * 
+	 * @param simplificationTechnique
+	 *
 	 * @param SummaryEdge
 	 *            that summarizes execution of an implemented procedure.
 	 */
-	private void addCallTransitionAndReturnTransition(final Summary edge, final SimplicationTechnique simplificationTechnique) {
+	private void addCallTransitionAndReturnTransition(final Summary edge,
+			final SimplicationTechnique simplificationTechnique) {
 		final CallStatement st = edge.getCallStatement();
 		final String callee = st.getMethodName();
 		assert (mRootAnnot.mentryNode.containsKey(callee)) : "Source code contains" + " call of " + callee
@@ -280,8 +280,8 @@ public class CfgBuilder {
 
 		final String caller = callerNode.getProcedure();
 
-		final TranslationResult arguments2InParams = mRootAnnot.getBoogie2SMT().getStatements2TransFormula()
-				.inParamAssignment(st, simplificationTechnique);
+		final TranslationResult arguments2InParams =
+				mRootAnnot.getBoogie2SMT().getStatements2TransFormula().inParamAssignment(st, simplificationTechnique);
 		final TranslationResult outParams2CallerVars = mRootAnnot.getBoogie2SMT().getStatements2TransFormula()
 				.resultAssignment(st, caller, simplificationTechnique);
 		final Map<String, ILocation> overapproximations = new HashMap<>();
@@ -303,7 +303,7 @@ public class CfgBuilder {
 
 	/**
 	 * Build control flow graph of single procedures.
-	 * 
+	 *
 	 * @author heizmann@informatik.uni-freiburg.de
 	 */
 	private class ProcedureCfgBuilder {
@@ -367,7 +367,7 @@ public class CfgBuilder {
 
 		/**
 		 * Builds the control flow graph of a single procedure according to a given implementation.
-		 * 
+		 *
 		 * @param Identifier
 		 *            of the procedure for which the CFG will be build.
 		 */
@@ -377,7 +377,8 @@ public class CfgBuilder {
 			mGotoEdges = new LinkedList<GotoEdge>();
 			mLabels = new HashSet<String>();
 
-			final Statement[] statements = mBoogieDeclarations.getProcImplementation().get(procName).getBody().getBlock();
+			final Statement[] statements =
+					mBoogieDeclarations.getProcImplementation().get(procName).getBody().getBlock();
 			if (statements.length == 0) {
 				throw new UnsupportedOperationException("Procedure contains no statement");
 			}
@@ -537,7 +538,7 @@ public class CfgBuilder {
 		/**
 		 * construct error location BoogieASTNode in procedure procName add constructed location to mprocLocNodes and
 		 * mErrorNodes.
-		 * 
+		 *
 		 * @return
 		 */
 		private ProgramPoint addErrorNode(final String procName, final BoogieASTNode BoogieASTNode) {
@@ -597,7 +598,7 @@ public class CfgBuilder {
 		 * locations. This is not always possible hence there is no guarantee that the goto is removed. If
 		 * allowMultiplicationOfEdges is true, we guarantee that the goto is removed but in some cases will not only
 		 * merge locations but also multiply existing edges.
-		 * 
+		 *
 		 * @return true iff we removed the gotoEdge.
 		 */
 		private boolean removeAuxiliaryGoto(final GotoEdge gotoEdge, final boolean allowMultiplicationOfEdges) {
@@ -660,7 +661,7 @@ public class CfgBuilder {
 						for (final RCFGEdge grandchild : child.getOutgoingEdges()) {
 							final ProgramPoint target = (ProgramPoint) grandchild.getTarget();
 							final CodeBlock edge = mCbf.copyCodeBlock((CodeBlock) grandchild, mother, target);
-							// transfer goto-loop annotations to the duplicated edges 							
+							// transfer goto-loop annotations to the duplicated edges
 							ModelUtils.copyAnnotations(gotoEdge, edge, LoopEntryAnnotation.class);
 							if (edge instanceof GotoEdge) {
 								mGotoEdges.add((GotoEdge) edge);
@@ -709,8 +710,8 @@ public class CfgBuilder {
 
 			// Violations against the ensures part of the procedure
 			// specification
-			final List<EnsuresSpecification> ensuresNonFree = mBoogieDeclarations.getEnsuresNonFree()
-					.get(mcurrentProcedureName);
+			final List<EnsuresSpecification> ensuresNonFree =
+					mBoogieDeclarations.getEnsuresNonFree().get(mcurrentProcedureName);
 			if (ensuresNonFree != null && !ensuresNonFree.isEmpty()) {
 				for (final EnsuresSpecification spec : ensuresNonFree) {
 					final Expression specExpr = spec.getFormula();
@@ -719,8 +720,8 @@ public class CfgBuilder {
 					passAllAnnotations(spec, assumeSt);
 					mBacktranslator.putAux(assumeSt, new BoogieASTNode[] { spec });
 					final ProgramPoint errorLocNode = addErrorNode(mcurrentProcedureName, spec);
-					final CodeBlock assumeEdge = mCbf.constructStatementSequence(finalNode, errorLocNode, assumeSt,
-							Origin.ENSURES);
+					final CodeBlock assumeEdge =
+							mCbf.constructStatementSequence(finalNode, errorLocNode, assumeSt, Origin.ENSURES);
 					passAllAnnotations(spec, assumeEdge);
 					passAllAnnotations(spec, errorLocNode);
 					mEdges.add(assumeEdge);
@@ -814,7 +815,7 @@ public class CfgBuilder {
 		/**
 		 * Get the LocNode that represents a label. If there is already a LocNode that represents this Label return this
 		 * representative. Otherwise construct a new LocNode that becomes the representative for this label.
-		 * 
+		 *
 		 * @param labelName
 		 *            Name of the Label for which you want the corresponding LocNode.
 		 * @param st
@@ -886,8 +887,8 @@ public class CfgBuilder {
 				return;
 			}
 			if (mcurrent instanceof ProgramPoint) {
-				final StatementSequence codeBlock = mCbf.constructStatementSequence((ProgramPoint) mcurrent, null, st,
-						origin);
+				final StatementSequence codeBlock =
+						mCbf.constructStatementSequence((ProgramPoint) mcurrent, null, st, origin);
 				passAllAnnotations(st, codeBlock);
 				mEdges.add(codeBlock);
 				mcurrent = codeBlock;
@@ -931,8 +932,8 @@ public class CfgBuilder {
 			passAllAnnotations(st, assumeError);
 			mBacktranslator.putAux(assumeError, new BoogieASTNode[] { st });
 			final ProgramPoint errorLocNode = addErrorNode(mcurrentProcedureName, st);
-			final StatementSequence assumeErrorCB = mCbf.constructStatementSequence(locNode, errorLocNode, assumeError,
-					Origin.ASSERT);
+			final StatementSequence assumeErrorCB =
+					mCbf.constructStatementSequence(locNode, errorLocNode, assumeError, Origin.ASSERT);
 			passAllAnnotations(st, errorLocNode);
 			passAllAnnotations(st, assumeErrorCB);
 			mEdges.add(assumeErrorCB);
@@ -951,7 +952,8 @@ public class CfgBuilder {
 			}
 			passAllAnnotations(st, assumeSafe);
 			mBacktranslator.putAux(assumeSafe, new BoogieASTNode[] { st });
-			final StatementSequence assumeSafeCB = mCbf.constructStatementSequence(locNode, null, assumeSafe, Origin.ASSERT);
+			final StatementSequence assumeSafeCB =
+					mCbf.constructStatementSequence(locNode, null, assumeSafe, Origin.ASSERT);
 			passAllAnnotations(st, assumeSafeCB);
 			// add a new TransEdge labeled with st as successor of the
 			// last constructed LocNode
@@ -1043,15 +1045,15 @@ public class CfgBuilder {
 					} else {
 						proc = mBoogieDeclarations.getProcSpecification().get(callee);
 					}
-					final Expression violatedRequires = getNegation(
-							new WeakestPrecondition(spec.getFormula(), st, proc).getResult());
+					final Expression violatedRequires =
+							getNegation(new WeakestPrecondition(spec.getFormula(), st, proc).getResult());
 					AssumeStatement assumeSt;
 					assumeSt = new AssumeStatement(st.getLocation(), violatedRequires);
 					passAllAnnotations(st, assumeSt);
 					mBacktranslator.putAux(assumeSt, new BoogieASTNode[] { st, spec });
 					final ProgramPoint errorLocNode = addErrorNode(mcurrentProcedureName, st);
-					final StatementSequence errorCB = mCbf.constructStatementSequence(locNode, errorLocNode, assumeSt,
-							Origin.REQUIRES);
+					final StatementSequence errorCB =
+							mCbf.constructStatementSequence(locNode, errorLocNode, assumeSt, Origin.REQUIRES);
 					passAllAnnotations(spec, errorCB);
 					passAllAnnotations(spec, errorLocNode);
 					mEdges.add(errorCB);
@@ -1094,7 +1096,7 @@ public class CfgBuilder {
 		 * connected to all incoming/outgoing transitions of the oldLocNode. The oldLocNode looses connections to all
 		 * incoming/outgoing transitions. If the oldLocNode was representative for a Label the new location will from
 		 * now on be the representative of this Label.
-		 * 
+		 *
 		 * @param oldLocNode
 		 *            LocNode that gets merged into the newLocNode. Must not represent an error location.
 		 * @param newLocNode
@@ -1187,7 +1189,8 @@ public class CfgBuilder {
 			final List<CodeBlock> sequence = new ArrayList<>(2);
 			sequence.add(incoming);
 			sequence.add(outgoing);
-			mCbf.constructSequentialComposition(predecessor, successor, mSimplifyCodeBlocks, false, sequence, mXnfConversionTechnique, mSimplificationTechnique);
+			mCbf.constructSequentialComposition(predecessor, successor, mSimplifyCodeBlocks, false, sequence,
+					mXnfConversionTechnique, mSimplificationTechnique);
 			if (!sequentialQueue.contains(predecessor)) {
 				final List<CodeBlock> outEdges = superfluousParallel(predecessor);
 				if (outEdges != null) {
@@ -1198,7 +1201,8 @@ public class CfgBuilder {
 
 		private void composeParallel(final ProgramPoint pp, final List<CodeBlock> outgoing) {
 			final ProgramPoint successor = (ProgramPoint) outgoing.get(0).getTarget();
-			mCbf.constructParallelComposition(pp, successor, Collections.unmodifiableList(outgoing), mXnfConversionTechnique, mSimplificationTechnique);
+			mCbf.constructParallelComposition(pp, successor, Collections.unmodifiableList(outgoing),
+					mXnfConversionTechnique, mSimplificationTechnique);
 			if (superfluousSequential(pp)) {
 				sequentialQueue.add(pp);
 			} else {
@@ -1241,7 +1245,7 @@ public class CfgBuilder {
 
 		/**
 		 * Check if ProgramPoint pp has several outgoing edges whose target is the same ProgramPoint.
-		 * 
+		 *
 		 * @return For some successor ProgramPoint the list of all outgoing edges whose target is this (successor)
 		 *         ProgramPoint, if there can be such a list with more than one element. Otherwise (each outgoing edge
 		 *         leads to a different ProgramPoint) return null.

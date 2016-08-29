@@ -34,8 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -44,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformat
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -56,27 +55,27 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Expression> {
+public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Term> {
 
 	private final List<AtomicTraceElement<RCFGEdge>> mTrace;
-	private final Map<Integer, ProgramState<Expression>> mPartialProgramStateMapping;
+	private final Map<Integer, ProgramState<Term>> mPartialProgramStateMapping;
 	private final Map<TermVariable, Boolean>[] mBranchEncoders;
 	private final Map<String, ILocation> mOverapproximations;
 
 	@SuppressWarnings("unchecked")
 	public RcfgProgramExecution(final List<? extends RCFGEdge> trace,
-			final Map<Integer, ProgramState<Expression>> partialProgramStateMapping) {
+			final Map<Integer, ProgramState<Term>> partialProgramStateMapping) {
 		this(trace, partialProgramStateMapping, new ArrayList<Map<TermVariable, Boolean>>().toArray(new Map[0]), null);
 	}
 	
 	public RcfgProgramExecution(final List<? extends RCFGEdge> trace,
-			final Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
+			final Map<Integer, ProgramState<Term>> partialProgramStateMapping,
 			final Map<TermVariable, Boolean>[] branchEncoders) {
 		this(trace, partialProgramStateMapping, branchEncoders, null);
 	}
 
 	public RcfgProgramExecution(final List<? extends RCFGEdge> trace,
-			final Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
+			final Map<Integer, ProgramState<Term>> partialProgramStateMapping,
 			final Map<TermVariable, Boolean>[] branchEncoders, 
 			final List<IRelevanceInformation> relevanceInformation) {
 		assert trace != null;
@@ -128,12 +127,12 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Express
 	}
 
 	@Override
-	public AtomicTraceElement<RCFGEdge> getTraceElement(int i) {
+	public AtomicTraceElement<RCFGEdge> getTraceElement(final int i) {
 		return mTrace.get(i);
 	}
 
 	@Override
-	public ProgramState<Expression> getProgramState(int i) {
+	public ProgramState<Term> getProgramState(final int i) {
 		if (i < 0 || i >= mTrace.size()) {
 			throw new IllegalArgumentException("out of range");
 		}
@@ -141,11 +140,11 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Express
 	}
 
 	@Override
-	public ProgramState<Expression> getInitialProgramState() {
+	public ProgramState<Term> getInitialProgramState() {
 		return mPartialProgramStateMapping.get(-1);
 	}
 
-	public static Map<String, ILocation> getOverapproximations(List<? extends RCFGEdge> trace) {
+	public static Map<String, ILocation> getOverapproximations(final List<? extends RCFGEdge> trace) {
 		final Map<String, ILocation> result = new HashMap<>();
 		for (final RCFGEdge cb : trace) {
 			if (cb.getPayload().hasAnnotation()) {
@@ -165,17 +164,17 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Express
 		return result;
 	}
 
-	private String ppstoString(ProgramState<Expression> pps) {
+	private String ppstoString(final ProgramState<Term> pps) {
 		String result;
 		if (pps == null) {
 			result = null;
 		} else {
 			final StringBuilder sb = new StringBuilder();
-			for (final Expression variable : pps.getVariables()) {
-				final Expression value = pps.getValues(variable).iterator().next();
+			for (final Term variable : pps.getVariables()) {
+				final Term value = pps.getValues(variable).iterator().next();
 				sb.append("  ");
-				final String var = BoogiePrettyPrinter.print(variable);
-				final String val = BoogiePrettyPrinter.print(value);
+				final String var = variable.toStringDirect();
+				final String val = value.toStringDirect();
 				sb.append(var).append("=").append(val);
 			}
 			result = sb.toString();
@@ -229,8 +228,8 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Express
 	}
 
 	@Override
-	public Class<Expression> getExpressionClass() {
-		return Expression.class;
+	public Class<Term> getExpressionClass() {
+		return Term.class;
 	}
 
 	@Override
@@ -251,7 +250,7 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Express
 		return unproabilityReasons;
 	}
 
-	public RcfgProgramExecution addRelevanceInformation(List<IRelevanceInformation> relevanceInformation) {
+	public RcfgProgramExecution addRelevanceInformation(final List<IRelevanceInformation> relevanceInformation) {
 		final List<RCFGEdge> edgeSequence = new ArrayList<>();
 		for (final AtomicTraceElement<RCFGEdge> ate : mTrace) {
 			edgeSequence.add(ate.getTraceElement());

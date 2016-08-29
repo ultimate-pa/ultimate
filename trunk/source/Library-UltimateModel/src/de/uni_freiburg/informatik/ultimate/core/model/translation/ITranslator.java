@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.core.model.translation;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+
 /**
  * Object translate traces and expressions from one format to another. In ULTIMATE generator plugins may transform one
  * program model into another. A program analysis constructs results (e.g., traces or expressions) for some program
@@ -57,6 +59,8 @@ public interface ITranslator<STE, TTE, SE, TE> {
 	 * Note: Does not need to preserve instances
 	 */
 	public TE translateExpression(SE expression);
+	
+	public ProgramState<TE> translateProgramState(ProgramState<SE> programState);
 
 	public String targetExpressionToString(TE expression);
 

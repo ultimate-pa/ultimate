@@ -83,6 +83,11 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	public static final String DINDENT = INDENT + INDENT;
 	public static final String TINDENT = DINDENT + INDENT;
 
+	public static final String LABEL_USE_FUTURE_RCFG = "Use the RCFG-of-the-future interface";
+	private static final Boolean DEF_USE_FUTURE_RCFG = false;
+	private static final String TOOLTIP_USE_FUTURE_RCFG =
+			"Instead of analysing Boogie, analyse transition formulas if run as stand-alone plugin (experimental)";
+
 	public AbsIntPrefInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
@@ -96,6 +101,8 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 				PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
 		rtr.add(new UltimatePreferenceItem<Boolean>(LABEL_RUN_AS_PRE_ANALYSIS, DEF_RUN_AS_PRE_ANALYSIS,
 				TOOLTIP_RUN_AS_PRE_ANALYSIS, PreferenceType.Boolean));
+		rtr.add(new UltimatePreferenceItem<Boolean>(LABEL_USE_FUTURE_RCFG, DEF_USE_FUTURE_RCFG, TOOLTIP_USE_FUTURE_RCFG,
+				PreferenceType.Boolean));
 
 		// Abstract Domains Container
 		final UltimatePreferenceItemContainer abstractDomainContainer =

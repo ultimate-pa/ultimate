@@ -226,7 +226,7 @@ public class WitnessAutomatonConstructor {
 
 				//@formatter:off
 				final WitnessEdgeAnnotation annot = new WitnessEdgeAnnotation(
-						data.getProperties().get("negated"),
+						transformControlToBooleanString(data.getProperties().get("control")),
 						data.getProperties().get("enterLoopHead"),
 						data.getProperties().get("enterFunction"),
 						data.getProperties().get("returnFrom"),
@@ -288,6 +288,19 @@ public class WitnessAutomatonConstructor {
 				return graph;
 			}
 		};
+	}
+
+	private String transformControlToBooleanString(final String controlString) {
+		if (controlString == null) {
+			return null;
+		}
+		if ("condition-true".equalsIgnoreCase(controlString)) {
+			return "true";
+		}
+		if ("condition-false".equalsIgnoreCase(controlString)) {
+			return "false";
+		}
+		throw new IllegalArgumentException("control cannot have this value: " + controlString);
 	}
 
 	private boolean getBoolProperty(final NodeMetadata data, final String key) {

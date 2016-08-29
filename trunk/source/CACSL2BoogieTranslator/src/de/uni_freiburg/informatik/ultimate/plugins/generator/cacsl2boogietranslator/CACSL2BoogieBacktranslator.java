@@ -386,7 +386,9 @@ public class CACSL2BoogieBacktranslator
 		}
 	}
 
-	private ProgramState<IASTExpression> translateProgramState(final ProgramState<Expression> programState) {
+	
+	@Override
+	public ProgramState<IASTExpression> translateProgramState(final ProgramState<Expression> programState) {
 		if (programState == null) {
 			// cannot translate nothin'
 			return null;
@@ -943,7 +945,7 @@ public class CACSL2BoogieBacktranslator
 			final BigInteger extractedValue = mExpressionTranslation.extractIntegerValue(lit, cType);
 			value = String.valueOf(extractedValue);
 		}
-		checkLiteral(lit, value);
+		checkLiteral(cType, lit, value);
 		return new FakeExpression(value);
 	}
 
@@ -978,30 +980,36 @@ public class CACSL2BoogieBacktranslator
 			final BigInteger extractedValue = mExpressionTranslation.extractIntegerValue(lit, cType);
 			value = String.valueOf(extractedValue);
 		}
-		checkLiteral(lit, value);
+		checkLiteral(cType, lit, value);
 		return new FakeExpression(value);
 	}
 
 	private IASTExpression translateRealLiteral(final RealLiteral lit) {
-		checkLiteral(lit, lit.getValue());
+		checkLiteral(null, lit, lit.getValue());
 		return new FakeExpression(lit.getValue());
 	}
 
 	private IASTExpression translateBooleanLiteral(final BooleanLiteral lit) {
 		final String value = (lit.getValue() ? "1" : "0");
-		checkLiteral(lit, value);
+		checkLiteral(null, lit, value);
 		return new FakeExpression(value);
 	}
 
-	private void checkLiteral(final Expression expr, final String value) {
+	private void checkLiteral(final CType cType, final Expression expr, final String value) {
 		if (value.contains("~fp~LONGDOUBLE")) {
 			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + expr.getClass().getSimpleName() + " "
 					+ BoogiePrettyPrinter.print(expr) + " could not be translated");
 
 		}
 		if (value == null || "null".equals(value)) {
-			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + expr.getClass().getSimpleName() + " "
-					+ BoogiePrettyPrinter.print(expr) + " could not be translated");
+			if (cType == null) {
+				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + expr.getClass().getSimpleName()
+						+ " " + BoogiePrettyPrinter.print(expr) + " could not be translated");
+			} else {
+				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + expr.getClass().getSimpleName()
+						+ " " + BoogiePrettyPrinter.print(expr) + " could not be translated for associated CType "
+						+ cType);
+			}
 		}
 	}
 

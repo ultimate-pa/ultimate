@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata;
@@ -30,30 +30,42 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-
+/**
+ * A finite word, i.e., a finite sequence of symbols.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            symbol type
+ */
 public class Word<LETTER> implements Iterable<LETTER> {
-
+	/**
+	 * The word.
+	 */
 	protected LETTER[] mWord;
 	
 	/**
-	 * Construct Word consisting of a sequence of symbols
+	 * Construct word consisting of a sequence of symbols.
 	 * 
-	 * @param symbols sequence of symbols
+	 * @param symbols
+	 *            sequence of symbols
 	 */
 	@SafeVarargs
 	public Word(final LETTER... symbols) {
-		this.mWord = symbols;
+		mWord = symbols;
 	}
 	
 	/**
-	 * @return The length of the Word is 0 for the empty word, 1 for the
-	 * word that consists of one symbol, etc.
+	 * @return The length of the word is 0 for the empty word, 1 for the
+	 *         word that consists of one symbol, etc.
 	 */
 	public int length() {
 		return mWord.length;
 	}
 	
 	/**
+	 * A list view of the symbols.
+	 * 
 	 * @return list of symbols
 	 */
 	public List<LETTER> asList() {
@@ -61,50 +73,53 @@ public class Word<LETTER> implements Iterable<LETTER> {
 	}
 	
 	/**
-	 * @param position position in word
-	 * @return Symbol at position.
+	 * The symbol at the given position.
+	 * 
+	 * @param position
+	 *            position in word
+	 * @return symbol at the given position
 	 */
 	public LETTER getSymbol(final int position) {
-		if (position < 0 || position >= mWord.length) {
+		if (position < 0 || position >= length()) {
 			throw new IllegalArgumentException("index out of range");
 		}
 		return mWord[position];
 	}
 	
 	/**
-	 * @param word2 other word
-	 * @return concatenation 'this.word2'
+	 * @param otherWord
+	 *            other word
+	 * @return concatenation 'this.otherWord'
 	 */
-	@SuppressWarnings("unchecked")
-	public Word<LETTER> concatenate(final Word<LETTER> word2) {
+	public Word<LETTER> concatenate(final Word<LETTER> otherWord) {
 		final int lengthWord1 = this.length();
-		final int lengthWord2 = word2.length();
-		final LETTER[] concatenationSymbols = 
-			(LETTER[]) new Object[lengthWord1 + lengthWord2];
-		
-		for (int i=0; i<lengthWord1; i++) {
+		final int lengthWord2 = otherWord.length();
+		@SuppressWarnings("unchecked")
+		final LETTER[] concatenationSymbols =
+				(LETTER[]) new Object[lengthWord1 + lengthWord2];
+				
+		for (int i = 0; i < lengthWord1; i++) {
 			concatenationSymbols[i] = this.getSymbol(i);
 		}
-		for (int i=0; i<lengthWord2; i++) {
-			concatenationSymbols[lengthWord1+i] = word2.getSymbol(i);
+		for (int i = 0; i < lengthWord2; i++) {
+			concatenationSymbols[lengthWord1 + i] = otherWord.getSymbol(i);
 		}
 		return new Word<LETTER>(concatenationSymbols);
-	}		
+	}
 	
 	@Override
 	public String toString() {
-		//return mWord.toString();
-		final StringBuilder sb = new StringBuilder();
-		sb.append('[');
-		for (int i = 0; i < mWord.length; i++) {
-			sb.append(mWord[i]);
+		final StringBuilder builder = new StringBuilder();
+		builder.append('[');
+		for (int i = 0; i < length(); i++) {
+			builder.append(getSymbol(i));
 		}
-		sb.append(']');
-		return sb.toString();
+		builder.append(']');
+		return builder.toString();
 	}
 	
 	@Override
 	public Iterator<LETTER> iterator() {
-		return Arrays.asList(mWord).iterator();
+		return asList().iterator();
 	}
 }

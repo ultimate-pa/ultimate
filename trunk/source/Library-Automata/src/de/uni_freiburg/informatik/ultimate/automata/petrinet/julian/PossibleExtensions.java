@@ -41,8 +41,8 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 	private final PriorityQueue<Event<S, C>> mPe;
 	private final BranchingProcess<S, C> mBranchingProcess;
 
-	public PossibleExtensions(BranchingProcess<S, C> branchingProcess,
-			Comparator<Event<S, C>> order) {
+	public PossibleExtensions(final BranchingProcess<S, C> branchingProcess,
+			final Comparator<Event<S, C>> order) {
 		this.mBranchingProcess = branchingProcess;
 
 		// anonymous implementation of the Order corresponding to McMillans
@@ -58,7 +58,7 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 	}
 
 	@Override
-	public void update(Event<S, C> e) {
+	public void update(final Event<S, C> e) {
 		final Collection<Candidate<S, C>> candidates = computeCandidates(e);
 		for (final Candidate<S, C> candidate : candidates) {
 			evolveCandidate(candidate);
@@ -70,12 +70,8 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 	 * Evolves a {@code Candidate} for a new possible Event in all possible ways
 	 * and, as a side-effect, adds valid extensions (ones whose predecessors are
 	 * a co-set) to he possible extension set.
-	 * 
-	 * @param mT
-	 * @param mChosen
-	 * @param mPlaces
 	 */
-	private void evolveCandidate(Candidate<S, C> cand) {
+	private void evolveCandidate(final Candidate<S, C> cand) {
 		if (cand.mPlaces.isEmpty()) {
 			mPe.add(new Event<S, C>(cand.mChosen, cand.mT));
 			return;
@@ -101,7 +97,7 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 	 * computes all {@code Candidate}s for possible extensions that are
 	 * successors of {@code Event} e
 	 */
-	private Collection<Candidate<S, C>> computeCandidates(Event<S, C> e) {
+	private Collection<Candidate<S, C>> computeCandidates(final Event<S, C> e) {
 		final int initCapacity = 2 
 				* e.getSuccessorConditions().size()
 				* e.getSuccessorConditions().iterator().next()

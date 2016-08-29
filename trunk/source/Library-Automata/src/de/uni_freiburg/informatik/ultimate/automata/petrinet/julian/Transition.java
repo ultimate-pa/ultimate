@@ -46,21 +46,21 @@ public class Transition<S, C>
 	private final Collection<Place<S, C>> mPredecessors;
 	private final Collection<Place<S, C>> mSuccessors;
 
-	private final int mTotalOrderID;
+	private final int mTotalOrderId;
 
 	/**
 	 * TODO Christian 2016-08-16: The code assumes that the Collection
 	 *      parameters are of type List. Why not explicitly type-check this?
 	 */
 	public Transition(final S symbol, final Collection<Place<S, C>> predecessors,
-			final Collection<Place<S, C>> successors, final int totalOrderID) {
+			final Collection<Place<S, C>> successors, final int totalOrderId) {
 		mSymbol = symbol;
 		mPredecessors = Collections
 				.unmodifiableList((List<Place<S, C>>) predecessors);
 		mSuccessors = Collections
 				.unmodifiableList((List<Place<S, C>>) successors);
 		mHashCode = computeHashCode();
-		mTotalOrderID = totalOrderID;
+		mTotalOrderId = totalOrderId;
 	}
 
 	@Override
@@ -90,16 +90,16 @@ public class Transition<S, C>
 
 	@Override
 	public String toString() {
-		return mSymbol.toString() + "[" + mTotalOrderID + "]";
+		return mSymbol.toString() + "[" + mTotalOrderId + "]";
 	}
 
-	public int getTotalOrderID() {
-		return mTotalOrderID;
+	public int getTotalOrderId() {
+		return mTotalOrderId;
 	}
 
 	@Override
 	public int compareTo(final Transition<S, C> o) {
-		return mTotalOrderID - o.mTotalOrderID;
+		return mTotalOrderId - o.mTotalOrderId;
 	}
 
 }

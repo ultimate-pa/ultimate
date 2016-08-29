@@ -2,27 +2,27 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE UnitTest Library.
- * 
+ *
  * The ULTIMATE UnitTest Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE UnitTest Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE UnitTest Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.test.util;
@@ -58,13 +58,17 @@ import de.uni_freiburg.informatik.ultimate.util.Utils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * 
+ *
  */
 public final class TestUtil {
 
-	private static final long PSEUDO_RANDOmFILE_SELECTION_SEED = 19120623;
+	private static final long PSEUDO_RANDOM_FILE_SELECTION_SEED = 19120623;
+
+	private TestUtil() {
+		// utility classes should not be instantiated
+	}
 
 	/**
 	 * Select n files from a collection of files in a pseudo-random and deterministic way.
@@ -78,7 +82,7 @@ public final class TestUtil {
 			return files;
 		} else {
 			final List<File> shuffle = new ArrayList<>(files);
-			Collections.shuffle(shuffle, new Random(PSEUDO_RANDOmFILE_SELECTION_SEED));
+			Collections.shuffle(shuffle, new Random(PSEUDO_RANDOM_FILE_SELECTION_SEED));
 			return new ArrayList<>(shuffle.subList(0, n));
 		}
 	}
@@ -86,19 +90,16 @@ public final class TestUtil {
 	/**
 	 * Generates a name based on the current time, the original name of the input file and the description string such
 	 * that it should be unique and recognizable.
-	 * 
+	 *
 	 * @param inputFile
 	 *            An instance representing a file on the local machine
 	 * @param description
 	 *            A description for the log file name.
 	 * @return A string representing the absolute path to a file on the local machine.
 	 */
-	public static String generateLogFilename(File inputFile, String description) {
-
+	public static String generateLogFilename(final File inputFile, final String description) {
 		final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
-
 		final String dir = inputFile.getParent() + File.separator;
-
 		final String originalFileName = inputFile.getName();
 
 		String name = "UltimateTest ";
@@ -114,19 +115,19 @@ public final class TestUtil {
 	/**
 	 * Combines a relative path with the base directory of this plugin, i.e. you can say
 	 * getPathFromHere("../../examples/settings/") to reach the setting directory
-	 * 
+	 *
 	 * @param path
 	 *            A string representing a relative path. Please use "/" as path separator regardless of OS. Java will
 	 *            recognize \\, but this wont work under Linux
 	 * @return A string representing the absolute path to the relative path based on the actual position of this package
 	 */
-	public static String getPathFromHere(String path) {
+	public static String getPathFromHere(final String path) {
 		final File here = new File(System.getProperty("user.dir"));
 		final File relative = new File(here.getAbsolutePath() + File.separator + path);
 		return relative.getAbsolutePath();
 	}
 
-	public static String getPathFromSurefire(String path, String canonicalClassName) {
+	public static String getPathFromSurefire(final String path, final String canonicalClassName) {
 		final File trunk = new File(System.getProperty("user.dir"));
 		final File relative = new File(trunk.getAbsolutePath() + File.separator + "target" + File.separator
 				+ "surefire-reports" + File.separator + canonicalClassName + File.separator + path);
@@ -136,11 +137,11 @@ public final class TestUtil {
 
 	/**
 	 * Prefix the parameter "path" with the path to the trunk folder of the Ultimate repository on the current machine.
-	 * 
+	 *
 	 * @param path
 	 * @return
 	 */
-	public static String getPathFromTrunk(String path) {
+	public static String getPathFromTrunk(final String path) {
 		final File trunk = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 		final File relative = new File(trunk.getAbsolutePath() + File.separator + path);
 		if (!relative.exists()) {
@@ -149,7 +150,7 @@ public final class TestUtil {
 		return relative.getAbsolutePath();
 	}
 
-	public static String removeTrunkExamplesPrefix(String path) {
+	public static String removeTrunkExamplesPrefix(final String path) {
 		final String trunk = TestUtil.getPathFromTrunk("");
 		final String examples = trunk + File.separator + "examples" + File.separator;
 		final int lastIndexOf = path.lastIndexOf(examples);
@@ -161,7 +162,7 @@ public final class TestUtil {
 		}
 	}
 
-	public static String removeTrunkSettingsPrefix(String path) {
+	public static String removeTrunkSettingsPrefix(final String path) {
 		final String trunk = TestUtil.getPathFromTrunk("");
 		final String examples = trunk + File.separator + "examples" + File.separator + "settings" + File.separator;
 		final int lastIndexOf = path.lastIndexOf(examples);
@@ -173,7 +174,7 @@ public final class TestUtil {
 		}
 	}
 
-	public static String removeTrunkToolchainPrefix(String path) {
+	public static String removeTrunkToolchainPrefix(final String path) {
 		final String trunk = TestUtil.getPathFromTrunk("");
 		final String examples = trunk + File.separator + "examples" + File.separator + "toolchains" + File.separator;
 		final int lastIndexOf = path.lastIndexOf(examples);
@@ -188,12 +189,12 @@ public final class TestUtil {
 	/***
 	 * Filters a list of files based on a given regex. Returns a collection of files of which the path matches the
 	 * regex.
-	 * 
+	 *
 	 * @param files
 	 * @param regex
 	 * @return
 	 */
-	public static Collection<File> filterFiles(Collection<File> files, String regex) {
+	public static Collection<File> filterFiles(final Collection<File> files, final String regex) {
 		final ArrayList<File> singleFiles = new ArrayList<File>();
 
 		for (final File f : files) {
@@ -209,7 +210,7 @@ public final class TestUtil {
 	/**
 	 * Get absolute path for the file in which an ITestLogfile will be written. This includes also the filename.
 	 */
-	public static String generateAbsolutePathForLogfile(ITestLogfile testSummary) {
+	public static String generateAbsolutePathForLogfile(final ITestLogfile testSummary) {
 		final String absolutPath = TestUtil.getPathFromSurefire(generateLogfilename(testSummary),
 				testSummary.getUltimateTestSuiteClass().getCanonicalName());
 		return absolutPath;
@@ -219,14 +220,14 @@ public final class TestUtil {
 	 * Get filename for the file in which an ITestSummary will be written. Returns only the name of the file without
 	 * directories.
 	 */
-	public static String generateLogfilename(ITestLogfile testSummary) {
-		final String filename = testSummary.getDescriptiveLogName() + " "
+	public static String generateLogfilename(final ITestLogfile testSummary) {
+		final String filename = testSummary.getDescriptiveLogName() + "_"
 				+ de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString()
 				+ testSummary.getFilenameExtension();
 		return filename;
 	}
 
-	public static String generateLogfilename(String directory, String description) {
+	public static String generateLogfilename(final String directory, String description) {
 		if (description == null) {
 			description = "";
 		}
@@ -292,24 +293,24 @@ public final class TestUtil {
 	 * root is a file, a collection containing root is returned (ignoring the regex) E.g., your file root has the
 	 * absolute path /home/horst/ultimate/ and your regex is *horst* you obtain the files that contain the String
 	 * "horst" if the prefix "/home/horst/ultimate/" was removed.
-	 * 
+	 *
 	 * @param root
 	 * @param regex
 	 * @return
 	 */
-	public static Collection<File> getFilesRegex(File root, String[] regex) {
+	public static Collection<File> getFilesRegex(final File root, final String[] regex) {
 		return getFilesRegex(root.getAbsolutePath(), root, regex);
 	}
 
 	/**
 	 * Returns recursively all files in a directory that have a path whose suffix beyond the String prefix is matched by
 	 * regex. If root is a file, a collection containing root is returned (ignoring the regex).
-	 * 
+	 *
 	 * @param root
 	 * @param regex
 	 * @return
 	 */
-	private static Collection<File> getFilesRegex(String prefix, File root, String[] regex) {
+	private static Collection<File> getFilesRegex(final String prefix, final File root, final String[] regex) {
 		if (!root.getAbsolutePath().startsWith(prefix)) {
 			throw new IllegalArgumentException("prefix is no prefix of root.getAbsolutePath()");
 		}
@@ -344,7 +345,7 @@ public final class TestUtil {
 		return rtr;
 	}
 
-	public static <E> Collection<E> uniformN(Collection<E> collection, int n) {
+	public static <E> Collection<E> uniformN(final Collection<E> collection, final int n) {
 		final List<E> rtr = new ArrayList<E>(n);
 		final int size = collection.size();
 
@@ -363,35 +364,34 @@ public final class TestUtil {
 		return rtr;
 	}
 
-
 	public static void logResults(final Class<?> caller, final String inputFile, final boolean fail,
-			final Collection<String> customMessages, final IUltimateServiceProvider services){
+			final Collection<String> customMessages, final IUltimateServiceProvider services) {
 		final ILogger logger = services.getLoggingService().getLogger(caller);
 		logResults(logger, inputFile, fail, customMessages, services.getResultService());
 	}
-	
-	public static void logResults(final ILogger logger, String inputFile, boolean fail,
-			Collection<String> customMessages, IResultService resultService) {
+
+	public static void logResults(final ILogger logger, final String inputFile, final boolean fail,
+			final Collection<String> customMessages, final IResultService resultService) {
 
 		if (logger == null) {
 			logResults(new ILogWriter() {
 				@Override
-				public void write(String message) {
+				public void write(final String message) {
 					System.err.println(message);
 				}
 			}, inputFile, fail, customMessages, resultService);
 		} else {
 			logResults(new ILogWriter() {
 				@Override
-				public void write(String message) {
+				public void write(final String message) {
 					logger.info(message);
 				}
 			}, inputFile, fail, customMessages, resultService);
 		}
 	}
 
-	private static void logResults(ILogWriter logger, String inputFile, boolean fail, Collection<String> customMessages,
-			IResultService resultService) {
+	private static void logResults(final ILogWriter logger, final String inputFile, final boolean fail,
+			final Collection<String> customMessages, final IResultService resultService) {
 		logger.write("#################### TEST RESULT ####################");
 		logger.write("Results for " + inputFile);
 
@@ -502,7 +502,8 @@ public final class TestUtil {
 	 * verification result of a termination analysis.
 	 */
 	public static Map<String, TerminationAnalysisOverallResult> constructFilenameKeywordMap_TerminationAnalysis() {
-		final Map<String, TerminationAnalysisOverallResult> map = new HashMap<String, TerminationAnalysisOverallResult>();
+		final Map<String, TerminationAnalysisOverallResult> map =
+				new HashMap<String, TerminationAnalysisOverallResult>();
 		// true-unreach-call is the SV-COMP annotation for safe
 		map.put(".*_true-termination.*", TerminationAnalysisOverallResult.TERMINATING);
 		// false-unreach-call is the SV-COMP annotation for safe
@@ -516,7 +517,8 @@ public final class TestUtil {
 	 * result of a termination analysis.
 	 */
 	public static Map<String, TerminationAnalysisOverallResult> constructPathKeywordMap_TerminationAnalysis() {
-		final Map<String, TerminationAnalysisOverallResult> map = new HashMap<String, TerminationAnalysisOverallResult>();
+		final Map<String, TerminationAnalysisOverallResult> map =
+				new HashMap<String, TerminationAnalysisOverallResult>();
 		// we sometimes put terminating examples in a folder with this name
 		map.put("/terminating", TerminationAnalysisOverallResult.TERMINATING);
 		// we sometimes put nonterminating examples in a folder with this name
@@ -530,7 +532,8 @@ public final class TestUtil {
 	 * the expected verification result of a termination analysis.
 	 */
 	public static Map<String, TerminationAnalysisOverallResult> constructFirstlineKeywordMap_TerminationAnalysis() {
-		final Map<String, TerminationAnalysisOverallResult> map = new HashMap<String, TerminationAnalysisOverallResult>();
+		final Map<String, TerminationAnalysisOverallResult> map =
+				new HashMap<String, TerminationAnalysisOverallResult>();
 		map.put("#rTerminationDerivable", TerminationAnalysisOverallResult.TERMINATING);
 		map.put("#rTermination", TerminationAnalysisOverallResult.TERMINATING);
 		map.put("#rNonTerminationDerivable", TerminationAnalysisOverallResult.NONTERMINATING);
@@ -542,7 +545,7 @@ public final class TestUtil {
 	/**
 	 * Returns the first line of File file as String.
 	 */
-	public static String extractFirstLine(File file) {
+	public static String extractFirstLine(final File file) {
 		BufferedReader br;
 		String line = null;
 		try {
@@ -561,7 +564,7 @@ public final class TestUtil {
 	 */
 	@SuppressWarnings("rawtypes")
 	private static <E extends ICsvProviderProvider> Collection<E> getCsvProviderProviderFromBenchmarkResults(
-			Collection<BenchmarkResult> benchmarkResults, Class<E> benchmarkClass) {
+			final Collection<BenchmarkResult> benchmarkResults, final Class<E> benchmarkClass) {
 		final List<E> filteredList = new ArrayList<E>();
 		for (final BenchmarkResult<?> benchmarkResult : benchmarkResults) {
 			@SuppressWarnings("unchecked")
@@ -579,8 +582,9 @@ public final class TestUtil {
 	 */
 	@SuppressWarnings("rawtypes")
 	public static <E extends ICsvProviderProvider<?>> Collection<E> getCsvProviderProviderFromUltimateResults(
-			Map<String, List<IResult>> ultimateIResults, Class<E> benchmarkClass) {
-		final Collection<BenchmarkResult> benchmarks = ResultUtil.filterResults(ultimateIResults, BenchmarkResult.class);
+			final Map<String, List<IResult>> ultimateIResults, final Class<E> benchmarkClass) {
+		final Collection<BenchmarkResult> benchmarks =
+				ResultUtil.filterResults(ultimateIResults, BenchmarkResult.class);
 		return getCsvProviderProviderFromBenchmarkResults(benchmarks, benchmarkClass);
 	}
 
@@ -588,13 +592,13 @@ public final class TestUtil {
 	 * Returns an absolute path to the SVCOMP root directory specified by the Maven variable "svcompdir". If there is no
 	 * variable with such a name, the parameter fallback will be used. The method converts relative paths to absolute
 	 * ones.
-	 * 
+	 *
 	 * @param fallback
 	 *            A string describing a relative or absolute path to an existing directory (which is hopefully the
 	 *            SVCOMP root directory).
 	 * @return An absolute path to an existing directory or null
 	 */
-	public static String getFromMavenVariableSVCOMPRoot(String fallback) {
+	public static String getFromMavenVariableSVCOMPRoot(final String fallback) {
 		String svcompDir = makeAbsolutePath(System.getProperty("svcompdir"));
 		if (svcompDir != null) {
 			return svcompDir;
@@ -606,12 +610,12 @@ public final class TestUtil {
 
 	/**
 	 * Converts a relative path to an absolute one and checks if this path exists.
-	 * 
+	 *
 	 * @param somepath
 	 *            A relative or absolute path
 	 * @return An absolute path to an existing file or directory or null
 	 */
-	public static String makeAbsolutePath(String somepath) {
+	public static String makeAbsolutePath(final String somepath) {
 		if (somepath == null) {
 			return null;
 		}
@@ -626,7 +630,7 @@ public final class TestUtil {
 		}
 	}
 
-	public static void writeSummary(final ITestSummary testSummary,final ILogger logger) {
+	public static void writeSummary(final ITestSummary testSummary, final ILogger logger) {
 		final File logFile = new File(TestUtil.generateAbsolutePathForLogfile(testSummary));
 		if (!logFile.isDirectory()) {
 			if (!logFile.getParentFile().mkdirs()) {
@@ -650,6 +654,34 @@ public final class TestUtil {
 		} catch (final IOException e) {
 			logger.fatal("Exception while writing to " + logFile.getAbsolutePath(), e);
 		}
+	}
+
+	/**
+	 * The JUnit view in Eclipse seems to limit the length of the test case name to a certain length. You cannot rerun
+	 * tests in the GUI if two test cases have the same prefix. This methods tries to reduce the length of the string
+	 * representing a test case name such that this limit is not reached.
+	 *
+	 * @param testCaseName
+	 *            The original test case name.
+	 * @return The minimized test case name.
+	 */
+	public static String minimizeTestCaseName(final String testCaseName) {
+		if (null == testCaseName) {
+			return null;
+		}
+		String rtr = testCaseName;
+		rtr = rtr.replaceAll("Input:", "I:");
+		rtr = rtr.replaceAll("Settings:", "S:");
+		rtr = rtr.replaceAll("Toolchain:", "T:");
+		rtr = rtr.replaceAll("Toolchain:", "T:");
+
+		if (rtr.length() > 255) {
+			final String currentSuffix = String.valueOf(rtr.hashCode());
+			rtr = rtr.substring(0, 254 - currentSuffix.length());
+			rtr = rtr + "-" + currentSuffix;
+		}
+
+		return rtr;
 	}
 
 	private interface ILogWriter {

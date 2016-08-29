@@ -34,9 +34,9 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -67,7 +67,7 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis
 
 	public CanonicalInterpolantAutomatonBuilder(IUltimateServiceProvider services,
 			IInterpolantGenerator interpolantGenerator, List<ProgramPoint> programPointSequence,
-			InCaReAlphabet<CodeBlock> alphabet, SmtManager smtManager, StateFactory<IPredicate> predicateFactory,
+			InCaReAlphabet<CodeBlock> alphabet, SmtManager smtManager, IStateFactory<IPredicate> predicateFactory,
 			ILogger logger) {
 		super(services, interpolantGenerator, programPointSequence, logger);
 		mIA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),

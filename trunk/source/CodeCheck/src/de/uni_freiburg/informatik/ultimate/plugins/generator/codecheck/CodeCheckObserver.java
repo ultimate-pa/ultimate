@@ -43,9 +43,8 @@ import java.util.Stack;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
@@ -179,7 +178,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				mServices, false, rootAnnot.getManagedScript(), mSimplificationTechnique, mXnfConversionTechnique);
 
 		mPredicateUnifier =
-				new PredicateUnifier(mServices, mSmtManager, mSimplificationTechnique, mXnfConversionTechnique);
+				new PredicateUnifier(mServices, mSmtManager.getManagedScript(), 
+						mSmtManager.getPredicateFactory(), mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), 
+						mSimplificationTechnique, mXnfConversionTechnique);
 
 		mEdgeChecker =
 				new MonolithicHoareTripleChecker(mSmtManager.getManagedScript(), mSmtManager.getModifiableGlobals());
@@ -418,7 +419,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[] {}));
 
 					if (GlobalSettings._instance._predicateUnification == PredicateUnification.PER_ITERATION) {
-						mPredicateUnifier = new PredicateUnifier(mServices, mSmtManager, mSimplificationTechnique,
+						mPredicateUnifier = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), 
+								mSmtManager.getPredicateFactory(), mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), 
+								mSimplificationTechnique,
 								mXnfConversionTechnique);
 					}
 
@@ -786,15 +789,15 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			return;
 		}
 
-		reportResult(new CounterExampleResult<RcfgElement, RCFGEdge, Expression>(getErrorPP(pe), Activator.PLUGIN_NAME,
+		reportResult(new CounterExampleResult<RcfgElement, RCFGEdge, Term>(getErrorPP(pe), Activator.PLUGIN_NAME,
 				mServices.getBacktranslationService(), pe));
 	}
 
 	private void reportUnproveableResult(final RcfgProgramExecution pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
 		final ProgramPoint errorPP = getErrorPP(pe);
-		final UnprovableResult<RcfgElement, RCFGEdge, Expression> uknRes =
-				new UnprovableResult<RcfgElement, RCFGEdge, Expression>(Activator.PLUGIN_NAME, errorPP,
+		final UnprovableResult<RcfgElement, RCFGEdge, Term> uknRes =
+				new UnprovableResult<RcfgElement, RCFGEdge, Term>(Activator.PLUGIN_NAME, errorPP,
 						mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}

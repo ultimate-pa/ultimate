@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
@@ -94,6 +95,11 @@ public final class ExtractedWitnessInvariant {
 
 	public String toStringWithCNode() {
 		return toString() + " --- " + getRelatedAstNode().getRawSignature();
+	}
+
+	public String toStringWithWitnessNodeLabel() {
+		return getBAACode() + " [L" + getStartline() + "-L" + getEndline() + "]["
+				+ mNodeLabels.stream().collect(Collectors.joining(", ")) + "]" + mInvariant;
 	}
 
 	/**

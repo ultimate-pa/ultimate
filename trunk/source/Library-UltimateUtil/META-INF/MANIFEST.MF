@@ -7,7 +7,8 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: Library-UltimateModel
 Export-Package: de.uni_freiburg.informatik.ultimate.util,
  de.uni_freiburg.informatik.ultimate.util.csv,
- de.uni_freiburg.informatik.ultimate.util.scc,
- de.uni_freiburg.informatik.ultimate.util.statistics,
+ de.uni_freiburg.informatik.ultimate.util.datastructures,
+ de.uni_freiburg.informatik.ultimate.util.datastructures.poset,
  de.uni_freiburg.informatik.ultimate.util.datastructures.relation,
- de.uni_freiburg.informatik.ultimate.util.datastructures
+ de.uni_freiburg.informatik.ultimate.util.scc,
+ de.uni_freiburg.informatik.ultimate.util.statistics

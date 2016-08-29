@@ -46,9 +46,6 @@ import java.util.Set;
  * <li>
  * The intersection of C and E is empty</li>
  * </ul>
- * 
- * @param <S>
- * @param <C>
  */
 public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 		Comparable<Configuration<S, C>> {
@@ -60,8 +57,6 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	/**
 	 * constructs a Configuration (Not a Suffix). The set given as parameter has
 	 * to be causally closed and conflict-free.
-	 * 
-	 * @param events
 	 */
 	public Configuration(final Set<Event<S, C>> events) {
 		// this.mEvents = new HashSet<Event<S, C>>(events);
@@ -98,12 +93,9 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	/**
 	 * returns the minimum of the Set of Events regarding the causal relation.
 	 * 
-	 * only yields the correct result, if it either has been precomputed when
+	 * <p>only yields the correct result, if it either has been precomputed when
 	 * the Object was constructed, or this is a proper Configuration (not a
 	 * suffix.)
-	 * 
-	 * @param unf
-	 * @return
 	 */
 	public Configuration<S, C> getMin(final BranchingProcess<S, C> unf) {
 		Set<Event<S, C>> result;
@@ -158,9 +150,6 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 
 	/**
 	 * returns true, if the configuration contains any of the specified events.
-	 * 
-	 * @param events
-	 * @return
 	 */
 	public boolean containsAny(final Collection<Event<S, C>> events) {
 		for (final Event<S, C> place : events) {
@@ -185,10 +174,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 	 * returns a new Configuration that contains the set difference between the
 	 * original configuration and its minimum regarding the casual relation.
 	 * 
-	 * requires, that getMin() has been called.
-	 * 
-	 * @param min
-	 * @return
+	 * <p>requires, that getMin() has been called.
 	 */
 	public Configuration<S, C> removeMin() {
 		assert mMin != null : "getMin() must have been called before removeMin()";
@@ -244,7 +230,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 		for (int i = 0; i < phi1.size(); i++) {
 			final Transition<S, C> t1 = phi1.get(i);
 			final Transition<S, C> t2 = phi2.get(i);
-			final int result = t1.getTotalOrderID() - t2.getTotalOrderID();
+			final int result = t1.getTotalOrderId() - t2.getTotalOrderId();
 			if (result != 0) {
 //				mLogger.debug(phi1.toString() + (result < 0 ? "<" : ">")
 //						+ phi2.toString());

@@ -31,7 +31,6 @@ public interface IPossibleExtensions<S, C> {
 	/**
 	 * remove and return the minimal element with respect to the specified Order.
 	 * Throws an Exception if queue empty.
-	 * @return
 	 */
 	Event<S, C> remove();
 	
@@ -42,5 +41,6 @@ public interface IPossibleExtensions<S, C> {
 	void update(Event<S, C> e);
 	
 	int size();
+	
 	boolean isEmpy();
 }

@@ -20,124 +20,136 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
+ * Given two nondeterministic NWAs {@code minuend} and {@code subtrahend} a.
+ * <p>
+ * TODO Christian 2016-08-20: unfinished documentation
  * 
- * 
- * @author haettigj@informatik.uni-freiburg.de
- * 
- * @param <LETTER>
- *            Symbol. Type of the elements of the alphabet over which the
- *            automata are defined.
+ * @author Jan Hättig (haettigj@informatik.uni-freiburg.de)
  * @param <STATE>
- *            Content. Type of the labels that are assigned to the states of
- *            automata. In many cases you want to use String as STATE and your
- *            states are labeled e.g. with "q0", "q1", ...
+ *            Content. Type of the labels that are assigned to the states of the
+ *            automata. In many cases you want to use {@link String} as {@link STATE} and your
+ *            states are labeled, e.g., with "q0", "q1", ...
  */
 public class AutomatonEpimorphism<STATE> {
-
-	private final AutomataLibraryServices mServices;
+	
 	private final ILogger mLogger;
-
-	private final HashMap<STATE, STATE> mEpimorphism;
-
+	
+	private final Map<STATE, STATE> mEpimorphism;
+	
+	private static final String INVALID_STATE_NAME_MESSAGE = "Invalid state name: ";
+	
 	/**
-	 * @param services Ultimate services
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
 	 */
 	public AutomatonEpimorphism(final AutomataLibraryServices services) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mEpimorphism = new HashMap<STATE, STATE>();
 	}
-
+	
 	/**
-	 * Creates the epimorphism for two automatons from a1 to a2. The Labels of
-	 * a1 have to be of type string and have to be of the following scheme:
-	 * "l1_l2", where "l1" is the actual label of the state and "l2" is
-	 * the label of the node of a2, which it is epimorph to
+	 * Creates the epimorphism for two automata from {@code nwa1} to {@code nwa2}. The Labels of
+	 * {@code nwa1} have to be of type {@link String} and have to be of the following scheme:
+	 * <blockquote>
+	 * {@code l1_l2},
+	 * </blockquote>
+	 * where {@code l1} is the actual label of the state and {@code l2} is
+	 * the label of the state of {@code nwa2} which it is epimorphic to.
 	 * 
-	 * @param services Ultimate services
-	 * @param a1
-	 *            automaton where the epimorphism to to is encoded in the labels
-	 * @param a2
+	 * @param services
+	 *            Ultimate services
+	 * @param nwa1
+	 *            automaton where the epimorphism is encoded in the labels
+	 * @param nwa2
 	 *            automaton where the epimorphism maps to
-	 * @return an epimorphism structure from a1 to a2
+	 * @return an epimorphism structure from nwa1 to nwa2
 	 */
 	public static AutomatonEpimorphism<String> createFromAutomatonLabels(
 			final AutomataLibraryServices services,
-			
-			final INestedWordAutomaton<String, String> a1,
-			final INestedWordAutomaton<String, String> a2) {
-		final ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+			final INestedWordAutomaton<String, String> nwa1,
+			final INestedWordAutomaton<String, String> nwa2) {
 		final AutomatonEpimorphism<String> epimorphism = new AutomatonEpimorphism<String>(services);
-
+		
 		// traversing the states
-		for (final String state1 : a1.getStates()) {
-			if (state1.contains("_")) {
-
-				// check that "_" is not the last char in the string
-				if (state1.indexOf("_") + 1 == state1.length()) {
-					logger.error("Invalid state name: " + state1);
-				}
-
-				// get the name of the epimorph state
-				final String epimorphState = state1
-						.substring(state1.indexOf("_") + 1);
-
-				// check that "_" does not occur multiple times
-				if (epimorphState.indexOf("_") != -1) {
-					logger.error("Invalid state name: " + state1);
-				}
-
-				// search the state in a2
-				String state2 = null;
-				for (final String s : a2.getStates()) {
-					if (s.equals(epimorphState)) {
-						state2 = s;
-					}
-				}
-
-				// if it is not found, error
-				if (state2 == null) {
-					logger.error("Missing epimorphism partner for: " + state1);
-				}
-
-				// set the mapping from state1 to state2
-				epimorphism.mEpimorphism.put(state1, state2);
+		for (final String state1 : nwa1.getStates()) {
+			final int indexOfUnderscore = state1.indexOf('_');
+			if (indexOfUnderscore == -1) {
+				continue;
 			}
+			
+			// check that '_' is not the last char in the string
+			if (indexOfUnderscore + 1 == state1.length()) {
+				throw new IllegalArgumentException(INVALID_STATE_NAME_MESSAGE + state1);
+			}
+			
+			// get the name of the epimorph state
+			final String state2 = state1.substring(indexOfUnderscore + 1);
+			
+			// check that '_' does not occur multiple times
+			if (state2.indexOf('_') != -1) {
+				throw new IllegalArgumentException(INVALID_STATE_NAME_MESSAGE + state1);
+			}
+			
+			// search the state in nwa2; if it is not found, error
+			if (!nwa2.getStates().contains(state2)) {
+				throw new IllegalArgumentException("Missing epimorphism partner for: " + state1);
+			}
+			
+			// set the mapping from state1 to state2
+			epimorphism.mEpimorphism.put(state1, state2);
 		}
-
+		
 		return epimorphism;
 	}
 	
 	/**
-	 * Returns the state, where the epimorphism points to
-	 * @param s state
+	 * Returns the state where the epimorphism points to.
+	 * 
+	 * @param source
+	 *            source state
+	 * @return target state under the epimorphism
 	 */
-	public STATE getMapping(final STATE s) {
-		return mEpimorphism.get(s);
+	public STATE getMapping(final STATE source) {
+		return mEpimorphism.get(source);
 	}
 	
-	public void insert(final STATE from, final STATE to) {
-		mEpimorphism.put(from, to);
+	/**
+	 * Inserts a new mapping of two states.
+	 * 
+	 * @param source
+	 *            mapping from this state
+	 * @param target
+	 *            mapping to this state
+	 */
+	public void insert(final STATE source, final STATE target) {
+		mEpimorphism.put(source, target);
 	}
-
+	
+	/**
+	 * Prints the object to the logger in <tt>DEBUG</tt> level.
+	 */
 	public void print() {
-		for(final Entry<STATE, STATE> e : mEpimorphism.entrySet()) {
-			mLogger.debug(e.getKey().toString() + " --> " + e.getValue());
-		}		
+		if (mLogger.isDebugEnabled()) {
+			for (final Entry<STATE, STATE> e : mEpimorphism.entrySet()) {
+				mLogger.debug(e.getKey() + " --> " + e.getValue());
+			}
+		}
 	}
 }

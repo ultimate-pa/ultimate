@@ -32,15 +32,23 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.AutomataScriptTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.reporting.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimatetest.summaries.AutomataScriptTestSummary;
+import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
+import de.uni_freiburg.informatik.ultimatetest.summaries.LatexOverviewSummary;
 
 public class AutomataScriptTestSuite extends UltimateTestSuite {
 
@@ -68,7 +76,20 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		return new ITestSummary[] { new AutomataScriptTestSummary(this.getClass()) };
+		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = 
+				new ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>>();
+		
+		final ColumnDefinition[] columnDef = new ColumnDefinition[] { 
+				new ColumnDefinition(
+						CegarLoopStatisticsDefinitions.OverallTime.toString(), "Avg. runtime",
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
+			};
+		
+		return new ITestSummary[] { 
+				new AutomataScriptTestSummary(this.getClass()),
+				new CsvConcatenator(this.getClass(), AutomataOperationStatistics.class), 
+				new LatexOverviewSummary(getClass(), benchmarks, columnDef),		
+		};
 	}
 	
 	@Override

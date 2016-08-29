@@ -10,7 +10,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
@@ -20,7 +20,7 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 	private final TreeAutomatonBU<LETTER, STATE> treeAutomaton;
 	protected final Tree<LETTER> result;
 	
-	public TreeEmptinessCheck(TreeAutomatonBU<LETTER, STATE> tree) {
+	public TreeEmptinessCheck(final TreeAutomatonBU<LETTER, STATE> tree) {
 		treeAutomaton = tree;
 		result = computeResult();
 	}
@@ -39,22 +39,22 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 		return "Exit emptiness check";
 	}
 	private Tree<LETTER> computeResult() {
-		LinkedList<TreeAutomatonRule<LETTER, STATE>> worklist = new LinkedList<TreeAutomatonRule<LETTER, STATE>>();
+		final LinkedList<TreeAutomatonRule<LETTER, STATE>> worklist = new LinkedList<TreeAutomatonRule<LETTER, STATE>>();
 
-		Map<STATE, Collection<TreeAutomatonRule<LETTER, STATE>>> rulesBySource = new HashMap<STATE, Collection<TreeAutomatonRule<LETTER, STATE>>>();
+		final Map<STATE, Collection<TreeAutomatonRule<LETTER, STATE>>> rulesBySource = new HashMap<STATE, Collection<TreeAutomatonRule<LETTER, STATE>>>();
 		
-		Map<STATE, Tree<LETTER>> soltree = new HashMap<>();
+		final Map<STATE, Tree<LETTER>> soltree = new HashMap<>();
 		
-		for (TreeAutomatonRule<LETTER, STATE> rule: treeAutomaton.getRules()) {
+		for (final TreeAutomatonRule<LETTER, STATE> rule: treeAutomaton.getRules()) {
 			boolean initialRules = false;
 			
-			for (STATE sourceState : rule.getSource()) {
+			for (final STATE sourceState : rule.getSource()) {
 				initialRules |= treeAutomaton.isInitialState(sourceState);
 				
 				Collection<TreeAutomatonRule<LETTER, STATE>> sourceRules;
-				if (rulesBySource.containsKey(sourceState))
+				if (rulesBySource.containsKey(sourceState)) {
 					sourceRules = rulesBySource.get(sourceState);
-				else {
+				} else {
 					sourceRules = new LinkedList<TreeAutomatonRule<LETTER, STATE>>();
 					rulesBySource.put(sourceState, sourceRules);
 				}
@@ -66,32 +66,34 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 		}
 
 		while (!worklist.isEmpty()) {
-			TreeAutomatonRule<LETTER, STATE> next = worklist.poll();
-			STATE dest = next.getDest();
+			final TreeAutomatonRule<LETTER, STATE> next = worklist.poll();
+			final STATE dest = next.getDest();
 			
-			List<Tree<LETTER>> subTrees = new LinkedList<Tree<LETTER>>();
+			final List<Tree<LETTER>> subTrees = new LinkedList<Tree<LETTER>>();
 			if (!soltree.containsKey(dest)) {
 				
 				boolean allMarked = true;
-				for (STATE q: next.getSource()) {
+				for (final STATE q: next.getSource()) {
 					if (!soltree.containsKey(q)) {
 						allMarked = false;
 						break;
-					}
-					else 
+					} else {
 						subTrees.add(soltree.get(q));
+					}
 				}
 				if (allMarked) {
-					Tree<LETTER> newTree = new Tree<LETTER>(next.getLetter(), subTrees);
+					final Tree<LETTER> newTree = new Tree<LETTER>(next.getLetter(), subTrees);
 					soltree.put(dest, newTree);
 					
 					if (treeAutomaton.isFinalState(dest)) {
 						return newTree;
 					} else {
 						if (rulesBySource.containsKey(dest)) {
-							for (TreeAutomatonRule<LETTER, STATE> considerNext: rulesBySource.get(dest))
+							for (final TreeAutomatonRule<LETTER, STATE> considerNext: rulesBySource.get(dest))
+							 {
 								worklist.add(considerNext);
 								//worklist.push(considerNext); // depth first
+							}
 						}
 					}
 				}
@@ -102,19 +104,19 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 	}
 	
 	@Override
-	public Object getResult() throws AutomataLibraryException {
+	public Object getResult() {
 		return result;
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return false;
 	}
 
-	public static void main(String[] args) throws AutomataLibraryException {
-		TreeAutomatonBU<String, Integer> treeA = new TreeAutomatonBU<>();
+	public static void main(final String[] args) throws AutomataLibraryException {
+		final TreeAutomatonBU<String, Integer> treeA = new TreeAutomatonBU<>();
 		
-		String[] rep = {"Nat", "NatList", "Bool", "BoolList"};
+		final String[] rep = {"Nat", "NatList", "Bool", "BoolList"};
 
 		final int NAT = 0, NatList = 1, EmptyList = 2;
 		treeA.addInitialState(NAT);
@@ -126,8 +128,8 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 		treeA.addRule("cons", new ArrayList<>(Arrays.asList(new Integer[]{NAT, EmptyList})), NatList);
 		treeA.addRule("cons", new ArrayList<>(Arrays.asList(new Integer[]{NAT, NatList})), NatList);
 
-		TreeEmptinessCheck<String, Integer> op = new TreeEmptinessCheck<>(treeA);
-		Tree<String> res = (Tree<String>) op.getResult();
+		final TreeEmptinessCheck<String, Integer> op = new TreeEmptinessCheck<>(treeA);
+		final Tree<String> res = (Tree<String>) op.getResult();
 		
 		System.out.println(treeA.toString());
 		System.out.println(res.toString());

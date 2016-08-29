@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.test.reporting;
@@ -43,8 +43,9 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
 /**
  * Summarizes all benchmarks of a certain class to a CSV. Searches through all
- * IResults and takes only the BenchmarkResults whose benchmarks is an
- * ICsvProvider<Object>> of a specified type. Each row is extends by an entry
+ * {@link de.uni_freiburg.informatik.ultimate.core.model.results.IResult result}s and takes only the
+ * {@link de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult benchmark result}s whose benchmark is an
+ * {@link ICsvProvider} of a specified type. Each row is extended by an entry
  * for the following.
  * <ul>
  * <li>File
@@ -55,51 +56,51 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
  * a single CSV.
  * 
  * @author heizmann@informatik.uni-freiburg.de
- * 
  */
 public class CsvConcatenator implements ITestSummary {
-
+	
 	private final Class<? extends UltimateTestSuite> mUltimateTestSuite;
-	private final Class<? extends ICsvProviderProvider<? extends Object>> mBenchmark;
+	private final Class<? extends ICsvProviderProvider<?>> mBenchmark;
 	private ICsvProvider<Object> mCsvProvider;
-
-	public CsvConcatenator(Class<? extends UltimateTestSuite> ultimateTestSuite,
-			Class<? extends ICsvProviderProvider<? extends Object>> benchmark) {
+	
+	public CsvConcatenator(final Class<? extends UltimateTestSuite> ultimateTestSuite,
+			final Class<? extends ICsvProviderProvider<?>> benchmark) {
 		super();
 		mUltimateTestSuite = ultimateTestSuite;
 		mBenchmark = benchmark;
 		final List<String> emtpyList = Collections.emptyList();
 		mCsvProvider = new SimpleCsvProvider<Object>(emtpyList);
 	}
-
+	
 	@Override
 	public String getSummaryLog() {
 		return mCsvProvider.toCsv(null, null).toString();
 	}
-
+	
 	@Override
 	public Class<? extends UltimateTestSuite> getUltimateTestSuiteClass() {
 		return mUltimateTestSuite;
 	}
-
+	
 	@Override
 	public String getDescriptiveLogName() {
 		return "Summarized " + mBenchmark.getSimpleName();
 	}
-
+	
 	@Override
 	public String getFilenameExtension() {
 		return ".csv";
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult, String category,
-			String message, String testname, IResultService resultService) {
+	public void addResult(final UltimateRunDefinition ultimateRunDefinition, final TestResult threeValuedResult,
+			final String category, final String message, final String testname, final IResultService resultService) {
 		if (resultService == null) {
 			return;
 		}
-		for (final ICsvProviderProvider<?> benchmarkResultWildcard : TestUtil.getCsvProviderProviderFromUltimateResults(resultService.getResults(),
+		for (final ICsvProviderProvider<?> benchmarkResultWildcard : TestUtil.getCsvProviderProviderFromUltimateResults(
+				resultService.getResults(),
 				mBenchmark)) {
 			final ICsvProviderProvider<Object> benchmarkResult = (ICsvProviderProvider<Object>) benchmarkResultWildcard;
 			final ICsvProvider<Object> benchmarkCsv = benchmarkResult.createCvsProvider();
@@ -108,13 +109,13 @@ public class CsvConcatenator implements ITestSummary {
 			add(benchmarkCsvWithRunDefinition);
 		}
 	}
-
-	private void add(ICsvProvider<Object> benchmarkCsvWithRunDefinition) {
+	
+	private void add(final ICsvProvider<Object> benchmarkCsvWithRunDefinition) {
 		mCsvProvider = CsvUtils.concatenateRows(mCsvProvider, benchmarkCsvWithRunDefinition);
 	}
-
-	private ICsvProvider<Object> addUltimateRunDefinition(UltimateRunDefinition ultimateRunDefinition,
-			ICsvProvider<Object> benchmark, String category, String message) {
+	
+	private ICsvProvider<Object> addUltimateRunDefinition(final UltimateRunDefinition ultimateRunDefinition,
+			final ICsvProvider<Object> benchmark, final String category, final String message) {
 		final List<String> resultColumns = new ArrayList<>();
 		resultColumns.add("File");
 		resultColumns.add("Settings");
@@ -125,12 +126,11 @@ public class CsvConcatenator implements ITestSummary {
 		for (int i = 0; i < rows; i++) {
 			final List<Object> resultRow = new ArrayList<>();
 			resultRow.add(ultimateRunDefinition.getInputFileNames().replace(",", ";"));
-			resultRow.add(ultimateRunDefinition.getSettings().getAbsolutePath());
+			resultRow.add(ultimateRunDefinition.getSettingsAbsolutePath());
 			resultRow.add(ultimateRunDefinition.getToolchain().getAbsolutePath());
 			resultRow.addAll(benchmark.getRow(i));
 			result.addRow(resultRow);
 		}
 		return result;
 	}
-
 }

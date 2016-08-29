@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata;
@@ -31,27 +31,31 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorS
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
- * Wrapper for ILoggingService and IProgressMonitorService that are used in the automata library.
+ * Wrapper for {@link ILoggingService} and {@link IProgressMonitorService} that are used in the
+ * automata library.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class AutomataLibraryServices {
-
+	
 	private final ILoggingService mLoggingService;
 	private final IProgressMonitorService mProgressMonitorService;
-
+	
 	/**
-	 * @param ultimateServices Ultimate services
+	 * Constructor.
+	 * 
+	 * @param ultimateServices
+	 *            Ultimate services
 	 */
 	public AutomataLibraryServices(final IUltimateServiceProvider ultimateServices) {
 		mLoggingService = ultimateServices.getLoggingService();
 		mProgressMonitorService = ultimateServices.getProgressMonitorService();
 	}
-
+	
 	public ILoggingService getLoggingService() {
 		return mLoggingService;
 	}
-
+	
 	public IProgressMonitorService getProgressMonitorService() {
 		return mProgressMonitorService;
 	}

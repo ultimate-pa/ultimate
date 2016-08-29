@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE SmtParser plug-in.
- * 
+ *
  * The ULTIMATE SmtParser plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE SmtParser plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE SmtParser plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE SmtParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE SmtParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE SmtParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker;
@@ -50,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 
 /**
  * Use external tool to do a syntax check.
+ *
  * @author Matthias Heizmann
- * 
  */
 public class SyntaxChecker implements IAnalysis {
 	protected String[] mFileTypes;
@@ -60,51 +60,58 @@ public class SyntaxChecker implements IAnalysis {
 	protected Unit mPreludeUnit;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
-	
-	private final FilenameExtractionObserver mFilenameExtractionObserver = 
-			new FilenameExtractionObserver();
-	
+
+	private final FilenameExtractionObserver mFilenameExtractionObserver = new FilenameExtractionObserver();
+
 	@Override
 	public ModelType getOutputDefinition() {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 	@Override
 	public boolean isGuiRequired() {
 		return false;
 	}
+
 	@Override
 	public ModelQuery getModelQuery() {
 		return ModelQuery.SOURCE;
 	}
+
 	@Override
 	public List<String> getDesiredToolID() {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 	@Override
-	public void setInputDefinition(ModelType graphType) {
+	public void setInputDefinition(final ModelType graphType) {
 		// TODO Auto-generated method stub
-		
+
 	}
+
 	@Override
 	public List<IObserver> getObservers() {
-		return Arrays.asList((new IObserver[]{ mFilenameExtractionObserver }));
+		return Arrays.asList(new IObserver[] { mFilenameExtractionObserver });
 	}
+
 	@Override
-	public void setToolchainStorage(IToolchainStorage storage) {
+	public void setToolchainStorage(final IToolchainStorage storage) {
 		mStorage = storage;
 	}
+
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 	}
-	
+
 	@Override
 	public void init() {
 		// TODO Auto-generated method stub
-		
+
 	}
+
 	@Override
 	public void finish() {
 		try {
@@ -114,46 +121,46 @@ public class SyntaxChecker implements IAnalysis {
 			throw new AssertionError(e);
 		}
 	}
+
 	private void doSyntaxCheck() throws IOException {
-		final String toolCommandError = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+		final String toolCommandError = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getString(PreferenceInitializer.LABEL_SyntaxErrorCommand);
 		final String filename = mFilenameExtractionObserver.getFilename();
-		
-		final boolean removeFilename = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+
+		final boolean removeFilename = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.LABEL_RemoveFilename);
-		
+
 		final String outputError = callSytaxCheckerAndReturnStderrOutput(toolCommandError, filename);
 		if (outputError == null) {
 			// everything fine, do nothing
 		} else {
-			final String longMessage = generateLongDescription(toolCommandError, outputError, filename,
-					removeFilename);
+			final String longMessage = generateLongDescription(toolCommandError, outputError, filename, removeFilename);
 			final ILocation loc = new DummyLocation();
-			final SyntaxErrorResult res = new SyntaxErrorResult(Activator.PLUGIN_ID, loc, longMessage );
+			final SyntaxErrorResult res = new SyntaxErrorResult(Activator.PLUGIN_ID, loc, longMessage);
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 			mServices.getProgressMonitorService().cancelToolchain();
 		}
 
-		
-		final boolean doSyntaxWarningCheck = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+		final boolean doSyntaxWarningCheck = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.LABEL_DoSyntaxWarningCheck);
 		if (doSyntaxWarningCheck) {
-			final String toolCommandWarnings = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+			final String toolCommandWarnings = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 					.getString(PreferenceInitializer.LABEL_SyntaxErrorCommand);
 			final String outputWarnings = callSytaxCheckerAndReturnStderrOutput(toolCommandWarnings, filename);
 			if (outputWarnings == null) {
 				// everything fine, do nothing
 			} else {
-				final String longMessage = generateLongDescription(toolCommandError, outputWarnings, filename,
-						removeFilename);
+				final String longMessage =
+						generateLongDescription(toolCommandError, outputWarnings, filename, removeFilename);
 				final String shortDescription = "Syntax checker warnings";
 				final Severity severity = Severity.WARNING;
-				final GenericResult res = new GenericResult(Activator.PLUGIN_ID, shortDescription, longMessage, severity);
+				final GenericResult res =
+						new GenericResult(Activator.PLUGIN_ID, shortDescription, longMessage, severity);
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 			}
 		}
 	}
-	
+
 	private String generateLongDescription(final String toolCommand, final String outputError, final String filename,
 			final boolean replaceFilename) {
 		final String toolOutput;
@@ -162,16 +169,17 @@ public class SyntaxChecker implements IAnalysis {
 		} else {
 			toolOutput = outputError;
 		}
-		final String longMessage = "Syntax check with command \"" + toolCommand + 
-				"\" returned the following output. " + System.lineSeparator() + toolOutput;
+		final String longMessage = "Syntax check with command \"" + toolCommand + "\" returned the following output. "
+				+ System.lineSeparator() + toolOutput;
 		return longMessage;
 	}
-	
+
 	private String callSytaxCheckerAndReturnStderrOutput(final String toolCommand, final String filename)
 			throws IOException {
 		final String syntaxCheckerCommand = toolCommand + " " + filename;
-		final MonitoredProcess mProcess = MonitoredProcess.exec(syntaxCheckerCommand, null, mServices, mStorage);
-		
+		final MonitoredProcess mProcess =
+				MonitoredProcess.exec(syntaxCheckerCommand, null, mServices, mStorage, mLogger);
+
 		if (mProcess == null) {
 			final String errorMsg = " Could not create process, terminating... ";
 			mLogger.fatal(errorMsg);
@@ -183,8 +191,8 @@ public class SyntaxChecker implements IAnalysis {
 		final String stderr = convert(mProcess.getErrorStream());
 		return stderr;
 	}
-	
-	private String convert(InputStream is) throws IOException {
+
+	private String convert(final InputStream is) throws IOException {
 		final InputStreamReader isr = new InputStreamReader(is);
 		final BufferedReader br = new BufferedReader(isr);
 		String line = br.readLine();
@@ -202,70 +210,70 @@ public class SyntaxChecker implements IAnalysis {
 			return sb.toString();
 		}
 	}
-	
+
 	@Override
 	public String getPluginName() {
 		return "SyntaxChecker";
 	}
+
 	@Override
 	public String getPluginID() {
 		return getClass().getPackage().getName();
 	}
+
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
-	
-	
 
 	private class DummyLocation implements ILocation {
-
-	@Override
-	public String getFileName() {
-		return mFilenameExtractionObserver.getFilename();
-	}
-
-	@Override
-	public int getStartLine() {
-		// TODO Auto-generated method stub
-		return -1;
-	}
-
-	@Override
-	public int getEndLine() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public int getStartColumn() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public int getEndColumn() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public ILocation getOrigin() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Check getCheck() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean isLoop() {
-		// TODO Auto-generated method stub
-		return false;
-	}
 		
+		@Override
+		public String getFileName() {
+			return mFilenameExtractionObserver.getFilename();
+		}
+
+		@Override
+		public int getStartLine() {
+			// TODO Auto-generated method stub
+			return -1;
+		}
+
+		@Override
+		public int getEndLine() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public int getStartColumn() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public int getEndColumn() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public ILocation getOrigin() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Check getCheck() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public boolean isLoop() {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
 	}
 }

@@ -32,8 +32,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -120,8 +120,8 @@ public class LoopCannibalizer {
 				i = correspondingReturn;
 			} else {
 				if (checkForNewPredicates(i)) {
-					final NestedWord<CodeBlock> before = mLoop.subWord(0, i);
-					final NestedWord<CodeBlock> after = mLoop.subWord(i + 1, mLoop.length() - 1);
+					final NestedWord<CodeBlock> before = mLoop.getSubWord(0, i);
+					final NestedWord<CodeBlock> after = mLoop.getSubWord(i + 1, mLoop.length() - 1);
 					final NestedWord<CodeBlock> shifted = after.concatenate(before);
 					final InterpolatingTraceChecker traceChecker = getTraceChecker(shifted, interpolation);
 					final LBool loopCheck = traceChecker.isCorrect();

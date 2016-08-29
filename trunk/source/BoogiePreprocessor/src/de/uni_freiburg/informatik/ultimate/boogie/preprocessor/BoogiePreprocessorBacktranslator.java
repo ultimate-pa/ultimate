@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,7 +92,7 @@ public class BoogiePreprocessorBacktranslator
 	private final IUltimateServiceProvider mServices;
 	private BoogieSymbolTable mSymbolTable;
 
-	BoogiePreprocessorBacktranslator(IUltimateServiceProvider services) {
+	BoogiePreprocessorBacktranslator(final IUltimateServiceProvider services) {
 		super(BoogieASTNode.class, BoogieASTNode.class, Expression.class, Expression.class);
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -104,11 +103,11 @@ public class BoogiePreprocessorBacktranslator
 		return mSymbolTable;
 	}
 
-	public void setSymbolTable(BoogieSymbolTable symbolTable) {
+	public void setSymbolTable(final BoogieSymbolTable symbolTable) {
 		mSymbolTable = symbolTable;
 	}
 
-	void addMapping(BoogieASTNode inputNode, BoogieASTNode outputNode) {
+	void addMapping(final BoogieASTNode inputNode, final BoogieASTNode outputNode) {
 		BoogieASTNode realInputNode = mMapping.get(inputNode);
 		if (realInputNode == null) {
 			realInputNode = inputNode;
@@ -129,37 +128,20 @@ public class BoogiePreprocessorBacktranslator
 		final List<ProgramState<Expression>> newProgramStates = new ArrayList<>();
 
 		final ProgramState<Expression> newInitialState =
-				backtranslateProgramState(programExecution.getInitialProgramState());
+				translateProgramState(programExecution.getInitialProgramState());
 		final int length = programExecution.getLength();
 		for (int i = 0; i < length; ++i) {
 			final BoogieASTNode elem = programExecution.getTraceElement(i).getTraceElement();
-			// the call to backtranslateTraceElements may produce null values,
+			// the call to translateTraceElements may produce null values,
 			// but we keep them anyways s.t. the indices between newTrace and
 			// programExecution match
-			newTrace.add(backtranslateTraceElement(elem));
-			newProgramStates.add(backtranslateProgramState(programExecution.getProgramState(i)));
+			newTrace.add(translateTraceElement(elem));
+			newProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
 		}
 		return createProgramExecutionFromTrace(newTrace, newInitialState, newProgramStates, programExecution);
 	}
 
-	private ProgramState<Expression> backtranslateProgramState(ProgramState<Expression> state) {
-		if (state == null) {
-			return null;
-		} else {
-			final Map<Expression, Collection<Expression>> newVariable2Values = new HashMap<>();
-			for (final Expression var : state.getVariables()) {
-				final Expression newVar = translateExpression(var);
-				final Collection<Expression> newValues = new ArrayList<>();
-				for (final Expression value : state.getValues(var)) {
-					newValues.add(translateExpression(value));
-				}
-				newVariable2Values.put(newVar, newValues);
-			}
-			return new ProgramState<>(newVariable2Values);
-		}
-	}
-
-	private BoogieASTNode backtranslateTraceElement(BoogieASTNode elem) {
+	private BoogieASTNode translateTraceElement(final BoogieASTNode elem) {
 		final BoogieASTNode newElem = mMapping.get(elem);
 
 		if (newElem == null) {
@@ -189,9 +171,9 @@ public class BoogiePreprocessorBacktranslator
 	}
 
 	private IProgramExecution<BoogieASTNode, Expression> createProgramExecutionFromTrace(
-			List<BoogieASTNode> translatedTrace, ProgramState<Expression> newInitialState,
-			List<ProgramState<Expression>> newProgramStates,
-			IProgramExecution<BoogieASTNode, Expression> programExecution) {
+			final List<BoogieASTNode> translatedTrace, final ProgramState<Expression> newInitialState,
+			final List<ProgramState<Expression>> newProgramStates,
+			final IProgramExecution<BoogieASTNode, Expression> programExecution) {
 
 		final List<AtomicTraceElement<BoogieASTNode>> atomicTrace = new ArrayList<>();
 		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
@@ -261,7 +243,7 @@ public class BoogiePreprocessorBacktranslator
 		return new BoogieProgramExecution(partialProgramStateMapping, actualAtomicTrace);
 	}
 
-	private StepInfo getStepInfoFromCondition(Expression input, Expression output) {
+	private StepInfo getStepInfoFromCondition(final Expression input, final Expression output) {
 		// compare the depth of UnaryExpression in the condition of the assume
 		// and the condition of the mapped conditional to determine if the
 		// condition
@@ -298,22 +280,22 @@ public class BoogiePreprocessorBacktranslator
 	}
 
 	@Override
-	public List<BoogieASTNode> translateTrace(List<BoogieASTNode> trace) {
+	public List<BoogieASTNode> translateTrace(final List<BoogieASTNode> trace) {
 		return super.translateTrace(trace);
 	}
 
 	@Override
-	public Expression translateExpression(Expression expression) {
+	public Expression translateExpression(final Expression expression) {
 		return new ExpressionTranslator().processExpression(expression);
 	}
 
 	@Override
-	public String targetExpressionToString(Expression expression) {
+	public String targetExpressionToString(final Expression expression) {
 		return BoogiePrettyPrinter.print(expression);
 	}
 
 	@Override
-	public List<String> targetTraceToString(List<BoogieASTNode> trace) {
+	public List<String> targetTraceToString(final List<BoogieASTNode> trace) {
 		final List<String> rtr = new ArrayList<>();
 		for (final BoogieASTNode node : trace) {
 			if (node instanceof Statement) {
@@ -334,7 +316,7 @@ public class BoogiePreprocessorBacktranslator
 			final Map<IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode, ?>, Multigraph<VL, BoogieASTNode>> cache,
 			final IMultigraphEdge<?, ?, VL, BoogieASTNode, ?> oldEdge,
 			final Multigraph<VL, BoogieASTNode> newSourceNode) {
-		final BoogieASTNode newLabel = backtranslateTraceElement(oldEdge.getLabel());
+		final BoogieASTNode newLabel = translateTraceElement(oldEdge.getLabel());
 		final IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode, ?> oldTarget = oldEdge.getTarget();
 		Multigraph<VL, BoogieASTNode> newTarget = cache.get(oldTarget);
 		if (newTarget == null) {
@@ -350,13 +332,13 @@ public class BoogiePreprocessorBacktranslator
 		return newTarget;
 	}
 
-	private void reportUnfinishedBacktranslation(String message) {
+	private void reportUnfinishedBacktranslation(final String message) {
 		mLogger.warn(message);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new GenericResult(Activator.PLUGIN_ID, "Unfinished Backtranslation", message, Severity.WARNING));
 	}
 
-	private String printDebug(BoogieASTNode node) {
+	private String printDebug(final BoogieASTNode node) {
 		if (node instanceof Statement) {
 			return BoogiePrettyPrinter.print((Statement) node);
 		}
@@ -409,7 +391,7 @@ public class BoogiePreprocessorBacktranslator
 	private class ExpressionTranslator extends BoogieTransformer {
 
 		@Override
-		protected Expression processExpression(Expression expr) {
+		protected Expression processExpression(final Expression expr) {
 			if (mSymbolTable == null) {
 				reportUnfinishedBacktranslation(
 						"No symboltable available, using identity as back-translation of " + expr);
@@ -505,8 +487,8 @@ public class BoogiePreprocessorBacktranslator
 			return rtr;
 		}
 
-		private IdentifierExpression extractIdentifier(ILocation mappedLoc, VarList[] list,
-				IdentifierExpression inputExp) {
+		private IdentifierExpression extractIdentifier(final ILocation mappedLoc, final VarList[] list,
+				final IdentifierExpression inputExp) {
 			if (list == null || list.length == 0) {
 				return inputExp;
 			}
@@ -520,8 +502,8 @@ public class BoogiePreprocessorBacktranslator
 			return rtr;
 		}
 
-		private IdentifierExpression extractIdentifier(ILocation mappedLoc, VarList list,
-				IdentifierExpression inputExp) {
+		private IdentifierExpression extractIdentifier(final ILocation mappedLoc, final VarList list,
+				final IdentifierExpression inputExp) {
 			if (list == null) {
 				return inputExp;
 			}

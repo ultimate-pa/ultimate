@@ -5,9 +5,6 @@ NestedWordAutomaton nwa = removeUnreachable(nwaUnprocessed);
 // INestedWordAutomatonSimple resultMinimizeSevpa = minimizeSevpa(nwa);
 // INestedWordAutomatonSimple resultMinimizeMaxSAT = minimizeNwaMaxSAT(nwa);
 
-print(nwaUnprocessed);
-print(nwa);
-
 print(numberOfStates(nwa));
 print(numberOfStates(shrinkNwa(nwa)));
 print(numberOfStates(minimizeSevpa(nwa)));

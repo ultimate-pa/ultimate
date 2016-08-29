@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.petruchio;
@@ -41,33 +41,32 @@ import petruchio.pn.PetriNet;
 /**
  * Wraps the Petri net representation used in Tim Straznys Petruchio.
  * Use a PetriNetJulian to construct a Petruchio petri net.
- * Stores mapping for transitions and places of both representations. 
+ * Stores mapping for transitions and places of both representations.
+ * 
  * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <S> Type of alphabet symbols
- * @param <C> Type of place labeling
+ * @param <S>
+ *            Type of alphabet symbols
+ * @param <C>
+ *            Type of place labeling
  */
 
-public class PetruchioWrapper<S,C> {
+public class PetruchioWrapper<S, C> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	
-	
-	
-	final PetriNetJulian<S,C> mNetJulian;
+	final PetriNetJulian<S, C> mNetJulian;
 	final PetriNet mNetPetruchio = new PetriNet();
 	
 	// Maps each place of mNetJulian to the corresponding place in mNetPetruchio
-	final Map<de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S,C>, Place> pJulian2pPetruchio = 
-		new IdentityHashMap<de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S,C>,Place>();
-
-	// Maps each transition of mNetPetruchio to the corresponding transition in mNetJulian	
-	final Map<Transition, ITransition<S,C>> tPetruchio2tJulian = 
-		new IdentityHashMap<Transition, ITransition<S,C>>();
-
-	
-	public PetruchioWrapper(AutomataLibraryServices services,
-			PetriNetJulian<S,C> net) {
+	final Map<de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S, C>, Place> mPJulian2pPetruchio =
+			new IdentityHashMap<de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S, C>, Place>();
+			
+	// Maps each transition of mNetPetruchio to the corresponding transition in mNetJulian
+	final Map<Transition, ITransition<S, C>> mTPetruchio2tJulian =
+			new IdentityHashMap<Transition, ITransition<S, C>>();
+			
+	public PetruchioWrapper(final AutomataLibraryServices services,
+			final PetriNetJulian<S, C> net) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mNetJulian = net;
@@ -76,70 +75,68 @@ public class PetruchioWrapper<S,C> {
 	
 	/**
 	 * Given a NetJulian Petri net mNetJulian, construct
-	 *  <ul>
-	 * <li> the corresponding Petruchio Petri net representation mNetPetruchio
-	 * <li> the Julian -> Petruchio place mapping plMap
-	 * <li> the Petruchio -> Julian place mapping trMap
+	 * <ul>
+	 * <li>the corresponding Petruchio Petri net representation mNetPetruchio
+	 * <li>the Julian -> Petruchio place mapping plMap
+	 * <li>the Petruchio -> Julian place mapping trMap
 	 * </ul>
 	 */
 	private void constructNetPetruchio() {
 		//construct a Petruchio place for each NetJulian place
-		for(final de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S,C> pJulian : mNetJulian.getPlaces()) {
+		for (final de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S, C> pJulian : mNetJulian.getPlaces()) {
 			Place pPetruchio;
 			String pLabel = "";
 			pLabel += pJulian.getContent();
 			pLabel += String.valueOf(pJulian.getContent().hashCode());
 			if (mNetJulian.getInitialMarking().contains(pJulian)) {
 				pPetruchio = mNetPetruchio.addPlace(pLabel, 1);
-			}
-			else {
+			} else {
 				pPetruchio = mNetPetruchio.addPlace(pLabel, 0);
 			}
 			// 1-sicheres Netz, Info hilft Petruchio/BW
-			pPetruchio.setBound(1); 
-			pJulian2pPetruchio.put(pJulian, pPetruchio);
+			pPetruchio.setBound(1);
+			mPJulian2pPetruchio.put(pJulian, pPetruchio);
 		}
 		//construct a Petruchio transition for each NetJulian transition
-		for(final ITransition<S,C> tJulian : mNetJulian.getTransitions()) {
+		for (final ITransition<S, C> tJulian : mNetJulian.getTransitions()) {
 			final Transition transitionPetruchio = mNetPetruchio.addTransition(tJulian.toString());
-			tPetruchio2tJulian.put(transitionPetruchio, tJulian);
+			mTPetruchio2tJulian.put(transitionPetruchio, tJulian);
 			// PTArcs kopieren
-			for(final de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S,C> pJulian : tJulian.getSuccessors()) {
-				mNetPetruchio.addArc(transitionPetruchio, pJulian2pPetruchio.get(pJulian), 1); // 1-sicheres Netz
+			for (final de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S, C> pJulian : tJulian
+					.getSuccessors()) {
+				mNetPetruchio.addArc(transitionPetruchio, mPJulian2pPetruchio.get(pJulian), 1); // 1-sicheres Netz
 			}
 			// TPArcs kopieren
-			for(final de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S,C> p : tJulian.getPredecessors()) {
-				mNetPetruchio.addArc(pJulian2pPetruchio.get(p), transitionPetruchio, 1); // 1-sicheres Netz
+			for (final de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S, C> p : tJulian
+					.getPredecessors()) {
+				mNetPetruchio.addArc(mPJulian2pPetruchio.get(p), transitionPetruchio, 1); // 1-sicheres Netz
 			}
 		}
 	}
 	
-
 	/**
 	 * Write Petri Net to file by using Petruchio. The ending of the filename
 	 * determines how the Petri net is encoded (e.g., .spec, .lola, etc.)
+	 * 
 	 * @param filename
+	 *            file name
 	 */
-	public void writeToFile(String filename) {
+	public void writeToFile(final String filename) {
 		mLogger.debug("Writing net to file " + filename);
 		petruchio.pn.Converter.writeNet(mNetPetruchio, filename);
 		mLogger.info("Accepting places: " + mNetJulian.getAcceptingPlaces());
 	}
-
+	
 	public Map<de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S, C>, Place> getpJulian2pPetruchio() {
-		return pJulian2pPetruchio;
+		return mPJulian2pPetruchio;
 	}
-
+	
 	public Map<Transition, ITransition<S, C>> gettPetruchio2tJulian() {
-		return tPetruchio2tJulian;
+		return mTPetruchio2tJulian;
 	}
-
+	
 	public PetriNet getNet() {
 		return mNetPetruchio;
 	}
-		
-
 	
-
-
 }

@@ -37,7 +37,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -47,7 +47,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -551,11 +553,12 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 */
 	private void checkSPImpliesWP(final IPredicate[] interpolantsSP, final IPredicate[] interpolantsWP) {
 		mLogger.debug("Checking implication of SP and WP...");
+		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(mServices, mLogger, mManagedScript);
 		for (int i = 0; i < interpolantsSP.length; i++) {
-			final LBool result = mSmtManager.isCovered(interpolantsSP[i], interpolantsWP[i]);
+			final Validity result = mic.checkImplication(interpolantsSP[i], false, interpolantsWP[i], false);
 			mLogger.debug("SP {" + interpolantsSP[i] + "} ==> WP {" + interpolantsWP[i] + "} is "
-					+ (result == LBool.UNSAT ? "valid" : (result == LBool.SAT ? "not valid" : result)));
-			assert (result == LBool.UNSAT || result == LBool.UNKNOWN) : "checkSPImpliesWP failed";
+					+ (result == Validity.VALID ? "valid" : (result == Validity.INVALID ? "not valid" : result)));
+			assert (result == Validity.VALID || result == Validity.UNKNOWN) : "checkSPImpliesWP failed";
 		}
 	}
 

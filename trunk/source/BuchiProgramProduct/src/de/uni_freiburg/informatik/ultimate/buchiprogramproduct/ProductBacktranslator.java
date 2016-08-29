@@ -31,11 +31,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -46,11 +46,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Rc
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class ProductBacktranslator extends DefaultTranslator<RCFGEdge, RCFGEdge, Expression, Expression> {
+public class ProductBacktranslator extends DefaultTranslator<RCFGEdge, RCFGEdge, Term, Term> {
 
 	private final HashMap<RCFGEdge, RCFGEdge> mEdgeMapping;
 
-	public ProductBacktranslator(Class<RCFGEdge> traceElementType, Class<Expression> expressionType) {
+	public ProductBacktranslator(final Class<RCFGEdge> traceElementType, final Class<Term> expressionType) {
 		super(traceElementType, traceElementType, expressionType,
 				expressionType);
 		mEdgeMapping = new HashMap<>();
@@ -58,8 +58,8 @@ public class ProductBacktranslator extends DefaultTranslator<RCFGEdge, RCFGEdge,
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public IProgramExecution<RCFGEdge, Expression> translateProgramExecution(
-			IProgramExecution<RCFGEdge, Expression> programExecution) {
+	public IProgramExecution<RCFGEdge, Term> translateProgramExecution(
+			final IProgramExecution<RCFGEdge, Term> programExecution) {
 
 		Map<TermVariable, Boolean>[] oldBranchEncoders = null;
 		if (programExecution instanceof RcfgProgramExecution) {
@@ -67,7 +67,7 @@ public class ProductBacktranslator extends DefaultTranslator<RCFGEdge, RCFGEdge,
 		}
 
 		final ArrayList<RCFGEdge> newTrace = new ArrayList<>();
-		final Map<Integer, ProgramState<Expression>> newValues = new HashMap<>();
+		final Map<Integer, ProgramState<Term>> newValues = new HashMap<>();
 		final ArrayList<Map<TermVariable, Boolean>> newBranchEncoders = new ArrayList<>();
 
 		addProgramState(-1, newValues, programExecution.getInitialProgramState());
@@ -89,22 +89,22 @@ public class ProductBacktranslator extends DefaultTranslator<RCFGEdge, RCFGEdge,
 		return new RcfgProgramExecution(newTrace, newValues, newBranchEncoders.toArray(new Map[0]));
 	}
 
-	private void addProgramState(int i, Map<Integer, ProgramState<Expression>> newValues,
-			ProgramState<Expression> programState) {
+	private void addProgramState(final int i, final Map<Integer, ProgramState<Term>> newValues,
+			final ProgramState<Term> programState) {
 		newValues.put(i, programState);
 	}
 
 	@Override
-	public List<RCFGEdge> translateTrace(List<RCFGEdge> trace) {
+	public List<RCFGEdge> translateTrace(final List<RCFGEdge> trace) {
 		return super.translateTrace(trace);
 	}
 
 	@Override
-	public Expression translateExpression(Expression expression) {
+	public Term translateExpression(final Term expression) {
 		return super.translateExpression(expression);
 	}
 
-	public void mapEdges(RCFGEdge newEdge, RCFGEdge originalEdge) {
+	public void mapEdges(final RCFGEdge newEdge, final RCFGEdge originalEdge) {
 		final RCFGEdge realOriginalEdge = mEdgeMapping.get(originalEdge);
 		if (realOriginalEdge != null) {
 			// this means we replaced an edge which we already replaced again

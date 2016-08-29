@@ -34,9 +34,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -49,6 +49,8 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.AnalysisTec
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.FixpointCheck;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.FixpointCheck.HasFixpoint;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.NonterminationAnalysisBenchmark;
@@ -70,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -277,7 +280,7 @@ public class LassoChecker {
 		mCounterexample = counterexample;
 		mLassoCheckerIdentifier = lassoCheckerIdentifier;
 		mPredicateUnifier =
-				new PredicateUnifier(mServices, mSmtManager, simplificationTechnique, xnfConversionTechnique);
+				new PredicateUnifier(mServices, mSmtManager.getManagedScript(), mSmtManager.getPredicateFactory(), mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), simplificationTechnique, xnfConversionTechnique);
 		mTruePredicate = mPredicateUnifier.getTruePredicate();
 		mFalsePredicate = mPredicateUnifier.getFalsePredicate();
 		mAxioms = axioms;
@@ -682,8 +685,15 @@ public class LassoChecker {
 		// s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " +
 		// loopVars);
 		// }
+		
+		final FixpointCheck fixpointCheck = new FixpointCheck(mServices, mLogger, mSmtManager.getManagedScript(), modifiableGlobalsAtHonda, stemTF, loopTF);
+		if (fixpointCheck.getResult() == HasFixpoint.YES) {
+			mNonterminationArgument = fixpointCheck.getTerminationArgument();
+			return SynthesisResult.NONTERMINATING;
+		}
 
 		final boolean doNonterminationAnalysis = !(s_AvoidNonterminationCheckIfArraysAreContained && containsArrays);
+		
 
 		NonTerminationArgument nonTermArgument = null;
 		if (doNonterminationAnalysis) {
@@ -804,13 +814,13 @@ public class LassoChecker {
 
 		TerminationArgument firstTerminationArgument = null;
 		for (final RankingTemplate rft : rankingFunctionTemplates) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				throw new ToolchainCanceledException(this.getClass());
-			}
 			TerminationArgument termArg;
 			try {
 				final TerminationAnalysisSettings settings = constructTASettings();
 				termArg = la.tryTemplate(rft, settings);
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
+					throw new ToolchainCanceledException(this.getClass(), generateRunningTaskInfo(stemTF, loopTF, withStem, rft));
+				}
 				final List<TerminationAnalysisBenchmark> benchs = la.getTerminationAnalysisBenchmarks();
 				mTerminationAnalysisBenchmarks.addAll(benchs);
 				if (mTemplateBenchmarkMode) {
@@ -858,6 +868,13 @@ public class LassoChecker {
 		} else {
 			return null;
 		}
+	}
+
+	private String generateRunningTaskInfo(final TransFormula stemTF, final TransFormula loopTF, final boolean withStem,
+			final RankingTemplate rft) {
+		return "applying " + rft.getName() + " template (degree " + rft.getDegree() + 
+				"), stem dagsize " + new DagSizePrinter(stemTF.getFormula()) + 
+				", loop dagsize " +  new DagSizePrinter(loopTF.getFormula());
 	}
 
 	// private List<LassoRankerParam> getLassoRankerParameters() {

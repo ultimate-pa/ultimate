@@ -1,0 +1,89 @@
+#! /bin/bash
+
+# Maximal benchmark time (in seconds) per run (actual benchmark takes longer)
+maxbenchmarktime="$(( 10 ))"
+# Desired runtime (in seconds) per problem
+targettime="$(( 60 ))"
+
+function logdate {
+	printf "%s    " "$(date +'%Y-%m-%d %H:%M:%S')"
+}
+
+function timeseconds {
+	date +'%s'
+}
+
+# Converts seconds to HH:MM:SS
+function s2hms {
+	date -d@"$1" -u +'%H:%M:%S'
+}
+
+function color1 { printf "\n\033[44m----- %s -----\033[m\n" "$1"; }
+function color2 { printf "\n\033[42m----- %s\033[m\n" "$1"; }
+function color3 { printf "\033[93m%s\033[m\n" "$1"; }
+
+color1 "Parameter overview"
+echo "max. benchmark time = $(s2hms $maxbenchmarktime)"
+echo "target runtime      = $(s2hms $targettime)"
+
+color1 "Compiling problems"
+for i in {10..18};  do
+	if [ -x "Problem$i" ]; then
+		logdate; echo "Problem$i already compiled"
+	else
+		logdate; echo "Compiling Problem$i.c ..."
+		clang -O3 -o "Problem$i" "Problem$i.c"
+		logdate; echo "... done"
+	fi
+done
+
+color1 "Running problems"
+for i in {10..18};  do
+	color2 "Problem$i"
+	color3 "Running benchmarks"
+		
+	inputlength=0
+	t=0
+	maxgrowth=1
+	while (( t < maxbenchmarktime )); do
+		(( inputlength++ ))
+		logdate; echo "Benchmark with input length $inputlength"
+		tstart="$(timeseconds)"
+		./Problem"$i" "$inputlength" &> /dev/null
+		tend="$(timeseconds)"
+		tprev="$t"
+		t="$(( tend - tstart ))"
+		if (( tprev > 0 )) && (( t > 0 )); then
+			growth=$(perl -e "print $t / $tprev")
+			if perl -e "exit !($growth > $maxgrowth)"; then
+				maxgrowth="$growth";
+			fi
+			logdate; printf "runtime growth = %.3f\n" "$growth"
+		fi
+	done
+	logdate; echo "Last benchmark took $(s2hms $t)"
+
+	color3 "Running actual bruteforce"
+
+	# growthfactors=(0 0 0 0 0 0 0 0 0 0 5 5 10 10 10 20 20 20 20)
+	# growthfactor="${growthfactors[$i]}"
+	logdate; echo "Estimate input length based on max. growth $maxgrowth"
+	if perl -e "exit !($maxgrowth <= 1)"; then
+		logdate; echo "Cannot estimate runtime. Please increase max. benchmark time."
+	else
+		inputlength=$(perl -e "print $inputlength + int(log($targettime / $t) / log($maxgrowth))")
+	fi
+
+	logdate; echo "Running with input length $inputlength ..."
+	tstart="$(timeseconds)"
+	./Problem"$i" "$inputlength" 1> /dev/null 2> output"$i".txt
+	tend="$(timeseconds)"
+	t="$(( tend - tstart ))"
+	logdate; echo "... done (took $(s2hms $t))"
+
+	outputsize="$(du -sh "output$i.txt" | cut -f1)"
+	logdate; echo "Extracting results from output$i.txt ($outputsize) ..."
+	grep -Po '^error_[0-9]+' output"$i".txt | sort -Vu > result$i.txt
+	logdate; echo "... done"
+done
+

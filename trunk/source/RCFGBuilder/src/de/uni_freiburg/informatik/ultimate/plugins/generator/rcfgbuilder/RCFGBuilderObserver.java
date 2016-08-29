@@ -61,7 +61,7 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 
 	private final IToolchainStorage mStorage;
 
-	public RCFGBuilderObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
+	public RCFGBuilderObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		mServices = services;
 		mStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -85,7 +85,7 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	 * @throws IOException
 	 */
 	@Override
-	public boolean process(IElement root) throws IOException {
+	public boolean process(final IElement root) throws IOException {
 		if (!(root instanceof Unit)) {
 			// TODO
 			mLogger.debug("No WrapperNode. Let Ultimate process with next node");
@@ -96,6 +96,7 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 			final CfgBuilder recCFGBuilder = new CfgBuilder(unit, translator, mServices, mStorage);
 			try {
 				mGraphroot = recCFGBuilder.getRootNode(unit);
+				translator.setTerm2Expression(mGraphroot.getRootAnnot().getBoogie2SMT().getTerm2Expression());				
 				ModelUtils.copyAnnotations(unit, mGraphroot);
 				mServices.getBacktranslationService().addTranslator(translator);
 			} catch (final SMTLIBException e) {
@@ -120,7 +121,7 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
 		// TODO Auto-generated method stub
 
 	}

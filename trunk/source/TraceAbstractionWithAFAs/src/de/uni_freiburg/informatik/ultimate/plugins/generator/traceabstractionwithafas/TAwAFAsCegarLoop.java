@@ -39,17 +39,17 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AA_MergedUnion;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.BooleanExpression;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.DifferenceSenwa;
+import de.uni_freiburg.informatik.ultimate.automata.alternating.AA_MergedUnion;
+import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.alternating.BooleanExpression;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -100,7 +100,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			final Collection<ProgramPoint> errorLocs, final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
 			final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		super(name, rootNode, smtManager, traceAbstractionBenchmarks, taPrefs, errorLocs, services, storage);
-		mPredicateUnifier = new PredicateUnifier(services, smtManager,mSimplificationTechnique, mXnfConversionTechnique,
+		mPredicateUnifier = new PredicateUnifier(services, smtManager.getManagedScript(), smtManager.getPredicateFactory(), 
+				smtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
 				smtManager.getPredicateFactory().newPredicate(smtManager.getScript().term("true")),
 				smtManager.getPredicateFactory().newPredicate(smtManager.getScript().term("false")));
 	}
