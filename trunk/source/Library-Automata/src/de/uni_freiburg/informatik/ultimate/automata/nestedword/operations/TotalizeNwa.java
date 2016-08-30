@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
@@ -59,7 +59,7 @@ public class TotalizeNwa<LETTER, STATE>
 	 * @param operand operand
 	 * @param stateFactory state factory
 	 */
-	public TotalizeNwa(final INestedWordAutomatonSimple<LETTER, STATE> operand, 
+	public TotalizeNwa(final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final IStateFactory<STATE> stateFactory) {
 		mOperand = operand;
 		mStateFactory = stateFactory;
@@ -130,6 +130,11 @@ public class TotalizeNwa<LETTER, STATE>
 	@Override
 	public boolean isFinal(final STATE state) {
 		if (state == mSinkState) {
+			/*
+			 * TODO Christian 2016-08-29: This is a bug: If the input automaton was a totalized and complemented
+			 *      automaton, the sink state could already exist and be final. This worked before because the
+			 *      StateFactory created a fresh sink state.
+			 */
 			return false;
 		} else {
 			return mOperand.isFinal(state);
@@ -163,7 +168,7 @@ public class TotalizeNwa<LETTER, STATE>
 			return new HashSet<OutgoingInternalTransition<LETTER, STATE>>(0);
 		}
 		if (state != mSinkState) {
-			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it = 
+			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it =
 					mOperand.internalSuccessors(state, letter).iterator();
 			if (it.hasNext()) {
 				it.next();
@@ -175,9 +180,9 @@ public class TotalizeNwa<LETTER, STATE>
 				}
 			}
 		}
-		final OutgoingInternalTransition<LETTER, STATE> trans = 
+		final OutgoingInternalTransition<LETTER, STATE> trans =
 				new OutgoingInternalTransition<LETTER, STATE>(letter, mSinkState);
-		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = 
+		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result =
 				new ArrayList<OutgoingInternalTransition<LETTER, STATE>>(1);
 		result.add(trans);
 		return result;
@@ -190,10 +195,10 @@ public class TotalizeNwa<LETTER, STATE>
 		if (mNondeterministicTransitionsDetected) {
 			return new HashSet<OutgoingInternalTransition<LETTER, STATE>>(0);
 		}
-		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = 
+		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result =
 				new ArrayList<OutgoingInternalTransition<LETTER, STATE>>();
 		for (final LETTER letter : getInternalAlphabet()) {
-			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it = 
+			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it =
 					internalSuccessors(state, letter).iterator();
 			if (mNondeterministicTransitionsDetected) {
 				return new HashSet<OutgoingInternalTransition<LETTER, STATE>>(0);
@@ -211,7 +216,7 @@ public class TotalizeNwa<LETTER, STATE>
 			return new HashSet<OutgoingCallTransition<LETTER, STATE>>(0);
 		}
 		if (state != mSinkState) {
-			final Iterator<OutgoingCallTransition<LETTER, STATE>> it = 
+			final Iterator<OutgoingCallTransition<LETTER, STATE>> it =
 					mOperand.callSuccessors(state, letter).iterator();
 			if (it.hasNext()) {
 				it.next();
@@ -223,9 +228,9 @@ public class TotalizeNwa<LETTER, STATE>
 				}
 			}
 		}
-		final OutgoingCallTransition<LETTER, STATE> trans = 
+		final OutgoingCallTransition<LETTER, STATE> trans =
 				new OutgoingCallTransition<LETTER, STATE>(letter, mSinkState);
-		final ArrayList<OutgoingCallTransition<LETTER, STATE>> result = 
+		final ArrayList<OutgoingCallTransition<LETTER, STATE>> result =
 				new ArrayList<OutgoingCallTransition<LETTER, STATE>>(1);
 		result.add(trans);
 		return result;
@@ -238,10 +243,10 @@ public class TotalizeNwa<LETTER, STATE>
 		if (mNondeterministicTransitionsDetected) {
 			return new HashSet<OutgoingCallTransition<LETTER, STATE>>(0);
 		}
-		final ArrayList<OutgoingCallTransition<LETTER, STATE>> result = 
+		final ArrayList<OutgoingCallTransition<LETTER, STATE>> result =
 				new ArrayList<OutgoingCallTransition<LETTER, STATE>>();
 		for (final LETTER letter : getCallAlphabet()) {
-			final Iterator<OutgoingCallTransition<LETTER, STATE>> it = 
+			final Iterator<OutgoingCallTransition<LETTER, STATE>> it =
 					callSuccessors(state, letter).iterator();
 			if (mNondeterministicTransitionsDetected) {
 				return new HashSet<OutgoingCallTransition<LETTER, STATE>>(0);
@@ -259,7 +264,7 @@ public class TotalizeNwa<LETTER, STATE>
 			return new HashSet<OutgoingReturnTransition<LETTER, STATE>>(0);
 		}
 		if (state != mSinkState) {
-			final Iterator<OutgoingReturnTransition<LETTER, STATE>> it = 
+			final Iterator<OutgoingReturnTransition<LETTER, STATE>> it =
 					mOperand.returnSuccessors(state, hier, letter).iterator();
 			if (it.hasNext()) {
 				it.next();
@@ -271,9 +276,9 @@ public class TotalizeNwa<LETTER, STATE>
 				}
 			}
 		}
-		final OutgoingReturnTransition<LETTER, STATE> trans = 
+		final OutgoingReturnTransition<LETTER, STATE> trans =
 				new OutgoingReturnTransition<LETTER, STATE>(hier, letter, mSinkState);
-		final ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = 
+		final ArrayList<OutgoingReturnTransition<LETTER, STATE>> result =
 				new ArrayList<OutgoingReturnTransition<LETTER, STATE>>(1);
 		result.add(trans);
 		return result;
@@ -286,10 +291,10 @@ public class TotalizeNwa<LETTER, STATE>
 		if (mNondeterministicTransitionsDetected) {
 			return new HashSet<OutgoingReturnTransition<LETTER, STATE>>(0);
 		}
-		final ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = 
+		final ArrayList<OutgoingReturnTransition<LETTER, STATE>> result =
 				new ArrayList<OutgoingReturnTransition<LETTER, STATE>>();
 		for (final LETTER letter : getReturnAlphabet()) {
-			final Iterator<OutgoingReturnTransition<LETTER, STATE>> it = 
+			final Iterator<OutgoingReturnTransition<LETTER, STATE>> it =
 					returnSuccessors(state, hier, letter).iterator();
 			if (mNondeterministicTransitionsDetected) {
 				return new HashSet<OutgoingReturnTransition<LETTER, STATE>>(0);
