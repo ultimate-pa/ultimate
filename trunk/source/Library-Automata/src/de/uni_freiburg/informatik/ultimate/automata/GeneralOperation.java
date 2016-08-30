@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -46,7 +46,7 @@ public abstract class GeneralOperation<LETTER, STATE>
 	protected final AutomataLibraryServices mServices;
 	
 	/**
-	 * logger.
+	 * Logger.
 	 */
 	protected final ILogger mLogger;
 	
@@ -58,8 +58,21 @@ public abstract class GeneralOperation<LETTER, STATE>
 	 */
 	public GeneralOperation(final AutomataLibraryServices services) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(
-				LibraryIdentifiers.PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+	}
+	
+	/**
+	 * Should be called regularly by subclasses to check for timeouts.
+	 * A subclass which does not do this is a bad subclass!
+	 * A good practice is to call this method after each sub-call to other {@link IOperation}s and inside (expensive)
+	 * loops.
+	 * <p>
+	 * If a timeout was requested, the subclass should immediately throw an {@link AutomataOperationCanceledException}.
+	 * 
+	 * @return true iff {@link AutomataLibraryServices} object requests cancellation
+	 */
+	protected final boolean isCancellationRequested() {
+		return !mServices.getProgressMonitorService().continueProcessing();
 	}
 	
 	@Override
@@ -79,10 +92,11 @@ public abstract class GeneralOperation<LETTER, STATE>
 	}
 	
 	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory)
+	public boolean checkResult(final IStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		mLogger.warn("No result check for " + operationName()
-				+ " available yet.");
+		if (mLogger.isWarnEnabled()) {
+			mLogger.warn("No result check for " + operationName() + " available yet.");
+		}
 		return true;
 	}
 }

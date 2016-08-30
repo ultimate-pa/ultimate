@@ -28,10 +28,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
@@ -115,7 +115,7 @@ public class InductivityCheck {
 				}
 			}
 			for (final CodeBlock cb : nwa.lettersReturn(state)) {
-				for (final IPredicate hier : nwa.hierPred(state, cb)) {
+				for (final IPredicate hier : nwa.hierarchicalPredecessorsOutgoing(state, cb)) {
 					for (final OutgoingReturnTransition<CodeBlock, IPredicate> outTrans : nwa.returnSuccessors(state, hier,
 							cb)) {
 						final Validity inductivity = mHoareTripleChecker.checkReturn(state, hier, (IReturnAction) cb, outTrans.getSucc());

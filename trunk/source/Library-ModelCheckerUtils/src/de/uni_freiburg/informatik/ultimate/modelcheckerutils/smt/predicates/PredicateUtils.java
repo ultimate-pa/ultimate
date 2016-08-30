@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -196,7 +196,7 @@ public class PredicateUtils {
 	 * <li>Each oldVar v is renamed to v_OLD.
 	 * </ul>
 	 */
-	public static Term formulaWithIndexedVars(final TransFormula tf, final int idxInVar, final int idxOutVar, final Set<IProgramVar> assignedVars,
+	public static Term formulaWithIndexedVars(final UnmodifiableTransFormula tf, final int idxInVar, final int idxOutVar, final Set<IProgramVar> assignedVars,
 			final Map<String, Term> indexedConstants, final Script script) {
 		assert (assignedVars != null && assignedVars.isEmpty());
 		final Set<TermVariable> notYetSubst = new HashSet<TermVariable>();
@@ -269,7 +269,7 @@ public class PredicateUtils {
 	}
 
 	public static LBool isInductiveHelper(final Script script, final IPredicate precond, final IPredicate postcond,
-			final TransFormula tf, final Set<IProgramVar> modifiableGlobalsBefore, final Set<IProgramVar> modifiableGlobalsAfter) {
+			final UnmodifiableTransFormula tf, final Set<IProgramVar> modifiableGlobalsBefore, final Set<IProgramVar> modifiableGlobalsAfter) {
 		script.push(1);
 
 		final Set<IProgramVar> empty = Collections.emptySet();

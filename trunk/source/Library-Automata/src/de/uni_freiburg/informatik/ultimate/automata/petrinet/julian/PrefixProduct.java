@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
@@ -33,18 +33,18 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ConcurrentProduct;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.ConcurrentProduct;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 public class PrefixProduct<S,C>
 		extends GeneralOperation<S, C>
@@ -59,14 +59,14 @@ public class PrefixProduct<S,C>
 	private HashSet<S> mNwaOnlyAlphabet;
 	private HashSet<S> mUnionAlphabet;
 	
-	private final Map<Place<S,C>,Place<S,C>> mOldPlace2newPlace = 
+	private final Map<Place<S,C>,Place<S,C>> mOldPlace2newPlace =
 		new HashMap<Place<S,C>,Place<S,C>>();
-	private final Map<C,Place<S,C>> mState2newPlace = 
+	private final Map<C,Place<S,C>> mState2newPlace =
 		new HashMap<C,Place<S,C>>();
 	
-	private final Map<S,Collection<ITransition<S,C>>> mSymbol2netTransitions = 
+	private final Map<S,Collection<ITransition<S,C>>> mSymbol2netTransitions =
 		new HashMap<S,Collection<ITransition<S,C>>>();
-	private final Map<S,Collection<AutomatonTransition>> mSymbol2nwaTransitions = 
+	private final Map<S,Collection<AutomatonTransition>> mSymbol2nwaTransitions =
 		new HashMap<S,Collection<AutomatonTransition>>();
 	
 
@@ -113,7 +113,7 @@ public class PrefixProduct<S,C>
 	
 	
 	
-	private void updateSymbol2netTransitions(final S symbol, 
+	private void updateSymbol2netTransitions(final S symbol,
 											 final ITransition<S,C> netTransition) {
 		Collection<ITransition<S,C>> netTransitions;
 		netTransitions = mSymbol2netTransitions.get(symbol);
@@ -124,7 +124,7 @@ public class PrefixProduct<S,C>
 		netTransitions.add(netTransition);
 	}
 	
-	private void updateSymbol2nwaTransitions(final S symbol, 
+	private void updateSymbol2nwaTransitions(final S symbol,
 				final AutomatonTransition nwaTransition) {
 		Collection<AutomatonTransition> nwaTransitions;
 		nwaTransitions = mSymbol2nwaTransitions.get(symbol);
@@ -136,7 +136,7 @@ public class PrefixProduct<S,C>
 	}
 	
 	@Override
-	public PetriNetJulian<S,C> getResult() throws AutomataLibraryException {
+	public PetriNetJulian<S,C> getResult() {
 		return this.mResult;
 	}
 	
@@ -153,7 +153,7 @@ public class PrefixProduct<S,C>
 
 		// prefix product preserves the constantTokenAmount invariant
 		final boolean constantTokenAmount = mOperand.constantTokenAmount();
-		mResult = new PetriNetJulian<S,C>(mServices, mUnionAlphabet, 
+		mResult = new PetriNetJulian<S,C>(mServices, mUnionAlphabet,
 										 mOperand.getStateFactory(),
 										 constantTokenAmount);
 		
@@ -184,7 +184,7 @@ public class PrefixProduct<S,C>
 					mNwa.internalSuccessors(state)) {
 				final S letter = trans.getLetter();
 				final C succ = trans.getSucc();
-				Collection<AutomatonTransition> automatonTransitions = 
+				Collection<AutomatonTransition> automatonTransitions =
 						mSymbol2nwaTransitions.get(letter);
 				if (automatonTransitions == null) {
 					automatonTransitions = new HashSet<AutomatonTransition>();
@@ -197,13 +197,13 @@ public class PrefixProduct<S,C>
 		
 		for (final S symbol : mNetOnlyAlphabet) {
 			for (final ITransition<S,C> trans : mSymbol2netTransitions.get(symbol)) {
-				final Collection<Place<S,C>> predecessors = 
+				final Collection<Place<S,C>> predecessors =
 											new ArrayList<Place<S,C>>();
 				for (final Place<S,C> oldPlace : trans.getPredecessors()) {
 					final Place<S,C> newPlace = mOldPlace2newPlace.get(oldPlace);
 					predecessors.add(newPlace);
 				}
-				final Collection<Place<S,C>> successors = 
+				final Collection<Place<S,C>> successors =
 					new ArrayList<Place<S,C>>();
 				for (final Place<S,C> oldPlace : trans.getSuccessors()) {
 					final Place<S,C> newPlace = mOldPlace2newPlace.get(oldPlace);
@@ -214,20 +214,20 @@ public class PrefixProduct<S,C>
 		}
 		
 		for (final S symbol : mNwaOnlyAlphabet) {
-			for (final AutomatonTransition trans : 
+			for (final AutomatonTransition trans :
 											mSymbol2nwaTransitions.get(symbol)) {
-				final Collection<Place<S,C>> predecessors = 
+				final Collection<Place<S,C>> predecessors =
 											new ArrayList<Place<S,C>>(1);
 				{
-					final Place<S,C> newPlace = 
+					final Place<S,C> newPlace =
 						mState2newPlace.get(trans.getPredecessor());
 					predecessors.add(newPlace);
 				}
 				
-				final Collection<Place<S,C>> successors = 
+				final Collection<Place<S,C>> successors =
 											new ArrayList<Place<S,C>>(1);
 				{
-					final Place<S,C> newPlace = 
+					final Place<S,C> newPlace =
 						mState2newPlace.get(trans.getSuccessor());
 					successors.add(newPlace);
 				}
@@ -239,10 +239,10 @@ public class PrefixProduct<S,C>
 			if (mSymbol2netTransitions.containsKey(symbol)) {
 				for (final ITransition<S,C> netTrans : mSymbol2netTransitions.get(symbol)) {
 					if (mSymbol2nwaTransitions.containsKey(symbol)) {
-						for (final AutomatonTransition nwaTrans : 
+						for (final AutomatonTransition nwaTrans :
 													mSymbol2nwaTransitions.get(symbol)) {
 						
-						final Collection<Place<S,C>> predecessors = 
+						final Collection<Place<S,C>> predecessors =
 													new ArrayList<Place<S,C>>();
 						for (final Place<S,C> oldPlace : netTrans.getPredecessors()) {
 							final Place<S,C> newPlace = mOldPlace2newPlace.get(oldPlace);
@@ -251,7 +251,7 @@ public class PrefixProduct<S,C>
 						predecessors.add(mState2newPlace.get(nwaTrans.getPredecessor()));
 						
 						
-						final Collection<Place<S,C>> successors = 
+						final Collection<Place<S,C>> successors =
 							new ArrayList<Place<S,C>>();
 						for (final Place<S,C> oldPlace : netTrans.getSuccessors()) {
 							final Place<S,C> newPlace = mOldPlace2newPlace.get(oldPlace);
@@ -294,11 +294,11 @@ public class PrefixProduct<S,C>
 	}
 
 	@Override
-	public boolean checkResult(final StateFactory<C> stateFactory)
+	public boolean checkResult(final IStateFactory<C> stateFactory)
 			throws AutomataLibraryException {
 		mLogger.info("Testing correctness of prefixProduct");
 
-		final INestedWordAutomaton<S, C> op1AsNwa = 
+		final INestedWordAutomaton<S, C> op1AsNwa =
 				(new PetriNet2FiniteAutomaton<S, C>(mServices, mOperand)).getResult();
 		final INestedWordAutomaton<S, C> resultAsNwa =
 				(new PetriNet2FiniteAutomaton<S, C>(mServices, mResult)).getResult();

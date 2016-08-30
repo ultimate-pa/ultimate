@@ -53,13 +53,13 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Class linearizing {@link TransFormula}s. For improved performance and
+ * Class linearizing {@link UnmodifiableTransFormula}s. For improved performance and
  * variable management, this class keeps a cache of linearization results. Thus,
  * this class should only be used in one single context at a time, to ensure
  * proper garbage collection.
@@ -75,7 +75,7 @@ public class CachedTransFormulaLinearizer {
 	private final Term[] mAxioms;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final ManagedScript mPredicateScript;
-	private final Map<TransFormula, LinearTransition> mCache;
+	private final Map<UnmodifiableTransFormula, LinearTransition> mCache;
 
 
 	/**
@@ -101,16 +101,16 @@ public class CachedTransFormulaLinearizer {
 		mReplacementVarFactory = new ReplacementVarFactory(mPredicateScript);
 		mAxioms = axioms.toArray(new Term[axioms.size()]);
 
-		mCache = new HashMap<TransFormula, LinearTransition>();
+		mCache = new HashMap<UnmodifiableTransFormula, LinearTransition>();
 	}
 
 	/**
 	 * Performs a transformation, utilizing the cache if possible. If the given
-	 * {@link TransFormula} has not yet been linearized, the result will also
+	 * {@link UnmodifiableTransFormula} has not yet been linearized, the result will also
 	 * get added to the cache.
 	 * 
 	 * The input and the output of this transformation are related as follows.
-	 * Let the input be a {@link TransFormula} that represents a formula φ whose
+	 * Let the input be a {@link UnmodifiableTransFormula} that represents a formula φ whose
 	 * free variables are primed and unprimed versions of the {@link BoogieVars}
 	 * x_1,...,x_n. The output is a {@link LinearTransition} that represent a
 	 * formula ψ whose free variables are primed and unprimed versions of
@@ -124,7 +124,7 @@ public class CachedTransFormulaLinearizer {
 	 *            transformula to transform
 	 * @return transformed transformula
 	 */
-	public LinearTransition linearize(final TransFormula tf) {
+	public LinearTransition linearize(final UnmodifiableTransFormula tf) {
 		LinearTransition result = mCache.get(tf);
 		if (result == null) {
 			result = makeLinear(tf);
@@ -137,7 +137,7 @@ public class CachedTransFormulaLinearizer {
 	 * Performs a transformation.
 	 * 
 	 * The input and the output of this transformation are related as follows.
-	 * Let the input be a {@link TransFormula} that represents a formula φ whose
+	 * Let the input be a {@link UnmodifiableTransFormula} that represents a formula φ whose
 	 * free variables are primed and unprimed versions of the {@link BoogieVars}
 	 * x_1,...,x_n. The output is a {@link LinearTransition} that represent a
 	 * formula ψ whose free variables are primed and unprimed versions of
@@ -152,7 +152,7 @@ public class CachedTransFormulaLinearizer {
 	 *            transformula to transform
 	 * @return transformed transformula
 	 */
-	private LinearTransition makeLinear(final TransFormula tf) {
+	private LinearTransition makeLinear(final UnmodifiableTransFormula tf) {
 		TransFormulaLR tflr = TransFormulaLR.buildTransFormula(tf,
 				mReplacementVarFactory, mPredicateScript);
 

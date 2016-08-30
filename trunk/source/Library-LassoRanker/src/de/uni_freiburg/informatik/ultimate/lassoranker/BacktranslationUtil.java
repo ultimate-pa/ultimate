@@ -31,7 +31,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -49,34 +48,25 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 public class BacktranslationUtil {
 	
 	/**
-	 * Translate a RankVar into a (Boogie) Expression. The Expression is the
-	 * (unique) Expression that represents the definition of the RankVar.
-	 */
-	private static Expression rankVar2Expression(final Term2Expression term2expression, final IProgramVar rv) {
-		return term2expression.translate(ReplacementVarUtils.getDefinition(rv));
-	}
-	
-	/**
-	 * Translate a sequence of mappings from RankVars to Rationals into a 
-	 * sequence of mappings from Expressions to Rationals.
-	 * The RanksVars are translated into an Expressions that represents the
-	 * defining term of the RankVar. The Rationals are are translated to 1 
-	 * (true) and 0 (false) if the corresponding RankVar represented a Term
+	 * Translate a sequence of mappings whose domain are IProgramVars that 
+	 * can also be ReplacementVars into a sequence of mappings 
+	 * whose domain are Terms.
+	 * The ReplacementVars are translated into Term that represents the
+	 * defining term of the ReplacementVars. 
+	 * The Rationals, which are the values of the mappings are are translated 
+	 * to 1 (true) and 0 (false) if the corresponding RankVar represented a Term
 	 * of sort Bool.
-	 * Ensures that RankVars that are defined by equivalent terms translated 
-	 * to the same Expression object. 
 	 */
-	public static List<Map<Expression, Rational>> rank2Boogie(
+	public static List<Map<Term, Rational>> rank2Rcfg(
 			final Term2Expression term2expression,
 			final List<Map<IProgramVar, Rational>> states) {
-		final List<Map<Expression, Rational>> result =
-				new ArrayList<Map<Expression, Rational>>(states.size());
+		final List<Map<Term, Rational>> result =
+				new ArrayList<Map<Term, Rational>>(states.size());
 		for (final Map<IProgramVar, Rational> state : states) {
-			final Map<Expression, Rational> expression2rational =
-					new LinkedHashMap<Expression, Rational>();
+			final Map<Term, Rational> term2rational =
+					new LinkedHashMap<Term, Rational>();
 			for (final Map.Entry<IProgramVar, Rational> entry : state.entrySet()) {
 				final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
-				final Expression e = term2expression.translate(definition);
 				Rational r = entry.getValue();
 				// Replace Rational for boolean RankVars
 				if (definition.getSort().getName().equals("Bool")) {
@@ -85,10 +75,10 @@ public class BacktranslationUtil {
 					r = entry.getValue().compareTo(Rational.ONE) == -1 ?
 							Rational.ONE : Rational.ZERO;
 				}
-				assert e != null && r != null;
-				expression2rational.put(e, r);
+				assert r != null;
+				term2rational.put(definition, r);
 			}
-			result.add(expression2rational);
+			result.add(term2rational);
 		}
 		return result;
 	}

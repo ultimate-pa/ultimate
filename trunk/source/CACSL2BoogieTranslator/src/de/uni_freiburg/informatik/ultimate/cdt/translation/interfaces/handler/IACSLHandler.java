@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Ensures;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FieldAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FreeableExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAssigns;
@@ -297,4 +298,8 @@ public interface IACSLHandler extends IHandler {
     public Result visit(Dispatcher main, ValidExpression node);
     
     public Result visit(Dispatcher main, CastExpression node);
+    
+    public Result visit(Dispatcher main, IfThenElseExpression node);
+    
+    
 }

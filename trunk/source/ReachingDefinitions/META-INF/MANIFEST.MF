@@ -9,7 +9,9 @@ Require-Bundle: Library-UltimateCore,
  Library-BoogieAST,
  Library-log4j,
  BoogiePreprocessor,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
+ de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2,
+ Library-SMTLIB
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions,
@@ -17,3 +19,4 @@ Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdef
  de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.Activator
+Import-Package: de.uni_freiburg.informatik.ultimate.logic

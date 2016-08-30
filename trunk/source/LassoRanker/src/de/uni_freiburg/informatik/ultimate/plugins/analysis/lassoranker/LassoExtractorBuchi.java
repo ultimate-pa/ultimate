@@ -35,16 +35,16 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiDifferenceFKV;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsEmpty;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceFKV;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -75,7 +75,7 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 	private final IUltimateServiceProvider mServices;	
 	private final INestedWordAutomaton<CodeBlock, IPredicate> mCfgAutomaton;
 	private INestedWordAutomaton<CodeBlock, IPredicate> mLassoAutomaton;
-	private final StateFactory<IPredicate> mPredicateFactory;
+	private final IStateFactory<IPredicate> mPredicateFactory;
 	private final SmtManager mSmtManager;
 	private final ILogger mLogger;
 	
@@ -144,7 +144,7 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 		
 		public LassoAutomatonBuilder(
 				final InCaReAlphabet<CodeBlock> alphabet,
-				final StateFactory<IPredicate> predicateFactory,
+				final IStateFactory<IPredicate> predicateFactory,
 				final NestedWord<CodeBlock> stem,
 				final NestedWord<CodeBlock> loop) throws AutomataOperationCanceledException {
 			mResult =	new NestedWordAutomaton<CodeBlock, IPredicate>(

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender;
@@ -31,10 +31,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizedState;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -46,12 +49,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
-public class BestApproximationDeterminizer 
+public class BestApproximationDeterminizer
 		implements IStateDeterminizer<CodeBlock, IPredicate> {
 	
 	IHoareTripleChecker mHoareTriplechecker;
 	TAPreferences mTaPreferences;
-	StateFactory<IPredicate> mStateFactory;
+	IStateFactory<IPredicate> mStateFactory;
 	NestedWordAutomaton<CodeBlock, IPredicate> mNwa;
 	public int mAnswerInternalSolver = 0;
 	public int mAnswerInternalAutomaton = 0;
@@ -64,31 +67,31 @@ public class BestApproximationDeterminizer
 	public int mAnswerReturnCache = 0;
 
 
-	Map<IPredicate,Map<CodeBlock,Set<IPredicate>>>	mInductiveSuccsCache = 
+	Map<IPredicate,Map<CodeBlock,Set<IPredicate>>>	mInductiveSuccsCache =
 		new HashMap<IPredicate,Map<CodeBlock,Set<IPredicate>>>();
 	
-	Map<IPredicate,Map<CodeBlock,Set<IPredicate>>>	mInductiveCallSuccsCache = 
+	Map<IPredicate,Map<CodeBlock,Set<IPredicate>>>	mInductiveCallSuccsCache =
 		new HashMap<IPredicate,Map<CodeBlock,Set<IPredicate>>>();
 	
-	Map<IPredicate,Map<IPredicate,Map<CodeBlock,Set<IPredicate>>>> mInductiveReturnSuccsCache = 
+	Map<IPredicate,Map<IPredicate,Map<CodeBlock,Set<IPredicate>>>> mInductiveReturnSuccsCache =
 		new HashMap<IPredicate,Map<IPredicate,Map<CodeBlock,Set<IPredicate>>>>();
 	
 
-	public BestApproximationDeterminizer(SmtManager mSmtManager,
-			TAPreferences taPreferences,
-			NestedWordAutomaton<CodeBlock, IPredicate> mNwa,
-			StateFactory<IPredicate> stateFactory) {
+	public BestApproximationDeterminizer(final SmtManager mSmtManager,
+			final TAPreferences taPreferences,
+			final NestedWordAutomaton<CodeBlock, IPredicate> nwa,
+			final IStateFactory<IPredicate> stateFactory) {
 		super();
 		mHoareTriplechecker = new MonolithicHoareTripleChecker(
 				mSmtManager.getManagedScript(), mSmtManager.getModifiableGlobals());
 		mTaPreferences = taPreferences;
 		mStateFactory = stateFactory;
-		mNwa = mNwa;
+		mNwa = nwa;
 	}
 	
 	@Override
 	public DeterminizedState<CodeBlock, IPredicate> initialState() {
-		final DeterminizedState<CodeBlock, IPredicate> detState = 
+		final DeterminizedState<CodeBlock, IPredicate> detState =
 			new DeterminizedState<CodeBlock, IPredicate>(mNwa);
 		//FIXME add all at once
 		for (final IPredicate initialState : mNwa.getInitialStates()) {
@@ -99,10 +102,10 @@ public class BestApproximationDeterminizer
 
 	@Override
 	public DeterminizedState<CodeBlock, IPredicate>  internalSuccessor(
-			DeterminizedState<CodeBlock, IPredicate>  detState,
-			CodeBlock symbol) {
+			final DeterminizedState<CodeBlock, IPredicate>  detState,
+			final CodeBlock symbol) {
 		
-		final DeterminizedState<CodeBlock, IPredicate>  succDetState = 
+		final DeterminizedState<CodeBlock, IPredicate>  succDetState =
 			new DeterminizedState<CodeBlock, IPredicate> (mNwa);
 		for (final IPredicate  downState : detState.getDownStates()) {
 			for (final IPredicate  upState : detState.getUpStates(downState)) {
@@ -112,22 +115,22 @@ public class BestApproximationDeterminizer
 			}
 		}
 		if (mTaPreferences.computeHoareAnnotation()) {
-			assert(mHoareTriplechecker.checkInternal(getState(detState), 
-						(IInternalAction) symbol, 
+			assert(mHoareTriplechecker.checkInternal(getState(detState),
+						(IInternalAction) symbol,
 						getState(succDetState)) == Validity.VALID ||
-				   mHoareTriplechecker.checkInternal(detState.getContent(mStateFactory), 
-						(IInternalAction) symbol, 
+				   mHoareTriplechecker.checkInternal(detState.getContent(mStateFactory),
+						(IInternalAction) symbol,
 						getState(succDetState)) == Validity.UNKNOWN);
 		}
-		return succDetState;	
+		return succDetState;
 	}
 	
 	@Override
 	public DeterminizedState<CodeBlock, IPredicate>  callSuccessor(
-			DeterminizedState<CodeBlock, IPredicate>  detState, 
-			CodeBlock symbol) {
+			final DeterminizedState<CodeBlock, IPredicate>  detState,
+			final CodeBlock symbol) {
 		
-		final DeterminizedState<CodeBlock, IPredicate>  succDetState = 
+		final DeterminizedState<CodeBlock, IPredicate>  succDetState =
 				new DeterminizedState<CodeBlock, IPredicate> (mNwa);
 		for (final IPredicate  downState : detState.getDownStates()) {
 			for (final IPredicate  upState : detState.getUpStates(downState)) {
@@ -138,37 +141,37 @@ public class BestApproximationDeterminizer
 		}
 		if (mTaPreferences.computeHoareAnnotation()) {
 			assert(mHoareTriplechecker.checkCall(
-						getState(detState), 
-						(Call) symbol, 
+						getState(detState),
+						(Call) symbol,
 						getState(succDetState)) == Validity.VALID ||
-				   mHoareTriplechecker.checkCall(getState(detState), 
-						(Call) symbol, 
+				   mHoareTriplechecker.checkCall(getState(detState),
+						(Call) symbol,
 						getState(succDetState)) == Validity.UNKNOWN);
 		}
-		return succDetState;	
+		return succDetState;
 	}
 
 	@Override
 	public DeterminizedState<CodeBlock, IPredicate>  returnSuccessor(
-			DeterminizedState<CodeBlock, IPredicate>  detState,
-			DeterminizedState<CodeBlock, IPredicate>  detLinPred,
-			CodeBlock symbol) {
+			final DeterminizedState<CodeBlock, IPredicate>  detState,
+			final DeterminizedState<CodeBlock, IPredicate>  detLinPred,
+			final CodeBlock symbol) {
 		
-		final DeterminizedState<CodeBlock, IPredicate>  succDetState = 
+		final DeterminizedState<CodeBlock, IPredicate>  succDetState =
 				new DeterminizedState<CodeBlock, IPredicate> (mNwa);
 		
-		for (final IPredicate  downLinPred : 
+		for (final IPredicate  downLinPred :
 												detLinPred.getDownStates()) {
-			for (final IPredicate  upLinPred : 
+			for (final IPredicate  upLinPred :
 									detLinPred.getUpStates(downLinPred)) {
-				final Set<IPredicate > upStates = 
+				final Set<IPredicate > upStates =
 										detState.getUpStates(upLinPred);
 				if (upStates == null) {
 					continue;
 				}
 				for (final IPredicate  upState : upStates) {
 					final Return returnSymbol = (Return) symbol;
-					for (final IPredicate  upSucc : 
+					for (final IPredicate  upSucc :
 							getReturnSuccs(upState,upLinPred, returnSymbol)) {
 						succDetState.addPair(downLinPred, upSucc, mNwa);
 					}
@@ -180,15 +183,15 @@ public class BestApproximationDeterminizer
 			assert(mHoareTriplechecker.checkReturn(
 					getState(detState),
 					getState(detLinPred),
-					(Return) symbol, 
+					(Return) symbol,
 					getState(succDetState)) == Validity.VALID ||
 							mHoareTriplechecker.checkReturn(getState(detState),
 						getState(detLinPred),
-						(Return) symbol, 
+						(Return) symbol,
 						getState(succDetState)) == Validity.UNKNOWN);
 		}
 
-		return succDetState;	
+		return succDetState;
 	}
 	
 	
@@ -199,8 +202,8 @@ public class BestApproximationDeterminizer
 	 * Return all states succ such that (state, symbol, succ) is inductive.
 	 */
 	private Set<IPredicate> getInternalSuccs(
-			IPredicate state,
-			CodeBlock symbol) {
+			final IPredicate state,
+			final CodeBlock symbol) {
 		Set<IPredicate> succs = getInternalSuccsCache(state, symbol);
 		if (succs == null) {
 			succs = new HashSet<IPredicate>();
@@ -222,10 +225,10 @@ public class BestApproximationDeterminizer
 	 * (state, symbol, succ) is inductive.
 	 */
 	private void putInternalSuccsCache(
-			IPredicate state,
-			CodeBlock symbol,
-			Set<IPredicate> succs) {
-		Map<CodeBlock, Set<IPredicate>> symbol2succs = 
+			final IPredicate state,
+			final CodeBlock symbol,
+			final Set<IPredicate> succs) {
+		Map<CodeBlock, Set<IPredicate>> symbol2succs =
 			mInductiveSuccsCache.get(state);
 		if (symbol2succs == null) {
 			symbol2succs = new HashMap<CodeBlock, Set<IPredicate>>();
@@ -240,9 +243,9 @@ public class BestApproximationDeterminizer
 	 * null is returned.
 	 */
 	private Set<IPredicate> getInternalSuccsCache(
-			IPredicate state,
-			CodeBlock symbol) {
-		final Map<CodeBlock, Set<IPredicate>> symbol2succs = 
+			final IPredicate state,
+			final CodeBlock symbol) {
+		final Map<CodeBlock, Set<IPredicate>> symbol2succs =
 			mInductiveSuccsCache.get(state);
 		if (symbol2succs == null) {
 			return null;
@@ -262,8 +265,8 @@ public class BestApproximationDeterminizer
 	 * Return all states succ such that (state, symbol, succ) is inductive.
 	 */
 	private Set<IPredicate> getCallSuccs(
-			IPredicate state,
-			Call symbol) {
+			final IPredicate state,
+			final Call symbol) {
 		Set<IPredicate> succs = getCallSuccsCache(state, symbol);
 		if (succs == null) {
 			succs = new HashSet<IPredicate>();
@@ -286,10 +289,10 @@ public class BestApproximationDeterminizer
 	 * (state, symbol, succ) is inductive.
 	 */
 	private void putCallSuccsCache(
-			IPredicate state,
-			CodeBlock symbol,
-			Set<IPredicate> succs) {
-		Map<CodeBlock, Set<IPredicate>> symbol2succs = 
+			final IPredicate state,
+			final CodeBlock symbol,
+			final Set<IPredicate> succs) {
+		Map<CodeBlock, Set<IPredicate>> symbol2succs =
 			mInductiveCallSuccsCache.get(state);
 		if (symbol2succs == null) {
 			symbol2succs = new HashMap<CodeBlock, Set<IPredicate>>();
@@ -304,9 +307,9 @@ public class BestApproximationDeterminizer
 	 * null is returned.
 	 */
 	private Set<IPredicate> getCallSuccsCache(
-			IPredicate state,
-			CodeBlock symbol) {
-		final Map<CodeBlock, Set<IPredicate>> symbol2succs = 
+			final IPredicate state,
+			final CodeBlock symbol) {
+		final Map<CodeBlock, Set<IPredicate>> symbol2succs =
 			mInductiveCallSuccsCache.get(state);
 		if (symbol2succs == null) {
 			return null;
@@ -319,22 +322,22 @@ public class BestApproximationDeterminizer
 	}
 	
 	/**
-	 * Returns true iff (state,symbol,succ) is inductive. Fist the interpolant
+	 * Returns true iff (state,symbol,succ) is inductive. First the interpolant
 	 * automaton is queried for a yes-answer, afterwards the solver is
-	 * queried for a yes/no/unknown-answer. We querying the interpolant
+	 * queried for a yes/no/unknown-answer. We query the interpolant
 	 * automaton for two reasons:
 	 * <ul>
 	 * <li> a query to the solver is expensive
-	 * <li> if we do not compute interpolants for every location we have 
+	 * <li> if we do not compute interpolants for every location we have
 	 * unknown-labeled states for which the solver can not give a yes/no-answer.
-	 * </ul> 
+	 * </ul>
 	 */
 	private boolean isInductiveInternalSuccessor(
-			IPredicate  state,
-			CodeBlock symbol,
-			IPredicate  succ) {
-		for (final IPredicate succInt : mNwa.succInternal(state, symbol)) {
-			if (succInt.equals(succ)) {
+			final IPredicate  state,
+			final CodeBlock symbol,
+			final IPredicate  succ) {
+		for (final OutgoingInternalTransition<CodeBlock, IPredicate> trans : mNwa.internalSuccessors(state, symbol)) {
+			if (trans.getSucc().equals(succ)) {
 				mAnswerInternalAutomaton++;
 				return true;
 			}
@@ -348,27 +351,27 @@ public class BestApproximationDeterminizer
 			return true;
 		}
 		else {
-			return false;	
+			return false;
 		}
 	}
 	
 	/**
-	 * Returns true iff (state,symbol,succ) is inductive. Fist the interpolant
+	 * Returns true iff (state,symbol,succ) is inductive. First the interpolant
 	 * automaton is queried for a yes-answer, afterwards the solver is
-	 * queried for a yes/no/unknown-answer. We querying the interpolant
+	 * queried for a yes/no/unknown-answer. We query the interpolant
 	 * automaton for two reasons:
 	 * <ul>
 	 * <li> a query to the solver is expensive
-	 * <li> if we do not compute interpolants for every location we have 
+	 * <li> if we do not compute interpolants for every location we have
 	 * unknown-labeled states for which the solver can not give a yes/no-answer.
-	 * </ul> 
+	 * </ul>
 	 */
 	private boolean inductiveCallSuccessor(
-			IPredicate  state,
-			Call symbol,
-			IPredicate  succ) {
-		for (final IPredicate succCall : mNwa.succCall(state,symbol)) {
-			if (succCall.equals(succ)) {
+			final IPredicate  state,
+			final Call symbol,
+			final IPredicate  succ) {
+		for (final OutgoingCallTransition<CodeBlock, IPredicate> trans : mNwa.callSuccessors(state,symbol)) {
+			if (trans.getSucc().equals(succ)) {
 				mAnswerCallAutomaton++;
 				return true;
 			}
@@ -391,9 +394,9 @@ public class BestApproximationDeterminizer
 	 * inductive.
 	 */
 	private Set<IPredicate> getReturnSuccs(
-			IPredicate state,
-			IPredicate linPred, 
-			Return symbol) {
+			final IPredicate state,
+			final IPredicate linPred,
+			final Return symbol) {
 		Set<IPredicate> succs = getReturnSuccsCache(state, linPred, symbol);
 		if (succs == null) {
 			succs = new HashSet<IPredicate>();
@@ -415,18 +418,18 @@ public class BestApproximationDeterminizer
 	 * (state, linPred, symbol, succ) is inductive.
 	 */
 	private void putReturnSuccsCache(
-			IPredicate state,
-			IPredicate linPred, 
-			CodeBlock symbol,
-			Set<IPredicate> succs) {
-		Map<IPredicate, Map<CodeBlock, Set<IPredicate>>> linPred2symbol2succs = 
+			final IPredicate state,
+			final IPredicate linPred,
+			final CodeBlock symbol,
+			final Set<IPredicate> succs) {
+		Map<IPredicate, Map<CodeBlock, Set<IPredicate>>> linPred2symbol2succs =
 			mInductiveReturnSuccsCache.get(state);
 		if (linPred2symbol2succs == null) {
-			linPred2symbol2succs = 
+			linPred2symbol2succs =
 				new HashMap<IPredicate, Map<CodeBlock, Set<IPredicate>>>();
-			mInductiveReturnSuccsCache.put(state, linPred2symbol2succs);	
+			mInductiveReturnSuccsCache.put(state, linPred2symbol2succs);
 		}
-		Map<CodeBlock, Set<IPredicate>> symbol2succs = 
+		Map<CodeBlock, Set<IPredicate>> symbol2succs =
 			linPred2symbol2succs.get(linPred);
 		if (symbol2succs == null) {
 			symbol2succs = new HashMap<CodeBlock, Set<IPredicate>>();
@@ -436,21 +439,21 @@ public class BestApproximationDeterminizer
 	}
 
 	/**
-	 * Let succs be the set of all states succ such that 
-	 * (state, linPred, symbol, succ) is inductive. If the cache knows this 
+	 * Let succs be the set of all states succ such that
+	 * (state, linPred, symbol, succ) is inductive. If the cache knows this
 	 * result succs is returned, otherwise
 	 * null is returned.
 	 */
 	private Set<IPredicate> getReturnSuccsCache(
-			IPredicate state,
-			IPredicate linPred, 
-			CodeBlock symbol) {
-		final Map<IPredicate, Map<CodeBlock, Set<IPredicate>>> linPred2symbol2succs = 
+			final IPredicate state,
+			final IPredicate linPred,
+			final CodeBlock symbol) {
+		final Map<IPredicate, Map<CodeBlock, Set<IPredicate>>> linPred2symbol2succs =
 			mInductiveReturnSuccsCache.get(state);
 		if (linPred2symbol2succs == null) {
 			return null;
 		}
-		final Map<CodeBlock, Set<IPredicate>> symbol2succs = 
+		final Map<CodeBlock, Set<IPredicate>> symbol2succs =
 			linPred2symbol2succs.get(linPred);
 		if (symbol2succs == null) {
 			return null;
@@ -465,22 +468,23 @@ public class BestApproximationDeterminizer
 	
 	/**
 	 * Returns true iff (state,callerState,symbol,succ) is inductive.
-	 * Fist the interpolant automaton is queried for a yes-answer, afterwards 
-	 * the solver is queried for a yes/no/unknown-answer. We querying the 
+	 * First the interpolant automaton is queried for a yes-answer, afterwards
+	 * the solver is queried for a yes/no/unknown-answer. We query the
 	 * interpolant automaton for two reasons:
 	 * <ul>
 	 * <li> a query to the solver is expensive
-	 * <li> if we do not compute interpolants for every location we have 
+	 * <li> if we do not compute interpolants for every location we have
 	 * unknown-labeled states for which the solver can not give a yes/no-answer.
-	 * </ul> 
+	 * </ul>
 	 */
 	private boolean isInductiveReturnSuccessor(
-			IPredicate  state,
-			IPredicate  callerState,
-			Return symbol,
-			IPredicate  succ) {
-		for (final IPredicate succRet : mNwa.succReturn(state,callerState, symbol)) {
-			if (succRet.equals(succ)) {
+			final IPredicate  state,
+			final IPredicate  callerState,
+			final Return symbol,
+			final IPredicate  succ) {
+		for (final OutgoingReturnTransition<CodeBlock, IPredicate> trans : mNwa.returnSuccessors(state,callerState,
+				symbol)) {
+			if (trans.getSucc().equals(succ)) {
 				mAnswerReturnAutomaton++;
 				return true;
 			}
@@ -488,7 +492,7 @@ public class BestApproximationDeterminizer
 		final IPredicate presentPs = state;
 		final IPredicate callerPs = callerState;
 		final IPredicate succPs = succ;
-		final Validity sat = 
+		final Validity sat =
 			mHoareTriplechecker.checkReturn(presentPs, callerPs, symbol, succPs);
 		mAnswerReturnSolver++;
 		if (sat == Validity.VALID) {
@@ -510,7 +514,7 @@ public class BestApproximationDeterminizer
 
 	@Override
 	public IPredicate getState(
-			DeterminizedState<CodeBlock, IPredicate> determinizedState) {
+			final DeterminizedState<CodeBlock, IPredicate> determinizedState) {
 		return determinizedState.getContent(mStateFactory);
 	}
 

@@ -34,10 +34,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -93,7 +93,7 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> buildTwoTrackInterpolantAutomaton(
-			IAutomaton<CodeBlock, IPredicate> abstraction, StateFactory<IPredicate> tAContentFactory) {
+			IAutomaton<CodeBlock, IPredicate> abstraction, IStateFactory<IPredicate> tAContentFactory) {
 		final Set<CodeBlock> internalAlphabet = abstraction.getAlphabet();
 		Set<CodeBlock> callAlphabet = new HashSet<CodeBlock>(0);
 		Set<CodeBlock> returnAlphabet = new HashSet<CodeBlock>(0);

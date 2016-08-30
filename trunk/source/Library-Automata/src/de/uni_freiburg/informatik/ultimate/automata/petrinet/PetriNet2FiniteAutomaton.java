@@ -38,9 +38,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 
 /**
@@ -69,7 +69,7 @@ public class PetriNet2FiniteAutomaton<S,C>
 	 * Maps a marking to the automaton state that represents this marking.
 	 */
 	private final Map<Marking<S,C>,C> mMarking2State = new HashMap<>();
-	private final StateFactory<C> mContentFactory;
+	private final IStateFactory<C> mContentFactory;
 	
 	/**
 	 * Constructor.
@@ -174,7 +174,7 @@ public class PetriNet2FiniteAutomaton<S,C>
 	}
 
 	@Override
-	public boolean checkResult(final StateFactory<C> stateFactory)
+	public boolean checkResult(final IStateFactory<C> stateFactory)
 			throws AutomataLibraryException {
 		return true;
 	}

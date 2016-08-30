@@ -51,41 +51,41 @@ public final class Log4JWrapper implements ILogger {
 
 	@Override
 	public boolean isFatalEnabled() {
-		return mLogger.getLevel().isGreaterOrEqual(Level.FATAL);
+		return Level.FATAL.isGreaterOrEqual(mLogger.getLevel());
 	}
 
 	@Override
-	public void fatal(Object msg, Throwable t) {
+	public void fatal(final Object msg, final Throwable t) {
 		mLogger.log(FQCN, Level.FATAL, msg, t);
 	}
 
 	@Override
-	public void fatal(Object msg) {
+	public void fatal(final Object msg) {
 		mLogger.log(FQCN, Level.FATAL, msg, null);
 	}
 
 	@Override
 	public boolean isErrorEnabled() {
-		return mLogger.getLevel().isGreaterOrEqual(Level.ERROR);
+		return Level.ERROR.isGreaterOrEqual(mLogger.getLevel());
 	}
 
 	@Override
-	public void error(Object msg, Throwable t) {
+	public void error(final Object msg, final Throwable t) {
 		mLogger.log(FQCN, Level.ERROR, msg, t);
 	}
 
 	@Override
-	public void error(Object msg) {
+	public void error(final Object msg) {
 		mLogger.log(FQCN, Level.ERROR, msg, null);
 	}
 
 	@Override
 	public boolean isWarnEnabled() {
-		return mLogger.getLevel().isGreaterOrEqual(Level.WARN);
+		return Level.WARN.isGreaterOrEqual(mLogger.getLevel());
 	}
 
 	@Override
-	public void warn(Object msg) {
+	public void warn(final Object msg) {
 		mLogger.log(FQCN, Level.WARN, msg, null);
 	}
 
@@ -95,7 +95,7 @@ public final class Log4JWrapper implements ILogger {
 	}
 
 	@Override
-	public void info(Object msg) {
+	public void info(final Object msg) {
 		mLogger.log(FQCN, Level.INFO, msg, null);
 	}
 
@@ -105,7 +105,7 @@ public final class Log4JWrapper implements ILogger {
 	}
 
 	@Override
-	public void debug(Object msg) {
+	public void debug(final Object msg) {
 		mLogger.log(FQCN, Level.DEBUG, msg, null);
 	}
 
@@ -118,7 +118,7 @@ public final class Log4JWrapper implements ILogger {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}

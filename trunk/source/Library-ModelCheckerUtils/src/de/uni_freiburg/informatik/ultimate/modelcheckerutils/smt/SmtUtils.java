@@ -1133,6 +1133,14 @@ public class SmtUtils {
 		return false;
 	}
 	
+	public static boolean isUninterpretedFunction(final Term term) {
+		if (term instanceof ApplicationTerm) {
+			final FunctionSymbol fun = ((ApplicationTerm) term).getFunction();
+			return !fun.isIntern();
+		}
+		return false;
+	}
+	
 
 	/**
 	 * @return logically equivalent term in disjunctive normal form (DNF)
@@ -1174,5 +1182,55 @@ public class SmtUtils {
 		return result;
 	}
 	
+	/**
+	 * Returns true for {@link Sorts} for which we can obtain values.
+	 * E.g. for arrays we cannot get values that our analysis can process, 
+	 * since arrays are infinite in general. However, if the range Sort of an
+	 * array is bitvector sort we can get values for array cells 
+	 * (resp. the corresponding select term).
+	 */
+	public static boolean isSortForWhichWeCanGetValues(final Sort sort) {
+		return sort.isNumericSort()
+				|| sort.getRealSort().getName().equals("Bool")
+				|| sort.getRealSort().getName().equals("BitVec")
+				|| sort.getRealSort().getName().equals("FloatingPoint");
+	}
+	
+	
+	/**
+	 * Get values from script and transform them try to simplify them.
+	 * @param script Script that is in a state where it can provide values, 
+	 * e.g., after a check-sat where the response was sat. 
+	 * @param terms Collection of term for which we want to have possible 
+	 * values in the current satisfying model
+	 * @return Mapping that maps to each term for which we want a value
+	 * a possible value in the current satisfying model.
+	 */
+	public static Map<Term, Term> getValues(final Script script, final Collection<Term> terms) {
+		if (terms.isEmpty()) {
+			return Collections.emptyMap();
+		} else {
+			final Term[] asArray = terms.toArray(new Term[terms.size()]);
+			final Map<Term, Term> mapFromSolver = script.getValue(asArray);
+			/*
+			 * Some solvers, e.g., Z3 return -1 not as a literal but as a unary minus of a positive literal. We use our
+			 * affine term to obtain the negative literal.
+			 */
+			final Map<Term, Term> copyWithNiceValues = new HashMap<Term, Term>();
+			for(final Entry<Term, Term> entry : mapFromSolver.entrySet()) {
+				copyWithNiceValues.put(entry.getKey(), makeAffineIfPossible(script, entry.getValue()));
+			}
+			return Collections.unmodifiableMap(copyWithNiceValues);
+		}
+	}
+	
+	private static Term makeAffineIfPossible(final Script script, final Term term) {
+		final AffineTerm affineTerm = (AffineTerm) (new AffineTermTransformer(script)).transform(term);
+		if (affineTerm.isErrorTerm()) {
+			return term;
+		} else {
+			return affineTerm.toTerm(script);
+		}
+	}
 
 }

@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 public final class TestUtil {
 
 	private static final long PSEUDO_RANDOM_FILE_SELECTION_SEED = 19120623;
-	private static int sTestSuffix = 0;
 
 	private TestUtil() {
 		// utility classes should not be instantiated
@@ -677,8 +676,7 @@ public final class TestUtil {
 		rtr = rtr.replaceAll("Toolchain:", "T:");
 
 		if (rtr.length() > 255) {
-			sTestSuffix++;
-			final String currentSuffix = String.valueOf(sTestSuffix);
+			final String currentSuffix = String.valueOf(rtr.hashCode());
 			rtr = rtr.substring(0, 254 - currentSuffix.length());
 			rtr = rtr + "-" + currentSuffix;
 		}

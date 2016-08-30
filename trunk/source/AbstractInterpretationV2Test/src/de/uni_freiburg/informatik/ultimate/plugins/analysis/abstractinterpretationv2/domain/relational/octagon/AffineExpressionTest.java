@@ -12,17 +12,17 @@ import org.junit.Before;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
 
 public class AffineExpressionTest {
 
-	private Map<IType, Map<String, IBoogieVar>> mVarCache;
+	private Map<IBoogieType, Map<String, IBoogieVar>> mVarCache;
 
 	@Before
 	public void setup() {
-		mVarCache = new HashMap<IType, Map<String, IBoogieVar>>();
+		mVarCache = new HashMap<IBoogieType, Map<String, IBoogieVar>>();
 		mVarCache.put(BoogieType.TYPE_INT, new HashMap<>());
 		mVarCache.put(BoogieType.TYPE_REAL, new HashMap<>());
 	}
@@ -186,7 +186,7 @@ public class AffineExpressionTest {
 		while (m.find()) {
 			final String coeffStr = m.group(sNumGroup);
 			final BigDecimal coeff = (coeffStr == null) ? BigDecimal.ONE : new BigDecimal(coeffStr);
-			final IType type = isInteger(coeff) ? BoogieType.TYPE_INT : BoogieType.TYPE_REAL;
+			final IBoogieType type = isInteger(coeff) ? BoogieType.TYPE_INT : BoogieType.TYPE_REAL;
 			final IBoogieVar var = getVar(m.group(sVarGroup), type);
 			final BigDecimal old = coefficients.put(var, coeff);
 			if (old != null) {
@@ -213,7 +213,7 @@ public class AffineExpressionTest {
 		}
 	}
 
-	private IBoogieVar getVar(final String name, final IType type) {
+	private IBoogieVar getVar(final String name, final IBoogieType type) {
 		final Map<String, IBoogieVar> cache = mVarCache.get(type);
 		if (cache == null) {
 			throw new UnsupportedOperationException("cache not available for type " + type);

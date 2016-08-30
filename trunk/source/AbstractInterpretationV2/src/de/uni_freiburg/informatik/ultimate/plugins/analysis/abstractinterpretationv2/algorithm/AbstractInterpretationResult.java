@@ -27,17 +27,22 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public final class AbstractInterpretationResult<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>
         implements IAbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> {
 
+	private final IAbstractDomain<STATE, ACTION, VARDECL> mAbstractDomain;
 	private final List<AbstractCounterexample<STATE, ACTION, VARDECL, LOCATION>> mCounterexamples;
 	private final AbstractInterpretationBenchmark<ACTION, LOCATION> mBenchmark;
 	private final Map<LOCATION, Term> mLoc2Term;
-	private final Map<LOCATION, STATE> mLoc2State;
+	private final Map<LOCATION, Set<STATE>> mLoc2States;
+	private final Map<LOCATION, STATE> mLoc2SingleStates;
 	private final Set<Term> mTerms;
 
-	protected AbstractInterpretationResult() {
+	protected AbstractInterpretationResult(final IAbstractDomain<STATE, ACTION, VARDECL> abstractDomain) {
+		assert abstractDomain != null;
+		mAbstractDomain = abstractDomain;
 		mCounterexamples = new ArrayList<>();
 		mBenchmark = new AbstractInterpretationBenchmark<>();
 		mLoc2Term = new HashMap<>();
-		mLoc2State = new HashMap<>();
+		mLoc2States = new HashMap<>();
+		mLoc2SingleStates = new HashMap<>();
 		mTerms = new LinkedHashSet<>();
 	}
 
@@ -71,7 +76,8 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 
 	protected void saveStates(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> rootStateStorage,
 	        final ACTION start) {
-		mLoc2State.putAll(rootStateStorage.getLoc2State(start));
+		mLoc2States.putAll(rootStateStorage.getLoc2States(start));
+		mLoc2SingleStates.putAll(rootStateStorage.getLoc2SingleStates(start));
 	}
 
 	@Override
@@ -80,8 +86,13 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	}
 
 	@Override
-	public Map<LOCATION, STATE> getLoc2State() {
-		return mLoc2State;
+	public Map<LOCATION, Set<STATE>> getLoc2States() {
+		return mLoc2States;
+	}
+
+	@Override
+	public Map<LOCATION, STATE> getLoc2SingleStates() {
+		return mLoc2SingleStates;
 	}
 
 	@Override
@@ -126,6 +137,6 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 
 	@Override
 	public IAbstractDomain<STATE, ACTION, VARDECL> getUsedDomain() {
-		throw new UnsupportedOperationException();
+		return mAbstractDomain;
 	}
 }

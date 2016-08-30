@@ -28,17 +28,17 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 
 import java.util.SortedMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
-public class DefaultTransFormulas extends NestedFormulas<TransFormula, IPredicate> {
+public class DefaultTransFormulas extends NestedFormulas<UnmodifiableTransFormula, IPredicate> {
 	
 	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
 	private final boolean mWithBranchEncoders;
@@ -66,7 +66,7 @@ public class DefaultTransFormulas extends NestedFormulas<TransFormula, IPredicat
 	}
 	
 	@Override
-	protected TransFormula getFormulaFromValidNonCallPos(int i) {
+	protected UnmodifiableTransFormula getFormulaFromValidNonCallPos(int i) {
 		if (super.getTrace().isReturnPosition(i)) {
 			final IReturnAction ret = (IReturnAction) super.getTrace().getSymbolAt(i);
 			return ret.getAssignmentOfReturn();
@@ -81,20 +81,20 @@ public class DefaultTransFormulas extends NestedFormulas<TransFormula, IPredicat
 	}
 
 	@Override
-	protected TransFormula getLocalVarAssignmentFromValidPos(int i) {
+	protected UnmodifiableTransFormula getLocalVarAssignmentFromValidPos(int i) {
 		final ICallAction cb = (ICallAction) super.getTrace().getSymbolAt(i);
 		return cb.getLocalVarsAssignment();
 	}
 
 	@Override
-	protected TransFormula getGlobalVarAssignmentFromValidPos(int i) {
+	protected UnmodifiableTransFormula getGlobalVarAssignmentFromValidPos(int i) {
 		final String calledProcedure = getCalledProcedure(i);
 		return mModifiableGlobalVariableManager.getGlobalVarsAssignment(calledProcedure);
 
 	}
 
 	@Override
-	protected TransFormula getOldVarAssignmentFromValidPos(int i) {		
+	protected UnmodifiableTransFormula getOldVarAssignmentFromValidPos(int i) {		
 		final String calledProcedure = getCalledProcedure(i);
 		return mModifiableGlobalVariableManager.getOldVarsAssignment(calledProcedure);
 	}

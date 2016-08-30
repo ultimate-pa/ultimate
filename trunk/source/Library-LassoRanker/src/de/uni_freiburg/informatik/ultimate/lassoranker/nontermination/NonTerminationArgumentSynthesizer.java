@@ -123,7 +123,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	/**
 	 * Contains the NonTerminationArgument object after successful discovery
 	 */
-	private NonTerminationArgument margument = null;
+	private GeometricNonTerminationArgument margument = null;
 	
 	/**
 	 * Result of SMT query
@@ -140,9 +140,9 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @param storage 
 	 * @throws IOException 
 	 */
-	public NonTerminationArgumentSynthesizer(Lasso lasso,
-			LassoRankerPreferences preferences,
-			NonTerminationAnalysisSettings settings, IUltimateServiceProvider services, IToolchainStorage storage) throws IOException {
+	public NonTerminationArgumentSynthesizer(final Lasso lasso,
+			final LassoRankerPreferences preferences,
+			final NonTerminationAnalysisSettings settings, final IUltimateServiceProvider services, final IToolchainStorage storage) throws IOException {
 		super(lasso, preferences, "nonterminationTemplate", services, storage);
 		
 		msettings = new NonTerminationAnalysisSettings(settings); // defensive copy
@@ -175,7 +175,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected Script constructScript(LassoRankerPreferences preferences, String constraintsName) {
+	protected Script constructScript(final LassoRankerPreferences preferences, final String constraintsName) {
 		final Settings settings = preferences.getSolverConstructionSettings(
 				preferences.baseNameOfDumpedScript + "+" + constraintsName);
 		final SolverMode solverMode;
@@ -252,9 +252,9 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @param nus variables for the nilpotent components
 	 * @return the constraints
 	 */
-	public Term generateConstraints(Map<IProgramVar, Term> vars_init,
-			Map<IProgramVar, Term> vars_honda, List<Map<IProgramVar, Term>> vars_gevs,
-			List<Term> lambdas, List<Term> nus) {
+	public Term generateConstraints(final Map<IProgramVar, Term> vars_init,
+			final Map<IProgramVar, Term> vars_honda, final List<Map<IProgramVar, Term>> vars_gevs,
+			final List<Term> lambdas, final List<Term> nus) {
 		msettings.checkSanity();
 		assert msettings.number_of_gevs >= 0;
 		assert vars_gevs.size() == msettings.number_of_gevs;
@@ -458,11 +458,11 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		return mscript.term("and", t1, t2, t3);
 	}
 	
-	private Term generateConstraint(LinearTransition transition,
-			List<LinearInequality> polyhedron,
-			Map<IProgramVar, Term> varsIn,
-			Map<IProgramVar, Term> varsOut,
-			boolean rays) {
+	private Term generateConstraint(final LinearTransition transition,
+			final List<LinearInequality> polyhedron,
+			final Map<IProgramVar, Term> varsIn,
+			final Map<IProgramVar, Term> varsOut,
+			final boolean rays) {
 		final Map<Term, Term> auxVars = new LinkedHashMap<Term, Term>();
 		final List<Term> conjunction = new ArrayList<Term>(polyhedron.size());
 		for (final LinearInequality ieq : polyhedron) {
@@ -542,7 +542,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @return the program state as a map from program variables to rational
 	 *         numbers
 	 */
-	private Map<IProgramVar, Rational> extractState(Map<IProgramVar, Term> vars)
+	private Map<IProgramVar, Rational> extractState(final Map<IProgramVar, Term> vars)
 			throws SMTLIBException, UnsupportedOperationException,
 			TermException {
 		if (vars.isEmpty()) {
@@ -563,12 +563,12 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @return
 	 * @throws SMTLIBException
 	 */
-	private NonTerminationArgument extractArgument(
-			Map<IProgramVar, Term> vars_init,
-			Map<IProgramVar, Term> vars_honda,
-			List<Map<IProgramVar, Term>> vars_gevs,
-			List<Term> var_lambdas,
-			List<Term> var_nus) {
+	private GeometricNonTerminationArgument extractArgument(
+			final Map<IProgramVar, Term> vars_init,
+			final Map<IProgramVar, Term> vars_honda,
+			final List<Map<IProgramVar, Term>> vars_gevs,
+			final List<Term> var_lambdas,
+			final List<Term> var_nus) {
 //		assert mscript.checkSat() == LBool.SAT;
 		
 		try {
@@ -600,7 +600,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 				}
 			}
 			final boolean has_stem = !mlasso.getStem().isTrue();
-			return new NonTerminationArgument(has_stem ? state0 : state1,
+			return new GeometricNonTerminationArgument(has_stem ? state0 : state1,
 					state1, gevs, lambdas, nus);
 		} catch (final UnsupportedOperationException e) {
 			// do nothing
@@ -613,7 +613,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	/**
 	 * @return the non-termination argument discovered
 	 */
-	public NonTerminationArgument getArgument() {
+	public GeometricNonTerminationArgument getArgument() {
 		assert synthesisSuccessful();
 		return margument;
 	}

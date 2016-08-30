@@ -50,7 +50,7 @@ public class NestedLassowordAST extends AtsASTNode {
 		super(loc);
 		mnw1 = nw1;
 		mnw2 = nw2;
-		setType(de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord.class);
+		setType(de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord.class);
 	}
 
 	@Override

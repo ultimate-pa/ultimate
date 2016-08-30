@@ -34,12 +34,12 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.GlobalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Relation
  */
 public class RelevantVariables {
 
-	private final NestedFormulas<TransFormula, IPredicate> mTraceWithFormulas;
+	private final NestedFormulas<UnmodifiableTransFormula, IPredicate> mTraceWithFormulas;
 	private final Set<IProgramVar>[] mForwardRelevantVariables;
 	private final Set<IProgramVar>[] mBackwardRelevantVariables;
 	private final Set<IProgramVar>[] mRelevantVariables;
@@ -64,7 +64,7 @@ public class RelevantVariables {
 	private final VariableOccurrence mOccurrence;
 	
 
-	public RelevantVariables(NestedFormulas<TransFormula, IPredicate> traceWithFormulas, 
+	public RelevantVariables(NestedFormulas<UnmodifiableTransFormula, IPredicate> traceWithFormulas, 
 			ModifiableGlobalVariableManager modifiedGlobals) {
 		super();
 		mModifiableGlobals = modifiedGlobals;
@@ -270,12 +270,12 @@ public class RelevantVariables {
 		Set<IProgramVar> result;
 		final Set<IProgramVar> currentRelevantVariables = mForwardRelevantVariables[i-1];
 		if (mTraceWithFormulas.getTrace().isInternalPosition(i-1)) {
-			final TransFormula tf = mTraceWithFormulas.getFormulaFromNonCallPos(i-1);
+			final UnmodifiableTransFormula tf = mTraceWithFormulas.getFormulaFromNonCallPos(i-1);
 			result = computeSuccessorRvInternal(currentRelevantVariables, tf, i-1);
 		} else if (mTraceWithFormulas.getTrace().isCallPosition(i-1)) {
-			final TransFormula oldVarAssignment = mTraceWithFormulas.getOldVarAssignment(i-1);
-			final TransFormula localVarAssignment = mTraceWithFormulas.getLocalVarAssignment(i-1);
-			final TransFormula globalVarAssignment = mTraceWithFormulas.getGlobalVarAssignment(i-1);
+			final UnmodifiableTransFormula oldVarAssignment = mTraceWithFormulas.getOldVarAssignment(i-1);
+			final UnmodifiableTransFormula localVarAssignment = mTraceWithFormulas.getLocalVarAssignment(i-1);
+			final UnmodifiableTransFormula globalVarAssignment = mTraceWithFormulas.getGlobalVarAssignment(i-1);
 			final String callee = mTraceWithFormulas.getTrace().getSymbol(i-1).getSucceedingProcedure();
 			final boolean isPendingCall = mTraceWithFormulas.getTrace().isPendingCall(i-1);
 			final int posOfCorrespondingReturn = mTraceWithFormulas.getTrace().getReturnPosition(i-1);
@@ -285,8 +285,8 @@ public class RelevantVariables {
 			final int correspondingCallPosition = mTraceWithFormulas.getTrace().getCallPosition(i-1);
 			final Set<IProgramVar> relevantVariablesBeforeCall = 
 					mForwardRelevantVariables[correspondingCallPosition];
-			final TransFormula tfReturn = mTraceWithFormulas.getFormulaFromNonCallPos(i-1);
-			final TransFormula localVarAssignmentAtCall = 
+			final UnmodifiableTransFormula tfReturn = mTraceWithFormulas.getFormulaFromNonCallPos(i-1);
+			final UnmodifiableTransFormula localVarAssignmentAtCall = 
 					mTraceWithFormulas.getLocalVarAssignment(correspondingCallPosition);
 			final String callee = mTraceWithFormulas.getTrace().getSymbol(i-1).getPreceedingProcedure();
 			result = computeSuccessorRvReturn(currentRelevantVariables, 
@@ -297,7 +297,7 @@ public class RelevantVariables {
 		return result;
 	}
 	
-	private Set<IProgramVar> computeSuccessorRvInternal(Set<IProgramVar> predRv, TransFormula tf, int i) {
+	private Set<IProgramVar> computeSuccessorRvInternal(Set<IProgramVar> predRv, UnmodifiableTransFormula tf, int i) {
 		final Set<IProgramVar> result = new HashSet<IProgramVar>(predRv.size());
 		final Set<IProgramVar> alternativeResult = new HashSet<IProgramVar>(predRv);
 		final ConstraintAnalysis tfConstraints = 
@@ -321,8 +321,8 @@ public class RelevantVariables {
 	}
 	
 	private Set<IProgramVar> computeSuccessorRvCall(Set<IProgramVar> predRv, 
-			TransFormula localVarAssignment, TransFormula oldVarAssignment, 
-			TransFormula globalVarAssignment, boolean isPendingCall,
+			UnmodifiableTransFormula localVarAssignment, UnmodifiableTransFormula oldVarAssignment, 
+			UnmodifiableTransFormula globalVarAssignment, boolean isPendingCall,
 			String callee, int posOfCall, int posOfCorrespondingReturn) {
 		assert !isPendingCall || posOfCorrespondingReturn == Integer.MAX_VALUE;
 		final Set<IProgramVar> result = new HashSet<IProgramVar>(predRv.size());
@@ -397,7 +397,7 @@ public class RelevantVariables {
 
 	private Set<IProgramVar> computeSuccessorRvReturn(Set<IProgramVar> returnPredRv,
 			Set<IProgramVar> callPredRv,
-			TransFormula returnTF, TransFormula localVarAssignment,
+			UnmodifiableTransFormula returnTF, UnmodifiableTransFormula localVarAssignment,
 			String callee, int posOfCall, int posOfCorrespondingReturn) {
 		final Set<IProgramVar> alternativeResult = new HashSet<IProgramVar>(callPredRv);
 		final ConstraintAnalysis localVarAssignmentCa = 
@@ -502,12 +502,12 @@ public class RelevantVariables {
 		Set<IProgramVar> result;
 		final Set<IProgramVar> currentRelevantVariables = mBackwardRelevantVariables[i+1];
 		if (mTraceWithFormulas.getTrace().isInternalPosition(i)) {
-			final TransFormula tf = mTraceWithFormulas.getFormulaFromNonCallPos(i);
+			final UnmodifiableTransFormula tf = mTraceWithFormulas.getFormulaFromNonCallPos(i);
 			result = computePredecessorRvInternal(currentRelevantVariables,tf,i);
 		} else if (mTraceWithFormulas.getTrace().isCallPosition(i)) {
-			final TransFormula localVarAssignment = mTraceWithFormulas.getLocalVarAssignment(i);
-			final TransFormula oldVarAssignment = mTraceWithFormulas.getOldVarAssignment(i);
-			final TransFormula globalVarAssignment = mTraceWithFormulas.getGlobalVarAssignment(i);
+			final UnmodifiableTransFormula localVarAssignment = mTraceWithFormulas.getLocalVarAssignment(i);
+			final UnmodifiableTransFormula oldVarAssignment = mTraceWithFormulas.getOldVarAssignment(i);
+			final UnmodifiableTransFormula globalVarAssignment = mTraceWithFormulas.getGlobalVarAssignment(i);
 			final String callee = mTraceWithFormulas.getTrace().getSymbol(i).getSucceedingProcedure();
 			if (mTraceWithFormulas.getTrace().isPendingCall(i)) {
 				result = computePredecessorRvCall_Pending(currentRelevantVariables, localVarAssignment, oldVarAssignment, globalVarAssignment, callee, i);
@@ -515,16 +515,16 @@ public class RelevantVariables {
 				final int correspondingReturnPosition = mTraceWithFormulas.getTrace().getReturnPosition(i);
 				final Set<IProgramVar> relevantVariablesAfterReturn = 
 						mBackwardRelevantVariables[correspondingReturnPosition+1];
-				final TransFormula returnTF = mTraceWithFormulas.getFormulaFromNonCallPos(correspondingReturnPosition);
+				final UnmodifiableTransFormula returnTF = mTraceWithFormulas.getFormulaFromNonCallPos(correspondingReturnPosition);
 				result = computePredecessorRvCall_NonPending(currentRelevantVariables, 
 						relevantVariablesAfterReturn, localVarAssignment, returnTF, oldVarAssignment, globalVarAssignment, callee, i, correspondingReturnPosition);
 				addNonModifiableGlobalsAlongCalledProcedure(result,i);
 			}
 		} else if (mTraceWithFormulas.getTrace().isReturnPosition(i)) {
 			final int correspondingCallPosition = mTraceWithFormulas.getTrace().getCallPosition(i);
-			final TransFormula oldVarAssignment =mTraceWithFormulas.getOldVarAssignment(correspondingCallPosition);
-			final TransFormula localVarAssignment =mTraceWithFormulas.getLocalVarAssignment(correspondingCallPosition);
-			final TransFormula tfReturn = mTraceWithFormulas.getFormulaFromNonCallPos(i);
+			final UnmodifiableTransFormula oldVarAssignment =mTraceWithFormulas.getOldVarAssignment(correspondingCallPosition);
+			final UnmodifiableTransFormula localVarAssignment =mTraceWithFormulas.getLocalVarAssignment(correspondingCallPosition);
+			final UnmodifiableTransFormula tfReturn = mTraceWithFormulas.getFormulaFromNonCallPos(i);
 			final String callee = mTraceWithFormulas.getTrace().getSymbol(i).getPreceedingProcedure();
 			result = computePredecessorRvReturn(currentRelevantVariables, 
 					tfReturn, oldVarAssignment, localVarAssignment, callee, correspondingCallPosition, i);
@@ -570,7 +570,7 @@ public class RelevantVariables {
 		}
 	}
 
-	private Set<IProgramVar> computePredecessorRvInternal(Set<IProgramVar> succRv, TransFormula tf, int pos) {
+	private Set<IProgramVar> computePredecessorRvInternal(Set<IProgramVar> succRv, UnmodifiableTransFormula tf, int pos) {
 		final Set<IProgramVar> alternativeResult = new HashSet<IProgramVar>(succRv);
 		final ConstraintAnalysis tfConstraints = 
 				mNestedConstraintAnalysis.getFormulaFromNonCallPos(pos);
@@ -603,8 +603,8 @@ public class RelevantVariables {
 	
 	private Set<IProgramVar> computePredecessorRvCall_NonPending(Set<IProgramVar> callPredRv, 
 			Set<IProgramVar> returnPredRv,
-			TransFormula localVarAssignment, TransFormula returnTF, 
-			TransFormula oldVarAssignment, TransFormula globalVarAssignment, String callee, int posOfCall, int posOfCorrespondingReturn) {
+			UnmodifiableTransFormula localVarAssignment, UnmodifiableTransFormula returnTF, 
+			UnmodifiableTransFormula oldVarAssignment, UnmodifiableTransFormula globalVarAssignment, String callee, int posOfCall, int posOfCorrespondingReturn) {
 		final Set<IProgramVar> alternativeResult = new HashSet<IProgramVar>(returnPredRv);
 		final ConstraintAnalysis returnTfCa = 
 				mNestedConstraintAnalysis.getFormulaFromNonCallPos(posOfCorrespondingReturn);
@@ -649,7 +649,7 @@ public class RelevantVariables {
 
 
 	private Set<IProgramVar> computePredecessorRvCall_Pending(Set<IProgramVar> callPredRv,
-			TransFormula localVarAssignment, TransFormula oldVarAssignment, TransFormula globalVarAssignment, String callee, int posOfCall) {
+			UnmodifiableTransFormula localVarAssignment, UnmodifiableTransFormula oldVarAssignment, UnmodifiableTransFormula globalVarAssignment, String callee, int posOfCall) {
 		final Set<IProgramVar> alternativeResult = new HashSet<IProgramVar>();
 		addAllNonModifiableGlobals(callPredRv, callee, alternativeResult);
 		
@@ -678,8 +678,8 @@ public class RelevantVariables {
 	
 	
 	private Set<IProgramVar> computePredecessorRvReturn(Set<IProgramVar> returnSuccRv,
-			TransFormula returnTf,
-			TransFormula oldVarAssignmentAtCall, TransFormula localVarAssignmentAtCall, String callee, int posOfCorrespondingCall, int posOfReturn) {
+			UnmodifiableTransFormula returnTf,
+			UnmodifiableTransFormula oldVarAssignmentAtCall, UnmodifiableTransFormula localVarAssignmentAtCall, String callee, int posOfCorrespondingCall, int posOfReturn) {
 		final Set<IProgramVar> alternativeResult = new HashSet<IProgramVar>();
 		for (final IProgramVar bv : returnSuccRv) {
 			if (bv instanceof IProgramNonOldVar) {
@@ -744,8 +744,8 @@ public class RelevantVariables {
 	
 	
 	
-	private boolean isHavoced(TransFormula globalVarAssignment,
-			TransFormula oldVarAssignment, IProgramVar bv) {
+	private boolean isHavoced(UnmodifiableTransFormula globalVarAssignment,
+			UnmodifiableTransFormula oldVarAssignment, IProgramVar bv) {
 		if (bv instanceof GlobalBoogieVar) {
 			boolean result;
 			if (bv instanceof IProgramOldVar) {
@@ -766,14 +766,14 @@ public class RelevantVariables {
 	
 	
 	private static class ConstraintAnalysis {
-		private final TransFormula mTransFormula;
+		private final UnmodifiableTransFormula mTransFormula;
 		private final Set<IProgramVar> mConstraintIn = new HashSet<>();
 		private final Set<IProgramVar> mUnconstraintIn = new HashSet<>();
 		private final Set<IProgramVar> mConstraintOut = new HashSet<>();
 		private final Set<IProgramVar> mUnconstraintOut = new HashSet<>();
 		private final Set<TermVariable> mFreeVars;
 		
-		public ConstraintAnalysis(TransFormula transFormula) {
+		public ConstraintAnalysis(UnmodifiableTransFormula transFormula) {
 			super();
 			mTransFormula = transFormula;
 			mFreeVars = new HashSet<TermVariable>(Arrays.asList(
@@ -852,18 +852,18 @@ public class RelevantVariables {
 
 		public NestedConstraintAnalysis(NestedWord<? extends IAction> nestedWord,
 				SortedMap<Integer, IPredicate> pendingContexts, 
-				NestedFormulas<TransFormula, IPredicate> traceWithFormulas) {
+				NestedFormulas<UnmodifiableTransFormula, IPredicate> traceWithFormulas) {
 			super(nestedWord, pendingContexts);
 			for (int i=0; i<nestedWord.length(); i++) {
 				if (getTrace().isCallPosition(i)) {
-					final TransFormula globalVarAssignment = traceWithFormulas.getGlobalVarAssignment(i);
+					final UnmodifiableTransFormula globalVarAssignment = traceWithFormulas.getGlobalVarAssignment(i);
 					setGlobalVarAssignmentAtPos(i, new ConstraintAnalysis(globalVarAssignment)); 
-					final TransFormula oldVarAssignment = traceWithFormulas.getOldVarAssignment(i);
+					final UnmodifiableTransFormula oldVarAssignment = traceWithFormulas.getOldVarAssignment(i);
 					setOldVarAssignmentAtPos(i, new ConstraintAnalysis(oldVarAssignment));
-					final TransFormula localVarAssignment = traceWithFormulas.getLocalVarAssignment(i);
+					final UnmodifiableTransFormula localVarAssignment = traceWithFormulas.getLocalVarAssignment(i);
 					setLocalVarAssignmentAtPos(i, new ConstraintAnalysis(localVarAssignment));
 				} else {
-					final TransFormula tf = traceWithFormulas.getFormulaFromNonCallPos(i);
+					final UnmodifiableTransFormula tf = traceWithFormulas.getFormulaFromNonCallPos(i);
 					setFormulaAtNonCallPos(i, new ConstraintAnalysis(tf));
 				}
 			}

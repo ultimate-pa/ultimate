@@ -176,9 +176,17 @@ public class ManagedScript {
 		return mScript;
 	}
 	
-	
-	
-	
+	public Term[] getInterpolants(final Object lockOwner, final Term[] partition) throws SMTLIBException, UnsupportedOperationException {
+		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
+		return mScript.getInterpolants(partition);
+	}
+
+	public Term[] getInterpolants(final Object lockOwner, final Term[] partition, final int[] startOfSubtree)
+			throws SMTLIBException, UnsupportedOperationException {
+		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
+		return mScript.getInterpolants(partition, startOfSubtree);
+	}
+
 	/**
 	 * @param name
 	 * @param sort

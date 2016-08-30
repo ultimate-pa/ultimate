@@ -2,27 +2,27 @@
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
@@ -48,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 
 /**
  * Standard binary expression evaluator for Abstract Interpretation for Nonrelational Domain States.
- * 
+ *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  * @param <VALUE>
@@ -57,10 +56,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *            The state type of the domain.
  */
 public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, CodeBlock>>
-        implements INAryEvaluator<VALUE, STATE, CodeBlock> {
+		implements INAryEvaluator<VALUE, STATE, CodeBlock> {
 
 	private final Set<IBoogieVar> mVariableSet;
-	private final ILogger mLogger;
+	private final EvaluatorLogger mLogger;
 	private final EvaluatorType mEvaluatorType;
 	private final int mMaxParallelSates;
 
@@ -71,8 +70,8 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 	private Operator mOperator;
 
-	public BinaryExpressionEvaluator(final ILogger logger, final EvaluatorType type, final int maxParallelStates,
-	        final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
+	public BinaryExpressionEvaluator(final EvaluatorLogger logger, final EvaluatorType type,
+			final int maxParallelStates, final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mLogger = logger;
 		mVariableSet = new HashSet<>();
 		mEvaluatorType = type;
@@ -81,7 +80,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	}
 
 	@Override
-	public List<IEvaluationResult<VALUE>> evaluate(STATE currentState) {
+	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
 
 		final List<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
@@ -120,7 +119,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 						break;
 					default:
 						throw new UnsupportedOperationException(
-						        "Division on types other than integers and reals is undefined.");
+								"Division on types other than integers and reals is undefined.");
 					}
 					returnBool = new BooleanValue(false);
 					break;
@@ -134,7 +133,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 						break;
 					default:
 						throw new UnsupportedOperationException(
-						        "Modulo operation on types other than integers and reals is undefined.");
+								"Modulo operation on types other than integers and reals is undefined.");
 					}
 					returnBool = new BooleanValue(false);
 					break;
@@ -146,14 +145,15 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					break;
 				case LOGICIMPLIES:
 					throw new UnsupportedOperationException(
-					        "Implications should have been removed during expression normalization.");
+							"Implications should have been removed during expression normalization.");
 				case LOGICIFF:
 					throw new UnsupportedOperationException(
-					        "If and only if expressions should have been removed during expression normalization.");
+							"If and only if expressions should have been removed during expression normalization.");
 				case COMPEQ:
 					if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
-						returnBool = ((res1.getBooleanValue().intersect(res2.getBooleanValue()))
-						        .getValue() != Value.BOTTOM ? new BooleanValue(true) : new BooleanValue(Value.BOTTOM));
+						returnBool =
+								((res1.getBooleanValue().intersect(res2.getBooleanValue())).getValue() != Value.BOTTOM
+										? new BooleanValue(true) : new BooleanValue(Value.BOTTOM));
 					}
 
 					returnValue = res1.getValue().intersect(res2.getValue());
@@ -177,8 +177,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					break;
 				case COMPGT:
 					if (!res1.getValue().canHandleReals()) {
-						mLogger.warn(
-						        "Cannot handle greater than operators precisely. Using greater or equal over-approximation instead.");
+						mLogger.warnOverapproximatingOperator(mOperator);
 					}
 
 					returnValue = res1.getValue().greaterThan(res2.getValue());
@@ -200,8 +199,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					break;
 				case COMPLT:
 					if (!res1.getValue().canHandleReals()) {
-						mLogger.warn(
-						        "Cannot handle greater than operators precisely. Using greater or equal over-approximation instead.");
+						mLogger.warnOverapproximatingOperator(mOperator);
 					}
 
 					returnValue = res1.getValue().lessThan(res2.getValue());
@@ -223,9 +221,8 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					break;
 				case COMPPO:
 				default:
+					mLogger.warnUnknownOperator(mOperator);
 					returnBool = new BooleanValue(false);
-					mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
-					        + ". Returning current state.");
 					returnValue = mNonrelationalValueFactory.createTopValue();
 				}
 				returnList.add(new NonrelationalEvaluationResult<VALUE>(returnValue, returnBool));
@@ -237,7 +234,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	}
 
 	@Override
-	public List<STATE> inverseEvaluate(IEvaluationResult<VALUE> computedValue, STATE currentState) {
+	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
 
 		final List<STATE> returnList = new ArrayList<>();
 
@@ -264,20 +261,20 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					break;
 				case LOGICOR:
 					mLeftSubEvaluator.inverseEvaluate(computedValue, currentState)
-					        .forEach(leftOr -> returnStates.add(leftOr));
+							.forEach(leftOr -> returnStates.add(leftOr));
 					mRightSubEvaluator.inverseEvaluate(computedValue, currentState)
-					        .forEach(rightOr -> returnStates.add(rightOr));
+							.forEach(rightOr -> returnStates.add(rightOr));
 					break;
 				case LOGICIMPLIES:
 					throw new UnsupportedOperationException(
-					        "Implications should have been removed from expressions during expression normalization.");
+							"Implications should have been removed from expressions during expression normalization.");
 				case LOGICIFF:
 					throw new UnsupportedOperationException(
-					        "If and only if expressions should have been removed during expression normalization.");
+							"If and only if expressions should have been removed during expression normalization.");
 				case COMPEQ:
 					final BooleanValue intersectBool = left.getBooleanValue().intersect(right.getBooleanValue());
 					if ((mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool())
-					        && (intersectBool.getValue() == Value.TOP)) {
+							&& (intersectBool.getValue() == Value.TOP)) {
 						returnStates.add(currentState);
 						break;
 					}
@@ -285,10 +282,10 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					final VALUE newLeft = computeNewValue(referenceValue, left.getValue(), right.getValue(), true);
 					final VALUE newRight = computeNewValue(referenceValue, right.getValue(), left.getValue(), false);
 
-					final NonrelationalEvaluationResult<VALUE> leftEvalresult = new NonrelationalEvaluationResult<VALUE>(
-					        newLeft, right.getBooleanValue());
-					final NonrelationalEvaluationResult<VALUE> rightEvalresult = new NonrelationalEvaluationResult<VALUE>(
-					        newRight, left.getBooleanValue());
+					final NonrelationalEvaluationResult<VALUE> leftEvalresult =
+							new NonrelationalEvaluationResult<VALUE>(newLeft, right.getBooleanValue());
+					final NonrelationalEvaluationResult<VALUE> rightEvalresult =
+							new NonrelationalEvaluationResult<VALUE>(newRight, left.getBooleanValue());
 
 					final List<STATE> leftEq = mLeftSubEvaluator.inverseEvaluate(leftEvalresult, currentState);
 					final List<STATE> rightEq = mRightSubEvaluator.inverseEvaluate(rightEvalresult, currentState);
@@ -310,18 +307,18 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				case ARITHDIV:
 				case ARITHMOD:
 					final VALUE newValueLeft = computeNewValue(referenceValue, left.getValue(), right.getValue(), true);
-					final VALUE newValueRight = computeNewValue(referenceValue, right.getValue(), left.getValue(),
-					        false);
+					final VALUE newValueRight =
+							computeNewValue(referenceValue, right.getValue(), left.getValue(), false);
 
-					final NonrelationalEvaluationResult<VALUE> inverseResultLeft = new NonrelationalEvaluationResult<VALUE>(
-					        newValueLeft, referenceBool);
-					final NonrelationalEvaluationResult<VALUE> inverseResultRight = new NonrelationalEvaluationResult<VALUE>(
-					        newValueRight, referenceBool);
+					final NonrelationalEvaluationResult<VALUE> inverseResultLeft =
+							new NonrelationalEvaluationResult<VALUE>(newValueLeft, referenceBool);
+					final NonrelationalEvaluationResult<VALUE> inverseResultRight =
+							new NonrelationalEvaluationResult<VALUE>(newValueRight, referenceBool);
 
-					final List<STATE> leftInverseArith = mLeftSubEvaluator.inverseEvaluate(inverseResultLeft,
-					        currentState);
-					final List<STATE> rightInverseArith = mRightSubEvaluator.inverseEvaluate(inverseResultRight,
-					        currentState);
+					final List<STATE> leftInverseArith =
+							mLeftSubEvaluator.inverseEvaluate(inverseResultLeft, currentState);
+					final List<STATE> rightInverseArith =
+							mRightSubEvaluator.inverseEvaluate(inverseResultRight, currentState);
 
 					for (final STATE le : leftInverseArith) {
 						for (final STATE ri : rightInverseArith) {
@@ -330,7 +327,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					}
 					break;
 				default:
-					mLogger.warn("Operator " + mOperator + " not supported. Returning current state");
+					mLogger.warnUnknownOperator(mOperator);
 					returnStates.add(currentState);
 					break;
 				}
@@ -348,7 +345,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	}
 
 	private VALUE computeNewValue(final VALUE referenceValue, final VALUE oldValue, final VALUE otherValue,
-	        final boolean isLeft) {
+			final boolean isLeft) {
 		VALUE newValue;
 
 		switch (mOperator) {
@@ -371,7 +368,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				newValue = referenceValue.divide(otherValue);
 			} else {
 				throw new UnsupportedOperationException(
-				        "Division on types other than integers and reals is not defined.");
+						"Division on types other than integers and reals is not defined.");
 			}
 			newValue = newValue.intersect(oldValue);
 			break;
@@ -385,14 +382,14 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					newValue = otherValue.divide(referenceValue);
 				} else {
 					throw new UnsupportedOperationException(
-					        "Division on types other than integers and reals is not defined.");
+							"Division on types other than integers and reals is not defined.");
 				}
 			}
 			newValue = newValue.intersect(oldValue);
 			break;
 		case ARITHMOD:
 			if (!otherValue.canHandleModulo()) {
-				mLogger.warn("Possible loss of precision: Abstract values cannot handle real-valued variables.");
+				mLogger.warnOverapproximatingOperator(mOperator);
 			}
 			newValue = otherValue.inverseModulo(referenceValue, oldValue, isLeft);
 			break;
@@ -401,7 +398,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			break;
 		case COMPLT:
 			if (!otherValue.canHandleReals()) {
-				mLogger.warn("Possible loss of precision: Abstract values cannot handle real-valued variables.");
+				mLogger.warnOverapproximatingOperator(mOperator);
 			}
 			newValue = otherValue.inverseLessThan(oldValue, isLeft);
 			break;
@@ -410,7 +407,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			break;
 		case COMPGT:
 			if (!otherValue.canHandleReals()) {
-				mLogger.warn("Possible loss of precision: Abstract values cannot handle real-valued variables.");
+				mLogger.warnOverapproximatingOperator(mOperator);
 			}
 			newValue = otherValue.inverseGreaterThan(oldValue, isLeft);
 			break;
@@ -427,7 +424,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<VALUE, STATE, CodeBlock> evaluator) {
+	public void addSubEvaluator(final IEvaluator<VALUE, STATE, CodeBlock> evaluator) {
 		assert evaluator != null;
 
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
@@ -458,7 +455,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	}
 
 	@Override
-	public void setOperator(Object operator) {
+	public void setOperator(final Object operator) {
 		assert operator != null;
 		assert operator instanceof Operator;
 

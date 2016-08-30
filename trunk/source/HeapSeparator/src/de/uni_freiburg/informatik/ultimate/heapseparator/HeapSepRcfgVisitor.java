@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -85,9 +85,9 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		if (!(edge instanceof CodeBlock)) {
 			return;
 		}
-		final TransFormula tf = ((CodeBlock) edge).getTransitionFormula();
+		final UnmodifiableTransFormula tf = ((CodeBlock) edge).getTransitionFormula();
 		
-		final TransFormula newTf = splitArraysInTransFormula(tf);
+		final UnmodifiableTransFormula newTf = splitArraysInTransFormula(tf);
 		
 		((CodeBlock) edge).setTransitionFormula(newTf);
 		
@@ -95,7 +95,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	}
 
 	
-	private TransFormula splitArraysInTransFormula(final TransFormula tf) {
+	private UnmodifiableTransFormula splitArraysInTransFormula(final UnmodifiableTransFormula tf) {
 
 	
 		

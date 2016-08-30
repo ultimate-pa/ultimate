@@ -23,6 +23,8 @@ public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> im
 			key -> data -> String.valueOf(data) + " " + key;
 	public static Function<String, Function<Object,String>> s_TimeBeforeKey = 
 			key -> time -> prettyprintNanoseconds( (Long) time) + " " + key;
+	public static Function<Object, Function<Object,Object>> s_IntegerMaximum = 
+			x -> y -> Math.max((Integer) x, (Integer) y);
 
 	
 	private final Class<T> mKeys;

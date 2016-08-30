@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 public class ScopedBoogieVarBuilder {
@@ -48,16 +48,16 @@ public class ScopedBoogieVarBuilder {
 		mVarCache = new Hashtable<>();
 	}
 
-	public ScopedBoogieVar getScopedBoogieVar(VariableLHS lhs, TransFormula tf) {
+	public ScopedBoogieVar getScopedBoogieVar(VariableLHS lhs, UnmodifiableTransFormula tf) {
 		return getScopedBoogieVar(lhs.getIdentifier(), lhs.getDeclarationInformation(), tf);
 	}
 
-	public ScopedBoogieVar getScopedBoogieVar(IdentifierExpression identifier, TransFormula tf) {
+	public ScopedBoogieVar getScopedBoogieVar(IdentifierExpression identifier, UnmodifiableTransFormula tf) {
 		return getScopedBoogieVar(identifier.getIdentifier(), identifier.getDeclarationInformation(), tf);
 
 	}
 
-	private ScopedBoogieVar getScopedBoogieVar(String identifier, DeclarationInformation info, TransFormula tf) {
+	private ScopedBoogieVar getScopedBoogieVar(String identifier, DeclarationInformation info, UnmodifiableTransFormula tf) {
 		final VariableDeclaration decl = (VariableDeclaration) mSymbolTable.getDeclaration(identifier,
 				info.getStorageClass(), info.getProcedure());
 		final VariableUID uid = new VariableUID(decl, identifier);
@@ -71,7 +71,7 @@ public class ScopedBoogieVarBuilder {
 		return rtr;
 	}
 
-	private IProgramVar getBoogieVarFromTransformula(String identifier, DeclarationInformation info, TransFormula tf) {
+	private IProgramVar getBoogieVarFromTransformula(String identifier, DeclarationInformation info, UnmodifiableTransFormula tf) {
 		// TODO: Check if this is the "right" way to get the correct BoogieVar
 
 		final HashSet<IProgramVar> vars = new HashSet<IProgramVar>();

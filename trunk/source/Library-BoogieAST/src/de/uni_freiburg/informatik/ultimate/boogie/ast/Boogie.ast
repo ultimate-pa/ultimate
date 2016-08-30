@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.boogie.ast;
 /* TODO: This should be BoogieType, but that package is not visible here */
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.result.FailureType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
@@ -195,7 +195,7 @@ ASTType ::=
         /** The semantic type that is represented by this type.  This
          * is computed by the type checker.
          */
-		boogieType : ?&IType
+		boogieType : ?&IBoogieType
 	( {/**
 	    * This class is used to represent primitive types.  This must only
 	    * be used for the builtin types <code>bool, int, real, 
@@ -239,7 +239,7 @@ Attribute ::=
  */
 Expression ::=
 	    /** The type of this expression.  This is set by the type-checker. */
-		type   : ?&IType
+		type   : ?&IBoogieType
 	( { BinaryExpression }
 		operator : Operator { LOGICIFF, LOGICIMPLIES, LOGICAND, LOGICOR,
 						   COMPLT, COMPGT, COMPLEQ, COMPGEQ, COMPEQ, COMPNEQ, COMPPO,
@@ -523,7 +523,7 @@ LeftHandSide ::=
          * in the object.  This is computed by the type checker.  You
          * can set it to null, if you call the type checker afterwards.
          */
-	    type : ?&IType
+	    type : ?&IBoogieType
 	( { /** A variable left-hand-side represents a variable.
 		 */
 		VariableLHS }

@@ -57,43 +57,51 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 			//### BPL
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_noPredAbs.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_refineAlways.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
 
-			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
+//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1_Debug.epf"),
-//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_WO_CON_Debug.epf"),
 
+
 			//### BPL Inline
 //			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 //			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AbstractInterpretationInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 
+
 			//### C
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
-////			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
-////			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_SMTInterpol.epf"),
-////			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_SMTInterpol.epf"),
-////			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default_SMTInterpol.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default_SMTInterpol.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_SMTInterpol.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_SMTInterpol.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
+
+
 //			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 //			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
+//			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
+
 
 			//### C Inline
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
@@ -104,52 +112,21 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 
 	private static final String[] INPUT = new String[] {
-			/* ULTIMATE repo */
-//			"examples/programs/abstractInterpretation/congruence.bpl",
-			"examples/programs/abstractInterpretation/regression",
+//			"examples/programs/abstractInterpretation/regression",
 //			"examples/programs/abstractInterpretation/regression/all",
-//			"examples/programs/abstractInterpretation/regression/all/procedure-Call-bools.bpl",
-//			"examples/programs/abstractInterpretation/regression/all/loop-nested-unsafe.bpl",
-//			"examples/programs/abstractInterpretation/regression/globals-easy-1-safe.bpl",
-//			"examples/programs/abstractInterpretation/regression/all/loop-110517_Martin01.bpl",
-
-//			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
-//			"examples/programs/abstractInterpretation/regression/bla.bpl",
-//			"examples/programs/abstractInterpretation/regression/modulo-assume-bug-npe.bpl",
-//			"examples/programs/abstractInterpretation/regression/division-zero-1.bpl",
-//			"examples/programs/abstractInterpretation/regression/division-inequality-bug.bpl",
-//			"examples/programs/abstractInterpretation/regression/division-inequality-bug-2.bpl",
-//			"examples/programs/abstractInterpretation/regression/modulo-assume-bug.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-Collatz.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count_incorrect.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
-//			"examples/programs/abstractInterpretation/regression/varupdate-multiplication.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
-
-//			"examples/programs/abstractInterpretation/regression/unary-minus-bug.bpl",
-//			"examples/programs/abstractInterpretation/regression/loop-CountTillBound-2.bpl",
-//			"examples/programs/abstractInterpretation/regression/loop-nested-assume-safe.bpl",
-//			"examples/programs/abstractInterpretation/regression/loop-procedure.bpl",
-//			"examples/programs/abstractInterpretation/regression/procedure-Loops.bpl",
-//			"examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-termination.cil.c"
-//			"examples/svcomp/bitvector-loops/overflow_false-unreach-call1.i",
-//			"examples/svcomp/bitvector-loops/diamond_false-unreach-call2.i",
-//			"examples/svcomp/product-lines/email_spec11_productSimulator_false-unreach-call.cil.c",
-//			"examples/svcomp/product-lines/email_spec4_product32_false-unreach-call.cil.c",
-//			"examples/svcomp/loop-invgen/down_true-unreach-call.i",
-//			"examples/svcomp/loop-lit/css2003_true-unreach-call.c.i",
-//			"examples/svcomp/loop-invgen/string_concat-noarr_true-unreach-call.i",
+			"examples/programs/abstractInterpretation/regression/all/loop-nested-assume-unsafe.bpl",
+			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
+			"examples/programs/abstractInterpretation/regression/loop-nested-assume-safe.bpl",
+			"examples/programs/abstractInterpretation/regression/procedure-Loops.bpl",
+			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
 	};
 
 	// @formatter:on
 
 	@Override
 	protected long getTimeout() {
-		// return 30 * 1000 * 1000;
-		return 30 * 1000;
-		// return 60 * 1000 * 10;
+		// return 90 * 1000 * 1000;
+		return 90 * 1000;
 	}
 
 	@Override

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstractionWithAFAs plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstractionWithAFAs plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstractionWithAFAs plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas;
@@ -32,11 +32,10 @@ import java.util.LinkedList;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -44,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 
 public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate>{
 
-	public RAFA_Determination(IUltimateServiceProvider ultimateServiceProvider, AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton, SmtManager smtManager, PredicateUnifier predicateUnifier){
+	public RAFA_Determination(final IUltimateServiceProvider ultimateServiceProvider, final AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton, final SmtManager smtManager, final PredicateUnifier predicateUnifier){
 		assert alternatingAutomaton.isReversed();
 		this.alternatingAutomaton = alternatingAutomaton;
 		this.smtManager = smtManager;
@@ -81,7 +80,7 @@ public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate
 	private final PredicateUnifier predicateUnifier;
 	private final NestedWordAutomaton<LETTER, IPredicate> resultAutomaton;
 
-	private IPredicate getPredicate(BitSet state){
+	private IPredicate getPredicate(final BitSet state){
 		IPredicate predicate = predicateUnifier.getTruePredicate();
 		int setBitIndex = getNextSetBit(state, 0);
 		while(setBitIndex != -1){
@@ -107,16 +106,16 @@ public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate
 	}
 
 	@Override
-	public NestedWordAutomaton<LETTER, IPredicate> getResult() throws AutomataOperationCanceledException{
+	public NestedWordAutomaton<LETTER, IPredicate> getResult() {
 		return resultAutomaton;
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<IPredicate> stateFactory) throws AutomataLibraryException{
+	public boolean checkResult(final IStateFactory<IPredicate> stateFactory) throws AutomataLibraryException{
 		return true;
 	}
 	
-	private static int getNextSetBit(BitSet bitSet, int offset){
+	private static int getNextSetBit(final BitSet bitSet, final int offset){
 		for(int i=offset;i<bitSet.size();i++){
 			if(bitSet.get(i)){
 				return i;

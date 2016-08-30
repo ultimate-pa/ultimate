@@ -57,6 +57,9 @@ public class WitnessBugs extends AbstractEvalTestSuite {
 		// rtr.addAll(produceWitnessSV("locks/test_locks_5_true-unreach-call_false-termination.c"));
 		// rtr.addAll(verifyWitnessSV("locks/test_locks_5_true-unreach-call_false-termination.c"));
 
+		rtr.addAll(produceAndVerifyWitnessSV(
+				"ldv-linux-4.2-rc1/linux-4.2-rc1.tar.xz-43_2a-drivers--net--appletalk--ipddp.ko-entry_point_true-unreach-call.cil.out.c"));
+		rtr.addAll(produceAndVerifyWitnessSV("ldv-regression/ex3_forlist.c_true-unreach-call.i"));
 		rtr.addAll(produceAndVerifyWitnessSV("ssh-simplified/s3_clnt_1_true-unreach-call.cil.c"));
 		rtr.addAll(produceAndVerifyWitnessSV("locks/test_locks_7_true-unreach-call_false-termination.c"));
 		rtr.addAll(produceAndVerifyWitnessSV("product-lines/minepump_spec5_product01_true-unreach-call.cil.c"));

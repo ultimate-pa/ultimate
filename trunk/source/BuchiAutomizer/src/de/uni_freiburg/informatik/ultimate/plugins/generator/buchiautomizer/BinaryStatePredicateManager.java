@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
@@ -249,8 +249,8 @@ public class BinaryStatePredicateManager {
 	 * @param stem 
 	 */
 	public void computePredicates(final boolean loopTermination, final TerminationArgument termArg, 
-			final boolean removeSuperfluousSupportingInvariants, final TransFormula stemTf, 
-			final TransFormula loopTf, final Set<IProgramVar> modifiableGlobalsAtHonda) {
+			final boolean removeSuperfluousSupportingInvariants, final UnmodifiableTransFormula stemTf, 
+			final UnmodifiableTransFormula loopTf, final Set<IProgramVar> modifiableGlobalsAtHonda) {
 		assert mLoopTermination == null;
 		assert mTerminationArgument == null;
 		assert mStemPrecondition == null;
@@ -304,7 +304,7 @@ public class BinaryStatePredicateManager {
 		mProvidesPredicates = true;
 	}
 
-	private List<Term> removeSuperfluousSupportingInvariants(final List<Term> siTerms, final TransFormula loopTf, final Set<IProgramVar> modifiableGlobals) {
+	private List<Term> removeSuperfluousSupportingInvariants(final List<Term> siTerms, final UnmodifiableTransFormula loopTf, final Set<IProgramVar> modifiableGlobals) {
 		final ArrayList<Term> neededSiTerms = new ArrayList<Term>();
 		for (int i=0; i<siTerms.size(); i++) {
 			final Term[] siTermSubset = startingFromIPlusList(siTerms, i+1, neededSiTerms);
@@ -320,7 +320,7 @@ public class BinaryStatePredicateManager {
 		return neededSiTerms;
 	}
 	
-	private boolean isSupportingInvariant(final Term[] siTermSubset, final TransFormula loopTf, final Set<IProgramVar> modifiableGlobals) {
+	private boolean isSupportingInvariant(final Term[] siTermSubset, final UnmodifiableTransFormula loopTf, final Set<IProgramVar> modifiableGlobals) {
 		final List<Term> siSubsetAndRankEqualityList = new ArrayList<Term>(Arrays.asList(siTermSubset));
 		siSubsetAndRankEqualityList.add(mRankEquality.getFormula());
 		final IPredicate siSubsetAndRankEquality = mSmtManager.getPredicateFactory().newPredicate(
@@ -346,7 +346,7 @@ public class BinaryStatePredicateManager {
 		}
 	}
 	
-	private boolean assertSupportingInvariant(final Term[] siTermSubset, final TransFormula loopTf, final Set<IProgramVar> modifiableGlobals) {
+	private boolean assertSupportingInvariant(final Term[] siTermSubset, final UnmodifiableTransFormula loopTf, final Set<IProgramVar> modifiableGlobals) {
 		final List<Term> siSubsetAndRankEqualityList = new ArrayList<Term>(Arrays.asList(siTermSubset));
 		siSubsetAndRankEqualityList.add(mRankEquality.getFormula());
 		final IPredicate siSubsetAndRankEquality = mSmtManager.getPredicateFactory().newPredicate(
@@ -398,8 +398,8 @@ public class BinaryStatePredicateManager {
 			final Collection<SupportingInvariant> siList, 
 			final Collection<Term> aisi, 
 			final boolean removeSuperfluousSupportingInvariants, 
-			final TransFormula stemTf,
-			final TransFormula loopTf, final Set<IProgramVar> modifiableGlobals) {
+			final UnmodifiableTransFormula stemTf,
+			final UnmodifiableTransFormula loopTf, final Set<IProgramVar> modifiableGlobals) {
 		List<Term> siTerms = new ArrayList<Term>(siList.size() + aisi.size());
 		for (final SupportingInvariant si : siList) {
 			final Term formula = si.asTerm(mSmtManager.getScript());
@@ -428,7 +428,7 @@ public class BinaryStatePredicateManager {
 		return mSmtManager.getPredicateFactory().newPredicate(si);
 	}
 
-	private boolean impliedByStem(final TransFormula stemTf, final List<Term> siTerms, final Set<IProgramVar> modifiableGlobals) {
+	private boolean impliedByStem(final UnmodifiableTransFormula stemTf, final List<Term> siTerms, final Set<IProgramVar> modifiableGlobals) {
 		final ArrayList<Term> implied = new ArrayList<>();
 		final ArrayList<Term> notImplied = new ArrayList<>();
 		for (final Term siTerm : siTerms) {
@@ -450,7 +450,7 @@ public class BinaryStatePredicateManager {
 	}
 
 	private boolean isInductive(final Set<Term> precondition,
-			final Set<IProgramVar> preconditionModifiableGlobals, final TransFormula transFormula,
+			final Set<IProgramVar> preconditionModifiableGlobals, final UnmodifiableTransFormula transFormula,
 			final Set<Term> postcondition, final Set<IProgramVar> postconditionModifiableGlobals) {
 		
 		final IPredicate precondPredicate = mSmtManager.getPredicateFactory().newPredicate(

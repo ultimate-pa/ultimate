@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.AAutomatonFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.NestedWordAutomatonFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.BridgeShrinker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.AutomataDefinitionInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitionsAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
@@ -55,6 +56,7 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 	private final IUltimateServiceProvider mServices;
 	private final ATester<LETTER, STATE> mTester;
 	private final List<AShrinker<?, LETTER, STATE>> mShrinkersLoop;
+	private final List<BridgeShrinker<?, LETTER, STATE>> mShrinkersBridge;
 	private final List<AShrinker<?, LETTER, STATE>> mShrinkersEnd;
 	private final EDebugPolicy mPolicy;
 	private final ILogger mLogger;
@@ -70,12 +72,14 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 			final IUltimateServiceProvider services,
 			final ATester<LETTER, STATE> tester,
 			final List<AShrinker<?, LETTER, STATE>> shrinkersLoop,
+			final List<BridgeShrinker<?, LETTER, STATE>> shrinkersBridge,
 			final List<AShrinker<?, LETTER, STATE>> shrinkersEnd,
 			final EDebugPolicy policy) {
 		mServices = services;
 		mTester = tester;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mShrinkersLoop = shrinkersLoop;
+		mShrinkersBridge = shrinkersBridge;
 		mShrinkersEnd = shrinkersEnd;
 		mPolicy = policy;
 	}
@@ -130,7 +134,7 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 		
 		// execute delta debugger (binary search)
 		final INestedWordAutomaton<LETTER, STATE> result =
-				debugger.shrink(mShrinkersLoop, mShrinkersEnd, mPolicy);
+				debugger.shrink(mShrinkersLoop, mShrinkersBridge, mShrinkersEnd, mPolicy);
 		
 		// print result
 		mLogger.info(

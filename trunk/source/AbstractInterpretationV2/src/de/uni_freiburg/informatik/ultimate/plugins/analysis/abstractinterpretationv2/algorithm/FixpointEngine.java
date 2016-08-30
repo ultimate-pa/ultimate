@@ -96,7 +96,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	        final AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> intermediateResult) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 		        + mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
-		mResult = intermediateResult == null ? new AbstractInterpretationResult<>() : intermediateResult;
+		mResult = intermediateResult == null ? new AbstractInterpretationResult<>(mDomain) : intermediateResult;
 		mBenchmark = mResult.getBenchmark();
 		calculateFixpoint(start);
 		mResult.saveTerms(mStateStorage, start, script, bpl2smt);
@@ -106,7 +106,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> run(final ACTION start, final Script script,
 	        final Boogie2SMT bpl2smt) {
-		return run(start, script, bpl2smt, new AbstractInterpretationResult<>());
+		return run(start, script, bpl2smt, new AbstractInterpretationResult<>(mDomain));
 	}
 
 	private void calculateFixpoint(final ACTION start) {

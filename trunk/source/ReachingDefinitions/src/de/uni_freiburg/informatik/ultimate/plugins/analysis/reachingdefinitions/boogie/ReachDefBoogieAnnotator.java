@@ -30,7 +30,7 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefBaseAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 
@@ -62,7 +62,7 @@ public class ReachDefBoogieAnnotator {
 	 * @return true iff annotations were changed.
 	 * @throws Throwable
 	 */
-	public boolean annotate(Statement stmt, TransFormula transFormula) throws Throwable {
+	public boolean annotate(Statement stmt, UnmodifiableTransFormula transFormula) throws Throwable {
 		final ReachDefBaseAnnotation old = mCurrent.clone();
 		union(mCurrent, mPredecessors);
 

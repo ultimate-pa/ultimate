@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizercfg.SmallBlockEncoder;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
@@ -44,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 
 /**
@@ -93,7 +93,7 @@ public class BuchiProgramProduct implements IGenerator {
 	}
 
 	@Override
-	public void setInputDefinition(ModelType graphType) {
+	public void setInputDefinition(final ModelType graphType) {
 		switch (graphType.getCreator()) {
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
 			mModelIsRCFG = true;
@@ -167,19 +167,19 @@ public class BuchiProgramProduct implements IGenerator {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage storage) {
+	public void setToolchainStorage(final IToolchainStorage storage) {
 		mStorage = storage;
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final Collection<CounterExampleResult> cex = ResultUtil.filterResults(services.getResultService().getResults(),
 				CounterExampleResult.class);
 		mPreviousToolFoundErrors = !cex.isEmpty();
-		mBacktranslator = new ProductBacktranslator(RCFGEdge.class, Expression.class);
+		mBacktranslator = new ProductBacktranslator(RCFGEdge.class, Term.class);
 		if (!mPreviousToolFoundErrors) {
 			mServices.getBacktranslationService().addTranslator(mBacktranslator);
 		}

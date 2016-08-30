@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Default implementation of {@link IReturnAction}. 
@@ -34,23 +34,23 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
  *
  */
 public class BasicReturnAction extends AbstractBasicAction implements IReturnAction {
-	private final TransFormula mAssignmentOfReturn;
-	private final TransFormula mLocalVarsAssignment;
+	private final UnmodifiableTransFormula mAssignmentOfReturn;
+	private final UnmodifiableTransFormula mLocalVarsAssignment;
 	
 	public BasicReturnAction(String preceedingProcedure, String succeedingProcedure, 
-			TransFormula assignmentOfReturn, TransFormula localVarsAssignmentOfCall) {
+			UnmodifiableTransFormula assignmentOfReturn, UnmodifiableTransFormula localVarsAssignmentOfCall) {
 		super(preceedingProcedure, succeedingProcedure);
 		mAssignmentOfReturn = assignmentOfReturn;
 		mLocalVarsAssignment = localVarsAssignmentOfCall;
 	}
 
 	@Override
-	public TransFormula getAssignmentOfReturn() {
+	public UnmodifiableTransFormula getAssignmentOfReturn() {
 		return mAssignmentOfReturn;
 	}
 
 	@Override
-	public TransFormula getLocalVarsAssignmentOfCall() {
+	public UnmodifiableTransFormula getLocalVarsAssignmentOfCall() {
 		return mLocalVarsAssignment;
 	}
 }

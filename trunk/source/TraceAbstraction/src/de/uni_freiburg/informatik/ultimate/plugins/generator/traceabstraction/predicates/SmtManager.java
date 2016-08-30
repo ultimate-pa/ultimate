@@ -53,11 +53,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
@@ -178,37 +178,37 @@ public class SmtManager {
 	}
 
 	@Deprecated
-	public int getNontrivialSatQueries() {
+	private int getNontrivialSatQueries() {
 		return mNontrivialSatQueries;
 	}
 
 	@Deprecated
-	public int getTrivialSatQueries() {
+	private int getTrivialSatQueries() {
 		return mTrivialSatQueries;
 	}
 
 	@Deprecated
-	public long getSatCheckSolverTime() {
+	private long getSatCheckSolverTime() {
 		return mSatCheckSolverTime;
 	}
 
 	@Deprecated
-	public long getInterpolQuriesTime() {
+	private long getInterpolQuriesTime() {
 		return mInterpolQuriesTime;
 	}
 
 	@Deprecated
-	public int getInterpolQueries() {
+	private int getInterpolQueries() {
 		return mInterpolQueries;
 	}
 
 	@Deprecated
-	public long getTraceCheckTime() {
+	private long getTraceCheckTime() {
 		return mTraceCheckTime;
 	}
 
 	@Deprecated
-	public long getSatCheckTime() {
+	private long getSatCheckTime() {
 		return mSatCheckTime;
 	}
 
@@ -225,30 +225,30 @@ public class SmtManager {
 	// }
 
 	@Deprecated
-	public int getTrivialCoverQueries() {
+	private int getTrivialCoverQueries() {
 		return mTrivialCoverQueries;
 	}
 
 	@Deprecated
-	public int getNontrivialCoverQueries() {
+	private int getNontrivialCoverQueries() {
 		return mNontrivialCoverQueries;
 	}
 
 	@Deprecated
-	public int getVarSetMinimalSolverQueries() {
+	private int getVarSetMinimalSolverQueries() {
 		return mVarSetMinimalSolverQueries;
 	}
 
 	@Deprecated
-	public long getVarSetMinimalComputationTime() {
+	private long getVarSetMinimalComputationTime() {
 		return mVarSetMinimalComputationTime;
 	}
 
-	public void setIteration(final int iteration) {
+	private void setIteration(final int iteration) {
 		msatProbNumber = 0;
 	}
 
-	public int getSatProbNumber() {
+	private int getSatProbNumber() {
 		return msatProbNumber;
 	}
 
@@ -365,7 +365,7 @@ public class SmtManager {
 	// }
 	// }
 
-	LBool checkSatisfiable(final Term f) {
+	private LBool checkSatisfiable(final Term f) {
 		final long startTime = System.nanoTime();
 		LBool result = null;
 		try {
@@ -441,7 +441,7 @@ public class SmtManager {
 	 *         holds, SMT_SAT if the inclusion does not hold and SMT_UNKNOWN if
 	 *         the theorem prover was not able to give an answer.
 	 */
-	public LBool isCovered(final IPredicate ps1, final IPredicate ps2) {
+	private LBool isCovered(final IPredicate ps1, final IPredicate ps2) {
 		final long startTime = System.nanoTime();
 
 		if (getPredicateFactory().isDontCare(ps1) || getPredicateFactory().isDontCare(ps2)) {
@@ -495,7 +495,7 @@ public class SmtManager {
 		return result;
 	}
 
-	public Validity isCovered(final Object caller, final Term formula1, final Term formula2) {
+	private Validity isCovered(final Object caller, final Term formula1, final Term formula2) {
 		assert (mManagedScript.isLockOwner(caller)) : "only lock owner may call";
 		final long startTime = System.nanoTime();
 
@@ -531,7 +531,7 @@ public class SmtManager {
 	// return result;
 	// }
 
-	public Term substituteRepresentants(final Set<IProgramVar> boogieVars, final Map<IProgramVar, TermVariable> substitution, final Term term) {
+	private Term substituteRepresentants(final Set<IProgramVar> boogieVars, final Map<IProgramVar, TermVariable> substitution, final Term term) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 
@@ -550,7 +550,7 @@ public class SmtManager {
 		return result;
 	}
 
-	public Term substituteToRepresentants(final Set<IProgramVar> boogieVars, final Map<IProgramVar, TermVariable> boogieVar2TermVar,
+	private Term substituteToRepresentants(final Set<IProgramVar> boogieVars, final Map<IProgramVar, TermVariable> boogieVar2TermVar,
 			final Term term) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
@@ -570,7 +570,7 @@ public class SmtManager {
 		return result;
 	}
 
-	public Term substituteTermVariablesByTerms(final Map<TermVariable, Term> substitution, final Term term) {
+	private Term substituteTermVariablesByTerms(final Map<TermVariable, Term> substitution, final Term term) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 
@@ -717,7 +717,7 @@ public class SmtManager {
 
 	// FIXME: does not work im SmtInterpol2
 
-	public static void dumpInterpolProblem(final Term[] formulas, final int iterationNumber, final int interpolProblem, final String dumpPath,
+	private static void dumpInterpolProblem(final Term[] formulas, final int iterationNumber, final int interpolProblem, final String dumpPath,
 			final Script theory) {
 		// String filename = "Iteration" + iterationNumber + "_InterpolProblem"
 		// + interpolProblem + ".smt";
@@ -733,7 +733,7 @@ public class SmtManager {
 	}
 
 	// FIXME: does not work im SmtInterpol2
-	static protected void dumpSatProblem(final Term formula, final int iterationNumber, final int satProbNumber, final String dumpPath,
+	static private void dumpSatProblem(final Term formula, final int iterationNumber, final int satProbNumber, final String dumpPath,
 			final Script theory) {
 		// String filename = "Iteration" + iterationNumber + "_SatProblem"
 		// + satProbNumber + ".smt";
@@ -748,11 +748,11 @@ public class SmtManager {
 		// }
 	}
 
-	public static HoareAnnotation getHoareAnnotation(final ProgramPoint programPoint) {
+	private static HoareAnnotation getHoareAnnotation(final ProgramPoint programPoint) {
 		return HoareAnnotation.getAnnotation(programPoint);
 	}
 
-	public LBool checkSatWithFreeVars(final Term negation) {
+	private LBool checkSatWithFreeVars(final Term negation) {
 		final LBool result = Util.checkSat(mScript, negation);
 		// if (result == LBool.UNKNOWN) {
 		// Object[] reason = mScript.getInfo(":reason-unknown");

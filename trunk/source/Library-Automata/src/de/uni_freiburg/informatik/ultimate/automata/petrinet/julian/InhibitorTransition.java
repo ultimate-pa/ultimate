@@ -38,8 +38,8 @@ public class InhibitorTransition<S, C> extends Transition<S, C> {
 
 	public InhibitorTransition(S symbol, Collection<Place<S, C>> predecessors,
 			Collection<Place<S, C>> inhibitors,
-			Collection<Place<S, C>> successors, int totalOrderID) {
-		super(symbol, predecessors, successors, totalOrderID);
+			Collection<Place<S, C>> successors, int totalOrderId) {
+		super(symbol, predecessors, successors, totalOrderId);
 		this.mInhibitors = inhibitors;
 	}
 

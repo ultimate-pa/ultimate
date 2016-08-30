@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 
 /**
  * Evaluator utilities.
@@ -57,7 +57,7 @@ public class EvaluatorUtils {
 	 *            The {@link PrimitiveType} of an {@link Expression}.
 	 * @return The corresponding {@link EvaluatorType}.
 	 */
-	public static EvaluatorType getEvaluatorType(IType type) {
+	public static EvaluatorType getEvaluatorType(IBoogieType type) {
 		if (type instanceof PrimitiveType) {
 			final PrimitiveType primitiveType = (PrimitiveType) type;
 			final int typeCode = primitiveType.getTypeCode();

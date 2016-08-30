@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiAutomizer plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
@@ -42,29 +42,28 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiClosureNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsEmpty;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaMaxSat2;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat.MinimizeNwaMaxSAT;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.BuchiReduce;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.ReduceBuchiFairDirectSimulation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.ReduceBuchiFairSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiClosureNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveNonLiveStates;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.arrays.MinimizeNwaMaxSAT;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.BuchiReduce;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.ReduceBuchiFairDirectSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.ReduceBuchiFairSimulation;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -75,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTermina
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
@@ -261,12 +261,12 @@ public class BuchiCegarLoop {
 		// mRootNode.getRootAnnot().getBoogie2SMT());
 
 		mPref = taPrefs;
-		mDefaultStateFactory = new PredicateFactoryForInterpolantAutomata(mSmtManager, mPref);
+		mDefaultStateFactory = new PredicateFactoryForInterpolantAutomata(mSmtManager, mPref.computeHoareAnnotation());
 		mPredicateFactoryResultChecking = new PredicateFactoryResultChecking(mSmtManager);
 
 		mHaf = new HoareAnnotationFragments(mLogger, null, null);
 		mStateFactoryForRefinement = new PredicateFactoryRefinement(mRootNode.getRootAnnot().getProgramPoints(),
-				mSmtManager, mPref, mPref.computeHoareAnnotation(), mHaf, null);
+				mSmtManager, false, mHaf, null, mPref.getHoareAnnotationPositions());
 
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
@@ -387,7 +387,6 @@ public class BuchiCegarLoop {
 
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			mLogger.info("======== Iteration " + mIteration + "============");
-			mSmtManager.setIteration(mIteration);
 			mBenchmarkGenerator.announceNextIteration();
 
 			boolean abstractionCorrect;
@@ -453,7 +452,7 @@ public class BuchiCegarLoop {
 					}
 					final ISLPredicate hondaISLP = (ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0);
 					final ProgramPoint hondaPP = hondaISLP.getProgramPoint();
-					final TerminationArgumentResult<RcfgElement, Expression> tar = constructTAResult(
+					final TerminationArgumentResult<RcfgElement, Term> tar = constructTAResult(
 							bspm.getTerminationArgument(), hondaPP, mCounterexample.getStem().getWord(),
 							mCounterexample.getLoop().getWord());
 					mMDBenchmark.reportRankingFunction(mIteration, tar);
@@ -484,7 +483,7 @@ public class BuchiCegarLoop {
 					}
 					final ISLPredicate hondaISLP = (ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0);
 					final ProgramPoint hondaPP = hondaISLP.getProgramPoint();
-					final TerminationArgumentResult<RcfgElement, Expression> tar = constructTAResult(
+					final TerminationArgumentResult<RcfgElement, Term> tar = constructTAResult(
 							bspm.getTerminationArgument(), hondaPP, mCounterexample.getStem().getWord(),
 							mCounterexample.getLoop().getWord());
 					mMDBenchmark.reportRankingFunction(mIteration, tar);
@@ -647,7 +646,7 @@ public class BuchiCegarLoop {
 		case ShrinkNwa: {
 			final ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(
 					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, mAbstraction, partition,
-					false, false, false, 200, false, 0, false, false);
+					false, false, false, 200, false, 0, false, false, true);
 			assert minimizeOp.checkResult(mPredicateFactoryResultChecking);
 			result = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 					minimizeOp.getResult())).getResult();
@@ -871,23 +870,21 @@ public class BuchiCegarLoop {
 						mRootNode.getRootAnnot().getModGlobVarManager()))).getResult();
 	}
 
-	private TerminationArgumentResult<RcfgElement, Expression> constructTAResult(
+	private TerminationArgumentResult<RcfgElement, Term> constructTAResult(
 			final TerminationArgument terminationArgument, final ProgramPoint honda, final NestedWord<CodeBlock> stem,
 			final NestedWord<CodeBlock> loop) {
 		final RankingFunction rf = terminationArgument.getRankingFunction();
 		final Collection<SupportingInvariant> si_list = terminationArgument.getSupportingInvariants();
-		final Expression[] supporting_invariants = new Expression[si_list.size()];
+		final Term[] supporting_invariants = new Term[si_list.size()];
 		int i = 0;
 		for (final SupportingInvariant si : terminationArgument.getSupportingInvariants()) {
-			supporting_invariants[i] = si.asExpression(mSmtManager.getScript(),
-					mRootNode.getRootAnnot().getBoogie2SMT().getTerm2Expression());
+			supporting_invariants[i] = si.asTerm(mSmtManager.getScript());
 			++i;
 		}
-		final TerminationArgumentResult<RcfgElement, Expression> result = new TerminationArgumentResult<RcfgElement, Expression>(
+		final TerminationArgumentResult<RcfgElement, Term> result = new TerminationArgumentResult<RcfgElement, Term>(
 				honda, Activator.PLUGIN_NAME,
-				rf.asLexExpression(mSmtManager.getScript(),
-						mRootNode.getRootAnnot().getBoogie2SMT().getTerm2Expression()),
-				rf.getName(), supporting_invariants, mServices.getBacktranslationService(), Expression.class);
+				rf.asLexTerm(mSmtManager.getScript()),
+				rf.getName(), supporting_invariants, mServices.getBacktranslationService(), Term.class);
 		return result;
 	}
 
@@ -963,8 +960,13 @@ public class BuchiCegarLoop {
 	}
 	
 	private static boolean automatonUsesISLPredicates(final INestedWordAutomaton<CodeBlock, IPredicate> nwa) {
-		final IPredicate someState = nwa.getStates().iterator().next();
-		return (someState instanceof ISLPredicate);
+		final Set<IPredicate> states = nwa.getStates();
+		if (states.isEmpty()) {
+			return true;
+		} else {
+			final IPredicate someState = states.iterator().next();
+			return (someState instanceof ISLPredicate);
+		}
 	}
 
 }

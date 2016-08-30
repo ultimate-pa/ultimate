@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Classes that implement this interface represent an {@link IAction} which
@@ -43,7 +43,7 @@ public interface IReturnAction extends IAction {
 	 * (this does not include information about modifiable global variables
 	 * that are implicitly modified). 
 	 */
-	public TransFormula getAssignmentOfReturn();
+	public UnmodifiableTransFormula getAssignmentOfReturn();
 	
 
 	/**
@@ -51,6 +51,6 @@ public interface IReturnAction extends IAction {
 	 * called procedure are modified while executing the corresponding call
 	 * action.
 	 */
-	public TransFormula getLocalVarsAssignmentOfCall();
+	public UnmodifiableTransFormula getLocalVarsAssignmentOfCall();
 	
 }

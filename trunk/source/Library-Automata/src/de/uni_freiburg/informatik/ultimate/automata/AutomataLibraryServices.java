@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorS
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
- * Wrapper for ILoggingService and IProgressMonitorService that are used in the
+ * Wrapper for {@link ILoggingService} and {@link IProgressMonitorService} that are used in the
  * automata library.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)

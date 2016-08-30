@@ -33,12 +33,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -65,7 +65,7 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE, CodeBlock, V
 
 	@Override
 	public void reportPossibleError(final AbstractCounterexample<STATE, CodeBlock, ?, ProgramPoint> cex) {
-		final Map<Integer, ProgramState<Expression>> programStates = new HashMap<>();
+		final Map<Integer, ProgramState<Term>> programStates = new HashMap<>();
 		final List<RCFGEdge> trace = new ArrayList<>();
 
 		programStates.put(-1, computeProgramState(cex.getInitialState()));
@@ -79,13 +79,13 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE, CodeBlock, V
 		final RcfgProgramExecution pex = new RcfgProgramExecution(trace, programStates);
 
 		final IResult result =
-				new UnprovableResult<ProgramPoint, RCFGEdge, Expression>(Activator.PLUGIN_ID, getLast(cex),
+				new UnprovableResult<ProgramPoint, RCFGEdge, Term>(Activator.PLUGIN_ID, getLast(cex),
 						mServices.getBacktranslationService(), pex, "abstract domain could reach this error location");
 
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 	}
 
-	private ProgramState<Expression> computeProgramState(final STATE state) {
+	private ProgramState<Term> computeProgramState(final STATE state) {
 		// TODO: Compute program state
 		return new ProgramState<>(Collections.emptyMap());
 	}

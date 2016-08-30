@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -54,8 +54,8 @@ public class TypeSortTranslator {
 
 	protected final Script mScript;
 
-	private final Map<IType, Sort> mType2Sort = new HashMap<IType, Sort>();
-	private final Map<Sort, IType> mSort2Type = new HashMap<Sort, IType>();
+	private final Map<IBoogieType, Sort> mType2Sort = new HashMap<IBoogieType, Sort>();
+	private final Map<Sort, IBoogieType> mSort2Type = new HashMap<Sort, IBoogieType>();
 	private final Map<String, Map<String, Expression[]>> mType2Attributes;
 
 	private final boolean mBlackHoleArrays;
@@ -74,7 +74,7 @@ public class TypeSortTranslator {
 			// variable in the Boogie program but we translate a boolean
 			// term e.g., "true".
 			final Sort boolSort = mScript.sort("Bool");
-			final IType boolType = BoogieType.TYPE_BOOL;
+			final IBoogieType boolType = BoogieType.TYPE_BOOL;
 			mType2Sort.put(boolType, boolSort);
 			mSort2Type.put(boolSort, boolType);
 		}
@@ -84,8 +84,8 @@ public class TypeSortTranslator {
 
 	}
 
-	public IType getType(final Sort sort) {
-		IType type = mSort2Type.get(sort);
+	public IBoogieType getType(final Sort sort) {
+		IBoogieType type = mSort2Type.get(sort);
 		if (type == null) {
 			// TODO Matthias: The following special treatment of arrays is only
 			// necessary if we allow to backtranslate to arrays that do not occur
@@ -118,7 +118,7 @@ public class TypeSortTranslator {
 	 * @param BoogieASTNode
 	 *            BoogieASTNode for which Sort is computed
 	 */
-	public Sort getSort(IType type, final BoogieASTNode BoogieASTNode) {
+	public Sort getSort(IBoogieType type, final BoogieASTNode BoogieASTNode) {
 		if (type instanceof BoogieType) {
 			type = ((BoogieType) type).getUnderlyingType();
 		}
@@ -162,7 +162,7 @@ public class TypeSortTranslator {
 	 * @param BoogieASTNode
 	 *            BoogieASTNode for which Sort is computed
 	 */
-	protected Sort constructSort(final IType boogieType, final BoogieASTNode BoogieASTNode) {
+	protected Sort constructSort(final IBoogieType boogieType, final BoogieASTNode BoogieASTNode) {
 		Sort result;
 		if (boogieType instanceof PrimitiveType) {
 			if (boogieType.equals(PrimitiveType.TYPE_BOOL)) {

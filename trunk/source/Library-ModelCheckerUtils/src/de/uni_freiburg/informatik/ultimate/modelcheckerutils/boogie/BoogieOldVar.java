@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.io.Serializable;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -49,7 +49,7 @@ public class BoogieOldVar extends GlobalBoogieVar implements Serializable, IProg
 	private IProgramNonOldVar mNonOldVar;
 	private final int mHashCode;
 
-	public BoogieOldVar(final String identifier, final IType iType, final boolean oldvar, final TermVariable tv,
+	public BoogieOldVar(final String identifier, final IBoogieType iType, final boolean oldvar, final TermVariable tv,
 			final ApplicationTerm defaultConstant, final ApplicationTerm primedContant) {
 		super(identifier, iType, tv, defaultConstant, primedContant);
 		mHashCode = computeHashCode();

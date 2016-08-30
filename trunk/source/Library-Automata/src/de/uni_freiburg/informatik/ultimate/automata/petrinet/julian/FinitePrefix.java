@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
@@ -45,7 +45,7 @@ public class FinitePrefix<LETTER,STATE>
 	 * @param operand operand
 	 * @throws AutomataLibraryException if construction fails
 	 */
-	public FinitePrefix(final AutomataLibraryServices services, 
+	public FinitePrefix(final AutomataLibraryServices services,
 			final PetriNetJulian<LETTER,STATE> operand)
 					throws AutomataLibraryException {
 		super(services, operand);
@@ -69,8 +69,7 @@ public class FinitePrefix<LETTER,STATE>
 	}
 
 	@Override
-	public BranchingProcess<LETTER,STATE> getResult()
-			throws AutomataLibraryException {
+	public BranchingProcess<LETTER,STATE> getResult() {
 		return mResult;
 	}
 }

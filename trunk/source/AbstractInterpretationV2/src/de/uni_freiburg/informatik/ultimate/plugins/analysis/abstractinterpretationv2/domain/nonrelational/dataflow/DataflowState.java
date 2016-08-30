@@ -315,4 +315,12 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		sId++;
 		return sId;
 	}
+
+	public Set<ProgramPoint> getNowriteLocations(IProgramVar iProgramVar) {
+		return mNoWrite.get(iProgramVar);
+	}
+	
+	public Set<CodeBlock> getReachingDefinitions(IProgramVar var) {
+		return mReachDef.get(var);
+	}
 }

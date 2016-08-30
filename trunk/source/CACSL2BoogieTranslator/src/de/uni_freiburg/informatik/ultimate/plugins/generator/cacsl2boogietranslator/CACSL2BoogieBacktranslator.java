@@ -113,7 +113,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author dietsch@informatik.uni-freiburg.de
  */
 public class CACSL2BoogieBacktranslator
-		extends DefaultTranslator<BoogieASTNode, CACSLLocation, Expression, IASTExpression> {
+		extends DefaultTranslator<BoogieASTNode, CACSLLocation, Expression, IASTExpression, String, String> {
 
 	private static final String UNFINISHED_BACKTRANSLATION = "Unfinished Backtranslation";
 
@@ -386,7 +386,8 @@ public class CACSL2BoogieBacktranslator
 		}
 	}
 
-	private ProgramState<IASTExpression> translateProgramState(final ProgramState<Expression> programState) {
+	@Override
+	public ProgramState<IASTExpression> translateProgramState(final ProgramState<Expression> programState) {
 		if (programState == null) {
 			// cannot translate nothin'
 			return null;
@@ -520,7 +521,7 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	@Override
-	public IBacktranslatedCFG<String, CACSLLocation> translateCFG(final IBacktranslatedCFG<?, BoogieASTNode> cfg) {
+	public IBacktranslatedCFG<String, CACSLLocation> translateCFG(final IBacktranslatedCFG<String, BoogieASTNode> cfg) {
 		// mLogger.info("################# Input: " + cfg.getClass().getSimpleName());
 		// printHondas(cfg, mLogger::info);
 		// printCFG(cfg, mLogger::info);

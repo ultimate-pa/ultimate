@@ -39,8 +39,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GeometricNonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NoResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentResult;
@@ -58,8 +58,8 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.GeometricNonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
-import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
@@ -79,7 +79,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -156,14 +156,14 @@ public class LassoRankerStarter {
 		final ManagedScript script = mRootAnnot.getManagedScript();
 
 		final TermVariableRenamer tvr = new TermVariableRenamer(script);
-		TransFormula stemTF;
+		UnmodifiableTransFormula stemTF;
 		if (mStem == null) {
 			stemTF = null;
 		} else {
 			stemTF = constructTransformula(mStem);
 			stemTF = tvr.renameVars(stemTF, "Stem");
 		}
-		TransFormula loopTf = constructTransformula(mLoop);
+		UnmodifiableTransFormula loopTf = constructTransformula(mLoop);
 		loopTf = tvr.renameVars(loopTf, "Loop");
 
 		final Term[] axioms = mRootAnnot.getBoogie2SMT().getAxioms().toArray(new Term[0]);
@@ -185,7 +185,7 @@ public class LassoRankerStarter {
 				.getNonTerminationAnalysisSettings(mServices);
 		if (nontermination_settings.analysis != AnalysisType.Disabled) {
 			try {
-				final NonTerminationArgument nta = laNT.checkNonTermination(nontermination_settings);
+				final GeometricNonTerminationArgument nta = laNT.checkNonTermination(nontermination_settings);
 				if (nta != null) {
 					if (!lassoWasOverapproximated().isEmpty()) {
 						reportFailBecauseOfOverapproximationResult();
@@ -262,7 +262,7 @@ public class LassoRankerStarter {
 		return overapproximations;
 	}
 
-	public TransFormula constructTransformula(final NestedWord<CodeBlock> nw) {
+	public UnmodifiableTransFormula constructTransformula(final NestedWord<CodeBlock> nw) {
 		final ManagedScript boogie2smt = mRootAnnot.getBoogie2SMT().getManagedScript();
 		final ModifiableGlobalVariableManager modGlobVarManager = mRootAnnot.getModGlobVarManager();
 		final boolean simplify = true;
@@ -365,7 +365,7 @@ public class LassoRankerStarter {
 		return templates.toArray(new RankingTemplate[0]);
 	}
 
-	private boolean isTerminationArgumentCorrect(final TerminationArgument arg, final TransFormula stemTF, final TransFormula loopTf) {
+	private boolean isTerminationArgumentCorrect(final TerminationArgument arg, final UnmodifiableTransFormula stemTF, final UnmodifiableTransFormula loopTf) {
 
 		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mSmtManager, mServices, mSimplificationTechnique, mXnfConversionTechnique);
 		final Set<IProgramVar> modifiableGlobals = mRootAnnot.getModGlobVarManager()
@@ -411,18 +411,17 @@ public class LassoRankerStarter {
 		final Collection<SupportingInvariant> si_list = arg.getSupportingInvariants();
 
 		final Script script = mRootAnnot.getScript();
-		final Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
 
-		final Expression[] supporting_invariants = new Expression[si_list.size()];
+		final Term[] supporting_invariants = new Term[si_list.size()];
 		int i = 0;
 		for (final SupportingInvariant si : si_list) {
-			supporting_invariants[i] = si.asExpression(script, term2expression);
+			supporting_invariants[i] = si.asTerm(script);
 			++i;
 		}
 
-		final TerminationArgumentResult<RcfgElement, Expression> result = new TerminationArgumentResult<RcfgElement, Expression>(
-				mHonda, Activator.PLUGIN_NAME, rf.asLexExpression(script, term2expression), rf.getName(),
-				supporting_invariants, getTranslatorSequence(), Expression.class);
+		final TerminationArgumentResult<RcfgElement, Term> result = new TerminationArgumentResult<RcfgElement, Term>(
+				mHonda, Activator.PLUGIN_NAME, rf.asLexTerm(script), rf.getName(),
+				supporting_invariants, getTranslatorSequence(), Term.class);
 		reportResult(result);
 	}
 
@@ -431,7 +430,7 @@ public class LassoRankerStarter {
 	 * 
 	 * @param arg
 	 */
-	private void reportNonTerminationResult(final NonTerminationArgument nta) {
+	private void reportNonTerminationResult(final GeometricNonTerminationArgument nta) {
 		// TODO: translate also the rational coefficients to Expressions?
 		// mRootAnnot.getBoogie2Smt().translate(term)
 		final Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
@@ -440,12 +439,12 @@ public class LassoRankerStarter {
 		states.add(nta.getStateInit());
 		states.add(nta.getStateHonda());
 		states.addAll(nta.getGEVs());
-		final List<Map<Expression, Rational>> initHondaRays = BacktranslationUtil.rank2Boogie(term2expression, states);
+		final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(term2expression, states);
 
-		final NonTerminationArgumentResult<RcfgElement, Expression> result = new NonTerminationArgumentResult<RcfgElement, Expression>(
+		final NonTerminationArgumentResult<RcfgElement, Term> result = new GeometricNonTerminationArgumentResult<RcfgElement, Term>(
 				mHonda, Activator.PLUGIN_NAME, initHondaRays.get(0), initHondaRays.get(1),
 				initHondaRays.subList(2, initHondaRays.size()), nta.getLambdas(), nta.getNus(), getTranslatorSequence(),
-				Expression.class);
+				Term.class);
 		reportResult(result);
 	}
 

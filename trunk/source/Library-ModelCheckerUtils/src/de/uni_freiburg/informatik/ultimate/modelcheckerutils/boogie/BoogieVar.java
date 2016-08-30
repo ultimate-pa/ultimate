@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.io.Serializable;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -47,7 +47,7 @@ public abstract class BoogieVar implements IProgramVar, Serializable, IBoogieVar
 
 	private static final long serialVersionUID = 103072739646531062L;
 	private final String mIdentifier;
-	private final IType mIType;
+	private final IBoogieType mIType;
 
 	/**
 	 * TermVariable which represents this BoogieVar in SMT terms.
@@ -65,7 +65,7 @@ public abstract class BoogieVar implements IProgramVar, Serializable, IBoogieVar
 	 */
 	private final ApplicationTerm mPrimedConstant;
 
-	public BoogieVar(final String identifier, final IType iType, final TermVariable tv,
+	public BoogieVar(final String identifier, final IBoogieType iType, final TermVariable tv,
 			final ApplicationTerm defaultConstant, final ApplicationTerm primedContant) {
 		mIdentifier = identifier;
 		mIType = iType;
@@ -86,7 +86,7 @@ public abstract class BoogieVar implements IProgramVar, Serializable, IBoogieVar
 	public abstract String getProcedure();
 
 	@Override
-	public IType getIType() {
+	public IBoogieType getIType() {
 		return mIType;
 	}
 

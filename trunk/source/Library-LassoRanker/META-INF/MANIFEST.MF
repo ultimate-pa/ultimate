@@ -13,7 +13,7 @@ Require-Bundle: Library-UltimateCore,
  Library-ModelCheckerUtils,
  SMTInterpol;resolution:=optional,
  SMTSolverBridge
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.lassoranker,
  de.uni_freiburg.informatik.ultimate.lassoranker.exceptions,
  de.uni_freiburg.informatik.ultimate.lassoranker.nontermination,

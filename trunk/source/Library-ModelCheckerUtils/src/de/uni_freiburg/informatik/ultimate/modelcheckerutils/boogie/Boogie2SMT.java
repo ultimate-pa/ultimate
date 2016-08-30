@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -172,7 +172,7 @@ public class Boogie2SMT {
 	 * Construct auxiliary variables only if the assertion stack of the script is at the lowest level. Auxiliary
 	 * variables are not supported in any backtranslation.
 	 */
-	public IProgramNonOldVar constructAuxiliaryGlobalBoogieVar(final String identifier, final String procedure, final IType iType,
+	public IProgramNonOldVar constructAuxiliaryGlobalBoogieVar(final String identifier, final String procedure, final IBoogieType iType,
 			final VarList varList) {
 
 		return mBoogie2SmtSymbolTable.constructAuxiliaryGlobalBoogieVar(identifier, procedure, iType, varList);

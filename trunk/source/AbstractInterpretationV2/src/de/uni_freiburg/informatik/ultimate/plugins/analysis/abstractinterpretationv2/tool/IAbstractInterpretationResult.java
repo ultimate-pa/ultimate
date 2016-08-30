@@ -23,10 +23,17 @@ public interface IAbstractInterpretationResult<STATE extends IAbstractState<STAT
 	Map<LOCATION, Term> getLoc2Term();
 
 	/**
-	 * @return a {@link Map} mapping each location that was reachable during the analysis of the computed fixpoint as to
-	 *         the corresponding abstract state.
+	 * @return a {@link Map} mapping each location that was reachable during the analysis of the computed fixpoint to
+	 *         the corresponding abstract states.
 	 */
-	Map<LOCATION, STATE> getLoc2State();
+	Map<LOCATION, Set<STATE>> getLoc2States();
+
+	/**
+	 * @return a {@link Map} mapping each location that was reachable during the analysis of the computed fixpoint to
+	 *         one abstract state which is the result of the merging operation of all corresponding abstract states at
+	 *         that location.
+	 */
+	Map<LOCATION, STATE> getLoc2SingleStates();
 
 	/**
 	 * @return a {@link Set} containing all fixpoints computed during the analysis as {@link Term}s.

@@ -106,14 +106,41 @@ public class MapEliminator {
 
 	// Stores all doubletons of terms, which might be compared
 	private final Set<Doubleton<Term>> mDoubletons;
+	private final boolean mAddInequalities;
+	private final boolean mAddIndexAssignment;
+	private final boolean mAddImplications;
 
 	/**
 	 * Creates a new map eliminator and preprocesses (stores the indices and arrays used in the {@code transformulas})
+	 *
+	 * @param services
+	 *            UltimateServices
+	 * @param managedScript
+	 *            ManagedScript
+	 * @param symbolTable
+	 *            Boogie2SmtSymbolTable
+	 * @param replacementVarFactory
+	 *            ReplacementVarFactory
+	 * @param simplificationTechnique
+	 *            SimplicationTechnique
+	 * @param xnfConversionTechnique
+	 *            XnfConversionTechnique
+	 * @param transformulas
+	 *            The transformulas, that should be processed
+	 * @param addInequalities
+	 *            If true, inequalities provided by the IndexAnalysis are also added (should be disabled for LR).
+	 * @param addIndexAssignment
+	 *            If true, also adds implications for index-assignments. This can increase the size a lot, but might
+	 *            improve the precision.
+	 * @param addImplications
+	 *            If true, for array assignment implications (not only if IndexAnalysis says they're trivial) are added.
+	 *            This might slighty increase the size, but also the precision.
 	 */
 	public MapEliminator(final IUltimateServiceProvider services, final ManagedScript managedScript,
 			final Boogie2SmtSymbolTable symbolTable, final ReplacementVarFactory replacementVarFactory,
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final Collection<TransFormulaLR> transformulas) {
+			final Collection<TransFormulaLR> transformulas, final boolean addInequalities,
+			final boolean addIndexAssignment, final boolean addImplications) {
 		super();
 
 		mServices = services;
@@ -136,6 +163,9 @@ public class MapEliminator {
 		mSelectToAuxVars = new HashMap<>();
 
 		mRelatedArays = new HashSet<>();
+		mAddInequalities = addInequalities;
+		mAddIndexAssignment = addIndexAssignment;
+		mAddImplications = addImplications;
 
 		findAllIndices();
 		mDoubletons = computeDoubletons(mFunctionsToIndices);
@@ -282,7 +312,7 @@ public class MapEliminator {
 	 */
 	public TransFormulaLR getRewrittenTransFormula(final TransFormulaLR transformula) {
 		final EqualityAnalysisResult emptyResult = new EqualityAnalysisResult(mDoubletons);
-		return getRewrittenTransFormula(transformula, emptyResult, emptyResult, false);
+		return getRewrittenTransFormula(transformula, emptyResult, emptyResult);
 	}
 
 	/**
@@ -297,13 +327,10 @@ public class MapEliminator {
 	 *            The invariants that are valid before the transformula
 	 * @param equalityAnalysisAfter
 	 *            The invariants that are valid after the transformula
-	 * @param overapproximate
-	 *            If true, a slightly weaker, but also smaller formula is returned
 	 * @return A TransFormulaLR, where array accesses are replaced by ReplacementVars
 	 */
 	public TransFormulaLR getRewrittenTransFormula(final TransFormulaLR transformula,
-			final EqualityAnalysisResult equalityAnalysisBefore, final EqualityAnalysisResult equalityAnalysisAfter,
-			final boolean overapproximate) {
+			final EqualityAnalysisResult equalityAnalysisBefore, final EqualityAnalysisResult equalityAnalysisAfter) {
 		assert mTransFormulas.contains(transformula);
 		final TransFormulaLR newTF = new TransFormulaLR(transformula);
 		final Term originalTerm = newTF.getFormula();
@@ -327,13 +354,15 @@ public class MapEliminator {
 		// Handle array havoc's
 		processArrayHavocs(newTF, assignedVars);
 		// Handle reads and writes
-		final Term processedTerm = process(originalTerm, newTF, assignedVars, invariants, overapproximate);
+		final Term processedTerm = process(originalTerm, newTF, assignedVars, invariants);
 		conjuncts.addAll(Arrays.asList(SmtUtils.getConjuncts(processedTerm)));
 		conjuncts.addAll(getInVarEqualities(newTF, assignedVars, invariants));
 		conjuncts.addAll(getOutVarEqualities(newTF, assignedVars, invariants));
 		conjuncts.addAll(invariants.constructListOfEqualities(mScript));
-		if (!overapproximate) {
+		if (mAddInequalities) {
 			conjuncts.addAll(invariants.constructListOfNotEquals(mScript));
+		}
+		if (mAddIndexAssignment) {
 			for (final Term t : assignedVars) {
 				conjuncts.addAll(processIndexAssignment(newTF, t, assignedVars, invariants));
 			}
@@ -426,6 +455,10 @@ public class MapEliminator {
 		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(transformula.getFormula().getFreeVars()));
 		for (final Entry<IProgramVar, Term> entry : transformula.getInVars().entrySet()) {
 			final Term inVar = entry.getValue();
+			// Make sure, constants are not removed from in-/out-vars
+			if (SmtUtils.isUninterpretedFunction(inVar)) {
+				continue;
+			}
 			final IProgramVar var = entry.getKey();
 			if (inVar.getSort().isArraySort()) {
 				inVarsToRemove.add(var);
@@ -472,24 +505,24 @@ public class MapEliminator {
 	 */
 	// TODO: Use non-recursive version
 	private Term process(final Term term, final TransFormulaLR transformula, final Set<Term> assignedVars,
-			final EqualityAnalysisResult invariants, final boolean overapproximate) {
+			final EqualityAnalysisResult invariants) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm a = (ApplicationTerm) term;
 			final FunctionSymbol function = a.getFunction();
-			if ("select".equals(function.getName()) || !function.isIntern()) {
-				// Handle array read / uf-call
-				return processRead(term, transformula, assignedVars, invariants, overapproximate);
-			}
 			final Term[] params = a.getParameters();
+			if ("select".equals(function.getName()) || !function.isIntern() && params.length != 0) {
+				// Handle array read / uf-call (contstants shouldn't be replaced)
+				return processRead(term, transformula, assignedVars, invariants);
+			}
 			if ("=".equals(function.getName()) && params[0].getSort().isArraySort()) {
 				// Handle array assignment
-				return processArrayAssignment(term, transformula, assignedVars, invariants, overapproximate);
+				return processArrayAssignment(term, transformula, assignedVars, invariants);
 			}
 			// Process recursively
 			final int length = params.length;
 			final Term[] newParams = new Term[length];
 			for (int i = 0; i < length; i++) {
-				newParams[i] = process(params[i], transformula, assignedVars, invariants, overapproximate);
+				newParams[i] = process(params[i], transformula, assignedVars, invariants);
 			}
 			final Term newTerm = mScript.term(function.getName(), newParams);
 			return newTerm;
@@ -498,41 +531,46 @@ public class MapEliminator {
 	}
 
 	private ArrayIndex processArrayIndex(final ArrayIndex arrayIndex, final TransFormulaLR transformula,
-			final Set<Term> assignedVars, final EqualityAnalysisResult invariants, final boolean overapproximate) {
+			final Set<Term> assignedVars, final EqualityAnalysisResult invariants) {
 		final List<Term> list = new ArrayList<>();
 		for (final Term t : arrayIndex) {
-			list.add(process(t, transformula, assignedVars, invariants, overapproximate));
+			list.add(process(t, transformula, assignedVars, invariants));
 		}
 		return new ArrayIndex(list);
 	}
 
 	private Term processRead(final Term term, final TransFormulaLR transformula, final Set<Term> assignedVars,
-			final EqualityAnalysisResult invariants, final boolean overapproximate) {
+			final EqualityAnalysisResult invariants) {
 		if ("select".equals(((ApplicationTerm) term).getFunction().getName())) {
 			final MultiDimensionalSelect multiDimensionalSelect = new MultiDimensionalSelect(term);
 			final Term array = multiDimensionalSelect.getArray();
 			// If there is a select-store-expression, create an aux-var
 			if (SmtUtils.isFunctionApplication(array, "store")) {
-				final ArrayIndex index = multiDimensionalSelect.getIndex();
+				final ArrayIndex index = processArrayIndex(multiDimensionalSelect.getIndex(), transformula,
+						assignedVars, invariants);
 				final ArrayWrite arrayWrite = new ArrayWrite(array);
 				final Set<ArrayIndex> processedIndices = new HashSet<>();
 				final TermVariable auxVar = mManagedScript.constructFreshTermVariable("aux", term.getSort());
 				mAuxVars.add(auxVar);
 				for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
 					final ArrayIndex assignedIndex = processArrayIndex(store.getIndex(), transformula, assignedVars,
-							invariants, overapproximate);
+							invariants);
 					if (processedIndices.contains(assignedIndex)) {
 						continue;
 					}
-					final Term value = process(store.getValue(), transformula, assignedVars, invariants,
-							overapproximate);
-					final Term newTerm = indexEqualityInequalityImpliesValueEquality(index, assignedIndex,
-							processedIndices, auxVar, value, invariants);
-					mAuxVarTerms.add(newTerm);
+					final Term value = process(store.getValue(), transformula, assignedVars, invariants);
+					if (areIndicesEqual(index, assignedIndex, invariants)
+							&& areAllIndicesUnequal(index, processedIndices, invariants)) {
+						mAuxVarTerms.add(SmtUtils.binaryEquality(mScript, auxVar, value));
+					} else if (mAddImplications) {
+						final Term newTerm = indexEqualityInequalityImpliesValueEquality(index, assignedIndex,
+								processedIndices, auxVar, value, invariants);
+						mAuxVarTerms.add(newTerm);
+					}
 					processedIndices.add(assignedIndex);
 				}
 				final Term selectTerm = SmtUtils.multiDimensionalSelect(mScript, arrayWrite.getOldArray(), index);
-				final Term newTerm = processRead(selectTerm, transformula, assignedVars, invariants, overapproximate);
+				final Term newTerm = processRead(selectTerm, transformula, assignedVars, invariants);
 				final Term arrayRead = indexEqualityInequalityImpliesValueEquality(index, index, processedIndices,
 						auxVar, newTerm, invariants);
 				mAuxVarTerms.add(arrayRead);
@@ -540,11 +578,12 @@ public class MapEliminator {
 			}
 		}
 		// Otherwise just return the corresponding variable
-		final Term globalTerm = translateTermVariablesToDefinitions(mScript, transformula, term);
 		if (allVariablesAreInVars(term, transformula)) {
+			final Term globalTerm = translateTermVariablesToDefinitions(mScript, transformula, term);
 			return getLocalTerm(globalTerm, transformula, assignedVars, true);
 		}
 		if (allVariablesAreOutVars(term, transformula)) {
+			final Term globalTerm = translateTermVariablesToDefinitions(mScript, transformula, term);
 			return getLocalTerm(globalTerm, transformula, assignedVars, false);
 		}
 		// If the term contains "mixed" vars or aux-vars, an aux-var is returned
@@ -556,8 +595,9 @@ public class MapEliminator {
 		return mSelectToAuxVars.get(term);
 	}
 
+	// TODO: Enable implications by argument (old map-elimination uses these implications)
 	private Term processArrayAssignment(final Term term, final TransFormulaLR transformula,
-			final Set<Term> assignedVars, final EqualityAnalysisResult invariants, final boolean overapproximate) {
+			final Set<Term> assignedVars, final EqualityAnalysisResult invariants) {
 		final ArrayWrite arrayWrite = new ArrayWrite(term);
 		final Term oldArray = arrayWrite.getOldArray();
 		final Term newArray = arrayWrite.getNewArray();
@@ -572,34 +612,34 @@ public class MapEliminator {
 		final Term globalNewArray = translateTermVariablesToDefinitions(mScript, transformula, newArray);
 		final SelectTemplate oldTemplate = new SelectTemplate(globalOldArray, mScript);
 		final SelectTemplate newTemplate = new SelectTemplate(globalNewArray, mScript);
-		final Set<ArrayIndex> assignedIndices = new HashSet<>();
+		final Set<ArrayIndex> processedIndices = new HashSet<>();
 		for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
-			final ArrayIndex assignedIndex = processArrayIndex(store.getIndex(), transformula, assignedVars, invariants,
-					overapproximate);
-			if (assignedIndices.contains(assignedIndex)) {
+			final ArrayIndex assignedIndex = processArrayIndex(store.getIndex(), transformula, assignedVars,
+					invariants);
+			if (processedIndices.contains(assignedIndex)) {
 				continue;
 			}
-			final Term value = process(store.getValue(), transformula, assignedVars, invariants, overapproximate);
+			final Term value = process(store.getValue(), transformula, assignedVars, invariants);
 			for (final ArrayIndex globalIndex : mFunctionsToIndices.getImage(newTemplate)) {
 				final ArrayIndex index = getLocalIndex(globalIndex, transformula, assignedVars, newIsInVar);
-				if (assignedIndices.contains(index)) {
+				if (processedIndices.contains(index)) {
 					continue;
 				}
 				if (areIndicesEqual(index, assignedIndex, invariants)
-						&& areAllIndicesUnequal(index, assignedIndices, invariants)) {
+						&& areAllIndicesUnequal(index, processedIndices, invariants)) {
 					final Term selectTerm = newTemplate.getTerm(globalIndex);
 					final Term var = getLocalTerm(selectTerm, transformula, assignedVars, newIsInVar);
 					result.add(SmtUtils.binaryEquality(mScript, var, value));
-				} else if (!overapproximate) {
+				} else if (mAddImplications) {
 					final Term selectTerm = newTemplate.getTerm(globalIndex);
 					final Term var = getLocalTerm(selectTerm, transformula, assignedVars, newIsInVar);
 					final Term newTerm = indexEqualityInequalityImpliesValueEquality(index, assignedIndex,
-							assignedIndices, var, value, invariants);
+							processedIndices, var, value, invariants);
 					result.add(newTerm);
 				}
 
 			}
-			assignedIndices.add(assignedIndex);
+			processedIndices.add(assignedIndex);
 		}
 		// For un-assigned indices i add: newArray[i] = oldArray[i]
 		for (final ArrayIndex globalIndex : mFunctionsToIndices.getImage(oldTemplate)) {
@@ -608,10 +648,10 @@ public class MapEliminator {
 			final ArrayIndex index1 = getLocalIndex(globalIndex, transformula, assignedVars, oldIsInVar);
 			final ArrayIndex index2 = getLocalIndex(globalIndex, transformula, assignedVars, newIsInVar);
 			if (areIndicesEqual(index1, index2, invariants)
-					&& areAllIndicesUnequal(index2, assignedIndices, invariants)) {
+					&& areAllIndicesUnequal(index2, processedIndices, invariants)) {
 				result.add(SmtUtils.binaryEquality(mScript, varNew, varOld));
-			} else if (!overapproximate) {
-				final Term newTerm = indexEqualityInequalityImpliesValueEquality(index1, index2, assignedIndices,
+			} else if (mAddImplications) {
+				final Term newTerm = indexEqualityInequalityImpliesValueEquality(index1, index2, processedIndices,
 						varNew, varOld, invariants);
 				result.add(newTerm);
 			}
@@ -784,6 +824,7 @@ public class MapEliminator {
 	}
 
 	private String niceTermString(final Term term) {
+		final String result;
 		if (SmtUtils.isFunctionApplication(term, "select")) {
 			final StringBuilder stringBuilder = new StringBuilder();
 			final MultiDimensionalSelect select = new MultiDimensionalSelect(term);
@@ -792,13 +833,11 @@ public class MapEliminator {
 			for (int i = 0; i < index.size(); i++) {
 				stringBuilder.append(niceTermString(index.get(i))).append(i == index.size() - 1 ? ']' : ',');
 			}
-			return stringBuilder.toString();
-		}
-		if (term instanceof TermVariable) {
+			result = stringBuilder.toString();
+		} else if (term instanceof TermVariable) {
 			final TermVariable termVariable = (TermVariable) term;
-			return termVariable.getName();
-		}
-		if (term instanceof ApplicationTerm) {
+			result = termVariable.getName();
+		} else if (term instanceof ApplicationTerm) {
 			final StringBuilder stringBuilder = new StringBuilder();
 			final ApplicationTerm applicationTerm = (ApplicationTerm) term;
 			final FunctionSymbol function = applicationTerm.getFunction();
@@ -810,10 +849,11 @@ public class MapEliminator {
 			for (int i = 0; i < params.length; i++) {
 				stringBuilder.append(niceTermString(params[i])).append(i == params.length - 1 ? ')' : ' ');
 			}
-			return stringBuilder.toString();
-
+			result = stringBuilder.toString();
+		} else {
+			result = term.toString();
 		}
-		return SmtUtils.removeSmtQuoteCharacters(term.toString());
+		return SmtUtils.removeSmtQuoteCharacters(result);
 	}
 
 	private Set<Doubleton<Term>> computeDoubletons(

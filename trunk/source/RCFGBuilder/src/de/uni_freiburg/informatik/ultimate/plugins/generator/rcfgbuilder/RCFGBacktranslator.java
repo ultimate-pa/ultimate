@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.MultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -53,7 +54,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslate
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IToString;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
@@ -70,13 +73,22 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 
-public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNode, Expression, Expression> {
+public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNode, Term, Expression, RCFGNode, String> {
 
 	private final ILogger mLogger;
+	private Term2Expression mTerm2Expression;
 
 	public RCFGBacktranslator(final ILogger logger) {
-		super(RCFGEdge.class, BoogieASTNode.class, Expression.class, Expression.class);
+		super(RCFGEdge.class, BoogieASTNode.class, Term.class, Expression.class);
 		mLogger = logger;
+	}
+
+	/**
+	 * @param term2Expression
+	 *            the term2Expression to set
+	 */
+	public void setTerm2Expression(final Term2Expression term2Expression) {
+		mTerm2Expression = term2Expression;
 	}
 
 	/**
@@ -163,6 +175,13 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 			if (branchEncoders == null) {
 				final CodeBlock someBranch = bi2cb.entrySet().iterator().next().getValue();
 				addCodeBlock(someBranch, trace, branchEncoders, relevanceInformation);
+				final IPayload p = cb.getSource().getPayload();
+				if (p == null) {
+					mLogger.error("unable to determine which branch was taken, unable to determine the location");
+				} else {
+					mLogger.warn("unable to determine which branch was taken at " + p.getLocation());
+				}
+				return;
 			} else {
 				for (final Entry<TermVariable, CodeBlock> entry : bi2cb.entrySet()) {
 					final boolean taken = branchEncoders.get(entry.getKey());
@@ -182,7 +201,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 
 	@Override
 	public IProgramExecution<BoogieASTNode, Expression>
-			translateProgramExecution(final IProgramExecution<RCFGEdge, Expression> programExecution) {
+			translateProgramExecution(final IProgramExecution<RCFGEdge, Term> programExecution) {
 		if (!(programExecution instanceof RcfgProgramExecution)) {
 			throw new IllegalArgumentException();
 		}
@@ -193,7 +212,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 				new HashMap<Integer, ProgramState<Expression>>();
 
 		if (rcfgProgramExecution.getInitialProgramState() != null) {
-			programStateMapping.put(-1, rcfgProgramExecution.getInitialProgramState());
+			programStateMapping.put(-1, translateProgramState(rcfgProgramExecution.getInitialProgramState()));
 		}
 		for (int i = 0; i < rcfgProgramExecution.getLength(); i++) {
 			final AtomicTraceElement<RCFGEdge> codeBlock = rcfgProgramExecution.getTraceElement(i);
@@ -205,14 +224,14 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 						codeBlock.getRelevanceInformation());
 			}
 			final int posInNewTrace = trace.size() - 1;
-			final ProgramState<Expression> programState = rcfgProgramExecution.getProgramState(i);
-			programStateMapping.put(posInNewTrace, programState);
+			final ProgramState<Term> programState = rcfgProgramExecution.getProgramState(i);
+			programStateMapping.put(posInNewTrace, translateProgramState(programState));
 		}
 		return new BoogieProgramExecution(programStateMapping, trace);
 	}
 
 	@Override
-	public IBacktranslatedCFG<String, BoogieASTNode> translateCFG(final IBacktranslatedCFG<?, RCFGEdge> cfg) {
+	public IBacktranslatedCFG<String, BoogieASTNode> translateCFG(final IBacktranslatedCFG<RCFGNode, RCFGEdge> cfg) {
 		if (!(cfg.getCFGs().stream().allMatch(a -> a instanceof RootNode))) {
 			throw new UnsupportedOperationException("Cannot translate cfg that is not an RCFG");
 		}
@@ -325,4 +344,10 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 		ModelUtils.copyAnnotations(old, rtr);
 		return rtr;
 	}
+
+	@Override
+	public Expression translateExpression(final Term term) {
+		return mTerm2Expression.translate(term);
+	}
+
 }

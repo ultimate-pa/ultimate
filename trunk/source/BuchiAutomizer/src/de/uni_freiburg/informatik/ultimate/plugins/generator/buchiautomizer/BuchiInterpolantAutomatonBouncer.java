@@ -33,10 +33,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -121,9 +121,9 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mBspm = bspm;
-		mStemPU = new PredicateUnifier(mServices, mSmtManager, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
-		mLoopPU = new PredicateUnifier(mServices, mSmtManager, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
-		mAcceptingPU = new PredicateUnifier(mServices, mSmtManager, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
+		mStemPU = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), mSmtManager.getPredicateFactory(), mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
+		mLoopPU = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), mSmtManager.getPredicateFactory(), mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
+		mAcceptingPU = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), mSmtManager.getPredicateFactory(), mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
 		IPredicate initialPredicate;
 		if (emtpyStem) {
 			final Set<IPredicate> empty = Collections.emptySet();

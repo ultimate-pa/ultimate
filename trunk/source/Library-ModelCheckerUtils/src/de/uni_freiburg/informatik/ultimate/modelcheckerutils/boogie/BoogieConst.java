@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 
 
@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
  */
 public class BoogieConst implements IBoogieVar {
 	private final String mIdentifier;
-	private final IType mIType;
+	private final IBoogieType mIType;
 	
 	/**
 	 * Constant (0-ary ApplicationTerm) which represents this BoogieVar in
@@ -45,7 +45,7 @@ public class BoogieConst implements IBoogieVar {
 	 */
 	private final ApplicationTerm mSmtConstant;
 
-	public BoogieConst(String identifier, IType iType,
+	public BoogieConst(String identifier, IBoogieType iType,
 			ApplicationTerm smtConstant) {
 		mIdentifier = identifier;
 		mIType = iType;
@@ -58,7 +58,7 @@ public class BoogieConst implements IBoogieVar {
 	}
 
 	@Override
-	public IType getIType() {
+	public IBoogieType getIType() {
 		return mIType;
 	}
 

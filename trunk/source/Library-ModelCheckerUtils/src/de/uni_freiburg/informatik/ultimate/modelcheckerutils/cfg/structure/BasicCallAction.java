@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Default implementation of {@link ICallAction}. 
@@ -34,15 +34,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
  *
  */
 public class BasicCallAction extends AbstractBasicAction implements ICallAction {
-	private final TransFormula mLocalVarsAssignment;
+	private final UnmodifiableTransFormula mLocalVarsAssignment;
 	
-	public BasicCallAction(String preceedingProcedure, String succeedingProcedure, TransFormula localVarsAssignment) {
+	public BasicCallAction(String preceedingProcedure, String succeedingProcedure, UnmodifiableTransFormula localVarsAssignment) {
 		super(preceedingProcedure, succeedingProcedure);
 		mLocalVarsAssignment = localVarsAssignment;
 	}
 
 	@Override
-	public TransFormula getLocalVarsAssignment() {
+	public UnmodifiableTransFormula getLocalVarsAssignment() {
 		return mLocalVarsAssignment;
 	}
 }

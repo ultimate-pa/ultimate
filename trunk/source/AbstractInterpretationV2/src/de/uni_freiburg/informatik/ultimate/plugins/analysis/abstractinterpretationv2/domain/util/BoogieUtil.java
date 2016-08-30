@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
@@ -24,11 +24,11 @@ public class BoogieUtil {
 	 *            the identifier of the variable
 	 * @param type
 	 *            the type of the variable
-	 * @return {@link IBoogieVar} according to the given identifier and {@link IType}
+	 * @return {@link IBoogieVar} according to the given identifier and {@link IBoogieType}
 	 *
 	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
 	 */
-	public static IBoogieVar createTemporaryIBoogieVar(String identifier, IType type) {
+	public static IBoogieVar createTemporaryIBoogieVar(String identifier, IBoogieType type) {
 		return new IBoogieVar() {
 			@Override
 			public String getIdentifier() {
@@ -36,7 +36,7 @@ public class BoogieUtil {
 			}
 
 			@Override
-			public IType getIType() {
+			public IBoogieType getIType() {
 				return type;
 			}
 

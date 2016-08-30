@@ -418,7 +418,7 @@ function { :inline true } guard_t22 (time: real, ENV_1$t: real, MAC_1$t0: real, 
 function { :inline true } guard_t41 (time: real, ENV_1$t: real, MAC_1$t0: real, APP_LZ_1$t0: real, ENV_1$t0: real, MAC_1$t: real, MEDIUM_1$t0: real, APP_RX_1$t0: real, MEDIUM_1$sendCount: int, channelBusy: bool, queue: bool) returns (bool)
 { ENV_1$t0 >= 0.0 }
 function { :inline true } property (time: real, ENV_1$t: real, MAC_1$t0: real, APP_LZ_1$t0: real, ENV_1$t0: real, MAC_1$t: real, MEDIUM_1$t0: real, APP_RX_1$t0: real, MEDIUM_1$sendCount: int, channelBusy: bool, queue: bool, MAC_1$power: real) returns (bool)
-{ time <= 9600.0 ==> MAC_1$power < 759.375 }
+{ time <= 400.0 ==> MAC_1$power < 100.0 }
 
 procedure main () returns ()
 modifies sync, sync_channel, sender, delay, loc$MAC_1, loc$APP_RX_1, loc$APP_LZ_1, loc$MEDIUM_1, loc$ENV_1, MAC_1$power, time, time$new, time$reset, ENV_1$t, ENV_1$t$new, ENV_1$t$reset, MAC_1$t0, MAC_1$t0$new, MAC_1$t0$reset, APP_LZ_1$t0, APP_LZ_1$t0$new, APP_LZ_1$t0$reset, ENV_1$t0, ENV_1$t0$new, ENV_1$t0$reset, MAC_1$t, MAC_1$t$new, MAC_1$t$reset, MEDIUM_1$t0, MEDIUM_1$t0$new, MEDIUM_1$t0$reset, APP_RX_1$t0, APP_RX_1$t0$new, APP_RX_1$t0$reset, MEDIUM_1$sendCount, MEDIUM_1$sendCount$new, MEDIUM_1$sendCount$reset, channelBusy, channelBusy$new, channelBusy$reset, queue, queue$new, queue$reset;

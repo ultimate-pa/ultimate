@@ -41,7 +41,7 @@ import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -274,7 +274,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 			if (!newState.mMapVarToBoogieVar.add(newBoogieVar)) {
 				throw new IllegalArgumentException("Variable already present: " + newBoogieVar);
 			}
-			final IType type = newBoogieVar.getIType();
+			final IBoogieType type = newBoogieVar.getIType();
 			if (TypeUtil.isNumeric(type)) {
 				unrefOtherMapNumericVarToIndex(newState);
 				newState.mMapNumericVarToIndex.put(newBoogieVar, newState.mMapNumericVarToIndex.size());
@@ -645,7 +645,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 			unrefOtherMapVarToBoogieVar(patchedState);
 			final boolean varIsNew = patchedState.mMapVarToBoogieVar.add(newBoogieVar);
 			assert varIsNew || mMapVarToBoogieVar.contains(newBoogieVar);
-			final IType type = newBoogieVar.getIType();
+			final IBoogieType type = newBoogieVar.getIType();
 			if (TypeUtil.isNumeric(type)) {
 				final int sourceVar = dominator.mMapNumericVarToIndex.get(newBoogieVar);
 				if (varIsNew) {

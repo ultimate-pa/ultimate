@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -203,7 +203,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		// return Script.LBool.UNSAT;
 		// }
 
-		final TransFormula tf = ta.getTransformula();
+		final UnmodifiableTransFormula tf = ta.getTransformula();
 		final String procPred = ta.getPreceedingProcedure();
 		final String procSucc = ta.getSucceedingProcedure();
 //		assert proc.equals(ta.getSucceedingProcedure()) : "different procedure before and after";
@@ -257,7 +257,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		final Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<IProgramVar>(0), 4, 0,
 				Integer.MIN_VALUE, null, -5, 0, mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCaller);
 
-		final TransFormula tf = ta.getLocalVarsAssignment();
+		final UnmodifiableTransFormula tf = ta.getLocalVarsAssignment();
 		final Set<IProgramVar> assignedVars = new HashSet<IProgramVar>();
 		final Term fTrans = PredicateUtils.formulaWithIndexedVars(tf, 0, 1, assignedVars, mIndexedConstants, mManagedScript.getScript());
 
@@ -312,13 +312,13 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		mManagedScript.getScript().push(1);
 		mIndexedConstants = new ScopedHashMap<String, Term>();
 
-		final TransFormula tfReturn = ta.getAssignmentOfReturn();
+		final UnmodifiableTransFormula tfReturn = ta.getAssignmentOfReturn();
 		final Set<IProgramVar> assignedVarsOnReturn = new HashSet<IProgramVar>();
 		final Term fReturn = PredicateUtils.formulaWithIndexedVars(tfReturn, 1, 2, assignedVarsOnReturn, mIndexedConstants,
 				mManagedScript.getScript());
 		// fReturn = (new FormulaUnLet()).unlet(fReturn);
 
-		final TransFormula tfCall = ta.getLocalVarsAssignmentOfCall();
+		final UnmodifiableTransFormula tfCall = ta.getLocalVarsAssignmentOfCall();
 		final Set<IProgramVar> assignedVarsOnCall = new HashSet<IProgramVar>();
 		final Term fCall = PredicateUtils.formulaWithIndexedVars(tfCall, 0, 1, assignedVarsOnCall, mIndexedConstants,
 				mManagedScript.getScript());

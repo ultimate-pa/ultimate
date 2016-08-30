@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * All automata have to implement this interface.
@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  *            Type of objects that are contained in the alphabet.
  * @param <STATE>
  *            Type of objects that are used to label states (resp. places
- *            for PetriNet)
+ *            for {@link de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet IPetriNet})
  */
 public interface IAutomaton<LETTER, STATE> {
 	/**
@@ -48,9 +48,10 @@ public interface IAutomaton<LETTER, STATE> {
 	
 	/**
 	 * @return StateFactory that was used to construct this automaton.
+	 * @deprecated Automata should not provide their state factory anymore.
 	 */
 	@Deprecated
-			StateFactory<STATE> getStateFactory();
+			IStateFactory<STATE> getStateFactory();
 			
 	/**
 	 * @return Size of the automaton. E.g., the number of states.

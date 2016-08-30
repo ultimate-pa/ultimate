@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionco
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PrefixProduct;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -44,7 +44,7 @@ public class Cfg2NetJulian extends CFG2Automaton {
 	private PetriNetJulian<CodeBlock, IPredicate> mResult;
 	
 	public Cfg2NetJulian(final RootNode rootNode,
-			final StateFactory<IPredicate> contentFactory, final SmtManager smtManager, final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique)
+			final IStateFactory<IPredicate> contentFactory, final SmtManager smtManager, final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique)
 					throws AutomataLibraryException {
 		super(rootNode, contentFactory, smtManager, services, simplificationTechnique, xnfConversionTechnique);
 		

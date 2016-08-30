@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IActi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -368,7 +368,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			mHierConstants = new ScopedHashMap<IProgramVar,Term>();
 			final IReturnAction ret = (IReturnAction) act;
 			final String proc = ret.getPreceedingProcedure();
-			final TransFormula ovaTF = mModifiableGlobalVariableManager.
+			final UnmodifiableTransFormula ovaTF = mModifiableGlobalVariableManager.
 					getOldVarsAssignment(proc);
 			Term ovaFormula = ovaTF.getFormula();
 
@@ -387,7 +387,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			quickCheck = mManagedScript.assertTerm(this, ovaFormula);
 			
 			final Set<IProgramVar> modifiableGlobals = ovaTF.getInVars().keySet();
-			final TransFormula callTf = ret.getLocalVarsAssignmentOfCall();
+			final UnmodifiableTransFormula callTf = ret.getLocalVarsAssignmentOfCall();
 			Term locVarAssign = callTf.getFormula();
 			//TODO: rename non-modifiable globals to DefaultConstants
 			locVarAssign = renameNonModifiableGlobalsToDefaultConstants(

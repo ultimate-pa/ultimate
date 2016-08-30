@@ -87,6 +87,11 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 	public String getSettingsName() {
 		return getSettings() == null ? NO_SETTINGS_NAME : getSettings().getName();
 	}
+	
+	public String getSettingsAbsolutePath() {
+		return getSettings() == null ? NO_SETTINGS_NAME : getSettings().getAbsolutePath();
+	}
+
 
 	/**
 	 * This method tries to find the "primary" input file. This method is a hack to retain compatibility with the times

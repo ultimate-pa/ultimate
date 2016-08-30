@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
@@ -38,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 
 public class Event<S, C> implements Serializable {
 	private static final long serialVersionUID = 7162664880110047121L;
-
+	
 	private final int mHashCode;
-
+	
 	private final Set<Condition<S, C>> mPredecessors;
 	private final Set<Condition<S, C>> mSuccessors;
 	private final Configuration<S, C> mLocalConfiguration;
@@ -48,10 +48,10 @@ public class Event<S, C> implements Serializable {
 	// private final ArrayList<Event<S, C>> mLocalConfiguration;
 	private final Marking<S, C> mMark;
 	private final ConditionMarking<S, C> mConditionMark;
-
+	
 	private Event<S, C> mCompanion;
 	private final Transition<S, C> mTransition;
-
+	
 	/**
 	 * Creates an Event from its predecessor conditions and the transition from
 	 * the net system it is mapped to by the homomorphism. Its successor
@@ -60,21 +60,22 @@ public class Event<S, C> implements Serializable {
 	 */
 	public Event(final Collection<Condition<S, C>> predecessors,
 			final Transition<S, C> transition) {
-		assert conditionToPlaceEqual(predecessors, transition.getPredecessors()) : "An event was created with inappropriate predecessors.\n  "
-				+ "transition: "
-				+ transition.toString()
-				+ "\n  events predecessors: "
-				+ predecessors.toString()
-				+ "\n  "
-				+ "transitions predecessors:"
-				+ transition.getPredecessors();
+		assert conditionToPlaceEqual(predecessors,
+				transition.getPredecessors()) : "An event was created with inappropriate predecessors.\n  "
+						+ "transition: "
+						+ transition.toString()
+						+ "\n  events predecessors: "
+						+ predecessors.toString()
+						+ "\n  "
+						+ "transitions predecessors:"
+						+ transition.getPredecessors();
 		this.mPredecessors = new HashSet<Condition<S, C>>(predecessors);
 		// HashSet<Event<S, C>> localConfiguration = new HashSet<Event<S, C>>();
 		this.mLocalConfiguration = new Configuration<S, C>(
 				new HashSet<Event<S, C>>());
 		this.mTransition = transition;
 		final Set<Condition<S, C>> conditionMarkSet = new HashSet<Condition<S, C>>();
-
+		
 		final Set<Event<S, C>> predecessorEvents = new HashSet<Event<S, C>>();
 		for (final Condition<S, C> c : predecessors) {
 			final Event<S, C> e = c.getPredecessorEvent();
@@ -86,9 +87,9 @@ public class Event<S, C> implements Serializable {
 			mLocalConfiguration.addAll(e.mLocalConfiguration);
 			e.mConditionMark.addTo(conditionMarkSet);
 		}
-
+		
 		mLocalConfiguration.add(this);
-
+		
 		this.mSuccessors = new HashSet<Condition<S, C>>();
 		for (final Place<S, C> p : transition.getSuccessors()) {
 			this.mSuccessors.add(new Condition<S, C>(this, p));
@@ -101,9 +102,9 @@ public class Event<S, C> implements Serializable {
 		this.mMark = mConditionMark.getMarking();
 		mHashCode = computeHashCode();
 	}
-
+	
 	/**
-	 * returns the Set of all successor conditions of {@code events}
+	 * @return The Set of all successor conditions of {@code events}.
 	 */
 	public static <S, C> Set<Condition<S, C>> getDot(final Set<Event<S, C>> events) {
 		final HashSet<Condition<S, C>> result = new HashSet<Condition<S, C>>();
@@ -112,10 +113,9 @@ public class Event<S, C> implements Serializable {
 		}
 		return result;
 	}
-
+	
 	/**
-	 * returns the Set of all successor events of all successor conditions of
-	 * the event
+	 * @return The Set of all successor events of all successor conditions of the event.
 	 */
 	public Set<Event<S, C>> getSuccessorEvents() {
 		final HashSet<Event<S, C>> result = new HashSet<Event<S, C>>();
@@ -124,10 +124,9 @@ public class Event<S, C> implements Serializable {
 		}
 		return result;
 	}
-
+	
 	/**
-	 * returns the Set of all successor events of all successor conditions of
-	 * {@code events}
+	 * @return The Set of all successor events of all successor conditions of {@code events}.
 	 */
 	public static <S, C> Set<Event<S, C>> getSuccessorEvents(
 			final Set<Event<S, C>> events) {
@@ -137,10 +136,9 @@ public class Event<S, C> implements Serializable {
 		}
 		return result;
 	}
-
+	
 	/**
-	 * returns the Set of all predecessor events of all predecessor conditions
-	 * of {@code events}
+	 * @return The Set of all predecessor events of all predecessor conditions of {@code events}.
 	 */
 	public static <S, C> Set<Event<S, C>> getPredecessorEvents(
 			final Set<Event<S, C>> events) {
@@ -150,10 +148,9 @@ public class Event<S, C> implements Serializable {
 		}
 		return result;
 	}
-
+	
 	/**
-	 * returns the Set of all predecessor events of all predecessor conditions
-	 * of the event
+	 * @return The Set of all predecessor events of all predecessor conditions of the event.
 	 */
 	public Set<Event<S, C>> getPredecessorEvents() {
 		final HashSet<Event<S, C>> result = new HashSet<Event<S, C>>();
@@ -162,7 +159,7 @@ public class Event<S, C> implements Serializable {
 		}
 		return result;
 	}
-
+	
 	/**
 	 * returns true, if the homomorphism h of the corresponding branching
 	 * process reduced to conditions and places is a well defined isomorphism.
@@ -179,7 +176,7 @@ public class Event<S, C> implements Serializable {
 		}
 		return places.isEmpty();
 	}
-
+	
 	/**
 	 * Creates a dummy event. Used as the root of a branchingprocess.
 	 */
@@ -199,33 +196,32 @@ public class Event<S, C> implements Serializable {
 		}
 		mHashCode = computeHashCode();
 	}
-
+	
 	public ConditionMarking<S, C> getConditionMark() {
 		return mConditionMark;
 	}
-
+	
 	public Set<Condition<S, C>> getSuccessorConditions() {
 		return mSuccessors;
 	}
-
+	
 	public Set<Condition<S, C>> getPredecessorConditions() {
 		return mPredecessors;
 	}
-
+	
 	/**
 	 * @return marking of the local configuration of this.
 	 */
 	public Marking<S, C> getMark() {
 		return mMark;
 	}
-
+	
 	/**
 	 * if e is a companion of this
 	 * <ul>
 	 * <li>return true and calls {@link Event#setCompanion(Event)}.</li>
 	 * <li>otherwise return false.</li>
 	 * </ul>
-	 * 
 	 * <b>Definition:</b> e is a companion of e' iff
 	 * <ul>
 	 * <li>e < e' with respect to order</li>
@@ -233,14 +229,15 @@ public class Event<S, C> implements Serializable {
 	 * </ul>
 	 * So far this definition corresponds to cut-off events as defined in the
 	 * 1996 TACAS Paper.
+	 * 
 	 * @param sameTransitionCutOff
-	 * If true, additionally we require
-	 * <ul>
-	 * <li>e and e' belong to the same transition</li>
-	 * </ul>
-	 *     which will produce fewer cut-off events and a bigger prefix hence.
-	 *     However, we assume the blowup is not so big TODO: check this claim.
-	 *     (maybe linear? with respect to what?)
+	 *            If true, additionally we require
+	 *            <ul>
+	 *            <li>e and e' belong to the same transition</li>
+	 *            </ul>
+	 *            which will produce fewer cut-off events and a bigger prefix hence.
+	 *            However, we assume the blowup is not so big TODO: check this claim.
+	 *            (maybe linear? with respect to what?)
 	 */
 	public boolean checkCutOffSetCompanion(final Event<S, C> e,
 			final Comparator<Event<S, C>> order, final boolean sameTransitionCutOff) {
@@ -260,7 +257,7 @@ public class Event<S, C> implements Serializable {
 		setCompanion(e);
 		return true;
 	}
-
+	
 	/**
 	 * set this.companion to e, or, if e is a cut-off event itself to the
 	 * companion of e.
@@ -273,7 +270,7 @@ public class Event<S, C> implements Serializable {
 			setCompanion(e.getCompanion());
 		}
 	}
-
+	
 	/**
 	 * true, if the event is a cutoff event. requires, that
 	 * {@link #checkCutOffSetCompanion(Event, Comparator)} was called.
@@ -287,7 +284,7 @@ public class Event<S, C> implements Serializable {
 	public boolean isCutoffEvent() {
 		return this.mCompanion != null;
 	}
-
+	
 	/**
 	 * returns the size of the local configuration, that is the number of
 	 * ancestor events.
@@ -295,25 +292,25 @@ public class Event<S, C> implements Serializable {
 	public int getAncestors() {
 		return mLocalConfiguration.size();
 	}
-
+	
 	public Configuration<S, C> getLocalConfiguration() {
 		return mLocalConfiguration;
 	}
-
+	
 	public Event<S, C> getCompanion() {
 		return mCompanion;
 	}
-
+	
 	public Transition<S, C> getTransition() {
 		return mTransition;
 	}
-
+	
 	@Override
 	public String toString() {
 		return mHashCode + ":" + getTransition() + ","
 				+ mLocalConfiguration.size() + "A";
 	}
-
+	
 	public int computeHashCode() {
 		final int prime = 31;
 		int result = 1;
@@ -326,10 +323,10 @@ public class Event<S, C> implements Serializable {
 				+ ((mTransition == null) ? 0 : mTransition.hashCode());
 		return result;
 	}
-
+	
 	@Override
 	public int hashCode() {
 		return mHashCode;
 	}
-
+	
 }

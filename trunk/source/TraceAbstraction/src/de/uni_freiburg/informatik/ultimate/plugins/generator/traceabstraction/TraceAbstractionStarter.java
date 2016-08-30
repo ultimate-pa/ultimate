@@ -34,9 +34,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
@@ -174,13 +173,12 @@ public class TraceAbstractionStarter {
 				final HoareAnnotation hoare = getHoareAnnotation(locNode);
 				if (hoare != null) {
 					final Term formula = hoare.getFormula();
-					final Expression expr = rootAnnot.getBoogie2SMT().getTerm2Expression().translate(formula);
-					final InvariantResult<RcfgElement, Expression> invResult = new InvariantResult<RcfgElement, Expression>(
-							Activator.PLUGIN_NAME, locNode, backTranslatorService, expr);
+					final InvariantResult<RcfgElement, Term> invResult = new InvariantResult<RcfgElement, Term>(
+							Activator.PLUGIN_NAME, locNode, backTranslatorService, formula);
 					reportResult(invResult);
 
 					if (!formula.equals(trueterm)) {
-						final String inv = backTranslatorService.translateExpressionToString(expr, Expression.class);
+						final String inv = backTranslatorService.translateExpressionToString(formula, Term.class);
 						new WitnessInvariant(inv).annotate(locNode);
 					}
 				}
@@ -195,9 +193,8 @@ public class TraceAbstractionStarter {
 				final HoareAnnotation hoare = getHoareAnnotation(finalNode);
 				if (hoare != null) {
 					final Term formula = hoare.getFormula();
-					final Expression expr = rootAnnot.getBoogie2SMT().getTerm2Expression().translate(formula);
-					final ProcedureContractResult<RcfgElement, Expression> result = new ProcedureContractResult<RcfgElement, Expression>(
-							Activator.PLUGIN_NAME, finalNode, backTranslatorService, proc, expr);
+					final ProcedureContractResult<RcfgElement, Term> result = new ProcedureContractResult<RcfgElement, Term>(
+							Activator.PLUGIN_NAME, finalNode, backTranslatorService, proc, formula);
 
 					reportResult(result);
 					// TODO: Add setting that controls the generation of those witness invariants; for now, just
@@ -359,7 +356,7 @@ public class TraceAbstractionStarter {
 			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
 		}
-		reportResult(new CounterExampleResult<RcfgElement, RCFGEdge, Expression>(getErrorPP(pe),
+		reportResult(new CounterExampleResult<RcfgElement, RCFGEdge, Term>(getErrorPP(pe),
 				Activator.PLUGIN_NAME, mServices.getBacktranslationService(), pe));
 	}
 
@@ -383,7 +380,7 @@ public class TraceAbstractionStarter {
 
 	private void reportUnproveableResult(final RcfgProgramExecution pe, final List<UnprovabilityReason> unproabilityReasons) {
 		final ProgramPoint errorPP = getErrorPP(pe);
-		final UnprovableResult<RcfgElement, RCFGEdge, Expression> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Expression>(
+		final UnprovableResult<RcfgElement, RCFGEdge, Term> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Term>(
 				Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}

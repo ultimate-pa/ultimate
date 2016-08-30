@@ -76,7 +76,7 @@ public final class CorrectnessWitnessUtils {
 		final IASTNode parent = stmt.getParent();
 		if (!(parent instanceof IASTStatement)) {
 			// this is sad, we would have to resolve interprocedural successors
-			throw new UnsupportedOperationException("Interprocedural successors are not supported");
+			return null;
 		}
 		final IASTNode[] children = parent.getChildren();
 		for (int i = 0; i < children.length - 1; ++i) {

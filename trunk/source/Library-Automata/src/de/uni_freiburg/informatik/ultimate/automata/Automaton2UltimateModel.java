@@ -27,20 +27,20 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.AAToUltimateModel;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.NwaToUltimateModel;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.TreeAutomatonToUltimateModel;
+import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.AAToUltimateModel;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.PetriNetToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.tree.visualization.TreeAutomatonToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
- * Converts an automaton (type {@code IAutomaton}) to an Ultimate model.
+ * Converts an automaton (type {@link IAutomaton}) to an Ultimate model (type {@link IElement}).
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Markus Pomrehn
@@ -53,7 +53,7 @@ public final class Automaton2UltimateModel {
 	}
 	
 	/**
-	 * Converts an {@code IAutomaton} object to an Ultimate model.
+	 * Converts an automaton ({@link IAutomaton}) object to an Ultimate model ({@link IElement}).
 	 * 
 	 * @param services
 	 *            Ultimate services
@@ -70,33 +70,34 @@ public final class Automaton2UltimateModel {
 	public static <LETTER, STATE> IElement ultimateModel(
 			final AutomataLibraryServices services,
 			final IAutomaton<LETTER, STATE> automaton)
-			throws AutomataOperationCanceledException {
+					throws AutomataOperationCanceledException {
 		if (automaton instanceof INestedWordAutomatonSimple) {
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa = (INestedWordAutomatonSimple<LETTER, STATE>) automaton;
-			final NwaToUltimateModel<LETTER, STATE> transformer = new NwaToUltimateModel<LETTER, STATE>(services);
+			final NwaToUltimateModel<LETTER, STATE> transformer = new NwaToUltimateModel<>(services);
 			return transformer.getUltimateModelOfNwa(nwa);
 			
 		} else if (automaton instanceof IPetriNet) {
 			final IPetriNet<LETTER, STATE> net = (IPetriNet<LETTER, STATE>) automaton;
-			final PetriNetToUltimateModel<LETTER, STATE> transformer = new PetriNetToUltimateModel<LETTER, STATE>();
+			final PetriNetToUltimateModel<LETTER, STATE> transformer = new PetriNetToUltimateModel<>();
 			return transformer.getUltimateModelOfPetriNet(net);
 			
 		} else if (automaton instanceof BranchingProcess) {
-			final BranchingProcess<LETTER, STATE> bp = (BranchingProcess<LETTER, STATE>) automaton;
+			final BranchingProcess<LETTER, STATE> branchingProcess = (BranchingProcess<LETTER, STATE>) automaton;
 			final BranchingProcessToUltimateModel<LETTER, STATE> transformer =
-					new BranchingProcessToUltimateModel<LETTER, STATE>();
-			return transformer.getUltimateModelOfBranchingProcess(bp);
+					new BranchingProcessToUltimateModel<>();
+			return transformer.getUltimateModelOfBranchingProcess(branchingProcess);
 			
 		} else if (automaton instanceof AlternatingAutomaton) {
-			final AlternatingAutomaton<LETTER, STATE> aa = (AlternatingAutomaton<LETTER, STATE>) automaton;
-			final AAToUltimateModel<LETTER, STATE> transformer = new AAToUltimateModel<LETTER, STATE>();
-			return transformer.getUltimateModelOfAA(aa);
+			final AlternatingAutomaton<LETTER, STATE> alternatingAutomaton =
+					(AlternatingAutomaton<LETTER, STATE>) automaton;
+			final AAToUltimateModel<LETTER, STATE> transformer = new AAToUltimateModel<>();
+			return transformer.getUltimateModelOfAA(alternatingAutomaton);
 			
 		} else if (automaton instanceof ITreeAutomaton) {
-			final ITreeAutomaton<LETTER, STATE> ta = (ITreeAutomaton<LETTER, STATE>) automaton;
+			final ITreeAutomaton<LETTER, STATE> treeAutomaton = (ITreeAutomaton<LETTER, STATE>) automaton;
 			final TreeAutomatonToUltimateModel<LETTER, STATE> transformer =
-					new TreeAutomatonToUltimateModel<LETTER, STATE>();
-			return transformer.getUltimateModelOfAA(ta);
+					new TreeAutomatonToUltimateModel<>();
+			return transformer.getUltimateModelOfAA(treeAutomaton);
 			
 		} else {
 			throw new IllegalArgumentException(

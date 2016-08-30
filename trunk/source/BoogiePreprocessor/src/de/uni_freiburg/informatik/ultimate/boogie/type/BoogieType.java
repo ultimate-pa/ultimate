@@ -32,7 +32,7 @@ import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 
 /**
@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
  * @author hoenicke
  * 
  */
-public abstract class BoogieType implements IType {
+public abstract class BoogieType implements IBoogieType {
     /**
      * long serialVersionUID
      */

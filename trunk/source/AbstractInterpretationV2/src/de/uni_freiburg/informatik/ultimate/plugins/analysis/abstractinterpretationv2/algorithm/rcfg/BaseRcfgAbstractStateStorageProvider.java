@@ -159,11 +159,15 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	@Override
-	public Map<LOCATION, STATE> getLoc2State(final CodeBlock initialTransition) {
+	public Map<LOCATION, Set<STATE>> getLoc2States(final CodeBlock initialTransition) {
+		final Map<LOCATION, Set<STATE>> states = getStatesOfAllChildren(initialTransition);
+		return states.entrySet().stream().filter(e -> e.getValue() != null && !e.getValue().isEmpty())
+		        .collect(Collectors.toMap(e -> e.getKey(), v -> v.getValue()));
+	}
+
+	@Override
+	public Map<LOCATION, STATE> getLoc2SingleStates(final CodeBlock initialTransition) {
 		final Map<LOCATION, StateDecorator> states = getMergedStatesOfAllChildren(initialTransition);
-		// TODO: Maybe get rid of the filter here for API reasons. The user of this method does not see that only
-		// locations are filtered which have an actual abstract state. Rather return a new location to state mapping
-		// where state is some bottom state.
 		return states.entrySet().stream().filter(e -> e.getValue().mState != null)
 		        .collect(Collectors.toMap(Map.Entry::getKey, decorator -> decorator.getValue().mState));
 	}
@@ -182,6 +186,14 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		Map<LOCATION, StateDecorator> states = getMergedLocalStates(initialTransition);
 		for (final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> child : mChildStores) {
 			states = mergeMaps(states, child.getMergedStatesOfAllChildren(initialTransition));
+		}
+		return states;
+	}
+	
+	private Map<LOCATION, Set<STATE>> getStatesOfAllChildren(final CodeBlock initialTransition) {
+		Map<LOCATION, Set<STATE>> states = getLocalStates(initialTransition);
+		for (final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> child : mChildStores) {
+			states = mergeStatesMaps(states, child.getStatesOfAllChildren(initialTransition));
 		}
 		return states;
 	}
@@ -221,11 +233,46 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 				currentState = new StateDecorator(states.stream().reduce(mMergeOperator::apply).get());
 			}
 
-			final StateDecorator alreadyKnownState = rtr.get(current);
+			final StateDecorator alreadyKnownState = rtr.get(postLoc);
 			if (alreadyKnownState != null) {
 				currentState = alreadyKnownState.merge(currentState);
 			}
 			rtr.put(postLoc, currentState);
+		}
+		return rtr;
+	}
+
+	private Map<LOCATION, Set<STATE>> getLocalStates(final CodeBlock initialTransition) {
+		final Map<LOCATION, Set<STATE>> rtr = new HashMap<>();
+		final Deque<CodeBlock> worklist = new ArrayDeque<>();
+		final Set<CodeBlock> closed = new HashSet<>();
+
+		worklist.add(initialTransition);
+
+		while (!worklist.isEmpty()) {
+			final CodeBlock current = worklist.remove();
+
+			if (!closed.add(current)) {
+				continue;
+			}
+
+			final LOCATION postLoc = mTransProvider.getTarget(current);
+
+			for (final CodeBlock outgoing : mTransProvider.getSuccessorActions(postLoc)) {
+				if (!(outgoing instanceof CodeBlock)) {
+					continue;
+				}
+				worklist.add(outgoing);
+			}
+
+			Set<STATE> alreadyKnownStates = rtr.get(postLoc);
+			if (alreadyKnownStates == null) {
+				alreadyKnownStates = new HashSet<>();
+				rtr.put(postLoc, alreadyKnownStates);
+			}
+
+			final Deque<STATE> states = getPostStates(current);
+			alreadyKnownStates.addAll(states);
 		}
 		return rtr;
 	}
@@ -295,6 +342,36 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 
 		return rtr;
 	}
+	
+	private Map<LOCATION, Set<STATE>> mergeStatesMaps(final Map<LOCATION, Set<STATE>> a,
+			final Map<LOCATION, Set<STATE>> b) {
+		final Map<LOCATION, Set<STATE>> rtr = new HashMap<>();
+		
+		for (final Entry<LOCATION, Set<STATE>> entryA : a.entrySet()) {
+			final Set<STATE> val = b.get(entryA.getKey());
+			if (val == null) {
+				rtr.put(entryA.getKey(), entryA.getValue());
+			} else {
+				// Clone the entry set to stay immutable, at least on set-level (note that entries are still mutable)
+				final Set<STATE> newSet = new HashSet<>();
+				newSet.addAll(val);
+				
+				entryA.getValue().forEach(v -> newSet.add(v));
+				rtr.put(entryA.getKey(), newSet);
+			}
+		}
+		
+		for (final Entry<LOCATION, Set<STATE>> entryB : b.entrySet()) {
+			final Set<STATE> val = a.get(entryB.getKey());
+			if (val == null) {
+				rtr.put(entryB.getKey(), entryB.getValue());
+			} else {
+				// First loop should have handled this case already.
+			}
+		}
+		
+		return rtr;
+	}
 
 	private Map<LOCATION, Term> convertStates2Terms(final Map<LOCATION, StateDecorator> states, final Script script,
 	        final Boogie2SMT bpl2smt) {
@@ -351,6 +428,11 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 				return other;
 			}
 			return new StateDecorator(mMergeOperator.apply(mState, other.mState));
+		}
+
+		@Override
+		public String toString() {
+			return mState == null ? "null" : "\"" + mState.toLogString() + "\"";
 		}
 	}
 }

@@ -230,7 +230,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 		for (int i = 0; i < phi1.size(); i++) {
 			final Transition<S, C> t1 = phi1.get(i);
 			final Transition<S, C> t2 = phi2.get(i);
-			final int result = t1.getTotalOrderID() - t2.getTotalOrderID();
+			final int result = t1.getTotalOrderId() - t2.getTotalOrderId();
 			if (result != 0) {
 //				mLogger.debug(phi1.toString() + (result < 0 ? "<" : ">")
 //						+ phi2.toString());

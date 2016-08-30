@@ -39,16 +39,16 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.petruchio.EmptinessPetruchio;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
@@ -59,7 +59,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	private final ILogger mLogger;
 
 	private final Set<S> mAlphabet;
-	private final StateFactory<C> mStateFactory;
+	private final IStateFactory<C> mStateFactory;
 
 	private final Collection<Place<S, C>> mPlaces = new HashSet<Place<S, C>>();
 	private final Set<Place<S, C>> mInitialPlaces = new HashSet<Place<S, C>>();
@@ -74,7 +74,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	private final boolean mConstantTokenAmount;
 
 	public PetriNetJulian(final AutomataLibraryServices services, final Set<S> alphabet,
-			final StateFactory<C> stateFactory, final boolean constantTokenAmount) {
+			final IStateFactory<C> stateFactory, final boolean constantTokenAmount) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.mAlphabet = alphabet;
@@ -203,7 +203,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	}
 
 	@Override
-	public StateFactory<C> getStateFactory() {
+	public IStateFactory<C> getStateFactory() {
 		return mStateFactory;
 	}
 

@@ -35,8 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
@@ -47,13 +46,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -143,7 +140,7 @@ public class TraceChecker {
 	protected AnnotateAndAsserter mAAA;
 	protected final LBool mIsSafe;
 	protected RcfgProgramExecution mRcfgProgramExecution;
-	protected final NestedFormulas<TransFormula, IPredicate> mNestedFormulas;
+	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mNestedFormulas;
 	protected NestedSsaBuilder mNsb;
 	protected final TraceCheckerBenchmarkGenerator mTraceCheckerBenchmarkGenerator;
 	protected final AssertCodeBlockOrder massertCodeBlocksIncrementally;
@@ -384,7 +381,7 @@ public class TraceChecker {
 
 	protected TraceChecker(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final SmtManager smtManager,
-			final ModifiableGlobalVariableManager modifiedGlobals, final NestedFormulas<TransFormula, IPredicate> rv,
+			final ModifiableGlobalVariableManager modifiedGlobals, final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
 			final boolean computeRcfgProgramExecution, final boolean unlockSmtSolverAlsoIfUnsat) {
 		this(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals, rv,
@@ -400,7 +397,7 @@ public class TraceChecker {
 	 */
 	protected TraceChecker(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final SmtManager smtManager,
-			final ModifiableGlobalVariableManager modifiedGlobals, final NestedFormulas<TransFormula, IPredicate> rv,
+			final ModifiableGlobalVariableManager modifiedGlobals, final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
 			final boolean computeRcfgProgramExecution, final boolean unlockSmtSolverAlsoIfUnsat, final SmtManager tcSmtManager) {
 		mServices = services;
@@ -538,7 +535,7 @@ public class TraceChecker {
 	 * trace check is UNKNOWN).
 	 */
 	private RcfgProgramExecution computeRcfgProgramExecutionCaseUNKNOWN() {
-		final Map<Integer, ProgramState<Expression>> emptyMap = Collections.emptyMap();
+		final Map<Integer, ProgramState<Term>> emptyMap = Collections.emptyMap();
 		@SuppressWarnings("unchecked")
 		final
 		Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
@@ -558,7 +555,7 @@ public class TraceChecker {
 				(NestedWord<CodeBlock>) mTrace, relVars, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 		for (int i = 0; i < mTrace.length(); i++) {
 			final CodeBlock cb = (CodeBlock) mTrace.getSymbolAt(i);
-			final TransFormula tf = cb.getTransitionFormulaWithBranchEncoders();
+			final UnmodifiableTransFormula tf = cb.getTransitionFormulaWithBranchEncoders();
 			if (tf.getBranchEncoders().size() > 0) {
 				final Map<TermVariable, Boolean> beMapping = new HashMap<TermVariable, Boolean>();
 				for (final TermVariable tv : tf.getBranchEncoders()) {
@@ -572,15 +569,14 @@ public class TraceChecker {
 			}
 		}
 		for (final IProgramVar bv : nsb.getIndexedVarRepresentative().keySet()) {
-			if (TraceCheckerUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
+			if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
 				for (final Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
 					final Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);
 					Term valueT = getValue(indexedVar);
 					if (mSmtManager != mTcSmtManager) {
 						valueT = new TermTransferrer(mSmtManager.getScript()).transform(valueT);
 					}
-					final Expression valueE = mSmtManager.getBoogie2Smt().getTerm2Expression().translate(valueT);
-					rpeb.addValueAtVarAssignmentPosition(bv, index, valueE);
+					rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
 				}
 			}
 		}
@@ -596,21 +592,7 @@ public class TraceChecker {
 	}
 
 	private Term getValue(final Term term) {
-		final Term[] arr = { term };
-		final Map<Term, Term> map = mTcSmtManager.getScript().getValue(arr);
-		final Term value = map.get(term);
-		/*
-		 * Some solvers, e.g., Z3 return -1 not as a literal but as a unary minus of a positive literal. We use our
-		 * affine term to obtain the negative literal.
-		 */
-		final AffineTerm affineTerm = (AffineTerm) (new AffineTermTransformer(mTcSmtManager.getScript()))
-				.transform(value);
-		if (affineTerm.isErrorTerm()) {
-			return value;
-		} else {
-			return affineTerm.toTerm(mTcSmtManager.getScript());
-		}
-
+		return SmtUtils.getValues(mTcSmtManager.getScript(), Collections.singleton(term)).get(term);
 	}
 
 	private Boolean getBooleanValue(final Term term) {

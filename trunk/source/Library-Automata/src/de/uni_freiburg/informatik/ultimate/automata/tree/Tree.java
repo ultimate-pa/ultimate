@@ -3,8 +3,6 @@ package de.uni_freiburg.informatik.ultimate.automata.tree;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.automata.ITreeRun;
-
 /**
  * Class to create a tree for the tree automaton.
  * @author grugelt@uni-freiburg.de

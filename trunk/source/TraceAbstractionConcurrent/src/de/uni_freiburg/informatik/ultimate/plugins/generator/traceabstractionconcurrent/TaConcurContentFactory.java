@@ -42,23 +42,22 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ProdState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
 public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutomata {
 
-	public TaConcurContentFactory(Map<String, Map<String, ProgramPoint>> locNodes,
-			AbstractCegarLoop abstractCegarLoop, SmtManager theory,
-			TAPreferences taPrefs,
-			boolean hoareAnnotation,
-			boolean interprocedural) {
+	public TaConcurContentFactory(final Map<String, Map<String, ProgramPoint>> locNodes,
+			final AbstractCegarLoop abstractCegarLoop, final SmtManager theory,
+			final boolean taPrefs,
+			final boolean hoareAnnotation,
+			final boolean interprocedural) {
 		super(theory, taPrefs);
 		// TODO Auto-generated constructor stub
 	}
 	
 	
 	@Override
-	public IPredicate getContentOnConcurrentProduct(IPredicate c1,
-			IPredicate c2) {
+	public IPredicate getContentOnConcurrentProduct(final IPredicate c1,
+			final IPredicate c2) {
 		
 		final List<IPredicate> programPoints = new ArrayList<IPredicate>();
 		final ProdState result = mSmtManager.getPredicateFactory().getNewProdState(programPoints);
@@ -81,7 +80,7 @@ public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutoma
 
 	@Override
 	public IPredicate getContentOnPetriNet2FiniteAutomaton(
-			Marking<?, IPredicate> marking) {
+			final Marking<?, IPredicate> marking) {
 		final LinkedList<IPredicate> programPoints = new LinkedList<IPredicate>();
 		for (final Place<?, IPredicate> place : marking) {
 			programPoints.add(place.getContent());
@@ -93,7 +92,7 @@ public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutoma
 
 
 	@Override
-	public IPredicate finitePrefix2net(Condition<?, IPredicate> c) {
+	public IPredicate finitePrefix2net(final Condition<?, IPredicate> c) {
 		final ProgramPoint pp = ((ISLPredicate) c.getPlace().getContent()).getProgramPoint();
 		return super.mSmtManager.getPredicateFactory().newDontCarePredicate(pp);
 	}
