@@ -27,63 +27,77 @@
 /**
  * Instances of this class define a memory model.
  */
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler.RequiredMemoryModelFeatures;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.RequiredMemoryModelFeatures;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class MemoryModel_SingleBitprecise extends AMemoryModel {
+public class MemoryModel_Unbounded extends AMemoryModel {
 	
-	private final HeapDataArray mDataArray;
-	private final int mResolution;
+	private final HeapDataArray mIntegerArray;
+	private final HeapDataArray mFloatingArray;
 	
-	public MemoryModel_SingleBitprecise(int memoryModelResolution, TypeSizes typeSizes, TypeHandler typeHandler, AExpressionTranslation expressionTranslation) {
+	public MemoryModel_Unbounded(TypeSizes typeSizes, ITypeHandler typeHandler, AExpressionTranslation expressionTranslation) {
 		super(typeSizes, typeHandler, expressionTranslation);
 		
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-
-		final ASTType intArrayType = typeHandler.bytesize2asttype(ignoreLoc, CPrimitiveCategory.INTTYPE, memoryModelResolution);
-		
-        mResolution = memoryModelResolution;
-		mDataArray = new HeapDataArray(SFO.INT, intArrayType, memoryModelResolution);
+		/*
+		 * In our Lindenmann-Hoenicke memory model, we use an array for all
+		 * integer data on the heap. This method returns the CType that we use to
+		 * represents this data.
+		 */
+        final ASTType intArrayType = typeHandler.ctype2asttype(ignoreLoc, 
+        		new CPrimitive(CPrimitives.INT));
+        
+    	/*
+    	 * In our Lindenmann-Hoenicke memory model, we use an array for all
+    	 * floating type data on the heap. This method returns the CType that we 
+    	 * use to represent this data.
+    	 */
+        final ASTType realArrayType = typeHandler.ctype2asttype(ignoreLoc, 
+        		new CPrimitive(CPrimitives.FLOAT));
+        
+       	mIntegerArray = new HeapDataArray(SFO.INT, intArrayType, 0);
+       	mFloatingArray = new HeapDataArray(SFO.REAL, realArrayType, 0);
+	}
+	
+	@Override
+	public String getProcedureSuffix(CPrimitives primitive) {
+		return getDataHeapArray(primitive).getName();
 	}
        	
 	@Override
-	public String getProcedureSuffix(CPrimitives primitive) {
-		if (primitive.isFloatingtype()) {
-			throw new UnsupportedOperationException("Floating types are not yet supported in "
-						+ this.getClass().getSimpleName());
-		}
-		return mDataArray.getName() + mTypeSizes.getSize(primitive);
-
-	}
-
-
-	@Override
 	public HeapDataArray getDataHeapArray(CPrimitives primitive) {
-		return mDataArray;
+		if (primitive.isIntegertype()) {
+			return mIntegerArray;
+		} else if(primitive.isFloatingtype()) {
+			return mFloatingArray;
+		} else {
+			throw new AssertionError();
+		}
 	}
+	
+
 	
 	@Override
 	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda, RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
 		final HashRelation<Integer, CPrimitives> bytesizes2primitives = new HashRelation<>();
 		for (final CPrimitives primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
-			final int bytesize = mTypeSizes.getSize(primitive);
+			final int bytesize = 0;
 			if (getDataHeapArray(primitive) == hda) {
 				bytesizes2primitives.addPair(bytesize, primitive);
 			}
@@ -97,17 +111,15 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
 		}
 		return result;
 	}
-	
+
 	@Override
 	protected int bytesizeOfStoredPointerComponents() {
-		return mTypeSizes.getSizeOfPointer();
-	}
-
-	public int getResolution() {
-		return mResolution;
+		return 0;
 	}
 
 
+
+	
 	
 
 }

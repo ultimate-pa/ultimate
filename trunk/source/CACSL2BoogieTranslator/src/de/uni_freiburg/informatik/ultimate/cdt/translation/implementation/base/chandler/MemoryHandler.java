@@ -29,7 +29,7 @@
 /**
  * Class that handles translation of memory related operations.
  */
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -85,7 +85,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.AMemoryModel.ReadWriteDefinition;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.AMemoryModel.ReadWriteDefinition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;

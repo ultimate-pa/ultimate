@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2014-2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
@@ -24,19 +25,30 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import org.eclipse.cdt.core.dom.ast.IASTPreprocessorIncludeStatement;
+import org.eclipse.cdt.core.dom.ast.IASTPreprocessorPragmaStatement;
 
-public class LocalLValueILocationPair {
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PreprocessorHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 
-	LocalLValue llv;
-	ILocation loc;
+public class SvComp14PreprocessorHandler extends PreprocessorHandler {
 
-	public LocalLValueILocationPair(LocalLValue llv, ILocation loc) {
-		super();
-		this.llv = llv;
-		this.loc = loc;
+	@Override
+	public Result visit(Dispatcher main, IASTPreprocessorIncludeStatement node) {
+		// Ignore #include in our sv-comp mode
+		return new SkipResult();
 	}
+
+	@Override
+	public Result visit(Dispatcher main, IASTPreprocessorPragmaStatement node) {
+		// TODO Auto-generated method stub
+		//return super.visit(main, node);
+		return new SkipResult();
+	}
+	
+
 }

@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.util.ArrayList;
 

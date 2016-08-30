@@ -29,7 +29,7 @@
 /**
  * Main Handler for SV-COMP 2014.
  */
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp;
 
 import java.util.Map;
 
@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.A
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.SideEffectHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompTypeHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp.chandler.SVCompTypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;

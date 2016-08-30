@@ -27,7 +27,7 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -82,7 +82,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler.MemoryModelDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;

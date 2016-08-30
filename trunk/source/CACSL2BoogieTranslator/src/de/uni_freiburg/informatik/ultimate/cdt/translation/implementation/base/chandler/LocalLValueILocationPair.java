@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2014-2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
- * Copyright (C) 2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
@@ -25,34 +24,19 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
  * to convey the resulting work.
  */
-//package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler;
-//
-//import java.util.List;
-//
-//import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
-//
-//import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.FunctionHandler;
-//import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-//import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultContract;
-//import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
-//import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
-//import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-//
-///**
-// * @author Markus Lindenmann
-// * @date 21.10.2012
-// */
-//public class SVCompFunctionHandler extends FunctionHandler {
-//    @Override
-//    public Result handleFunctionDeclaration(Dispatcher main,
-//            List<ACSLNode> contract, IASTSimpleDeclaration node) {
-//        Result r = null;
-//        try {
-//            r = super.handleFunctionDeclaration(main, contract, node);
-//        } catch (ClassCastException cce) {
-//            r = new ResultSkip();
-//        }
-//        assert r != null;
-//        return r;
-//    }
-//}
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
+
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+
+public class LocalLValueILocationPair {
+
+	LocalLValue llv;
+	ILocation loc;
+
+	public LocalLValueILocationPair(LocalLValue llv, ILocation loc) {
+		super();
+		this.llv = llv;
+		this.loc = loc;
+	}
+}

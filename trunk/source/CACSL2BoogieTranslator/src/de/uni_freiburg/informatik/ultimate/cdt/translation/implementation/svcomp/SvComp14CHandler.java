@@ -30,7 +30,7 @@
 /**
  * CHandler variation for the SV-COMP 2014.
  */
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler.MemoryModelDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;

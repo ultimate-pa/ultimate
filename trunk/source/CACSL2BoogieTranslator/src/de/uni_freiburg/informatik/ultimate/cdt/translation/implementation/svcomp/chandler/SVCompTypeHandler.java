@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp.chandler;
 
 import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTTypedefNameSpecifier;
