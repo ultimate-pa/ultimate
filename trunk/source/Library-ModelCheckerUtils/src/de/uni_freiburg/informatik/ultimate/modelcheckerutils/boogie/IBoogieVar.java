@@ -1,7 +1,7 @@
 
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 
 /**
@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 public interface IBoogieVar {
 	String getIdentifier();
 
-	IType getIType();
+	IBoogieType getIType();
 
 	ApplicationTerm getDefaultConstant();
 }

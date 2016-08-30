@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -55,7 +55,7 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 	}
 
 	@Override
-	public String opTranslation(BinaryExpression.Operator op, IType type1, IType type2) {
+	public String opTranslation(BinaryExpression.Operator op, IBoogieType type1, IBoogieType type2) {
 		if (op == BinaryExpression.Operator.COMPEQ) {
 			return "=";
 		} else if (op == BinaryExpression.Operator.COMPGEQ) {
@@ -117,7 +117,7 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 	}
 
 	@Override
-	public String opTranslation(UnaryExpression.Operator op, IType type) {
+	public String opTranslation(UnaryExpression.Operator op, IBoogieType type) {
 		if (op == UnaryExpression.Operator.LOGICNEG) {
 			if (type.equals(PrimitiveType.TYPE_BOOL)) {
 				return "not";
@@ -132,7 +132,7 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 	}
 
 	@Override
-	public String funcApplication(String funcIdentifier, IType[] argumentTypes) {
+	public String funcApplication(String funcIdentifier, IBoogieType[] argumentTypes) {
 		if (argumentTypes.length == 2 
 				&& argumentTypes[0].equals(PrimitiveType.TYPE_INT) 
 				&& argumentTypes[1].equals(PrimitiveType.TYPE_INT)) {

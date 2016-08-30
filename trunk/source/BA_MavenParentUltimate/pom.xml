@@ -14,7 +14,7 @@
 
 	<properties>
 		<!-- maven plugin versions -->
-		<tycho-version>0.24.0</tycho-version>
+		<tycho-version>0.25.0</tycho-version>
 		<sonar-version>3.0.2</sonar-version>
 		<jacoco-version>0.7.7.201606060606</jacoco-version>
 		<m2e-version>1.0.0</m2e-version>

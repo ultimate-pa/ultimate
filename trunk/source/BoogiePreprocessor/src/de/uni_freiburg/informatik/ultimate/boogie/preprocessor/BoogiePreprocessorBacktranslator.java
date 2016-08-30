@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslato
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -512,7 +512,7 @@ public class BoogiePreprocessorBacktranslator
 			if (list == null) {
 				return inputExp;
 			}
-			final IType bplType = list.getType().getBoogieType();
+			final IBoogieType bplType = list.getType().getBoogieType();
 			if (!(bplType instanceof BoogieType)) {
 				throw new UnsupportedOperationException("The BoogiePreprocessorBacktranslator cannot handle "
 						+ bplType.getClass().getSimpleName() + " as type of VarList");

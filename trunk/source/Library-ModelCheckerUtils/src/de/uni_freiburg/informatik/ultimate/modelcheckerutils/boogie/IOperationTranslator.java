@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -41,10 +41,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public interface IOperationTranslator {
 
-	public String opTranslation(BinaryExpression.Operator op, IType type1, IType type2);
-	public String opTranslation(UnaryExpression.Operator op, IType type);
+	public String opTranslation(BinaryExpression.Operator op, IBoogieType type1, IBoogieType type2);
+	public String opTranslation(UnaryExpression.Operator op, IBoogieType type);
 	
-	public String funcApplication(String funcIdentifier, IType[] argumentTypes);
+	public String funcApplication(String funcIdentifier, IBoogieType[] argumentTypes);
 	
 	public Term booleanTranslation(BooleanLiteral exp);
 	public Term bitvecTranslation(BitvecLiteral exp);

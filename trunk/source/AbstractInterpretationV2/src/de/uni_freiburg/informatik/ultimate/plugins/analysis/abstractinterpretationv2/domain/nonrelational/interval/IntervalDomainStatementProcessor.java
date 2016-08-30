@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
@@ -249,9 +249,9 @@ public class IntervalDomainStatementProcessor
 				Operator newOp;
 
 				Expression newLeft = binexp.getLeft();
-				final IType leftType = binexp.getLeft().getType();
+				final IBoogieType leftType = binexp.getLeft().getType();
 				Expression newRight = binexp.getRight();
-				final IType rightType = binexp.getRight().getType();
+				final IBoogieType rightType = binexp.getRight().getType();
 
 				switch (binexp.getOperator()) {
 				case COMPEQ:

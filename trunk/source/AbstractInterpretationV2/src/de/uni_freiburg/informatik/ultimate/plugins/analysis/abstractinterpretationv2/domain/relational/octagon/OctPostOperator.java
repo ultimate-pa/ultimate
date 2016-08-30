@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
@@ -216,7 +216,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		final List<Pair<IBoogieVar, Expression>> mapTmpVarToArg = new ArrayList<>();
 		int paramNumber = 0;
 		for (final VarList inParamList : procedure.getInParams()) {
-			final IType type = inParamList.getType().getBoogieType();
+			final IBoogieType type = inParamList.getType().getBoogieType();
 			if (!TypeUtil.isBoolean(type) && !TypeUtil.isNumeric(type)) {
 				paramNumber += inParamList.getIdentifiers().length;
 				continue;

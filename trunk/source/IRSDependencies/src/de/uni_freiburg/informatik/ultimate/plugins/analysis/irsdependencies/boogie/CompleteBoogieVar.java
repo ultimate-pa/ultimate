@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.boogie;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 
 /**
  * Class is used by Daniel for debugging symbol table. Orignially this was
@@ -40,14 +40,14 @@ public class CompleteBoogieVar
 
 	private final String mIdentifier;
 	private final String mProcedure;
-	private final IType mIType;
+	private final IBoogieType mIType;
 	
 	private final boolean mOldvar;
 	
 	private final int mHashCode;
 	
 	
-	public CompleteBoogieVar(String identifier, String procedure, IType iType) {
+	public CompleteBoogieVar(String identifier, String procedure, IBoogieType iType) {
 		mIdentifier = identifier;
 		mProcedure = procedure;
 		mIType = iType;
@@ -68,7 +68,7 @@ public class CompleteBoogieVar
 	public String getProcedure() {
 		return mProcedure;
 	}
-	public IType getIType() {
+	public IBoogieType getIType() {
 		return mIType;
 	}
 	public boolean isGlobal() {

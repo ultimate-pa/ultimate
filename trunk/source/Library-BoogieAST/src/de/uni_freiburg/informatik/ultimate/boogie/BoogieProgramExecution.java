@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.ProgramExecutionFormatter;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
@@ -97,7 +97,7 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	public IValuation getValuation(final List<ITranslator<?, ?, ?, ?, ?, ?>> translatorSequence) {
 		return new IValuation() {
 			@Override
-			public Map<String, Entry<IType, List<String>>> getValuesForFailurePathIndex(final int index) {
+			public Map<String, Entry<IBoogieType, List<String>>> getValuesForFailurePathIndex(final int index) {
 				final ProgramState<Expression> ps = getProgramState(index);
 				if (ps == null) {
 					return getEmtpyProgramState();
@@ -106,16 +106,16 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 				}
 			}
 
-			public Map<String, Entry<IType, List<String>>> getEmtpyProgramState() {
+			public Map<String, Entry<IBoogieType, List<String>>> getEmtpyProgramState() {
 				return Collections.emptyMap();
 			}
 
-			public Map<String, Entry<IType, List<String>>> translateProgramState(final ProgramState<Expression> ps) {
-				final Map<String, Entry<IType, List<String>>> result = new HashMap<>();
+			public Map<String, Entry<IBoogieType, List<String>>> translateProgramState(final ProgramState<Expression> ps) {
+				final Map<String, Entry<IBoogieType, List<String>>> result = new HashMap<>();
 				for (final Expression var : ps.getVariables()) {
 					final String varString = backtranslationWorkaround(translatorSequence, var);
 					final List<String> valuesString = exprSet2StringList(ps.getValues(var));
-					result.put(varString, new SimpleEntry<IType, List<String>>(var.getType(), valuesString));
+					result.put(varString, new SimpleEntry<IBoogieType, List<String>>(var.getType(), valuesString));
 				}
 				return result;
 			}

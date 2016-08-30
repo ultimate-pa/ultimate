@@ -69,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.TypeConstructor;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
@@ -237,7 +237,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 *            but we want to avoid casts everywhere.
 	 * @return the flattened type as BoogieType.
 	 */
-	private BoogieType flattenType(IType itype) {
+	private BoogieType flattenType(IBoogieType itype) {
 		BoogieType result;
 		final BoogieType type = ((BoogieType) itype).getUnderlyingType();
 		if (mFlattenCache.containsKey(type)) {
@@ -395,7 +395,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 * @return The expanded varlist.
 	 */
 	private VarList[] expandVarList(VarList input) {
-		final IType oldType = input.getType().getBoogieType();
+		final IBoogieType oldType = input.getType().getBoogieType();
 		final BoogieType bt = flattenType(oldType);
 
 		if (bt instanceof StructType) {
@@ -507,7 +507,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			final Expression[] flattened = new Expression[st.getFieldCount()];
 			for (int i = 0; i < flattened.length; i++) {
 				final String ident = id + DOT + st.getFieldIds()[i];
-				final IType type = st.getFieldType(i);
+				final IBoogieType type = st.getFieldType(i);
 				flattened[i] = new IdentifierExpression(e.getLocation(), type, ident, ie.getDeclarationInformation());
 			}
 			return flattened;
@@ -518,7 +518,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			final Expression[] result = new Expression[arrays.length];
 			assert (st.getFieldCount() == result.length);
 			for (int i = 0; i < result.length; i++) {
-				final IType resultType = st.getFieldType(i);
+				final IBoogieType resultType = st.getFieldType(i);
 				result[i] = new ArrayAccessExpression(aae.getLocation(), resultType, arrays[i], indices);
 			}
 			return result;
@@ -528,7 +528,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			final Expression[] result = new Expression[st.getFieldCount()];
 			for (int i = 0; i < result.length; i++) {
 				final String funcName = app.getIdentifier() + DOT + st.getFieldIds()[i];
-				final IType resultType = st.getFieldType(i);
+				final IBoogieType resultType = st.getFieldType(i);
 				result[i] = new FunctionApplication(app.getLocation(), resultType, funcName, args);
 			}
 			return result;
@@ -540,7 +540,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			final Expression[] result = new Expression[arrays.length];
 			assert (st.getFieldCount() == result.length);
 			for (int i = 0; i < result.length; i++) {
-				final IType resultType = st.getFieldType(i);
+				final IBoogieType resultType = st.getFieldType(i);
 				result[i] = new ArrayStoreExpression(ase.getLocation(), resultType, arrays[i], indices, values[i]);
 			}
 			return result;
@@ -667,7 +667,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			final VariableLHS[] flattened = new VariableLHS[st.getFieldCount()];
 			for (int i = 0; i < flattened.length; i++) {
 				final String ident = id + DOT + st.getFieldIds()[i];
-				final IType type = st.getFieldType(i);
+				final IBoogieType type = st.getFieldType(i);
 				flattened[i] = new VariableLHS(lhs.getLocation(), type, ident, vlhs.getDeclarationInformation());
 			}
 			return flattened;
@@ -677,7 +677,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			final Expression[] indices = processExpressions(alhs.getIndices());
 			final LeftHandSide[] result = new LeftHandSide[arrays.length];
 			for (int i = 0; i < result.length; i++) {
-				final IType resultType = st.getFieldType(i);
+				final IBoogieType resultType = st.getFieldType(i);
 				result[i] = new ArrayLHS(alhs.getLocation(), resultType, arrays[i], indices);
 			}
 			return result;
@@ -756,7 +756,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	private Declaration[] expandDeclaration(Declaration decl) {
 		if (decl instanceof FunctionDeclaration) {
 			final FunctionDeclaration funDecl = (FunctionDeclaration) decl;
-			final IType retType = funDecl.getOutParam().getType().getBoogieType();
+			final IBoogieType retType = funDecl.getOutParam().getType().getBoogieType();
 			final BoogieType bt = flattenType(retType);
 			if (!(bt instanceof StructType)) {
 				// quick check, if processDeclaration can be used.

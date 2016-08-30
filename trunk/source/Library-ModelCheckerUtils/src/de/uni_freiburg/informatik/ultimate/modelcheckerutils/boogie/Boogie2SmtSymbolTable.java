@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -246,7 +246,7 @@ public class Boogie2SmtSymbolTable {
 	private void declareConstants(final ConstDeclaration constdecl) {
 		final VarList varlist = constdecl.getVarList();
 		final Sort[] paramTypes = new Sort[0];
-		final IType iType = varlist.getType().getBoogieType();
+		final IBoogieType iType = varlist.getType().getBoogieType();
 		final Sort sort = mTypeSortTranslator.getSort(iType, varlist);
 
 		final Map<String, Expression[]> attributes = extractAttributes(constdecl);
@@ -315,13 +315,13 @@ public class Boogie2SmtSymbolTable {
 			if (ids == 0) {
 				ids = 1;
 			}
-			final IType paramType = vl.getType().getBoogieType();
+			final IBoogieType paramType = vl.getType().getBoogieType();
 			final Sort paramSort = mTypeSortTranslator.getSort(paramType, funcdecl);
 			for (int i = 0; i < ids; i++) {
 				paramSorts[paramNr++] = paramSort;
 			}
 		}
-		final IType resultType = funcdecl.getOutParam().getType().getBoogieType();
+		final IBoogieType resultType = funcdecl.getOutParam().getType().getBoogieType();
 		final Sort resultSort = mTypeSortTranslator.getSort(resultType, funcdecl);
 		if (attributeDefinedIdentifier == null) {
 			// no builtin function, we have to declare it
@@ -397,7 +397,7 @@ public class Boogie2SmtSymbolTable {
 	private void declareGlobalVariables(final VariableDeclaration vardecl) {
 		for (final VarList vl : vardecl.getVariables()) {
 			for (final String id : vl.getIdentifiers()) {
-				final IType type = vl.getType().getBoogieType();
+				final IBoogieType type = vl.getType().getBoogieType();
 				final BoogieNonOldVar global = constructGlobalBoogieVar(id, type, vl);
 				putNew(id, global, mGlobals);
 				final BoogieOldVar oldGlobal = global.getOldVar();
@@ -501,8 +501,8 @@ public class Boogie2SmtSymbolTable {
 			throw new IllegalArgumentException("specification and implementation have different param length");
 		}
 		for (int i = 0; i < specVl.length; i++) {
-			final IType specType = specVl[i].getType().getBoogieType();
-			final IType implType = implVl[i].getType().getBoogieType();
+			final IBoogieType specType = specVl[i].getType().getBoogieType();
+			final IBoogieType implType = implVl[i].getType().getBoogieType();
 			if (!specType.equals(implType)) {
 				throw new IllegalArgumentException("specification and implementation have different types");
 			}
@@ -535,7 +535,7 @@ public class Boogie2SmtSymbolTable {
 	private void declareParams(final String procId, final VarList[] vl,
 			final Map<String, Map<String, BoogieVar>> specMap, final DeclarationInformation declarationInformation) {
 		for (int i = 0; i < vl.length; i++) {
-			final IType type = vl[i].getType().getBoogieType();
+			final IBoogieType type = vl[i].getType().getBoogieType();
 			final String[] ids = vl[i].getIdentifiers();
 			for (int j = 0; j < ids.length; j++) {
 				final BoogieVar bv = constructLocalBoogieVar(ids[j], procId, type, vl[i], declarationInformation);
@@ -551,7 +551,7 @@ public class Boogie2SmtSymbolTable {
 			for (final VariableDeclaration vdecl : proc.getBody().getLocalVars()) {
 				for (final VarList vl : vdecl.getVariables()) {
 					for (final String id : vl.getIdentifiers()) {
-						final IType type = vl.getType().getBoogieType();
+						final IBoogieType type = vl.getType().getBoogieType();
 						final LocalBoogieVar bv =
 								constructLocalBoogieVar(id, proc.getIdentifier(), type, vl, declarationInformation);
 						putNew(proc.getIdentifier(), id, bv, mImplementationLocals);
@@ -573,7 +573,7 @@ public class Boogie2SmtSymbolTable {
 	 *            BoogieASTNode for which errors (e.g., unsupported syntax) are reported
 	 * @param declarationInformation
 	 */
-	private LocalBoogieVar constructLocalBoogieVar(final String identifier, final String procedure, final IType iType,
+	private LocalBoogieVar constructLocalBoogieVar(final String identifier, final String procedure, final IBoogieType iType,
 			final VarList varList, final DeclarationInformation declarationInformation) {
 		final Sort sort = mTypeSortTranslator.getSort(iType, varList);
 
@@ -600,7 +600,7 @@ public class Boogie2SmtSymbolTable {
 	 * @param boogieASTNode
 	 *            BoogieASTNode for which errors (e.g., unsupported syntax) are reported
 	 */
-	private BoogieNonOldVar constructGlobalBoogieVar(final String identifier, final IType iType,
+	private BoogieNonOldVar constructGlobalBoogieVar(final String identifier, final IBoogieType iType,
 			final VarList varlist) {
 		final Sort sort = mTypeSortTranslator.getSort(iType, varlist);
 		final String procedure = null;
@@ -674,7 +674,7 @@ public class Boogie2SmtSymbolTable {
 	}
 
 	IProgramNonOldVar constructAuxiliaryGlobalBoogieVar(final String identifier, final String procedure,
-			final IType iType, final VarList varList) {
+			final IBoogieType iType, final VarList varList) {
 		final BoogieNonOldVar bv = constructGlobalBoogieVar(identifier, iType, varList);
 		mGlobals.put(identifier, bv);
 		mOldGlobals.put(identifier, bv.getOldVar());

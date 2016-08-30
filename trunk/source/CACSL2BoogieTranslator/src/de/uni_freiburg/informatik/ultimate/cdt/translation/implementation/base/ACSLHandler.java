@@ -92,7 +92,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IA
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
@@ -613,7 +613,7 @@ public class ACSLHandler implements IACSLHandler {
         }
         
         
-        IType type = new InferredType(InferredType.Type.Unknown);
+        IBoogieType type = new InferredType(InferredType.Type.Unknown);
         final String cId = main.mCHandler.getSymbolTable()
                     .getCID4BoogieID(id, loc);
         final CType cType;
@@ -913,7 +913,7 @@ public class ACSLHandler implements IACSLHandler {
     @Override
     public Result visit(final Dispatcher main, final FreeableExpression node) {
         final ILocation loc = LocationFactory.createACSLLocation(node);
-        final IType it = new InferredType(InferredType.Type.Boolean);
+        final IBoogieType it = new InferredType(InferredType.Type.Boolean);
 
         final ArrayList<Declaration> decl = new ArrayList<Declaration>();
         final ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -941,7 +941,7 @@ public class ACSLHandler implements IACSLHandler {
     @Override
     public Result visit(final Dispatcher main, final MallocableExpression node) {
         final ILocation loc = LocationFactory.createACSLLocation(node);
-        final IType it = new InferredType(InferredType.Type.Boolean);
+        final IBoogieType it = new InferredType(InferredType.Type.Boolean);
 
         final ArrayList<Declaration> decl = new ArrayList<Declaration>();
         final ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -975,7 +975,7 @@ public class ACSLHandler implements IACSLHandler {
     @Override
     public Result visit(final Dispatcher main, final ValidExpression node) {
         final ILocation loc = LocationFactory.createACSLLocation(node);
-        final IType it = new InferredType(InferredType.Type.Boolean);
+        final IBoogieType it = new InferredType(InferredType.Type.Boolean);
 
         final ArrayList<Declaration> decl = new ArrayList<Declaration>();
         final ArrayList<Statement> stmt = new ArrayList<Statement>();

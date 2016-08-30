@@ -4,12 +4,12 @@ Bundle-Name: CDTPlugin
 Bundle-SymbolicName: CDTPlugin;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.cdt.Activator
-Require-Bundle: Library-UltimateCore,
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: BoogiePreprocessor,
  UltimateCore,
- Library-log4j,
  GUIGeneratedPreferencePages,
  org.eclipse.cdt.core,
- org.eclipse.cdt.codan.checkers,
  org.eclipse.cdt.codan.core,
  org.eclipse.cdt.codan.core.cxx,
  org.eclipse.cdt.codan.ui,
@@ -19,9 +19,5 @@ Require-Bundle: Library-UltimateCore,
  org.eclipse.ui.ide,
  org.eclipse.core.filesystem,
  org.eclipse.ui.console,
- org.eclipse.ui,
  org.eclipse.ui.navigator,
- de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator,
- BoogiePreprocessor
-Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+ de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator

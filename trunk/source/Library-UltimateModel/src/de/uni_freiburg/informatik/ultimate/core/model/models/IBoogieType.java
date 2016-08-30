@@ -36,6 +36,6 @@ import java.io.Serializable;
  * 
  * @author hoenicke
  */
-public interface IType extends Serializable{
+public interface IBoogieType extends Serializable{
 
 }

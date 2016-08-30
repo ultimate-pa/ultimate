@@ -51,18 +51,18 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 
 public class ConstExpander extends BoogieTransformer implements IUnmanagedObserver {
 
-	private final HashMap<IType, List<ConstDeclaration>> mConstDecls;
+	private final HashMap<IBoogieType, List<ConstDeclaration>> mConstDecls;
 	private final BoogiePreprocessorBacktranslator mBacktranslator;
 
 	protected ConstExpander(BoogiePreprocessorBacktranslator backtranslator) {
 		mBacktranslator = backtranslator;
-		mConstDecls = new HashMap<IType, List<ConstDeclaration>>();
+		mConstDecls = new HashMap<IBoogieType, List<ConstDeclaration>>();
 	}
 
 	@Override
@@ -105,7 +105,7 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 		final HashMap<String, List<String>> uniqueChildrens = new HashMap<String, List<String>>();
 		final HashSet<String> uniqueValues = new HashSet<String>();
 		final ASTType asttype = cdlist.get(0).getVarList().getType();
-		final IType type = asttype.getBoogieType();
+		final IBoogieType type = asttype.getBoogieType();
 		final IdentifierExpression var = new IdentifierExpression(asttype.getLocation(), type, "$$",
 		/*
 		 * FIXME : ask Jochen about storage class
@@ -311,7 +311,7 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 	private void addUniquenessAxioms(ArrayList<Declaration> newDecls, List<ConstDeclaration> cdlist) {
 		final ArrayList<String> identifiers = new ArrayList<String>();
 		final HashMap<String, VarList> nodeMap = new HashMap<>();
-		final IType type = cdlist.get(0).getVarList().getType().getBoogieType();
+		final IBoogieType type = cdlist.get(0).getVarList().getType().getBoogieType();
 		for (final ConstDeclaration c : cdlist) {
 			if (c.isUnique()) {
 				for (final String id : c.getVarList().getIdentifiers()) {
@@ -345,7 +345,7 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 		}
 	}
 
-	private void addConstDeclaration(IType type, ConstDeclaration constDecl) {
+	private void addConstDeclaration(IBoogieType type, ConstDeclaration constDecl) {
 		List<ConstDeclaration> declList = mConstDecls.get(type);
 		if (declList == null) {
 			declList = new ArrayList<ConstDeclaration>();

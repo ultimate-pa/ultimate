@@ -30,7 +30,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.test;
 
 import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +37,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IValuation;
 
 /**
@@ -50,29 +49,23 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IValuation;
 public class TestValuation implements IValuation {
 
 	@Override
-	public Map<String, Entry<de.uni_freiburg.informatik.ultimate.core.model.models.IType, List<String>>>
-			getValuesForFailurePathIndex(final int index) {
-		final Map<String, Entry<IType, List<String>>> map = new HashMap<>();
+	public Map<String, Entry<IBoogieType, List<String>>> getValuesForFailurePathIndex(final int index) {
+		final Map<String, Entry<IBoogieType, List<String>>> map = new HashMap<>();
 		switch (index) {
 		case 0:
-			map.put("x", new SimpleEntry<IType, List<String>>(BoogieType.TYPE_INT,
-					new ArrayList<String>(Arrays.asList("11"))));
-			return map;
+			map.put("x", new SimpleEntry<>(BoogieType.TYPE_INT, Arrays.asList("11")));
+			break;
 		case 1:
-			map.put("names",
-					new SimpleEntry<IType, List<String>>(
-							BoogieType.createArrayType(3, new BoogieType[] { BoogieType.TYPE_INT },
-									BoogieType.TYPE_INT),
-							new ArrayList<String>(Arrays.asList("Stefan", "Alex", "Markus"))));
-			return map;
+			map.put("names", new SimpleEntry<>(
+					BoogieType.createArrayType(3, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT),
+					Arrays.asList("Stefan", "Alex", "Markus")));
+			break;
 		default:
-			map.put("x", new SimpleEntry<IType, List<String>>(BoogieType.TYPE_INT,
-					new ArrayList<String>(Arrays.asList("11"))));
-			map.put("y", new SimpleEntry<IType, List<String>>(BoogieType.TYPE_INT,
-					new ArrayList<String>(Arrays.asList("4711"))));
-			map.put("counter", new SimpleEntry<IType, List<String>>(BoogieType.TYPE_INT,
-					new ArrayList<String>(Arrays.asList("133423421"))));
-			return map;
+			map.put("x", new SimpleEntry<>(BoogieType.TYPE_INT, Arrays.asList("11")));
+			map.put("y", new SimpleEntry<>(BoogieType.TYPE_INT, Arrays.asList("4711")));
+			map.put("counter", new SimpleEntry<>(BoogieType.TYPE_INT, Arrays.asList("133423421")));
+			break;
 		}
+		return map;
 	}
 }

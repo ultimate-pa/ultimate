@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 
 /**
  * @author Markus Lindenmann
@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
  * @author Oleksii Saukh
  * @date 02.01.2012
  */
+@FunctionalInterface
 public interface IValuation {
-
 	/**
 	 * This method returns the Variable Values for current position on the failure path. How this is done is in the
 	 * responsibility of each ModelChecker, that have to implement this interface. <br>
@@ -58,5 +58,5 @@ public interface IValuation {
 	 *            the current position on the failure path.
 	 * @return the values as Strings for the variables.
 	 */
-	Map<String, Entry<IType, List<String>>> getValuesForFailurePathIndex(final int index);
+	Map<String, Entry<IBoogieType, List<String>>> getValuesForFailurePathIndex(final int index);
 }

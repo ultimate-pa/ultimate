@@ -39,7 +39,7 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IValuation;
 
 /**
@@ -74,9 +74,9 @@ public class VariableAssignmentContentProvider implements ITreeContentProvider {
 		if (mValuation == null || index == null) {
 			return;
 		}
-		final Set<Entry<String, Entry<IType, List<String>>>> entrySet =
+		final Set<Entry<String, Entry<IBoogieType, List<String>>>> entrySet =
 				mValuation.getValuesForFailurePathIndex(index).entrySet();
-		for (final Entry<String, Entry<IType, List<String>>> entry : entrySet) {
+		for (final Entry<String, Entry<IBoogieType, List<String>>> entry : entrySet) {
 			if (entry.getValue().getKey() instanceof ArrayType) {
 				final VarAssNode parent = new VarAssNode(entry.getKey(), "");
 				final ArrayList<VarAssNode> children = new ArrayList<VarAssNode>();

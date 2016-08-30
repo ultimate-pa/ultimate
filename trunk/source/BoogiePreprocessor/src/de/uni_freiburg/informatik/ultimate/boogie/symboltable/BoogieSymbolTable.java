@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 
 /**
  * BoogieSymbolTable is a symbol table for all scopes of a Boogie program.
@@ -257,7 +257,7 @@ public class BoogieSymbolTable {
 				exp.getDeclarationInformation().getProcedure());
 	}
 
-	public IType getTypeForVariableSymbol(String symbolname, StorageClass scope, String scopeName) {
+	public IBoogieType getTypeForVariableSymbol(String symbolname, StorageClass scope, String scopeName) {
 		final Declaration decl = getDeclaration(symbolname, scope, scopeName);
 		if (decl == null) {
 			return null;
@@ -265,12 +265,12 @@ public class BoogieSymbolTable {
 		return findType(decl, symbolname);
 	}
 
-	private IType findType(Declaration decl, String symbolname) {
+	private IBoogieType findType(Declaration decl, String symbolname) {
 		if (decl instanceof VariableDeclaration) {
 			return findType(((VariableDeclaration) decl).getVariables(), symbolname);
 		} else if (decl instanceof Procedure) {
 			final Procedure proc = (Procedure) decl;
-			IType type = findType(proc.getInParams(), symbolname);
+			IBoogieType type = findType(proc.getInParams(), symbolname);
 			if (type != null) {
 				return type;
 			}
@@ -282,7 +282,7 @@ public class BoogieSymbolTable {
 		return null;
 	}
 
-	private IType findType(VarList[] vlists, String symbolname) {
+	private IBoogieType findType(VarList[] vlists, String symbolname) {
 		for (final VarList vl : vlists) {
 			for (final String s : vl.getIdentifiers()) {
 				if (s.equals(symbolname)) {
@@ -391,7 +391,7 @@ public class BoogieSymbolTable {
 			return;
 		}
 		for (final String symbol : localSymbols) {
-			final IType type = getTypeForVariableSymbol(symbol, scClass, currentFunctionSymbol);
+			final IBoogieType type = getTypeForVariableSymbol(symbol, scClass, currentFunctionSymbol);
 			builder.append("  * ").append(shorten(scClass)).append(" ").append(symbol).append(" : ").append(type)
 					.append("\n");
 		}
