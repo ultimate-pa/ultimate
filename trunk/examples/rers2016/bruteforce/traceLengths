@@ -1,16 +1,19 @@
 #! /bin/bash
 
-color1='\033[95m'
-color2='\033[94m'
-color3='\033[96m'
+color1='\033[91m'
+color2='\033[95m'
+color3='\033[94m'
+color4='\033[96m'
 resetcolor='\033[m'
 
 for i in result1?.txt; do
 	inputlength="$(grep -Poe 'input length = \K[0-9]+' "$i")"
+	runtime="$(grep -Poe 'runtime = \K\S*' "$i")"
 	tracelengths="$(grep -Poe ' -> \K[0-9]+' "$i" | sort -nr | tr '\n' ' ')"
 	errorcount="$(wc -w <<< "$tracelengths")"
 
-	printf "${color1}%s ${color2}#err=%02d ${color3}len=%02d${resetcolor}" "$i" "$errorcount" "$inputlength"
+	printf "${color1}%s ${color2}t=%s ${color3}#err=%02d ${color4}len=%02d${resetcolor}" \
+		"$i" "$runtime" "$errorcount" "$inputlength"
 	xargs printf ' %2d' <<< "$tracelengths"
 	echo
 done
