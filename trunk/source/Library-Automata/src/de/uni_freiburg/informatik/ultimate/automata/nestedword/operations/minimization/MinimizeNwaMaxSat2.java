@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -81,17 +82,18 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class MinimizeNwaMaxSat2<LETTER, STATE>
 		extends AbstractMinimizeNwaDd<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
-		
+	
+	private static final int THREE = 3;
 	private final NestedMap2<STATE, STATE, Doubleton<STATE>> mStatePairs = new NestedMap2<>();
 	private final AbstractMaxSatSolver<Doubleton<STATE>> mSolver;
-	private final Collection<Set<STATE>> mInitialEquivalenceClasses;
+	private final Iterable<Set<STATE>> mInitialEquivalenceClasses;
 	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final boolean mUseFinalStateConstraints;
-	private int mNumberClauses_Acceptance = 0;
-	private int mNumberClauses_Transitions = 0;
-	private int mNumberClauses_Transitions_Nondeterministic = 0;
-	private int mNumberClauses_Transitivity = 0;
+	private int mNumberClauses_Acceptance;
+	private int mNumberClauses_Transitions;
+	private int mNumberClauses_Transitions_Nondeterministic;
+	private int mNumberClauses_Transitivity;
 	/**
 	 * This flag can also be set for nondeterministic automata.
 	 * However, the results might not be satisfactory: all successors have to be
@@ -115,7 +117,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 			final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, true,
 				new LookaheadPartitionConstructor<LETTER, STATE>(services, operand).getResult());
 	}
@@ -143,18 +145,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final boolean addMapOldState2newState,
 			final Collection<Set<STATE>> initialEquivalenceClasses)
-					throws AutomataOperationCanceledException {
-		/*
-		 * TODO change fourth-to-last flag to 'false' to use the more general transition clauses
-		 * <p>
-		 * TODO change third-to-last flag to 'false' to use the more general solver
-		 * <p>
-		 * TODO change second-to-last flag to 'true' to use the transitivity on-the-fly
-		 * <p>
-		 * TODO change last flag to 'true' to use the transitivity on-the-fly with path compression
-		 */
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, addMapOldState2newState,
-				initialEquivalenceClasses, true, false, false, false, false);
+				initialEquivalenceClasses, true, false, false, true, false);
 	}
 	
 	/**
@@ -193,13 +186,13 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 			final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final boolean addMapOldState2newState,
-			final Collection<Set<STATE>> initialEquivalenceClasses,
+			final Iterable<Set<STATE>> initialEquivalenceClasses,
 			final boolean useFinalStateConstraints,
 			final boolean useTransitionHornClauses,
 			final boolean useHornSolver,
 			final boolean useTransitivityGenerator,
 			final boolean usePathCompression)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		super(services, stateFactory, "minimizeNwaMaxSat2", operand);
 		mOperand = operand;
 		// if (!new IsDeterministic<>(mServices, operand).getResult()) {
@@ -214,13 +207,13 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 		}
 		ScopedTransitivityGenerator<STATE> transitivityGenerator = null;
 		if (useHornSolver) {
-			mSolver = new HornMaxSatSolver<Doubleton<STATE>>(mServices);
+			mSolver = new HornMaxSatSolver<>(mServices);
 		} else {
 			if (useTransitivityGenerator) {
 				transitivityGenerator = new ScopedTransitivityGenerator<>(usePathCompression);
-				mSolver = new TransitivityGeneralMaxSatSolver<STATE>(mServices, transitivityGenerator);
+				mSolver = new TransitivityGeneralMaxSatSolver<>(mServices, transitivityGenerator);
 			} else {
-				mSolver = new GeneralMaxSatSolver<Doubleton<STATE>>(mServices);
+				mSolver = new GeneralMaxSatSolver<>(mServices);
 			}
 		}
 		
@@ -265,17 +258,16 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 		
 		if (!mUseTransitionHornClauses) {
 			// check that automaton cannot be minimized by merging states (incomplete check!)
-			final MinimizeSevpa<LETTER, STATE> minimizedAgain =
-					new MinimizeSevpa<LETTER, STATE>(mServices, getResult(), null, stateFactory, false);
+			final ShrinkNwa<LETTER, STATE> minimizedAgain = new ShrinkNwa<>(mServices, stateFactory, getResult());
 			final int minimizedAgainSize = minimizedAgain.getResult().size();
-					assert minimizedAgain.checkResult(stateFactory);
+			assert minimizedAgain.checkResult(stateFactory);
 			final int resultSize = getResult().size();
 			if (resultSize != minimizedAgainSize) {
-				return new Pair<Boolean, String>(Boolean.FALSE, String.format(
+				return new Pair<>(Boolean.FALSE, String.format(
 						"The result was still mergable from %d states to %d states.", resultSize, minimizedAgainSize));
 			}
 		}
-		return new Pair<Boolean, String>(Boolean.TRUE, "");
+		return new Pair<>(Boolean.TRUE, "");
 	}
 	
 	@SuppressWarnings("squid:S1698")
@@ -319,7 +311,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 				}
 				
 				for (int j = 0; j < i; j++) {
-					final Doubleton<STATE> doubleton = new Doubleton<STATE>(states[i], states[j]);
+					final Doubleton<STATE> doubleton = new Doubleton<>(states[i], states[j]);
 					mStatePairs.put(states[i], states[j], doubleton);
 					mStatePairs.put(states[j], states[i], doubleton);
 					mSolver.addVariable(doubleton);
@@ -356,31 +348,24 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 				final STATE[] downStates1 = constructStateArray(mOperand.getDownStates(state1));
 				for (int j = 0; j < i; j++) {
 					final STATE state2 = states[j];
-					final boolean predPairKnowToBeSimilar;
-					if (i != j) {
-						// this condition is for efficiency reasons only
-						
-						if (knownToBeDifferent(state1, state2)) {
-							// all corresponding clauses are trivially true
-							continue;
-						}
-						
-						if (!haveSameOutgoingInternalCallSymbols(state1, state2)) {
-							// not known to be different, report to the solver
-							setStatesDifferent(state1, state2);
-							
-							// all corresponding clauses are trivially true
-							continue;
-						}
-						
-						predPairKnowToBeSimilar = knownToBeSimilar(state1, state2);
-					} else {
-						predPairKnowToBeSimilar = true;
+					if (knownToBeDifferent(state1, state2)) {
+						// all corresponding clauses are trivially true
+						continue;
 					}
+					
+					if (!haveSameOutgoingInternalCallSymbols(state1, state2)) {
+						// not known to be different, report to the solver
+						setStatesDifferent(state1, state2);
+						
+						// all corresponding clauses are trivially true
+						continue;
+					}
+					
+					final boolean predPairKnowToBeSimilar = knownToBeSimilar(state1, state2);
 					
 					final Doubleton<STATE> predDoubleton =
 							getDoubleton(state1, state2, predPairKnowToBeSimilar);
-							
+					
 					if (mUseTransitionHornClauses) {
 						generateTransitionConstraint_Internal_Horn(
 								state1, state2, predDoubleton);
@@ -438,20 +423,23 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 	private void generateTransitionConstraint_Internal_General(
 			final STATE predState1, final STATE predState2,
 			final Doubleton<STATE> predDoubleton) {
-		outer: for (final OutgoingInternalTransition<LETTER, STATE> trans1 : mOperand.internalSuccessors(predState1)) {
-			final STATE succState1 = trans1.getSucc();
-			final List<STATE> succStates2 = new ArrayList<>();
-			for (final OutgoingInternalTransition<LETTER, STATE> trans2 : mOperand.internalSuccessors(predState2,
-					trans1.getLetter())) {
-				final STATE succState2 = trans2.getSucc();
-				if (knownToBeSimilar(succState1, succState2)) {
-					// clause is trivially true, continue with next state
-					continue outer;
-				}
-				succStates2.add(succState2);
+		// NOTE: We exploit the knowledge that the states have the same outgoing symbols
+		final Map<LETTER, Pair<Set<STATE>, Set<STATE>>> letter2succPairs = new HashMap<>();
+		for (final LETTER letter : mOperand.lettersInternal(predState1)) {
+			final Set<STATE> succs1 = new LinkedHashSet<>();
+			final Set<STATE> succs2 = new LinkedHashSet<>();
+			letter2succPairs.put(letter, new Pair<>(succs1, succs2));
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(predState1,
+					letter)) {
+				succs1.add(trans.getSucc());
 			}
-			generateNaryTransitionConstraint(predDoubleton, succState1, succStates2);
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(predState2,
+					letter)) {
+				succs2.add(trans.getSucc());
+			}
 		}
+		
+		generateTransitionConstraint_General_InternalCall_HelperSymmetric(predDoubleton, letter2succPairs);
 	}
 	
 	private void generateTransitionConstraint_Call_Horn(
@@ -470,19 +458,66 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 	private void generateTransitionConstraint_Call_General(
 			final STATE predState1, final STATE predState2,
 			final Doubleton<STATE> predDoubleton) {
-		outer: for (final OutgoingCallTransition<LETTER, STATE> trans1 : mOperand.callSuccessors(predState1)) {
-			final STATE succState1 = trans1.getSucc();
-			final List<STATE> succStates2 = new ArrayList<>();
-			for (final OutgoingCallTransition<LETTER, STATE> trans2 : mOperand.callSuccessors(predState2,
-					trans1.getLetter())) {
-				final STATE succState2 = trans2.getSucc();
+		// NOTE: We exploit the knowledge that the states have the same outgoing symbols
+		final Map<LETTER, Pair<Set<STATE>, Set<STATE>>> letter2succPairs = new HashMap<>();
+		for (final LETTER letter : mOperand.lettersCall(predState1)) {
+			final Set<STATE> succs1 = new LinkedHashSet<>();
+			final Set<STATE> succs2 = new LinkedHashSet<>();
+			letter2succPairs.put(letter, new Pair<>(succs1, succs2));
+			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(predState1,
+					letter)) {
+				succs1.add(trans.getSucc());
+			}
+			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(predState2,
+					letter)) {
+				succs2.add(trans.getSucc());
+			}
+		}
+		
+		generateTransitionConstraint_General_InternalCall_HelperSymmetric(predDoubleton, letter2succPairs);
+	}
+	
+	private void generateTransitionConstraint_General_InternalCall_HelperSymmetric(final Doubleton<STATE> predDoubleton,
+			final Map<LETTER, Pair<Set<STATE>, Set<STATE>>> letter2succPairs) {
+		final Collection<STATE> succs2remove = new ArrayList<>();
+		
+		for (final Pair<Set<STATE>, Set<STATE>> succPair : letter2succPairs.values()) {
+			final Set<STATE> succs2 = succPair.getSecond();
+			generateTransitionConstraint_General_InternalCall_HelperOneSide(predDoubleton, succPair.getFirst(), succs2,
+					succs2remove);
+			/*
+			 * Optimization: If a state from the second set is known to be similar to another on from the first set, we
+			 * should not try to add a clause for the other direction (as it will be found out again that they are
+			 * similar).
+			 */
+			succs2.removeAll(succs2remove);
+			
+			generateTransitionConstraint_General_InternalCall_HelperOneSide(predDoubleton, succs2, succPair.getFirst(),
+					null);
+			
+			// clear the list again to reuse it (more efficient than recreating all the time)
+			succs2remove.clear();
+		}
+	}
+	
+	private void generateTransitionConstraint_General_InternalCall_HelperOneSide(final Doubleton<STATE> predDoubleton,
+			final Iterable<STATE> succs1, final Iterable<STATE> succs2, final Collection<STATE> succs2remove) {
+		outer: for (final STATE succState1 : succs1) {
+			for (final STATE succState2 : succs2) {
 				if (knownToBeSimilar(succState1, succState2)) {
-					// clause is trivially true, continue with next state
+					// clause is trivially true
+					
+					// remember this state, it needs not be checked in the other direction
+					if (succs2remove != null) {
+						succs2remove.add(succState2);
+					}
+					
+					// continue with next state
 					continue outer;
 				}
-				succStates2.add(succState2);
 			}
-			generateNaryTransitionConstraint(predDoubleton, succState1, succStates2);
+			// create new transition clause
+			generateNaryTransitionConstraint(predDoubleton, succState1, succs2);
 		}
 	}
 	
@@ -528,29 +563,78 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 			return;
 		}
 		
-		final Doubleton<STATE> hierPredDoubleton =
-				getDoubletonIfNotSimilar(hierPredState1, hierPredState2);
-		if (!haveSameOutgoingReturnSymbols(linPredState1, hierPredState1, linPredState2, hierPredState2)) {
+		final Doubleton<STATE> hierPredDoubleton = getDoubletonIfNotSimilar(hierPredState1, hierPredState2);
+		final Set<LETTER> sameOutgoingReturnSymbols =
+				getSameOutgoingReturnSymbols(linPredState1, hierPredState1, linPredState2, hierPredState2);
+		if (sameOutgoingReturnSymbols == null) {
 			addThreeLiteralHornClause(linPredDoubleton, hierPredDoubleton, null);
 		} else {
 			// both DoubleDeckers have same outgoing return symbols
-			outer: for (final OutgoingReturnTransition<LETTER, STATE> trans1 : mOperand
-					.returnSuccessorsGivenHier(linPredState1, hierPredState1)) {
-				final STATE succState1 = trans1.getSucc();
-				final List<STATE> succStates2 = new ArrayList<>();
-				for (final OutgoingReturnTransition<LETTER, STATE> trans2 : mOperand.returnSuccessors(linPredState2,
-						hierPredState2,
-						trans1.getLetter())) {
-					final STATE succState2 = trans2.getSucc();
-					if (knownToBeSimilar(succState1, succState2)) {
-						// clause is trivially true, continue with next state
-						continue outer;
-					}
-					succStates2.add(succState2);
+			
+			// NOTE: We exploit the knowledge that the states have the same outgoing symbols
+			final Map<LETTER, Pair<Set<STATE>, Set<STATE>>> letter2succPairs = new HashMap<>();
+			for (final LETTER letter : sameOutgoingReturnSymbols) {
+				final Set<STATE> succs1 = new LinkedHashSet<>();
+				final Set<STATE> succs2 = new LinkedHashSet<>();
+				letter2succPairs.put(letter, new Pair<>(succs1, succs2));
+				for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(linPredState1,
+						hierPredState1, letter)) {
+					succs1.add(trans.getSucc());
 				}
-				generateNaryTransitionConstraint(linPredDoubleton,
-						hierPredDoubleton, succState1, succStates2);
+				for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(linPredState2,
+						hierPredState2, letter)) {
+					succs2.add(trans.getSucc());
+				}
 			}
+			
+			generateTransitionConstraint_General_Return_HelperSymmetric(linPredDoubleton, hierPredDoubleton,
+					letter2succPairs);
+		}
+	}
+	
+	private void generateTransitionConstraint_General_Return_HelperSymmetric(final Doubleton<STATE> linPredDoubleton,
+			final Doubleton<STATE> hierPredDoubleton,
+			final Map<LETTER, Pair<Set<STATE>, Set<STATE>>> letter2succPairs) {
+		final Collection<STATE> succs2remove = new ArrayList<>();
+		
+		for (final Pair<Set<STATE>, Set<STATE>> succPair : letter2succPairs.values()) {
+			final Set<STATE> succs2 = succPair.getSecond();
+			generateTransitionConstraint_General_Return_HelperOneSide(linPredDoubleton, hierPredDoubleton,
+					succPair.getFirst(), succs2, succs2remove);
+			/*
+			 * Optimization: If a state from the second set is known to be similar to another on from the first set, we
+			 * should not try to add a clause for the other direction (as it will be found out again that they are
+			 * similar).
+			 */
+			succs2.removeAll(succs2remove);
+			
+			generateTransitionConstraint_General_Return_HelperOneSide(linPredDoubleton, hierPredDoubleton, succs2,
+					succPair.getFirst(), null);
+			
+			// clear the list again to reuse it (more efficient than recreating all the time)
+			succs2remove.clear();
+		}
+	}
+	
+	private void generateTransitionConstraint_General_Return_HelperOneSide(final Doubleton<STATE> linPredDoubleton,
+			final Doubleton<STATE> hierPredDoubleton, final Set<STATE> succs1, final Set<STATE> succs2,
+			final Collection<STATE> succs2remove) {
+		outer: for (final STATE succState1 : succs1) {
+			for (final STATE succState2 : succs2) {
+				if (knownToBeSimilar(succState1, succState2)) {
+					// clause is trivially true
+					
+					// remember this state, it needs not be checked in the other direction
+					if (succs2remove != null) {
+						succs2remove.add(succState2);
+					}
+					
+					// continue with next state
+					continue outer;
+				}
+			}
+			// create new transition clause
+			generateNaryTransitionConstraint(linPredDoubleton, hierPredDoubleton, succState1, succs2);
 		}
 	}
 	
@@ -565,6 +649,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 	}
 	
 	/**
+	 * Getter for a {@link Doubleton}.
+	 * 
 	 * @param state1
 	 *            state 1
 	 * @param state2
@@ -600,7 +686,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 	@SuppressWarnings("unchecked")
 	private void generateNaryTransitionConstraint(
 			final Doubleton<STATE> predDoubleton,
-			final STATE succState1, final List<STATE> succStates2) {
+			final STATE succState1, final Iterable<STATE> succStates2) {
 		final List<Doubleton<STATE>> succDoubletons = new ArrayList<>();
 		for (final STATE succState2 : succStates2) {
 			if (!knownToBeDifferent(succState1, succState2)) {
@@ -621,7 +707,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 	private void generateNaryTransitionConstraint(
 			final Doubleton<STATE> linPredDoubleton,
 			final Doubleton<STATE> hierPredDoubleton, final STATE succState1,
-			final List<STATE> succStates2) {
+			final Iterable<STATE> succStates2) {
 		final List<Doubleton<STATE>> succDoubletons = new ArrayList<>();
 		for (final STATE succState2 : succStates2) {
 			if (!knownToBeDifferent(succState1, succState2)) {
@@ -726,8 +812,17 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 	 * @return true iff two states have the same outgoing return symbols wrt.
 	 *         hierarchical predecessors
 	 */
-	private boolean haveSameOutgoingReturnSymbols(final STATE up1, final STATE down1, final STATE up2,
-			final STATE down2) {
+	private boolean haveSameOutgoingReturnSymbols(final STATE up1, final STATE down1,
+			final STATE up2, final STATE down2) {
+		return getSameOutgoingReturnSymbols(up1, down1, up2, down2) != null;
+	}
+	
+	/**
+	 * @return A set of letters iff the two states have the same outgoing return symbols with respect to the
+	 *         hierarchical predecessors, {@code null} otherwise.
+	 */
+	private Set<LETTER> getSameOutgoingReturnSymbols(final STATE up1, final STATE down1,
+			final STATE up2, final STATE down2) {
 		final Set<LETTER> returnLetters1 = new HashSet<>();
 		for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessorsGivenHier(up1, down1)) {
 			returnLetters1.add(trans.getLetter());
@@ -736,7 +831,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 		for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessorsGivenHier(up2, down2)) {
 			returnLetters2.add(trans.getLetter());
 		}
-		return returnLetters1.equals(returnLetters2);
+		return returnLetters1.equals(returnLetters2) ? returnLetters1 : null;
 	}
 	
 	private VariableStatus resultFromSolver(final STATE inputState1,
@@ -775,14 +870,15 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 		}
 	}
 	
-	private void generateTransitivityConstraints() throws AutomataOperationCanceledException {
+private void generateTransitivityConstraints() throws AutomataOperationCanceledException {
 		for (final Set<STATE> equivalenceClass : mInitialEquivalenceClasses) {
 			final STATE[] states = constructStateArray(equivalenceClass);
 			for (int i = 0; i < states.length; i++) {
 				for (int j = 0; j < i; j++) {
-					// TODO: use already computed solver information to save
-					// some time
-					// will not safe much, because solver does this quickly
+					/*
+					 * TODO: use already computed solver information to save some time; will not safe much, because
+					 * the solver does this quickly
+					 */
 					for (int k = 0; k < j; k++) {
 						final Doubleton<STATE> doubleton_ij = mStatePairs.get(states[i], states[j]);
 						final Doubleton<STATE> doubleton_jk = mStatePairs.get(states[j], states[k]);
@@ -790,7 +886,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 						mSolver.addHornClause(consArr(doubleton_ij, doubleton_jk), doubleton_ik);
 						mSolver.addHornClause(consArr(doubleton_jk, doubleton_ik), doubleton_ij);
 						mSolver.addHornClause(consArr(doubleton_ik, doubleton_ij), doubleton_jk);
-						mNumberClauses_Transitivity += 3;
+						mNumberClauses_Transitivity += THREE;
 					}
 					checkTimeout();
 				}
@@ -808,7 +904,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 		return doubletons.toArray(new Doubleton[doubletons.size()]);
 	}
 	
-	private <T> boolean voidOfNull(final T[] positiveAtoms) {
+	private static <T> boolean voidOfNull(final T[] positiveAtoms) {
 		for (final T elem : positiveAtoms) {
 			if (elem == null) {
 				return false;
@@ -823,3 +919,5 @@ public class MinimizeNwaMaxSat2<LETTER, STATE>
 		}
 	}
 }
+
+
