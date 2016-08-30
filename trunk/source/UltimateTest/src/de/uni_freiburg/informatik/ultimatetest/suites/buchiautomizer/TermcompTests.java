@@ -42,9 +42,9 @@ public class TermcompTests extends
 	
 	
 	private static final String[] mUltimateRepository = {
-		"examples/termination/termcomp2015/C/",
-		"examples/termination/termcomp2015/C_Integer/Stroeder_15",
-		"examples/termination/termcomp2015/C_Integer/Ton_Chanh_15",
+		"examples/termination/termcomp2016/C/",
+		"examples/termination/termcomp2016/C_Integer/Stroeder_15",
+		"examples/termination/termcomp2016/C_Integer/Ton_Chanh_15",
 	};
 	
 	/**
@@ -64,12 +64,12 @@ public class TermcompTests extends
 	 * 
 	 */
 	private static final String[] mSettings = {
-		"buchiAutomizer/termcomp2015_Tests.epf",
+		"buchiAutomizer/termcomp2016.epf",
 	};
 	
 	
 	private static final String[] mCToolchains = {
-		"AutomizerAndBuchiAutomizerCWithBlockEncoding.xml",
+		"AutomizerAndBuchiAutomizerCInlineWithBlockEncoding.xml",
 //		"BuchiAutomizerCInlineWithBlockEncoding.xml",
 	};
 
