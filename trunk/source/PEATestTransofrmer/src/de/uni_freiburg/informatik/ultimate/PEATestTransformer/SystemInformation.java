@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.PEATestTransformer;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -18,19 +19,24 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 public class SystemInformation {
 	
 	//input and output variables of the System 
-	private HashSet<String> inputVariables = new HashSet<String>();
-	private HashSet<String> outputVariables = new HashSet<String>();
+	private HashMap<String, String> inputVariables = new HashMap<String, String>();
+	private HashMap<String, String> outputVariables = new HashMap<String, String>();
+	private HashMap<String, String> internalVariables = new HashMap<String, String>();
 	//information which test to conduct
 	//TODO:private TestInformation 
 	
 	//TODO: initial assignment for variables
 	
-	public void addInputVariable(String ident){
-		this.inputVariables.add(ident);
+	public void addInputVariable(String ident, String type){
+		this.inputVariables.put(ident, type);
 	}
 	
-	public void addOutputVariable(String ident){
-		this.outputVariables.add(ident);
+	public void addOutputVariable(String ident, String type){
+		this.outputVariables.put(ident, type);
+	}
+	
+	public void addInternalVariable(String ident, String type){
+		this.internalVariables.put(ident, type);
 	}
 	
 	

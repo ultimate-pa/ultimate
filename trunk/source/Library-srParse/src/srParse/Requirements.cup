@@ -147,9 +147,9 @@ terminal PLUS, MINUS;
 terminal TIMES, DIVIDE, MOD;
 terminal TRUE, FALSE;
 terminal String ID;
-terminal String NUMBER;
-terminal String BOOGIENUMBER;
 terminal String REALNUMBER;
+terminal String NUMBER;
+
 
 /* Non-terminals */
 non terminal CDD expression, expr;
@@ -347,10 +347,10 @@ expr7NI ::= MINUS expr7NI:e
         | expr9NI:e {:RESULT = e;:}
         ;
 
-expr9NI ::= NUMBER:n
-	  {: RESULT = new IntegerLiteral(getLocation(n$,n$,false), n); :}
-	| REALNUMBER:n
+expr9NI ::= REALNUMBER:n
 	  {: RESULT = new RealLiteral(getLocation(n$,n$,false), n); :}
+	| NUMBER:n
+	  {: RESULT = new IntegerLiteral(getLocation(n$,n$,false), n); :}
 	| cid:i
 	  {: RESULT = new IdentifierExpression(getLocation(i$,i$,false), i); :}
 	| bool:b 

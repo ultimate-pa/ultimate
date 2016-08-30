@@ -74,7 +74,7 @@ public class SimplePositiveTestTranslator extends BasicTranslator {
 			conjunction.add(this.generateBinaryLogicExpression(location, disjunctsPerPea, BinaryExpression.Operator.LOGICOR));
 		}
 		for(String var: this.vars){
-			//only fix input vars, rest will normalize from there on
+			//only fix input vars, rest will be determined from the input
 			if(this.sysInfo.isInput(var)){
 				conjunction.add(this.sysInfo.getInitialAssignmentPredicate(var));
 			}

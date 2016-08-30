@@ -425,7 +425,7 @@ public class BasicTranslator {
 	}
 	
 	/**
-	 * generate "assume pc== 0 ... " statements for initialization of the autmoata.
+	 * generate "assume pc== 0 ... " statements for initialization of the automaton.
 	 * @param location
 	 * @param peas
 	 * @return
