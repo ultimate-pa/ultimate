@@ -37,15 +37,23 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 /**
  * Factory for {@link NestedWordAutomaton} objects.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class NestedWordAutomatonFactory<LETTER, STATE>
 		extends AAutomatonFactory<LETTER, STATE> {
 	private final IUltimateServiceProvider mServices;
 	
 	/**
-	 * @param automaton nested word automaton
-	 * @param services Ultimate services
+	 * Constructor.
+	 * 
+	 * @param automaton
+	 *            nested word automaton
+	 * @param services
+	 *            Ultimate services
 	 */
 	public NestedWordAutomatonFactory(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
@@ -55,19 +63,21 @@ public class NestedWordAutomatonFactory<LETTER, STATE>
 	}
 	
 	/**
-	 * @param automaton automaton interface
+	 * Casts the automaton interface to a concrete class.
+	 * 
+	 * @param automaton
+	 *            automaton interface
 	 * @return cast automaton
 	 */
-	private NestedWordAutomaton<LETTER, STATE>
-			getNWA(final INestedWordAutomaton<LETTER, STATE> automaton) {
+	private NestedWordAutomaton<LETTER, STATE> getNwa(final INestedWordAutomaton<LETTER, STATE> automaton) {
 		return (NestedWordAutomaton<LETTER, STATE>) automaton;
 	}
 	
 	@Override
 	protected INestedWordAutomaton<LETTER, STATE> createWithAlphabets(
-			Set<LETTER> internalAlphabet, Set<LETTER> callAlphabet,
-			Set<LETTER> returnAlphabet) {
-		return new NestedWordAutomaton<LETTER, STATE>(
+			final Set<LETTER> internalAlphabet, final Set<LETTER> callAlphabet,
+			final Set<LETTER> returnAlphabet) {
+		return new NestedWordAutomaton<>(
 				new AutomataLibraryServices(mServices), internalAlphabet,
 				callAlphabet, returnAlphabet, mAutomaton.getStateFactory());
 	}
@@ -75,21 +85,21 @@ public class NestedWordAutomatonFactory<LETTER, STATE>
 	@Override
 	public void addState(final INestedWordAutomaton<LETTER, STATE> automaton,
 			final STATE state, final boolean isInitial, final boolean isFinal) {
-		getNWA(automaton).addState(isInitial, isFinal, state);
+		getNwa(automaton).addState(isInitial, isFinal, state);
 	}
 	
 	@Override
 	public void addInternalTransition(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final STATE pred, final LETTER letter, final STATE succ) {
-		getNWA(automaton).addInternalTransition(pred, letter, succ);
+		getNwa(automaton).addInternalTransition(pred, letter, succ);
 	}
 	
 	@Override
 	public void addCallTransition(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final STATE pred, final LETTER letter, final STATE succ) {
-		getNWA(automaton).addCallTransition(pred, letter, succ);
+		getNwa(automaton).addCallTransition(pred, letter, succ);
 	}
 	
 	@Override
@@ -97,6 +107,6 @@ public class NestedWordAutomatonFactory<LETTER, STATE>
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final STATE pred, final STATE hier, final LETTER letter,
 			final STATE succ) {
-		getNWA(automaton).addReturnTransition(pred, hier, letter, succ);
+		getNwa(automaton).addReturnTransition(pred, hier, letter, succ);
 	}
 }

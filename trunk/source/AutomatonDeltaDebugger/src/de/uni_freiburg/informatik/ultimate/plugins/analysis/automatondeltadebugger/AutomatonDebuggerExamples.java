@@ -98,31 +98,40 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	public IOperation<LETTER, STATE> getOperation(final EOperationType type,
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final IStateFactory<STATE> factory) throws Throwable {
+		final IOperation<LETTER, STATE> operation;
 		switch (type) {
 			case MINIMIZE_NWA_MAXSAT:
-				return minimizeNwaMaxSat(automaton, factory);
+				operation = minimizeNwaMaxSat(automaton, factory);
+				break;
 			
 			case MINIMIZE_NWA_MAXSAT2:
-				return minimizeNwaMaxSat2(automaton, factory);
+				operation = minimizeNwaMaxSat2(automaton, factory);
+				break;
 			
 			case REDUCE_NWA_DIRECT_SIMULATION:
-				return reduceNwaDirectSimulation(automaton, factory);
+				operation = reduceNwaDirectSimulation(automaton, factory);
+				break;
 			
 			case REDUCE_NWA_DELAYED_SIMULATION:
-				return reduceNwaDelayedSimulation(automaton, factory);
+				operation = reduceNwaDelayedSimulation(automaton, factory);
+				break;
 			
 			case SHRINK_NWA:
-				return shrinkNwa(automaton, factory);
+				operation = shrinkNwa(automaton, factory);
+				break;
 			
 			case BUCHI_REDUCE:
-				return buchiReduce(automaton, factory);
+				operation = buchiReduce(automaton, factory);
+				break;
 			
 			case COMPLEMENT:
-				return complement(automaton, factory);
+				operation = complement(automaton, factory);
+				break;
 			
 			default:
 				throw new IllegalArgumentException("Unknown operation.");
 		}
+		return operation;
 	}
 	
 	/**
@@ -139,7 +148,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 			final IStateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveUnreachable<LETTER, STATE>(mServices, automaton).getResult();
-		return new MinimizeNwaMaxSAT<LETTER, STATE>(mServices, factory, preprocessed);
+		return new MinimizeNwaMaxSAT<>(mServices, factory, preprocessed);
 	}
 	
 	/**
@@ -156,7 +165,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 			final IStateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveDeadEnds<LETTER, STATE>(mServices, automaton).getResult();
-		return new MinimizeNwaMaxSat2<LETTER, STATE>(mServices, factory, preprocessed);
+		return new MinimizeNwaMaxSat2<>(mServices, factory, preprocessed);
 	}
 	
 	/**
@@ -173,7 +182,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 			final IStateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveDeadEnds<LETTER, STATE>(mServices, automaton).getResult();
-		return new ReduceNwaDirectSimulation<LETTER, STATE>(mServices, factory, preprocessed, false);
+		return new ReduceNwaDirectSimulation<>(mServices, factory, preprocessed, false);
 	}
 	
 	/**
@@ -190,7 +199,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 			final IStateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveDeadEnds<LETTER, STATE>(mServices, automaton).getResult();
-		return new ReduceNwaDelayedSimulation<LETTER, STATE>(mServices, factory, preprocessed, false);
+		return new ReduceNwaDelayedSimulation<>(mServices, factory, preprocessed, false);
 	}
 	
 	/**
@@ -207,7 +216,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 			final IStateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveUnreachable<LETTER, STATE>(mServices, automaton).getResult();
-		return new ShrinkNwa<LETTER, STATE>(mServices, factory, preprocessed);
+		return new ShrinkNwa<>(mServices, factory, preprocessed);
 	}
 	
 	/**
@@ -224,7 +233,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 			final IStateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveDeadEnds<LETTER, STATE>(mServices, automaton).getResult();
-		return new BuchiReduce<LETTER, STATE>(mServices, factory, preprocessed);
+		return new BuchiReduce<>(mServices, factory, preprocessed);
 	}
 	
 	/**
