@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2013-2015 Betim Musa (musab@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2013-2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE AutomataScriptInterpreter plug-in.
@@ -1773,18 +1774,23 @@ public class TestFileInterpreter implements IMessagePrinter {
 	
 	/**
 	 * Checks if the given class object implements the IOperation interface.
+	 * <p>
+	 * The check also checks whether a superclass implements the interface.
 	 * 
-	 * @param c
+	 * @param clazzIn
 	 *            the class object to check
 	 * @return true if and only if the class object c implements the IOperation interface. Otherwise false.
 	 */
-	private static boolean classImplementsIOperationInterface(final Class<?> c) {
-		final Class<?>[] implementedInterfaces = c.getInterfaces();
-		for (final Class<?> interFace : implementedInterfaces) {
-			if (interFace.equals(IOperation.class)) {
-				return true;
+	private static boolean classImplementsIOperationInterface(final Class<?> clazzIn) {
+		Class<?> clazz = clazzIn;
+		do {
+			final Class<?>[] implementedInterfaces = clazz.getInterfaces();
+			for (final Class<?> interFace : implementedInterfaces) {
+				if (interFace.equals(IOperation.class)) {
+					return true;
+				}
 			}
-		}
+		} while ((clazz = clazz.getSuperclass()) != null);
 		return false;
 	}
 	
