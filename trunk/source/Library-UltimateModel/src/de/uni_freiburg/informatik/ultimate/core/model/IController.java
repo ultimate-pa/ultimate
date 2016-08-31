@@ -100,7 +100,7 @@ public interface IController<T> extends IUltimatePlugin {
 	void displayToolchainResultProgramUnknown(final String description);
 
 	/**
-	 * Is called by the core if the controller should display an exception to the user
+	 * Is called by the core if the controller should display an exception to the user.
 	 *
 	 * @param description
 	 *            A message to the user saying why or where the exception occurred.

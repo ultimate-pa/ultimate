@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.Log4JLogging
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.PluginType;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.SubchainType;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
@@ -290,10 +291,16 @@ public class ToolchainManager {
 							new BenchmarkResult<Double>(Activator.PLUGIN_ID, "Toolchain Benchmarks", mBenchmark));
 
 				}
-
+				// TODO: Remove the result notifier
 				new ResultNotifier(mCurrentController, mToolchainData.getServices()).processResults();
-				mModelManager.removeAll();
+				final boolean appendCompleteLongDescription =
+						CorePreferenceInitializer.getPreferenceProvider(mToolchainData.getServices())
+								.getBoolean(CorePreferenceInitializer.LABEL_LONG_RESULT);
 				mLogger.info("#######################  End " + getLogPrefix() + " #######################");
+				// TODO: Move this logging call to the different controllers
+				ResultUtil.logResults(mToolchainData.getServices().getLoggingService().getControllerLogger(),
+						resultService, appendCompleteLongDescription);
+				mModelManager.removeAll();
 			}
 
 			return ReturnCode.Ok;

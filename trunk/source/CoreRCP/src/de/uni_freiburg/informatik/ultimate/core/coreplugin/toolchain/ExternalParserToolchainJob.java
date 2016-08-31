@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain;
@@ -47,30 +47,31 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 	private final IElement mAST;
 	private final ModelType mOutputDefinition;
 
-	public ExternalParserToolchainJob(String name, ICore<ToolchainListType> core,
-			IController<ToolchainListType> controller, IElement ast, ModelType outputDefinition, ILogger logger) {
+	public ExternalParserToolchainJob(final String name, final ICore<ToolchainListType> core,
+			final IController<ToolchainListType> controller, final IElement ast, final ModelType outputDefinition,
+			final ILogger logger) {
 		super(name, core, controller, logger);
 		mAST = ast;
 		mOutputDefinition = outputDefinition;
 	}
 
 	@Override
-	protected IStatus runToolchainKeepToolchain(IProgressMonitor monitor) {
+	protected IStatus runToolchainKeepToolchain(final IProgressMonitor monitor) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	protected IStatus runToolchainKeepInput(IProgressMonitor monitor) {
+	protected IStatus runToolchainKeepInput(final IProgressMonitor monitor) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	protected IStatus rerunToolchain(IProgressMonitor monitor) {
+	protected IStatus rerunToolchain(final IProgressMonitor monitor) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	protected IStatus runToolchainDefault(IProgressMonitor monitor) {
+	protected IStatus runToolchainDefault(final IProgressMonitor monitor) {
 		final IToolchainProgressMonitor tpm = RcpProgressMonitorWrapper.create(monitor);
 		IStatus returnstatus = Status.OK_STATUS;
 		tpm.beginTask(getName(), IProgressMonitor.UNKNOWN);
@@ -92,7 +93,7 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 				mChain = currentToolchain.makeToolSelection(tpm);
 				if (mChain == null) {
 					mLogger.warn("Toolchain selection failed, aborting...");
-					return new Status(Status.CANCEL, Activator.PLUGIN_ID, "Toolchain selection canceled");
+					return new Status(IStatus.CANCEL, Activator.PLUGIN_ID, "Toolchain selection canceled");
 				}
 				setServices(mChain.getServices());
 			}
@@ -111,7 +112,6 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 			mServices.getResultService().reportResult(idOfCore, new ExceptionOrErrorResult(idOfCore, e));
 		} finally {
 			tpm.worked(1);
-			logResults();
 			releaseToolchain(currentToolchain);
 			// TODO: Maybe we need to destroy the storage here, but I think not.
 			tpm.done();
@@ -123,10 +123,10 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 	/**
 	 * This method releases the active toolchain back to the core. Overwrite this method if you want to delay the
 	 * release of the toolchain.
-	 * 
+	 *
 	 * @param currentToolchain
 	 */
-	protected void releaseToolchain(IToolchain<ToolchainListType> chain) {
+	protected void releaseToolchain(final IToolchain<ToolchainListType> chain) {
 		mCore.releaseToolchain(chain);
 	}
 
