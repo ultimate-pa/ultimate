@@ -2,27 +2,27 @@
  * Copyright (C) 2007-2015 Christian Ortolf
  * Copyright (C) 2007-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE DebugGUI plug-in.
- * 
+ *
  * The ULTIMATE DebugGUI plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE DebugGUI plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE DebugGUI plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE DebugGUI plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -60,9 +60,9 @@ import de.uni_freiburg.informatik.ultimate.gui.dialogs.ParserChooseDialog;
 
 /**
  * GUIController is the IController<ToolchainListType> implementation of the UltimateDebug GUI
- * 
+ *
  * @author dietsch
- * 
+ *
  */
 public class GuiController implements IController<ToolchainListType> {
 
@@ -83,7 +83,7 @@ public class GuiController implements IController<ToolchainListType> {
 
 	/**
 	 * Initialization of Controller. The GUI is created here. Note: This methods blocks until the GUI is closed.
-	 * 
+	 *
 	 * @return the exit code for the application
 	 */
 	@Override
@@ -95,33 +95,34 @@ public class GuiController implements IController<ToolchainListType> {
 		mLogger = mLoggingService.getControllerLogger();
 		mCore = core;
 		mDisplay = PlatformUI.createDisplay();
+		if (mDisplay == null) {
+			mLogger.fatal("PlatformUI.createDisplay() delivered null-value, cannot create workbench, exiting...");
+			return -1;
+		}
 
 		mParser = null;
-		mModels = new ArrayList<String>();
-		mLogger.debug("Creating Workbench ...");
-		mLogger.debug("--------------------------------------------------------------------------------");
+		mModels = new ArrayList<>();
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Creating Workbench ...");
+			mLogger.debug("--------------------------------------------------------------------------------");
+		}
 		int returnCode = -1;
 		final ApplicationWorkbenchAdvisor workbenchAdvisor = new ApplicationWorkbenchAdvisor();
-		if (mDisplay != null && workbenchAdvisor != null) {
-			mTrayIconNotifier = new TrayIconNotifier(workbenchAdvisor);
-			workbenchAdvisor.init(mCore, mTrayIconNotifier, this, mLogger);
-			try {
-				returnCode = PlatformUI.createAndRunWorkbench(mDisplay, workbenchAdvisor);
+		mTrayIconNotifier = new TrayIconNotifier(workbenchAdvisor);
+		workbenchAdvisor.init(mCore, mTrayIconNotifier, this, mLogger);
+		try {
+			returnCode = PlatformUI.createAndRunWorkbench(mDisplay, workbenchAdvisor);
+			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("GUI return code: " + returnCode);
-				return returnCode;
-			} catch (final Exception ex) {
-				mLogger.fatal("An exception occured", ex);
-				return returnCode;
-			} finally {
-				setCurrentToolchain(null);
-				mDisplay.dispose();
 			}
-
-		} else {
-			mLogger.fatal("PlatformUI.createDisplay() delivered null-value, cannot create workbench, exiting...");
-
+			return returnCode;
+		} catch (final Exception ex) {
+			mLogger.fatal("An exception occured", ex);
+			return returnCode;
+		} finally {
+			setCurrentToolchain(null);
+			mDisplay.dispose();
 		}
-		return returnCode;
 	}
 
 	@Override
@@ -138,18 +139,19 @@ public class GuiController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public synchronized IToolchainData<ToolchainListType> selectTools(final List<ITool> t) {
-		return selectTools(t, Collections.EMPTY_LIST);
+	public synchronized IToolchainData<ToolchainListType> selectTools(final List<ITool> tools) {
+		final List<ITool> previous = Collections.emptyList();
+		return selectTools(tools, previous);
 	}
 
-	private synchronized IToolchainData<ToolchainListType> selectTools(final List<ITool> t, final List<ITool> previous) {
+	private synchronized IToolchainData<ToolchainListType> selectTools(final List<ITool> tools,
+			final List<ITool> previous) {
 		mDisplay.syncExec(new Runnable() {
 			@Override
 			public void run() {
 				final Shell shell = new Shell(mDisplay);
 				try {
-					mTools = new AnalysisChooseDialog(mLogger, shell, t, previous, mCore).open();
+					mTools = new AnalysisChooseDialog(mLogger, shell, tools, previous, mCore).open();
 				} catch (final FileNotFoundException e) {
 					MessageDialog.openError(shell, "An error occured", "Toolchain XML file was not found.");
 
@@ -200,7 +202,7 @@ public class GuiController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public void displayToolchainResultProgramUnknown(String description) {
+	public void displayToolchainResultProgramUnknown(final String description) {
 		mTrayIconNotifier.showTrayBalloon("Program could not be checked",
 				"Ultimate could not prove your program: " + description, SWT.ICON_INFORMATION);
 
@@ -216,8 +218,8 @@ public class GuiController implements IController<ToolchainListType> {
 		return null;
 	}
 
-	public void setCurrentToolchain(IToolchain<ToolchainListType> toolchain) {
-		if (mCurrentToolchain != null && mCurrentToolchain != toolchain) {
+	public void setCurrentToolchain(final IToolchain<ToolchainListType> toolchain) {
+		if (mCurrentToolchain != null && !mCurrentToolchain.equals(toolchain)) {
 			mCore.releaseToolchain(mCurrentToolchain);
 		}
 		mCurrentToolchain = toolchain;
