@@ -3,86 +3,83 @@
  * Copyright (C) 2012-2015 Evren Ermis
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.core.coreplugin;
+package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
 import java.util.List;
+import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtElement;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
-import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 
-public class ResultNotifier {
+/**
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+public final class ResultSummarizer {
 
-	private enum ToolchainResult {
-		NORESULT(-1),
-		GENERICRESULT(0), 
-		CORRECT(1), 
-		UNPROVABLE(2), 
-		TIMEOUT(3), 
-		INCORRECT(4), 
-		SYNTAXERROR(5);
+	/**
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	public enum ToolchainResult {
+		NORESULT(-1), GENERICRESULT(0), CORRECT(1), UNPROVABLE(2), TIMEOUT(3), INCORRECT(4), SYNTAXERROR(5);
 
 		private int mValue;
 
-		ToolchainResult(int i) {
+		ToolchainResult(final int i) {
 			mValue = i;
 		}
 
-		boolean isLess(ToolchainResult other) {
+		boolean isLess(final ToolchainResult other) {
 			return mValue < other.mValue;
 		}
 
-		boolean isLessOrEqual(ToolchainResult other) {
+		boolean isLessOrEqual(final ToolchainResult other) {
 			return mValue <= other.mValue;
 		}
 	}
 
-	private final IController mController;
-	private final ILogger mLogger;
-	private final IUltimateServiceProvider mServices;
+	private ToolchainResult mSummary;
+	private String mDescription;
 
-	public ResultNotifier(IController controller, IUltimateServiceProvider services) {
-		assert services != null;
-		mController = controller;
-		mServices = services;
-		mLogger = mServices.getLoggingService().getControllerLogger();
+	public ResultSummarizer(final IResultService resultService) {
+		processResults(resultService.getResults());
 	}
 
-	public void processResults() {
-		ToolchainResult toolchainResult = ToolchainResult.NORESULT;
-		String description = "Toolchain returned no Result.";
+	public ResultSummarizer(final Map<String, List<IResult>> results) {
+		processResults(results);
+	}
 
-		for (final List<IResult> PluginResults : mServices.getResultService().getResults().values()) {
+	private void processResults(final Map<String, List<IResult>> results) {
+		ToolchainResult toolchainResult = ToolchainResult.NORESULT;
+		String description = "Toolchain returned no result.";
+
+		for (final List<IResult> PluginResults : results.values()) {
 			for (final IResult result : PluginResults) {
 				if (result instanceof SyntaxErrorResult) {
 					toolchainResult = ToolchainResult.SYNTAXERROR;
@@ -113,36 +110,45 @@ public class ResultNotifier {
 				}
 			}
 		}
-		switch (toolchainResult) {
+		mSummary = toolchainResult;
+		mDescription = description;
+	}
+
+	public ToolchainResult getResultSummary() {
+		return mSummary;
+	}
+
+	public String getResultDescription() {
+		return mDescription;
+	}
+
+	public String getOldResultMessage() {
+		switch (getResultSummary()) {
 		case SYNTAXERROR:
 		case UNPROVABLE:
 		case TIMEOUT:
 		case NORESULT:
-			programUnknown(description);
-			break;
+			return programUnknown(getResultDescription());
 		case INCORRECT:
-			programIncorrect();
-			break;
+			return programIncorrect();
 		case CORRECT:
-			programCorrect();
-			break;
+			return programCorrect();
 		case GENERICRESULT:
-			mLogger.info(description);
-			break;
+			return getResultDescription();
 		default:
-			throw new AssertionError("unknown result");
+			throw new UnsupportedOperationException("unknown result " + getResultSummary());
 		}
 	}
 
-	private void programCorrect() {
-		mController.displayToolchainResultProgramCorrect();
+	private String programCorrect() {
+		return "RESULT: Ultimate proved your program to be correct!";
 	}
 
-	private void programIncorrect() {
-		mController.displayToolchainResultProgramIncorrect();
+	private String programIncorrect() {
+		return "RESULT: Ultimate proved your program to be incorrect!";
 	}
 
-	private void programUnknown(final String text) {
-		mController.displayToolchainResultProgramUnknown(text);
+	private String programUnknown(final String text) {
+		return "RESULT: Ultimate could not prove your program: " + text;
 	}
 }

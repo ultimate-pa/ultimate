@@ -1,13 +1,15 @@
 package de.uni_freiburg.informatik.ultimate.automata.tree;
 
-public interface ITreeRun<LETTER> {
-	
-	//public Word<LETTER> getWord();
-	
-	//public LETTER getSymbol(int i);
-	
-	//public int getLength();
-	
-	public LETTER getRoot();
+import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 
+public interface ITreeRun<LETTER, STATE> {
+	
+	public ITreeAutomaton<LETTER, STATE> getAutomaton();
+	
+	public Tree<LETTER> getTree();
+	
+	public STATE getRoot();
+	
+	public LETTER getRootSymbol();
 }

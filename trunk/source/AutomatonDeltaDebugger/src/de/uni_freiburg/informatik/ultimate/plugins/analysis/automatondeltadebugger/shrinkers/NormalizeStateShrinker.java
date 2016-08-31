@@ -34,35 +34,35 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-
-import java.util.Set;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Normalizes state names.
- * 
  * This shrinker renames states in the following way: - All initial states are
  * named "q0_i" for some i. - All other final states are named "qf_i" for some
  * i. - All other states are named "q_i" for some i.
- * 
  * For each of those three types of states the index is a consecutive number,
  * assigned in a depth-first manner starting from some initial state.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class NormalizeStateShrinker<LETTER, STATE>
 		extends AShrinker<STATE, LETTER, STATE> {
-	@SuppressWarnings("squid:UselessParenthesesCheck")
 	@Override
 	public INestedWordAutomaton<LETTER, STATE>
 			createAutomaton(final List<STATE> list) {
 		// create fresh automaton
-		final INestedWordAutomaton<LETTER, STATE> automaton =
-				mFactory.create(mAutomaton);
+		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create(mAutomaton);
 		
 		// rename states
 		final HashMap<STATE, STATE> old2new = renameStates(automaton, list);
@@ -74,29 +74,31 @@ public class NormalizeStateShrinker<LETTER, STATE>
 	}
 	
 	/**
-	 * depth-first renaming of states
+	 * Depth-first renaming of states.
 	 * 
-	 * @param automaton automaton
-	 * @param list list of states
+	 * @param automaton
+	 *            automaton
+	 * @param list
+	 *            list of states
 	 * @return map old state -> new state
 	 */
-	@SuppressWarnings({ "unchecked", "squid:UselessParenthesesCheck" })
 	private HashMap<STATE, STATE> renameStates(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final List<STATE> list) {
-		final HashSet<STATE> noninitialStates = new HashSet<STATE>();
-		final ArrayDeque<STATE> stack = new ArrayDeque<STATE>();
+		final HashSet<STATE> noninitialStates = new HashSet<>();
+		final ArrayDeque<STATE> stack = new ArrayDeque<>();
 		final HashSet<STATE> remaining =
 				filterStates(list, noninitialStates, stack);
 		final Set<STATE> oldStates = mAutomaton.getStates();
 		
-		final HashMap<STATE, STATE> old2new = new HashMap<STATE, STATE>();
-		final HashSet<STATE> onStackOrVisited = new HashSet<STATE>(stack);
+		final HashMap<STATE, STATE> old2new = new HashMap<>();
+		final HashSet<STATE> onStackOrVisited = new HashSet<>(stack);
 		int initials = 0;
 		int finals = 0;
 		int normals = 0;
 		boolean firstRun = true;
-		while (true) {
+		boolean stop = false;
+		while (!stop) {
 			// check whether stack is empty
 			if (stack.isEmpty()) {
 				if (firstRun) {
@@ -104,11 +106,11 @@ public class NormalizeStateShrinker<LETTER, STATE>
 					firstRun = false;
 					addMissingStates(noninitialStates, stack,
 							remaining, onStackOrVisited);
-					continue;
 				} else {
 					// stop when the stack is empty a second time
-					break;
+					stop = true;
 				}
+				continue;
 			}
 			
 			// pick the next state
@@ -127,61 +129,68 @@ public class NormalizeStateShrinker<LETTER, STATE>
 				 * assign new name
 				 * Make sure that the new state name does not exist.
 				 */
-				assert (oldState instanceof String) : "The state was a " +
-						"string during list creation.";
-				STATE newStateCandidate = null;
+				assert oldState instanceof String : "The state was a string during list creation.";
+				Pair<Integer, STATE> pair;
 				if (isInitial) {
-					do {
-						++initials;
-						newStateCandidate = (STATE) ("qI_" + initials);
-					} while (isUsedName(newStateCandidate, oldState, oldStates));
+					pair = getFreshName(oldStates, "qI_", initials, oldState);
+					initials = pair.getFirst();
 				} else if (isFinal) {
-					do {
-						++finals;
-						newStateCandidate = (STATE) ("qF_" + finals);
-					} while (isUsedName(newStateCandidate, oldState, oldStates));
+					pair = getFreshName(oldStates, "qF_", finals, oldState);
+					finals = pair.getFirst();
 				} else {
-					do {
-						++normals;
-						newStateCandidate = (STATE) ("q_" + normals);
-					} while (isUsedName(newStateCandidate, oldState, oldStates));
+					pair = getFreshName(oldStates, "q_", normals, oldState);
+					normals = pair.getFirst();
 				}
-				newState = newStateCandidate;
+				newState = pair.getSecond();
 			}
 			final STATE oldMapping = old2new.put(oldState, newState);
-			assert (oldMapping == null);
+			assert oldMapping == null;
 			mFactory.addState(automaton, newState, isInitial, isFinal);
 			
 			// push successors which have not been visited
 			considerSuccessors(stack, onStackOrVisited, oldState);
 		}
-		assert (automaton.size() == mAutomaton.size()) : "The number of " +
-				"states must be retained.";
+		assert automaton.size() == mAutomaton.size() : "The number of states must be retained.";
 		return old2new;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private Pair<Integer, STATE> getFreshName(final Set<STATE> oldStates, final String prefix, final int indexIn,
+			final STATE oldState) {
+		STATE newStateCandidate;
+		int index = indexIn;
+		do {
+			++index;
+			newStateCandidate = (STATE) (prefix + index);
+		} while (isUsedName(newStateCandidate, oldState, oldStates));
+		return new Pair<>(index, newStateCandidate);
 	}
 	
 	private boolean isUsedName(final STATE newStateCandidate,
 			final STATE oldState, final Set<STATE> oldStates) {
 		if (oldStates.contains(newStateCandidate)) {
-			return (! oldState.equals(newStateCandidate));
+			return !oldState.equals(newStateCandidate);
 		}
 		return false;
 	}
-
+	
 	/**
-	 * preprocessing: filters states into initial and non-initial states
-	 * and returns the set of states not in the list
+	 * Preprocessing: filters states into initial and non-initial states
+	 * and returns the set of states not in the list.
 	 * 
-	 * @param list list of states (input)
-	 * @param noninitialStates set of non-initial states
-	 * @param initialStates stack of initial states
+	 * @param list
+	 *            list of states (input)
+	 * @param noninitialStates
+	 *            set of non-initial states
+	 * @param initialStates
+	 *            stack of initial states
 	 * @return remaining original states not visited
 	 */
 	private HashSet<STATE> filterStates(final List<STATE> list,
 			final HashSet<STATE> noninitialStates,
 			final ArrayDeque<STATE> initialStates) {
 		final HashSet<STATE> remaining =
-				new HashSet<STATE>(mAutomaton.getStates());
+				new HashSet<>(mAutomaton.getStates());
 		
 		for (final STATE state : list) {
 			final boolean wasPresent = remaining.remove(state);
@@ -197,13 +206,17 @@ public class NormalizeStateShrinker<LETTER, STATE>
 	}
 	
 	/**
-	 * adds states not reached by a forward search (might be necessary for the
-	 * bug to occur)
+	 * Adds states not reached by a forward search (might be necessary for the
+	 * bug to occur).
 	 * 
-	 * @param noninitialStates non-initial states
-	 * @param stack stack of states (empty when this method is called)
-	 * @param remaining states not visited yet
-	 * @param onStackOrVisited states on stack or visited
+	 * @param noninitialStates
+	 *            non-initial states
+	 * @param stack
+	 *            stack of states (empty when this method is called)
+	 * @param remaining
+	 *            states not visited yet
+	 * @param onStackOrVisited
+	 *            states on stack or visited
 	 */
 	private void addMissingStates(final HashSet<STATE> noninitialStates,
 			final ArrayDeque<STATE> stack, final HashSet<STATE> remaining,
@@ -221,11 +234,14 @@ public class NormalizeStateShrinker<LETTER, STATE>
 	}
 	
 	/**
-	 * adds all successor states which have not been visited
+	 * Adds all successor states which have not been visited.
 	 * 
-	 * @param stack stack of states
-	 * @param onStackOrVisited states on stack or visited
-	 * @param oldState state in the old automaton
+	 * @param stack
+	 *            stack of states
+	 * @param onStackOrVisited
+	 *            states on stack or visited
+	 * @param oldState
+	 *            state in the old automaton
 	 */
 	private void considerSuccessors(final ArrayDeque<STATE> stack,
 			final HashSet<STATE> onStackOrVisited, final STATE oldState) {
@@ -247,12 +263,15 @@ public class NormalizeStateShrinker<LETTER, STATE>
 	}
 	
 	/**
-	 * checks whether the successor is in a set; if not, adds the state to the
-	 * set and a stack
+	 * Checks whether the successor is in a set; if not, adds the state to the
+	 * set and a stack.
 	 * 
-	 * @param stack stack to push to
-	 * @param onStackOrVisited set of states (if state not present, add it)
+	 * @param stack
+	 *            stack to push to
+	 * @param onStackOrVisited
+	 *            set of states (if state not present, add it)
 	 * @param succ
+	 *            successor
 	 */
 	private void checkAndAddSuccessor(final ArrayDeque<STATE> stack,
 			final HashSet<STATE> onStackOrVisited, final STATE succ) {
@@ -262,10 +281,12 @@ public class NormalizeStateShrinker<LETTER, STATE>
 	}
 	
 	/**
-	 * adds transitions for new states
+	 * Adds transitions for new states.
 	 * 
-	 * @param automaton automaton
-	 * @param old2new map old state -> new state
+	 * @param automaton
+	 *            automaton
+	 * @param old2new
+	 *            map old state -> new state
 	 */
 	private void addTransitions(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
@@ -299,9 +320,9 @@ public class NormalizeStateShrinker<LETTER, STATE>
 		final Iterator<STATE> iterator = states.iterator();
 		if ((iterator.hasNext()) && (iterator.next() instanceof String)) {
 			// states of type string can be renamed
-			return new ArrayList<STATE>(states);
+			return new ArrayList<>(states);
 		}
 		// no states or of non-string type cannot be renamed
-		return new ArrayList<STATE>();
+		return new ArrayList<>();
 	}
 }

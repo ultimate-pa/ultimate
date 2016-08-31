@@ -36,12 +36,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 
 /**
  * Removes states.
- * 
  * This shrinker removes any kind of states. Especially, it does not make an
  * exception to initial states. Transitions are added iff all respective states
  * are still present.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class StateShrinker<LETTER, STATE>
 		extends AShrinker<STATE, LETTER, STATE> {
@@ -53,7 +56,7 @@ public class StateShrinker<LETTER, STATE>
 				mFactory.create(mAutomaton);
 		
 		// add the complement of the passed states
-		final Set<STATE> oldStates = new HashSet<STATE>(mAutomaton.getStates());
+		final Set<STATE> oldStates = new HashSet<>(mAutomaton.getStates());
 		oldStates.removeAll(states);
 		mFactory.addStates(automaton, oldStates);
 		
@@ -65,6 +68,6 @@ public class StateShrinker<LETTER, STATE>
 	
 	@Override
 	public List<STATE> extractList() {
-		return new ArrayList<STATE>(mAutomaton.getStates());
+		return new ArrayList<>(mAutomaton.getStates());
 	}
 }

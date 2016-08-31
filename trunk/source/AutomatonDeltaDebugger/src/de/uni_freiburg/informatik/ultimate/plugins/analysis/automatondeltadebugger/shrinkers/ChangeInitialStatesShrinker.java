@@ -55,6 +55,17 @@ public class ChangeInitialStatesShrinker<LETTER, STATE> extends BridgeShrinker<P
 	private boolean mChangeWasSuccessful;
 	private INestedWordAutomaton<LETTER, STATE> mAutomatonBackup;
 	
+	/**
+	 * Constructor.
+	 * <p>
+	 * Implementation detail: The assignment of the fields is useless.
+	 */
+	public ChangeInitialStatesShrinker() {
+		mPairs = null;
+		mChangeWasSuccessful = false;
+		mAutomatonBackup = null;
+	}
+
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> createAutomaton(final List<Pair<STATE, STATE>> list) {
 		// create fresh automaton
@@ -68,7 +79,7 @@ public class ChangeInitialStatesShrinker<LETTER, STATE> extends BridgeShrinker<P
 		assert !mAutomatonBackup.isInitial(newInit) : "The new initial state was already initial.";
 		
 		// add all old states except for the two states passed
-		final Set<STATE> oldStates = new HashSet<STATE>(mAutomatonBackup.getStates());
+		final Set<STATE> oldStates = new HashSet<>(mAutomatonBackup.getStates());
 		oldStates.remove(oldInit);
 		oldStates.remove(newInit);
 		mFactory.addStates(automaton, oldStates);

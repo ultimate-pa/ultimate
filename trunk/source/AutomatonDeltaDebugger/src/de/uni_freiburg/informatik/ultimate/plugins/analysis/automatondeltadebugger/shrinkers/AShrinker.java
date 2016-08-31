@@ -128,10 +128,10 @@ public abstract class AShrinker<T, LETTER, STATE> {
 		
 		switch (policy) {
 			case SINGLE:
-				debugger = new SingleDebug<T, LETTER, STATE>(tester, this);
+				debugger = new SingleDebug<>(tester, this);
 				break;
 			case BINARY:
-				debugger = new BinaryDebug<T, LETTER, STATE>(tester, this);
+				debugger = new BinaryDebug<>(tester, this);
 				break;
 			default:
 				throw new IllegalArgumentException("Unknown policy.");

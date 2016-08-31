@@ -31,27 +31,31 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 
 /**
  * Executes the respective method which should be debugged and compares to the designated error.<br>
- * 
  * Usage: Initially, the error which is to be expected is stored in order to be able to compare to its concrete type
  * during the search later on. The {@link #execute(INestedWordAutomaton)} method must be overwritten to run the
  * designated method accordingly.<br>
- * 
  * The architecture allows for very general testing features such as additional pre- and post-processing, but comes with
  * the price that this class must be implemented for each method anew.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public abstract class ATester<LETTER, STATE> {
 	private final Throwable mThrowable;
-
+	
 	/**
+	 * Constructor.
+	 * 
 	 * @param throwable
 	 *            instance of a throwable
 	 */
 	public ATester(final Throwable throwable) {
 		this.mThrowable = throwable;
 	}
-
+	
 	/**
 	 * Tests whether an input still produces an error.
 	 * 
@@ -70,18 +74,18 @@ public abstract class ATester<LETTER, STATE> {
 		}
 		return false;
 	}
-
+	
 	/**
 	 * Executes the method to be tested on the given automaton.
 	 * 
 	 * @param automaton
 	 *            input automaton
-	 * @throws any
-	 *             type of throwable
+	 * @throws Throwable
+	 *             any type of throwable
 	 */
 	@SuppressWarnings("squid:S00112")
 	public abstract void execute(final INestedWordAutomaton<LETTER, STATE> automaton) throws Throwable;
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder b = new StringBuilder();

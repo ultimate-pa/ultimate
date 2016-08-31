@@ -123,9 +123,8 @@ public class StringFactory implements IStateFactory<String> {
 	}
 	
 	@Override
-	@SuppressWarnings("squid:S2129")
 	public String createSinkStateContent() {
-		return new String("∅SinkState");
+		return "∅SinkState";
 	}
 	
 	@Override

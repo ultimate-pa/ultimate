@@ -30,9 +30,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 /**
  * Enum of transition/letter types in nested word automata.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public enum ELetterType {
+public enum LetterType {
 	INTERNAL,
 	CALL,
 	RETURN

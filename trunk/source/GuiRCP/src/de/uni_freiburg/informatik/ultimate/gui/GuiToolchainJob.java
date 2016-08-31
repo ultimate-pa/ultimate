@@ -68,5 +68,4 @@ public class GuiToolchainJob extends DefaultToolchainJob {
 			((GuiController) mController).setCurrentToolchain(mToolchain);
 		}
 	}
-
 }

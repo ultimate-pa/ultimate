@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.terms;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,13 +9,15 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph.HornClausePredicateSymbol;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script.HornClause;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HCTransFormula;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HCVar;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClause;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClausePredicateSymbol;
 
 public class Body {
 	Cobody cobody;
 	ApplicationTerm head;
-
+	
 	public Body() {
 		cobody = new Cobody();
 	}
@@ -48,7 +49,8 @@ public class Body {
 		this.cobody.mergeCobody(cobody);
 	}
 
-	public void addTransitionFormula(ApplicationTerm formula) {
+	
+	public void addTransitionFormula(Term formula) {
 		cobody.addTransitionFormula(formula);
 	}
 

@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil;
 
 /**
  * Represents an uninterpreted predicate symbol that appears in a set of Horn clauses.
@@ -9,7 +9,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.grap
 public class HornClausePredicateSymbol {
 
 	int arity;
-
 	String name;
 	
 	public HornClausePredicateSymbol(String name, int arity) {
@@ -22,7 +21,6 @@ public class HornClausePredicateSymbol {
 	}
 	
 	public static class HornClauseFalsePredicateSymbol extends HornClausePredicateSymbol {
-
 		public HornClauseFalsePredicateSymbol() {
 			super("false", 0);
 		}

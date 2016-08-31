@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.JAXBException;
 
@@ -18,12 +19,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  */
 public class UltimateWebController implements IController<ToolchainListType> {
 
@@ -36,7 +38,7 @@ public class UltimateWebController implements IController<ToolchainListType> {
 	private final ExternalUltimateCore mExternalUltimateCore;
 	private ICore<ToolchainListType> mCore;
 
-	public UltimateWebController(File settings, File input, File toolchain, long deadline) {
+	public UltimateWebController(final File settings, final File input, final File toolchain, final long deadline) {
 		mExternalUltimateCore = new ExternalUltimateCore(this);
 		mSettingsFile = settings;
 		mInputFile = input;
@@ -44,7 +46,7 @@ public class UltimateWebController implements IController<ToolchainListType> {
 		mDeadline = deadline;
 	}
 
-	public JSONObject runUltimate(JSONObject json) {
+	public JSONObject runUltimate(final JSONObject json) {
 		try {
 			mExternalUltimateCore.runUltimate();
 			UltimateResultProcessor.processUltimateResults(mCurrentServices, json);
@@ -64,12 +66,11 @@ public class UltimateWebController implements IController<ToolchainListType> {
 		// clear old preferences
 		mCore = core;
 		core.resetPreferences();
-		return mExternalUltimateCore.init(core, mSettingsFile, mDeadline, new File[] { mInputFile })
-				.getCode();
+		return mExternalUltimateCore.init(core, mSettingsFile, mDeadline, new File[] { mInputFile }).getCode();
 	}
 
 	@Override
-	public IToolchainData<ToolchainListType> selectTools(List<ITool> tools) {
+	public IToolchainData<ToolchainListType> selectTools(final List<ITool> tools) {
 		try {
 			final IToolchainData<ToolchainListType> tc = mCore.createToolchainData(mToolchainFile.getAbsolutePath());
 			mCurrentServices = tc.getServices();
@@ -96,33 +97,26 @@ public class UltimateWebController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public ISource selectParser(Collection<ISource> parser) {
+	public ISource selectParser(final Collection<ISource> parser) {
 		return null;
 	}
 
 	@Override
-	public List<String> selectModel(List<String> modelNames) {
+	public List<String> selectModel(final List<String> modelNames) {
 		return null;
 	}
 
 	@Override
-	public void displayToolchainResultProgramIncorrect() {
+	public void displayToolchainResults(final IToolchainData<ToolchainListType> toolchain,
+			final Map<String, List<IResult>> results) {
+		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void displayToolchainResultProgramCorrect() {
+	public void displayException(final IToolchainData<ToolchainListType> toolchain, final String description,
+			final Throwable ex) {
+		// TODO Auto-generated method stub
 
 	}
-
-	@Override
-	public void displayToolchainResultProgramUnknown(String description) {
-
-	}
-
-	@Override
-	public void displayException(String description, Throwable ex) {
-
-	}
-
 }

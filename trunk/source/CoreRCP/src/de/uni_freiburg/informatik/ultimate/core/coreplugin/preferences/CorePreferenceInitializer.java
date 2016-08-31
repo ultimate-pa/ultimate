@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2007-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 
@@ -33,18 +33,20 @@ import org.eclipse.core.runtime.Platform;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
 
 /**
  * CorePreferenceInitializer implements UltimatePreferenceStore for UltimateCore. It initializes the default values for
  * preferences and provides access to the preferences for the plugin.
- * 
+ *
  * It has to contribute to the extension point org.eclipse.core.runtime.preferences.initializer (see the plugin.xml).
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  */
 public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 
@@ -81,8 +83,8 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	public static final String DEFAULT_VALUE_LOG4J_PATTERN = "[%d{ISO8601} %-5p L%-5.5L %20.20C{1}]: %m%n";
 
 	// Log level
-	public static final String DESC_LOGFILE = "The basic preferences for creating a log file (like enabled, name, "
-			+ "directory)";
+	public static final String DESC_LOGFILE =
+			"The basic preferences for creating a log file (like enabled, name, " + "directory)";
 
 	public static final String LABEL_LOGFILE = "Create a Logfile";
 	public static final boolean VALUE_LOGFILE = false;
@@ -161,8 +163,8 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	public static final String INVALID_LOGLEVEL = "Valid levels: " + Arrays.toString(VALUE_VALID_LOG_LEVELS);
 	public static final String INVALID_ENTRY = "Entry has to be of the form: \"<plug-in id>=<log level>\"";
 	public static final String INVALID_TOOL_ENTRY = "Entry has to be of the form: \"<tool id>=<log level>\"";
-	public static final String INVALID_WITNESSVERIFCATION_SETTING = "You must enable generation and writing of "
-			+ "witness results before you can verify them";
+	public static final String INVALID_WITNESSVERIFCATION_SETTING =
+			"You must enable generation and writing of " + "witness results before you can verify them";
 	public static final String LOGGING_PREFERENCES_DESC = "Specify log levels for the certail plugins.\n"
 			+ "Note that there is a hierarchy and specifying a less strict level for children will have no effect";
 	public static final String ALL_PLUGINS_PRESENT = "All entered plugins are in fact present!";
@@ -225,13 +227,16 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 
 				// Toolchain
 				new UltimatePreferenceItem<Integer>(LABEL_TIMEOUT, VALUE_TIMEOUT, PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1000000)),
-		};
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1000000)), };
+	}
+
+	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {
+		return services.getPreferenceProvider(Activator.PLUGIN_ID);
 	}
 
 	private static final class LogLevelValidator implements IUltimatePreferenceItemValidator<String> {
 		@Override
-		public boolean isValid(String value) {
+		public boolean isValid(final String value) {
 			final String upper = value.toUpperCase();
 			for(final String validValue : VALUE_VALID_LOG_LEVELS){
 				if(validValue.equals(upper)){
@@ -242,7 +247,7 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 		}
 
 		@Override
-		public String getInvalidValueErrorMessage(String value) {
+		public String getInvalidValueErrorMessage(final String value) {
 			return INVALID_LOGLEVEL;
 		}
 	}

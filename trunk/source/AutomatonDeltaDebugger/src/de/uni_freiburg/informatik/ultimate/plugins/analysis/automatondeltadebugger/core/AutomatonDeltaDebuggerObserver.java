@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -48,8 +49,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 /**
  * Obeserver which initializes the delta debugging process.
  * 
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  * @see AutomatonDebugger
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
 public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 		extends BaseObserver {
@@ -62,11 +67,20 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 	private final ILogger mLogger;
 	
 	/**
-	 * @param services Ultimate services
-	 * @param tester tester
-	 * @param shrinkersLoop rules to be appplied iteratively
-	 * @param shrinkersEnd rules to be applied once in the end
-	 * @param policy debug policy
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param tester
+	 *            tester
+	 * @param shrinkersLoop
+	 *            rules to be appplied iteratively
+	 * @param shrinkersBridge
+	 *            rules to be applied after each loop with changes
+	 * @param shrinkersEnd
+	 *            rules to be applied once in the end
+	 * @param policy
+	 *            debug policy
 	 */
 	public AutomatonDeltaDebuggerObserver(
 			final IUltimateServiceProvider services,
@@ -78,9 +92,9 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 		mServices = services;
 		mTester = tester;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mShrinkersLoop = shrinkersLoop;
-		mShrinkersBridge = shrinkersBridge;
-		mShrinkersEnd = shrinkersEnd;
+		mShrinkersLoop = new ArrayList<>(shrinkersLoop);
+		mShrinkersBridge = new ArrayList<>(shrinkersBridge);
+		mShrinkersEnd = new ArrayList<>(shrinkersEnd);
 		mPolicy = policy;
 	}
 	
@@ -105,8 +119,7 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 			}
 		}
 		if (automaton == null) {
-			mLogger.info("The input file did not contain any nested word " +
-					"automaton (type INestedWordAutomaton).");
+			mLogger.info("The input file did not contain any nested word automaton (type INestedWordAutomaton).");
 			return true;
 		}
 		deltaDebug(automaton);
@@ -115,21 +128,21 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 	
 	/**
 	 * initializes and runs the delta debugging process
-	 * 
 	 * NOTE: A user may want to change the type of automaton factory here.
 	 * 
-	 * @param automaton input automaton
+	 * @param automaton
+	 *            input automaton
 	 */
 	private void deltaDebug(
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
 		// automaton factory
 		final AAutomatonFactory<LETTER, STATE> automatonFactory =
-				new NestedWordAutomatonFactory<LETTER, STATE>(automaton,
+				new NestedWordAutomatonFactory<>(automaton,
 						mServices);
 		
 		// construct delta debugger
 		final AutomatonDebugger<LETTER, STATE> debugger =
-				new AutomatonDebugger<LETTER, STATE>(automaton,
+				new AutomatonDebugger<>(automaton,
 						automatonFactory, mTester);
 		
 		// execute delta debugger (binary search)

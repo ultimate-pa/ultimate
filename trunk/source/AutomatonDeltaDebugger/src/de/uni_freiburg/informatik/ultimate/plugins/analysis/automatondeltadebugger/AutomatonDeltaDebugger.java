@@ -81,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * @param <STATE>
  *            state type
  */
+@SuppressWarnings("squid:S1200")
 public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	protected ILogger mLogger;
 	protected final List<IObserver> mObservers;
@@ -94,10 +95,10 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	private final EDebugPolicy mDebugPolicy;
 	
 	/**
-	 * standard automaton delta debugger
+	 * Standard automaton delta debugger.
 	 */
 	public AutomatonDeltaDebugger() {
-		mObservers = new LinkedList<IObserver>();
+		mObservers = new LinkedList<>();
 		/*
 		 * NOTE: Insert your own settings here.
 		 */
@@ -107,7 +108,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	}
 	
 	/**
-	 * possible mode of the debugger
+	 * Possible mode of the debugger.
 	 */
 	public enum EAutomatonDeltaDebuggerOperationMode {
 		/**
@@ -135,11 +136,11 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 				case GENERAL:
 					tester = getGeneralTester();
 					break;
-					
+				
 				case CHECK_RESULT:
 					tester = getCheckResultTester();
 					break;
-					
+				
 				default:
 					throw new IllegalArgumentException("Unknown mode.");
 			}
@@ -152,7 +153,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	}
 	
 	/**
-	 * example tester for debugging general problems
+	 * Example tester for debugging general problems.
 	 * 
 	 * @return tester which listens for any throwable
 	 */
@@ -172,8 +173,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	}
 	
 	/**
-	 * example tester for debugging problems with the <code>checkResult()</code>
-	 * method of <code>IOperation</code>
+	 * Example tester for debugging problems with the {@code checkResult()} method of {@code IOperation}.
 	 * 
 	 * @return tester which debugs the checkResult method
 	 */
@@ -198,6 +198,8 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	}
 	
 	/**
+	 * Constructs an {@link IOperation} object from the setting.
+	 * 
 	 * @param automaton
 	 *            automaton
 	 * @param factory
