@@ -371,6 +371,9 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 			final Set<MetaState> mResult = new HashSet<MetaState>();
 			// Add the predecessors inherited from the TMA.
 			final Set<Integer> predStateNbSet = mTMA.predecessors(mState.mStateNb, letter);
+			if (predStateNbSet == null) {
+				throw new NullPointerException("20160830 Matthias: This NPE is a known and old bug. I will fix it only when I revise the Ramsey-based complementation.");
+			}
 			for (final Integer predStateNb : predStateNbSet) {
 				mResult.add(getMetaState(predStateNb, mState.mTmaNb));
 			}
