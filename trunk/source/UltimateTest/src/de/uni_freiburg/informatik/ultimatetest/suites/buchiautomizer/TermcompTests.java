@@ -65,6 +65,8 @@ public class TermcompTests extends
 	 */
 	private static final String[] mSettings = {
 		"buchiAutomizer/termcomp2016.epf",
+		"buchiAutomizer/termcomp2016-nonlinear.epf",
+		"buchiAutomizer/termcomp2016-newMapElimination.epf",
 	};
 	
 	
