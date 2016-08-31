@@ -26,9 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.test;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -67,8 +65,6 @@ public class UltimateStarter implements IController<ToolchainListType> {
 
 	private final UltimateRunDefinition mUltimateRunDefinition;
 	private final long mDeadline;
-	private final String mLogPattern;
-	private final File mLogFile;
 	private final ExternalUltimateCore mExternalUltimateCore;
 
 	private IUltimateServiceProvider mCurrentSerivces;
@@ -77,18 +73,10 @@ public class UltimateStarter implements IController<ToolchainListType> {
 	private ICore<ToolchainListType> mCurrentCore;
 
 	public UltimateStarter(final UltimateRunDefinition ultimateRunDefinition, final long deadline) {
-		this(ultimateRunDefinition, deadline, null, null);
-	}
-
-	public UltimateStarter(final UltimateRunDefinition ultimateRunDefintion, final long deadline, final File logFile,
-			final String logPattern) {
 		assert deadline >= 0 : "Deadline has to be positive or zero";
-		mUltimateRunDefinition = ultimateRunDefintion;
-		mExternalUltimateCore = new ExternalUltimateCoreTest(this);
+		mUltimateRunDefinition = ultimateRunDefinition;
+		mExternalUltimateCore = new ExternalUltimateCore(this);
 		mDeadline = deadline;
-		mLogFile = logFile;
-		mLogPattern = logPattern;
-		detachLogger();
 	}
 
 	public IStatus runUltimate() throws Throwable {
@@ -108,25 +96,6 @@ public class UltimateStarter implements IController<ToolchainListType> {
 
 	public void complete() {
 		mExternalUltimateCore.complete();
-	}
-
-	private void attachLogger() {
-		if (mLogFile == null || mLoggingService == null) {
-			return;
-		}
-
-		try {
-			mLoggingService.addLogfile(mLogPattern, mLogFile.getAbsolutePath(), true);
-		} catch (final IOException e1) {
-			mLogger.fatal("Failed to create logfile " + mLogFile + ". Reason: " + e1);
-		}
-	}
-
-	private void detachLogger() {
-		if (mLogFile == null || mLoggingService == null) {
-			return;
-		}
-		mLoggingService.removeLogFile(mLogFile.getAbsolutePath());
 	}
 
 	@Override
@@ -190,26 +159,5 @@ public class UltimateStarter implements IController<ToolchainListType> {
 	 */
 	public IUltimateServiceProvider getServices() {
 		return mCurrentSerivces;
-	}
-
-	private class ExternalUltimateCoreTest extends ExternalUltimateCore {
-
-		public ExternalUltimateCoreTest(final IController<ToolchainListType> controller) {
-			super(controller);
-		}
-
-		@Override
-		protected ILogger getLogger(final ILoggingService loggingService) {
-			mLogger = super.getLogger(loggingService);
-			attachLogger();
-			return mLogger;
-		}
-
-		@Override
-		public void complete() {
-			detachLogger();
-			super.complete();
-		}
-
 	}
 }
