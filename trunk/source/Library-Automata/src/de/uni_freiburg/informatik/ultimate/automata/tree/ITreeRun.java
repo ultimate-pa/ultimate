@@ -10,5 +10,6 @@ public interface ITreeRun<LETTER, STATE> {
 	public Tree<LETTER> getTree();
 	
 	public STATE getRoot();
-
+	
+	public LETTER getRootSymbol();
 }

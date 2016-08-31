@@ -1,12 +1,12 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph.HornClausePredicateSymbol;
 
 /**
  * This is our internal representation of a Horn clause.
@@ -49,9 +49,9 @@ public class HornClause {
 	ArrayList<TermVariable> mHeadPredTermVariables;
 	HornClausePredicateSymbol mHeadPredicate;
 	
-	Term mTransitionFormula;
+	HCTransFormula mTransitionFormula;
 	
-	public Term getTransitionFormula() {
+	public HCTransFormula getTransitionFormula() {
 		return mTransitionFormula;
 	}
 	
@@ -64,10 +64,26 @@ public class HornClause {
 	}
 	
 	public HornClause(Term transitionFormula, ArrayList<TermVariable> bodyVars, HornClausePredicateSymbol body, Map<HornClausePredicateSymbol, ArrayList<TermVariable>> cobody) {
-		mTransitionFormula = transitionFormula;
 		mHeadPredTermVariables = bodyVars;
-		mHeadPredicate = body;	
+		mHeadPredicate = body;
 		mBodyPredToTermVariables = cobody;
+		
+		Map<HCVar, TermVariable> outVars = new HashMap<>();
+		for (int i = 0; i < bodyVars.size(); ++i) {
+			outVars.put(new HCVar(body, i, bodyVars.get(i)), bodyVars.get(i));
+		}
+
+		Map<HCVar, TermVariable> inVars = new HashMap<>();
+		for (HornClausePredicateSymbol pred : cobody.keySet()) {
+			ArrayList<TermVariable> vars = cobody.get(pred);
+
+			for (int i = 0; i < vars.size(); ++i) {
+				inVars.put(new HCVar(pred, i, vars.get(i)), vars.get(i));
+			}
+
+		}
+		
+		mTransitionFormula = new HCTransFormula(transitionFormula, inVars, outVars);
 	}
 	
 	public String toString() {
@@ -83,7 +99,7 @@ public class HornClause {
 		
 		String body = mHeadPredicate.toString() + mHeadPredTermVariables;
 		
-		return String.format("(%s) ^^ (%s) ~~> (%s)", cobody, mTransitionFormula, body);
+		return String.format("(%s) ^^ (%s) ~~> (%s) || in : %s || out : %s ", cobody, mTransitionFormula, body, mTransitionFormula.getInVars(), mTransitionFormula.getOutVars());
 	}
 }
  

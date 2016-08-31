@@ -114,6 +114,11 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 	}
 	
 	@Override
+	public LETTER getRootSymbol() {
+		return letter;
+	}
+	
+	@Override
 	public String toString() {
 		if (children.isEmpty())
 			return "";

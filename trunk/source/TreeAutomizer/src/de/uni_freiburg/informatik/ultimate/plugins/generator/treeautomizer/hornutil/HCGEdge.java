@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil;
 
 import java.util.HashMap;
 
@@ -24,7 +24,5 @@ public class HCGEdge {
 
 	HashMap<HornClausePredicateSymbol, Object> mSources;
 	HornClausePredicateSymbol mTarget;
-	
-	
 	
 }

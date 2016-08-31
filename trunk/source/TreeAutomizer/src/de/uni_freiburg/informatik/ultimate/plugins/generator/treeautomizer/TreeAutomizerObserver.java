@@ -31,15 +31,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.parsers.FactoryConfigurationError;
+
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HCTransFormula;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClause;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script.HornAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script.HornClause;
 
 /**
  * import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU; /**
@@ -72,15 +75,16 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 		HornAnnot annot = (HornAnnot) st.get("HoRNClauses");
 		List<HornClause> hornClauses = (List<HornClause>) annot.getAnnotationsAsMap().get("HoRNClauses");
 
-		TreeAutomatonBU<Term, HornClausePredicateSymbol> tree = new TreeAutomatonBU<>();
+		TreeAutomatonBU<HCTransFormula, HornClausePredicateSymbol> tree = new TreeAutomatonBU<>();
 		
 		for (HornClause clause : hornClauses) {
 			List<HornClausePredicateSymbol> tail = new ArrayList<HornClausePredicateSymbol>();
 			tail.addAll(clause.getTailPredicates());
 			tree.addRule(clause.getTransitionFormula(), tail, clause.getHeadPredicate());
 		}
-		//System.err.println(tree.DebugString());
-		// TODO(amin): Add initial and final states.
+		
+		// TODO(mostafa): Add initial and final states.
+		tree.addFinalState(new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol());
 		//tree.addFinalState(state);
 		//tree.addInitialState(state);
 		return false;
