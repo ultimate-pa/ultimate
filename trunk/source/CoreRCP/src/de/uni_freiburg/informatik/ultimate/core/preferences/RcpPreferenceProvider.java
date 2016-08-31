@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 
@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.PreferenceExcepti
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -65,54 +65,54 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 	private final String mPluginID;
 	private static final Map<String, Set<IPreferenceChangeListener>> sActiveListener;
 
-	public RcpPreferenceProvider(String pluginID) {
+	public RcpPreferenceProvider(final String pluginID) {
 		mPluginID = pluginID;
 	}
 
 	/**
 	 * Retrieves a preference value of type boolean from the store. If the key is neither in the current store nor in
 	 * the default store, false is returned.
-	 * 
+	 *
 	 * @param key
 	 * @return
 	 */
 	@Override
-	public boolean getBoolean(String key) {
+	public boolean getBoolean(final String key) {
 		return getBoolean(key, false);
 	}
 
 	@Override
-	public boolean getBoolean(String key, boolean defaultValue) {
+	public boolean getBoolean(final String key, final boolean defaultValue) {
 		return getInstance().getBoolean(key, getDefault().getBoolean(key, defaultValue));
 	}
 
 	/**
 	 * Retrieves a preference value of type String from the store. If the key is neither in the current store nor in the
 	 * default store, "" is returned.
-	 * 
+	 *
 	 * @param key
 	 * @return
 	 */
 	@Override
-	public String getString(String key) {
+	public String getString(final String key) {
 		return getString(key, "");
 	}
 
 	@Override
-	public String getString(String key, String defaultValue) {
+	public String getString(final String key, final String defaultValue) {
 		return getInstance().get(key, getDefault().get(key, defaultValue));
 	}
 
 	/**
 	 * Retrieves a preference value of type T, where T is a subtype of Enum, from the store. If the key is neither in
 	 * the current store nor in the default store, an UnknownFormatConversionException is returned.
-	 * 
+	 *
 	 * @param key
 	 * @param enumType
 	 * @return
 	 */
 	@Override
-	public <T extends Enum<T>> T getEnum(String key, Class<T> enumType) {
+	public <T extends Enum<T>> T getEnum(final String key, final Class<T> enumType) {
 		final String strValue = getString(key);
 		if (strValue.isEmpty()) {
 			throw new UnknownFormatConversionException(
@@ -125,14 +125,14 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 	/**
 	 * Retrieves a preference value of type T, where T is a subtype of Enum, from the store. If the key is neither in
 	 * the current store nor in the default store, defaultValue is returned.
-	 * 
+	 *
 	 * @param key
 	 * @param defaultValue
 	 * @param enumType
 	 * @return
 	 */
 	@Override
-	public <T extends Enum<T>> T getEnum(String key, T defaultValue, Class<T> enumType) {
+	public <T extends Enum<T>> T getEnum(final String key, final T defaultValue, final Class<T> enumType) {
 		final String strValue = getString(key);
 		if (strValue.isEmpty()) {
 			return defaultValue;
@@ -144,90 +144,90 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 	/**
 	 * Retrieves a preference value of type byte[] from the store. If the key is neither in the current store nor in the
 	 * default store, an empty byte array of length 0 is returned.
-	 * 
+	 *
 	 * @param key
 	 * @return
 	 */
 	@Override
-	public byte[] getByteArray(String key) {
+	public byte[] getByteArray(final String key) {
 		return getByteArray(key, new byte[0]);
 	}
 
 	@Override
-	public byte[] getByteArray(String key, byte[] defaultValue) {
+	public byte[] getByteArray(final String key, final byte[] defaultValue) {
 		return getInstance().getByteArray(key, getDefault().getByteArray(key, defaultValue));
 	}
 
 	/**
 	 * Retrieves a preference value of type double from the store. If the key is neither in the current store nor in the
 	 * default store, 0.0d is returned.
-	 * 
+	 *
 	 * @param key
 	 * @return
 	 */
 	@Override
-	public double getDouble(String key) {
+	public double getDouble(final String key) {
 		return getDouble(key, 0.0d);
 	}
 
 	@Override
-	public double getDouble(String key, double defaultValue) {
+	public double getDouble(final String key, final double defaultValue) {
 		return getInstance().getDouble(key, getDefault().getDouble(key, defaultValue));
 	}
 
 	/**
 	 * Retrieves a preference value of type float from the store. If the key is neither in the current store nor in the
 	 * default store, 0.0f is returned.
-	 * 
+	 *
 	 * @param key
 	 * @return
 	 */
 	@Override
-	public float getFloat(String key) {
+	public float getFloat(final String key) {
 		return getFloat(key, 0.0f);
 	}
 
 	@Override
-	public float getFloat(String key, float defaultValue) {
+	public float getFloat(final String key, final float defaultValue) {
 		return getInstance().getFloat(key, getDefault().getFloat(key, defaultValue));
 	}
 
 	/**
 	 * Retrieves a preference value of type int from the store. If the key is neither in the current store nor in the
 	 * default store, 0 is returned.
-	 * 
+	 *
 	 * @param key
 	 * @return
 	 */
 	@Override
-	public int getInt(String key) {
+	public int getInt(final String key) {
 		return getInt(key, 0);
 	}
 
 	@Override
-	public int getInt(String key, int defaultValue) {
+	public int getInt(final String key, final int defaultValue) {
 		return getInstance().getInt(key, getDefault().getInt(key, defaultValue));
 	}
 
 	/**
 	 * Retrieves a preference value of type long from the store. If the key is neither in the current store nor in the
 	 * default store, 0L is returned.
-	 * 
+	 *
 	 * @param key
 	 * @return
 	 */
 	@Override
-	public long getLong(String key) {
+	public long getLong(final String key) {
 		return getLong(key, 0L);
 	}
 
 	@Override
-	public long getLong(String key, long defaultValue) {
+	public long getLong(final String key, final long defaultValue) {
 		return getInstance().getLong(key, getDefault().getLong(key, defaultValue));
 	}
 
 	@Override
-	public void put(String key, String value) {
+	public void put(final String key, final String value) {
 		getInstance().put(key, value);
 		try {
 			getInstance().flush();
@@ -236,12 +236,12 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 		}
 	}
 
-	public void addPreferenceChangeListener(IPreferenceChangeListener iPreferenceChangeListener) {
+	public void addPreferenceChangeListener(final IPreferenceChangeListener iPreferenceChangeListener) {
 		addPreferenceChangeListener(mPluginID, iPreferenceChangeListener);
-
 	}
 
-	private static void addPreferenceChangeListener(String id, IPreferenceChangeListener iPreferenceChangeListener) {
+	private static void addPreferenceChangeListener(final String id,
+			final IPreferenceChangeListener iPreferenceChangeListener) {
 		InstanceScope.INSTANCE.getNode(id).addPreferenceChangeListener(iPreferenceChangeListener);
 
 		Set<IPreferenceChangeListener> set = sActiveListener.get(id);
@@ -252,7 +252,7 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 		set.add(iPreferenceChangeListener);
 	}
 
-	public void removePreferenceChangeListener(IPreferenceChangeListener iPreferenceChangeListener) {
+	public void removePreferenceChangeListener(final IPreferenceChangeListener iPreferenceChangeListener) {
 		getInstance().removePreferenceChangeListener(iPreferenceChangeListener);
 		if (sActiveListener.containsKey(mPluginID)) {
 			sActiveListener.get(mPluginID).remove(iPreferenceChangeListener);
@@ -271,11 +271,11 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 		return InstanceScope.INSTANCE;
 	}
 
-	public void exportPreferences(OutputStream outputStream) throws CoreException {
+	public void exportPreferences(final OutputStream outputStream) throws CoreException {
 		Platform.getPreferencesService().exportPreferences(getInstance(), outputStream, null);
 	}
 
-	public static IStatus importPreferences(InputStream inputStream) throws CoreException {
+	public static IStatus importPreferences(final InputStream inputStream) throws CoreException {
 		final IStatus status = Platform.getPreferencesService().importPreferences(inputStream);
 		if (status.isOK()) {
 			for (final Entry<String, Set<IPreferenceChangeListener>> entry : sActiveListener.entrySet()) {
@@ -291,7 +291,7 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 
 	/**
 	 * Get an array of strings were each entry represents all preferences that differ from their default values.
-	 * 
+	 *
 	 */
 	public String[] getDeltaPreferencesStrings() {
 		final List<String> rtr = new ArrayList<>();
