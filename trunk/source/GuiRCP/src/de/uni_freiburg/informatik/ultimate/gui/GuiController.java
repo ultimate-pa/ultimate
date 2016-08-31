@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.JAXBException;
 
@@ -43,6 +44,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.xml.sax.SAXException;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultSummarizer;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
@@ -51,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.ITool;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.gui.advisors.ApplicationWorkbenchAdvisor;
@@ -189,27 +192,30 @@ public class GuiController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public void displayToolchainResultProgramIncorrect() {
-		mTrayIconNotifier.showTrayBalloon("Program is incorrect", "Ultimate proved your program to be incorrect!",
-				SWT.ICON_WARNING);
-
+	public void displayToolchainResults(final IToolchainData<ToolchainListType> toolchain,
+			final Map<String, List<IResult>> results) {
+		final ResultSummarizer summarizer = new ResultSummarizer(results);
+		switch (summarizer.getResultSummary()) {
+		case CORRECT:
+			mTrayIconNotifier.showTrayBalloon("Program is correct", "Ultimate proved your program to be correct!",
+					SWT.ICON_INFORMATION);
+			break;
+		case INCORRECT:
+			mTrayIconNotifier.showTrayBalloon("Program is incorrect", "Ultimate proved your program to be incorrect!",
+					SWT.ICON_WARNING);
+			break;
+		default:
+			mTrayIconNotifier.showTrayBalloon("Program could not be checked",
+					"Ultimate could not prove your program: " + summarizer.getResultDescription(),
+					SWT.ICON_INFORMATION);
+			break;
+		}
 	}
 
 	@Override
-	public void displayToolchainResultProgramCorrect() {
-		mTrayIconNotifier.showTrayBalloon("Program is correct", "Ultimate proved your program to be correct!",
-				SWT.ICON_INFORMATION);
-	}
-
-	@Override
-	public void displayToolchainResultProgramUnknown(final String description) {
-		mTrayIconNotifier.showTrayBalloon("Program could not be checked",
-				"Ultimate could not prove your program: " + description, SWT.ICON_INFORMATION);
-
-	}
-
-	@Override
-	public void displayException(final String description, final Throwable ex) {
+	public void displayException(final IToolchainData<ToolchainListType> toolchain, final String description,
+			final Throwable ex) {
+		// TODO Auto-generated method stub
 
 	}
 

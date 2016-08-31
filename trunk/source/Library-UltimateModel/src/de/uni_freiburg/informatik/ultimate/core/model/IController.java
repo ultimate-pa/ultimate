@@ -29,6 +29,9 @@ package de.uni_freiburg.informatik.ultimate.core.model;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 
 /**
  * This is the interface that all plugins providing a user interface to Ultimate should implement. UltimateCore should
@@ -81,32 +84,27 @@ public interface IController<T> extends IUltimatePlugin {
 	List<String> selectModel(List<String> modelNames);
 
 	/**
-	 * Should be called to notify the user that the toolchain proved the program to be incorrect
-	 */
-	void displayToolchainResultProgramIncorrect();
-
-	/**
-	 * Should be called to notify the user that the toolchain proved the program to be correct
-	 */
-	void displayToolchainResultProgramCorrect();
-
-	/**
-	 * Should be called to notify the user that the toolchain failed to prove the program correct or incorrect for some
-	 * reason.
+	 * After a toolchain is executed, {@link ICore} calls this method so that the controller may display the results of
+	 * the toolchain to the user.
 	 *
-	 * @param description
-	 *            The reason why the result of the analysis is unknown.
+	 * @param toolchain
+	 *            The toolchain from which the results are taken.
+	 * @param results
+	 *            The actual results.
 	 */
-	void displayToolchainResultProgramUnknown(final String description);
+	void displayToolchainResults(IToolchainData<T> toolchain, Map<String, List<IResult>> results);
 
 	/**
-	 * Is called by the core if the controller should display an exception to the user.
+	 * If during the execution of a toolchain an exception occurs, {@link ICore} calls this method so that the
+	 * controller may inform the user about the exception.
 	 *
+	 * @param toolchain
+	 *            The toolchain in which the exception occured.
 	 * @param description
 	 *            A message to the user saying why or where the exception occurred.
 	 * @param ex
 	 *            The exception itself.
 	 */
-	void displayException(String description, Throwable ex);
+	void displayException(IToolchainData<T> toolchain, String description, Throwable ex);
 
 }

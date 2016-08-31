@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
 import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
@@ -67,14 +68,18 @@ public final class ResultSummarizer {
 	private String mDescription;
 
 	public ResultSummarizer(final IResultService resultService) {
-		processResults(resultService);
+		processResults(resultService.getResults());
 	}
 
-	private void processResults(final IResultService resultService) {
+	public ResultSummarizer(final Map<String, List<IResult>> results) {
+		processResults(results);
+	}
+
+	private void processResults(final Map<String, List<IResult>> results) {
 		ToolchainResult toolchainResult = ToolchainResult.NORESULT;
 		String description = "Toolchain returned no result.";
 
-		for (final List<IResult> PluginResults : resultService.getResults().values()) {
+		for (final List<IResult> PluginResults : results.values()) {
 			for (final IResult result : PluginResults) {
 				if (result instanceof SyntaxErrorResult) {
 					toolchainResult = ToolchainResult.SYNTAXERROR;

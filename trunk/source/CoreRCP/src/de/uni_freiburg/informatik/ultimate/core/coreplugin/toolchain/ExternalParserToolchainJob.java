@@ -80,7 +80,7 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 		try {
 			tpm.worked(1);
 			if ((mJobMode == ChainMode.RERUN || mJobMode == ChainMode.KEEP_TOOLCHAIN)) {
-				throw new Exception("Rerun currently unsupported! Aborting...");
+				throw new UnsupportedOperationException("Rerun currently unsupported! Aborting...");
 			}
 			// all modes requires this
 			currentToolchain = mCore.requestToolchain();
@@ -106,7 +106,8 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 		} catch (final Throwable e) {
 			mLogger.fatal(String.format("The toolchain threw an exception: %s", e.getMessage()));
 			mLogger.fatal(e);
-			mController.displayException("The toolchain threw an exception", e);
+			mController.displayException(currentToolchain.getCurrentToolchainData(), "The toolchain threw an exception",
+					e);
 			returnstatus = Status.CANCEL_STATUS;
 			final String idOfCore = Activator.PLUGIN_ID;
 			mServices.getResultService().reportResult(idOfCore, new ExceptionOrErrorResult(idOfCore, e));

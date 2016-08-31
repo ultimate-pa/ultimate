@@ -176,7 +176,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 		} catch (final Throwable e) {
 			mLogger.fatal(String.format("The toolchain threw an exception: %s", e.getMessage()));
 			mLogger.fatal(e);
-			mController.displayException("The toolchain threw an exception", e);
+			mController.displayException(mToolchain.getCurrentToolchainData(), "The toolchain threw an exception", e);
 			returnstatus = Status.CANCEL_STATUS;
 			final String idOfCore = Activator.PLUGIN_ID;
 			if (mServices != null) {
@@ -236,7 +236,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 
 		} catch (final Throwable e) {
 			mLogger.fatal(String.format("The toolchain threw an exception: %s", e.getMessage()));
-			mController.displayException("The toolchain threw an exception", e);
+			mController.displayException(mToolchain.getCurrentToolchainData(), "The toolchain threw an exception", e);
 			returnstatus = new Status(IStatus.CANCEL, Activator.PLUGIN_ID, IStatus.ERROR,
 					"Toolchain threw an exception", null);
 			final String idOfCore = Activator.PLUGIN_ID;
