@@ -4,11 +4,13 @@
 **/.settings/*
 **/target/*
 **/bin/*
+**.swp
 **/.recommenders/*
 
 /trunk/source/Servers
 /trunk/source/.sonarlint/*
 /trunk/source/*.log
+hs_err_pid*
 
 /trunk/source/Website/WebContent/WEB-INF/classes
 /trunk/source/Website/WebContent/json/*.json
