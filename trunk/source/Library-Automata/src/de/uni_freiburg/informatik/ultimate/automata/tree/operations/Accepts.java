@@ -7,7 +7,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
@@ -94,7 +94,7 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		// TODO Auto-generated method stub
 		return false;
 	}

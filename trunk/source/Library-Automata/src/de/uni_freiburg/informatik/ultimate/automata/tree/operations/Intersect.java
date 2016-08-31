@@ -10,8 +10,8 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.StringFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
@@ -30,11 +30,11 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final ITreeAutomaton<LETTER, STATE> treeB;
 	protected final ITreeAutomaton<LETTER, STATE> result;
 	
-	private final StateFactory<STATE> stateFactory;
+	private final IStateFactory<STATE> stateFactory;
 	private final Map<STATE, Map<STATE, Pair<STATE, STATE>>> pairsMap;
 	private final Map<Pair<STATE, STATE>, STATE> reducedStates;
 
-	public Intersect(final ITreeAutomaton<LETTER, STATE> t1, final ITreeAutomaton<LETTER, STATE> t2, final StateFactory<STATE> factory) {
+	public Intersect(final ITreeAutomaton<LETTER, STATE> t1, final ITreeAutomaton<LETTER, STATE> t2, final IStateFactory<STATE> factory) {
 		reducedStates = new HashMap<>();
 		pairsMap = new HashMap<>();
 		
@@ -162,7 +162,7 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 
 	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return false;
 	}
 	

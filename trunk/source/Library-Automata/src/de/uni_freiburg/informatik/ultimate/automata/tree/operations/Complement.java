@@ -16,11 +16,11 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private final ITreeAutomaton<LETTER, STATE> treeAutomaton;
-	private final StateFactory<STATE> stateFactory;
+	private final IStateFactory<STATE> stateFactory;
 	
 	protected final ITreeAutomaton<LETTER, STATE> result;
 	
-	public Complement(final ITreeAutomaton<LETTER, STATE> tree, final StateFactory<STATE> factory) {
+	public Complement(final ITreeAutomaton<LETTER, STATE> tree, final IStateFactory<STATE> factory) {
 		treeAutomaton = tree;
 		stateFactory = factory;
 		
@@ -55,7 +55,7 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 
 	@Override
-	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		// TODO Auto-generated method stub
 		return false;
 	}

@@ -11,8 +11,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.StringFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
@@ -27,12 +27,12 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private final ITreeAutomaton<LETTER, STATE> treeAutomaton;
-	private final StateFactory<STATE> stateFactory;
+	private final IStateFactory<STATE> stateFactory;
 	private final Map<Set<STATE>, STATE> reducedStates;
 	
 	protected final ITreeAutomaton<LETTER, STATE> result;
 
-	public Determinize(final ITreeAutomaton<LETTER, STATE> tree, final StateFactory<STATE> factory) {
+	public Determinize(final ITreeAutomaton<LETTER, STATE> tree, final IStateFactory<STATE> factory) {
 		reducedStates = new HashMap<>();
 		stateFactory = factory;
 		
