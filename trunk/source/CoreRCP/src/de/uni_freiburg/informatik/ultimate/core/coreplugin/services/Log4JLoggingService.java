@@ -79,6 +79,8 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	private static final String LOGGER_NAME_TOOLS = "tools";
 	private static final String STORE_KEY = "LoggingService";
 
+	private static int sId = 0;
+
 	private final RcpPreferenceProvider mPreferenceStore;
 	private List<String> mLiveLoggerIds;
 	private ConsoleAppender mConsoleAppender;
@@ -112,8 +114,8 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		refreshPropertiesAppendLogFile();
 
 		mRefreshingListener = new RefreshingPreferenceChangeListener();
-		mPreferenceStore.removePreferenceChangeListener(mRefreshingListener);
 		mPreferenceStore.addPreferenceChangeListener(mRefreshingListener);
+		sId++;
 	}
 
 	public void refreshLoggingService() {
@@ -182,11 +184,6 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		}
 	}
 
-	/**
-	 * UltimateLoggerFactory getInstance getter for the singleton. lazily creates the object
-	 *
-	 * @return the singleton instance of the UltimateLoggerFactory
-	 */
 	static Log4JLoggingService getService(final IToolchainStorage storage) {
 		assert storage != null;
 		IStorable rtr = storage.getStorable(STORE_KEY);
@@ -369,7 +366,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 	@Override
 	public void destroy() {
-		mPreferenceStore.removePreferenceChangeListener(mRefreshingListener);
+		assert sId == 1 : "There should be only one instance of Log4JLoggingService";
 	}
 
 	@Override

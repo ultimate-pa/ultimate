@@ -236,8 +236,8 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 		}
 	}
 
-	public void addPreferenceChangeListener(final IPreferenceChangeListener iPreferenceChangeListener) {
-		addPreferenceChangeListener(mPluginID, iPreferenceChangeListener);
+	public void addPreferenceChangeListener(final IPreferenceChangeListener preferenceChangeListener) {
+		addPreferenceChangeListener(mPluginID, preferenceChangeListener);
 	}
 
 	private static void addPreferenceChangeListener(final String id,
