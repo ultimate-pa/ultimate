@@ -12,7 +12,7 @@ import org.json.JSONObject;
 import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.external.ExternalUltimateCore;
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
@@ -27,7 +27,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class UltimateWebController implements IController<ToolchainListType> {
+public class UltimateWebController implements IController<RunDefinition> {
 
 	private final File mSettingsFile;
 	private final File mInputFile;
@@ -36,7 +36,7 @@ public class UltimateWebController implements IController<ToolchainListType> {
 
 	private IUltimateServiceProvider mCurrentServices;
 	private final ExternalUltimateCore mExternalUltimateCore;
-	private ICore<ToolchainListType> mCore;
+	private ICore<RunDefinition> mCore;
 
 	public UltimateWebController(final File settings, final File input, final File toolchain, final long deadline) {
 		mExternalUltimateCore = new ExternalUltimateCore(this);
@@ -59,7 +59,7 @@ public class UltimateWebController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public int init(final ICore<ToolchainListType> core) {
+	public int init(final ICore<RunDefinition> core) {
 		// TODO Use own logging service to prefix each ultimate log line with
 		// the session id
 		// TODO: check what the whole settings thing means in parallel contexts
@@ -70,9 +70,9 @@ public class UltimateWebController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public IToolchainData<ToolchainListType> selectTools(final List<ITool> tools) {
+	public IToolchainData<RunDefinition> selectTools(final List<ITool> tools) {
 		try {
-			final IToolchainData<ToolchainListType> tc = mCore.createToolchainData(mToolchainFile.getAbsolutePath());
+			final IToolchainData<RunDefinition> tc = mCore.createToolchainData(mToolchainFile.getAbsolutePath());
 			mCurrentServices = tc.getServices();
 			return tc;
 		} catch (FileNotFoundException | JAXBException | SAXException e) {
@@ -107,14 +107,14 @@ public class UltimateWebController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public void displayToolchainResults(final IToolchainData<ToolchainListType> toolchain,
+	public void displayToolchainResults(final IToolchainData<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void displayException(final IToolchainData<ToolchainListType> toolchain, final String description,
+	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
 			final Throwable ex) {
 		// TODO Auto-generated method stub
 

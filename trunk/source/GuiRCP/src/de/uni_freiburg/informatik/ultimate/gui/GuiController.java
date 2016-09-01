@@ -45,7 +45,7 @@ import org.eclipse.ui.PlatformUI;
 import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultSummarizer;
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
@@ -62,12 +62,12 @@ import de.uni_freiburg.informatik.ultimate.gui.dialogs.ModelChooseDialog;
 import de.uni_freiburg.informatik.ultimate.gui.dialogs.ParserChooseDialog;
 
 /**
- * GUIController is the IController<ToolchainListType> implementation of the UltimateDebug GUI
+ * GUIController is the IController<RunDefinition> implementation of the UltimateDebug GUI
  *
  * @author dietsch
  *
  */
-public class GuiController implements IController<ToolchainListType> {
+public class GuiController implements IController<RunDefinition> {
 
 	public static final String PLUGIN_ID = GuiController.class.getPackage().getName();
 	public static final String PLUGIN_NAME = "Gui Controller";
@@ -76,12 +76,12 @@ public class GuiController implements IController<ToolchainListType> {
 	private Display mDisplay;
 
 	private volatile ISource mParser;
-	private volatile IToolchainData<ToolchainListType> mTools;
+	private volatile IToolchainData<RunDefinition> mTools;
 	private volatile List<String> mModels;
 
-	private ICore<ToolchainListType> mCore;
+	private ICore<RunDefinition> mCore;
 	private TrayIconNotifier mTrayIconNotifier;
-	private IToolchain<ToolchainListType> mCurrentToolchain;
+	private IToolchain<RunDefinition> mCurrentToolchain;
 	private ILoggingService mLoggingService;
 
 	/**
@@ -90,7 +90,7 @@ public class GuiController implements IController<ToolchainListType> {
 	 * @return the exit code for the application
 	 */
 	@Override
-	public int init(final ICore<ToolchainListType> core) {
+	public int init(final ICore<RunDefinition> core) {
 		if (core == null) {
 			throw new IllegalArgumentException("core may not be null");
 		}
@@ -142,12 +142,12 @@ public class GuiController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public synchronized IToolchainData<ToolchainListType> selectTools(final List<ITool> tools) {
+	public synchronized IToolchainData<RunDefinition> selectTools(final List<ITool> tools) {
 		final List<ITool> previous = Collections.emptyList();
 		return selectTools(tools, previous);
 	}
 
-	private synchronized IToolchainData<ToolchainListType> selectTools(final List<ITool> tools,
+	private synchronized IToolchainData<RunDefinition> selectTools(final List<ITool> tools,
 			final List<ITool> previous) {
 		mDisplay.syncExec(new Runnable() {
 			@Override
@@ -192,7 +192,7 @@ public class GuiController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public void displayToolchainResults(final IToolchainData<ToolchainListType> toolchain,
+	public void displayToolchainResults(final IToolchainData<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
 		final ResultSummarizer summarizer = new ResultSummarizer(results);
 		switch (summarizer.getResultSummary()) {
@@ -213,7 +213,7 @@ public class GuiController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public void displayException(final IToolchainData<ToolchainListType> toolchain, final String description,
+	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
 			final Throwable ex) {
 		// TODO Auto-generated method stub
 	}
@@ -223,14 +223,14 @@ public class GuiController implements IController<ToolchainListType> {
 		return null;
 	}
 
-	public void setCurrentToolchain(final IToolchain<ToolchainListType> toolchain) {
+	public void setCurrentToolchain(final IToolchain<RunDefinition> toolchain) {
 		if (mCurrentToolchain != null && !mCurrentToolchain.equals(toolchain)) {
 			mCore.releaseToolchain(mCurrentToolchain);
 		}
 		mCurrentToolchain = toolchain;
 	}
 
-	public IToolchain<ToolchainListType> getCurrentToolchain() {
+	public IToolchain<RunDefinition> getCurrentToolchain() {
 		return mCurrentToolchain;
 	}
 

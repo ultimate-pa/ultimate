@@ -38,7 +38,7 @@ import org.eclipse.equinox.app.IApplication;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultSummarizer;
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
@@ -53,13 +53,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class CommandLineController implements IController<ToolchainListType> {
+public class CommandLineController implements IController<RunDefinition> {
 
 	private ILogger mLogger;
-	private IToolchainData<ToolchainListType> mToolchain;
+	private IToolchainData<RunDefinition> mToolchain;
 
 	@Override
-	public int init(final ICore<ToolchainListType> core) {
+	public int init(final ICore<RunDefinition> core) {
 		if (core == null) {
 			return -1;
 		}
@@ -129,7 +129,7 @@ public class CommandLineController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public IToolchainData<ToolchainListType> selectTools(final List<ITool> tools) {
+	public IToolchainData<RunDefinition> selectTools(final List<ITool> tools) {
 		return mToolchain;
 	}
 
@@ -139,7 +139,7 @@ public class CommandLineController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public void displayToolchainResults(final IToolchainData<ToolchainListType> toolchain,
+	public void displayToolchainResults(final IToolchainData<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
 		final ResultSummarizer summarizer = new ResultSummarizer(results);
 		switch (summarizer.getResultSummary()) {
@@ -156,7 +156,7 @@ public class CommandLineController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public void displayException(final IToolchainData<ToolchainListType> toolchain, final String description,
+	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
 			final Throwable ex) {
 		mLogger.fatal("RESULT: An exception occured during the execution of Ultimate: " + description, ex);
 	}

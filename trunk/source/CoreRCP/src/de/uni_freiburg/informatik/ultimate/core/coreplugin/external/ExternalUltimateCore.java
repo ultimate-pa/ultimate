@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.external;
@@ -36,16 +36,16 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.LivecycleException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 
 /**
- * 
+ *
  * Note: Not thread-safe (will build another one which is thread-safe and keeps one UltimateCore instance)
- * 
+ *
  * <ol>
  * <li>{@link #runUltimate()}</li>
  * <li>Delegate your callback to {@link IController#init(ICore, ILoggingService)} to
@@ -54,9 +54,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
  * <li>Call {@link #complete()}</li>
  * <li>Throw this instance away</li>
  * </ol>
- * 
+ *
  * @author dietsch
- * 
+ *
  */
 public class ExternalUltimateCore {
 
@@ -66,13 +66,13 @@ public class ExternalUltimateCore {
 
 	private final Semaphore mUltimateExit;
 	private final Semaphore mStarterContinue;
-	private final IController<ToolchainListType> mController;
+	private final IController<RunDefinition> mController;
 
 	protected ManualReleaseToolchainJob mJob;
 
 	private volatile IStatus mReturnStatus;
 
-	public ExternalUltimateCore(IController<ToolchainListType> controller) {
+	public ExternalUltimateCore(final IController<RunDefinition> controller) {
 		mUltimateExit = new Semaphore(0);
 		mStarterContinue = new Semaphore(0);
 		mController = controller;
@@ -98,20 +98,21 @@ public class ExternalUltimateCore {
 		return mReturnStatus;
 	}
 
-	public IStatus init(ICore<ToolchainListType> core) {
+	public IStatus init(final ICore<RunDefinition> core) {
 		return init(core, null, 0, null);
 	}
 
-	public IStatus init(ICore<ToolchainListType> core, File[] inputFiles) {
+	public IStatus init(final ICore<RunDefinition> core, final File[] inputFiles) {
 		return init(core, null, 0, inputFiles);
 	}
 
-	public IStatus init(ICore<ToolchainListType> core, File settingsFile, long deadline, File[] inputFiles) {
+	public IStatus init(final ICore<RunDefinition> core, final File settingsFile, final long deadline,
+			final File[] inputFiles) {
 		ILogger logger = null;
 		try {
 			mReachedInit = true;
 			if (core == null) {
-				return new Status(Status.ERROR, Activator.PLUGIN_ID, Status.ERROR, "Initialization failed", null);
+				return new Status(IStatus.ERROR, Activator.PLUGIN_ID, IStatus.ERROR, "Initialization failed", null);
 			}
 
 			logger = getLogger(core.getCoreLoggingService());
@@ -135,12 +136,12 @@ public class ExternalUltimateCore {
 		return mReturnStatus;
 	}
 
-	protected ILogger getLogger(ILoggingService loggingService) {
+	protected ILogger getLogger(final ILoggingService loggingService) {
 		return loggingService.getControllerLogger();
 	}
 
-	protected ManualReleaseToolchainJob getToolchainJob(ICore<ToolchainListType> core,
-			IController<ToolchainListType> controller, ILogger logger, File[] inputFiles) {
+	protected ManualReleaseToolchainJob getToolchainJob(final ICore<RunDefinition> core,
+			final IController<RunDefinition> controller, final ILogger logger, final File[] inputFiles) {
 		return new ManualReleaseToolchainJob("Processing Toolchain", core, controller, logger, inputFiles);
 	}
 
@@ -174,8 +175,8 @@ public class ExternalUltimateCore {
 
 	protected class ManualReleaseToolchainJob extends DefaultToolchainJob {
 
-		public ManualReleaseToolchainJob(String name, ICore<ToolchainListType> core,
-				IController<ToolchainListType> controller, ILogger logger, File[] inputs) {
+		public ManualReleaseToolchainJob(final String name, final ICore<RunDefinition> core,
+				final IController<RunDefinition> controller, final ILogger logger, final File[] inputs) {
 			super(name, core, controller, logger, inputs);
 		}
 

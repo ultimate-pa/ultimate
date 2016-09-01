@@ -3,27 +3,27 @@
  * Copyright (C) 2008-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 Jürgen Christ (christj@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE DebugGUI plug-in.
- * 
+ *
  * The ULTIMATE DebugGUI plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE DebugGUI plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE DebugGUI plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE DebugGUI plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.gui.advisors;
@@ -42,7 +42,7 @@ import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 import org.eclipse.ui.application.ActionBarAdvisor;
 import org.eclipse.ui.application.IActionBarConfigurer;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
@@ -56,13 +56,13 @@ import de.uni_freiburg.informatik.ultimate.gui.actions.SaveSettingsAction;
 
 /**
  * The class that handles the actions and fills the action bars.
- * 
+ *
  * @author Christian Ortolf
- * 
+ *
  */
 public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 
-	private final ICore<ToolchainListType> mCore;
+	private final ICore<RunDefinition> mCore;
 	private final GuiController mController;
 	private final ILogger mLogger;
 
@@ -79,8 +79,8 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 	private IWorkbenchAction mSaveSettings;
 	private IWorkbenchAction mResetSettings;
 
-	public ApplicationActionBarAdvisor(IActionBarConfigurer configurer, ICore<ToolchainListType> icc,
-			GuiController controller, ILogger logger) {
+	public ApplicationActionBarAdvisor(final IActionBarConfigurer configurer, final ICore<RunDefinition> icc,
+			final GuiController controller, final ILogger logger) {
 		super(configurer);
 		mCore = icc;
 		mController = controller;
@@ -89,7 +89,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 
 	/**
 	 * Called by Workbench to create our actions.
-	 * 
+	 *
 	 * @param window
 	 *            the workbench window we are in
 	 */
@@ -108,18 +108,18 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 		mResetSettings = registerAction(new ResetSettingsAction(mCore));
 	}
 
-	private IWorkbenchAction registerAction(IWorkbenchAction action) {
+	private IWorkbenchAction registerAction(final IWorkbenchAction action) {
 		register(action);
 		return action;
 	}
 
 	/**
 	 * called by workbench the menu.
-	 * 
+	 *
 	 * @param menuBar
 	 */
 	@Override
-	protected void fillMenuBar(IMenuManager menuBar) {
+	protected void fillMenuBar(final IMenuManager menuBar) {
 		final MenuManager fileMenu = new MenuManager("&File", "file");
 
 		fileMenu.add(mLoadSourceFiles);
@@ -148,7 +148,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 	}
 
 	@Override
-	protected void fillCoolBar(ICoolBarManager coolBar) {
+	protected void fillCoolBar(final ICoolBarManager coolBar) {
 		final IToolBarManager toolBar = new ToolBarManager(SWT.PUSH);
 		coolBar.add(toolBar);
 

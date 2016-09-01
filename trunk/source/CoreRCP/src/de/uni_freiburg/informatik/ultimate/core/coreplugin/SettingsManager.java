@@ -45,7 +45,7 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChange
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.osgi.service.prefs.BackingStoreException;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
@@ -92,7 +92,7 @@ final class SettingsManager {
 		logDefaultPreferences(pluginId, pluginName);
 	}
 
-	void loadPreferencesFromFile(final ICore<ToolchainListType> core, final String filename) {
+	void loadPreferencesFromFile(final ICore<RunDefinition> core, final String filename) {
 		if (filename != null && !filename.isEmpty()) {
 			mLogger.debug("--------------------------------------------------------------------------------");
 			mLogger.info("Beginning loading settings from " + filename);
@@ -121,7 +121,7 @@ final class SettingsManager {
 		}
 	}
 
-	private void logPreferencesDifferentFromDefaults(final ICore<ToolchainListType> core) {
+	private void logPreferencesDifferentFromDefaults(final ICore<RunDefinition> core) {
 		boolean isSomePluginDifferent = false;
 		for (final IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
 			final String pluginId = plugin.getPluginID();
@@ -139,7 +139,7 @@ final class SettingsManager {
 		}
 	}
 
-	void savePreferences(final ICore<ToolchainListType> core, final String filename) {
+	void savePreferences(final ICore<RunDefinition> core, final String filename) {
 		if (filename == null || filename.isEmpty()) {
 			return;
 		}
@@ -166,7 +166,7 @@ final class SettingsManager {
 		}
 	}
 
-	void resetPreferences(final ICore<ToolchainListType> core) {
+	void resetPreferences(final ICore<RunDefinition> core) {
 		mLogger.info("Resetting all preferences to default values...");
 		for (final IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
 			final IPreferenceInitializer preferences = plugin.getPreferences();

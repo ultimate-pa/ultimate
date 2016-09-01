@@ -35,7 +35,7 @@ import javax.xml.bind.JAXBException;
 
 import org.xml.sax.SAXException;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -51,10 +51,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public class ToolchainLocator {
 
 	private final File mDir;
-	private final ICore<ToolchainListType> mCore;
+	private final ICore<RunDefinition> mCore;
 	private final ILogger mLogger;
 
-	public ToolchainLocator(final File directory, final ICore<ToolchainListType> core, final ILogger logger) {
+	public ToolchainLocator(final File directory, final ICore<RunDefinition> core, final ILogger logger) {
 		mDir = directory;
 		mCore = core;
 		mLogger = logger;
@@ -76,11 +76,10 @@ public class ToolchainLocator {
 			return;
 		}
 
-		final List<IToolchainData<ToolchainListType>> toolchains = new ArrayList<>();
+		final List<IToolchainData<RunDefinition>> toolchains = new ArrayList<>();
 		for (final File xmlFile : xmlFiles) {
 			try {
-				final IToolchainData<ToolchainListType> toolchain =
-						mCore.createToolchainData(xmlFile.getAbsolutePath());
+				final IToolchainData<RunDefinition> toolchain = mCore.createToolchainData(xmlFile.getAbsolutePath());
 				toolchains.add(toolchain);
 			} catch (final FileNotFoundException e) {
 				mLogger.error("Could not find file: " + e.getMessage());
@@ -89,7 +88,7 @@ public class ToolchainLocator {
 			}
 		}
 
-		toolchains.stream().forEach(a -> mLogger.debug(a.toString()));
+		toolchains.stream().forEach(a -> mLogger.debug("Found toolchain " + a.getToolchain().getName()));
 
 	}
 }

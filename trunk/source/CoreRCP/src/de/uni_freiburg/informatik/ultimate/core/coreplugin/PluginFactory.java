@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin;
@@ -35,7 +35,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.Platform;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
@@ -51,18 +51,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
 
 /**
- * 
+ *
  * PluginFactory creates instances of plugins for toolchains and/or the core.
- * 
+ *
  * @author dietsch
- * 
+ *
  */
 final class PluginFactory implements IServiceFactoryFactory {
 
 	// private static final Class<?>[] sIToolClasses = { IAnalysis.class,
 	// IGenerator.class, IOutput.class };
-	private static final Class<?>[] sIToolchainPluginClasses = { IAnalysis.class, IGenerator.class, IOutput.class,
-			ISource.class };
+	private static final Class<?>[] sIToolchainPluginClasses =
+			{ IAnalysis.class, IGenerator.class, IOutput.class, ISource.class };
 
 	private final IExtensionRegistry mRegistry;
 	private final ILogger mLogger;
@@ -73,11 +73,11 @@ final class PluginFactory implements IServiceFactoryFactory {
 	private final HashMap<Class<?>, IServiceFactory<?>> mAvailableServicesByClassName;
 
 	private boolean mGuiMode;
-	private final IController<ToolchainListType> mController;
+	private final IController<RunDefinition> mController;
 	private List<IToolchainPlugin> mToolchainPluginCache;
 	private List<ITool> mToolCache;
 
-	PluginFactory(SettingsManager settingsManager, ILogger logger) {
+	PluginFactory(final SettingsManager settingsManager, final ILogger logger) {
 		mLogger = logger;
 		mRegistry = Platform.getExtensionRegistry();
 		mAvailableToolsByClass = new HashMap<>();
@@ -107,11 +107,11 @@ final class PluginFactory implements IServiceFactoryFactory {
 	// checkPreferencesForActivePlugins();
 	// mLogger.debug("--------------------------------------------------------------------------------");
 
-	IController<ToolchainListType> getController() {
+	IController<RunDefinition> getController() {
 		return mController;
 	}
 
-	List<String> getPluginClassNames(Class<?> clazz) {
+	List<String> getPluginClassNames(final Class<?> clazz) {
 		final List<IConfigurationElement> elems = mAvailableToolsByClass.get(clazz);
 		final List<String> rtr = new ArrayList<>();
 		if (elems != null) {
@@ -123,9 +123,9 @@ final class PluginFactory implements IServiceFactoryFactory {
 	}
 
 	/**
-	 * 
+	 *
 	 * TODO: How to check feasibility / admissibility ?
-	 * 
+	 *
 	 * @return
 	 */
 	List<String> getPluginIds() {
@@ -133,11 +133,11 @@ final class PluginFactory implements IServiceFactoryFactory {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param toolId
 	 * @return
 	 */
-	<T extends IToolchainPlugin> T createTool(String toolId) {
+	<T extends IToolchainPlugin> T createTool(final String toolId) {
 		IConfigurationElement element = mAvailableToolsByClassName.get(toolId);
 		if (element == null) {
 			// maybe the user used the PluginID?
@@ -147,7 +147,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 		return prepareToolchainPlugin(plugin);
 	}
 
-	private <T extends IToolchainPlugin> T prepareToolchainPlugin(T plugin) {
+	private <T extends IToolchainPlugin> T prepareToolchainPlugin(final T plugin) {
 		if (plugin == null) {
 			return null;
 		}
@@ -165,7 +165,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 
 	/**
 	 * This method returns a list of instances of available IToolchainPlugins. Those tools are not initialized.
-	 * 
+	 *
 	 * @return
 	 */
 	List<IToolchainPlugin> getAllAvailableToolchainPlugins() {
@@ -225,7 +225,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 		return rtr;
 	}
 
-	boolean isPluginAvailable(String pluginId) {
+	boolean isPluginAvailable(final String pluginId) {
 		return mAvailableToolsByClassName.containsKey(pluginId) || mPluginIDToClassName.containsKey(pluginId);
 	}
 
@@ -233,16 +233,16 @@ final class PluginFactory implements IServiceFactoryFactory {
 	 * This method loads all contributions to the IController Extension Point. Its receiving configuration elements (see
 	 * exsd-files) which define class name in element "impl" and attribute "class" as well as an attribute
 	 * "isGraphical". It then
-	 * 
+	 *
 	 * Changed in Ultimate 2.0 to support multiple present controllers and to make the distinction between graphical and
 	 * non graphical ones
-	 * 
+	 *
 	 * @param reg
 	 *            The extension registry (which extensions are valid and how can I find them); is obtained by
 	 *            Platform.getExtensionRegistry()
 	 * @throws CoreException
 	 */
-	private IController<ToolchainListType> loadControllerPlugin(IExtensionRegistry reg) {
+	private IController<RunDefinition> loadControllerPlugin(final IExtensionRegistry reg) {
 		final List<IConfigurationElement> configElements = mAvailableToolsByClass.get(IController.class);
 
 		if (configElements.size() != 1) {
@@ -259,7 +259,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 			return null;
 		}
 		final IConfigurationElement controllerDescriptor = configElements.get(0);
-		final IController<ToolchainListType> controller = createInstance(controllerDescriptor);
+		final IController<RunDefinition> controller = createInstance(controllerDescriptor);
 		mGuiMode = new Boolean(controllerDescriptor.getAttribute("isGraphical")).booleanValue();
 		mSettingsManager.registerPlugin(controller);
 
@@ -268,7 +268,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T extends IUltimatePlugin> T createInstance(IConfigurationElement element) {
+	private <T extends IUltimatePlugin> T createInstance(final IConfigurationElement element) {
 		if (element == null) {
 			return null;
 		}
@@ -280,7 +280,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 		}
 	}
 
-	private void registerType(Class<?> clazz) {
+	private void registerType(final Class<?> clazz) {
 		if (clazz.equals(IServiceFactory.class)) {
 			for (final IConfigurationElement element : mRegistry
 					.getConfigurationElementsFor(getExtensionPointFromClass(clazz))) {
@@ -300,10 +300,11 @@ final class PluginFactory implements IServiceFactoryFactory {
 		}
 	}
 
-	private void registerTool(Class<?> clazz) {
+	private void registerTool(final Class<?> clazz) {
 		final List<IConfigurationElement> result = new ArrayList<IConfigurationElement>();
 		mAvailableToolsByClass.put(clazz, result);
-		for (final IConfigurationElement element : mRegistry.getConfigurationElementsFor(getExtensionPointFromClass(clazz))) {
+		for (final IConfigurationElement element : mRegistry
+				.getConfigurationElementsFor(getExtensionPointFromClass(clazz))) {
 			result.add(element);
 			final String className = element.getAttribute("class");
 			mAvailableToolsByClassName.put(className, element);
@@ -312,12 +313,12 @@ final class PluginFactory implements IServiceFactoryFactory {
 		mLogger.info(result.size() + " " + clazz.getSimpleName() + " plugins available");
 	}
 
-	private String createPluginID(String classname) {
+	private String createPluginID(final String classname) {
 		final String rtr = classname.substring(0, classname.lastIndexOf("."));
 		return rtr;
 	}
 
-	private String getExtensionPointFromClass(Class<?> clazz) {
+	private String getExtensionPointFromClass(final Class<?> clazz) {
 		final String qualifiedName = clazz.getName();
 		switch (qualifiedName) {
 		case "de.uni_freiburg.informatik.ultimate.core.model.IController":
@@ -338,8 +339,8 @@ final class PluginFactory implements IServiceFactoryFactory {
 	}
 
 	@Override
-	public <T, K extends IServiceFactory<T>> T createService(Class<K> service, IUltimateServiceProvider services,
-			IToolchainStorage storage) {
+	public <T, K extends IServiceFactory<T>> T createService(final Class<K> service,
+			final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		final IServiceFactory<?> unknownfactory = mAvailableServicesByClassName.get(service);
 
 		if (unknownfactory == null) {

@@ -38,7 +38,7 @@ import org.apache.commons.cli.Option.Builder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.lib.util.LoggerOutputStream;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
@@ -58,7 +58,7 @@ public class CommandLineParser {
 
 	private static final int MAX_NAME_LENGTH = 160;
 
-	private final ICore<ToolchainListType> mCore;
+	private final ICore<RunDefinition> mCore;
 	private final ILogger mLogger;
 	private final Options mOptionsForParser;
 	private final Options mOptionsForHelp;
@@ -68,7 +68,7 @@ public class CommandLineParser {
 
 	private int mMaxOptionWidth;
 
-	public CommandLineParser(final ICore<ToolchainListType> core) {
+	public CommandLineParser(final ICore<RunDefinition> core) {
 		mCore = core;
 		mLogger = core.getCoreLoggingService().getControllerLogger();
 		mParser = new DefaultParser();
