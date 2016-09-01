@@ -28,14 +28,12 @@ package de.uni_freiburg.informatik.ultimate.cli;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.cli.ParseException;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.app.IApplication;
-import org.osgi.framework.Bundle;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
@@ -73,7 +71,7 @@ public class CommandLineController implements IController<ToolchainListType> {
 			mLogger.debug("Data directory is " + Platform.getLocation());
 			mLogger.debug("Working directory is " + Platform.getInstallLocation().getURL());
 			mLogger.debug("user.dir is " + System.getProperty("user.dir"));
-			mLogger.debug("CLI Controller version is " + getVersion(Activator.PLUGIN_ID));
+			mLogger.debug("CLI Controller version is " + RcpUtils.getVersion(Activator.PLUGIN_ID));
 		}
 
 		final CommandLineParser newCmdParser = new CommandLineParser(core);
@@ -113,18 +111,6 @@ public class CommandLineController implements IController<ToolchainListType> {
 			return -1;
 		}
 		return IApplication.EXIT_OK;
-	}
-
-	private String getVersion(final String pluginId) {
-		final Bundle bundle = Platform.getBundle(pluginId);
-		if (bundle == null) {
-			return "UNKNOWN";
-		}
-		final Dictionary<String, String> headers = bundle.getHeaders();
-		if (headers != null) {
-			return headers.get("Bundle-Version");
-		}
-		return "UNKNOWN";
 	}
 
 	@Override
