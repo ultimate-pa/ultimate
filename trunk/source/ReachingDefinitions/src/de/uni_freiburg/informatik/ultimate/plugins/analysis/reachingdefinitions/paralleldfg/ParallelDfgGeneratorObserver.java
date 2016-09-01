@@ -39,6 +39,8 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	private Integer mCFGEdgeCount;
 	private Integer mCFGNodeCount;
 	private ParallelDataflowgraph<RCFGEdge> mInitNode;
+	private Map<String, Integer> mStmtsPerThread;
+	private Map<String, Integer> mLocsPerThread;
 
 	public ParallelDfgGeneratorObserver(ILogger logger, IUltimateServiceProvider services) {
 		mLogger = logger;
@@ -49,6 +51,8 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		mCFGEdgeCount= 0;
 		mCFGNodeCount=0;
 		mInitNode = null;
+		mStmtsPerThread = new HashMap<String, Integer>();
+		mLocsPerThread  = new HashMap<String, Integer>();
 	}
 
 
@@ -65,7 +69,6 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		computeInitNode(rootNode);
 		// look for asserts in the RCFG
 		List<RCFGNode> nodes = new ArrayList<RCFGNode>();
-
 		// ignore the first edge from the dummy root to the function entry
 		for (RCFGEdge e: rootNode.getOutgoingEdges()){
 			Set<RCFGNode> a = nodesInGraph(e.getTarget());
@@ -108,12 +111,15 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		
 		
 		// Debug info after the algorithm
-		mLogger.debug("Total number of data flow nodes in the Parallel DFG: " + mNodeCount);
-		mLogger.debug("Total number of data flow edges in the Parallel DFG: " + mEdgeCount);
-		mLogger.debug("Total number of control flow nodes in the original Program: " + mCFGNodeCount);
-		mLogger.debug("Total number of control flowe dges in the original Program: " + mCFGEdgeCount);
 		
+		mLogger.debug("Information of the orignial CFG of the program: ");
+		mLogger.debug("Total number of control flow nodes: " + mCFGNodeCount);
+		mLogger.debug("Total number of control flowe edges: " + mCFGEdgeCount);
+		mLogger.debug("Maximal number of nodes in the Parallel DFG: " + computeMaxNodes());
 		
+		mLogger.debug("Information of the Parallel DFG:");
+		mLogger.debug("Total number of data flow nodes: " + mNodeCount);
+		mLogger.debug("Total number of data flow edges: " + mEdgeCount);
 		return false;
 	}
 
@@ -207,7 +213,6 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 				}
 				
 				// this pp has init in nowrite(x,pp)
-				// TODO does not work
 				Set<ProgramPoint> nwls = dfs.getNowriteLocations((IProgramVar) var);
 				Set<ProgramPoint> entryPoint = mInitNode.getLocations(entry.getKey());
 				ProgramPoint en = null;
@@ -283,6 +288,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	
 	
 	private Set<RCFGNode> nodesInGraph(RCFGNode root){
+		// Called for every Thread, where root is the entry point of the thread.
 		// Returns a list of all the nodes in the graph
 		// memorize, which elements have been visited
 		Integer countEdges = 0;
@@ -308,6 +314,9 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		}
 		mCFGEdgeCount += countEdges;
 		mCFGNodeCount += visited.size();
+		ProgramPoint pp = (ProgramPoint) root;
+		mStmtsPerThread.put(pp.getProcedure(), visited.size());
+		mLocsPerThread.put(pp.getProcedure(), countEdges);
 		return visited;
 	}
 	
@@ -397,5 +406,20 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		mNodeCount++;
 	}
 	
+	
+	private Integer computeMaxNodes(){
+		Integer count =0;
+		for (Entry<String, Integer> entry: mStmtsPerThread.entrySet()){
+			if (entry.getKey() == "~init"){
+				continue;
+			}
+			for (Entry<String, Integer> other: mLocsPerThread.entrySet()){
+				if (entry.getKey() != other.getKey() && other.getKey() != "~init"){
+					count += entry.getValue() * other.getValue();
+				}
+			}
+		}
+		return count;
+	}
 
 }
