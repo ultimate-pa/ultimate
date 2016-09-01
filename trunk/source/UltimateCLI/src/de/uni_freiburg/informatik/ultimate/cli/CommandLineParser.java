@@ -65,24 +65,28 @@ public class CommandLineParser {
 	private final Map<String, Pair<String, String>> mCliName2PreferenceName;
 	private final Map<String, IUltimatePreferenceItemValidator<?>> mCliName2Validator;
 
-	private int mMaxWidth;
+	private int mMaxOptionWidth;
 
 	public CommandLineParser(final ICore<ToolchainListType> core) {
 		mCore = core;
 		mLogger = core.getCoreLoggingService().getControllerLogger();
 		mParser = new DefaultParser();
-		mMaxWidth = Integer.MIN_VALUE;
+		mMaxOptionWidth = Integer.MIN_VALUE;
 		mCliName2PreferenceName = new HashMap<>();
 		mCliName2Validator = new HashMap<>();
 
 		mOptions = createOptions();
-		mLogger.debug("Max width of options was " + mMaxWidth);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Max width of options was " + mMaxOptionWidth);
+		}
 	}
 
 	public void printHelp() {
 		final HelpFormatter formatter = new HelpFormatter();
-		final PrintWriter logPrintWriter = new PrintWriter(new LoggerOutputStream(a -> mLogger.info(a)));
-		formatter.setWidth(mMaxWidth * 2);
+		final PrintWriter logPrintWriter = new PrintWriter(new LoggerOutputStream(mLogger::info));
+		formatter.setLeftPadding(0);
+		formatter.setDescPadding(6);
+		formatter.setWidth(mMaxOptionWidth + 1);
 		// keep the options in the order they were declared
 		formatter.setOptionComparator(null);
 		formatter.printHelp(logPrintWriter, "Ultimate [OPTIONS] -tc <FILE> -i <FILE> [<FILE> ...]", mOptions);
@@ -148,10 +152,12 @@ public class CommandLineParser {
 			}
 			addPreferences(op, preferences);
 		}
+
 		// add platform options (they appear because of the way RCP launches and are never used by this controller)
 		op.addOption(Option.builder("product").hasArg().type(String.class).build());
 		op.addOption(Option.builder("application").hasArg().type(String.class).build());
 		op.addOption(Option.builder().longOpt("console").type(Boolean.class).build());
+		op.addOption(Option.builder().longOpt("launcher.suppressErrors").type(Boolean.class).build());
 
 		return op;
 	}
@@ -279,8 +285,8 @@ public class CommandLineParser {
 		final String processedName = unprocessedName.replace(' ', '.').replace('(', '.').replace(')', '.')
 				.replaceAll(":", "").replace('"', '.').replaceAll("\\.+", ".").toLowerCase();
 		final int newLength = processedName.length();
-		if (mMaxWidth < newLength) {
-			mMaxWidth = newLength;
+		if (mMaxOptionWidth < newLength) {
+			mMaxOptionWidth = newLength;
 		}
 		if (newLength > MAX_NAME_LENGTH) {
 			mLogger.warn("Option " + processedName + " longer than allowed maximum of " + MAX_NAME_LENGTH);

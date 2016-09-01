@@ -65,10 +65,15 @@ public class CommandLineController implements IController<ToolchainListType> {
 		}
 
 		mLogger = core.getCoreLoggingService().getControllerLogger();
-		mLogger.debug("Initializing CommandlineController...");
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Initializing CommandlineController...");
+			mLogger.debug("Working directory is " + Platform.getLocation());
+		}
 
 		final CommandLineParser newCmdParser = new CommandLineParser(core);
 		final String[] args = Platform.getCommandLineArgs();
+
 		try {
 			final ParsedParameter pparams = newCmdParser.parse(args);
 			if (pparams.isHelpRequested()) {
@@ -91,7 +96,7 @@ public class CommandLineController implements IController<ToolchainListType> {
 			tcj.join();
 
 		} catch (final ParseException e) {
-			mLogger.error("Could not parse command-line options from arguments " + String.join(",", args) + ":");
+			mLogger.error("Could not parse command-line options from arguments \"" + String.join(" ", args) + "\":");
 			mLogger.error(e.getMessage());
 			newCmdParser.printHelp();
 			return -1;
