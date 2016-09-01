@@ -60,7 +60,8 @@ public class CommandLineParser {
 
 	private final ICore<ToolchainListType> mCore;
 	private final ILogger mLogger;
-	private final Options mOptions;
+	private final Options mOptionsForParser;
+	private final Options mOptionsForHelp;
 	private final DefaultParser mParser;
 	private final Map<String, Pair<String, String>> mCliName2PreferenceName;
 	private final Map<String, IUltimatePreferenceItemValidator<?>> mCliName2Validator;
@@ -75,7 +76,15 @@ public class CommandLineParser {
 		mCliName2PreferenceName = new HashMap<>();
 		mCliName2Validator = new HashMap<>();
 
-		mOptions = createOptions();
+		final Options visibleOptions = createVisibleOptions();
+		final Options invisibleOptions = createInvisibleOptions();
+		mOptionsForParser = new Options();
+		visibleOptions.getOptions().stream().forEach(mOptionsForParser::addOption);
+		invisibleOptions.getOptions().stream().forEach(mOptionsForParser::addOption);
+
+		mOptionsForHelp = new Options();
+		visibleOptions.getOptions().stream().forEach(mOptionsForHelp::addOption);
+
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Max width of options was " + mMaxOptionWidth);
 		}
@@ -89,13 +98,13 @@ public class CommandLineParser {
 		formatter.setWidth(mMaxOptionWidth + 1);
 		// keep the options in the order they were declared
 		formatter.setOptionComparator(null);
-		formatter.printHelp(logPrintWriter, "Ultimate [OPTIONS] -tc <FILE> -i <FILE> [<FILE> ...]", mOptions);
+		formatter.printHelp(logPrintWriter, "Ultimate [OPTIONS] -tc <FILE> -i <FILE> [<FILE> ...]", mOptionsForHelp);
 		logPrintWriter.flush();
 		logPrintWriter.close();
 	}
 
 	public ParsedParameter parse(final String[] args) throws ParseException {
-		final CommandLine cli = mParser.parse(mOptions, args);
+		final CommandLine cli = mParser.parse(mOptionsForParser, args);
 		validateParsedOptionsWithValidators(cli);
 		validateParsedOptionsByConversion(cli);
 		return new ParsedParameter(mCore, cli, mCliName2PreferenceName);
@@ -137,14 +146,14 @@ public class CommandLineParser {
 		return (IUltimatePreferenceItemValidator<Object>) mCliName2Validator.get(cliName);
 	}
 
-	private Options createOptions() {
+	private Options createVisibleOptions() {
 		final Options op = new Options();
 
 		// add CLI controller options
 		for (final Option option : CommandLineOptions.createCommandLineOptions()) {
 			op.addOption(option);
 		}
-		// create preferences from loaded Ultimate plugins
+		// create options from preferences of loaded Ultimate plugins
 		for (final IUltimatePlugin plugin : mCore.getRegisteredUltimatePlugins()) {
 			final IPreferenceInitializer preferences = plugin.getPreferences();
 			if (preferences == null) {
@@ -152,13 +161,16 @@ public class CommandLineParser {
 			}
 			addPreferences(op, preferences);
 		}
+		return op;
+	}
 
+	private Options createInvisibleOptions() {
+		final Options op = new Options();
 		// add platform options (they appear because of the way RCP launches and are never used by this controller)
 		op.addOption(Option.builder("product").hasArg().type(String.class).build());
 		op.addOption(Option.builder("application").hasArg().type(String.class).build());
 		op.addOption(Option.builder().longOpt("console").type(Boolean.class).build());
 		op.addOption(Option.builder().longOpt("launcher.suppressErrors").type(Boolean.class).build());
-
 		return op;
 	}
 
