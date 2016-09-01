@@ -143,7 +143,7 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 
 	public static final String DEFAULT_VALUE_ROOT_PREF = "DEBUG";
 	public static final String DEFAULT_VALUE_TOOLS_PREF = "INFO";
-	public static final String DEFAULT_VALUE_CORE_PREF = "INFO";
+	public static final String DEFAULT_VALUE_CORE_PREF = "WARN";
 	public static final String DEFAULT_VALUE_CONTROLLER_PREF = "INFO";
 	public static final String DEFAULT_VALUE_PLUGINS_PREF = "INFO";
 
