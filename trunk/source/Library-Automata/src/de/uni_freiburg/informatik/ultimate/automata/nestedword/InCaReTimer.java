@@ -120,8 +120,8 @@ public class InCaReTimer {
 	 * @return pretty-printed time
 	 */
 	public static String prettyprintNanoseconds(final long time) {
-		final long seconds = time / 1000000000;
-		final long tenthDigit = (time / 100000000) % 10;
+		final long seconds = time / 1_000_000_000;
+		final long tenthDigit = (time / 100_000_000) % 10;
 		return Long.toString(seconds) + '.' + Long.toString(tenthDigit) + 's';
 	}
 	

@@ -112,7 +112,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		
 		private final String mFileEnding;
 		
-		private Format(final String fileEnding) {
+		Format(final String fileEnding) {
 			mFileEnding = fileEnding;
 		}
 		
@@ -243,7 +243,6 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		final String fileName = workingDirectory + File.separator + fileNamePrefix + getDateTimeFileName();
 		new AutomatonDefinitionPrinter<LETTER, STATE>(services,
 				fileNamePrefix, fileName, Format.ATS_NUMERATE, message, automata);
-		return;
 	}
 	
 	/**
@@ -276,7 +275,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 * 
 	 * @return date/time string
 	 */
-	private String getDateTimeNice() {
+	private static String getDateTimeNice() {
 		return getDateTimeFromFormat("yyyy/MM/dd HH:mm:ss");
 	}
 	
@@ -384,7 +383,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		println(");");
 	}
 	
-	private String getCollectionPrefix(final String string) {
+	private static String getCollectionPrefix(final String string) {
 		return String.format("\t%s = {", string);
 	}
 	
@@ -460,15 +459,15 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		}
 	}
 	
-	private String replaceBackslashes(final Object input) {
+	private static String replaceBackslashes(final Object input) {
 		return input.toString().replaceAll("\"", "\\\"");
 	}
 	
-	private String quoteAndReplaceBackslashes(final Object input) {
+	private static String quoteAndReplaceBackslashes(final Object input) {
 		return QUOTE + replaceBackslashes(input) + QUOTE;
 	}
 	
-	private String quoteAndReplaceBackslashes(final Object input, final String suffix) {
+	private static String quoteAndReplaceBackslashes(final Object input, final String suffix) {
 		return QUOTE + replaceBackslashes(input) + suffix + QUOTE;
 	}
 	
@@ -697,7 +696,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		
 		@Override
 		protected Map<STATE, String> getStateMapping(final Collection<STATE> states) {
-			final Map<STATE, String> stateMapping = new HashMap<STATE, String>();
+			final Map<STATE, String> stateMapping = new HashMap<>();
 			for (final STATE state : states) {
 				stateMapping.put(state,
 						quoteAndReplaceBackslashes(state, Integer.toString(state.hashCode() / sHashDivisor)));
@@ -1396,6 +1395,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 * @param <E>
 	 *            type of object to print
 	 */
+	@FunctionalInterface
 	private interface IConverter<E> {
 		String convert(E elem);
 	}

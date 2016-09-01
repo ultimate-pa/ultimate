@@ -248,7 +248,7 @@ public class StringFactory implements IStateFactory<String> {
 		return builder.toString();
 	}
 	
-	private void prettyprintCollectionOfStates(final StringBuilder builder,
+	private static void prettyprintCollectionOfStates(final StringBuilder builder,
 			final List<Pair<StateWithRankInfo<String>, String>> collection,
 			final boolean isNestedWordAutomaton) {
 		if (collection.isEmpty()) {
@@ -334,7 +334,8 @@ public class StringFactory implements IStateFactory<String> {
 		return state + " (entry " + entry + CLOSE_PARENTHESIS;
 	}
 	
-	private void buchiComplementFkvHelper(final StringBuilder builder, final StateWithRankInfo<String> stateWithInfo) {
+	private static void buchiComplementFkvHelper(final StringBuilder builder,
+			final StateWithRankInfo<String> stateWithInfo) {
 		// @formatter:off
 		builder.append(stateWithInfo.getState())
 				.append(COMMA);
@@ -349,7 +350,7 @@ public class StringFactory implements IStateFactory<String> {
 		}
 	}
 	
-	private void buchiComplementNcsbHelperRankTwo(final List<Pair<StateWithRankInfo<String>, String>> listC,
+	private static void buchiComplementNcsbHelperRankTwo(final List<Pair<StateWithRankInfo<String>, String>> listC,
 			final List<Pair<StateWithRankInfo<String>, String>> listB, final StateWithRankInfo<String> downState,
 			final StateWithRankInfo<String> upState) {
 		listC.add(new Pair<>(downState, upState.getState()));

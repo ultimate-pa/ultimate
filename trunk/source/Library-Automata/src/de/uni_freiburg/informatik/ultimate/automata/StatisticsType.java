@@ -189,7 +189,7 @@ public enum StatisticsType {
 	 */
 	IS_OUT_OF_MEMORY,
 	/**
-	 * If the operation uses SCC, an optimization for automata
+	 * If the operation uses SCC, an optimization for automata.
 	 */
 	IS_USING_SCCS,
 	/**
