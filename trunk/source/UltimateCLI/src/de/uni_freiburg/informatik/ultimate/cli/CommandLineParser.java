@@ -88,6 +88,9 @@ public class CommandLineParser {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Max width of options was " + mMaxOptionWidth);
 		}
+
+		final ToolchainLocator toolchainLocator = new ToolchainLocator(RcpUtils.getWorkingDirectory(), core, mLogger);
+		toolchainLocator.loadToolchains();
 	}
 
 	public void printHelp() {
