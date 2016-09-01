@@ -81,7 +81,6 @@ public class CommandLineParser {
 
 	public void printHelp() {
 		final HelpFormatter formatter = new HelpFormatter();
-		@SuppressWarnings("squid:S1943")
 		final PrintWriter logPrintWriter = new PrintWriter(new LoggerOutputStream(a -> mLogger.info(a)));
 		formatter.setWidth(mMaxWidth * 2);
 		// keep the options in the order they were declared
@@ -137,7 +136,7 @@ public class CommandLineParser {
 	private Options createOptions() {
 		final Options op = new Options();
 
-		// add CLI options
+		// add CLI controller options
 		for (final Option option : CommandLineOptions.createCommandLineOptions()) {
 			op.addOption(option);
 		}
@@ -151,6 +150,7 @@ public class CommandLineParser {
 		}
 		// add platform options (they appear because of the way RCP launches and are never used by this controller)
 		op.addOption(Option.builder("product").hasArg().type(String.class).build());
+		op.addOption(Option.builder("application").hasArg().type(String.class).build());
 		op.addOption(Option.builder().longOpt("console").type(Boolean.class).build());
 
 		return op;
