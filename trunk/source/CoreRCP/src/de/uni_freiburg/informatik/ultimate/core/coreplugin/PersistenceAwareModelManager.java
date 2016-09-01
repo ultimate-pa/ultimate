@@ -40,12 +40,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.DataAccessException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.DataAccessException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.GraphNotFoundException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.PersistentObjectNotFoundException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.PersistentObjectTypeMismatchException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.IRepository;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.PersistentObjectNotFoundException;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.PersistentObjectTypeMismatchException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.SerializationRepository;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;

@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.ToolchainWalker.CompleteToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.StoreObjectException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.GenericServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.Log4JLoggingService;
@@ -162,7 +162,7 @@ public class ToolchainManager {
 
 			// install logging services into toolchain storage
 			mLoggingService.setCurrentControllerID(mCurrentController.getPluginID());
-			mToolchainData.getStorage().putStorable(Log4JLoggingService.getServiceKey(), mLoggingService);
+			mLoggingService.store(mToolchainData.getStorage());
 
 			// install service provider service into toolchain storage
 			mToolchainData.getStorage().putStorable(GenericServiceProvider.getServiceKey(),
@@ -302,6 +302,7 @@ public class ToolchainManager {
 				ResultUtil.logResults(controllerLogger, resultService, appendCompleteLongDescription);
 				final ResultSummarizer resultSummary = new ResultSummarizer(resultService);
 				controllerLogger.info(resultSummary.getOldResultMessage());
+				mCurrentController.displayToolchainResults(mToolchainData, resultService.getResults());
 				mModelManager.removeAll();
 			}
 

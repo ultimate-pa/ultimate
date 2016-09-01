@@ -28,29 +28,29 @@
 /*
  * Project:	CoreRCP
  * Package:	de.uni_freiburg.informatik.ultimate.model.repository
- * File:	DuplicateKeyException.java created on Oct 29, 2009 by Björn Buchhold
+ * File:	PersistentObjectFoundException.java created on Oct 28, 2009 by Björn Buchhold
  *
  */
-package de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository;
+package de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions;
+
 
 /**
- * DuplicateKeyException
+ * PersistentObjectFoundException
  *
  * @author Björn Buchhold
  *
  */
-public class DuplicateKeyException extends DataAccessException {
-	
+public class PersistentObjectNotFoundException extends DataAccessException {
 
 	/**
 	 * long serialVersionUID
 	 */
-	private static final long serialVersionUID = -8860449896992867725L;
+	private static final long serialVersionUID = 3503439079052656989L;
 	
 	/**
 	 * @param msg
 	 */
-	public DuplicateKeyException(String msg) {
+	public PersistentObjectNotFoundException(String msg){
 		super(msg);
 	}
 	
@@ -58,9 +58,14 @@ public class DuplicateKeyException extends DataAccessException {
 	 * @param msg
 	 * @param cause
 	 */
-	public DuplicateKeyException(String msg, Throwable cause) {
+	public PersistentObjectNotFoundException(String msg, Throwable cause){
 		super(msg, cause);
 	}
 
-	
+	/**
+	 * @param e
+	 */
+	public PersistentObjectNotFoundException(Throwable e) {
+		super("An error occurred because the object could not be found properly!",e);
+	}
 }

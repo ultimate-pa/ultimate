@@ -192,7 +192,6 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 	@Override
 	public void loadPreferences(final String absolutePath) {
 		mSettingsManager.loadPreferencesFromFile(this, absolutePath);
-		mLoggingService.refreshLoggingService();
 	}
 
 	@Override

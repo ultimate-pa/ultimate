@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.GraphNotFoundException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelwalker.CFGWalker;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelwalker.DFSTreeWalker;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelwalker.IWalker;

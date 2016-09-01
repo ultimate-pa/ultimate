@@ -28,38 +28,37 @@
 /*
  * Project:	CoreRCP
  * Package:	de.uni_freiburg.informatik.ultimate.model.repository
- * File:	PersistObjectException.java created on Oct 29, 2009 by Björn Buchhold
+ * File:	PersistentObjectTypeMismatchException.java created on Oct 29, 2009 by Björn Buchhold
  *
  */
-package de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository;
-
+package de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions;
 
 /**
- * PersistObjectException
+ * PersistentObjectTypeMismatchException
  *
  * @author Björn Buchhold
  *
  */
-public class StoreObjectException extends DataAccessException {
+public class PersistentObjectTypeMismatchException extends DataAccessException {
 
 	/**
 	 * long serialVersionUID
 	 */
-	private static final long serialVersionUID = 7672000550303730525L;
-
+	private static final long serialVersionUID = 2801380493879228801L;
+	
 	/**
-	 * @param e
+	 * @param msg
 	 */
-	public StoreObjectException(Throwable e) {
-		super("Failed to persist object", e);	
+	public PersistentObjectTypeMismatchException(String msg){
+		super(msg);
 	}
-
+	
 	/**
-	 * @param string
-	 * @param e
+	 * @param msg
+	 * @param cause
 	 */
-	public StoreObjectException(String string, Throwable e) {
-		super(string, e);
+	public PersistentObjectTypeMismatchException(String msg, Throwable cause){
+		super(msg, cause);
 	}
 
 }

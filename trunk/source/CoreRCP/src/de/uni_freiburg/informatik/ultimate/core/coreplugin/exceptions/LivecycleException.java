@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2009-2015 Björn Buchhold
- * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Core.
@@ -25,40 +24,25 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
-/*
- * Project:	CoreRCP
- * Package:	de.uni_freiburg.informatik.ultimate.model.repository
- * File:	PersistentObjectTypeMismatchException.java created on Oct 29, 2009 by Björn Buchhold
- *
- */
-package de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository;
+package de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions;
+
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 
 /**
- * PersistentObjectTypeMismatchException
- *
- * @author Björn Buchhold
- *
+ * Use this exception to signal that Ultimate encountered a serious error before
+ * it could call {@link IController#init(ICore, ILoggingService)}
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ * 
  */
-public class PersistentObjectTypeMismatchException extends DataAccessException {
+public class LivecycleException extends RuntimeException {
 
-	/**
-	 * long serialVersionUID
-	 */
-	private static final long serialVersionUID = 2801380493879228801L;
-	
-	/**
-	 * @param msg
-	 */
-	public PersistentObjectTypeMismatchException(String msg){
-		super(msg);
-	}
-	
-	/**
-	 * @param msg
-	 * @param cause
-	 */
-	public PersistentObjectTypeMismatchException(String msg, Throwable cause){
-		super(msg, cause);
+	private static final long serialVersionUID = -6577471260294280323L;
+
+	public LivecycleException(String arg0) {
+		super(arg0);
 	}
 
 }

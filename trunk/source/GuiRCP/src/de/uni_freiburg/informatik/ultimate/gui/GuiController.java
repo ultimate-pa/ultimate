@@ -216,7 +216,6 @@ public class GuiController implements IController<ToolchainListType> {
 	public void displayException(final IToolchainData<ToolchainListType> toolchain, final String description,
 			final Throwable ex) {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override

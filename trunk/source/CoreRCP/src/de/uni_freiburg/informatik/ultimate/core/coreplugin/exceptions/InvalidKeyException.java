@@ -27,42 +27,33 @@
  */
 /*
  * Project:	CoreRCP
- * Package:	de.uni_freiburg.informatik.ultimate.model
- * File:	GraphNotFoundException.java created on Nov 11, 2009 by Björn Buchhold
+ * Package:	de.uni_freiburg.informatik.ultimate.model.repository
+ * File:	InvalidKeyException.java created on Oct 29, 2009 by Björn Buchhold
  *
  */
-package de.uni_freiburg.informatik.ultimate.core.coreplugin;
+package de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import java.io.FileNotFoundException;
 
 /**
- * GraphNotFoundException
+ * InvalidKeyException
  *
  * @author Björn Buchhold
  *
  */
-public class GraphNotFoundException extends Exception {
+public class InvalidKeyException extends StoreObjectException {
 
 	/**
 	 * long serialVersionUID
 	 */
-	private static final long serialVersionUID = -6102010750779099260L;
-
-
-	/**
-	 * @param gt the graph that could not be found
-	 * @param e the exception thrown
-	 */
-	public GraphNotFoundException(ModelType gt, Exception e) {
-		super("The Graphtype: " + gt + " could not be found. Neither in the map, nor in the repository" , e);
-	}
-
+	private static final long serialVersionUID = 988620680137659382L;
 
 	/**
-	 * @param gt
+	 * @param string
+	 * @param e
 	 */
-	public GraphNotFoundException(ModelType gt) {
-		super("The Graphtype: " + gt + " could not be found. Neither in the map, nor in the repository");
+	public InvalidKeyException(String string, FileNotFoundException e) {
+		super(string, e);
 	}
 
 }
