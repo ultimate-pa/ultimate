@@ -80,7 +80,10 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	 * Note that this log pattern consumes quite some cycles. Replacing it with "%-5p: %m%n" is advised for more
 	 * performance.
 	 */
-	public static final String DEFAULT_VALUE_LOG4J_PATTERN = "[%d{ISO8601} %-5p L%-5.5L %20.20C{1}]: %m%n";
+	public static final String VALUE_LOG4J_PATTERN = "[%d{ISO8601} %-5p L%-5.5L %20.20C{1}]: %m%n";
+
+	public static final String LABEL_LOG4J_CONTROLLER_PATTERN = "UI logger pattern";
+	public static final String VALUE_LOG4J_CONTROLLER_PATTERN = "%m%n";
 
 	// Log level
 	public static final String DESC_LOGFILE =
@@ -200,7 +203,8 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 				new UltimatePreferenceItem<String>(LABEL_MmTMPDIRECTORY, VALUE_MmTMPDIRECTORY,
 						PreferenceType.Directory),
 
-				new UltimatePreferenceItem<String>(LABEL_LOG4J_PATTERN, DEFAULT_VALUE_LOG4J_PATTERN,
+				new UltimatePreferenceItem<String>(LABEL_LOG4J_PATTERN, VALUE_LOG4J_PATTERN, PreferenceType.String),
+				new UltimatePreferenceItem<String>(LABEL_LOG4J_CONTROLLER_PATTERN, VALUE_LOG4J_CONTROLLER_PATTERN,
 						PreferenceType.String),
 
 				// Log levels
@@ -238,8 +242,8 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 		@Override
 		public boolean isValid(final String value) {
 			final String upper = value.toUpperCase();
-			for(final String validValue : VALUE_VALID_LOG_LEVELS){
-				if(validValue.equals(upper)){
+			for (final String validValue : VALUE_VALID_LOG_LEVELS) {
+				if (validValue.equals(upper)) {
 					return true;
 				}
 			}

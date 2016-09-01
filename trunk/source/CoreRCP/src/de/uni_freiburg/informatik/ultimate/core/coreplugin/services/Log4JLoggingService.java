@@ -82,7 +82,8 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 			CorePreferenceInitializer.LABEL_CONTROLLER_PREF, CorePreferenceInitializer.LABEL_PLUGINS_PREF,
 			CorePreferenceInitializer.LABEL_PLUGIN_DETAIL_PREF, CorePreferenceInitializer.LABEL_COLOR_DEBUG,
 			CorePreferenceInitializer.LABEL_COLOR_INFO, CorePreferenceInitializer.LABEL_COLOR_WARNING,
-			CorePreferenceInitializer.LABEL_COLOR_ERROR, CorePreferenceInitializer.LABEL_COLOR_FATAL, };
+			CorePreferenceInitializer.LABEL_COLOR_ERROR, CorePreferenceInitializer.LABEL_COLOR_FATAL,
+			CorePreferenceInitializer.LABEL_LOG4J_CONTROLLER_PATTERN };
 
 	private static final String APPENDER_NAME_CONSOLE = "ConsoleAppender";
 	private static final String APPENDER_NAME_LOGFILE = "LogfileAppender";
@@ -122,13 +123,14 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		mRootAppenders.clear();
 		mControllerAppenders.clear();
 
-		final PatternLayout consoleLayout =
+		final PatternLayout mainLayout =
 				new PatternLayout(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN));
-		final Appender consoleAppender = new ConsoleAppender(consoleLayout);
+		final Appender consoleAppender = new ConsoleAppender(mainLayout);
 		consoleAppender.setName(APPENDER_NAME_CONSOLE);
 		mRootAppenders.add(consoleAppender);
 
-		final PatternLayout controllerLayout = new PatternLayout("[%-5p]: %m%n");
+		final PatternLayout controllerLayout =
+				new PatternLayout(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_CONTROLLER_PATTERN));
 		final Appender controllerAppender = new ConsoleAppender(controllerLayout);
 		controllerAppender.setName(APPENDER_NAME_CONTROLLER);
 		mControllerAppenders.add(controllerAppender);
