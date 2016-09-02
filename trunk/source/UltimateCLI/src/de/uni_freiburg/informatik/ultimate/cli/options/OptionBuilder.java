@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.cli.options;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.apache.commons.cli.Option;
@@ -57,14 +59,11 @@ public class OptionBuilder {
 	private final Options mRcpOptions;
 	private final Options mCliControllerOptions;
 
-	private int mMaxOptionWidth;
-
 	public OptionBuilder(final ICore<RunDefinition> core, final ILogger logger) {
 		mCore = core;
 		mCliName2PreferenceName = new HashMap<>();
 		mCliName2Validator = new HashMap<>();
 		mLogger = logger;
-		mMaxOptionWidth = Integer.MIN_VALUE;
 
 		mUltimateOptions = createUltimateOptions();
 		mRcpOptions = createRcpOptions();
@@ -86,10 +85,6 @@ public class OptionBuilder {
 		return (IUltimatePreferenceItemValidator<Object>) mCliName2Validator.get(cliName);
 	}
 
-	public int getMaxOptionNameWidth() {
-		return mMaxOptionWidth;
-	}
-
 	public Options getParserOptions(final Predicate<String> pluginNameFilter) {
 		final Options rtr = new Options();
 		mCliControllerOptions.getOptions().stream().forEach(rtr::addOption);
@@ -108,6 +103,20 @@ public class OptionBuilder {
 				.forEach(rtr::addOption);
 
 		return rtr;
+	}
+
+	public int calculateMaxWidth(final Options opts) {
+		if (opts == null) {
+			return 0;
+		}
+		final Collection<Option> options = opts.getOptions();
+		if (options.isEmpty()) {
+			return 0;
+		}
+		final Optional<Integer> max =
+				options.stream().map(a -> a.getLongOpt().toString().length()).max(Integer::compare);
+		// 8 is the length of the additional symbols for a long option line: --<option> <arg>
+		return max.get() + 8;
 	}
 
 	private boolean filterUltimateOption(final Option option, final Predicate<String> pluginNameFilter) {
@@ -280,9 +289,7 @@ public class OptionBuilder {
 		final String processedName = unprocessedName.replace(' ', '.').replace('(', '.').replace(')', '.')
 				.replaceAll(":", "").replace('"', '.').replaceAll("\\.+", ".").toLowerCase();
 		final int newLength = processedName.length();
-		if (mMaxOptionWidth < newLength) {
-			mMaxOptionWidth = newLength;
-		}
+
 		if (newLength > MAX_NAME_LENGTH) {
 			mLogger.warn("Option " + processedName + " longer than allowed maximum of " + MAX_NAME_LENGTH);
 		}

@@ -77,7 +77,7 @@ public class CommandLineParser {
 		final PrintWriter logPrintWriter = new PrintWriter(new LoggerOutputStream(mLogger::info));
 		formatter.setLeftPadding(0);
 		formatter.setDescPadding(6);
-		formatter.setWidth(mOptionBuilder.getMaxOptionNameWidth() + 1);
+		formatter.setWidth(mOptionBuilder.calculateMaxWidth(mOptionsForHelp));
 		// keep the options in the order they were declared
 		formatter.setOptionComparator(null);
 		formatter.printHelp(logPrintWriter, "Ultimate [OPTIONS] -tc <FILE> -i <FILE> [<FILE> ...]", mOptionsForHelp);
