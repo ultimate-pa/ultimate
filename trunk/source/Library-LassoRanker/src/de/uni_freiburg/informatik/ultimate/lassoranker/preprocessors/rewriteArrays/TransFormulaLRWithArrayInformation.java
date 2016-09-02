@@ -567,13 +567,16 @@ public class TransFormulaLRWithArrayInformation {
 							break;
 						}
 					}
-					assert firstGenerationArray != null : arrayInVar + " has no progenitor";
-					if (firstGenerationArray != arrayInVar) {
-						assert occursInArrayEqualities(arrayInVar) : 
-							"if arrayInVar of foreign index is not first generation it has to occur in array equality";
-						assert occursInArrayEqualities(firstGenerationArray) : 
-							"if arrayInVar of foreign index is not first generation the first generation has to occur in array equality";
+					if (firstGenerationArray == null) {
+						mLogger.warn(arrayInVar + " has no progenitor");
 					}
+//					assert firstGenerationArray != null : arrayInVar + " has no progenitor";
+//					if (firstGenerationArray != arrayInVar) {
+//						assert occursInArrayEqualities(arrayInVar) : 
+//							"if arrayInVar of foreign index is not first generation it has to occur in array equality";
+//						assert occursInArrayEqualities(firstGenerationArray) : 
+//							"if arrayInVar of foreign index is not first generation the first generation has to occur in array equality";
+//					}
 					final Set<ArrayIndex> foreignIndicesForInVar = foreignIndices.getImage(arrayInVar);
 					for (final ArrayIndex foreignIndex : foreignIndicesForInVar) {
 						addFirstGenerationIndexPair(firstGenerationArray, foreignIndex);
