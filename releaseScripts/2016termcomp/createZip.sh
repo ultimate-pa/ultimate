@@ -5,7 +5,7 @@ mkdir StarExecArchive/Ultimate
 cp -a ../../trunk/source/BA_SiteRepository/target/products/CLI-E4/linux/gtk/x86_64/* StarExecArchive/Ultimate/
 cp LICENSE* StarExecArchive/Ultimate/
 cp starexec_description.txt StarExecArchive/
-cp ../../trunk/examples/toolchains/AutomizerAndBuchiAutomizerCWithBlockEncoding.xml StarExecArchive/
+cp ../../trunk/examples/toolchains/AutomizerAndBuchiAutomizerCInlineWithBlockEncoding.xml StarExecArchive/
 cp starexec_run_default StarExecArchive/bin/
 cp Ultimate.ini StarExecArchive/Ultimate/
 cp ../../trunk/examples/settings/buchiAutomizer/termcomp2016.epf StarExecArchive/
