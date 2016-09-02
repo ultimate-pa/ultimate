@@ -160,8 +160,7 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 		
 		final Integer snd = getInteger(sndBaseKey);
 		
-		final int difference = fst - snd;
-		return difference;
+		return fst - snd;
 	}
 	
 	private Integer getInteger(final StatisticsType key) {
@@ -172,7 +171,6 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 		if (!(raw instanceof Integer)) {
 			throw new IllegalArgumentException(key + MUST_BE_OF_NUMBER_TYPE);
 		}
-		final Integer result = (Integer) raw;
-		return result;
+		return (Integer) raw;
 	}
 }
