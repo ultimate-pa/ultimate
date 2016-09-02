@@ -338,7 +338,7 @@ public class ShrinkNwa<LETTER, STATE>
 			mReturnSplitCorrectnessEcs = new HashSet<EquivalenceClass>();
 		}
 		
-		mNondeterministicTransitions = false;
+		mNondeterministicTransitions = nondeterministicTransitions;
 		
 		// must be the last part of the constructor
 		minimize(isFiniteAutomaton, equivalenceClasses, addMapOldState2newState);
