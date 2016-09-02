@@ -6,7 +6,7 @@
     </description>
 
     <target name="generate_parser">
-        <java classname="java_cup.Main" classpath="${cupDir}" fork="true" failonerror="true">
+        <java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true" failonerror="true">
             <arg value="GlobalLocalParser.cup" />
         </java>
         <java jar="${flexJar}" fork="true" failonerror="true">

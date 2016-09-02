@@ -30,7 +30,7 @@ package req_to_pea;
 import java.util.ArrayList;
 import java.util.List;
 
-import java_cup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.Symbol;
 import pea.PhaseEventAutomata;
 import pea.modelchecking.J2UPPAALConverter;
 import pea.reqCheck.PatternToPEA;

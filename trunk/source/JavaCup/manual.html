@@ -166,7 +166,7 @@ as follows:<br></p>
 <hr>
 <pre><tt>// CUP specification for a simple expression evaluator (no actions)
 
-import java_cup.runtime.*;
+import com.github.jhoenicke.javacup.runtime.*;
 
 /* Preliminaries to set up and use the scanner.  */
 init with {: scanner.init();              :};
@@ -205,7 +205,7 @@ expr      ::= expr PLUS expr
 However, here we can quickly see that the specification contains four 
 main parts.  The first part provides preliminary and miscellaneous declarations
 to specify how the parser is to be generated, and supply parts of the 
-runtime code.  In this case we indicate that the <tt>java_cup.runtime</tt>
+runtime code.  In this case we indicate that the <tt>com.github.jhoenicke.javacup.runtime</tt>
 classes should be imported, then supply a small bit of initialization code,
 and some code for invoking the scanner to retrieve the next input token.
 The second part of the specification declares terminals and non-terminals,
@@ -251,7 +251,7 @@ uses autoboxing for integers and thus needs Java 1.5 to run.
 </p><hr>
 <pre><tt>// CUP specification for a simple expression evaluator (w/ actions)
 
-import java_cup.runtime.*;
+import com.github.jhoenicke.javacup.runtime.*;
 
 /* Preliminaries to set up and use the scanner.  */
 init with {: scanner.init();              :};
@@ -350,8 +350,8 @@ representing these symbols to the parser.
 The terminals will be retrieved with a call to the
 scanner function.  In the example, the parser will call
 <tt>scanner.next_token()</tt>. The scanner should return objects of
-type <tt>java_cup.runtime.Symbol</tt>.  This type is very different than
-older versions of CUP's <tt>java_cup.runtime.symbol</tt>.  These Symbol
+type <tt>com.github.jhoenicke.javacup.runtime.Symbol</tt>.  This type is very different than
+older versions of CUP's <tt>com.github.jhoenicke.javacup.runtime.symbol</tt>.  These Symbol
 objects contains the instance variable <tt>value</tt> of type Object, 
 which should be
 set by the lexer.  This variable refers to the value of that symbol, and
@@ -368,7 +368,7 @@ will be executed before any tokens are requested.  Each token will be
 requested using whatever code is found in the <tt>scan with</tt> clause.
 Beyond this, the exact form the scanner takes is up to you; however
 note that each call to the scanner function should return a new
-instance of <code>java_cup.runtime.Symbol</code> (or a subclass).
+instance of <code>com.github.jhoenicke.javacup.runtime.Symbol</code> (or a subclass).
 These symbol objects are annotated with parser information and pushed
 onto a stack; reusing objects will result in the parser annotations
 being scrambled.  As of CUP 0.10j, <code>Symbol</code> reuse should be
@@ -544,12 +544,12 @@ useful to specify in the grammar file:</p>
   <dt><tt>noscanner</tt>
   </dt><dd>CUP 0.10j introduced <a href="#scanner">improved scanner
   integration</a> and a new interface,
-  <code>java_cup.runtime.Scanner</code>.  By default, the 
+  <code>com.github.jhoenicke.javacup.runtime.Scanner</code>.  By default, the 
   generated parser refers to this interface, which means you cannot
   use these parsers with CUP runtimes older than 0.10j.  If your
   parser does not use the new scanner integration features, then you
   may specify the <code>noscanner</code> option to suppress the
-  <code>java_cup.runtime.Scanner</code> references and allow
+  <code>com.github.jhoenicke.javacup.runtime.Scanner</code> references and allow
   compatibility with old runtimes.  Not many people should have reason
   to do this.</dd>
 </dl>
@@ -610,7 +610,7 @@ form:</p>
 
 <p>As with the <tt>init</tt> clause, the contents of the code string forms
 the body of a method in the generated parser.  However, in this case
-the method returns an object of type <tt>java_cup.runtime.Symbol</tt>.
+the method returns an object of type <tt>com.github.jhoenicke.javacup.runtime.Symbol</tt>.
 Consequently the code found in the <tt>scan with</tt> clause should 
 return such a value.  See <a href="#scanner">section 5</a> for
 information on the default behavior if the <code>scan with</code>
@@ -751,7 +751,7 @@ section optionally starts with a declaration of the form:</p>
 non-terminal for parsing.  If a start non-terminal is not explicitly
 declared, then the non-terminal on the left hand side of the first 
 production will be used.  At the end of a successful parse, CUP returns
-an object of type <tt>java_cup.runtime.Symbol</tt>.  This
+an object of type <tt>com.github.jhoenicke.javacup.runtime.Symbol</tt>.  This
 <tt>Symbol</tt>'s value instance variable contains the final reduction
 result.</p>
 
@@ -854,7 +854,7 @@ efficiently internally (e.g. the array is only created once).
 <h4>3.1 Command line interface</h4>
 <p>As mentioned above, CUP is written in Java.  To invoke it, one needs
 to use the Java interpreter to invoke the static method 
-<tt>java_cup.Main()</tt>, passing an array of strings containing options.  
+<tt>com.github.jhoenicke.javacup.Main()</tt>, passing an array of strings containing options.  
 Assuming a Unix machine, the simplest way to do this is typically to invoke it 
 directly from the command line with a command such as: </p>
 
@@ -996,12 +996,12 @@ by passing various options to it.  Legal options are documented in
   <dt><tt>-noscanner</tt>
   </dt><dd>CUP 0.10j introduced <a href="#scanner">improved scanner
   integration</a> and a new interface,
-  <code>java_cup.runtime.Scanner</code>.  By default, the 
+  <code>com.github.jhoenicke.javacup.runtime.Scanner</code>.  By default, the 
   generated parser refers to this interface, which means you cannot
   use these parsers with CUP runtimes older than 0.10j.  If your
   parser does not use the new scanner integration features, then you
   may specify the <code>-noscanner</code> option to suppress the
-  <code>java_cup.runtime.Scanner</code> references and allow
+  <code>com.github.jhoenicke.javacup.runtime.Scanner</code> references and allow
   compatibility with old runtimes.  Not many people should have reason
   to do this.</dd>
 
@@ -1017,7 +1017,7 @@ script</h4>
 <p>To use cup in an ANT script, You have to add the following task definition to
 Your <tt>build.xml</tt> file:</p>
 <pre>&lt;taskdef name="cup"
-  classname="java_cup.anttask.CUPTask"
+  classname="com.github.jhoenicke.javacup.anttask.CUPTask"
   classpathref="cupclasspath"
 /&gt;
 </pre>
@@ -1052,7 +1052,7 @@ supplied action code.  In general, all names beginning with the prefix of
 <tt>CUP$</tt> are reserved for internal uses by CUP generated code. </p> 
 
 <p>The <tt>parser</tt> class contains the actual generated parser.  It is 
-a subclass of <tt>java_cup.runtime.LRParser</tt> which implements a 
+a subclass of <tt>com.github.jhoenicke.javacup.runtime.LRParser</tt> which implements a 
 general table driven framework for an LR parser.  The generated <tt>parser</tt>
 class provides a series of tables for use by the general framework.  
 Three tables are provided:
@@ -1083,14 +1083,14 @@ available for customization include:
 </dt><dd>This method is called by the parser prior to asking for the first token 
     from the scanner.  The body of this method contains the code from the 
     <tt>init with</tt> clause of the the specification.  </dd>
-<dt><a name="scan_method"><tt>public java_cup.runtime.Symbol scan()</tt></a>
+<dt><a name="scan_method"><tt>public com.github.jhoenicke.javacup.runtime.Symbol scan()</tt></a>
 </dt><dd>This method encapsulates the scanner and is called each time a new
     terminal is needed by the parser.  The body of this method is 
     supplied by the <tt>scan with</tt> clause of the specification, if
     present; otherwise it returns <code>getScanner().next_token()</code>.</dd>
-<dt><tt>public java_cup.runtime.Scanner getScanner()</tt>
+<dt><tt>public com.github.jhoenicke.javacup.runtime.Scanner getScanner()</tt>
 </dt><dd>Returns the default scanner.  See <a href="#scanner">section 5</a>.</dd>
-<dt><tt>public void setScanner(java_cup.runtime.Scanner s)</tt>
+<dt><tt>public void setScanner(com.github.jhoenicke.javacup.runtime.Scanner s)</tt>
 </dt><dd>Sets the default scanner.  See <a href="#scanner">section 5</a>.</dd>
 <dt><tt> public void report_error(String message, Object info)</tt>
 </dt><dd>This method should be called whenever an error message is to be issued.  In
@@ -1167,8 +1167,8 @@ The changes make it easier to incorporate JLex and other
 automatically-generated scanners into CUP parsers.</p>
 
 <p>To use the new code, your scanner should implement the
-<code>java_cup.runtime.Scanner</code> interface, defined as:
-</p><pre>package java_cup.runtime;
+<code>com.github.jhoenicke.javacup.runtime.Scanner</code> interface, defined as:
+</p><pre>package com.github.jhoenicke.javacup.runtime;
 
 public interface Scanner {
     public Symbol next_token() throws java.lang.Exception;
@@ -1176,7 +1176,7 @@ public interface Scanner {
 </pre>
 
 <p>In addition to the methods described in <a href="#parser">section
-4</a>, the <code>java_cup.runtime.lr_parser</code> class has two new
+4</a>, the <code>com.github.jhoenicke.javacup.runtime.lr_parser</code> class has two new
 accessor methods, <code>setScanner()</code> and <code>getScanner()</code>.
 The default implementation of <a href="#scan_method"><code>scan()</code></a>
 is:
@@ -1207,12 +1207,11 @@ As an example of scanner integration, the following three lines in the
 lexer-generator input are all that is required to use a 
 <a href="http://www.cs.princeton.edu/%7Eappel/modern/java/JLex/">JLex</a>
 scanner with CUP:
-</p><pre>%implements java_cup.runtime.Scanner
+</p><pre>%implements com.github.jhoenicke.javacup.runtime.Scanner
 %function next_token
-%type java_cup.runtime.Symbol
+%type com.github.jhoenicke.javacup.runtime.Symbol
 </pre>
-<p>It is anticipated that the JLex directive <code>%cup</code> will
-abbreviate the above three directive in the next version of JLex.
+<p>
 Invoking the parser with the JLex scanner is then simply:</p>
 <pre>parser parser_obj = new parser( new Yylex( some_InputStream_or_Reader));
 </pre>
@@ -1235,9 +1234,9 @@ the scanner integration features with a hand-coded scanner.</p>
 
 <p>Since CUP v11a we offer the possibility of advanced symbol handling in CUP.
 Therefore, You can implement Your own SymbolFactory, derived from
-<code>java_cup.runtime.SymbolFactory</code>, and have CUP manage Your own type of
+<code>com.github.jhoenicke.javacup.runtime.SymbolFactory</code>, and have CUP manage Your own type of
 symbols. We've done that for You already in the pre-defined
-<code>java_cup.runtime.ComplexSymbolFactory</code>, which provides support for
+<code>com.github.jhoenicke.javacup.runtime.ComplexSymbolFactory</code>, which provides support for
 detailed location information in the symbol class. Just have a look at CUPs own
 <code>Lexer.jflex</code>, which is already using the new feature.</p>
 
@@ -1389,38 +1388,33 @@ The following gives a simplified grammar (no error handling, no robust id)
 of the java cup parser:
 
 <hr>
-<pre><tt>java_cup_spec      ::= package_spec import_list code_parts
-                       symbol_list precedence_list start_spec 
-                       production_list
+<pre><tt>javacup_spec       ::= package_spec import_spec* code_parts
+                       symbol+ preced* start_spec 
+                       production+
 package_spec       ::= PACKAGE multipart_id SEMI | empty
-import_list        ::= import_list import_spec | empty
 import_spec        ::= IMPORT import_id SEMI
 code_parts         ::= code_parts code_part | empty
-code_part          ::= ACTION CODE CODE_STRING opt_semi |
-                       PARSER CODE CODE_STRING opt_semi |
-                       INIT WITH CODE_STRING opt_semi |
-                       SCAN WITH CODE_STRING opt_semi
-symbol_list        ::= symbol_list symbol | symbol
+code_part          ::= ACTION CODE CODE_STRING SEMI? |
+                       PARSER CODE CODE_STRING SEMI? |
+                       INIT WITH CODE_STRING SEMI? |
+                       SCAN WITH CODE_STRING SEMI?
 symbol             ::= TERMINAL opt_type_id terminal_list SEMI |
                        non_terminal opt_type_id non_terminal_list SEMI
 non_terminal       ::= NON TERMINAL | NONTERMINAL
-precedence_list    ::= precedence_l preced | empty
 preced             ::= PRECEDENCE LEFT terminal_list SEMI |
                        PRECEDENCE RIGHT terminal_list SEMI |
                        PRECEDENCE NONASSOC terminal_list SEMI
 start_spec         ::= START WITH nt_id SEMI | empty
-production_list    ::= production_list production | production
 production         ::= nt_id COLON_COLON_EQUALS rhs_list SEMI opt_context_prec
 rhs_list           ::= rhs_list BAR rhs | rhs
-rhs                ::= prod_part_list PERCENT_PREC term_id |
-                       prod_part_list
-prod_part_list     ::= prod_part_list prod_part | empty
+rhs                ::= prod_part* PERCENT_PREC term_id |
+                       prod_part*
 prod_part          ::= symbol_id opt_label | CODE_STRING
 opt_label          ::= COLON label_id | empty
 opt_type_id        ::= type_id | empty
 import_id          ::= multipart_id DOT STAR | multipart_id
 type_id            ::= multipart_id | type_id LBRACK RBRACK
-                       multipart_id LANGLE type_id_list RANGLE
+                       multipart_id LANGLE type_arg_list RANGLE
 type_arg_list      ::= type_arg_list COMMA type_arg | type_arg
 type_arg           ::= type_id | wildcard
 wildcard           ::= QUESTION | wildcard EXTENDS type_id | 
@@ -1432,7 +1426,6 @@ term_id            ::= symbol_id
 non_term_id        ::= ID
 symbol_id          ::= ID
 label_id           ::= ID
-opt_semi           ::= SEMI | empty
 </tt></pre>
 <hr>
 
@@ -1440,7 +1433,7 @@ opt_semi           ::= SEMI | empty
 <hr><a><br>
 </a><pre><a><tt>// Simple Example Scanner Class
 
-import java_cup.runtime.*;
+import com.github.jhoenicke.javacup.runtime.*;
 import sym;
 
 public class scanner {
@@ -1704,7 +1697,7 @@ package have been stomped on.  Documentation was updated, as well.</dd>
 <dt>0.10h-0.10i</dt><dd>February 1999, are maintenance releases.</dd>
 <dt>0.10j</dt><dd>July 1999, broadened the CUP input grammar to allow more
 flexibility and improved scanner integration via the
-<code>java_cup.runtime.Scanner</code> interface.</dd>
+<code>com.github.jhoenicke.javacup.runtime.Scanner</code> interface.</dd>
 
 <dt>0.11a</dt>
 <dd>the changelog has <a href="http://www2.cs.tum.edu/repos/cup/develop/changelog.txt">moved</a> to the

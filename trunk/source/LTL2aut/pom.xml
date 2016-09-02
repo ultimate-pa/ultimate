@@ -59,7 +59,7 @@
 									${automatascriptparserDir}</echo>
 								<echo>AutomataScriptParser: flexBinary is ${flexBinary}</echo>
 
-								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
+								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
 									dir="${ltl2autParserDir}" failonerror="true">
 									<arg line="-parser Parser" />
 									<arg value="AutPromela.cup" />
@@ -68,7 +68,7 @@
 									<arg value="AutPromela.flex" />
 								</java>
 
-								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
+								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
 									dir="${ltl2autParserDir}" failonerror="true">
 									<arg line="-parser Parser" />
 									<arg value="Apformula.cup" />

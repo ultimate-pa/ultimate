@@ -20,7 +20,7 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java_cup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.Symbol;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
 
@@ -33,7 +33,9 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
 %class Lexer
 %public
 %unicode
-%cup
+%implements com.github.jhoenicke.javacup.runtime.Scanner
+%type com.github.jhoenicke.javacup.runtime.Symbol
+%function next_token
 %line
 %column
 

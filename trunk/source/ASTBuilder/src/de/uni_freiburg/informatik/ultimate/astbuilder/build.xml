@@ -7,7 +7,7 @@
     </description>
 
     <target name="generate_ast">
-        <java classname="java_cup.Main" classpath="${cupDir}" fork="true" failonerror="true">
+        <java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true" failonerror="true">
                 <arg value="parser.cup" />
         </java>
         <java classname="de.uni_freiburg.informatik.ultimate.astbuilder.Main" classpath="${astbuilderDir}:${cupDir}" fork="true" failonerror="true">

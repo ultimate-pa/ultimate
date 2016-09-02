@@ -54,7 +54,7 @@
 								<echo>ASTBuilder: cupDir is ${cupDir}</echo>
 								<echo>ASTBuilder: astbuilderDir is ${astbuilderDir}</echo>
 						        
-						        <java classname="java_cup.Main" classpath="${cupDir}" fork="true" dir="${astbuilderDir}" failonerror="true">
+						        <java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true" dir="${astbuilderDir}" failonerror="true">
 						                <arg value="parser.cup" />
 						        </java>
 							</tasks>

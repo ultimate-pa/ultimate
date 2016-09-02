@@ -3,7 +3,7 @@
    This file is the specification for the Automata TestFile Scanner */
 
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser;
-import java_cup.runtime.*;
+import com.github.jhoenicke.javacup.runtime.*;
 
 /* ------------------------Macro Declarations  ---------------------- */ 
 %%
@@ -14,8 +14,9 @@ import java_cup.runtime.*;
 %line
 %column
 
-%cup
-%cupdebug
+%implements com.github.jhoenicke.javacup.runtime.Scanner
+%type com.github.jhoenicke.javacup.runtime.Symbol
+%function next_token
 
 %{   
     StringBuffer stringBuffer = new StringBuffer();
@@ -23,14 +24,14 @@ import java_cup.runtime.*;
     private String m_CurToken = new String();
     private StringBuffer idBuffer = new StringBuffer();
 
-    /* To create a new java_cup.runtime.Symbol with information about
+    /* To create a new com.github.jhoenicke.javacup.runtime.Symbol with information about
        the current token, the token will have no value in this
        case. */
     private Symbol symbol(int type) {
         return new Symbol(type, yyline, yycolumn);
     }
     
-    /* Also creates a new java_cup.runtime.Symbol with information
+    /* Also creates a new com.github.jhoenicke.javacup.runtime.Symbol with information
        about the current token, but this object has a value. */
     private Symbol symbol(int type, Object value) {
         return new Symbol(type, yyline, yycolumn, value);

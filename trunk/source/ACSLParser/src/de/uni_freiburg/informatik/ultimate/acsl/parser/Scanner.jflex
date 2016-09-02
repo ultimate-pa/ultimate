@@ -1,11 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.acsl.parser;
 
-import java_cup.runtime.ComplexSymbolFactory;
-import java_cup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.ComplexSymbolFactory;
+import com.github.jhoenicke.javacup.runtime.Symbol;
 %%
 %class Scanner
 %unicode
-%cup
+%implements com.github.jhoenicke.javacup.runtime.Scanner
+%type com.github.jhoenicke.javacup.runtime.Symbol
+%function next_token
 %line
 %column
 
@@ -28,9 +30,6 @@ import java_cup.runtime.Symbol;
     	return sf.newSymbol(text, type, left, right, value);
     }
 %}
-%eofval{
-    return sf.newSymbol("EOF",sym.EOF);
-%eofval}
 
 space = [\032 \t \012 \r @ ]
 rD = [0-9]
@@ -228,3 +227,4 @@ WhiteSpace     = {LineTerminator}* | {space}*
 	{WhiteSpace}	{ /* ignore */ }
 /* error fallback */
 .|\n		        { return symbol("error",sym.error, yytext()); }
+<<EOF>>             { return symbol("eof",sym.EOF); }

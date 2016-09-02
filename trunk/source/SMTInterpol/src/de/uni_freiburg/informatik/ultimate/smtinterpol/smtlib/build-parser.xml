@@ -25,7 +25,7 @@ along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
 
 
     <target name="generate_parser">
-        <java classname="java_cup.Main" classpath="${cupDir}" fork="true" failonerror="true">
+        <java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true" failonerror="true">
 			<arg value="smtlib.cup" />
         </java>
         <java jar="${flexJar}" fork="true">

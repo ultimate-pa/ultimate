@@ -33,7 +33,7 @@
 								<echo>SmtInterpol: smtlib2Dir is ${smtlib2Dir}</echo>
 								<echo>SmtInterpol: dimacsDir is ${dimacsDir}</echo>
 
-								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
+								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
 									dir="${smtlibDir}" failonerror="true">
 									<arg value="smtlib.cup" />
 								</java>
@@ -41,7 +41,7 @@
 									<arg value="smtlib.flex" />
 								</java>
 
-								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
+								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
 									dir="${smtlib2Dir}" failonerror="true">
 									<arg value="smtlib.cup" />
 								</java>
@@ -49,7 +49,7 @@
 									<arg value="smtlib.flex" />
 								</java>
 								
-								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
+								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
 									dir="${dimacsDir}" failonerror="true">
 									<arg value="dimacs.cup" />
 								</java>

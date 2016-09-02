@@ -56,7 +56,7 @@
 								<echo>SMTSolverBridge: externalsmtsolverDir is ${externalsmtsolverDir}</echo>
 								<echo>SMTSolverBridge: flexBinary is ${flexBinary}</echo>
 
-								<java classname="java_cup.Main" classpath="${cupDir}" fork="true" dir="${externalsmtsolverDir}" failonerror="true">
+								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true" dir="${externalsmtsolverDir}" failonerror="true">
 									<arg value="scriptResult.cup" />
 								</java>
 								<java jar="${flexBinary}" fork="true" dir="${externalsmtsolverDir}" failonerror="true">
