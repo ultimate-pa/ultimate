@@ -58,6 +58,7 @@ public class TreeAutomizerCEGAR extends AbstractCegarLoop {
 		super(services, storage, name, rootNode, smtManager, taPrefs, errorLocs, logger);
 		predicateFactory = new PredicateFactoryResultChecking(smtManager);
 		mBackendSmtSolverScript = script;
+
 	}
 
 	@Override
