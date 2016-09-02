@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.BridgeShrinker;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils.ELetterType;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils.LetterType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils.TypedLetter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils.TypedTransition;
 
@@ -46,8 +46,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * with caution.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public abstract class AAutomatonFactory<LETTER, STATE> {
 	protected INestedWordAutomaton<LETTER, STATE> mAutomaton;
@@ -220,7 +222,7 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	public void addInternalTransitions(final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Collection<TypedTransition<LETTER, STATE>> transitions) {
 		for (final TypedTransition<LETTER, STATE> trans : transitions) {
-			assert trans.getLetter().getType() == ELetterType.INTERNAL : "No internal transition.";
+			assert trans.getLetter().getType() == LetterType.INTERNAL : "No internal transition.";
 			addInternalTransition(automaton, trans.getPred(), trans.getLetter().getLetter(), trans.getSucc());
 		}
 	}
@@ -239,7 +241,7 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	public void addCallTransitions(final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Collection<TypedTransition<LETTER, STATE>> transitions) {
 		for (final TypedTransition<LETTER, STATE> trans : transitions) {
-			assert trans.getLetter().getType() == ELetterType.CALL : "No call transition.";
+			assert trans.getLetter().getType() == LetterType.CALL : "No call transition.";
 			addCallTransition(automaton, trans.getPred(), trans.getLetter().getLetter(), trans.getSucc());
 		}
 	}
@@ -258,7 +260,7 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	public void addReturnTransitions(final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Collection<TypedTransition<LETTER, STATE>> transitions) {
 		for (final TypedTransition<LETTER, STATE> trans : transitions) {
-			assert trans.getLetter().getType() == ELetterType.RETURN : "No return transition.";
+			assert trans.getLetter().getType() == LetterType.RETURN : "No return transition.";
 			addReturnTransition(automaton, trans.getPred(), trans.getHier(),
 					trans.getLetter().getLetter(), trans.getSucc());
 		}
@@ -275,7 +277,7 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 		for (final STATE state : automaton.getStates()) {
 			for (final OutgoingInternalTransition<LETTER, STATE> trans : automaton.internalSuccessors(state)) {
 				transitions.add(new TypedTransition<LETTER, STATE>(state, trans.getSucc(), null,
-						new TypedLetter<LETTER>(trans.getLetter(), ELetterType.INTERNAL)));
+						new TypedLetter<LETTER>(trans.getLetter(), LetterType.INTERNAL)));
 			}
 		}
 		return transitions;
@@ -291,7 +293,7 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 		for (final STATE state : automaton.getStates()) {
 			for (final OutgoingCallTransition<LETTER, STATE> trans : automaton.callSuccessors(state)) {
 				transitions.add(new TypedTransition<LETTER, STATE>(state, trans.getSucc(), null,
-						new TypedLetter<LETTER>(trans.getLetter(), ELetterType.CALL)));
+						new TypedLetter<LETTER>(trans.getLetter(), LetterType.CALL)));
 			}
 		}
 		return transitions;
@@ -308,7 +310,7 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 		for (final STATE state : automaton.getStates()) {
 			for (final OutgoingReturnTransition<LETTER, STATE> trans : automaton.returnSuccessors(state)) {
 				transitions.add(new TypedTransition<LETTER, STATE>(state, trans.getSucc(), trans.getHierPred(),
-						new TypedLetter<LETTER>(trans.getLetter(), ELetterType.RETURN)));
+						new TypedLetter<LETTER>(trans.getLetter(), LetterType.RETURN)));
 			}
 		}
 		return transitions;

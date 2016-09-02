@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
  * @author musab@informatik.uni-freiburg.de
  *
  */
-public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredicate> {
+public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormula, IPredicate> {
 	
 	/**
 	 * If index i is an internal position or a return transition in the
@@ -68,21 +68,21 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	 * {@code g_1,...,g_n := old(g_1),...,old(g_n)} where g_1,...,g_n are the
 	 * global variables modified by the called procedure.  
 	 */
-	private final TransFormula[] mTransFormulas;
+	private final UnmodifiableTransFormula[] mTransFormulas;
 	
 	/**
 	 * Maps a call position to a formula that represents the assignment 
 	 * {@code g_1,...,g_n := old(g_1),...,old(g_n)} where g_1,...,g_n are the
 	 * global variables modified by the called procedure.  
 	 */
-	private final Map<Integer,TransFormula> mGlobalAssignmentTransFormulaAtCall;
+	private final Map<Integer,UnmodifiableTransFormula> mGlobalAssignmentTransFormulaAtCall;
 	
 	/**
 	 * Maps a call position to a formula that represents the assignment 
 	 * {@code old(g_1),...,old(g_n) := g_1,...,g_n} where g_1,...,g_n are the
 	 * global variables modified by the called procedure.  
 	 */
-	private final Map<Integer, TransFormula> mOldVarsAssignmentTransFormulasAtCall;
+	private final Map<Integer, UnmodifiableTransFormula> mOldVarsAssignmentTransFormulasAtCall;
 	
 	
 	private final ManagedScript mScript;
@@ -106,9 +106,9 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 		super(nestedTrace, pendingContexts);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
-		mTransFormulas = new TransFormula[nestedTrace.length()];
-		mGlobalAssignmentTransFormulaAtCall = new HashMap<Integer, TransFormula>();
-		mOldVarsAssignmentTransFormulasAtCall = new HashMap<Integer, TransFormula>();
+		mTransFormulas = new UnmodifiableTransFormula[nestedTrace.length()];
+		mGlobalAssignmentTransFormulaAtCall = new HashMap<Integer, UnmodifiableTransFormula>();
+		mOldVarsAssignmentTransFormulasAtCall = new HashMap<Integer, UnmodifiableTransFormula>();
 		mScript = script;
 		generateRelevantTransFormulas(unsat_core, localVarAssignmentsAtCallInUnsatCore, 
 				oldVarAssignmentAtCallInUnsatCore, modGlobalVarManager);
@@ -126,9 +126,9 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 		super(nestedTrace, pendingContexts);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
-		mTransFormulas = new TransFormula[nestedTrace.length()];
-		mGlobalAssignmentTransFormulaAtCall = new HashMap<Integer, TransFormula>();
-		mOldVarsAssignmentTransFormulasAtCall = new HashMap<Integer, TransFormula>();
+		mTransFormulas = new UnmodifiableTransFormula[nestedTrace.length()];
+		mGlobalAssignmentTransFormulaAtCall = new HashMap<Integer, UnmodifiableTransFormula>();
+		mOldVarsAssignmentTransFormulasAtCall = new HashMap<Integer, UnmodifiableTransFormula>();
 		mScript = script;
 		generateRelevantTransFormulas(unsat_core, modGlobalVarManager, aaa, aac);
 	}
@@ -263,7 +263,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 		return conjunctsInUnsatCore;
 	}
 	
-	private TransFormula buildTransFormulaForStmtNotInUnsatCore(final TransFormula tf) {
+	private UnmodifiableTransFormula buildTransFormulaForStmtNotInUnsatCore(final UnmodifiableTransFormula tf) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, 
 				tf.getBranchEncoders().isEmpty(), tf.getBranchEncoders(), true);
 		for (final IProgramVar bv : tf.getAssignedVars()) {
@@ -276,8 +276,8 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 		return tfb.finishConstruction(mScript);
 	}
 	
-	private TransFormula buildTransFormulaWithRelevantConjuncts(
-			final TransFormula tf, final Term[] conjunctsInUnsatCore) {
+	private UnmodifiableTransFormula buildTransFormulaWithRelevantConjuncts(
+			final UnmodifiableTransFormula tf, final Term[] conjunctsInUnsatCore) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(
 				null, null, false, null, false);
 		
@@ -309,22 +309,22 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	}
 
 	@Override
-	protected TransFormula getFormulaFromValidNonCallPos(final int i) {
+	protected UnmodifiableTransFormula getFormulaFromValidNonCallPos(final int i) {
 		return mTransFormulas[i];
 	}
 
 	@Override
-	protected TransFormula getLocalVarAssignmentFromValidPos(final int i) {
+	protected UnmodifiableTransFormula getLocalVarAssignmentFromValidPos(final int i) {
 		return mTransFormulas[i];
 	}
 
 	@Override
-	protected TransFormula getGlobalVarAssignmentFromValidPos(final int i) {
+	protected UnmodifiableTransFormula getGlobalVarAssignmentFromValidPos(final int i) {
 		return mGlobalAssignmentTransFormulaAtCall.get(i);
 	}
 
 	@Override
-	protected TransFormula getOldVarAssignmentFromValidPos(final int i) {
+	protected UnmodifiableTransFormula getOldVarAssignmentFromValidPos(final int i) {
 		return mOldVarsAssignmentTransFormulasAtCall.get(i);
 	}
 }

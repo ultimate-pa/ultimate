@@ -36,6 +36,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.JAXBException;
 
@@ -52,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -232,22 +234,16 @@ public class CommandlineController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public void displayToolchainResultProgramIncorrect() {
-		System.out.println("RESULT: Ultimate proved your program to be incorrect!");
+	public void displayToolchainResults(final IToolchainData<ToolchainListType> toolchain,
+			final Map<String, List<IResult>> results) {
+		// TODO Auto-generated method stub
+
 	}
 
 	@Override
-	public void displayToolchainResultProgramCorrect() {
-		System.out.println("RESULT: Ultimate proved your program to be correct!");
-	}
-
-	@Override
-	public void displayToolchainResultProgramUnknown(final String description) {
-		System.out.println("RESULT: Ultimate could not prove your program: " + description);
-	}
-
-	@Override
-	public void displayException(final String description, final Throwable ex) {
+	public void displayException(final IToolchainData<ToolchainListType> toolchain, final String description,
+			final Throwable ex) {
+		// TODO Auto-generated method stub
 
 	}
 
@@ -255,4 +251,5 @@ public class CommandlineController implements IController<ToolchainListType> {
 	public IPreferenceInitializer getPreferences() {
 		return null;
 	}
+
 }

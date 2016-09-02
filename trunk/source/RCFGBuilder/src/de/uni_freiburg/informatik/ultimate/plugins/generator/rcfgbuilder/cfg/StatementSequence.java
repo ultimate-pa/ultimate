@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Edge in a recursive control flow graph that represents a sequence of
@@ -153,7 +153,7 @@ public class StatementSequence extends CodeBlock implements IInternalAction {
 	}
 
 	@Override
-	public TransFormula getTransformula() {
+	public UnmodifiableTransFormula getTransformula() {
 		return getTransitionFormula();
 	}
 

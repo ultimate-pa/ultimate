@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.decorator.ASTDecorator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.SvComp14MainDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp.SvComp14MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;

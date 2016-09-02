@@ -30,17 +30,23 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 /**
  * Wraps a letter together with its type (internal, call, return).
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
  */
 public final class TypedLetter<LETTER> {
 	private final LETTER mLetter;
-	private final ELetterType mType;
+	private final LetterType mType;
 	
 	/**
-	 * @param letter letter
-	 * @param type letter type
+	 * Constructor.
+	 * 
+	 * @param letter
+	 *            letter
+	 * @param type
+	 *            letter type
 	 */
-	public TypedLetter(final LETTER letter, final ELetterType type) {
+	public TypedLetter(final LETTER letter, final LetterType type) {
 		this.mLetter = letter;
 		this.mType = type;
 	}
@@ -49,7 +55,7 @@ public final class TypedLetter<LETTER> {
 		return mLetter;
 	}
 	
-	public ELetterType getType() {
+	public LetterType getType() {
 		return mType;
 	}
 	
@@ -69,12 +75,11 @@ public final class TypedLetter<LETTER> {
 	}
 	
 	@Override
-	public boolean equals(Object o) {
-		if ((o == null) || (this.getClass() != o.getClass())) {
+	public boolean equals(final Object obj) {
+		if ((obj == null) || (this.getClass() != obj.getClass())) {
 			return false;
 		}
-		final TypedLetter<?> other = (TypedLetter<?>) o;
-		return (other.mLetter.equals(this.mLetter)) &&
-				(other.mType == this.mType);
+		final TypedLetter<?> other = (TypedLetter<?>) obj;
+		return (other.mLetter.equals(this.mLetter)) && (other.mType == this.mType);
 	}
 }

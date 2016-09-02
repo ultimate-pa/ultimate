@@ -48,7 +48,7 @@ public class TermcompMemsafetyTests extends AbstractTraceAbstractionTestSuite {
 //		"examples/termination/termcomp2015/C/SV-COMP_Mixed_Categories/rekcba_aso_false-unreach-call.1.M1.c",
 //		"examples/termination/termcomp2015/C/SV-COMP_Mixed_Categories/rekcba_ctmfalse-unreach-call.2.c",
 //		
-		"examples/termination/termcomp2015/C/",
+		"examples/termination/termcomp2016/C/",
 //		"examples/termination/termcomp2015/C_Integer/Stroeder_15",
 //		"examples/termination/termcomp2015/C_Integer/Ton_Chanh_15",
 	};
@@ -70,15 +70,16 @@ public class TermcompMemsafetyTests extends AbstractTraceAbstractionTestSuite {
 	 * 
 	 */
 	private static final String[] mSettings = {
-		"buchiAutomizer/termcomp2015_Tests.epf",
-		"buchiAutomizer/termcomp2015_Tests_NoMinimization.epf",
+		"buchiAutomizer/termcomp2016.epf"
+//		"buchiAutomizer/termcomp2015_Tests.epf",
+//		"buchiAutomizer/termcomp2015_Tests_NoMinimization.epf",
 //		"buchiAutomizer/termcomp2015_Tests_iZ3.epf",
 	};
 	
 	
 	private static final String[] mCToolchains = {
 //		"AutomizerAndBuchiAutomizerCWithBlockEncoding.xml",
-		"AutomizerCWithBlockEncoding.xml",
+		"AutomizerCInlineWithBlockEncoding.xml",
 //		"BuchiAutomizerCInlineWithBlockEncoding.xml",
 	};
 

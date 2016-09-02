@@ -38,13 +38,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 
 /**
  * @author Markus Lindenmann
  * @date 16.06.2012
  */
-public class InferredType implements IType {
+public class InferredType implements IBoogieType {
     /**
      * The serial version UID.
      */

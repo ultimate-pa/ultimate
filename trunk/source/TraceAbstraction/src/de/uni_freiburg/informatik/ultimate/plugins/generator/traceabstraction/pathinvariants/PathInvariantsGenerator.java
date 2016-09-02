@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
@@ -208,7 +208,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 					throw new UnsupportedOperationException(
 							"interprocedural traces are not supported (yet)");
 				}
-				final TransFormula transFormula = ((IInternalAction) mRun.getSymbol(i - 1))
+				final UnmodifiableTransFormula transFormula = ((IInternalAction) mRun.getSymbol(i - 1))
 						.getTransformula();
 				transitions.add(new Transition(transFormula, locations
 						.get(i - 1), location));

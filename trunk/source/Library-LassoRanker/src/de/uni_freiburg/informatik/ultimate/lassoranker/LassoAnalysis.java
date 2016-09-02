@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -113,12 +113,12 @@ public class LassoAnalysis {
 	/**
 	 * Stem formula of the linear lasso program
 	 */
-	private final TransFormula mStemTransition;
+	private final UnmodifiableTransFormula mStemTransition;
 
 	/**
 	 * Loop formula of the linear lasso program
 	 */
-	private final TransFormula mLoopTransition;
+	private final UnmodifiableTransFormula mLoopTransition;
 
 	/**
 	 * Representation of the lasso that we are analyzing which is split into a conjunction of lassos.
@@ -200,8 +200,8 @@ public class LassoAnalysis {
 	 * @throws FileNotFoundException
 	 *             if the file for dumping the script cannot be opened
 	 */
-	public LassoAnalysis(final Script script, final Boogie2SMT boogie2smt, final TransFormula stemTransition,
-			final TransFormula loopTransition, final Set<IProgramVar> modifiableGlobalsAtHonda, final Term[] axioms,
+	public LassoAnalysis(final Script script, final Boogie2SMT boogie2smt, final UnmodifiableTransFormula stemTransition,
+			final UnmodifiableTransFormula loopTransition, final Set<IProgramVar> modifiableGlobalsAtHonda, final Term[] axioms,
 			final LassoRankerPreferences preferences, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final SimplicationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) throws TermException {
@@ -260,7 +260,7 @@ public class LassoAnalysis {
 	 * @throws FileNotFoundException
 	 *             if the file for dumping the script cannot be opened
 	 */
-	public LassoAnalysis(final Script script, final Boogie2SMT boogie2smt, final TransFormula loop,
+	public LassoAnalysis(final Script script, final Boogie2SMT boogie2smt, final UnmodifiableTransFormula loop,
 			final Set<IProgramVar> modifiableGlobalsAtHonda, final Term[] axioms,
 			final LassoRankerPreferences preferences, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final XnfConversionTechnique xnfConversionTechnique,

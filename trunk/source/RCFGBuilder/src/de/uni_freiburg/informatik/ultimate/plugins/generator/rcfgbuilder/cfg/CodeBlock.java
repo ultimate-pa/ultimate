@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
 /**
@@ -75,8 +75,8 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 
 	private final int mSerialnumber;
 
-	protected TransFormula mTransitionFormula;
-	protected TransFormula mTransitionFormulaWithBranchEncoders;
+	protected UnmodifiableTransFormula mTransitionFormula;
+	protected UnmodifiableTransFormula mTransitionFormulaWithBranchEncoders;
 
 	protected RCFGEdgeAnnotation mAnnotation;
 
@@ -150,15 +150,15 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	/**
 	 * @return an SMT-LIB based representation of this CodeBlock's transition relation
 	 */
-	public TransFormula getTransitionFormula() {
+	public UnmodifiableTransFormula getTransitionFormula() {
 		return mTransitionFormula;
 	}
 
-	public TransFormula getTransitionFormulaWithBranchEncoders() {
+	public UnmodifiableTransFormula getTransitionFormulaWithBranchEncoders() {
 		return mTransitionFormulaWithBranchEncoders;
 	}
 
-	public void setTransitionFormula(TransFormula transFormula) {
+	public void setTransitionFormula(UnmodifiableTransFormula transFormula) {
 		mTransitionFormula = transFormula;
 		mTransitionFormulaWithBranchEncoders = transFormula;
 	}

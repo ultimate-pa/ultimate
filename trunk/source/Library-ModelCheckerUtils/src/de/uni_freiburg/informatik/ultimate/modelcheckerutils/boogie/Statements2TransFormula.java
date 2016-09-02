@@ -63,8 +63,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.MultiTermResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.SingleTermResult;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -144,7 +144,7 @@ public class Statements2TransFormula {
 	}
 
 	private TranslationResult getTransFormula(final boolean simplify, final boolean feasibilityKnown, final SimplicationTechnique simplicationTechnique) {
-		TransFormula tf = null;
+		UnmodifiableTransFormula tf = null;
 		try {
 			tf = constructTransFormula(simplify, feasibilityKnown, simplicationTechnique);
 			mCurrentProcedure = null;
@@ -157,7 +157,7 @@ public class Statements2TransFormula {
 		return new TranslationResult(tf, mOverapproximations);
 	}
 
-	private TransFormula constructTransFormula(final boolean simplify, final boolean feasibilityKnown, final SimplicationTechnique simplicationTechnique) {
+	private UnmodifiableTransFormula constructTransFormula(final boolean simplify, final boolean feasibilityKnown, final SimplicationTechnique simplicationTechnique) {
 		final Set<TermVariable> auxVars = mAuxVars;
 		Term formula = mAssumes;
 		formula = eliminateAuxVars(mAssumes, auxVars);
@@ -739,15 +739,15 @@ public class Statements2TransFormula {
 	
 	
 	public class TranslationResult {
-		private final TransFormula mTransFormula;
+		private final UnmodifiableTransFormula mTransFormula;
 		private final Map<String, ILocation> mOverapproximations;
-		public TranslationResult(final TransFormula transFormula,
+		public TranslationResult(final UnmodifiableTransFormula transFormula,
 				final Map<String, ILocation> overapproximations) {
 			super();
 			mTransFormula = transFormula;
 			mOverapproximations = overapproximations;
 		}
-		public TransFormula getTransFormula() {
+		public UnmodifiableTransFormula getTransFormula() {
 			return mTransFormula;
 		}
 		public Map<String, ILocation> getOverapproximations() {

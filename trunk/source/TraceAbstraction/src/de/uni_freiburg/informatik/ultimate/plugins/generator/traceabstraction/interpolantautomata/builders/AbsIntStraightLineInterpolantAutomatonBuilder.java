@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
+ *
+ * This file is part of the ULTIMATE TraceAbstraction plug-in.
+ *
+ * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders;
 
 import java.util.HashMap;
@@ -37,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  */
 public class AbsIntStraightLineInterpolantAutomatonBuilder
-        implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
+		implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
 
 	private static final long PRINT_PREDS_LIMIT = 30;
 
@@ -48,11 +75,11 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 	private final IRun<CodeBlock, IPredicate> mCurrentCounterExample;
 
 	public AbsIntStraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
-	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
-	        final PredicateUnifier predUnifier, final SmtManager smtManager,
-	        final IRun<CodeBlock, IPredicate> currentCounterExample,
-	        final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
+			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
+			final PredicateUnifier predUnifier, final SmtManager smtManager,
+			final IRun<CodeBlock, IPredicate> currentCounterExample,
+			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSmtManager = smtManager;
@@ -66,15 +93,15 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> constructAutomaton(
-	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
-	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
-	        final PredicateUnifier predicateUnifier) {
+			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
+			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
+			final PredicateUnifier predicateUnifier) {
 
 		mLogger.info("Creating automaton from AI predicates.");
 
 		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<CodeBlock, IPredicate>(
-		        new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
-		        oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
+				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
+				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
 
 		final NestedRun<CodeBlock, IPredicate> cex = (NestedRun<CodeBlock, IPredicate>) mCurrentCounterExample;
 		final Word<CodeBlock> word = cex.getWord();
@@ -94,16 +121,16 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 			final CodeBlock symbol = word.getSymbol(i);
 
 			@SuppressWarnings("unchecked")
-			final Set<IAbstractState<?, ?, ?>> nextStates = (Set<IAbstractState<?, ?, ?>>) aiResult.getLoc2States()
-			        .get(symbol.getTarget());
+			final Set<IAbstractState<?, ?, ?>> nextStates =
+					(Set<IAbstractState<?, ?, ?>>) aiResult.getLoc2States().get(symbol.getTarget());
 
 			final IPredicate target;
 			if (nextStates == null) {
 				target = falsePredicate;
 			} else {
 				target = predicateUnifier.getOrConstructPredicateForDisjunction(
-				        nextStates.stream().map(s -> s.getTerm(mSmtManager.getScript(), mSmtManager.getBoogie2Smt()))
-				                .map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
+						nextStates.stream().map(s -> s.getTerm(mSmtManager.getScript(), mSmtManager.getBoogie2Smt()))
+								.map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
 
 				if (mLogger.isDebugEnabled()) {
 					if (i == 0) {
@@ -145,12 +172,12 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 
 		if (PRINT_PREDS_LIMIT < alreadyThereAsState.size()) {
 			mLogger.info("Using "
-			        + alreadyThereAsState.size() + " predicates from AI: " + String.join(",", alreadyThereAsState
-			                .stream().limit(PRINT_PREDS_LIMIT).map(a -> a.toString()).collect(Collectors.toList()))
-			        + "...");
+					+ alreadyThereAsState.size() + " predicates from AI: " + String.join(",", alreadyThereAsState
+							.stream().limit(PRINT_PREDS_LIMIT).map(a -> a.toString()).collect(Collectors.toList()))
+					+ "...");
 		} else {
 			mLogger.info("Using " + alreadyThereAsState.size() + " predicates from AI: " + String.join(",",
-			        alreadyThereAsState.stream().map(a -> a.toString()).collect(Collectors.toList())));
+					alreadyThereAsState.stream().map(a -> a.toString()).collect(Collectors.toList())));
 		}
 
 		return result;

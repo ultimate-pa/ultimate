@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MultiElementCounter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -133,7 +133,7 @@ public class NestedSsaBuilder {
 		return mConstants2BoogieVar;
 	}
 
-	protected final NestedFormulas<TransFormula, IPredicate> mFormulas;
+	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mFormulas;
 
 	protected final ModifiableNestedFormulas<Term, Term> mSsa;
 	protected final ModifiableNestedFormulas<Map<Term, Term>, Map<Term, Term>> mVariable2Constant;
@@ -175,7 +175,7 @@ public class NestedSsaBuilder {
 	
 
 	public NestedSsaBuilder(final NestedWord<? extends IAction> trace, final SmtManager smtManager,
-			final NestedFormulas<TransFormula, IPredicate> nestedTransFormulas,
+			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nestedTransFormulas,
 			final ModifiableGlobalVariableManager globModVarManager, final ILogger logger,
 			final boolean transferToScriptNeeded) {
 		mLogger = logger;
@@ -229,12 +229,12 @@ public class NestedSsaBuilder {
 			mSsa.setPendingContext(pendingReturnPosition, pendingContextVV.getVersioneeredTerm());
 			mVariable2Constant.setPendingContext(pendingReturnPosition, pendingContextVV.getSubstitutionMapping());
 
-			final TransFormula localVarAssignment = correspondingCall.getTransitionFormula();
+			final UnmodifiableTransFormula localVarAssignment = correspondingCall.getTransitionFormula();
 			final VariableVersioneer initLocalVarsVV = new VariableVersioneer(localVarAssignment);
 			initLocalVarsVV.versionInVars();
 
 			final String calledProcedure = correspondingCall.getCallStatement().getMethodName();
-			final TransFormula oldVarAssignment = mFormulas.getOldVarAssignment(pendingReturnPosition);
+			final UnmodifiableTransFormula oldVarAssignment = mFormulas.getOldVarAssignment(pendingReturnPosition);
 			final VariableVersioneer initOldVarsVV = new VariableVersioneer(oldVarAssignment);
 			initOldVarsVV.versionInVars();
 
@@ -290,7 +290,7 @@ public class NestedSsaBuilder {
 //				throw new IllegalArgumentException(s_GotosUnsupportedMessage);
 //			}
 
-			TransFormula tf;
+			UnmodifiableTransFormula tf;
 			if (mFormulas.getTrace().isCallPosition(i)) {
 				tf = mFormulas.getLocalVarAssignment(i);
 			} else {
@@ -308,7 +308,7 @@ public class NestedSsaBuilder {
 				final Call call = (Call) symbol;
 				final String calledProcedure = call.getCallStatement().getMethodName();
 				mcurrentProcedure = calledProcedure;
-				final TransFormula oldVarAssignment = mFormulas.getOldVarAssignment(i);
+				final UnmodifiableTransFormula oldVarAssignment = mFormulas.getOldVarAssignment(i);
 				final VariableVersioneer initOldVarsVV = new VariableVersioneer(oldVarAssignment);
 				initOldVarsVV.versionInVars();
 				startOfCallingContextStack.push(startOfCallingContext);
@@ -321,7 +321,7 @@ public class NestedSsaBuilder {
 				mSsa.setOldVarAssignmentAtPos(i, initOldVarsVV.getVersioneeredTerm());
 				mVariable2Constant.setOldVarAssignmentAtPos(i, initOldVarsVV.getSubstitutionMapping());
 
-				final TransFormula globalVarAssignment = mFormulas.getGlobalVarAssignment(i);
+				final UnmodifiableTransFormula globalVarAssignment = mFormulas.getGlobalVarAssignment(i);
 				final VariableVersioneer initGlobalVarsVV = new VariableVersioneer(globalVarAssignment);
 				initGlobalVarsVV.versionInVars();
 				initGlobalVarsVV.versionAssignedVars(i);
@@ -393,12 +393,12 @@ public class NestedSsaBuilder {
 	}
 
 	class VariableVersioneer {
-		private final TransFormula mTF;
+		private final UnmodifiableTransFormula mTF;
 		private final IPredicate mPred;
 		private final Map<Term, Term> mSubstitutionMapping = new HashMap<>();
 		private final Term mformula;
 
-		public VariableVersioneer(final TransFormula tf) {
+		public VariableVersioneer(final UnmodifiableTransFormula tf) {
 			mTF = tf;
 			mPred = null;
 			mformula = transferToCurrentScriptIfNecessary(tf.getFormula());
@@ -574,7 +574,7 @@ public class NestedSsaBuilder {
 		if (!bv.isGlobal()) {
 			throw new IllegalArgumentException(bv + " no global var");
 		}
-		TransFormula oldVarAssignment;
+		UnmodifiableTransFormula oldVarAssignment;
 		if (startOfCallingContext >= 0) {
 			oldVarAssignment = mFormulas.getOldVarAssignment(startOfCallingContext);
 		} else if (startOfCallingContext == -1) {

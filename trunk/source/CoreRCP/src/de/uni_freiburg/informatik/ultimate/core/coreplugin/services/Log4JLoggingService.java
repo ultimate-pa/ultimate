@@ -2,27 +2,27 @@
  * Copyright (C) 2015 Björn Buchhold
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 /*
@@ -66,17 +66,20 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvide
 
 /**
  * UltimateLoggers
- * 
+ *
  * @author Björn Buchhold
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  */
 public final class Log4JLoggingService implements IStorable, ILoggingService {
 
+	private static final String APPENDER_NAME_CONSOLE = "ConsoleAppender";
 	private static final String LOGGER_NAME_CONTROLLER = "controller";
 	private static final String LOGGER_NAME_PLUGINS = "plugins";
 	private static final String LOGGER_NAME_TOOLS = "tools";
 	private static final String STORE_KEY = "LoggingService";
+
+	private static int sId = 0;
 
 	private final RcpPreferenceProvider mPreferenceStore;
 	private List<String> mLiveLoggerIds;
@@ -89,13 +92,13 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	private final Map<String, FileAppender> mLogFiles;
 
 	private Log4JLoggingService() {
-		mLogFiles = new HashMap<String, FileAppender>();
+		mLogFiles = new HashMap<>();
 		mPreferenceStore = new RcpPreferenceProvider(Activator.PLUGIN_ID);
-		mAdditionalAppenders = new HashSet<Appender>();
+		mAdditionalAppenders = new HashSet<>();
 
 		// we remove the initial log4j console appender because we want to
 		// replace it with our own
-		Logger.getRootLogger().removeAppender("ConsoleAppender");
+		Logger.getRootLogger().removeAppender(APPENDER_NAME_CONSOLE);
 
 		final Enumeration<?> forgeinAppenders = Logger.getRootLogger().getAllAppenders();
 		while (forgeinAppenders.hasMoreElements()) {
@@ -111,8 +114,8 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		refreshPropertiesAppendLogFile();
 
 		mRefreshingListener = new RefreshingPreferenceChangeListener();
-		mPreferenceStore.removePreferenceChangeListener(mRefreshingListener);
 		mPreferenceStore.addPreferenceChangeListener(mRefreshingListener);
+		sId++;
 	}
 
 	public void refreshLoggingService() {
@@ -122,12 +125,12 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		getLoggerById(Activator.PLUGIN_ID).debug("Logger refreshed");
 	}
 
-	public void addAppender(Appender appender) {
+	public void addAppender(final Appender appender) {
 		mAdditionalAppenders.add(appender);
 		Logger.getRootLogger().addAppender(appender);
 	}
 
-	public void removeAppender(Appender appender) {
+	public void removeAppender(final Appender appender) {
 		mAdditionalAppenders.remove(appender);
 		Logger.getRootLogger().removeAppender(appender);
 	}
@@ -138,7 +141,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 			Logger.getRootLogger().removeAppender(mConsoleAppender);
 			// we remove the initial log4j console appender because we want to
 			// replace it with our own
-			Logger.getRootLogger().removeAppender("ConsoleAppender");
+			Logger.getRootLogger().removeAppender(APPENDER_NAME_CONSOLE);
 
 			for (final Appender appender : mAdditionalAppenders) {
 				Logger.getRootLogger().removeAppender(appender);
@@ -146,12 +149,12 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 			// first, handle console appender as we also configure it
 			// defining format of logging output
-			final PatternLayout layout = new PatternLayout(
-					mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN));
+			final PatternLayout layout =
+					new PatternLayout(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN));
 
 			// attaching output to console (stout)
 			mConsoleAppender = new ConsoleAppender(layout);
-			mConsoleAppender.setName("ConsoleAppender");
+			mConsoleAppender.setName(APPENDER_NAME_CONSOLE);
 			Logger.getRootLogger().addAppender(mConsoleAppender);
 
 			for (final Appender appender : mAdditionalAppenders) {
@@ -181,12 +184,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		}
 	}
 
-	/**
-	 * UltimateLoggerFactory getInstance getter for the singleton. lazily creates the object
-	 * 
-	 * @return the singleton instance of the UltimateLoggerFactory
-	 */
-	static Log4JLoggingService getService(IToolchainStorage storage) {
+	static Log4JLoggingService getService(final IToolchainStorage storage) {
 		assert storage != null;
 		IStorable rtr = storage.getStorable(STORE_KEY);
 		if (rtr == null) {
@@ -202,34 +200,34 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 	/**
 	 * Logger getLoggerById
-	 * 
+	 *
 	 * @param id
 	 *            Internal logger id.
 	 * @return Logger for this id.
 	 */
-	public Logger getLoggerById(String id) {
+	public Logger getLoggerById(final String id) {
 		return lookupLoggerInHierarchie(id);
 	}
 
 	/**
 	 * boolean isExternalTool
-	 * 
+	 *
 	 * @param id
 	 *            Internal logger id.
 	 * @return <code>true</code> if and only if this id denotes an external tool.
 	 */
-	private boolean isExternalTool(String id) {
+	private boolean isExternalTool(final String id) {
 		return id.startsWith(CorePreferenceInitializer.EXTERNAL_TOOLS_PREFIX);
 	}
 
 	/**
 	 * Logger lookupLoggerInHierarchie
-	 * 
+	 *
 	 * @param id
 	 *            Internal logger id.
 	 * @return Logger for this internal id.
 	 */
-	private Logger lookupLoggerInHierarchie(String id) {
+	private Logger lookupLoggerInHierarchie(final String id) {
 		// it is core
 		if (id.equals(Activator.PLUGIN_ID)) {
 			return Logger.getLogger(Activator.PLUGIN_ID);
@@ -260,7 +258,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	}
 
 	private void refreshPropertiesLoggerHierarchie() {
-		mLiveLoggerIds = new LinkedList<String>();
+		mLiveLoggerIds = new LinkedList<>();
 		final Logger rootLogger = Logger.getRootLogger();
 		final String level = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_ROOT_PREF);
 		rootLogger.setLevel(Level.toLevel(level));
@@ -322,16 +320,16 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 	/**
 	 * String getLogLevel gets a log level for a certain plug-in
-	 * 
+	 *
 	 * @param id
 	 *            the id of the plug in
 	 * @return the log level or null if no log-level is directly associated
 	 */
-	private String getLogLevel(String id) {
+	private String getLogLevel(final String id) {
 		final String[] pref = getLoggingDetailsPreference();
 		for (final String string : pref) {
-			if (string.startsWith(id + "=")) {
-				return string.substring(string.lastIndexOf("=") + 1);
+			if (string.startsWith(id + '=')) {
+				return string.substring(string.lastIndexOf('=') + 1);
 			}
 		}
 		return null;
@@ -345,14 +343,14 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		final String[] pref = convert(mPreferenceStore.getString(CorePreferenceInitializer.PREFID_DETAILS));
 		final String[] retVal = new String[pref.length];
 		for (int i = 0; i < retVal.length; i++) {
-			retVal[i] = pref[i].substring(0, pref[i].lastIndexOf("="));
+			retVal[i] = pref[i].substring(0, pref[i].lastIndexOf('='));
 		}
 		return retVal;
 	}
 
-	private String[] convert(String preferenceValue) {
-		final StringTokenizer tokenizer = new StringTokenizer(preferenceValue,
-				CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
+	private String[] convert(final String preferenceValue) {
+		final StringTokenizer tokenizer =
+				new StringTokenizer(preferenceValue, CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
 		final int tokenCount = tokenizer.countTokens();
 		final String[] elements = new String[tokenCount];
 		for (int i = 0; i < tokenCount; i++) {
@@ -362,27 +360,27 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		return elements;
 	}
 
-	public void setCurrentControllerID(String name) {
+	public void setCurrentControllerID(final String name) {
 		mCurrentControllerName = name;
 	}
 
 	@Override
 	public void destroy() {
-		mPreferenceStore.removePreferenceChangeListener(mRefreshingListener);
+		assert sId == 1 : "There should be only one instance of Log4JLoggingService";
 	}
 
 	@Override
-	public ILogger getLogger(String pluginId) {
+	public ILogger getLogger(final String pluginId) {
 		return convert(getLoggerById(pluginId));
 	}
 
 	@Override
-	public ILogger getLogger(Class<?> clazz) {
+	public ILogger getLogger(final Class<?> clazz) {
 		return getLogger(clazz.getName());
 	}
 
 	@Override
-	public ILogger getLoggerForExternalTool(String id) {
+	public ILogger getLoggerForExternalTool(final String id) {
 		return convert(getLoggerById(CorePreferenceInitializer.EXTERNAL_TOOLS_PREFIX + id));
 	}
 
@@ -392,7 +390,8 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	}
 
 	@Override
-	public void addLogfile(String logPattern, String absolutePath, boolean append) throws IOException {
+	public void addLogfile(final String logPattern, final String absolutePath, final boolean append)
+			throws IOException {
 		final PatternLayout layout = new PatternLayout(logPattern);
 		if (mLogFiles.containsKey(absolutePath)) {
 			removeLogFile(absolutePath);
@@ -403,7 +402,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	}
 
 	@Override
-	public void removeLogFile(String absolutePath) {
+	public void removeLogFile(final String absolutePath) {
 		final FileAppender appender = mLogFiles.remove(absolutePath);
 		if (appender == null) {
 			return;
@@ -413,7 +412,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	}
 
 	@Override
-	public void addWriter(Writer writer, String logPattern) {
+	public void addWriter(final Writer writer, final String logPattern) {
 		final Appender appender = new Log4JAppenderWrapper(writer, logPattern);
 		if (!mAdditionalAppenders.add(appender)) {
 			// it is already added and the pattern cannot be changed without creating a new writer (removing closes the
@@ -424,18 +423,18 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	}
 
 	@Override
-	public void removeWriter(Writer writer) {
+	public void removeWriter(final Writer writer) {
 		final Appender appender = new Log4JAppenderWrapper(writer, null);
 		mAdditionalAppenders.remove(appender);
 		Logger.getRootLogger().removeAppender(appender);
 	}
 
-	private ILogger convert(final Logger logger) {
+	private static ILogger convert(final Logger logger) {
 		return new Log4JWrapper(logger);
 	}
 
 	@Override
-	public Object getBacking(ILogger logger, Class<?> backingType) {
+	public Object getBacking(final ILogger logger, final Class<?> backingType) {
 		if (logger == null || backingType == null) {
 			return null;
 		}
@@ -457,9 +456,8 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		}
 
 		@Override
-		public void preferenceChange(PreferenceChangeEvent event) {
+		public void preferenceChange(final PreferenceChangeEvent event) {
 			// do things if it concerns the loggers
-			final String ek = event.getKey();
 			final Object newValue = event.getNewValue();
 			final Object oldValue = event.getOldValue();
 
@@ -470,6 +468,8 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 			if (newValue != null && newValue.equals(oldValue)) {
 				return;
 			}
+
+			final String ek = event.getKey();
 			if (ek.equals(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)
 					|| ek.equals(CorePreferenceInitializer.LABEL_LOGFILE)
 					|| ek.equals(CorePreferenceInitializer.LABEL_LOGFILE_NAME)
@@ -502,7 +502,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		}
 	}
 
-	private final static class Log4JAppenderWrapper extends WriterAppender {
+	private static final class Log4JAppenderWrapper extends WriterAppender {
 
 		private final Writer mWriter;
 
@@ -525,7 +525,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		}
 
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(final Object obj) {
 			if (this == obj) {
 				return true;
 			}

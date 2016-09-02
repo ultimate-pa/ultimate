@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -278,7 +278,7 @@ public class Expression2Term {
 				result = auxVar;
 			} else {
 				final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
-				final IType[] argumentTypes = new IType[func.getArguments().length];
+				final IBoogieType[] argumentTypes = new IBoogieType[func.getArguments().length];
 				for (int i = 0; i < func.getArguments().length; i++) {
 					argumentTypes[i] = func.getArguments()[i].getType();
 				}
@@ -345,7 +345,7 @@ public class Expression2Term {
 			// }
 			mQuantifiedVariables.beginScope();
 			for (int i = 0; i < variables.length; i++) {
-				final IType type = variables[i].getType().getBoogieType();
+				final IBoogieType type = variables[i].getType().getBoogieType();
 				final Sort sort = mTypeSortTranslator.getSort(type, exp);
 				for (int j = 0; j < variables[i].getIdentifiers().length; j++) {
 					final String identifier = variables[i].getIdentifiers()[j];

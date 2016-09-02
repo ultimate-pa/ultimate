@@ -85,6 +85,6 @@ public abstract class BinaryNwaOperation<LETTER, STATE>
 		if (!mFstOperand.getCallAlphabet().equals(mSndOperand.getCallAlphabet())) {
 			return true;
 		}
-		return (!mFstOperand.getReturnAlphabet().equals(mSndOperand.getReturnAlphabet()));
+		return !mFstOperand.getReturnAlphabet().equals(mSndOperand.getReturnAlphabet());
 	}
 }

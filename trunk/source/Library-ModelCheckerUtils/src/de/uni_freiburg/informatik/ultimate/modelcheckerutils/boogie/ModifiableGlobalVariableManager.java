@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
@@ -63,8 +63,8 @@ public class ModifiableGlobalVariableManager {
 	protected final ManagedScript mMgdScript;
 	protected final Boogie2SmtSymbolTable mSymbolTable;
 	
-	private final Map<String, TransFormula> mProc2OldVarsAssignment;
-	private final Map<String, TransFormula> mProc2GlobalVarsAssignment;
+	private final Map<String, UnmodifiableTransFormula> mProc2OldVarsAssignment;
+	private final Map<String, UnmodifiableTransFormula> mProc2GlobalVarsAssignment;
 	
 	
 	
@@ -75,8 +75,8 @@ public class ModifiableGlobalVariableManager {
 		mModifiedVars = modifiedVars;
 		mMgdScript = mgdScript;
 		mSymbolTable = symbolTable;
-		mProc2OldVarsAssignment = new HashMap<String, TransFormula>();
-		mProc2GlobalVarsAssignment = new HashMap<String, TransFormula>();
+		mProc2OldVarsAssignment = new HashMap<String, UnmodifiableTransFormula>();
+		mProc2GlobalVarsAssignment = new HashMap<String, UnmodifiableTransFormula>();
 	}
 	
 	protected ModifiableGlobalVariableManager(final ModifiableGlobalVariableManager modifiableGlobalVariableManager) {
@@ -117,8 +117,8 @@ public class ModifiableGlobalVariableManager {
 	 * where g_1,...,g_n are the global variables that can be modified by
 	 * procedure proc and gOld_1,...,gOld_n are the corresponding oldvars.
 	 */
-	public TransFormula getOldVarsAssignment(final String proc) {
-		TransFormula oldVarsAssignment = mProc2OldVarsAssignment.get(proc);
+	public UnmodifiableTransFormula getOldVarsAssignment(final String proc) {
+		UnmodifiableTransFormula oldVarsAssignment = mProc2OldVarsAssignment.get(proc);
 		if (oldVarsAssignment == null) {
 			oldVarsAssignment = constructOldVarsAssignment(proc);
 			mProc2OldVarsAssignment.put(proc, oldVarsAssignment);
@@ -133,8 +133,8 @@ public class ModifiableGlobalVariableManager {
 	 * where g_1,...,g_n are the global variables that can be modified by
 	 * procedure proc and gOld_1,...,gOld_n are the corresponding oldvars.
 	 */
-	public TransFormula getGlobalVarsAssignment(final String proc) {
-		TransFormula globalVarsAssignment = mProc2GlobalVarsAssignment.get(proc);
+	public UnmodifiableTransFormula getGlobalVarsAssignment(final String proc) {
+		UnmodifiableTransFormula globalVarsAssignment = mProc2GlobalVarsAssignment.get(proc);
 		if (globalVarsAssignment == null) {
 			globalVarsAssignment = constructGlobalVarsAssignment(proc);
 			mProc2GlobalVarsAssignment.put(proc, globalVarsAssignment);
@@ -144,7 +144,7 @@ public class ModifiableGlobalVariableManager {
 	
 	
 
-	private TransFormula constructOldVarsAssignment(final String proc) {
+	private UnmodifiableTransFormula constructOldVarsAssignment(final String proc) {
 		Set<String> vars = mModifiedVars.get(proc);
 		if (vars == null) {
 			//no global var modified
@@ -175,7 +175,7 @@ public class ModifiableGlobalVariableManager {
 
 
 	
-	private TransFormula constructGlobalVarsAssignment(final String proc) {
+	private UnmodifiableTransFormula constructGlobalVarsAssignment(final String proc) {
 		Set<String> vars = mModifiedVars.get(proc);
 		if (vars == null) {
 			//no global var modified

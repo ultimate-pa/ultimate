@@ -2,27 +2,27 @@
  * Copyright (C) 2015 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogieProcedureInliner plug-in.
- * 
+ *
  * The ULTIMATE BoogieProcedureInliner plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogieProcedureInliner plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogieProcedureInliner plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogieProcedureInliner plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogieProcedureInliner plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogieProcedureInliner plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.backtranslation;
@@ -57,10 +57,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IToString;
 
 /**
  * Backtranslates an inlined boogie program.
- * 
+ *
  * @author schaetzc@informatik.uni-freiburg.de
  */
-public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression> {
+public class InlinerBacktranslator
+		extends DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression, String, String> {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -73,7 +74,7 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 
 	private final ExpressionBacktranslation mExprBackTrans = new ExpressionBacktranslation();
 
-	public InlinerBacktranslator(IUltimateServiceProvider services) {
+	public InlinerBacktranslator(final IUltimateServiceProvider services) {
 		super(BoogieASTNode.class, BoogieASTNode.class, Expression.class, Expression.class);
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -81,17 +82,17 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 
 	/**
 	 * Updates the mapping, using an used InlineVersionTransformer.
-	 * 
+	 *
 	 * @param transformer
 	 *            InlinerVersionTransformer, which already transformed a procedure.
 	 */
-	public void addBacktranslation(InlineVersionTransformer transformer) {
+	public void addBacktranslation(final InlineVersionTransformer transformer) {
 		mBackTransMap.putAll(transformer.getBacktranslationMap());
 		mExprBackTrans.reverseAndAddMapping(transformer.getVariableMap());
 	}
 
 	// Does not need to preserve instances
-	public Collection<Expression> translateExpressions(Collection<Expression> exprs) {
+	public Collection<Expression> translateExpressions(final Collection<Expression> exprs) {
 		final Collection<Expression> translatedExprs = new ArrayList<>();
 		for (final Expression expr : exprs) {
 			translatedExprs.add(translateExpression(expr));
@@ -101,13 +102,13 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 
 	// Does not need to preserve instances
 	@Override
-	public Expression translateExpression(Expression expr) {
+	public Expression translateExpression(final Expression expr) {
 		return mExprBackTrans.processExpression(expr);
 	}
 
 	// Should preserve instances
 	@Override
-	public List<BoogieASTNode> translateTrace(List<BoogieASTNode> trace) {
+	public List<BoogieASTNode> translateTrace(final List<BoogieASTNode> trace) {
 		final Set<CallStatement> knownCalls = new HashSet<>();
 		final List<BoogieASTNode> translatedTrace = new ArrayList<>();
 		final CallReinserter callReinserter = new CallReinserter();
@@ -120,13 +121,14 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 					reportUnfinishedBacktranslation("Cannot reconstruct StepInfo (either call or return): " + call);
 				}
 				knownCalls.add(call);
-				atomicTraceElem = new AtomicTraceElement<BoogieASTNode>(call, call, StepInfo.PROC_CALL, stringProvider, null);
+				atomicTraceElem =
+						new AtomicTraceElement<BoogieASTNode>(call, call, StepInfo.PROC_CALL, stringProvider, null);
 			} else {
 				atomicTraceElem = new AtomicTraceElement<BoogieASTNode>(traceElem, stringProvider, null);
 			}
 			final BackTransValue traceElemMapping = mBackTransMap.get(traceElem);
-			final List<AtomicTraceElement<BoogieASTNode>> recoveredCalls = callReinserter
-					.recoverInlinedCallsBefore(atomicTraceElem, traceElemMapping);
+			final List<AtomicTraceElement<BoogieASTNode>> recoveredCalls =
+					callReinserter.recoverInlinedCallsBefore(atomicTraceElem, traceElemMapping);
 			for (final AtomicTraceElement<BoogieASTNode> insertedCall : recoveredCalls) {
 				translatedTrace.add(insertedCall.getTraceElement());
 			}
@@ -143,8 +145,8 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 	}
 
 	@Override
-	public IProgramExecution<BoogieASTNode, Expression> translateProgramExecution(
-			IProgramExecution<BoogieASTNode, Expression> exec) {
+	public IProgramExecution<BoogieASTNode, Expression>
+			translateProgramExecution(final IProgramExecution<BoogieASTNode, Expression> exec) {
 		final int length = exec.getLength();
 		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
 		final CallReinserter callReinserter = new CallReinserter();
@@ -193,12 +195,12 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 	}
 
 	@Override
-	public String targetExpressionToString(Expression expression) {
+	public String targetExpressionToString(final Expression expression) {
 		return BoogiePrettyPrinter.print(expression);
 	}
 
 	@Override
-	public List<String> targetTraceToString(List<BoogieASTNode> trace) {
+	public List<String> targetTraceToString(final List<BoogieASTNode> trace) {
 		final List<String> rtr = new ArrayList<>();
 		for (final BoogieASTNode node : trace) {
 			if (node instanceof Statement) {
@@ -210,7 +212,7 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 		return rtr;
 	}
 
-	private void reportUnfinishedBacktranslation(String message) {
+	private void reportUnfinishedBacktranslation(final String message) {
 		mLogger.warn(message);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new GenericResult(Activator.PLUGIN_ID, "Unfinished Backtranslation", message, Severity.WARNING));

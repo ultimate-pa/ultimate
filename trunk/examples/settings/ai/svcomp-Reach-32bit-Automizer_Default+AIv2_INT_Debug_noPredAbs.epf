@@ -30,15 +30,14 @@ file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton\ enhancement=NONE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton=TWOTRACK
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolants\ consolidation=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=FPandBP
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ separate\ solver\ for\ trace\ checks=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ path\ program\ construction\ from\ abstract\ interpretation\ predicates=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/SMT\ solver=External_ModelsAndUnsatCoreMode
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Abstract\ interpretation\ Mode=USE_PATH_PROGRAM
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton\ enhancement=NONE
 
 
 #Thu Oct 29 17:01:28 CET 2015

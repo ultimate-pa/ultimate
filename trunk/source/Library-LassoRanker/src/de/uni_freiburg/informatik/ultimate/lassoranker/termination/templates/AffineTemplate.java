@@ -80,7 +80,7 @@ public class AffineTemplate extends ComposableTemplate {
 	
 	@Override
 	public List<List<LinearInequality>> getConstraintsDec(
-			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
+			final Map<IProgramVar, Term> inVars, final Map<IProgramVar, Term> outVars) {
 		// f(x') < f(x) - delta
 		final LinearInequality li = mfgen.generate(inVars);
 		final LinearInequality li2 = mfgen.generate(outVars);
@@ -98,7 +98,7 @@ public class AffineTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsNonInc(
-			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
+			final Map<IProgramVar, Term> inVars, final Map<IProgramVar, Term> outVars) {
 		// f(x') ≤ f(x)
 		final LinearInequality li = mfgen.generate(inVars);
 		final LinearInequality li2 = mfgen.generate(outVars);
@@ -112,7 +112,7 @@ public class AffineTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsBounded(
-			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
+			final Map<IProgramVar, Term> inVars, final Map<IProgramVar, Term> outVars) {
 		// f(x) > 0
 		final LinearInequality li = mfgen.generate(inVars);
 		li.setStrict(true);
@@ -145,7 +145,7 @@ public class AffineTemplate extends ComposableTemplate {
 	}
 
 	@Override
-	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
+	public RankingFunction extractRankingFunction(final Map<Term, Rational> val)
 			throws SMTLIBException {
 		final AffineFunction f = mfgen.extractAffineFunction(val);
 		return new LinearRankingFunction(f);

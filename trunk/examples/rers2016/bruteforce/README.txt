@@ -15,13 +15,13 @@ To run:
 
 First, execute the program:
 
-        ./Problem17 INPUT_LENGTH 2> output17.txt 1> /dev/null
+        ./Problem17 INPUT_LENGTH > output17.txt
         
-** How long this needs depends on your configuration above, a length of 5 is 
+** How long this needs depends on your configuration above, a length of 10 is 
    fairly quick
 
 Then, process the output:
 
-        awk -e '{print $1}' output17.txt | sort | uniq
+        awk -e '{print $1}' output17.txt | sort -Vu
 
 You will obtain a list of the labels reached.

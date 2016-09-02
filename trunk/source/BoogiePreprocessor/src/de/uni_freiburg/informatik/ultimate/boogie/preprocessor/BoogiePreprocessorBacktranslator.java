@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogiePreprocessor plug-in.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogiePreprocessor plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslato
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -77,12 +77,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IToString;
 
 /**
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  */
 public class BoogiePreprocessorBacktranslator
-		extends DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression> {
+		extends DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression, String, String> {
 
 	private final ILogger mLogger;
 	/**
@@ -308,23 +308,28 @@ public class BoogiePreprocessorBacktranslator
 	}
 
 	@Override
-	public IBacktranslatedCFG<?, BoogieASTNode> translateCFG(final IBacktranslatedCFG<?, BoogieASTNode> cfg) {
-		return translateCFG(cfg, (a, b, c) -> translateCFGEdge(a, b, c));
+	public IBacktranslatedCFG<String, BoogieASTNode> translateCFG(final IBacktranslatedCFG<String, BoogieASTNode> cfg) {
+		// final IFunction<Map<IExplicitEdgesMultigraph<?, ?, ?, BoogieASTNode, ?>, Multigraph<?, BoogieASTNode>>,
+		// IMultigraphEdge<?, ?, ?, BoogieASTNode, ?>, Multigraph<?, BoogieASTNode>, Multigraph<?, BoogieASTNode>>
+		// funTranslateEdge =
+		// (a, b, c) -> translateCFGEdge(a, b, c);
+		final IBacktranslatedCFG<String, BoogieASTNode> rtr = translateCFG(cfg, (a, b, c) -> translateCFGEdge(a, b, c));
+		return rtr;
 	}
 
-	private <VL> Multigraph<VL, BoogieASTNode> translateCFGEdge(
-			final Map<IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode, ?>, Multigraph<VL, BoogieASTNode>> cache,
-			final IMultigraphEdge<?, ?, VL, BoogieASTNode, ?> oldEdge,
-			final Multigraph<VL, BoogieASTNode> newSourceNode) {
+	private Multigraph<String, BoogieASTNode> translateCFGEdge(
+			final Map<IExplicitEdgesMultigraph<?, ?, String, BoogieASTNode, ?>, Multigraph<String, BoogieASTNode>> cache,
+			final IMultigraphEdge<?, ?, String, BoogieASTNode, ?> oldEdge,
+			final Multigraph<String, BoogieASTNode> newSourceNode) {
 		final BoogieASTNode newLabel = translateTraceElement(oldEdge.getLabel());
-		final IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode, ?> oldTarget = oldEdge.getTarget();
-		Multigraph<VL, BoogieASTNode> newTarget = cache.get(oldTarget);
+		final IExplicitEdgesMultigraph<?, ?, String, BoogieASTNode, ?> oldTarget = oldEdge.getTarget();
+		Multigraph<String, BoogieASTNode> newTarget = cache.get(oldTarget);
 		if (newTarget == null) {
 			newTarget = createLabeledWitnessNode(oldTarget);
 			cache.put(oldTarget, newTarget);
 		}
-		final MultigraphEdge<VL, BoogieASTNode> newEdge =
-				new MultigraphEdge<VL, BoogieASTNode>(newSourceNode, newLabel, newTarget);
+		final MultigraphEdge<String, BoogieASTNode> newEdge =
+				new MultigraphEdge<String, BoogieASTNode>(newSourceNode, newLabel, newTarget);
 		final ConditionAnnotation coan = ConditionAnnotation.getAnnotation(oldEdge.getLabel());
 		if (coan != null) {
 			coan.annotate(newEdge);
@@ -385,7 +390,7 @@ public class BoogiePreprocessorBacktranslator
 
 	/**
 	 * Backtranslate arbitrary Boogie expressions
-	 * 
+	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 */
 	private class ExpressionTranslator extends BoogieTransformer {
@@ -507,7 +512,7 @@ public class BoogiePreprocessorBacktranslator
 			if (list == null) {
 				return inputExp;
 			}
-			final IType bplType = list.getType().getBoogieType();
+			final IBoogieType bplType = list.getType().getBoogieType();
 			if (!(bplType instanceof BoogieType)) {
 				throw new UnsupportedOperationException("The BoogiePreprocessorBacktranslator cannot handle "
 						+ bplType.getClass().getSimpleName() + " as type of VarList");

@@ -129,8 +129,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.SvComp14CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompTypeHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp.SvComp14CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp.chandler.SVCompTypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;

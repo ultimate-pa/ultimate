@@ -37,7 +37,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 /**
  * Removes call transitions.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class CallTransitionShrinker<LETTER, STATE>
 		extends AShrinker<TypedTransition<LETTER, STATE>, LETTER, STATE> {
@@ -68,7 +72,6 @@ public class CallTransitionShrinker<LETTER, STATE>
 	
 	@Override
 	public List<TypedTransition<LETTER, STATE>> extractList() {
-		return new ArrayList<TypedTransition<LETTER, STATE>>(
-				mFactory.getCallTransitions(mAutomaton));
+		return new ArrayList<>(mFactory.getCallTransitions(mAutomaton));
 	}
 }

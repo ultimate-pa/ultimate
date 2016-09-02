@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -140,7 +140,7 @@ public class TraceChecker {
 	protected AnnotateAndAsserter mAAA;
 	protected final LBool mIsSafe;
 	protected RcfgProgramExecution mRcfgProgramExecution;
-	protected final NestedFormulas<TransFormula, IPredicate> mNestedFormulas;
+	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mNestedFormulas;
 	protected NestedSsaBuilder mNsb;
 	protected final TraceCheckerBenchmarkGenerator mTraceCheckerBenchmarkGenerator;
 	protected final AssertCodeBlockOrder massertCodeBlocksIncrementally;
@@ -381,7 +381,7 @@ public class TraceChecker {
 
 	protected TraceChecker(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final SmtManager smtManager,
-			final ModifiableGlobalVariableManager modifiedGlobals, final NestedFormulas<TransFormula, IPredicate> rv,
+			final ModifiableGlobalVariableManager modifiedGlobals, final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
 			final boolean computeRcfgProgramExecution, final boolean unlockSmtSolverAlsoIfUnsat) {
 		this(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals, rv,
@@ -397,7 +397,7 @@ public class TraceChecker {
 	 */
 	protected TraceChecker(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final SmtManager smtManager,
-			final ModifiableGlobalVariableManager modifiedGlobals, final NestedFormulas<TransFormula, IPredicate> rv,
+			final ModifiableGlobalVariableManager modifiedGlobals, final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
 			final boolean computeRcfgProgramExecution, final boolean unlockSmtSolverAlsoIfUnsat, final SmtManager tcSmtManager) {
 		mServices = services;
@@ -555,7 +555,7 @@ public class TraceChecker {
 				(NestedWord<CodeBlock>) mTrace, relVars, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 		for (int i = 0; i < mTrace.length(); i++) {
 			final CodeBlock cb = (CodeBlock) mTrace.getSymbolAt(i);
-			final TransFormula tf = cb.getTransitionFormulaWithBranchEncoders();
+			final UnmodifiableTransFormula tf = cb.getTransitionFormulaWithBranchEncoders();
 			if (tf.getBranchEncoders().size() > 0) {
 				final Map<TermVariable, Boolean> beMapping = new HashMap<TermVariable, Boolean>();
 				for (final TermVariable tv : tf.getBranchEncoders()) {

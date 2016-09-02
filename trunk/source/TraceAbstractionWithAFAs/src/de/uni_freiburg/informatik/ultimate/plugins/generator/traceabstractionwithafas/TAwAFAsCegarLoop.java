@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -281,7 +281,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			final IProgramVar writtenVar, final Term writtenVarSsa,
 			final HashMap<IProgramVar,Term> varToSsaVarNew, 
 			final HashMap<Term,IProgramVar> constantsToBoogieVar) {
-		final TransFormula transFormula = nodeLabel.getBlock().getTransitionFormula();
+		final UnmodifiableTransFormula transFormula = nodeLabel.getBlock().getTransitionFormula();
 	
 		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 

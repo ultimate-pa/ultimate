@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
@@ -218,7 +218,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		}
 
 		
-		final NestedFormulas<TransFormula, IPredicate> rtf = constructRelevantTransFormulas(unsatCore);
+		final NestedFormulas<UnmodifiableTransFormula, IPredicate> rtf = constructRelevantTransFormulas(unsatCore);
 		assert stillInfeasible(rtf) : "incorrect Unsatisfiable Core! trace length " 
 				+ mTrace.length() + " unsat-core size " + unsatCore.size();
 
@@ -334,8 +334,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * Construct representation of the trace formula that contains only the
 	 * conjuncts that occur in the unsat core.
 	 */
-	private NestedFormulas<TransFormula, IPredicate> constructRelevantTransFormulas(final Set<Term> unsatCore) {
-		final NestedFormulas<TransFormula, IPredicate> rtf;
+	private NestedFormulas<UnmodifiableTransFormula, IPredicate> constructRelevantTransFormulas(final Set<Term> unsatCore) {
+		final NestedFormulas<UnmodifiableTransFormula, IPredicate> rtf;
 		if (mUnsatCores == UnsatCores.IGNORE) {
 			rtf = new DefaultTransFormulas(mTrace, mPrecondition, mPostcondition, mPendingContexts,
 					mModifiedGlobals, false);
@@ -405,7 +405,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * finer granularity.
 	 * @return true iff result of infeasiblity check is unsat or unknown
 	 */
-	private boolean stillInfeasible(final NestedFormulas<TransFormula, IPredicate> rv) {
+	private boolean stillInfeasible(final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv) {
 		final TraceChecker tc = new TraceChecker(rv.getPrecondition(), rv.getPostcondition(),
 				new TreeMap<Integer, IPredicate>(), rv.getTrace(), mSmtManager, mModifiedGlobals, rv,
 				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, true);

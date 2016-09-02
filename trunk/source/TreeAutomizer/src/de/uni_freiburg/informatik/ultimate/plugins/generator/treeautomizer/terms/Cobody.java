@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.terms;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -9,36 +8,29 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HCTransFormula;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HCVar;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClausePredicateSymbol;
 
 public class Cobody {
-	Set<ApplicationTerm> transitions;
+	Set<Term> transitions;
 	Set<ApplicationTerm> predicates;
+	Map<HCVar, TermVariable> inVars;
 
 	public Cobody() {
 		predicates = new HashSet<>();
 		transitions = new HashSet<>();
+		inVars = new HashMap<>();
 	}
-	/*
-	 * public String toString() { String res = ""; if (literals.size() > 1) {
-	 * boolean first = true; for (ApplicationTerm literal : literals) { res +=
-	 * literal.toString(); if (!first) { res += ", "; } first = false; } } if
-	 * (literals.size() == 1) { res = literals.iterator().next().toString(); }
-	 * if (literals.isEmpty()) { res = "true"; } return "(" + res + ")"; }
-	 * 
-	 * public void addPredicates(Collection<ApplicationTerm> literals) { for
-	 * (ApplicationTerm literal : literals) { addPredicate(literal); } }
-	 */
 
 	public void addPredicate(ApplicationTerm literal) {
 		predicates.add(literal);
 	}
 
-	public void addTransitionFormula(ApplicationTerm formula) {
+	public void addTransitionFormula(Term formula) {
 		transitions.add(formula);
 	}
 
@@ -46,7 +38,7 @@ public class Cobody {
 		for (ApplicationTerm predicate : cobody.predicates) {
 			addPredicate(predicate);
 		}
-		for (ApplicationTerm transition : cobody.transitions) {
+		for (Term transition : cobody.transitions) {
 			addTransitionFormula(transition);
 		}
 	}
@@ -67,14 +59,10 @@ public class Cobody {
 	}
 
 	public Term getTransitionFormula(Theory theory) {
-		ArrayList<Term> terms = new ArrayList<>();
-		for (Term literal : transitions) {
-			terms.add(literal);
-		}
-		if (terms.size() > 0)
-			return theory.and(terms.toArray(new Term[] {}));
-		else
+		if (transitions.isEmpty())
 			return theory.mTrue;
+		else
+			return theory.and(transitions.toArray(new Term[] {}));
 	}
 
 	public Map<HornClausePredicateSymbol, ArrayList<TermVariable>> getPredicateToVars(
@@ -102,11 +90,11 @@ public class Cobody {
 			res += t.toString();
 			first = false;
 		}
-		for (ApplicationTerm t : transitions) {
+		for (Term t : transitions) {
 			if (!first) {
 				res += " && ";
 			}
-			res += t.toString();
+			res += t.toStringDirect();
 			first = false;
 		}
 		return '(' + res + ')';

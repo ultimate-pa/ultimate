@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2016 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
+ *
+ * This file is part of the ULTIMATE TraceAbstraction plug-in.
+ *
+ * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders;
 
 import java.util.HashMap;
@@ -59,11 +85,11 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 	private final VariableCollector mVariableCollector;
 
 	public AbsIntTotalInterpolationAutomatonBuilder(final IUltimateServiceProvider services,
-	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
-	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
-	        final PredicateUnifier predicateUnifier, final SmtManager smtManager,
-	        final IRun<CodeBlock, IPredicate> currentCounterExample,
-	        final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
+			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
+			final PredicateUnifier predicateUnifier, final SmtManager smtManager,
+			final IRun<CodeBlock, IPredicate> currentCounterExample,
+			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSmtManager = smtManager;
@@ -75,17 +101,18 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> constructAutomaton(
-	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
-	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
-	        final PredicateUnifier predicateUnifier) {
+			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
+			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
+			final PredicateUnifier predicateUnifier) {
 
 		mLogger.info("Creating total interpolated automaton from AI predicates.");
 
 		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<>(
-		        new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
-		        oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
+				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
+				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
 
-		final NestedRun<CodeBlock, IPredicate> counterExample = (NestedRun<CodeBlock, IPredicate>) mCurrentCounterExample;
+		final NestedRun<CodeBlock, IPredicate> counterExample =
+				(NestedRun<CodeBlock, IPredicate>) mCurrentCounterExample;
 		final Word<CodeBlock> word = counterExample.getWord();
 
 		final int wordLength = word.length();
@@ -104,8 +131,8 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 		for (int i = 0; i < wordLength; i++) {
 			final CodeBlock symbol = word.getSymbol(i);
 
-			final Set<IAbstractState<?, CodeBlock, IBoogieVar>> nextStates = (Set<IAbstractState<?, CodeBlock, IBoogieVar>>) aiResult
-			        .getLoc2States().get(symbol.getTarget());
+			final Set<IAbstractState<?, CodeBlock, IBoogieVar>> nextStates =
+					(Set<IAbstractState<?, CodeBlock, IBoogieVar>>) aiResult.getLoc2States().get(symbol.getTarget());
 
 			final IPredicate target;
 			if (nextStates == null) {
@@ -121,8 +148,8 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 				}
 			} else {
 				target = predicateUnifier.getOrConstructPredicateForDisjunction(
-				        nextStates.stream().map(s -> s.getTerm(mSmtManager.getScript(), mSmtManager.getBoogie2Smt()))
-				                .map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
+						nextStates.stream().map(s -> s.getTerm(mSmtManager.getScript(), mSmtManager.getBoogie2Smt()))
+								.map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
 
 				nextStates.forEach(state -> stateToPredicate.put(state, target));
 
@@ -166,19 +193,19 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 
 		if (PRINT_PREDS_LIMIT < alreadyThereAsState.size()) {
 			mLogger.info("Using "
-			        + alreadyThereAsState.size() + " predicates from AI: " + String.join(",", alreadyThereAsState
-			                .stream().limit(PRINT_PREDS_LIMIT).map(a -> a.toString()).collect(Collectors.toList()))
-			        + "...");
+					+ alreadyThereAsState.size() + " predicates from AI: " + String.join(",", alreadyThereAsState
+							.stream().limit(PRINT_PREDS_LIMIT).map(a -> a.toString()).collect(Collectors.toList()))
+					+ "...");
 		} else {
 			mLogger.info("Using " + alreadyThereAsState.size() + " predicates from AI: " + String.join(",",
-			        alreadyThereAsState.stream().map(a -> a.toString()).collect(Collectors.toList())));
+					alreadyThereAsState.stream().map(a -> a.toString()).collect(Collectors.toList())));
 		}
 
 		int numberOfTransitionsBeforeEnhancement = 0;
 
 		if (mLogger.isDebugEnabled()) {
-			final Analyze<CodeBlock, IPredicate> analyze = new Analyze<>(new AutomataLibraryServices(mServices),
-			        result);
+			final Analyze<CodeBlock, IPredicate> analyze =
+					new Analyze<>(new AutomataLibraryServices(mServices), result);
 			numberOfTransitionsBeforeEnhancement = analyze.getNumberOfTransitions(ESymbolType.TOTAL);
 		}
 
@@ -195,8 +222,8 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 				continue;
 			}
 
-			final Set<String> variableNames = mVariableCollector.collectVariableNames(currentLetter,
-			        mStatementExtractor);
+			final Set<String> variableNames =
+					mVariableCollector.collectVariableNames(currentLetter, mStatementExtractor);
 
 			final Iterator<IAbstractState<?, CodeBlock, IBoogieVar>> stateIterator = allStates.iterator();
 			while (stateIterator.hasNext()) {
@@ -223,12 +250,12 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 		}
 
 		if (mLogger.isDebugEnabled()) {
-			final Analyze<CodeBlock, IPredicate> analyze = new Analyze<>(new AutomataLibraryServices(mServices),
-			        result);
+			final Analyze<CodeBlock, IPredicate> analyze =
+					new Analyze<>(new AutomataLibraryServices(mServices), result);
 			final int numberOfTransitionsAfter = analyze.getNumberOfTransitions(ESymbolType.TOTAL);
 
 			mLogger.debug("Enhancement added " + (numberOfTransitionsAfter - numberOfTransitionsBeforeEnhancement)
-			        + " transitions.");
+					+ " transitions.");
 			mLogger.debug("# Transitions before: " + numberOfTransitionsBeforeEnhancement);
 			mLogger.debug("# Transitions after : " + numberOfTransitionsAfter);
 		}
@@ -242,7 +269,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 	}
 
 	private static List<IAbstractState> applyPostInternally(final IAbstractState<?, CodeBlock, IBoogieVar> currentState,
-	        final IAbstractPostOperator postOperator, final CodeBlock transition) {
+			final IAbstractPostOperator postOperator, final CodeBlock transition) {
 		return postOperator.apply(currentState, transition);
 	}
 
@@ -257,7 +284,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 
 	private boolean areCompatible(final IAbstractState state, final Set<String> variableNames) {
 		final Set<String> varsInState = (Set<String>) state.getVariables().stream()
-		        .map(var -> ((IBoogieVar) var).getIdentifier()).collect(Collectors.toSet());
+				.map(var -> ((IBoogieVar) var).getIdentifier()).collect(Collectors.toSet());
 
 		if (variableNames.size() == 0 && varsInState.size() == 0) {
 			return true;
@@ -282,7 +309,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 		private Set<String> mVariableNames;
 
 		private Set<String> collectVariableNames(final CodeBlock codeBlock,
-		        final RcfgStatementExtractor statementExtractor) {
+				final RcfgStatementExtractor statementExtractor) {
 			mVariableNames = new HashSet<>();
 			for (final Statement statement : statementExtractor.process(codeBlock)) {
 				processStatement(statement);

@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
@@ -101,7 +101,7 @@ public class PredicateTransformer {
 	 * its occurrence in the given predicate is substituted by a fresh variable.
 	 * All fresh variables are existentially quantified.
 	 */
-	public Term strongestPostcondition(final IPredicate p, final TransFormula tf) {
+	public Term strongestPostcondition(final IPredicate p, final UnmodifiableTransFormula tf) {
 		if (SmtUtils.isFalse(p.getFormula())) {
 			return p.getFormula();
 		}
@@ -154,7 +154,7 @@ public class PredicateTransformer {
 		return pushed;
 	}
 
-	public Term weakLocalPostconditionCall(final IPredicate p, final TransFormula globalVarAssignments, final Set<IProgramVar> modifiableGlobals) {
+	public Term weakLocalPostconditionCall(final IPredicate p, final UnmodifiableTransFormula globalVarAssignments, final Set<IProgramVar> modifiableGlobals) {
 		final Set<TermVariable> varsToQuantify = new HashSet<>();
 		
 		final Term renamedOldVarsAssignment;
@@ -206,8 +206,8 @@ public class PredicateTransformer {
 	}
 	
 	
-	public Term strongestPostconditionCall(final IPredicate p, final TransFormula localVarAssignments,
-			final TransFormula globalVarAssignments, final TransFormula oldVarAssignments, final Set<IProgramVar> modifiableGlobals) {
+	public Term strongestPostconditionCall(final IPredicate p, final UnmodifiableTransFormula localVarAssignments,
+			final UnmodifiableTransFormula globalVarAssignments, final UnmodifiableTransFormula oldVarAssignments, final Set<IProgramVar> modifiableGlobals) {
 		final Set<TermVariable> varsToQuantify = new HashSet<>();
 		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction = new IValueConstruction<IProgramVar, TermVariable>() {
 
@@ -299,8 +299,8 @@ public class PredicateTransformer {
 	 * statement and callerPred is the predicate that held in the calling
 	 * procedure before the corresponding call. TODO: How is it computed?
 	 */
-	public Term strongestPostcondition(final IPredicate calleePred, final IPredicate callerPred, final TransFormula ret_TF,
-			final TransFormula callTF, final TransFormula globalVarsAssignment, final TransFormula oldVarsAssignment) {
+	public Term strongestPostcondition(final IPredicate calleePred, final IPredicate callerPred, final UnmodifiableTransFormula ret_TF,
+			final UnmodifiableTransFormula callTF, final UnmodifiableTransFormula globalVarsAssignment, final UnmodifiableTransFormula oldVarsAssignment) {
 		// VarsToQuantify contains local vars of called procedure, and it may
 		// contain
 		// some invars, if it was a recursive call, i.e. callingProc =
@@ -474,7 +474,7 @@ public class PredicateTransformer {
 	}
 	
 
-	public Term weakestPrecondition(final IPredicate p, final TransFormula tf) {
+	public Term weakestPrecondition(final IPredicate p, final UnmodifiableTransFormula tf) {
 		if (SmtUtils.isTrue(p.getFormula())) {
 			return p.getFormula();
 		}
@@ -531,8 +531,8 @@ public class PredicateTransformer {
 	 * Responsible for computing WP of a Call statement.
 	 * 
 	 */
-	public Term weakestPrecondition(final IPredicate calleePred, final TransFormula call_TF,
-			final TransFormula globalVarsAssignments, final TransFormula oldVarsAssignments, 
+	public Term weakestPrecondition(final IPredicate calleePred, final UnmodifiableTransFormula call_TF,
+			final UnmodifiableTransFormula globalVarsAssignments, final UnmodifiableTransFormula oldVarsAssignments, 
 			final Set<IProgramVar> modifiableGlobals) {
 		
 		final InstanceProviderWpCall ip = new InstanceProviderWpCall(modifiableGlobals);
@@ -621,8 +621,8 @@ public class PredicateTransformer {
 	 * @param varsOccurringBetweenCallAndReturn 
 	 * 
 	 */
-	public Term weakestPrecondition(final IPredicate returnerPred, final IPredicate callerPred, final TransFormula returnTF,
-			final TransFormula callTF, final TransFormula globalVarsAssignments, final TransFormula oldVarAssignments,
+	public Term weakestPrecondition(final IPredicate returnerPred, final IPredicate callerPred, final UnmodifiableTransFormula returnTF,
+			final UnmodifiableTransFormula callTF, final UnmodifiableTransFormula globalVarsAssignments, final UnmodifiableTransFormula oldVarAssignments,
 			final Set<IProgramVar> modifiableGlobals, final Set<IProgramVar> varsOccurringBetweenCallAndReturn) {
 		final InstanceProviderWpReturn ir = new InstanceProviderWpReturn(modifiableGlobals, varsOccurringBetweenCallAndReturn, returnTF.getAssignedVars());
 		

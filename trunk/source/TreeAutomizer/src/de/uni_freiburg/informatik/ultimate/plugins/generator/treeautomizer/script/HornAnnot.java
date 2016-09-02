@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClause;
 
 public class HornAnnot implements IAnnotations {
 
@@ -12,9 +13,9 @@ public class HornAnnot implements IAnnotations {
 	public HornAnnot(List<HornClause> clauses) {
 		mp.put("HoRNClauses", clauses);
 	}
+	
 	@Override
 	public Map<String, Object> getAnnotationsAsMap() {
-		// TODO Auto-generated method stub
 		return mp;
 	}
 

@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.io.Serializable;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
@@ -52,7 +52,7 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable, ILocalPr
 	private final int mHashCode;
 	
 	
-	public LocalBoogieVar(final String identifier, final String procedure, final IType iType, 
+	public LocalBoogieVar(final String identifier, final String procedure, final IBoogieType iType, 
 			final TermVariable tv,
 			final ApplicationTerm defaultConstant,
 			final ApplicationTerm primedContant) {

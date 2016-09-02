@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Represents an edge without any effect to the programs variables. While
@@ -67,7 +67,7 @@ public class GotoEdge extends CodeBlock implements IInternalAction {
 	}
 
 	@Override
-	public TransFormula getTransformula() {
+	public UnmodifiableTransFormula getTransformula() {
 		return getTransitionFormula();
 	}
 

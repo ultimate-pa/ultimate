@@ -33,8 +33,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
@@ -46,8 +46,8 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 	private final IProgramOldVar mUnseededOldVar;
 	private final IProgramOldVar[] mOldRankOldVar;
 	
-	private final Map<String, TransFormula> mProc2OldVarsAssignment;
-	private final Map<String, TransFormula> mProc2GlobalVarsAssignment;
+	private final Map<String, UnmodifiableTransFormula> mProc2OldVarsAssignment;
+	private final Map<String, UnmodifiableTransFormula> mProc2GlobalVarsAssignment;
 
 	public BuchiModGlobalVarManager(final IProgramNonOldVar unseeded, final IProgramNonOldVar[] oldRank,
 			final ModifiableGlobalVariableManager modifiableGlobalVariableManager, 
@@ -62,14 +62,14 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 			mOldRankOldVar[i] = oldRank[i].getOldVar();
 			assert mOldRankOldVar[i] != null : "oldVar missing";
 		}
-		mProc2OldVarsAssignment = new HashMap<String, TransFormula>();
-		mProc2GlobalVarsAssignment = new HashMap<String, TransFormula>();
+		mProc2OldVarsAssignment = new HashMap<String, UnmodifiableTransFormula>();
+		mProc2GlobalVarsAssignment = new HashMap<String, UnmodifiableTransFormula>();
 	}
 
 	
 	@Override
-	public TransFormula getOldVarsAssignment(final String proc) {
-		TransFormula oldVarsAssignment = mProc2OldVarsAssignment.get(proc);
+	public UnmodifiableTransFormula getOldVarsAssignment(final String proc) {
+		UnmodifiableTransFormula oldVarsAssignment = mProc2OldVarsAssignment.get(proc);
 		if (oldVarsAssignment == null) {
 			oldVarsAssignment = constructOldVarsAssignment(proc);
 			mProc2OldVarsAssignment.put(proc, oldVarsAssignment);
@@ -80,8 +80,8 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 	
 
 	@Override
-	public TransFormula getGlobalVarsAssignment(final String proc) {
-		TransFormula globalVarsAssignment = mProc2GlobalVarsAssignment.get(proc);
+	public UnmodifiableTransFormula getGlobalVarsAssignment(final String proc) {
+		UnmodifiableTransFormula globalVarsAssignment = mProc2GlobalVarsAssignment.get(proc);
 		if (globalVarsAssignment == null) {
 			globalVarsAssignment = constructGlobalVarsAssignment(proc);
 			mProc2GlobalVarsAssignment.put(proc, globalVarsAssignment);
@@ -90,8 +90,8 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 	}
 	
 	
-	private TransFormula constructOldVarsAssignment(final String proc) {
-		final TransFormula without = super.getOldVarsAssignment(proc);
+	private UnmodifiableTransFormula constructOldVarsAssignment(final String proc) {
+		final UnmodifiableTransFormula without = super.getOldVarsAssignment(proc);
 		assert without.getAuxVars().isEmpty();
 		assert without.getBranchEncoders().isEmpty();
 		assert without.isInfeasible() == Infeasibility.UNPROVEABLE;
@@ -115,8 +115,8 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 	}
 	
 	
-	private TransFormula constructGlobalVarsAssignment(final String proc) {
-		final TransFormula without = super.getGlobalVarsAssignment(proc);
+	private UnmodifiableTransFormula constructGlobalVarsAssignment(final String proc) {
+		final UnmodifiableTransFormula without = super.getGlobalVarsAssignment(proc);
 		assert without.getAuxVars().isEmpty();
 		assert without.getBranchEncoders().isEmpty();
 		assert without.isInfeasible() == Infeasibility.UNPROVEABLE;

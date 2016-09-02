@@ -75,9 +75,9 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 		@SuppressWarnings("unchecked")
 		final LETTER[] word = (LETTER[]) new Object[] {};
 		final int[] nestingRelation = {};
-		mNestedWord = new NestedWord<LETTER>(word, nestingRelation);
+		mNestedWord = new NestedWord<>(word, nestingRelation);
 		
-		mStateSequence = new ArrayList<STATE>(1);
+		mStateSequence = new ArrayList<>(1);
 		mStateSequence.add(state);
 	}
 	
@@ -101,9 +101,9 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 		@SuppressWarnings("unchecked")
 		final LETTER[] word = (LETTER[]) new Object[] { symbol };
 		final int[] nestingRelation = { position };
-		mNestedWord = new NestedWord<LETTER>(word, nestingRelation);
+		mNestedWord = new NestedWord<>(word, nestingRelation);
 		
-		mStateSequence = new ArrayList<STATE>(2);
+		mStateSequence = new ArrayList<>(2);
 		mStateSequence.add(state0);
 		mStateSequence.add(state1);
 	}
@@ -183,11 +183,11 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 		if (lastStateOfThis.equals(firstStateOfRun)) {
 			
 			final NestedWord<LETTER> concatNestedWord = mNestedWord.concatenate(run.getWord());
-			final ArrayList<STATE> concatStateSeq = new ArrayList<STATE>(mStateSequence);
+			final ArrayList<STATE> concatStateSeq = new ArrayList<>(mStateSequence);
 			for (int i = 1; i < run.getStateSequence().size(); i++) {
 				concatStateSeq.add(run.getStateSequence().get(i));
 			}
-			return new NestedRun<LETTER, STATE>(concatNestedWord, concatStateSeq);
+			return new NestedRun<>(concatNestedWord, concatStateSeq);
 		} else {
 			throw new IllegalArgumentException("Can only concatenate two runs"
 					+ " where the last element of the first runs statement"

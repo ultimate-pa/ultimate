@@ -35,7 +35,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -50,7 +50,7 @@ public class DataflowPostOperator implements IAbstractPostOperator<DataflowState
 
 	@Override
 	public List<DataflowState> apply(final DataflowState oldstate, final CodeBlock transition) {
-		final TransFormula tf = transition.getTransitionFormula();
+		final UnmodifiableTransFormula tf = transition.getTransitionFormula();
 		if (tf.getOutVars().isEmpty()) {
 			return Collections.singletonList(oldstate);
 		}
@@ -90,7 +90,7 @@ public class DataflowPostOperator implements IAbstractPostOperator<DataflowState
 		return null;
 	}
 
-	private Set<IProgramVar> computeDefSetFromTransFormula(TransFormula tf, Set<IProgramVar> allVariables) {
+	private Set<IProgramVar> computeDefSetFromTransFormula(UnmodifiableTransFormula tf, Set<IProgramVar> allVariables) {
 		// TODO I think we will need something like "constrained vars"
 		//  i.e. the set of IProgramVars x where invar(x) = outVar(x) and where
 		//  x is constrained by the formula  (i.e. like from an assume statement)

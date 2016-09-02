@@ -73,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 
-public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNode, Term, Expression> {
+public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNode, Term, Expression, RCFGNode, String> {
 
 	private final ILogger mLogger;
 	private Term2Expression mTerm2Expression;
@@ -82,17 +82,14 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 		super(RCFGEdge.class, BoogieASTNode.class, Term.class, Expression.class);
 		mLogger = logger;
 	}
-	
-	
 
 	/**
-	 * @param term2Expression the term2Expression to set
+	 * @param term2Expression
+	 *            the term2Expression to set
 	 */
 	public void setTerm2Expression(final Term2Expression term2Expression) {
 		mTerm2Expression = term2Expression;
 	}
-
-
 
 	/**
 	 * Mapping from auxiliary CodeBlocks to source BoogieAstNodes. For assert, the requires assumed at begin of
@@ -234,7 +231,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 	}
 
 	@Override
-	public IBacktranslatedCFG<String, BoogieASTNode> translateCFG(final IBacktranslatedCFG<?, RCFGEdge> cfg) {
+	public IBacktranslatedCFG<String, BoogieASTNode> translateCFG(final IBacktranslatedCFG<RCFGNode, RCFGEdge> cfg) {
 		if (!(cfg.getCFGs().stream().allMatch(a -> a instanceof RootNode))) {
 			throw new UnsupportedOperationException("Cannot translate cfg that is not an RCFG");
 		}
@@ -347,11 +344,10 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 		ModelUtils.copyAnnotations(old, rtr);
 		return rtr;
 	}
-	
+
 	@Override
 	public Expression translateExpression(final Term term) {
 		return mTerm2Expression.translate(term);
 	}
-	
-	
+
 }

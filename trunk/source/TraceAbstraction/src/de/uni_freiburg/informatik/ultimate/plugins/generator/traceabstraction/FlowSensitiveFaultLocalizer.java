@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IActi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -403,10 +403,10 @@ public class FlowSensitiveFaultLocalizer {
 	 * @param startPosition - Starting location of the branch.
 	 * @param endPosition -  End location of the branch.
 	 */
-	private TransFormula computeMarkhorFormula(final int startPosition, final int endPosition, 
+	private UnmodifiableTransFormula computeMarkhorFormula(final int startPosition, final int endPosition, 
 			final NestedWord<CodeBlock> counterexampleWord, final Map<Integer, List<Integer>> informationFromCFG, 
 			final ManagedScript smtManager){
-		TransFormula combinedTransitionFormula = counterexampleWord.getSymbolAt(startPosition).getTransitionFormula();
+		UnmodifiableTransFormula combinedTransitionFormula = counterexampleWord.getSymbolAt(startPosition).getTransitionFormula();
 		for(int i = startPosition+1; i<= endPosition; i++){
 			boolean subBranch=false;
 			int branchOut=0;
@@ -423,19 +423,19 @@ public class FlowSensitiveFaultLocalizer {
 			}
 			if(subBranch){
 				 // The current statement is a branch out and it's branch-in is with in the current branch.
-				final TransFormula subBranchMarkhorFormula = computeMarkhorFormula(branchOut,branchIn,counterexampleWord,
+				final UnmodifiableTransFormula subBranchMarkhorFormula = computeMarkhorFormula(branchOut,branchIn,counterexampleWord,
 						informationFromCFG,smtManager);
-				combinedTransitionFormula = TransFormula.sequentialComposition(mLogger, mServices, 
+				combinedTransitionFormula = UnmodifiableTransFormula.sequentialComposition(mLogger, mServices, 
 						smtManager, false, false, false, mXnfConversionTechnique, mSimplificationTechnique, combinedTransitionFormula,subBranchMarkhorFormula);
 			} else{ 
 				// It is a normal statement.
 				final CodeBlock statement = counterexampleWord.getSymbol(i);
-				final TransFormula transitionFormula = statement.getTransitionFormula();
-				combinedTransitionFormula = TransFormula.sequentialComposition(mLogger, mServices, 
+				final UnmodifiableTransFormula transitionFormula = statement.getTransitionFormula();
+				combinedTransitionFormula = UnmodifiableTransFormula.sequentialComposition(mLogger, mServices, 
 						smtManager, false, false, false, mXnfConversionTechnique, mSimplificationTechnique, combinedTransitionFormula,transitionFormula);
 			}
 		}
-		final TransFormula markhor = TransFormula.computeMarkhorTransFormula(combinedTransitionFormula, 
+		final UnmodifiableTransFormula markhor = UnmodifiableTransFormula.computeMarkhorTransFormula(combinedTransitionFormula, 
 				smtManager, mServices, mLogger, mXnfConversionTechnique, mSimplificationTechnique);
 		return markhor;
 	}
@@ -444,7 +444,7 @@ public class FlowSensitiveFaultLocalizer {
 	 * Checks if subtrace from position "startPosition" to position "endPosition" is relevant.
 	 */
 	private boolean checkBranchRelevance(final int startPosition, final int endPosition, 
-			final TransFormula markhor,final IPredicate weakestPreconditionLeft, 
+			final UnmodifiableTransFormula markhor,final IPredicate weakestPreconditionLeft, 
 			final IPredicate weakestPreconditionRight, final NestedWord<CodeBlock> counterexampleWord, 
 			final SmtManager smtManager, final ModifiableGlobalVariableManager modGlobVarManager){
 
@@ -513,7 +513,7 @@ public class FlowSensitiveFaultLocalizer {
 			if (branchOutPosition != null) {
 				final int positionBranchIn = position;
 				position = branchOutPosition;
-				final TransFormula markhor = computeMarkhorFormula(branchOutPosition, positionBranchIn, 
+				final UnmodifiableTransFormula markhor = computeMarkhorFormula(branchOutPosition, positionBranchIn, 
 						counterexampleWord,informationFromCFG, smtManager.getManagedScript());
 				final Term wpTerm = computeWp(weakestPreconditionRight, markhor, smtManager.getScript(), 
 						smtManager.getManagedScript(), pt, mApplyQuantifierElimination);
@@ -536,7 +536,7 @@ public class FlowSensitiveFaultLocalizer {
 			} else { 
 				// The statement under consideration is NOT a BRANCH-IN Statement.
 				
-				final TransFormula tf =  counterexampleWord.getSymbolAt(position).getTransitionFormula();
+				final UnmodifiableTransFormula tf =  counterexampleWord.getSymbolAt(position).getTransitionFormula();
 				final Term wpTerm = computeWp(weakestPreconditionRight, tf, smtManager.getScript(), 
 						smtManager.getManagedScript(), pt, mApplyQuantifierElimination);
 				weakestPreconditionLeft = smtManager.getPredicateFactory().newPredicate(wpTerm);
@@ -614,7 +614,7 @@ public class FlowSensitiveFaultLocalizer {
 	/**
 	 * Compute WP and optionally apply quantifier elimination. 
 	 */
-	private Term computeWp(final IPredicate successor, final TransFormula tf, final Script script, 
+	private Term computeWp(final IPredicate successor, final UnmodifiableTransFormula tf, final Script script, 
 			final ManagedScript freshTermVariableConstructor, 
 			final PredicateTransformer pt, final boolean applyQuantifierElimination) {
 		Term result = pt.weakestPrecondition(successor, tf);

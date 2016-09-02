@@ -14,12 +14,11 @@
 
 	<properties>
 		<!-- maven plugin versions -->
-		<tycho-version>0.24.0</tycho-version>
-		<sonar-version>2.7.1</sonar-version>
-		<jacoco-version>0.7.5.201505241946</jacoco-version>
+		<tycho-version>0.25.0</tycho-version>
+		<sonar-version>3.0.2</sonar-version>
+		<jacoco-version>0.7.7.201606060606</jacoco-version>
 		<m2e-version>1.0.0</m2e-version>
-		<maven-antrun-plugin-version>1.8</maven-antrun-plugin-version>
-		<coveralls-version>4.0.0</coveralls-version>
+		<coveralls-version>4.2.0</coveralls-version>
 
 		<!-- reference to workspace root -->
 		<workspaceDir>${basedir}/..</workspaceDir>
@@ -197,7 +196,7 @@
 			</plugin>
 
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
+				<groupId>org.sonarsource.scanner.maven</groupId>
 				<artifactId>sonar-maven-plugin</artifactId>
 				<version>${sonar-version}</version>
 			</plugin>

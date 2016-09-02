@@ -12,20 +12,39 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 
+/**
+ * Determinize a given tree automaton.
+ * @author mostafa (mostafa.amin93@gmail.com)
+ *
+ * @param <LETTER> letter of the tree automaton.
+ * @param <STATE> state of the tree automaton.
+ */
 public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
-	private final ITreeAutomaton<LETTER, STATE> tree;
+	private final ITreeAutomaton<LETTER, STATE> treeAutomaton;
+	private final IStateFactory<STATE> stateFactory;
+	private final Map<Set<STATE>, STATE> reducedStates;
+	
+	protected final ITreeAutomaton<LETTER, STATE> result;
 
-	protected final ITreeAutomaton<LETTER, Set<STATE>> res;
+	public Determinize(final ITreeAutomaton<LETTER, STATE> tree, final IStateFactory<STATE> factory) {
+		reducedStates = new HashMap<>();
+		stateFactory = factory;
+		
+		treeAutomaton = tree;
+		result = computeResult();
+	}
 	
-	
-	public Determinize(final ITreeAutomaton<LETTER, STATE> tree) {
-		this.tree = tree;
-		this.res = computeResult();
+	private STATE reduceState(final Set<STATE> key) {
+		if (!reducedStates.containsKey(key)) {
+			reducedStates.put(key, stateFactory.minimize(key));
+		}
+		return reducedStates.get(key);
 	}
 	
 	@Override
@@ -43,13 +62,12 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return "Exiting determinization";
 	}
 	
-	private TreeAutomatonBU<LETTER, Set<STATE>> computeResult() {
-		final TreeAutomatonBU<LETTER, Set<STATE>> res = new TreeAutomatonBU<>();
+	private TreeAutomatonBU<LETTER, STATE> computeResult() {
 		final Map<STATE, Set<STATE>> stateToSState = new HashMap<>();
 		
 		final Map<LETTER, Map<List<Set<STATE>>, Set<STATE>>> rules = new HashMap<LETTER, Map<List<Set<STATE>>, Set<STATE>>>();
 		
-		for (final TreeAutomatonRule<LETTER, STATE> rule : tree.getRules()) {
+		for (final TreeAutomatonRule<LETTER, STATE> rule : treeAutomaton.getRules()) {
 			if (!rules.containsKey(rule.getLetter())) {
 				rules.put(rule.getLetter(), new HashMap<>());
 			}
@@ -84,16 +102,14 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 			}
 		}
-		System.err.println(worklist);
-		final Set<Set<STATE>> visited = new HashSet<Set<STATE>>();
+		final Set<Set<STATE>> visited = new HashSet<>();
 		while (!worklist.isEmpty()) {
 			final Set<STATE> state = worklist.poll();
-			System.err.println(state);
 			if (visited.contains(state))  {
 				continue;
 			}
 			visited.add(state);
-			final Map<LETTER, Map<List<Set<STATE>>, Set<Set<STATE>>>> newRules = new HashMap<LETTER, Map<List<Set<STATE>>, Set<Set<STATE>>>>();
+			final Map<LETTER, Map<List<Set<STATE>>, Set<Set<STATE>>>> newRules = new HashMap<>();
 			for (final LETTER letter : rules.keySet()) {
 				if (!newRules.containsKey(letter)) {
 					newRules.put(letter, new HashMap<>());
@@ -112,7 +128,6 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 							if (!newRules.get(letter).containsKey(toAdd)) {
 								newRules.get(letter).put(toAdd, new HashSet<Set<STATE>>());
 							}
-							//System.err.println(letter + " " + toAdd + " ~~> " + dest) ;
 							newRules.get(letter).get(toAdd).add(dest);
 						}
 						++idx;
@@ -123,8 +138,9 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				final Map<List<Set<STATE>>, Set<Set<STATE>>> mp = newRules.get(letter);
 				for (final List<Set<STATE>> st : mp.keySet()) {
 				
-					final Set<STATE> uni = new HashSet<STATE>();
-					for (final Set<STATE> s : mp.get(st)) {
+					final Set<Set<STATE>> dest = mp.get(st);
+					final Set<STATE> uni = new HashSet<>();
+					for (final Set<STATE> s : dest) {
 						uni.addAll(s);
 					}
 					rules.get(letter).put(st, uni);
@@ -134,29 +150,34 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 			}
 		}
+		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
 		for (final LETTER letter : rules.keySet()) {
 			final Map<List<Set<STATE>>, Set<STATE>> mp = rules.get(letter);
-			for (final List<Set<STATE>> st : mp.keySet()) {
-				final Set<STATE> dest = mp.get(st);
-				res.addRule(letter, st, dest);
+			for (final List<Set<STATE>> sSrc : mp.keySet()) {
+				final List<STATE> src = new ArrayList<>();
+				for (Set<STATE> sub : sSrc) {
+					src.add(reduceState(sub));
+				}
+				final Set<STATE> sDest = mp.get(sSrc);
+				final STATE dest = reduceState(sDest);
+				res.addRule(letter, src, dest);
 				
-				for (final Set<STATE> e : st) {
-					for (final STATE s : e) {
-						if (tree.isInitialState(s)) {
-							res.addInitialState(e);
+				for (final Set<STATE> sub : sSrc) {
+					final STATE state = reduceState(sub);
+					for (final STATE s : sub) {
+						if (treeAutomaton.isInitialState(s)) {
+							res.addInitialState(state);
 						}
-						if (tree.isFinalState(s)) {
-							// TODO: should be redundant
-							res.addFinalState(e);
+						if (treeAutomaton.isFinalState(s)) {
+							res.addFinalState(state);
 						}
 					}
 				}
-				for (final STATE s : dest) {
-					if (tree.isFinalState(s)) {
+				for (final STATE s : sDest) {
+					if (treeAutomaton.isFinalState(s)) {
 						res.addFinalState(dest);
 					}
-					if (tree.isInitialState(s)) {
-						// TODO: should be redundant
+					if (treeAutomaton.isInitialState(s)) {
 						res.addInitialState(dest);
 					}
 				}
@@ -164,9 +185,10 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		return res;
 	}
+	
 	@Override
-	public Object getResult() {
-		return res;
+	public ITreeAutomaton<LETTER, STATE> getResult() {
+		return result;
 	}
 
 	@Override
@@ -174,22 +196,23 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return false;
 	}
 
-
-	public static void main(final String[] args) throws AutomataLibraryException {
-		final TreeAutomatonBU<String, Integer> treeA = new TreeAutomatonBU<>();
+	public static void main(String[] args) throws AutomataLibraryException {
+		final TreeAutomatonBU<String, String> treeA = new TreeAutomatonBU<>();
 		
-		final int Q0 = 0, Q1 = 1, Q2 = 2, Q3 = 3;
+		final String Q0 = "Q0", Q1 = "Q1", Q2 = "Q2", Q3 = "Q3";
+		
 		treeA.addInitialState(Q0);
 		treeA.addFinalState(Q3);
-		treeA.addRule("F", new ArrayList<>(Arrays.asList(new Integer[]{Q0, Q1})), Q2);
-		treeA.addRule("F", new ArrayList<>(Arrays.asList(new Integer[]{Q0, Q1})), Q3);
-		treeA.addRule("G", new ArrayList<>(Arrays.asList(new Integer[]{Q2})), Q3);
-		treeA.addRule("G", new ArrayList<>(Arrays.asList(new Integer[]{Q3})), Q3);
-		treeA.addRule("H", new ArrayList<>(Arrays.asList(new Integer[]{Q0, Q2})), Q1);
-		treeA.addRule("H", new ArrayList<>(Arrays.asList(new Integer[]{Q0, Q3})), Q1);
+		treeA.addRule("F", new ArrayList<>(Arrays.asList(new String[]{Q0, Q1})), Q2);
+		treeA.addRule("F", new ArrayList<>(Arrays.asList(new String[]{Q0, Q1})), Q3);
+		treeA.addRule("G", new ArrayList<>(Arrays.asList(new String[]{Q2})), Q3);
+		treeA.addRule("G", new ArrayList<>(Arrays.asList(new String[]{Q3})), Q3);
+		treeA.addRule("H", new ArrayList<>(Arrays.asList(new String[]{Q0, Q2})), Q1);
+		treeA.addRule("H", new ArrayList<>(Arrays.asList(new String[]{Q0, Q3})), Q1);
 		
-		final Determinize<String, Integer> op = new Determinize<>(treeA);
-		final TreeAutomatonBU<String, Set<Integer>> res = (TreeAutomatonBU<String, Set<Integer>>) op.getResult();
+		final StringFactory fac = new StringFactory();
+		final Determinize<String, String> op = new Determinize<>(treeA, fac);
+		final ITreeAutomaton<String, String> res = op.getResult();
 		
 		System.out.println(treeA.toString() + "\n");
 		System.out.println(res.toString() + "\n");

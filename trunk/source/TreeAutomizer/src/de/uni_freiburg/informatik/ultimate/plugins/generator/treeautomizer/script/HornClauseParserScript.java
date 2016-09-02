@@ -26,7 +26,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HCTransFormula;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClause;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.terms.Body;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.terms.Cobody;
 
@@ -119,7 +121,7 @@ public class HornClauseParserScript extends NoopScript {
 			mDeclaredPredicateSymbols.add(fun);
 		}
 	}
-
+	/**
 	private String termsToString(Term[] terms) {
 		String res = "";
 		for (Term term : terms) {
@@ -186,20 +188,24 @@ public class HornClauseParserScript extends NoopScript {
 		}
 		return getTheory().mTrue;
 	}
+	*/
 
 	private Cobody parseCobody(Term term) throws SMTLIBException {
 		ApplicationTerm t = (ApplicationTerm) term;
 
 		if (t.getFunction().getName().equals("and")) {
+			// t = And (y1 y2 ... yn)
 			Cobody tail = new Cobody();
 			for (Term literal : t.getParameters()) {
 				ApplicationTerm par = (ApplicationTerm) literal;
 				if (mDeclaredPredicateSymbols.contains(par.getFunction().getName())) {
+					//yi = I
 					tail.addPredicate(par);
 				} else if (par.getFunction().getName().equals("not") && mDeclaredPredicateSymbols
 						.contains(((ApplicationTerm) par.getParameters()[0]).getFunction().getName())) {
 					throw new SMTLIBException("The cobody has a negative predicate.");
 				} else {
+					//yi = formula
 					tail.addTransitionFormula(par);
 				}
 			}
@@ -207,11 +213,13 @@ public class HornClauseParserScript extends NoopScript {
 		}
 		Cobody tail = new Cobody();
 		if (mDeclaredPredicateSymbols.contains(t.getFunction().getName())) {
+			// yi = I
 			tail.addPredicate(t);
 		} else if (t.getFunction().getName().equals("not") && mDeclaredPredicateSymbols
 				.contains(((ApplicationTerm) t.getParameters()[0]).getFunction().getName())) {
 			throw new SMTLIBException("The cobody has a negative predicate.");
 		} else {
+			// yi = formula
 			tail.addTransitionFormula(t);
 		}
 
@@ -229,17 +237,21 @@ public class HornClauseParserScript extends NoopScript {
 			return head;
 		}
 		if (t.getFunction().getName().equals("or")) {
+			// t = Or (y1 ... yn)
 			Body head = new Body();
 			for (Term literal : t.getParameters()) {
 				ApplicationTerm par = (ApplicationTerm) literal;
 				if (mDeclaredPredicateSymbols.contains(par.getFunction().getName())) {
+					// yi = I 
 					if (!head.setHead(par)) {
 						throw new SMTLIBException("The head has more than a positive predicate symbol.");
 					}
 				} else if (par.getFunction().getName().equals("not") && mDeclaredPredicateSymbols
 						.contains(((ApplicationTerm) par.getParameters()[0]).getFunction().getName())) {
+					// yi = ~I
 					head.addPredicateToCobody((ApplicationTerm) par.getParameters()[0]);
 				} else {
+					// yi = formula
 					if (!par.equals(getTheory().mFalse))
 						head.addTransitionFormula((ApplicationTerm) getTheory().not(par));
 				}

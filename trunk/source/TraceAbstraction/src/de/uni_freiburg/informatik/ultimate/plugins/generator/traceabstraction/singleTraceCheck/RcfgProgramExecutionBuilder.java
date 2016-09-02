@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -80,7 +80,7 @@ public class RcfgProgramExecutionBuilder {
 	private boolean isReAssigned(final IProgramVar bv, final int position) {
 		boolean result;
 		if (mTrace.isInternalPosition(position) || mTrace.isReturnPosition(position)) {
-			final TransFormula tf = mTrace.getSymbolAt(position).getTransitionFormula();
+			final UnmodifiableTransFormula tf = mTrace.getSymbolAt(position).getTransitionFormula();
 			result = tf.getAssignedVars().contains(bv);
 		} else if (mTrace.isCallPosition(position)) {
 			final Call call = (Call) mTrace.getSymbolAt(position);

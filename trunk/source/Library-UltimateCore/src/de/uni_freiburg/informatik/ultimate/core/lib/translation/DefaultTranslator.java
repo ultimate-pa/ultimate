@@ -71,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <TE>
  *            Target Expression. Type of expression in the target program model.
  */
-public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE, SE, TE> {
+public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslator<STE, TTE, SE, TE, SVL, TVL> {
 
 	private final Class<STE> mSourceTraceElementType;
 	private final Class<TTE> mTargetTraceElementType;
@@ -175,9 +175,9 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public IBacktranslatedCFG<?, TTE> translateCFG(final IBacktranslatedCFG<?, STE> cfg) {
+	public IBacktranslatedCFG<TVL, TTE> translateCFG(final IBacktranslatedCFG<SVL, STE> cfg) {
 		try {
-			return (IBacktranslatedCFG<?, TTE>) cfg;
+			return (IBacktranslatedCFG<TVL, TTE>) cfg;
 		} catch (final ClassCastException e) {
 			final String message = "Type of source trace element and type of target"
 					+ " trace element are different. DefaultTranslator can only be applied to the same type.";
@@ -226,15 +226,16 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	 *            </ul>
 	 */
 	@SuppressWarnings("unchecked")
-	public static <STE, TTE, SE, TE> TE translateExpressionIteratively(final SE expr,
-			final ITranslator<?, ?, ?, ?>... iTranslators) {
+	public static <STE, TTE, SE, TE, SVL, TVL> TE translateExpressionIteratively(final SE expr,
+			final ITranslator<?, ?, ?, ?, ?, ?>... iTranslators) {
 		TE result;
 
 		if (iTranslators.length == 0) {
 			result = (TE) expr;
 		} else {
-			final ITranslator<STE, ?, SE, ?> last = (ITranslator<STE, ?, SE, ?>) iTranslators[iTranslators.length - 1];
-			final ITranslator<?, ?, ?, ?>[] allButLast = Arrays.copyOf(iTranslators, iTranslators.length - 1);
+			final ITranslator<STE, ?, SE, ?, SVL, ?> last =
+					(ITranslator<STE, ?, SE, ?, SVL, ?>) iTranslators[iTranslators.length - 1];
+			final ITranslator<?, ?, ?, ?, ?, ?>[] allButLast = Arrays.copyOf(iTranslators, iTranslators.length - 1);
 			final Object expressionOfIntermediateType = last.translateExpression(expr);
 			result = (TE) translateExpressionIteratively(expressionOfIntermediateType, allButLast);
 		}
@@ -242,27 +243,28 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <STE, TTE, SE, TE> List<TTE> translateTraceIteratively(final List<STE> trace,
-			final ITranslator<?, ?, ?, ?>... iTranslators) {
+	public static <STE, TTE, SE, TE, SVL, TVL> List<TTE> translateTraceIteratively(final List<STE> trace,
+			final ITranslator<?, ?, ?, ?, ?, ?>... iTranslators) {
 		List<TTE> result;
 		if (iTranslators.length == 0) {
 			result = (List<TTE>) trace;
 		} else {
-			final ITranslator<?, ?, ?, ?>[] allButLast = Arrays.copyOf(iTranslators, iTranslators.length - 1);
+			final ITranslator<?, ?, ?, ?, ?, ?>[] allButLast = Arrays.copyOf(iTranslators, iTranslators.length - 1);
 			result = (List<TTE>) translateTraceIteratively(trace, allButLast);
 		}
 		return result;
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <STE, TTE, SE, TE> IProgramExecution<TTE, TE> translateProgramExecutionIteratively(
-			final IProgramExecution<STE, SE> programExecution, final ITranslator<?, ?, ?, ?>... iTranslators) {
+	public static <STE, TTE, SE, TE, SVL, TVL> IProgramExecution<TTE, TE> translateProgramExecutionIteratively(
+			final IProgramExecution<STE, SE> programExecution, final ITranslator<?, ?, ?, ?, ?, ?>... iTranslators) {
 		final IProgramExecution<TTE, TE> result;
 		if (iTranslators.length == 0) {
 			result = (IProgramExecution<TTE, TE>) programExecution;
 		} else {
-			final ITranslator<STE, ?, SE, ?> last = (ITranslator<STE, ?, SE, ?>) iTranslators[iTranslators.length - 1];
-			final ITranslator<?, ?, ?, ?>[] allButLast = Arrays.copyOf(iTranslators, iTranslators.length - 1);
+			final ITranslator<STE, ?, SE, ?, SVL, ?> last =
+					(ITranslator<STE, ?, SE, ?, SVL, ?>) iTranslators[iTranslators.length - 1];
+			final ITranslator<?, ?, ?, ?, ?, ?>[] allButLast = Arrays.copyOf(iTranslators, iTranslators.length - 1);
 			final IProgramExecution<?, ?> peOfIntermediateType = last.translateProgramExecution(programExecution);
 			result = (IProgramExecution<TTE, TE>) translateProgramExecutionIteratively(peOfIntermediateType,
 					allButLast);
@@ -285,7 +287,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 		return sb.toString();
 	}
 
-	protected <TVL, SVL> IBacktranslatedCFG<TVL, TTE> translateCFG(final IBacktranslatedCFG<SVL, STE> cfg,
+	protected IBacktranslatedCFG<TVL, TTE> translateCFG(final IBacktranslatedCFG<SVL, STE> cfg,
 			final IFunction<Map<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>>, IMultigraphEdge<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>, Multigraph<TVL, TTE>> funTranslateEdge,
 			final IFunction<String, List<Multigraph<TVL, TTE>>, Class<TTE>, IBacktranslatedCFG<TVL, TTE>> funCreateBCFG) {
 
@@ -336,7 +338,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	 *            unrolling of the graph.
 	 * @return A backtranslated CFG.
 	 */
-	protected <TVL, SVL> IBacktranslatedCFG<TVL, TTE> translateCFG(final IBacktranslatedCFG<SVL, STE> cfg,
+	protected IBacktranslatedCFG<TVL, TTE> translateCFG(final IBacktranslatedCFG<SVL, STE> cfg,
 			final IFunction<Map<IExplicitEdgesMultigraph<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>>, IMultigraphEdge<?, ?, SVL, STE, ?>, Multigraph<TVL, TTE>, Multigraph<TVL, TTE>> funTranslateEdge) {
 		return translateCFG(cfg, funTranslateEdge, (a, b, c) -> new BacktranslatedCFG<>(a, b, c));
 	}
@@ -408,7 +410,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	public interface IFunction<P1, P2, P3, R> {
 		R create(P1 p1, P2 p2, P3 p3);
 	}
-	
+
 	@Override
 	public ProgramState<TE> translateProgramState(final ProgramState<SE> oldProgramState) {
 		if (oldProgramState == null) {
@@ -416,15 +418,14 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 		}
 		final Map<TE, Collection<TE>> variable2Values = new HashMap<>();
 		for (final SE oldVariable : oldProgramState.getVariables()) {
-			final Collection<TE> newValues = new ArrayList<>(); 
+			final Collection<TE> newValues = new ArrayList<>();
 			for (final SE oldValue : oldProgramState.getValues(oldVariable)) {
 				newValues.add(translateExpression(oldValue));
 			}
 			final TE newVariable = translateExpression(oldVariable);
 			variable2Values.put(newVariable, newValues);
 		}
-		return new ProgramState<>(variable2Values );
+		return new ProgramState<>(variable2Values);
 	}
-	
 
 }

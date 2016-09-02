@@ -80,7 +80,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.Ca
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.InliningUnsupportedException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
@@ -932,7 +932,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 					calleeNode.getId());
 			for (int i = 0; i < inVarRHSs.length; ++i) {
 				inParamsIterator.next();
-				final IType inParamType = inParamsIterator.currentVarList(0).getType().getBoogieType();
+				final IBoogieType inParamType = inParamsIterator.currentVarList(0).getType().getBoogieType();
 				final String inParamId = inParamsIterator.currentId(0);
 				inVarLHSs[i] = new VariableLHS(proc.getLocation(), inParamType, inParamId, inParamDeclInfo);
 			}
@@ -951,7 +951,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 					calleeNode.getId());
 			for (int i = 0; i < processedCallLHS.length; ++i) {
 				outParamsIterator.next();
-				final IType outParamType = outParamsIterator.currentVarList(0).getType().getBoogieType();
+				final IBoogieType outParamType = outParamsIterator.currentVarList(0).getType().getBoogieType();
 				final String outParamId =  outParamsIterator.currentId(0);
 				processedOutParamRHS[i] = processExpression(
 						new IdentifierExpression(procLocation, outParamType, outParamId, outParamDeclInfo));
@@ -970,7 +970,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		for (int i = 0; oldVarsIterator.hasNext(); ++i) {
 			final IdentifierExpression idExpr = oldVarsIterator.next().getIdExpr();
 			final String id = idExpr.getIdentifier();
-			final IType type = idExpr.getType();
+			final IBoogieType type = idExpr.getType();
 			final VarMapValue mapping = mVarMap.get(new VarMapKey(id, declInfoGlobal, proc.getIdentifier()));
 			oldVarLHS[i] = new VariableLHS(callLocation, type, mapping.getVarId(), mapping.getDeclInfo());
 			oldVarRHS[i] = new IdentifierExpression(callLocation, type, id, declInfoGlobal);
@@ -999,7 +999,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	private List<VariableLHS> varListsToVarLHSs(VarList[] varLists, DeclarationInformation declInfo) {
 		final List<VariableLHS> varLHSs = new ArrayList<>(3 * varLists.length);
 		for (final VarList varList : varLists) {
-			final IType type = varList.getType().getBoogieType();
+			final IBoogieType type = varList.getType().getBoogieType();
 			final ILocation location = varList.getLocation();
 			for (final String id : varList.getIdentifiers()) {
 				varLHSs.add(new VariableLHS(location, type, id, declInfo));
@@ -1135,7 +1135,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		} else if (expr instanceof QuantifierExpression) {
 			final QuantifierExpression quantExpr = (QuantifierExpression) expr;
 			final ILocation location = quantExpr.getLocation();
-			final IType type = quantExpr.getType();
+			final IBoogieType type = quantExpr.getType();
 			final VarList[] params = quantExpr.getParameters();
 			final Attribute[] attrs = quantExpr.getAttributes();
 			final Expression formula = quantExpr.getSubformula();

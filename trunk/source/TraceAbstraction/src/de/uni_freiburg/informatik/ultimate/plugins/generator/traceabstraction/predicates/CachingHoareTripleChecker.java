@@ -26,18 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
-import java.util.Set;
-
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 
 /**
  * IHoareTripleChecker that caches already computed results.
@@ -45,106 +43,53 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @author Matthias Heizmann
  *
  */
-public class CachingHoareTripleChecker implements IHoareTripleChecker {
-	
-	private final IHoareTripleChecker mComputingHoareTripleChecker;
-	private final PredicateUnifier mPredicateUnifer;
-	private final NestedMap3<IPredicate, IInternalAction, IPredicate, Validity> mInternalCache =
-			new NestedMap3<>();
-	private final NestedMap3<IPredicate, CodeBlock, IPredicate, Validity> mCallCache =
-			new NestedMap3<>();
-	private final NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, Validity> mReturnCache =
-			new NestedMap4<>();
-	private final boolean mUnknownIfSomeExtendedCacheCheckIsUnknown = true;
+public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
+
+	protected final IUltimateServiceProvider mServices;
+	protected final ILogger mLogger;
+	protected final IHoareTripleChecker mComputingHoareTripleChecker;
+	protected final PredicateUnifier mPredicateUnifer;
+	protected final boolean mUnknownIfSomeExtendedCacheCheckIsUnknown = true;
+
 	
 	public CachingHoareTripleChecker(
-			IHoareTripleChecker protectedHoareTripleChecker,
-			PredicateUnifier predicateUnifer) {
+			final IUltimateServiceProvider services, final IHoareTripleChecker protectedHoareTripleChecker,
+			final PredicateUnifier predicateUnifer) {
 		super();
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mComputingHoareTripleChecker = protectedHoareTripleChecker;
 		mPredicateUnifer = predicateUnifer;
 	}
 
 	@Override
-	public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
-		Validity result = mInternalCache.get(pre, act, succ);
+	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
+		Validity result = getFromInternalCache(pre, act, succ);
 		if (result == null) {
 			result = extendedCacheCheckInternal(pre,act,succ);
 			if (result == null) {
 				result = mComputingHoareTripleChecker.checkInternal(pre, act, succ);
 			}
-			mInternalCache.put(pre, act, succ, result);
+			addToInternalCache(pre, act, succ, result);
 		}
 		return result;
 	}
 
-	private Validity extendedCacheCheckInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
-		boolean someResultWasUnknown = false;
-		{
-			final Set<IPredicate> strongerThanPre = mPredicateUnifer.getCoverageRelation().getCoveredPredicates(pre);
-			final Set<IPredicate> weakerThanSucc = mPredicateUnifer.getCoverageRelation().getCoveringPredicates(succ);
-			for (final IPredicate strengthenedPre : strongerThanPre) {
-				for (final IPredicate weakenedSucc : weakerThanSucc) {
-					final Validity result = mInternalCache.get(strengthenedPre, act, weakenedSucc);
-					if (result != null) {
-						switch (result) {
-						case VALID:
-							break;
-						case UNKNOWN:
-							someResultWasUnknown = true;
-							break;
-						case INVALID:
-							return result;
-						case NOT_CHECKED:
-							break;
-//						throw new IllegalStateException("use protective Hoare triple checker");
-						default:
-							throw new AssertionError("unknown case");
-						}
-					}
-				}
-			}
-		}
-		{
-			final Set<IPredicate> weakerThanPre = mPredicateUnifer.getCoverageRelation().getCoveringPredicates(pre);
-			final Set<IPredicate> strongerThanSucc = mPredicateUnifer.getCoverageRelation().getCoveredPredicates(succ);
-			for (final IPredicate weakenedPre : weakerThanPre) {
-				for (final IPredicate strengthenedSucc : strongerThanSucc) {
-					final Validity result = mInternalCache.get(weakenedPre, act, strengthenedSucc);
-					if (result != null) {
-						switch (result) {
-						case VALID:
-							return result;
-						case UNKNOWN:
-							someResultWasUnknown = true;
-							break;
-						case INVALID:
-							break;
-						case NOT_CHECKED:
-							break;
-//						throw new IllegalStateException("use protective Hoare triple checker");
-						default:
-							throw new AssertionError("unknown case");
-						}
-					}
-				}
-			}
-		}
-		if (mUnknownIfSomeExtendedCacheCheckIsUnknown && someResultWasUnknown) {
-			return Validity.UNKNOWN;
-		} else {
-			return null;
-		}
-	}
+	protected abstract Validity getFromInternalCache(final IPredicate pre, final IInternalAction act, final IPredicate succ);
+
+	protected abstract void addToInternalCache(final IPredicate pre, final IInternalAction act, final IPredicate succ,
+			final Validity result);
+
+	protected abstract Validity extendedCacheCheckInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ);
 
 	@Override
-	public Validity checkCall(IPredicate pre, ICallAction act, IPredicate succ) {
+	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
 		return mComputingHoareTripleChecker.checkCall(pre, act, succ);
 	}
 
 	@Override
-	public Validity checkReturn(IPredicate preLin, IPredicate preHier,
-			IReturnAction act, IPredicate succ) {
+	public Validity checkReturn(final IPredicate preLin, final IPredicate preHier,
+			final IReturnAction act, final IPredicate succ) {
 		return mComputingHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
 	}
 	

@@ -114,7 +114,6 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * @param nestingRelation
 	 *            The nesting relation of nested word.
 	 */
-	@SuppressWarnings("pmd:UseVarargs")
 	public NestedWord(final LETTER[] word, final int[] nestingRelation) {
 		assert assertValidNestedWord(word, nestingRelation);
 		mWord = word;
@@ -183,7 +182,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		if (word instanceof NestedWord) {
 			return (NestedWord<LETTER>) word;
 		} else {
-			return new NestedWord<LETTER>(word);
+			return new NestedWord<>(word);
 		}
 	}
 	
@@ -204,7 +203,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * @return All call positions.
 	 */
 	private Set<Integer> computeCallPositions() {
-		final Set<Integer> result = new LinkedHashSet<Integer>();
+		final Set<Integer> result = new LinkedHashSet<>();
 		for (int i = 0; i < mNestingRelation.length; i++) {
 			if (isCallPosition(i)) {
 				result.add(i);
@@ -227,7 +226,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	}
 	
 	private SortedMap<Integer, LETTER> computePendingReturnPositions() {
-		final SortedMap<Integer, LETTER> result = new TreeMap<Integer, LETTER>();
+		final SortedMap<Integer, LETTER> result = new TreeMap<>();
 		for (int i = 0; i < mNestingRelation.length; i++) {
 			if (isPendingReturn(i)) {
 				result.put(i, mWord[i]);
@@ -248,7 +247,6 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * @return true iff every entry of <tt>nestingRelation</tt> is in the range of the array or an INTERNAL_POSITION,
 	 *         PLUS_INFINITY, or MINUS_INFINITY.
 	 */
-	@SuppressWarnings("pmd:UseVarargs")
 	private boolean nestingRelationValuesInRange(final int[] nestingRelation) {
 		for (final int content : nestingRelation) {
 			if ((content < 0 || content >= nestingRelation.length) && (!isSpecialNestingRelationIndex(content))) {
@@ -270,8 +268,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * @return true iff <tt>nestingRelation[i] = j</tt> implies <tt>nestingRelation[j] = i</tt> for all <tt>i</tt> such
 	 *         that <tt>0 <= nestingRelation[i] < nestingRelation.length</tt>
 	 */
-	@SuppressWarnings("pmd:UseVarargs")
-	private boolean nestingRelationSymmetricNestingEdges(final int[] nestingRelation) {
+	private static boolean nestingRelationSymmetricNestingEdges(final int[] nestingRelation) {
 		for (int i = 0; i < nestingRelation.length; i++) {
 			if (0 <= nestingRelation[i] && nestingRelation[i] < nestingRelation.length
 					&& nestingRelation[nestingRelation[i]] != i) {
@@ -296,8 +293,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * 
 	 * @return false iff the modeled nesting relation contains (i,j) and (i',j') such that <tt>i < i' <= j < j'</tt>
 	 */
-	@SuppressWarnings("pmd:UseVarargs")
-	private boolean nestingEdgesDoNotCross(final int[] nestingRelation) {
+	private static boolean nestingEdgesDoNotCross(final int[] nestingRelation) {
 		for (int i = 0; i < nestingRelation.length; i++) {
 			final int nestingEntry = nestingRelation[i];
 			if (nestingEntry < 0 || nestingEntry >= nestingRelation.length) {
@@ -464,7 +460,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		// copy word
 		final LETTER[] subwordAsArray = Arrays.copyOfRange(mWord, firstIndex, lastIndex + 1);
 		
-		return new NestedWord<LETTER>(subwordAsArray, newNestingRelation);
+		return new NestedWord<>(subwordAsArray, newNestingRelation);
 	}
 	
 	/**
@@ -529,7 +525,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		System.arraycopy(mWord, 0, concatWord, 0, mWord.length);
 		System.arraycopy(word2, 0, concatWord, mWord.length, word2.length);
 		
-		return new NestedWord<LETTER>(concatWord, concatNestingRelation);
+		return new NestedWord<>(concatWord, concatNestingRelation);
 	}
 	
 	/**
@@ -604,7 +600,6 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		return builder.toString();
 	}
 	
-	@SuppressWarnings("pmd:UseVarargs")
 	private boolean assertValidNestedWord(final LETTER[] word, final int[] nestingRelation) {
 		assert word.length == nestingRelation.length : "The nesting relation must contain one entry for each letter "
 				+ "in the word.";
@@ -632,7 +627,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		return true;
 	}
 	
-	private boolean isSpecialNestingRelationIndex(final int nestingRelationEntry) {
+	private static boolean isSpecialNestingRelationIndex(final int nestingRelationEntry) {
 		return nestingRelationEntry == INTERNAL_POSITION || nestingRelationEntry == PLUS_INFINITY
 				|| nestingRelationEntry == MINUS_INFINITY;
 	}

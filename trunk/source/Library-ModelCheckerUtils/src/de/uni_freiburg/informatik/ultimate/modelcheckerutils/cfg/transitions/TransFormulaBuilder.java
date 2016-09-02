@@ -35,7 +35,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * An object of this class allows one to construct a {@link TransFormula}.
- * {@link TransFormula}s are unmodifiable and have a package-private 
+ * An object of this class allows one to construct a {@link UnmodifiableTransFormula}.
+ * {@link UnmodifiableTransFormula}s are unmodifiable and have a package-private 
  * constructor. This class allows to collect data for a TransFormula and to
  * construct it.
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -61,7 +61,7 @@ public class TransFormulaBuilder {
 
 	/**
 	 * Specify inVars, outVars, auxVars, and branchEncoders that are used
-	 * initially while constructing a new {@link TransFormula}.
+	 * initially while constructing a new {@link UnmodifiableTransFormula}.
 	 * For each of these arguments we do not use the Map/Set but construct
 	 * a copy. Each of these arguments my be null, and if this is the case
 	 * we start with an empty Map/Set.
@@ -254,7 +254,7 @@ public class TransFormulaBuilder {
 		}
 	}
 	
-	public TransFormula finishConstruction(final ManagedScript script) {
+	public UnmodifiableTransFormula finishConstruction(final ManagedScript script) {
 		if (mFormula == null) {
 			throw new IllegalStateException("cannot finish without formula");
 		}
@@ -262,15 +262,15 @@ public class TransFormulaBuilder {
 			throw new IllegalStateException("cannot finish without feasibility status");
 		}
 		mConstructionFinished = true;
-		TransFormula.removeSuperfluousVars(mFormula, mInVars, mOutVars, mAuxVars);
-		return new TransFormula(mFormula, mInVars, mOutVars, mAuxVars, mBranchEncoders, mInfeasibility, script);
+		UnmodifiableTransFormula.removeSuperfluousVars(mFormula, mInVars, mOutVars, mAuxVars);
+		return new UnmodifiableTransFormula(mFormula, mInVars, mOutVars, mAuxVars, mBranchEncoders, mInfeasibility, script);
 	}
 	
 	
 	/**
 	 * Construct TransFormula with "true" formula and no variables.
 	 */
-	public static TransFormula getTrivialTransFormula(final ManagedScript script) {
+	public static UnmodifiableTransFormula getTrivialTransFormula(final ManagedScript script) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true);
 		tfb.setFormula(script.getScript().term("true"));
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
@@ -287,7 +287,7 @@ public class TransFormulaBuilder {
 	 * <li> ∃x' φ(x,x') is equivalent to pred
 	 * </ul>
 	 */
-	public static TransFormula constructTransFormulaFromPredicate(final IPredicate pred, final ManagedScript script) {
+	public static UnmodifiableTransFormula constructTransFormulaFromPredicate(final IPredicate pred, final ManagedScript script) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true);
 		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (final IProgramVar bv : pred.getVars()) {

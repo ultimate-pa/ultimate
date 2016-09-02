@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * Removes states which only have one outgoing transition and bends over all
  * incoming transitions to the respective target state.
- * 
  * Example: Two simple chains of four states connected by internal transitions
  * "q1 -a-> q2 -b-> q4" and call-return transitions "q1 -c-> q3 -r/q1-> q4" can
  * be simplified by removing the states in the middle, i.e., q2 and q3 to
@@ -53,15 +52,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * the internal b-transition and the return transition have been removed, which
  * may not always be reasonable. But often all that matters is that the target
  * state is still reachable.
- * 
  * This shrinker is best used together with a general transition shrinker to
  * raise the number of states with only one outgoing transition.
- * 
  * This class could also be generalized to states with more than one outgoing
  * transition, but then it is not clear where the transitions should be bent to,
  * and the data structures become more complicated.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class SingleExitShrinker<LETTER, STATE>
 		extends AShrinker<Pair<STATE, STATE>, LETTER, STATE> {
@@ -73,15 +74,15 @@ public class SingleExitShrinker<LETTER, STATE>
 				mFactory.create(mAutomaton);
 		
 		// data structures to contain all transitive chains (forward & backward)
-		final HashMap<STATE, STATE> left2right = new HashMap<STATE, STATE>();
-		HashMap<STATE, STATE> right2left = new HashMap<STATE, STATE>();
+		final HashMap<STATE, STATE> left2right = new HashMap<>();
+		final HashMap<STATE, STATE> right2left = new HashMap<>();
 		
 		/*
 		 * add states which are not a left-hand side in the list; also set up
 		 * data structures which contain all transitive chains
 		 */
 		final HashSet<STATE> states =
-				new HashSet<STATE>(mAutomaton.getStates());
+				new HashSet<>(mAutomaton.getStates());
 		for (final Pair<STATE, STATE> pair : list) {
 			final STATE source = pair.getFirst();
 			final STATE target = pair.getSecond();
@@ -105,9 +106,6 @@ public class SingleExitShrinker<LETTER, STATE>
 			right2left.put(rhs, lhs);
 		}
 		
-		// not needed anymore
-		right2left = null;
-		
 		mFactory.addStates(automaton, states);
 		
 		// add transitions which are still unconcerned by removing the states
@@ -117,8 +115,7 @@ public class SingleExitShrinker<LETTER, STATE>
 		for (final Entry<STATE, STATE> entry : left2right.entrySet()) {
 			final STATE source = entry.getKey();
 			final STATE transitiveTarget = entry.getValue();
-			if ((transitiveTarget == null) ||
-					(!states.contains(transitiveTarget))) {
+			if ((transitiveTarget == null) || (!states.contains(transitiveTarget))) {
 				// source state is no entry of a transitive chain, ignore it
 				continue;
 			}
@@ -157,7 +154,7 @@ public class SingleExitShrinker<LETTER, STATE>
 	@SuppressWarnings("squid:LabelsShouldNotBeUsedCheck")
 	public List<Pair<STATE, STATE>> extractList() {
 		final ArrayList<Pair<STATE, STATE>> list =
-				new ArrayList<Pair<STATE, STATE>>();
+				new ArrayList<>();
 		/*
 		 * check that there is exactly one internal/call/return successor which
 		 * is not a self-loop

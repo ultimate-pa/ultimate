@@ -34,7 +34,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -62,7 +62,7 @@ public class TermVariableRenamer {
 	 * </ul>
 	 * Otherwise x_n is not replaced.
 	 */
-	public TransFormula renameVars(final TransFormula tf, final String prefix) {
+	public UnmodifiableTransFormula renameVars(final UnmodifiableTransFormula tf, final String prefix) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, 
 				false, tf.getBranchEncoders(), false);
 		final Map<IProgramVar, TermVariable> inVars = tf.getInVars();

@@ -30,7 +30,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 /**
  * Wraps a transition together with its type (internal, call, return).
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public final class TypedTransition<LETTER, STATE> {
 	private final STATE mPred;
@@ -39,10 +43,16 @@ public final class TypedTransition<LETTER, STATE> {
 	private final TypedLetter<LETTER> mLetter;
 	
 	/**
-	 * @param pred predecessor state
-	 * @param succ successor state
-	 * @param hier hierarchical predecessor state
-	 * @param letter letter
+	 * Constructor.
+	 * 
+	 * @param pred
+	 *            predecessor state
+	 * @param succ
+	 *            successor state
+	 * @param hier
+	 *            hierarchical predecessor state
+	 * @param letter
+	 *            letter
 	 */
 	public TypedTransition(final STATE pred, final STATE succ, final STATE hier,
 			final TypedLetter<LETTER> letter) {
@@ -69,31 +79,23 @@ public final class TypedTransition<LETTER, STATE> {
 	}
 	
 	@Override
-	@SuppressWarnings("squid:UselessParenthesesCheck")
 	public int hashCode() {
-		final int hashCode = ((mHier == null) ? 0 : mHier.hashCode());
-		return hashCode + mPred.hashCode() + mSucc.hashCode() +
-				mLetter.hashCode();
+		final int hashCode = (mHier == null) ? 0 : mHier.hashCode();
+		return hashCode + mPred.hashCode() + mSucc.hashCode() + mLetter.hashCode();
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean equals(Object o) {
-		if ((o == null) || (this.getClass() != o.getClass())) {
+	public boolean equals(final Object obj) {
+		if ((obj == null) || (this.getClass() != obj.getClass())) {
 			return false;
 		}
-		final TypedTransition<LETTER, STATE> other =
-				(TypedTransition<LETTER, STATE>) o;
-		if (this.mHier == null) {
-			if (other.mHier != null) {
-				return false;
-			}
-		} else if (other.mHier == null) {
+		final TypedTransition<LETTER, STATE> other = (TypedTransition<LETTER, STATE>) obj;
+		if (this.mHier == null ^ other.mHier == null) {
 			return false;
 		}
-		return (other.mPred.equals(this.mPred)) &&
-				(other.mSucc.equals(this.mSucc)) &&
-				(other.mLetter.equals(this.mLetter));
+		return (other.mPred.equals(this.mPred)) && (other.mSucc.equals(this.mSucc))
+				&& (other.mLetter.equals(this.mLetter));
 	}
 	
 	@Override

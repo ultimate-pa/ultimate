@@ -35,7 +35,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 /**
  * Abstract debugging policy with common tasks.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <T>
+ *            shrinker data structure
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public abstract class ADebug<T, LETTER, STATE> {
 	protected final ATester<LETTER, STATE> mTester;
@@ -50,8 +56,12 @@ public abstract class ADebug<T, LETTER, STATE> {
 	}
 	
 	/**
-	 * @param tester tester
-	 * @param shrinker shrinker
+	 * Constructor.
+	 * 
+	 * @param tester
+	 *            tester
+	 * @param shrinker
+	 *            shrinker
 	 */
 	public ADebug(final ATester<LETTER, STATE> tester,
 			final AShrinker<T, LETTER, STATE> shrinker) {
@@ -74,7 +84,8 @@ public abstract class ADebug<T, LETTER, STATE> {
 	/**
 	 * Executes sublist test and informs the shrinker.
 	 * 
-	 * @param list list of shrinking elements to be executed
+	 * @param list
+	 *            list of shrinking elements to be executed
 	 * @return true iff shrinking was successful
 	 */
 	protected boolean test(final List<T> list) {

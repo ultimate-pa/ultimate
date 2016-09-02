@@ -1,23 +1,32 @@
-error_17
-error_18
-error_19
-error_2
-error_23
-error_24
-error_3
-error_33
-error_42
-error_50
-error_52
-error_56
-error_61
-error_63
-error_67
-error_69
-error_7
-error_72
-error_73
-error_85
-error_89
-error_94
-Input
+# input length = 20, runtime = 01:45:04
+error_1 -> 12: 14 12 9 18 5 10 7 10 7 10 18 16
+error_2 -> 4: 14 8 20 8
+error_3 -> 3: 12 20 11
+error_7 -> 4: 14 8 7 9
+error_9 -> 18: 14 8 20 20 12 8 7 8 7 8 7 8 7 8 7 8 20 14
+error_16 -> 11: 14 8 20 20 12 8 7 8 20 7 2
+error_17 -> 4: 7 11 20 16
+error_18 -> 3: 14 8 5
+error_19 -> 3: 1 13 11
+error_21 -> 9: 14 12 15 2 20 19 15 9 13
+error_22 -> 15: 1 7 19 20 10 3 13 7 19 20 10 3 13 9 9
+error_23 -> 3: 7 17 13
+error_24 -> 4: 1 13 13 16
+error_27 -> 10: 14 12 15 2 20 19 19 19 15 5
+error_28 -> 12: 14 8 20 20 12 5 5 5 5 8 20 11
+error_33 -> 4: 1 7 16 20
+error_36 -> 15: 1 7 13 5 4 2 4 5 5 5 5 5 8 20 3
+error_42 -> 4: 7 17 17 20
+error_50 -> 3: 12 3 5
+error_52 -> 3: 7 8 8
+error_56 -> 3: 1 9 14
+error_61 -> 4: 14 12 15 17
+error_63 -> 4: 7 10 15 19
+error_67 -> 4: 7 11 6 8
+error_68 -> 10: 1 7 19 20 10 3 13 13 6 14
+error_69 -> 3: 7 10 2
+error_72 -> 4: 1 9 10 18
+error_73 -> 3: 7 11 11
+error_85 -> 3: 1 7 3
+error_89 -> 3: 14 4 4
+error_94 -> 3: 14 12 3

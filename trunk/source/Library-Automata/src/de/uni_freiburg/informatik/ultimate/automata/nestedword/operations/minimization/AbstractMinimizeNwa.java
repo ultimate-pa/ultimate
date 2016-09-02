@@ -177,8 +177,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 		result.addKeyValuePair(StatisticsType.STATES_OUTPUT, outputSize);
 		result.addDifferenceData(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
 				StatisticsType.STATES_REDUCTION_ABSOLUTE);
-		result.addPercentageData(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
-				StatisticsType.STATES_REDUCTION_RELATIVE, true);
+		result.addPercentageDataInverted(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
+				StatisticsType.STATES_REDUCTION_RELATIVE);
 				
 		return result;
 	}

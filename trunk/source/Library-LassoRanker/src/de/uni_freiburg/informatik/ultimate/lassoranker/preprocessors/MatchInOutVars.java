@@ -91,9 +91,10 @@ public class MatchInOutVars extends TransitionPreprocessor {
 	private void addMissingOutVars(final TransFormulaLR tf) {
 		for (final Map.Entry<IProgramVar, Term> entry : tf.getInVars().entrySet()) {
 			if (!tf.getOutVars().containsKey(entry.getKey())) {
+				final String id = SmtUtils.removeSmtQuoteCharacters(
+						entry.getKey().getGloballyUniqueId());
 				final TermVariable inVar = mVariableManager.constructFreshTermVariable(
-						entry.getKey().getGloballyUniqueId(),
-						entry.getValue().getSort()
+						id, entry.getValue().getSort()
 				);
 				tf.addOutVar(entry.getKey(), inVar);
 			}

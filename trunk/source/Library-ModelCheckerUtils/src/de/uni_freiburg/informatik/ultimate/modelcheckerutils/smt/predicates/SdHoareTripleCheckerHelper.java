@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
@@ -135,7 +135,7 @@ public class SdHoareTripleCheckerHelper {
 	 * @param symbol
 	 * @return
 	 */
-	private boolean varsDisjoinedFormInVars(IPredicate state, TransFormula tf) {
+	private boolean varsDisjoinedFormInVars(IPredicate state, UnmodifiableTransFormula tf) {
 		for (final IProgramVar bv : state.getVars()) {
 			if (tf.getInVars().containsKey(bv)) {
 				return false;
@@ -273,7 +273,7 @@ public class SdHoareTripleCheckerHelper {
 			}
 		}
 		//workaround see preHierIndependent()
-		final TransFormula locVarAssignTf = act.getLocalVarsAssignment();
+		final UnmodifiableTransFormula locVarAssignTf = act.getLocalVarsAssignment();
 		if (!varSetDisjoint(locVarAssignTf.getAssignedVars(), pre.getVars())) {
 			return null;
 		}
@@ -288,7 +288,7 @@ public class SdHoareTripleCheckerHelper {
 		if (isOrIteFormula(post)) {
 			return sdecCall(pre, cb, post);
 		}
-		final TransFormula locVarAssignTf = cb.getLocalVarsAssignment();
+		final UnmodifiableTransFormula locVarAssignTf = cb.getLocalVarsAssignment();
 		final boolean argumentsRestrictedByPre = 
 				!varSetDisjoint(locVarAssignTf.getInVars().keySet(), pre.getVars());
 		for (final IProgramVar bv : post.getVars()) {
@@ -400,7 +400,7 @@ public class SdHoareTripleCheckerHelper {
 	
 
 	private boolean preHierIndependent(IPredicate pre, IPredicate hier, 
-			TransFormula localVarsAssignment, String calledProcedure) {
+			UnmodifiableTransFormula localVarsAssignment, String calledProcedure) {
 		//TODO: Matthias 7.10.2012 I hoped following would be sufficient.
 		// But this is not sufficient when constant assigned to invar
 		// e.g. pre is x!=0 and call is x_Out=1. Might be solved with
@@ -441,12 +441,12 @@ public class SdHoareTripleCheckerHelper {
 	
 	
 	private boolean prePostIndependent(IPredicate pre, IReturnAction ret, IPredicate post) {
-		final TransFormula returnAssignTf = ret.getAssignmentOfReturn();
+		final UnmodifiableTransFormula returnAssignTf = ret.getAssignmentOfReturn();
 		if (!varSetDisjoint(pre.getVars(), returnAssignTf.getInVars().keySet())
 				&& !varSetDisjoint(returnAssignTf.getAssignedVars(), post.getVars())) {
 			return false;
 		}
-		final TransFormula locVarAssignTf = ret.getLocalVarsAssignmentOfCall();
+		final UnmodifiableTransFormula locVarAssignTf = ret.getLocalVarsAssignmentOfCall();
 		if (!varSetDisjoint(post.getVars(), locVarAssignTf.getInVars().keySet())
 				&& !varSetDisjoint(locVarAssignTf.getAssignedVars(), pre.getVars())) {
 			return false;

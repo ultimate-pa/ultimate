@@ -39,7 +39,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 
@@ -118,5 +121,61 @@ public class ResultUtil {
 			return (Check) check;
 		}
 		return null;
+	}
+
+	/**
+	 * Write all results contained in the {@link IResultService} instance to a logger instance.
+	 *
+	 * @param logger
+	 *            The {@link ILogger} instance to which the results should be written.
+	 * @param resultService
+	 *            The {@link IResultService} instance from which the results should be fetched.
+	 * @param appendCompleteLongDescription
+	 *            true if the complete long descriptions of the results should be written, false if only the first line
+	 *            of the long description should be written.
+	 */
+	public static void logResults(final ILogger logger, final IResultService resultService,
+			final boolean appendCompleteLongDescription) {
+		if (logger == null || resultService == null) {
+			throw new IllegalArgumentException("logger or resultService is null");
+		}
+		logger.info(" --- Results ---");
+		for (final Entry<String, List<IResult>> entry : resultService.getResults().entrySet()) {
+			logger.info(String.format(" * Results from %s:", entry.getKey()));
+
+			for (final IResult result : entry.getValue()) {
+				logResult(logger, result, appendCompleteLongDescription);
+			}
+		}
+	}
+
+	private static void logResult(final ILogger logger, final IResult result,
+			final boolean appendCompleteLongDescription) {
+		final StringBuilder sb = new StringBuilder();
+
+		sb.append("  - ");
+		sb.append(result.getClass().getSimpleName());
+		if (result instanceof IResultWithLocation) {
+			final ILocation loc = ((IResultWithLocation) result).getLocation();
+			if (loc.getStartLine() != 0) {
+				sb.append(" [Line: ");
+				sb.append(loc.getStartLine()).append("]");
+			} else {
+				sb.append(" [UNKNOWN] ");
+			}
+		}
+		sb.append(": ");
+		sb.append(result.getShortDescription());
+		logger.info(sb.toString());
+
+		final String[] s = result.getLongDescription().split("\n");
+		if (appendCompleteLongDescription) {
+			logger.info(String.format("    %s", result.getLongDescription()));
+		} else {
+			logger.info(String.format("    %s", s[0].replaceAll("\\n|\\r", "")));
+			if (s.length > 1) {
+				logger.info("    [...]");
+			}
+		}
 	}
 }
