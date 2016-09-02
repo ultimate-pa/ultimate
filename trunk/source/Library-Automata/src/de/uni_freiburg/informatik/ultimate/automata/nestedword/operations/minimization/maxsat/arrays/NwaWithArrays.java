@@ -254,9 +254,9 @@ final class ITrans {
 	ITrans() {}
 
 	ITrans(final int src, final int sym, final int dst) {
-		this.mSrc = src;
-		this.mSym = sym;
-		this.mDst = dst;
+		mSrc = src;
+		mSym = sym;
+		mDst = dst;
 	}
 
 	@Override
@@ -304,9 +304,9 @@ final class CTrans {
 	CTrans() {}
 
 	CTrans(final int src, final int sym, final int dst) {
-		this.mSrc = src;
-		this.mSym = sym;
-		this.mDst = dst;
+		mSrc = src;
+		mSym = sym;
+		mDst = dst;
 	}
 
 	@Override
@@ -359,10 +359,10 @@ final class RTrans {
 	RTrans() {}
 
 	RTrans(final int src, final int sym, final int top, final int dst) {
-		this.mSrc = src;
-		this.mSym = sym;
-		this.mTop = top;
-		this.mDst = dst;
+		mSrc = src;
+		mSym = sym;
+		mTop = top;
+		mDst = dst;
 	}
 
 	@Override

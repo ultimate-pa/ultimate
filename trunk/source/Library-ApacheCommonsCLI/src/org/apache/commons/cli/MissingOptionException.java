@@ -17,8 +17,8 @@
 
 package org.apache.commons.cli;
 
-import java.util.List;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Thrown when a required option has not been provided.
@@ -77,11 +77,11 @@ public class MissingOptionException extends ParseException
      */
     private static String createMessage(List<?> missingOptions)
     {
-        StringBuilder buf = new StringBuilder("Missing required option");
+        final StringBuilder buf = new StringBuilder("Missing required option");
         buf.append(missingOptions.size() == 1 ? "" : "s");
         buf.append(": ");
 
-        Iterator<?> it = missingOptions.iterator();
+        final Iterator<?> it = missingOptions.iterator();
         while (it.hasNext())
         {
             buf.append(it.next());

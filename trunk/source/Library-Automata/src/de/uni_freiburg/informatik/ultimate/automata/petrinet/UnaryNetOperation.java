@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
-import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 
 /**
  * Abstract operation taking one Petri net as input.

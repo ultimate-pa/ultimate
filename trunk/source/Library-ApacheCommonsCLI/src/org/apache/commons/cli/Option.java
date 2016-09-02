@@ -87,15 +87,15 @@ public class Option implements Cloneable, Serializable
      */
     private Option(final Builder builder)
     {
-        this.argName = builder.argName;
-        this.description = builder.description;
-        this.longOpt = builder.longOpt;
-        this.numberOfArgs = builder.numberOfArgs;
-        this.opt = builder.opt;
-        this.optionalArg = builder.optionalArg;
-        this.required = builder.required;
-        this.type = builder.type;
-        this.valuesep = builder.valuesep;
+        argName = builder.argName;
+        description = builder.description;
+        longOpt = builder.longOpt;
+        numberOfArgs = builder.numberOfArgs;
+        opt = builder.opt;
+        optionalArg = builder.optionalArg;
+        required = builder.required;
+        type = builder.type;
+        valuesep = builder.valuesep;
     }
     
     /**
@@ -151,7 +151,7 @@ public class Option implements Cloneable, Serializable
         // if hasArg is set then the number of arguments is 1
         if (hasArg)
         {
-            this.numberOfArgs = 1;
+            numberOfArgs = 1;
         }
 
         this.description = description;
@@ -378,7 +378,7 @@ public class Option implements Cloneable, Serializable
      */
     public void setArgs(int num)
     {
-        this.numberOfArgs = num;
+        numberOfArgs = num;
     }
 
     /**
@@ -389,7 +389,7 @@ public class Option implements Cloneable, Serializable
      */
     public void setValueSeparator(char sep)
     {
-        this.valuesep = sep;
+        valuesep = sep;
     }
 
     /**
@@ -454,7 +454,7 @@ public class Option implements Cloneable, Serializable
         if (hasValueSeparator())
         {
             // get the separator character
-            char sep = getValueSeparator();
+            final char sep = getValueSeparator();
 
             // store the index for the value separator
             int index = value.indexOf(sep);
@@ -544,7 +544,7 @@ public class Option implements Cloneable, Serializable
      */
     public String getValue(String defaultValue)
     {
-        String value = getValue();
+        final String value = getValue();
 
         return (value != null) ? value : defaultValue;
     }
@@ -578,7 +578,7 @@ public class Option implements Cloneable, Serializable
     @Override
     public String toString()
     {
-        StringBuilder buf = new StringBuilder().append("[ option: ");
+        final StringBuilder buf = new StringBuilder().append("[ option: ");
 
         buf.append(opt);
 
@@ -632,7 +632,7 @@ public class Option implements Cloneable, Serializable
             return false;
         }
 
-        Option option = (Option) o;
+        final Option option = (Option) o;
 
 
         if (opt != null ? !opt.equals(option.opt) : option.opt != null)
@@ -673,11 +673,11 @@ public class Option implements Cloneable, Serializable
     {
         try
         {
-            Option option = (Option) super.clone();
+            final Option option = (Option) super.clone();
             option.values = new ArrayList<String>(values);
             return option;
         }
-        catch (CloneNotSupportedException cnse)
+        catch (final CloneNotSupportedException cnse)
         {
             throw new RuntimeException("A CloneNotSupportedException was thrown: " + cnse.getMessage());
         }
@@ -879,7 +879,7 @@ public class Option implements Cloneable, Serializable
          */
         public Builder optionalArg(final boolean isOptional)
         {
-            this.optionalArg = isOptional;
+            optionalArg = isOptional;
             return this;
         }
         

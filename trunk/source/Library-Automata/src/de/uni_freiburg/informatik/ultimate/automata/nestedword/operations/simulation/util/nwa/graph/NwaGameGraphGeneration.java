@@ -1015,7 +1015,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						if (mSimulationType == ESimulationType.DELAYED && mNwa.isFinal(edgeDest)) {
 							bitForDestination = false;
 						}
-						Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(leftState, edgeDest, bitForDestination,
+						final Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(leftState, edgeDest, bitForDestination,
 								null, null);
 						// If Spoiler vertex is not existent at this point, then
 						// it is non-simulating since its states are in different
@@ -1056,7 +1056,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						if (mSimulationType == ESimulationType.DELAYED && mNwa.isFinal(edgeDest)) {
 							bitForDestination = false;
 						}
-						Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(leftState, edgeDest, bitForDestination,
+						final Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(leftState, edgeDest, bitForDestination,
 								null, null);
 						// If Spoiler vertex is not existent at this point, then
 						// it is non-simulating since its states are in different
@@ -1098,7 +1098,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						if (mSimulationType == ESimulationType.DELAYED && mNwa.isFinal(edgeDest)) {
 							bitForDestination = false;
 						}
-						Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(leftState, edgeDest, bitForDestination,
+						final Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(leftState, edgeDest, bitForDestination,
 								null, null);
 						// If Spoiler vertex is not existent at this point, then
 						// it is non-simulating since its states are in different

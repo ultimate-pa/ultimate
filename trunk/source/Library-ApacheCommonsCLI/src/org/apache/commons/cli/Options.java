@@ -73,7 +73,7 @@ public class Options implements Serializable
             requiredOpts.add(group);
         }
 
-        for (Option option : group.getOptions())
+        for (final Option option : group.getOptions())
         {
             // an Option cannot be required if it is in an
             // OptionGroup, either the group is required or
@@ -151,7 +151,7 @@ public class Options implements Serializable
      */
     public Options addOption(Option opt)
     {
-        String key = opt.getKey();
+        final String key = opt.getKey();
 
         // add it to the long option list
         if (opt.hasLongOpt())
@@ -234,7 +234,7 @@ public class Options implements Serializable
     {
         opt = Util.stripLeadingHyphens(opt);
         
-        List<String> matchingOpts = new ArrayList<String>();
+        final List<String> matchingOpts = new ArrayList<String>();
 
         // for a perfect match return the single option only
         if (longOpts.keySet().contains(opt))
@@ -242,7 +242,7 @@ public class Options implements Serializable
             return Collections.singletonList(opt);
         }
 
-        for (String longOpt : longOpts.keySet())
+        for (final String longOpt : longOpts.keySet())
         {
             if (longOpt.startsWith(opt))
             {
@@ -314,7 +314,7 @@ public class Options implements Serializable
     @Override
     public String toString()
     {
-        StringBuilder buf = new StringBuilder();
+        final StringBuilder buf = new StringBuilder();
 
         buf.append("[ Options: [ short ");
         buf.append(shortOpts.toString());

@@ -9,8 +9,6 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HCTransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HCVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClausePredicateSymbol;
 
@@ -27,13 +25,13 @@ public class Body {
 	}
 
 	public HornClause convertToHornClause(Map<String, HornClausePredicateSymbol> predicates, Theory theory) {
-		Map<HornClausePredicateSymbol, ArrayList<TermVariable>> tt = this.getBodyPredicateToVars(predicates);
+		final Map<HornClausePredicateSymbol, ArrayList<TermVariable>> tt = getBodyPredicateToVars(predicates);
 		assert tt.size() <= 1;
-		HornClausePredicateSymbol bodySymbol = tt.keySet().iterator().hasNext() ? tt.keySet().iterator().next()
+		final HornClausePredicateSymbol bodySymbol = tt.keySet().iterator().hasNext() ? tt.keySet().iterator().next()
 				: new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol();
-		return new HornClause(this.getTransitionFormula(theory),
+		return new HornClause(getTransitionFormula(theory),
 				tt.containsKey(bodySymbol) ? tt.get(bodySymbol) : new ArrayList<>(), bodySymbol,
-				this.getCobodyPredicateToVars(predicates));
+				getCobodyPredicateToVars(predicates));
 
 	}
 	public boolean setHead(ApplicationTerm literal) {
@@ -54,6 +52,7 @@ public class Body {
 		cobody.addTransitionFormula(formula);
 	}
 
+	@Override
 	public String toString() {
 		return '(' + cobody.toString() + " ==> " + (head == null ? "false" : head.toString()) + ')';
 	}
@@ -70,10 +69,10 @@ public class Body {
 	public Map<HornClausePredicateSymbol, ArrayList<TermVariable>> getBodyPredicateToVars(
 			Map<String, HornClausePredicateSymbol> predicateSymbols) {
 
-		HashMap<HornClausePredicateSymbol, ArrayList<TermVariable>> res = new HashMap<>();
+		final HashMap<HornClausePredicateSymbol, ArrayList<TermVariable>> res = new HashMap<>();
 		if (head != null) {
-			ArrayList<TermVariable> vars = new ArrayList<TermVariable>();
-			for (Term par : head.getParameters()) {
+			final ArrayList<TermVariable> vars = new ArrayList<TermVariable>();
+			for (final Term par : head.getParameters()) {
 				vars.add((TermVariable) par);
 			}
 

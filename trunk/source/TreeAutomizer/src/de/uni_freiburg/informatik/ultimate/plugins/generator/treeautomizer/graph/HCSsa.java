@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.grap
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 public class HCSsa {
 	private final Tree<Term> nestedFormulas;

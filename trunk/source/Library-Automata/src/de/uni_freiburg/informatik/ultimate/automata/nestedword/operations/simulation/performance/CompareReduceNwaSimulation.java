@@ -182,7 +182,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				final long startTime = System.currentTimeMillis();
 				IDoubleDeckerAutomaton<LETTER, STATE> operandAsNwa = null;
 				if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
-					operandAsNwa = (IDoubleDeckerAutomaton<LETTER, STATE>) operand;
+					operandAsNwa = operand;
 				} else {
 					operandAsNwa = new RemoveUnreachable<LETTER, STATE>(services, operand).getResult();
 				}

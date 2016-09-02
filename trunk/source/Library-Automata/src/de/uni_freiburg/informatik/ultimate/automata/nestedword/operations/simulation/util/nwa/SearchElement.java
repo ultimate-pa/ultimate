@@ -113,7 +113,7 @@ public final class SearchElement<LETTER, STATE> {
 		if (!(obj instanceof SearchElement)) {
 			return false;
 		}
-		SearchElement<?, ?> other = (SearchElement<?, ?>) obj;
+		final SearchElement<?, ?> other = (SearchElement<?, ?>) obj;
 		if (mDuplicatorChoice == null) {
 			if (other.mDuplicatorChoice != null) {
 				return false;

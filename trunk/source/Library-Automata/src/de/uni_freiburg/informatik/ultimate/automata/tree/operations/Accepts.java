@@ -56,7 +56,7 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		final Set<STATE> res = new HashSet<>();
 		
 		final ArrayList<Set<STATE>> next = new ArrayList<>();
-		for (Tree<LETTER> ch : t.getChildren()) {
+		for (final Tree<LETTER> ch : t.getChildren()) {
 			next.add(checkTree(ch));
 		}
 		
@@ -111,22 +111,22 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		treeA.addRule("cons", new ArrayList<>(Arrays.asList(new String[]{NAT, NatList})), NatList);
 		
 		// cons(0, cons(s(0), nil))
-		Tree<String> nil = new Tree<String>("nil");
-		Tree<String> zero1 = new Tree<String>("0");
-		Tree<String> zero2 = new Tree<String>("0");
-		ArrayList<Tree<String>> z1 = new ArrayList<Tree<String>>();
+		final Tree<String> nil = new Tree<String>("nil");
+		final Tree<String> zero1 = new Tree<String>("0");
+		final Tree<String> zero2 = new Tree<String>("0");
+		final ArrayList<Tree<String>> z1 = new ArrayList<Tree<String>>();
 		z1.add(zero2);
-		Tree<String> one = new Tree<String>("s", z1);
+		final Tree<String> one = new Tree<String>("s", z1);
 		
-		ArrayList<Tree<String>> e2 = new ArrayList<>();
+		final ArrayList<Tree<String>> e2 = new ArrayList<>();
 		e2.add(one);
 		e2.add(nil);
-		Tree<String> elm2 = new Tree<String>("cons", e2);
+		final Tree<String> elm2 = new Tree<String>("cons", e2);
 
-		ArrayList<Tree<String>> e1 = new ArrayList<>();
+		final ArrayList<Tree<String>> e1 = new ArrayList<>();
 		e1.add(zero1);
 		e1.add(elm2);
-		Tree<String> run = new Tree<String>("f", e1);
+		final Tree<String> run = new Tree<String>("f", e1);
 		
 		final Accepts<String, String> op = new Accepts<>(treeA, run);
 		

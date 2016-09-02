@@ -48,7 +48,7 @@ public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE e
 	private final int mInParamCount;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 
-	private List<IEvaluator<VALUE, STATE, CodeBlock>> mInputParamEvaluators;
+	private final List<IEvaluator<VALUE, STATE, CodeBlock>> mInputParamEvaluators;
 
 	public FunctionEvaluator(final String name, final int numInParams,
 	        final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {

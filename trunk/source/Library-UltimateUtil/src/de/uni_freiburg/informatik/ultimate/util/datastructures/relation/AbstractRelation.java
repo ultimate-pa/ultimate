@@ -281,7 +281,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 
 					@Override
 					public Entry<D, R> next() {
-						Entry<D, R> result = mNextEntry;
+						final Entry<D, R> result = mNextEntry;
 						mNextEntry = constructNext();
 						return result;
 					}

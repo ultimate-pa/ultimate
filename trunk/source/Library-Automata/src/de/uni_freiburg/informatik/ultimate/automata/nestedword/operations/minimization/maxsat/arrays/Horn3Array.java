@@ -44,7 +44,7 @@ final class Horn3Array implements Iterable<Horn3Clause> {
 	private final IntArray mAz;
 
 	Horn3Array(final int numVars) {
-		this.mNumVars = numVars;
+		mNumVars = numVars;
 
 		mAx = new IntArray();
 		mAy = new IntArray();
@@ -98,7 +98,7 @@ final class Horn3Array implements Iterable<Horn3Clause> {
 		private int mIdx;
 
 		Horn3Iterator(final Horn3Array h3a) {
-			this.mH3a = h3a;
+			mH3a = h3a;
 			mH3c = new Horn3Clause(-1,-1,-1);
 			mIdx = 0;
 		}

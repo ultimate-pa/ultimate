@@ -18,10 +18,8 @@
 package org.apache.commons.cli;
 
 import java.io.File;
-
 import java.net.MalformedURLException;
 import java.net.URL;
-
 import java.util.Date;
 
 /**
@@ -118,7 +116,7 @@ public class TypeHandler
         {
             cl = Class.forName(classname);
         }
-        catch (ClassNotFoundException cnfe)
+        catch (final ClassNotFoundException cnfe)
         {
             throw new ParseException("Unable to find the class: " + classname);
         }
@@ -127,7 +125,7 @@ public class TypeHandler
         {
             return cl.newInstance();
         }
-        catch (Exception e)
+        catch (final Exception e)
         {
             throw new ParseException(e.getClass().getName() + "; Unable to create an instance of: " + classname);
         }
@@ -151,7 +149,7 @@ public class TypeHandler
             }
             return Long.valueOf(str);
         }
-        catch (NumberFormatException e)
+        catch (final NumberFormatException e)
         {
             throw new ParseException(e.getMessage());
         }
@@ -170,7 +168,7 @@ public class TypeHandler
         {
             return Class.forName(classname);
         }
-        catch (ClassNotFoundException e)
+        catch (final ClassNotFoundException e)
         {
             throw new ParseException("Unable to find the class: " + classname);
         }
@@ -205,7 +203,7 @@ public class TypeHandler
         {
             return new URL(str);
         }
-        catch (MalformedURLException e)
+        catch (final MalformedURLException e)
         {
             throw new ParseException("Unable to parse the URL: " + str);
         }

@@ -17,6 +17,7 @@ public class HCVar {
 		return termVariable;
 	}
 	
+	@Override
 	public String toString() {
 		return predicate.name + "{" + idx + "}";
 	}

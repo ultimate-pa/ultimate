@@ -31,14 +31,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.parsers.FactoryConfigurationError;
-
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HCTransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClausePredicateSymbol;
@@ -71,14 +68,14 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(IElement root) throws Throwable {
 		
-		Map<String, IAnnotations> st = root.getPayload().getAnnotations();
-		HornAnnot annot = (HornAnnot) st.get("HoRNClauses");
-		List<HornClause> hornClauses = (List<HornClause>) annot.getAnnotationsAsMap().get("HoRNClauses");
+		final Map<String, IAnnotations> st = root.getPayload().getAnnotations();
+		final HornAnnot annot = (HornAnnot) st.get("HoRNClauses");
+		final List<HornClause> hornClauses = (List<HornClause>) annot.getAnnotationsAsMap().get("HoRNClauses");
 
-		TreeAutomatonBU<HCTransFormula, HornClausePredicateSymbol> tree = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<HCTransFormula, HornClausePredicateSymbol> tree = new TreeAutomatonBU<>();
 		
-		for (HornClause clause : hornClauses) {
-			List<HornClausePredicateSymbol> tail = new ArrayList<HornClausePredicateSymbol>();
+		for (final HornClause clause : hornClauses) {
+			final List<HornClausePredicateSymbol> tail = new ArrayList<HornClausePredicateSymbol>();
 			tail.addAll(clause.getTailPredicates());
 			tree.addRule(clause.getTransitionFormula(), tail, clause.getHeadPredicate());
 		}

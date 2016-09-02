@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ExternalParserToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;

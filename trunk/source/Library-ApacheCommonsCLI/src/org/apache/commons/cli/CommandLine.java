@@ -92,7 +92,7 @@ public class CommandLine implements Serializable
         {
             return getParsedOptionValue(opt);
         }
-        catch (ParseException pe)
+        catch (final ParseException pe)
         {
             System.err.println("Exception found converting " + opt + " to desired type: " + pe.getMessage());
             return null;
@@ -110,8 +110,8 @@ public class CommandLine implements Serializable
      */
     public Object getParsedOptionValue(String opt) throws ParseException
     {
-        String res = getOptionValue(opt);
-        Option option = resolveOption(opt);
+        final String res = getOptionValue(opt);
+        final Option option = resolveOption(opt);
         
         if (option == null || res == null)
         {
@@ -141,7 +141,7 @@ public class CommandLine implements Serializable
      */
     public String getOptionValue(String opt)
     {
-        String[] values = getOptionValues(opt);
+        final String[] values = getOptionValues(opt);
 
         return (values == null) ? null : values[0];
     }
@@ -167,9 +167,9 @@ public class CommandLine implements Serializable
      */
     public String[] getOptionValues(String opt)
     {
-        List<String> values = new ArrayList<String>();
+        final List<String> values = new ArrayList<String>();
 
-        for (Option option : options)
+        for (final Option option : options)
         {
             if (opt.equals(option.getOpt()) || opt.equals(option.getLongOpt()))
             {
@@ -189,7 +189,7 @@ public class CommandLine implements Serializable
     private Option resolveOption(String opt)
     {
         opt = Util.stripLeadingHyphens(opt);
-        for (Option option : options)
+        for (final Option option : options)
         {
             if (opt.equals(option.getOpt()))
             {
@@ -228,7 +228,7 @@ public class CommandLine implements Serializable
      */
     public String getOptionValue(String opt, String defaultValue)
     {
-        String answer = getOptionValue(opt);
+        final String answer = getOptionValue(opt);
 
         return (answer != null) ? answer : defaultValue;
     }
@@ -262,13 +262,13 @@ public class CommandLine implements Serializable
      */
     public Properties getOptionProperties(String opt)
     {
-        Properties props = new Properties();
+        final Properties props = new Properties();
 
-        for (Option option : options)
+        for (final Option option : options)
         {
             if (opt.equals(option.getOpt()) || opt.equals(option.getLongOpt()))
             {
-                List<String> values = option.getValuesList();
+                final List<String> values = option.getValuesList();
                 if (values.size() >= 2)
                 {
                     // use the first 2 arguments as the key/value pair
@@ -292,7 +292,7 @@ public class CommandLine implements Serializable
      */
     public String[] getArgs()
     {
-        String[] answer = new String[args.size()];
+        final String[] answer = new String[args.size()];
 
         args.toArray(answer);
 
@@ -369,10 +369,10 @@ public class CommandLine implements Serializable
      */
     public Option[] getOptions()
     {
-        Collection<Option> processed = options;
+        final Collection<Option> processed = options;
 
         // reinitialise array
-        Option[] optionsArray = new Option[processed.size()];
+        final Option[] optionsArray = new Option[processed.size()];
 
         // return the array
         return processed.toArray(optionsArray);

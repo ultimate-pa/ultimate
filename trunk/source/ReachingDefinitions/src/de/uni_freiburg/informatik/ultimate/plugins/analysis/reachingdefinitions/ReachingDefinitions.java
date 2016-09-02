@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.AssumeFinder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAG;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAGGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.TraceCodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.paralleldfg.ParallelDfgGeneratorObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.preferences.ReachingDefinitionsPreferenceInitializer;
@@ -101,7 +100,7 @@ public class ReachingDefinitions implements IAnalysis {
 //			 rtr.add(new DataflowDAGGenerator(logger, stmtProvider,
 //					 edgeProvider, finder.getEdgesWithAssumes()));
 			
-			if (mServices.getPreferenceProvider(this.getPluginID())
+			if (mServices.getPreferenceProvider(getPluginID())
 					.getBoolean(ReachingDefinitionsPreferenceInitializer.LABEL_COMPUTE_PARRALLEL_DFG)) {
 				rtr.add(new ParallelDfgGeneratorObserver(logger, mServices));
 			}
