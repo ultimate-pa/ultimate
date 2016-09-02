@@ -29,12 +29,17 @@ package de.uni_freiburg.informatik.ultimate.cli;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.xml.bind.JAXBException;
 
 import org.xml.sax.SAXException;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.PluginType;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
@@ -54,41 +59,63 @@ public class ToolchainLocator {
 	private final ICore<RunDefinition> mCore;
 	private final ILogger mLogger;
 
+	private List<IToolchainData<RunDefinition>> mFoundToolchains;
+
 	public ToolchainLocator(final File directory, final ICore<RunDefinition> core, final ILogger logger) {
 		mDir = directory;
 		mCore = core;
 		mLogger = logger;
 	}
 
-	public void loadToolchains() {
-		mLogger.debug("Trying to read toolchain files from " + mDir);
+	public List<IToolchainData<RunDefinition>> locateToolchains() {
+		if (mFoundToolchains != null) {
+			return Collections.unmodifiableList(mFoundToolchains);
+		}
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Trying to read toolchain files from " + mDir);
+		}
 
 		if (!mDir.exists()) {
-			return;
+			return Collections.emptyList();
 		}
 
 		if (!mDir.isDirectory()) {
-			return;
+			return Collections.emptyList();
 		}
 
 		final File[] xmlFiles = mDir.listFiles((file, name) -> name.endsWith(".xml"));
 		if (xmlFiles.length == 0) {
-			return;
+			return Collections.emptyList();
 		}
 
-		final List<IToolchainData<RunDefinition>> toolchains = new ArrayList<>();
+		mFoundToolchains = new ArrayList<>();
 		for (final File xmlFile : xmlFiles) {
 			try {
 				final IToolchainData<RunDefinition> toolchain = mCore.createToolchainData(xmlFile.getAbsolutePath());
-				toolchains.add(toolchain);
+				mFoundToolchains.add(toolchain);
 			} catch (final FileNotFoundException e) {
 				mLogger.error("Could not find file: " + e.getMessage());
 			} catch (final JAXBException e) {
 			} catch (final SAXException e) {
 			}
 		}
+		return Collections.unmodifiableList(mFoundToolchains);
+	}
 
-		toolchains.stream().forEach(a -> mLogger.debug("Found toolchain " + a.getToolchain().getName()));
+	public Predicate<String> createFilterForAvailableTools() {
+		Predicate<String> rtr = a -> false;
 
+		// the current cli controller and the core are always allowed
+		rtr = rtr.or(a -> Activator.PLUGIN_ID.equalsIgnoreCase(a));
+		rtr = rtr.or(a -> de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator.PLUGIN_ID.equalsIgnoreCase(a));
+
+		final List<IToolchainData<RunDefinition>> availableToolchains = locateToolchains();
+		final Set<String> availablePluginIds = availableToolchains.stream()
+				.flatMap(a -> a.getToolchain().getToolchain().getPluginOrSubchain().stream())
+				.filter(a -> a instanceof PluginType).map(a -> ((PluginType) a).getId().toLowerCase())
+				.collect(Collectors.toSet());
+		rtr = rtr.or(a -> availablePluginIds.contains(a.toLowerCase()));
+		return rtr;
 	}
 }

@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.cli;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Map;
 
 import javax.xml.bind.JAXBException;
 
@@ -37,6 +36,9 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.ParseException;
 import org.xml.sax.SAXException;
 
+import de.uni_freiburg.informatik.ultimate.cli.exceptions.InvalidFileException;
+import de.uni_freiburg.informatik.ultimate.cli.options.CommandLineOptions;
+import de.uni_freiburg.informatik.ultimate.cli.options.OptionBuilder;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
@@ -52,16 +54,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class ParsedParameter {
 
-	private final Map<String, Pair<String, String>> mCliName2PreferenceName;
 	private final CommandLine mCli;
 	private final ICore<RunDefinition> mCore;
 	private final ILogger mLogger;
+	private final OptionBuilder mOptionFactory;
 
-	ParsedParameter(final ICore<RunDefinition> core, final CommandLine cli,
-			final Map<String, Pair<String, String>> cliName2PreferenceName) {
+	ParsedParameter(final ICore<RunDefinition> core, final CommandLine cli, final OptionBuilder optionFactory) {
 		mCore = core;
 		mCli = cli;
-		mCliName2PreferenceName = cliName2PreferenceName;
+		mOptionFactory = optionFactory;
 		mLogger = core.getCoreLoggingService().getControllerLogger();
 	}
 
@@ -73,7 +74,7 @@ public class ParsedParameter {
 
 	private void applyCliSetting(final Option op, final IUltimateServiceProvider services) throws ParseException {
 		final String optName = op.getLongOpt();
-		final Pair<String, String> prefName = mCliName2PreferenceName.get(optName);
+		final Pair<String, String> prefName = mOptionFactory.getUltimatePreference(optName);
 		if (prefName == null) {
 			return;
 		}

@@ -11,7 +11,7 @@
  *
  * The ULTIMATE CLI plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
@@ -24,43 +24,36 @@
  * licensors of the ULTIMATE CLI plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.cli;
+package de.uni_freiburg.informatik.ultimate.cli.options;
 
 import java.io.File;
-import java.net.URISyntaxException;
-import java.util.Dictionary;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.URIUtil;
-import org.osgi.framework.Bundle;
+import org.apache.commons.cli.Option;
 
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class RcpUtils {
-	private RcpUtils() {
-		// utility class
-	}
+public final class CommandLineOptions {
 
-	public static String getVersion(final String pluginId) {
-		final Bundle bundle = Platform.getBundle(pluginId);
-		if (bundle == null) {
-			return "UNKNOWN";
-		}
-		final Dictionary<String, String> headers = bundle.getHeaders();
-		if (headers != null) {
-			return headers.get("Bundle-Version");
-		}
-		return "UNKNOWN";
-	}
+	public static final String OPTION_NAME_TOOLCHAIN = "tc";
+	public static final String OPTION_NAME_INPUTFILES = "i";
+	public static final String OPTION_NAME_SETTINGS = "s";
+	public static final String OPTION_NAME_HELP = "h";
 
-	public static File getWorkingDirectory() {
-		try {
-			return URIUtil.toFile(Platform.getInstallLocation().getURL().toURI());
-		} catch (final URISyntaxException e) {
-			throw new RuntimeException(e);
-		}
+	public static List<Option> createCommandLineOptions() {
+		// add CLI options
+		final List<Option> rtr = new ArrayList<>();
+		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_TOOLCHAIN).longOpt("toolchain").type(File.class).hasArg()
+				.required().argName("FILE").build());
+		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_INPUTFILES).longOpt("input").hasArgs().required()
+				.argName("FILE").build());
+		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_SETTINGS).longOpt("settings").type(File.class).hasArg()
+				.argName("FILE").build());
+		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_HELP).longOpt("help").type(Boolean.class).build());
+		return rtr;
 	}
 }

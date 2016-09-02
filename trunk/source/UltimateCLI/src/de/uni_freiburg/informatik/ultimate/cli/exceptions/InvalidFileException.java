@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE CLI plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.cli;
+package de.uni_freiburg.informatik.ultimate.cli.exceptions;
 
 /**
  * An {@link InvalidFileException} exception is thrown if a file or a path to a file is not as expected: maybe the file does not
