@@ -61,13 +61,29 @@ public class ToolchainLocator {
 
 	private List<IToolchainData<RunDefinition>> mFoundToolchains;
 
-	public ToolchainLocator(final File directory, final ICore<RunDefinition> core, final ILogger logger) {
-		mDir = directory;
+	public ToolchainLocator(final File dirOrFile, final ICore<RunDefinition> core, final ILogger logger) {
+		mDir = dirOrFile;
 		mCore = core;
 		mLogger = logger;
 	}
 
-	public List<IToolchainData<RunDefinition>> locateToolchains() {
+	public Predicate<String> createFilterForAvailableTools() {
+		Predicate<String> rtr = a -> false;
+
+		// the current cli controller and the core are always allowed
+		rtr = rtr.or(a -> Activator.PLUGIN_ID.equalsIgnoreCase(a));
+		rtr = rtr.or(a -> de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator.PLUGIN_ID.equalsIgnoreCase(a));
+
+		final List<IToolchainData<RunDefinition>> availableToolchains = locateToolchains();
+		final Set<String> availablePluginIds = availableToolchains.stream()
+				.flatMap(a -> a.getToolchain().getToolchain().getPluginOrSubchain().stream())
+				.filter(a -> a instanceof PluginType).map(a -> ((PluginType) a).getId().toLowerCase())
+				.collect(Collectors.toSet());
+		rtr = rtr.or(a -> availablePluginIds.contains(a.toLowerCase()));
+		return rtr;
+	}
+
+	private List<IToolchainData<RunDefinition>> locateToolchains() {
 		if (mFoundToolchains != null) {
 			return Collections.unmodifiableList(mFoundToolchains);
 		}
@@ -77,10 +93,6 @@ public class ToolchainLocator {
 		}
 
 		if (!mDir.exists()) {
-			return Collections.emptyList();
-		}
-
-		if (!mDir.isDirectory()) {
 			return Collections.emptyList();
 		}
 
@@ -103,19 +115,4 @@ public class ToolchainLocator {
 		return Collections.unmodifiableList(mFoundToolchains);
 	}
 
-	public Predicate<String> createFilterForAvailableTools() {
-		Predicate<String> rtr = a -> false;
-
-		// the current cli controller and the core are always allowed
-		rtr = rtr.or(a -> Activator.PLUGIN_ID.equalsIgnoreCase(a));
-		rtr = rtr.or(a -> de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator.PLUGIN_ID.equalsIgnoreCase(a));
-
-		final List<IToolchainData<RunDefinition>> availableToolchains = locateToolchains();
-		final Set<String> availablePluginIds = availableToolchains.stream()
-				.flatMap(a -> a.getToolchain().getToolchain().getPluginOrSubchain().stream())
-				.filter(a -> a instanceof PluginType).map(a -> ((PluginType) a).getId().toLowerCase())
-				.collect(Collectors.toSet());
-		rtr = rtr.or(a -> availablePluginIds.contains(a.toLowerCase()));
-		return rtr;
-	}
 }
