@@ -13,4 +13,22 @@
   <artifactId>JavaCup</artifactId>
   <version>1.0.0</version>
   <packaging>eclipse-plugin</packaging>
+  
+  <build>
+	<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.eclipse.tycho</groupId>
+					<artifactId>tycho-compiler-plugin</artifactId>
+					<configuration>
+						<excludes>
+						<exclude>
+							com/github/jhoenicke/javacup/anttask/**
+						</exclude>
+						</excludes>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+  </build>
 </project>
