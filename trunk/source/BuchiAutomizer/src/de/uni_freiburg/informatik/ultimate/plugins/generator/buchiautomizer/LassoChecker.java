@@ -69,8 +69,8 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -550,6 +550,9 @@ public class LassoChecker {
 		final NestedWord<CodeBlock> stem = mCounterexample.getStem().getWord();
 		try {
 			final UnmodifiableTransFormula stemTF = computeTF(stem, mSimplifyStemAndLoop, true, false);
+			if (SmtUtils.isFalse(stemTF.getFormula())) {
+				throw new AssertionError("stemTF is false but stem analysis said: feasible");
+			}
 			return stemTF;
 		} catch (final ToolchainCanceledException tce) {
 			throw new ToolchainCanceledException(getClass(),
@@ -564,6 +567,9 @@ public class LassoChecker {
 		final NestedWord<CodeBlock> loop = mCounterexample.getLoop().getWord();
 		try {
 			final UnmodifiableTransFormula loopTF = computeTF(loop, mSimplifyStemAndLoop, true, false);
+			if (SmtUtils.isFalse(loopTF.getFormula())) {
+				throw new AssertionError("loopTF is false but loop analysis said: feasible");
+			}
 			return loopTF;
 		} catch (final ToolchainCanceledException tce) {
 			throw new ToolchainCanceledException(getClass(),
