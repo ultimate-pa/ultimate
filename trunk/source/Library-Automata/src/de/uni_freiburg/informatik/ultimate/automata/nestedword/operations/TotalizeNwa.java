@@ -138,8 +138,15 @@ public class TotalizeNwa<LETTER, STATE>
 	
 	@Override
 	public boolean isInitial(final STATE state) {
-		if (state == mSinkState) {
-			return false;
+		/*
+		 * There are problems if the input already contains the state that
+		 * is the sink state of this automaton.
+		 * We approach these problems by comparing a state only to 
+		 * the sink state if a newly sink state was constructed
+		 */
+		if (mSinkStateWasConstructed && state == mSinkState) {
+			// return true iff operand does not have initial states
+			return !mOperand.getInitialStates().iterator().hasNext();
 		} else {
 			return mOperand.isInitial(state);
 		}
@@ -147,12 +154,13 @@ public class TotalizeNwa<LETTER, STATE>
 
 	@Override
 	public boolean isFinal(final STATE state) {
+		/*
+		 * There are problems if the input already contains the state that
+		 * is the sink state of this automaton.
+		 * We approach these problems by comparing a state only to 
+		 * the sink state if a newly sink state was constructed
+		 */
 		if (mSinkStateWasConstructed && state == mSinkState) {
-			/*
-			 * TODO Christian 2016-08-29: This is a bug: If the input automaton was a totalized and complemented
-			 *      automaton, the sink state could already exist and be final. This worked before because the
-			 *      StateFactory created a fresh sink state.
-			 */
 			return false;
 		} else {
 			return mOperand.isFinal(state);
