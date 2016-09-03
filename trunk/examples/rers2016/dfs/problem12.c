@@ -9,7 +9,7 @@
 #define INPUT_MIN 1
 #define INPUT_MAX 10
 #define INPUT_COUNT (INPUT_MAX - INPUT_MIN + 1)
-#define INPUT_SEQ_LENGTH 20000
+#define INPUT_SEQ_LENGTH 100
 
 #define ERR_INVALID_INPUT 999
 // Flag that contains the number of the label reached, or negative if none
@@ -78,7 +78,6 @@ void dfs(int depth) {
 		}
 		return;
 	} else if (depth >= INPUT_SEQ_LENGTH) {
-		printf("prefix of length %d\n", depth);
 		return;
 	}
 	int inputLayer[INPUT_COUNT];
