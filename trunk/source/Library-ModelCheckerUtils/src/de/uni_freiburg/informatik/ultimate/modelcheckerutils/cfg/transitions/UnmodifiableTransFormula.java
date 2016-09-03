@@ -356,7 +356,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, false);
 
-		final Map<Term, Term> subsitutionMapping = new HashMap<Term, Term>();
+		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (int i = transFormula.length - 1; i >= 0; i--) {
 			for (final IProgramVar var : transFormula[i].getOutVars().keySet()) {
 
@@ -367,7 +367,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 				} else {
 					newOutVar = mgdScript.constructFreshTermVariable(var.getGloballyUniqueId(), var.getTermVariable().getSort());
 				}
-				subsitutionMapping.put(outVar, newOutVar);
+				substitutionMapping.put(outVar, newOutVar);
 				// add to outvars if var is not outvar
 				if (!tfb.containsOutVar(var)) {
 					tfb.addOutVar(var, newOutVar);
@@ -386,7 +386,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 				} else {
 					// case: var is read and written
 					final TermVariable newInVar = mgdScript.constructFreshTermVariable(var.getGloballyUniqueId(), var.getTermVariable().getSort());
-					subsitutionMapping.put(inVar, newInVar);
+					substitutionMapping.put(inVar, newInVar);
 					tfb.addInVar(var, newInVar);
 					if (tfb.getOutVar(var) != newOutVar) {
 						// add to auxVars if not already outVar
@@ -396,7 +396,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 			}
 			for (final TermVariable oldAuxVar : transFormula[i].getAuxVars()) {
 				final TermVariable newAuxVar = mgdScript.constructFreshCopy(oldAuxVar);
-				subsitutionMapping.put(oldAuxVar, newAuxVar);
+				substitutionMapping.put(oldAuxVar, newAuxVar);
 				auxVars.add(newAuxVar);
 			}
 			tfb.addBranchEncoders(transFormula[i].getBranchEncoders());
@@ -414,11 +414,11 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 						newInVar = mgdScript.constructFreshTermVariable(var.getGloballyUniqueId(), var.getTermVariable().getSort());
 						tfb.addInVar(var, newInVar);
 					}
-					subsitutionMapping.put(inVar, newInVar);
+					substitutionMapping.put(inVar, newInVar);
 				}
 			}
 			final Term originalFormula = transFormula[i].getFormula();
-			final Term updatedFormula = (new SubstitutionWithLocalSimplification(mgdScript, subsitutionMapping)).transform(originalFormula);
+			final Term updatedFormula = (new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping)).transform(originalFormula);
 			formula = Util.and(script, formula, updatedFormula);
 		}
 
@@ -567,11 +567,10 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		final Set<TermVariable> auxVars = new HashSet<>();
 		for (int i = 0; i < transFormulas.length; i++) {
 			tfb.addBranchEncoders(transFormulas[i].getBranchEncoders());
-			auxVars.addAll(transFormulas[i].getAuxVars());
-			final Map<Term, Term> subsitutionMapping = new HashMap<Term, Term>();
+			final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 			for (final IProgramVar bv : transFormulas[i].getInVars().keySet()) {
 				final TermVariable inVar = transFormulas[i].getInVars().get(bv);
-				subsitutionMapping.put(inVar, tfb.getInVar(bv));
+				substitutionMapping.put(inVar, tfb.getInVar(bv));
 			}
 			for (final IProgramVar bv : transFormulas[i].getOutVars().keySet()) {
 				final TermVariable outVar = transFormulas[i].getOutVars().get(bv);
@@ -579,14 +578,19 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 
 				final boolean isAssignedVar = (inVar != outVar);
 				if (isAssignedVar) {
-					subsitutionMapping.put(outVar, tfb.getOutVar(bv));
+					substitutionMapping.put(outVar, tfb.getOutVar(bv));
 				} else {
-					assert subsitutionMapping.containsKey(outVar);
-					assert subsitutionMapping.containsValue(tfb.getInVar(bv));
+					assert substitutionMapping.containsKey(outVar);
+					assert substitutionMapping.containsValue(tfb.getInVar(bv));
 				}
 			}
+			for (final TermVariable oldAuxVar : transFormulas[i].getAuxVars()) {
+				final TermVariable newAuxVar = mgdScript.constructFreshCopy(oldAuxVar);
+				substitutionMapping.put(oldAuxVar, newAuxVar);
+				auxVars.add(newAuxVar);
+			}
 			final Term originalFormula = transFormulas[i].getFormula();
-			renamedFormulas[i] = (new SubstitutionWithLocalSimplification(mgdScript, subsitutionMapping)).transform(originalFormula);
+			renamedFormulas[i] = (new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping)).transform(originalFormula);
 
 			for (final IProgramVar bv : assignedInSomeBranch.keySet()) {
 				final TermVariable inVar = transFormulas[i].getInVars().get(bv);
@@ -632,7 +636,9 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 
 		tfb.setFormula(resultFormula);
 		tfb.setInfeasibility(inFeasibility);
-		tfb.addAuxVarsButRenameToFreshCopies(auxVars, mgdScript);
+		for (final TermVariable auxVar : auxVars) {
+			tfb.addAuxVar(auxVar);
+		}
 		return tfb.finishConstruction(mgdScript);
 	}
 
