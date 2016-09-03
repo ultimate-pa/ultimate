@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLRUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -112,7 +112,7 @@ public class CellVariableBuilder {
 					final boolean isInVarCell = isInVarCell(instance, index);
 					final boolean isOutVarCell = isOutVarCell(instance, index);
 					if (isInVarCell || isOutVarCell) {
-						final TermVariable arrayRepresentative = (TermVariable) TransFormulaUtils.getDefinition(mTransFormula, instance);
+						final TermVariable arrayRepresentative = (TermVariable) TransFormulaLRUtils.getDefinition(mTransFormula, instance);
 						final ArrayIndex indexRepresentative = tflrwac.getOrConstructIndexRepresentative(index);
 						if (isInVarCell) {
 							final ReplacementVar rv = mArrayCellInVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
@@ -172,16 +172,16 @@ public class CellVariableBuilder {
 	 * index is an inVar.
 	 */
 	private boolean isInVarCell(final TermVariable arrayInstance, final List<Term> index) {
-		if (TransFormulaUtils.isInvar(arrayInstance, mTransFormula)) {
-			return TransFormulaUtils.allVariablesAreInVars(index, mTransFormula);
+		if (TransFormulaLRUtils.isInvar(arrayInstance, mTransFormula)) {
+			return TransFormulaLRUtils.allVariablesAreInVars(index, mTransFormula);
 		} else {
 			return false;
 		}
 	}
 
 	private boolean isOutVarCell(final TermVariable arrayInstance, final List<Term> index) {
-		if (TransFormulaUtils.isOutvar(arrayInstance, mTransFormula)) {
-			return TransFormulaUtils.allVariablesAreOutVars(index, mTransFormula);
+		if (TransFormulaLRUtils.isOutvar(arrayInstance, mTransFormula)) {
+			return TransFormulaLRUtils.allVariablesAreOutVars(index, mTransFormula);
 		} else {
 			return false;
 		}

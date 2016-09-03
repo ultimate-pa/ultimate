@@ -25,10 +25,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.mapelimination;
 
-import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils.allVariablesAreInVars;
-import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils.allVariablesAreOutVars;
-import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils.allVariablesAreVisible;
-import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils.translateTermVariablesToDefinitions;
+import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLRUtils.allVariablesAreInVars;
+import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLRUtils.allVariablesAreOutVars;
+import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLRUtils.allVariablesAreVisible;
+import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLRUtils.translateTermVariablesToDefinitions;
 
 import java.util.ArrayList;
 import java.util.Arrays;

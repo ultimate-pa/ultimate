@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
  * 
  * @author Matthias Heizmann
  */
-public class TransFormulaUtils {
+public class TransFormulaLRUtils {
 
 
 
