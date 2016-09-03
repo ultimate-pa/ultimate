@@ -33,17 +33,17 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ADebug.EDebugPolicy;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.AAutomatonFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AbstractDebug.DebugPolicy;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.INestedWordAutomatonFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AbstractShrinker;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.BridgeShrinker;
 
 /**
  * Delta debugger for automaton-related methods.
  * This is the main class to run the delta debugger. To run it, the user needs
  * the following ingredients: 1) an initial {@link INestedWordAutomaton} object
- * 2) a {@link AAutomatonFactory} which can create new automaton objects 3) a
- * {@link ATester} which executes the method under consideration on automaton
+ * 2) a {@link INestedWordAutomatonFactory} which can create new automaton objects 3) a
+ * {@link AbstractTester} which executes the method under consideration on automaton
  * objects and checks whether the same type of error as in the original
  * (unshrunk) problem still occurs.
  * At 2) It is advised that the factory returns objects of the same type as the
@@ -67,8 +67,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  */
 public class AutomatonDebugger<LETTER, STATE> {
 	private INestedWordAutomaton<LETTER, STATE> mAutomaton;
-	private final AAutomatonFactory<LETTER, STATE> mFactory;
-	private final ATester<LETTER, STATE> mTester;
+	private final INestedWordAutomatonFactory<LETTER, STATE> mFactory;
+	private final AbstractTester<LETTER, STATE> mTester;
 	
 	/**
 	 * Constructor.
@@ -80,10 +80,8 @@ public class AutomatonDebugger<LETTER, STATE> {
 	 * @param tester
 	 *            tester
 	 */
-	public AutomatonDebugger(
-			final INestedWordAutomaton<LETTER, STATE> automaton,
-			final AAutomatonFactory<LETTER, STATE> factory,
-			final ATester<LETTER, STATE> tester) {
+	public AutomatonDebugger(final INestedWordAutomaton<LETTER, STATE> automaton,
+			final INestedWordAutomatonFactory<LETTER, STATE> factory, final AbstractTester<LETTER, STATE> tester) {
 		this.mAutomaton = automaton;
 		this.mFactory = factory;
 		this.mTester = tester;
@@ -109,13 +107,11 @@ public class AutomatonDebugger<LETTER, STATE> {
 	 * @param policy
 	 *            debug policy
 	 * @return shrunk automaton
-	 * @see ADebug
+	 * @see AbstractDebug
 	 */
-	public INestedWordAutomaton<LETTER, STATE> shrink(
-			final List<AShrinker<?, LETTER, STATE>> shrinkersLoop,
+	public INestedWordAutomaton<LETTER, STATE> shrink(final List<AbstractShrinker<?, LETTER, STATE>> shrinkersLoop,
 			final List<BridgeShrinker<?, LETTER, STATE>> shrinkersBridge,
-			final List<AShrinker<?, LETTER, STATE>> shrinkersEnd,
-			final EDebugPolicy policy) {
+			final List<AbstractShrinker<?, LETTER, STATE>> shrinkersEnd, final DebugPolicy policy) {
 		// apply loop shrinkers until nothing has changed
 		applyLoopShrinkers(shrinkersLoop, policy);
 		
@@ -128,8 +124,8 @@ public class AutomatonDebugger<LETTER, STATE> {
 		return mAutomaton;
 	}
 	
-	private boolean applyLoopShrinkers(final List<AShrinker<?, LETTER, STATE>> shrinkersLoop,
-			final EDebugPolicy policy) {
+	private boolean applyLoopShrinkers(final List<AbstractShrinker<?, LETTER, STATE>> shrinkersLoop,
+			final DebugPolicy policy) {
 		boolean isReducedAtLeastOnce = false;
 		boolean isReduced;
 		do {
@@ -139,8 +135,8 @@ public class AutomatonDebugger<LETTER, STATE> {
 		return isReducedAtLeastOnce;
 	}
 	
-	private void applyBridgeShrinkers(final List<AShrinker<?, LETTER, STATE>> shrinkersLoop,
-			final List<BridgeShrinker<?, LETTER, STATE>> shrinkersBridge, final EDebugPolicy policy) {
+	private void applyBridgeShrinkers(final List<AbstractShrinker<?, LETTER, STATE>> shrinkersLoop,
+			final List<BridgeShrinker<?, LETTER, STATE>> shrinkersBridge, final DebugPolicy policy) {
 		final List<BridgeShrinker<?, LETTER, STATE>> shrinkersBridgeCopy = new LinkedList<>(shrinkersBridge);
 		final INestedWordAutomaton<LETTER, STATE> automatonBackup = mAutomaton;
 		boolean isReducedAtLeastOnceByAny = false;
@@ -184,12 +180,11 @@ public class AutomatonDebugger<LETTER, STATE> {
 	 * @param policy
 	 *            debug policy
 	 * @return true iff at least one shrinker was successful
-	 * @see ADebug
+	 * @see AbstractDebug
 	 */
-	private boolean applyShrinkers(final List<AShrinker<?, LETTER, STATE>> shrinkers,
-			final EDebugPolicy policy) {
+	private boolean applyShrinkers(final List<AbstractShrinker<?, LETTER, STATE>> shrinkers, final DebugPolicy policy) {
 		boolean isReduced = false;
-		for (final AShrinker<?, LETTER, STATE> shrinker : shrinkers) {
+		for (final AbstractShrinker<?, LETTER, STATE> shrinker : shrinkers) {
 			final INestedWordAutomaton<LETTER, STATE> newAutomaton =
 					shrinker.runSearch(mAutomaton, mTester, mFactory, policy);
 			if (newAutomaton != null) {
@@ -203,14 +198,16 @@ public class AutomatonDebugger<LETTER, STATE> {
 	
 	@Override
 	public String toString() {
-		final StringBuilder b = new StringBuilder();
-		b.append("<debugger with ");
-		b.append(mFactory);
-		b.append(" and ");
-		b.append(mTester);
-		b.append(", currently considering the following automaton:\n");
-		b.append(mAutomaton);
-		b.append(">");
-		return b.toString();
+		final StringBuilder builder = new StringBuilder();
+		// @formatter:off
+		builder.append("<debugger with ")
+				.append(mFactory)
+				.append(" and ")
+				.append(mTester)
+				.append(", currently considering the following automaton:\n")
+				.append(mAutomaton)
+				.append('>');
+		// @formatter:on
+		return builder.toString();
 	}
 }

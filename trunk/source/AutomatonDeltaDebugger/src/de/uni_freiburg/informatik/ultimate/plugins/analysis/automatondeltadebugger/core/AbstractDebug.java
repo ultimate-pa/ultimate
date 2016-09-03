@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AbstractShrinker;
 
 /**
  * Abstract debugging policy with common tasks.
@@ -43,15 +43,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * @param <STATE>
  *            state type
  */
-public abstract class ADebug<T, LETTER, STATE> {
-	protected final ATester<LETTER, STATE> mTester;
-	protected final AShrinker<T, LETTER, STATE> mShrinker;
+public abstract class AbstractDebug<T, LETTER, STATE> {
+	protected final AbstractTester<LETTER, STATE> mTester;
+	protected final AbstractShrinker<T, LETTER, STATE> mShrinker;
 	
 	/**
 	 * Policy for delta debugging a list of items.
 	 */
-	public enum EDebugPolicy {
+	public enum DebugPolicy {
+		/**
+		 * Apply a single change at a time.
+		 */
 		SINGLE,
+		/**
+		 * Apply many changes at a time in binary search manner.
+		 */
 		BINARY
 	}
 	
@@ -63,8 +69,8 @@ public abstract class ADebug<T, LETTER, STATE> {
 	 * @param shrinker
 	 *            shrinker
 	 */
-	public ADebug(final ATester<LETTER, STATE> tester,
-			final AShrinker<T, LETTER, STATE> shrinker) {
+	public AbstractDebug(final AbstractTester<LETTER, STATE> tester,
+			final AbstractShrinker<T, LETTER, STATE> shrinker) {
 		mTester = tester;
 		mShrinker = shrinker;
 	}
@@ -90,8 +96,7 @@ public abstract class ADebug<T, LETTER, STATE> {
 	 */
 	protected boolean test(final List<T> list) {
 		// initialize test for the sublist
-		final INestedWordAutomaton<LETTER, STATE> automaton =
-				mShrinker.createAutomaton(list);
+		final INestedWordAutomaton<LETTER, STATE> automaton = mShrinker.createAutomaton(list);
 		
 		// run test
 		final boolean isTestSuccessful = mTester.test(automaton);

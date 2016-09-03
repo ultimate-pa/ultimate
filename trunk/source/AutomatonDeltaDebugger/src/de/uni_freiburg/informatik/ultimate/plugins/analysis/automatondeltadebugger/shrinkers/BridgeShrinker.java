@@ -28,7 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ADebug.EDebugPolicy;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AbstractDebug.DebugPolicy;
 
 /**
  * A bridge shrinker has an internal state and hence can be interrupted while still continuing from the current state
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * @param <STATE>
  *            state type
  */
-public abstract class BridgeShrinker<T, LETTER, STATE> extends AShrinker<T, LETTER, STATE> {
+public abstract class BridgeShrinker<T, LETTER, STATE> extends AbstractShrinker<T, LETTER, STATE> {
 	/**
 	 * Resets the internal state of the shrinker.
 	 * 
@@ -71,7 +71,7 @@ public abstract class BridgeShrinker<T, LETTER, STATE> extends AShrinker<T, LETT
 	}
 	
 	@Override
-	public EDebugPolicy getPolicy() {
-		return EDebugPolicy.SINGLE;
+	public DebugPolicy getPolicy() {
+		return DebugPolicy.SINGLE;
 	}
 }

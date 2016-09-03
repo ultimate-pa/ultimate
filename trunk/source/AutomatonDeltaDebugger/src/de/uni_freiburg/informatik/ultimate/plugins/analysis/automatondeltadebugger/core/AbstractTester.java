@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
  * @param <STATE>
  *            state type
  */
-public abstract class ATester<LETTER, STATE> {
+public abstract class AbstractTester<LETTER, STATE> {
 	private final Throwable mThrowable;
 	
 	/**
@@ -52,7 +52,7 @@ public abstract class ATester<LETTER, STATE> {
 	 * @param throwable
 	 *            instance of a throwable
 	 */
-	public ATester(final Throwable throwable) {
+	public AbstractTester(final Throwable throwable) {
 		this.mThrowable = throwable;
 	}
 	
@@ -88,13 +88,15 @@ public abstract class ATester<LETTER, STATE> {
 	
 	@Override
 	public String toString() {
-		final StringBuilder b = new StringBuilder();
-		b.append(this.getClass().getSimpleName());
+		final StringBuilder builder = new StringBuilder();
+		builder.append(this.getClass().getSimpleName());
 		if (mThrowable != null) {
-			b.append(" with exception type '");
-			b.append(mThrowable.getClass().getSimpleName());
-			b.append("'");
+			// @formatter:off
+			builder.append(" with exception type '")
+					.append(mThrowable.getClass().getSimpleName())
+					.append("'");
+			// @formatter:on
 		}
-		return b.toString();
+		return builder.toString();
 	}
 }

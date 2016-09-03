@@ -44,20 +44,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  *            state type
  */
 public class InternalTransitionShrinker<LETTER, STATE>
-		extends AShrinker<TypedTransition<LETTER, STATE>, LETTER, STATE> {
+		extends AbstractShrinker<TypedTransition<LETTER, STATE>, LETTER, STATE> {
 	@Override
 	public INestedWordAutomaton<LETTER, STATE>
 			createAutomaton(final List<TypedTransition<LETTER, STATE>> list) {
 		// create fresh automaton
-		final INestedWordAutomaton<LETTER, STATE> automaton =
-				mFactory.create(mAutomaton);
+		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create(mAutomaton);
 		
 		// add all states
 		mFactory.addStates(automaton, mAutomaton.getStates());
 		
 		// add the complement of the passed transitions
-		final Set<TypedTransition<LETTER, STATE>> oldTransitions =
-				mFactory.getInternalTransitions(mAutomaton);
+		final Set<TypedTransition<LETTER, STATE>> oldTransitions = mFactory.getInternalTransitions(mAutomaton);
 		oldTransitions.removeAll(list);
 		mFactory.addInternalTransitions(automaton, oldTransitions);
 		
@@ -72,7 +70,6 @@ public class InternalTransitionShrinker<LETTER, STATE>
 	
 	@Override
 	public List<TypedTransition<LETTER, STATE>> extractList() {
-		return new ArrayList<>(
-				mFactory.getInternalTransitions(mAutomaton));
+		return new ArrayList<>(mFactory.getInternalTransitions(mAutomaton));
 	}
 }

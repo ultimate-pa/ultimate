@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 
 /**
  * Factory for {@link INestedWordAutomaton} objects.
+ * <p>
  * NOTE: The automaton field is not updated during the shrinking process. Use it
  * with caution.
  * 
@@ -51,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * @param <STATE>
  *            state type
  */
-public abstract class AAutomatonFactory<LETTER, STATE> {
+public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	protected INestedWordAutomaton<LETTER, STATE> mAutomaton;
 	
 	/**
@@ -60,8 +61,7 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	 * @param automaton
 	 *            nested word automaton
 	 */
-	public AAutomatonFactory(
-			final INestedWordAutomaton<LETTER, STATE> automaton) {
+	public INestedWordAutomatonFactory(final INestedWordAutomaton<LETTER, STATE> automaton) {
 		this.mAutomaton = automaton;
 	}
 	
@@ -87,8 +87,8 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	 *            return alphabet, null uses original one
 	 * @return new {@link INestedWordAutomaton} object with specified alphabets
 	 */
-	public INestedWordAutomaton<LETTER, STATE> create(
-			final Set<LETTER> internalAlphabet, final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet) {
+	public INestedWordAutomaton<LETTER, STATE> create(final Set<LETTER> internalAlphabet,
+			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet) {
 		final Set<LETTER> internalAlphabetRes = (internalAlphabet == null)
 				? mAutomaton.getInternalAlphabet()
 				: internalAlphabet;
@@ -114,8 +114,8 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	 *            return alphabet
 	 * @return new {@link INestedWordAutomaton} object with specified alphabets
 	 */
-	protected abstract INestedWordAutomaton<LETTER, STATE> createWithAlphabets(
-			final Set<LETTER> internalAlphabet, final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet);
+	protected abstract INestedWordAutomaton<LETTER, STATE> createWithAlphabets(final Set<LETTER> internalAlphabet,
+			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet);
 	
 	/**
 	 * This method assumes that the passed state is present of the original

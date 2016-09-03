@@ -30,12 +30,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ADebug;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ADebug.EDebugPolicy;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ATester;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AbstractDebug;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AbstractDebug.DebugPolicy;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AbstractTester;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.BinaryDebug;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.SingleDebug;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.AAutomatonFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.INestedWordAutomatonFactory;
 
 /**
  * Shrinks an automaton according to a certain criterion while still producing
@@ -57,9 +57,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * @param <STATE>
  *            state type
  */
-public abstract class AShrinker<T, LETTER, STATE> {
+public abstract class AbstractShrinker<T, LETTER, STATE> {
 	protected INestedWordAutomaton<LETTER, STATE> mAutomaton;
-	protected AAutomatonFactory<LETTER, STATE> mFactory;
+	protected INestedWordAutomatonFactory<LETTER, STATE> mFactory;
 	
 	/**
 	 * Creates an automaton.
@@ -114,17 +114,15 @@ public abstract class AShrinker<T, LETTER, STATE> {
 	 *            debug policy provided by the user
 	 * @return new automaton iff automaton could be shrunk
 	 */
-	public final INestedWordAutomaton<LETTER, STATE> runSearch(
-			final INestedWordAutomaton<LETTER, STATE> automaton,
-			final ATester<LETTER, STATE> tester,
-			final AAutomatonFactory<LETTER, STATE> factory,
-			final EDebugPolicy policyUser) {
+	public final INestedWordAutomaton<LETTER, STATE> runSearch(final INestedWordAutomaton<LETTER, STATE> automaton,
+			final AbstractTester<LETTER, STATE> tester, final INestedWordAutomatonFactory<LETTER, STATE> factory,
+			final DebugPolicy policyUser) {
 		mAutomaton = automaton;
 		mFactory = factory;
-		final ADebug<T, LETTER, STATE> debugger;
+		final AbstractDebug<T, LETTER, STATE> debugger;
 		
 		// check for policy override
-		final EDebugPolicy policy = isPolicyOverridden() ? getPolicy() : policyUser;
+		final DebugPolicy policy = isPolicyOverridden() ? getPolicy() : policyUser;
 		
 		switch (policy) {
 			case SINGLE:
@@ -154,9 +152,9 @@ public abstract class AShrinker<T, LETTER, STATE> {
 	 * 
 	 * @return The policy preferred by this shrinker.
 	 */
-	public EDebugPolicy getPolicy() {
+	public DebugPolicy getPolicy() {
 		// default: use binary search
-		return EDebugPolicy.BINARY;
+		return DebugPolicy.BINARY;
 	}
 	
 	/**
