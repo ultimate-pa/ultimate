@@ -1,4 +1,4 @@
-# input length = 21, runtime = 09:40:47
+# input length = 22, runtime = 1d04:23:47
 error_1 -> 8: 7 10 2 7 6 7 5 4
 error_6 -> 3: 7 6 6
 error_12 -> 8: 7 10 2 7 5 9 10 6
