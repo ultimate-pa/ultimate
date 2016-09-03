@@ -4,9 +4,9 @@
 # All numbers are passes as one argument. Example: thisScript "10 11 12"
 numseq="$([ -z "$1" ] && seq -s' ' 10 18 || echo "$1")"
 # Maximal benchmark time (in seconds) per run (actual benchmark takes longer)
-maxbenchmarktime="$(( 6 ))"
+maxbenchmarktime="$(( 2 ))"
 # Desired runtime (in seconds) per problem
-targettime="$(( 36 ))"
+targettime="$(( 5 ))"
 
 function logdate {
 	printf "%s    " "$(date +'%Y-%m-%d %H:%M:%S')"
@@ -18,7 +18,9 @@ function timeseconds {
 
 # Converts seconds to HH:MM:SS
 function s2hms {
-	date -d@"$1" -u +'%H:%M:%S'
+	t="$1"
+	printf "%dd" "$(( t / (3600 * 24) ))"
+	date -d@"$t" -u +'%H:%M:%S'
 }
 
 # Select median of a list of values
@@ -84,7 +86,7 @@ for i in $numseq;  do
 	if [ -z "$mediangrowth" ]; then
 		logdate; echo "Cannot estimate runtime. Please increase max. benchmark time."
 	else
-		inputlength=$(perl -e "print $inputlength + int(log($targettime / $t) / log($mediangrowth))")
+		inputlength=$(perl -e "print $inputlength + int(0.5 + log($targettime / $t) / log($mediangrowth))")
 	fi
 
 	logdate; echo "Running with input length $inputlength ..."
