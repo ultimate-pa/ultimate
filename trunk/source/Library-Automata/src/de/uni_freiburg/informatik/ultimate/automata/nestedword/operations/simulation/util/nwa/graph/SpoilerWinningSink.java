@@ -132,4 +132,14 @@ public final class SpoilerWinningSink<LETTER, STATE> implements IWinningSink<LET
 		return mSpoilerSink;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.
+	 * simulation.util.nwa.graph.IWinningSink#isWinningForSpoiler()
+	 */
+	@Override
+	public boolean isWinningForSpoiler() {
+		return true;
+	}
 }

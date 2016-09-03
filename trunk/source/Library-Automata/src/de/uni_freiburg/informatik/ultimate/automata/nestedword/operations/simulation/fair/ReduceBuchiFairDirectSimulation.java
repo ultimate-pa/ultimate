@@ -55,7 +55,7 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 
 	/**
 	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton using SCCs as an optimization.<br/>
+	 * automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -127,8 +127,8 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 					throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, useSCCs, false,
 				new FairDirectSimulation<LETTER, STATE>(services.getProgressMonitorService(),
-						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs,
-						stateFactory, possibleEquivalentClasses,
+						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
+						possibleEquivalentClasses,
 						new FairDirectGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory)));

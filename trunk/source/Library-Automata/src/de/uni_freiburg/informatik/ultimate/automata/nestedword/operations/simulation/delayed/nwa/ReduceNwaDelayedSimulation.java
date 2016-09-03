@@ -62,7 +62,7 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
-	 * automaton using SCCs as an optimization.<br/>
+	 * automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -77,7 +77,7 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 */
 	public ReduceNwaDelayedSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, true);
+		this(services, stateFactory, operand, false);
 	}
 
 	/**
@@ -139,12 +139,18 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 								stateFactory, possibleEquivalenceClasses)));
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.
+	 * simulation.delayed.BuchiReduce#checkResult(de.uni_freiburg.informatik.
+	 * ultimate.automata.statefactory.IStateFactory)
+	 */
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		getLogger().info("Start testing correctness of " + operationName());
-		final boolean correct =
-				(new TestBuchiEquivalence<LETTER, STATE>(getServices(),stateFactory, getOperand(), getResult()))
-						.getResult();
+		final boolean correct = (new TestBuchiEquivalence<LETTER, STATE>(getServices(), stateFactory, getOperand(),
+				getResult())).getResult();
 		getLogger().info("Finished testing correctness of " + operationName());
 		return correct;
 	}

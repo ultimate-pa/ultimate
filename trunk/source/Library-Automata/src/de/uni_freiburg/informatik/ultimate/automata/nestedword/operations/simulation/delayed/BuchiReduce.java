@@ -139,16 +139,16 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		mResult = simulation.getResult();
 		mStatistics = simulation.getSimulationPerformance().exportToAutomataOperationStatistics();
 
-		final boolean compareWithNonSccResult = false;
-		if (compareWithNonSccResult) {
+		final boolean compareWithSccResult = false;
+		if (compareWithSccResult) {
 			final DelayedGameGraph<LETTER, STATE> graph = new DelayedGameGraph<>(mServices,
 					mServices.getProgressMonitorService(), mLogger, mOperand, stateFactory);
 			graph.generateGameGraphFromAutomaton();
-			final DelayedSimulation<LETTER, STATE> nonSccSim = new DelayedSimulation<>(
-					mServices.getProgressMonitorService(), mLogger, false, stateFactory, graph);
-			nonSccSim.doSimulation();
-			final INestedWordAutomaton<LETTER, STATE> nonSCCresult = nonSccSim.getResult();
-			if (mResult.size() != nonSCCresult.size()) {
+			final DelayedSimulation<LETTER, STATE> sccSim = new DelayedSimulation<>(
+					mServices.getProgressMonitorService(), mLogger, true, stateFactory, graph);
+			sccSim.doSimulation();
+			final INestedWordAutomaton<LETTER, STATE> sccResult = sccSim.getResult();
+			if (mResult.size() != sccResult.size()) {
 				throw new AssertionError();
 			}
 		}
@@ -156,6 +156,13 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		mLogger.info(exitMessage());
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#checkResult(de.
+	 * uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory)
+	 */
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());

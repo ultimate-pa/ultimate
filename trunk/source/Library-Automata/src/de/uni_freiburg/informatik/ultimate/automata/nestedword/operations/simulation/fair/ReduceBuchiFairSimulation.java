@@ -447,7 +447,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 
 	/**
 	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton using SCCs as an optimization.<br/>
+	 * automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -613,6 +613,13 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		mLogger.info(exitMessage());
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#checkResult(de.
+	 * uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory)
+	 */
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());

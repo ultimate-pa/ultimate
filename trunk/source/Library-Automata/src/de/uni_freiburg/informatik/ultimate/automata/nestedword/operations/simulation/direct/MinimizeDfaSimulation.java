@@ -145,16 +145,16 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 		mResult = simulation.getResult();
 		mStatistics = simulation.getSimulationPerformance().exportToAutomataOperationStatistics();
 
-		final boolean compareWithNonSccResult = false;
-		if (compareWithNonSccResult) {
+		final boolean compareWithSccResult = false;
+		if (compareWithSccResult) {
 			final DirectGameGraph<LETTER, STATE> graph = new DirectGameGraph<>(mServices,
 					mServices.getProgressMonitorService(), mLogger, mOperand, stateFactory);
 			graph.generateGameGraphFromAutomaton();
-			final DirectSimulation<LETTER, STATE> nonSccSim = new DirectSimulation<LETTER, STATE>(
-					mServices.getProgressMonitorService(), mLogger, false, stateFactory, graph);
-			nonSccSim.doSimulation();
-			final INestedWordAutomaton<LETTER, STATE> nonSCCresult = nonSccSim.getResult();
-			if (mResult.size() != nonSCCresult.size()) {
+			final DirectSimulation<LETTER, STATE> sccSim = new DirectSimulation<LETTER, STATE>(
+					mServices.getProgressMonitorService(), mLogger, true, stateFactory, graph);
+			sccSim.doSimulation();
+			final INestedWordAutomaton<LETTER, STATE> sccResult = sccSim.getResult();
+			if (mResult.size() != sccResult.size()) {
 				throw new AssertionError();
 			}
 		}

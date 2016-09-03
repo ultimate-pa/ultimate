@@ -188,6 +188,14 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private final GameGraphChanges<LETTER, STATE> mRemovedReturnBridges;
 	/**
+	 * If the game graph should be restricted to the initial partition, given by
+	 * the parameter <tt>possibleEquivalenceClasses</tt>. If <tt>true</tt> only
+	 * vertices that represent state combinations which possibly are simulating
+	 * get generated, all other will be rejected. If <tt>false</tt> also
+	 * vertices that are reachable by the initial partition get generated.
+	 */
+	private final boolean mRestrictGraphToInitPart;
+	/**
 	 * Service provider of Ultimate framework.
 	 */
 	private final AutomataLibraryServices mServices;
@@ -245,6 +253,14 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            that may be merge-able. States which are not in the same set
 	 *            are definitely not merge-able which is used as an optimization
 	 *            for the game graph
+	 * @param restrictGraphToInitPart
+	 *            If the game graph should be restricted to the initial
+	 *            partition, given by the parameter
+	 *            <tt>possibleEquivalenceClasses</tt>. If <tt>true</tt> only
+	 *            vertices that represent state combinations which possibly are
+	 *            simulating get generated, all other will be rejected. If
+	 *            <tt>false</tt> also vertices that are reachable by the initial
+	 *            partition get generated.
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
@@ -252,7 +268,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	public NwaGameGraphGeneration(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final ILogger logger, final IDoubleDeckerAutomaton<LETTER, STATE> nwa,
 			final AGameGraph<LETTER, STATE> gameGraph, final ESimulationType simulationType,
-			final Collection<Set<STATE>> possibleEquivalenceClasses) {
+			final Collection<Set<STATE>> possibleEquivalenceClasses, final boolean restrictGraphToInitPart) {
 		mServices = services;
 		mNwa = nwa;
 		mAutomatonStatesToGraphDuplicatorVertex = new HashMap<>();
@@ -278,6 +294,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		mSimulationPerformance = new SimulationPerformance(simulationType, false);
 
 		mPossibleEquivalenceClasses = possibleEquivalenceClasses;
+		mRestrictGraphToInitPart = restrictGraphToInitPart;
 	}
 
 	/**
@@ -681,6 +698,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				boolean considerVertex = true;
 				final STATE state1 = v.getQ0();
 				final STATE state2 = v.getQ1();
+
+				// Ignore special cases
+				if (state1 == null || state2 == null) {
+					continue;
+				}
+
 				// For delayed simulation we need to choose between the
 				// vertex with bit set to true or false
 				if (mSimulationType == ESimulationType.DELAYED) {
@@ -690,7 +713,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						considerVertex = !mNwa.isFinal(state1) || mNwa.isFinal(state2);
 					}
 				}
-				if (considerVertex && state1 != null && state2 != null) {
+				if (considerVertex) {
 					if (v.getPM(null, mGameGraph.getGlobalInfinity()) < mGameGraph.getGlobalInfinity()) {
 						similarStates.addPair(state1, state2);
 					}
@@ -1017,12 +1040,23 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						}
 						Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(leftState, edgeDest, bitForDestination,
 								null, null);
-						// If Spoiler vertex is not existent at this point, then
-						// it is non-simulating since its states are in different
-						// equivalence classes
 						if (spoilerDest == null) {
-							// Spoiler wins if going to this vertex, so we add a SpoilerWinningSink
-							addSpoilerWinningSink(duplicatorVertex);
+							if (mRestrictGraphToInitPart) {
+								// If Spoiler vertex is not existent at this
+								// point, then it is non-simulating since its
+								// states are in different equivalence classes.
+								// Spoiler wins if going to this vertex, so we
+								// add a SpoilerWinningSink
+								addSpoilerWinningSink(duplicatorVertex);
+							} else {
+								// Generate Spoiler vertices (q0, q2) if not
+								// existent
+								final int priority = calculatePriority(leftState, edgeDest);
+								spoilerDest = addSpoilerVertexHelper(priority, bitForDestination, leftState, edgeDest);
+								if (spoilerDest != null) {
+									workingList.add(spoilerDest);
+								}
+							}
 						}
 
 						// Add the edge
@@ -1058,12 +1092,23 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						}
 						Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(leftState, edgeDest, bitForDestination,
 								null, null);
-						// If Spoiler vertex is not existent at this point, then
-						// it is non-simulating since its states are in different
-						// equivalence classes
 						if (spoilerDest == null) {
-							// Spoiler wins if going to this vertex, so we add a SpoilerWinningSink
-							addSpoilerWinningSink(duplicatorVertex);
+							if (mRestrictGraphToInitPart) {
+								// If Spoiler vertex is not existent at this
+								// point, then it is non-simulating since its
+								// states are in different equivalence classes.
+								// Spoiler wins if going to this vertex, so we
+								// add a SpoilerWinningSink
+								addSpoilerWinningSink(duplicatorVertex);
+							} else {
+								// Generate Spoiler vertices (q0, q2) if not
+								// existent
+								final int priority = calculatePriority(leftState, edgeDest);
+								spoilerDest = addSpoilerVertexHelper(priority, bitForDestination, leftState, edgeDest);
+								if (spoilerDest != null) {
+									workingList.add(spoilerDest);
+								}
+							}
 						}
 
 						// Add the edge
@@ -1100,12 +1145,23 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						}
 						Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(leftState, edgeDest, bitForDestination,
 								null, null);
-						// If Spoiler vertex is not existent at this point, then
-						// it is non-simulating since its states are in different
-						// equivalence classes
 						if (spoilerDest == null) {
-							// Spoiler wins if going to this vertex, so we add a SpoilerWinningSink
-							addSpoilerWinningSink(duplicatorVertex);
+							if (mRestrictGraphToInitPart) {
+								// If Spoiler vertex is not existent at this
+								// point, then it is non-simulating since its
+								// states are in different equivalence classes.
+								// Spoiler wins if going to this vertex, so we
+								// add a SpoilerWinningSink
+								addSpoilerWinningSink(duplicatorVertex);
+							} else {
+								// Generate Spoiler vertices (q0, q2) if not
+								// existent
+								final int priority = calculatePriority(leftState, edgeDest);
+								spoilerDest = addSpoilerVertexHelper(priority, bitForDestination, leftState, edgeDest);
+								if (spoilerDest != null) {
+									workingList.add(spoilerDest);
+								}
+							}
 						}
 
 						// Add the edge
@@ -1445,6 +1501,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					.getSpoilerNwaVertex();
 
 			final Map<STATE, Set<Pair<STATE, Boolean>>> spoilerToDuplicatorChoices = new HashMap<>();
+			boolean hasSinkWinningForSpoiler = false;
+			boolean hasSinkWinningForDuplicator = false;
 			boolean runsInDuplicatorDeadEnd = false;
 			// Collect all summarize edges
 			for (final SummaryReturnTransition<GameLetter<LETTER, STATE>, IGameState> summary : gameAutomatonWithMergedSummaries
@@ -1488,15 +1546,26 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							.getSpoilerNwaVertex();
 					// Add the summary to Duplicators choices for this
 					// merged summary
-					final STATE spoilerTarget = summaryDestination.getQ0();
-					final STATE duplicatorTarget = summaryDestination.getQ1();
-					final boolean bitTarget = summaryDestination.isB();
-					if (!spoilerToDuplicatorChoices.containsKey(spoilerTarget)) {
-						spoilerToDuplicatorChoices.put(spoilerTarget, new LinkedHashSet<>());
+					IWinningSink<LETTER, STATE> sinkTarget = summaryDestination.getSink();
+					if (sinkTarget == null) {
+						// Target is no sink
+						final STATE spoilerTarget = summaryDestination.getQ0();
+						final STATE duplicatorTarget = summaryDestination.getQ1();
+						final boolean bitTarget = summaryDestination.isB();
+						if (!spoilerToDuplicatorChoices.containsKey(spoilerTarget)) {
+							spoilerToDuplicatorChoices.put(spoilerTarget, new LinkedHashSet<>());
+						}
+						final Set<Pair<STATE, Boolean>> choices = spoilerToDuplicatorChoices.get(spoilerTarget);
+						choices.add(new Pair<>(duplicatorTarget, bitTarget));
+						spoilerToDuplicatorChoices.put(spoilerTarget, choices);
+					} else {
+						// Target is a sink, put it in a separate container
+						if (sinkTarget.isWinningForSpoiler()) {
+							hasSinkWinningForSpoiler = true;
+						} else {
+							hasSinkWinningForDuplicator = true;
+						}
 					}
-					final Set<Pair<STATE, Boolean>> choices = spoilerToDuplicatorChoices.get(spoilerTarget);
-					choices.add(new Pair<>(duplicatorTarget, bitTarget));
-					spoilerToDuplicatorChoices.put(spoilerTarget, choices);
 				}
 
 				// If operation was canceled, for example from the
@@ -1511,9 +1580,21 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				addSpoilerWinningSinkExtended(mergedSummarySource);
 			}
 			// Create and add the merged summaries
-			for (final Entry<STATE, Set<Pair<STATE, Boolean>>> choiceEntry : spoilerToDuplicatorChoices.entrySet()) {
-				final STATE spoilerChoice = choiceEntry.getKey();
-				addSummarizeEdge(mergedSummarySource, spoilerChoice, choiceEntry.getValue());
+			if (hasSinkWinningForSpoiler) {
+				// If there is a winning sink for Spoiler, no other summaries
+				// are needed.
+				addSpoilerWinningSinkExtended(mergedSummarySource);
+			} else {
+				for (final Entry<STATE, Set<Pair<STATE, Boolean>>> choiceEntry : spoilerToDuplicatorChoices
+						.entrySet()) {
+					final STATE spoilerChoice = choiceEntry.getKey();
+					addSummarizeEdge(mergedSummarySource, spoilerChoice, choiceEntry.getValue());
+				}
+				// If no summarize edges where added, we are forced to add the
+				// winning sink for Duplicator, if it was present.
+				if (spoilerToDuplicatorChoices.isEmpty() && hasSinkWinningForDuplicator) {
+					addDuplicatorWinningSink(mergedSummarySource);
+				}
 			}
 		}
 

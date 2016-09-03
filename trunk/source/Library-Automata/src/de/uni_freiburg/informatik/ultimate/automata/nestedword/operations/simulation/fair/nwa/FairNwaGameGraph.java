@@ -120,7 +120,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 			mNwa = new RemoveUnreachable<LETTER, STATE>(services, preparedNwa).getResult();
 		}
 		mGeneration = new NwaGameGraphGeneration<LETTER, STATE>(services, getProgressTimer(), getLogger(), mNwa, this,
-				ESimulationType.FAIR, possibleEquivalenceClasses);
+				ESimulationType.FAIR, possibleEquivalenceClasses, true);
 	}
 
 	/*

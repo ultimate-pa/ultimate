@@ -90,6 +90,12 @@ public final class NwaSimulationUtil {
 			boolean considerVertex = true;
 			final STATE state1 = spoilerVertex.getQ0();
 			final STATE state2 = spoilerVertex.getQ1();
+			
+			// Ignore special cases
+			if (state1 == null || state2 == null) {
+				continue;
+			}
+			
 			// For delayed simulation we need to choose between the
 			// vertex with bit set to true or false
 			if (simulationType == ESimulationType.DELAYED) {
