@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
@@ -507,7 +508,7 @@ public class IterativePredicateTransformer {
 			final int call_pos, final int return_pos) {
 		final UnmodifiableTransFormula summaryOfInnerStatements = computeSummaryForInterproceduralTrace(
 				trace, rv, call_pos + 1, return_pos);
-		final UnmodifiableTransFormula summaryWithCallAndReturn = UnmodifiableTransFormula.sequentialCompositionWithCallAndReturn(
+		final UnmodifiableTransFormula summaryWithCallAndReturn = TransFormulaUtils.sequentialCompositionWithCallAndReturn(
 				mMgdScript, true, false, s_TransformSummaryToCNF, Call, 
 				oldVarsAssignment, globalVarsAssignment,
 				summaryOfInnerStatements, Return, mLogger, mServices, mXnfConversionTechnique, mSimplificationTechnique);
@@ -542,7 +543,7 @@ public class IterativePredicateTransformer {
 						final UnmodifiableTransFormula summaryBetweenCallAndReturn = computeSummaryForInterproceduralTrace(trace, rv,
 								i + 1, returnPosition);
 						final UnmodifiableTransFormula returnTf = rv.getFormulaFromNonCallPos(returnPosition);
-						transformulasToComputeSummaryFor.addLast(UnmodifiableTransFormula.sequentialCompositionWithCallAndReturn(
+						transformulasToComputeSummaryFor.addLast(TransFormulaUtils.sequentialCompositionWithCallAndReturn(
 								mMgdScript, true, false, s_TransformSummaryToCNF, callTf, oldVarsAssignment,
 								globalVarsAssignment, summaryBetweenCallAndReturn, returnTf,
 								mLogger, mServices, mXnfConversionTechnique, mSimplificationTechnique));
@@ -554,7 +555,7 @@ public class IterativePredicateTransformer {
 						final UnmodifiableTransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
 						final String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
 						final Set<IProgramVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
-						return UnmodifiableTransFormula.sequentialCompositionWithPendingCall(mMgdScript, true,
+						return TransFormulaUtils.sequentialCompositionWithPendingCall(mMgdScript, true,
 								false, s_TransformSummaryToCNF, transformulasToComputeSummaryFor,
 								callTf, oldVarsAssignment, summaryAfterPendingCall,
 								mLogger, mServices, modifiableGlobalsOfEndProcedure, mXnfConversionTechnique, mSimplificationTechnique);
@@ -563,7 +564,7 @@ public class IterativePredicateTransformer {
 					final UnmodifiableTransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
 					final String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
 					final Set<IProgramVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
-					return UnmodifiableTransFormula.sequentialCompositionWithPendingCall(mMgdScript, true, false,
+					return TransFormulaUtils.sequentialCompositionWithPendingCall(mMgdScript, true, false,
 							s_TransformSummaryToCNF, transformulasToComputeSummaryFor,
 							callTf, oldVarsAssignment, summaryAfterPendingCall, mLogger,
 							mServices, modifiableGlobalsOfEndProcedure, mXnfConversionTechnique, mSimplificationTechnique);
@@ -574,7 +575,7 @@ public class IterativePredicateTransformer {
 				transformulasToComputeSummaryFor.addLast(rv.getFormulaFromNonCallPos(i));
 			}
 		}
-		return UnmodifiableTransFormula.sequentialComposition(mLogger, mServices, mMgdScript, true, false,
+		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, true, false,
 				s_TransformSummaryToCNF, mXnfConversionTechnique, mSimplificationTechnique, transformulasToComputeSummaryFor.toArray(new UnmodifiableTransFormula[transformulasToComputeSummaryFor.size()]));
 
 	}

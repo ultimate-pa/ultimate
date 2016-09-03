@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
@@ -220,7 +221,7 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 		if (lastUnmatchedCall == null) {
 			assert afterLastUnmatchedCall.isEmpty();
 			// no pending call in codeBlocks
-			tfForCodeBlocks = UnmodifiableTransFormula.sequentialComposition(logger, services, mgdScript, simplify, extPqe,
+			tfForCodeBlocks = TransFormulaUtils.sequentialComposition(logger, services, mgdScript, simplify, extPqe,
 					tranformToCNF, xnfConversionTechnique, simplificationTechnique, beforeFirstPendingCall.toArray(new UnmodifiableTransFormula[beforeFirstPendingCall.size()]));
 		} else {
 			// there is a pending call in codeBlocks
@@ -249,7 +250,7 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 				}
 				final Set<IProgramVar> modifiableGlobalsOfEndProcedure =
 						modGlobVarManager.getModifiedBoogieVars(nameEndProcedure);
-				result = UnmodifiableTransFormula.sequentialCompositionWithPendingCall(mgdScript, simplify, extPqe, tranformToCNF,
+				result = TransFormulaUtils.sequentialCompositionWithPendingCall(mgdScript, simplify, extPqe, tranformToCNF,
 						Arrays.asList(beforeCall), call.getTransitionFormula(), oldVarsAssignment, tfForCodeBlocks,
 						logger, services, modifiableGlobalsOfEndProcedure, xnfConversionTechnique, simplificationTechnique);
 			} else {
@@ -257,7 +258,7 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 				final String proc = call.getCallStatement().getMethodName();
 				final UnmodifiableTransFormula oldVarsAssignment = modGlobVarManager.getOldVarsAssignment(proc);
 				final UnmodifiableTransFormula globalVarsAssignment = modGlobVarManager.getGlobalVarsAssignment(proc);
-				result = UnmodifiableTransFormula.sequentialCompositionWithCallAndReturn(mgdScript, simplify, extPqe,
+				result = TransFormulaUtils.sequentialCompositionWithCallAndReturn(mgdScript, simplify, extPqe,
 						tranformToCNF, call.getTransitionFormula(), oldVarsAssignment, globalVarsAssignment,
 						tfForCodeBlocks, ret.getTransitionFormula(), logger, services, xnfConversionTechnique, simplificationTechnique);
 			}

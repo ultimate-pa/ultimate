@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IActi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
@@ -425,17 +426,17 @@ public class FlowSensitiveFaultLocalizer {
 				 // The current statement is a branch out and it's branch-in is with in the current branch.
 				final UnmodifiableTransFormula subBranchMarkhorFormula = computeMarkhorFormula(branchOut,branchIn,counterexampleWord,
 						informationFromCFG,smtManager);
-				combinedTransitionFormula = UnmodifiableTransFormula.sequentialComposition(mLogger, mServices, 
+				combinedTransitionFormula = TransFormulaUtils.sequentialComposition(mLogger, mServices, 
 						smtManager, false, false, false, mXnfConversionTechnique, mSimplificationTechnique, combinedTransitionFormula,subBranchMarkhorFormula);
 			} else{ 
 				// It is a normal statement.
 				final CodeBlock statement = counterexampleWord.getSymbol(i);
 				final UnmodifiableTransFormula transitionFormula = statement.getTransitionFormula();
-				combinedTransitionFormula = UnmodifiableTransFormula.sequentialComposition(mLogger, mServices, 
+				combinedTransitionFormula = TransFormulaUtils.sequentialComposition(mLogger, mServices, 
 						smtManager, false, false, false, mXnfConversionTechnique, mSimplificationTechnique, combinedTransitionFormula,transitionFormula);
 			}
 		}
-		final UnmodifiableTransFormula markhor = UnmodifiableTransFormula.computeMarkhorTransFormula(combinedTransitionFormula, 
+		final UnmodifiableTransFormula markhor = TransFormulaUtils.computeMarkhorTransFormula(combinedTransitionFormula, 
 				smtManager, mServices, mLogger, mXnfConversionTechnique, mSimplificationTechnique);
 		return markhor;
 	}
