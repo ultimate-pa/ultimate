@@ -91,7 +91,8 @@ public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETT
 		traverseDoubleDeckerGraph();
 		((DoubleDeckerAutomaton<LETTER, STATE>) super.mTraversedNwa).setUp2Down(getUp2DownMapping());
 		if (totalize || (!mOperand.getInitialStates().iterator().hasNext())) {
-			makeAutomatonTotal();
+			final STATE sinkState = addSinkState();
+			makeAutomatonTotal(sinkState);
 		}
 		mLogger.info(exitMessage());
 //		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices,
@@ -118,11 +119,8 @@ public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETT
 //				(IDoubleDeckerAutomaton) mTraversedNwa)).getResult() : "down states inconsistent";
 	}
 	
-	private void makeAutomatonTotal() throws AutomataOperationCanceledException {
-		final STATE sinkState = mTraversedNwa.getStateFactory().createSinkStateContent();
-		final boolean isInitial = !mOperand.getInitialStates().iterator().hasNext();
-		final boolean isFinal = mComplement;
-		((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(isInitial, isFinal, sinkState);
+	private void makeAutomatonTotal(final STATE sinkState) throws AutomataOperationCanceledException {
+
 		
 		for (final STATE state : mTraversedNwa.getStates()) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -149,6 +147,14 @@ public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETT
 				}
 			}
 		}
+	}
+
+	private STATE addSinkState() {
+		final STATE sinkState = mTraversedNwa.getStateFactory().createSinkStateContent();
+		final boolean isInitial = !mOperand.getInitialStates().iterator().hasNext();
+		final boolean isFinal = mComplement;
+		((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(isInitial, isFinal, sinkState);
+		return sinkState;
 	}
 	
 	@Override
