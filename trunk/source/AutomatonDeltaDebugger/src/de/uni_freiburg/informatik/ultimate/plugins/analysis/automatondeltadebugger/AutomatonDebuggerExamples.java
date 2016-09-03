@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Comple
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaOverapproximation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.arrays.MinimizeNwaMaxSAT;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.BuchiReduce;
@@ -69,17 +70,43 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	}
 	
 	/**
-	 * implemented operations for quick usage
+	 * Implemented operations for quick usage.
+	 * <p>
 	 * NOTE: If another operation is supported, add a value here.
 	 */
 	public enum EOperationType {
+		/**
+		 * {@link MinimizeNwaMaxSAT}.
+		 */
 		MINIMIZE_NWA_MAXSAT,
+		/**
+		 * {@link MinimizeNwaMaxSAT2}.
+		 */
 		MINIMIZE_NWA_MAXSAT2,
+		/**
+		 * {@link ReduceNwaDirectSimulation}.
+		 */
 		REDUCE_NWA_DIRECT_SIMULATION,
+		/**
+		 * {@link ReduceNwaDelayedSimulation}.
+		 */
 		REDUCE_NWA_DELAYED_SIMULATION,
+		/**
+		 * {@link ShrinkNwa}.
+		 */
 		SHRINK_NWA,
+		/**
+		 * {@link BuchiReduce}.
+		 */
 		BUCHI_REDUCE,
-		COMPLEMENT
+		/**
+		 * {@link Complement}.
+		 */
+		COMPLEMENT,
+		/**
+		 * {@link MinimizeNwaOverapproximation}.
+		 */
+		MINIMIZE_NWA_OVERAPPROXIMATION
 	}
 	
 	/**
@@ -128,6 +155,10 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 				operation = complement(automaton, factory);
 				break;
 			
+			case MINIMIZE_NWA_OVERAPPROXIMATION:
+				operation = minimizeNwaOverapproximation(automaton, factory);
+				break;
+			
 			default:
 				throw new IllegalArgumentException("Unknown operation.");
 		}
@@ -139,7 +170,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	 *            The automaton.
 	 * @param factory
 	 *            state factory
-	 * @return new <code>MinimizeNwaMaxSAT()</code> instance
+	 * @return new {@link MinimizeNwaMaxSAT} instance
 	 * @throws Throwable
 	 *             when error occurs
 	 */
@@ -156,7 +187,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	 *            The automaton.
 	 * @param factory
 	 *            state factory
-	 * @return new <code>MinimizeNwaMaxSAT2()</code> instance
+	 * @return new {@link MinimizeNwaMaxSAT2} instance
 	 * @throws Throwable
 	 *             when error occurs
 	 */
@@ -173,7 +204,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	 *            The automaton.
 	 * @param factory
 	 *            state factory
-	 * @return new <code>ReduceNwaDirectSimulation()</code> instance
+	 * @return new {@link ReduceNwaDirectSimulation} instance
 	 * @throws Throwable
 	 *             when error occurs
 	 */
@@ -190,7 +221,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	 *            The automaton.
 	 * @param factory
 	 *            state factory
-	 * @return new <code>ReduceNwaDelayedSimulation()</code> instance
+	 * @return new {@link ReduceNwaDelayedSimulation} instance
 	 * @throws Throwable
 	 *             when error occurs
 	 */
@@ -207,7 +238,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	 *            The automaton.
 	 * @param factory
 	 *            state factory
-	 * @return new <code>ReduceNwaDirectSimulation()</code> instance
+	 * @return new {@link ReduceNwaDirectSimulation} instance
 	 * @throws Throwable
 	 *             when error occurs
 	 */
@@ -224,7 +255,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	 *            The automaton.
 	 * @param factory
 	 *            state factory
-	 * @return new <code>BuchiReduce()</code> instance
+	 * @return new {@link BuchiReduce} instance
 	 * @throws Throwable
 	 *             when error occurs
 	 */
@@ -248,5 +279,21 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	public IOperation<LETTER, STATE> complement(final INestedWordAutomaton<LETTER, STATE> automaton,
 			final IStateFactory<STATE> factory) throws Throwable {
 		return new Complement<>(mServices, factory, automaton);
+	}
+	
+	/**
+	 * @param automaton
+	 *            The automaton.
+	 * @param factory
+	 *            state factory
+	 * @return new {@link MinimizeNwaOverapproximation} instance
+	 * @throws Throwable
+	 *             when error occurs
+	 */
+	public IOperation<LETTER, STATE> minimizeNwaOverapproximation(final INestedWordAutomaton<LETTER, STATE> automaton,
+			final IStateFactory<STATE> factory) throws Throwable {
+		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
+				new RemoveUnreachable<LETTER, STATE>(mServices, automaton).getResult();
+		return new MinimizeNwaOverapproximation<>(mServices, factory, preprocessed);
 	}
 }
