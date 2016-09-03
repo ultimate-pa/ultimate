@@ -394,7 +394,11 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 					}
 				}
 			}
-			auxVars.addAll(transFormula[i].getAuxVars());
+			for (final TermVariable oldAuxVar : transFormula[i].getAuxVars()) {
+				final TermVariable newAuxVar = mgdScript.constructFreshCopy(oldAuxVar);
+				subsitutionMapping.put(oldAuxVar, newAuxVar);
+				auxVars.add(newAuxVar);
+			}
 			tfb.addBranchEncoders(transFormula[i].getBranchEncoders());
 
 			for (final IProgramVar var : transFormula[i].getInVars().keySet()) {
@@ -463,7 +467,9 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(infeasibility);
-		tfb.addAuxVarsButRenameToFreshCopies(auxVars, mgdScript);
+		for (final TermVariable auxVar : auxVars) {
+			tfb.addAuxVar(auxVar);
+		}
 		return tfb.finishConstruction(mgdScript);
 	}
 
