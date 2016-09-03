@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeDfaHopcroftLists;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaCombinator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaOverapproximation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.arrays.MinimizeNwaMaxSAT;
@@ -136,6 +137,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	private static final boolean DIFFERENCE_INSTEAD_OF_INTERSECTION = true;
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	protected static final boolean TRACE_HISTOGRAMM_BAILOUT = false;
+	private static final int MINIMIZATION_TIMEOUT = 1_000;
 
 	protected HoareAnnotationFragments mHaf;
 
@@ -723,6 +725,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case RAQ_DIRECT_SIMULATION:
 		case NWA_COMBINATOR:
 		case NWA_COMBINATOR_EVERY_KTH:
+		case NWA_OVERAPPROXIMATION:
 			minimizeAbstraction(mStateFactoryForRefinement, mPredicateFactoryResultChecking, minimization);
 			break;
 		default:
@@ -826,6 +829,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						mComputeHoareAnnotation, MINIMIZE_EVERY_KTH_ITERATION, mIteration);
 				// it can happen that no minimization took place
 				wasMinimized = (newAbstractionRaw == oldAbstraction);
+				break;
+			}
+			case NWA_OVERAPPROXIMATION: {
+				newAbstractionRaw = new MinimizeNwaOverapproximation<CodeBlock, IPredicate>(services,
+						predicateFactoryRefinement, oldAbstraction, MINIMIZATION_TIMEOUT);
+				wasMinimized = true;
 				break;
 			}
 			case DFA_HOPCROFT_ARRAYS: {
