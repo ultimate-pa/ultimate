@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @see AbstractMinimizeIncremental
  */
-public final class Interrupt {
+public final class Interrupt implements IFlag {
 	/**
 	 * Internal status.
 	 */
@@ -51,6 +51,7 @@ public final class Interrupt {
 	/**
 	 * @return The internal status.
 	 */
+	@Override
 	public boolean getStatus() {
 		return mTerminate;
 	}
