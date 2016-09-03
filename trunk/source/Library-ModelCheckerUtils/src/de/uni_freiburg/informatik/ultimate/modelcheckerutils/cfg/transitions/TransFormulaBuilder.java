@@ -307,4 +307,50 @@ public class TransFormulaBuilder {
 		tfb.setInfeasibility(infeasibility);
 		return tfb.finishConstruction(script);
 	}
+	
+	
+	public static UnmodifiableTransFormula constructCopy(final TransFormula tf, 
+			final Collection<IProgramVar> inVarsToRemove, final Collection<IProgramVar> outVarsToRemove, final ManagedScript script) {
+		Set<TermVariable> branchEncoders;
+		if (tf instanceof UnmodifiableTransFormula) {
+			branchEncoders = ((UnmodifiableTransFormula) tf).getBranchEncoders();
+		} else {
+			branchEncoders = Collections.emptySet();
+		}
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), 
+				branchEncoders.isEmpty(), branchEncoders.isEmpty() ? null : branchEncoders, false);
+		final Set<TermVariable> auxVars = new HashSet<>();
+		for (final IProgramVar pv : inVarsToRemove) {
+			assert tf.mInVars.containsKey(pv) : "illegal to remove variable not that is contained";
+			final TermVariable inVar = tf.mInVars.get(pv);
+			final TermVariable outVar = tf.mOutVars.get(pv);
+			tf.mInVars.remove(pv);
+			if (inVar != outVar) {
+				// inVar does not occurs already as outVar, we have to add inVar
+				// to auxVars
+				auxVars.add(inVar);
+			} 
+		}
+		for (final IProgramVar pv : outVarsToRemove) {
+			assert tf.mOutVars.containsKey(pv) : "illegal to remove variable not that is contained";
+			final TermVariable inVar = tf.mInVars.get(pv);
+			final TermVariable outVar = tf.mOutVars.get(pv);
+			tf.mOutVars.remove(pv);
+			if (inVar != outVar) {
+				// outVar does not occurs already as inVar, we have to add outVar
+				// to auxVars
+				auxVars.add(outVar);
+			}
+		}
+		final Infeasibility infeasibility;
+		if (tf instanceof UnmodifiableTransFormula) {
+			infeasibility = ((UnmodifiableTransFormula) tf).isInfeasible();
+		} else {
+			infeasibility = Infeasibility.NOT_DETERMINED;
+		}
+		tfb.setFormula(tf.getFormula());
+		tfb.setInfeasibility(infeasibility);
+		tfb.addAuxVarsButRenameToFreshCopies(auxVars, script);
+		return tfb.finishConstruction(script);
+	}
 }

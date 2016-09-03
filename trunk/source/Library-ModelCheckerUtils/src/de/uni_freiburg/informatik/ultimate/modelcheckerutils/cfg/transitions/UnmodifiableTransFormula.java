@@ -655,41 +655,6 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	}
 
 
-	private void removeOutVar(final IProgramVar var) {
-		assert mOutVars.containsKey(var) : "illegal to remove variable not that is contained";
-		final TermVariable inVar = mInVars.get(var);
-		final TermVariable outVar = mOutVars.get(var);
-		mOutVars.remove(var);
-		if (inVar != outVar) {
-			// outVar does not occurs already as inVar, we have to add outVar
-			// to auxVars
-			mAuxVars.add(outVar);
-			final boolean removed = mAssignedVars.remove(var);
-			assert (removed);
-		} else {
-			assert !mAssignedVars.contains(var);
-		}
-	}
-
-	private void removeInVar(final IProgramVar var) {
-		assert mInVars.containsKey(var) : "illegal to remove variable not that is contained";
-		final TermVariable inVar = mInVars.get(var);
-		final TermVariable outVar = mOutVars.get(var);
-		mInVars.remove(var);
-		if (inVar != outVar) {
-			// inVar does not occurs already as outVar, we have to add inVar
-			// to auxVars
-			mAuxVars.add(inVar);
-			assert outVar == null || mAssignedVars.contains(var);
-		} else {
-			assert !mAssignedVars.contains(var);
-			if (outVar != null) {
-				mAssignedVars.add(var);
-			}
-		}
-	}
-
-
 	/**
 	 * Returns TransFormula that describes a sequence of code blocks that
 	 * contains a pending call. Note the the scope of inVars and outVars is
@@ -719,19 +684,19 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 			final Set<IProgramVar> modifiableGlobalsOfEndProcedure, 
 			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
 		logger.debug("sequential composition (pending call) with" + (simplify ? "" : "out") + " formula simplification");
-		UnmodifiableTransFormula callAndBeforeTF;
+		final UnmodifiableTransFormula callAndBeforeTF;
 		{
 			final List<UnmodifiableTransFormula> callAndBeforeList = new ArrayList<UnmodifiableTransFormula>(beforeCall);
 			callAndBeforeList.add(callTf);
 			final UnmodifiableTransFormula[] callAndBeforeArray = callAndBeforeList.toArray(new UnmodifiableTransFormula[callAndBeforeList.size()]);
-			callAndBeforeTF = sequentialComposition(logger, services, mgdScript, simplify, extPqe, transformToCNF,
+			final UnmodifiableTransFormula composition = sequentialComposition(logger, services, mgdScript, simplify, extPqe, transformToCNF,
 					xnfConversionTechnique, simplificationTechnique, callAndBeforeArray);
 
 			// remove outVars that relate to scope of caller
 			// - local vars that are no inParams of callee
 			// - oldVars of variables that can be modified by callee
 			final List<IProgramVar> varsToRemove = new ArrayList<IProgramVar>();
-			for (final IProgramVar bv : callAndBeforeTF.getOutVars().keySet()) {
+			for (final IProgramVar bv : composition.getOutVars().keySet()) {
 				if (bv.isGlobal()) {
 					if (bv.isOldvar() && oldVarsAssignment.getOutVars().containsKey(bv)) {
 						varsToRemove.add(bv);
@@ -743,24 +708,22 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 					}
 				}
 			}
-			for (final IProgramVar bv : varsToRemove) {
-				callAndBeforeTF.removeOutVar(bv);
-			}
+			callAndBeforeTF = TransFormulaBuilder.constructCopy(composition, Collections.emptySet(), varsToRemove, mgdScript);
 		}
 
-		UnmodifiableTransFormula oldAssignAndAfterTF;
+		final UnmodifiableTransFormula oldAssignAndAfterTF;
 		{
 			final List<UnmodifiableTransFormula> oldAssignAndAfterList = new ArrayList<UnmodifiableTransFormula>(Arrays.asList(afterCall));
 			oldAssignAndAfterList.add(0, oldVarsAssignment);
 			final UnmodifiableTransFormula[] oldAssignAndAfterArray = oldAssignAndAfterList.toArray(new UnmodifiableTransFormula[0]);
-			oldAssignAndAfterTF = sequentialComposition(logger, services, mgdScript, simplify, extPqe, transformToCNF,
+			final UnmodifiableTransFormula composition = sequentialComposition(logger, services, mgdScript, simplify, extPqe, transformToCNF,
 					xnfConversionTechnique, simplificationTechnique, oldAssignAndAfterArray);
 
 			// remove inVars that relate to scope of callee
 			// - local vars that are no inParams of callee
 			// - oldVars of variables that can be modified by callee
 			final List<IProgramVar> inVarsToRemove = new ArrayList<IProgramVar>();
-			for (final IProgramVar bv : oldAssignAndAfterTF.getInVars().keySet()) {
+			for (final IProgramVar bv : composition.getInVars().keySet()) {
 				if (bv.isGlobal()) {
 					if (bv.isOldvar() && oldVarsAssignment.getOutVars().containsKey(bv)) {
 						inVarsToRemove.add(bv);
@@ -772,12 +735,9 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 					}
 				}
 			}
-			for (final IProgramVar bv : inVarsToRemove) {
-				oldAssignAndAfterTF.removeInVar(bv);
-			}
 			
 			final List<IProgramVar> outVarsToRemove = new ArrayList<IProgramVar>();
-			for (final IProgramVar bv : oldAssignAndAfterTF.getOutVars().keySet()) {
+			for (final IProgramVar bv : composition.getOutVars().keySet()) {
 				if (bv instanceof IProgramOldVar) {
 					final IProgramNonOldVar nonOld = ((IProgramOldVar) bv).getNonOldVar();
 					if (modifiableGlobalsOfEndProcedure.contains(nonOld)) {
@@ -787,9 +747,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 					}
 				}
 			}
-			for (final IProgramVar bv : outVarsToRemove) {
-				oldAssignAndAfterTF.removeOutVar(bv);
-			}
+			oldAssignAndAfterTF = TransFormulaBuilder.constructCopy(composition, inVarsToRemove, outVarsToRemove, mgdScript);
 		}
 
 		final UnmodifiableTransFormula result = sequentialComposition(logger, services, mgdScript, simplify, 
@@ -819,45 +777,37 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 			final UnmodifiableTransFormula procedureTf, final UnmodifiableTransFormula returnTf, final ILogger logger, 
 			final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
 		logger.debug("sequential composition (call/return) with" + (simplify ? "" : "out") + " formula simplification");
-		final UnmodifiableTransFormula result = sequentialComposition(logger, services, mgdScript, 
+		final UnmodifiableTransFormula composition = sequentialComposition(logger, services, mgdScript, 
 				simplify, extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique,
 				callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf);
-		{
-			final List<IProgramVar> inVarsToRemove = new ArrayList<IProgramVar>();
-			for (final IProgramVar bv : result.getInVars().keySet()) {
-				if (bv.isGlobal()) {
-					if (bv.isOldvar() && oldVarsAssignment.getOutVars().containsKey(bv)) {
-						inVarsToRemove.add(bv);
-					}
-				} else {
-					if (!callTf.getInVars().containsKey(bv)) {
-						// bv is local but not argument of procedure call
-						inVarsToRemove.add(bv);
-					}
+		final List<IProgramVar> inVarsToRemove = new ArrayList<IProgramVar>();
+		for (final IProgramVar bv : composition.getInVars().keySet()) {
+			if (bv.isGlobal()) {
+				if (bv.isOldvar() && oldVarsAssignment.getOutVars().containsKey(bv)) {
+					inVarsToRemove.add(bv);
+				}
+			} else {
+				if (!callTf.getInVars().containsKey(bv)) {
+					// bv is local but not argument of procedure call
+					inVarsToRemove.add(bv);
 				}
 			}
-			for (final IProgramVar bv : inVarsToRemove) {
-				result.removeInVar(bv);
-			}
 		}
-		{
-			final List<IProgramVar> outVarsToRemove = new ArrayList<IProgramVar>();
-			for (final IProgramVar bv : result.getOutVars().keySet()) {
-				if (bv.isGlobal()) {
-					if (bv.isOldvar() && oldVarsAssignment.getOutVars().containsKey(bv)) {
-						outVarsToRemove.add(bv);
-					}
-				} else {
-					if (!returnTf.getOutVars().containsKey(bv)) {
-						// bv is local but not result of procedure call
-						outVarsToRemove.add(bv);
-					}
+
+		final List<IProgramVar> outVarsToRemove = new ArrayList<IProgramVar>();
+		for (final IProgramVar bv : composition.getOutVars().keySet()) {
+			if (bv.isGlobal()) {
+				if (bv.isOldvar() && oldVarsAssignment.getOutVars().containsKey(bv)) {
+					outVarsToRemove.add(bv);
+				}
+			} else {
+				if (!returnTf.getOutVars().containsKey(bv)) {
+					// bv is local but not result of procedure call
+					outVarsToRemove.add(bv);
 				}
 			}
-			for (final IProgramVar bv : outVarsToRemove) {
-				result.removeOutVar(bv);
-			}
 		}
+		final UnmodifiableTransFormula result = TransFormulaBuilder.constructCopy(composition, inVarsToRemove, outVarsToRemove, mgdScript);
 		{
 			for (final Entry<IProgramVar, TermVariable> entry : callTf.getInVars().entrySet()) {
 				if (!result.getOutVars().containsKey(entry.getKey())) {
