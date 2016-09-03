@@ -321,10 +321,10 @@ public class TransFormulaBuilder {
 				branchEncoders.isEmpty(), branchEncoders.isEmpty() ? null : branchEncoders, false);
 		final Set<TermVariable> auxVars = new HashSet<>();
 		for (final IProgramVar pv : inVarsToRemove) {
-			assert tf.mInVars.containsKey(pv) : "illegal to remove variable not that is contained";
-			final TermVariable inVar = tf.mInVars.get(pv);
-			final TermVariable outVar = tf.mOutVars.get(pv);
-			tf.mInVars.remove(pv);
+			assert tfb.mInVars.containsKey(pv) : "illegal to remove variable not that is contained";
+			final TermVariable inVar = tfb.mInVars.get(pv);
+			final TermVariable outVar = tfb.mOutVars.get(pv);
+			tfb.mInVars.remove(pv);
 			if (inVar != outVar) {
 				// inVar does not occurs already as outVar, we have to add inVar
 				// to auxVars
@@ -332,10 +332,10 @@ public class TransFormulaBuilder {
 			} 
 		}
 		for (final IProgramVar pv : outVarsToRemove) {
-			assert tf.mOutVars.containsKey(pv) : "illegal to remove variable not that is contained";
-			final TermVariable inVar = tf.mInVars.get(pv);
-			final TermVariable outVar = tf.mOutVars.get(pv);
-			tf.mOutVars.remove(pv);
+			assert tfb.mOutVars.containsKey(pv) : "illegal to remove variable not that is contained";
+			final TermVariable inVar = tfb.mInVars.get(pv);
+			final TermVariable outVar = tfb.mOutVars.get(pv);
+			tfb.mOutVars.remove(pv);
 			if (inVar != outVar) {
 				// outVar does not occurs already as inVar, we have to add outVar
 				// to auxVars
