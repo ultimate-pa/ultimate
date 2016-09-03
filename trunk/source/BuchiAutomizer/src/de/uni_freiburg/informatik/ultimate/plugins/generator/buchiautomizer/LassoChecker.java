@@ -694,7 +694,9 @@ public class LassoChecker {
 		
 		final FixpointCheck fixpointCheck = new FixpointCheck(mServices, mLogger, mSmtManager.getManagedScript(), modifiableGlobalsAtHonda, stemTF, loopTF);
 		if (fixpointCheck.getResult() == HasFixpoint.YES) {
-			mNonterminationArgument = fixpointCheck.getTerminationArgument();
+			if (withStem) {
+				mNonterminationArgument = fixpointCheck.getTerminationArgument();
+			}
 			return SynthesisResult.NONTERMINATING;
 		}
 
