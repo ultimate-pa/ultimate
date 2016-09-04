@@ -36,38 +36,44 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 
 /**
  * Checks whether a nested word automaton is total.
- * 
- * <p>An NWA is total if for each state and symbol there is an outgoing
+ * <p>
+ * An NWA is total if for each state and symbol there is an outgoing
  * transition.
  * For return transitions, we require that for each hierarchical predecessor
  * there is a transition with each return symbol.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class IsTotal<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final boolean mResult;
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	
 	/**
-	 * @param services Ultimate services
-	 * @param operand input NWA
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            input NWA
 	 */
 	public IsTotal(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services);
 		mOperand = operand;
-		mResult = isTotal();
+		mResult = computeIsTotal();
 		mLogger.info("automaton is " + (mResult ? "" : "not ") + "total");
 	}
 	
 	/**
-	 * @return true iff automaton is total according to contract
+	 * @return {@code true} iff automaton is total according to contract.
 	 */
-	private boolean isTotal() {
+	private boolean computeIsTotal() {
 		for (final STATE state : mOperand.getStates()) {
-			if (! isTotal(state)) {
+			if (!isTotal(state)) {
 				return false;
 			}
 		}
@@ -75,33 +81,32 @@ public class IsTotal<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	}
 	
 	/**
-	 * @param state state for which totality is tested
-	 * @return true iff the given state has all outgoing transitions
+	 * @param state
+	 *            The state for which totality is tested.
+	 * @return {@code true} iff the given state has all outgoing transitions
 	 */
 	private boolean isTotal(final STATE state) {
-		// internal
+		// internals
 		for (final LETTER symbol : mOperand.getInternalAlphabet()) {
-			final Iterable<OutgoingInternalTransition<LETTER, STATE>> it =
-				mOperand.internalSuccessors(state, symbol);
+			final Iterable<OutgoingInternalTransition<LETTER, STATE>> it = mOperand.internalSuccessors(state, symbol);
 			if (!it.iterator().hasNext()) {
 				return false;
 			}
 		}
 		
-		// call
+		// calls
 		for (final LETTER symbol : mOperand.getCallAlphabet()) {
-			final Iterable<OutgoingCallTransition<LETTER, STATE>> it =
-				mOperand.callSuccessors(state, symbol);
+			final Iterable<OutgoingCallTransition<LETTER, STATE>> it = mOperand.callSuccessors(state, symbol);
 			if (!it.iterator().hasNext()) {
 				return false;
 			}
 		}
 		
-		 // return
+		// returns
 		for (final LETTER symbol : mOperand.getReturnAlphabet()) {
 			for (final STATE hier : mOperand.getStates()) {
 				final Iterable<OutgoingReturnTransition<LETTER, STATE>> it =
-					mOperand.returnSuccessors(state, hier, symbol);
+						mOperand.returnSuccessors(state, hier, symbol);
 				if (!it.iterator().hasNext()) {
 					return false;
 				}
@@ -114,7 +119,7 @@ public class IsTotal<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	public String operationName() {
 		return "IsTotal";
 	}
-
+	
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;

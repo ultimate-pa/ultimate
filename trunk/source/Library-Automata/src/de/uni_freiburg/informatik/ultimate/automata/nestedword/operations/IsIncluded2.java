@@ -40,12 +40,14 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * Since this operation is restricted to exactly three operands
  * it is not useful in practice and only used for testing correctness
  * of our incremental inclusion check.
- * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class IsIncluded2<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public final class IsIncluded2<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mB1;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mB2;
@@ -56,72 +58,75 @@ public class IsIncluded2<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
 	private final NestedRun<LETTER, STATE> mCounterexample;
 	
 	/**
-	 * @param services Ultimate services
-	 * @param stateFactory state factory
-	 * @param operandA minuend
-	 * @param operandB1 first subtrahend
-	 * @param operandB2 second subtrahend
-	 * @throws AutomataLibraryException if construction fails
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operandA
+	 *            minuend
+	 * @param operandB1
+	 *            first subtrahend
+	 * @param operandB2
+	 *            second subtrahend
+	 * @throws AutomataLibraryException
+	 *             if construction fails
 	 */
 	public IsIncluded2(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operandA,
 			final INestedWordAutomatonSimple<LETTER, STATE> operandB1,
 			final INestedWordAutomatonSimple<LETTER, STATE> operandB2)
-					throws AutomataLibraryException {
+			throws AutomataLibraryException {
 		super(services);
 		mOperand = operandA;
 		mB1 = operandB1;
 		mB2 = operandB2;
 		// workaround until Matthias implemented this
-		mLogger.info(startMessage());
-		mInclusionViaDifference =
-				new InclusionViaDifference<>(services, stateFactory, operandA);
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		
+		mInclusionViaDifference = new InclusionViaDifference<>(services, stateFactory, operandA);
 		mInclusionViaDifference.addSubtrahend(mB1);
 		mInclusionViaDifference.addSubtrahend(mB2);
 		mCounterexample = mInclusionViaDifference.getCounterexample();
-		mResult = (mCounterexample == null);
-		mLogger.info(exitMessage());
+		mResult = mCounterexample == null;
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
-
+	
 	@Override
 	public String operationName() {
-		return "isIncluded2";
+		return "IsIncluded2";
 	}
-
+	
 	@Override
 	public String startMessage() {
-			return "Start " + operationName() + ". Operand A "
-					+ mOperand.sizeInformation() + ". Operand B_1 "
-					+ mB1.sizeInformation() + ". Operand B_2 "
-					+ mB2.sizeInformation();
+		return "Start " + operationName() + ". Operand A " + mOperand.sizeInformation() + ". Operand B_1 "
+				+ mB1.sizeInformation() + ". Operand B_2 " + mB2.sizeInformation();
 	}
-
+	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Language is "
-				+ (mResult ? "" : "not ") + "included";
+		return "Finished " + operationName() + ". Language is " + (mResult ? "" : "not ") + "included";
 	}
-
+	
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-
+	
 	@Override
 	public Boolean getResult() {
 		return mResult;
 	}
-
+	
 	public NestedRun<LETTER, STATE> getCounterexample() {
 		return mCounterexample;
-	}
-
-	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		// FIXME: result check not implemented yet
-		mLogger.warn("FIXME: result check not implemented yet");
-		return true;
 	}
 }

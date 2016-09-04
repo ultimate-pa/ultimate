@@ -33,10 +33,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 /**
  * Operation that returns the number of states of a nested word automaton.
  * 
- * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class NumberOfStates<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
@@ -44,26 +45,27 @@ public class NumberOfStates<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 	/**
 	 * Constructor.
 	 * 
-	 * @param services Ultimate services
-	 * @param operand operand
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
 	 */
-	public NumberOfStates(
-			final AutomataLibraryServices services,
+	public NumberOfStates(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
 		super(services);
 		mOperand = operand;
 	}
-
+	
 	@Override
 	public String operationName() {
-		return "numberOfStates";
+		return "NumberOfStates";
 	}
-
+	
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-
+	
 	@Override
 	public Integer getResult() {
 		return mOperand.size();

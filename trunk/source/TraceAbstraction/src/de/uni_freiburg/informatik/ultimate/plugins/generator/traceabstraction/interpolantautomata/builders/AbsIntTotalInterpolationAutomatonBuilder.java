@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.ESymbolType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -206,7 +206,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 		if (mLogger.isDebugEnabled()) {
 			final Analyze<CodeBlock, IPredicate> analyze =
 					new Analyze<>(new AutomataLibraryServices(mServices), result);
-			numberOfTransitionsBeforeEnhancement = analyze.getNumberOfTransitions(ESymbolType.TOTAL);
+			numberOfTransitionsBeforeEnhancement = analyze.getNumberOfTransitions(SymbolType.TOTAL);
 		}
 
 		final IAbstractPostOperator<?, CodeBlock, IBoogieVar> postOperator = aiResult.getUsedDomain().getPostOperator();
@@ -252,7 +252,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 		if (mLogger.isDebugEnabled()) {
 			final Analyze<CodeBlock, IPredicate> analyze =
 					new Analyze<>(new AutomataLibraryServices(mServices), result);
-			final int numberOfTransitionsAfter = analyze.getNumberOfTransitions(ESymbolType.TOTAL);
+			final int numberOfTransitionsAfter = analyze.getNumberOfTransitions(SymbolType.TOTAL);
 
 			mLogger.debug("Enhancement added " + (numberOfTransitionsAfter - numberOfTransitionsBeforeEnhancement)
 					+ " transitions.");

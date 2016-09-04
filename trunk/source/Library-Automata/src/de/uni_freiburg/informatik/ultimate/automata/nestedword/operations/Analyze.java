@@ -42,7 +42,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 
 /**
- * Given an NWA, this class analyzes the NWA to obtain various information.
+ * Given a nested word automaton, this class analyzes the automaton to obtain various information.
+ * <p>
  * A user should use the respective getters to obtain individual data.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
@@ -52,13 +53,29 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  *            state type
  */
 public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+	private static final String INVALID_SYMBOL_TYPE = "Invalid symbol type.";
+	
+	private static final int THREE = 3;
+	
 	/**
 	 * Type of symbol.
 	 */
-	public enum ESymbolType {
+	public enum SymbolType {
+		/**
+		 * Internal symbol.
+		 */
 		INTERNAL,
+		/**
+		 * Call symbol.
+		 */
 		CALL,
+		/**
+		 * Return symbol.
+		 */
 		RETURN,
+		/**
+		 * Any type of symbol.
+		 */
 		TOTAL
 	}
 	
@@ -117,11 +134,19 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 		
 		// compute all available information
 		if (computeEverything) {
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info(startMessage());
+			}
+			
 			getNumberOfStates();
-			getNumberOfSymbols(ESymbolType.TOTAL);
-			getNumberOfTransitions(ESymbolType.TOTAL);
-			getTransitionDensity(ESymbolType.TOTAL);
+			getNumberOfSymbols(SymbolType.TOTAL);
+			getNumberOfTransitions(SymbolType.TOTAL);
+			getTransitionDensity(SymbolType.TOTAL);
 			getNumberOfNondeterministicStates();
+			
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info(exitMessage());
+			}
 		}
 	}
 	
@@ -130,7 +155,7 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	/**
 	 * @return Number of states.
 	 */
-	public int getNumberOfStates() {
+	public final int getNumberOfStates() {
 		if (!mNumberOfStatesComputed) {
 			computeNumberOfStates();
 		}
@@ -139,10 +164,10 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	
 	/**
 	 * @param type
-	 *            symbol type
+	 *            The symbol type.
 	 * @return number of symbols
 	 */
-	public int getNumberOfSymbols(final ESymbolType type) {
+	public final int getNumberOfSymbols(final SymbolType type) {
 		if (!mNumberOfSymbolsComputed) {
 			computeNumberOfSymbols();
 		}
@@ -151,31 +176,31 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 			case INTERNAL:
 				result = mNumberOfInternalSymbols;
 				break;
-				
+			
 			case CALL:
 				result = mNumberOfCallSymbols;
 				break;
-				
+			
 			case RETURN:
 				result = mNumberOfReturnSymbols;
 				break;
-				
+			
 			case TOTAL:
 				result = mNumberOfInternalSymbols + mNumberOfCallSymbols + mNumberOfReturnSymbols;
 				break;
-				
+			
 			default:
-				throw new IllegalArgumentException("Invalid symbol type.");
+				throw new IllegalArgumentException(INVALID_SYMBOL_TYPE);
 		}
 		return result;
 	}
 	
 	/**
 	 * @param type
-	 *            symbol type
+	 *            The symbol type.
 	 * @return number of transitions
 	 */
-	public int getNumberOfTransitions(final ESymbolType type) {
+	public final int getNumberOfTransitions(final SymbolType type) {
 		if (!mNumberOfTransitionsComputed) {
 			computeNumberOfTransitions();
 		}
@@ -184,21 +209,21 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 			case INTERNAL:
 				result = mNumberOfInternalTransitions;
 				break;
-				
+			
 			case CALL:
 				result = mNumberOfCallTransitions;
 				break;
-				
+			
 			case RETURN:
 				result = mNumberOfReturnTransitions;
 				break;
-				
+			
 			case TOTAL:
 				result = mNumberOfInternalTransitions + mNumberOfCallTransitions + mNumberOfReturnTransitions;
 				break;
-				
+			
 			default:
-				throw new IllegalArgumentException("Invalid symbol type.");
+				throw new IllegalArgumentException(INVALID_SYMBOL_TYPE);
 		}
 		return result;
 	}
@@ -217,7 +242,7 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	 *            symbol type
 	 * @return transition density
 	 */
-	public double getTransitionDensity(final ESymbolType type) {
+	public final double getTransitionDensity(final SymbolType type) {
 		if (!mTransitionDensityComputed) {
 			computeTransitionDensity();
 		}
@@ -226,21 +251,21 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 			case INTERNAL:
 				result = mInternalTransitionDensity;
 				break;
-				
+			
 			case CALL:
 				result = mCallTransitionDensity;
 				break;
-				
+			
 			case RETURN:
 				result = mReturnTransitionDensity;
 				break;
-				
+			
 			case TOTAL:
-				result = (mInternalTransitionDensity + mCallTransitionDensity + mReturnTransitionDensity) / 3;
+				result = (mInternalTransitionDensity + mCallTransitionDensity + mReturnTransitionDensity) / THREE;
 				break;
-				
+			
 			default:
-				throw new IllegalArgumentException("Invalid symbol type.");
+				throw new IllegalArgumentException(INVALID_SYMBOL_TYPE);
 		}
 		return result;
 	}
@@ -254,7 +279,7 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	 * 
 	 * @return number of nondeterministic states
 	 */
-	public int getNumberOfNondeterministicStates() {
+	public final int getNumberOfNondeterministicStates() {
 		if (!mNumberOfNondeterministicStatesComputed) {
 			computeDegreeOfNondeterminism();
 		}
@@ -265,19 +290,19 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	
 	@Override
 	public String operationName() {
-		return "NWA Analysis";
+		return "Analyze";
 	}
 	
 	@Override
-	public String startMessage() {
+	public final String startMessage() {
 		return "Started automaton analysis";
 	}
 	
 	@Override
-	public String exitMessage() {
+	public final String exitMessage() {
 		return "Finished automaton analysis";
 	}
-
+	
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
@@ -290,13 +315,13 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	
 	// --- computation methods ---
 	
-	private void computeNumberOfStates() {
+	private final void computeNumberOfStates() {
 		mNumberOfStates = mOperand.size();
 		
 		mNumberOfStatesComputed = true;
 	}
 	
-	private void computeNumberOfSymbols() {
+	private final void computeNumberOfSymbols() {
 		mNumberOfInternalSymbols = mOperand.getInternalAlphabet().size();
 		mNumberOfCallSymbols = mOperand.getCallAlphabet().size();
 		mNumberOfReturnSymbols = mOperand.getReturnAlphabet().size();
@@ -304,7 +329,7 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 		mNumberOfSymbolsComputed = true;
 	}
 	
-	private void computeNumberOfTransitions() {
+	private final void computeNumberOfTransitions() {
 		mNumberOfInternalTransitions = 0;
 		mNumberOfCallTransitions = 0;
 		mNumberOfReturnTransitions = 0;
@@ -335,75 +360,85 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 		mNumberOfTransitionsComputed = true;
 	}
 	
-	@SuppressWarnings("squid:S1244")
+	@SuppressWarnings({ "squid:S1244", "squid:S2184" })
 	private void computeTransitionDensity() {
 		// make sure the numbers of states, symbols, and transitions exist
 		getNumberOfStates();
-		getNumberOfSymbols(ESymbolType.TOTAL);
-		getNumberOfTransitions(ESymbolType.TOTAL);
+		getNumberOfSymbols(SymbolType.TOTAL);
+		getNumberOfTransitions(SymbolType.TOTAL);
 		
 		double denominator;
 		
-		denominator = (mNumberOfStates * mNumberOfInternalSymbols);
-		mInternalTransitionDensity = (denominator == 0d
-				? 0d
-				: (mNumberOfInternalTransitions / denominator));
-				
-		denominator = (mNumberOfStates * mNumberOfCallSymbols);
-		mCallTransitionDensity = (denominator == 0d
-				? 0d
-				: (mNumberOfCallTransitions / denominator));
-				
-		denominator =
-				(mNumberOfStates * mNumberOfStates * mNumberOfReturnSymbols);
-		mReturnTransitionDensity = (denominator == 0d
-				? 0d
-				: (mNumberOfReturnTransitions / denominator));
-				
+		denominator = mNumberOfStates * mNumberOfInternalSymbols;
+		mInternalTransitionDensity = denominator == 0D
+				? 0D
+				: (mNumberOfInternalTransitions / denominator);
+		
+		denominator = mNumberOfStates * mNumberOfCallSymbols;
+		mCallTransitionDensity = denominator == 0D
+				? 0D
+				: (mNumberOfCallTransitions / denominator);
+		
+		denominator = mNumberOfStates * mNumberOfStates * mNumberOfReturnSymbols;
+		mReturnTransitionDensity = denominator == 0D
+				? 0D
+				: (mNumberOfReturnTransitions / denominator);
+		
 		mTransitionDensityComputed = true;
 	}
 	
-	private void computeDegreeOfNondeterminism() {
+	private final void computeDegreeOfNondeterminism() {
 		mNumberOfNondeterministicStates = 0;
 		
 		final Set<STATE> dummySet = Collections.emptySet();
-		final Map<LETTER, Set<STATE>> symbolsVisited = new HashMap<>();
-		outer: for (final STATE state : mOperand.getStates()) {
-			symbolsVisited.clear();
-			for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(state)) {
-				if (symbolsVisited.put(trans.getLetter(), dummySet) != null) {
-					++mNumberOfNondeterministicStates;
-					continue outer;
-				}
-			}
+		for (final STATE state : mOperand.getStates()) {
+			computeDegreeOfNondeterminismInternal(dummySet, state);
 			
-			symbolsVisited.clear();
-			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(state)) {
-				if (symbolsVisited.put(trans.getLetter(), dummySet) != null) {
-					++mNumberOfNondeterministicStates;
-					continue outer;
-				}
-			}
+			computeDegreeOfNondeterminismCall(dummySet, state);
 			
-			/*
-			 * for return transitions check for same symbol AND hierarchical
-			 * predecessor
-			 */
-			symbolsVisited.clear();
-			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(state)) {
-				final LETTER letter = trans.getLetter();
-				Set<STATE> set = symbolsVisited.get(letter);
-				if (set == null) {
-					set = new HashSet<STATE>();
-					symbolsVisited.put(letter, set);
-				}
-				if (!set.add(trans.getHierPred())) {
-					++mNumberOfNondeterministicStates;
-					continue outer;
-				}
-			}
+			computeDegreeOfNondeterminismReturn(state);
 		}
 		
 		mNumberOfNondeterministicStatesComputed = true;
+	}
+	
+	private void computeDegreeOfNondeterminismInternal(final Set<STATE> dummySet, final STATE state) {
+		final Map<LETTER, Set<STATE>> symbolsVisited = new HashMap<>();
+		for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(state)) {
+			if (symbolsVisited.put(trans.getLetter(), dummySet) != null) {
+				++mNumberOfNondeterministicStates;
+				return;
+			}
+		}
+	}
+	
+	private void computeDegreeOfNondeterminismCall(final Set<STATE> dummySet, final STATE state) {
+		final Map<LETTER, Set<STATE>> symbolsVisited = new HashMap<>();
+		for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(state)) {
+			if (symbolsVisited.put(trans.getLetter(), dummySet) != null) {
+				++mNumberOfNondeterministicStates;
+				return;
+			}
+		}
+	}
+	
+	private void computeDegreeOfNondeterminismReturn(final STATE state) {
+		/*
+		 * for return transitions check for same symbol AND hierarchical
+		 * predecessor
+		 */
+		final Map<LETTER, Set<STATE>> symbolsVisited = new HashMap<>();
+		for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(state)) {
+			final LETTER letter = trans.getLetter();
+			Set<STATE> set = symbolsVisited.get(letter);
+			if (set == null) {
+				set = new HashSet<>();
+				symbolsVisited.put(letter, set);
+			}
+			if (!set.add(trans.getHierPred())) {
+				++mNumberOfNondeterministicStates;
+				return;
+			}
+		}
 	}
 }

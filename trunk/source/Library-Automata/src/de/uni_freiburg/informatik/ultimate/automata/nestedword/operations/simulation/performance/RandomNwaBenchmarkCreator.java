@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.ESymbolType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 
 /**
@@ -260,9 +260,9 @@ public final class RandomNwaBenchmarkCreator {
 			if (i == 1) {
 				// Print some debug information
 				final Analyze<String, String> analyzer = new Analyze<>(mServices, nwa, true);
-				System.out.println("#Internal: " + analyzer.getNumberOfTransitions(ESymbolType.INTERNAL));
-				System.out.println("#Call: " + analyzer.getNumberOfTransitions(ESymbolType.CALL));
-				System.out.println("#Return: " + analyzer.getNumberOfTransitions(ESymbolType.RETURN));
+				System.out.println("#Internal: " + analyzer.getNumberOfTransitions(SymbolType.INTERNAL));
+				System.out.println("#Call: " + analyzer.getNumberOfTransitions(SymbolType.CALL));
+				System.out.println("#Return: " + analyzer.getNumberOfTransitions(SymbolType.RETURN));
 			}
 
 			final String fileNamePost = "_" + i;

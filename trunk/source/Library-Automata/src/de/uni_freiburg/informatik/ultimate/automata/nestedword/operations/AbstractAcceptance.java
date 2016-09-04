@@ -41,41 +41,48 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 
-
 /**
- * Contains methods which are shared by Acceptance and BuchiAcceptance.
- * @author heizmann@informatik.uni-freiburg.de
+ * Contains methods which are shared by {@link Accepts} and
+ * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts BuchiAccepts}.
  * 
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author heizmann@informatik.uni-freiburg.de
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public abstract class AbstractAcceptance<LETTER,STATE>
-		extends UnaryNwaOperation<LETTER, STATE> {
-	/**
-	 * Input nested word automaton.
-	 */
+public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+	private static final String AT_POSITION = " at position ";
+	private static final String UNABLE_TO_CHECK_ACCEPTANCE_LETTER = "Unable to check acceptance. Letter ";
+	
 	protected final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	
 	protected boolean mIsAccepted;
 	
 	/**
-	 * @param services Ultimate services
-	 * @param operand operand
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
 	 */
 	public AbstractAcceptance(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
 		super(services);
 		mOperand = operand;
 	}
-
+	
 	/**
+	 * @param states
+	 *            states
 	 * @return Result contains a configuration for each state which contains
-	 *     only this state.
+	 *         only this state.
 	 */
 	public Set<ArrayDeque<STATE>> emptyStackConfiguration(final Iterable<STATE> states) {
 		final Set<ArrayDeque<STATE>> configurations = new HashSet<>();
 		for (final STATE state : states) {
-			final ArrayDeque<STATE> singletonStack = new ArrayDeque<STATE>();
+			final ArrayDeque<STATE> singletonStack = new ArrayDeque<>();
 			singletonStack.push(state);
 			configurations.add(singletonStack);
 		}
@@ -85,16 +92,15 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 	/**
 	 * @return true iff the topmost stack element is an accepting state.
 	 */
-	public boolean isAcceptingConfiguration(final Deque<STATE> configuration,
-			final INestedWordAutomatonSimple<LETTER,STATE> nwa) {
-			final STATE state = configuration.peek();
-			if (nwa.isFinal(state)) {
-				return true;
-			}
+	protected boolean isAcceptingConfiguration(final Deque<STATE> configuration,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+		final STATE state = configuration.peek();
+		if (nwa.isFinal(state)) {
+			return true;
+		}
 		return false;
 	}
 	
-
 	/**
 	 * Compute successor configurations for a set of given configurations and
 	 * one letter of a nested word. A configuration is given as a stack of
@@ -113,14 +119,13 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 	 *            only this initial state. Useful to check if suffix of word is
 	 *            accepted. If set the input configurations is modified.
 	 * @throws AutomataLibraryException
-	 * 
+	 *             if symbol not contained in alphabet or timeout
 	 */
-	public Set<ArrayDeque<STATE>> successorConfigurations(
-			final Set<ArrayDeque<STATE>> configurations,
-			final NestedWord<LETTER> nw, final int position,
-			final INestedWordAutomatonSimple<LETTER,STATE> nwa,
-			final boolean addInitial) throws AutomataLibraryException {
-		final Set<ArrayDeque<STATE>> succConfigs = new HashSet<ArrayDeque<STATE>>();
+	protected Set<ArrayDeque<STATE>> successorConfigurations(final Set<ArrayDeque<STATE>> configurations,
+			final NestedWord<LETTER> nestedWord, final int position,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final boolean addInitial)
+			throws AutomataLibraryException {
+		final Set<ArrayDeque<STATE>> succConfigs = new HashSet<>();
 		if (addInitial) {
 			/**
 			 * TODO Christian 2016-08-16: Most probably a bug: Does not make sense.
@@ -133,65 +138,79 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 			}
 			
 			final STATE state = config.pop();
-			final LETTER symbol = nw.getSymbol(position);
-			if (nw.isInternalPosition(position)) {
-				if (!nwa.getInternalAlphabet().contains(symbol)) {
-					throw new AutomataLibraryException(this.getClass(),
-							"Unable to check acceptance. Letter "
-							+ symbol + " at position " + position
-							+ " not in internal alphabet of automaton.");
-				}
-				final Iterable<OutgoingInternalTransition<LETTER, STATE>> outTransitions =
-						nwa.internalSuccessors(state, symbol);
-				for (final OutgoingInternalTransition<LETTER, STATE> outRans :outTransitions) {
-					final STATE succ = outRans.getSucc();
-					final ArrayDeque<STATE> succConfig = config.clone();
-					succConfig.push(succ);
-					succConfigs.add(succConfig);
-				}
-			} else if (nw.isCallPosition(position)) {
-				if (!nwa.getCallAlphabet().contains(symbol)) {
-					throw new AutomataLibraryException(this.getClass(),
-							"Unable to check acceptance. Letter "
-							+ symbol + " at position " + position
-							+ " not in call alphabet of automaton.");
-				}
-				final Iterable<OutgoingCallTransition<LETTER, STATE>> outTransitions =
-						nwa.callSuccessors(state, symbol);
-				for (final OutgoingCallTransition<LETTER, STATE> outRans :outTransitions) {
-					final STATE succ = outRans.getSucc();
-					final ArrayDeque<STATE> succConfig = config.clone();
-					succConfig.push(state);
-					succConfig.push(succ);
-					succConfigs.add(succConfig);
-				}
-			} else if (nw.isReturnPosition(position)) {
-				if (!nwa.getReturnAlphabet().contains(symbol)) {
-					throw new AutomataLibraryException(this.getClass(),
-							"Unable to check acceptance. Letter "
-							+ symbol + " at position " + position
-							+ " not in return alphabet of automaton.");
-				}
-				if (config.isEmpty()) {
-					mLogger.warn("Input has pending returns, we reject such words");
-				} else {
-					final STATE callPred = config.pop();
-					final Iterable<OutgoingReturnTransition<LETTER, STATE>> outTransitions =
-							nwa.returnSuccessors(state, callPred, symbol);
-					for (final OutgoingReturnTransition<LETTER, STATE> outRans :outTransitions) {
-						final STATE succ = outRans.getSucc();
-						final ArrayDeque<STATE> succConfig = config.clone();
-						succConfig.push(succ);
-						succConfigs.add(succConfig);
-					}
-					config.push(callPred);
-				}
+			final LETTER symbol = nestedWord.getSymbol(position);
+			if (nestedWord.isInternalPosition(position)) {
+				successorConfigurationsInternal(position, nwa, succConfigs, config, state, symbol);
+			} else if (nestedWord.isCallPosition(position)) {
+				successorConfigurationsCall(position, nwa, succConfigs, config, state, symbol);
+			} else if (nestedWord.isReturnPosition(position)) {
+				successorConfigurationsReturn(position, nwa, succConfigs, config, state, symbol);
 			} else {
 				throw new AssertionError();
 			}
 			config.push(state);
 		}
 		return succConfigs;
+	}
+	
+	private void successorConfigurationsInternal(final int position,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final Set<ArrayDeque<STATE>> succConfigs,
+			final ArrayDeque<STATE> config, final STATE state, final LETTER symbol) throws AutomataLibraryException {
+		if (!nwa.getInternalAlphabet().contains(symbol)) {
+			throw new AutomataLibraryException(this.getClass(), UNABLE_TO_CHECK_ACCEPTANCE_LETTER + symbol + AT_POSITION
+					+ position + " not in internal alphabet of automaton.");
+		}
+		final Iterable<OutgoingInternalTransition<LETTER, STATE>> outTransitions =
+				nwa.internalSuccessors(state, symbol);
+		for (final OutgoingInternalTransition<LETTER, STATE> outRans : outTransitions) {
+			final STATE succ = outRans.getSucc();
+			final ArrayDeque<STATE> succConfig = config.clone();
+			succConfig.push(succ);
+			succConfigs.add(succConfig);
+		}
+	}
+	
+	private void successorConfigurationsCall(final int position, final INestedWordAutomatonSimple<LETTER, STATE> nwa,
+			final Set<ArrayDeque<STATE>> succConfigs, final ArrayDeque<STATE> config, final STATE state,
+			final LETTER symbol) throws AutomataLibraryException {
+		if (!nwa.getCallAlphabet().contains(symbol)) {
+			throw new AutomataLibraryException(this.getClass(), UNABLE_TO_CHECK_ACCEPTANCE_LETTER + symbol + AT_POSITION
+					+ position + " not in call alphabet of automaton.");
+		}
+		final Iterable<OutgoingCallTransition<LETTER, STATE>> outTransitions =
+				nwa.callSuccessors(state, symbol);
+		for (final OutgoingCallTransition<LETTER, STATE> outRans : outTransitions) {
+			final STATE succ = outRans.getSucc();
+			final ArrayDeque<STATE> succConfig = config.clone();
+			succConfig.push(state);
+			succConfig.push(succ);
+			succConfigs.add(succConfig);
+		}
+	}
+	
+	private void successorConfigurationsReturn(final int position, final INestedWordAutomatonSimple<LETTER, STATE> nwa,
+			final Set<ArrayDeque<STATE>> succConfigs, final ArrayDeque<STATE> config, final STATE state,
+			final LETTER symbol) throws AutomataLibraryException {
+		if (!nwa.getReturnAlphabet().contains(symbol)) {
+			throw new AutomataLibraryException(this.getClass(), UNABLE_TO_CHECK_ACCEPTANCE_LETTER + symbol + AT_POSITION
+					+ position + " not in return alphabet of automaton.");
+		}
+		if (config.isEmpty()) {
+			if (mLogger.isWarnEnabled()) {
+				mLogger.warn("Input has pending returns, we reject such words");
+			}
+		} else {
+			final STATE callPred = config.pop();
+			final Iterable<OutgoingReturnTransition<LETTER, STATE>> outTransitions =
+					nwa.returnSuccessors(state, callPred, symbol);
+			for (final OutgoingReturnTransition<LETTER, STATE> outRans : outTransitions) {
+				final STATE succ = outRans.getSucc();
+				final ArrayDeque<STATE> succConfig = config.clone();
+				succConfig.push(succ);
+				succConfigs.add(succConfig);
+			}
+			config.push(callPred);
+		}
 	}
 	
 	@Override

@@ -36,52 +36,58 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.N
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-
 /**
- * Totalizes an NWA, i.e., makes every state have an outgoing transition
- * for every letter.
+ * Totalizes a nested word automaton, i.e., makes every state have an outgoing transition for every letter.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class Totalize<LETTER,STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
-	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
+	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private final IStateFactory<STATE> mStateFactory;
 	
-	
 	/**
-	 * @param services Ultimate services
-	 * @param operand operand
-	 * @throws AutomataLibraryException if NWA construction fails
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @throws AutomataLibraryException
+	 *             if NWA construction fails
 	 */
-	public Totalize(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER,STATE> operand)
-					throws AutomataLibraryException {
+	public Totalize(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand)
+			throws AutomataLibraryException {
 		super(services);
 		mOperand = operand;
 		mStateFactory = operand.getStateFactory();
-		mLogger.info(startMessage());
-		final TotalizeNwa<LETTER, STATE> totalized =
-				new TotalizeNwa<LETTER, STATE>(operand, mStateFactory);
-		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(
-				mServices, totalized);
-		mLogger.info(exitMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		
+		final TotalizeNwa<LETTER, STATE> totalized = new TotalizeNwa<>(operand, mStateFactory);
+		mResult = new NestedWordAutomatonReachableStates<>(mServices, totalized);
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 	
 	@Override
 	public String operationName() {
-		return "totalize";
+		return "Totalize";
 	}
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result "
-				+ mResult.sizeInformation();
+		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}
-
+	
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
@@ -90,11 +96,13 @@ public class Totalize<LETTER,STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
-	}	
+	}
+	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		mLogger.info("Start testing correctness of " + operationName());
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Start testing correctness of " + operationName());
+		}
 		
 		final String message;
 		final boolean correct;
@@ -102,12 +110,12 @@ public class Totalize<LETTER,STATE> extends UnaryNwaOperation<LETTER, STATE> {
 		// check language equivalence
 		final Pair<Boolean, String> equivalenceResult = checkLanguageEquivalence(stateFactory);
 		
-		if (! equivalenceResult.getFirst()) {
+		if (!equivalenceResult.getFirst()) {
 			// language equivalence check failed
 			message = equivalenceResult.getSecond();
 			correct = false;
 			assert false;
-		} else if (! new IsTotal<LETTER, STATE>(mServices, mResult).getResult()) {
+		} else if (!new IsTotal<LETTER, STATE>(mServices, mResult).getResult()) {
 			// totality check failed
 			message = "The result is not total.";
 			correct = false;
@@ -117,10 +125,11 @@ public class Totalize<LETTER,STATE> extends UnaryNwaOperation<LETTER, STATE> {
 			correct = true;
 		}
 		
-		mLogger.info("Finished testing correctness of " + operationName());
-		if (! correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
-					operationName() + "Failed", message, mOperand);
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of " + operationName());
+		}
+		if (!correct) {
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed", message, mOperand);
 		}
 		return correct;
 	}

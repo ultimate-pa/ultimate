@@ -36,50 +36,62 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
  * Operation that checks if the language of the first operand is included in the
  * language of the second automaton.
- * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class IsIncluded<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
+public final class IsIncluded<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private final Boolean mResult;
 	private final NestedRun<LETTER, STATE> mCounterexample;
 	
 	/**
-	 * @param services Ultimate services
-	 * @param stateFactory state factory
-	 * @param fstOperand first operand
-	 * @param sndOperand second operand
-	 * @throws AutomataLibraryException if construction fails
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param fstOperand
+	 *            first operand
+	 * @param sndOperand
+	 *            second operand
+	 * @throws AutomataLibraryException
+	 *             if construction fails
 	 */
-	public IsIncluded(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
+	public IsIncluded(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand)
-					throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
-		mLogger.info(startMessage());
-		final IsEmpty<LETTER, STATE> emptinessCheck = new IsEmpty<LETTER, STATE>(
-				services, (new Difference<LETTER, STATE>(
-						mServices, stateFactory, fstOperand, sndOperand)).getResult());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		
+		final IsEmpty<LETTER, STATE> emptinessCheck = new IsEmpty<>(services,
+				(new Difference<LETTER, STATE>(mServices, stateFactory, fstOperand, sndOperand)).getResult());
 		mResult = emptinessCheck.getResult();
 		mCounterexample = emptinessCheck.getNestedRun();
-		mLogger.info(exitMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
-
+	
 	@Override
 	public String operationName() {
-		return "isIncluded";
+		return "IsIncluded";
 	}
-
+	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Language is "
-				+ (mResult ? "" : "not ") + "included";
+		return "Finished " + operationName() + ". Language is " + (mResult ? "" : "not ") + "included";
 	}
 	
 	@Override
@@ -91,12 +103,12 @@ public class IsIncluded<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE>
 	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
-
+	
 	@Override
 	public Boolean getResult() {
 		return mResult;
 	}
-
+	
 	public NestedRun<LETTER, STATE> getCounterexample() {
 		return mCounterexample;
 	}

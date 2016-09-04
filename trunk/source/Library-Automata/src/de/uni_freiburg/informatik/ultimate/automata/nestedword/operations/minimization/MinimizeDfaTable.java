@@ -76,7 +76,7 @@ public class MinimizeDfaTable<LETTER,STATE> extends AbstractMinimizeNwa<LETTER, 
 					throws AutomataLibraryException {
 		super(services, operand.getStateFactory(), "minimizeDFA", operand);
 		
-	    assert !new HasUnreachableStates<LETTER,STATE>(mServices, operand).result() :
+	    assert !new HasUnreachableStates<LETTER,STATE>(mServices, operand).getResult() :
 			"No unreachable states allowed";
 		
 		mIsDeterministic = isDeterministic();
