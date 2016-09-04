@@ -67,7 +67,7 @@ public class PredicateFactory {
 	private final SimplicationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
-	protected int mSerialNumber;
+	protected int mSerialNumberCounter;
 
 	private static final Set<IProgramVar> EMPTY_VARS = Collections.emptySet();
 	private static final String[] NO_PROCEDURE = new String[0];
@@ -76,12 +76,13 @@ public class PredicateFactory {
 	private final ManagedScript mMgdScript;
 	private final ILogger mLogger;
 	
-	protected Term mDontCareTerm;
-	protected Term mEmptyStackTerm;
+	private final Term mDontCareTerm;
+	private final Term mEmptyStackTerm;
 	
 	
 	
-	public Term getDontCareTerm() {
+	
+	protected Term getDontCareTerm() {
 		return mDontCareTerm;
 	}
 
@@ -95,6 +96,10 @@ public class PredicateFactory {
 		mScript = mgdScript.getScript();
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
+	}
+	
+	protected int constructFreshSerialNumber() {
+		return mSerialNumberCounter++;
 	}
 	
 	/**
@@ -120,7 +125,7 @@ public class PredicateFactory {
 
 	public PredicateWithHistory newPredicateWithHistory(final ProgramPoint pp, final Term term, final Map<Integer, Term> history) {
 		final TermVarsProc tvp = constructTermVarsProc(term);
-		final PredicateWithHistory pred = new PredicateWithHistory(pp, mSerialNumber++, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(),
+		final PredicateWithHistory pred = new PredicateWithHistory(pp, constructFreshSerialNumber(), tvp.getProcedures(), tvp.getFormula(), tvp.getVars(),
 				tvp.getClosedFormula(), history);
 		return pred;
 	}
@@ -139,14 +144,14 @@ public class PredicateFactory {
 	}
 	
 	private SPredicate newSPredicate(final ProgramPoint pp, final TermVarsProc termVarsProc) {
-		final SPredicate pred = new SPredicate(pp, mSerialNumber++, termVarsProc.getProcedures(), termVarsProc.getFormula(),
+		final SPredicate pred = new SPredicate(pp, constructFreshSerialNumber(), termVarsProc.getProcedures(), termVarsProc.getFormula(),
 				termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return pred;
 	}
 
 	public BasicPredicate newPredicate(final Term term) {
 		final TermVarsProc termVarsProc = constructTermVarsProc(term);
-		final BasicPredicate predicate = new BasicPredicate(mSerialNumber++, termVarsProc.getProcedures(),
+		final BasicPredicate predicate = new BasicPredicate(constructFreshSerialNumber(), termVarsProc.getProcedures(),
 				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return predicate;
 	}
@@ -163,13 +168,20 @@ public class PredicateFactory {
 
 	public MLPredicate newMLPredicate(final ProgramPoint[] programPoints, final Term term) {
 		final TermVarsProc termVarsProc = constructTermVarsProc(term);
-		final MLPredicate predicate = new MLPredicate(programPoints, mSerialNumber++, termVarsProc.getProcedures(),
+		final MLPredicate predicate = new MLPredicate(programPoints, constructFreshSerialNumber(), termVarsProc.getProcedures(),
+				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
+		return predicate;
+	}
+	
+	public MLPredicate newMLDontCarePredicate(final ProgramPoint[] programPoints) {
+		final TermVarsProc termVarsProc = constructTermVarsProc(mDontCareTerm);
+		final MLPredicate predicate = new MLPredicate(programPoints, constructFreshSerialNumber(), termVarsProc.getProcedures(),
 				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return predicate;
 	}
 	
 	public ProdState getNewProdState(final List<IPredicate> programPoints) {
-		return new ProdState(mSerialNumber++, programPoints, mScript.term("true"),new HashSet<IProgramVar>(0));
+		return new ProdState(constructFreshSerialNumber(), programPoints, mScript.term("true"),new HashSet<IProgramVar>(0));
 	}
 	
 	private TermVarsProc constructDontCare() {
@@ -180,12 +192,12 @@ public class PredicateFactory {
 	
 
 	public UnknownState newDontCarePredicate(final ProgramPoint pp) {
-		final UnknownState pred = new UnknownState(pp, mSerialNumber++, mDontCareTerm);
+		final UnknownState pred = new UnknownState(pp, constructFreshSerialNumber(), mDontCareTerm);
 		return pred;
 	}
 
 	public DebugPredicate newDebugPredicate(final String debugMessage) {
-		final DebugPredicate pred = new DebugPredicate(debugMessage, mSerialNumber++, mDontCareTerm);
+		final DebugPredicate pred = new DebugPredicate(debugMessage, constructFreshSerialNumber(), mDontCareTerm);
 		return pred;
 	}
 
@@ -196,19 +208,19 @@ public class PredicateFactory {
 	}
 
 	public SPredicate newTrueSLPredicateWithWitnessNode(final ProgramPoint pp, final WitnessNode witnessNode, final Integer stutteringSteps) {
-		final SPredicate pred = new SPredicateWithWitnessNode(pp, mSerialNumber++, NO_PROCEDURE, mScript.term("true"), EMPTY_VARS,
+		final SPredicate pred = new SPredicateWithWitnessNode(pp, constructFreshSerialNumber(), NO_PROCEDURE, mScript.term("true"), EMPTY_VARS,
 				mScript.term("true"), witnessNode, stutteringSteps);
 		return pred;
 	}
 
 	public HoareAnnotation getNewHoareAnnotation(final ProgramPoint pp, final ModifiableGlobalVariableManager modifiableGlobals) {
-		return new HoareAnnotation(pp, mSerialNumber++, mSymbolTable, this, modifiableGlobals, mMgdScript, mScript, mServices, mSimplificationTechnique, mXnfConversionTechnique);
+		return new HoareAnnotation(pp, constructFreshSerialNumber(), mSymbolTable, this, modifiableGlobals, mMgdScript, mScript, mServices, mSimplificationTechnique, mXnfConversionTechnique);
 	}
 
 	public IPredicate newBuchiPredicate(final Set<IPredicate> inputPreds) {
 		final Term conjunction = and(inputPreds);
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunction, mScript, mSymbolTable);
-		final BuchiPredicate buchi = new BuchiPredicate(mSerialNumber++, tvp.getProcedures(), tvp.getFormula(),
+		final BuchiPredicate buchi = new BuchiPredicate(constructFreshSerialNumber(), tvp.getProcedures(), tvp.getFormula(),
 				tvp.getVars(), tvp.getClosedFormula(), inputPreds);
 		return buchi;
 	}
