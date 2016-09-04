@@ -88,17 +88,17 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	 * The actual script.
 	 */
 	protected final Script mScript;
-	
+
 	/**
 	 * The auxiliary class to print terms and sorts.
 	 */
 	private final PrintTerm mTermPrinter = new PrintTerm();
-
+	
 	private final String mBaseFilename;
 	private final String mDirectory;
-
-	protected final LinkedList<ArrayList<ISmtCommand>> mCommandStack;
 	
+	protected final LinkedList<ArrayList<ISmtCommand>> mCommandStack;
+
 	public LoggingScriptForNonIncrementalBenchmarks(final Script script, final String baseFilename,
 			final String directory) {
 		super();
@@ -108,7 +108,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		mCommandStack = new LinkedList<>();
 		mCommandStack.push(new ArrayList<ISmtCommand>());
 	}
-
+	
 	protected LinkedList<ArrayList<ISmtCommand>> deepCopyOfCommandStack() {
 		final LinkedList<ArrayList<ISmtCommand>> result = new LinkedList<ArrayList<ISmtCommand>>();
 		for (final ArrayList<ISmtCommand> al : mCommandStack) {
@@ -119,20 +119,20 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		}
 		return result;
 	}
-	
+
 	private void addToCurrentAssertionStack(final String string) {
 		mCommandStack.getLast().add(new SmtCommandInStringRepresentation(string));
 	}
-
+	
 	protected void addToCurrentAssertionStack(final ISmtCommand smtCommand) {
 		mCommandStack.getLast().add(smtCommand);
 	}
-
+	
 	private void resetAssertionStack() {
 		mCommandStack.clear();
 		mCommandStack.add(new ArrayList<>());
 	}
-
+	
 	private void printCommandStack(final PrintWriter pw, final List<ArrayList<ISmtCommand>> commandStack) {
 		for (final ArrayList<ISmtCommand> al : commandStack) {
 			for (final ISmtCommand command : al) {
@@ -140,7 +140,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 			}
 		}
 	}
-
+	
 	protected void writeCommandStackToFile(final File file, final List<ArrayList<ISmtCommand>> commandStack) {
 		FileWriter fw = null;
 		try {
@@ -152,18 +152,18 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		printCommandStack(pw, commandStack);
 		pw.close();
 	}
-
+	
 	protected File constructFile(final String suffix) {
 		final String filename = mDirectory + File.separator + mBaseFilename + suffix + ".smt2";
 		final File file = new File(filename);
 		return file;
 	}
-	
+
 	private final Term formatTerm(final Term input) {
 		// return mLetter == null ? input : new FormulaLet().let(input);
 		return input;
 	}
-	
+
 	@Override
 	public void setLogic(final String logic) throws UnsupportedOperationException, SMTLIBException {
 		final StringWriter sw = new StringWriter();
@@ -172,7 +172,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		mScript.setLogic(logic);
 	}
-
+	
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
 		final StringWriter sw = new StringWriter();
@@ -181,7 +181,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		mScript.setLogic(logic);
 	}
-	
+
 	@Override
 	public void setOption(final String opt, final Object value) throws UnsupportedOperationException, SMTLIBException {
 		final StringWriter sw = new StringWriter();
@@ -194,7 +194,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		mScript.setOption(opt, value);
 	}
-	
+
 	@Override
 	public void setInfo(final String info, final Object value) {
 		final StringWriter sw = new StringWriter();
@@ -207,7 +207,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		mScript.setInfo(info, value);
 	}
-	
+
 	@Override
 	public void declareSort(final String sort, final int arity) throws SMTLIBException {
 		final StringWriter sw = new StringWriter();
@@ -220,7 +220,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		mScript.declareSort(sort, arity);
 	}
-	
+
 	@Override
 	public void defineSort(final String sort, final Sort[] sortParams, final Sort definition) throws SMTLIBException {
 		final StringWriter sw = new StringWriter();
@@ -240,7 +240,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		mScript.defineSort(sort, sortParams, definition);
 	}
-	
+
 	@Override
 	public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort) throws SMTLIBException {
 		final StringWriter sw = new StringWriter();
@@ -260,7 +260,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		mScript.declareFun(fun, paramSorts, resultSort);
 	}
-	
+
 	@Override
 	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
 			throws SMTLIBException {
@@ -286,7 +286,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		mScript.defineFun(fun, params, resultSort, definition);
 	}
-	
+
 	@Override
 	public void push(final int levels) throws SMTLIBException {
 		// StringWriter sw = new StringWriter();
@@ -298,7 +298,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		}
 		mScript.push(levels);
 	}
-	
+
 	@Override
 	public void pop(final int levels) throws SMTLIBException {
 		// StringWriter sw = new StringWriter();
@@ -310,14 +310,14 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		}
 		mScript.pop(levels);
 	}
-	
+
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
 		
 		addToCurrentAssertionStack(new AssertCommand(term));
 		return mScript.assertTerm(term);
 	}
-	
+
 	@Override
 	public LBool checkSat() throws SMTLIBException {
 		final StringWriter sw = new StringWriter();
@@ -326,7 +326,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.checkSat();
 	}
-	
+
 	@Override
 	public Term[] getAssertions() throws SMTLIBException {
 		final StringWriter sw = new StringWriter();
@@ -335,7 +335,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.getAssertions();
 	}
-	
+
 	@Override
 	public Term getProof() throws SMTLIBException, UnsupportedOperationException {
 		final StringWriter sw = new StringWriter();
@@ -344,7 +344,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.getProof();
 	}
-	
+
 	@Override
 	public Term[] getUnsatCore() throws SMTLIBException, UnsupportedOperationException {
 		final StringWriter sw = new StringWriter();
@@ -353,7 +353,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.getUnsatCore();
 	}
-	
+
 	@Override
 	public Map<Term, Term> getValue(final Term[] terms) throws SMTLIBException, UnsupportedOperationException {
 		final StringWriter sw = new StringWriter();
@@ -369,7 +369,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.getValue(terms);
 	}
-	
+
 	@Override
 	public Assignments getAssignment() throws SMTLIBException, UnsupportedOperationException {
 		final StringWriter sw = new StringWriter();
@@ -378,7 +378,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.getAssignment();
 	}
-	
+
 	@Override
 	public Object getOption(final String opt) throws UnsupportedOperationException {
 		// StringWriter sw = new StringWriter();
@@ -387,7 +387,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		// addToCurrentAssertionStack(sw.toString());
 		return mScript.getOption(opt);
 	}
-	
+
 	@Override
 	public Object getInfo(final String info) throws UnsupportedOperationException {
 		final StringWriter sw = new StringWriter();
@@ -396,7 +396,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.getInfo(info);
 	}
-	
+
 	@Override
 	public Term simplify(final Term term) throws SMTLIBException {
 		final StringWriter sw = new StringWriter();
@@ -407,7 +407,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.simplify(term);
 	}
-	
+
 	@Override
 	public void reset() {
 		final StringWriter sw = new StringWriter();
@@ -416,7 +416,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		resetAssertionStack();
 		mScript.reset();
 	}
-	
+
 	@Override
 	public Term[] getInterpolants(final Term[] partition) throws SMTLIBException, UnsupportedOperationException {
 		final StringWriter sw = new StringWriter();
@@ -430,7 +430,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.getInterpolants(partition);
 	}
-
+	
 	// [a,b,c], [0,1,0] -> a (b) c
 	// c
 	// a b
@@ -457,7 +457,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.getInterpolants(partition, startOfSubtree);
 	}
-	
+
 	@Override
 	public void exit() {
 		final StringWriter sw = new StringWriter();
@@ -468,89 +468,89 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		mScript.exit();
 	}
-	
+
 	@Override
 	public Sort sort(final String sortname, final Sort... params) throws SMTLIBException {
 		return mScript.sort(sortname, params);
 	}
-	
+
 	@Override
 	public Sort sort(final String sortname, final BigInteger[] indices, final Sort... params) throws SMTLIBException {
 		return mScript.sort(sortname, indices, params);
 	}
-	
+
 	@Override
 	public Term term(final String funcname, final Term... params) throws SMTLIBException {
 		return mScript.term(funcname, params);
 	}
-	
+
 	@Override
 	public Term term(final String funcname, final BigInteger[] indices, final Sort returnSort, final Term... params)
 			throws SMTLIBException {
 		return mScript.term(funcname, indices, returnSort, params);
 	}
-	
+
 	@Override
 	public TermVariable variable(final String varname, final Sort sort) throws SMTLIBException {
 		return mScript.variable(varname, sort);
 	}
-	
+
 	@Override
 	public Term quantifier(final int quantor, final TermVariable[] vars, final Term body, final Term[]... patterns)
 			throws SMTLIBException {
 		return mScript.quantifier(quantor, vars, body, patterns);
 	}
-	
+
 	@Override
 	public Term let(final TermVariable[] vars, final Term[] values, final Term body) throws SMTLIBException {
 		return mScript.let(vars, values, body);
 	}
-	
+
 	@Override
 	public Term annotate(final Term t, final Annotation... annotations) throws SMTLIBException {
 		return mScript.annotate(t, annotations);
 	}
-	
+
 	@Override
 	public Term numeral(final String num) throws SMTLIBException {
 		return mScript.numeral(num);
 	}
-	
+
 	@Override
 	public Term numeral(final BigInteger num) throws SMTLIBException {
 		return mScript.numeral(num);
 	}
-	
+
 	@Override
 	public Term decimal(final String decimal) throws SMTLIBException {
 		return mScript.decimal(decimal);
 	}
-	
+
 	@Override
 	public Term decimal(final BigDecimal decimal) throws SMTLIBException {
 		return mScript.decimal(decimal);
 	}
-	
+
 	@Override
 	public Term string(final String str) throws SMTLIBException {
 		return mScript.string(str);
 	}
-	
+
 	@Override
 	public Term hexadecimal(final String hex) throws SMTLIBException {
 		return mScript.hexadecimal(hex);
 	}
-	
+
 	@Override
 	public Term binary(final String bin) throws SMTLIBException {
 		return mScript.binary(bin);
 	}
-	
+
 	@Override
 	public Sort[] sortVariables(final String... names) throws SMTLIBException {
 		return mScript.sortVariables(names);
 	}
-	
+
 	@Override
 	public Model getModel() throws SMTLIBException, UnsupportedOperationException {
 		final StringWriter sw = new StringWriter();
@@ -559,7 +559,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.getModel();
 	}
-	
+
 	@Override
 	public Iterable<Term[]> checkAllsat(final Term[] predicates) throws SMTLIBException, UnsupportedOperationException {
 		final StringWriter sw = new StringWriter();
@@ -576,7 +576,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.checkAllsat(predicates);
 	}
-	
+
 	@Override
 	public Term[] findImpliedEquality(final Term[] x, final Term[] y) {
 		final StringWriter sw = new StringWriter();
@@ -600,7 +600,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		addToCurrentAssertionStack(sw.toString());
 		return mScript.findImpliedEquality(x, y);
 	}
-
+	
 	@Override
 	public QuotedObject echo(final QuotedObject msg) {
 		// StringWriter sw = new StringWriter();
@@ -611,7 +611,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		// addToCurrentAssertionStack(sw.toString());
 		return mScript.echo(msg);
 	}
-
+	
 	/**
 	 * Write a comment to the generated SMTLIB dump file. Note that this function is only available in the LoggingScript
 	 * and not in the interface {@link Script} since it only makes sense for logging and not for solving.
@@ -626,20 +626,20 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		mPw.println(comment);
 		addToCurrentAssertionStack(sw.toString());
 	}
-
+	
 	public interface ISmtCommand {
 		@Override
 		public abstract String toString();
 	}
-
+	
 	public class AssertCommand implements ISmtCommand {
 		private final Term mTerm;
-		
+
 		public AssertCommand(final Term term) {
 			super();
 			mTerm = term;
 		}
-
+		
 		@Override
 		public String toString() {
 			final StringWriter sw = new StringWriter();
@@ -650,18 +650,33 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 			return sw.toString();
 		}
 	}
-
+	
 	public class SmtCommandInStringRepresentation implements ISmtCommand {
 		private final String mCommand;
-		
+
 		public SmtCommandInStringRepresentation(final String command) {
 			super();
 			mCommand = command;
 		}
-
+		
 		@Override
 		public String toString() {
 			return mCommand;
 		}
+	}
+
+	@Override
+	public LBool checkSatAssuming(final Term... assumptions) throws SMTLIBException {
+		throw new UnsupportedOperationException("Introduced in SMTInterpol 2.1-324-ga0525a0, not yet supported");
+	}
+	
+	@Override
+	public Term[] getUnsatAssumptions() throws SMTLIBException, UnsupportedOperationException {
+		throw new UnsupportedOperationException("Introduced in SMTInterpol 2.1-324-ga0525a0, not yet supported");
+	}
+	
+	@Override
+	public void resetAssertions() {
+		throw new UnsupportedOperationException("Introduced in SMTInterpol 2.1-324-ga0525a0, not yet supported");
 	}
 }

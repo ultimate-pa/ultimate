@@ -53,134 +53,134 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 public class ScriptWithTermConstructionChecks implements Script {
 	
 	private final Script mScript;
-	
+
 	public ScriptWithTermConstructionChecks(final Script script) {
 		super();
 		mScript = script;
 	}
-	
+
 	@Override
 	public void setLogic(final String logic) throws UnsupportedOperationException, SMTLIBException {
 		mScript.setLogic(logic);
 	}
-	
+
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
 		mScript.setLogic(logic);
 	}
-	
+
 	@Override
 	public void setOption(final String opt, final Object value) throws UnsupportedOperationException, SMTLIBException {
 		mScript.setOption(opt, value);
 	}
-	
+
 	@Override
 	public void setInfo(final String info, final Object value) {
 		mScript.setInfo(info, value);
 	}
-	
+
 	@Override
 	public void declareSort(final String sort, final int arity) throws SMTLIBException {
 		mScript.declareSort(sort, arity);
 	}
-	
+
 	@Override
 	public void defineSort(final String sort, final Sort[] sortParams, final Sort definition) throws SMTLIBException {
 		mScript.defineSort(sort, sortParams, definition);
 	}
-	
+
 	@Override
 	public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort) throws SMTLIBException {
 		mScript.declareFun(fun, paramSorts, resultSort);
 	}
-	
+
 	@Override
 	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
 			throws SMTLIBException {
 		mScript.defineFun(fun, params, resultSort, definition);
 	}
-	
+
 	@Override
 	public void push(final int levels) throws SMTLIBException {
 		mScript.push(levels);
 	}
-	
+
 	@Override
 	public void pop(final int levels) throws SMTLIBException {
 		mScript.pop(levels);
 	}
-	
+
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
 		return mScript.assertTerm(term);
 	}
-	
+
 	@Override
 	public LBool checkSat() throws SMTLIBException {
 		return mScript.checkSat();
 	}
-	
+
 	@Override
 	public Term[] getAssertions() throws SMTLIBException {
 		return mScript.getAssertions();
 	}
-	
+
 	@Override
 	public Term getProof() throws SMTLIBException, UnsupportedOperationException {
 		return mScript.getProof();
 	}
-	
+
 	@Override
 	public Term[] getUnsatCore() throws SMTLIBException, UnsupportedOperationException {
 		return mScript.getUnsatCore();
 	}
-	
+
 	@Override
 	public Map<Term, Term> getValue(final Term[] terms) throws SMTLIBException, UnsupportedOperationException {
 		return mScript.getValue(terms);
 	}
-	
+
 	@Override
 	public Assignments getAssignment() throws SMTLIBException, UnsupportedOperationException {
 		return mScript.getAssignment();
 	}
-	
+
 	@Override
 	public Object getOption(final String opt) throws UnsupportedOperationException {
 		return mScript.getOption(opt);
 	}
-	
+
 	@Override
 	public Object getInfo(final String info) throws UnsupportedOperationException, SMTLIBException {
 		return mScript.getInfo(info);
 	}
-	
+
 	@Override
 	public void exit() {
 		mScript.exit();
 	}
-	
+
 	@Override
 	public Sort sort(final String sortname, final Sort... params) throws SMTLIBException {
 		return mScript.sort(sortname, params);
 	}
-	
+
 	@Override
 	public Sort sort(final String sortname, final BigInteger[] indices, final Sort... params) throws SMTLIBException {
 		return mScript.sort(sortname, indices, params);
 	}
-	
+
 	@Override
 	public Sort[] sortVariables(final String... names) throws SMTLIBException {
 		return mScript.sortVariables(names);
 	}
-	
+
 	@Override
 	public Term term(final String funcname, final Term... params) throws SMTLIBException {
 		checkIfsomeParamUsesDifferentTheory(params);
 		return mScript.term(funcname, params);
 	}
-	
+
 	private void checkIfsomeParamUsesDifferentTheory(final Term[] params) {
 		for (final Term param : params) {
 			final Theory paramTheory = getTheory(param);
@@ -189,116 +189,131 @@ public class ScriptWithTermConstructionChecks implements Script {
 			}
 		}
 	}
-	
+
 	private Theory getTheory(final Term param) {
 		return param.getSort().getTheory();
 	}
-
+	
 	private Theory getThisScriptsTheory() {
 		return mScript.sort("Bool").getTheory();
 	}
-	
+
 	@Override
 	public Term term(final String funcname, final BigInteger[] indices, final Sort returnSort, final Term... params)
 			throws SMTLIBException {
 		checkIfsomeParamUsesDifferentTheory(params);
 		return mScript.term(funcname, indices, returnSort, params);
 	}
-	
+
 	@Override
 	public TermVariable variable(final String varname, final Sort sort) throws SMTLIBException {
 		return mScript.variable(varname, sort);
 	}
-	
+
 	@Override
 	public Term quantifier(final int quantor, final TermVariable[] vars, final Term body, final Term[]... patterns)
 			throws SMTLIBException {
 		return mScript.quantifier(quantor, vars, body, patterns);
 	}
-	
+
 	@Override
 	public Term let(final TermVariable[] vars, final Term[] values, final Term body) throws SMTLIBException {
 		return mScript.let(vars, values, body);
 	}
-	
+
 	@Override
 	public Term annotate(final Term t, final Annotation... annotations) throws SMTLIBException {
 		return mScript.annotate(t, annotations);
 	}
-	
+
 	@Override
 	public Term numeral(final String num) throws SMTLIBException {
 		return mScript.numeral(num);
 	}
-	
+
 	@Override
 	public Term numeral(final BigInteger num) throws SMTLIBException {
 		return mScript.numeral(num);
 	}
-	
+
 	@Override
 	public Term decimal(final String decimal) throws SMTLIBException {
 		return mScript.decimal(decimal);
 	}
-	
+
 	@Override
 	public Term decimal(final BigDecimal decimal) throws SMTLIBException {
 		return mScript.decimal(decimal);
 	}
-	
+
 	@Override
 	public Term hexadecimal(final String hex) throws SMTLIBException {
 		return mScript.hexadecimal(hex);
 	}
-	
+
 	@Override
 	public Term binary(final String bin) throws SMTLIBException {
 		return mScript.binary(bin);
 	}
-	
+
 	@Override
 	public Term string(final String str) throws SMTLIBException {
 		return mScript.string(str);
 	}
-	
+
 	@Override
 	public Term simplify(final Term term) throws SMTLIBException {
 		return mScript.simplify(term);
 	}
-	
+
 	@Override
 	public void reset() {
 		mScript.reset();
 	}
-	
+
 	@Override
 	public Term[] getInterpolants(final Term[] partition) throws SMTLIBException, UnsupportedOperationException {
 		return mScript.getInterpolants(partition);
 	}
-	
+
 	@Override
 	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree)
 			throws SMTLIBException, UnsupportedOperationException {
 		return mScript.getInterpolants(partition, startOfSubtree);
 	}
-	
+
 	@Override
 	public Model getModel() throws SMTLIBException, UnsupportedOperationException {
 		return mScript.getModel();
 	}
-	
+
 	@Override
 	public Iterable<Term[]> checkAllsat(final Term[] predicates) throws SMTLIBException, UnsupportedOperationException {
 		return mScript.checkAllsat(predicates);
 	}
-	
+
 	@Override
 	public Term[] findImpliedEquality(final Term[] x, final Term[] y) {
 		return mScript.findImpliedEquality(x, y);
 	}
-	
+
 	@Override
 	public QuotedObject echo(final QuotedObject msg) {
 		return mScript.echo(msg);
+	}
+
+	@Override
+	public LBool checkSatAssuming(final Term... assumptions) throws SMTLIBException {
+		throw new UnsupportedOperationException("Introduced in SMTInterpol 2.1-324-ga0525a0, not yet supported");
+	}
+	
+	@Override
+	public Term[] getUnsatAssumptions() throws SMTLIBException, UnsupportedOperationException {
+		throw new UnsupportedOperationException("Introduced in SMTInterpol 2.1-324-ga0525a0, not yet supported");
+	}
+	
+	@Override
+	public void resetAssertions() {
+		throw new UnsupportedOperationException("Introduced in SMTInterpol 2.1-324-ga0525a0, not yet supported");
 	}
 }
