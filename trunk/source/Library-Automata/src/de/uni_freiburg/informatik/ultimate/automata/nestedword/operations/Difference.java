@@ -47,7 +47,8 @@ public class Difference<LETTER,STATE>
 		extends BinaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER,STATE>,
 			IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
-
+	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private DeterminizeNwa<LETTER,STATE> mSndDeterminized;
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 	private ComplementDeterministicNwa<LETTER,STATE> mSndComplemented;
@@ -63,7 +64,9 @@ public class Difference<LETTER,STATE>
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
 			final boolean finalIsTrap)
 					throws AutomataLibraryException {
-		super(services, fstOperand, sndOperand);
+		super(services);
+		mFstOperand = fstOperand;
+		mSndOperand = sndOperand;
 		mStateFactory = stateFactory;
 		mStateDeterminizer = stateDeterminizer;
 		mLogger.info(startMessage());
@@ -153,12 +156,16 @@ public class Difference<LETTER,STATE>
 		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mIntersect);
 	}
 	
-
-
-
-
-
-
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+		return mFstOperand;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+		return mSndOperand;
+	}
+	
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		if (mResultWOdeadEnds == null) {

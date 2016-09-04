@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
@@ -51,6 +51,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public class ConcurrentProduct<LETTER,STATE>
 		extends BinaryNwaOperation<LETTER, STATE> {
+	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	
 	private final boolean mConcurrentPrefixProduct;
 
@@ -67,9 +69,9 @@ public class ConcurrentProduct<LETTER,STATE>
 	
 	/**
 	 * Map from state pairs of the input automata to corresponding states
-	 * in the result automaton. 
+	 * in the result automaton.
 	 */
-	private final StatePair2StateMap mInputPair2resultState = 
+	private final StatePair2StateMap mInputPair2resultState =
 		new StatePair2StateMap();
 	
 
@@ -86,11 +88,13 @@ public class ConcurrentProduct<LETTER,STATE>
 	 * @param fstOperand first operand
 	 * @param sndOperand second operand
 	 */
-	public ConcurrentProduct(final AutomataLibraryServices services, 
+	public ConcurrentProduct(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
 			final boolean concurrentPrefixProduct) {
-		super(services, fstOperand, sndOperand);
+		super(services);
+		mFstOperand = fstOperand;
+		mSndOperand = sndOperand;
 		mConcurrentPrefixProduct = concurrentPrefixProduct;
 		mContentFactory = fstOperand.getStateFactory();
 //FIXME
@@ -129,17 +133,17 @@ public class ConcurrentProduct<LETTER,STATE>
 	 * Returns the automaton state that represents the state pair
 	 * (state1,state2). If this state is not yet constructed, construct it
 	 * and enqueue the pair (state1,state2). If it has to be
-	 * constructed it is an initial state iff isInitial is true. 
+	 * constructed it is an initial state iff isInitial is true.
 	 */
 	private STATE getState(final STATE state1, final STATE state2,
 			final boolean isInitial) {
-		STATE state = 
+		STATE state =
 					mInputPair2resultState.get(state1, state2);
 		if (state == null) {
 			boolean isFinal;
 			if (mConcurrentPrefixProduct) {
 				isFinal = mFstOperand.isFinal(state1) || mSndOperand.isFinal(state2);
-			} else {			
+			} else {
 				isFinal = mFstOperand.isFinal(state1) && mSndOperand.isFinal(state2);
 			}
 			final STATE content1 = state1;
@@ -158,13 +162,13 @@ public class ConcurrentProduct<LETTER,STATE>
 	
 	private void constructOutgoingTransitions(final STATE state1,	final STATE state2) {
 		final STATE state = getState(state1,state2,false);
-		final HashSet<LETTER> commonOutSymbols = 
+		final HashSet<LETTER> commonOutSymbols =
 				new HashSet<LETTER>(mFstOperand.lettersInternal(state1));
 		commonOutSymbols.retainAll(mSndOperand.lettersInternal(state2));
-		final HashSet<LETTER> state1OnlySymbols = 
+		final HashSet<LETTER> state1OnlySymbols =
 				new HashSet<LETTER>(mFstOperand.lettersInternal(state1));
 		state1OnlySymbols.removeAll(mSynchronizationAlphabet);
-		final HashSet<LETTER> state2OnlySymbols = 
+		final HashSet<LETTER> state2OnlySymbols =
 				new HashSet<LETTER>(mSndOperand.lettersInternal(state2));
 		state2OnlySymbols.removeAll(mSynchronizationAlphabet);
 		
@@ -213,6 +217,16 @@ public class ConcurrentProduct<LETTER,STATE>
 			}
 		}
 	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+		return mFstOperand;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+		return mSndOperand;
+	}
 
 	@Override
 	public INestedWordAutomaton<LETTER,STATE> getResult() {
@@ -221,7 +235,7 @@ public class ConcurrentProduct<LETTER,STATE>
 	
 
 	/**
-	 * Maps pairs of states to states. 
+	 * Maps pairs of states to states.
 	 * @author heizmann@informatik.uni-freiburg.de
 	 */
 	private class StatePair2StateMap {
@@ -252,7 +266,7 @@ public class ConcurrentProduct<LETTER,STATE>
 	
 	/**
 	 * Queue for pairs of states. Pairs are not dequeued in the same order as
-	 * inserted. 
+	 * inserted.
 	 * @author heizmann@informatik.uni-freiburg.de
 	 */
 	private class StatePairQueue {
@@ -272,7 +286,7 @@ public class ConcurrentProduct<LETTER,STATE>
 		}
 		
 		public void dequeuePair() {
-			assert (mDequeuedPairFst == null && mDequeuedPairSnd == null) : 
+			assert (mDequeuedPairFst == null && mDequeuedPairSnd == null) :
 				"Results from last dequeue not yet collected!";
 			final Iterator<STATE> it1 = mQueue.keySet().iterator();
 			mDequeuedPairFst = it1.next();

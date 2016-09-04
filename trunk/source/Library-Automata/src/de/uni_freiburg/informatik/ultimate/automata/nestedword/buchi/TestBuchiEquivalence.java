@@ -71,7 +71,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER, STATE>{
 	private final IStateFactory<STATE> mStateFactory;
-	
+	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private final boolean mResult;
 	
 	/**
@@ -116,7 +117,9 @@ public class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperation<LETT
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
 			final boolean completeTest) throws AutomataLibraryException {
-		super(services, fstOperand, sndOperand);
+		super(services);
+		mFstOperand = fstOperand;
+		mSndOperand = sndOperand;
 		mStateFactory = stateFactory;
 		
 		if (alphabetsDiffer()) {
@@ -130,6 +133,16 @@ public class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperation<LETT
 			mResult = checkEquivalence();
 		}
 		mLogger.info(exitMessage());
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+		return mFstOperand;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+		return mSndOperand;
 	}
 	
 	@Override

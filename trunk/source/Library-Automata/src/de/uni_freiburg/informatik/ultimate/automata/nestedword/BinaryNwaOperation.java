@@ -41,15 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
  */
 public abstract class BinaryNwaOperation<LETTER, STATE>
 		extends GeneralOperation<LETTER, STATE> {
-	/**
-	 * Input nested word automaton.
-	 */
-	protected final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
-	
-	/**
-	 * Input nested word automaton.
-	 */
-	protected final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	
 	/**
 	 * Constructor.
@@ -61,30 +52,36 @@ public abstract class BinaryNwaOperation<LETTER, STATE>
 	 * @param sndOperand
 	 *            second operand
 	 */
-	public BinaryNwaOperation(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) {
+	public BinaryNwaOperation(final AutomataLibraryServices services) {
 		super(services);
-		mFstOperand = fstOperand;
-		mSndOperand = sndOperand;
 	}
 	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". First operand " + mFstOperand.sizeInformation() + " Second operand "
-				+ mSndOperand.sizeInformation();
+		return "Start " + operationName() + ". First operand " + getFirstOperand().sizeInformation()
+				+ " Second operand " + getSecondOperand().sizeInformation();
 	}
+	
+	/**
+	 * @return The first operand.
+	 */
+	protected abstract INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand();
+	
+	/**
+	 * @return The second operand.
+	 */
+	protected abstract INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand();
 	
 	/**
 	 * @return true iff the alphabets of the two operands differ.
 	 */
 	protected boolean alphabetsDiffer() {
-		if (!mFstOperand.getInternalAlphabet().equals(mSndOperand.getInternalAlphabet())) {
+		if (!getFirstOperand().getInternalAlphabet().equals(getSecondOperand().getInternalAlphabet())) {
 			return true;
 		}
-		if (!mFstOperand.getCallAlphabet().equals(mSndOperand.getCallAlphabet())) {
+		if (!getFirstOperand().getCallAlphabet().equals(getSecondOperand().getCallAlphabet())) {
 			return true;
 		}
-		return !mFstOperand.getReturnAlphabet().equals(mSndOperand.getReturnAlphabet());
+		return !getFirstOperand().getReturnAlphabet().equals(getSecondOperand().getReturnAlphabet());
 	}
 }

@@ -41,7 +41,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public class Intersect<LETTER,STATE>
 		extends BinaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
-
+	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private final IntersectNwa<LETTER, STATE> mIntersect;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
 	private final IStateFactory<STATE> mStateFactory;
@@ -56,7 +57,9 @@ public class Intersect<LETTER,STATE>
 			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand)
 					throws AutomataLibraryException {
-		super(services, fstOperand, sndOperand);
+		super(services);
+		mFstOperand = fstOperand;
+		mSndOperand = sndOperand;
 		mStateFactory = mFstOperand.getStateFactory();
 		mLogger.info(startMessage());
 		mIntersect = new IntersectNwa<LETTER, STATE>(mFstOperand, mSndOperand, mStateFactory, false);
@@ -77,6 +80,15 @@ public class Intersect<LETTER,STATE>
 				+ mResult.sizeInformation();
 	}
 	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+		return mFstOperand;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+		return mSndOperand;
+	}
 
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {

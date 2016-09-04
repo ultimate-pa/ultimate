@@ -45,7 +45,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public class IsIncluded<LETTER, STATE>
 		extends BinaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
-	
+	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private final Boolean mResult;
 	private final NestedRun<LETTER, STATE> mCounterexample;
 	
@@ -61,7 +62,9 @@ public class IsIncluded<LETTER, STATE>
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand)
 					throws AutomataLibraryException {
-		super(services, fstOperand, sndOperand);
+		super(services);
+		mFstOperand = fstOperand;
+		mSndOperand = sndOperand;
 		mLogger.info(startMessage());
 		final IsEmpty<LETTER, STATE> emptinessCheck = new IsEmpty<LETTER, STATE>(
 				services, (new Difference<LETTER, STATE>(
@@ -80,6 +83,16 @@ public class IsIncluded<LETTER, STATE>
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Language is "
 				+ (mResult ? "" : "not ") + "included";
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+		return mFstOperand;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+		return mSndOperand;
 	}
 
 	@Override

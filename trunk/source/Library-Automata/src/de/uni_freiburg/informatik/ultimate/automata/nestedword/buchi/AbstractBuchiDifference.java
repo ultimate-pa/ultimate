@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
@@ -51,7 +51,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public abstract class AbstractBuchiDifference<LETTER, STATE>
 		extends BinaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
-	
+	protected final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
+	protected final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	protected BuchiIntersectNwa<LETTER, STATE> mIntersect;
 	protected NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
 	protected final IStateFactory<STATE> mStateFactory;
@@ -68,7 +69,9 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) {
-		super(services, fstOperand, sndOperand);
+		super(services);
+		mFstOperand = fstOperand;
+		mSndOperand = sndOperand;
 		mStateFactory = stateFactory;
 	}
 	
@@ -95,9 +98,19 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 		return "Finished " + operationName() + ". First operand "
 				+ mFstOperand.sizeInformation() + ". Second operand "
 				+ mSndOperand.sizeInformation() + " Result "
-				+ mResult.sizeInformation() 
+				+ mResult.sizeInformation()
 				+ " Complement of second has " + getSndComplemented().size()
 				+ " states.";
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+		return mFstOperand;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+		return mSndOperand;
 	}
 	
 	@Override
@@ -147,7 +160,7 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 	}
 	
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand1, 
+			final INestedWordAutomatonSimple<LETTER, STATE> operand1,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand2,
 			final boolean underApproximationOfComplement) throws AutomataLibraryException {
 		boolean correct;
