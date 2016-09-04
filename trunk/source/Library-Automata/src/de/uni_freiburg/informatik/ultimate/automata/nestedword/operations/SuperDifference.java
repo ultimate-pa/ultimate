@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.ITransitionlet;
@@ -60,9 +59,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            states are labeled e.g. with "q0", "q1", ...
  */
 
-public class SuperDifference<LETTER, STATE>
-		extends GeneralOperation<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public class SuperDifference<LETTER, STATE> extends GeneralOperation<LETTER, STATE> {
 	/* *** *** *** Fields *** *** *** */
 	
 	// Automatons

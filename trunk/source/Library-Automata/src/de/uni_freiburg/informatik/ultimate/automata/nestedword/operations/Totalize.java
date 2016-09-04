@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
@@ -47,9 +46,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class Totalize<LETTER,STATE>
-		extends UnaryNwaOperation<LETTER, STATE>
-		implements IOperation<LETTER,STATE> {
+public class Totalize<LETTER,STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
 	private final IStateFactory<STATE> mStateFactory;

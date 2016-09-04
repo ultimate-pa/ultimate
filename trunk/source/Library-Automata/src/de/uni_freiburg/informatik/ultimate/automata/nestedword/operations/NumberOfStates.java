@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 
@@ -39,9 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class NumberOfStates<LETTER, STATE>
-		extends UnaryNwaOperation<LETTER, STATE>
-		implements IOperation<LETTER,STATE> {
+public class NumberOfStates<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	
 	/**

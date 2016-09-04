@@ -32,7 +32,6 @@ import java.util.HashSet;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -43,9 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class Accepts<S, C>
-		extends UnaryNetOperation<S, C>
-		implements IOperation<S, C> {
+public class Accepts<S, C> extends UnaryNetOperation<S, C> {
 	
 	private final Word<S> mWord;
 	private final Boolean mResult;

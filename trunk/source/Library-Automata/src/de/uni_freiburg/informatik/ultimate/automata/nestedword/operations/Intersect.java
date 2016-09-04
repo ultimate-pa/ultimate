@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
@@ -38,9 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.N
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 
-public class Intersect<LETTER,STATE>
-		extends BinaryNwaOperation<LETTER, STATE>
-		implements IOperation<LETTER,STATE> {
+public class Intersect<LETTER,STATE> extends BinaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private final IntersectNwa<LETTER, STATE> mIntersect;

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
@@ -31,7 +31,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 
@@ -43,9 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class Accepts<LETTER,STATE>
-		extends AbstractAcceptance<LETTER,STATE>
-		implements IOperation<LETTER,STATE> {
+public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE> {
 
 	private final NestedWord<LETTER> mWord;
 	private final boolean mPrefixOfInputIsAccepted;

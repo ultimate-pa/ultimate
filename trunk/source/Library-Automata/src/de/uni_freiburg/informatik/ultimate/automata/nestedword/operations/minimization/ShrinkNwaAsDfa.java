@@ -41,7 +41,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IBlock;
@@ -65,9 +64,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <STATE>
  *            state type
  */
-public class ShrinkNwaAsDfa<LETTER, STATE>
-		extends AbstractMinimizeNwa<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	// old automaton
 	private IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;
 	// partition object

@@ -37,7 +37,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
@@ -48,9 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAuto
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class DifferenceBlackAndWhite<S, C>
-		extends GeneralOperation<S, C>
-		implements IOperation<S, C> {
+public class DifferenceBlackAndWhite<S, C> extends GeneralOperation<S, C> {
 		
 	private final PetriNetJulian<S, C> mOperand;
 	private final NestedWordAutomaton<S, C> mNwa;

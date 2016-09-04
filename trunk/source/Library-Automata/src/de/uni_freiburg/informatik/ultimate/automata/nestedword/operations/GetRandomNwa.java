@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
@@ -35,9 +35,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -50,14 +49,12 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * 
  * @author Fabian Reiter
  */
-public class GetRandomNwa
-		extends GeneralOperation<String, String>
-		implements IOperation<String,String> {
+public class GetRandomNwa extends GeneralOperation<String, String> {
 	
 	private final Random mRandom;
 	private final INestedWordAutomaton<String,String> mResult;
 	
-	private final int mAlphabetSize; 
+	private final int mAlphabetSize;
 	private final int mSize;
 	private final double mInternalTransitionDensity;
 	private final double mCallTransitionProbability;
@@ -75,7 +72,7 @@ public class GetRandomNwa
 	 * @param acceptanceDensity acceptance density
 	 */
 	public GetRandomNwa(final AutomataLibraryServices services,
-			final int alphabetSize, final int size, 
+			final int alphabetSize, final int size,
 			final double internalTransitionDensity,
 			final double callTransitionProbability,
 			final double returnTransitionProbability,
@@ -88,10 +85,10 @@ public class GetRandomNwa
 		mCallTransitionProbability = callTransitionProbability;
 		mReturnTransitionProbability = returnTransitionProbability;
 		mAcceptanceDensity = acceptanceDensity;
-		mResult = generateAutomaton(mAlphabetSize, mSize, 
-				mInternalTransitionDensity, 
-				mCallTransitionProbability, 
-				mReturnTransitionProbability, 
+		mResult = generateAutomaton(mAlphabetSize, mSize,
+				mInternalTransitionDensity,
+				mCallTransitionProbability,
+				mReturnTransitionProbability,
 				mAcceptanceDensity);
 	}
 	
@@ -107,7 +104,7 @@ public class GetRandomNwa
 	 * @param acceptanceDensity acceptance density
 	 */
 	public GetRandomNwa(final AutomataLibraryServices services,
-			final int alphabetSize, final int size, 
+			final int alphabetSize, final int size,
 			final int internalTransitionDensity,
 			final int callTransitionProbability,
 			final int returnTransitionProbability,
@@ -121,10 +118,10 @@ public class GetRandomNwa
 		mCallTransitionProbability = (callTransitionProbability) / thousand;
 		mReturnTransitionProbability = (returnTransitionProbability) / thousand;
 		mAcceptanceDensity = (acceptanceDensity) / thousand;
-		mResult = generateAutomaton(mAlphabetSize, mSize, 
-				mInternalTransitionDensity, 
-				mCallTransitionProbability, 
-				mReturnTransitionProbability, 
+		mResult = generateAutomaton(mAlphabetSize, mSize,
+				mInternalTransitionDensity,
+				mCallTransitionProbability,
+				mReturnTransitionProbability,
 				mAcceptanceDensity);
 	}
 	
@@ -137,15 +134,15 @@ public class GetRandomNwa
 	public String startMessage() {
 		return MessageFormat.format("Start {0}. Alphabet size {1} Number of states {2} "
 				+ "Density internal transition {3} Probability call transition {4} "
-				+ "Probability return transition {5} Acceptance density {6}", 
+				+ "Probability return transition {5} Acceptance density {6}",
 				operationName(), mAlphabetSize, mSize, mInternalTransitionDensity,
-				mCallTransitionProbability, mReturnTransitionProbability, 
+				mCallTransitionProbability, mReturnTransitionProbability,
 				mAcceptanceDensity);
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " 
+		return "Finished " + operationName() + " Result "
 				+ mResult.sizeInformation() + '.';
 	}
 	
@@ -167,7 +164,7 @@ public class GetRandomNwa
 	 * @return a randomly generated NFA that fulfills the given specification
 	 */
 	public INestedWordAutomaton<String,String> generateAutomaton(
-							final int alphabetSize, final int size, 
+							final int alphabetSize, final int size,
 							final double internalTransitionDensity,
 							final double callTransitionProbability,
 							final double returnTransitionProbability,
@@ -197,7 +194,7 @@ public class GetRandomNwa
 		final int numOfTransitions =
 					(int) Math.round(internalTransitionDensity * maxNumOfTransitions);
 		if (numOfTransitions < size - 1) {
-			mLogger.warn("You specified density " + internalTransitionDensity 
+			mLogger.warn("You specified density " + internalTransitionDensity
 					+ " for internal transition. This is not sufficient to"
 					+ " connect all states with internal transitions.");
 		}
@@ -220,23 +217,23 @@ public class GetRandomNwa
 		
 		// ────────────────────────────────────────────────────────────────────
 		// Create the result automaton.
-		// If both, callTransitionProbability and returnTransitionProbability 
+		// If both, callTransitionProbability and returnTransitionProbability
 		// are 0 we set callAlphabet and returnAlphabet to null.
 		//
 		final IStateFactory<String> stateFactory = new StringFactory();
 		NestedWordAutomaton<String,String> result;
-		final boolean isFiniteAutomaton = (callTransitionProbability == 0 
+		final boolean isFiniteAutomaton = (callTransitionProbability == 0
 				&& returnTransitionProbability == 0);
 		if (isFiniteAutomaton) {
 			result = new NestedWordAutomaton<String,String>(
-					mServices, 
-					new HashSet<String>(num2Letter), null, null,	stateFactory);			
+					mServices,
+					new HashSet<String>(num2Letter), null, null,	stateFactory);
 		} else {
 			result = new NestedWordAutomaton<String,String>(
-					mServices, 
+					mServices,
 					new HashSet<String>(num2Letter),
-					new HashSet<String>(num2Letter), 
-					new HashSet<String>(num2Letter),	stateFactory);						
+					new HashSet<String>(num2Letter),
+					new HashSet<String>(num2Letter),	stateFactory);
 		}
 		
 		// ────────────────────────────────────────────────────────────────────
@@ -275,7 +272,7 @@ public class GetRandomNwa
  * number between 0 and n²k−1.
  * The number assigned to the transition ⟨qₚ,aₓ⟩ ↦ qₛ is
  *   p·(kn) + x·(n) + s .
- *      
+ * 
  *   0 ···                                                             ··· n²k−1
  * ┏━━━━┳╺╺╺╺┳━━━━┳━  ━┳━━━━┳╺╺╺╺┳━━━━┳━   ━┳━━━━┳╺╺╺╺┳━━━━┳━  ━┳━━━━┳╺╺╺╺┳━━━━┓
  * ┃ q₀ ┃ ·· ┃qₙ₋₁┃ ·· ┃ q₀ ┃ ·· ┃qₙ₋₁┃ ··· ┃ q₀ ┃ ·· ┃qₙ₋₁┃ ·· ┃ q₀ ┃ ·· ┃qₙ₋₁┃
@@ -307,7 +304,7 @@ public class GetRandomNwa
 		
 		for (int i = 0; i < shuffledStateNbList.size(); ++i) {
 			// random reached state
-			final int predStateNb = 
+			final int predStateNb =
 					reachedStateNbs.get(mRandom.nextInt(reachedStateNbs.size()));
 			// random letter
 			final int letterNb = mRandom.nextInt(alphabetSize);
@@ -332,7 +329,7 @@ public class GetRandomNwa
 		for (int transNb = 0; transNb < maxNumOfTransitions; ++transNb) {
 			if (!usedTransitionNbs.contains(transNb)) {
 				shuffledTransitionNbList.add(transNb);
-			}	
+			}
 		}
 		Collections.shuffle(shuffledTransitionNbList, mRandom);
 		

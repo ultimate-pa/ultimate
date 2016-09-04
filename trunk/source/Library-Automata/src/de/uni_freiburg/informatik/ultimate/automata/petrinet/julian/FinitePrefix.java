@@ -28,13 +28,10 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.order;
 
-public class FinitePrefix<LETTER,STATE>
-		extends UnaryNetOperation<LETTER, STATE>
-		implements IOperation<LETTER,STATE> {
+public class FinitePrefix<LETTER,STATE> extends UnaryNetOperation<LETTER, STATE> {
 	
 	private final BranchingProcess<LETTER,STATE> mResult;
 	

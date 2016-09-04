@@ -32,7 +32,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.TestBuchiEquivalence;
@@ -57,8 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce<LETTER, STATE> {
 
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa

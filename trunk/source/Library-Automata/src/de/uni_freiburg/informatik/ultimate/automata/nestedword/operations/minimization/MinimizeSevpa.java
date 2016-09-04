@@ -40,7 +40,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.FalseFlag;
@@ -74,9 +73,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 @SuppressWarnings("squid:UselessParenthesesCheck")
-public class MinimizeSevpa<LETTER, STATE>
-		extends AbstractMinimizeNwaDd<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
 	// old automaton
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;
 	// ID for equivalence classes

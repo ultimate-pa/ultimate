@@ -35,7 +35,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.AbstractAcceptance;
@@ -50,9 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <LETTER> Symbol. Type of the symbols used as alphabet.
  * @param <STATE> Content. Type of the labels ("the content") of the automata states.
  */
-public class BuchiAccepts<LETTER,STATE>
-		extends AbstractAcceptance<LETTER,STATE>
-		implements IOperation<LETTER,STATE> {
+public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE> {
 	/**
 	 * stem of the nested lasso word whose acceptance is checked
 	 */

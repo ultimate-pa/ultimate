@@ -39,7 +39,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.AbstractMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.GeneralMaxSatSolver;
@@ -79,9 +78,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <STATE>
  *            state type
  */
-public class MinimizeNwaMaxSat2<LETTER, STATE>
-		extends AbstractMinimizeNwaDd<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
 	
 	private static final int THREE = 3;
 	private final NestedMap2<STATE, STATE, Doubleton<STATE>> mStatePairs = new NestedMap2<>();

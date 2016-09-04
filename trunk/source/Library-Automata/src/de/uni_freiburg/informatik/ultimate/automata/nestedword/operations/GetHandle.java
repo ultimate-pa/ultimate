@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -57,9 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class GetHandle<LETTER, STATE>
-		extends UnaryNwaOperation<LETTER, STATE>
-		implements IOperation<LETTER,STATE> {
+public class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	
 	private NestedRun<LETTER,STATE> mHandle;

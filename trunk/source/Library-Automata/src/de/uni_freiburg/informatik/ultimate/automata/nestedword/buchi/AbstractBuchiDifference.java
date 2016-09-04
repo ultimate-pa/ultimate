@@ -33,7 +33,6 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
@@ -48,9 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public abstract class AbstractBuchiDifference<LETTER, STATE>
-		extends BinaryNwaOperation<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public abstract class AbstractBuchiDifference<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
 	protected final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	protected final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	protected BuchiIntersectNwa<LETTER, STATE> mIntersect;

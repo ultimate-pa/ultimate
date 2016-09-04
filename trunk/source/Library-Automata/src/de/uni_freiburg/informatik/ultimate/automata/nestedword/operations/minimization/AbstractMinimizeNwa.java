@@ -68,9 +68,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <STATE>
  *            state type
  */
-public abstract class AbstractMinimizeNwa<LETTER, STATE>
-		extends UnaryNwaOperation<LETTER, STATE>
-		implements IMinimizeNwa<LETTER, STATE>, IOperation<LETTER, STATE> {
+public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
+		implements IMinimizeNwa<LETTER, STATE> {
 	/**
 	 * The operand.
 	 */

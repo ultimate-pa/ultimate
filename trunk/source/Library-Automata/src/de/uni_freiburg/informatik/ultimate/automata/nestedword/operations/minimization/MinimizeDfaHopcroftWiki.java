@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 
@@ -49,9 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class MinimizeDfaHopcroftWiki<LETTER, STATE>
-		extends AbstractMinimizeNwa<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	// ArrayList and HashMap for mapping STATE to int and vice versa.
 	private ArrayList<STATE> mInt2state;
 	private HashMap<STATE, Integer> mState2int;

@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -49,9 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class MinimizeDfaHopcroftArrays<LETTER, STATE>
-		extends AbstractMinimizeNwaDd<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
 	// ArrayList and HashMap for mapping STATE to int and vice versa.
 	private ArrayList<STATE> mInt2state;
 	private HashMap<STATE, Integer> mState2int;
