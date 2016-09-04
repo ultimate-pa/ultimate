@@ -42,28 +42,33 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
  * Abstract superclass of Buchi difference operations.
  * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * 
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public abstract class AbstractBuchiDifference<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
 	protected final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	protected final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	protected BuchiIntersectNwa<LETTER, STATE> mIntersect;
-	protected NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
+	protected NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	protected final IStateFactory<STATE> mStateFactory;
 	
 	/**
 	 * Constructor.
 	 * 
-	 * @param services Ultimate services
-	 * @param stateFactory state factory
-	 * @param fstOperand first operand
-	 * @param sndOperand second operand
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param fstOperand
+	 *            first operand
+	 * @param sndOperand
+	 *            second operand
 	 */
-	public AbstractBuchiDifference(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
+	public AbstractBuchiDifference(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) {
 		super(services);
@@ -73,21 +78,19 @@ public abstract class AbstractBuchiDifference<LETTER, STATE> extends BinaryNwaOp
 	}
 	
 	/**
-	 * @return second operand complemented
+	 * @return The second operand complemented.
 	 */
 	public abstract INestedWordAutomatonSimple<LETTER, STATE> getSndComplemented();
 	
 	/**
 	 * Constructs the difference using the complement of the second operand.
 	 * 
-	 * @throws AutomataLibraryException if construction fails
+	 * @throws AutomataLibraryException
+	 *             if construction fails
 	 */
-	protected void constructDifferenceFromComplement()
-			throws AutomataLibraryException {
-		mIntersect = new BuchiIntersectNwa<LETTER, STATE>(
-				mFstOperand, getSndComplemented(), mStateFactory);
-		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(
-				mServices, mIntersect);
+	protected void constructDifferenceFromComplement() throws AutomataLibraryException {
+		mIntersect = new BuchiIntersectNwa<>(mFstOperand, getSndComplemented(), mStateFactory);
+		mResult = new NestedWordAutomatonReachableStates<>(mServices, mIntersect);
 	}
 	
 	@Override
@@ -111,29 +114,29 @@ public abstract class AbstractBuchiDifference<LETTER, STATE> extends BinaryNwaOp
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		final boolean underApproximationOfComplement = false;
-		boolean correct = true;
-		mLogger.info("Start testing correctness of " + operationName());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Start testing correctness of " + operationName());
+		}
+		
 		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<>();
-		final BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness =
-				new BuchiIsEmpty<LETTER, STATE>(mServices, mFstOperand);
+		final BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness = new BuchiIsEmpty<>(mServices, mFstOperand);
 		final boolean fstOperandEmpty = fstOperandEmptiness.getResult();
 		if (!fstOperandEmpty) {
 			lassoWords.add(fstOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		final BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness =
-				new BuchiIsEmpty<LETTER, STATE>(mServices, mSndOperand);
+		final BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness = new BuchiIsEmpty<>(mServices, mSndOperand);
 		final boolean sndOperandEmpty = sndOperandEmptiness.getResult();
 		if (!sndOperandEmpty) {
 			lassoWords.add(sndOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		final BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
+		final BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<>(mServices, mResult);
 		final boolean resultEmpty = resultEmptiness.getResult();
 		if (!resultEmpty) {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
+		boolean correct = true;
 		correct &= (!fstOperandEmpty || resultEmpty);
 		assert correct;
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
@@ -142,24 +145,25 @@ public abstract class AbstractBuchiDifference<LETTER, STATE> extends BinaryNwaOp
 		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mFstOperand)).getResult());
 		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mSndOperand)).getResult());
 		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mResult)).getResult());
-
+		
 		for (final NestedLassoWord<LETTER> nlw : lassoWords) {
 			correct &= checkAcceptance(nlw, mFstOperand, mSndOperand, underApproximationOfComplement);
 			assert correct;
 		}
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
-					operationName() + "Failed", "language is different",
-					mFstOperand, mSndOperand);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+					"language is different", mFstOperand, mSndOperand);
 		}
-		mLogger.info("Finished testing correctness of " + operationName());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of " + operationName());
+		}
 		return correct;
 	}
 	
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand1,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand2,
-			final boolean underApproximationOfComplement) throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand2, final boolean underApproximationOfComplement)
+			throws AutomataLibraryException {
 		boolean correct;
 		final boolean op1 = (new BuchiAccepts<LETTER, STATE>(mServices, operand1, nlw)).getResult();
 		final boolean op2 = (new BuchiAccepts<LETTER, STATE>(mServices, operand2, nlw)).getResult();

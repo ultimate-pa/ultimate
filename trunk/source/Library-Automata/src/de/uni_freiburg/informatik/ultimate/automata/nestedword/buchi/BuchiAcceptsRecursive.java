@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -47,14 +48,13 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
  * Class that provides the Buchi acceptance check for nested word automata.
  * 
- * @author heizmann@informatik.uni-freiburg.de
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            Symbol. Type of the symbols used as alphabet.
  * @param <STATE>
  *            Content. Type of the labels ("the content") of the automata states.
  */
-public class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
-	
+public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	/**
 	 * Stem of the nested lasso word whose acceptance is checked.
 	 */
@@ -66,7 +66,6 @@ public class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperation<LETT
 	private NestedWord<LETTER> mLoop;
 	
 	private final INestedWordAutomaton<LETTER, STATE> mNwa;
-	private final NestedLassoWord<LETTER> mNlw;
 	private boolean mAccepted;
 	
 	/**
@@ -83,33 +82,41 @@ public class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 *            NestedWordAutomaton which is interpreted as Buchi nested word
 	 *            automaton here
 	 */
-	public BuchiAcceptsRecursive(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> nwa, final NestedLassoWord<LETTER> nlw) {
+	public BuchiAcceptsRecursive(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> nwa,
+			final NestedLassoWord<LETTER> nlw) {
 		super(services);
 		mNwa = nwa;
-		mNlw = nlw;
-		mLogger.info(startMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
 		
 		mStem = nlw.getStem();
 		mLoop = nlw.getLoop();
 		
 		if (mStem.containsPendingReturns()) {
-			mLogger.warn("This implementation of Buchi acceptance rejects lasso"
-					+ " words, where the stem contains pending returns.");
+			if (mLogger.isWarnEnabled()) {
+				mLogger.warn("This implementation of Buchi acceptance rejects lasso words, where the stem contains "
+						+ "pending returns.");
+			}
 			mAccepted = false;
 			return;
 		}
 		
 		if (mLoop.containsPendingReturns()) {
-			mLogger.warn("This implementation of Buchi acceptance rejects lasso"
-					+ " words, where the loop contains pending returns.");
+			if (mLogger.isWarnEnabled()) {
+				mLogger.warn("This implementation of Buchi acceptance rejects lasso words, where the loop contains "
+						+ "pending returns.");
+			}
 			mAccepted = false;
 			return;
 			
 		}
 		
 		if (mLoop.length() == 0) {
-			mLogger.debug("LassoWords with empty lasso are rejected by every Büchi automaton");
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("LassoWords with empty lasso are rejected by every Büchi automaton");
+			}
 			mAccepted = false;
 			return;
 		}
@@ -118,11 +125,10 @@ public class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperation<LETT
 		// stem.
 		// Honda denotes the part of the lasso where stem and loop are connected.
 		// Therefore we call theses stats Honda states.
-		final Set<STATE> hondaStates = new HashSet<STATE>();
+		final Set<STATE> hondaStates = new HashSet<>();
 		final Collection<STATE> initialStates = nwa.getInitialStates();
 		for (final STATE initialState : initialStates) {
-			final Set<STATE> reach =
-					getReachableStates(0, initialState, new LinkedList<STATE>());
+			final Set<STATE> reach = getReachableStates(0, initialState, new LinkedList<STATE>());
 			hondaStates.addAll(reach);
 		}
 		
@@ -130,19 +136,18 @@ public class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperation<LETT
 		// contains an accepting state and brings the automaton back to the honda state.
 		boolean result = false;
 		for (final STATE hondaState : hondaStates) {
-			result = result || isCompleteableToAcceptingRun(
-					new HashMap<STATE, Boolean>(),
-					0,
-					hondaState,
+			result = result || isCompleteableToAcceptingRun(new HashMap<STATE, Boolean>(), 0, hondaState,
 					new LinkedList<STATE>());
 		}
 		mAccepted = result;
-		mLogger.info(exitMessage());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 	
 	@Override
 	public String operationName() {
-		return "buchiAcceptsRecursive";
+		return "BuchiAcceptsRecursive";
 	}
 	
 	@Override
@@ -171,60 +176,40 @@ public class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 * mStem further. If the automaton is deterministic this result will always be a
 	 * singleton.
 	 */
-	
-	Set<STATE> getReachableStates(
-			final int currentPosition,
-			final STATE currentState,
+	private Set<STATE> getReachableStates(final int currentPosition, final STATE currentState,
 			final List<STATE> callStack) {
 		if (currentPosition >= mStem.length()) {
-			final Set<STATE> result = new HashSet<STATE>();
-			result.add(currentState);
-			return result;
+			return Collections.singleton(currentState);
 		} else {
 			final LETTER currentSymbol = mStem.getSymbolAt(currentPosition);
 			
-			final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> outgoingTransitions;
-			if (mStem.isInternalPosition(currentPosition)) {
-				outgoingTransitions = mNwa.internalSuccessors(currentState, currentSymbol);
-			} else if (mStem.isCallPosition(currentPosition)) {
-				callStack.add(currentState);
-				outgoingTransitions = mNwa.callSuccessors(currentState, currentSymbol);
-			} else if (mStem.isReturnPosition(currentPosition)) {
-				assert (!callStack.isEmpty()) : "restricted to stem without pending return";
-				//pop the top element from the callStack
-				final STATE linearPred = callStack.remove(callStack.size() - 1);
-				outgoingTransitions = mNwa.returnSuccessors(currentState, linearPred, currentSymbol);
-			} else {
-				throw new IllegalArgumentException();
-			}
+			final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> outgoingTransitions =
+					getOutgoingTransitions(currentPosition, currentState, callStack, currentSymbol, mStem, "stem");
 			
 			if (!outgoingTransitions.iterator().hasNext()) {
-				return new HashSet<STATE>();
-			} else {
-				final List<STATE> succStates = new ArrayList<STATE>();
-				for (final IOutgoingTransitionlet<LETTER, STATE> outgoingTransition : outgoingTransitions) {
-					succStates.add(outgoingTransition.getSucc());
-				}
-				final Set<STATE> result = new HashSet<STATE>();
-				for (int i = 0; i < succStates.size(); i++) {
-					// in case of nondeterminism, i.e. several successor states for
-					// currentSymbol, every recursive call of this procedure needs its own
-					// copy of the call stack. One of the recursive procedure calls (I decided
-					// for the last one) can use the existing copy  of the callStack.
-					List<STATE> callStackcopy;
-					if (i != succStates.size() - 1) {
-						callStackcopy = new LinkedList<STATE>(callStack);
-					} else {
-						callStackcopy = callStack;
-					}
-					final Set<STATE> returnValue = getReachableStates(
-							currentPosition + 1,
-							succStates.get(i),
-							callStackcopy);
-					result.addAll(returnValue);
-				}
-				return result;
+				return Collections.emptySet();
 			}
+			final List<STATE> succStates = new ArrayList<>();
+			for (final IOutgoingTransitionlet<LETTER, STATE> outgoingTransition : outgoingTransitions) {
+				succStates.add(outgoingTransition.getSucc());
+			}
+			final Set<STATE> result = new HashSet<>();
+			for (int i = 0; i < succStates.size(); i++) {
+				// in case of nondeterminism, i.e. several successor states for
+				// currentSymbol, every recursive call of this procedure needs its own
+				// copy of the call stack. One of the recursive procedure calls (I decided
+				// for the last one) can use the existing copy  of the callStack.
+				List<STATE> callStackcopy;
+				if (i != succStates.size() - 1) {
+					callStackcopy = new LinkedList<>(callStack);
+				} else {
+					callStackcopy = callStack;
+				}
+				final Set<STATE> returnValue =
+						getReachableStates(currentPosition + 1, succStates.get(i), callStackcopy);
+				result.addAll(returnValue);
+			}
+			return result;
 		}
 	}
 	
@@ -252,12 +237,10 @@ public class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 * possibilities) lead to hondaState such that an accepting state was
 	 * visited.
 	 */
-	boolean isCompleteableToAcceptingRun(
-			final Map<STATE, Boolean> hondaCandidates2visitedFinal,
-			int currentPosition,
-			final STATE currentState,
-			final List<STATE> callStack) {
-		assert (currentPosition <= mLoop.length());
+	boolean isCompleteableToAcceptingRun(final Map<STATE, Boolean> hondaCandidates2visitedFinal,
+			final int currentPositionIn, final STATE currentState, final List<STATE> callStack) {
+		int currentPosition = currentPositionIn;
+		assert currentPosition <= mLoop.length();
 		if (currentPosition == mLoop.length()) {
 			currentPosition = 0;
 		}
@@ -276,53 +259,56 @@ public class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperation<LETT
 		
 		final LETTER currentSymbol = mLoop.getSymbolAt(currentPosition);
 		
+		final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> outgoingTransitions =
+				getOutgoingTransitions(currentPosition, currentState, callStack, currentSymbol, mLoop, "loop");
+		
+		if (!outgoingTransitions.iterator().hasNext()) {
+			return false;
+		}
+		final List<STATE> succStates = new ArrayList<>();
+		for (final IOutgoingTransitionlet<LETTER, STATE> outgoingTransition : outgoingTransitions) {
+			succStates.add(outgoingTransition.getSucc());
+		}
+		boolean result = false;
+		for (int i = 0; i < succStates.size(); i++) {
+			// in case of nondeterminism, i.e. several successor states for
+			// currentSymbol, every recursive call of this procedure needs its own
+			// copy of the call stack. One of the recursive procedure calls (I decided
+			// for the last one) can use the existing copy  of the callStack.
+			List<STATE> callStackCopy;
+			Map<STATE, Boolean> hondaCandidatesCopy;
+			if (i != succStates.size() - 1) {
+				callStackCopy = new LinkedList<>(callStack);
+				hondaCandidatesCopy = new HashMap<>(hondaCandidates2visitedFinal);
+			} else {
+				callStackCopy = callStack;
+				hondaCandidatesCopy = hondaCandidates2visitedFinal;
+			}
+			
+			result = result || isCompleteableToAcceptingRun(hondaCandidatesCopy, currentPosition + 1,
+					succStates.get(i), callStackCopy);
+		}
+		return result;
+	}
+	
+	private Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> getOutgoingTransitions(final int currentPosition,
+			final STATE currentState, final List<STATE> callStack, final LETTER currentSymbol,
+			final NestedWord<LETTER> word, final String name) {
 		final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> outgoingTransitions;
-		if (mLoop.isInternalPosition(currentPosition)) {
+		if (word.isInternalPosition(currentPosition)) {
 			outgoingTransitions = mNwa.internalSuccessors(currentState, currentSymbol);
-		} else if (mLoop.isCallPosition(currentPosition)) {
+		} else if (word.isCallPosition(currentPosition)) {
 			callStack.add(currentState);
 			outgoingTransitions = mNwa.callSuccessors(currentState, currentSymbol);
-		} else if (mLoop.isReturnPosition(currentPosition)) {
-			assert (!callStack.isEmpty()) : "restricted to loop without pending return";
+		} else if (word.isReturnPosition(currentPosition)) {
+			assert !callStack.isEmpty() : "restricted to " + name + " without pending return";
 			//pop the top element from the callStack
 			final STATE linearPred = callStack.remove(callStack.size() - 1);
 			outgoingTransitions = mNwa.returnSuccessors(currentState, linearPred, currentSymbol);
 		} else {
 			throw new IllegalArgumentException();
 		}
-		
-		if (!outgoingTransitions.iterator().hasNext()) {
-			return false;
-		} else {
-			final List<STATE> succStates = new ArrayList<STATE>();
-			for (final IOutgoingTransitionlet<LETTER, STATE> outgoingTransition : outgoingTransitions) {
-				succStates.add(outgoingTransition.getSucc());
-			}
-			boolean result = false;
-			for (int i = 0; i < succStates.size(); i++) {
-				// in case of nondeterminism, i.e. several successor states for
-				// currentSymbol, every recursive call of this procedure needs its own
-				// copy of the call stack. One of the recursive procedure calls (I decided
-				// for the last one) can use the existing copy  of the callStack.
-				List<STATE> callStackCopy;
-				Map<STATE, Boolean> hondaCandidatesCopy;
-				if (i != succStates.size() - 1) {
-					callStackCopy = new LinkedList<STATE>(callStack);
-					hondaCandidatesCopy = new HashMap<STATE, Boolean>(
-							hondaCandidates2visitedFinal);
-				} else {
-					callStackCopy = callStack;
-					hondaCandidatesCopy = hondaCandidates2visitedFinal;
-				}
-				
-				result = result || isCompleteableToAcceptingRun(
-						hondaCandidatesCopy,
-						currentPosition + 1,
-						succStates.get(i),
-						callStackCopy);
-			}
-			return result;
-		}
+		return outgoingTransitions;
 	}
 	
 	@Override
@@ -330,5 +316,4 @@ public class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperation<LETT
 			throws AutomataLibraryException {
 		return true;
 	}
-	
 }
