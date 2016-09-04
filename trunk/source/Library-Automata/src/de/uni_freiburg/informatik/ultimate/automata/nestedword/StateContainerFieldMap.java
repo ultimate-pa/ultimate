@@ -196,25 +196,6 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		
 		private void updatePosition() {
 			mPosition++;
-			switch (mPosition) {
-				case ONE:
-					if (!(getOut1() instanceof OutgoingInternalTransition)) {
-						throw new AssertionError();
-					}
-					break;
-				case TWO:
-					if (!(getOut2() instanceof OutgoingInternalTransition)) {
-						throw new AssertionError();
-					}
-					break;
-				case THREE:
-					if (!(getOut3() instanceof OutgoingInternalTransition)) {
-						throw new AssertionError();
-					}
-					break;
-				default:
-					throw new AssertionError();
-			}
 		}
 		
 		@Override
@@ -225,7 +206,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		@SuppressWarnings("unchecked")
 		@Override
 		public OutgoingInternalTransition<LETTER, STATE> next() {
-			Object result;
+			final Object result;
 			switch (mPosition) {
 				case ONE:
 					result = getOut1();
@@ -238,6 +219,9 @@ public class StateContainerFieldMap<LETTER, STATE> {
 					break;
 				default:
 					throw new NoSuchElementException();
+			}
+			if (!(result instanceof OutgoingInternalTransition)) {
+				throw new AssertionError();
 			}
 			updatePosition();
 			return (OutgoingInternalTransition<LETTER, STATE>) result;
@@ -315,10 +299,8 @@ public class StateContainerFieldMap<LETTER, STATE> {
 			if (mLetterIterator.hasNext()) {
 				do {
 					mCurrentLetter = mLetterIterator.next();
-					mCurrentIterator = internalSuccessorsMap(mLetter2succ,
-							mCurrentLetter).iterator();
-				} while (!mCurrentIterator.hasNext()
-						&& mLetterIterator.hasNext());
+					mCurrentIterator = internalSuccessorsMap(mLetter2succ, mCurrentLetter).iterator();
+				} while (!mCurrentIterator.hasNext() && mLetterIterator.hasNext());
 				if (!mCurrentIterator.hasNext()) {
 					mCurrentLetter = null;
 					mCurrentIterator = null;
@@ -339,18 +321,12 @@ public class StateContainerFieldMap<LETTER, STATE> {
 			if (mCurrentLetter == null) {
 				throw new NoSuchElementException();
 			} else {
-				final OutgoingInternalTransition<LETTER, STATE> result =
-						mCurrentIterator.next();
+				final OutgoingInternalTransition<LETTER, STATE> result = mCurrentIterator.next();
 				if (!mCurrentIterator.hasNext()) {
 					nextLetter();
 				}
 				return result;
 			}
-		}
-		
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException();
 		}
 	}
 }
