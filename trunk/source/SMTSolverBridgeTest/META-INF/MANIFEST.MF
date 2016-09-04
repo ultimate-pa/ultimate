@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SMTSolverBridgeTest
+Bundle-SymbolicName: SMTSolverBridgeTest
+Bundle-Version: 0.0.1
+Fragment-Host: SMTSolverBridge
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: Library-UltimateTest
