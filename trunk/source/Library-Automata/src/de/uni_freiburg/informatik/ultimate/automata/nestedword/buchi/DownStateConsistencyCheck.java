@@ -32,9 +32,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Check if down states of an automaton are stored consistent.
@@ -53,17 +52,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class DownStateConsistencyCheck<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final boolean mResult;
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
 	
 	public DownStateConsistencyCheck(final AutomataLibraryServices services,
 			final IDoubleDeckerAutomaton<LETTER, STATE> nwa) throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mOperand = nwa;
 		mResult = consistentForAll();
 	}
@@ -74,13 +70,13 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 	}
 	
 	@Override
-	public String startMessage() {
-		return "Start " + operationName() + " Operand " + mOperand.sizeInformation();
+	public String exitMessage() {
+		return "Finished " + operationName() + " Result " + mResult;
 	}
 	
 	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + mResult;
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override
@@ -92,7 +88,7 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 		boolean result = true;
 		result &= consistentForInitials();
 		for (final STATE state : mOperand.getStates()) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (isCancellationRequested()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 			result &= consistentForState(state);

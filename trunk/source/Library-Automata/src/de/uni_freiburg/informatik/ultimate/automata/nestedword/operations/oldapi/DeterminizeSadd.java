@@ -35,22 +35,17 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class DeterminizeSadd<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
+public class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	
 	private final Map<Macrostate, STATE> mMacrostate2detState =
 			new HashMap<Macrostate, STATE>();
@@ -71,8 +66,7 @@ public class DeterminizeSadd<LETTER, STATE> implements IOperation<LETTER, STATE>
 			
 	public DeterminizeSadd(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mOperand = nwa;
 		mLogger.info(startMessage());
 		mResult = new NestedWordAutomaton<LETTER, STATE>(
@@ -92,15 +86,14 @@ public class DeterminizeSadd<LETTER, STATE> implements IOperation<LETTER, STATE>
 	}
 	
 	@Override
-	public String startMessage() {
-		return "Start " + operationName() + " Operand "
-				+ mOperand.sizeInformation();
-	}
-	
-	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result "
 				+ mResult.sizeInformation();
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override

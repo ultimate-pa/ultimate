@@ -37,13 +37,12 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Class that provides the Buchi acceptance check for nested word automata.
@@ -54,10 +53,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            Content. Type of the labels ("the content") of the automata states.
  */
-public class BuchiAcceptsRecursive<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
 	/**
 	 * Stem of the nested lasso word whose acceptance is checked.
 	 */
@@ -88,8 +85,7 @@ public class BuchiAcceptsRecursive<LETTER, STATE> implements IOperation<LETTER, 
 	 */
 	public BuchiAcceptsRecursive(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> nwa, final NestedLassoWord<LETTER> nlw) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mNwa = nwa;
 		mNlw = nlw;
 		mLogger.info(startMessage());
@@ -150,13 +146,8 @@ public class BuchiAcceptsRecursive<LETTER, STATE> implements IOperation<LETTER, 
 	}
 	
 	@Override
-	public String startMessage() {
-		return "Start " + operationName() + " Operand " + mNwa.sizeInformation();
-	}
-	
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName();
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mNwa;
 	}
 	
 	@Override

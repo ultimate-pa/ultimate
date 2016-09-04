@@ -36,8 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -48,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
@@ -68,10 +66,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  *            automata. In many cases you want to use String as STATE and your states are
  *            labeled e.g. with "q0", "q1", ...
  */
-public class DifferenceSadd<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
+public class DifferenceSadd<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
 	
 	private final INestedWordAutomatonSimple<LETTER, STATE> mMinuend;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSubtrahend;
@@ -124,8 +119,7 @@ public class DifferenceSadd<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mContentFactory = minuend.getStateFactory();
 		this.mMinuend = minuend;
 		this.mSubtrahend = subtrahend;
@@ -165,8 +159,7 @@ public class DifferenceSadd<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mContentFactory = minuend.getStateFactory();
 		this.mMinuend = minuend;
 		this.mSubtrahend = subtrahend;
@@ -203,6 +196,16 @@ public class DifferenceSadd<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result "
 				+ mDifference.sizeInformation();
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+		return mMinuend;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+		return mSubtrahend;
 	}
 	
 	@Override

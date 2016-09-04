@@ -28,18 +28,14 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldap
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class ComplementSadd<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
+public class ComplementSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	
 	protected INestedWordAutomaton<LETTER, STATE> mOperand;
 	protected INestedWordAutomaton<LETTER, STATE> mDeterminizedOperand;
@@ -51,15 +47,14 @@ public class ComplementSadd<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	}
 	
 	@Override
-	public String startMessage() {
-		return "Start " + operationName() + " Operand "
-				+ mOperand.sizeInformation();
-	}
-	
-	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result "
 				+ mResult.sizeInformation();
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override
@@ -70,8 +65,7 @@ public class ComplementSadd<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	public ComplementSadd(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand)
 					throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mOperand = operand;
 		
 		mLogger.info(startMessage());

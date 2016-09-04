@@ -30,17 +30,15 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Auxiliary class for doing some benchmarks.
@@ -51,10 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            state type
  */
-public class BuchiComplementationEvaluation<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
+public class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final String mResult;
@@ -65,11 +60,6 @@ public class BuchiComplementationEvaluation<LETTER, STATE> implements IOperation
 	}
 	
 	@Override
-	public String startMessage() {
-		return "Start " + operationName() + " Operand " + mOperand.sizeInformation();
-	}
-	
-	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Operand " + mOperand.sizeInformation() + " Result " + mResult;
 	}
@@ -77,8 +67,7 @@ public class BuchiComplementationEvaluation<LETTER, STATE> implements IOperation
 	public BuchiComplementationEvaluation(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> input) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		this.mOperand = new NestedWordAutomatonReachableStates<>(mServices, input);
 		mLogger.info(startMessage());
 		mResult = evaluate(stateFactory);
@@ -148,6 +137,11 @@ public class BuchiComplementationEvaluation<LETTER, STATE> implements IOperation
 	public boolean checkResult(final IStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return true;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override

@@ -32,13 +32,11 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Buchi Complementation based on the algorithm proposed by Frantisek Blahoudek
@@ -49,10 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class BuchiComplementNCSB<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
+public class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
@@ -60,8 +55,7 @@ public class BuchiComplementNCSB<LETTER, STATE> implements IOperation<LETTER, ST
 	public BuchiComplementNCSB(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> input) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		this.mOperand = input;
 		mLogger.info(startMessage());
 		final BuchiComplementNCSBNwa<LETTER, STATE> complemented =
@@ -74,11 +68,6 @@ public class BuchiComplementNCSB<LETTER, STATE> implements IOperation<LETTER, ST
 	@Override
 	public String operationName() {
 		return "buchiComplementBS";
-	}
-	
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + " Operand " + mOperand.sizeInformation();
 	}
 	
 	@Override
@@ -173,6 +162,11 @@ public class BuchiComplementNCSB<LETTER, STATE> implements IOperation<LETTER, ST
 		}
 //		assert correct : operationName() + " wrong result!";
 		return correct;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override

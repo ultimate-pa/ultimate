@@ -29,14 +29,13 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwa;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Operation that compares the different types of simulation methods for buechi
@@ -50,12 +49,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            State class of buechi automaton, not used
  */
-public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public final class CompareWithRandomAutomata<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 
-	/**
-	 * The logger used by the Ultimate framework.
-	 */
-	private final ILogger mLogger;
 	/**
 	 * The inputed buechi automaton.
 	 */
@@ -64,10 +59,6 @@ public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperatio
 	 * The resulting buechi automaton.
 	 */
 	private final INestedWordAutomaton<LETTER, STATE> mResult;
-	/**
-	 * Service provider of Ultimate framework.
-	 */
-	private final AutomataLibraryServices mServices;
 
 	/**
 	 * Compares the different types of simulation methods for buechi reduction
@@ -85,8 +76,7 @@ public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperatio
 	 */
 	public CompareWithRandomAutomata(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mOperand = operand;
 		mResult = operand;
 		mLogger.info(startMessage());
@@ -134,16 +124,10 @@ public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperatio
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#exitMessage()
-	 */
+	
 	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + ".";
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 
 	/*
@@ -165,16 +149,5 @@ public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperatio
 	@Override
 	public String operationName() {
 		return "compareWithRandomAutomata";
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#startMessage()
-	 */
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Operand has " + mOperand.sizeInformation();
 	}
 }

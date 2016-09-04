@@ -911,7 +911,7 @@ private void generateTransitivityConstraints() throws AutomataOperationCanceledE
 	}
 	
 	private void checkTimeout() throws AutomataOperationCanceledException {
-		if (!mServices.getProgressMonitorService().continueProcessing()) {
+		if (isCancellationRequested()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 	}

@@ -35,31 +35,25 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.SenwaWalker.ISuccessorVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class SenwaBuilder<LETTER, STATE>
-		implements ISuccessorVisitor<LETTER, STATE>,
-			IOperation<LETTER, STATE> {
+public class SenwaBuilder<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
+		implements ISuccessorVisitor<LETTER, STATE> {
 	
-	private final AutomataLibraryServices mServices;
 	private final Senwa<LETTER, STATE> mSenwa;
 	private final INestedWordAutomaton<LETTER, STATE> mNwa;
 //	private final Set<STATE> mAdded = new HashSet<>();
 	
 	private final Map<STATE,STATE> mResult2Operand = new HashMap<>();
 	private final Map<STATE,Map<STATE,STATE>> mEntry2Operand2Result = new HashMap<>();
-	
-	
-	private final ILogger mLogger;
 
 	/**
 	 * Constructor.
@@ -71,8 +65,7 @@ public class SenwaBuilder<LETTER, STATE>
 	public SenwaBuilder(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> nwa)
 					throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mNwa = nwa;
 		mLogger.info(startMessage());
 		mSenwa = new Senwa<LETTER, STATE>(mServices,
@@ -88,11 +81,6 @@ public class SenwaBuilder<LETTER, STATE>
 		return "senwa";
 	}
 	
-	@Override
-	public String startMessage() {
-			return "Start " + operationName() + ". Input has " + mNwa.sizeInformation();
-	}
-
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result has " + mSenwa.sizeInformation();
@@ -189,6 +177,11 @@ public class SenwaBuilder<LETTER, STATE>
 			}
 		}
 		return resSuccs;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mNwa;
 	}
 	
 	@Override

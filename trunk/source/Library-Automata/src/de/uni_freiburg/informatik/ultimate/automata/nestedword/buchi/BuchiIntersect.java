@@ -32,18 +32,13 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class BuchiIntersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
+public class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
 	
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
@@ -54,8 +49,7 @@ public class BuchiIntersect<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	public BuchiIntersect(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
 		mStateFactory = mFstOperand.getStateFactory();
@@ -66,8 +60,7 @@ public class BuchiIntersect<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
 			final IStateFactory<STATE> sf) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
 		mStateFactory = sf;
@@ -80,12 +73,6 @@ public class BuchiIntersect<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	}
 	
 	@Override
-	public String startMessage() {
-		return "Start intersect. First operand " + mFstOperand.sizeInformation() + ". Second operand "
-				+ mSndOperand.sizeInformation();
-	}
-	
-	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}
@@ -95,6 +82,16 @@ public class BuchiIntersect<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		mIntersect = new BuchiIntersectNwa<LETTER, STATE>(mFstOperand, mSndOperand, mStateFactory);
 		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mIntersect);
 		mLogger.info(exitMessage());
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+		return mFstOperand;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+		return mSndOperand;
 	}
 	
 	@Override

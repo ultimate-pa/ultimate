@@ -31,17 +31,12 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
+public class LassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
@@ -51,8 +46,7 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	
 	public LassoExtractor(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
 		if (mOperand instanceof NestedWordAutomatonReachableStates) {
@@ -74,6 +68,11 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	}
 	
 	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
+	}
+	
+	@Override
 	public List<NestedLassoWord<LETTER>> getResult() {
 		return mNestedLassoWords;
 	}
@@ -81,12 +80,6 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	@Override
 	public String operationName() {
 		return "getSomeAcceptedLassoRuns";
-	}
-	
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Operand "
-				+ mOperand.sizeInformation();
 	}
 	
 	@Override

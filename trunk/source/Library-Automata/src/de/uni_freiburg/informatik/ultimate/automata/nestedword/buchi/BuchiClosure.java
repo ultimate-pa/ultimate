@@ -31,11 +31,10 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Increase the number of accepting states without changing the language.
@@ -46,10 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            state type
  */
-public class BuchiClosure<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
+public class BuchiClosure<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final INestedWordAutomaton<LETTER, STATE> mResult;
@@ -64,8 +60,7 @@ public class BuchiClosure<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 */
 	public BuchiClosure(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
 		mResult = new BuchiClosureNwa<LETTER, STATE>(mServices, mOperand);
@@ -86,7 +81,7 @@ public class BuchiClosure<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	@Override
 	public String exitMessage() {
-		return "Start " + operationName() + " Operand "
+		return "Start " + operationName() + " Result "
 				+ mResult.sizeInformation() + " thereof "
 				+ mResult.getFinalStates().size() + " accepting";
 	}
@@ -115,6 +110,11 @@ public class BuchiClosure<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		assert correct;
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override

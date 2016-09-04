@@ -32,16 +32,14 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Buchi Complementation based on
@@ -51,11 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class BuchiComplementFKV<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-	
+public class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	/**
 	 * TODO Allow definition of a maximal rank for cases where you know that
 	 * this is sound. E.g. if the automaton is reverse deterministic a maximal
@@ -98,8 +92,7 @@ public class BuchiComplementFKV<LETTER, STATE> implements IOperation<LETTER, STA
 			final INestedWordAutomatonSimple<LETTER, STATE> input,
 			final String optimization,
 			final int userDefinedMaxRank) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		this.mStateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
 		this.mStateFactory = input.getStateFactory();
 		this.mOperand = input;
@@ -122,8 +115,7 @@ public class BuchiComplementFKV<LETTER, STATE> implements IOperation<LETTER, STA
 	public BuchiComplementFKV(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> input,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizier) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		this.mStateDeterminizer = stateDeterminizier;
 		this.mStateFactory = input.getStateFactory();
 		this.mOperand = input;
@@ -225,6 +217,11 @@ public class BuchiComplementFKV<LETTER, STATE> implements IOperation<LETTER, STA
 		}
 //		assert correct : operationName() + " wrong result!";
 		return correct;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override
