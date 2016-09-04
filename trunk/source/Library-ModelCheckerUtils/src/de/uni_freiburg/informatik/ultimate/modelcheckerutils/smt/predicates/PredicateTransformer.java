@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -65,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruc
  */
 public class PredicateTransformer {
 	private final Script mScript;
-	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
 	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -73,15 +71,14 @@ public class PredicateTransformer {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	public PredicateTransformer(final ManagedScript variableManager, final Script script, 
-			final ModifiableGlobalVariableManager modifiableGlobalVariableManager,
-			final IUltimateServiceProvider services, 
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final IUltimateServiceProvider services,
+			final SimplicationTechnique simplificationTechnique, 
+			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mScript = script;
-		mModifiableGlobalVariableManager = modifiableGlobalVariableManager;
 		mMgdScript = variableManager;
 	}
 	
@@ -376,7 +373,8 @@ public class PredicateTransformer {
 					outVarsToRenameInCallTF.put(callTF.getOutVars().get(pv), freshVar);
 				}
 			} else if (!ret_TF.getInVars().containsKey(pv) && !callTF.getOutVars().containsKey(pv)) {
-				if (!mModifiableGlobalVariableManager.getGlobals().containsKey(pv.getIdentifier())) {
+				final boolean isGlobal = pv.isGlobal();
+				if (!isGlobal) {
 					varsToQuantifyInCalleePred.add(pv.getTermVariable());
 				}
 			}

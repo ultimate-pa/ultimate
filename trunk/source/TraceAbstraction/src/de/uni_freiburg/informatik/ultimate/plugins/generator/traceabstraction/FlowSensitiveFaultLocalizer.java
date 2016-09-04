@@ -634,7 +634,7 @@ public class FlowSensitiveFaultLocalizer {
 		final Map<Integer, List<Integer>> informationFromCFG = computeInformationFromCFG(counterexample, cfg); 
 		// You should send the counter example, the CFG information and the the start of the branch and the end of the branch.
 		final PredicateTransformer pt = new PredicateTransformer(smtManager.getManagedScript(), 
-				smtManager.getScript(), modGlobVarManager, mServices, mSimplificationTechnique, mXnfConversionTechnique);
+				smtManager.getScript(), mServices, mSimplificationTechnique, mXnfConversionTechnique);
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
 				smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
 		final int startLocation = 0;

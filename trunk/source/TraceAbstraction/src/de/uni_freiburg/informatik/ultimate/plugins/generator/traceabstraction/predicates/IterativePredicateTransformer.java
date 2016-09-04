@@ -100,7 +100,7 @@ public class IterativePredicateTransformer {
 		mMgdScript = boogie2smt;
 		mModifiedGlobals = modifiableGlobalVariableManager;
 		mPredicateTransformer = new PredicateTransformer(boogie2smt, 
-				script, modifiableGlobalVariableManager, services, simplificationTechnique, xnfConversionTechnique);
+				script, services, simplificationTechnique, xnfConversionTechnique);
 		mPredicateFactory = predicateFactory;
 		mTrace = trace;
 		mPrecondition = precondition;
