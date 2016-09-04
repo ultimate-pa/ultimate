@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <C> Content
  */
 public class PetriNet2FiniteAutomaton<S,C> extends UnaryNetOperation<S, C> {
-	
+	private final IPetriNet<S, C> mOperand;
 	private final NestedWordAutomaton<S,C> mResult;
 	
 	/**
@@ -76,7 +76,8 @@ public class PetriNet2FiniteAutomaton<S,C> extends UnaryNetOperation<S, C> {
 	 */
 	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services,
 			final IPetriNet<S,C> operand) {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 		mLogger.info(startMessage());
 		mContentFactory = operand.getStateFactory();
 		final Set<S> alphabet = new HashSet<S>(operand.getAlphabet());
@@ -163,6 +164,11 @@ public class PetriNet2FiniteAutomaton<S,C> extends UnaryNetOperation<S, C> {
 			transitions.addAll(place.getSuccessors());
 		}
 		return transitions;
+	}
+	
+	@Override
+	protected IPetriNet<S, C> getOperand() {
+		return mOperand;
 	}
 	
 	@Override

@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
  * @param <PLACE> place type
  */
 public class NumberOfPlaces<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLACE> {
+	private final IPetriNet<LETTER, PLACE> mOperand;
 	
 	/**
 	 * Constructor.
@@ -48,12 +49,18 @@ public class NumberOfPlaces<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLA
 	 */
 	public NumberOfPlaces(final AutomataLibraryServices services,
 			final IPetriNet<LETTER, PLACE> operand) {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 	}
 
 	@Override
 	public String operationName() {
 		return "numberOfStates";
+	}
+	
+	@Override
+	protected IPetriNet<LETTER, PLACE> getOperand() {
+		return mOperand;
 	}
 
 	@Override

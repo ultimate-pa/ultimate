@@ -47,10 +47,6 @@ public abstract class BinaryNwaOperation<LETTER, STATE>
 	 * 
 	 * @param services
 	 *            Ultimate services
-	 * @param fstOperand
-	 *            first operand
-	 * @param sndOperand
-	 *            second operand
 	 */
 	public BinaryNwaOperation(final AutomataLibraryServices services) {
 		super(services);

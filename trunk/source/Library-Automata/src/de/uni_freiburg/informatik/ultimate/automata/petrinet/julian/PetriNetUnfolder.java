@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
@@ -46,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 public class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C> {
-
+	private final IPetriNet<S, C> mOperand;
 	private final boolean mStopIfAcceptingRunFound;
 	private final boolean mSameTransitionCutOff;
 	private final order mOrder;
@@ -150,7 +151,8 @@ public class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C> {
 			final PetriNetJulian<S, C> operand, final order order,
 			final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
 			throws AutomataOperationCanceledException {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 		this.mStopIfAcceptingRunFound = stopIfAcceptingRunFound;
 		this.mSameTransitionCutOff = sameTransitionCutOff;
 		this.mOrder = order;
@@ -407,6 +409,11 @@ public class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C> {
 			return "co relation was queried "
 					+ mUnfolding.getCoRelationQueries() + " times.";
 		}
+	}
+	
+	@Override
+	protected IPetriNet<S, C> getOperand() {
+		return mOperand;
 	}
 
 	@Override

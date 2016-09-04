@@ -19,46 +19,44 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
-import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 
 /**
  * Abstract operation taking one Petri net as input.
  * The most common methods are provided but can also be overwritten.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <PLACE>
+ *            place type
  */
-public abstract class UnaryNetOperation<LETTER, STATE>
-		extends GeneralOperation<LETTER, STATE> {
-	/**
-	 * Input Petri net.
-	 */
-	protected final IPetriNet<LETTER, STATE> mOperand;
-	
+public abstract class UnaryNetOperation<LETTER, PLACE> extends GeneralOperation<LETTER, PLACE> {
 	/**
 	 * Constructor.
 	 * 
-	 * @param services Ultimate services
-	 * @param operand operand
+	 * @param services
+	 *            Ultimate services
 	 */
-	public UnaryNetOperation(final AutomataLibraryServices services,
-			final IPetriNet<LETTER, STATE> operand) {
+	public UnaryNetOperation(final AutomataLibraryServices services) {
 		super(services);
-		mOperand = operand;
 	}
+	
+	/**
+	 * @return The operand Petri net.
+	 */
+	protected abstract IPetriNet<LETTER, PLACE> getOperand();
 	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Operand "
-				+ mOperand.sizeInformation();
+		return "Start " + operationName() + ". Operand " + getOperand().sizeInformation();
 	}
 }

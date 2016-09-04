@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
@@ -36,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 public class IsEmpty<LETTER,STATE> extends UnaryNetOperation<LETTER, STATE> {
-
+	private final IPetriNet<LETTER, STATE> mOperand;
 	private final Boolean mResult;
 	
 	/**
@@ -48,7 +49,8 @@ public class IsEmpty<LETTER,STATE> extends UnaryNetOperation<LETTER, STATE> {
 	 */
 	public IsEmpty(final AutomataLibraryServices services,
 			final PetriNetJulian<LETTER,STATE> operand) throws AutomataLibraryException {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 		mLogger.info(startMessage());
 		final PetriNetUnfolder<LETTER,STATE> unf =
 				new PetriNetUnfolder<LETTER,STATE>(mServices, operand, order.ERV, false, true);
@@ -66,6 +68,11 @@ public class IsEmpty<LETTER,STATE> extends UnaryNetOperation<LETTER, STATE> {
 	public String exitMessage() {
 		return "Finished " + operationName()
 			+ " language " + (mResult ? "is empty" : "is not emtpy");
+	}
+	
+	@Override
+	protected IPetriNet<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 
 	@Override
