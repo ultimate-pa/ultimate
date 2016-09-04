@@ -586,7 +586,7 @@ public class LassoChecker {
 		final UnmodifiableTransFormula tf = SequentialComposition.getInterproceduralTransFormula(mSmtManager.getBoogie2Smt().getManagedScript(),
 				mModifiableGlobalVariableManager, simplify, extendedPartialQuantifierElimination, toCNF,
 				withBranchEncoders, mLogger, mServices, word.asList(), mXnfConversionTechnique,
-				mSimplificationTechnique);
+				mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 		return tf;
 	}
 

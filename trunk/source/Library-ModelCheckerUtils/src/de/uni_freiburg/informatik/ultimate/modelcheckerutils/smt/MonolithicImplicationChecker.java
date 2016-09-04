@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -45,13 +44,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 public class MonolithicImplicationChecker {
 	
 	private final IUltimateServiceProvider mServices;
-	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
 
-	public MonolithicImplicationChecker(final IUltimateServiceProvider services, final ILogger logger, final ManagedScript managedScript) {
+	public MonolithicImplicationChecker(final IUltimateServiceProvider services, final ManagedScript managedScript) {
 		super();
 		mServices = services;
-		mLogger = logger;
 		mManagedScript = managedScript;
 	}
 	

@@ -47,11 +47,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
@@ -59,6 +62,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
@@ -492,12 +498,15 @@ public class TransFormulaUtils {
 	 *            TransFormula that assigns the result of the procedure call.
 	 * @param logger
 	 * @param services
+	 * @param symbolTable 
+	 * @param modifiableGlobalsOfCallee 
 	 */
 	public static UnmodifiableTransFormula sequentialCompositionWithCallAndReturn(final ManagedScript mgdScript, final boolean simplify,
 			final boolean extPqe, final boolean transformToCNF, final UnmodifiableTransFormula callTf, 
 			final UnmodifiableTransFormula oldVarsAssignment, final UnmodifiableTransFormula globalVarsAssignment,
 			final UnmodifiableTransFormula procedureTf, final UnmodifiableTransFormula returnTf, final ILogger logger, 
-			final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
+			final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique, 
+			final Boogie2SmtSymbolTable symbolTable, final Set<IProgramVar> modifiableGlobalsOfCallee) {
 		logger.debug("sequential composition (call/return) with" + (simplify ? "" : "out") + " formula simplification");
 		final UnmodifiableTransFormula composition = sequentialComposition(logger, services, mgdScript, 
 				simplify, extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique,
@@ -544,10 +553,38 @@ public class TransFormulaUtils {
 		}
 		assert SmtUtils.neitherKeyNorValueIsNull(result.mOutVars) : "sequentialCompositionWithCallAndReturn introduced null entries";
 		assert (isIntraprocedural(result));
+//		assert predicateBasedResultCheck(services, mgdScript, 
+//				xnfConversionTechnique, simplificationTechnique, 
+//				callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf, result, symbolTable, modifiableGlobalsOfCallee);
 		return result;
 	}
 	
 	
+	private static boolean predicateBasedResultCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique,
+			final UnmodifiableTransFormula callTf, final UnmodifiableTransFormula oldVarsAssignment,
+			final UnmodifiableTransFormula globalVarsAssignment, final UnmodifiableTransFormula procedureTf,
+			final UnmodifiableTransFormula returnTf, final UnmodifiableTransFormula result, 
+			final Boogie2SmtSymbolTable symbolTable, final Set<IProgramVar> modifiableGlobals) {
+		final PredicateTransformer pt = new PredicateTransformer(services, mgdScript, simplificationTechnique, xnfConversionTechnique);
+		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);
+		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));
+		final Term resultComposition = pt.strongestPostcondition(truePredicate, result);
+		final IPredicate resultCompositionPredicate = bpf.newPredicate(resultComposition); 
+		final Term afterCallTerm = pt.strongestPostconditionCall(truePredicate, callTf, globalVarsAssignment, oldVarsAssignment, modifiableGlobals);
+		final IPredicate afterCallPredicate = bpf.newPredicate(afterCallTerm);
+		final Term beforeReturnTerm = pt.strongestPostcondition(afterCallPredicate, procedureTf);
+		final IPredicate beforeReturnPredicate = bpf.newPredicate(beforeReturnTerm);
+		final Term afterReturnTerm = pt.strongestPostcondition(beforeReturnPredicate, truePredicate, returnTf, callTf, globalVarsAssignment, oldVarsAssignment);
+		final IPredicate afterReturnPredicate = bpf.newPredicate(afterReturnTerm);
+		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
+		final Validity check1 = mic.checkImplication(afterReturnPredicate, false, resultCompositionPredicate, false);
+		final Validity check2 = mic.checkImplication(resultCompositionPredicate, false, afterReturnPredicate, false);
+//		return check1 == Validity.VALID && check2 == Validity.VALID;
+		return true;
+	}
+
+
 	/**
 	 * Returns true iff all local variables in tf belong to a single procedure.
 	 */

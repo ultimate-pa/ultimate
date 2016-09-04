@@ -340,7 +340,8 @@ public class FlowSensitiveFaultLocalizer {
 				smtManager.getPredicateFactory(),
 				smtManager.getScript(), smtManager.getManagedScript(), modGlobVarManager, 
 				mServices, counterexampleWord, null, falsePredicate, null, 
-				smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(falsePredicate)), mSimplificationTechnique, mXnfConversionTechnique);
+				smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(falsePredicate)), 
+				mSimplificationTechnique, mXnfConversionTechnique, smtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 		
 		final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexampleWord, 
 				null, falsePredicate, Collections.emptySortedMap(), modGlobVarManager, false);

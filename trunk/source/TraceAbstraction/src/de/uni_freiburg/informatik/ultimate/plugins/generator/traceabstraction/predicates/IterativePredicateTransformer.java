@@ -41,8 +41,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -81,32 +83,35 @@ public class IterativePredicateTransformer {
 	protected final SortedMap<Integer, IPredicate> mPendingContexts;
 	private final IPredicate mFalsePredicate;
 	private final boolean mInterproceduralPost = true;
+	private final Boogie2SmtSymbolTable mSymbolTable;
 	
 	private static final boolean s_TransformSummaryToCNF = true;
 
 	public IterativePredicateTransformer(final PredicateFactory predicateFactory,
 			final Script script,
-			final ManagedScript boogie2smt,
+			final ManagedScript mgdScript,
 			final ModifiableGlobalVariableManager modifiableGlobalVariableManager,
 			final IUltimateServiceProvider services, final NestedWord<? extends IAction> trace, 
 			final IPredicate precondition, final IPredicate postcondition, 
 			final SortedMap<Integer, IPredicate> pendingContexts,
 			final IPredicate falsePredicate, 
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
+			final Boogie2SmtSymbolTable symbolTable) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
-		mMgdScript = boogie2smt;
+		mMgdScript = mgdScript;
 		mModifiedGlobals = modifiableGlobalVariableManager;
 		mPredicateTransformer = new PredicateTransformer(services, 
-				boogie2smt, simplificationTechnique, xnfConversionTechnique);
+				mgdScript, simplificationTechnique, xnfConversionTechnique);
 		mPredicateFactory = predicateFactory;
 		mTrace = trace;
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
 		mPendingContexts = pendingContexts;
 		mFalsePredicate = falsePredicate;
+		mSymbolTable = symbolTable;
 	}
 	
 
@@ -509,10 +514,12 @@ public class IterativePredicateTransformer {
 			final int call_pos, final int return_pos) {
 		final UnmodifiableTransFormula summaryOfInnerStatements = computeSummaryForInterproceduralTrace(
 				trace, rv, call_pos + 1, return_pos);
+		final String callee = ((ICallAction) trace.getSymbol(call_pos)).getSucceedingProcedure();
 		final UnmodifiableTransFormula summaryWithCallAndReturn = TransFormulaUtils.sequentialCompositionWithCallAndReturn(
 				mMgdScript, true, false, s_TransformSummaryToCNF, Call, 
 				oldVarsAssignment, globalVarsAssignment,
-				summaryOfInnerStatements, Return, mLogger, mServices, mXnfConversionTechnique, mSimplificationTechnique);
+				summaryOfInnerStatements, Return, mLogger, mServices, mXnfConversionTechnique, mSimplificationTechnique, 
+				mSymbolTable, mModifiedGlobals.getModifiedBoogieVars(callee));
 		return new ProcedureSummary(summaryWithCallAndReturn, summaryOfInnerStatements);
 	}
 
@@ -527,7 +534,7 @@ public class IterativePredicateTransformer {
 			final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv, final int start, final int end) {
 		final LinkedList<UnmodifiableTransFormula> transformulasToComputeSummaryFor = new LinkedList<UnmodifiableTransFormula>();
 		for (int i = start; i < end; i++) {
-			if (trace.getSymbol(i) instanceof Call) {
+			if (trace.getSymbol(i) instanceof ICallAction) {
 				final UnmodifiableTransFormula callTf = rv.getLocalVarAssignment(i);
 				final UnmodifiableTransFormula oldVarsAssignment = rv.getOldVarAssignment(i);
 				final UnmodifiableTransFormula globalVarsAssignment = rv.getGlobalVarAssignment(i);
@@ -544,10 +551,12 @@ public class IterativePredicateTransformer {
 						final UnmodifiableTransFormula summaryBetweenCallAndReturn = computeSummaryForInterproceduralTrace(trace, rv,
 								i + 1, returnPosition);
 						final UnmodifiableTransFormula returnTf = rv.getFormulaFromNonCallPos(returnPosition);
+						final String callee = ((ICallAction) trace.getSymbol(i)).getSucceedingProcedure();
 						transformulasToComputeSummaryFor.addLast(TransFormulaUtils.sequentialCompositionWithCallAndReturn(
 								mMgdScript, true, false, s_TransformSummaryToCNF, callTf, oldVarsAssignment,
 								globalVarsAssignment, summaryBetweenCallAndReturn, returnTf,
-								mLogger, mServices, mXnfConversionTechnique, mSimplificationTechnique));
+								mLogger, mServices, mXnfConversionTechnique, mSimplificationTechnique, 
+								mSymbolTable, mModifiedGlobals.getModifiedBoogieVars(callee)));
 						i = returnPosition;
 					} else {
 						// If the position of the corresponding Return is >=

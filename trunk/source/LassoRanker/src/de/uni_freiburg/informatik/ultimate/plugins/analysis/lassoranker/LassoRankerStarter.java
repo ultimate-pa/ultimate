@@ -263,15 +263,16 @@ public class LassoRankerStarter {
 	}
 
 	public UnmodifiableTransFormula constructTransformula(final NestedWord<CodeBlock> nw) {
-		final ManagedScript boogie2smt = mRootAnnot.getBoogie2SMT().getManagedScript();
+		final ManagedScript mgdScript = mRootAnnot.getBoogie2SMT().getManagedScript();
 		final ModifiableGlobalVariableManager modGlobVarManager = mRootAnnot.getModGlobVarManager();
 		final boolean simplify = true;
 		final boolean extPqe = true;
 		final boolean tranformToCNF = false;
 		final boolean withBranchEncoders = false;
 		final List<CodeBlock> codeBlocks = Collections.unmodifiableList(nw.asList());
-		return SequentialComposition.getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify, extPqe,
-				tranformToCNF, withBranchEncoders, mLogger, mServices, codeBlocks, mXnfConversionTechnique, mSimplificationTechnique);
+		return SequentialComposition.getInterproceduralTransFormula(mgdScript, modGlobVarManager, simplify, extPqe,
+				tranformToCNF, withBranchEncoders, mLogger, mServices, codeBlocks, 
+				mXnfConversionTechnique, mSimplificationTechnique, mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
 	}
 
 	/**
