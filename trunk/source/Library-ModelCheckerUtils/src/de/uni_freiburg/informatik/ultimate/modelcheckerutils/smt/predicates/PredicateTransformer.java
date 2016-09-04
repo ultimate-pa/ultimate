@@ -70,16 +70,15 @@ public class PredicateTransformer {
 	private final SimplicationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
-	public PredicateTransformer(final ManagedScript variableManager, final Script script, 
-			final IUltimateServiceProvider services,
-			final SimplicationTechnique simplificationTechnique, 
+	public PredicateTransformer(final IUltimateServiceProvider services, final ManagedScript mgdScript, 
+			final SimplicationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
-		mScript = script;
-		mMgdScript = variableManager;
+		mScript = mgdScript.getScript();
+		mMgdScript = mgdScript;
 	}
 	
 	private static TermVariable constructFreshTermVariable(final ManagedScript freshVarConstructor, final IProgramVar pv) {
