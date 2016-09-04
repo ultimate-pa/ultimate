@@ -26,9 +26,9 @@
  * to convey the resulting work.
  */
 /**
- * Max-SAT-based minimization for nested word automata.
+ * Utilities for minimization operations.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util;

@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2012-2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2012-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -26,9 +26,10 @@
  * to convey the resulting work.
  */
 /**
- * Max-SAT-based minimization for nested word automata.
+ * Bridge to the <i>Petruchio</i> Petri net library.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.petruchio;
