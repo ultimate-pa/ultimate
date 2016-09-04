@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -72,7 +73,7 @@ public class BasicPredicateFactory {
 
 	public BasicPredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Boogie2SmtSymbolTable symbolTable, final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 			mServices = services;
-			mLogger = mServices.getLoggingService().getLogger("");
+			mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 			mDontCareTerm = new AuxilliaryTerm("don't care");
 			mEmptyStackTerm = new AuxilliaryTerm("emptyStack");
 			mSymbolTable = symbolTable;
