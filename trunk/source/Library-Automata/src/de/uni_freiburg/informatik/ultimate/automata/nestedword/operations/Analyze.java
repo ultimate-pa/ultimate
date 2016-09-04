@@ -36,6 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -64,10 +65,6 @@ public class Analyze<LETTER, STATE>
 		TOTAL
 	}
 	
-	/*
-	 * The operand as more specific interface.
-	 * It shadows the superclass field with the same name.
-	 */
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	
 	private boolean mNumberOfStatesComputed;
@@ -118,7 +115,7 @@ public class Analyze<LETTER, STATE>
 	public Analyze(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final boolean computeEverything) {
-		super(services, operand);
+		super(services);
 		mOperand = operand;
 		
 		// compute all available information
@@ -282,6 +279,11 @@ public class Analyze<LETTER, STATE>
 	@Override
 	public String exitMessage() {
 		return "Finished automaton analysis";
+	}
+
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override

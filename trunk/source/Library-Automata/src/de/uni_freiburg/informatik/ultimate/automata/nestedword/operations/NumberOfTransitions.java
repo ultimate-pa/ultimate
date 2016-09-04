@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -45,10 +46,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public class NumberOfTransitions<LETTER, STATE>
 		extends UnaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
-	/*
-	 * The operand as more specific interface.
-	 * It shadows the superclass field with the same name.
-	 */
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	
 	/**
@@ -60,8 +57,13 @@ public class NumberOfTransitions<LETTER, STATE>
 	public NumberOfTransitions(
 			final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
-		super(services, operand);
+		super(services);
 		mOperand = operand;
+	}
+
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override

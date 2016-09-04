@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public class RemoveDeadEnds<LETTER, STATE>
 		extends UnaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
-		
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mResult;
 	
@@ -73,7 +73,8 @@ public class RemoveDeadEnds<LETTER, STATE>
 	public RemoveDeadEnds(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand)
 					throws AutomataOperationCanceledException {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 		mLogger.info(startMessage());
 		try {
 			mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(
@@ -98,6 +99,11 @@ public class RemoveDeadEnds<LETTER, STATE>
 		return "Finished " + operationName() + " Reduced from "
 				+ mOperand.sizeInformation() + " to "
 				+ mResult.sizeInformation();
+	}
+
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override

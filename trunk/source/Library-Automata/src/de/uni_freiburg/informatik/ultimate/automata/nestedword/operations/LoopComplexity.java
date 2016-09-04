@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.AutomatonSccComputation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
@@ -63,10 +64,6 @@ public class LoopComplexity<LETTER, STATE>
 		extends UnaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 
-	/*
-	 * The operand as more specific interface.
-	 * It shadows the superclass field with the same name.
-	 */
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mGraph;
@@ -82,7 +79,7 @@ public class LoopComplexity<LETTER, STATE>
 	public LoopComplexity(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand)
 					throws AutomataLibraryException {
-		super(services, operand);
+		super(services);
 
 		if (operand instanceof NestedWordAutomatonReachableStates) {
 			mOperand = operand;
@@ -257,6 +254,11 @@ public class LoopComplexity<LETTER, STATE>
 		return "Finished " + operationName() + ". Operand with "
 				+ mOperand.size()
 				+ " states has loop complexity " + mResult;
+	}
+
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 
 	@Override

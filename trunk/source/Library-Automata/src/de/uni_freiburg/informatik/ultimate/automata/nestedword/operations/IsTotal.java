@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -50,11 +51,6 @@ public class IsTotal<LETTER, STATE>
 		extends UnaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 	private final boolean mResult;
-	
-	/*
-	 * The operand as more specific interface.
-	 * It shadows the superclass field with the same name.
-	 */
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	
 	/**
@@ -63,7 +59,7 @@ public class IsTotal<LETTER, STATE>
 	 */
 	public IsTotal(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
-		super(services, operand);
+		super(services);
 		mOperand = operand;
 		mResult = isTotal();
 		mLogger.info("automaton is " + (mResult ? "" : "not ") + "total");
@@ -120,6 +116,11 @@ public class IsTotal<LETTER, STATE>
 	@Override
 	public String operationName() {
 		return "IsTotal";
+	}
+
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override

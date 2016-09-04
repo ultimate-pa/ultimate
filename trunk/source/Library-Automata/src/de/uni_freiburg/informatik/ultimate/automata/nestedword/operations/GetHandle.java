@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
@@ -59,10 +60,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 public class GetHandle<LETTER, STATE>
 		extends UnaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
-	/*
-	 * The operand as more specific interface.
-	 * It shadows the superclass field with the same name.
-	 */
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	
 	private NestedRun<LETTER,STATE> mHandle;
@@ -79,7 +76,7 @@ public class GetHandle<LETTER, STATE>
 	 */
 	public GetHandle(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		super(services, operand);
+		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
 		if (mOperand.getInitialStates().size() != 1) {
@@ -183,6 +180,11 @@ public class GetHandle<LETTER, STATE>
 			assert predecessor == knownPredecessor : "wrong state";
 			return true;
 		}
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 
 	@Override

@@ -75,6 +75,10 @@ public class IsEmpty<LETTER, STATE>
 		extends UnaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 	/**
+	 * Operand.
+	 */
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	/**
 	 * Set of states in which the run we are searching has to begin.
 	 */
 	private final Collection<STATE> mStartStates;
@@ -212,7 +216,8 @@ public class IsEmpty<LETTER, STATE>
 	 */
 	public IsEmpty(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 		mDummyEmptyStackState = mOperand.getEmptyStackState();
 		mStartStates = Utils.constructHashSet(mOperand.getInitialStates());
 		mGoalStateIsAcceptingState = true;
@@ -244,7 +249,8 @@ public class IsEmpty<LETTER, STATE>
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Set<STATE> startStates, final Set<STATE> forbiddenStates,
 			final Set<STATE> goalStates) {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 		assert operand.getStates().containsAll(startStates) : "unknown states";
 		assert operand.getStates().containsAll(goalStates) : "unknown states";
 		mDummyEmptyStackState = mOperand.getEmptyStackState();
@@ -701,6 +707,11 @@ public class IsEmpty<LETTER, STATE>
 			}
 		}
 		return false;
+	}
+
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override

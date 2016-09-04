@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public class Determinize<LETTER,STATE>
 		extends UnaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
-
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final DeterminizeNwa<LETTER, STATE> mDeterminized;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
 	private final IStateDeterminizer<LETTER,STATE> mStateDeterminizer;
@@ -58,10 +58,11 @@ public class Determinize<LETTER,STATE>
 	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
 	public Determinize(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, 
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER,STATE> operand)
 					throws AutomataOperationCanceledException {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 		mStateDeterminizer =
 				new PowersetDeterminizer<LETTER, STATE>(mOperand, true, stateFactory);
 		mStateFactory = stateFactory;
@@ -80,11 +81,12 @@ public class Determinize<LETTER,STATE>
 	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
 	public Determinize(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, 
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER,STATE> operand,
 			final Set<STATE> predefinedInitials)
 					throws AutomataOperationCanceledException {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 		mStateDeterminizer =
 				new PowersetDeterminizer<LETTER, STATE>(mOperand, true, stateFactory);
 		mStateFactory = stateFactory;
@@ -108,6 +110,11 @@ public class Determinize<LETTER,STATE>
 	}
 
 	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
+	}
+
+	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
@@ -119,7 +126,7 @@ public class Determinize<LETTER,STATE>
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
 
-			final INestedWordAutomaton<LETTER, STATE> resultDD = 
+			final INestedWordAutomaton<LETTER, STATE> resultDD =
 					(new DeterminizeDD<LETTER, STATE>(mServices, sf, mOperand)).getResult();
 			// should recognize same language as old computation
 			correct &= new IsIncluded<>(mServices, sf, resultDD, mResult).getResult();

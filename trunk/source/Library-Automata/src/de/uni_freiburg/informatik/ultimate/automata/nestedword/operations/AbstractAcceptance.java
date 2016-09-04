@@ -51,6 +51,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  */
 public abstract class AbstractAcceptance<LETTER,STATE>
 		extends UnaryNwaOperation<LETTER, STATE> {
+	/**
+	 * Input nested word automaton.
+	 */
+	protected final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	
 	protected boolean mIsAccepted;
 	
@@ -60,7 +64,8 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 	 */
 	public AbstractAcceptance(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 	}
 
 	/**
@@ -187,6 +192,11 @@ public abstract class AbstractAcceptance<LETTER,STATE>
 			config.push(state);
 		}
 		return succConfigs;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override

@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public class IsDeterministic<LETTER,STATE>
 		extends UnaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
-	
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
 	private final boolean mResult;
 	private final IStateFactory<STATE> mStateFactory;
@@ -55,7 +55,8 @@ public class IsDeterministic<LETTER,STATE>
 	public IsDeterministic(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER,STATE> operand)
 					throws AutomataOperationCanceledException {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 		mStateFactory = operand.getStateFactory();
 		mLogger.info(startMessage());
 		final TotalizeNwa<LETTER, STATE> totalized =
@@ -89,6 +90,11 @@ public class IsDeterministic<LETTER,STATE>
 	public String exitMessage() {
 		return "Finished " + operationName() + " Operand is "
 					+ (mResult ? "" : "not ") + "deterministic.";
+	}
+
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 
 	@Override

@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public class RemoveUnreachable<LETTER,STATE>
 		extends UnaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
-	
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
 
 	/**
@@ -64,7 +64,8 @@ public class RemoveUnreachable<LETTER,STATE>
 	public RemoveUnreachable(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER,STATE> operand)
 			throws AutomataOperationCanceledException {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 		mLogger.info(startMessage());
 		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(
 				mServices, mOperand);
@@ -82,6 +83,10 @@ public class RemoveUnreachable<LETTER,STATE>
 				+ mResult.sizeInformation();
 	}
 
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
+	}
 
 	@Override
 	public NestedWordAutomatonReachableStates<LETTER,STATE> getResult() {

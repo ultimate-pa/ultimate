@@ -36,6 +36,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 public class GetAcceptedWord<LETTER, STATE>
 		extends UnaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	
 	private NestedWord<LETTER> mAcceptedWord;
 
 	/**
@@ -46,7 +48,8 @@ public class GetAcceptedWord<LETTER, STATE>
 	public GetAcceptedWord(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand)
 					throws AutomataLibraryException {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 		mLogger.info(startMessage());
 		final IsEmpty<LETTER, STATE> isEmpty = new IsEmpty<LETTER, STATE>(mServices, operand);
 		if (isEmpty.getResult()) {
@@ -56,6 +59,11 @@ public class GetAcceptedWord<LETTER, STATE>
 			mAcceptedWord = isEmpty.getNestedRun().getWord();
 		}
 		mLogger.info(exitMessage());
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 
 	@Override

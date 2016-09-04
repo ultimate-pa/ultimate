@@ -46,40 +46,35 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public abstract class UnaryNwaOperation<LETTER, STATE>
 		extends GeneralOperation<LETTER, STATE> {
 	/**
-	 * Input nested word automaton.
-	 */
-	protected final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
-	
-	/**
 	 * Constructor.
 	 * 
 	 * @param services
 	 *            Ultimate services
-	 * @param operand
-	 *            operand
 	 */
-	public UnaryNwaOperation(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+	public UnaryNwaOperation(final AutomataLibraryServices services) {
 		super(services);
-		mOperand = operand;
 	}
 	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Operand " + mOperand.sizeInformation();
+		return "Start " + operationName() + ". Operand " + getOperand().sizeInformation();
 	}
 	
 	/**
-	 * This implementation can be used in the checkResult() method.
+	 * @return The operand nested word automaton.
+	 */
+	protected abstract INestedWordAutomatonSimple<LETTER, STATE> getOperand();
+	
+	/**
+	 * This implementation can be used in the {@link de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
+	 * getResult()} method.
 	 * It checks (finite word) language equivalence between the operand and the result.
 	 * <p>
-	 * NOTE: The operation relies on the method
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult() getResult()} being a constant-time
-	 * operation.
+	 * NOTE: The operation relies on the {@link de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
+	 * getResult()} method being a constant-time operation.
 	 */
-	protected Pair<Boolean, String> checkLanguageEquivalence(
-			final IStateFactory<STATE> stateFactory)
-					throws AutomataLibraryException {
+	protected Pair<Boolean, String> checkLanguageEquivalence(final IStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
 		// type-check and cast result to nested word automaton
 		if (!(getResult() instanceof INestedWordAutomatonSimple)) {
 			throw new UnsupportedOperationException(
@@ -88,12 +83,13 @@ public abstract class UnaryNwaOperation<LETTER, STATE>
 		@SuppressWarnings("unchecked")
 		final INestedWordAutomatonSimple<LETTER, STATE> result =
 				(INestedWordAutomatonSimple<LETTER, STATE>) getResult();
-				
+		final INestedWordAutomatonSimple<LETTER, STATE> operand = getOperand();
+		
 		// check language equivalence via two inclusion checks
 		final String message;
 		boolean correct = true;
-		if (new IsIncluded<LETTER, STATE>(mServices, stateFactory, mOperand, result).getResult()) {
-			if (new IsIncluded<LETTER, STATE>(mServices, stateFactory, result, mOperand).getResult()) {
+		if (new IsIncluded<LETTER, STATE>(mServices, stateFactory, operand, result).getResult()) {
+			if (new IsIncluded<LETTER, STATE>(mServices, stateFactory, result, operand).getResult()) {
 				message = null;
 			} else {
 				message = "The result recognizes less words than before.";

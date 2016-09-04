@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public class Complement<LETTER,STATE>
 		extends UnaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
-
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private DeterminizeNwa<LETTER,STATE> mDeterminized;
 	private ComplementDeterministicNwa<LETTER,STATE> mComplement;
 	private NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
@@ -62,7 +62,8 @@ public class Complement<LETTER,STATE>
 			final IStateDeterminizer<LETTER,STATE> stateDeterminizer,
 			final IStateFactory<STATE> stateFactory)
 					throws AutomataLibraryException {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 		mStateDeterminizer = stateDeterminizer;
 		mStateFactory = stateFactory;
 		mLogger.info(startMessage());
@@ -138,6 +139,11 @@ public class Complement<LETTER,STATE>
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Result "
 				+ mResult.sizeInformation();
+	}
+
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 
 	@Override

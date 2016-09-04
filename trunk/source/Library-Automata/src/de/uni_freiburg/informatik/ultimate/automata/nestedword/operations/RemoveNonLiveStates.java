@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public class RemoveNonLiveStates<LETTER, STATE>
 		extends UnaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
-		
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
 	private final INestedWordAutomaton<LETTER, STATE> mResult;
 	
@@ -77,7 +77,8 @@ public class RemoveNonLiveStates<LETTER, STATE>
 	public RemoveNonLiveStates(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand)
 					throws AutomataOperationCanceledException {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 		mLogger.info(startMessage());
 		mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(
 				mServices, mOperand);
@@ -98,6 +99,11 @@ public class RemoveNonLiveStates<LETTER, STATE>
 		return "Finished " + operationName() + " Reduced from "
 				+ mOperand.sizeInformation() + " to "
 				+ mResult.sizeInformation();
+	}
+
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override

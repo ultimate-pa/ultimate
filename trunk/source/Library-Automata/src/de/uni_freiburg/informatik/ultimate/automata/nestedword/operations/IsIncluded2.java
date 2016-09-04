@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public class IsIncluded2<LETTER, STATE>
 		extends UnaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
-	
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mB1;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mB2;
 	
@@ -72,7 +72,8 @@ public class IsIncluded2<LETTER, STATE>
 			final INestedWordAutomatonSimple<LETTER, STATE> operandB1,
 			final INestedWordAutomatonSimple<LETTER, STATE> operandB2)
 					throws AutomataLibraryException {
-		super(services, operandA);
+		super(services);
+		mOperand = operandA;
 		mB1 = operandB1;
 		mB2 = operandB2;
 		// workaround until Matthias implemented this
@@ -103,6 +104,11 @@ public class IsIncluded2<LETTER, STATE>
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Language is "
 				+ (mResult ? "" : "not ") + "included";
+	}
+
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 
 	@Override

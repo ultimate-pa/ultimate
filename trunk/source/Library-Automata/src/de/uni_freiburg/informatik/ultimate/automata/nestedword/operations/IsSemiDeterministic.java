@@ -60,11 +60,6 @@ public class IsSemiDeterministic<LETTER, STATE>
 	private final Set<STATE> mNondeterministicSuccessorOfAccepting = new HashSet<>();
 	
 	private final boolean mResult;
-	
-	/*
-	 * The operand as more specific implementation.
-	 * It shadows the superclass field with the same name.
-	 */
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mOperand;
 	
 	/**
@@ -79,7 +74,7 @@ public class IsSemiDeterministic<LETTER, STATE>
 	 */
 	public IsSemiDeterministic(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataLibraryException {
-		super(services, operand);
+		super(services);
 		if (operand instanceof NestedWordAutomatonReachableStates) {
 			mOperand = (NestedWordAutomatonReachableStates<LETTER, STATE>) operand;
 		} else {
@@ -262,6 +257,11 @@ public class IsSemiDeterministic<LETTER, STATE>
 			}
 		}
 		return false;
+	}
+
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override

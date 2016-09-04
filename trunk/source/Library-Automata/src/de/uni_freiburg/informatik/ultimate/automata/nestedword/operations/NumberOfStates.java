@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 public class NumberOfStates<LETTER, STATE>
 		extends UnaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	
 	/**
 	 * Constructor.
@@ -52,12 +53,18 @@ public class NumberOfStates<LETTER, STATE>
 	public NumberOfStates(
 			final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 	}
 
 	@Override
 	public String operationName() {
 		return "numberOfStates";
+	}
+
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 
 	@Override

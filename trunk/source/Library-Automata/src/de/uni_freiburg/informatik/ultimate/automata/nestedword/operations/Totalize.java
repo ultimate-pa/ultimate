@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class Totalize<LETTER,STATE>
 		extends UnaryNwaOperation<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
-	
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
 	private final IStateFactory<STATE> mStateFactory;
 	
@@ -63,7 +63,8 @@ public class Totalize<LETTER,STATE>
 	public Totalize(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER,STATE> operand)
 					throws AutomataLibraryException {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 		mStateFactory = operand.getStateFactory();
 		mLogger.info(startMessage());
 		final TotalizeNwa<LETTER, STATE> totalized =
@@ -82,6 +83,11 @@ public class Totalize<LETTER,STATE>
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result "
 				+ mResult.sizeInformation();
+	}
+
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override
