@@ -19,6 +19,7 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 
 /**
  * Generic interface for the different parsers of SMTInterpol.  Each interface
@@ -29,10 +30,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 public interface IParser {
 	/**
 	 * Parse a specific file. If the filename is <code>null</code>, the
-	 * parser should parse standard input,
-	 * @param script    The script that should be used.
-	 * @param filename  The name of the file to parse.
+	 * parser should parse standard input.  The script has to be initialized.
+	 * @param script       The script that should be used.
+	 * @param filename     The name of the file to parse.
+	 * @param options      The option map used to handle all options for the
+	 *                     solver and the parser.
 	 * @return Exit code.
 	 */
-	public int run(Script script, String filename); 
+	public int run(Script script, String filename, OptionMap options);
 }

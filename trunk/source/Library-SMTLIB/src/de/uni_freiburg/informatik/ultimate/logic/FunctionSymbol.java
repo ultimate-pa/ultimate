@@ -115,7 +115,8 @@ public class FunctionSymbol {
 	}
 	
 	/**
-	 * @deprecated use getParamterSorts().length 
+	 * @deprecated use getParameterSorts().length
+	 * @return the number of parameters this function takes.
 	 */
 	@Deprecated
 	public int getParameterCount() {
@@ -123,7 +124,9 @@ public class FunctionSymbol {
 	}
 	
 	/**
-	 * @deprecated use getParamterSorts()[i] 
+	 * @deprecated use getParameterSorts()[i].
+	 * @param i the parameter number.
+	 * @return the sort of the ith parameter.
 	 */
 	@Deprecated
 	public Sort getParameterSort(int i) {

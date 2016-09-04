@@ -22,12 +22,10 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
@@ -59,16 +57,13 @@ public class CClosure implements ITheory {
 	final ArrayDeque<SymmetricPair<CCAppTerm>> mPendingCongruences =
 		new ArrayDeque<SymmetricPair<CCAppTerm>>();
 	
-	final Clausifier mClausifier;
-	
 	private long mInvertEdgeTime, mEqTime, mCcTime, mSetRepTime;
 	private long mCcCount, mMergeCount;
 	
 	private int mStoreNum, mSelectNum, mDiffNum;
 
-	public CClosure(DPLLEngine engine, Clausifier clausifier) {
+	public CClosure(DPLLEngine engine) {
 		mEngine = engine;
-		mClausifier = clausifier;
 	}
 	
 	public CCTerm createAnonTerm(SharedTerm flat) {
@@ -475,7 +470,7 @@ public class CClosure implements ITheory {
 	
 
 	@Override
-	public void dumpModel(Logger logger) {
+	public void dumpModel(LogProxy logger) {
 //		assert(checkCongruence());
 		logger.info("Equivalence Classes:");
 		for (final CCTerm t : mAllTerms) {
@@ -519,7 +514,7 @@ public class CClosure implements ITheory {
 	}
 	
 	@Override
-	public void printStatistics(Logger logger) {
+	public void printStatistics(LogProxy logger) {
 		logger.info("CCTimes: iE " + mInvertEdgeTime + " eq "
 				+ mEqTime + " cc " + mCcTime + " setRep "
 				+ mSetRepTime);

@@ -22,8 +22,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -31,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.BooleanVarAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ITheory;
@@ -113,10 +112,20 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		if (array != null) {
 			array.fillInModel(this, t, ste);
 		}
+		if (!partial) {
+			for (final FunctionSymbol fs : t.getDeclaredFunctions().values()) {
+				if (!fs.isIntern() && !mFuncVals.containsKey(fs)) {
+					final SortInterpretation si = provideSortInterpretation(fs.getReturnSort());
+					// ensure the sort is inhabited
+					si.ensureCapacity(1);
+					map(fs, 0);
+				}
+			}
+		}
 		mEval = new ModelEvaluator(this);
 	}
 	
-	public boolean checkTypeValues(Logger logger) {
+	public boolean checkTypeValues(LogProxy logger) {
 		boolean correct = true;
 		for (final Map.Entry<FunctionSymbol, FunctionValue> me : mFuncVals.entrySet()) {
 			final FunctionSymbol fs = me.getKey();
@@ -228,17 +237,14 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 	@Override
 	public String toString() {
 		final ModelFormatter mf = new ModelFormatter(mTheory, this);
-		if (!mSorts.isEmpty()) {
-			mf.appendComment("Sort interpretations");
-		}
-		for (final Map.Entry<Sort, SortInterpretation> me : mSorts.entrySet()) {
-			mf.appendSortInterpretation(me.getValue(), me.getKey());
-		}
-		// Only if we printed ";; Sort interpretations" we should print the
-		// delimiting comment ";; Function interpretations"
-		if (!mSorts.isEmpty()) {
-			mf.appendComment("Function interpretations");
-		}
+//		if (!mSorts.isEmpty())
+//			mf.appendComment("Sort interpretations");
+//		for (Map.Entry<Sort, SortInterpretation> me : mSorts.entrySet())
+//			mf.appendSortInterpretation(me.getValue(), me.getKey());
+//		// Only if we printed ";; Sort interpretations" we should print the
+//		// delimiting comment ";; Function interpretations"
+//		if (!mSorts.isEmpty())
+//			mf.appendComment("Function interpretations");
 		for (final Map.Entry<FunctionSymbol, FunctionValue> me : mFuncVals.entrySet()) {
 			if (!me.getKey().isIntern()) {
 				mf.appendValue(me.getKey(), me.getValue(), mTheory);

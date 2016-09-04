@@ -118,13 +118,6 @@ public interface IProofTracker {
 	 */
 	public void normalized(ConstantTerm term, SMTAffineTerm res);
 	/**
-	 * Track a transformation into <=0-form.
-	 * @param orig The original term.
-	 * @param leq  The resulting term.
-	 * @param rule The rule applied.
-	 */
-	public void toLeq0(Term orig, SMTAffineTerm leq, int rule);
-	/**
 	 * Track an leq simplification.
 	 * @param leq  The leq0-term.
 	 * @param res  The rewrite result.

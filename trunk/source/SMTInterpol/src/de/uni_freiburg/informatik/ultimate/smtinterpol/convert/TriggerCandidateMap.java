@@ -27,8 +27,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -36,16 +34,16 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.CollectionsHelper;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class TriggerCandidateMap {
-	private final Logger mLogger;
+	private final LogProxy mLogger;
 	private final HashMap<FunctionSymbol, List<ApplicationTerm>> mFuncs;
 	private final Set<ApplicationTerm> mUnitCandidates;
 	private final Theory mTheory;
 	private Set<TermVariable> mVars;
-	public TriggerCandidateMap(Logger logger,Theory theory,
+	public TriggerCandidateMap(LogProxy logger,Theory theory,
 			Set<TermVariable> vars) {
 		mLogger = logger;
 		mFuncs = new HashMap<FunctionSymbol,List<ApplicationTerm>>();
@@ -117,10 +115,8 @@ public class TriggerCandidateMap {
 				continue;
 			}
 			if (hasVarMatchError(candidate,at)) {
-				mLogger.debug(
-						new DebugMessage(
-								"Pattern candidate {0} dropped. It is looping against {1}...",
-								candidate,at));
+				mLogger.debug("Pattern candidate %s dropped. It is looping against %s...",
+								candidate,at);
 				return true;
 			}
 		}
