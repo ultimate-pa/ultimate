@@ -45,13 +45,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class OptionBuilder {
 
 	private static final int MAX_NAME_LENGTH = 160;
+	private static final int MIN_WIDTH = 0;
 
 	private final ICore<RunDefinition> mCore;
-	private final Map<String, Pair<String, String>> mCliName2PreferenceName;
+	private final Map<String, Triple<String, String, UltimatePreferenceItem<?>>> mCliName2UltimatePreferences;
 	private final Map<String, IUltimatePreferenceItemValidator<?>> mCliName2Validator;
 	private final ILogger mLogger;
 
@@ -59,15 +61,16 @@ public class OptionBuilder {
 	private final Options mRcpOptions;
 	private final Options mCliControllerOptions;
 
-	public OptionBuilder(final ICore<RunDefinition> core, final ILogger logger) {
+	public OptionBuilder(final ICore<RunDefinition> core, final ILogger logger, final boolean requireToolchain,
+			final boolean requireInputFiles) {
 		mCore = core;
-		mCliName2PreferenceName = new HashMap<>();
+		mCliName2UltimatePreferences = new HashMap<>();
 		mCliName2Validator = new HashMap<>();
 		mLogger = logger;
 
 		mUltimateOptions = createUltimateOptions();
 		mRcpOptions = createRcpOptions();
-		mCliControllerOptions = createCliOptions();
+		mCliControllerOptions = createCliOptions(requireToolchain, requireInputFiles);
 	}
 
 	/**
@@ -77,7 +80,11 @@ public class OptionBuilder {
 	 * @return
 	 */
 	public Pair<String, String> getUltimatePreference(final String longOptName) {
-		return mCliName2PreferenceName.get(longOptName);
+		final Triple<String, String, UltimatePreferenceItem<?>> triple = mCliName2UltimatePreferences.get(longOptName);
+		if (triple == null) {
+			return null;
+		}
+		return new Pair<>(triple.getFirst(), triple.getSecond());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -105,7 +112,7 @@ public class OptionBuilder {
 		return rtr;
 	}
 
-	public int calculateMaxWidth(final Options opts) {
+	public static int calculateMaxWidth(final Options opts) {
 		if (opts == null) {
 			return 0;
 		}
@@ -113,25 +120,45 @@ public class OptionBuilder {
 		if (options.isEmpty()) {
 			return 0;
 		}
-		final Optional<Integer> max =
-				options.stream().map(a -> a.getLongOpt().toString().length()).max(Integer::compare);
+		final Optional<Integer> max = options.stream().map(a -> a.getLongOpt().length()).max(Integer::compare);
 		// 8 is the length of the additional symbols for a long option line: --<option> <arg>
-		return max.get() + 8;
+		if (!max.isPresent()) {
+			throw new AssertionError("Java8 does not work");
+		}
+		final int calculatedMaxWidth = max.get() + 8;
+		return calculatedMaxWidth > MIN_WIDTH ? calculatedMaxWidth : MIN_WIDTH;
+	}
+
+	public Options filterExperimentalOptions(final Options opts) {
+		final Options rtr = new Options();
+		opts.getOptions().stream().sequential().filter(a -> !isUltimateOptionWithoutDesc(a)).forEach(rtr::addOption);
+		return rtr;
 	}
 
 	private boolean filterUltimateOption(final Option option, final Predicate<String> pluginNameFilter) {
-		final Pair<String, String> pair = getUltimatePreference(option.getLongOpt());
-		if (pair == null) {
+		final Triple<String, String, UltimatePreferenceItem<?>> triple =
+				mCliName2UltimatePreferences.get(option.getLongOpt());
+		if (triple == null) {
 			return false;
 		}
-		return pluginNameFilter.test(pair.getFirst());
+		return pluginNameFilter.test(triple.getFirst());
 	}
 
-	private Options createCliOptions() {
+	private boolean isUltimateOptionWithoutDesc(final Option option) {
+		final Triple<String, String, UltimatePreferenceItem<?>> triple =
+				mCliName2UltimatePreferences.get(option.getLongOpt());
+		if (triple == null) {
+			return false;
+		}
+		final String desc = triple.getThird().getToolTip();
+		return desc == null || desc.isEmpty();
+	}
+
+	private static Options createCliOptions(final boolean requireToolchain, final boolean requireInputFiles) {
 		final Options op = new Options();
 
 		// add CLI controller options
-		for (final Option option : CommandLineOptions.createCommandLineOptions()) {
+		for (final Option option : CommandLineOptions.createFinalCLIOptions(requireToolchain, requireInputFiles)) {
 			op.addOption(option);
 		}
 
@@ -156,7 +183,7 @@ public class OptionBuilder {
 	/**
 	 * The options created here are only relevant for avoiding parse errors due to RCP parameters.
 	 */
-	private Options createRcpOptions() {
+	private static Options createRcpOptions() {
 		final Options op = new Options();
 		// add platform options (they appear because of the way RCP launches and are never used by this controller)
 		op.addOption(Option.builder("product").hasArg().type(String.class).build());
@@ -218,7 +245,7 @@ public class OptionBuilder {
 	}
 
 	private Builder createBuilder(final UltimatePreferenceItem<?> item, final String pluginId) {
-		final String longName = convertLabelToLongName(pluginId, item.getLabel());
+		final String longName = convertLabelToLongName(pluginId, item);
 		final String description = createDescription(item);
 
 		final Builder builder;
@@ -282,7 +309,8 @@ public class OptionBuilder {
 		return sb.toString();
 	}
 
-	private String convertLabelToLongName(final String pluginId, final String label) {
+	private String convertLabelToLongName(final String pluginId, final UltimatePreferenceItem<?> item) {
+		final String label = item.getLabel();
 		final int lastIdx = pluginId.lastIndexOf('.');
 		final String prefix = lastIdx > 0 ? pluginId.substring(lastIdx + 1) : pluginId;
 		final String unprocessedName = prefix + " " + label;
@@ -294,7 +322,7 @@ public class OptionBuilder {
 			mLogger.warn("Option " + processedName + " longer than allowed maximum of " + MAX_NAME_LENGTH);
 		}
 
-		mCliName2PreferenceName.put(processedName, new Pair<>(pluginId, label));
+		mCliName2UltimatePreferences.put(processedName, new Triple<>(pluginId, label, item));
 		return processedName;
 	}
 

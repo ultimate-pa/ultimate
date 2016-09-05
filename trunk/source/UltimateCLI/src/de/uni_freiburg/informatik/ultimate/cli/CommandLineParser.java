@@ -37,7 +37,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import de.uni_freiburg.informatik.ultimate.cli.options.OptionBuilder;
-import de.uni_freiburg.informatik.ultimate.cli.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.lib.util.LoggerOutputStream;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
@@ -49,7 +48,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class CommandLineParser {
+public final class CommandLineParser {
+
+	private static final int DESC_PADDING = 6;
+	private static final String USAGE = "Ultimate [OPTIONS] -tc <FILE> -i <FILE> [<FILE> ...]";
+	private static final String HEADER = null;
+	private static final String FOOTER = null;
 
 	private final ILogger mLogger;
 	private final Options mOptionsForParser;
@@ -57,32 +61,38 @@ public class CommandLineParser {
 	private final OptionBuilder mOptionBuilder;
 	private final DefaultParser mParser;
 	private final ICore<RunDefinition> mCore;
-	private final ToolchainLocator mToolchainLocator;
 
-	public CommandLineParser(final ICore<RunDefinition> core) {
+	private CommandLineParser(final ICore<RunDefinition> core, final Predicate<String> pluginNameFilter,
+			final boolean requireToolchain, final boolean requireInputFiles) {
+		if (pluginNameFilter == null) {
+			throw new IllegalArgumentException("pluginNameFilter");
+		}
+		if (core == null) {
+			throw new IllegalArgumentException("core");
+		}
 		mCore = core;
 		mLogger = core.getCoreLoggingService().getControllerLogger();
 		mParser = new DefaultParser();
-		mOptionBuilder = new OptionBuilder(core, mLogger);
-		mToolchainLocator = new ToolchainLocator(RcpUtils.getWorkingDirectory(), core, mLogger);
-		final Predicate<String> pluginNameFilter = mToolchainLocator.createFilterForAvailableTools();
-		// final Predicate<String> pluginNameFilter = a -> true;
+		mOptionBuilder = new OptionBuilder(core, mLogger, requireToolchain, requireInputFiles);
 		mOptionsForParser = mOptionBuilder.getParserOptions(pluginNameFilter);
 		mOptionsForHelp = mOptionBuilder.getHelpOptions(pluginNameFilter);
+	}
 
+	public static CommandLineParser createCliOnlyParser(final ICore<RunDefinition> core) {
+		return new CommandLineParser(core, a -> false, false, false);
+	}
+
+	public static CommandLineParser createCompleteParser(final ICore<RunDefinition> core,
+			final Predicate<String> pluginNameFilter) {
+		return new CommandLineParser(core, pluginNameFilter, true, false);
 	}
 
 	public void printHelp() {
-		final HelpFormatter formatter = new HelpFormatter();
-		final PrintWriter logPrintWriter = new PrintWriter(new LoggerOutputStream(mLogger::info));
-		formatter.setLeftPadding(0);
-		formatter.setDescPadding(6);
-		formatter.setWidth(mOptionBuilder.calculateMaxWidth(mOptionsForHelp));
-		// keep the options in the order they were declared
-		formatter.setOptionComparator(null);
-		formatter.printHelp(logPrintWriter, "Ultimate [OPTIONS] -tc <FILE> -i <FILE> [<FILE> ...]", mOptionsForHelp);
-		logPrintWriter.flush();
-		logPrintWriter.close();
+		printHelp(mLogger, mOptionBuilder.filterExperimentalOptions(mOptionsForHelp), USAGE, HEADER, FOOTER);
+	}
+
+	public void printHelpWithExperimentals() {
+		printHelp(mLogger, mOptionsForHelp, USAGE, HEADER, FOOTER);
 	}
 
 	public ParsedParameter parse(final String[] args) throws ParseException {
@@ -90,6 +100,21 @@ public class CommandLineParser {
 		validateParsedOptionsWithValidators(cli);
 		validateParsedOptionsByConversion(cli);
 		return new ParsedParameter(mCore, cli, mOptionBuilder);
+	}
+
+	private void printHelp(final ILogger logger, final Options options, final String usage, final String header,
+			final String footer) {
+		final HelpFormatter formatter = new HelpFormatter();
+		final PrintWriter logPrintWriter = new PrintWriter(new LoggerOutputStream(logger::info));
+		formatter.setLeftPadding(0);
+		formatter.setDescPadding(DESC_PADDING);
+		formatter.setWidth(OptionBuilder.calculateMaxWidth(options));
+		// keep the options in the order they were declared
+		formatter.setOptionComparator(null);
+		formatter.printHelp(logPrintWriter, formatter.getWidth(), usage, header, options, formatter.getLeftPadding(),
+				formatter.getDescPadding(), footer, false);
+		logPrintWriter.flush();
+		logPrintWriter.close();
 	}
 
 	private void validateParsedOptionsByConversion(final CommandLine cli) throws ParseException {
@@ -122,5 +147,4 @@ public class CommandLineParser {
 			}
 		}
 	}
-
 }

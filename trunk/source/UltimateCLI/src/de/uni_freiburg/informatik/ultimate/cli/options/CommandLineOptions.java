@@ -43,17 +43,31 @@ public final class CommandLineOptions {
 	public static final String OPTION_NAME_INPUTFILES = "i";
 	public static final String OPTION_NAME_SETTINGS = "s";
 	public static final String OPTION_NAME_HELP = "h";
+	public static final String OPTION_NAME_VERSION = "version";
+	public static final String OPTION_NAME_EXPERIMENTAL = "experimental";
 
-	public static List<Option> createCommandLineOptions() {
+	private CommandLineOptions() {
+		// this is a utility class
+	}
+
+	public static List<Option> createFinalCLIOptions() {
+		return createFinalCLIOptions(true, true);
+	}
+
+	public static List<Option> createFinalCLIOptions(final boolean requireToolchain, final boolean requireInputFile) {
 		// add CLI options
 		final List<Option> rtr = new ArrayList<>();
 		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_TOOLCHAIN).longOpt("toolchain").type(File.class).hasArg()
-				.required().argName("FILE").build());
-		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_INPUTFILES).longOpt("input").hasArgs().required()
-				.argName("FILE").build());
+				.required(requireToolchain).argName("FILE").desc("Specify the path to an Ultimate toolchain file")
+				.build());
+		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_INPUTFILES).longOpt("input").hasArgs()
+				.required(requireInputFile).argName("FILE").build());
 		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_SETTINGS).longOpt("settings").type(File.class).hasArg()
 				.argName("FILE").build());
 		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_HELP).longOpt("help").type(Boolean.class).build());
+		rtr.add(Option.builder().longOpt(CommandLineOptions.OPTION_NAME_VERSION).type(Boolean.class).build());
+		rtr.add(Option.builder().longOpt(CommandLineOptions.OPTION_NAME_EXPERIMENTAL).type(Boolean.class)
+				.desc("Also show experimental options (even if they do not have a description)").build());
 		return rtr;
 	}
 }

@@ -30,12 +30,15 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.Predicate;
 
 import org.apache.commons.cli.ParseException;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.app.IApplication;
 
 import de.uni_freiburg.informatik.ultimate.cli.exceptions.InvalidFileException;
+import de.uni_freiburg.informatik.ultimate.cli.options.CommandLineOptions;
 import de.uni_freiburg.informatik.ultimate.cli.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
@@ -49,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 /**
  * The current command line controller for Ultimate provides a user interface for the command line.
@@ -76,43 +80,102 @@ public class CommandLineController implements IController<RunDefinition> {
 			mLogger.debug("CLI Controller version is " + RcpUtils.getVersion(Activator.PLUGIN_ID));
 		}
 
-		final CommandLineParser newCmdParser = new CommandLineParser(core);
 		final String[] args = Platform.getCommandLineArgs();
 
+		// first, parse to see if toolchain is specified.
+		final CommandLineParser toolchainStageParser = CommandLineParser.createCliOnlyParser(core);
+		ParsedParameter toolchainStageParams;
 		try {
-			final ParsedParameter pparams = newCmdParser.parse(args);
-			if (pparams.isHelpRequested()) {
-				newCmdParser.printHelp();
+			toolchainStageParams = toolchainStageParser.parse(args);
+
+		} catch (final ParseException pex) {
+			printParseException(args, toolchainStageParser, pex);
+			return -1;
+		}
+
+		if (toolchainStageParams.isVersionRequested()) {
+			mLogger.info("Version is " + RcpUtils.getVersion(Activator.PLUGIN_ID));
+			mLogger.info(
+					"Maximal heap size is " + Utils.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true));
+			return IApplication.EXIT_OK;
+		}
+
+		if (!toolchainStageParams.hasToolchain()) {
+			if (toolchainStageParams.isHelpRequested()) {
+				printHelp(toolchainStageParser, toolchainStageParams);
+				return IApplication.EXIT_OK;
+			}
+			mLogger.info("Missing required option: " + CommandLineOptions.OPTION_NAME_TOOLCHAIN);
+			printHelp(toolchainStageParser, toolchainStageParams);
+			printAvailableToolchains(core);
+			return IApplication.EXIT_OK;
+		}
+
+		final Predicate<String> pluginNameFilter;
+		try {
+			pluginNameFilter = getPluginFilter(core, toolchainStageParams.getToolchainFile());
+		} catch (final ParseException pex) {
+			mLogger.error("Could not find the provided toolchain file: " + pex.getMessage());
+			return -1;
+		}
+
+		// second, perform real parsing
+		final CommandLineParser fullParser = CommandLineParser.createCompleteParser(core, pluginNameFilter);
+		final ParsedParameter fullParams;
+
+		try {
+			fullParams = fullParser.parse(args);
+			if (fullParams.isHelpRequested()) {
+				printHelp(fullParser, fullParams);
 				return IApplication.EXIT_OK;
 			}
 
-			if (pparams.hasSettings()) {
-				core.loadPreferences(pparams.getSettingsFile());
+			if (!fullParams.hasInputFiles()) {
+				throw new ParseException("Missing required option: " + CommandLineOptions.OPTION_NAME_INPUTFILES);
 			}
 
-			mToolchain = pparams.createToolchainData();
+			if (fullParams.hasSettings()) {
+				core.loadPreferences(fullParams.getSettingsFile());
+			}
 
-			pparams.applyCliSettings(mToolchain.getServices());
+			mToolchain = fullParams.createToolchainData();
 
-			final File[] inputFiles = pparams.getInputFiles();
+			fullParams.applyCliSettings(mToolchain.getServices());
+
+			final File[] inputFiles = fullParams.getInputFiles();
 			final BasicToolchainJob tcj =
 					new DefaultToolchainJob("Processing Toolchain", core, this, mLogger, inputFiles);
 			tcj.schedule();
 			tcj.join();
 
-		} catch (final ParseException e) {
-			mLogger.error("Could not parse command-line options from arguments \"" + String.join(" ", args) + "\":");
-			mLogger.error(e.getMessage());
-			newCmdParser.printHelp();
+		} catch (final ParseException pex) {
+			printParseException(args, fullParser, pex);
 			return -1;
 		} catch (final InvalidFileException e) {
 			mLogger.error("File in arguments violated specification: " + e.getMessage());
 			return -1;
-		} catch (final InterruptedException e) {
+		} catch (@SuppressWarnings("squid:S2142") final InterruptedException e) {
 			mLogger.fatal("Exception during execution of toolchain", e);
 			return -1;
 		}
 		return IApplication.EXIT_OK;
+	}
+
+	private static void printHelp(final CommandLineParser toolchainStageParser,
+			final ParsedParameter toolchainStageParams) {
+		if (toolchainStageParams.showExperimentals()) {
+			toolchainStageParser.printHelpWithExperimentals();
+		} else {
+			toolchainStageParser.printHelp();
+		}
+	}
+
+	private void printParseException(final String[] args, final CommandLineParser toolchainStageParser,
+			final ParseException pex) {
+		mLogger.error(pex.getMessage());
+		mLogger.error("Arguments were \"" + String.join(" ", args) + "\":");
+		mLogger.error("--");
+		toolchainStageParser.printHelp();
 	}
 
 	@Override
@@ -166,6 +229,33 @@ public class CommandLineController implements IController<RunDefinition> {
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return null;
+	}
+
+	private Predicate<String> getPluginFilter(final ICore<RunDefinition> core, final File toolchainFileOrDir) {
+		if (toolchainFileOrDir == null) {
+			return a -> true;
+		}
+		final ToolchainLocator locator = new ToolchainLocator(toolchainFileOrDir, core, mLogger);
+		return locator.createFilterForAvailableTools();
+	}
+
+	private void printAvailableToolchains(final ICore<RunDefinition> core) {
+		final File workingDir = RcpUtils.getWorkingDirectory();
+		final ToolchainLocator locator = new ToolchainLocator(workingDir, core, mLogger);
+
+		final Map<File, IToolchainData<RunDefinition>> availableToolchains = locator.locateToolchains();
+		if (availableToolchains.isEmpty()) {
+			mLogger.warn("There are no toolchains in Ultimates working directory " + workingDir);
+			return;
+		}
+		final String indent = "    ";
+
+		mLogger.info("The following toolchains are available:");
+		for (final Entry<File, IToolchainData<RunDefinition>> entry : availableToolchains.entrySet()) {
+			mLogger.info(entry.getKey());
+			mLogger.info(indent + entry.getValue().getToolchain().getName());
+		}
+
 	}
 
 }

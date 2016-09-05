@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.cli;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -59,7 +59,7 @@ public class ToolchainLocator {
 	private final ICore<RunDefinition> mCore;
 	private final ILogger mLogger;
 
-	private List<IToolchainData<RunDefinition>> mFoundToolchains;
+	private Map<File, IToolchainData<RunDefinition>> mFoundToolchains;
 
 	public ToolchainLocator(final File dirOrFile, final ICore<RunDefinition> core, final ILogger logger) {
 		mDir = dirOrFile;
@@ -71,11 +71,11 @@ public class ToolchainLocator {
 		Predicate<String> rtr = a -> false;
 
 		// the current cli controller and the core are always allowed
-		rtr = rtr.or(a -> Activator.PLUGIN_ID.equalsIgnoreCase(a));
-		rtr = rtr.or(a -> de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator.PLUGIN_ID.equalsIgnoreCase(a));
+		rtr = rtr.or(Activator.PLUGIN_ID::equalsIgnoreCase);
+		rtr = rtr.or(de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator.PLUGIN_ID::equalsIgnoreCase);
 
-		final List<IToolchainData<RunDefinition>> availableToolchains = locateToolchains();
-		final Set<String> availablePluginIds = availableToolchains.stream()
+		final Map<File, IToolchainData<RunDefinition>> availableToolchains = locateToolchains();
+		final Set<String> availablePluginIds = availableToolchains.values().stream()
 				.flatMap(a -> a.getToolchain().getToolchain().getPluginOrSubchain().stream())
 				.filter(a -> a instanceof PluginType).map(a -> ((PluginType) a).getId().toLowerCase())
 				.collect(Collectors.toSet());
@@ -83,9 +83,9 @@ public class ToolchainLocator {
 		return rtr;
 	}
 
-	private List<IToolchainData<RunDefinition>> locateToolchains() {
+	public Map<File, IToolchainData<RunDefinition>> locateToolchains() {
 		if (mFoundToolchains != null) {
-			return Collections.unmodifiableList(mFoundToolchains);
+			return Collections.unmodifiableMap(mFoundToolchains);
 		}
 
 		if (mLogger.isDebugEnabled()) {
@@ -93,26 +93,34 @@ public class ToolchainLocator {
 		}
 
 		if (!mDir.exists()) {
-			return Collections.emptyList();
+			return Collections.emptyMap();
+		}
+		final File[] xmlFiles;
+		if (mDir.isFile()) {
+			if (mDir.getName().endsWith(".xml")) {
+				xmlFiles = new File[] { mDir };
+			} else {
+				return Collections.emptyMap();
+			}
+		} else {
+			xmlFiles = mDir.listFiles((file, name) -> name.endsWith(".xml"));
+			if (xmlFiles.length == 0) {
+				return Collections.emptyMap();
+			}
 		}
 
-		final File[] xmlFiles = mDir.listFiles((file, name) -> name.endsWith(".xml"));
-		if (xmlFiles.length == 0) {
-			return Collections.emptyList();
-		}
-
-		mFoundToolchains = new ArrayList<>();
+		mFoundToolchains = new HashMap<>();
 		for (final File xmlFile : xmlFiles) {
 			try {
 				final IToolchainData<RunDefinition> toolchain = mCore.createToolchainData(xmlFile.getAbsolutePath());
-				mFoundToolchains.add(toolchain);
+				mFoundToolchains.put(xmlFile, toolchain);
 			} catch (final FileNotFoundException e) {
 				mLogger.error("Could not find file: " + e.getMessage());
-			} catch (final JAXBException e) {
-			} catch (final SAXException e) {
+			} catch (final JAXBException | SAXException e) {
+				// ignore those exceptions; they just say that this file is not a valid toolchain file
 			}
 		}
-		return Collections.unmodifiableList(mFoundToolchains);
+		return Collections.unmodifiableMap(mFoundToolchains);
 	}
 
 }

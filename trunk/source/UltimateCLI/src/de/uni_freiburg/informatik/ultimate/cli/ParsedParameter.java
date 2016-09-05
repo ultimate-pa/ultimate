@@ -89,6 +89,14 @@ public class ParsedParameter {
 		return mCli.hasOption(CommandLineOptions.OPTION_NAME_HELP);
 	}
 
+	public boolean isVersionRequested() {
+		return mCli.hasOption(CommandLineOptions.OPTION_NAME_VERSION);
+	}
+
+	public boolean showExperimentals() {
+		return mCli.hasOption(CommandLineOptions.OPTION_NAME_EXPERIMENTAL);
+	}
+
 	public String getSettingsFile() throws ParseException, InvalidFileException {
 		final File file = getParsedOption(CommandLineOptions.OPTION_NAME_SETTINGS);
 		checkFileExists(file);
@@ -99,17 +107,26 @@ public class ParsedParameter {
 		return mCli.hasOption(CommandLineOptions.OPTION_NAME_SETTINGS);
 	}
 
+	public boolean hasToolchain() {
+		return mCli.hasOption(CommandLineOptions.OPTION_NAME_TOOLCHAIN);
+	}
+
+	public boolean hasInputFiles() {
+		return mCli.hasOption(CommandLineOptions.OPTION_NAME_INPUTFILES);
+	}
+
+	public File getToolchainFile() throws ParseException {
+		return getParsedOption(CommandLineOptions.OPTION_NAME_TOOLCHAIN);
+	}
+
 	public IToolchainData<RunDefinition> createToolchainData() throws InvalidFileException, ParseException {
-		final File toolchainFile = getParsedOption(CommandLineOptions.OPTION_NAME_TOOLCHAIN);
+		final File toolchainFile = getToolchainFile();
 		try {
 			return mCore.createToolchainData(toolchainFile.getAbsolutePath());
 		} catch (final FileNotFoundException e1) {
 			throw new InvalidFileException(
 					"Toolchain file not found at specified path: " + toolchainFile.getAbsolutePath());
-		} catch (final JAXBException e1) {
-			throw new InvalidFileException(
-					"Toolchain file at path " + toolchainFile.getAbsolutePath() + " was malformed: " + e1.getMessage());
-		} catch (final SAXException e1) {
+		} catch (final SAXException | JAXBException e1) {
 			throw new InvalidFileException(
 					"Toolchain file at path " + toolchainFile.getAbsolutePath() + " was malformed: " + e1.getMessage());
 		}
@@ -138,8 +155,11 @@ public class ParsedParameter {
 		return files;
 	}
 
-	private void checkFileExists(final File file) throws InvalidFileException {
-		if (file == null || !file.exists()) {
+	private static void checkFileExists(final File file) throws InvalidFileException {
+		if (file == null) {
+			throw new IllegalArgumentException("file");
+		}
+		if (!file.exists()) {
 			throw new InvalidFileException("File " + file.getAbsolutePath() + " does not exist");
 		}
 		if (!file.canRead()) {
@@ -151,4 +171,5 @@ public class ParsedParameter {
 	private <T> T getParsedOption(final String optionName) throws ParseException {
 		return (T) mCli.getParsedOptionValue(optionName);
 	}
+
 }
