@@ -173,7 +173,7 @@ public class CommandLineController implements IController<RunDefinition> {
 	private void printParseException(final String[] args, final CommandLineParser toolchainStageParser,
 			final ParseException pex) {
 		mLogger.error(pex.getMessage());
-		mLogger.error("Arguments were \"" + String.join(" ", args) + "\":");
+		mLogger.error("Arguments were \"" + String.join(" ", args) + "\"");
 		mLogger.error("--");
 		toolchainStageParser.printHelp();
 	}
