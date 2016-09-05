@@ -665,7 +665,7 @@ public class DPLLEngine {
 			for (final Literal l : conflict) {
 				newlits[i++] = l.negate();
 			}
-			assert newlits[newlits.length - 1] != null;
+			assert i == newlits.length;
 			final Clause resolution = new Clause(newlits, expstacklevel);
 			if (isProofGenerationEnabled()) {
 				for (final Literal l0: level0Ants) {
@@ -673,7 +673,7 @@ public class DPLLEngine {
 				}
 				if (antecedents.isEmpty()) {
 					// TODO: only one clause object needed here.
-					resolution.setProof(clause.getProof());				
+					resolution.setProof(clause.getProof());
 				} else {
 					final Antecedent[] ants = 
 							antecedents.toArray(
