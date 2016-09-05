@@ -154,9 +154,9 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			// final.
 			final boolean considerVertex;
 			if (v.isB()) {
-				considerVertex = mBuechi.isFinal(v.getQ0()) && !mBuechi.isFinal(v.getQ0());
+				considerVertex = mBuechi.isFinal(v.getQ0()) && !mBuechi.isFinal(v.getQ1());
 			} else {
-				considerVertex = !mBuechi.isFinal(v.getQ0()) || mBuechi.isFinal(v.getQ0());
+				considerVertex = !mBuechi.isFinal(v.getQ0()) || mBuechi.isFinal(v.getQ1());
 			}
 
 			if (considerVertex) {
