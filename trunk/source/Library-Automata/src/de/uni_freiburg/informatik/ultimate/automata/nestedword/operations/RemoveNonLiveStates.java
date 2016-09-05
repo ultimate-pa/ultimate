@@ -152,8 +152,8 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 		rsc.removeNonLiveStates();
 		final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy =
 				(DoubleDeckerAutomaton<LETTER, STATE>) rsc.getResult();
-//		correct = correct && mResult.getStates().isEmpty() ||
-		correct &= ResultChecker.isSubset(reachableStatesCopy.getStates(), mResult.getStates());
+//		correct = correct && mResult.getStates().isEmpty()
+//				|| ResultChecker.isSubset(reachableStatesCopy.getStates(), mResult.getStates());
 //		assert correct;
 		correct = correct && ResultChecker.isSubset(mResult.getStates(), reachableStatesCopy.getStates());
 		assert correct;
