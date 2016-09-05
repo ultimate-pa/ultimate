@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
@@ -136,8 +136,8 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	 * checks if a new event {@code e}, with regards to {@code order} is a
 	 * cut-off event. In that case, companions are computed as a side-effect.
 	 * 
-	 * @see Event#checkCutOffSetCompanion(Event, Comparator, boolean)
 	 * @return true iff event is cut-off
+	 * @see Event#checkCutOffSetCompanion(Event, Comparator, boolean)
 	 */
 	public boolean isCutoffEvent(final Event<S, C> e, final Comparator<Event<S, C>> order,
 			final boolean sameTransitionCutOff) {

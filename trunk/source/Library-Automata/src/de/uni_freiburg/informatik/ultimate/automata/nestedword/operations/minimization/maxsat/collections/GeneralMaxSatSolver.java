@@ -303,7 +303,8 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	}
 	
 	private void backtrackFurther(final V var) {
-		assert (mNumberOfNonHornClauses > 0) : "For Horn clauses backtracking should not be necessary for more than one level.";
+		assert (mNumberOfNonHornClauses > 0) : "For Horn clauses backtracking should not be necessary for more than "
+				+ "one level.";
 		assert (var != null);
 		V nextVar = var;
 		do {

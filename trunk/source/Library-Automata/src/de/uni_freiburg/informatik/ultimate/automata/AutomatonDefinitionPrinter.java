@@ -76,6 +76,10 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	private static final String UNSUPPORTED_LABELING = "Unsupported labeling.";
 	private static final String ATS_EXTENSION = "ats";
 	private static final char QUOTE = '\"';
+	private static final String NEW_LINE = System.lineSeparator();
+
+	// enable writing automata, e.g., when an error occurs
+	private static final boolean DUMP_AUTOMATON = false;
 	
 	/**
 	 * Output format types.
@@ -121,22 +125,17 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		}
 	}
 	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-	
-	private static final String NEW_LINE = System.lineSeparator();
-	
 	/**
 	 * Print hash modulo this number to get shorter identifiers.
 	 */
 	private static int sHashDivisor = 1;
 	
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
+	
 	private PrintWriter mPrintWriter;
 	
 	private StringWriter mStringWriter;
-	
-	// enable writing automata, e.g., when an error occurs
-	private static final boolean DUMP_AUTOMATON = false;
 	
 	/**
 	 * Base constructor.
@@ -1250,10 +1249,9 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		private static final int MINIMUM_SKELETON_SIZE = 130;
 		private static final String STATE_ID_CLOSE = "</StateID>";
 		private static final String STATE_ID_OPEN = "<StateID>";
+		private static final char TAB = '\t';
 		private final IConverter<LETTER> mLetterConverter;
 		private final IConverter<STATE> mStateConverter;
-		
-		private static final char TAB = '\t';
 		
 		public GoalFormatWriter(final INestedWordAutomaton<LETTER, STATE> nwa) {
 			super(nwa);

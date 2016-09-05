@@ -46,12 +46,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  *            states are labeled, e.g., with "q0", "q1", ...
  */
 public class AutomatonEpimorphism<STATE> {
+	private static final String INVALID_STATE_NAME_MESSAGE = "Invalid state name: ";
 	
 	private final ILogger mLogger;
 	
 	private final Map<STATE, STATE> mEpimorphism;
-	
-	private static final String INVALID_STATE_NAME_MESSAGE = "Invalid state name: ";
 	
 	/**
 	 * Constructor.

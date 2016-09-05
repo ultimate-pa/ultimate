@@ -136,13 +136,14 @@ public final class RemoveUnreachable<LETTER, STATE> extends UnaryNwaOperation<LE
 		}
 		return correct;
 	}
-
+	
 	private boolean checkEachState(final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy) {
 		boolean correct = true;
 		for (final STATE state : reachableStatesCopy.getStates()) {
 			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : reachableStatesCopy
 					.internalSuccessors(state)) {
-				correct = correct && mResult.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
+				correct =
+						correct && mResult.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingCallTransition<LETTER, STATE> outTrans : reachableStatesCopy.callSuccessors(state)) {
@@ -151,8 +152,9 @@ public final class RemoveUnreachable<LETTER, STATE> extends UnaryNwaOperation<LE
 			}
 			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : reachableStatesCopy
 					.returnSuccessors(state)) {
-				correct = correct && mResult.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(),
-						outTrans.getSucc());
+				correct =
+						correct && mResult.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(),
+								outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mResult.internalSuccessors(state)) {

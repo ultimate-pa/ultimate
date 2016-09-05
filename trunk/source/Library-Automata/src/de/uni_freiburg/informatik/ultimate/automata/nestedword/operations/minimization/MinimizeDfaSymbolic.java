@@ -78,7 +78,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 
 	/***********************************************************************/
 	/**
-	 * Constructor
+	 * Constructor.
 	 * 
 	 * @param services Ultimate services
 	 * @param operand operand
