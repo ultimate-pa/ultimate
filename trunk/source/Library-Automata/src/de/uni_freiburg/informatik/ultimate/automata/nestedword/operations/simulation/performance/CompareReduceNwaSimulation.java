@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import java.util.Collection;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
@@ -195,11 +194,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 			logger.info("Method has thrown an out of memory error.");
 			outOfMemory = true;
 		}
-		try {
-			appendMethodPerformanceToLog(method, name, type, useSCCs, timedOut, outOfMemory, operand);
-		} catch (final AutomataLibraryException e) {
-			e.printStackTrace();
-		}
+		appendMethodPerformanceToLog(method, name, type, useSCCs, timedOut, outOfMemory, operand);
 	}
 
 	/*

@@ -798,13 +798,11 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	 *            If the method has thrown an out of memory error
 	 * @param operand
 	 *            The automaton the method processed
-	 * @throws AutomataLibraryException
-	 *             If a automata library exception occurred.
 	 */
 	@SuppressWarnings("unchecked")
 	protected void appendMethodPerformanceToLog(final Object method, final String name, final ESimulationType type,
 			final boolean usedSCCs, final boolean timedOut, final boolean outOfMemory,
-			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
+			final INestedWordAutomaton<LETTER, STATE> operand) {
 		createAndResetPerformanceHead();
 
 		if (method instanceof ASimulation) {
@@ -959,11 +957,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 			mLogger.info("Method has thrown an out of memory error.");
 			outOfMemory = true;
 		}
-		try {
-			appendMethodPerformanceToLog(method, name, type, useSCCs, timedOut, outOfMemory, operand);
-		} catch (final AutomataLibraryException e) {
-			e.printStackTrace();
-		}
+		appendMethodPerformanceToLog(method, name, type, useSCCs, timedOut, outOfMemory, operand);
 	}
 
 	/**
