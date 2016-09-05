@@ -52,7 +52,7 @@ public class DebugMessage {
 		}
 		
 	}
-	private static final TermDirectFormat TERmFORMAT = new TermDirectFormat();
+	private static final TermDirectFormat TERM_FORMAT = new TermDirectFormat();
 	private final boolean mTermDirect;
 	private final String mMsg;
 	private final Object[] mParams;
@@ -70,7 +70,7 @@ public class DebugMessage {
 		if (mTermDirect) {
 			for (int i = 0; i < mParams.length; ++i) {
 				if (mParams[i] instanceof Term) {
-					mf.setFormatByArgumentIndex(i, TERmFORMAT);
+					mf.setFormatByArgumentIndex(i, TERM_FORMAT);
 				}
 			}
 		}

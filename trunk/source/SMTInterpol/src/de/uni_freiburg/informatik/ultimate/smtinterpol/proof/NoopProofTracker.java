@@ -63,9 +63,6 @@ public class NoopProofTracker implements IProofTracker {
 	public void sum(FunctionSymbol fsym, Term[] args, Term res) { /* Noop */ }
 
 	@Override
-	public void toLeq0(Term orig, SMTAffineTerm leq, int rule) { /* Noop */ }
-
-	@Override
 	public void leqSimp(SMTAffineTerm leq, Term res, int rule) { /* Noop */ }
 
 	@Override

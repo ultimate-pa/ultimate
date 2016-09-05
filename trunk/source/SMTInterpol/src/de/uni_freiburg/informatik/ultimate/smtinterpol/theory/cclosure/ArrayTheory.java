@@ -26,10 +26,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.EqualityProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
@@ -523,7 +522,7 @@ public class ArrayTheory implements ITheory {
 	private final ArrayDeque<ArrayLemma> mPropClauses = 
 			new ArrayDeque<ArrayLemma>();
 	
-	private final Logger mLogger;
+	private final LogProxy mLogger;
 	
 	/// Cache for the congruence roots;
 	Map<CCTerm,ArrayNode> mCongRoots = null;
@@ -665,25 +664,23 @@ public class ArrayTheory implements ITheory {
 	}
 
 	@Override
-	public void printStatistics(Logger logger) {
+	public void printStatistics(LogProxy logger) {
 		if (logger.isInfoEnabled()) {
-			logger.info(String.format(
-					"Array: #Arrays: %d, #BuildWeakEQ: %d, #ModEdges: %d, "
+			logger.info("Array: #Arrays: %d, #BuildWeakEQ: %d, #ModEdges: %d, "
 					+ "#addStores: %d, #merges: %d", mNumArrays,
-					mNumBuildWeakEQ, mNumModuloEdges, mNumAddStores, mNumMerges));
-			logger.info(String.format(
-					"Insts: ReadOverWeakEQ: %d, WeakeqExt: %d",
-					mNumInstsSelect, mNumInstsEq));
-			logger.info(String.format("Time: BuildWeakEq: %.3f ms, BuildWeakEqi: %.3f ms",
-					mTimeBuildWeakEq / 1e6, mTimeBuildWeakEqi / 1e6));
-			logger.info(String.format("Time: Propagation %.3f ms, Explanations: %.3f ms",
-					mTimePropagation / 1e6, mTimeExplanations / 1e6));
+					mNumBuildWeakEQ, mNumModuloEdges, mNumAddStores, mNumMerges);
+			logger.info("Insts: ReadOverWeakEQ: %d, WeakeqExt: %d",
+					mNumInstsSelect, mNumInstsEq);
+			logger.info("Time: BuildWeakEq: %.3f ms, BuildWeakEqi: %.3f ms",
+					mTimeBuildWeakEq / 1e6, mTimeBuildWeakEqi / 1e6);
+			logger.info("Time: Propagation %.3f ms, Explanations: %.3f ms",
+					mTimePropagation / 1e6, mTimeExplanations / 1e6);
 		}
 
 	}
 
 	@Override
-	public void dumpModel(Logger logger) {
+	public void dumpModel(LogProxy logger) {
 		if (!logger.isInfoEnabled()) {
 			return;
 		}
@@ -992,7 +989,7 @@ public class ArrayTheory implements ITheory {
 		return !propEqualities.isEmpty();
 	}
 	
-	private CCEquality createEquality(CCTerm t1, CCTerm t2) {
+	static  CCEquality createEquality(CCTerm t1, CCTerm t2) {
 		final EqualityProxy ep = t1.getFlatTerm().createEquality(t2.getFlatTerm());
 		if (ep == EqualityProxy.getFalseProxy()) {
 			return null;

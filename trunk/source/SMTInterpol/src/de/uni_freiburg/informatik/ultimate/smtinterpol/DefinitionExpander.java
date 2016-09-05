@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet.UnletType;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 
 public class DefinitionExpander extends LoggingScript {
@@ -49,9 +50,10 @@ public class DefinitionExpander extends LoggingScript {
 	public static void main(String[] args) {
 		final String infile = args[0];
 		final String outfile = args[1];
+		final OptionMap options = new OptionMap(new DefaultLogger(), true);
 		try {
 			final ParseEnvironment pe = new ParseEnvironment(
-					new DefinitionExpander(outfile));
+					new DefinitionExpander(outfile), options);
 			pe.parseScript(infile);
 		} catch (final FileNotFoundException e) {
 			e.printStackTrace();

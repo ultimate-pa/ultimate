@@ -43,6 +43,15 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
   private StringBuilder string; // NOPMD
   private MySymbolFactory symFactory;
   private final UnifyHash<BigInteger> bignumbers = new UnifyHash<BigInteger>();
+  private boolean version25 = true;
+  
+  public void setVersion25(boolean on) {
+    version25 = on;
+  }
+  
+  public boolean isVersion25() {
+    return version25;
+  }
   
   public void setSymbolFactory(MySymbolFactory factory) {
     symFactory = factory;
@@ -86,7 +95,7 @@ Symbol = {SMTLetter} {SMTLetterDigit}*
 Binary = "#b" [01]+
 Keyword = ":" {SMTLetterDigit}+
 
-%state STRING
+%state STRING20 STRING25
 
 %%
 
@@ -104,6 +113,7 @@ Keyword = ":" {SMTLetterDigit}+
   "DECIMAL"              { return symbol(LexerSymbols.DECIMALSYM, yytext()); }
   "declare-sort"         { return symbol(LexerSymbols.DECLARESORT, yytext()); }
   "declare-fun"          { return symbol(LexerSymbols.DECLAREFUN, yytext()); }
+  "declare-const"        { return symbol(LexerSymbols.DECLARECONST, yytext()); }
   "define-sort"          { return symbol(LexerSymbols.DEFINESORT, yytext()); }
   "define-fun"           { return symbol(LexerSymbols.DEFINEFUN, yytext()); }
   "error"                { return symbol(LexerSymbols.ERRORSYM, yytext()); }
@@ -119,6 +129,7 @@ Keyword = ":" {SMTLetterDigit}+
   "get-option"           { return symbol(LexerSymbols.GETOPTION, yytext()); }
   "get-proof"            { return symbol(LexerSymbols.GETPROOF, yytext()); }
   "get-unsat-core"       { return symbol(LexerSymbols.GETUNSATCORE, yytext()); }
+  "get-unsat-assumptions" { return symbol(LexerSymbols.GETUNSATASSUMPTIONS, yytext()); }
   "get-value"            { return symbol(LexerSymbols.GETVALUE, yytext()); }
   "immediate-exit"       { return symbol(LexerSymbols.IMMEDIATEEXIT, yytext()); }
   "include"              { return symbol(LexerSymbols.INCLUDE, yytext()); }
@@ -144,10 +155,12 @@ Keyword = ":" {SMTLetterDigit}+
   "unsat"                { return symbol(LexerSymbols.UNSAT, yytext()); }
   "simplify"             { return symbol(LexerSymbols.SIMPLIFY, yytext()); }
   "reset"                { return symbol(LexerSymbols.RESET, yytext()); }
+  "reset-assertions"     { return symbol(LexerSymbols.RESETASSERTIONS, yytext()); }
   "timed"                { return symbol(LexerSymbols.TIMED, yytext()); }
   "check-allsat"         { return symbol(LexerSymbols.ALLSAT, yytext()); }
   "echo"                 { return symbol(LexerSymbols.ECHO, yytext()); }
   "find-implied-equality" { return symbol(LexerSymbols.FINDIMPLIEDEQUALITY, yytext()); }
+  "check-sat-assuming"   { return symbol(LexerSymbols.CHECKSATASSUMING, yytext()); }
 
   /* Predefined Keywords */
   ":named"               { return symbol(LexerSymbols.CNAMED, yytext()); }
@@ -188,7 +201,7 @@ Keyword = ":" {SMTLetterDigit}+
   {Decimal}              { return symbol(LexerSymbols.DECIMAL, new BigDecimal(yytext())); }
   {HexaDecimal}          { return symbol(LexerSymbols.HEXADECIMAL, yytext()); }
   {Binary}               { return symbol(LexerSymbols.BINARY, yytext()); }
-  \"                     { string = new StringBuilder(); yybegin(STRING); }
+  \"                     { string = new StringBuilder(); if (version25) yybegin(STRING25); else yybegin(STRING20); }
 
  
   /* comments */
@@ -198,7 +211,7 @@ Keyword = ":" {SMTLetterDigit}+
   {WhiteSpace}           { /* ignore */ }
 }
 
-<STRING> {
+<STRING20> {
   \"                             { String value = string.toString();
                                    string = null;
                                    yybegin(YYINITIAL);
@@ -207,6 +220,15 @@ Keyword = ":" {SMTLetterDigit}+
   \\\"                           { string.append('\"'); }
   \\\\                           { string.append('\\'); }
   \\                             { string.append('\\'); }
+}
+
+<STRING25> {
+  [^\"]+                         { string.append( yytext() ); }
+  \"\"                           { string.append ('\"'); }
+  \"                             { String value = string.toString();
+                                   string = null;
+                                   yybegin(YYINITIAL);
+                                   return symbol(LexerSymbols.STRING, value); }
 }
 
 

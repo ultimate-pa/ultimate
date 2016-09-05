@@ -25,6 +25,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
@@ -34,8 +35,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 public class ArithDelay extends InternTermTransformer {
 	private final ScopedHashMap<Rational, Term> mArithConsts = 
 			new ScopedHashMap<Rational, Term>();
-
-	private final static Sort[] EMPTY_SORT_ARRAY = new Sort[0];
 	
 	private Term replace(Rational constant, Theory t, Sort s) {
 		Term replacement = mArithConsts.get(constant);
@@ -43,7 +42,7 @@ public class ArithDelay extends InternTermTransformer {
 			final String rep = "@" + constant.toString();
 			FunctionSymbol fsym = t.getFunction(rep);
 			if (fsym == null) {
-				fsym = t.declareFunction(rep, EMPTY_SORT_ARRAY, s);
+				fsym = t.declareFunction(rep, Script.EMPTY_SORT_ARRAY, s);
 			}
 			replacement = t.term(fsym);
 			mArithConsts.put(constant, replacement);
