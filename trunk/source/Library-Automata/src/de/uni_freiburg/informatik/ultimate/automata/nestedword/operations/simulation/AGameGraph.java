@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation;
@@ -768,11 +768,15 @@ public abstract class AGameGraph<LETTER, STATE> {
 				if (vertex instanceof DuplicatorVertex) {
 					final DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex = (DuplicatorVertex<LETTER, STATE>) vertex;
 					result.append(", " + vertexAsDuplicatorVertex.getLetter());
+				} else {
+					result.append(" | p:" + getPriority(vertex));
 				}
 				result.append(")\t--> (" + succ.getQ0() + ", " + succ.getQ1());
 				if (succ instanceof DuplicatorVertex) {
 					final DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex = (DuplicatorVertex<LETTER, STATE>) succ;
 					result.append(", " + vertexAsDuplicatorVertex.getLetter());
+				} else {
+					result.append(" | p:" + getPriority(succ));
 				}
 				result.append(")");
 			}
