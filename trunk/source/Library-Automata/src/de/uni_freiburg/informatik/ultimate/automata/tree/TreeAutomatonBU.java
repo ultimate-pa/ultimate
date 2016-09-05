@@ -196,6 +196,7 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 					moveNextParent();
 				}
 			}
+			@Override
 			public boolean hasNext() {
 				initalize();
 				return currentParent != null;
@@ -206,12 +207,13 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 				if (!hasNext()) {
 					throw new NoSuchElementException();
 				}
-				TreeAutomatonRule<LETTER, STATE> rule = new TreeAutomatonRule<LETTER, STATE>(currentLetter, currentParent, currentState);
+				final TreeAutomatonRule<LETTER, STATE> rule = new TreeAutomatonRule<LETTER, STATE>(currentLetter, currentParent, currentState);
 				moveNextParent();
 				return rule;
 			}
 		};
 	}
+	@Override
 	public Iterable<TreeAutomatonRule<LETTER, STATE>> getRules() {
 
 		final ArrayList<TreeAutomatonRule<LETTER, STATE>> list = new ArrayList<>();
@@ -274,10 +276,12 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 	
 	public String stateString(STATE state) {
 		String res = state.toString();
-		if (initalStates.contains(state))
+		if (initalStates.contains(state)) {
 			res += "_";
-		if (isFinalState(state))
+		}
+		if (isFinalState(state)) {
 			res += "*";
+		}
 		return res;
 	}
 	
@@ -297,6 +301,7 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 		return statesString + "\n" + rulesString;
 	}
 	
+	@Override
 	public String toString() {
 		
 		String alphabet = "";
@@ -345,7 +350,7 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 			}
 			transitionTable += String.format("\t\t((%s) %s %s)", src, rule.getLetter(), rule.getDest());
 		}
-		return String.format("TreeAutomaton %s = {\n\talphabet = {%s},\n\tstates = {%s},\n\tinitialStates = {%s},\n\tfinalStates = {%s},\n\ttransitionTable = {\n%s\n\t}\n}", "ta" + this.hashCode() % 1000000 , alphabet, states, initialStates, finalStates, transitionTable);
+		return String.format("TreeAutomaton %s = {\n\talphabet = {%s},\n\tstates = {%s},\n\tinitialStates = {%s},\n\tfinalStates = {%s},\n\ttransitionTable = {\n%s\n\t}\n}", "ta" + hashCode() % 1000000 , alphabet, states, initialStates, finalStates, transitionTable);
 		
 	}
 }

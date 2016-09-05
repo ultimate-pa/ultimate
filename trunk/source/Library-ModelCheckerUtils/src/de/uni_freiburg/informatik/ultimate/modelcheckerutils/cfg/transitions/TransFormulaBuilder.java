@@ -126,7 +126,7 @@ public class TransFormulaBuilder {
 				final Map<Term, Term> substitutionMapping = new HashMap<>();
 				for (final TermVariable auxVar : arg0) {
 					final TermVariable newAuxVar = script.constructFreshCopy(auxVar);
-					this.addAuxVar(newAuxVar);
+					addAuxVar(newAuxVar);
 					substitutionMapping.put(auxVar, newAuxVar);
 				}
 				mFormula = (new Substitution(script, substitutionMapping).transform(mFormula));
@@ -319,7 +319,7 @@ public class TransFormulaBuilder {
 		}
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), 
 				branchEncoders.isEmpty(), branchEncoders.isEmpty() ? null : branchEncoders, false);
-		final Set<TermVariable> auxVars = new HashSet<>();
+		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
 		for (final IProgramVar pv : inVarsToRemove) {
 			assert tfb.mInVars.containsKey(pv) : "illegal to remove variable not that is contained";
 			final TermVariable inVar = tfb.mInVars.get(pv);
@@ -328,7 +328,8 @@ public class TransFormulaBuilder {
 			if (inVar != outVar) {
 				// inVar does not occurs already as outVar, we have to add inVar
 				// to auxVars
-				auxVars.add(inVar);
+				final boolean modified = auxVars.add(inVar);
+				assert modified : "similar var already there";
 			} 
 		}
 		for (final IProgramVar pv : outVarsToRemove) {
@@ -339,7 +340,8 @@ public class TransFormulaBuilder {
 			if (inVar != outVar) {
 				// outVar does not occurs already as inVar, we have to add outVar
 				// to auxVars
-				auxVars.add(outVar);
+				final boolean modified = auxVars.add(outVar);
+				assert modified : "similar var already there";
 			}
 		}
 		final Infeasibility infeasibility;

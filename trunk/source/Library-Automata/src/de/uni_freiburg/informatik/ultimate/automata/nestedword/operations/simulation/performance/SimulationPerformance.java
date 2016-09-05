@@ -230,7 +230,7 @@ public final class SimulationPerformance {
 	 *         than this object
 	 */
 	public AutomataOperationStatistics exportToAutomataOperationStatistics() {
-		AutomataOperationStatistics stats = new AutomataOperationStatistics();
+		final AutomataOperationStatistics stats = new AutomataOperationStatistics();
 		// Meta data
 		stats.addKeyValuePair(StatisticsType.OPERATION_NAME, getSimType());
 		stats.addKeyValuePair(StatisticsType.ATS_ID, getName());
@@ -239,16 +239,16 @@ public final class SimulationPerformance {
 		stats.addKeyValuePair(StatisticsType.IS_USING_SCCS, isUsingSCCs());
 
 		// Time measures
-		for (ETimeMeasure measure : getTimeMeasures().keySet()) {
-			long value = getTimeMeasureResult(measure, EMultipleDataOption.ADDITIVE);
+		for (final ETimeMeasure measure : getTimeMeasures().keySet()) {
+			final long value = getTimeMeasureResult(measure, EMultipleDataOption.ADDITIVE);
 			if (value != NO_TIME_RESULT) {
 				stats.addKeyValuePair(convertTimeMeasureToStatistic(measure), value);
 			}
 		}
 
 		// Counting measures
-		for (ECountingMeasure measure : getCountingMeasures().keySet()) {
-			int value = getCountingMeasureResult(measure);
+		for (final ECountingMeasure measure : getCountingMeasures().keySet()) {
+			final int value = getCountingMeasureResult(measure);
 			if (value != NO_COUNTING_RESULT) {
 				stats.addKeyValuePair(convertCountingMeasureToStatistic(measure), value);
 			}

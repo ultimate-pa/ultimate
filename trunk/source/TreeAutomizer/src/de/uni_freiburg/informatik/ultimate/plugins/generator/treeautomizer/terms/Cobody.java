@@ -11,7 +11,6 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HCTransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HCVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClausePredicateSymbol;
 
@@ -35,16 +34,16 @@ public class Cobody {
 	}
 
 	public void mergeCobody(Cobody cobody) {
-		for (ApplicationTerm predicate : cobody.predicates) {
+		for (final ApplicationTerm predicate : cobody.predicates) {
 			addPredicate(predicate);
 		}
-		for (Term transition : cobody.transitions) {
+		for (final Term transition : cobody.transitions) {
 			addTransitionFormula(transition);
 		}
 	}
 	
 	public Body negate() {
-		Body res = new Body();
+		final Body res = new Body();
 		res.mergeCobody(this);
 		return res;
 	}
@@ -59,19 +58,20 @@ public class Cobody {
 	}
 
 	public Term getTransitionFormula(Theory theory) {
-		if (transitions.isEmpty())
+		if (transitions.isEmpty()) {
 			return theory.mTrue;
-		else
+		} else {
 			return theory.and(transitions.toArray(new Term[] {}));
+		}
 	}
 
 	public Map<HornClausePredicateSymbol, ArrayList<TermVariable>> getPredicateToVars(
 			Map<String, HornClausePredicateSymbol> predicateSymbols) {
 
-		HashMap<HornClausePredicateSymbol, ArrayList<TermVariable>> res = new HashMap<>();
-		for (ApplicationTerm predicate : predicates) {
-			ArrayList<TermVariable> vars = new ArrayList<TermVariable>();
-			for (Term par : predicate.getParameters()) {
+		final HashMap<HornClausePredicateSymbol, ArrayList<TermVariable>> res = new HashMap<>();
+		for (final ApplicationTerm predicate : predicates) {
+			final ArrayList<TermVariable> vars = new ArrayList<TermVariable>();
+			for (final Term par : predicate.getParameters()) {
 				vars.add((TermVariable) par);
 			}
 
@@ -80,17 +80,18 @@ public class Cobody {
 		return res;
 	}
 
+	@Override
 	public String toString() {
 		String res = "";
 		boolean first = true;
-		for (ApplicationTerm t : predicates) {
+		for (final ApplicationTerm t : predicates) {
 			if (!first) {
 				res += " && ";
 			}
 			res += t.toString();
 			first = false;
 		}
-		for (Term t : transitions) {
+		for (final Term t : transitions) {
 			if (!first) {
 				res += " && ";
 			}

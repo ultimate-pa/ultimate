@@ -94,7 +94,7 @@ public class LassoPartitioneer {
 		mMgdScript = freshVarConstructor;
 		mScript = freshVarConstructor.getScript();
 		mLasso = lasso;
-		this.mXnfConversionTechnique = xnfConversionTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
 		doPartition();
 //		assert checkStemImplications() : "stem problem";
 	}

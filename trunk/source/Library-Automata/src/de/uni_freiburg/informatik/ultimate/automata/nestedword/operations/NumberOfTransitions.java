@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
+import java.util.Iterator;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -37,10 +39,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
  * Operation that returns the number of transitions of a finite automaton.
  * 
- * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class NumberOfTransitions<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
@@ -48,16 +51,17 @@ public class NumberOfTransitions<LETTER, STATE> extends UnaryNwaOperation<LETTER
 	/**
 	 * Constructor.
 	 * 
-	 * @param services Ultimate services
-	 * @param operand operand
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
 	 */
-	public NumberOfTransitions(
-			final AutomataLibraryServices services,
+	public NumberOfTransitions(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services);
 		mOperand = operand;
 	}
-
+	
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
@@ -67,9 +71,9 @@ public class NumberOfTransitions<LETTER, STATE> extends UnaryNwaOperation<LETTER
 	public Integer getResult() {
 		int number = 0;
 		for (final STATE state : mOperand.getStates()) {
-			for (@SuppressWarnings("unused")
-					final OutgoingInternalTransition<LETTER, STATE> trans :
-						mOperand.internalSuccessors(state)) {
+			for (final Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator =
+					mOperand.internalSuccessors(state).iterator(); iterator.hasNext();) {
+				iterator.next();
 				number++;
 			}
 		}
@@ -77,8 +81,12 @@ public class NumberOfTransitions<LETTER, STATE> extends UnaryNwaOperation<LETTER
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public String operationName() {
+		return "NumberOfTransitions";
+	}
+	
+	@Override
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
 }

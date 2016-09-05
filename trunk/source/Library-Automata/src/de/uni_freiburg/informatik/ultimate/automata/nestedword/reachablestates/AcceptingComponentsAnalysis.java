@@ -54,13 +54,14 @@ import de.uni_freiburg.informatik.ultimate.util.scc.SccComputationNonRecursive;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 public class AcceptingComponentsAnalysis<LETTER, STATE> {
-	private final NestedWordAutomatonReachableStates<LETTER, STATE> mNestedWordAutomatonReachableStates;
-	private final StateBasedTransitionFilterPredicateProvider<LETTER, STATE> mTransitionFilter;
 	/**
 	 * Use also other methods for lasso construction. This is only useful if you
 	 * want to analyze if the lasso construction can be optimized.
 	 */
 	private static final boolean USE_ALTERNATIVE_LASSO_CONSTRUCTION = false;
+
+	private final NestedWordAutomatonReachableStates<LETTER, STATE> mNestedWordAutomatonReachableStates;
+	private final StateBasedTransitionFilterPredicateProvider<LETTER, STATE> mTransitionFilter;
 	
 	private final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> mAcceptingSummaries;
 	

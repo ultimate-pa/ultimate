@@ -31,10 +31,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
@@ -61,8 +59,8 @@ public class DataflowPostOperator implements IAbstractPostOperator<DataflowState
 //		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 //			reach.put(entry.getKey(), Collections.singleton(transition));
 //		}
-		Set<IProgramVar> defSet = computeDefSetFromTransFormula(tf, oldstate.getVariables());
-		Set<IProgramVar> nonDefSet = new HashSet<>(oldstate.getVariables());
+		final Set<IProgramVar> defSet = computeDefSetFromTransFormula(tf, oldstate.getVariables());
+		final Set<IProgramVar> nonDefSet = new HashSet<>(oldstate.getVariables());
 		nonDefSet.removeAll(defSet);
 
 		for (final IProgramVar pv : defSet) {

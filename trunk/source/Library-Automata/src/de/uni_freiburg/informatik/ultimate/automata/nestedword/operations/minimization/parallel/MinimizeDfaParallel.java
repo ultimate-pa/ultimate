@@ -50,6 +50,14 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	/**
+	 * Switches for setting priority. Setting both to true will have the same
+	 * effect as setting both to false. Then they will just all run with the
+	 * same priority as the main thread.
+	 */
+	public static final boolean PREFER_HELPER_THREADS = false;
+	public static final boolean PREFER_ALGORITHM_THREADS = false;
+	
+	/**
 	 * Whether the result is constructed yet.
 	 */
 	private boolean mResultConstructed = false;
@@ -106,15 +114,6 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 	 */
 	private ArrayList<STATE> mInt2state;
 	private HashMap<STATE, Integer> mState2int;
-
-	/**
-	 * Switches for setting priority. Setting both to true will have the same
-	 * effect as setting both to false. Then they will just all run with the
-	 * same priority as the main thread.
-	 */
-	public static final boolean PREFER_HELPER_THREADS = false;
-	public static final boolean PREFER_ALGORITHM_THREADS = false;
-
 	
 	/**
 	 * Constructor.

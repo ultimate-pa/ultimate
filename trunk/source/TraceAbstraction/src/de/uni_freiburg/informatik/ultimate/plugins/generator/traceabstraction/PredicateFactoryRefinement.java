@@ -74,8 +74,7 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 		if (p1 instanceof IMLPredicate) {
 //			assert mSmtManager.isDontCare(p2);
 			assert !mComputeHoareAnnotation;
-			final Term dontcare = mSmtManager.getPredicateFactory().getDontCareTerm();
-			return mSmtManager.getPredicateFactory().newMLPredicate(((IMLPredicate) p1).getProgramPoints(), dontcare);
+			return mSmtManager.getPredicateFactory().newMLDontCarePredicate(((IMLPredicate) p1).getProgramPoints());
 		}
 		
 		assert (p1 instanceof ISLPredicate);
@@ -144,8 +143,7 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 			final ProgramPoint[] pps = ((IMLPredicate) someElement).getProgramPoints();
 			if (states.isEmpty()) {
 				assert false : "minimize empty set???";
-				final Term dontcareTerm = mSmtManager.getPredicateFactory().getDontCareTerm();
-				return mSmtManager.getPredicateFactory().newMLPredicate(pps, dontcareTerm);
+				return mSmtManager.getPredicateFactory().newMLDontCarePredicate(pps);
 			}
 			final Term disjunction = mSmtManager.getPredicateFactory().or(false, states);
 			return mSmtManager.getPredicateFactory().newMLPredicate(pps, disjunction);

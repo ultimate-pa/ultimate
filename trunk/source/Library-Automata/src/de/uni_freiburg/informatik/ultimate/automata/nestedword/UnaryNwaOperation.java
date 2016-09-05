@@ -43,8 +43,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <STATE>
  *            state type
  */
-public abstract class UnaryNwaOperation<LETTER, STATE>
-		extends GeneralOperation<LETTER, STATE> {
+public abstract class UnaryNwaOperation<LETTER, STATE> extends GeneralOperation<LETTER, STATE> {
 	/**
 	 * Constructor.
 	 * 

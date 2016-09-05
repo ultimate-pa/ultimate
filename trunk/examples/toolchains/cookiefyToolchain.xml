@@ -1,7 +1,12 @@
-﻿<toolchain>
+﻿<rundefinition>
+	<name>Ultimate Toolchain</name>
+	<toolchain>
+		
 	<plugin id="BoogiePrinter" />
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor" />
 	<plugin id="BoogiePrinter" />
 	<plugin id="de.uni_freiburg.informatik.ultimate.Cookiefy" />
 	<plugin id="BoogiePrinter" />
-</toolchain>
+
+	</toolchain>
+</rundefinition>

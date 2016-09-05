@@ -74,7 +74,7 @@ public final class Main {
 				}
 				emitter.setGrammar(grammar);
 				emitter.emitClasses();
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				System.err.println("Parse Error in file: " + param[i] + ": " + e.getMessage());
 				if (debug) {
 					System.err.println(e);

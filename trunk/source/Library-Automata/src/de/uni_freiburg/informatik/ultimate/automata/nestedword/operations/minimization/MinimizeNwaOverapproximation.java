@@ -65,8 +65,6 @@ public class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractMinimiz
 	 *            state factory
 	 * @param operand
 	 *            operand
-	 * @param time
-	 *            time in milliseconds for the minimization to run
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */

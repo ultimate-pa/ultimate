@@ -35,6 +35,11 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.DuplicateKeyException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.PersistentObjectNotFoundException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.PersistentObjectTypeMismatchException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.StoreObjectException;
+
 /**
  * Repository interface for the Ultimate core. A Repository should implement the
  * declared methods. Different implementations can be used in order to try

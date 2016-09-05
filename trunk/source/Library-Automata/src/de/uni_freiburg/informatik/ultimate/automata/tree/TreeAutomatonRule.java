@@ -38,6 +38,7 @@ public class TreeAutomatonRule<LETTER, STATE> {
 	public int getArity() {
 		return src != null ? src.size() : 0;
 	}
+	@Override
 	public String toString() {
 		return "(" + src.toString() + " ~~ " + letter.toString() + " ~~> " + dest.toString() + ")";
 	}

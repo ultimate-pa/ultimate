@@ -39,14 +39,13 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
  * Increase the number of accepting states without changing the language.
  * 
- * @author heizmann@informatik.uni-freiburg.de
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
  * @param <STATE>
  *            state type
  */
-public class BuchiClosure<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
-	
+public final class BuchiClosure<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final INestedWordAutomaton<LETTER, STATE> mResult;
 	
@@ -58,57 +57,62 @@ public class BuchiClosure<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE
 	 * @param operand
 	 *            operand
 	 */
-	public BuchiClosure(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand) {
+	public BuchiClosure(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services);
 		mOperand = operand;
-		mLogger.info(startMessage());
-		mResult = new BuchiClosureNwa<LETTER, STATE>(mServices, mOperand);
-		mLogger.info(exitMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		
+		mResult = new BuchiClosureNwa<>(mServices, mOperand);
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 	
 	@Override
 	public String operationName() {
-		return "buchiClosure";
+		return "BuchiClosure";
 	}
 	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + " Operand "
-				+ mOperand.sizeInformation() + " thereof "
+		return "Start " + operationName() + " Operand " + mOperand.sizeInformation() + " thereof "
 				+ mOperand.getFinalStates().size() + " accepting";
 	}
 	
 	@Override
 	public String exitMessage() {
-		return "Start " + operationName() + " Result "
-				+ mResult.sizeInformation() + " thereof "
+		return "Start " + operationName() + " Result " + mResult.sizeInformation() + " thereof "
 				+ mResult.getFinalStates().size() + " accepting";
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		boolean correct = true;
-		mLogger.info("Start testing correctness of " + operationName());
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Start testing correctness of " + operationName());
+		}
 		
-		final List<NestedLassoWord<LETTER>> lassoWords =
-				new ArrayList<NestedLassoWord<LETTER>>();
-		final BuchiIsEmpty<LETTER, STATE> operandEmptiness =
-				new BuchiIsEmpty<LETTER, STATE>(mServices, mOperand);
+		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<>();
+		final BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<>(mServices, mOperand);
 		final boolean operandEmpty = operandEmptiness.getResult();
 		if (!operandEmpty) {
 			lassoWords.add(operandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		final BuchiIsEmpty<LETTER, STATE> resultEmptiness =
-				new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
+		final BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<>(mServices, mResult);
 		final boolean resultEmpty = resultEmptiness.getResult();
 		if (!resultEmpty) {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
+		boolean correct = true;
 		correct &= (operandEmpty == resultEmpty);
 		assert correct;
-		mLogger.info("Finished testing correctness of " + operationName());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of " + operationName());
+		}
 		return correct;
 	}
 	

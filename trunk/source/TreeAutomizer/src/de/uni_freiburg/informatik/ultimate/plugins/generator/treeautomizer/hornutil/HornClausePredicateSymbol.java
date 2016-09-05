@@ -16,6 +16,7 @@ public class HornClausePredicateSymbol {
 		this.arity = arity;
 	}
 	
+	@Override
 	public String toString() {
 		return name;
 	}

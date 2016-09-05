@@ -77,6 +77,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
+	// size suggestion for random splits of blocks for efficiency reasons
+	public static final int SUGGESTED_RANDOM_SPLIT_SIZE = 200;
 	
 	// TODO<debug>
 	// general output
@@ -94,8 +96,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STAT
 	// size information before return splits
 	private static final boolean STAT_RETURN_SIZE = false;
 	
-	// size suggestion for random splits of blocks for efficiency reasons
-	public static final int SUGGESTED_RANDOM_SPLIT_SIZE = 200;
+	private static final int HIER_PRED_MAX_SIZE = 150;
 	
 	// old automaton
 	private IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;
@@ -160,8 +161,6 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STAT
 	
 	private final BufferedWriter mWriter1;
 	private final BufferedWriter mWriter2;
-	
-	private static final int HIER_PRED_MAX_SIZE = 150;
 	
 	/**
 	 * This constructor creates a copy of the operand.

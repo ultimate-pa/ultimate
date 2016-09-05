@@ -26,56 +26,75 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 
-public class GetAcceptedWord<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+/**
+ * Extracts a (nested) word from a nested word automaton.
+ * <p>
+ * NOTE: If the language of the input automaton is empty, an exception is thrown.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
+public final class GetAcceptedWord<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	
-	private NestedWord<LETTER> mAcceptedWord;
-
+	private final NestedWord<LETTER> mAcceptedWord;
+	
 	/**
-	 * @param services Ultimate services
-	 * @param operand operand
-	 * @throws AutomataLibraryException if construction fails
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public GetAcceptedWord(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand)
-					throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
-		mLogger.info(startMessage());
-		final IsEmpty<LETTER, STATE> isEmpty = new IsEmpty<LETTER, STATE>(mServices, operand);
-		if (isEmpty.getResult()) {
-			throw new IllegalArgumentException(
-					"unable to get word from empty language");
-		} else {
-			mAcceptedWord = isEmpty.getNestedRun().getWord();
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
 		}
-		mLogger.info(exitMessage());
+		
+		final IsEmpty<LETTER, STATE> isEmpty = new IsEmpty<>(mServices, operand);
+		if (isEmpty.getResult()) {
+			throw new IllegalArgumentException("unable to get word from empty language");
+		}
+		mAcceptedWord = isEmpty.getNestedRun().getWord();
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 	
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-
+	
 	@Override
 	public NestedWord<LETTER> getResult() {
 		return mAcceptedWord;
 	}
-
+	
 	@Override
 	public String operationName() {
-		return "getAcceptedWord";
+		return "GetAcceptedWord";
 	}
-
+	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Found word of length "
-				+ mAcceptedWord.length();
+		return "Finished " + operationName() + ". Found word of length " + mAcceptedWord.length();
 	}
 }

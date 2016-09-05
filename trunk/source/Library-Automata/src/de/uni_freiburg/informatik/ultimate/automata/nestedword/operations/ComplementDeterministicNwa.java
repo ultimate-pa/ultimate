@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
@@ -35,59 +35,63 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-
 /**
- * Represents complement of deterministic and total nwa.
- * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * Represents the complement of a deterministic and total nested word automaton.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class ComplementDeterministicNwa<LETTER, STATE>
-		implements INestedWordAutomatonSimple<LETTER, STATE> {
-	
+public final class ComplementDeterministicNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	
 	/**
-	 * @param operand operand
+	 * Constructor.
+	 * 
+	 * @param operand
+	 *            operand
 	 */
 	public ComplementDeterministicNwa(final INestedWordAutomatonSimple<LETTER, STATE> operand) {
 		if (operand instanceof DeterminizeNwa) {
-			if (!((DeterminizeNwa<LETTER, STATE>)operand).isTotal()) {
+			if (!((DeterminizeNwa<LETTER, STATE>) operand).isTotal()) {
 				throw new AssertionError("can only complement total automata");
 			}
 			mOperand = operand;
-		} else if (operand instanceof TotalizeNwa) {
-			mOperand = operand;
-		} else if ((operand instanceof NestedWordAutomaton) 
-				&& ((NestedWordAutomaton<LETTER, STATE>) operand).isDeterministic() 
-				&& ((NestedWordAutomaton<LETTER, STATE>) operand).isTotal()) {
+		} else if ((operand instanceof TotalizeNwa) || isDeterministicTotalNwa(operand)) {
 			mOperand = operand;
 		} else {
 			throw new IllegalArgumentException("input not known to be deterministic");
 		}
 	}
 	
+	private boolean isDeterministicTotalNwa(final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+		return (operand instanceof NestedWordAutomaton)
+				&& ((NestedWordAutomaton<LETTER, STATE>) operand).isDeterministic()
+				&& ((NestedWordAutomaton<LETTER, STATE>) operand).isTotal();
+	}
+	
 	@Override
 	public Iterable<STATE> getInitialStates() {
 		return mOperand.getInitialStates();
 	}
-
+	
 	@Override
 	public Set<LETTER> getInternalAlphabet() {
 		return mOperand.getInternalAlphabet();
 	}
-
+	
 	@Override
 	public Set<LETTER> getCallAlphabet() {
 		return mOperand.getCallAlphabet();
 	}
-
+	
 	@Override
 	public Set<LETTER> getReturnAlphabet() {
 		return mOperand.getReturnAlphabet();
 	}
-
+	
 	@Override
 	public IStateFactory<STATE> getStateFactory() {
 		return mOperand.getStateFactory();
@@ -97,81 +101,80 @@ public class ComplementDeterministicNwa<LETTER, STATE>
 	public boolean isInitial(final STATE state) {
 		return mOperand.isInitial(state);
 	}
-
+	
 	@Override
 	public boolean isFinal(final STATE state) {
 		return !mOperand.isFinal(state);
 	}
-
+	
 	@Override
 	public STATE getEmptyStackState() {
 		return mOperand.getEmptyStackState();
 	}
-
+	
 	@Override
 	public Set<LETTER> lettersInternal(final STATE state) {
 		return mOperand.getInternalAlphabet();
 	}
-
+	
 	@Override
 	public Set<LETTER> lettersCall(final STATE state) {
 		return mOperand.getCallAlphabet();
 	}
-
+	
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {
 		return mOperand.getReturnAlphabet();
 	}
-
-
+	
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			final STATE state, final LETTER letter) {
 		return mOperand.internalSuccessors(state, letter);
 	}
-
+	
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			final STATE state) {
 		return mOperand.internalSuccessors(state);
 	}
-
+	
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			final STATE state, final LETTER letter) {
 		return mOperand.callSuccessors(state, letter);
 	}
-
+	
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			final STATE state) {
 		return mOperand.callSuccessors(state);
 	}
-
+	
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			final STATE state, final STATE hier, final LETTER letter) {
 		return mOperand.returnSuccessors(state, hier, letter);
 	}
-
+	
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			final STATE state, final STATE hier) {
 		return mOperand.returnSuccessorsGivenHier(state, hier);
 	}
-
+	
 	@Override
 	public int size() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
-
+	
 	@Override
 	public Set<LETTER> getAlphabet() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
 	public String sizeInformation() {
 		// TODO Auto-generated method stub

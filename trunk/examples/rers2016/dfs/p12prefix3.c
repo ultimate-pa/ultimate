@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-
+#include<signal.h>
+#include<unistd.h>
 
 // ------------------ W A R N I N G ------------------
 // This program simulates a run of Problem12 that may lead to an (expected) overflow.
@@ -31,23 +32,37 @@ void reset_error() {
 
 void calculate_output(int);
 
+unsigned long long THREES_ENTERED = 0;
 void run() {
 	int prePrefix[] = {1, 2, 8, 2, 7, 7, 3, 8, 1, 1, 3, 10, 1, 3, 10, 8, 1, 8, 4, 10, 1, 3, 6, 8, 7, 8, 7, 2, 3, 1, 4};
 	int prePrefixLength = 31;
 	for (int i = 0; i < prePrefixLength; ++i) {
 		calculate_output(prePrefix[i]);
 	}
-	unsigned long long n = 0;
 	while (ERR < 0) {
-		++n;
+		++THREES_ENTERED;
 		calculate_output(3);
 	}
-	printf("error %d after 'prefix' + %llu * '3'\n", ERR, n);
+	printf("error %d after 'prefix' + %llu * '3'\n", ERR, THREES_ENTERED);
+}
+
+void sig_handler(int sigId) {
+	printf("Received signal ...\n");
+	if (sigId == SIGUSR1) {
+		printf("... SIGUSR1\nPrinting number of entered threes\n");
+		printf("%21llu\nttt   bbb   mmm   '''\n", THREES_ENTERED);
+	} else if (sigId == SIGUSR2) {
+		printf("... SIGUSR2\nPrinting variables\n");
+		// label used as breakpoint when debugging
+		sigusr2: ;
+	} else {
+		printf("... SIGUSR2\nIgnored Signal\n");
+	}
 }
 
 void test_int_size() {
-	int n = 0;
-	if (sizeof(n) != 4) {
+	int i = 0;
+	if (sizeof(i) != 4) {
 		fprintf(stderr, "You are not using 32-bit integers.");
 		exit(1);
 	}
@@ -55,6 +70,10 @@ void test_int_size() {
 
 int main(int argc, char *argv[]) {
 	test_int_size();
+	if (signal(SIGUSR1, sig_handler) == SIG_ERR || signal(SIGUSR2, sig_handler) == SIG_ERR) {
+		fprintf(stderr, "Cannot catch signals\n");
+		exit(1);
+	}
 	reset_eca();
 	reset_error();
 	run();

@@ -2,27 +2,27 @@
  * Copyright (C) 2008-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 Jürgen Christ (christj@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE DebugGUI plug-in.
- * 
+ *
  * The ULTIMATE DebugGUI plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE DebugGUI plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE DebugGUI plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE DebugGUI plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -56,8 +56,8 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.xml.sax.SAXException;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainFileValidator;
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
 
 /**
- * 
+ *
  * @author Jürgen Christ
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -84,10 +84,10 @@ public class AnalysisChooseDialog extends Dialog {
 	private final List<ITool> mTools;
 	private final List<ITool> mPrevious;
 	private final ILogger mLogger;
-	private final ICore<ToolchainListType> mCore;
+	private final ICore<RunDefinition> mCore;
 
 	public AnalysisChooseDialog(final ILogger logger, final Shell parent, final int style, final List<ITool> tools,
-			final List<ITool> previous, final ICore<ToolchainListType> core) {
+			final List<ITool> previous, final ICore<RunDefinition> core) {
 		super(parent, style);
 		mTools = tools;
 		mPrevious = previous;
@@ -98,11 +98,11 @@ public class AnalysisChooseDialog extends Dialog {
 	}
 
 	public AnalysisChooseDialog(final ILogger logger, final Shell parent, final List<ITool> tools,
-			final List<ITool> previous, final ICore<ToolchainListType> core) {
+			final List<ITool> previous, final ICore<RunDefinition> core) {
 		this(logger, parent, SWT.NONE, tools, previous, core);
 	}
 
-	public IToolchainData<ToolchainListType> open() throws FileNotFoundException, JAXBException, SAXException {
+	public IToolchainData<RunDefinition> open() throws FileNotFoundException, JAXBException, SAXException {
 		createContents();
 		mShell.layout();
 		mShell.setSize(mShell.computeSize(SWT.DEFAULT, SWT.DEFAULT));
@@ -114,7 +114,7 @@ public class AnalysisChooseDialog extends Dialog {
 			}
 		}
 
-		final IToolchainData<ToolchainListType> resultChain;
+		final IToolchainData<RunDefinition> resultChain;
 		if (mToolchainFile != null) {
 			mLogger.info("Reading toolchain file from " + mToolchainFile);
 			resultChain = mCore.createToolchainData(mToolchainFile);
@@ -127,7 +127,8 @@ public class AnalysisChooseDialog extends Dialog {
 			// save this toolchain in a tempfile for redo actions
 			final String tDir = System.getProperty("java.io.tmpdir");
 			final File tmpToolchain = new File(tDir, "lastUltimateToolchain.xml");
-			new ToolchainFileValidator().saveToolchain(tmpToolchain.getAbsolutePath(), resultChain.getToolchain());
+			new ToolchainFileValidator().saveToolchain(tmpToolchain.getAbsolutePath(), "Last Ultimate Toolchain",
+					resultChain.getToolchain().getToolchain());
 			mCore.getPreferenceProvider(GuiController.PLUGIN_ID).put(IPreferencesKeys.LASTTOOLCHAINPATH,
 					tmpToolchain.getAbsolutePath());
 			mLogger.info("Saved custom toolchain to " + tmpToolchain.getAbsolutePath());
@@ -168,7 +169,7 @@ public class AnalysisChooseDialog extends Dialog {
 		Collections.sort(mTools, new Comparator<ITool>() {
 
 			@Override
-			public int compare(ITool o1, ITool o2) {
+			public int compare(final ITool o1, final ITool o2) {
 				return o1.getPluginName().compareTo(o2.getPluginName());
 			}
 
@@ -326,13 +327,13 @@ public class AnalysisChooseDialog extends Dialog {
 
 	/**
 	 * function for the listeners... will move the items appropriate
-	 * 
+	 *
 	 * @param swtDirection
 	 *            the SWT.Direction constant SWT.UP will move an item up in the resulttable SWT.DOWN will move an item
 	 *            down in the resulttable SWT.LEFT will remove an item from the resulttable SWT.RIGHT will add an item
 	 *            to the resulttable
 	 */
-	private void moveItem(int swtDirection) {
+	private void moveItem(final int swtDirection) {
 		// get currently selected items
 		final int ri = mRresultTable.getSelectionIndex();
 		final int li = mTable.getSelectionIndex();
@@ -382,7 +383,7 @@ public class AnalysisChooseDialog extends Dialog {
 		// resulttable.getColumn(0).pack();
 	}
 
-	private static void setCaption(TableItem item) {
+	private static void setCaption(final TableItem item) {
 		final IToolchainPlugin isp = (IToolchainPlugin) item.getData();
 		item.setText(isp.getPluginName() + "   id: " + isp.getPluginID());
 	}

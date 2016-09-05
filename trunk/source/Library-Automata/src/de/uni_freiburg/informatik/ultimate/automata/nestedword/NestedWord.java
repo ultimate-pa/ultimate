@@ -74,11 +74,6 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 // FIXME after all testscript are ready: Remove unnecessay constructors an let
 // callers use the right methods.
 public class NestedWord<LETTER> extends Word<LETTER> {
-	
-	private static final String QUOTE_SPACE = "\" ";
-	private static final char QUOTE = '\"';
-	private static final String ACCESS_TO_POSITION = "Access to position ";
-	
 	/**
 	 * Constant to represent internal positions in our array model of a nesting relation.
 	 */
@@ -93,6 +88,10 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * Constant to represent pending returns in our array model of a nesting relation.
 	 */
 	public static final int MINUS_INFINITY = Integer.MIN_VALUE;
+
+	private static final String QUOTE_SPACE = "\" ";
+	private static final char QUOTE = '\"';
+	private static final String ACCESS_TO_POSITION = "Access to position ";
 	
 	private final int[] mNestingRelation;
 	
@@ -247,7 +246,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * @return true iff every entry of <tt>nestingRelation</tt> is in the range of the array or an INTERNAL_POSITION,
 	 *         PLUS_INFINITY, or MINUS_INFINITY.
 	 */
-	private boolean nestingRelationValuesInRange(final int[] nestingRelation) {
+	private static boolean nestingRelationValuesInRange(final int[] nestingRelation) {
 		for (final int content : nestingRelation) {
 			if ((content < 0 || content >= nestingRelation.length) && (!isSpecialNestingRelationIndex(content))) {
 				return false;

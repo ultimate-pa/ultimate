@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.ToolchainWalker.CompleteToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.StoreObjectException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.GenericServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.Log4JLoggingService;
@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultSummarizer;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.PluginType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.SubchainType;
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
@@ -76,13 +76,13 @@ public class ToolchainManager {
 
 	private final ILogger mLogger;
 	private final PluginFactory mPluginFactory;
-	private final IController<ToolchainListType> mCurrentController;
+	private final IController<RunDefinition> mCurrentController;
 	private final AtomicLong mCurrentId;
 	private final ConcurrentHashMap<Long, Toolchain> mActiveToolchains;
 	private final Log4JLoggingService mLoggingService;
 
 	public ToolchainManager(final Log4JLoggingService loggingService, final PluginFactory factory,
-			final IController<ToolchainListType> controller) {
+			final IController<RunDefinition> controller) {
 		mLoggingService = loggingService;
 		mLogger = mLoggingService.getLogger(Activator.PLUGIN_ID);
 		mPluginFactory = factory;
@@ -91,7 +91,7 @@ public class ToolchainManager {
 		mActiveToolchains = new ConcurrentHashMap<>();
 	}
 
-	public void releaseToolchain(final IToolchain<ToolchainListType> toolchain) {
+	public void releaseToolchain(final IToolchain<RunDefinition> toolchain) {
 		if (!mActiveToolchains.remove(toolchain.getId(), toolchain)) {
 			mLogger.warn("An concurrency error occured: Toolchain ID has changed during livecycle");
 		}
@@ -102,7 +102,7 @@ public class ToolchainManager {
 		}
 	}
 
-	public IToolchain<ToolchainListType> requestToolchain() {
+	public IToolchain<RunDefinition> requestToolchain() {
 		final Toolchain tc = new Toolchain(mCurrentId.incrementAndGet(), createModelManager());
 		mActiveToolchains.put(tc.getId(), tc);
 		return tc;
@@ -131,13 +131,13 @@ public class ToolchainManager {
 	}
 
 	/*************************** ToolchainContainer Implementation ****************************/
-	private class Toolchain implements IToolchain<ToolchainListType> {
+	private class Toolchain implements IToolchain<RunDefinition> {
 
 		private final long mId;
 		private final IModelManager mModelManager;
 		private final Benchmark mBenchmark;
 
-		private IToolchainData<ToolchainListType> mToolchainData;
+		private IToolchainData<RunDefinition> mToolchainData;
 		private final Map<File, ISource> mParsers;
 		private File[] mInputFiles;
 		private ToolchainWalker mToolchainWalker;
@@ -149,7 +149,7 @@ public class ToolchainManager {
 			mParsers = new LinkedHashMap<File, ISource>();
 		}
 
-		/*************************** IToolchain<ToolchainListType> Implementation ****************************/
+		/*************************** IToolchain<RunDefinition> Implementation ****************************/
 
 		@Override
 		public void init(final IToolchainProgressMonitor monitor) {
@@ -162,7 +162,7 @@ public class ToolchainManager {
 
 			// install logging services into toolchain storage
 			mLoggingService.setCurrentControllerID(mCurrentController.getPluginID());
-			mToolchainData.getStorage().putStorable(Log4JLoggingService.getServiceKey(), mLoggingService);
+			mLoggingService.store(mToolchainData.getStorage());
 
 			// install service provider service into toolchain storage
 			mToolchainData.getStorage().putStorable(GenericServiceProvider.getServiceKey(),
@@ -181,7 +181,7 @@ public class ToolchainManager {
 		}
 
 		@Override
-		public IToolchainData<ToolchainListType> makeToolSelection(final IToolchainProgressMonitor monitor) {
+		public IToolchainData<RunDefinition> makeToolSelection(final IToolchainProgressMonitor monitor) {
 			final List<ITool> tools = mPluginFactory.getAllAvailableTools();
 
 			if (tools.isEmpty()) {
@@ -190,19 +190,19 @@ public class ToolchainManager {
 			}
 
 			// present selection dialog
-			final IToolchainData<ToolchainListType> rtr = mCurrentController.selectTools(tools);
+			final IToolchainData<RunDefinition> rtr = mCurrentController.selectTools(tools);
 			return setToolSelection(monitor, rtr);
 		}
 
 		@Override
-		public IToolchainData<ToolchainListType> setToolSelection(final IToolchainProgressMonitor monitor,
-				final IToolchainData<ToolchainListType> data) {
+		public IToolchainData<RunDefinition> setToolSelection(final IToolchainProgressMonitor monitor,
+				final IToolchainData<RunDefinition> data) {
 			if (data == null) {
 				/* dialog was aborted */
 				mLogger.warn(getLogPrefix() + ": Dialog was aborted, returning null tools.");
 				return null;
 			}
-			if (!checkToolchain(data.getToolchain().getPluginOrSubchain())) {
+			if (!checkToolchain(data.getToolchain().getToolchain().getPluginOrSubchain())) {
 				mLogger.warn(getLogPrefix() + ": Invalid toolchain selection, returning null tools.");
 				return null;
 			}
@@ -302,6 +302,7 @@ public class ToolchainManager {
 				ResultUtil.logResults(controllerLogger, resultService, appendCompleteLongDescription);
 				final ResultSummarizer resultSummary = new ResultSummarizer(resultService);
 				controllerLogger.info(resultSummary.getOldResultMessage());
+				mCurrentController.displayToolchainResults(mToolchainData, resultService.getResults());
 				mModelManager.removeAll();
 			}
 
@@ -327,7 +328,7 @@ public class ToolchainManager {
 			return mInputFiles != null;
 		}
 
-		/*************************** End IToolchain<ToolchainListType> Implementation ****************************/
+		/*************************** End IToolchain<RunDefinition> Implementation ****************************/
 
 		/**
 		 * Checks whether all plugins in the toolchain are present.
@@ -450,7 +451,7 @@ public class ToolchainManager {
 		}
 
 		@Override
-		public IToolchainData<ToolchainListType> getCurrentToolchainData() {
+		public IToolchainData<RunDefinition> getCurrentToolchainData() {
 			return mToolchainData;
 		}
 

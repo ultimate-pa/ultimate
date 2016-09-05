@@ -71,7 +71,7 @@ public final class GameDoubleDeckerSet implements IGameState {
 		if (!(obj instanceof GameDoubleDeckerSet)) {
 			return false;
 		}
-		GameDoubleDeckerSet other = (GameDoubleDeckerSet) obj;
+		final GameDoubleDeckerSet other = (GameDoubleDeckerSet) obj;
 		if (mDownToUp == null) {
 			if (other.mDownToUp != null) {
 				return false;

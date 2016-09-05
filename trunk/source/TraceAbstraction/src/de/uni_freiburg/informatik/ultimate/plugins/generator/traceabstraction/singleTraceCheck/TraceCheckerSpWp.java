@@ -55,11 +55,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
@@ -251,7 +251,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				postprocs.add(new UnifyPostprocessor());
 				final IterativePredicateTransformer spt = new IterativePredicateTransformer(
 						mSmtManager.getPredicateFactory(), mSmtManager.getScript(), mSmtManager.getManagedScript(), mModifiedGlobals, mServices, mTrace, 
-						mPrecondition, mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique);
+						mPrecondition, mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 				mInterpolantsFp = spt.computeStrongestPostconditionSequence(rtf, postprocs).getInterpolants();
 			} catch (final ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing forward predicates");
@@ -277,7 +277,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				postprocs.add(new UnifyPostprocessor());
 				final IterativePredicateTransformer spt = new IterativePredicateTransformer(
 						mSmtManager.getPredicateFactory(), mSmtManager.getScript(), mSmtManager.getManagedScript(), mModifiedGlobals, mServices, mTrace, 
-						mPrecondition, mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique);
+						mPrecondition, mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 				mInterpolantsBp = spt.computeWeakestPreconditionSequence(rtf, postprocs, false).getInterpolants();
 			} catch (final ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing backward predicates");
@@ -553,7 +553,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 */
 	private void checkSPImpliesWP(final IPredicate[] interpolantsSP, final IPredicate[] interpolantsWP) {
 		mLogger.debug("Checking implication of SP and WP...");
-		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(mServices, mLogger, mManagedScript);
+		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(mServices, mManagedScript);
 		for (int i = 0; i < interpolantsSP.length; i++) {
 			final Validity result = mic.checkImplication(interpolantsSP[i], false, interpolantsWP[i], false);
 			mLogger.debug("SP {" + interpolantsSP[i] + "} ==> WP {" + interpolantsWP[i] + "} is "

@@ -35,8 +35,8 @@ import java.util.Map.Entry;
 public class BooleanExpression {
 
 	public BooleanExpression(final BitSet alpha, final BitSet beta) {
-		this.mAlpha = alpha;
-		this.mBeta = beta;
+		mAlpha = alpha;
+		mBeta = beta;
 	}
 	
 	private final BitSet mAlpha;

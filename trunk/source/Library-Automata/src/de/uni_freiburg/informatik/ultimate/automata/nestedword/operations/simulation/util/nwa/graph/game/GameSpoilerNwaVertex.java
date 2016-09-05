@@ -73,7 +73,7 @@ public final class GameSpoilerNwaVertex<LETTER, STATE> implements IGameState {
 		if (!(obj instanceof GameSpoilerNwaVertex)) {
 			return false;
 		}
-		GameSpoilerNwaVertex<?, ?> other = (GameSpoilerNwaVertex<?, ?>) obj;
+		final GameSpoilerNwaVertex<?, ?> other = (GameSpoilerNwaVertex<?, ?>) obj;
 		if (mSpoilerNwaVertex == null) {
 			if (other.mSpoilerNwaVertex != null) {
 				return false;

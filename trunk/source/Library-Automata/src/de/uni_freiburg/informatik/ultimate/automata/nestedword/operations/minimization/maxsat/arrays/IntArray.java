@@ -127,8 +127,8 @@ final class IntArray implements Iterable<Integer> {
 		IntArrayIterator(final int[] array, final int first, final int last) {
 			assert 0 <= first && first <= last && last <= array.length;
 
-			this.mInnerArray = array;
-			this.mLast = last;
+			mInnerArray = array;
+			mLast = last;
 			mIdx = first;
 		}
 

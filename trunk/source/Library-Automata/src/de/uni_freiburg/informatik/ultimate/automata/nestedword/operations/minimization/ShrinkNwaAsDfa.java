@@ -242,31 +242,31 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	 * and then for each such set the states are split from their equivalence
 	 * classes.
 	 * 
-	 * @param ec
+	 * @param block
 	 *            the splitter equivalence class
 	 * @param iterator
 	 *            the iterator abstracting from the letter type
 	 * @param isInternal
 	 *            true iff split is internal
 	 */
-	private void splitPredecessors(final EquivalenceClass ec,
+	private void splitPredecessors(final EquivalenceClass block,
 			final ITransitionIterator<LETTER, STATE> iterator,
 			final ETransitionType type) {
 		assert ((type == ETransitionType.INTERNAL
 				&& (iterator instanceof ShrinkNwaAsDfa.InternalTransitionIterator)
-				&& (ec.mIncomingInt != EIncomingStatus.IN_WL))
+				&& (block.mIncomingInt != EIncomingStatus.IN_WL))
 				|| (type == ETransitionType.CALL
 						&& (iterator instanceof ShrinkNwaAsDfa.CallTransitionIterator)
-						&& (ec.mIncomingCall != EIncomingStatus.IN_WL))
+						&& (block.mIncomingCall != EIncomingStatus.IN_WL))
 				||
 				(type == ETransitionType.RETURN
 						&& (iterator instanceof ShrinkNwaAsDfa.ReturnTransitionIterator)
-						&& (ec.mIncomingRet != EIncomingStatus.IN_WL)));
+						&& (block.mIncomingRet != EIncomingStatus.IN_WL)));
 						
 		// create a hash map from letter to respective predecessor states
 		final HashMap<Pair<LETTER, STATE>, HashSet<STATE>> letter2states =
 				new HashMap<Pair<LETTER, STATE>, HashSet<STATE>>();
-		for (final STATE state : ec.mStates) {
+		for (final STATE state : block.mStates) {
 			iterator.nextState(state);
 			while (iterator.hasNext()) {
 				final Pair<LETTER, STATE> letter = iterator.nextAndLetter();
@@ -283,15 +283,15 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		if (letter2states.isEmpty()) {
 			switch (type) {
 				case INTERNAL:
-					ec.mIncomingInt = EIncomingStatus.NONE;
+					block.mIncomingInt = EIncomingStatus.NONE;
 					break;
 					
 				case CALL:
-					ec.mIncomingCall = EIncomingStatus.NONE;
+					block.mIncomingCall = EIncomingStatus.NONE;
 					break;
 					
 				case RETURN:
-					ec.mIncomingRet = EIncomingStatus.NONE;
+					block.mIncomingRet = EIncomingStatus.NONE;
 					break;
 				default:
 					throw new IllegalArgumentException();
@@ -352,6 +352,30 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	// --- [end] main methods --- //
 	
 	// --- [start] helper methods and classes --- //
+	
+	/**
+	 * This method checks that the states in each equivalence class initially
+	 * passed in the constructor are all either final or non-final.
+	 *
+	 * @param equivalenceClasses
+	 *            partition passed in constructor
+	 * @return true iff equivalence classes respect final status of states
+	 */
+	private boolean assertStatesSeparation(
+			final Iterable<Set<STATE>> equivalenceClasses) {
+		for (final Set<STATE> equivalenceClass : equivalenceClasses) {
+			final Iterator<STATE> it = equivalenceClass.iterator();
+			assert (it
+					.hasNext()) : "Empty equivalence classes should be avoided.";
+			final boolean isFinal = mOperand.isFinal(it.next());
+			while (it.hasNext()) {
+				if (isFinal != mOperand.isFinal(it.next())) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 	
 	/**
 	 * Type of a transition/symbol.
@@ -521,30 +545,6 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		}
 	}
 	
-	/**
-	 * This method checks that the states in each equivalence class initially
-	 * passed in the constructor are all either final or non-final.
-	 *
-	 * @param equivalenceClasses
-	 *            partition passed in constructor
-	 * @return true iff equivalence classes respect final status of states
-	 */
-	private boolean assertStatesSeparation(
-			final Iterable<Set<STATE>> equivalenceClasses) {
-		for (final Set<STATE> equivalenceClass : equivalenceClasses) {
-			final Iterator<STATE> it = equivalenceClass.iterator();
-			assert (it
-					.hasNext()) : "Empty equivalence classes should be avoided.";
-			final boolean isFinal = mOperand.isFinal(it.next());
-			while (it.hasNext()) {
-				if (isFinal != mOperand.isFinal(it.next())) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-	
 	// --- [end] helper methods and classes --- //
 	
 	// --- [start] important inner classes --- //
@@ -635,16 +635,16 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		 * 
 		 * @param state
 		 *            state
-		 * @param ec
+		 * @param block
 		 *            equivalence class
 		 */
 		private void splitStateFast(final STATE state,
-				final EquivalenceClass ec) {
+				final EquivalenceClass block) {
 			// move state to intersection set
-			ec.mIntersection.add(state);
+			block.mIntersection.add(state);
 			
 			// remove state from old set
-			ec.mStates.remove(state);
+			block.mStates.remove(state);
 		}
 		
 		/**
@@ -672,30 +672,30 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 			}
 			
 			// check and finalize splits
-			for (final EquivalenceClass ec : splitEcs) {
-				if ((letter != null) && (!ec.mStates.isEmpty())) {
+			for (final EquivalenceClass block : splitEcs) {
+				if ((letter != null) && (!block.mStates.isEmpty())) {
 					final STATE hier = letter.getSecond();
 					// return split, also add neutral states
 					final ArrayList<STATE> ecStates =
-							new ArrayList<STATE>(ec.mStates);
+							new ArrayList<STATE>(block.mStates);
 					for (final STATE lin : ecStates) {
 						if (!mDoubleDecker.isDoubleDecker(lin, hier)) {
-							splitStateFast(lin, ec);
+							splitStateFast(lin, block);
 						}
 					}
 				}
 				
 				// split removed every state, restore equivalence class
-				if (ec.mStates.isEmpty()) {
-					ec.mStates = ec.mIntersection;
+				if (block.mStates.isEmpty()) {
+					block.mStates = block.mIntersection;
 				} else {
 					// do a split
 					splitOccurred = true;
-					addEcSplit(ec);
+					addEcSplit(block);
 				}
 				
 				// reset equivalence class
-				ec.reset();
+				block.reset();
 			}
 			
 			return splitOccurred;
@@ -706,10 +706,10 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 			final StringBuilder builder = new StringBuilder();
 			builder.append("{");
 			String append = "";
-			for (final EquivalenceClass ec : mEquivalenceClasses) {
+			for (final EquivalenceClass block : mEquivalenceClasses) {
 				builder.append(append);
 				append = ", ";
-				builder.append(ec);
+				builder.append(block);
 			}
 			builder.append("}");
 			return builder.toString();
@@ -782,13 +782,6 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		}
 		
 		/**
-		 * Sets the equivalence class as initial.
-		 */
-		private void markAsInitial() {
-			mIsInitial = true;
-		}
-		
-		/**
 		 * This constructor is used for the initialization.
 		 * 
 		 * @param states
@@ -853,6 +846,13 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 			if (add) {
 				mWorkList.add(this);
 			}
+		}
+		
+		/**
+		 * Sets the equivalence class as initial.
+		 */
+		private void markAsInitial() {
+			mIsInitial = true;
 		}
 		
 		@Override
@@ -992,12 +992,12 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		 * asserts that the class is not already in the work list and must
 		 * inform the equivalence class beforehand.
 		 *
-		 * @param ec
+		 * @param block
 		 *            the equivalence class
 		 */
-		public void add(final EquivalenceClass ec) {
-			assert (!mQueue.contains(ec));
-			mQueue.add(ec);
+		public void add(final EquivalenceClass block) {
+			assert (!mQueue.contains(block));
+			mQueue.add(block);
 		}
 		
 		@Override
@@ -1031,10 +1031,10 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		protected void toStringHelper(final StringBuilder builder) {
 			builder.append("<<");
 			String append = "";
-			for (final EquivalenceClass ec : mQueue) {
+			for (final EquivalenceClass block : mQueue) {
 				builder.append(append);
 				append = ", ";
-				builder.append(ec);
+				builder.append(block);
 			}
 		}
 	}
@@ -1050,11 +1050,11 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		}
 		
 		@Override
-		public void add(final EquivalenceClass ec) {
-			assert ((ec.mIncomingInt == EIncomingStatus.IN_WL)
-					|| (ec.mIncomingCall == EIncomingStatus.IN_WL)
-					|| (ec.mIncomingRet == EIncomingStatus.IN_WL));
-			super.add(ec);
+		public void add(final EquivalenceClass block) {
+			assert ((block.mIncomingInt == EIncomingStatus.IN_WL)
+					|| (block.mIncomingCall == EIncomingStatus.IN_WL)
+					|| (block.mIncomingRet == EIncomingStatus.IN_WL));
+			super.add(block);
 		}
 	}
 	

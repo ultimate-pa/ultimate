@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -42,24 +43,28 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * Totalized automaton of input. Expects that input is deterministic.
  * If a transition is nondeterministic an empty transition set is returned and
  * mNondeterminismInInputDetected is set to true.
+ * 
  * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class TotalizeNwa<LETTER, STATE>
-		implements INestedWordAutomatonSimple<LETTER, STATE> {
-	
+public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final IStateFactory<STATE> mStateFactory;
 	private STATE mSinkState;
 	private boolean mSinkStateWasConstructed;
-	private boolean mNondeterministicTransitionsDetected = false;
-	private boolean mNondeterministicInitialsDetected = false;
-
+	private boolean mNondeterministicTransitionsDetected;
+	private boolean mNondeterministicInitialsDetected;
+	
 	/**
-	 * @param operand operand
-	 * @param stateFactory state factory
+	 * Constructor.
+	 * 
+	 * @param operand
+	 *            operand
+	 * @param stateFactory
+	 *            state factory
 	 */
 	public TotalizeNwa(final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final IStateFactory<STATE> stateFactory) {
@@ -67,7 +72,7 @@ public class TotalizeNwa<LETTER, STATE>
 		mStateFactory = stateFactory;
 	}
 	
-	public void requestSinkState() {
+	private void requestSinkState() {
 		if (mSinkStateWasConstructed) {
 			// do nothing
 			assert mSinkState != null;
@@ -77,23 +82,42 @@ public class TotalizeNwa<LETTER, STATE>
 			if (mSinkState == null) {
 				throw new IllegalArgumentException("sink state must not be null");
 			}
-			if (mOperand instanceof INestedWordAutomaton) {
-				if (((INestedWordAutomaton) mOperand).getStates().contains(mSinkState)) {
-					throw new UnsupportedOperationException("Operand already contains the state " + mSinkState);
-				}
+			if ((mOperand instanceof INestedWordAutomaton)
+					&& (((INestedWordAutomaton<?, ?>) mOperand).getStates().contains(mSinkState))) {
+				throw new UnsupportedOperationException("Operand already contains the state " + mSinkState);
 			}
-			mSinkStateWasConstructed = true;
 		}
+		mSinkStateWasConstructed = true;
 	}
-
+	
+	/**
+	 * @param state
+	 *            The candidate state.
+	 * @return {@code true} iff the sink state was constructed and is equal to the given state
+	 */
+	@SuppressWarnings("squid:S1698")
+	private boolean isNewSinkState(final STATE state) {
+		// equality intended here
+		return mSinkStateWasConstructed && state == mSinkState;
+	}
+	
+	/**
+	 * @return {@code true} iff automaton is nondeterministic.
+	 */
 	public boolean nonDeterminismInInputDetected() {
 		return mNondeterministicTransitionsDetected || mNondeterministicInitialsDetected;
 	}
 	
+	/**
+	 * @return {@code true} iff automaton has nondeterministic transitions.
+	 */
 	public boolean nondeterministicTransitionsDetected() {
 		return mNondeterministicTransitionsDetected;
 	}
-
+	
+	/**
+	 * @return {@code true} iff automaton has more than one initial state.
+	 */
 	public boolean nondeterministicInitialsDetected() {
 		return mNondeterministicInitialsDetected;
 	}
@@ -111,26 +135,26 @@ public class TotalizeNwa<LETTER, STATE>
 		if (it.hasNext()) {
 			mNondeterministicInitialsDetected = true;
 		}
-		final HashSet<STATE> result = new HashSet<STATE>(1);
+		final HashSet<STATE> result = new HashSet<>(1);
 		result.add(initial);
 		return result;
 	}
-
+	
 	@Override
 	public Set<LETTER> getInternalAlphabet() {
 		return mOperand.getInternalAlphabet();
 	}
-
+	
 	@Override
 	public Set<LETTER> getCallAlphabet() {
 		return mOperand.getCallAlphabet();
 	}
-
+	
 	@Override
 	public Set<LETTER> getReturnAlphabet() {
 		return mOperand.getReturnAlphabet();
 	}
-
+	
 	@Override
 	public IStateFactory<STATE> getStateFactory() {
 		return mStateFactory;
@@ -141,209 +165,192 @@ public class TotalizeNwa<LETTER, STATE>
 		/*
 		 * There are problems if the input already contains the state that
 		 * is the sink state of this automaton.
-		 * We approach these problems by comparing a state only to 
-		 * the sink state if a newly sink state was constructed
+		 * We approach these problems by comparing a state only to
+		 * the sink state if a new sink state was constructed.
 		 */
-		if (mSinkStateWasConstructed && state == mSinkState) {
+		if (isNewSinkState(state)) {
 			// return true iff operand does not have initial states
 			return !mOperand.getInitialStates().iterator().hasNext();
 		} else {
 			return mOperand.isInitial(state);
 		}
 	}
-
+	
 	@Override
 	public boolean isFinal(final STATE state) {
 		/*
 		 * There are problems if the input already contains the state that
 		 * is the sink state of this automaton.
-		 * We approach these problems by comparing a state only to 
+		 * We approach these problems by comparing a state only to
 		 * the sink state if a newly sink state was constructed
 		 */
-		if (mSinkStateWasConstructed && state == mSinkState) {
+		if (isNewSinkState(state)) {
 			return false;
 		} else {
 			return mOperand.isFinal(state);
 		}
 	}
-
+	
 	@Override
 	public STATE getEmptyStackState() {
 		return mOperand.getEmptyStackState();
 	}
-
+	
 	@Override
 	public Set<LETTER> lettersInternal(final STATE state) {
 		return mOperand.getInternalAlphabet();
 	}
-
+	
 	@Override
 	public Set<LETTER> lettersCall(final STATE state) {
 		return mOperand.getCallAlphabet();
 	}
-
+	
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {
 		return mOperand.getReturnAlphabet();
 	}
-
+	
 	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
-			final STATE state, final LETTER letter) {
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
+			final LETTER letter) {
 		if (mNondeterministicTransitionsDetected) {
-			return new HashSet<OutgoingInternalTransition<LETTER, STATE>>(0);
+			return Collections.emptySet();
 		}
-		if (!mSinkStateWasConstructed || state != mSinkState) {
+		if (!isNewSinkState(state)) {
 			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it =
 					mOperand.internalSuccessors(state, letter).iterator();
 			if (it.hasNext()) {
-				it.next();
+				final OutgoingInternalTransition<LETTER, STATE> trans = it.next();
 				if (it.hasNext()) {
 					mNondeterministicTransitionsDetected = true;
-					return new HashSet<OutgoingInternalTransition<LETTER, STATE>>(0);
+					return Collections.emptySet();
 				} else {
-					return mOperand.internalSuccessors(state, letter);
+					return Collections.singleton(trans);
 				}
 			}
 		}
 		requestSinkState();
-		final OutgoingInternalTransition<LETTER, STATE> trans =
-				new OutgoingInternalTransition<LETTER, STATE>(letter, mSinkState);
-		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result =
-				new ArrayList<OutgoingInternalTransition<LETTER, STATE>>(1);
-		result.add(trans);
-		return result;
+		final OutgoingInternalTransition<LETTER, STATE> trans = new OutgoingInternalTransition<>(letter, mSinkState);
+		return Collections.singleton(trans);
 	}
-
+	
 	@SuppressWarnings("squid:S1941")
 	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
-			final STATE state) {
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
 		if (mNondeterministicTransitionsDetected) {
-			return new HashSet<OutgoingInternalTransition<LETTER, STATE>>(0);
+			return Collections.emptySet();
 		}
-		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result =
-				new ArrayList<OutgoingInternalTransition<LETTER, STATE>>();
-		for (final LETTER letter : getInternalAlphabet()) {
-			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it =
-					internalSuccessors(state, letter).iterator();
+		final Set<LETTER> alphabet = getInternalAlphabet();
+		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>(alphabet.size());
+		for (final LETTER letter : alphabet) {
+			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it = internalSuccessors(state, letter).iterator();
 			if (mNondeterministicTransitionsDetected) {
-				return new HashSet<OutgoingInternalTransition<LETTER, STATE>>(0);
+				return Collections.emptySet();
 			}
 			result.add(it.next());
 			assert !it.hasNext();
 		}
 		return result;
 	}
-
+	
 	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-			final STATE state, final LETTER letter) {
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
 		if (mNondeterministicTransitionsDetected) {
-			return new HashSet<OutgoingCallTransition<LETTER, STATE>>(0);
+			return Collections.emptySet();
 		}
-		if (!mSinkStateWasConstructed || state != mSinkState) {
+		if (!isNewSinkState(state)) {
 			final Iterator<OutgoingCallTransition<LETTER, STATE>> it =
 					mOperand.callSuccessors(state, letter).iterator();
 			if (it.hasNext()) {
-				it.next();
+				final OutgoingCallTransition<LETTER, STATE> trans = it.next();
 				if (it.hasNext()) {
 					mNondeterministicTransitionsDetected = true;
-					return new HashSet<OutgoingCallTransition<LETTER, STATE>>(0);
+					return Collections.emptySet();
 				} else {
-					return mOperand.callSuccessors(state, letter);
+					return Collections.singleton(trans);
 				}
 			}
 		}
 		requestSinkState();
-		final OutgoingCallTransition<LETTER, STATE> trans =
-				new OutgoingCallTransition<LETTER, STATE>(letter, mSinkState);
-		final ArrayList<OutgoingCallTransition<LETTER, STATE>> result =
-				new ArrayList<OutgoingCallTransition<LETTER, STATE>>(1);
-		result.add(trans);
-		return result;
+		final OutgoingCallTransition<LETTER, STATE> trans = new OutgoingCallTransition<>(letter, mSinkState);
+		return Collections.singleton(trans);
 	}
-
+	
 	@SuppressWarnings("squid:S1941")
 	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-			final STATE state) {
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
 		if (mNondeterministicTransitionsDetected) {
-			return new HashSet<OutgoingCallTransition<LETTER, STATE>>(0);
+			return Collections.emptySet();
 		}
-		final ArrayList<OutgoingCallTransition<LETTER, STATE>> result =
-				new ArrayList<OutgoingCallTransition<LETTER, STATE>>();
-		for (final LETTER letter : getCallAlphabet()) {
-			final Iterator<OutgoingCallTransition<LETTER, STATE>> it =
-					callSuccessors(state, letter).iterator();
+		final Set<LETTER> alphabet = getCallAlphabet();
+		final ArrayList<OutgoingCallTransition<LETTER, STATE>> result = new ArrayList<>(alphabet.size());
+		for (final LETTER letter : alphabet) {
+			final Iterator<OutgoingCallTransition<LETTER, STATE>> it = callSuccessors(state, letter).iterator();
 			if (mNondeterministicTransitionsDetected) {
-				return new HashSet<OutgoingCallTransition<LETTER, STATE>>(0);
+				return Collections.emptySet();
 			}
 			result.add(it.next());
 			assert !it.hasNext();
 		}
 		return result;
 	}
-
+	
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			final STATE state, final STATE hier, final LETTER letter) {
 		if (mNondeterministicTransitionsDetected) {
-			return new HashSet<OutgoingReturnTransition<LETTER, STATE>>(0);
+			return Collections.emptySet();
 		}
-		if (!mSinkStateWasConstructed || state != mSinkState) {
+		if (!isNewSinkState(state)) {
 			final Iterator<OutgoingReturnTransition<LETTER, STATE>> it =
 					mOperand.returnSuccessors(state, hier, letter).iterator();
 			if (it.hasNext()) {
-				it.next();
+				final OutgoingReturnTransition<LETTER, STATE> trans = it.next();
 				if (it.hasNext()) {
 					mNondeterministicTransitionsDetected = true;
-					return new HashSet<OutgoingReturnTransition<LETTER, STATE>>(0);
+					return Collections.emptySet();
 				} else {
-					return mOperand.returnSuccessors(state, hier, letter);
+					return Collections.singleton(trans);
 				}
 			}
 		}
 		requestSinkState();
-		final OutgoingReturnTransition<LETTER, STATE> trans =
-				new OutgoingReturnTransition<LETTER, STATE>(hier, letter, mSinkState);
-		final ArrayList<OutgoingReturnTransition<LETTER, STATE>> result =
-				new ArrayList<OutgoingReturnTransition<LETTER, STATE>>(1);
-		result.add(trans);
-		return result;
+		final OutgoingReturnTransition<LETTER, STATE> trans = new OutgoingReturnTransition<>(hier, letter, mSinkState);
+		return Collections.singleton(trans);
 	}
-
+	
 	@SuppressWarnings("squid:S1941")
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			final STATE state, final STATE hier) {
 		if (mNondeterministicTransitionsDetected) {
-			return new HashSet<OutgoingReturnTransition<LETTER, STATE>>(0);
+			return Collections.emptySet();
 		}
-		final ArrayList<OutgoingReturnTransition<LETTER, STATE>> result =
-				new ArrayList<OutgoingReturnTransition<LETTER, STATE>>();
-		for (final LETTER letter : getReturnAlphabet()) {
+		final Set<LETTER> alphabet = getReturnAlphabet();
+		final ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = new ArrayList<>(alphabet.size());
+		for (final LETTER letter : alphabet) {
 			final Iterator<OutgoingReturnTransition<LETTER, STATE>> it =
 					returnSuccessors(state, hier, letter).iterator();
 			if (mNondeterministicTransitionsDetected) {
-				return new HashSet<OutgoingReturnTransition<LETTER, STATE>>(0);
+				return Collections.emptySet();
 			}
 			result.add(it.next());
 			assert !it.hasNext();
 		}
 		return result;
 	}
-
+	
 	@Override
 	public int size() {
 		throw new UnsupportedOperationException();
 	}
-
+	
 	@Override
 	public Set<LETTER> getAlphabet() {
 		throw new UnsupportedOperationException();
 	}
-
+	
 	@Override
 	public String sizeInformation() {
 		return "size Information not available";

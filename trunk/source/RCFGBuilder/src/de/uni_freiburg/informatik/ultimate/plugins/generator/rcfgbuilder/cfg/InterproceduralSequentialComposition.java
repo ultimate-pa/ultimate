@@ -30,6 +30,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
@@ -45,8 +46,10 @@ public class InterproceduralSequentialComposition extends SequentialComposition 
 			final ModifiableGlobalVariableManager modGlobVarManager, 
 			final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks, 
 			final ILogger logger, final IUltimateServiceProvider services,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
-		super(serialNumber, source, target, mgdScript, modGlobVarManager, simplify, extPqe, services, codeBlocks, xnfConversionTechnique, simplificationTechnique);
+			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique, 
+			final Boogie2SmtSymbolTable symbolTable) {
+		super(serialNumber, source, target, mgdScript, modGlobVarManager, simplify, extPqe, services, codeBlocks, 
+				xnfConversionTechnique, simplificationTechnique, symbolTable);
 	}
 
 	@Override

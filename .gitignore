@@ -167,6 +167,8 @@ hs_err_pid*
 /trunk/source/Library-UltimateCore/src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/DropmodelType.java
 /trunk/source/Library-UltimateCore/src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ModelIdOnlyType.java
 /trunk/source/Library-UltimateCore/src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainModelType.java
+/trunk/source/Library-UltimateCore/src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/OptionType.java
+/trunk/source/Library-UltimateCore/src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/RunDefinition.java
 
 
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/acsl/parser/Parser.java

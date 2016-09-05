@@ -36,7 +36,8 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.StoreObjectException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.GraphNotFoundException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 

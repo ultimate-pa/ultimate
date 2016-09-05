@@ -60,6 +60,17 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		implements IMinimize {
 	/**
+	 * True if Hopcroft algorithm shall help Incremental algorithm, false
+	 * otherwise.
+	 */
+	public static final boolean HELP_INCREMENTAL = true;
+	/**
+	 * Boolean variable for determining to run the algorithm with or without
+	 * producing tasks for parallel execution.
+	 */
+	private static boolean sParallel = false;
+	
+	/**
 	 * Whether the result is constructed yet.
 	 */
 	private boolean mResultConstructed = false;
@@ -93,22 +104,11 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	private int[] mState2representative;
 	
 	/**
-	 * True if Hopcroft algorithm shall help Incremental algorithm, false
-	 * otherwise.
-	 */
-	public static final boolean HELP_INCREMENTAL = true;
-	
-	/**
 	 * String holding the cpu time.
 	 */
 	private double mRunTime;
 	
 	// ---- Variables and methods needed for parallel execution. ---- //
-	/**
-	 * Boolean variable for determining to run the algorithm with or without
-	 * producing tasks for parallel execution.
-	 */
-	private static boolean sParallel = false;
 	/**
 	 * Reference on task queue for enqueueing the produced tasks.
 	 */

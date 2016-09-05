@@ -36,45 +36,64 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-
-public class Intersect<LETTER,STATE> extends BinaryNwaOperation<LETTER, STATE> {
+/**
+ * Computes the intersection of two nested word automata.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
+public final class Intersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private final IntersectNwa<LETTER, STATE> mIntersect;
-	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
+	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private final IStateFactory<STATE> mStateFactory;
 	
 	/**
-	 * @param services Ultimate services
-	 * @param fstOperand first operand
-	 * @param sndOperand second operand
-	 * @throws AutomataLibraryException if construction fails
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param fstOperand
+	 *            first operand
+	 * @param sndOperand
+	 *            second operand
+	 * @throws AutomataLibraryException
+	 *             if construction fails
 	 */
-	public Intersect(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand)
-					throws AutomataLibraryException {
+	public Intersect(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
-		mStateFactory = mFstOperand.getStateFactory();
-		mLogger.info(startMessage());
-		mIntersect = new IntersectNwa<LETTER, STATE>(mFstOperand, mSndOperand, mStateFactory, false);
-		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mIntersect);
-		mLogger.info(exitMessage());
+		mStateFactory = stateFactory;
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		
+		mIntersect = new IntersectNwa<>(mFstOperand, mSndOperand, mStateFactory, false);
+		mResult = new NestedWordAutomatonReachableStates<>(mServices, mIntersect);
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
-	
 	
 	@Override
 	public String operationName() {
-		return "intersect";
+		return "Intersect";
 	}
-	
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result "
-				+ mResult.sizeInformation();
+		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}
 	
 	@Override
@@ -86,31 +105,35 @@ public class Intersect<LETTER,STATE> extends BinaryNwaOperation<LETTER, STATE> {
 	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
-
+	
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
-
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> sf) throws AutomataLibraryException {
-		mLogger.info("Start testing correctness of " + operationName());
-		final INestedWordAutomaton<LETTER, STATE> resultDD =
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Start testing correctness of " + operationName());
+		}
+		
+		final INestedWordAutomaton<LETTER, STATE> resultDd =
 				(new IntersectDD<LETTER, STATE>(mServices, mFstOperand, mSndOperand)).getResult();
 		boolean correct = true;
-		correct &= (resultDD.size() == mResult.size());
+		correct &= (resultDd.size() == mResult.size());
 		assert correct;
-		correct &= new IsIncluded<>(mServices, sf, resultDD, mResult).getResult();
+		correct &= new IsIncluded<>(mServices, stateFactory, resultDd, mResult).getResult();
 		assert correct;
-		correct &= new IsIncluded<>(mServices, sf, mResult, resultDD).getResult();
+		correct &= new IsIncluded<>(mServices, stateFactory, mResult, resultDd).getResult();
 		assert correct;
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
-					operationName() + "Failed", "language is different",
-					mFstOperand, mSndOperand);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+					"language is different", mFstOperand, mSndOperand);
 		}
-		mLogger.info("Finished testing correctness of " + operationName());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of " + operationName());
+		}
 		return correct;
 	}
 }

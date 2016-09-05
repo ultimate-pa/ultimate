@@ -33,7 +33,7 @@ import org.eclipse.core.runtime.jobs.Job;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain.ReturnCode;
@@ -67,15 +67,15 @@ public abstract class BasicToolchainJob extends Job {
 	}
 
 	protected ChainMode mJobMode;
-	protected ICore<ToolchainListType> mCore;
-	protected IController<ToolchainListType> mController;
+	protected ICore<RunDefinition> mCore;
+	protected IController<RunDefinition> mController;
 	protected ILogger mLogger;
-	protected IToolchainData<ToolchainListType> mChain;
+	protected IToolchainData<RunDefinition> mChain;
 	protected IUltimateServiceProvider mServices;
 	private long mDeadline;
 
-	public BasicToolchainJob(final String name, final ICore<ToolchainListType> core,
-			final IController<ToolchainListType> controller, final ILogger logger) {
+	public BasicToolchainJob(final String name, final ICore<RunDefinition> core,
+			final IController<RunDefinition> controller, final ILogger logger) {
 		super(name);
 		assert logger != null;
 		mCore = core;

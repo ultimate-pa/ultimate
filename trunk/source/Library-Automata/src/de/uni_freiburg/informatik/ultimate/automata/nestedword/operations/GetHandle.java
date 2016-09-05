@@ -40,42 +40,68 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 
-
 /**
  * Class that computes a handle of an automaton.
+ * <p>
  * We call an initial run of an automaton a <i>handle</i> if
  * <ul>
- * <li> there is exactly one initial state
- * <li> each state but the last of the run has exactly one successor
- * <li> each state but the first of the run has exactly one predecessor
- * <li> no state occurs more than once in the handle (automaton does not have
+ * <li>there is exactly one initial state
+ * <li>each state but the last of the run has exactly one successor
+ * <li>each state but the first of the run has exactly one predecessor
+ * <li>no state occurs more than once in the handle (automaton does not have
  * a cycle shape)
  * </ul>
- * @author Matthias Heizmann
  * 
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public final class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+	private NestedRun<LETTER, STATE> mHandle;
+	private final NoHandleReason mNoHandleReason;
 	
-	private NestedRun<LETTER,STATE> mHandle;
-	private NoHandleReason mNoHandleReason;
-	
+	/**
+	 * Available reasons why the automaton is no handle.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 */
 	private enum NoHandleReason {
-		MULTI_INITIAL, CYCLE_SHAPE, MULTI_INIT_SUCC
+		/**
+		 * Multiple initial states.
+		 */
+		MULTI_INITIAL,
+		/**
+		 * Cycle in the automaton.
+		 */
+		CYCLE_SHAPE,
+		/**
+		 * Multiple successors of the initial state.
+		 */
+		MULTI_INIT_SUCC
 	}
 	
 	/**
-	 * @param services Ultimate services
-	 * @param operand operand
-	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if timeout exceeds
 	 */
 	public GetHandle(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
-		mLogger.info(startMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		
 		if (mOperand.getInitialStates().size() != 1) {
 			mNoHandleReason = NoHandleReason.MULTI_INITIAL;
 		} else {
@@ -84,39 +110,51 @@ public class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 			if (mHandle == null) {
 				mNoHandleReason = NoHandleReason.MULTI_INIT_SUCC;
 			} else {
-				while (true) {
-					final STATE knownPredecessor = mHandle.getStateAtPosition(mHandle.getLength() - 2);
-					final STATE current = mHandle.getStateAtPosition(mHandle.getLength() - 1);
-					final boolean singlePred = hasSinglePredecessor(current, knownPredecessor);
-					if (!singlePred) {
-						break;
-					}
-					final NestedRun<LETTER, STATE> newSuffix = getSingleSuccessor(current);
-					if (newSuffix == null) {
-						break;
-					} else {
-						mHandle = mHandle.concatenate(newSuffix);
-					}
-					if (mHandle.getLength() > mOperand.size()) {
-						mLogger.info("automaton has cycle shape");
-						mHandle = null;
-						mNoHandleReason = NoHandleReason.CYCLE_SHAPE;
-						break;
-					}
-				}
+				mNoHandleReason = aa();
 			}
 		}
-		mLogger.info(exitMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 	
+	private NoHandleReason aa() {
+		while (true) {
+			final STATE knownPredecessor = mHandle.getStateAtPosition(mHandle.getLength() - 2);
+			final STATE current = mHandle.getStateAtPosition(mHandle.getLength() - 1);
+			final boolean singlePred = hasSinglePredecessor(current, knownPredecessor);
+			if (!singlePred) {
+				return null;
+			}
+			final NestedRun<LETTER, STATE> newSuffix = getSingleSuccessor(current);
+			if (newSuffix == null) {
+				return null;
+			} else {
+				mHandle = mHandle.concatenate(newSuffix);
+			}
+			if (mHandle.getLength() > mOperand.size()) {
+				if (mLogger.isInfoEnabled()) {
+					mLogger.info("automaton has cycle shape");
+				}
+				mHandle = null;
+				return NoHandleReason.CYCLE_SHAPE;
+			}
+		}
+	}
 	
-	public NestedRun<LETTER,STATE> getSingleSuccessor(final STATE state) {
-		NestedRun<LETTER,STATE> result = null;
+	/**
+	 * TODO Christian 2016-09-04: This method is not used elsewhere. Make it private?
+	 * 
+	 * @param state
+	 *            state
+	 * @return a run of length 2 from the given state to its successor
+	 */
+	public NestedRun<LETTER, STATE> getSingleSuccessor(final STATE state) {
+		NestedRun<LETTER, STATE> result = null;
 		for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mOperand.internalSuccessors(state)) {
 			if (result == null) {
-				result = new NestedRun<LETTER, STATE>(state,
-						outTrans.getLetter(), NestedWord.INTERNAL_POSITION,
-						outTrans.getSucc());
+				result = new NestedRun<>(state, outTrans.getLetter(), NestedWord.INTERNAL_POSITION, outTrans.getSucc());
 			} else {
 				// two or more successors
 				return null;
@@ -124,9 +162,7 @@ public class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 		}
 		for (final OutgoingCallTransition<LETTER, STATE> outTrans : mOperand.callSuccessors(state)) {
 			if (result == null) {
-				result = new NestedRun<LETTER, STATE>(state,
-						outTrans.getLetter(), NestedWord.PLUS_INFINITY,
-						outTrans.getSucc());
+				result = new NestedRun<>(state, outTrans.getLetter(), NestedWord.PLUS_INFINITY, outTrans.getSucc());
 			} else {
 				// two or more successors
 				return null;
@@ -134,9 +170,7 @@ public class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 		}
 		for (final OutgoingReturnTransition<LETTER, STATE> outTrans : mOperand.returnSuccessors(state)) {
 			if (result == null) {
-				result = new NestedRun<LETTER, STATE>(state,
-						outTrans.getLetter(), NestedWord.MINUS_INFINITY,
-						outTrans.getSucc());
+				result = new NestedRun<>(state, outTrans.getLetter(), NestedWord.MINUS_INFINITY, outTrans.getSucc());
 			} else {
 				// two or more successors
 				return null;
@@ -145,6 +179,16 @@ public class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 		return result;
 	}
 	
+	/**
+	 * TODO Christian 2016-09-04: This method is not used elsewhere. Make it private?
+	 * 
+	 * @param state
+	 *            state
+	 * @param knownPredecessor
+	 *            predecessor state (only used for assertion)
+	 * @return {@code true} iff the state has a single predecessor state (namely the one passed)
+	 */
+	@SuppressWarnings("squid:S1698")
 	public boolean hasSinglePredecessor(final STATE state, final STATE knownPredecessor) {
 		STATE predecessor = null;
 		for (final IncomingInternalTransition<LETTER, STATE> inTrans : mOperand.internalPredecessors(state)) {
@@ -174,6 +218,7 @@ public class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 		if (predecessor == null) {
 			return false;
 		} else {
+			// equality check intended here
 			assert predecessor == knownPredecessor : "wrong state";
 			return true;
 		}
@@ -183,25 +228,35 @@ public class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-
+	
 	@Override
-	public NestedRun<LETTER,STATE> getResult() {
+	public NestedRun<LETTER, STATE> getResult() {
 		return mHandle;
 	}
-
+	
 	@Override
 	public String operationName() {
-		return "getHandle";
+		return "GetHandle";
 	}
-
+	
 	@Override
 	public String exitMessage() {
-		String result = "Finished " + operationName();
+		final StringBuilder builder = new StringBuilder();
+		// @formatter:off
+		builder.append("Finished ")
+				.append(operationName());
+		// @formatter:on
 		if (mHandle == null) {
-			result += ". Automaton has no handle. Reason: " + mNoHandleReason;
+			// @formatter:off
+			builder.append(". Automaton has no handle. Reason: ")
+					.append(mNoHandleReason);
+			// @formatter:on
 		} else {
-			result += ". Found word of length " + mHandle.getLength();
+			// @formatter:off
+			builder.append(". Found word of length ")
+					.append(mHandle.getLength());
+			// @formatter:on
 		}
-		return result;
+		return builder.toString();
 	}
 }

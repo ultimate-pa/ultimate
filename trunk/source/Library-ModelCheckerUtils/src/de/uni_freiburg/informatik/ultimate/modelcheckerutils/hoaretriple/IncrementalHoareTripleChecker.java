@@ -109,7 +109,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		if (quickCheck_Postcond == LBool.UNSAT) {
 			return Validity.VALID;
 		}
-		assert quickCheck_Postcond == LBool.UNKNOWN : "unexpected quickcheck result";
+		assert quickCheck_Postcond == LBool.UNKNOWN || quickCheck_Postcond == null : "unexpected quickcheck result";
 		assert mAssertedPrecond == pre && mAssertedHier == null && 
 				mAssertedAction == act && mAssertedPostcond == post;
 		return checkValidity();
@@ -130,7 +130,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		if (quickCheck_Postcond == LBool.UNSAT) {
 			return Validity.VALID;
 		}
-		assert quickCheck_Postcond == LBool.UNKNOWN : "unexpected quickcheck result";
+		assert quickCheck_Postcond == LBool.UNKNOWN || quickCheck_Postcond == null : "unexpected quickcheck result";
 		assert mAssertedPrecond == pre && mAssertedHier == null && 
 				mAssertedAction == act && mAssertedPostcond == post;
 		return checkValidity();
@@ -156,7 +156,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		if (quickCheck_Postcond == LBool.UNSAT) {
 			return Validity.VALID;
 		}
-		assert quickCheck_Postcond == LBool.UNKNOWN : "unexpected quickcheck result";
+		assert quickCheck_Postcond == LBool.UNKNOWN || quickCheck_Postcond == null : "unexpected quickcheck result";
 		assert mAssertedPrecond == linPre && mAssertedHier == hierPre && 
 				mAssertedAction == act && mAssertedPostcond == postcond;
 		return checkValidity();

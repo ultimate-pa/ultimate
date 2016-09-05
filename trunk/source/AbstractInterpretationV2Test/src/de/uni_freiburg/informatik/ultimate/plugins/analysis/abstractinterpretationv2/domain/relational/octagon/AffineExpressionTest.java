@@ -208,7 +208,7 @@ public class AffineExpressionTest {
 		try {
 			value.toBigIntegerExact();
 			return true;
-		} catch (ArithmeticException ex) {
+		} catch (final ArithmeticException ex) {
 			return false;
 		}
 	}

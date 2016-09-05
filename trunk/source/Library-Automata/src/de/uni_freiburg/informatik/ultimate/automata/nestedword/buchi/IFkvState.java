@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
@@ -29,16 +29,25 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 import java.util.Set;
 
 /**
- * Meta state used in the rank-based compelementation of Büchi nested word
- * automta. Can be either a {@link #FkvSubsetComponentState} or a 
- * {@link #LevelRankingState}. 
- * @author Matthias Heizmann
- *
+ * Meta state used in the rank-based complementation of Buchi nested word
+ * automata. Can be either a {@link #FkvSubsetComponentState} or a
+ * {@link #LevelRankingState}.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public interface IFkvState<LETTER, STATE> {
-
-	public Set<StateWithRankInfo<STATE>> getDownStates();
+	/**
+	 * @return The down states.
+	 */
+	Set<StateWithRankInfo<STATE>> getDownStates();
 	
-	public Iterable<StateWithRankInfo<STATE>> getUpStates(StateWithRankInfo<STATE> downState);
-
+	/**
+	 * @param downState A down state.
+	 * @return The corresponding up states.
+	 */
+	Iterable<StateWithRankInfo<STATE>> getUpStates(StateWithRankInfo<STATE> downState);
 }

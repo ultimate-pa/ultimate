@@ -35,8 +35,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-
-public class IsDeterministic<LETTER,STATE> extends UnaryNwaOperation<LETTER, STATE> {
+/**
+ * Checks whether a nested word automaton is deterministic.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
+public final class IsDeterministic<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
 	private final boolean mResult;
@@ -45,79 +53,98 @@ public class IsDeterministic<LETTER,STATE> extends UnaryNwaOperation<LETTER, STA
 	private final boolean mNondeterministicInitials;
 	
 	/**
-	 * @param services Ultimate services
-	 * @param operand operand
-	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if timeout exceeds
 	 */
 	public IsDeterministic(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER,STATE> operand)
-					throws AutomataOperationCanceledException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mStateFactory = operand.getStateFactory();
-		mLogger.info(startMessage());
-		final TotalizeNwa<LETTER, STATE> totalized =
-				new TotalizeNwa<LETTER, STATE>(operand, mStateFactory);
-		if (isCancellationRequested()) {
-			throw new AutomataOperationCanceledException(this.getClass());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
 		}
-		mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, totalized);
+		
+		// TODO Christian 2016-09-05: Rather store 'totalized' instead of 'mReach' which is only used for assertions
+		final TotalizeNwa<LETTER, STATE> totalized = new TotalizeNwa<>(operand, mStateFactory);
+		mReach = new NestedWordAutomatonReachableStates<>(mServices, totalized);
+		
 		mResult = !totalized.nonDeterminismInInputDetected();
 		mNondeterministicTransitions = totalized.nondeterministicTransitionsDetected();
 		mNondeterministicInitials = totalized.nondeterministicInitialsDetected();
-		mLogger.info(exitMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 	
-
+	/**
+	 * @return {@code true} iff the automaton has nondeterministic transitions.
+	 */
 	public boolean hasNondeterministicTransitions() {
 		return mNondeterministicTransitions;
 	}
-
-
+	
+	/**
+	 * @return {@code true} iff the automaton has more than one initial state.
+	 */
 	public boolean hasNondeterministicInitials() {
 		return mNondeterministicInitials;
 	}
-
+	
 	@Override
 	public String operationName() {
-		return "isDeterministic";
+		return "IsDeterministic";
 	}
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Operand is "
-					+ (mResult ? "" : "not ") + "deterministic.";
+		return "Finished " + operationName() + ". Operand is " + (mResult ? "" : "not ") + "deterministic.";
 	}
-
+	
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-
+	
 	@Override
 	public Boolean getResult() {
 		return mResult;
 	}
-
+	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> sf)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
 		if (mResult) {
-			mLogger.info("Start testing correctness of " + operationName());
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("Start testing correctness of " + operationName());
+			}
+			
 			// should recognize same language as old computation
-			correct &= new IsIncluded<>(mServices, sf, mOperand, mReach).getResult();
+			correct &= new IsIncluded<>(mServices, stateFactory, mOperand, mReach).getResult();
 			assert correct;
-			correct &= new IsIncluded<>(mServices, sf, mReach, mOperand).getResult();
+			correct &= new IsIncluded<>(mServices, stateFactory, mReach, mOperand).getResult();
 			assert correct;
 			if (!correct) {
-				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
-						operationName() + "Failed", "language is different",
-						mOperand);
+				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+						"language is different", mOperand);
 			}
-			mLogger.info("Finished testing correctness of " + operationName());
+			
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("Finished testing correctness of " + operationName());
+			}
 		} else {
-			mLogger.warn("result was not tested");
+			if (mLogger.isWarnEnabled()) {
+				mLogger.warn("result was not tested");
+			}
 		}
 		return correct;
 	}

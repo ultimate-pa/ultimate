@@ -80,6 +80,30 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinimizeIncremental<LETTER, STATE>
 		implements IMinimize {
 	/**
+	 * True if Incremental algorithm shall help Hopcroft algorithm, false
+	 * otherwise.
+	 */
+	public static final boolean HELP_HOPCROFT = true;
+	
+	/**
+	 * Option: Separate states with different transitions.
+	 * 
+	 * <p>That is, if there is a letter {@code l} where one of the states has an
+	 * outgoing transitions with {@code l} and one has not (hence this
+	 * transition would go to an implicit sink state.
+	 * 
+	 * <p>NOTE: This is only reasonable if the input automaton is not total.
+	 * Furthermore, the method becomes incomplete (i.e., may not find the
+	 * minimum) if dead ends have not been removed beforehand.
+	 */
+	private static final boolean OPTION_NEQ_TRANS = false;
+	/**
+	 * Boolean variable for determining to run the algorithm with or without
+	 * producing tasks for parallel execution.
+	 */
+	private static boolean sParallel = false;
+	
+	/**
 	 * The number of states in the input automaton (often used).
 	 */
 	private int mSize;
@@ -120,12 +144,6 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 */
 
 	/**
-	 * True if Incremental algorithm shall help Hopcroft algorithm, false
-	 * otherwise.
-	 */
-	public static final boolean HELP_HOPCROFT = true;
-
-	/**
 	 * Double holding the cpu time in seconds.
 	 */
 	private double mRunTime;
@@ -137,30 +155,10 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 */
 	private MinimizeDfaHopcroftParallel<LETTER, STATE> mHopcroftAlgorithm;
 	/**
-	 * Boolean variable for determining to run the algorithm with or without
-	 * producing tasks for parallel execution.
-	 */
-	private static boolean sParallel = false;
-	/**
 	 * This variable will be true as soon as the union-find data structure is
 	 * initialized.
 	 */
 	private boolean mInitialized = false;
-
-	// ----------------------- options for tweaking ----------------------- //
-
-	/**
-	 * Option: Separate states with different transitions.
-	 * 
-	 * <p>That is, if there is a letter {@code l} where one of the states has an
-	 * outgoing transitions with {@code l} and one has not (hence this
-	 * transition would go to an implicit sink state.
-	 * 
-	 * <p>NOTE: This is only reasonable if the input automaton is not total.
-	 * Furthermore, the method becomes incomplete (i.e., may not find the
-	 * minimum) if dead ends have not been removed beforehand.
-	 */
-	private static final boolean OPTION_NEQ_TRANS = false;
 
 	// --------------------------- class methods --------------------------- //
 

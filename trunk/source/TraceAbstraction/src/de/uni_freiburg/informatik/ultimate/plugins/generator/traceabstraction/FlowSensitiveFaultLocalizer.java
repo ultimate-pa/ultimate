@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker;
@@ -69,7 +70,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.QuantifierEliminationPostprocessor;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.DefaultTransFormulas;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -340,7 +340,8 @@ public class FlowSensitiveFaultLocalizer {
 				smtManager.getPredicateFactory(),
 				smtManager.getScript(), smtManager.getManagedScript(), modGlobVarManager, 
 				mServices, counterexampleWord, null, falsePredicate, null, 
-				smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(falsePredicate)), mSimplificationTechnique, mXnfConversionTechnique);
+				smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(falsePredicate)), 
+				mSimplificationTechnique, mXnfConversionTechnique, smtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 		
 		final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexampleWord, 
 				null, falsePredicate, Collections.emptySortedMap(), modGlobVarManager, false);
@@ -633,8 +634,8 @@ public class FlowSensitiveFaultLocalizer {
 		mLogger.info("Starting flow-sensitive error relevancy analysis");
 		final Map<Integer, List<Integer>> informationFromCFG = computeInformationFromCFG(counterexample, cfg); 
 		// You should send the counter example, the CFG information and the the start of the branch and the end of the branch.
-		final PredicateTransformer pt = new PredicateTransformer(smtManager.getManagedScript(), 
-				smtManager.getScript(), modGlobVarManager, mServices, mSimplificationTechnique, mXnfConversionTechnique);
+		final PredicateTransformer pt = new PredicateTransformer(mServices, 
+				smtManager.getManagedScript(), mSimplificationTechnique, mXnfConversionTechnique);
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
 				smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
 		final int startLocation = 0;

@@ -31,12 +31,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
@@ -47,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ObjectFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExParserPreferenceInitializer;
@@ -135,8 +132,8 @@ public class SpaceExParser implements ISource {
 		}
 
 		try {
-			FileReader fr = new FileReader(file);
-			BufferedReader br = new BufferedReader(fr);
+			final FileReader fr = new FileReader(file);
+			final BufferedReader br = new BufferedReader(fr);
 			try {
 				if (!br.readLine().contains("<?xml")) {
 					mLogger.debug("The input file does not contain an opening xml tag.");
@@ -151,7 +148,7 @@ public class SpaceExParser implements ISource {
 				br.close();
 				fr.close();
 			}
-		} catch (IOException ioe) {
+		} catch (final IOException ioe) {
 			return false;
 		}
 
@@ -188,7 +185,7 @@ public class SpaceExParser implements ISource {
 
 		fis.close();
 		
-		HybridModel system = new HybridModel(spaceEx, mLogger);
+		final HybridModel system = new HybridModel(spaceEx, mLogger);
 		
 		return new SpaceExModelBuilder(system, mLogger).getModel();
 	}

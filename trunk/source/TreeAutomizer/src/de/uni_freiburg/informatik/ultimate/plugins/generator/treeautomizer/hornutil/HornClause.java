@@ -68,14 +68,14 @@ public class HornClause {
 		mHeadPredicate = body;
 		mBodyPredToTermVariables = cobody;
 		
-		Map<HCVar, TermVariable> outVars = new HashMap<>();
+		final Map<HCVar, TermVariable> outVars = new HashMap<>();
 		for (int i = 0; i < bodyVars.size(); ++i) {
 			outVars.put(new HCVar(body, i, bodyVars.get(i)), bodyVars.get(i));
 		}
 
-		Map<HCVar, TermVariable> inVars = new HashMap<>();
-		for (HornClausePredicateSymbol pred : cobody.keySet()) {
-			ArrayList<TermVariable> vars = cobody.get(pred);
+		final Map<HCVar, TermVariable> inVars = new HashMap<>();
+		for (final HornClausePredicateSymbol pred : cobody.keySet()) {
+			final ArrayList<TermVariable> vars = cobody.get(pred);
 
 			for (int i = 0; i < vars.size(); ++i) {
 				inVars.put(new HCVar(pred, i, vars.get(i)), vars.get(i));
@@ -86,18 +86,20 @@ public class HornClause {
 		mTransitionFormula = new HCTransFormula(transitionFormula, inVars, outVars);
 	}
 	
+	@Override
 	public String toString() {
 		String cobody = "";
 		
-		for (HornClausePredicateSymbol symbol : mBodyPredToTermVariables.keySet()) {
+		for (final HornClausePredicateSymbol symbol : mBodyPredToTermVariables.keySet()) {
 			cobody += " " + symbol.toString() + mBodyPredToTermVariables.get(symbol);
 		}
-		if (cobody.length() > 0)
+		if (cobody.length() > 0) {
 			cobody = "and" + cobody;
-		else
+		} else {
 			cobody = "true";
+		}
 		
-		String body = mHeadPredicate.toString() + mHeadPredTermVariables;
+		final String body = mHeadPredicate.toString() + mHeadPredTermVariables;
 		
 		return String.format("(%s) ^^ (%s) ~~> (%s) || in : %s || out : %s ", cobody, mTransitionFormula, body, mTransitionFormula.getInVars(), mTransitionFormula.getOutVars());
 	}

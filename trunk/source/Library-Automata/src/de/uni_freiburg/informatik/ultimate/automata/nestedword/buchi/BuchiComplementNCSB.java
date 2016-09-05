@@ -80,7 +80,6 @@ public class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<LETTER
 	public boolean checkResult(final IStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		final boolean underApproximationOfComplement = false;
-		boolean correct = true;
 		mLogger.info("Start testing correctness of " + operationName());
 		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
 		final BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, mOperand);
@@ -93,6 +92,7 @@ public class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<LETTER
 		if (!resultEmpty) {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
+		boolean correct = true;
 		correct &= !(operandEmpty && resultEmpty);
 		assert correct;
 //		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));

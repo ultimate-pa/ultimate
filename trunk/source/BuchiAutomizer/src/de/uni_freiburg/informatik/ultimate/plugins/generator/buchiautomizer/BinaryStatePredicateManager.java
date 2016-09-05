@@ -418,10 +418,13 @@ public class BinaryStatePredicateManager {
 		
 		final Term conjunction = SmtUtils.and(mScript, siTerms);
 		final Term si;
-		if (false) {
+		if (true) {
 			final Term simplified = SmtUtils.simplify(mSmtManager.getManagedScript(), conjunction, mServices, mSimplificationTechnique);   
 			final Term normalized = (new AffineSubtermNormalizer(mSmtManager.getScript(), mLogger)).transform(simplified);
 			si = normalized;
+			if (SmtUtils.isFalse(si)) {
+				throw new AssertionError("Supporting invariant is false. This is impossible since we only consider feasible stems.");
+			}
 		} else {
 			si = conjunction;
 		}

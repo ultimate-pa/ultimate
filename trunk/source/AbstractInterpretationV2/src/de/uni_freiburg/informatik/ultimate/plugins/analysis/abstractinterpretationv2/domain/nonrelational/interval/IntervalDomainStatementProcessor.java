@@ -78,7 +78,7 @@ public class IntervalDomainStatementProcessor
 	@Override
 	protected IEvaluatorFactory<IntervalDomainValue, IntervalDomainState, CodeBlock> createEvaluatorFactory(
 	        final int maxParallelStates) {
-		EvaluatorFactory.Function<String, IntervalDomainValue> valueExpressionEvaluatorCreator = (value, type) -> {
+		final EvaluatorFactory.Function<String, IntervalDomainValue> valueExpressionEvaluatorCreator = (value, type) -> {
 			return new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value));
 		};
 		return new EvaluatorFactory<>(getLogger(), maxParallelStates, new IntervalValueFactory(),

@@ -31,10 +31,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-
-import java.util.Set;
 
 /**
  * Represents a state (S,O,g) in the complement automaton.

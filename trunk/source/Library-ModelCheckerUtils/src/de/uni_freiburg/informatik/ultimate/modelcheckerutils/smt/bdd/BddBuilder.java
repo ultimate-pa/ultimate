@@ -50,23 +50,23 @@ public class BddBuilder extends NonRecursive{
 		
 		@Override
 		public void walk(NonRecursive walker, ConstantTerm term) {
-			BddBuilder bb = (BddBuilder)walker;
+			final BddBuilder bb = (BddBuilder)walker;
 			bb.mValues.add(bb.getFactory().ithVar(bb.getAtoms().indexOf(term)));
 		}
 
 		@Override
 		public void walk(NonRecursive walker, AnnotatedTerm term) {
-			BddBuilder bb = (BddBuilder)walker;
+			final BddBuilder bb = (BddBuilder)walker;
 			walker.enqueueWalker(new DownWalker(term.getSubterm()));
 		}
 
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
-			BddBuilder bb = (BddBuilder)walker;
-			String fName = term.getFunction().getName();
+			final BddBuilder bb = (BddBuilder)walker;
+			final String fName = term.getFunction().getName();
 			if(fName.equals("and") || fName.equals("or") || fName.equals("xor") || fName.equals("not") || fName.equals("=>")){
 				bb.enqueueWalker(new UpWalker(term));
-				for(Term t:term.getParameters()){
+				for(final Term t:term.getParameters()){
 					walker.enqueueWalker(new DownWalker(t));
 				}
 			}else if(fName.equals("true")){
@@ -82,19 +82,19 @@ public class BddBuilder extends NonRecursive{
 
 		@Override
 		public void walk(NonRecursive walker, LetTerm term) {
-			BddBuilder bb = (BddBuilder)walker;
+			final BddBuilder bb = (BddBuilder)walker;
 			bb.mValues.add(bb.getFactory().ithVar(bb.getAtoms().indexOf(term)));
 		}
 
 		@Override
 		public void walk(NonRecursive walker, QuantifiedFormula term) {
-			BddBuilder bb = (BddBuilder)walker;
+			final BddBuilder bb = (BddBuilder)walker;
 			bb.mValues.add(bb.getFactory().ithVar(bb.getAtoms().indexOf(term)));
 		}
 
 		@Override
 		public void walk(NonRecursive walker, TermVariable term) {
-			BddBuilder bb = (BddBuilder)walker;
+			final BddBuilder bb = (BddBuilder)walker;
 			bb.mValues.add(bb.getFactory().ithVar(bb.getAtoms().indexOf(term)));
 		}
 	}
@@ -117,8 +117,8 @@ public class BddBuilder extends NonRecursive{
 
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
-			BddBuilder bb = (BddBuilder)walker;
-			String fName = term.getFunction().getName();
+			final BddBuilder bb = (BddBuilder)walker;
+			final String fName = term.getFunction().getName();
 			if(fName.equals("and")){
 				BDD b = bb.mValues.poll();
 				for(int i = 0; i < term.getParameters().length-1; i++){
@@ -144,7 +144,7 @@ public class BddBuilder extends NonRecursive{
 				}
 				bb.mValues.add(b);
 			}else if(fName.equals("not")){
-				BDD b = bb.mValues.poll();
+				final BDD b = bb.mValues.poll();
 				bb.mValues.add(b.not());
 			}
 		}

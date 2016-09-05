@@ -72,7 +72,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_RUN_AS_PRE_ANALYSIS = "Run as pre-analysis";
 	public static final String TOOLTIP_RUN_AS_PRE_ANALYSIS =
-			"Do not report any results, suppress all exceptions except OOM, use 20% of available time";
+			"Do not report any results, suppress all exceptions except OOM, use 20% of available time.";
 
 	public static final int DEF_ITERATIONS_UNTIL_WIDENING = 3;
 	public static final int DEF_STATES_UNTIL_MERGE = 2;

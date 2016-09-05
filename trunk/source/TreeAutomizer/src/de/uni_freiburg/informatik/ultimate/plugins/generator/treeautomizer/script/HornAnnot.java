@@ -19,9 +19,10 @@ public class HornAnnot implements IAnnotations {
 		return mp;
 	}
 
+	@Override
 	public String toString() {
 		String res = "";
-		for (String key : mp.keySet()) {
+		for (final String key : mp.keySet()) {
 			if (!res.isEmpty()) {
 				res += '\t';
 			}

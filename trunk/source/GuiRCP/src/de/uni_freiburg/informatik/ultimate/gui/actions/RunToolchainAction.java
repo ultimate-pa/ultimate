@@ -50,7 +50,7 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.xml.sax.SAXException;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
@@ -68,10 +68,10 @@ public abstract class RunToolchainAction extends Action {
 
 	protected final IWorkbenchWindow mWorkbenchWindow;
 	protected final ILogger mLogger;
-	protected final ICore<ToolchainListType> mCore;
+	protected final ICore<RunDefinition> mCore;
 	protected final GuiController mController;
 
-	public RunToolchainAction(final ILogger logger, final IWorkbenchWindow window, final ICore<ToolchainListType> icore,
+	public RunToolchainAction(final ILogger logger, final IWorkbenchWindow window, final ICore<RunDefinition> icore,
 			final GuiController controller, final String id, final String label, final String imageFilePath) {
 		super();
 		mLogger = logger;
@@ -106,7 +106,7 @@ public abstract class RunToolchainAction extends Action {
 		return null;
 	}
 
-	protected IToolchainData<ToolchainListType> getLastToolchainData() {
+	protected IToolchainData<RunDefinition> getLastToolchainData() {
 		final String toolchainxml =
 				mCore.getPreferenceProvider(GuiController.PLUGIN_ID).getString(IPreferencesKeys.LASTTOOLCHAINPATH);
 		if (toolchainxml == null || toolchainxml.isEmpty()) {

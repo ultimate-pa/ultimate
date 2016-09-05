@@ -48,8 +48,8 @@ final class Partition {
 	int[] mClassOf;
 
 	Partition(final int numClasses, final int[] classOf) {
-		this.mNumClasses = numClasses;
-		this.mClassOf = classOf;
+		mNumClasses = numClasses;
+		mClassOf = classOf;
 	}
 
 	/**

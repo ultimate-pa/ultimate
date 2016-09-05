@@ -74,13 +74,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 @SuppressWarnings("squid:UselessParenthesesCheck")
 public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
-	// old automaton
-	private final IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;
-	// ID for equivalence classes
-	private int mEquivalenceClassId;
-	// Partition of states into equivalence classes
-	private Partition mPartition;
-	
 	/*
 	 * EXPERIMENTAL
 	 * deterministic finite automata can be handled more efficiently
@@ -97,6 +90,14 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, 
 	private static final boolean SPLIT_ALL_RETURNS_HIER = false;
 	
 	private static final boolean STATISTICS = false;
+	
+	// old automaton
+	private final IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;
+	// ID for equivalence classes
+	private int mEquivalenceClassId;
+	// Partition of states into equivalence classes
+	private Partition mPartition;
+	
 	private int mSplitsWithChange;
 	private int mSplitsWithoutChange;
 	
@@ -917,27 +918,27 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, 
 		 * put one or two of {'Y \cap X', 'Y \ X'} in W,
 		 * but only if Y was split, i.e., 'Y \ X != {}'
 		 */
-		for (final EquivalenceClass ec : intersected) {
+		for (final EquivalenceClass block : intersected) {
 			/*
 			 * if Y is empty, then the intersection is not needed
 			 * and the states can be restored
 			 */
-			if (!ec.isEmpty()) {
+			if (!block.isEmpty()) {
 				++mSplitsWithChange;
 				
 				// create new equivalence class
-				final EquivalenceClass intersection = ec.split(partition);
+				final EquivalenceClass intersection = block.split(partition);
 				
 				/*
 				 * if Y was in the target set, the split equivalence class
 				 * must also be inserted
 				 */
-				if (ec.isInTargetSet()) {
+				if (block.isInTargetSet()) {
 					targetSet.addEquivalenceClass(intersection);
 				}
 				
 				// if Y was not in work list, put it and/or intersection there
-				if (!ec.isInWorkList()) {
+				if (!block.isInWorkList()) {
 					assert (!intersection.isInWorkList());
 					
 					if (ONLY_ONE_TO_WORK_LIST) {
@@ -947,8 +948,8 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, 
 						 * of {'Y \cap X', 'Y \ X'} in W
 						 * NOTE: see note for monlyOneToWorkList
 						 */
-						if (ec.size() <= intersection.size()) {
-							partition.addToWorkList(ec);
+						if (block.size() <= intersection.size()) {
+							partition.addToWorkList(block);
 						} else {
 							partition.addToWorkList(intersection);
 						}
@@ -958,7 +959,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, 
 						 * put both equivalence classes in the work list
 						 * (necessary for correctness)
 						 */
-						partition.addToWorkList(ec);
+						partition.addToWorkList(block);
 						partition.addToWorkList(intersection);
 					}
 				}
@@ -970,7 +971,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, 
 			}
 			
 			// reset information about the intersection equivalence class
-			ec.resetIntersection();
+			block.resetIntersection();
 		}
 	}
 	
@@ -985,16 +986,16 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, 
 	private void putAllToWorkList(final Partition partition, final boolean naiveSplit) {
 		if (naiveSplit) {
 			// only collect equivalence classes, which have been split lately
-			for (final EquivalenceClass ec : partition.getEquivalenceClasses()) {
-				if (ec.wasSplitDuringSecondPhase()) {
-					partition.addToWorkList(ec);
+			for (final EquivalenceClass block : partition.getEquivalenceClasses()) {
+				if (block.wasSplitDuringSecondPhase()) {
+					partition.addToWorkList(block);
 				}
 			}
 		} else {
 			// only collect equivalence classes with incoming return transitions
-			for (final EquivalenceClass ec : partition.getEquivalenceClasses()) {
-				if (ec.hasIncomingReturns(partition)) {
-					partition.addToWorkList(ec);
+			for (final EquivalenceClass block : partition.getEquivalenceClasses()) {
+				if (block.hasIncomingReturns(partition)) {
+					partition.addToWorkList(block);
 				}
 			}
 		}
@@ -1092,17 +1093,17 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, 
 			// check first hierarchical states pair
 			STATE lin = transition.mLin;
 			STATE hier = mHier;
-			EquivalenceClass ec =
+			EquivalenceClass block =
 					partition.getEquivalenceClass(transition.mSucc);
-			if (!isSimilarHelper(partition, letter, lin, hier, ec)) {
+			if (!isSimilarHelper(partition, letter, lin, hier, block)) {
 				return false;
 			}
 			
 			// check second hierarchical states pair
 			lin = mLin;
 			hier = transition.mHier;
-			ec = partition.getEquivalenceClass(mSucc);
-			return isSimilarHelper(partition, letter, lin, hier, ec);
+			block = partition.getEquivalenceClass(mSucc);
+			return isSimilarHelper(partition, letter, lin, hier, block);
 		}
 		
 		/**
@@ -1179,7 +1180,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, 
 	abstract class APredecessorSetFinder {
 		// partition object
 		protected Partition mPartition;
-		protected TargetSet mA;
+		protected TargetSet mTargetSet;
 		
 		/**
 		 * @param partition
@@ -1189,7 +1190,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, 
 		 */
 		public APredecessorSetFinder(final Partition partition, final TargetSet targetSet) {
 			mPartition = partition;
-			mA = targetSet;
+			mTargetSet = targetSet;
 		}
 		
 		/**
@@ -1201,7 +1202,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, 
 		 */
 		protected PredecessorSet find(final LETTER letter) {
 			final PredecessorSet x = new PredecessorSet();
-			final Iterator<STATE> iterator = mA.iterator();
+			final Iterator<STATE> iterator = mTargetSet.iterator();
 			while (iterator.hasNext()) {
 				final STATE state = iterator.next();
 				addPred(state, letter, x);
@@ -2050,6 +2051,41 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, 
 			addNeighborsEfficient(hierSet, predSet);
 		}
 		
+		@Override
+		public String toString() {
+			final StringBuilder builder = new StringBuilder();
+			
+			builder.append("{ ");
+			for (final EquivalenceClass block : mEquivalenceClasses) {
+				builder.append(block.toString());
+				builder.append(",\n");
+			}
+			if (builder.length() > 2) {
+				builder.delete(builder.length() - 2, builder.length());
+			}
+			builder.append(" }");
+			
+			return builder.toString();
+		}
+		
+		@Override
+		public Iterator<IBlock<STATE>> blocksIterator() {
+			return new Iterator<IBlock<STATE>>() {
+				protected Iterator<EquivalenceClass> mIt =
+						mEquivalenceClasses.iterator();
+				
+				@Override
+				public boolean hasNext() {
+					return mIt.hasNext();
+				}
+				
+				@Override
+				public IBlock<STATE> next() {
+					return mIt.next();
+				}
+			};
+		}
+		
 		/**
 		 * Iterable for internal transitions.
 		 */
@@ -2106,41 +2142,6 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, 
 					}
 				};
 			}
-		}
-		
-		@Override
-		public String toString() {
-			final StringBuilder builder = new StringBuilder();
-			
-			builder.append("{ ");
-			for (final EquivalenceClass ec : mEquivalenceClasses) {
-				builder.append(ec.toString());
-				builder.append(",\n");
-			}
-			if (builder.length() > 2) {
-				builder.delete(builder.length() - 2, builder.length());
-			}
-			builder.append(" }");
-			
-			return builder.toString();
-		}
-		
-		@Override
-		public Iterator<IBlock<STATE>> blocksIterator() {
-			return new Iterator<IBlock<STATE>>() {
-				protected Iterator<EquivalenceClass> mIt =
-						mEquivalenceClasses.iterator();
-				
-				@Override
-				public boolean hasNext() {
-					return mIt.hasNext();
-				}
-				
-				@Override
-				public IBlock<STATE> next() {
-					return mIt.next();
-				}
-			};
 		}
 	}
 	
@@ -2245,8 +2246,8 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, 
 		 * Delete object and reset flag in equivalence class objects.
 		 */
 		void delete() {
-			for (final EquivalenceClass ec : mEquivalenceClasses) {
-				ec.setInTargetSet(false);
+			for (final EquivalenceClass block : mEquivalenceClasses) {
+				block.setInTargetSet(false);
 			}
 			
 			mEquivalenceClasses = null;
@@ -2264,8 +2265,8 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, 
 			final StringBuilder builder = new StringBuilder();
 			builder.append("{");
 			
-			for (final EquivalenceClass ec : mEquivalenceClasses) {
-				builder.append(ec.toString());
+			for (final EquivalenceClass block : mEquivalenceClasses) {
+				builder.append(block.toString());
 				builder.append("\n");
 			}
 			builder.append("}");
