@@ -23,6 +23,7 @@ int SHORTEST_SEQ_TO_ERR[100];
 void __VERIFIER_error(int i) {
 	if (ERR >= 0) {
 		fprintf(stderr, "Error not reset. Overwriting error code %d.\n", ERR);
+		fflush(stderr);
 	}
 	ERR = i;
 }
@@ -75,6 +76,7 @@ void dfs(int depth) {
 			SHORTEST_SEQ_TO_ERR[ERR] = depth;
 			printf("error_%d -> %d:", ERR, depth);
 			print_input(depth);
+			fflush(stdout);
 		}
 		return;
 	} else if (depth >= INPUT_SEQ_LENGTH) {
