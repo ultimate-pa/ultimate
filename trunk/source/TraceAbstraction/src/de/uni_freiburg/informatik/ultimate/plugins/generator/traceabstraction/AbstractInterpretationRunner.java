@@ -215,8 +215,7 @@ public class AbstractInterpretationRunner {
 				        "Canonical interpolant automaton generation not yet implemented.");
 			case USE_TOTAL:
 				aiInterpolAutomatonBuilder = new AbsIntTotalInterpolationAutomatonBuilder(mServices, abstraction,
-				        mAbsIntResult, interpolGenerator.getPredicateUnifier(), mSmtManager, currentCex,
-				        mSimplificationTechnique, mXnfConversionTechnique);
+				        mAbsIntResult, interpolGenerator.getPredicateUnifier(), mSmtManager, currentCex);
 				break;
 			default:
 				throw new UnsupportedOperationException("AI mode " + mMode + " not yet implemented");
