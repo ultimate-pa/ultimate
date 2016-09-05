@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
@@ -45,10 +46,10 @@ public class IsEmpty<LETTER,STATE> extends UnaryNetOperation<LETTER, STATE> {
 	 * 
 	 * @param services Ultimate services
 	 * @param operand operand
-	 * @throws AutomataLibraryException if construction fails
+	 * @throws AutomataOperationCanceledException if operation was canceled
 	 */
 	public IsEmpty(final AutomataLibraryServices services,
-			final PetriNetJulian<LETTER,STATE> operand) throws AutomataLibraryException {
+			final PetriNetJulian<LETTER,STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());

@@ -34,7 +34,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.AutomatonSccComputation;
@@ -78,11 +77,11 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	 *            Ultimate services
 	 * @param operand
 	 *            operand
-	 * @throws AutomataLibraryException
-	 *             if construction fails
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public LoopComplexity(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand)
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		super(services);
 		
 		if (operand instanceof NestedWordAutomatonReachableStates) {
@@ -125,7 +124,7 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		
 		return (new RemoveUnreachable<LETTER, STATE>(mServices, graph)).getResult();
 	}
-
+	
 	private void addOutgoingTransitions(final LETTER letter, final NestedWordAutomaton<LETTER, STATE> graph) {
 		for (final STATE state1 : mOperand.getStates()) {
 			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mOperand.internalSuccessors(state1)) {
@@ -142,7 +141,7 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	 * Compute the loop complexity of the subgraph that is obtained by projecting mGraph to a subgraph.
 	 */
 	private Integer computeLoopComplexityOfSubgraph(final Set<STATE> statesOfSubgraph)
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		
 		final AutomatonSccComputation<LETTER, STATE> sccComputation =
 				new AutomatonSccComputation<>(mServices, mGraph, statesOfSubgraph, statesOfSubgraph);

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldap
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
@@ -64,7 +65,7 @@ public class ComplementSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 	
 	public ComplementSadd(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		

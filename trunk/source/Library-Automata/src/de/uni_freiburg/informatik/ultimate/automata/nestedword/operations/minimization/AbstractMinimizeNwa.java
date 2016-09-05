@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
@@ -497,10 +496,10 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * any call and return transitions.
 	 * 
 	 * @return true iff input automaton is a DFA
-	 * @throws AutomataLibraryException
-	 *             thrown by determinism check
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
-	protected final boolean isDfa() throws AutomataLibraryException {
+	protected final boolean isDfa() throws AutomataOperationCanceledException {
 		return (isDeterministic() && isFiniteAutomaton());
 	}
 	
@@ -508,11 +507,11 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * This method checks whether the input automaton is deterministic.
 	 * 
 	 * @return true iff automaton is deterministic
-	 * @throws AutomataLibraryException
-	 *             thrown by determinism check
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	protected final boolean isDeterministic()
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		return new IsDeterministic<LETTER, STATE>(mServices, mOperand).getResult();
 	}
 	
@@ -556,8 +555,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 *            state factory
 	 * @return pair <tt>(b, m)</tt> where <tt>b = true</tt> iff result check succeeded, otherwise <tt>m</tt> contains an
 	 *         error message
-	 * @throws AutomataLibraryException
-	 *             when tests call failing methods
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	protected Pair<Boolean, String> checkResultHelper(final IStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {

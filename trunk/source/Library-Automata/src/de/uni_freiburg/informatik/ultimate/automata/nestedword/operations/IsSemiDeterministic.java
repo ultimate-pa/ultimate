@@ -31,8 +31,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
@@ -66,11 +66,11 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 	 *            Ultimate services
 	 * @param operand
 	 *            operand
-	 * @throws AutomataLibraryException
-	 *             if construction fails
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public IsSemiDeterministic(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		if (operand instanceof NestedWordAutomatonReachableStates) {
 			mOperand = (NestedWordAutomatonReachableStates<LETTER, STATE>) operand;

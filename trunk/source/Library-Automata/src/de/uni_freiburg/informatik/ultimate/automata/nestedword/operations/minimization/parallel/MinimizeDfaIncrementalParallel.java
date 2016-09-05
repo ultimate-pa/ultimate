@@ -39,7 +39,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -169,13 +168,13 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 * @param stateFactory state factory
 	 * @param operand
 	 *            input automaton (DFA)
-	 * @throws AutomataLibraryException
-	 *             thrown when execution is cancelled
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public MinimizeDfaIncrementalParallel(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, new Interrupt());
 	}
 
@@ -188,13 +187,13 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 *            input automaton (DFA)
 	 * @param interrupt
 	 *            interrupt
-	 * @throws AutomataLibraryException
-	 *             thrown when execution is cancelled
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public MinimizeDfaIncrementalParallel(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
-			final Interrupt interrupt) throws AutomataLibraryException {
+			final Interrupt interrupt) throws AutomataOperationCanceledException {
 		super(services, stateFactory, "MinimizeAMR", operand, interrupt);
 		
 		/*
@@ -218,15 +217,15 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 *            input automaton (DFA)
 	 * @param interrupt
 	 *            interrupt
-	 * @throws AutomataLibraryException
-	 *             thrown by DFA check
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public MinimizeDfaIncrementalParallel(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt, final ArrayList<STATE> int2state,
 			final HashMap<STATE, Integer> state2int)
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		super(services, stateFactory, "MinimizeAMR", operand, interrupt);
 		mInt2state = int2state;
 		mState2int = state2int;
@@ -282,7 +281,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	/**
 	 * This method is only executed if the algorithm is run non-parallel.
 	 */
-	private void executeAlgorithm() throws AutomataLibraryException {
+	private void executeAlgorithm() throws AutomataOperationCanceledException {
 
 		initialize();
 		// Do time measurement
@@ -293,7 +292,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 		mLogger.info(exitMessage());
 	}
 
-	private void initialize() throws AutomataLibraryException {
+	private void initialize() throws AutomataOperationCanceledException {
 
 		assert super.isDfa() : "The input automaton is no DFA.";
 
@@ -351,7 +350,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 
 	protected void minimizeParallel(final LinkedBlockingQueue<Runnable> taskQueue,
 			final MinimizeDfaHopcroftParallel<LETTER, STATE> hopcroft)
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		mLogger.info("Inc: started");
 		mTaskQueue = taskQueue;
 		mHopcroftAlgorithm = hopcroft;
@@ -365,7 +364,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 *             thrown when execution is cancelled
 	 */
 	private void minimize()
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 
 		// try minimization as long as possible
 		findEquiv();

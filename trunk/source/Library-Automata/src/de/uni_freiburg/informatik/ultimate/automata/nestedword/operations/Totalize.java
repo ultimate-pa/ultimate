@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
@@ -57,11 +58,11 @@ public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 	 *            Ultimate services
 	 * @param operand
 	 *            operand
-	 * @throws AutomataLibraryException
-	 *             if NWA construction fails
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public Totalize(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand)
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mStateFactory = operand.getStateFactory();

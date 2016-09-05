@@ -38,7 +38,6 @@ import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
@@ -331,8 +330,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	 * 
 	 * @param addMapping
 	 *            true iff mapping old to new state is needed
-	 * @throws AutomataLibraryException
-	 *             thrown by superclass
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	private void constructAutomaton(final boolean addMapping)
 			throws AutomataOperationCanceledException {

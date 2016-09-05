@@ -30,6 +30,7 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
@@ -113,7 +114,7 @@ public class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNwaOpera
 	
 	private void addToResultsWithSizeReduction(final LinkedHashMap<String, Integer> results,
 			final String name,
-			final NestedWordAutomatonReachableStates<LETTER, STATE> result) throws AutomataLibraryException {
+			final NestedWordAutomatonReachableStates<LETTER, STATE> result) throws AutomataOperationCanceledException {
 		addToResults(results, name, result);
 		final INestedWordAutomaton<LETTER, STATE> nl =
 				(new RemoveNonLiveStates<LETTER, STATE>(mServices, result)).getResult();

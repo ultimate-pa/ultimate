@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
@@ -62,12 +63,12 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 	 *            state factory
 	 * @param operand
 	 *            operand
-	 * @throws AutomataLibraryException
-	 *             if construction fails
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public Complement(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand)
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		this(services, operand, new PowersetDeterminizer<LETTER, STATE>(operand, true, stateFactory), stateFactory);
 	}
 	
@@ -82,12 +83,12 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 	 *            state determinizer
 	 * @param operand
 	 *            operand
-	 * @throws AutomataLibraryException
-	 *             if construction fails
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public Complement(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mStateDeterminizer = stateDeterminizer;
@@ -104,7 +105,8 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 		}
 	}
 	
-	private NestedWordAutomatonReachableStates<LETTER, STATE> computeComplement() throws AutomataLibraryException {
+	private NestedWordAutomatonReachableStates<LETTER, STATE> computeComplement()
+			throws AutomataOperationCanceledException {
 		DeterminizeNwa<LETTER, STATE> determinized;
 		if (mOperand instanceof DeterminizeNwa) {
 			determinized = (DeterminizeNwa<LETTER, STATE>) mOperand;
@@ -124,7 +126,7 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 	}
 	
 	private NestedWordAutomatonReachableStates<LETTER, STATE> tryWithoutDeterminization()
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		assert mStateDeterminizer instanceof PowersetDeterminizer;
 		final TotalizeNwa<LETTER, STATE> totalized =
 				new TotalizeNwa<>(mOperand, mStateFactory);

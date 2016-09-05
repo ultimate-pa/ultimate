@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.alternating;
@@ -37,8 +37,7 @@ public class AA_Accepts<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	public AA_Accepts(
 			final AlternatingAutomaton<LETTER,STATE> alternatingAutomaton,
-			final Word<LETTER> word)
-					throws AutomataLibraryException {
+			final Word<LETTER> word) {
 		mIsAccepted = alternatingAutomaton.accepts(word);
 	}
 	
@@ -68,4 +67,3 @@ public class AA_Accepts<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		return true;
 	}
 }
-

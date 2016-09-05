@@ -36,7 +36,6 @@ import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -142,13 +141,13 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 	 *            state factory
 	 * @param operand
 	 *            input automaton (DFA)
-	 * @throws AutomataLibraryException
-	 *             thrown by DFA check or if execution is cancelled
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public MinimizeDfaIncremental(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null);
 	}
 	
@@ -163,14 +162,14 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 	 *            input automaton (DFA)
 	 * @param interrupt
 	 *            interrupt
-	 * @throws AutomataLibraryException
-	 *             thrown by DFA check or if execution is cancelled
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public MinimizeDfaIncremental(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		super(services, stateFactory, "MinimizeAMR", operand, interrupt);
 		
 		assert super.isDfa() : "The input automaton is no DFA.";

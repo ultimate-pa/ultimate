@@ -70,7 +70,7 @@ public class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 	STATE mWitnessCritical;
 	
 	public BuchiIsEmptyXW(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> nwa) throws AutomataLibraryException {
+			final INestedWordAutomaton<LETTER, STATE> nwa) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = nwa;
 		mLogger.info(startMessage());

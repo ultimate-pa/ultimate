@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
@@ -128,7 +127,7 @@ public class SenwaWalker<LETTER, STATE> {
 		traverseDoubleDeckerGraph();
 	}
 	
-	public INestedWordAutomaton<LETTER, STATE> getResult() throws AutomataLibraryException {
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mTraversedSenwa;
 	}
 	

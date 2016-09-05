@@ -105,7 +105,7 @@ public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETT
 	
 	public ReachableStatesCopy(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> nwa)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = nwa;
 		mLogger.info(startMessage());

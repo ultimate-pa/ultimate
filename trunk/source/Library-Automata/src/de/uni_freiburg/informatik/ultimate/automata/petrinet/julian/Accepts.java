@@ -53,11 +53,11 @@ public class Accepts<S, C> extends UnaryNetOperation<S, C> {
 	 * @param services Ultimate services
 	 * @param operand Petri net
 	 * @param word word
-	 * @throws AutomataLibraryException if construction fails
+	 * @throws AutomataOperationCanceledException if operation was canceled
 	 */
 	public Accepts(final AutomataLibraryServices services,
 			final IPetriNet<S, C> operand, final Word<S> word)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mWord = word;
@@ -93,7 +93,7 @@ public class Accepts<S, C> extends UnaryNetOperation<S, C> {
 	}
 
 	private boolean getResultHelper(int position,
-	        final Marking<S, C> marking) throws AutomataLibraryException {
+	        final Marking<S, C> marking) throws AutomataOperationCanceledException {
 		if (position >= mWord.length()) {
 			return mOperand.isAccepting(marking);
 		}

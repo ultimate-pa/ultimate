@@ -31,6 +31,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
@@ -54,7 +55,7 @@ public class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<LETTER
 	
 	public BuchiComplementNCSB(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> input) throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> input) throws AutomataOperationCanceledException {
 		super(services);
 		this.mOperand = input;
 		mLogger.info(startMessage());

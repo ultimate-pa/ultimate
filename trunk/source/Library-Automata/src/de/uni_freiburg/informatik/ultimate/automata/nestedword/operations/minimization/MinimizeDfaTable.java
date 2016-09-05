@@ -39,7 +39,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -69,11 +68,12 @@ public class MinimizeDfaTable<LETTER,STATE> extends AbstractMinimizeNwa<LETTER, 
 	 * @param services Ultimate services
 	 * @param operand
 	 *            the input automaton
-	 * @throws AutomataLibraryException if construction fails
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public MinimizeDfaTable(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER,STATE> operand)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		super(services, operand.getStateFactory(), "minimizeDFA", operand);
 		
 	    assert !new HasUnreachableStates<LETTER,STATE>(mServices, operand).getResult() :
@@ -112,7 +112,7 @@ public class MinimizeDfaTable<LETTER,STATE> extends AbstractMinimizeNwa<LETTER, 
 	 */
 	private void calculateTable(final ArrayList<STATE> states,
 			final boolean[][] table)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		// we iterate on the table to get all the equivalent states
 		boolean makeNextIteration = true;
 		while (makeNextIteration) {

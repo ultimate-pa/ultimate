@@ -90,7 +90,7 @@ public class BuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE
 		return mResult;
 	}
 	
-	public NestedLassoRun<LETTER, STATE> getAcceptingNestedLassoRun() throws AutomataLibraryException {
+	public NestedLassoRun<LETTER, STATE> getAcceptingNestedLassoRun() throws AutomataOperationCanceledException {
 		if (mResult) {
 			mLogger.info("There is no accepting nested lasso run");
 			return null;
