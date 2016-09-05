@@ -388,7 +388,6 @@ public class TransFormulaUtils {
 	 * contains a pending call. Note the the scope of inVars and outVars is
 	 * different. Do not compose the result with the default/intraprocedural
 	 * composition.
-	 * 
 	 * @param beforeCall
 	 *            TransFormula that describes transition relation before the
 	 *            call.
@@ -397,6 +396,7 @@ public class TransFormulaUtils {
 	 * @param oldVarsAssignment
 	 *            TransFormula that assigns to oldVars of modifiable globals the
 	 *            value of the global var.
+	 * @param globalVarsAssignment TODO
 	 * @param afterCall
 	 *            TransFormula that describes the transition relation after the
 	 *            call.
@@ -405,12 +405,15 @@ public class TransFormulaUtils {
 	 * @param modifiableGlobalsOfEndProcedure
 	 * 			  Set of variables that are modifiable globals in the procedure
 	 * 	          in which the afterCall TransFormula ends. 
+	 * @param symbolTable 
 	 */
 	public static UnmodifiableTransFormula sequentialCompositionWithPendingCall(final ManagedScript mgdScript, final boolean simplify,
 			final boolean extPqe, final boolean transformToCNF, final List<UnmodifiableTransFormula> beforeCall, final UnmodifiableTransFormula callTf,
-			final UnmodifiableTransFormula oldVarsAssignment, final UnmodifiableTransFormula afterCall, final ILogger logger, final IUltimateServiceProvider services, 
+			final UnmodifiableTransFormula oldVarsAssignment, final UnmodifiableTransFormula globalVarsAssignment, final UnmodifiableTransFormula afterCall, final ILogger logger, 
+			final IUltimateServiceProvider services, 
 			final Set<IProgramVar> modifiableGlobalsOfEndProcedure, 
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
+			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique, 
+			final Boogie2SmtSymbolTable symbolTable) {
 		logger.debug("sequential composition (pending call) with" + (simplify ? "" : "out") + " formula simplification");
 		final UnmodifiableTransFormula callAndBeforeTF;
 		{
@@ -481,8 +484,44 @@ public class TransFormulaUtils {
 		final UnmodifiableTransFormula result = sequentialComposition(logger, services, mgdScript, simplify, 
 				extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique,
 				callAndBeforeTF, oldAssignAndAfterTF);
+		assert !result.getBranchEncoders().isEmpty() || predicateBasedResultCheck(services, mgdScript, 
+				xnfConversionTechnique, simplificationTechnique, 
+				beforeCall,
+				callTf, oldVarsAssignment, globalVarsAssignment, afterCall, result, symbolTable, modifiableGlobalsOfEndProcedure) : 
+					"sequentialCompositionWithPendingCall - incorrect result";
 		return result;
 	}
+	
+	
+	private static boolean predicateBasedResultCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique,
+			final List<UnmodifiableTransFormula> beforeCall,
+			final UnmodifiableTransFormula callTf, final UnmodifiableTransFormula oldVarsAssignment,
+			final UnmodifiableTransFormula globalVarsAssignment, final UnmodifiableTransFormula afterCallTf,
+			final UnmodifiableTransFormula result, 
+			final Boogie2SmtSymbolTable symbolTable, final Set<IProgramVar> modifiableGlobals) {
+		assert result.getBranchEncoders().isEmpty() : "result check not applicable with branch encoders";
+		final PredicateTransformer pt = new PredicateTransformer(services, mgdScript, simplificationTechnique, xnfConversionTechnique);
+		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);
+		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));
+		final Term resultComposition = pt.strongestPostcondition(truePredicate, result);
+		final IPredicate resultCompositionPredicate = bpf.newPredicate(resultComposition);
+		IPredicate beforeCallPredicate = truePredicate;
+		for (final UnmodifiableTransFormula tf : beforeCall) {
+			final Term tmp = pt.strongestPostcondition(truePredicate, tf);
+			beforeCallPredicate = bpf.newPredicate(tmp);
+		}
+		final Term afterCallTerm = pt.strongestPostconditionCall(beforeCallPredicate, callTf, globalVarsAssignment, oldVarsAssignment, modifiableGlobals);
+		final IPredicate afterCallPredicate = bpf.newPredicate(afterCallTerm);
+		final Term endTerm = pt.strongestPostcondition(afterCallPredicate, afterCallTf);
+		final IPredicate endPredicate = bpf.newPredicate(endTerm);
+		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
+		final Validity check1 = mic.checkImplication(endPredicate, false, resultCompositionPredicate, false);
+		final Validity check2 = mic.checkImplication(resultCompositionPredicate, false, endPredicate, false);
+		assert check1 != Validity.UNKNOWN && check2 != Validity.UNKNOWN : "SMT solver too weak for correctness check";
+		return check1 == Validity.VALID && check2 == Validity.VALID;
+	}
+	
 
 	/**
 	 * Returns a TransFormula that can be seen as procedure summary.
@@ -553,9 +592,10 @@ public class TransFormulaUtils {
 		}
 		assert SmtUtils.neitherKeyNorValueIsNull(result.mOutVars) : "sequentialCompositionWithCallAndReturn introduced null entries";
 		assert (isIntraprocedural(result));
-//		assert predicateBasedResultCheck(services, mgdScript, 
-//				xnfConversionTechnique, simplificationTechnique, 
-//				callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf, result, symbolTable, modifiableGlobalsOfCallee);
+		assert !result.getBranchEncoders().isEmpty() || predicateBasedResultCheck(services, mgdScript, 
+				xnfConversionTechnique, simplificationTechnique, 
+				callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf, result, symbolTable, modifiableGlobalsOfCallee) : 
+					"sequentialCompositionWithCallAndReturn - incorrect result";
 		return result;
 	}
 	
@@ -566,6 +606,7 @@ public class TransFormulaUtils {
 			final UnmodifiableTransFormula globalVarsAssignment, final UnmodifiableTransFormula procedureTf,
 			final UnmodifiableTransFormula returnTf, final UnmodifiableTransFormula result, 
 			final Boogie2SmtSymbolTable symbolTable, final Set<IProgramVar> modifiableGlobals) {
+		assert result.getBranchEncoders().isEmpty() : "result check not applicable with branch encoders";
 		final PredicateTransformer pt = new PredicateTransformer(services, mgdScript, simplificationTechnique, xnfConversionTechnique);
 		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);
 		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));
@@ -580,8 +621,7 @@ public class TransFormulaUtils {
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final Validity check1 = mic.checkImplication(afterReturnPredicate, false, resultCompositionPredicate, false);
 		final Validity check2 = mic.checkImplication(resultCompositionPredicate, false, afterReturnPredicate, false);
-//		return check1 == Validity.VALID && check2 == Validity.VALID;
-		return true;
+		return check1 == Validity.VALID && check2 == Validity.VALID;
 	}
 
 

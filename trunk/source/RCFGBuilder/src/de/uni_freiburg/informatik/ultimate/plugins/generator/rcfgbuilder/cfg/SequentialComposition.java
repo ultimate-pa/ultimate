@@ -246,6 +246,7 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 			if (ret == null) {
 				final String proc = call.getCallStatement().getMethodName();
 				final UnmodifiableTransFormula oldVarsAssignment = modGlobVarManager.getOldVarsAssignment(proc);
+				final UnmodifiableTransFormula globalVarsAssignment = modGlobVarManager.getGlobalVarsAssignment(proc);
 				final String nameEndProcedure;
 				if (lastUnmatchedCall == null) {
 					nameEndProcedure = proc;
@@ -255,8 +256,8 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 				final Set<IProgramVar> modifiableGlobalsOfEndProcedure =
 						modGlobVarManager.getModifiedBoogieVars(nameEndProcedure);
 				result = TransFormulaUtils.sequentialCompositionWithPendingCall(mgdScript, simplify, extPqe, tranformToCNF,
-						Arrays.asList(beforeCall), call.getTransitionFormula(), oldVarsAssignment, tfForCodeBlocks,
-						logger, services, modifiableGlobalsOfEndProcedure, xnfConversionTechnique, simplificationTechnique);
+						Arrays.asList(beforeCall), call.getTransitionFormula(), oldVarsAssignment, globalVarsAssignment,
+						tfForCodeBlocks, logger, services, modifiableGlobalsOfEndProcedure, xnfConversionTechnique, simplificationTechnique, symbolTable);
 			} else {
 				assert beforeCall == null;
 				final String proc = call.getCallStatement().getMethodName();

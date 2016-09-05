@@ -567,8 +567,8 @@ public class IterativePredicateTransformer {
 						final Set<IProgramVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
 						return TransFormulaUtils.sequentialCompositionWithPendingCall(mMgdScript, true,
 								false, s_TransformSummaryToCNF, transformulasToComputeSummaryFor,
-								callTf, oldVarsAssignment, summaryAfterPendingCall,
-								mLogger, mServices, modifiableGlobalsOfEndProcedure, mXnfConversionTechnique, mSimplificationTechnique);
+								callTf, oldVarsAssignment, globalVarsAssignment,
+								summaryAfterPendingCall, mLogger, mServices, modifiableGlobalsOfEndProcedure, mXnfConversionTechnique, mSimplificationTechnique, mSymbolTable);
 					}
 				} else {
 					final UnmodifiableTransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
@@ -576,8 +576,8 @@ public class IterativePredicateTransformer {
 					final Set<IProgramVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
 					return TransFormulaUtils.sequentialCompositionWithPendingCall(mMgdScript, true, false,
 							s_TransformSummaryToCNF, transformulasToComputeSummaryFor,
-							callTf, oldVarsAssignment, summaryAfterPendingCall, mLogger,
-							mServices, modifiableGlobalsOfEndProcedure, mXnfConversionTechnique, mSimplificationTechnique);
+							callTf, oldVarsAssignment, null, summaryAfterPendingCall,
+							mLogger, mServices, modifiableGlobalsOfEndProcedure, mXnfConversionTechnique, mSimplificationTechnique, mSymbolTable);
 				}
 			} else if (trace.getSymbol(i) instanceof Return) {
 				// Nothing to do
