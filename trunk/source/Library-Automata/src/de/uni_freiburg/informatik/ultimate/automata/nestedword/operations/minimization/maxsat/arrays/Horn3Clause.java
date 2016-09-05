@@ -46,8 +46,8 @@ final class Horn3Clause {
 	int mZ;
 
 	Horn3Clause(final int x, final int y, final int z) {
-		this.mX = x;
-		this.mY = y;
-		this.mZ = z;
+		mX = x;
+		mY = y;
+		mZ = z;
 	}
 }

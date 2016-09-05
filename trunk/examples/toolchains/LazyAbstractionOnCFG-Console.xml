@@ -1,4 +1,7 @@
-<toolchain>
+<rundefinition>
+	<name>Ultimate Toolchain</name>
+	<toolchain>
+		
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
 	<plugin id="CFGBuilder"/>
 	<plugin id="CFG2SMT"/>
@@ -7,4 +10,6 @@
 	<subchain>
 		<plugin id="LazyAbstractionOnCFG"/>
 	</subchain>
-</toolchain>
+
+	</toolchain>
+</rundefinition>

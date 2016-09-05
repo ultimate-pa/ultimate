@@ -31,8 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.parsers.FactoryConfigurationError;
-
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -93,10 +91,10 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 		HornAnnot annot = (HornAnnot) st.get("HoRNClauses");
 		List<HornClause> hornClauses = (List<HornClause>) annot.getAnnotationsAsMap().get("HoRNClauses");
 
-		TreeAutomatonBU<HCTransFormula, HornClausePredicateSymbol> tree = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<HCTransFormula, HornClausePredicateSymbol> tree = new TreeAutomatonBU<>();
 		
-		for (HornClause clause : hornClauses) {
-			List<HornClausePredicateSymbol> tail = new ArrayList<HornClausePredicateSymbol>();
+		for (final HornClause clause : hornClauses) {
+			final List<HornClausePredicateSymbol> tail = new ArrayList<HornClausePredicateSymbol>();
 			tail.addAll(clause.getTailPredicates());
 			tree.addRule(clause.getTransitionFormula(), tail, clause.getHeadPredicate());
 		}

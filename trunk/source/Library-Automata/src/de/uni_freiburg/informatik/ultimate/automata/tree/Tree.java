@@ -42,6 +42,7 @@ public class Tree<LETTER> {
 		return this.children;
 	}
 
+	@Override
 	public String toString() {
 		String res = symbol.toString();
 		if (!getChildren().isEmpty()) {

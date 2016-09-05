@@ -14,7 +14,7 @@
    </configIni>
 
    <launcherArgs>
-      <programArgs>-nosplash --console -consoleLog
+      <programArgs>--launcher.suppressErrors -nosplash -consoleLog
       </programArgs>
       <programArgsLin>-data @user.home/.ultimate
       </programArgsLin>
@@ -35,9 +35,12 @@
       </win>
    </launcher>
 
+
    <vm>
    </vm>
 
+   <plugins>
+   </plugins>
 
    <features>
       <feature id="BA_FeatureUltimateCommandLine" version="0.0.1"/>

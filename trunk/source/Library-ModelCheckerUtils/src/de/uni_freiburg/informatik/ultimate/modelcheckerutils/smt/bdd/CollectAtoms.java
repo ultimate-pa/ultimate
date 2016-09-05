@@ -34,47 +34,60 @@ public class CollectAtoms extends NonRecursive{
 
 		@Override
 		public void walk(NonRecursive walker, ConstantTerm term) {
-			CollectAtoms cnr = (CollectAtoms)walker;
-			if(!(cnr.mAtoms.contains(term))) cnr.mAtoms.add(term);
+			final CollectAtoms cnr = (CollectAtoms)walker;
+			if(!(cnr.mAtoms.contains(term))) {
+				cnr.mAtoms.add(term);
+			}
 		}
 
 		@Override
 		public void walk(NonRecursive walker, AnnotatedTerm term) {
-			CollectAtoms cnr = (CollectAtoms)walker;
+			final CollectAtoms cnr = (CollectAtoms)walker;
 			walker.enqueueWalker(new AtomCollector(term.getSubterm()));
 		}
 
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
-			CollectAtoms cnr = (CollectAtoms)walker;
-			String fName = term.getFunction().getName();
+			final CollectAtoms cnr = (CollectAtoms)walker;
+			final String fName = term.getFunction().getName();
 			if(fName.equals("and") || fName.equals("or") || fName.equals("xor") || fName.equals("not") || fName.equals("=>")){
-				for(Term t:term.getParameters()){
+				for(final Term t:term.getParameters()){
 					walker.enqueueWalker(new AtomCollector(t));
 				}
 			}else if(fName.equals("true") || fName.equals("false")){
-				if(!(cnr.mAtoms.contains(term))) cnr.mAtoms.add(term); //macht scheinbar probleme wenn mans ignoriert
+				if(!(cnr.mAtoms.contains(term)))
+				 {
+					cnr.mAtoms.add(term); //macht scheinbar probleme wenn mans ignoriert
+				}
 			}else{
-				if(!(cnr.mAtoms.contains(term))) cnr.mAtoms.add(term);
+				if(!(cnr.mAtoms.contains(term))) {
+					cnr.mAtoms.add(term);
+				}
 			}
 		}
 
 		@Override
 		public void walk(NonRecursive walker, LetTerm term) {
-			CollectAtoms cnr = (CollectAtoms)walker;
-			if(!(cnr.mAtoms.contains(term))) cnr.mAtoms.add(term);
+			final CollectAtoms cnr = (CollectAtoms)walker;
+			if(!(cnr.mAtoms.contains(term))) {
+				cnr.mAtoms.add(term);
+			}
 		}
 
 		@Override
 		public void walk(NonRecursive walker, QuantifiedFormula term) {
-			CollectAtoms cnr = (CollectAtoms)walker;
-			if(!(cnr.mAtoms.contains(term))) cnr.mAtoms.add(term);
+			final CollectAtoms cnr = (CollectAtoms)walker;
+			if(!(cnr.mAtoms.contains(term))) {
+				cnr.mAtoms.add(term);
+			}
 		}
 
 		@Override
 		public void walk(NonRecursive walker, TermVariable term) {
-			CollectAtoms cnr = (CollectAtoms)walker;
-			if(!(cnr.mAtoms.contains(term))) cnr.mAtoms.add(term);
+			final CollectAtoms cnr = (CollectAtoms)walker;
+			if(!(cnr.mAtoms.contains(term))) {
+				cnr.mAtoms.add(term);
+			}
 		}
 	}
 }

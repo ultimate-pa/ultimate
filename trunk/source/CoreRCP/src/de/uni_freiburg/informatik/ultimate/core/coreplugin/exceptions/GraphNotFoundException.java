@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2009-2015 Björn Buchhold
+ * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Core.
@@ -24,25 +25,44 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.core.coreplugin.external;
+/*
+ * Project:	CoreRCP
+ * Package:	de.uni_freiburg.informatik.ultimate.model
+ * File:	GraphNotFoundException.java created on Nov 11, 2009 by Björn Buchhold
+ *
+ */
+package de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions;
 
-import de.uni_freiburg.informatik.ultimate.core.model.IController;
-import de.uni_freiburg.informatik.ultimate.core.model.ICore;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 
 /**
- * Use this exception to signal that Ultimate encountered a serious error before
- * it could call {@link IController#init(ICore, ILoggingService)}
- * 
- * @author dietsch@informatik.uni-freiburg.de
- * 
+ * GraphNotFoundException
+ *
+ * @author Björn Buchhold
+ *
  */
-public class LivecycleException extends RuntimeException {
+public class GraphNotFoundException extends Exception {
 
-	private static final long serialVersionUID = -6577471260294280323L;
+	/**
+	 * long serialVersionUID
+	 */
+	private static final long serialVersionUID = -6102010750779099260L;
 
-	public LivecycleException(String arg0) {
-		super(arg0);
+
+	/**
+	 * @param gt the graph that could not be found
+	 * @param e the exception thrown
+	 */
+	public GraphNotFoundException(ModelType gt, Exception e) {
+		super("The Graphtype: " + gt + " could not be found. Neither in the map, nor in the repository" , e);
+	}
+
+
+	/**
+	 * @param gt
+	 */
+	public GraphNotFoundException(ModelType gt) {
+		super("The Graphtype: " + gt + " could not be found. Neither in the map, nor in the repository");
 	}
 
 }

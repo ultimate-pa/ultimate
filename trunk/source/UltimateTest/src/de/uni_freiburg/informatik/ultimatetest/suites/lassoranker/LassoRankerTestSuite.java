@@ -2,27 +2,27 @@
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Jan Leike (leike@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Test Library.
- * 
+ *
  * The ULTIMATE Test Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Test Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Test Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimatetest.suites.lassoranker;
@@ -50,34 +50,31 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSum
 
 /**
  * Test Suite for the LassoRanker plugin
- * 
- * The Test Suite calls the LassoRanker on all '.bpl'-files found in the
- * directory specified by s_test_files_dir and uses the toolchain s_toolchain.
- * 
- * The files in the test file directory as assumed to be annotated with an
- * expected result value in their first line. The annotation has the form
- * 
+ *
+ * The Test Suite calls the LassoRanker on all '.bpl'-files found in the directory specified by s_test_files_dir and
+ * uses the toolchain s_toolchain.
+ *
+ * The files in the test file directory as assumed to be annotated with an expected result value in their first line.
+ * The annotation has the form
+ *
  * <pre>
  * // #rExpectedResult
  * </pre>
- * 
+ *
  * where ExpectedResult can be one of the following.
- * 
+ *
  * <ul>
  * <li>"Ignore" -- do not use this as a test file
  * <li>"Termination" -- example terminates, but LassoRanker may not prove it
- * <li>"TerminationDerivable" -- LassoRanker should prove that this example
- * terminates
- * <li>"NonTermination" -- example does not terminate, but LassoRanker may not
- * prove it
- * <li>"NonTerminationDerivable" -- LassoRanker should prove that this example
- * does not terminate
+ * <li>"TerminationDerivable" -- LassoRanker should prove that this example terminates
+ * <li>"NonTermination" -- example does not terminate, but LassoRanker may not prove it
+ * <li>"NonTerminationDerivable" -- LassoRanker should prove that this example does not terminate
  * <li>"Unknown" -- termination is unspecified
  * <li>"Error" -- LassoRanker should throw an error when processing this example
  * </ul>
- * 
+ *
  * @see LassoRankerTestResultDecider.ExpectedResult
- * 
+ *
  * @author Jan Leike
  */
 public class LassoRankerTestSuite extends UltimateTestSuite {
@@ -88,7 +85,6 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 	// "examples/settings/LassoRankerTestLinearSMTInterpol.epf";
 	// Workaround by Matthias: Use following line for non-linear constraints
 	public static final String SETTINGS_FILE = "examples/settings/LassoRankerTest.epf";
-	public static final boolean PRODUCE_LOG_FILES = false;
 
 	public static final long DEADLINE = 5 * 1000; // in ms
 
@@ -112,11 +108,9 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 
 		final File toolchainFile = new File(TestUtil.getPathFromTrunk(TOOLCHAIN));
 		final File settingsFile = new File(TestUtil.getPathFromTrunk(SETTINGS_FILE));
-		final String logPattern = "[%d{ISO8601} %-5p L%-5.5L %20.20C{1}]: %m%n";
 		for (final File inputFile : inputFiles) {
 			final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
-			final UltimateStarter starter = new UltimateStarter(urd, DEADLINE, PRODUCE_LOG_FILES ? new File(
-					TestUtil.generateLogFilename(inputFile, "LassoRanker")) : null, PRODUCE_LOG_FILES ? logPattern : null);
+			final UltimateStarter starter = new UltimateStarter(urd, DEADLINE);
 			final LassoRankerTestResultDecider decider = new LassoRankerTestResultDecider(inputFile);
 			if (decider.getExpectedResult() == ExpectedResult.IGNORE) {
 				continue;

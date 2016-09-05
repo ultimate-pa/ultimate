@@ -1,15 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.paralleldfg;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableLabeledEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAG;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
 public class ParallelDataflowgraph<T> extends ModifiableLabeledEdgesMultigraph<ParallelDataflowgraph<T>, IProgramVar>{
@@ -38,6 +34,7 @@ public class ParallelDataflowgraph<T> extends ModifiableLabeledEdgesMultigraph<P
 		return false;
 	}
 	
+	@Override
 	public String toString(){
 		String s = "Statement: ";
 		if (mNodeLabel == null){
@@ -46,7 +43,7 @@ public class ParallelDataflowgraph<T> extends ModifiableLabeledEdgesMultigraph<P
 		else {
 			s = s+ mNodeLabel.toString() + " Locations: ";
 		}
-		for (Entry<String, Set<ProgramPoint>> entry : locations.entrySet()){
+		for (final Entry<String, Set<ProgramPoint>> entry : locations.entrySet()){
 			s += entry.getKey() + entry.getValue().toString();
 		}
 		return s;

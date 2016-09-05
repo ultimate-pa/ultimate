@@ -155,7 +155,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			final Map<List<Set<STATE>>, Set<STATE>> mp = rules.get(letter);
 			for (final List<Set<STATE>> sSrc : mp.keySet()) {
 				final List<STATE> src = new ArrayList<>();
-				for (Set<STATE> sub : sSrc) {
+				for (final Set<STATE> sub : sSrc) {
 					src.add(reduceState(sub));
 				}
 				final Set<STATE> sDest = mp.get(sSrc);

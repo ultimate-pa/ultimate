@@ -84,19 +84,19 @@ public class SimplifyQuick {
 
 	public Term getSimplifiedTerm(Term inputTerm) throws SMTLIBException {
 
-		Settings settings = new SolverBuilder.Settings(false, "", TIMOUT_IN_SECONDS * 1000, null, false, null, null);
-		Script simplificationScript = SolverBuilder.buildScript(mServices, mStorage, settings);
+		final Settings settings = new SolverBuilder.Settings(false, "", TIMOUT_IN_SECONDS * 1000, null, false, null, null);
+		final Script simplificationScript = SolverBuilder.buildScript(mServices, mStorage, settings);
 		simplificationScript.setLogic(Logics.CORE);
-		TermTransferrer towards = new TermTransferrerBooleanCore(simplificationScript);
-		Term foreign = towards.transform(inputTerm);
+		final TermTransferrer towards = new TermTransferrerBooleanCore(simplificationScript);
+		final Term foreign = towards.transform(inputTerm);
 
 		simplificationScript.setOption(":check-type", "QUICK");
-		SimplifyDDAWithTimeout dda = new SimplifyDDAWithTimeout(simplificationScript, false, mServices);
-		Term foreignsimplified = dda.getSimplifiedTerm(foreign);
+		final SimplifyDDAWithTimeout dda = new SimplifyDDAWithTimeout(simplificationScript, false, mServices);
+		final Term foreignsimplified = dda.getSimplifiedTerm(foreign);
 		// simplificationScript.setOption(":check-type", "FULL");
 
-		TermTransferrer back = new TermTransferrer(mScript, towards.getBacktranferMapping());
-		Term simplified = back.transform(foreignsimplified);
+		final TermTransferrer back = new TermTransferrer(mScript, towards.getBacktranferMapping());
+		final Term simplified = back.transform(foreignsimplified);
 		simplificationScript.exit();
 
 		return simplified;

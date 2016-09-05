@@ -126,7 +126,7 @@ public class TransFormulaBuilder {
 				final Map<Term, Term> substitutionMapping = new HashMap<>();
 				for (final TermVariable auxVar : arg0) {
 					final TermVariable newAuxVar = script.constructFreshCopy(auxVar);
-					this.addAuxVar(newAuxVar);
+					addAuxVar(newAuxVar);
 					substitutionMapping.put(auxVar, newAuxVar);
 				}
 				mFormula = (new Substitution(script, substitutionMapping).transform(mFormula));

@@ -62,6 +62,7 @@
 			src/jdd/**,
 			src/net/sf/javabdd/**,
 			src/com.github.jhoenicke.javacup/**,
+			src/org/apache/commons/cli/**,
 			src/srParse/ReqLexer.java,
 			src/srParse/ReqParser.java,
 			src/srParse/ReqSymbols.java,
@@ -109,6 +110,8 @@
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/SubchainType.java,
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainListType.java,
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainModelType.java
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/OptionType.java
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/RunDefinition.java
 		</sonar.exclusions>
 
 		<!-- Exclude from sonar duplication analysis -->
@@ -310,6 +313,7 @@
 		<module>../HeapSeparator</module>
 		
 		<module>../TreeAutomizer</module>
+		<module>../Library-ApacheCommonsCLI</module>
 	</modules>
 
 	<profiles>

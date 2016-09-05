@@ -66,11 +66,11 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 	}
 	
 	private Collection<STATE> getInitialStates() {
-		Set<STATE> res = new HashSet<>();
+		final Set<STATE> res = new HashSet<>();
 		if (children.isEmpty()) {
 			res.add(state);
 		} else {
-			for (TreeRun<LETTER, STATE> st : children) {
+			for (final TreeRun<LETTER, STATE> st : children) {
 				res.addAll(st.getInitialStates());
 			}
 		}
@@ -79,7 +79,7 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 	
 	@Override
 	public ITreeAutomaton<LETTER, STATE> getAutomaton() {
-		TreeAutomatonBU<LETTER, STATE> treeAutomaton = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<LETTER, STATE> treeAutomaton = new TreeAutomatonBU<>();
 		
 		for (final STATE st : getStates()) {
 			treeAutomaton.addState(st);
@@ -89,7 +89,7 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 		}
 		treeAutomaton.addFinalState(state);
 		
-		for (TreeAutomatonRule<LETTER, STATE> rule : getRules()) {
+		for (final TreeAutomatonRule<LETTER, STATE> rule : getRules()) {
 			treeAutomaton.addRule(rule);
 		}
 		
@@ -120,8 +120,9 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 	
 	@Override
 	public String toString() {
-		if (children.isEmpty())
+		if (children.isEmpty()) {
 			return "";
+		}
 		String res = "";
 		for (final TreeRun<LETTER, STATE> st : children) {
 			if (!res.isEmpty()) {

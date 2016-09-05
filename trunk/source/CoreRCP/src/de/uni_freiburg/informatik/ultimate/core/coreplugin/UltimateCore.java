@@ -46,8 +46,8 @@ import org.xml.sax.SAXException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.Log4JLoggingService;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUltimatePlugin {
+public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltimatePlugin {
 
 	// TODO: Remove de.uni_freiburg.informatik.ultimate.core.model.coreplugin from
 	// exported packages
@@ -73,7 +73,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 
 	private ILogger mLogger;
 
-	private IController<ToolchainListType> mCurrentController;
+	private IController<RunDefinition> mCurrentController;
 
 	private ToolchainWalker mToolchainWalker;
 
@@ -93,7 +93,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 		// This Default-Constructor is needed to start up the application
 	}
 
-	public final Object startManually(final IController<ToolchainListType> controller) throws Exception {
+	public final Object startManually(final IController<RunDefinition> controller) throws Exception {
 		setCurrentController(controller);
 		return start(null);
 	}
@@ -192,7 +192,6 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 	@Override
 	public void loadPreferences(final String absolutePath) {
 		mSettingsManager.loadPreferencesFromFile(this, absolutePath);
-		mLoggingService.refreshLoggingService();
 	}
 
 	@Override
@@ -206,12 +205,12 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 	}
 
 	@Override
-	public IToolchain<ToolchainListType> requestToolchain() {
+	public IToolchain<RunDefinition> requestToolchain() {
 		return mToolchainManager.requestToolchain();
 	}
 
 	@Override
-	public void releaseToolchain(final IToolchain<ToolchainListType> toolchain) {
+	public void releaseToolchain(final IToolchain<RunDefinition> toolchain) {
 		mToolchainManager.releaseToolchain(toolchain);
 
 	}
@@ -221,7 +220,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 		mLogger.warn("Received 'Stop'-Command, ignoring...");
 	}
 
-	private void setCurrentController(final IController<ToolchainListType> controller) {
+	private void setCurrentController(final IController<RunDefinition> controller) {
 		if (mCurrentController != null) {
 			if (controller == null) {
 				mLogger.warn("Controller already set! Using " + mCurrentController.getPluginName()
@@ -236,7 +235,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 		mCurrentController = controller;
 	}
 
-	private IController<ToolchainListType> getCurrentController() {
+	private IController<RunDefinition> getCurrentController() {
 		return mCurrentController;
 	}
 
@@ -263,7 +262,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 	}
 
 	@Override
-	public IToolchainData<ToolchainListType> createToolchainData(final String filename)
+	public IToolchainData<RunDefinition> createToolchainData(final String filename)
 			throws FileNotFoundException, JAXBException, SAXException {
 		if (!new File(filename).exists()) {
 			throw new FileNotFoundException("The specified toolchain file " + filename + " was not found");
@@ -274,7 +273,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 	}
 
 	@Override
-	public IToolchainData<ToolchainListType> createToolchainData() {
+	public IToolchainData<RunDefinition> createToolchainData() {
 		final ToolchainStorage tcStorage = new ToolchainStorage();
 		return new ToolchainData(tcStorage, tcStorage);
 	}

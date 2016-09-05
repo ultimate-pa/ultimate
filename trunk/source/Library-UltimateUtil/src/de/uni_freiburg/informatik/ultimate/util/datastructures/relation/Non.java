@@ -140,7 +140,7 @@ public final class Non<E1, E2, E3, E4, E5, E6, E7, E8, E9> {
 		if (!(obj instanceof Non)) {
 			return false;
 		}
-		Non<?, ?, ?, ?, ?, ?, ?, ?, ?> other = (Non<?, ?, ?, ?, ?, ?, ?, ?, ?>) obj;
+		final Non<?, ?, ?, ?, ?, ?, ?, ?, ?> other = (Non<?, ?, ?, ?, ?, ?, ?, ?, ?>) obj;
 		if (mEighth == null) {
 			if (other.mEighth != null) {
 				return false;

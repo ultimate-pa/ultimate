@@ -192,7 +192,7 @@ final class Scan {
 		public final String mProblem;
 
 		ParseNwaException(final String problem) {
-			this.mProblem = problem;
+			mProblem = problem;
 		}
 	}
 

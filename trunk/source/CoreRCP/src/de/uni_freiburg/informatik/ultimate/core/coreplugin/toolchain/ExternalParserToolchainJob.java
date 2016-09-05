@@ -33,7 +33,7 @@ import org.eclipse.core.runtime.Status;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.RcpProgressMonitorWrapper;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
@@ -47,8 +47,8 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 	private final IElement mAST;
 	private final ModelType mOutputDefinition;
 
-	public ExternalParserToolchainJob(final String name, final ICore<ToolchainListType> core,
-			final IController<ToolchainListType> controller, final IElement ast, final ModelType outputDefinition,
+	public ExternalParserToolchainJob(final String name, final ICore<RunDefinition> core,
+			final IController<RunDefinition> controller, final IElement ast, final ModelType outputDefinition,
 			final ILogger logger) {
 		super(name, core, controller, logger);
 		mAST = ast;
@@ -75,7 +75,7 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 		final IToolchainProgressMonitor tpm = RcpProgressMonitorWrapper.create(monitor);
 		IStatus returnstatus = Status.OK_STATUS;
 		tpm.beginTask(getName(), IProgressMonitor.UNKNOWN);
-		IToolchain<ToolchainListType> currentToolchain = null;
+		IToolchain<RunDefinition> currentToolchain = null;
 
 		try {
 			tpm.worked(1);
@@ -127,7 +127,7 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 	 *
 	 * @param currentToolchain
 	 */
-	protected void releaseToolchain(final IToolchain<ToolchainListType> chain) {
+	protected void releaseToolchain(final IToolchain<RunDefinition> chain) {
 		mCore.releaseToolchain(chain);
 	}
 

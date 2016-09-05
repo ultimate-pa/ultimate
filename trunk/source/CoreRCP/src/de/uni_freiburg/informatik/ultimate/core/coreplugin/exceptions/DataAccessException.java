@@ -28,32 +28,39 @@
 /*
  * Project:	CoreRCP
  * Package:	de.uni_freiburg.informatik.ultimate.model.repository
- * File:	InvalidKeyException.java created on Oct 29, 2009 by Björn Buchhold
+ * File:	DataAccessException.java created on Oct 28, 2009 by Björn Buchhold
  *
  */
-package de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository;
-
-import java.io.FileNotFoundException;
+package de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions;
 
 /**
- * InvalidKeyException
+ * DataAccessException
+ * Root of the Exception Hierarchy for Data Access.
+ * Catching this kind of Exception allows the user to react t data access failure
+ * without knowing the particular reason (wrong usage, unavailable data access service etc)
  *
  * @author Björn Buchhold
  *
  */
-public class InvalidKeyException extends StoreObjectException {
+public class DataAccessException extends Exception {
 
 	/**
 	 * long serialVersionUID
 	 */
-	private static final long serialVersionUID = 988620680137659382L;
-
+	private static final long serialVersionUID = -481244605773347116L;
+	
 	/**
-	 * @param string
-	 * @param e
+	 * @param msg
 	 */
-	public InvalidKeyException(String string, FileNotFoundException e) {
-		super(string, e);
+	public DataAccessException(String msg){
+		super(msg);
 	}
-
+	
+	/**
+	 * @param msg
+	 * @param cause
+	 */
+	public DataAccessException(String msg, Throwable cause){
+		super(msg, cause);
+	}
 }

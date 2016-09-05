@@ -28,39 +28,38 @@
 /*
  * Project:	CoreRCP
  * Package:	de.uni_freiburg.informatik.ultimate.model.repository
- * File:	DataAccessException.java created on Oct 28, 2009 by Björn Buchhold
+ * File:	PersistObjectException.java created on Oct 29, 2009 by Björn Buchhold
  *
  */
-package de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository;
+package de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions;
+
 
 /**
- * DataAccessException
- * Root of the Exception Hierarchy for Data Access.
- * Catching this kind of Exception allows the user to react t data access failure
- * without knowing the particular reason (wrong usage, unavailable data access service etc)
+ * PersistObjectException
  *
  * @author Björn Buchhold
  *
  */
-public class DataAccessException extends Exception {
+public class StoreObjectException extends DataAccessException {
 
 	/**
 	 * long serialVersionUID
 	 */
-	private static final long serialVersionUID = -481244605773347116L;
-	
+	private static final long serialVersionUID = 7672000550303730525L;
+
 	/**
-	 * @param msg
+	 * @param e
 	 */
-	public DataAccessException(String msg){
-		super(msg);
+	public StoreObjectException(Throwable e) {
+		super("Failed to persist object", e);	
 	}
-	
+
 	/**
-	 * @param msg
-	 * @param cause
+	 * @param string
+	 * @param e
 	 */
-	public DataAccessException(String msg, Throwable cause){
-		super(msg, cause);
+	public StoreObjectException(String string, Throwable e) {
+		super(string, e);
 	}
+
 }

@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +40,7 @@ public class HCTransFormula {
 		}
 		
 		if (t instanceof ApplicationTerm) {
-			for (Term s : ((ApplicationTerm) t).getParameters()) {
+			for (final Term s : ((ApplicationTerm) t).getParameters()) {
 				res.addAll(getVars(s));
 			}
 		}

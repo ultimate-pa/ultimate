@@ -47,8 +47,8 @@ final class Hist {
 	Hist() {}
 
 	Hist(final int lin, final int hier) {
-		this.mLin = lin;
-		this.mHier = hier;
+		mLin = lin;
+		mHier = hier;
 	}
 
 	@Override

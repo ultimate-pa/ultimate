@@ -90,7 +90,7 @@ public final class GameLetter<LETTER, STATE> {
 		if (!(obj instanceof GameLetter)) {
 			return false;
 		}
-		GameLetter<?, ?> other = (GameLetter<?, ?>) obj;
+		final GameLetter<?, ?> other = (GameLetter<?, ?>) obj;
 		if (mLetter == null) {
 			if (other.mLetter != null) {
 				return false;

@@ -46,47 +46,79 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  */
 public enum PreferenceItem {
 
-	LABEL___ENABLE_INLINING_FOR("Enable inlining for ..."), INLINE_UNIMPLEMENTED("calls to unimplemented procedures",
-			true, Boolean), INLINE_IMPLEMENTED("calls to implemented procedures", true, Boolean),
+	LABEL_ENABLE_INLINING_FOR("Enable inlining for ..."),
 
-	LABEL___IGNORE_CALLS("\nIgnore calls ..."), IGNORE_CALL_FORALL("with \'forall\' modifier *", true,
-			PreferenceType.Boolean), IGNORE_WITH_FREE_REQUIRES("to procedures with \'free requires\' specifications *",
-					true, Boolean), IGNORE_POLYMORPHIC("to and inside polymorphic procedures *", true,
-							Boolean), IGNORE_RECURSIVE("to recursive procedures *", true,
-									Boolean), IGNORE_MULTIPLE_CALLED("to procedures, called more than once", false,
-											Boolean), NOTE___UNSUPPORTED(
-													"* attempt to inline these will cause an exception"),
+	INLINE_UNIMPLEMENTED("calls to unimplemented procedures", "Inline calls to unimplemented procedures.", true,
+			Boolean),
 
-	LABEL___USER_LIST("\nUser list (procedure ids, separated by whitespace)"), USER_LIST("User list", "",
-			PreferenceType.MultilineString), USER_LIST_TYPE("User list type", UserListType.BLACKLIST_RESTRICT,
-					PreferenceType.Combo, UserListType.values()), NOTE___TYPE_DESCRIPTION(UserListType.description()),
+	INLINE_IMPLEMENTED("calls to implemented procedures", "Inline calls to implemented procedures.", true, Boolean),
 
-	LABEL___ENTRY_PROCEDURE_HANDLING("\nEntry procedure handling"), PROCESS_ONLY_ENTRY_AND_RE_ENTRY_PROCEDURES(
-			"Process only entry and re-entry procedures", true,
-			Boolean), ENTRY_PROCEDURES("Entry procedures (ids, separated by whitespace)", "ULTIMATE.start",
-					PreferenceType.String), ENTRY_PROCEDURE_FALLBACK(
-							"Fallback: Process everything, if an entry procedure doesn't exist", true,
-							Boolean), ELIMINATE_DEAD_CODE("Eliminate dead code after inlining", true, Boolean); // see
-																												// CallGraphNodeLabel
+	LABEL_IGNORE_CALLS("Ignore calls ..."),
 
-	protected final String mName;
-	protected final Object mDefaultValue;
-	protected final PreferenceType mType;
-	protected final Object[] mChoices;
+	IGNORE_CALL_FORALL("with \'forall\' modifier",
+			"Do not inline calls with forall-star modifier (attempting to inline these can cause exceptions).", true,
+			PreferenceType.Boolean),
+
+	IGNORE_WITH_FREE_REQUIRES("to procedures with \'free requires\' specifications",
+			"Do not inline calls to procedures with free-requires specification "
+					+ "(attempting to inline these can cause exceptions).",
+			true, Boolean),
+
+	IGNORE_POLYMORPHIC("to and inside polymorphic procedures",
+			"Do not inline calls to and inside polymorphic procedures (attempting to inline these can cause exceptions).",
+			true, Boolean),
+
+	IGNORE_RECURSIVE("to recursive procedures",
+			"Do not inline calls to recursive procedures (attempting to inline these can cause exceptions).", true,
+			Boolean),
+
+	IGNORE_MULTIPLE_CALLED("to procedures, called more than once",
+			"Do not inline calls to procedures called more than once.", false, Boolean),
+
+	LABEL_USER_LIST("User list (procedure ids, separated by whitespace)"),
+
+	USER_LIST("User list", "Specify procedure names that should not be inlined (separate with a comma).", "",
+			PreferenceType.MultilineString),
+
+	USER_LIST_TYPE("User list type", UserListType.description(), UserListType.BLACKLIST_RESTRICT, PreferenceType.Combo,
+			UserListType.values()),
+
+	LABEL_ENTRY_PROCEDURE_HANDLING("Entry procedure handling"),
+
+	PROCESS_ONLY_ENTRY_AND_RE_ENTRY_PROCEDURES("Process only entry and re-entry procedures", null, true, Boolean),
+
+	ENTRY_PROCEDURES("Entry procedures", "Give names separated by whitespace.", "ULTIMATE.start",
+			PreferenceType.String),
+
+	ENTRY_PROCEDURE_FALLBACK("Fallback to processing everything",
+			"If no entry procedure can be found, just treat every procedure as potential entry procedure.", true,
+			Boolean),
+
+	// see CallGraphNodeLabel
+	ELIMINATE_DEAD_CODE("Remove dead code", "Eliminate dead code after inlining.", true, Boolean);
+
+	private final String mName;
+	private final Object mDefaultValue;
+	private final PreferenceType mType;
+	private final Object[] mChoices;
+	private final String mDescription;
 
 	private PreferenceItem(String name) {
-		this(name, null, PreferenceType.Label, null);
+		this(name, null, null, PreferenceType.Label, null);
 	}
 
-	private PreferenceItem(String name, Object defaultValue, PreferenceType type) {
-		this(name, defaultValue, type, null);
+	private PreferenceItem(final String name, final String description, final Object defaultValue,
+			final PreferenceType type) {
+		this(name, description, defaultValue, type, null);
 	}
 
-	private PreferenceItem(String name, Object defaultValue, PreferenceType type, Object[] choices) {
+	private PreferenceItem(final String name, final String description, final Object defaultValue,
+			final PreferenceType type, final Object[] choices) {
 		mName = name;
 		mDefaultValue = defaultValue;
 		mType = type;
 		mChoices = choices;
+		mDescription = description;
 	}
 
 	public String getName() {
@@ -101,12 +133,12 @@ public enum PreferenceItem {
 		return mDefaultValue;
 	}
 
-	/**
-	 * @param services
-	 *            The current {@link IUltimateServiceProvider} instance that is used to retrieve valid preferences.
-	 * @return Tokens from {@link #getStringValue()}, which where separated by whitespace.
-	 */
-	public List<String> getStringValueTokens(final IUltimateServiceProvider services) {
+	public String getDescription() {
+		return mDescription;
+	}
+
+	/** @return Tokens from {@link #getStringValue()}, which where separated by whitespace. */
+	public List<String> getStringValueTokens(IUltimateServiceProvider services) {
 		final String trimmedStringValue = services.getPreferenceProvider(Activator.PLUGIN_ID).getString(mName).trim();
 		if (trimmedStringValue.isEmpty()) {
 			return Collections.emptyList();
@@ -116,6 +148,6 @@ public enum PreferenceItem {
 	}
 
 	public UltimatePreferenceItem<?> newUltimatePreferenceItem() {
-		return new UltimatePreferenceItem<Object>(mName, mDefaultValue, mType, mChoices);
+		return new UltimatePreferenceItem<Object>(mName, mDefaultValue, mType, mDescription, false, mChoices, null);
 	}
 }

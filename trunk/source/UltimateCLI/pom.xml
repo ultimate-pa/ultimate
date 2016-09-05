@@ -35,8 +35,8 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
-	<groupId>UltimateCLI</groupId>
-	<artifactId>UltimateCLI</artifactId>
+	<groupId>de.uni_freiburg.informatik.ultimate.cli</groupId>
+	<artifactId>de.uni_freiburg.informatik.ultimate.cli</artifactId>
 	<version>0.0.1</version>
 	<packaging>eclipse-plugin</packaging>
 </project>

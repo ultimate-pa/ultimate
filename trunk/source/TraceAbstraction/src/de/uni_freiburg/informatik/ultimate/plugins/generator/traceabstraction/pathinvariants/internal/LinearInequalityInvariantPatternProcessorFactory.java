@@ -91,7 +91,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		mXnfConversionTechnique = xnfConversionTechnique;
 		this.predUnifier = predUnifier;
 		this.smtManager = smtManager.getManagedScript();
-		this.mAxioms = smtManager.getBoogie2Smt().getAxioms();
+		mAxioms = smtManager.getBoogie2Smt().getAxioms();
 		this.strategy = strategy;
 		mUseNonlinearConstraints = useNonlinerConstraints;
 		mSolverSettings = solverSettings;
