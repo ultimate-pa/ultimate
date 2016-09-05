@@ -54,7 +54,7 @@ public final class Util {
 			}
 			term = script.let(vars, values, term);
 			LBool result = script.assertTerm(term);
-			if (result == LBool.UNSAT) {
+			if (result == LBool.UNKNOWN) {
 				result = script.checkSat();
 			}
 			return result;
