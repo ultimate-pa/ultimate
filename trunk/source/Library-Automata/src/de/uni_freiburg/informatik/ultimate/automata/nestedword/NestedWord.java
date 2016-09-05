@@ -247,7 +247,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * @return true iff every entry of <tt>nestingRelation</tt> is in the range of the array or an INTERNAL_POSITION,
 	 *         PLUS_INFINITY, or MINUS_INFINITY.
 	 */
-	private boolean nestingRelationValuesInRange(final int[] nestingRelation) {
+	private static boolean nestingRelationValuesInRange(final int[] nestingRelation) {
 		for (final int content : nestingRelation) {
 			if ((content < 0 || content >= nestingRelation.length) && (!isSpecialNestingRelationIndex(content))) {
 				return false;
