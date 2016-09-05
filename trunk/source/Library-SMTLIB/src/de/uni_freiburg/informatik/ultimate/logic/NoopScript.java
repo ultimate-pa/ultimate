@@ -28,9 +28,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory.SolverSetup;
  * Simple implementation of a script, that supports building terms and sorts,
  * but does not support setting and getting options, checking for satisfiabilty,
  * or getting any other results.
- * 
+ *
  * This can be used as base class for implementing the script interface.
- *  
+ *
  * @author Jürgen Christ, Jochen Hoenicke
  */
 public class NoopScript implements Script {
@@ -55,8 +55,20 @@ public class NoopScript implements Script {
 	
 	public Theory getTheory() {
 		return mTheory;
-	}	
-	
+	}
+
+	/**
+	 * Check that the symbol does not contain characters that would make
+	 * it impossible to use it in a LoggingScript.  These are | and \.
+	 * @param symbol the symbol to check
+	 * @throws SMTLibException if symbol contains | or \.
+	 */
+	private void checkSymbol(String symbol) throws SMTLIBException {
+		if (symbol.indexOf('|') >= 0 || symbol.indexOf('\\') >= 0) {
+			throw new SMTLIBException("Symbol must not contain | or \\");
+		}
+	}
+
 	@Override
 	public void setLogic(String logic) throws UnsupportedOperationException {
 		try {
@@ -92,6 +104,7 @@ public class NoopScript implements Script {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}
+		checkSymbol(sort);
 		try {
 			mTheory.declareSort(sort, arity);
 		} catch (final IllegalArgumentException eiae) {
@@ -105,6 +118,7 @@ public class NoopScript implements Script {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}
+		checkSymbol(sort);
 		try {
 			mTheory.defineSort(sort, sortParams.length, definition);
 		} catch (final IllegalArgumentException eiae) {
@@ -118,6 +132,7 @@ public class NoopScript implements Script {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}
+		checkSymbol(fun);
 		try {
 			mTheory.declareFunction(fun, paramSorts, resultSort);
 		} catch (final IllegalArgumentException eiae) {
@@ -128,6 +143,7 @@ public class NoopScript implements Script {
 	@Override
 	public void defineFun(String fun, TermVariable[] params,
 			Sort resultSort, Term definition) throws SMTLIBException {
+		checkSymbol(fun);
 		defineFunInternal(fun, params, resultSort, definition);
 	}
 	
@@ -136,14 +152,14 @@ public class NoopScript implements Script {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}
-        if (!resultSort.equalsSort(definition.getSort())) {
+		if (!resultSort.equalsSort(definition.getSort())) {
 			throw new SMTLIBException("Sort mismatch");
 		}
-        try {
-        	mTheory.defineFunction(fun, params, definition);
-        } catch (final IllegalArgumentException eiae) {
-        	throw new SMTLIBException(eiae.getMessage());
-        }
+		try {
+			mTheory.defineFunction(fun, params, definition);
+		} catch (final IllegalArgumentException eiae) {
+			throw new SMTLIBException(eiae.getMessage());
+		}
 	}
 
 	@Override
@@ -178,6 +194,11 @@ public class NoopScript implements Script {
 
 	@Override
 	public LBool checkSat() {
+		return LBool.UNKNOWN;
+	}
+	
+	@Override
+	public LBool checkSatAssuming(Term... assumptions) {
 		return LBool.UNKNOWN;
 	}
 
@@ -230,7 +251,7 @@ public class NoopScript implements Script {
 	@Override
 	public void reset() {
 		mTheory = null;
-        mStackLevel = 0;
+		mStackLevel = 0;
 	}
 
 	@Override
@@ -282,7 +303,7 @@ public class NoopScript implements Script {
 			throw new SMTLIBException("No logic set!");
 		}
 		final Sort[] sorts =
-				params.length == 0 ? Theory.EMPTY_SORT_ARRAY : new Sort[params.length];
+				params.length == 0 ? Script.EMPTY_SORT_ARRAY : new Sort[params.length];
 		for (int i = 0; i < sorts.length; i++) {
 			sorts[i] = params[i].getSort();
 		}
@@ -309,6 +330,7 @@ public class NoopScript implements Script {
 			throw new SMTLIBException(
 					"Invalid input to create a term variable");
 		}
+		checkSymbol(varname);
 		return mTheory.createTermVariable(varname, sort);
 	}
 
@@ -322,12 +344,12 @@ public class NoopScript implements Script {
 			throw new SMTLIBException("Empty quantifier body");
 		}
 		if (patterns != null && patterns.length > 0) {
-	  		final Annotation[] annots = new Annotation[patterns.length];
-	  		int i = 0;
-	  		for (final Term[] p : patterns) {
-	  			annots[i++] = new Annotation(":pattern", p);
-	  		}
-	  		body = mTheory.annotatedTerm(annots, body);
+			final Annotation[] annots = new Annotation[patterns.length];
+			int i = 0;
+			for (final Term[] p : patterns) {
+				annots[i++] = new Annotation(":pattern", p);
+			}
+			body = mTheory.annotatedTerm(annots, body);
 		}
 		if (quantor == Script.EXISTS) {
 			return mTheory.exists(vars, body);
@@ -352,24 +374,25 @@ public class NoopScript implements Script {
 	public Term annotate(Term t, Annotation... annotations)
 		throws SMTLIBException {
 		if (annotations.length > 0) {
-  			for (final Annotation a : annotations) {
-  			    if (a.getKey().equals(":named")) {
-  			    	if (!(a.getValue() instanceof String)) {
+			for (final Annotation a : annotations) {
+				if (a.getKey().equals(":named")) {
+					if (!(a.getValue() instanceof String)) {
 						throw new SMTLIBException(
-  			    				"Need a string value for :named");
+								"Need a string value for :named");
 					}
-  			    	if (t.getFreeVars().length != 0) {
+					checkSymbol((String) a.getValue());
+					if (t.getFreeVars().length != 0) {
 						throw new SMTLIBException("Cannot name open terms");
 					} else {
 						defineFunInternal((String) a.getValue(), 
-  			    	    	Theory.EMPTY_TERmVARIABLE_ARRAY, t.getSort(), t);
+								Theory.EMPTY_TERM_VARIABLE_ARRAY, t.getSort(), t);
 					}
-  			    }
-  			}
-  			return mTheory.annotatedTerm(annotations, t);
-  		} else {
-  			return t;
-  		}
+				}
+			}
+			return mTheory.annotatedTerm(annotations, t);
+		} else {
+			return t;
+		}
 	}
 
 	@Override
@@ -430,7 +453,7 @@ public class NoopScript implements Script {
 			throw new SMTLIBException("No logic set!");
 		}
 		if (mTheory.getStringSort() == null) {
-			throw new SMTLIBException("Logic does not allow strings " + str);
+			throw new SMTLIBException("Logic does not allow strings");
 		}
 		return mTheory.string(str);
 	}
@@ -488,6 +511,21 @@ public class NoopScript implements Script {
 	@Override
 	public QuotedObject echo(QuotedObject msg) {
 		return msg;
+	}
+
+	@Override
+	public void resetAssertions() {
+		if (mTheory == null) {
+			throw new SMTLIBException("No logic set!");
+		}
+		mTheory.resetAssertions();
+		mStackLevel = 0;
+	}
+
+	@Override
+	public Term[] getUnsatAssumptions() throws SMTLIBException,
+			UnsupportedOperationException {
+		throw new UnsupportedOperationException();
 	}
 
 }

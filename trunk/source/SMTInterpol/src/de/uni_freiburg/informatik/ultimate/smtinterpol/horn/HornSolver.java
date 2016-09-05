@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap.CopyMode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
@@ -110,7 +111,8 @@ public class HornSolver extends NoopScript {
 			final SimplifyDDA simp = new SimplifyDDA(
 					new SMTInterpol(backend,
 							Collections.singletonMap(
-									":check-type", (Object)"quick")));
+									":check-type", (Object)"quick"),
+									CopyMode.CURRENT_VALUE));
 			if (offset < solution.length) {
 				System.err.println("size: " + new DAGSize().size(solution[offset]));
 				final Term simplified = simp.getSimplifiedTerm(solution[offset]);

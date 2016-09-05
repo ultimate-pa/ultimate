@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
- * Copyright (C) 2015 JÃ¼rgen Christ (christj@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 Jürgen Christ (christj@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Util Library.
@@ -45,7 +45,7 @@ public final class ScopeUtils {
 	public static final int NUM_INITIAL_SCOPES = 5;
 	/**
 	 * The growth function for internal scope arrays.  The arrays grow by a
-	 * constant amount {@link #NUmADDITIONAL_SCOPES NUmADDITIONAL_SCOPES}.
+	 * constant amount {@link #NUM_ADDITIONAL_SCOPES NUM_ADDITIONAL_SCOPES}.
 	 * @param curarray Current internal scope array.
 	 * @return New internal scope array
 	 */
@@ -55,7 +55,7 @@ public final class ScopeUtils {
 	/**
 	 * The growth function for internal integer scope arrays.  The arrays grow 
 	 * by a constant amount
-	 * {@link #NUmADDITIONAL_SCOPES NUmADDITIONAL_SCOPES}.
+	 * {@link #NUM_ADDITIONAL_SCOPES NUM_ADDITIONAL_SCOPES}.
 	 * @param curarray Current internal scope array.
 	 * @return New internal scope array
 	 */

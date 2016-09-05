@@ -25,12 +25,13 @@ import java.io.Reader;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.IParser;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
 
 public class SMTLIBParser implements IParser {
 
 	@Override
-	public int run(Script solver, String filename) {
+	public int run(Script script, String filename, OptionMap options) {
 		try {
 			final MySymbolFactory symfactory = new MySymbolFactory();
 			Reader reader;
@@ -44,7 +45,7 @@ public class SMTLIBParser implements IParser {
 			lexer.setSymbolFactory(symfactory);
 			final Parser parser = new Parser(lexer, symfactory);
 			parser.setFileName(filename);
-			parser.setSolver(solver, false);
+			parser.setSolver(script, false);
 			parser.parse();
 			final Term[] interpolants = parser.benchmark.check();
 			if (interpolants != null) {
@@ -59,4 +60,5 @@ public class SMTLIBParser implements IParser {
 			return 1;
 		}
 	}
+
 }

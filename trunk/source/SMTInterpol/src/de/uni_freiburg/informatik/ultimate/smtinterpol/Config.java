@@ -18,8 +18,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol;
 
-import org.apache.log4j.Level;
-
 /**
  * Basic configuration of SMTInterpol.
  * @author Juergen Christ
@@ -33,8 +31,8 @@ public interface Config {
 	/// Create timing statistics
 	public final static boolean PROFILE_TIME = !COMPETITION;
 	/// Default log level
-	public final static Level DEFAULT_LOG_LEVEL = 
-			COMPETITION ? Level.ERROR : Level.INFO;
+	public final static int DEFAULT_LOG_LEVEL = 
+			COMPETITION ? LogProxy.LOGLEVEL_ERROR : LogProxy.LOGLEVEL_INFO;
 	/// Check the status set by the user against our check-sat status
 	public final static boolean CHECK_STATUS_SET = !COMPETITION;
 

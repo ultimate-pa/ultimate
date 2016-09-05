@@ -21,13 +21,12 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.test_generator;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleList;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
@@ -44,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 public class TBenchmark extends SMTInterpol {
 	Generator mGenerator;
 	
-	public TBenchmark(Logger logger, PrintWriter out) {
+	public TBenchmark(LogProxy logger, PrintWriter out) {
 		super(logger);
 		mGenerator = new Generator(out);
 		setOption(":regular-output-channel", "stderr");

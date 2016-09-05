@@ -19,9 +19,8 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.dpll;
 
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.SharedTermEvaluator;
 
@@ -108,11 +107,11 @@ public interface ITheory {
 	/**
 	 * Print statistics. 
 	 */
-	public void printStatistics(Logger logger);
+	public void printStatistics(LogProxy logger);
 	/**
 	 * Dump current model.  Currently only used for debugging purposes. 
 	 */
-	public void dumpModel(Logger logger);
+	public void dumpModel(LogProxy logger);
 	/**
 	 * Notification that the DPLLEngine is about to make a new decision.
 	 * @param currentDecideLevel Number of decisions of the engine.
