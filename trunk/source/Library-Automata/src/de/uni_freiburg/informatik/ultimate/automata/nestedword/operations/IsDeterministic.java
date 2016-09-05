@@ -73,11 +73,8 @@ public final class IsDeterministic<LETTER, STATE> extends UnaryNwaOperation<LETT
 			mLogger.info(startMessage());
 		}
 		
-		@SuppressWarnings("squid:S1941")
+		// TODO Christian 2016-09-05: Rather store 'totalized' instead of 'mReach' which is only used for assertions
 		final TotalizeNwa<LETTER, STATE> totalized = new TotalizeNwa<>(operand, mStateFactory);
-		if (isCancellationRequested()) {
-			throw new AutomataOperationCanceledException(this.getClass());
-		}
 		mReach = new NestedWordAutomatonReachableStates<>(mServices, totalized);
 		
 		mResult = !totalized.nonDeterminismInInputDetected();
