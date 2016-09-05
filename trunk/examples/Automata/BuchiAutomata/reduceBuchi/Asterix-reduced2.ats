@@ -1,7 +1,7 @@
 // Author: Christian Schilling (schillic@informatik.uni-freiburg.de)
 // Date: 2016-09-05
 // Even more simplified version of Asterix.
-// BuchiReduce fails due to a bug in the game graph construction.
+// BuchiReduce fails due to a bug in the delayed simulation computation.
 
 print(buchiReduce(removeDeadends(nwa)));
 
