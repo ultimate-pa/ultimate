@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 
@@ -39,9 +38,8 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
  * @param <LETTER> letter type
  * @param <PLACE> place type
  */
-public class NumberOfTransitions<LETTER, PLACE>
-		extends UnaryNetOperation<LETTER, PLACE>
-		implements IOperation<LETTER,PLACE> {
+public class NumberOfTransitions<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLACE> {
+	private final IPetriNet<LETTER, PLACE> mOperand;
 	
 	/**
 	 * Constructor.
@@ -51,12 +49,18 @@ public class NumberOfTransitions<LETTER, PLACE>
 	 */
 	public NumberOfTransitions(final AutomataLibraryServices services,
 			final IPetriNet<LETTER, PLACE> operand) {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 	}
 
 	@Override
 	public String operationName() {
 		return "numberOfPlaces";
+	}
+	
+	@Override
+	protected IPetriNet<LETTER, PLACE> getOperand() {
+		return mOperand;
 	}
 
 	@Override

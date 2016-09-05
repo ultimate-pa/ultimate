@@ -28,12 +28,10 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Operation that checks if the language of the first Buchi automaton is
@@ -44,10 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
-
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
+public class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LETTER,STATE> {
 
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand1;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand2;
@@ -61,8 +56,7 @@ public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> 
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa1,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa2)
 			throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mOperand1 = nwa1;
 		mOperand2 = nwa2;
 		mLogger.info(startMessage());
@@ -85,16 +79,19 @@ public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> 
 	}
 
 	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Operand1 "
-				+ mOperand1.sizeInformation() + ". Operand2 "
-				+ mOperand2.sizeInformation();
-	}
-
-	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Language is "
 				+ (mResult ? "" : "not ") + "included";
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+		return mOperand1;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+		return mOperand2;
 	}
 
 	@Override

@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.ESymbolType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.EMultipleDataOption;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.ETimeMeasure;
@@ -862,31 +862,31 @@ public abstract class ASimulation<LETTER, STATE> {
 		// Input automaton
 		final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(services, input, true);
 		final int inputStates = inputAnalyzer.getNumberOfStates();
-		final int inputTransitions = inputAnalyzer.getNumberOfTransitions(ESymbolType.TOTAL);
+		final int inputTransitions = inputAnalyzer.getNumberOfTransitions(SymbolType.TOTAL);
 		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, inputStates);
 		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_NONDETERMINISTIC_STATES,
 				inputAnalyzer.getNumberOfNondeterministicStates());
 
 		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE,
-				inputAnalyzer.getNumberOfSymbols(ESymbolType.TOTAL));
+				inputAnalyzer.getNumberOfSymbols(SymbolType.TOTAL));
 		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS, inputTransitions);
 		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_DENSITY_MILLION,
-				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.TOTAL) * 1_000_000));
+				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.TOTAL) * 1_000_000));
 
 		// Output automaton
 		if (mResult != null) {
 			final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, mResult, true);
 			final int outputStates = outputAnalyzer.getNumberOfStates();
-			final int outputTransitions = outputAnalyzer.getNumberOfTransitions(ESymbolType.TOTAL);
+			final int outputTransitions = outputAnalyzer.getNumberOfTransitions(SymbolType.TOTAL);
 			mPerformance.setCountingMeasure(ECountingMeasure.RESULT_STATES, outputStates);
 			mPerformance.setCountingMeasure(ECountingMeasure.RESULT_NONDETERMINISTIC_STATES,
 					outputAnalyzer.getNumberOfNondeterministicStates());
 
 			mPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE,
-					outputAnalyzer.getNumberOfSymbols(ESymbolType.TOTAL));
+					outputAnalyzer.getNumberOfSymbols(SymbolType.TOTAL));
 			mPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS, outputTransitions);
 			mPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_DENSITY_MILLION,
-					(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.TOTAL) * 1_000_000));
+					(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.TOTAL) * 1_000_000));
 
 			// General metrics
 			mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, graph.getSize());

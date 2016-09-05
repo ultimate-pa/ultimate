@@ -32,7 +32,6 @@ import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwa;
@@ -47,10 +46,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class MinimizeNwaMaxSAT<LETTER, STATE>
-		extends AbstractMinimizeNwa<LETTER, STATE>
-		implements IMinimizeNwa<LETTER, STATE>, IOperation<LETTER, STATE> {
-
+public class MinimizeNwaMaxSAT<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
+		implements IMinimizeNwa<LETTER, STATE> {
 	/**
 	 * Constructor.
 	 * 

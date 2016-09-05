@@ -35,10 +35,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.TestBuchiEquivalence;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwa;
@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            State class of buechi automaton
  */
-public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	/**
 	 * Demo usage of fair simulation in general. Also used for debugging
 	 * purpose.
@@ -410,11 +410,6 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	}
 
 	/**
-	 * The logger used by the Ultimate framework.
-	 */
-	private final ILogger mLogger;
-
-	/**
 	 * The inputed buechi automaton.
 	 */
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
@@ -423,10 +418,6 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 * The resulting possible reduced buechi automaton.
 	 */
 	private final INestedWordAutomaton<LETTER, STATE> mResult;
-	/**
-	 * Service provider of Ultimate framework.
-	 */
-	private final AutomataLibraryServices mServices;
 	/**
 	 * Simulation used for operation.
 	 */
@@ -447,7 +438,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 
 	/**
 	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton using SCCs as an optimization.<br/>
+	 * automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -584,9 +575,8 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs,
 			final boolean checkOperationDeeply, final FairSimulation<LETTER, STATE> simulation)
 					throws AutomataOperationCanceledException {
-		mServices = services;
+		super(services);
 		mStateFactory = stateFactory;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
 		mUseSCCs = useSCCs;
 		mLogger.info(startMessage());
@@ -613,6 +603,13 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		mLogger.info(exitMessage());
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#checkResult(de.
+	 * uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory)
+	 */
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
@@ -665,17 +662,6 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		return "reduceBuchiFairSimulation";
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#startMessage()
-	 */
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Operand has " + mOperand.sizeInformation();
-	}
-
 	/**
 	 * Gets the logger used by the Ultimate framework.
 	 * 
@@ -690,6 +676,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 * 
 	 * @return The inputed automaton.
 	 */
+	@Override
 	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
 	}

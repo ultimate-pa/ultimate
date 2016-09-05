@@ -28,21 +28,17 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizeUnderappox;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class BuchiComplementRE<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
+public class BuchiComplementRE<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private INestedWordAutomaton<LETTER, STATE> mResult;
@@ -55,17 +51,17 @@ public class BuchiComplementRE<LETTER, STATE> implements IOperation<LETTER, STAT
 	}
 	
 	@Override
-	public String startMessage() {
-		return "Start " + operationName() + " Operand " + mOperand.sizeInformation();
-	}
-	
-	@Override
 	public String exitMessage() {
 		if (mBuchiComplementREApplicable) {
 			return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 		} else {
 			return "Unable to perform " + operationName() + "on this input";
 		}
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override
@@ -81,8 +77,7 @@ public class BuchiComplementRE<LETTER, STATE> implements IOperation<LETTER, STAT
 	public BuchiComplementRE(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
 		final INestedWordAutomaton<LETTER, STATE> operandWithoutNonLiveStates =

@@ -62,6 +62,7 @@ public class HornClauseParserScript extends NoopScript {
 	public IElement getHornClauses() {
 		final Payload payload = new Payload();
 		payload.getAnnotations().put("HoRNClauses", new HornAnnot(mCurrentHornClause));
+//		payload.getAnnotations().put("HoRNClausesScript", mBackendSmtSolver);
 		return new HornClauseAST(payload);
 	}
 	

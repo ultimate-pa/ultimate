@@ -13,7 +13,7 @@ Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.uni_freiburg.informatik.ultimate.boogie.parser;
   uses:="org.eclipse.core.runtime,
-   java_cup.runtime,
+   com.github.jhoenicke.javacup.runtime,
    org.apache.log4j,
    de.uni_freiburg.informatik.ultimate.model.boogie.ast,
    de.uni_freiburg.informatik.ultimate.model,

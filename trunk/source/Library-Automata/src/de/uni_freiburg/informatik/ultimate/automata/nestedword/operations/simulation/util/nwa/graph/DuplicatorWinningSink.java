@@ -131,4 +131,14 @@ public final class DuplicatorWinningSink<LETTER, STATE> implements IWinningSink<
 		return mSpoilerSink;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.
+	 * simulation.util.nwa.graph.IWinningSink#isWinningForSpoiler()
+	 */
+	@Override
+	public boolean isWinningForSpoiler() {
+		return false;
+	}
 }

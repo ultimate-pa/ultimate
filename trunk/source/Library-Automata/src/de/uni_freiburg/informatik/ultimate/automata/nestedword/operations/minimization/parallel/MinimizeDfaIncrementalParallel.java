@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.parallel;
@@ -42,10 +42,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeIncremental;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.Interrupt;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.Interrupt;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -78,9 +77,32 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class MinimizeDfaIncrementalParallel<LETTER, STATE>
-		extends AbstractMinimizeIncremental<LETTER, STATE>
-		implements IMinimize, IOperation<LETTER, STATE> {
+public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinimizeIncremental<LETTER, STATE>
+		implements IMinimize {
+	/**
+	 * True if Incremental algorithm shall help Hopcroft algorithm, false
+	 * otherwise.
+	 */
+	public static final boolean HELP_HOPCROFT = true;
+	
+	/**
+	 * Option: Separate states with different transitions.
+	 * 
+	 * <p>That is, if there is a letter {@code l} where one of the states has an
+	 * outgoing transitions with {@code l} and one has not (hence this
+	 * transition would go to an implicit sink state.
+	 * 
+	 * <p>NOTE: This is only reasonable if the input automaton is not total.
+	 * Furthermore, the method becomes incomplete (i.e., may not find the
+	 * minimum) if dead ends have not been removed beforehand.
+	 */
+	private static final boolean OPTION_NEQ_TRANS = false;
+	/**
+	 * Boolean variable for determining to run the algorithm with or without
+	 * producing tasks for parallel execution.
+	 */
+	private static boolean sParallel = false;
+	
 	/**
 	 * The number of states in the input automaton (often used).
 	 */
@@ -122,12 +144,6 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE>
 	 */
 
 	/**
-	 * True if Incremental algorithm shall help Hopcroft algorithm, false
-	 * otherwise.
-	 */
-	public static final boolean HELP_HOPCROFT = true;
-
-	/**
 	 * Double holding the cpu time in seconds.
 	 */
 	private double mRunTime;
@@ -139,30 +155,10 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE>
 	 */
 	private MinimizeDfaHopcroftParallel<LETTER, STATE> mHopcroftAlgorithm;
 	/**
-	 * Boolean variable for determining to run the algorithm with or without
-	 * producing tasks for parallel execution.
-	 */
-	private static boolean sParallel = false;
-	/**
 	 * This variable will be true as soon as the union-find data structure is
 	 * initialized.
 	 */
 	private boolean mInitialized = false;
-
-	// ----------------------- options for tweaking ----------------------- //
-
-	/**
-	 * Option: Separate states with different transitions.
-	 * 
-	 * <p>That is, if there is a letter {@code l} where one of the states has an
-	 * outgoing transitions with {@code l} and one has not (hence this
-	 * transition would go to an implicit sink state.
-	 * 
-	 * <p>NOTE: This is only reasonable if the input automaton is not total.
-	 * Furthermore, the method becomes incomplete (i.e., may not find the
-	 * minimum) if dead ends have not been removed beforehand.
-	 */
-	private static final boolean OPTION_NEQ_TRANS = false;
 
 	// --------------------------- class methods --------------------------- //
 

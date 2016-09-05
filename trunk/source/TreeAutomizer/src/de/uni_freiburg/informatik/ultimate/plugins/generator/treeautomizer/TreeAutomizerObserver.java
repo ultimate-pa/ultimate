@@ -36,6 +36,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph.TreeAutomizerCEGAR;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HCTransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClausePredicateSymbol;
@@ -46,6 +52,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.scrip
  * Auto-Generated Stub for the plug-in's Observer
  */
 public class TreeAutomizerObserver implements IUnmanagedObserver {
+
+	private IUltimateServiceProvider mServices;
+	private IToolchainStorage mToolchainStorage;
+	private ILogger mLogger;
+	
+	public TreeAutomizerObserver(IUltimateServiceProvider services, IToolchainStorage toolchainStorage) {
+		mServices = services;
+		mToolchainStorage = toolchainStorage;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+	}
 
 	@Override
 	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
@@ -68,9 +84,12 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(IElement root) throws Throwable {
 		
-		final Map<String, IAnnotations> st = root.getPayload().getAnnotations();
-		final HornAnnot annot = (HornAnnot) st.get("HoRNClauses");
-		final List<HornClause> hornClauses = (List<HornClause>) annot.getAnnotationsAsMap().get("HoRNClauses");
+		RootNode rootNode = (RootNode) root;
+		rootNode.getRootAnnot().getScript();
+		
+		Map<String, IAnnotations> st = root.getPayload().getAnnotations();
+		HornAnnot annot = (HornAnnot) st.get("HoRNClauses");
+		List<HornClause> hornClauses = (List<HornClause>) annot.getAnnotationsAsMap().get("HoRNClauses");
 
 		final TreeAutomatonBU<HCTransFormula, HornClausePredicateSymbol> tree = new TreeAutomatonBU<>();
 		
@@ -84,6 +103,8 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 		tree.addFinalState(new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol());
 		//tree.addFinalState(state);
 		//tree.addInitialState(state);
+//		TreeAutomizerCEGAR cegar = new TreeAutomizerCEGAR(mServices, 
+//				mToolchainStorage, "name", rootNode, smtManager, taPrefs, errorLocs, mLogger, script);
 		return false;
 	}
 

@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.astbuilder;
 import java.io.IOException;
 import java.io.Reader;
 
-import java_cup.runtime.Scanner;
-import java_cup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.Scanner;
+import com.github.jhoenicke.javacup.runtime.Symbol;
 
 public class Lexer implements Scanner {
     boolean eof = false;

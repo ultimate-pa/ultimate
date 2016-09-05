@@ -550,6 +550,9 @@ public class LassoChecker {
 		final NestedWord<CodeBlock> stem = mCounterexample.getStem().getWord();
 		try {
 			final UnmodifiableTransFormula stemTF = computeTF(stem, mSimplifyStemAndLoop, true, false);
+			if (SmtUtils.isFalse(stemTF.getFormula())) {
+				throw new AssertionError("stemTF is false but stem analysis said: feasible");
+			}
 			return stemTF;
 		} catch (final ToolchainCanceledException tce) {
 			throw new ToolchainCanceledException(getClass(),
@@ -564,6 +567,9 @@ public class LassoChecker {
 		final NestedWord<CodeBlock> loop = mCounterexample.getLoop().getWord();
 		try {
 			final UnmodifiableTransFormula loopTF = computeTF(loop, mSimplifyStemAndLoop, true, false);
+			if (SmtUtils.isFalse(loopTF.getFormula())) {
+				throw new AssertionError("loopTF is false but loop analysis said: feasible");
+			}
 			return loopTF;
 		} catch (final ToolchainCanceledException tce) {
 			throw new ToolchainCanceledException(getClass(),
@@ -580,7 +586,7 @@ public class LassoChecker {
 		final UnmodifiableTransFormula tf = SequentialComposition.getInterproceduralTransFormula(mSmtManager.getBoogie2Smt().getManagedScript(),
 				mModifiableGlobalVariableManager, simplify, extendedPartialQuantifierElimination, toCNF,
 				withBranchEncoders, mLogger, mServices, word.asList(), mXnfConversionTechnique,
-				mSimplificationTechnique);
+				mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 		return tf;
 	}
 
@@ -688,7 +694,9 @@ public class LassoChecker {
 		
 		final FixpointCheck fixpointCheck = new FixpointCheck(mServices, mLogger, mSmtManager.getManagedScript(), modifiableGlobalsAtHonda, stemTF, loopTF);
 		if (fixpointCheck.getResult() == HasFixpoint.YES) {
-			mNonterminationArgument = fixpointCheck.getTerminationArgument();
+			if (withStem) {
+				mNonterminationArgument = fixpointCheck.getTerminationArgument();
+			}
 			return SynthesisResult.NONTERMINATING;
 		}
 

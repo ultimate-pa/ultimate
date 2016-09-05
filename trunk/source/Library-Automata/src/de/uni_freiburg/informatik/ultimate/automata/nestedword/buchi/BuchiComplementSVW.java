@@ -29,12 +29,11 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Büchi complementation based on the method of Sistla, Vardi, Wolper.
@@ -51,10 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            state type
  */
-public class BuchiComplementSVW<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
+public class BuchiComplementSVW<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final BuchiComplementAutomatonSVW<LETTER, STATE> mResult;
@@ -65,11 +61,6 @@ public class BuchiComplementSVW<LETTER, STATE> implements IOperation<LETTER, STA
 	}
 	
 	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Operand " + mOperand.sizeInformation();
-	}
-	
-	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
 	}
@@ -77,12 +68,16 @@ public class BuchiComplementSVW<LETTER, STATE> implements IOperation<LETTER, STA
 	public BuchiComplementSVW(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand)
 					throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
 		mResult = new BuchiComplementAutomatonSVW<LETTER, STATE>(mServices, operand);
 		mLogger.info(exitMessage());
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override

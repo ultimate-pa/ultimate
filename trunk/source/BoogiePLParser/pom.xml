@@ -58,7 +58,7 @@
 								<echo>BoogiePLParser: boogieparserDir is ${boogieparserDir}</echo>
 								<echo>BoogiePLParser: flexBinary is ${flexBinary}</echo>
 
-								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
+								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
 									dir="${boogieparserDir}" failonerror="true">
 									<arg line="-expect 1" /> <!-- FIXME: Necessary for attributes of assert and assume -->
 									<arg value="Boogie.cup" />

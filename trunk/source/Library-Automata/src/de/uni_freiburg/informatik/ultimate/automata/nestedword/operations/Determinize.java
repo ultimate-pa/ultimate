@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
@@ -41,97 +40,121 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-
-public class Determinize<LETTER,STATE>
-		extends UnaryNwaOperation<LETTER, STATE>
-		implements IOperation<LETTER,STATE> {
-
+/**
+ * Determinizes a nested word automaton.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
+public final class Determinize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final DeterminizeNwa<LETTER, STATE> mDeterminized;
-	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
-	private final IStateDeterminizer<LETTER,STATE> mStateDeterminizer;
+	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
+	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 	private final IStateFactory<STATE> mStateFactory;
 	
 	/**
-	 * @param services Ultimate services
-	 * @param stateFactory state factory
-	 * @param operand operand
-	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 * Default constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if timeout exceeds
 	 */
-	public Determinize(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, 
-			final INestedWordAutomatonSimple<LETTER,STATE> operand)
-					throws AutomataOperationCanceledException {
-		super(services, operand);
-		mStateDeterminizer =
-				new PowersetDeterminizer<LETTER, STATE>(mOperand, true, stateFactory);
-		mStateFactory = stateFactory;
-		mLogger.info(startMessage());
-		mDeterminized = new DeterminizeNwa<LETTER, STATE>(
-				mServices, mOperand, mStateDeterminizer, mStateFactory);
-		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mDeterminized);
-		mLogger.info(exitMessage());
+	public Determinize(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand, null);
 	}
 	
 	/**
-	 * @param services Ultimate services
-	 * @param stateFactory state factory
-	 * @param operand operand
-	 * @param predefinedInitials predefined initial states
-	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 * Constructor with predefined initial states.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            operand
+	 * @param predefinedInitials
+	 *            predefined initial states
+	 * @throws AutomataOperationCanceledException
+	 *             if timeout exceeds
 	 */
-	public Determinize(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, 
-			final INestedWordAutomatonSimple<LETTER,STATE> operand,
-			final Set<STATE> predefinedInitials)
-					throws AutomataOperationCanceledException {
-		super(services, operand);
-		mStateDeterminizer =
-				new PowersetDeterminizer<LETTER, STATE>(mOperand, true, stateFactory);
+	public Determinize(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand, final Set<STATE> predefinedInitials)
+			throws AutomataOperationCanceledException {
+		super(services);
+		mOperand = operand;
+		mStateDeterminizer = new PowersetDeterminizer<>(mOperand, true, stateFactory);
 		mStateFactory = stateFactory;
-		mLogger.info(startMessage());
-		mDeterminized = new DeterminizeNwa<LETTER, STATE>(
-				mServices, mOperand, mStateDeterminizer, mStateFactory,
-				predefinedInitials, false);
-		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mDeterminized);
-		mLogger.info(exitMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		
+		mDeterminized = predefinedInitials == null
+				? new DeterminizeNwa<>(mServices, mOperand, mStateDeterminizer, mStateFactory)
+				: new DeterminizeNwa<>(mServices, mOperand, mStateDeterminizer, mStateFactory, predefinedInitials,
+						false);
+		mResult = new NestedWordAutomatonReachableStates<>(mServices, mDeterminized);
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 	
 	@Override
 	public String operationName() {
-		return "determinize";
+		return "Determinize";
 	}
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Result "
-				+ mResult.sizeInformation();
+		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
 	}
-
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
+	}
+	
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
-
-
+	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> sf) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
-			mLogger.info("Start testing correctness of " + operationName());
-
-			final INestedWordAutomaton<LETTER, STATE> resultDD = 
-					(new DeterminizeDD<LETTER, STATE>(mServices, sf, mOperand)).getResult();
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("Start testing correctness of " + operationName());
+			}
+			
+			final INestedWordAutomaton<LETTER, STATE> resultDd =
+					(new DeterminizeDD<LETTER, STATE>(mServices, stateFactory, mOperand)).getResult();
 			// should recognize same language as old computation
-			correct &= new IsIncluded<>(mServices, sf, resultDD, mResult).getResult();
-			correct &= new IsIncluded<>(mServices, sf, mResult, resultDD).getResult();
-			mLogger.info("Finished testing correctness of " + operationName());
+			correct &= new IsIncluded<>(mServices, stateFactory, resultDd, mResult).getResult();
+			correct &= new IsIncluded<>(mServices, stateFactory, mResult, resultDd).getResult();
+			
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("Finished testing correctness of " + operationName());
+			}
 		} else {
-			mLogger.warn("result was not tested");
+			if (mLogger.isWarnEnabled()) {
+				mLogger.warn("result was not tested");
+			}
 		}
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
-					operationName() + "Failed", "language is different",
-					mOperand);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+					"language is different", mOperand);
 		}
 		return correct;
 	}

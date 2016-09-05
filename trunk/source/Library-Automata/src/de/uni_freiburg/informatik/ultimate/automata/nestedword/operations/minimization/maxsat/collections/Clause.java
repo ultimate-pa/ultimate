@@ -40,11 +40,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <V> Kind of objects that are used as variables.
  */
 class Clause<V> {
-	protected final V[] mPositiveAtoms;
-	protected final V[] mNegativeAtoms;
-	protected IClauseCondition mClauseCondition;
-	private boolean mIsHorn;
-	private final int mHashCode;
+	/*
+	 * counters for true/false/neither clauses
+	 * 
+	 * TODO remove after debugging
+	 */
+	public static int trues = 0, falses = 0, neithers = 0;
 	
 	// default clause conditions
 	private static final TrueClauseCondition TRUE_CLAUSE_CONDITION =
@@ -54,13 +55,11 @@ class Clause<V> {
 	private static final UndeterminedClauseCondition UNDETERMINED_CLAUSE_CONDITION =
 			new UndeterminedClauseCondition();
 	
-	/*
-	 * counters for true/false/neither clauses
-	 * 
-	 * TODO remove after debugging
-	 */
-	public static int trues = 0, falses = 0, neithers = 0;
-	
+	protected final V[] mPositiveAtoms;
+	protected final V[] mNegativeAtoms;
+	protected IClauseCondition mClauseCondition;
+	private boolean mIsHorn;
+	private final int mHashCode;
 	
 	public Clause(final AbstractMaxSatSolver<V> solver, final V[] positiveAtoms, final V[] negativeAtoms) {
 		mPositiveAtoms = positiveAtoms;

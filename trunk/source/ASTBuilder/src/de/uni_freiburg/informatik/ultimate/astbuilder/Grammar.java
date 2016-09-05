@@ -39,9 +39,8 @@ public class Grammar {
     /**
      * Returns a textual description of this object.
      */
-    @Override
-	public String toString() {
-        final StringBuffer sb = new StringBuffer();
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
         sb.append("Grammar").append('[');
         sb.append(packageName);
         sb.append(',').append(imports);

@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
@@ -67,12 +68,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <STATE>
  *            state type
  */
-public abstract class AbstractMinimizeNwa<LETTER, STATE>
-		extends UnaryNwaOperation<LETTER, STATE>
-		implements IMinimizeNwa<LETTER, STATE>, IOperation<LETTER, STATE> {
+public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
+		implements IMinimizeNwa<LETTER, STATE> {
 	/**
-	 * The operand as more specific interface.
-	 * It shadows the superclass field with the same name.
+	 * The operand.
 	 */
 	protected final INestedWordAutomaton<LETTER, STATE> mOperand;
 	/**
@@ -112,7 +111,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	protected AbstractMinimizeNwa(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory, final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
-		super(services, operand);
+		super(services);
 		mOperand = operand;
 		mName = name;
 		mResult = null;
@@ -153,6 +152,11 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	public final String exitMessage() {
 		return "Finished " + operationName() + ". Reduced states from "
 				+ mOperand.size() + " to " + getResult().size() + '.';
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override

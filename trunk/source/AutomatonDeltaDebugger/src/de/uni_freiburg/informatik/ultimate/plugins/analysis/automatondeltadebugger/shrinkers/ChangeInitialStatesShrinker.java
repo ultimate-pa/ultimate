@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public class ChangeInitialStatesShrinker<LETTER, STATE> extends BridgeShrinker<Pair<STATE, STATE>, LETTER, STATE> {
-	
 	private List<Pair<STATE, STATE>> mPairs;
 	private boolean mChangeWasSuccessful;
 	private INestedWordAutomaton<LETTER, STATE> mAutomatonBackup;
@@ -65,7 +64,7 @@ public class ChangeInitialStatesShrinker<LETTER, STATE> extends BridgeShrinker<P
 		mChangeWasSuccessful = false;
 		mAutomatonBackup = null;
 	}
-
+	
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> createAutomaton(final List<Pair<STATE, STATE>> list) {
 		// create fresh automaton

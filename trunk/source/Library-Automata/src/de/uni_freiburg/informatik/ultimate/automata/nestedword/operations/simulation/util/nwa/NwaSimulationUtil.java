@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.ESymbolType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
@@ -90,6 +90,12 @@ public final class NwaSimulationUtil {
 			boolean considerVertex = true;
 			final STATE state1 = spoilerVertex.getQ0();
 			final STATE state2 = spoilerVertex.getQ1();
+			
+			// Ignore special cases
+			if (state1 == null || state2 == null) {
+				continue;
+			}
+			
 			// For delayed simulation we need to choose between the
 			// vertex with bit set to true or false
 			if (simulationType == ESimulationType.DELAYED) {
@@ -324,48 +330,48 @@ public final class NwaSimulationUtil {
 		final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(services, input, true);
 
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE_INTERNAL,
-				inputAnalyzer.getNumberOfSymbols(ESymbolType.INTERNAL));
+				inputAnalyzer.getNumberOfSymbols(SymbolType.INTERNAL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE_CALL,
-				inputAnalyzer.getNumberOfSymbols(ESymbolType.CALL));
+				inputAnalyzer.getNumberOfSymbols(SymbolType.CALL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE_RETURN,
-				inputAnalyzer.getNumberOfSymbols(ESymbolType.RETURN));
+				inputAnalyzer.getNumberOfSymbols(SymbolType.RETURN));
 
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS_INTERNAL,
-				inputAnalyzer.getNumberOfTransitions(ESymbolType.INTERNAL));
+				inputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS_CALL,
-				inputAnalyzer.getNumberOfTransitions(ESymbolType.CALL));
+				inputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS_RETURN,
-				inputAnalyzer.getNumberOfTransitions(ESymbolType.RETURN));
+				inputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
 
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_INTERNAL_DENSITY_MILLION,
-				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.INTERNAL) * 1_000_000));
+				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.INTERNAL) * 1_000_000));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_CALL_DENSITY_MILLION,
-				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.CALL) * 1_000_000));
+				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.CALL) * 1_000_000));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_RETURN_DENSITY_MILLION,
-				(int) Math.round(inputAnalyzer.getTransitionDensity(ESymbolType.RETURN) * 1_000_000));
+				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.RETURN) * 1_000_000));
 
 		final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, result, true);
 
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE_INTERNAL,
-				outputAnalyzer.getNumberOfSymbols(ESymbolType.INTERNAL));
+				outputAnalyzer.getNumberOfSymbols(SymbolType.INTERNAL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE_CALL,
-				outputAnalyzer.getNumberOfSymbols(ESymbolType.CALL));
+				outputAnalyzer.getNumberOfSymbols(SymbolType.CALL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE_RETURN,
-				outputAnalyzer.getNumberOfSymbols(ESymbolType.RETURN));
+				outputAnalyzer.getNumberOfSymbols(SymbolType.RETURN));
 
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS_INTERNAL,
-				outputAnalyzer.getNumberOfTransitions(ESymbolType.INTERNAL));
+				outputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS_CALL,
-				outputAnalyzer.getNumberOfTransitions(ESymbolType.CALL));
+				outputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS_RETURN,
-				outputAnalyzer.getNumberOfTransitions(ESymbolType.RETURN));
+				outputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
 
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_INTERNAL_DENSITY_MILLION,
-				(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.INTERNAL) * 1_000_000));
+				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.INTERNAL) * 1_000_000));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_CALL_DENSITY_MILLION,
-				(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.CALL) * 1_000_000));
+				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.CALL) * 1_000_000));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_RETURN_DENSITY_MILLION,
-				(int) Math.round(outputAnalyzer.getTransitionDensity(ESymbolType.RETURN) * 1_000_000));
+				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.RETURN) * 1_000_000));
 	}
 
 	/**

@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -121,9 +122,9 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 		final boolean s_TransformToCNF = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
-		mTransitionFormula = UnmodifiableTransFormula.parallelComposition(mLogger, mServices, getSerialNumber(), mgdScript,
+		mTransitionFormula = TransFormulaUtils.parallelComposition(mLogger, mServices, getSerialNumber(), mgdScript,
 				null, s_TransformToCNF, xnfConversionTechnique, transFormulas);
-		mTransitionFormulaWithBranchEncoders = UnmodifiableTransFormula.parallelComposition(mLogger, mServices,
+		mTransitionFormulaWithBranchEncoders = TransFormulaUtils.parallelComposition(mLogger, mServices,
 				getSerialNumber(), mgdScript, branchIndicator, s_TransformToCNF, xnfConversionTechnique, transFormulasWithBranchEncoders);
 	}
 

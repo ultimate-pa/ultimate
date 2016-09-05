@@ -130,4 +130,15 @@ public final class SpoilerWinningSinkExtended<LETTER, STATE> implements IWinning
 	public SpoilerNwaVertex<LETTER, STATE> getSpoilerAuxiliarySink() {
 		return mSpoilerSink;
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.
+	 * simulation.util.nwa.graph.IWinningSink#isWinningForSpoiler()
+	 */
+	@Override
+	public boolean isWinningForSpoiler() {
+		return true;
+	}
 }

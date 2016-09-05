@@ -1,4 +1,4 @@
-# input length = 26, runtime = 01:33:36
+# input length = 30, runtime = 2d03:12:13
 error_5 -> 11: 5 5 2 5 2 2 5 2 5 2 5
 error_6 -> 9: 5 5 2 5 3 5 3 5 1
 error_11 -> 6: 5 5 3 5 2 2

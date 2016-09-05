@@ -126,7 +126,7 @@ public class PredicateUnifier {
 		mSymbolTable = symbolTable;
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mImplicationChecker = new MonolithicImplicationChecker(mServices, mLogger, mMgnScript);
+		mImplicationChecker = new MonolithicImplicationChecker(mServices, mMgnScript);
 		mTerm2Predicates = new HashMap<Term, IPredicate>();
 		final Term trueTerm = mScript.term("true");
 		IPredicate truePredicate = null;

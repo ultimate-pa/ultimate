@@ -34,7 +34,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLRUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -150,7 +150,7 @@ public class EquivalentCells {
 		for (final TermVariable representative : unionFind.getAllRepresentatives()) {
 			final List<TermVariable> equalInOutVars = new ArrayList<TermVariable>();
 			for (final TermVariable member : unionFind.getEquivalenceClassMembers(representative)) {
-				if (TransFormulaUtils.isInvar(member, mTransFormula) || TransFormulaUtils.isOutvar(member, mTransFormula)) {
+				if (TransFormulaLRUtils.isInvar(member, mTransFormula) || TransFormulaLRUtils.isOutvar(member, mTransFormula)) {
 					equalInOutVars.add(member);
 				}
 			}
@@ -175,7 +175,7 @@ public class EquivalentCells {
 	private TermVariable computeInOutRepresentative(UnionFind<TermVariable> uf, TermVariable ufRepresentative) {
 		final Set<TermVariable> eq = uf.getEquivalenceClassMembers(ufRepresentative);
 		for (final TermVariable member : eq) {
-			if (TransFormulaUtils.isInvar(member, mTransFormula) || TransFormulaUtils.isOutvar(member, mTransFormula)) {
+			if (TransFormulaLRUtils.isInvar(member, mTransFormula) || TransFormulaLRUtils.isOutvar(member, mTransFormula)) {
 				return member;
 			}
 		}

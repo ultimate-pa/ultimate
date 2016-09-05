@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -55,14 +56,16 @@ public class CodeBlockFactory implements IStorable {
 	private final ManagedScript mMgdScript;
 	private final ModifiableGlobalVariableManager mMgvManager;
 	private int mSerialNumberCounter = 0;
+	private final Boogie2SmtSymbolTable mSymbolTable;
 
 	public CodeBlockFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final ModifiableGlobalVariableManager mgvManager) {
+			final ModifiableGlobalVariableManager mgvManager, final Boogie2SmtSymbolTable symbolTable) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mMgdScript = mgdScript;
 		mMgvManager = mgvManager;
+		mSymbolTable = symbolTable;
 	}
 
 	public Call constructCall(final ProgramPoint source, final ProgramPoint target, final CallStatement call) {
@@ -73,7 +76,7 @@ public class CodeBlockFactory implements IStorable {
 			final ProgramPoint target, final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
 		return new InterproceduralSequentialComposition(mSerialNumberCounter++, source, target, mMgdScript, mMgvManager,
-				simplify, extPqe, codeBlocks, mLogger, mServices, xnfConversionTechnique, simplificationTechnique);
+				simplify, extPqe, codeBlocks, mLogger, mServices, xnfConversionTechnique, simplificationTechnique, mSymbolTable);
 	}
 
 	public GotoEdge constructGotoEdge(final ProgramPoint source, final ProgramPoint target) {
@@ -95,7 +98,7 @@ public class CodeBlockFactory implements IStorable {
 			final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
 		return new SequentialComposition(mSerialNumberCounter++, source, target, mMgdScript, mMgvManager, simplify,
-				extPqe, mServices, codeBlocks, xnfConversionTechnique, simplificationTechnique);
+				extPqe, mServices, codeBlocks, xnfConversionTechnique, simplificationTechnique, mSymbolTable);
 	}
 
 	public StatementSequence constructStatementSequence(final ProgramPoint source, final ProgramPoint target,

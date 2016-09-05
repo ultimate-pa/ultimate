@@ -44,4 +44,13 @@ public interface IWinningSink<LETTER, STATE> {
 	 * @return The priority of the sink, which determines the winning player.
 	 */
 	public int getPriority();
+
+	/**
+	 * Whether the sink is winning for the player <tt>Spoiler</tt>, else it is
+	 * winning for <tt>Duplicator</tt>.
+	 * 
+	 * @return <tt>True</tt> if the sink is winning for <tt>Spoiler</tt>,
+	 *         <tt>false</tt> if it is winning for <tt>Duplicator</tt>.
+	 */
+	public boolean isWinningForSpoiler();
 }

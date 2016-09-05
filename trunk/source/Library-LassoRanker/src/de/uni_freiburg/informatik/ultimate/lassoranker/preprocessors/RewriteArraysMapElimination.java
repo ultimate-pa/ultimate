@@ -58,8 +58,8 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 
 	// Parameters for the MapEliminator
 	private static boolean ADD_INEQUALITIES = false;
-	private static boolean ADD_INDEX_ASSIGNMENT = false;
-	private static boolean ONLY_TRIVIAL_IMPLICATIONS = false;
+	private static boolean ONLY_TRIVIAL_IMPLICATIONS_INDEX_ASSIGNMENT = true;
+	private static boolean ONLY_TRIVIAL_IMPLICATIONS_ARRRAY_WRITE = false;
 	private static boolean ONLY_INDICES_IN_FORMULA = true;
 
 	private final IUltimateServiceProvider mServices;
@@ -105,7 +105,8 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 	public Collection<LassoUnderConstruction> process(final LassoUnderConstruction lasso) throws TermException {
 		final MapEliminator elim = new MapEliminator(mServices, mManagedScript, mSymbolTable, mReplacementVarFactory,
 				mSimplificationTechnique, mXnfConversionTechnique, Arrays.asList(lasso.getStem(), lasso.getLoop()),
-				ADD_INEQUALITIES, ADD_INDEX_ASSIGNMENT, ONLY_TRIVIAL_IMPLICATIONS, ONLY_INDICES_IN_FORMULA);
+				ADD_INEQUALITIES, ONLY_TRIVIAL_IMPLICATIONS_INDEX_ASSIGNMENT, ONLY_TRIVIAL_IMPLICATIONS_ARRRAY_WRITE,
+				ONLY_INDICES_IN_FORMULA);
 		final EqualityAnalysisResult equalityAnalysisStem = new EqualityAnalysisResult(elim.getDoubletons());
 		final EqualitySupportingInvariantAnalysis esia = new EqualitySupportingInvariantAnalysis(elim.getDoubletons(),
 				mSymbolTable, mManagedScript.getScript(), mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);

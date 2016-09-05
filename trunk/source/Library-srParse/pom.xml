@@ -29,7 +29,7 @@
 								<echo>Library-srParse: srparseparserDir is ${srparseparserDir}</echo>
 								<echo>Library-srParse: flexBinary is ${flexBinary}</echo>
 
-								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
+								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
 									dir="${srparseparserDir}" failonerror="true">
 									<arg value="Requirements.cup" />
 								</java>

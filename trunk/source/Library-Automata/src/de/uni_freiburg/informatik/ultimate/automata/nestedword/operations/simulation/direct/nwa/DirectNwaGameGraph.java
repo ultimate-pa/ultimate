@@ -120,7 +120,7 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 			mNwa = new RemoveUnreachable<LETTER, STATE>(services, preparedNwa).getResult();
 		}
 		mGeneration = new NwaGameGraphGeneration<LETTER, STATE>(services, getProgressTimer(), getLogger(), mNwa, this,
-				ESimulationType.DIRECT, possibleEquivalenceClasses);
+				ESimulationType.DIRECT, possibleEquivalenceClasses, true);
 	}
 
 	/*

@@ -19,55 +19,85 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizedState;
 
-
-public interface IStateDeterminizer<LETTER,STATE> {
-	
-	DeterminizedState<LETTER,STATE> initialState();
+/**
+ * Interface for state determinizers.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
+public interface IStateDeterminizer<LETTER, STATE> {
+	/**
+	 * @return The initial state.
+	 */
+	DeterminizedState<LETTER, STATE> initialState();
 	
 	/**
-	 * Given a DeterminizedState detState, return the successor state under an
-	 * internal transition labeled with symbol.
+	 * @param detState
+	 *            determinized state
+	 * @param letter
+	 *            letter
+	 * @return Given a DeterminizedState detState, return the successor state under an internal transition labeled with
+	 *         symbol.
 	 */
-	DeterminizedState<LETTER,STATE> internalSuccessor(DeterminizedState<LETTER,STATE> detState,
-											 LETTER symbol);
-
+	DeterminizedState<LETTER, STATE> internalSuccessor(DeterminizedState<LETTER, STATE> detState, LETTER letter);
 	
 	/**
-	 * Compute successor detState under call transition of a detState
-	 * and symbol. 
+	 * @param detState
+	 *            determinized state
+	 * @param letter
+	 *            letter
+	 * @return The successor detState under call transition of a detState and symbol.
 	 */
-	DeterminizedState<LETTER,STATE> callSuccessor(DeterminizedState<LETTER,STATE> detState, 
-										 LETTER symbol);
-
+	DeterminizedState<LETTER, STATE> callSuccessor(DeterminizedState<LETTER, STATE> detState, LETTER letter);
 	
 	/**
-	 * Given a DeterminizedState detState, return the successor state under a
-	 * return transition for linear predecessor linPred labeled with symbol.
+	 * @param detState
+	 *            determinized state
+	 * @param linPred
+	 *            linear predecessor state
+	 * @param letter
+	 *            letter
+	 * @return Given a DeterminizedState detState, return the successor state under a return transition for linear
+	 *         predecessor linPred labeled with symbol.
 	 */
-	DeterminizedState<LETTER,STATE> returnSuccessor(DeterminizedState<LETTER,STATE> detState,
-										   DeterminizedState<LETTER,STATE> linPred,
-										   LETTER symbol);
-
+	DeterminizedState<LETTER, STATE> returnSuccessor(DeterminizedState<LETTER, STATE> detState,
+			DeterminizedState<LETTER, STATE> linPred, LETTER letter);
+	
+	/**
+	 * @return Maximum degree of nondeterminism.
+	 */
 	int getMaxDegreeOfNondeterminism();
 	
 	/**
-	 * If true, the constructed DeterminizedStates are sets of DoubleDecker,
+	 * If {@code true}, the constructed DeterminizedStates are sets of
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker DoubleDecker},
 	 * needed, e.g. for exact determinization of nested word automata.
-	 * If false, the constructed DeterminziedStates are sets of States. This
+	 * If {@code false}, the constructed DeterminizedStates are sets of {@link STATE}s. This
 	 * is sufficient for exact determinization of finite automata. We also use
-	 * these DeterminziedStates for determinizations where the resulting
-	 * automaton recognizes a superset of the input automatons language.
+	 * these DeterminizedStates for determinizations where the resulting
+	 * automaton recognizes a superset of the input automaton's language.
+	 * 
+	 * @return {@code true} iff {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker
+	 *         DoubleDecker} is used.
 	 */
 	boolean useDoubleDeckers();
 	
-	STATE getState(DeterminizedState<LETTER,STATE> determinizedState);
+	/**
+	 * @param determinizedState
+	 *            A determinized state.
+	 * @return the corresponding state
+	 */
+	STATE getState(DeterminizedState<LETTER, STATE> determinizedState);
 }

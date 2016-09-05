@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArra
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLRUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -195,12 +195,12 @@ public class TransFormulaLRWithArrayInformation {
 			final ILogger logger, final ManagedScript ftvc, 
 			final Boogie2SmtSymbolTable boogie2smt, final List<List<ArrayEquality>> arrayEqualities, final SingleUpdateNormalFormTransformer[] sunfts) {
 		final TransFormulaLR afterSunft = constructTransFormulaLRWInSunf(services, mXnfConversionTechnique, mSimplificationTechnique, logger, ftvc, mReplacementVarFactory, mScript.getScript(), mTransFormulaLR, arrayEqualities, sunfts);
-		final LBool notStronger = TransFormulaUtils.implies(mServices, mLogger, mTransFormulaLR, afterSunft, mScript.getScript(), boogie2smt);
+		final LBool notStronger = TransFormulaLRUtils.implies(mServices, mLogger, mTransFormulaLR, afterSunft, mScript.getScript(), boogie2smt);
 		if (notStronger != LBool.SAT && notStronger != LBool.UNSAT) {
 			logger.warn("result of sunf transformation notStronger check is " + notStronger);
 		}
 		assert (notStronger != LBool.SAT) : "result of sunf transformation too strong";
-		final LBool notWeaker = TransFormulaUtils.implies(mServices, mLogger, afterSunft, mTransFormulaLR, mScript.getScript(), boogie2smt);
+		final LBool notWeaker = TransFormulaLRUtils.implies(mServices, mLogger, afterSunft, mTransFormulaLR, mScript.getScript(), boogie2smt);
 		if (notWeaker != LBool.SAT && notWeaker != LBool.UNSAT) {
 			logger.warn("result of sunf transformation notWeaker check is " + notWeaker);
 		}
@@ -220,7 +220,7 @@ public class TransFormulaLRWithArrayInformation {
 				// array also occurs in loop, we have to add the index
 				// of this ArrayCellReplacement
 				final ArrayIndex foreignIndex = computeForeignIndex(arrayRv, acrvi.getIndex(), acrvi.termVariableToRankVarMappingForIndex());
-				assert (TransFormulaUtils.allVariablesAreInVars(foreignIndex, mTransFormulaLR));
+				assert (TransFormulaLRUtils.allVariablesAreInVars(foreignIndex, mTransFormulaLR));
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Adding foreign index " + foreignIndex + " for array " + arrayInVar);
 				}
@@ -317,7 +317,7 @@ public class TransFormulaLRWithArrayInformation {
 	public ArrayIndex getOrConstructIndexRepresentative(final ArrayIndex indexInstance) {
 		ArrayIndex indexRepresentative = mIndexInstance2IndexRepresentative.get(indexInstance);
 		if (indexRepresentative == null) {
-			indexRepresentative = new ArrayIndex(TransFormulaUtils.translateTermVariablesToDefinitions(mScript.getScript(), mTransFormulaLR, indexInstance));
+			indexRepresentative = new ArrayIndex(TransFormulaLRUtils.translateTermVariablesToDefinitions(mScript.getScript(), mTransFormulaLR, indexInstance));
 			mIndexInstance2IndexRepresentative.put(indexInstance, indexRepresentative);
 		}
 		return indexRepresentative;
@@ -433,7 +433,7 @@ public class TransFormulaLRWithArrayInformation {
 				final ArrayGeneration fg = mGeneration2OriginalGeneration.get(ag);
 				assert fg != null : "no original generation!";
 				final TermVariable representative = fg.getRepresentative();
-				if (TransFormulaUtils.isInvar(representative, mTransFormula)) {
+				if (TransFormulaLRUtils.isInvar(representative, mTransFormula)) {
 					mInstance2Representative.put(array, representative);
 				} else {
 					throw new AssertionError("no invar");
@@ -499,7 +499,7 @@ public class TransFormulaLRWithArrayInformation {
 
 			private void determineRepresentative() {
 				for (final TermVariable array : mArrays) {
-					if (TransFormulaUtils.isInvar(array, mTransFormula)) {
+					if (TransFormulaLRUtils.isInvar(array, mTransFormula)) {
 						mRepresentative = array;
 						return;
 					}
@@ -567,13 +567,16 @@ public class TransFormulaLRWithArrayInformation {
 							break;
 						}
 					}
-					assert firstGenerationArray != null : arrayInVar + " has no progenitor";
-					if (firstGenerationArray != arrayInVar) {
-						assert occursInArrayEqualities(arrayInVar) : 
-							"if arrayInVar of foreign index is not first generation it has to occur in array equality";
-						assert occursInArrayEqualities(firstGenerationArray) : 
-							"if arrayInVar of foreign index is not first generation the first generation has to occur in array equality";
+					if (firstGenerationArray == null) {
+						mLogger.warn(arrayInVar + " has no progenitor");
 					}
+//					assert firstGenerationArray != null : arrayInVar + " has no progenitor";
+//					if (firstGenerationArray != arrayInVar) {
+//						assert occursInArrayEqualities(arrayInVar) : 
+//							"if arrayInVar of foreign index is not first generation it has to occur in array equality";
+//						assert occursInArrayEqualities(firstGenerationArray) : 
+//							"if arrayInVar of foreign index is not first generation the first generation has to occur in array equality";
+//					}
 					final Set<ArrayIndex> foreignIndicesForInVar = foreignIndices.getImage(arrayInVar);
 					for (final ArrayIndex foreignIndex : foreignIndicesForInVar) {
 						addFirstGenerationIndexPair(firstGenerationArray, foreignIndex);
@@ -602,12 +605,12 @@ public class TransFormulaLRWithArrayInformation {
 		private void addFirstGenerationIndexPair(final TermVariable firstGeneration, final ArrayIndex index) {
 			mArrayFirstGeneration2Indices.addPair(firstGeneration, index);
 			if (mTransFormulaLR.getInVarsReverseMapping().containsKey(firstGeneration)) {
-				if (TransFormulaUtils.allVariablesAreInVars(index, getTransFormulaLR())) {
+				if (TransFormulaLRUtils.allVariablesAreInVars(index, getTransFormulaLR())) {
 					final ArrayIndex inReplacedByOut = new ArrayIndex(SmtUtils.substitutionElementwise(index, mInVars2OutVars));
 					mArrayFirstGeneration2Indices.addPair(firstGeneration, inReplacedByOut);
 					mAdditionalArrayReads.addAll(extractArrayReads(inReplacedByOut));
 				}
-				if (TransFormulaUtils.allVariablesAreOutVars(index, getTransFormulaLR())) {
+				if (TransFormulaLRUtils.allVariablesAreOutVars(index, getTransFormulaLR())) {
 					final ArrayIndex outReplacedByIn = new ArrayIndex(SmtUtils.substitutionElementwise(index, mOutVars2InVars));
 					mArrayFirstGeneration2Indices.addPair(firstGeneration, outReplacedByIn);
 					mAdditionalArrayReads.addAll(extractArrayReads(outReplacedByIn));
@@ -660,13 +663,13 @@ public class TransFormulaLRWithArrayInformation {
 				for (final ArrayIndex index : indicesOfAllGenerations) {
 					final boolean requiresRepVar = requiresRepVar(instance, index);
 					if (requiresRepVar) {
-						final TermVariable arrayRepresentative = (TermVariable) TransFormulaUtils.getDefinition(mTransFormulaLR, instance);
+						final TermVariable arrayRepresentative = (TermVariable) TransFormulaLRUtils.getDefinition(mTransFormulaLR, instance);
 						final ArrayIndex indexRepresentative = getOrConstructIndexRepresentative(index);
 						{
 							final TermVariable inVarInstance = computeInVarInstance(instance);
 							assert getTransFormulaLR().getInVarsReverseMapping().containsKey(inVarInstance);
 							final ArrayIndex inVarIndex = computeInVarIndex(index);
-							assert TransFormulaUtils.allVariablesAreInVars(inVarIndex, getTransFormulaLR());
+							assert TransFormulaLRUtils.allVariablesAreInVars(inVarIndex, getTransFormulaLR());
 							final ArrayCellReplacementVarInformation acrvi = 
 									new ArrayCellReplacementVarInformation(
 											inVarInstance, arrayRepresentative, 
@@ -679,7 +682,7 @@ public class TransFormulaLRWithArrayInformation {
 							final TermVariable outVarInstance = computeOutVarInstance(instance);
 							assert getTransFormulaLR().getOutVarsReverseMapping().containsKey(outVarInstance);
 							final ArrayIndex outVarIndex = computeOutVarIndex(index);
-							assert TransFormulaUtils.allVariablesAreOutVars(outVarIndex, getTransFormulaLR());
+							assert TransFormulaLRUtils.allVariablesAreOutVars(outVarIndex, getTransFormulaLR());
 							final ArrayCellReplacementVarInformation acrvi = 
 									new ArrayCellReplacementVarInformation(
 											outVarInstance, arrayRepresentative, 
@@ -757,7 +760,7 @@ public class TransFormulaLRWithArrayInformation {
 		// check if arrayInstance is inVar or outVar and if all indices are inVars or outVars
 		if (getTransFormulaLR().getOutVarsReverseMapping().keySet().contains(arrayInstance) || 
 				getTransFormulaLR().getInVarsReverseMapping().keySet().contains(arrayInstance)) {
-			return TransFormulaUtils.allVariablesAreVisible(index, getTransFormulaLR());
+			return TransFormulaLRUtils.allVariablesAreVisible(index, getTransFormulaLR());
 		} else {
 			return false;
 		}
@@ -771,16 +774,16 @@ public class TransFormulaLRWithArrayInformation {
 	 * index is an inVar.
 	 */
 	public boolean isInVarCell(final TermVariable arrayInstance, final ArrayIndex index) {
-		if (TransFormulaUtils.isInvar(arrayInstance, getTransFormulaLR())) {
-			return TransFormulaUtils.allVariablesAreInVars(index, getTransFormulaLR());
+		if (TransFormulaLRUtils.isInvar(arrayInstance, getTransFormulaLR())) {
+			return TransFormulaLRUtils.allVariablesAreInVars(index, getTransFormulaLR());
 		} else {
 			return false;
 		}
 	}
 
 	public boolean isOutVarCell(final TermVariable arrayInstance, final ArrayIndex index) {
-		if (TransFormulaUtils.isOutvar(arrayInstance, getTransFormulaLR())) {
-			return TransFormulaUtils.allVariablesAreOutVars(index, getTransFormulaLR());
+		if (TransFormulaLRUtils.isOutvar(arrayInstance, getTransFormulaLR())) {
+			return TransFormulaLRUtils.allVariablesAreOutVars(index, getTransFormulaLR());
 		} else {
 			return false;
 		}

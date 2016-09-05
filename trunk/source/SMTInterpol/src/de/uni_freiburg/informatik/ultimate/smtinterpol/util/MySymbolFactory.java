@@ -18,8 +18,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.util;
 
-import java_cup.runtime.Symbol;
-import java_cup.runtime.SymbolFactory;
+import com.github.jhoenicke.javacup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.SymbolFactory;
 
 public class MySymbolFactory implements SymbolFactory {
 	public class LineColumnSymbol extends Symbol {

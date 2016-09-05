@@ -307,4 +307,52 @@ public class TransFormulaBuilder {
 		tfb.setInfeasibility(infeasibility);
 		return tfb.finishConstruction(script);
 	}
+	
+	
+	public static UnmodifiableTransFormula constructCopy(final TransFormula tf, 
+			final Collection<IProgramVar> inVarsToRemove, final Collection<IProgramVar> outVarsToRemove, final ManagedScript script) {
+		Set<TermVariable> branchEncoders;
+		if (tf instanceof UnmodifiableTransFormula) {
+			branchEncoders = ((UnmodifiableTransFormula) tf).getBranchEncoders();
+		} else {
+			branchEncoders = Collections.emptySet();
+		}
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), 
+				branchEncoders.isEmpty(), branchEncoders.isEmpty() ? null : branchEncoders, false);
+		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
+		for (final IProgramVar pv : inVarsToRemove) {
+			assert tfb.mInVars.containsKey(pv) : "illegal to remove variable not that is contained";
+			final TermVariable inVar = tfb.mInVars.get(pv);
+			final TermVariable outVar = tfb.mOutVars.get(pv);
+			tfb.mInVars.remove(pv);
+			if (inVar != outVar) {
+				// inVar does not occurs already as outVar, we have to add inVar
+				// to auxVars
+				final boolean modified = auxVars.add(inVar);
+				assert modified : "similar var already there";
+			} 
+		}
+		for (final IProgramVar pv : outVarsToRemove) {
+			assert tfb.mOutVars.containsKey(pv) : "illegal to remove variable not that is contained";
+			final TermVariable inVar = tfb.mInVars.get(pv);
+			final TermVariable outVar = tfb.mOutVars.get(pv);
+			tfb.mOutVars.remove(pv);
+			if (inVar != outVar) {
+				// outVar does not occurs already as inVar, we have to add outVar
+				// to auxVars
+				final boolean modified = auxVars.add(outVar);
+				assert modified : "similar var already there";
+			}
+		}
+		final Infeasibility infeasibility;
+		if (tf instanceof UnmodifiableTransFormula) {
+			infeasibility = ((UnmodifiableTransFormula) tf).isInfeasible();
+		} else {
+			infeasibility = Infeasibility.NOT_DETERMINED;
+		}
+		tfb.setFormula(tf.getFormula());
+		tfb.setInfeasibility(infeasibility);
+		tfb.addAuxVarsButRenameToFreshCopies(auxVars, script);
+		return tfb.finishConstruction(script);
+	}
 }

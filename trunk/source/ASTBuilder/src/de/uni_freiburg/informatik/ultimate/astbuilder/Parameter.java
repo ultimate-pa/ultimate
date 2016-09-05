@@ -58,9 +58,8 @@ public class Parameter {
     /**
      * Returns a textual description of this object.
      */
-    @Override
-	public String toString() {
-        final StringBuffer sb = new StringBuffer();
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
         sb.append("Parameter").append('[');
         sb.append(name);
         sb.append(',').append(type);

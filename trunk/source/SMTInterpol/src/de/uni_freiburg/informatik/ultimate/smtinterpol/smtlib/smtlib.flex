@@ -18,7 +18,7 @@
  */
 /* SMT-Lib lexer */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib;
-import java_cup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.Symbol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
 
 /**
@@ -30,8 +30,9 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
 %class Lexer
 %public
 %unicode
-%cupsym LexerSymbols
-%cup
+%implements com.github.jhoenicke.javacup.runtime.Scanner
+%type com.github.jhoenicke.javacup.runtime.Symbol
+%function next_token
 %line
 %column
 

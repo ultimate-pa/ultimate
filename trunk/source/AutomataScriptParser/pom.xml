@@ -56,7 +56,7 @@
 								<echo>AutomataScriptParser: automatascriptparserDir is ${automatascriptparserDir}</echo>
 								<echo>AutomataScriptParser: flexBinary is ${flexBinary}</echo>
 
-								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
+								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
 									dir="${automatascriptparserDir}" failonerror="true">
 									<arg line="-parser Parser"/>
 									<arg value="AutomataTestFileGrammar.cup" />

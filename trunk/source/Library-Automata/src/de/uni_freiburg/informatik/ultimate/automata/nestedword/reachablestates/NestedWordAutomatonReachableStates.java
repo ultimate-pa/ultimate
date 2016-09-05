@@ -76,7 +76,20 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INestedWordAutomatonOldApi<LETTER, STATE>,
 		INestedWordAutomaton<LETTER, STATE>, IDoubleDeckerAutomaton<LETTER, STATE>,
 		IAutomatonWithSccComputation<LETTER, STATE> {
+	/**
+	 * Construct a run for each accepting state. Use this only while
+	 * developing/debugging/testing the construction of runs.
+	 */
+	private static final boolean EXT_RUN_CONSTRUCTION_TESTING = false;
+	
+	/**
+	 * Construct a lasso for each accepting state/accepting summary. Use this
+	 * only while developing/debugging/testing the construction of lassos.
+	 */
+	private static final boolean EXT_LASSO_CONSTRUCTION_TESTING = false;
 		
+	protected final IStateFactory<STATE> mStateFactory;
+	
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	
@@ -85,8 +98,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	private final Set<LETTER> mInternalAlphabet;
 	private final Set<LETTER> mCallAlphabet;
 	private final Set<LETTER> mReturnAlphabet;
-	
-	protected final IStateFactory<STATE> mStateFactory;
 	
 	private final Set<STATE> mInitialStates = new HashSet<STATE>();
 	private final Set<STATE> mFinalStates = new HashSet<STATE>();
@@ -130,18 +141,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	private AncestorComputation mOnlyLiveStates;
 	private AcceptingSummariesComputation mAcceptingSummaries;
 	private AcceptingComponentsAnalysis<LETTER, STATE> mAcceptingComponentsAnalysis;
-	
-	/**
-	 * Construct a run for each accepting state. Use this only while
-	 * developing/debugging/testing the construction of runs.
-	 */
-	private static final boolean EXT_RUN_CONSTRUCTION_TESTING = false;
-	
-	/**
-	 * Construct a lasso for each accepting state/accepting summary. Use this
-	 * only while developing/debugging/testing the construction of lassos.
-	 */
-	private static final boolean EXT_LASSO_CONSTRUCTION_TESTING = false;
 	
 	// private void addSummary(StateContainer<LETTER,STATE> callPred,
 	// StateContainer<LETTER,STATE> returnSucc) {

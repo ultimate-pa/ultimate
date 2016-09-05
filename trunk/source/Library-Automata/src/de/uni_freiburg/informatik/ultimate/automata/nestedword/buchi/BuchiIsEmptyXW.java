@@ -37,17 +37,16 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Class that provides the Buchi emptiness check for nested word automata.
@@ -58,9 +57,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  *            Content. Type of the labels (the content) of the automata states.
  * @version 2010-12-18
  */
-public class BuchiIsEmptyXW<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	private final AutomataLibraryServices mServices;
-	
+public class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	INestedWordAutomaton<LETTER, STATE> mOperand;
 	final Boolean mResult;
 	
@@ -72,12 +69,9 @@ public class BuchiIsEmptyXW<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	STATE mWitnessInitial;
 	STATE mWitnessCritical;
 	
-	private final ILogger mLogger;
-	
 	public BuchiIsEmptyXW(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> nwa) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mOperand = nwa;
 		mLogger.info(startMessage());
 		mResult = checkEmptiness();
@@ -90,13 +84,13 @@ public class BuchiIsEmptyXW<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	}
 	
 	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Operand " + mOperand.sizeInformation();
+	public String exitMessage() {
+		return "Finished " + operationName() + " Result is " + mResult;
 	}
 	
 	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + " Result is " + mResult;
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override
@@ -409,7 +403,7 @@ public class BuchiIsEmptyXW<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			extendPathBeyondOrigin(workPair.mSource, workPair.mTarget,
 					mReachabilityBridge, worklist);
 					
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (isCancellationRequested()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
@@ -433,7 +427,7 @@ public class BuchiIsEmptyXW<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			extendAcceptingPathCallReturn(workPair.mSource, workPair.mTarget,
 					callAlphabet, returnAlphabet, mReachabilityBridge,
 					mReachabilityBridgeA, worklist);
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (isCancellationRequested()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
@@ -466,7 +460,7 @@ public class BuchiIsEmptyXW<LETTER, STATE> implements IOperation<LETTER, STATE> 
 					mReachabilityBridgeC, worklist);
 			extendPathBeyondOrigin(workPair.mSource, workPair.mTarget,
 					mReachabilityBridgeC, worklist);
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (isCancellationRequested()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}

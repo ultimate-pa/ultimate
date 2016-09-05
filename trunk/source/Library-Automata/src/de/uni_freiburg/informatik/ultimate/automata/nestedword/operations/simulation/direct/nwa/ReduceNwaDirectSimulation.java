@@ -32,7 +32,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.TestBuchiEquivalence;
@@ -58,13 +57,12 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class ReduceNwaDirectSimulation<LETTER, STATE>
-		extends MinimizeDfaSimulation<LETTER, STATE>
-		implements IMinimizeNwa<LETTER, STATE>, IOperation<LETTER, STATE> {
+public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaSimulation<LETTER, STATE>
+		implements IMinimizeNwa<LETTER, STATE> {
 
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
-	 * automaton using SCCs as an optimization.<br/>
+	 * automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -79,7 +77,7 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE>
 	 */
 	public ReduceNwaDirectSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, true);
+		this(services, stateFactory, operand, false);
 	}
 
 	/**
@@ -141,12 +139,18 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE>
 								stateFactory, possibleEquivalenceClasses)));
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.
+	 * simulation.direct.MinimizeDfaSimulation#checkResult(de.uni_freiburg.
+	 * informatik.ultimate.automata.statefactory.IStateFactory)
+	 */
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		getLogger().info("Start testing correctness of " + operationName());
-		final boolean correct =
-				(new TestBuchiEquivalence<LETTER, STATE>(getServices(),stateFactory, getOperand(), getResult()))
-						.getResult();
+		final boolean correct = (new TestBuchiEquivalence<LETTER, STATE>(getServices(), stateFactory, getOperand(),
+				getResult())).getResult();
 		getLogger().info("Finished testing correctness of " + operationName());
 		return correct;
 	}

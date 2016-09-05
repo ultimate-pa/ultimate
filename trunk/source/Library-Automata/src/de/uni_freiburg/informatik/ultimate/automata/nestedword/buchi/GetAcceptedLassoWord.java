@@ -28,24 +28,19 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class GetAcceptedLassoWord<LETTER, STATE> implements IOperation<LETTER,STATE> {
-
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
+public class GetAcceptedLassoWord<LETTER, STATE> extends UnaryNwaOperation<LETTER,STATE> {
 
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final NestedLassoWord<LETTER> mAcceptedWord;
 
 	public GetAcceptedLassoWord(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
 		final BuchiIsEmpty<LETTER, STATE> isEmpty = new BuchiIsEmpty<LETTER, STATE>(mServices, operand);
@@ -57,6 +52,11 @@ public class GetAcceptedLassoWord<LETTER, STATE> implements IOperation<LETTER,ST
 		}
 		mLogger.info(exitMessage());
 	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
+	}
 
 	@Override
 	public NestedLassoWord<LETTER> getResult() {
@@ -66,12 +66,6 @@ public class GetAcceptedLassoWord<LETTER, STATE> implements IOperation<LETTER,ST
 	@Override
 	public String operationName() {
 		return "getAcceptedLassoWord";
-	}
-
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Operand "
-				+ mOperand.sizeInformation();
 	}
 
 	@Override

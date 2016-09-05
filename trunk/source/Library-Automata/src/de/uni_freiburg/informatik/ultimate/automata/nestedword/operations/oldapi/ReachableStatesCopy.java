@@ -88,10 +88,15 @@ public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETT
 				nwa.getReturnAlphabet(), nwa.getStateFactory());
 		super.mRemoveDeadEnds = removeDeadEnds;
 		super.mRemoveNonLiveStates = removeNonLiveStates;
+		final boolean operandHasInitialStates = mOperand.getInitialStates().iterator().hasNext();
+		STATE sinkState = null;
+		if (totalize || !operandHasInitialStates) {
+			sinkState = addSinkState();
+		}
 		traverseDoubleDeckerGraph();
 		((DoubleDeckerAutomaton<LETTER, STATE>) super.mTraversedNwa).setUp2Down(getUp2DownMapping());
-		if (totalize || (!mOperand.getInitialStates().iterator().hasNext())) {
-			makeAutomatonTotal();
+		if (totalize) {
+			makeAutomatonTotal(sinkState);
 		}
 		mLogger.info(exitMessage());
 //		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices,
@@ -118,12 +123,8 @@ public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETT
 //				(IDoubleDeckerAutomaton) mTraversedNwa)).getResult() : "down states inconsistent";
 	}
 	
-	private void makeAutomatonTotal() throws AutomataOperationCanceledException {
-		final STATE sinkState = mTraversedNwa.getStateFactory().createSinkStateContent();
-		final boolean isInitial = !mOperand.getInitialStates().iterator().hasNext();
-		final boolean isFinal = mComplement;
-		((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(isInitial, isFinal, sinkState);
-		
+	private void makeAutomatonTotal(final STATE sinkState) throws AutomataOperationCanceledException {
+		assert sinkState != null : "sink state must not be null";
 		for (final STATE state : mTraversedNwa.getStates()) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				throw new AutomataOperationCanceledException(this.getClass());
@@ -149,6 +150,14 @@ public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETT
 				}
 			}
 		}
+	}
+
+	private STATE addSinkState() {
+		final STATE sinkState = mTraversedNwa.getStateFactory().createSinkStateContent();
+		final boolean isInitial = !mOperand.getInitialStates().iterator().hasNext();
+		final boolean isFinal = mComplement;
+		((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(isInitial, isFinal, sinkState);
+		return sinkState;
 	}
 	
 	@Override

@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -49,9 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class MinimizeDfaHopcroftArrays<LETTER, STATE>
-		extends AbstractMinimizeNwaDd<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
 	// ArrayList and HashMap for mapping STATE to int and vice versa.
 	private ArrayList<STATE> mInt2state;
 	private HashMap<STATE, Integer> mState2int;
@@ -391,6 +388,93 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 	}
 	
 	/**
+	 * Method for building the result automaton with reduced states
+	 * and transitions.
+	 */
+	private void buildResult(final boolean addMapping) {
+		final ArrayList<STATE> newStates =
+				new ArrayList<STATE>(mBlocks.mNumberOfSets);
+		final int blockOfInitState = mBlocks.mSetElemBelongsTo[mInitialState];
+		final int[] blockOfFinalStates = new int[mNumberOfFinalStates];
+		for (int i = 0; i < mNumberOfFinalStates; ++i) {
+			blockOfFinalStates[i] = mBlocks.mSetElemBelongsTo[mFinalStates[i]];
+		}
+		
+		final Map<STATE, STATE> mOldState2newState = addMapping
+				? new HashMap<STATE, STATE>(computeHashCap(mOperand.size()))
+				: null;
+				
+		startResultConstruction();
+		// Iterate over number of blocks for getting every first element.
+		for (int i = 0; i < mBlocks.mNumberOfSets; ++i) {
+			// Get index in melements of the first element in block.
+			final int firstOfBlockIndex = mBlocks.mFirst[i];
+			// Get index in melements of the last element in block.
+			final int lastOfBlockIndex = mBlocks.mPast[i];
+			// For intersecting all STATEs belonging to one block,
+			// build collection of all States.
+			final Collection<STATE> tmp = new ArrayList<STATE>(
+					lastOfBlockIndex - firstOfBlockIndex);
+			// Iterate in melements over all States belonging to one block
+			// and adding them to the collection created before.
+			for (int j = firstOfBlockIndex; j < lastOfBlockIndex; ++j) {
+				final int elem = mBlocks.mElements[j];
+				tmp.add(mInt2state.get(elem));
+			}
+			// Build the new state by using the minimize - function of StateFactory.
+			final STATE newState = mStateFactory.minimize(tmp);
+			
+			// update mapping 'old state -> new state'
+			if (mOldState2newState != null) {
+				for (final STATE oldState : tmp) {
+					mOldState2newState.put(oldState, newState);
+				}
+			}
+			
+			newStates.add(newState);
+			// Add the new state to the new result automaton.
+			boolean isFinalState = false;
+			for (int k = 0; k < blockOfFinalStates.length; ++k) {
+				if (i == blockOfFinalStates[k]) {
+					isFinalState = true;
+				}
+			}
+			final boolean isInitialState = (i == blockOfInitState);
+			addState(isInitialState, isFinalState, newState);
+		}
+		
+		// Iterate over each block to get the outgoing transitions of every
+		// first element of block.
+		for (int i = 0; i < mBlocks.mNumberOfSets; ++i) {
+			// Get the index in melements of the first element.
+			final int firstOfBlockIndex = mBlocks.mFirst[i];
+			// Get the belonging STATE - object out of Map.
+			final STATE st = mInt2state.get(mBlocks.mElements[firstOfBlockIndex]);
+			// Take the before created new State as predecessor
+			// for the new transition.
+			final STATE newPred = newStates.get(i);
+			// Get the outgoing transitions of the STATE st.
+			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it =
+					mOperand.internalSuccessors(st).iterator();
+			// Iterate over outgoing transitions of each block and add the
+			// transition to the new automaton.
+			while (it.hasNext()) {
+				// Get the next outgoing transition.
+				final OutgoingInternalTransition<LETTER, STATE> next = it.next();
+				// Get the successor of the transition.
+				final int succ = mState2int.get(next.getSucc());
+				// For finding the equivalent state in the new states,
+				// get the number of the block the successor belongs to.
+				final int blockOfSucc = mBlocks.mSetElemBelongsTo[succ];
+				final STATE newSucc = newStates.get(blockOfSucc);
+				// Add the new transition to the result automaton.
+				addInternalTransition(newPred, next.getLetter(), newSucc);
+			}
+			finishResultConstruction(mOldState2newState, true);
+		}
+	}
+	
+	/**
 	 * Implementation of partition data structure out of paper:
 	 * "Fast brief practical DFA minimization".
 	 */
@@ -515,93 +599,6 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE>
 				mNumberOfMarkedElemInSet[set] = mNumberOfMarkedElemInSet[this.mNumberOfSets++] = 0;
 			}
 			
-		}
-	}
-	
-	/**
-	 * Method for building the result automaton with reduced states
-	 * and transitions.
-	 */
-	private void buildResult(final boolean addMapping) {
-		final ArrayList<STATE> newStates =
-				new ArrayList<STATE>(mBlocks.mNumberOfSets);
-		final int blockOfInitState = mBlocks.mSetElemBelongsTo[mInitialState];
-		final int[] blockOfFinalStates = new int[mNumberOfFinalStates];
-		for (int i = 0; i < mNumberOfFinalStates; ++i) {
-			blockOfFinalStates[i] = mBlocks.mSetElemBelongsTo[mFinalStates[i]];
-		}
-		
-		final Map<STATE, STATE> mOldState2newState = addMapping
-				? new HashMap<STATE, STATE>(computeHashCap(mOperand.size()))
-				: null;
-				
-		startResultConstruction();
-		// Iterate over number of blocks for getting every first element.
-		for (int i = 0; i < mBlocks.mNumberOfSets; ++i) {
-			// Get index in melements of the first element in block.
-			final int firstOfBlockIndex = mBlocks.mFirst[i];
-			// Get index in melements of the last element in block.
-			final int lastOfBlockIndex = mBlocks.mPast[i];
-			// For intersecting all STATEs belonging to one block,
-			// build collection of all States.
-			final Collection<STATE> tmp = new ArrayList<STATE>(
-					lastOfBlockIndex - firstOfBlockIndex);
-			// Iterate in melements over all States belonging to one block
-			// and adding them to the collection created before.
-			for (int j = firstOfBlockIndex; j < lastOfBlockIndex; ++j) {
-				final int elem = mBlocks.mElements[j];
-				tmp.add(mInt2state.get(elem));
-			}
-			// Build the new state by using the minimize - function of StateFactory.
-			final STATE newState = mStateFactory.minimize(tmp);
-			
-			// update mapping 'old state -> new state'
-			if (mOldState2newState != null) {
-				for (final STATE oldState : tmp) {
-					mOldState2newState.put(oldState, newState);
-				}
-			}
-			
-			newStates.add(newState);
-			// Add the new state to the new result automaton.
-			boolean isFinalState = false;
-			for (int k = 0; k < blockOfFinalStates.length; ++k) {
-				if (i == blockOfFinalStates[k]) {
-					isFinalState = true;
-				}
-			}
-			final boolean isInitialState = (i == blockOfInitState);
-			addState(isInitialState, isFinalState, newState);
-		}
-		
-		// Iterate over each block to get the outgoing transitions of every
-		// first element of block.
-		for (int i = 0; i < mBlocks.mNumberOfSets; ++i) {
-			// Get the index in melements of the first element.
-			final int firstOfBlockIndex = mBlocks.mFirst[i];
-			// Get the belonging STATE - object out of Map.
-			final STATE st = mInt2state.get(mBlocks.mElements[firstOfBlockIndex]);
-			// Take the before created new State as predecessor
-			// for the new transition.
-			final STATE newPred = newStates.get(i);
-			// Get the outgoing transitions of the STATE st.
-			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it =
-					mOperand.internalSuccessors(st).iterator();
-			// Iterate over outgoing transitions of each block and add the
-			// transition to the new automaton.
-			while (it.hasNext()) {
-				// Get the next outgoing transition.
-				final OutgoingInternalTransition<LETTER, STATE> next = it.next();
-				// Get the successor of the transition.
-				final int succ = mState2int.get(next.getSucc());
-				// For finding the equivalent state in the new states,
-				// get the number of the block the successor belongs to.
-				final int blockOfSucc = mBlocks.mSetElemBelongsTo[succ];
-				final STATE newSucc = newStates.get(blockOfSucc);
-				// Add the new transition to the result automaton.
-				addInternalTransition(newPred, next.getLetter(), newSucc);
-			}
-			finishResultConstruction(mOldState2newState, true);
 		}
 	}
 }

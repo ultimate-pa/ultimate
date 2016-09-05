@@ -37,10 +37,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ADebug.EDebugPolicy;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.AAutomatonFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AbstractDebug.DebugPolicy;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.INestedWordAutomatonFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.NestedWordAutomatonFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AbstractShrinker;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.BridgeShrinker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.AutomataDefinitionInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitionsAST;
@@ -56,14 +56,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
  *            state type
  * @see AutomatonDebugger
  */
-public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
-		extends BaseObserver {
+public class AutomatonDeltaDebuggerObserver<LETTER, STATE> extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
-	private final ATester<LETTER, STATE> mTester;
-	private final List<AShrinker<?, LETTER, STATE>> mShrinkersLoop;
+	private final AbstractTester<LETTER, STATE> mTester;
+	private final List<AbstractShrinker<?, LETTER, STATE>> mShrinkersLoop;
 	private final List<BridgeShrinker<?, LETTER, STATE>> mShrinkersBridge;
-	private final List<AShrinker<?, LETTER, STATE>> mShrinkersEnd;
-	private final EDebugPolicy mPolicy;
+	private final List<AbstractShrinker<?, LETTER, STATE>> mShrinkersEnd;
+	private final DebugPolicy mPolicy;
 	private final ILogger mLogger;
 	
 	/**
@@ -82,13 +81,10 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 	 * @param policy
 	 *            debug policy
 	 */
-	public AutomatonDeltaDebuggerObserver(
-			final IUltimateServiceProvider services,
-			final ATester<LETTER, STATE> tester,
-			final List<AShrinker<?, LETTER, STATE>> shrinkersLoop,
+	public AutomatonDeltaDebuggerObserver(final IUltimateServiceProvider services,
+			final AbstractTester<LETTER, STATE> tester, final List<AbstractShrinker<?, LETTER, STATE>> shrinkersLoop,
 			final List<BridgeShrinker<?, LETTER, STATE>> shrinkersBridge,
-			final List<AShrinker<?, LETTER, STATE>> shrinkersEnd,
-			final EDebugPolicy policy) {
+			final List<AbstractShrinker<?, LETTER, STATE>> shrinkersEnd, final DebugPolicy policy) {
 		mServices = services;
 		mTester = tester;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -104,10 +100,8 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 		if (!(root instanceof AutomataTestFileAST)) {
 			return true;
 		}
-		final AutomataDefinitionsAST automataDefinition =
-				((AutomataTestFileAST) root).getAutomataDefinitions();
-		final AutomataDefinitionInterpreter adi =
-				new AutomataDefinitionInterpreter(null, mLogger, mServices);
+		final AutomataDefinitionsAST automataDefinition = ((AutomataTestFileAST) root).getAutomataDefinitions();
+		final AutomataDefinitionInterpreter adi = new AutomataDefinitionInterpreter(null, mLogger, mServices);
 		adi.interpret(automataDefinition);
 		final Map<String, Object> automata = adi.getAutomata();
 		// design decision: take the first automaton from the iterator
@@ -136,22 +130,18 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 	private void deltaDebug(
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
 		// automaton factory
-		final AAutomatonFactory<LETTER, STATE> automatonFactory =
-				new NestedWordAutomatonFactory<>(automaton,
-						mServices);
+		final INestedWordAutomatonFactory<LETTER, STATE> automatonFactory =
+				new NestedWordAutomatonFactory<>(automaton, mServices);
 		
 		// construct delta debugger
-		final AutomatonDebugger<LETTER, STATE> debugger =
-				new AutomatonDebugger<>(automaton,
-						automatonFactory, mTester);
+		final AutomatonDebugger<LETTER, STATE> debugger = new AutomatonDebugger<>(automaton, automatonFactory, mTester);
 		
 		// execute delta debugger (binary search)
 		final INestedWordAutomaton<LETTER, STATE> result =
 				debugger.shrink(mShrinkersLoop, mShrinkersBridge, mShrinkersEnd, mPolicy);
 		
 		// print result
-		mLogger.info(
-				"The automaton debugger terminated, resulting in the following automaton:");
+		mLogger.info("The automaton debugger terminated, resulting in the following automaton:");
 		mLogger.info(result);
 	}
 }
