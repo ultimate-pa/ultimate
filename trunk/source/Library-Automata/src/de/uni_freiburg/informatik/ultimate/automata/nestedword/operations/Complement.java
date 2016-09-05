@@ -137,12 +137,14 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 						mServices, complemented);
 		if (!totalized.nonDeterminismInInputDetected()) {
 			mComplement = complemented;
-			mLogger.info(
-					"Operand was deterministic. Have not used determinization.");
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("Operand was deterministic. Have not used determinization.");
+			}
 			return result;
 		} else {
-			mLogger.info(
-					"Operand was not deterministic. Recomputing result with determinization.");
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("Operand was not deterministic. Recomputing result with determinization.");
+			}
 			return null;
 		}
 	}
@@ -172,7 +174,9 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
-			mLogger.info("Start testing correctness of " + operationName());
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("Start testing correctness of " + operationName());
+			}
 			
 			// intersection of operand and result should be empty
 			final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
@@ -188,9 +192,14 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 			// should recognize same language as old computation
 			correct &= new IsIncluded<>(mServices, stateFactory, resultDd, mResult).getResult();
 			correct &= new IsIncluded<>(mServices, stateFactory, mResult, resultDd).getResult();
-			mLogger.info("Finished testing correctness of " + operationName());
+			
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("Finished testing correctness of " + operationName());
+			}
 		} else {
-			mLogger.warn("operation not tested");
+			if (mLogger.isWarnEnabled()) {
+				mLogger.warn("operation not tested");
+			}
 		}
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,

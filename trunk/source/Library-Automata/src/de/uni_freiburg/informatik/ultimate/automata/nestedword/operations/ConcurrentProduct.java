@@ -105,10 +105,10 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 		}
 		*/
 		
-		if (!fstOperand.getCallAlphabet().isEmpty()
+		if (mLogger.isWarnEnabled() && (!fstOperand.getCallAlphabet().isEmpty()
 				|| !fstOperand.getReturnAlphabet().isEmpty()
 				|| !sndOperand.getCallAlphabet().isEmpty()
-				|| !sndOperand.getReturnAlphabet().isEmpty()) {
+				|| !sndOperand.getReturnAlphabet().isEmpty())) {
 			mLogger.warn("Call alphabet and return alphabet are ignored.");
 		}
 		mSynchronizationAlphabet = new HashSet<>(fstOperand.getInternalAlphabet());

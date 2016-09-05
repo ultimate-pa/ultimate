@@ -65,7 +65,9 @@ public class IsTotal<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 		super(services);
 		mOperand = operand;
 		mResult = computeIsTotal();
-		mLogger.info("automaton is " + (mResult ? "" : "not ") + "total");
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("automaton is " + (mResult ? "" : "not ") + "total");
+		}
 	}
 	
 	/**
