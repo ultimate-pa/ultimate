@@ -201,7 +201,7 @@ public class SmtParser implements ISource {
 		}
 
 		mLogger.info("Executing SMT file " + file.getAbsolutePath());
-		final OptionMap optionMap = new OptionMap(logProxy);
+		final OptionMap optionMap = new OptionMap(logProxy, true);
 		final ParseEnvironment parseEnv = new ParseEnvironment(script, optionMap);
 		try {
 			parseEnv.parseScript(file.getAbsolutePath());
