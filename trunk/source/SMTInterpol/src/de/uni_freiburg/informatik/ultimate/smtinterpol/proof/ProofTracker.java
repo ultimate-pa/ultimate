@@ -384,22 +384,6 @@ public class ProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public void toLeq0(Term orig, SMTAffineTerm leq, int rule) {
-		final Theory t = orig.getTheory();
-		Term right = t.term(
-				"<=", SMTAffineTerm.cleanup(leq),
-				leq.getSort().getName().equals("Int")
-					? t.numeral(BigInteger.ZERO) : t.decimal(BigDecimal.ZERO));
-		if (rule == ProofConstants.RW_LT_TO_LEQ0
-				|| rule == ProofConstants.RW_GT_TO_LEQ0) {
-			right = t.term(t.mNot, right);
-		}
-		if (right != orig) {
-			append(new ResultRewrite(orig, right, rule));
-		}
-	}
-
-	@Override
 	public void leqSimp(SMTAffineTerm leq, Term res, int rule) {
 		final Theory t = res.getTheory();
 		final Term left = t.term("<=", SMTAffineTerm.cleanup(leq),

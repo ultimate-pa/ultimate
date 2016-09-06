@@ -1544,6 +1544,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 							throw new AssertionError(e);
 						} catch (final InvocationTargetException e) {
 							final Throwable targetException = e.getTargetException();
+							if (!(targetException instanceof AutomataLibraryException)) {
+								e.printStackTrace();
+							}
 							if (targetException instanceof InterpreterException) {
 								throw (InterpreterException) targetException;
 							} else {

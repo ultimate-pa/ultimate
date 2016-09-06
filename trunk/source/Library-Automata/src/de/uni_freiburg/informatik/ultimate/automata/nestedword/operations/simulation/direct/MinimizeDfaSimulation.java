@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -38,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -64,13 +64,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            State class of buechi automaton
  */
-public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, STATE> {
-
-	/**
-	 * The logger used by the Ultimate framework.
-	 */
-	private final ILogger mLogger;
-
+public class MinimizeDfaSimulation<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	/**
 	 * The inputed buechi automaton.
 	 */
@@ -81,10 +75,6 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	 */
 	private INestedWordAutomaton<LETTER, STATE> mResult;
 
-	/**
-	 * Service provider of Ultimate framework.
-	 */
-	private final AutomataLibraryServices mServices;
 	/**
 	 * Performance statistics of this operation.
 	 */
@@ -135,8 +125,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	protected MinimizeDfaSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final DirectSimulation<LETTER, STATE> simulation)
 					throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
 
@@ -145,16 +134,16 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 		mResult = simulation.getResult();
 		mStatistics = simulation.getSimulationPerformance().exportToAutomataOperationStatistics();
 
-		final boolean compareWithNonSccResult = false;
-		if (compareWithNonSccResult) {
+		final boolean compareWithSccResult = false;
+		if (compareWithSccResult) {
 			final DirectGameGraph<LETTER, STATE> graph = new DirectGameGraph<>(mServices,
 					mServices.getProgressMonitorService(), mLogger, mOperand, stateFactory);
 			graph.generateGameGraphFromAutomaton();
-			final DirectSimulation<LETTER, STATE> nonSccSim = new DirectSimulation<LETTER, STATE>(
-					mServices.getProgressMonitorService(), mLogger, false, stateFactory, graph);
-			nonSccSim.doSimulation();
-			final INestedWordAutomaton<LETTER, STATE> nonSCCresult = nonSccSim.getResult();
-			if (mResult.size() != nonSCCresult.size()) {
+			final DirectSimulation<LETTER, STATE> sccSim = new DirectSimulation<LETTER, STATE>(
+					mServices.getProgressMonitorService(), mLogger, true, stateFactory, graph);
+			sccSim.doSimulation();
+			final INestedWordAutomaton<LETTER, STATE> sccResult = sccSim.getResult();
+			if (mResult.size() != sccResult.size()) {
 				throw new AssertionError();
 			}
 		}
@@ -228,17 +217,6 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 		return "minimizeDfaSimulation";
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#startMessage()
-	 */
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Operand has " + mOperand.sizeInformation();
-	}
-
 	/**
 	 * Gets the logger used by the Ultimate framework.
 	 * 
@@ -253,6 +231,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	 * 
 	 * @return The inputed automaton.
 	 */
+	@Override
 	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
 	}

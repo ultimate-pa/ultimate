@@ -466,7 +466,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		OctDomainState other = (OctDomainState) obj;
+		final OctDomainState other = (OctDomainState) obj;
 		return mId == other.mId;
 	}
 

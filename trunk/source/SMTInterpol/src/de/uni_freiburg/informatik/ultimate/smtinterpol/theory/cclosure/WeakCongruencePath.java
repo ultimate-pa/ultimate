@@ -20,7 +20,6 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
 import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.EqualityProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
@@ -84,21 +83,9 @@ public class WeakCongruencePath extends CongruencePath {
 		mArrayTheory = arrayTheory;
 	}
 
-	private CCEquality createEquality(CCTerm t1, CCTerm t2) {
-		final EqualityProxy ep = t1.getFlatTerm().createEquality(t2.getFlatTerm());
-		if (ep == EqualityProxy.getFalseProxy()) {
-			return null;
-		}
-		final Literal res = ep.getLiteral();
-		if (res instanceof CCEquality) {
-			return (CCEquality) res;
-		}
-		return ep.createCCEquality(t1.getFlatTerm(), t2.getFlatTerm());
-	}
-	
 	public Clause computeSelectOverWeakEQ(CCAppTerm select1, CCAppTerm select2,
 			boolean produceProofs) {
-		final CCEquality eq = createEquality(select1, select2);
+		final CCEquality eq = ArrayTheory.createEquality(select1, select2);
 
 		final CCTerm i1 = select1.getArg();
 		final CCTerm i2 = select2.getArg();
@@ -117,7 +104,7 @@ public class WeakCongruencePath extends CongruencePath {
 	
 	public Clause computeWeakeqExt(CCTerm a, CCTerm b, boolean produceProofs) {
 		assert a != b;
-		final CCEquality eq = createEquality(a, b);
+		final CCEquality eq = ArrayTheory.createEquality(a, b);
 		final HashSet<CCTerm> storeIndices = new HashSet<CCTerm>();
 		final Cursor start = new Cursor(a, 
 				mArrayTheory.mCongRoots.get(a.getRepresentative()));
@@ -323,7 +310,7 @@ public class WeakCongruencePath extends CongruencePath {
 	 * @param idxFromStore The index of an edge in the weakeq graph.
 	 */
 	private void computeIndexDiseq(CCTerm idx, CCTerm idxFromStore) {
-		final CCEquality eqlit = createEquality(idx, idxFromStore);
+		final CCEquality eqlit = ArrayTheory.createEquality(idx, idxFromStore);
 		if (eqlit != null) {
 			mAllLiterals.add(eqlit.negate());
 		}

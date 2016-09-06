@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
-import java_cup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.Symbol;
 
 /**
  * This class runs an external SMT solver. The main methods are <code>input</code>, which gives an input to the SMT
@@ -58,21 +58,21 @@ import java_cup.runtime.Symbol;
  * @author Matthias Heizmann
  */
 class Executor {
-	
+
 	private MonitoredProcess mProcess;
 	private Lexer mLexer;
 	private BufferedWriter mWriter;
 	private InputStream mStdErr;
-	
+
 	private final Script mScript;
 	private final String mSolverCmd;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 	private final String mName;
-	
+
 	private static final String sEofErrorMessage = "Received EOF on stdin.";
-	
+
 	Executor(final String solverCommand, final Script script, final ILogger logger,
 			final IUltimateServiceProvider services, final IToolchainStorage storage, final String solverName)
 			throws IOException {
@@ -84,32 +84,32 @@ class Executor {
 		mName = solverName;
 		createProcess();
 	}
-	
+
 	private void createProcess() throws IOException {
 		mProcess = MonitoredProcess.exec(mSolverCmd, "(exit)", mServices, mStorage, mLogger);
 		mProcess.setTerminationAfterToolchainTimeout(20 * 1000);
-		
+
 		if (mProcess == null) {
 			final String errorMsg = getLogStringPrefix() + " Could not create process, terminating... ";
 			mLogger.fatal(errorMsg);
 			throw new IllegalStateException(errorMsg);
 		}
-		
+
 		final OutputStream stdin = mProcess.getOutputStream();
 		final InputStream stdout = mProcess.getInputStream();
-		
+
 		mStdErr = mProcess.getErrorStream();
-		
+
 		final MySymbolFactory symfactory = new MySymbolFactory();
 		mLexer = new Lexer(new InputStreamReader(stdout));
 		mLexer.setSymbolFactory(symfactory);
-		
+
 		mWriter = new BufferedWriter(new OutputStreamWriter(stdin));
-		
+
 		input("(set-option :print-success true)");
 		parseSuccess();
 	}
-	
+
 	public void input(final String in) {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(getLogStringPrefix() + " " + in);
@@ -125,7 +125,7 @@ class Executor {
 			}
 		}
 	}
-	
+
 	public void exit() {
 		input("(exit)");
 		// 2015-11-12 Matthias: Do not parse "success" after exit.
@@ -134,9 +134,9 @@ class Executor {
 		// parseSuccess();
 		mProcess.forceShutdown();
 		mProcess = null;
-		
+
 	}
-	
+
 	private List<Symbol> parseSexpr(final Lexer lexer) throws IOException {
 		final ArrayList<Symbol> result = new ArrayList<Symbol>();
 		int parenLevel = 0;
@@ -152,13 +152,13 @@ class Executor {
 		} while (parenLevel > 0);
 		return result;
 	}
-	
+
 	private List<Symbol> readAnswer() {
 		try {
 			final List<Symbol> result = parseSexpr(mLexer);
 			if (mLogger.isDebugEnabled()) {
 				for (final Symbol s : result) {
-					mLogger.debug(s.toString() + "\n");
+					mLogger.debug(s.toString());
 				}
 			}
 			return result;
@@ -166,7 +166,7 @@ class Executor {
 			throw new SMTLIBException(getLogStringPrefix() + " Connection to SMT solver broken", e);
 		}
 	}
-	
+
 	public void reset() throws IOException {
 		try {
 			mWriter.write("(exit)\n");
@@ -177,11 +177,11 @@ class Executor {
 		mProcess.forceShutdown();
 		createProcess();
 	}
-	
+
 	public Symbol parse(final int what) {
 		final List<Symbol> answer = readAnswer();
 		String stderr = "";
-		
+
 		// clear the std error buffer as it blocks when it runs full
 		try {
 			if (mStdErr.available() > 0) {
@@ -197,7 +197,7 @@ class Executor {
 		} catch (final IOException e) {
 			// we don't care what happens on stdErr
 		}
-		
+
 		final Parser parser = new Parser();
 		parser.setScript(mScript);
 		answer.add(0, new Symbol(what));
@@ -218,48 +218,48 @@ class Executor {
 					getLogStringPrefix() + "Unexpected Exception while parsing. " + generateStderrMessage(stderr), ex);
 		}
 	}
-	
+
 	public void parseSuccess() {
 		parse(LexerSymbols.SUCCESS);
 	}
-	
+
 	public LBool parseCheckSatResult() {
 		return (LBool) parse(LexerSymbols.CHECKSAT).value;
 	}
-	
+
 	public Term[] parseGetAssertionsResult() {
 		return (Term[]) parse(LexerSymbols.GETASSERTIONS).value;
 	}
-	
+
 	public Term[] parseGetUnsatCoreResult() {
 		return (Term[]) parse(LexerSymbols.GETUNSATCORE).value;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public Map<Term, Term> parseGetValueResult() {
 		return (Map<Term, Term>) parse(LexerSymbols.GETVALUE).value;
 	}
-	
+
 	public Assignments parseGetAssignmentResult() {
 		return (Assignments) parse(LexerSymbols.GETASSIGNMENT).value;
 	}
-	
+
 	public Object[] parseGetInfoResult() {
 		return (Object[]) parse(LexerSymbols.GETINFO).value;
 	}
-	
+
 	public Object parseGetOptionResult() {
 		return parse(LexerSymbols.GETOPTION).value;
 	}
-	
+
 	public Term parseTerm() {
 		return (Term) parse(LexerSymbols.GETTERM).value;
 	}
-	
+
 	private String getLogStringPrefix() {
 		return mName + " (" + mSolverCmd + ")";
 	}
-	
+
 	private static String generateStderrMessage(final String stderr) {
 		if (stderr.isEmpty()) {
 			return "No stderr output.";
@@ -267,5 +267,5 @@ class Executor {
 			return "stderr output: " + stderr;
 		}
 	}
-	
+
 }

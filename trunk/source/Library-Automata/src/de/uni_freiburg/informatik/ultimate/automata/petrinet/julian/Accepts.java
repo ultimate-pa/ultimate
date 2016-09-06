@@ -32,7 +32,6 @@ import java.util.HashSet;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -43,10 +42,8 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class Accepts<S, C>
-		extends UnaryNetOperation<S, C>
-		implements IOperation<S, C> {
-	
+public class Accepts<S, C> extends UnaryNetOperation<S, C> {
+	private final IPetriNet<S, C> mOperand;
 	private final Word<S> mWord;
 	private final Boolean mResult;
 	
@@ -54,19 +51,20 @@ public class Accepts<S, C>
 	 * Constructor.
 	 * 
 	 * @param services Ultimate services
-	 * @param net Petri net
+	 * @param operand Petri net
 	 * @param word word
-	 * @throws AutomataLibraryException if construction fails
+	 * @throws AutomataOperationCanceledException if operation was canceled
 	 */
 	public Accepts(final AutomataLibraryServices services,
-			final IPetriNet<S, C> net, final Word<S> word)
-					throws AutomataLibraryException {
-		super(services, net);
+			final IPetriNet<S, C> operand, final Word<S> word)
+					throws AutomataOperationCanceledException {
+		super(services);
+		mOperand = operand;
 		mWord = word;
 		mLogger.info(startMessage());
 		// this.marking = new HashSet<Place<S, C>>(net.getInitialMarking());
 		// this.position = 0;
-		mResult = getResultHelper(0,net.getInitialMarking());
+		mResult = getResultHelper(0,operand.getInitialMarking());
 		mLogger.info(exitMessage());
 	}
 	
@@ -83,6 +81,11 @@ public class Accepts<S, C>
 		return "Start " + operationName()
 			+ "Operand " + mOperand.sizeInformation();
 	}
+	
+	@Override
+	protected IPetriNet<S, C> getOperand() {
+		return mOperand;
+	}
 
 	@Override
 	public Boolean getResult() {
@@ -90,7 +93,7 @@ public class Accepts<S, C>
 	}
 
 	private boolean getResultHelper(int position,
-	        final Marking<S, C> marking) throws AutomataLibraryException {
+	        final Marking<S, C> marking) throws AutomataOperationCanceledException {
 		if (position >= mWord.length()) {
 			return mOperand.isAccepting(marking);
 		}

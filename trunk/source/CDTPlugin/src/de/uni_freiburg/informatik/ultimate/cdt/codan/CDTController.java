@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ExternalParserToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
@@ -56,23 +56,23 @@ import de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferenc
 
 /**
  * {@link CDTController} is one of the distinct controllers of Ultimate. It starts the Core from a different host
- * (another RCP instance, namely Eclipse CDT), but uses one {@link ICore<ToolchainListType>} instance for multiple
+ * (another RCP instance, namely Eclipse CDT), but uses one {@link ICore<RunDefinition>} instance for multiple
  * executions of Ultimate.
  *
  * @author dietsch
  */
-public class CDTController implements IController<ToolchainListType> {
+public class CDTController implements IController<RunDefinition> {
 
 	private ILogger mLogger;
 	private final UltimateCChecker mChecker;
 
-	private ICore<ToolchainListType> mCore;
+	private ICore<RunDefinition> mCore;
 	private UltimateThread mUltimateThread;
 	private ManualReleaseToolchainJob mCurrentJob;
 
 	private final Semaphore mUltimateExit;
 	private final Semaphore mUltimateReady;
-	private IToolchainData<ToolchainListType> mToolchainData;
+	private IToolchainData<RunDefinition> mToolchainData;
 
 	public CDTController(final UltimateCChecker currentChecker) throws Exception {
 		mChecker = currentChecker;
@@ -82,7 +82,7 @@ public class CDTController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public int init(final ICore<ToolchainListType> core) {
+	public int init(final ICore<RunDefinition> core) {
 		// we use init() only to create the preference pages and safe a core
 		// reference
 		mLogger = core.getCoreLoggingService().getControllerLogger();
@@ -132,7 +132,7 @@ public class CDTController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public IToolchainData<ToolchainListType> selectTools(final List<ITool> tools) {
+	public IToolchainData<RunDefinition> selectTools(final List<ITool> tools) {
 		return mToolchainData;
 	}
 
@@ -173,25 +173,25 @@ public class CDTController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public void displayToolchainResults(final IToolchainData<ToolchainListType> toolchain,
+	public void displayToolchainResults(final IToolchainData<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void displayException(final IToolchainData<ToolchainListType> toolchain, final String description,
+	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
 			final Throwable ex) {
 		// TODO Auto-generated method stub
 	}
 
 	private class UltimateThread {
 
-		private final IController<ToolchainListType> mController;
+		private final IController<RunDefinition> mController;
 		private Exception mUltimateException;
 		private boolean mIsRunning;
 
-		private UltimateThread(final IController<ToolchainListType> controller) {
+		private UltimateThread(final IController<RunDefinition> controller) {
 			mController = controller;
 		}
 
@@ -226,16 +226,16 @@ public class CDTController implements IController<ToolchainListType> {
 
 	private class ManualReleaseToolchainJob extends ExternalParserToolchainJob {
 
-		private IToolchain<ToolchainListType> mCurrentChain;
+		private IToolchain<RunDefinition> mCurrentChain;
 
-		public ManualReleaseToolchainJob(final String name, final ICore<ToolchainListType> core,
-				final IController<ToolchainListType> controller, final IElement ast, final ModelType outputDefinition,
+		public ManualReleaseToolchainJob(final String name, final ICore<RunDefinition> core,
+				final IController<RunDefinition> controller, final IElement ast, final ModelType outputDefinition,
 				final ILogger logger) {
 			super(name, core, controller, ast, outputDefinition, logger);
 		}
 
 		@Override
-		protected void releaseToolchain(final IToolchain<ToolchainListType> chain) {
+		protected void releaseToolchain(final IToolchain<RunDefinition> chain) {
 			if (mCurrentChain != null && mCurrentChain != chain) {
 				// ensure that no chain is unreleased
 				super.releaseToolchain(mCurrentChain);

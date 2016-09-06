@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2009-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance;
@@ -35,27 +35,25 @@ import java.util.Date;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.ESymbolType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 
 /**
  * Creates a set of random Nwa automata and saves them as ats-Files.
- * 
+ *
  * @author Daniel Tischner
  *
  */
 public final class RandomNwaBenchmarkCreator {
 
 	/**
-	 * Default path where the Nwa automata benchmark set gets saved if no other
-	 * path is specified.
+	 * Default path where the Nwa automata benchmark set gets saved if no other path is specified.
 	 */
-	public static final File DEFAULT_PATH = new File(new File(System.getProperty("user.home"), "Desktop"),
-			"randomNwaBenchmark");
+	public static final File DEFAULT_PATH =
+			new File(new File(System.getProperty("user.home"), "Desktop"), "randomNwaBenchmark");
 	/**
-	 * Default amount of created Nwa automata after which a logging message gets
-	 * printed.
+	 * Default amount of created Nwa automata after which a logging message gets printed.
 	 */
 	public static final int LOG_EVERY = 50;
 	/**
@@ -63,8 +61,7 @@ public final class RandomNwaBenchmarkCreator {
 	 */
 	private static final int PERC_LOWER_BOUND = 0;
 	/**
-	 * Converts a value in percentage, if multiplied with, into a value between
-	 * 0.0 and 1.0.
+	 * Converts a value in percentage, if multiplied with, into a value between 0.0 and 1.0.
 	 */
 	private static final int PERC_TO_DOUBLE = 100;
 	/**
@@ -74,7 +71,7 @@ public final class RandomNwaBenchmarkCreator {
 
 	/**
 	 * Shows the usage of the {@link RandomNwaBenchmarkCreator} class.
-	 * 
+	 *
 	 * @param args
 	 *            Not supported
 	 * @throws IOException
@@ -112,8 +109,7 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * The percentage of how many states should be accepting, between 0 and 100
-	 * (both inclusive).
+	 * The percentage of how many states should be accepting, between 0 and 100 (both inclusive).
 	 */
 	private final float mAcceptance;
 	/**
@@ -121,19 +117,16 @@ public final class RandomNwaBenchmarkCreator {
 	 */
 	private final int mAlphabetSize;
 	/**
-	 * The percentage of how many call transitions each state should be have,
-	 * between 0 and 100 (both inclusive).
+	 * The percentage of how many call transitions each state should be have, between 0 and 100 (both inclusive).
 	 */
 	private final float mCallTotality;
 	/**
-	 * The percentage of how many internal transitions each state should be
-	 * have, between 0 and 100 (both inclusive).
+	 * The percentage of how many internal transitions each state should be have, between 0 and 100 (both inclusive).
 	 */
 	private final float mInternalTotality;
 	private String mPreamble;
 	/**
-	 * The percentage of how many return transitions each state should be have,
-	 * between 0 and 100 (both inclusive).
+	 * The percentage of how many return transitions each state should be have, between 0 and 100 (both inclusive).
 	 */
 	private final float mReturnTotality;
 
@@ -148,32 +141,30 @@ public final class RandomNwaBenchmarkCreator {
 	private final int mSize;
 
 	/**
-	 * Creates a new creator object that is able to generate random automata
-	 * with the given properties. A benchmark set can then be created using
-	 * {@link #createAndSaveABenchmark(int, File, int)}.
-	 * 
+	 * Creates a new creator object that is able to generate random automata with the given properties. A benchmark set
+	 * can then be created using {@link #createAndSaveABenchmark(int, File, int)}.
+	 *
 	 * @param size
 	 *            The amount of states generated Nwa automata should have
 	 * @param alphabetSize
 	 *            The size of the alphabet generated Nwa automata should have
 	 * @param acceptance
-	 *            The percentage of how many states should be accepting, between
-	 *            0 and 100 (both inclusive)
+	 *            The percentage of how many states should be accepting, between 0 and 100 (both inclusive)
 	 * @param internalTotality
-	 *            The percentage of how many internal transitions each state
-	 *            should be have, between 0 and 100 (both inclusive)
+	 *            The percentage of how many internal transitions each state should be have, between 0 and 100 (both
+	 *            inclusive)
 	 * @param callTotality
-	 *            The percentage of how many call transitions each state should
-	 *            be have, between 0 and 100 (both inclusive)
+	 *            The percentage of how many call transitions each state should be have, between 0 and 100 (both
+	 *            inclusive)
 	 * @param returnTotality
-	 *            The percentage of how many return transitions each state
-	 *            should be have, between 0 and 100 (both inclusive)
+	 *            The percentage of how many return transitions each state should be have, between 0 and 100 (both
+	 *            inclusive)
 	 * @throws IllegalArgumentException
 	 *             If a percentage value is not between 0 and 100 (inclusive)
 	 */
 	public RandomNwaBenchmarkCreator(final int size, final int alphabetSize, final float acceptance,
 			final float internalTotality, final float callTotality, final float returnTotality)
-					throws IllegalArgumentException {
+			throws IllegalArgumentException {
 		mSize = size;
 		mAlphabetSize = alphabetSize;
 		mAcceptance = ensureIsPercentage(acceptance);
@@ -186,11 +177,9 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Creates and saves random generated Nwa automata to the default path,
-	 * specified by {@link #DEFAULT_PATH}, in the ats-Format. Prints a debug
-	 * message to {@link System#out} after every {@link #LOG_EVERY} created
-	 * automata.
-	 * 
+	 * Creates and saves random generated Nwa automata to the default path, specified by {@link #DEFAULT_PATH}, in the
+	 * ats-Format. Prints a debug message to {@link System#out} after every {@link #LOG_EVERY} created automata.
+	 *
 	 * @param amount
 	 *            Amount of random Nwa automata to generate
 	 * @throws IOException
@@ -201,10 +190,9 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Creates and saves random generated Nwa automata to the given path in the
-	 * ats-Format. Prints a debug message to {@link System#out} after every
-	 * {@link #LOG_EVERY} created automata.
-	 * 
+	 * Creates and saves random generated Nwa automata to the given path in the ats-Format. Prints a debug message to
+	 * {@link System#out} after every {@link #LOG_EVERY} created automata.
+	 *
 	 * @param amount
 	 *            Amount of random Nwa automata to generate
 	 * @param pathToSaveBenchmark
@@ -217,16 +205,14 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Creates and saves random generated Nwa automata to the given path in the
-	 * ats-Format.
-	 * 
+	 * Creates and saves random generated Nwa automata to the given path in the ats-Format.
+	 *
 	 * @param amount
 	 *            Amount of random Nwa automata to generate
 	 * @param pathToSaveBenchmark
 	 *            The path where the automata should get saved
 	 * @param logEvery
-	 *            Amount of generated automata after which a logging message
-	 *            gets printed to {@link System#out}
+	 *            Amount of generated automata after which a logging message gets printed to {@link System#out}
 	 * @throws IOException
 	 *             If an I/O-Exception occurred
 	 */
@@ -256,13 +242,13 @@ public final class RandomNwaBenchmarkCreator {
 
 			nwa = new GetRandomNwa(mServices, mAlphabetSize, mSize, internalTotalityDouble, callTotalityDouble,
 					returnTotalityDouble, acceptanceDouble).getResult();
-			
+
 			if (i == 1) {
 				// Print some debug information
 				final Analyze<String, String> analyzer = new Analyze<>(mServices, nwa, true);
-				System.out.println("#Internal: " + analyzer.getNumberOfTransitions(ESymbolType.INTERNAL));
-				System.out.println("#Call: " + analyzer.getNumberOfTransitions(ESymbolType.CALL));
-				System.out.println("#Return: " + analyzer.getNumberOfTransitions(ESymbolType.RETURN));
+				System.out.println("#Internal: " + analyzer.getNumberOfTransitions(SymbolType.INTERNAL));
+				System.out.println("#Call: " + analyzer.getNumberOfTransitions(SymbolType.CALL));
+				System.out.println("#Return: " + analyzer.getNumberOfTransitions(SymbolType.RETURN));
 			}
 
 			final String fileNamePost = "_" + i;
@@ -275,10 +261,9 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Sets a text that gets saved in every following created ats-File right
-	 * before the automaton itself. Can be used to write operations, that use
-	 * the automaton, directly in the same file.
-	 * 
+	 * Sets a text that gets saved in every following created ats-File right before the automaton itself. Can be used to
+	 * write operations, that use the automaton, directly in the same file.
+	 *
 	 * @param preamble
 	 *            Text to set right before the generated automata
 	 */
@@ -287,15 +272,13 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Ensures the given value is a percentage. For this, it must be between 0
-	 * and 100 (both inclusive).
-	 * 
+	 * Ensures the given value is a percentage. For this, it must be between 0 and 100 (both inclusive).
+	 *
 	 * @param percentage
 	 *            Value to ensure
 	 * @return The given value if it is valid
 	 * @throws IllegalArgumentException
-	 *             If the given value is no percentage, i.e. not between 0 and
-	 *             100 (both inclusive)
+	 *             If the given value is no percentage, i.e. not between 0 and 100 (both inclusive)
 	 */
 	private float ensureIsPercentage(final float percentage) throws IllegalArgumentException {
 		if (percentage < PERC_LOWER_BOUND || percentage > PERC_UPPER_BOUND) {
@@ -305,9 +288,8 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Converts a given value, in percentage, to a double value between 0.0 and
-	 * 1.0.
-	 * 
+	 * Converts a given value, in percentage, to a double value between 0.0 and 1.0.
+	 *
 	 * @param percentage
 	 *            Value between 0 and 100 (both inclusive).
 	 * @return The corresponding value between 0.0 and 1.0

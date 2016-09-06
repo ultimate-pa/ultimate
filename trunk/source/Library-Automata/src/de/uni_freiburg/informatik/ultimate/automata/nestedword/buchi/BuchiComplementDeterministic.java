@@ -32,6 +32,7 @@ import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
@@ -78,7 +79,7 @@ public class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDeckerVis
 	}
 	
 	public BuchiComplementDeterministic(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> nwa) throws AutomataLibraryException {
+			final INestedWordAutomaton<LETTER, STATE> nwa) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = nwa;
 		mContentFactory = mOperand.getStateFactory();

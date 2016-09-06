@@ -36,42 +36,46 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class DifferenceBlackAndWhite<S, C>
-		extends GeneralOperation<S, C>
-		implements IOperation<S, C> {
-		
+/**
+ * Computes the difference between a {@link PetriNetJulian} and a {@link NestedWordAutomaton}.
+ * <p>
+ * TODO Christian 2016-09-06: If the <tt>finalIsTrap</tt> method is removed, the input can become an
+ * {@link INestedWordAutomaton}.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbol type
+ * @param <C>
+ *            content type
+ */
+public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C> {
 	private final PetriNetJulian<S, C> mOperand;
 	private final NestedWordAutomaton<S, C> mNwa;
 	private final IStateFactory<C> mContentFactory;
 	
 	private PetriNetJulian<S, C> mResult;
 	
-	private final Map<Place<S, C>, Place<S, C>> mOldPlace2NewPlace =
-			new HashMap<Place<S, C>, Place<S, C>>();
-			
-	private final Map<S, Set<C>> mSelfloop =
-			new HashMap<S, Set<C>>();
-	private final Map<S, Set<C>> mStateChanger =
-			new HashMap<S, Set<C>>();
-			
-	private final Map<C, Place<S, C>> mWhitePlace =
-			new HashMap<C, Place<S, C>>();
-			
-	private final Map<C, Place<S, C>> mBlackPlace =
-			new HashMap<C, Place<S, C>>();
-			
+	private final Map<Place<S, C>, Place<S, C>> mOldPlace2NewPlace = new HashMap<>();
+	
+	private final Map<S, Set<C>> mSelfloop = new HashMap<>();
+	private final Map<S, Set<C>> mStateChanger = new HashMap<>();
+	
+	private final Map<C, Place<S, C>> mWhitePlace = new HashMap<>();
+	
+	private final Map<C, Place<S, C>> mBlackPlace = new HashMap<>();
+	
 	/**
 	 * Constructor.
 	 * 
@@ -82,19 +86,18 @@ public class DifferenceBlackAndWhite<S, C>
 	 * @param nwa
 	 *            nested word automaton
 	 */
-	public DifferenceBlackAndWhite(final AutomataLibraryServices services,
-			final PetriNetJulian<S, C> net,
+	public DifferenceBlackAndWhite(final AutomataLibraryServices services, final PetriNetJulian<S, C> net,
 			final NestedWordAutomaton<S, C> nwa) {
 		super(services);
 		mOperand = net;
 		mNwa = nwa;
 		mContentFactory = net.getStateFactory();
 		
-		mLogger.info(startMessage());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
 		
-		final Collection<S> netAlphabet = new HashSet<S>(net.getAlphabet());
-		final Collection<S> nwaAlpahbet = new HashSet<S>(nwa.getInternalAlphabet());
-		if (!netAlphabet.equals(nwaAlpahbet)) {
+		if (!net.getAlphabet().equals(nwa.getInternalAlphabet())) {
 			throw new IllegalArgumentException("net and nwa must use same alphabet");
 		}
 		if (nwa.getInitialStates().size() != 1) {
@@ -103,7 +106,7 @@ public class DifferenceBlackAndWhite<S, C>
 		}
 		if (!nwa.finalIsTrap()) {
 			throw new UnsupportedOperationException(
-					"Second operand has to closed under concatenation with sigma star");
+					"Second operand has to be closed under concatenation with Sigma star.");
 			//otherwise the result won't be the intersection of languages
 		}
 		final C nwaInitialState = nwa.getInitialStates().iterator().next();
@@ -112,8 +115,7 @@ public class DifferenceBlackAndWhite<S, C>
 		if (nwa.isFinal(nwaInitialState)) {
 			// case where nwa accepts everything. Result will be a net that
 			// accepts the empty language
-			mResult = new PetriNetJulian<S, C>(mServices, mOperand.getAlphabet(),
-					mOperand.getStateFactory(),
+			mResult = new PetriNetJulian<>(mServices, mOperand.getAlphabet(), mOperand.getStateFactory(),
 					true);
 			final C sinkContent = mContentFactory.createSinkStateContent();
 			mResult.addPlace(sinkContent, true, false);
@@ -122,12 +124,15 @@ public class DifferenceBlackAndWhite<S, C>
 			addBlackAndWhitePlaces();
 			addTransitions();
 		}
-		mLogger.info(exitMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 	
 	@Override
 	public String operationName() {
-		return "differenceBlackAndWhite";
+		return "DifferenceBlackAndWhite";
 	}
 	
 	@Override
@@ -138,13 +143,13 @@ public class DifferenceBlackAndWhite<S, C>
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
+		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
 	}
 	
 	private void classifySymbols() {
 		for (final S symbol : mNwa.getInternalAlphabet()) {
-			final HashSet<C> selfloopStates = new HashSet<C>();
-			final HashSet<C> changerStates = new HashSet<C>();
+			final HashSet<C> selfloopStates = new HashSet<>();
+			final HashSet<C> changerStates = new HashSet<>();
 			for (final C state : mNwa.getStates()) {
 				if (mNwa.isFinal(state)) {
 					// we do not consider accepting states since they
@@ -157,10 +162,10 @@ public class DifferenceBlackAndWhite<S, C>
 				if (!successorsIt.hasNext()) {
 					continue;
 				}
+				@SuppressWarnings("squid:S1941")
 				final C succState = successorsIt.next().getSucc();
 				if (successorsIt.hasNext()) {
-					throw new IllegalArgumentException(
-							"Only deterministic automata supported");
+					throw new IllegalArgumentException("Only deterministic automata supported");
 				}
 				if (succState.equals(state)) {
 					selfloopStates.add(state);
@@ -170,8 +175,10 @@ public class DifferenceBlackAndWhite<S, C>
 			}
 			mSelfloop.put(symbol, selfloopStates);
 			mStateChanger.put(symbol, changerStates);
-			mLogger.debug(symbol + " " + selfloopStates.size() + " times selfloop " + changerStates.size()
-					+ " times changer");
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(symbol + " " + selfloopStates.size() + " times selfloop " + changerStates.size()
+						+ " times changer");
+			}
 		}
 	}
 	
@@ -205,13 +212,11 @@ public class DifferenceBlackAndWhite<S, C>
 //	}
 	
 	private void copyNetStatesOnly() {
-		
 		// difference black and white preserves the constantTokenAmount invariant
 		final boolean constantTokenAmount = mOperand.constantTokenAmount();
-		mResult = new PetriNetJulian<S, C>(mServices, mOperand.getAlphabet(),
-				mOperand.getStateFactory(),
+		mResult = new PetriNetJulian<>(mServices, mOperand.getAlphabet(), mOperand.getStateFactory(),
 				constantTokenAmount);
-				
+		
 		for (final Place<S, C> oldPlace : mOperand.getPlaces()) {
 			final C content = oldPlace.getContent();
 			final boolean isInitial = mOperand.getInitialMarking().contains(oldPlace);
@@ -253,26 +258,24 @@ public class DifferenceBlackAndWhite<S, C>
 					continue;
 				}
 				
-				final Collection<Place<S, C>> predecessors =
-						new ArrayList<Place<S, C>>();
+				final Collection<Place<S, C>> predecessors = new ArrayList<>();
 				for (final Place<S, C> oldPlace : oldTrans.getPredecessors()) {
 					final Place<S, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					predecessors.add(newPlace);
 				}
-				assert (mWhitePlace.containsKey(predState));
+				assert mWhitePlace.containsKey(predState);
 				predecessors.add(mWhitePlace.get(predState));
-				assert (mWhitePlace.containsKey(succState));
+				assert mWhitePlace.containsKey(succState);
 				predecessors.add(mBlackPlace.get(succState));
 				
-				final Collection<Place<S, C>> successors =
-						new ArrayList<Place<S, C>>();
+				final Collection<Place<S, C>> successors = new ArrayList<>();
 				for (final Place<S, C> oldPlace : oldTrans.getSuccessors()) {
 					final Place<S, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					successors.add(newPlace);
 				}
-				assert (mWhitePlace.containsKey(succState));
+				assert mWhitePlace.containsKey(succState);
 				successors.add(mWhitePlace.get(succState));
-				assert (mBlackPlace.containsKey(predState));
+				assert mBlackPlace.containsKey(predState);
 				successors.add(mBlackPlace.get(predState));
 				
 				mResult.addTransition(oldTrans.getSymbol(), predecessors, successors);
@@ -283,8 +286,7 @@ public class DifferenceBlackAndWhite<S, C>
 //				Collection<IState<S,C>> succStates = predState.getInternalSucc(symbol);
 //				assert (succStates.size() == 1);
 //				IState<S,C> succState = succStates.iterator().next();
-				final Collection<Place<S, C>> predecessors =
-						new ArrayList<Place<S, C>>();
+				final Collection<Place<S, C>> predecessors = new ArrayList<>();
 				for (final Place<S, C> oldPlace : oldTrans.getPredecessors()) {
 					final Place<S, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					predecessors.add(newPlace);
@@ -292,8 +294,7 @@ public class DifferenceBlackAndWhite<S, C>
 //				predecessors.add(mWhitePlace.get(predState));
 //				predecessors.add(mBlackPlace.get(succState));
 				
-				final Collection<Place<S, C>> successors =
-						new ArrayList<Place<S, C>>();
+				final Collection<Place<S, C>> successors = new ArrayList<>();
 				for (final Place<S, C> oldPlace : oldTrans.getSuccessors()) {
 					final Place<S, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					successors.add(newPlace);
@@ -324,9 +325,14 @@ public class DifferenceBlackAndWhite<S, C>
 //	}
 	
 	@Override
+	protected IPetriNet<S, C> getOperand() {
+		return mOperand;
+	}
+	
+	@Override
 	public PetriNetJulian<S, C> getResult() {
-		assert (isPreSuccPlaceInNet(mResult));
-		assert (isPreSuccTransitionInNet(mResult));
+		assert isPreSuccPlaceInNet(mResult);
+		assert isPreSuccTransitionInNet(mResult);
 		return mResult;
 	}
 	
@@ -363,9 +369,10 @@ public class DifferenceBlackAndWhite<S, C>
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<C> stateFactory)
-			throws AutomataLibraryException {
-		mLogger.info("Testing correctness of differenceBlackAndWhite");
+	public boolean checkResult(final IStateFactory<C> stateFactory) throws AutomataLibraryException {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Testing correctness of " + operationName());
+		}
 		
 		final INestedWordAutomaton<S, C> op1AsNwa =
 				(new PetriNet2FiniteAutomaton<S, C>(mServices, mOperand)).getResult();
@@ -373,13 +380,14 @@ public class DifferenceBlackAndWhite<S, C>
 				(new DifferenceDD<S, C>(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
 		final INestedWordAutomaton<S, C> resultAsNwa =
 				(new PetriNet2FiniteAutomaton<S, C>(mServices, mResult)).getResult();
-				
+		
 		boolean correct = true;
 		correct &= new IsIncluded<>(mServices, stateFactory, resultAsNwa, rcResult).getResult();
 		correct &= new IsIncluded<>(mServices, stateFactory, rcResult, resultAsNwa).getResult();
 		
-		mLogger.info("Finished testing correctness of differenceBlackAndWhite");
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of " + operationName());
+		}
 		return correct;
 	}
-	
 }

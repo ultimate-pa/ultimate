@@ -106,7 +106,7 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 	public DeterminizeDD(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> input)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		this(services, input,
 				new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory));
 	}

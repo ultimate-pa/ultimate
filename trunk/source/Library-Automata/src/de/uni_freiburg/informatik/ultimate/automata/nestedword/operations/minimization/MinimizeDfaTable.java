@@ -39,10 +39,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.HasUnreachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -55,9 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class MinimizeDfaTable<LETTER,STATE>
-		extends AbstractMinimizeNwa<LETTER, STATE>
-		implements IOperation<LETTER,STATE> {
+public class MinimizeDfaTable<LETTER,STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	/*_______________________________________________________________________*\
 	\* FIELDS / ATTRIBUTES                                                   */
 	
@@ -72,14 +68,15 @@ public class MinimizeDfaTable<LETTER,STATE>
 	 * @param services Ultimate services
 	 * @param operand
 	 *            the input automaton
-	 * @throws AutomataLibraryException if construction fails
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public MinimizeDfaTable(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER,STATE> operand)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		super(services, operand.getStateFactory(), "minimizeDFA", operand);
 		
-	    assert !new HasUnreachableStates<LETTER,STATE>(mServices, operand).result() :
+	    assert !new HasUnreachableStates<LETTER,STATE>(mServices, operand).getResult() :
 			"No unreachable states allowed";
 		
 		mIsDeterministic = isDeterministic();
@@ -115,7 +112,7 @@ public class MinimizeDfaTable<LETTER,STATE>
 	 */
 	private void calculateTable(final ArrayList<STATE> states,
 			final boolean[][] table)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		// we iterate on the table to get all the equivalent states
 		boolean makeNextIteration = true;
 		while (makeNextIteration) {

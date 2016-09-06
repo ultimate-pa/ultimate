@@ -1,19 +1,21 @@
-package java_cup;
-import java_cup.runtime.ComplexSymbolFactory;
-import java_cup.runtime.ComplexSymbolFactory.Location;
-import java_cup.runtime.Symbol;
+package com.github.jhoenicke.javacup;
+import com.github.jhoenicke.javacup.runtime.ComplexSymbolFactory;
+import com.github.jhoenicke.javacup.runtime.ComplexSymbolFactory.Location;
+import com.github.jhoenicke.javacup.runtime.Symbol;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
 %%
 
 %class Lexer
-%implements sym
+%implements sym, com.github.jhoenicke.javacup.runtime.Scanner
+%function next_token
+%type com.github.jhoenicke.javacup.runtime.Symbol
+%eofclose
 %public
 %unicode
 %line
 %column
-%cup
 %{
     public Lexer(InputStream is, ComplexSymbolFactory sf){
 	this(new InputStreamReader(is));

@@ -38,6 +38,8 @@ public class LeafNode extends ProofNode {
 	public final static int THEORY_ARRAY = -5;
 	/// NO equality propagation
 	public final static int EQ = -6;
+	/// An assumption
+	public final static int ASSUMPTION = -7;
 
 	private final int mLeafKind;
 	private IAnnotation mAnnotation;

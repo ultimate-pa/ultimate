@@ -45,6 +45,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.ModelContainer;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.DuplicateKeyException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.InvalidKeyException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.PersistentObjectNotFoundException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.PersistentObjectTypeMismatchException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**

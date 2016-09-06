@@ -48,11 +48,11 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	 * Used to indicate an invalid percentage (if the base is zero).
 	 */
 	private static final int INVALID_PERCENTAGE = -1;
-
-	private final TreeMap<StatisticsType, Object> mKeyValueMap = new TreeMap<>();
 	
 	private static final String FIRST_INSERT_THE_VALUE_FOR_KEY = "First insert the value for key ";
 	private static final String MUST_BE_OF_NUMBER_TYPE = "must be of number type.";
+
+	private final TreeMap<StatisticsType, Object> mKeyValueMap = new TreeMap<>();
 	
 	@Override
 	public ICsvProvider<Object> createCvsProvider() {

@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 import java.util.ArrayDeque;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AbstractShrinker;
 
 /**
  * Reduces a list of objects in a binary search manner until a local minimum is
@@ -48,36 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * @param <STATE>
  *            state type
  */
-public class BinaryDebug<T, LETTER, STATE> extends ADebug<T, LETTER, STATE> {
-	/**
-	 * Left and right bound for the list of objects.
-	 */
-	private static class SublistBounds {
-		private final int mLeft;
-		private final int mRight;
-		private final boolean mIsLhs;
-		
-		SublistBounds(final int left, final int right, final boolean isLhs) {
-			this.mLeft = left;
-			this.mRight = right;
-			this.mIsLhs = isLhs;
-		}
-		
-		@Override
-		public String toString() {
-			final StringBuilder b = new StringBuilder();
-			b.append("(");
-			b.append(mLeft);
-			b.append(", ");
-			b.append(mRight);
-			b.append(")");
-			if (mIsLhs) {
-				b.append("*");
-			}
-			return b.toString();
-		}
-	}
-	
+public class BinaryDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STATE> {
 	private final ArrayDeque<SublistBounds> mStack;
 	private SublistBounds mSublistBounds;
 	
@@ -89,8 +60,8 @@ public class BinaryDebug<T, LETTER, STATE> extends ADebug<T, LETTER, STATE> {
 	 * @param shrinker
 	 *            shrinker
 	 */
-	public BinaryDebug(final ATester<LETTER, STATE> tester,
-			final AShrinker<T, LETTER, STATE> shrinker) {
+	public BinaryDebug(final AbstractTester<LETTER, STATE> tester,
+			final AbstractShrinker<T, LETTER, STATE> shrinker) {
 		super(tester, shrinker);
 		mStack = new ArrayDeque<>();
 		mSublistBounds = null;
@@ -134,8 +105,7 @@ public class BinaryDebug<T, LETTER, STATE> extends ADebug<T, LETTER, STATE> {
 		mStack.add(new SublistBounds(0, list.size(), false));
 		while (!mStack.isEmpty()) {
 			mSublistBounds = mStack.poll();
-			final List<T> sublist =
-					list.subList(mSublistBounds.mLeft, mSublistBounds.mRight);
+			final List<T> sublist = list.subList(mSublistBounds.mLeft, mSublistBounds.mRight);
 			if (sublist.isEmpty()) {
 				continue;
 			}
@@ -163,5 +133,36 @@ public class BinaryDebug<T, LETTER, STATE> extends ADebug<T, LETTER, STATE> {
 	@Override
 	protected void noErrorAction() {
 		split(mSublistBounds);
+	}
+	
+	/**
+	 * Left and right bound for the list of objects.
+	 */
+	private static class SublistBounds {
+		private final int mLeft;
+		private final int mRight;
+		private final boolean mIsLhs;
+		
+		SublistBounds(final int left, final int right, final boolean isLhs) {
+			this.mLeft = left;
+			this.mRight = right;
+			this.mIsLhs = isLhs;
+		}
+		
+		@Override
+		public String toString() {
+			final StringBuilder builder = new StringBuilder();
+			// @formatter:off
+			builder.append('(')
+					.append(mLeft)
+					.append(", ")
+					.append(mRight)
+					.append(')');
+			// @formatter:on
+			if (mIsLhs) {
+				builder.append('*');
+			}
+			return builder.toString();
+		}
 	}
 }

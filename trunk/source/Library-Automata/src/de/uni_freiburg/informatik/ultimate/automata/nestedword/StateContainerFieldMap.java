@@ -55,9 +55,12 @@ public class StateContainerFieldMap<LETTER, STATE> {
 	private Object mOut1;
 	private Object mOut2;
 	private Object mOut3;
+	// TODO Christian 2016-09-02: This field is unused.
 	private Object mOut4;
 	
 	/**
+	 * Constructor.
+	 * 
 	 * @param state
 	 *            state
 	 */
@@ -117,6 +120,18 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		}
 	}
 	
+	protected Object getOut1() {
+		return mOut1;
+	}
+	
+	protected Object getOut2() {
+		return mOut2;
+	}
+	
+	protected Object getOut3() {
+		return mOut3;
+	}
+	
 	private void addInternalTransitionMap(
 			final Map<LETTER, Set<STATE>> letter2succs,
 			final LETTER letter,
@@ -133,62 +148,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 	 * @return All internal outgoing transitions in field mode.
 	 */
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessorsField() {
-		return new Iterable<OutgoingInternalTransition<LETTER, STATE>>() {
-			@Override
-			public Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator() {
-				return new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
-					/**
-					 * Points to next field that has OutgoingInternalTransition.
-					 */
-					private short mPosition;
-					
-					{
-						mPosition = 0;
-						updatePosition();
-					}
-					
-					private void updatePosition() {
-						mPosition++;
-						while (mPosition < FOUR) {
-							if ((mPosition == ONE && (mOut1 instanceof OutgoingInternalTransition))
-									|| (mPosition == TWO && (mOut2 instanceof OutgoingInternalTransition))
-									|| (mPosition == THREE && (mOut3 instanceof OutgoingInternalTransition))) {
-								return;
-							} else {
-								throw new AssertionError();
-							}
-						}
-					}
-					
-					@Override
-					public boolean hasNext() {
-						return mPosition < FOUR;
-					}
-					
-					@SuppressWarnings("unchecked")
-					@Override
-					public OutgoingInternalTransition<LETTER, STATE> next() {
-						Object result;
-						if (mPosition == ONE) {
-							result = mOut1;
-						} else if (mPosition == TWO) {
-							result = mOut2;
-						} else if (mPosition == THREE) {
-							result = mOut3;
-						} else {
-							throw new NoSuchElementException();
-						}
-						updatePosition();
-						return (OutgoingInternalTransition<LETTER, STATE>) result;
-					}
-					
-					@Override
-					public void remove() {
-						throw new UnsupportedOperationException();
-					}
-				};
-			}
-		};
+		return FieldIterator::new;
 	}
 	
 	/**
@@ -200,116 +160,173 @@ public class StateContainerFieldMap<LETTER, STATE> {
 	 */
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessorsMap(
 			final Map<LETTER, Set<STATE>> letter2succ, final LETTER letter) {
-		return new Iterable<OutgoingInternalTransition<LETTER, STATE>>() {
-			@Override
-			public Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator() {
-				return new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
-					private Iterator<STATE> mIterator;
-					
-					{
-						if (letter2succ != null) {
-							if (letter2succ.get(letter) != null) {
-								mIterator = letter2succ.get(letter).iterator();
-							} else {
-								mIterator = null;
-							}
-						} else {
-							mIterator = null;
-						}
-					}
-					
-					@Override
-					public boolean hasNext() {
-						return mIterator == null || mIterator.hasNext();
-					}
-					
-					@Override
-					public OutgoingInternalTransition<LETTER, STATE> next() {
-						if (mIterator == null) {
-							throw new NoSuchElementException();
-						} else {
-							final STATE succ = mIterator.next();
-							return new OutgoingInternalTransition<>(letter, succ);
-						}
-					}
-					
-					@Override
-					public void remove() {
-						throw new UnsupportedOperationException();
-					}
-				};
-			}
-		};
+		return () -> new MapLetterIterator(letter2succ, letter);
 	}
 	
 	/**
+	 * The resulting {@link Iterator} iterates over all {@link OutgoingInternalTransition}s of the state.
+	 * <p>
+	 * Implementation detail: It iterates over all outgoing internal letters and uses the iterators returned by
+	 * internalSuccessors(state, letter).
+	 * 
 	 * @param letter2succ
 	 *            map (letter -> successors)
 	 * @return All internal outgoing transitions for a given map.
 	 */
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessorsMap(
 			final Map<LETTER, Set<STATE>> letter2succ) {
-		return new Iterable<OutgoingInternalTransition<LETTER, STATE>>() {
-			/**
-			 * Iterates over all OutgoingInternalTransition of state.
-			 * Iterates over all outgoing internal letters and uses the
-			 * iterators returned by internalSuccessors(state, letter)
-			 */
-			@Override
-			public Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator() {
-				return new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
-					private Iterator<LETTER> mLetterIterator;
-					private LETTER mCurrentLetter;
-					private Iterator<OutgoingInternalTransition<LETTER, STATE>> mCurrentIterator;
-					
-					{
-						mLetterIterator = letter2succ.keySet().iterator();
-						nextLetter();
-					}
-					
-					private void nextLetter() {
-						if (mLetterIterator.hasNext()) {
-							do {
-								mCurrentLetter = mLetterIterator.next();
-								mCurrentIterator = internalSuccessorsMap(letter2succ,
-										mCurrentLetter).iterator();
-							} while (!mCurrentIterator.hasNext()
-									&& mLetterIterator.hasNext());
-							if (!mCurrentIterator.hasNext()) {
-								mCurrentLetter = null;
-								mCurrentIterator = null;
-							}
-						} else {
-							mCurrentLetter = null;
-							mCurrentIterator = null;
-						}
-					}
-					
-					@Override
-					public boolean hasNext() {
-						return mCurrentLetter != null;
-					}
-					
-					@Override
-					public OutgoingInternalTransition<LETTER, STATE> next() {
-						if (mCurrentLetter == null) {
-							throw new NoSuchElementException();
-						} else {
-							final OutgoingInternalTransition<LETTER, STATE> result =
-									mCurrentIterator.next();
-							if (!mCurrentIterator.hasNext()) {
-								nextLetter();
-							}
-							return result;
-						}
-					}
-					
-					@Override
-					public void remove() {
-						throw new UnsupportedOperationException();
-					}
-				};
+		return () -> new MapNoLetterIterator(letter2succ);
+	}
+	
+	/**
+	 * Iterator for field mode.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	private final class FieldIterator implements Iterator<OutgoingInternalTransition<LETTER, STATE>> {
+		/**
+		 * Points to next field with {@link OutgoingInternalTransition}.
+		 */
+		private short mPosition;
+		
+		public FieldIterator() {
+			updatePosition();
+		}
+		
+		private void updatePosition() {
+			mPosition++;
+		}
+		
+		@Override
+		public boolean hasNext() {
+			return mPosition < FOUR;
+		}
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public OutgoingInternalTransition<LETTER, STATE> next() {
+			final Object result;
+			switch (mPosition) {
+				case ONE:
+					result = getOut1();
+					break;
+				case TWO:
+					result = getOut2();
+					break;
+				case THREE:
+					result = getOut3();
+					break;
+				default:
+					throw new NoSuchElementException();
 			}
-		};
+			if (!(result instanceof OutgoingInternalTransition)) {
+				throw new AssertionError();
+			}
+			updatePosition();
+			return (OutgoingInternalTransition<LETTER, STATE>) result;
+		}
+		
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+	}
+	
+	/**
+	 * Iterator for map mode and a given letter.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	private final class MapLetterIterator implements Iterator<OutgoingInternalTransition<LETTER, STATE>> {
+		private final LETTER mLetter;
+		private Iterator<STATE> mIterator;
+		
+		private MapLetterIterator(final Map<LETTER, Set<STATE>> letter2succ, final LETTER letter) {
+			this.mLetter = letter;
+			if (letter2succ != null) {
+				if (letter2succ.get(letter) != null) {
+					mIterator = letter2succ.get(letter).iterator();
+				} else {
+					mIterator = null;
+				}
+			} else {
+				mIterator = null;
+			}
+		}
+		
+		@Override
+		public boolean hasNext() {
+			return mIterator == null || mIterator.hasNext();
+		}
+		
+		@Override
+		public OutgoingInternalTransition<LETTER, STATE> next() {
+			if (mIterator == null) {
+				throw new NoSuchElementException();
+			} else {
+				final STATE succ = mIterator.next();
+				return new OutgoingInternalTransition<>(mLetter, succ);
+			}
+		}
+		
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+	}
+	
+	/**
+	 * Iterator for map mode and no given letter.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	private final class MapNoLetterIterator implements Iterator<OutgoingInternalTransition<LETTER, STATE>> {
+		private final Map<LETTER, Set<STATE>> mLetter2succ;
+		private final Iterator<LETTER> mLetterIterator;
+		private LETTER mCurrentLetter;
+		private Iterator<OutgoingInternalTransition<LETTER, STATE>> mCurrentIterator;
+		
+		private MapNoLetterIterator(final Map<LETTER, Set<STATE>> letter2succ) {
+			mLetter2succ = letter2succ;
+			mLetterIterator = letter2succ.keySet().iterator();
+			nextLetter();
+		}
+		
+		private void nextLetter() {
+			if (mLetterIterator.hasNext()) {
+				do {
+					mCurrentLetter = mLetterIterator.next();
+					mCurrentIterator = internalSuccessorsMap(mLetter2succ, mCurrentLetter).iterator();
+				} while (!mCurrentIterator.hasNext() && mLetterIterator.hasNext());
+				if (!mCurrentIterator.hasNext()) {
+					mCurrentLetter = null;
+					mCurrentIterator = null;
+				}
+			} else {
+				mCurrentLetter = null;
+				mCurrentIterator = null;
+			}
+		}
+		
+		@Override
+		public boolean hasNext() {
+			return mCurrentLetter != null;
+		}
+		
+		@Override
+		public OutgoingInternalTransition<LETTER, STATE> next() {
+			if (mCurrentLetter == null) {
+				throw new NoSuchElementException();
+			} else {
+				final OutgoingInternalTransition<LETTER, STATE> result = mCurrentIterator.next();
+				if (!mCurrentIterator.hasNext()) {
+					nextLetter();
+				}
+				return result;
+			}
+		}
 	}
 }

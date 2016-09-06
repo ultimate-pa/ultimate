@@ -99,4 +99,18 @@ public abstract class GeneralOperation<LETTER, STATE>
 		}
 		return true;
 	}
+	
+	/**
+	 * @return Logger message for starting the {@link #checkResult(IStateFactory)} method.
+	 */
+	protected final String startCheckMessage() {
+		return "Testing correctness of " + operationName() + '.';
+	}
+	
+	/**
+	 * @return Logger message for exiting the {@link #checkResult(IStateFactory)} method.
+	 */
+	protected final String exitCheckMessage() {
+		return "Finished testing correctness of " + operationName() + '.';
+	}
 }

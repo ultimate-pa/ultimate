@@ -38,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.TestBuchiEquivalence;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -61,12 +61,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            State class of buechi automaton
  */
-public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
-
-	/**
-	 * The logger used by the Ultimate framework.
-	 */
-	private final ILogger mLogger;
+public class BuchiReduce<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	/**
 	 * The inputed buechi automaton.
 	 */
@@ -75,10 +70,6 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * The resulting possible reduced buechi automaton.
 	 */
 	private INestedWordAutomaton<LETTER, STATE> mResult;
-	/**
-	 * Service provider of Ultimate framework.
-	 */
-	private final AutomataLibraryServices mServices;
 	/**
 	 * Performance statistics of this operation.
 	 */
@@ -129,8 +120,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	protected BuchiReduce(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final DelayedSimulation<LETTER, STATE> simulation)
 					throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
 
@@ -139,16 +129,16 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		mResult = simulation.getResult();
 		mStatistics = simulation.getSimulationPerformance().exportToAutomataOperationStatistics();
 
-		final boolean compareWithNonSccResult = false;
-		if (compareWithNonSccResult) {
+		final boolean compareWithSccResult = false;
+		if (compareWithSccResult) {
 			final DelayedGameGraph<LETTER, STATE> graph = new DelayedGameGraph<>(mServices,
 					mServices.getProgressMonitorService(), mLogger, mOperand, stateFactory);
 			graph.generateGameGraphFromAutomaton();
-			final DelayedSimulation<LETTER, STATE> nonSccSim = new DelayedSimulation<>(
-					mServices.getProgressMonitorService(), mLogger, false, stateFactory, graph);
-			nonSccSim.doSimulation();
-			final INestedWordAutomaton<LETTER, STATE> nonSCCresult = nonSccSim.getResult();
-			if (mResult.size() != nonSCCresult.size()) {
+			final DelayedSimulation<LETTER, STATE> sccSim = new DelayedSimulation<>(
+					mServices.getProgressMonitorService(), mLogger, true, stateFactory, graph);
+			sccSim.doSimulation();
+			final INestedWordAutomaton<LETTER, STATE> sccResult = sccSim.getResult();
+			if (mResult.size() != sccResult.size()) {
 				throw new AssertionError();
 			}
 		}
@@ -156,6 +146,13 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		mLogger.info(exitMessage());
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#checkResult(de.
+	 * uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory)
+	 */
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
@@ -208,17 +205,6 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return "BuchiReduce";
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#startMessage()
-	 */
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Operand has " + mOperand.sizeInformation();
-	}
-
 	/**
 	 * Gets the logger used by the Ultimate framework.
 	 * 
@@ -233,6 +219,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * 
 	 * @return The inputed automaton.
 	 */
+	@Override
 	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
 	}

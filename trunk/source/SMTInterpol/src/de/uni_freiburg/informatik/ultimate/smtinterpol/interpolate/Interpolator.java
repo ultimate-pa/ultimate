@@ -30,9 +30,6 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
@@ -46,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
@@ -67,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAAnnotation
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinVar;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffinTerm;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 /**
  * This interpolator computes the interpolants of a refutation
@@ -83,7 +80,7 @@ public class Interpolator extends NonRecursive {
 	SMTInterpol mSmtSolver;
 	Script mCheckingSolver;
 	
-	Logger mLogger;
+	LogProxy mLogger;
 	Theory mTheory;
 	int mNumInterpolants;
 	/**
@@ -185,7 +182,7 @@ public class Interpolator extends NonRecursive {
 		}
 	}
 
-	public Interpolator(Logger logger, SMTInterpol smtSolver, 
+	public Interpolator(LogProxy logger, SMTInterpol smtSolver, 
 			Script checkingSolver, Theory theory, 
 			Set<String>[] partitions, int[] startOfSubTrees) {
 		mPartitions = new HashMap<String, Integer>();
@@ -220,8 +217,7 @@ public class Interpolator extends NonRecursive {
 	
 	public Interpolant[] interpolate(Clause clause) {
 		if (mInterpolants.containsKey(clause)){
-			mLogger.debug(new DebugMessage(
-					"Clause {0} has been interpolated before.", clause));
+			mLogger.debug("Clause {0} has been interpolated before.", clause);
 			return mInterpolants.get(clause);
 		}
 		if (mSmtSolver.isTerminationRequested()) {
@@ -324,8 +320,7 @@ public class Interpolator extends NonRecursive {
 		// add the interpolants to the stack and the cache
 		mInterpolated.add(interpolants);
 		mInterpolants.put(clause, interpolants);
-		mLogger.debug(new DebugMessage(
-				"Interpolating leaf {0} yields ...", clause));
+		mLogger.debug("Interpolating leaf {0} yields ...", clause);
 		for(int i = 0; i <= mNumInterpolants -1; i++){
 			mLogger.debug(interpolants[i]);
 		}
@@ -344,10 +339,9 @@ public class Interpolator extends NonRecursive {
 		final Interpolant[] interp = new Interpolant[mNumInterpolants];
 
 		for (int i = 0; i < mNumInterpolants; i++) {
-			mLogger.debug(new DebugMessage(
-			        "Pivot {2}{3} on interpolants {0} and {1} gives...",
-							primInterp[i], assInterp[i],
-							pivot.getSMTFormula(mTheory), pivInfo));
+			mLogger.debug("Pivot {2}{3} on interpolants {0} and {1} gives...",
+						  primInterp[i], assInterp[i],
+						  pivot.getSMTFormula(mTheory), pivInfo);
 			if (pivInfo.isALocal(i)) {
 				interp[i] = new Interpolant(mTheory.or(
 				        primInterp[i].mTerm, assInterp[i].mTerm));
@@ -402,8 +396,7 @@ public class Interpolator extends NonRecursive {
 		}
 		
 		mInterpolants.put(clause, interpolants);
-		mLogger.debug(new DebugMessage(
-				"...which is the resulting interpolant for clause {0} ", clause));
+		mLogger.debug("...which is the resulting interpolant for clause {0} ", clause);
 	}
 	
 	/**
@@ -566,8 +559,8 @@ public class Interpolator extends NonRecursive {
 	}
 
 	private void checkInductivity(Collection<Literal> clause, Interpolant[] ipls) {
-		final Level old = mLogger.getLevel();// NOPMD
-		mLogger.setLevel(Level.ERROR);
+		final int old = mLogger.getLoglevel();// NOPMD
+		mLogger.setLoglevel(LogProxy.LOGLEVEL_ERROR);
 
 		mCheckingSolver.push(1);
 		
@@ -752,7 +745,7 @@ public class Interpolator extends NonRecursive {
 			mCheckingSolver.pop(1);
 		}
 		mCheckingSolver.pop(1);
-		mLogger.setLevel(old);
+		mLogger.setLoglevel(old);
 	}
 
 	/**

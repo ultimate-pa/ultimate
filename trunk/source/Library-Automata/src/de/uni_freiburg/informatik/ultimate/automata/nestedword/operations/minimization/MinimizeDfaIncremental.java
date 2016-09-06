@@ -36,11 +36,10 @@ import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.Interrupt;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -74,9 +73,25 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class MinimizeDfaIncremental<LETTER, STATE>
-		extends AbstractMinimizeIncremental<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncremental<LETTER, STATE> {
+	// ----------------------- options for tweaking ----------------------- //
+	
+	/**
+	 * Option:
+	 * Separate states with different transitions.
+	 * <p>
+	 * That is, if there is a letter {@code l} where one of the states has
+	 * an outgoing transitions with {@code l} and one has not (hence this
+	 * transition would go to an implicit sink state.
+	 * <p>
+	 * NOTE: This is only reasonable if the input automaton is not total.
+	 * Furthermore, the method becomes incomplete (i.e., may not find the
+	 * minimum) if dead ends have not been removed beforehand.
+	 */
+	private static final boolean OPTION_NEQ_TRANS = false;
+	
+	// ----------------------- fields ----------------------- //
+	
 	/**
 	 * The number of states in the input automaton (often used).
 	 */
@@ -115,22 +130,6 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 	 */
 	private final ArrayDeque<StackElem> mStack;
 	
-	// ----------------------- options for tweaking ----------------------- //
-	
-	/**
-	 * Option:
-	 * Separate states with different transitions.
-	 * <p>
-	 * That is, if there is a letter {@code l} where one of the states has
-	 * an outgoing transitions with {@code l} and one has not (hence this
-	 * transition would go to an implicit sink state.
-	 * <p>
-	 * NOTE: This is only reasonable if the input automaton is not total.
-	 * Furthermore, the method becomes incomplete (i.e., may not find the
-	 * minimum) if dead ends have not been removed beforehand.
-	 */
-	private static final boolean OPTION_NEQ_TRANS = false;
-	
 	// --------------------------- class methods --------------------------- //
 	
 	/**
@@ -142,13 +141,13 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 	 *            state factory
 	 * @param operand
 	 *            input automaton (DFA)
-	 * @throws AutomataLibraryException
-	 *             thrown by DFA check or if execution is cancelled
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public MinimizeDfaIncremental(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null);
 	}
 	
@@ -163,14 +162,14 @@ public class MinimizeDfaIncremental<LETTER, STATE>
 	 *            input automaton (DFA)
 	 * @param interrupt
 	 *            interrupt
-	 * @throws AutomataLibraryException
-	 *             thrown by DFA check or if execution is cancelled
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public MinimizeDfaIncremental(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		super(services, stateFactory, "MinimizeAMR", operand, interrupt);
 		
 		assert super.isDfa() : "The input automaton is no DFA.";

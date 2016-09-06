@@ -33,15 +33,14 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import petruchio.cov.Backward;
 import petruchio.cov.SimpleList;
 import petruchio.interfaces.petrinet.Place;
@@ -62,25 +61,11 @@ import petruchio.interfaces.petrinet.Transition;
  *            Type of place labeling
  */
 
-public class EmptinessPetruchio<S, C> implements IOperation<S, C> {
-	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
+public class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C> {
 	
 	@Override
 	public String operationName() {
 		return "emptinessPetruchio";
-	}
-	
-	@Override
-	public String startMessage() {
-		return "Start emptinessPetruchio. "
-				+ "Operand " + mNetJulian.sizeInformation();
-	}
-	
-	@Override
-	public String exitMessage() {
-		return "Finished emptinessPetruchio";
 	}
 	
 	final PetruchioWrapper<S, C> mPetruchio;
@@ -91,8 +76,7 @@ public class EmptinessPetruchio<S, C> implements IOperation<S, C> {
 	
 	public EmptinessPetruchio(final AutomataLibraryServices services,
 			final PetriNetJulian<S, C> net) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mNetJulian = net;
 		mLogger.info(startMessage());
 		mPetruchio = new PetruchioWrapper<S, C>(mServices, net);
@@ -165,6 +149,11 @@ public class EmptinessPetruchio<S, C> implements IOperation<S, C> {
 			result = result.concatenate(oneStepSubrun);
 		}
 		return result;
+	}
+
+	@Override
+	protected IPetriNet<S, C> getOperand() {
+		return mNetJulian;
 	}
 	
 	@Override

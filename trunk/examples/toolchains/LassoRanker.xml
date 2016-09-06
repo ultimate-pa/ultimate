@@ -1,5 +1,10 @@
-<toolchain>
+<rundefinition>
+	<name>Ultimate Toolchain</name>
+	<toolchain>
+		
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker"/>
-</toolchain>
+
+	</toolchain>
+</rundefinition>

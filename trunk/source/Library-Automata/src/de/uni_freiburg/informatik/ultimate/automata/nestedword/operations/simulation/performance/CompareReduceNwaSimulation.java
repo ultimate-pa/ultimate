@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance;
@@ -29,10 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import java.util.Collection;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
@@ -64,8 +62,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareReduceBuchiSimulation<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareReduceBuchiSimulation<LETTER, STATE> {
 
 	/**
 	 * Compares the different types of simulation methods for nwa reduction.
@@ -182,7 +179,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				final long startTime = System.currentTimeMillis();
 				IDoubleDeckerAutomaton<LETTER, STATE> operandAsNwa = null;
 				if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
-					operandAsNwa = (IDoubleDeckerAutomaton<LETTER, STATE>) operand;
+					operandAsNwa = operand;
 				} else {
 					operandAsNwa = new RemoveUnreachable<LETTER, STATE>(services, operand).getResult();
 				}
@@ -197,11 +194,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 			logger.info("Method has thrown an out of memory error.");
 			outOfMemory = true;
 		}
-		try {
-			appendMethodPerformanceToLog(method, name, type, useSCCs, timedOut, outOfMemory, operand);
-		} catch (final AutomataLibraryException e) {
-			e.printStackTrace();
-		}
+		appendMethodPerformanceToLog(method, name, type, useSCCs, timedOut, outOfMemory, operand);
 	}
 
 	/*

@@ -184,21 +184,25 @@ public class AutomataDefinitionInterpreter {
 	public void interpret(TreeAutomatonAST astNode) throws IllegalArgumentException{
 		mErrorLocation = astNode.getLocation();
 		
-		TreeAutomatonBU<String, String> treeAutomaton = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<String, String> treeAutomaton = new TreeAutomatonBU<>();
 
-		for (String ltr : astNode.getAlphabet())
+		for (final String ltr : astNode.getAlphabet()) {
 			treeAutomaton.addFinalState(ltr);
+		}
 		
-		for (String s : astNode.getStates())
+		for (final String s : astNode.getStates()) {
 			treeAutomaton.addState(s);
+		}
 
-		for (String is : astNode.getInitialStates())
+		for (final String is : astNode.getInitialStates()) {
 			treeAutomaton.addInitialState(is);
+		}
 
-		for (String fs : astNode.getFinalStates())
+		for (final String fs : astNode.getFinalStates()) {
 			treeAutomaton.addFinalState(fs);
+		}
 		
-		for (TreeAutomatonTransitionAST trans : astNode.getTransitions()) {
+		for (final TreeAutomatonTransitionAST trans : astNode.getTransitions()) {
 			if (trans.getSourceStates().size() == 0) {
 				throw new UnsupportedOperationException("The TreeAutomaton format with initial states "
 						+ "(and implicit symbol ranks) does not allow nullary rules, i.e.,"
@@ -213,33 +217,33 @@ public class AutomataDefinitionInterpreter {
 	public void interpret(TreeAutomatonRankedAST astNode) throws IllegalArgumentException{
 		mErrorLocation = astNode.getLocation();
 		
-		TreeAutomatonBU<String, String> treeAutomaton = new TreeAutomatonBU<>();
-		String nullaryString = "elim0arySymbol_";
+		final TreeAutomatonBU<String, String> treeAutomaton = new TreeAutomatonBU<>();
+		final String nullaryString = "elim0arySymbol_";
 
-		List<RankedAlphabetEntryAST> ra = astNode.getRankedAlphabet();
-		for (RankedAlphabetEntryAST rae : ra) {
-			for (String ltr : rae.getAlphabet()) {
+		final List<RankedAlphabetEntryAST> ra = astNode.getRankedAlphabet();
+		for (final RankedAlphabetEntryAST rae : ra) {
+			for (final String ltr : rae.getAlphabet()) {
 				treeAutomaton.addLetter(ltr);
 				if (Integer.parseInt(rae.getRank()) == 0) {
 					// our tree automata don't have 0-ary symbols right now 
 					// (they use 1-ary, initial states, and adapted rules instead)
 					// this converts 0-ary symbols accordingly
-					String inState = nullaryString + ltr;
+					final String inState = nullaryString + ltr;
 					treeAutomaton.addState(inState); 
 					treeAutomaton.addInitialState(inState);
 				}
 			}
 		}
 		
-		for (String s : astNode.getStates()) {
+		for (final String s : astNode.getStates()) {
 			treeAutomaton.addState(s);
 		}
 		
-		for (String fs : astNode.getFinalStates()) {
+		for (final String fs : astNode.getFinalStates()) {
 			treeAutomaton.addFinalState(fs);
 		}
 		
-		for (TreeAutomatonTransitionAST trans : astNode.getTransitions()) {
+		for (final TreeAutomatonTransitionAST trans : astNode.getTransitions()) {
 			if (trans.getSourceStates().size() == 0) {
 				treeAutomaton.addRule(trans.getSymbol(), 
 						Collections.singletonList(nullaryString + trans.getSymbol()), 

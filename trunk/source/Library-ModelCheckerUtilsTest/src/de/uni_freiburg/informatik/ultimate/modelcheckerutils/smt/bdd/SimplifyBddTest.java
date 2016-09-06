@@ -149,24 +149,24 @@ public class SimplifyBddTest {
 		script.declareFun("select", new Sort[]{ints, ints}, bool);
 		script.declareFun("store", new Sort[]{ints, ints, bool}, ints);
 		
-		Term a = script.term("noMemleak_a");
-		Term b = script.term("noMemleak_b");
-		Term a_3 = script.term("v_noMemleak_a_3");
-		Term v7 = script.numeral("7");
-		Term vTrue = script.term("true");
-		Term vFalse = script.term("false");
+		final Term a = script.term("noMemleak_a");
+		final Term b = script.term("noMemleak_b");
+		final Term a_3 = script.term("v_noMemleak_a_3");
+		final Term v7 = script.numeral("7");
+		final Term vTrue = script.term("true");
+		final Term vFalse = script.term("false");
 		
 		
 
-		Term s1 = script.term("store", a_3, v7, vTrue);
-		Term s2 = script.term("store", s1, v7, vFalse);
-		Term e1 = script.term("=", a, s2);
+		final Term s1 = script.term("store", a_3, v7, vTrue);
+		final Term s2 = script.term("store", s1, v7, vFalse);
+		final Term e1 = script.term("=", a, s2);
 		
-		Term s3 = script.term("=", a_3, v7);
+		final Term s3 = script.term("=", a_3, v7);
 		
-		Term e2 = SmtUtils.not(script, script.term("=", b, a_3));
+		final Term e2 = SmtUtils.not(script, script.term("=", b, a_3));
 		
-		Term and = script.term("and", e2, s3, e1);
+		final Term and = script.term("and", e2, s3, e1);
 		
 		final Term out = simplifyBdd.transformToDNF(and);
 		Assert.assertTrue(and + " got in and that got out " + out , Util.checkSat(script, script.term("distinct", and, out)) != LBool.SAT);

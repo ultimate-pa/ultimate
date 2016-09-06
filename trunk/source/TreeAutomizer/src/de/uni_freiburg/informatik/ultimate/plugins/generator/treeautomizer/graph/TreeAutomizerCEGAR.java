@@ -1,12 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
 import java.util.Collection;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.petruchio.EmptinessPetruchio;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
@@ -17,20 +14,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HCTransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClausePredicateSymbol;
 
 public class TreeAutomizerCEGAR extends AbstractCegarLoop {
 
@@ -58,6 +51,7 @@ public class TreeAutomizerCEGAR extends AbstractCegarLoop {
 		super(services, storage, name, rootNode, smtManager, taPrefs, errorLocs, logger);
 		predicateFactory = new PredicateFactoryResultChecking(smtManager);
 		mBackendSmtSolverScript = script;
+
 	}
 
 	@Override
@@ -67,10 +61,10 @@ public class TreeAutomizerCEGAR extends AbstractCegarLoop {
 
 	@Override
 	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
-		TreeEmptinessCheck<HCTransFormula, IPredicate> emptiness = new TreeEmptinessCheck<>(mAbstraction);
+		final TreeEmptinessCheck<HCTransFormula, IPredicate> emptiness = new TreeEmptinessCheck<>(mAbstraction);
 		
 		final TreeAutomatonBU<HCTransFormula, IPredicate> abstraction = mAbstraction;
-		mCounterexample = (ITreeRun<HCTransFormula, IPredicate>) emptiness.getResult();
+		mCounterexample = emptiness.getResult();
 		
 		if (mCounterexample == null) {
 			return true;
@@ -96,8 +90,8 @@ public class TreeAutomizerCEGAR extends AbstractCegarLoop {
 	@Override
 	protected LBool isCounterexampleFeasible() {
 		// TODO Auto-generated method stub
-		SSABuilder ssaBuilder = new SSABuilder(mCounterexample, mBackendSmtSolverScript);//preCondition, postCondition)
-		HCSsa ssa = ssaBuilder.getSSA();
+		final SSABuilder ssaBuilder = new SSABuilder(mCounterexample, mBackendSmtSolverScript);//preCondition, postCondition)
+		final HCSsa ssa = ssaBuilder.getSSA();
 		
 		// TODO(mostafa): Check satsifiability
 		return null;
@@ -116,7 +110,7 @@ public class TreeAutomizerCEGAR extends AbstractCegarLoop {
 	@Override
 	protected boolean refineAbstraction() throws AutomataOperationCanceledException, AutomataLibraryException {	
 		generalizeCounterExample();
-		ITreeAutomaton<HCTransFormula, IPredicate> cExample = (new Complement<HCTransFormula, IPredicate>(mCounterexample.getAutomaton(), predicateFactory)).getResult();
+		final ITreeAutomaton<HCTransFormula, IPredicate> cExample = (new Complement<HCTransFormula, IPredicate>(mCounterexample.getAutomaton(), predicateFactory)).getResult();
 		mAbstraction = (TreeAutomatonBU<HCTransFormula, IPredicate>) (new Intersect<HCTransFormula, IPredicate>(mAbstraction, cExample, predicateFactory)).getResult();
 		
 		++mIteration;

@@ -31,14 +31,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.parsers.FactoryConfigurationError;
-
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph.TreeAutomizerCEGAR;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HCTransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClausePredicateSymbol;
@@ -49,6 +52,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.scrip
  * Auto-Generated Stub for the plug-in's Observer
  */
 public class TreeAutomizerObserver implements IUnmanagedObserver {
+
+	private IUltimateServiceProvider mServices;
+	private IToolchainStorage mToolchainStorage;
+	private ILogger mLogger;
+	
+	public TreeAutomizerObserver(IUltimateServiceProvider services, IToolchainStorage toolchainStorage) {
+		mServices = services;
+		mToolchainStorage = toolchainStorage;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+	}
 
 	@Override
 	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
@@ -71,14 +84,17 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(IElement root) throws Throwable {
 		
+		RootNode rootNode = (RootNode) root;
+		rootNode.getRootAnnot().getScript();
+		
 		Map<String, IAnnotations> st = root.getPayload().getAnnotations();
 		HornAnnot annot = (HornAnnot) st.get("HoRNClauses");
 		List<HornClause> hornClauses = (List<HornClause>) annot.getAnnotationsAsMap().get("HoRNClauses");
 
-		TreeAutomatonBU<HCTransFormula, HornClausePredicateSymbol> tree = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<HCTransFormula, HornClausePredicateSymbol> tree = new TreeAutomatonBU<>();
 		
-		for (HornClause clause : hornClauses) {
-			List<HornClausePredicateSymbol> tail = new ArrayList<HornClausePredicateSymbol>();
+		for (final HornClause clause : hornClauses) {
+			final List<HornClausePredicateSymbol> tail = new ArrayList<HornClausePredicateSymbol>();
 			tail.addAll(clause.getTailPredicates());
 			tree.addRule(clause.getTransitionFormula(), tail, clause.getHeadPredicate());
 		}
@@ -87,6 +103,8 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 		tree.addFinalState(new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol());
 		//tree.addFinalState(state);
 		//tree.addInitialState(state);
+//		TreeAutomizerCEGAR cegar = new TreeAutomizerCEGAR(mServices, 
+//				mToolchainStorage, "name", rootNode, smtManager, taPrefs, errorLocs, mLogger, script);
 		return false;
 	}
 

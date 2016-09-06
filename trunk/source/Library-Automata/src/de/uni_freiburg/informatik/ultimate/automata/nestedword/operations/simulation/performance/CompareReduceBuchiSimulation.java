@@ -42,11 +42,10 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
@@ -80,7 +79,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <STATE>
  *            State class of buechi automaton
  */
-public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 
 	/**
 	 * Amount of fix fields in the log format. Currently this is name, type,
@@ -472,10 +471,6 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	 */
 	private final List<String> mLoggedLines;
 	/**
-	 * The logger used by the Ultimate framework.
-	 */
-	private final ILogger mLogger;
-	/**
 	 * The inputed buechi automaton.
 	 */
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
@@ -483,10 +478,6 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	 * The resulting buechi automaton.
 	 */
 	private final INestedWordAutomaton<LETTER, STATE> mResult;
-	/**
-	 * Service provider of Ultimate framework.
-	 */
-	private final AutomataLibraryServices mServices;
 	/**
 	 * Holds time measures of the comparison.
 	 */
@@ -511,11 +502,10 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	 */
 	public CompareReduceBuchiSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+		super(services);
 		verifyAutomatonValidity(operand);
 
 		mLoggedLines = new LinkedList<String>();
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
 		mResult = operand;
 		mTimeMeasures = new LinkedHashMap<>();
@@ -571,15 +561,9 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 		return true;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#exitMessage()
-	 */
 	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + ".";
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 
 	/*
@@ -601,17 +585,6 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	@Override
 	public String operationName() {
 		return "compareReduceBuchiSimulation";
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#startMessage()
-	 */
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Operand has " + mOperand.sizeInformation();
 	}
 
 	/**
@@ -825,13 +798,11 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	 *            If the method has thrown an out of memory error
 	 * @param operand
 	 *            The automaton the method processed
-	 * @throws AutomataLibraryException
-	 *             If a automata library exception occurred.
 	 */
 	@SuppressWarnings("unchecked")
 	protected void appendMethodPerformanceToLog(final Object method, final String name, final ESimulationType type,
 			final boolean usedSCCs, final boolean timedOut, final boolean outOfMemory,
-			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
+			final INestedWordAutomaton<LETTER, STATE> operand) {
 		createAndResetPerformanceHead();
 
 		if (method instanceof ASimulation) {
@@ -986,11 +957,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 			mLogger.info("Method has thrown an out of memory error.");
 			outOfMemory = true;
 		}
-		try {
-			appendMethodPerformanceToLog(method, name, type, useSCCs, timedOut, outOfMemory, operand);
-		} catch (final AutomataLibraryException e) {
-			e.printStackTrace();
-		}
+		appendMethodPerformanceToLog(method, name, type, useSCCs, timedOut, outOfMemory, operand);
 	}
 
 	/**

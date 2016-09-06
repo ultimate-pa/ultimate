@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.gui;
 import java.io.File;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
@@ -38,20 +38,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class GuiToolchainJob extends DefaultToolchainJob {
 
-	public GuiToolchainJob(final String name, final ICore<ToolchainListType> core, final GuiController controller,
+	public GuiToolchainJob(final String name, final ICore<RunDefinition> core, final GuiController controller,
 			final File[] inputFiles, final ILogger logger) {
 		super(name, core, controller, logger, inputFiles);
 	}
 
-	public GuiToolchainJob(final String name, final ICore<ToolchainListType> core,
-			final IController<ToolchainListType> controller, final ILogger logger,
-			final IToolchain<ToolchainListType> toolchain) {
+	public GuiToolchainJob(final String name, final ICore<RunDefinition> core,
+			final IController<RunDefinition> controller, final ILogger logger,
+			final IToolchain<RunDefinition> toolchain) {
 		super(name, core, controller, logger, toolchain);
 	}
 
-	public GuiToolchainJob(final String name, final ICore<ToolchainListType> core,
-			final IController<ToolchainListType> controller, final ILogger logger,
-			final IToolchainData<ToolchainListType> data, final File[] inputFiles) {
+	public GuiToolchainJob(final String name, final ICore<RunDefinition> core,
+			final IController<RunDefinition> controller, final ILogger logger, final IToolchainData<RunDefinition> data,
+			final File[] inputFiles) {
 		super(name, core, controller, logger, data, inputFiles);
 	}
 

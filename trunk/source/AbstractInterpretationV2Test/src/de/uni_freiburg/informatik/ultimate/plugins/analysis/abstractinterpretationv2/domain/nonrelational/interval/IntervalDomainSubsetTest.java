@@ -62,6 +62,27 @@ public class IntervalDomainSubsetTest {
 		assertTrue(subsetResult == SubsetResult.NONE);
 	}
 
+	@Test
+	public void TestContainment() {
+		final BoogieVarMockup varA = new BoogieVarMockup("a");
+
+		IntervalDomainState s1 = new IntervalDomainState(new ConsoleLogger());
+		s1 = s1.addVariable(varA);
+		s1 = s1.setValue(varA, new IntervalDomainValue(2, 4));
+
+		IntervalDomainState s2 = new IntervalDomainState(new ConsoleLogger());
+		s2 = s2.addVariable(varA);
+		s2 = s2.setValue(varA, new IntervalDomainValue(5, 5));
+
+		System.out.println("State 1: " + s1);
+		System.out.println("State 2: " + s2);
+
+		final SubsetResult subsetResult = s1.isSubsetOf(s2);
+		System.out.println("Subset result: " + subsetResult);
+
+		assertTrue(subsetResult != SubsetResult.NONE);
+	}
+
 	private class BoogieVarMockup implements IBoogieVar {
 
 		private final String mName;

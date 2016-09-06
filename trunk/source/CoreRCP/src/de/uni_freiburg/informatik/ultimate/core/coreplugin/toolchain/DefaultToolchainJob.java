@@ -36,8 +36,8 @@ import org.eclipse.core.runtime.Status;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.RcpProgressMonitorWrapper;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public class DefaultToolchainJob extends BasicToolchainJob {
 
 	private File[] mInputFiles;
-	protected IToolchain<ToolchainListType> mToolchain;
+	protected IToolchain<RunDefinition> mToolchain;
 
 	/**
 	 * Use this constructor to run a new toolchain
@@ -69,8 +69,8 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	 * @param input
 	 *            The files on which the toolchain should run.
 	 */
-	public DefaultToolchainJob(final String name, final ICore<ToolchainListType> core,
-			final IController<ToolchainListType> controller, final ILogger logger, final File[] input) {
+	public DefaultToolchainJob(final String name, final ICore<RunDefinition> core,
+			final IController<RunDefinition> controller, final ILogger logger, final File[] input) {
 		super(name, core, controller, logger);
 		setUser(true);
 		setSystem(false);
@@ -87,9 +87,9 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	 * @param logger
 	 * @param toolchain
 	 */
-	public DefaultToolchainJob(final String name, final ICore<ToolchainListType> core,
-			final IController<ToolchainListType> controller, final ILogger logger,
-			final IToolchain<ToolchainListType> toolchain) {
+	public DefaultToolchainJob(final String name, final ICore<RunDefinition> core,
+			final IController<RunDefinition> controller, final ILogger logger,
+			final IToolchain<RunDefinition> toolchain) {
 		super(name, core, controller, logger);
 		setUser(true);
 		setSystem(false);
@@ -107,9 +107,9 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	 * @param data
 	 * @param input
 	 */
-	public DefaultToolchainJob(final String name, final ICore<ToolchainListType> core,
-			final IController<ToolchainListType> controller, final ILogger logger,
-			final IToolchainData<ToolchainListType> data, final File[] input) {
+	public DefaultToolchainJob(final String name, final ICore<RunDefinition> core,
+			final IController<RunDefinition> controller, final ILogger logger, final IToolchainData<RunDefinition> data,
+			final File[] input) {
 		super(name, core, controller, logger);
 		setUser(true);
 		setSystem(false);
@@ -118,7 +118,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 		mJobMode = ChainMode.DEFAULT;
 	}
 
-	private void setToolchain(final IToolchain<ToolchainListType> toolchain) {
+	private void setToolchain(final IToolchain<RunDefinition> toolchain) {
 		assert toolchain != null;
 		mToolchain = toolchain;
 	}
@@ -161,7 +161,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			mToolchain.init(tpm);
 			tpm.worked(1);
 
-			final IToolchainData<ToolchainListType> data = mToolchain.getCurrentToolchainData();
+			final IToolchainData<RunDefinition> data = mToolchain.getCurrentToolchainData();
 			if (data == null) {
 				return Status.CANCEL_STATUS;
 			}

@@ -47,7 +47,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IBlock;
@@ -77,9 +76,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class ShrinkNwa<LETTER, STATE>
-		extends AbstractMinimizeNwaDd<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
+	// size suggestion for random splits of blocks for efficiency reasons
+	public static final int SUGGESTED_RANDOM_SPLIT_SIZE = 200;
 	
 	// TODO<debug>
 	// general output
@@ -97,8 +96,7 @@ public class ShrinkNwa<LETTER, STATE>
 	// size information before return splits
 	private static final boolean STAT_RETURN_SIZE = false;
 	
-	// size suggestion for random splits of blocks for efficiency reasons
-	public static final int SUGGESTED_RANDOM_SPLIT_SIZE = 200;
+	private static final int HIER_PRED_MAX_SIZE = 150;
 	
 	// old automaton
 	private IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;
@@ -163,8 +161,6 @@ public class ShrinkNwa<LETTER, STATE>
 	
 	private final BufferedWriter mWriter1;
 	private final BufferedWriter mWriter2;
-	
-	private static final int HIER_PRED_MAX_SIZE = 150;
 	
 	/**
 	 * This constructor creates a copy of the operand.
@@ -338,7 +334,7 @@ public class ShrinkNwa<LETTER, STATE>
 			mReturnSplitCorrectnessEcs = new HashSet<EquivalenceClass>();
 		}
 		
-		mNondeterministicTransitions = false;
+		mNondeterministicTransitions = nondeterministicTransitions;
 		
 		// must be the last part of the constructor
 		minimize(isFiniteAutomaton, equivalenceClasses, addMapOldState2newState);

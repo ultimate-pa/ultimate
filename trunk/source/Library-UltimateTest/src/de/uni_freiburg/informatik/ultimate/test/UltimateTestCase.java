@@ -30,7 +30,7 @@ import java.util.List;
 
 import org.eclipse.core.runtime.IStatus;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.external.LivecycleException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.LivecycleException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;

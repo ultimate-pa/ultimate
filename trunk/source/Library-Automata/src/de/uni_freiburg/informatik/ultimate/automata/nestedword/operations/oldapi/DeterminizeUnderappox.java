@@ -29,9 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldap
 import java.util.ArrayList;
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
@@ -48,15 +47,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IState
  * @param <STATE> state type
  */
 
-public class DeterminizeUnderappox<LETTER, STATE> extends DeterminizeDD<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public class DeterminizeUnderappox<LETTER, STATE> extends DeterminizeDD<LETTER, STATE> {
 
 	public DeterminizeUnderappox(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER,STATE> input,
 			final IStateDeterminizer<LETTER,STATE> stateDeterminizer)
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		super(services, input, stateDeterminizer);
-		}
+	}
 	
 	@Override
 	public String operationName() {

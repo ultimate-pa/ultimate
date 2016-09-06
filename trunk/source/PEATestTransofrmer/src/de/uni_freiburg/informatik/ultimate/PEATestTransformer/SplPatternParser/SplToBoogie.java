@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.PeaToBoogieTranslator.SimplePositiveT
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import java_cup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.Symbol;
 import srParse.ReqParser;
 import srParse.pattern.PatternType;
 

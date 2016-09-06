@@ -41,8 +41,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
@@ -51,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -79,32 +83,35 @@ public class IterativePredicateTransformer {
 	protected final SortedMap<Integer, IPredicate> mPendingContexts;
 	private final IPredicate mFalsePredicate;
 	private final boolean mInterproceduralPost = true;
+	private final Boogie2SmtSymbolTable mSymbolTable;
 	
 	private static final boolean s_TransformSummaryToCNF = true;
 
 	public IterativePredicateTransformer(final PredicateFactory predicateFactory,
 			final Script script,
-			final ManagedScript boogie2smt,
+			final ManagedScript mgdScript,
 			final ModifiableGlobalVariableManager modifiableGlobalVariableManager,
 			final IUltimateServiceProvider services, final NestedWord<? extends IAction> trace, 
 			final IPredicate precondition, final IPredicate postcondition, 
 			final SortedMap<Integer, IPredicate> pendingContexts,
 			final IPredicate falsePredicate, 
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
+			final Boogie2SmtSymbolTable symbolTable) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
-		mMgdScript = boogie2smt;
+		mMgdScript = mgdScript;
 		mModifiedGlobals = modifiableGlobalVariableManager;
-		mPredicateTransformer = new PredicateTransformer(boogie2smt, 
-				script, modifiableGlobalVariableManager, services, simplificationTechnique, xnfConversionTechnique);
+		mPredicateTransformer = new PredicateTransformer(services, 
+				mgdScript, simplificationTechnique, xnfConversionTechnique);
 		mPredicateFactory = predicateFactory;
 		mTrace = trace;
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
 		mPendingContexts = pendingContexts;
 		mFalsePredicate = falsePredicate;
+		mSymbolTable = symbolTable;
 	}
 	
 
@@ -507,10 +514,12 @@ public class IterativePredicateTransformer {
 			final int call_pos, final int return_pos) {
 		final UnmodifiableTransFormula summaryOfInnerStatements = computeSummaryForInterproceduralTrace(
 				trace, rv, call_pos + 1, return_pos);
-		final UnmodifiableTransFormula summaryWithCallAndReturn = UnmodifiableTransFormula.sequentialCompositionWithCallAndReturn(
+		final String callee = ((ICallAction) trace.getSymbol(call_pos)).getSucceedingProcedure();
+		final UnmodifiableTransFormula summaryWithCallAndReturn = TransFormulaUtils.sequentialCompositionWithCallAndReturn(
 				mMgdScript, true, false, s_TransformSummaryToCNF, Call, 
 				oldVarsAssignment, globalVarsAssignment,
-				summaryOfInnerStatements, Return, mLogger, mServices, mXnfConversionTechnique, mSimplificationTechnique);
+				summaryOfInnerStatements, Return, mLogger, mServices, mXnfConversionTechnique, mSimplificationTechnique, 
+				mSymbolTable, mModifiedGlobals.getModifiedBoogieVars(callee));
 		return new ProcedureSummary(summaryWithCallAndReturn, summaryOfInnerStatements);
 	}
 
@@ -525,7 +534,7 @@ public class IterativePredicateTransformer {
 			final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv, final int start, final int end) {
 		final LinkedList<UnmodifiableTransFormula> transformulasToComputeSummaryFor = new LinkedList<UnmodifiableTransFormula>();
 		for (int i = start; i < end; i++) {
-			if (trace.getSymbol(i) instanceof Call) {
+			if (trace.getSymbol(i) instanceof ICallAction) {
 				final UnmodifiableTransFormula callTf = rv.getLocalVarAssignment(i);
 				final UnmodifiableTransFormula oldVarsAssignment = rv.getOldVarAssignment(i);
 				final UnmodifiableTransFormula globalVarsAssignment = rv.getGlobalVarAssignment(i);
@@ -542,10 +551,12 @@ public class IterativePredicateTransformer {
 						final UnmodifiableTransFormula summaryBetweenCallAndReturn = computeSummaryForInterproceduralTrace(trace, rv,
 								i + 1, returnPosition);
 						final UnmodifiableTransFormula returnTf = rv.getFormulaFromNonCallPos(returnPosition);
-						transformulasToComputeSummaryFor.addLast(UnmodifiableTransFormula.sequentialCompositionWithCallAndReturn(
+						final String callee = ((ICallAction) trace.getSymbol(i)).getSucceedingProcedure();
+						transformulasToComputeSummaryFor.addLast(TransFormulaUtils.sequentialCompositionWithCallAndReturn(
 								mMgdScript, true, false, s_TransformSummaryToCNF, callTf, oldVarsAssignment,
 								globalVarsAssignment, summaryBetweenCallAndReturn, returnTf,
-								mLogger, mServices, mXnfConversionTechnique, mSimplificationTechnique));
+								mLogger, mServices, mXnfConversionTechnique, mSimplificationTechnique, 
+								mSymbolTable, mModifiedGlobals.getModifiedBoogieVars(callee)));
 						i = returnPosition;
 					} else {
 						// If the position of the corresponding Return is >=
@@ -554,19 +565,19 @@ public class IterativePredicateTransformer {
 						final UnmodifiableTransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
 						final String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
 						final Set<IProgramVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
-						return UnmodifiableTransFormula.sequentialCompositionWithPendingCall(mMgdScript, true,
+						return TransFormulaUtils.sequentialCompositionWithPendingCall(mMgdScript, true,
 								false, s_TransformSummaryToCNF, transformulasToComputeSummaryFor,
-								callTf, oldVarsAssignment, summaryAfterPendingCall,
-								mLogger, mServices, modifiableGlobalsOfEndProcedure, mXnfConversionTechnique, mSimplificationTechnique);
+								callTf, oldVarsAssignment, globalVarsAssignment,
+								summaryAfterPendingCall, mLogger, mServices, modifiableGlobalsOfEndProcedure, mXnfConversionTechnique, mSimplificationTechnique, mSymbolTable);
 					}
 				} else {
 					final UnmodifiableTransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
 					final String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
 					final Set<IProgramVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
-					return UnmodifiableTransFormula.sequentialCompositionWithPendingCall(mMgdScript, true, false,
+					return TransFormulaUtils.sequentialCompositionWithPendingCall(mMgdScript, true, false,
 							s_TransformSummaryToCNF, transformulasToComputeSummaryFor,
-							callTf, oldVarsAssignment, summaryAfterPendingCall, mLogger,
-							mServices, modifiableGlobalsOfEndProcedure, mXnfConversionTechnique, mSimplificationTechnique);
+							callTf, oldVarsAssignment, null, summaryAfterPendingCall,
+							mLogger, mServices, modifiableGlobalsOfEndProcedure, mXnfConversionTechnique, mSimplificationTechnique, mSymbolTable);
 				}
 			} else if (trace.getSymbol(i) instanceof Return) {
 				// Nothing to do
@@ -574,7 +585,7 @@ public class IterativePredicateTransformer {
 				transformulasToComputeSummaryFor.addLast(rv.getFormulaFromNonCallPos(i));
 			}
 		}
-		return UnmodifiableTransFormula.sequentialComposition(mLogger, mServices, mMgdScript, true, false,
+		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, true, false,
 				s_TransformSummaryToCNF, mXnfConversionTechnique, mSimplificationTechnique, transformulasToComputeSummaryFor.toArray(new UnmodifiableTransFormula[transformulasToComputeSummaryFor.size()]));
 
 	}

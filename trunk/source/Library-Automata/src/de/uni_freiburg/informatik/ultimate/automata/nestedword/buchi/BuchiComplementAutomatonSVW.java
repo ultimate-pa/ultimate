@@ -38,7 +38,6 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
@@ -94,7 +93,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 			
 	public BuchiComplementAutomatonSVW(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> origAutomaton)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mTMA = new TransitionMonoidAutomaton(origAutomaton);
@@ -114,7 +113,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 	 *         <b>Use with caution!</b> The automaton has to be computed
 	 *         entirely.
 	 */
-	public INestedWordAutomaton<LETTER, STATE> toNestedWordAutomaton() throws AutomataLibraryException {
+	public INestedWordAutomaton<LETTER, STATE> toNestedWordAutomaton() throws AutomataOperationCanceledException {
 		final NestedWordAutomaton<LETTER, STATE> result =
 				new NestedWordAutomaton<LETTER, STATE>(mServices, mAlphabet, null, null,
 						mStateFactory);
@@ -619,7 +618,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 		 * are simply represented by Integer objects.
 		 */
 		public TransitionMonoidAutomaton(final INestedWordAutomaton<LETTER, STATE> origAutomaton)
-				throws AutomataLibraryException {
+				throws AutomataOperationCanceledException {
 			mOrigAutomaton = origAutomaton;
 			final Collection<LETTER> alphabet = origAutomaton.getInternalAlphabet();
 			
@@ -777,7 +776,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 			 * @return The copy of the transition profile τ(ε), i.e. the initial
 			 *         state of the TMA.
 			 */
-			public TransitionProfile() throws AutomataLibraryException {
+			public TransitionProfile() {
 				mIsInitial = true;
 				for (final STATE q : mOrigAutomaton.getStates()) {
 					if (mOrigAutomaton.isFinal(q)) {
@@ -791,7 +790,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 			/**
 			 * @return The transition profile τ(a) for letter {@code a}.
 			 */
-			public TransitionProfile(final LETTER a) throws AutomataLibraryException {
+			public TransitionProfile(final LETTER a) {
 				for (final STATE p : mOrigAutomaton.getStates()) {
 					final boolean p_isFinal = mOrigAutomaton.isFinal(p);
 					for (final OutgoingInternalTransition<LETTER, STATE> trans : mOrigAutomaton.internalSuccessors(p,

@@ -40,10 +40,11 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.FalseFlag;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IBlock;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IFlag;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IPartition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
@@ -72,16 +73,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 @SuppressWarnings("squid:UselessParenthesesCheck")
-public class MinimizeSevpa<LETTER, STATE>
-		extends AbstractMinimizeNwaDd<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
-	// old automaton
-	private final IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;
-	// ID for equivalence classes
-	private int mEquivalenceClassId;
-	// Partition of states into equivalence classes
-	private Partition mPartition;
-	
+public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
 	/*
 	 * EXPERIMENTAL
 	 * deterministic finite automata can be handled more efficiently
@@ -98,8 +90,19 @@ public class MinimizeSevpa<LETTER, STATE>
 	private static final boolean SPLIT_ALL_RETURNS_HIER = false;
 	
 	private static final boolean STATISTICS = false;
+	
+	// old automaton
+	private final IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;
+	// ID for equivalence classes
+	private int mEquivalenceClassId;
+	// Partition of states into equivalence classes
+	private Partition mPartition;
+	
 	private int mSplitsWithChange;
 	private int mSplitsWithoutChange;
+	
+	private final IFlag mTimeout;
+	private boolean mConstructionInterrupted;
 	
 	/* EXPERIMENTAL END */
 	
@@ -116,7 +119,7 @@ public class MinimizeSevpa<LETTER, STATE>
 	public MinimizeSevpa(
 			final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		this(services, operand, null, operand.getStateFactory(), false);
 	}
 	
@@ -143,6 +146,35 @@ public class MinimizeSevpa<LETTER, STATE>
 			final IStateFactory<STATE> stateFactory,
 			final boolean addMapOldState2newState)
 					throws AutomataOperationCanceledException {
+		this(services, operand, equivalenceClasses, stateFactory, addMapOldState2newState, new FalseFlag());
+	}
+	
+	/**
+	 * Creates a copy of operand with an initial partition.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            nested word automaton to minimize
+	 * @param equivalenceClasses
+	 *            represent initial equivalence classes
+	 * @param addMapOldState2newState
+	 *            add map old state 2 new state?
+	 * @param timeout
+	 *            timeout
+	 * @throws AutomataOperationCanceledException
+	 *             iff cancel signal is received
+	 */
+	public MinimizeSevpa(
+			final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final Collection<Set<STATE>> equivalenceClasses,
+			final IStateFactory<STATE> stateFactory,
+			final boolean addMapOldState2newState,
+			final IFlag timeout)
+			throws AutomataOperationCanceledException {
 		super(services, stateFactory, "minimizeSevpa", operand);
 		if (mOperand instanceof IDoubleDeckerAutomaton) {
 			mDoubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>) mOperand;
@@ -153,6 +185,7 @@ public class MinimizeSevpa<LETTER, STATE>
 			}
 			mDoubleDecker = null;
 		}
+		mTimeout = timeout;
 		
 		minimize(equivalenceClasses, addMapOldState2newState);
 		mLogger.info(exitMessage());
@@ -179,8 +212,8 @@ public class MinimizeSevpa<LETTER, STATE>
 	private void minimize(
 			final Collection<Set<STATE>> equivalenceClasses,
 			final boolean addMapping)
-					throws AutomataOperationCanceledException {
-					
+			throws AutomataOperationCanceledException {
+		
 		// cancel if signal is received
 		if (isCancellationRequested()) {
 			throw new AutomataOperationCanceledException(getClass());
@@ -210,8 +243,8 @@ public class MinimizeSevpa<LETTER, STATE>
 			StatesContainer states,
 			final Collection<Set<STATE>> equivalenceClasses,
 			final boolean addMapping)
-					throws AutomataOperationCanceledException {
-					
+			throws AutomataOperationCanceledException {
+		
 		if (equivalenceClasses == null) {
 			// creation of the initial partition (if not passed in the constructor)
 			assert (mPartition == null);
@@ -303,7 +336,7 @@ public class MinimizeSevpa<LETTER, STATE>
 		// create partition object
 		final Partition partition =
 				new Partition(mOperand, finals.size() + nonfinals.size());
-				
+		
 		// set up the initial equivalence classes
 		
 		// final states
@@ -342,6 +375,11 @@ public class MinimizeSevpa<LETTER, STATE>
 		int equivalenceClasses = mPartition.getEquivalenceClasses().size();
 		
 		while (true) {
+			if (mTimeout.getStatus()) {
+				mConstructionInterrupted = true;
+				break;
+			}
+			
 			// fixed point iteration
 			while (!mPartition.workListIsEmpty()) {
 				
@@ -391,7 +429,7 @@ public class MinimizeSevpa<LETTER, STATE>
 					// internal alphabet
 					findXByInternalOrCall(a, mPartition, internalLetters,
 							new InternalPredecessorSetFinder(mPartition, a));
-							
+					
 					// call alphabet
 					findXByInternalOrCall(a, mPartition, callLetters,
 							new CallPredecessorSetFinder(mPartition, a));
@@ -524,7 +562,7 @@ public class MinimizeSevpa<LETTER, STATE>
 				 */
 				final HashMap<EquivalenceClass, HashSet<STATE>> ec2linSet =
 						new HashMap<EquivalenceClass, HashSet<STATE>>();
-						
+				
 				final Iterator<STATE> iterator = targetSet.iterator();
 				while (iterator.hasNext()) {
 					final STATE state = iterator.next();
@@ -654,7 +692,7 @@ public class MinimizeSevpa<LETTER, STATE>
 			// maps hierarchical states to linear states to return transitions
 			final HashMap<EquivalenceClass, HashMap<EquivalenceClass, List<Set<ReturnTransition>>>> hier2lin2trans =
 					new HashMap<EquivalenceClass, HashMap<EquivalenceClass, List<Set<ReturnTransition>>>>();
-					
+			
 			final Iterator<STATE> iterator = targetSet.iterator();
 			// for each successor state 'state' in A:
 			while (iterator.hasNext()) {
@@ -673,7 +711,7 @@ public class MinimizeSevpa<LETTER, STATE>
 					
 					final EquivalenceClass ecHier =
 							partition.getEquivalenceClass(hier);
-							
+					
 					HashMap<EquivalenceClass, List<Set<ReturnTransition>>> lin2trans = hier2lin2trans.get(ecHier);
 					if (lin2trans == null) {
 						lin2trans = new HashMap<EquivalenceClass, List<Set<ReturnTransition>>>();
@@ -686,7 +724,7 @@ public class MinimizeSevpa<LETTER, STATE>
 						final STATE lin = inTransInner.getLinPred();
 						final EquivalenceClass ecLin =
 								partition.getEquivalenceClass(lin);
-								
+						
 						// list of similar sets
 						List<Set<ReturnTransition>> similarSetsList =
 								lin2trans.get(ecLin);
@@ -699,7 +737,7 @@ public class MinimizeSevpa<LETTER, STATE>
 						// return transition considered
 						final ReturnTransition transition =
 								new ReturnTransition(lin, hier, state);
-								
+						
 						// find fitting set of similar return transitions
 						Set<ReturnTransition> similarSet =
 								getSimilarSet(partition, transition,
@@ -840,7 +878,7 @@ public class MinimizeSevpa<LETTER, STATE>
 		 */
 		final LinkedList<EquivalenceClass> intersected =
 				new LinkedList<EquivalenceClass>();
-				
+		
 		// iteratively splits equivalence classes with elements from X
 		final Iterator<STATE> iterator = predSet.iterator();
 		while (iterator.hasNext()) {
@@ -880,27 +918,27 @@ public class MinimizeSevpa<LETTER, STATE>
 		 * put one or two of {'Y \cap X', 'Y \ X'} in W,
 		 * but only if Y was split, i.e., 'Y \ X != {}'
 		 */
-		for (final EquivalenceClass ec : intersected) {
+		for (final EquivalenceClass block : intersected) {
 			/*
 			 * if Y is empty, then the intersection is not needed
 			 * and the states can be restored
 			 */
-			if (!ec.isEmpty()) {
+			if (!block.isEmpty()) {
 				++mSplitsWithChange;
 				
 				// create new equivalence class
-				final EquivalenceClass intersection = ec.split(partition);
+				final EquivalenceClass intersection = block.split(partition);
 				
 				/*
 				 * if Y was in the target set, the split equivalence class
 				 * must also be inserted
 				 */
-				if (ec.isInTargetSet()) {
+				if (block.isInTargetSet()) {
 					targetSet.addEquivalenceClass(intersection);
 				}
 				
 				// if Y was not in work list, put it and/or intersection there
-				if (!ec.isInWorkList()) {
+				if (!block.isInWorkList()) {
 					assert (!intersection.isInWorkList());
 					
 					if (ONLY_ONE_TO_WORK_LIST) {
@@ -910,8 +948,8 @@ public class MinimizeSevpa<LETTER, STATE>
 						 * of {'Y \cap X', 'Y \ X'} in W
 						 * NOTE: see note for monlyOneToWorkList
 						 */
-						if (ec.size() <= intersection.size()) {
-							partition.addToWorkList(ec);
+						if (block.size() <= intersection.size()) {
+							partition.addToWorkList(block);
 						} else {
 							partition.addToWorkList(intersection);
 						}
@@ -921,7 +959,7 @@ public class MinimizeSevpa<LETTER, STATE>
 						 * put both equivalence classes in the work list
 						 * (necessary for correctness)
 						 */
-						partition.addToWorkList(ec);
+						partition.addToWorkList(block);
 						partition.addToWorkList(intersection);
 					}
 				}
@@ -933,7 +971,7 @@ public class MinimizeSevpa<LETTER, STATE>
 			}
 			
 			// reset information about the intersection equivalence class
-			ec.resetIntersection();
+			block.resetIntersection();
 		}
 	}
 	
@@ -948,16 +986,16 @@ public class MinimizeSevpa<LETTER, STATE>
 	private void putAllToWorkList(final Partition partition, final boolean naiveSplit) {
 		if (naiveSplit) {
 			// only collect equivalence classes, which have been split lately
-			for (final EquivalenceClass ec : partition.getEquivalenceClasses()) {
-				if (ec.wasSplitDuringSecondPhase()) {
-					partition.addToWorkList(ec);
+			for (final EquivalenceClass block : partition.getEquivalenceClasses()) {
+				if (block.wasSplitDuringSecondPhase()) {
+					partition.addToWorkList(block);
 				}
 			}
 		} else {
 			// only collect equivalence classes with incoming return transitions
-			for (final EquivalenceClass ec : partition.getEquivalenceClasses()) {
-				if (ec.hasIncomingReturns(partition)) {
-					partition.addToWorkList(ec);
+			for (final EquivalenceClass block : partition.getEquivalenceClasses()) {
+				if (block.hasIncomingReturns(partition)) {
+					partition.addToWorkList(block);
 				}
 			}
 		}
@@ -986,6 +1024,13 @@ public class MinimizeSevpa<LETTER, STATE>
 		
 		// construct result with library method
 		constructResultFromPartition(mPartition, addMapping);
+	}
+	
+	/**
+	 * @return {@code true} iff the construction was interrupted.
+	 */
+	protected boolean getConstructionInterrupted() {
+		return mConstructionInterrupted;
 	}
 	
 	/**
@@ -1048,17 +1093,17 @@ public class MinimizeSevpa<LETTER, STATE>
 			// check first hierarchical states pair
 			STATE lin = transition.mLin;
 			STATE hier = mHier;
-			EquivalenceClass ec =
+			EquivalenceClass block =
 					partition.getEquivalenceClass(transition.mSucc);
-			if (!isSimilarHelper(partition, letter, lin, hier, ec)) {
+			if (!isSimilarHelper(partition, letter, lin, hier, block)) {
 				return false;
 			}
 			
 			// check second hierarchical states pair
 			lin = mLin;
 			hier = transition.mHier;
-			ec = partition.getEquivalenceClass(mSucc);
-			return isSimilarHelper(partition, letter, lin, hier, ec);
+			block = partition.getEquivalenceClass(mSucc);
+			return isSimilarHelper(partition, letter, lin, hier, block);
 		}
 		
 		/**
@@ -1135,7 +1180,7 @@ public class MinimizeSevpa<LETTER, STATE>
 	abstract class APredecessorSetFinder {
 		// partition object
 		protected Partition mPartition;
-		protected TargetSet mA;
+		protected TargetSet mTargetSet;
 		
 		/**
 		 * @param partition
@@ -1145,7 +1190,7 @@ public class MinimizeSevpa<LETTER, STATE>
 		 */
 		public APredecessorSetFinder(final Partition partition, final TargetSet targetSet) {
 			mPartition = partition;
-			mA = targetSet;
+			mTargetSet = targetSet;
 		}
 		
 		/**
@@ -1157,7 +1202,7 @@ public class MinimizeSevpa<LETTER, STATE>
 		 */
 		protected PredecessorSet find(final LETTER letter) {
 			final PredecessorSet x = new PredecessorSet();
-			final Iterator<STATE> iterator = mA.iterator();
+			final Iterator<STATE> iterator = mTargetSet.iterator();
 			while (iterator.hasNext()) {
 				final STATE state = iterator.next();
 				addPred(state, letter, x);
@@ -1680,7 +1725,7 @@ public class MinimizeSevpa<LETTER, STATE>
 		
 		@Override
 		public boolean isRepresentativeIndependentInternalsCalls() {
-			return true;
+			return !getConstructionInterrupted();
 		}
 	}
 	
@@ -2006,6 +2051,41 @@ public class MinimizeSevpa<LETTER, STATE>
 			addNeighborsEfficient(hierSet, predSet);
 		}
 		
+		@Override
+		public String toString() {
+			final StringBuilder builder = new StringBuilder();
+			
+			builder.append("{ ");
+			for (final EquivalenceClass block : mEquivalenceClasses) {
+				builder.append(block.toString());
+				builder.append(",\n");
+			}
+			if (builder.length() > 2) {
+				builder.delete(builder.length() - 2, builder.length());
+			}
+			builder.append(" }");
+			
+			return builder.toString();
+		}
+		
+		@Override
+		public Iterator<IBlock<STATE>> blocksIterator() {
+			return new Iterator<IBlock<STATE>>() {
+				protected Iterator<EquivalenceClass> mIt =
+						mEquivalenceClasses.iterator();
+				
+				@Override
+				public boolean hasNext() {
+					return mIt.hasNext();
+				}
+				
+				@Override
+				public IBlock<STATE> next() {
+					return mIt.next();
+				}
+			};
+		}
+		
 		/**
 		 * Iterable for internal transitions.
 		 */
@@ -2062,41 +2142,6 @@ public class MinimizeSevpa<LETTER, STATE>
 					}
 				};
 			}
-		}
-		
-		@Override
-		public String toString() {
-			final StringBuilder builder = new StringBuilder();
-			
-			builder.append("{ ");
-			for (final EquivalenceClass ec : mEquivalenceClasses) {
-				builder.append(ec.toString());
-				builder.append(",\n");
-			}
-			if (builder.length() > 2) {
-				builder.delete(builder.length() - 2, builder.length());
-			}
-			builder.append(" }");
-			
-			return builder.toString();
-		}
-		
-		@Override
-		public Iterator<IBlock<STATE>> blocksIterator() {
-			return new Iterator<IBlock<STATE>>() {
-				protected Iterator<EquivalenceClass> mIt =
-						mEquivalenceClasses.iterator();
-						
-				@Override
-				public boolean hasNext() {
-					return mIt.hasNext();
-				}
-				
-				@Override
-				public IBlock<STATE> next() {
-					return mIt.next();
-				}
-			};
 		}
 	}
 	
@@ -2170,7 +2215,7 @@ public class MinimizeSevpa<LETTER, STATE>
 						while (mListIterator.hasNext()) {
 							mEquivalenceClassIterator =
 									mListIterator.next().getCollection().iterator();
-									
+							
 							if (mEquivalenceClassIterator.hasNext()) {
 								mNext = mEquivalenceClassIterator.next();
 								return;
@@ -2201,8 +2246,8 @@ public class MinimizeSevpa<LETTER, STATE>
 		 * Delete object and reset flag in equivalence class objects.
 		 */
 		void delete() {
-			for (final EquivalenceClass ec : mEquivalenceClasses) {
-				ec.setInTargetSet(false);
+			for (final EquivalenceClass block : mEquivalenceClasses) {
+				block.setInTargetSet(false);
 			}
 			
 			mEquivalenceClasses = null;
@@ -2220,8 +2265,8 @@ public class MinimizeSevpa<LETTER, STATE>
 			final StringBuilder builder = new StringBuilder();
 			builder.append("{");
 			
-			for (final EquivalenceClass ec : mEquivalenceClasses) {
-				builder.append(ec.toString());
+			for (final EquivalenceClass block : mEquivalenceClasses) {
+				builder.append(block.toString());
 				builder.append("\n");
 			}
 			builder.append("}");

@@ -1,5 +1,5 @@
 ﻿<toolchain>
-	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor.BoogiePreprocessor"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2"/>
 </toolchain>

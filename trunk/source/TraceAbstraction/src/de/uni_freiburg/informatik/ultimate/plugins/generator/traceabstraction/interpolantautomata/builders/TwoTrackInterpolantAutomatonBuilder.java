@@ -54,7 +54,7 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 	private final IUltimateServiceProvider mServices;
 
 	private final NestedWord<CodeBlock> mNestedWord;
-	private NestedWordAutomaton<CodeBlock, IPredicate> mTTIA;
+	private final NestedWordAutomaton<CodeBlock, IPredicate> mTTIA;
 	private final SmtManager mSmtManager;
 	private final InterpolantsPreconditionPostcondition mInterpolantsFP;
 	private final InterpolantsPreconditionPostcondition mInterpolantsBP;

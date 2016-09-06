@@ -34,15 +34,16 @@ import java.util.HashMap;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubMonitor;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.StoreObjectException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.GraphNotFoundException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.DropmodelType;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ModelIdOnlyType;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.PluginType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.SerializeType;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.SubchainType;
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
@@ -81,17 +82,17 @@ final class ToolchainWalker implements IToolchainCancel {
 
 	public void walk(final CompleteToolchainData data, final IProgressMonitorService service,
 			final IToolchainProgressMonitor monitor) throws Throwable {
-		final IToolchainData<ToolchainListType> chain = data.getToolchain();
+		final IToolchainData<RunDefinition> chain = data.getToolchain();
 
 		// convert monitor to submonitor
-		int remainingWork = chain.getToolchain().getPluginOrSubchain().size();
+		int remainingWork = chain.getToolchain().getToolchain().getPluginOrSubchain().size();
 
 		final SubMonitor progress = SubMonitor.convert(RcpProgressMonitorWrapper.create(monitor), remainingWork);
 
 		mLogger.info("Walking toolchain with " + String.valueOf(remainingWork) + " elements.");
 
 		// iterate over toolchain
-		for (final Object o : chain.getToolchain().getPluginOrSubchain()) {
+		for (final Object o : chain.getToolchain().getToolchain().getPluginOrSubchain()) {
 
 			// Deal with the current toolchain element
 			if (o instanceof PluginType) {
@@ -429,18 +430,18 @@ final class ToolchainWalker implements IToolchainCancel {
 
 	final class CompleteToolchainData {
 
-		private final IToolchainData<ToolchainListType> mToolchain;
+		private final IToolchainData<RunDefinition> mToolchain;
 		private final ISource[] mParsers;
-		private final IController<ToolchainListType> mController;
+		private final IController<RunDefinition> mController;
 
-		CompleteToolchainData(final IToolchainData<ToolchainListType> toolchain, final ISource[] parsers,
-				final IController<ToolchainListType> controller) {
+		CompleteToolchainData(final IToolchainData<RunDefinition> toolchain, final ISource[] parsers,
+				final IController<RunDefinition> controller) {
 			mToolchain = toolchain;
 			mParsers = parsers;
 			mController = controller;
 		}
 
-		final IToolchainData<ToolchainListType> getToolchain() {
+		final IToolchainData<RunDefinition> getToolchain() {
 			return mToolchain;
 		}
 
@@ -448,7 +449,7 @@ final class ToolchainWalker implements IToolchainCancel {
 			return mParsers;
 		}
 
-		final IController<ToolchainListType> getController() {
+		final IController<RunDefinition> getController() {
 			return mController;
 		}
 

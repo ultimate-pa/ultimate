@@ -38,12 +38,11 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.Interrupt;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.Interrupt;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -58,9 +57,19 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class MinimizeDfaHopcroftParallel<LETTER, STATE>
-		extends AbstractMinimizeNwa<LETTER, STATE>
-		implements IMinimize, IOperation<LETTER, STATE> {
+public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
+		implements IMinimize {
+	/**
+	 * True if Hopcroft algorithm shall help Incremental algorithm, false
+	 * otherwise.
+	 */
+	public static final boolean HELP_INCREMENTAL = true;
+	/**
+	 * Boolean variable for determining to run the algorithm with or without
+	 * producing tasks for parallel execution.
+	 */
+	private static boolean sParallel = false;
+	
 	/**
 	 * Whether the result is constructed yet.
 	 */
@@ -95,22 +104,11 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE>
 	private int[] mState2representative;
 	
 	/**
-	 * True if Hopcroft algorithm shall help Incremental algorithm, false
-	 * otherwise.
-	 */
-	public static final boolean HELP_INCREMENTAL = true;
-	
-	/**
 	 * String holding the cpu time.
 	 */
 	private double mRunTime;
 	
 	// ---- Variables and methods needed for parallel execution. ---- //
-	/**
-	 * Boolean variable for determining to run the algorithm with or without
-	 * producing tasks for parallel execution.
-	 */
-	private static boolean sParallel = false;
 	/**
 	 * Reference on task queue for enqueueing the produced tasks.
 	 */
@@ -138,13 +136,13 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE>
 	 *            state factory
 	 * @param operand
 	 *            input automaton (DFA)
-	 * @throws AutomataLibraryException
-	 *             thrown by DFA check
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public MinimizeDfaHopcroftParallel(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, new Interrupt());
 	}
 	
@@ -192,15 +190,12 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE>
 	 *            input automaton (DFA)
 	 * @param interrupt
 	 *            interrupt
-	 * @throws AutomataLibraryException
-	 *             thrown by DFA check
 	 */
 	public MinimizeDfaHopcroftParallel(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt, final ArrayList<STATE> int2state,
-			final HashMap<STATE, Integer> state2int)
-					throws AutomataLibraryException {
+			final HashMap<STATE, Integer> state2int) {
 		super(services, stateFactory, "MinimizeDfaHopcroftParallel", operand);
 		mInterrupt = interrupt;
 		mInt2state = int2state;

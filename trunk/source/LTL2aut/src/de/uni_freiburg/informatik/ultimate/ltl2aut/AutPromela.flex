@@ -1,14 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.ltl2aut;
 
-import java_cup.runtime.*;
+import com.github.jhoenicke.javacup.runtime.*;
 
 %%
 
-%cupsym Symbols
 %class Lexer
 %unicode
-%cup
-%cupdebug
+%implements com.github.jhoenicke.javacup.runtime.Scanner
+%type com.github.jhoenicke.javacup.runtime.Symbol
+%function next_token
 %line
 %column
 %public
@@ -77,7 +77,5 @@ CommentContent       = ( [^*] | \*+ [^/*] )*
 	{Identifier}    { return symbol(Symbols.NAME, yytext()); }
 	{Comment}		{ /* ignore */ }
 
-	
-
  } 
- 
+<<EOF>>                          { return symbol(Symbols.EOF); } 

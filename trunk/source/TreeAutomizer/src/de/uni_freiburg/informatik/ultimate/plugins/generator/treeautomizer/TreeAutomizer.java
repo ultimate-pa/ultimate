@@ -84,7 +84,7 @@ public class TreeAutomizer implements IGenerator {
 
 	@Override
 	public void init() {
-		mObserver = new TreeAutomizerObserver();
+		mObserver = new TreeAutomizerObserver(mServices, mToolchainStorage);
 		mObservers = Collections.singletonList(mObserver);
 	}
 

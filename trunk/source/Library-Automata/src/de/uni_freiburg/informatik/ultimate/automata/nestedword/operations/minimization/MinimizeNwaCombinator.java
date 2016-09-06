@@ -34,7 +34,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -49,9 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class MinimizeNwaCombinator<LETTER, STATE>
-		extends AbstractMinimizeNwaDd<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
 	private static final String UNDEFINED_ENUM_STATE_MESSAGE = "Undefined enum state.";
 	
 	/**
@@ -87,13 +85,13 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 	 *            state factory
 	 * @param operand
 	 *            input automaton
-	 * @throws AutomataLibraryException
-	 *             thrown by minimization methods
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand)
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null, false, 0);
 	}
 	
@@ -112,8 +110,8 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 	 *            add map old state 2 new state?
 	 * @param iteration
 	 *            index in the pattern
-	 * @throws AutomataLibraryException
-	 *             thrown by minimization methods
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
@@ -121,7 +119,7 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 			final Collection<Set<STATE>> partition,
 			final boolean addMapOldState2newState,
 			final int iteration)
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, partition, addMapOldState2newState, getDefaultPattern(), iteration);
 	}
 	
@@ -142,8 +140,8 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 	 *            iteration index at which minimization should be used
 	 * @param iteration
 	 *            index in the pattern
-	 * @throws AutomataLibraryException
-	 *             thrown by minimization methods
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
@@ -152,7 +150,7 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 			final boolean addMapOldState2newState,
 			final int indexForMinimization,
 			final int iteration)
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, partition, addMapOldState2newState,
 				getEveryNthPattern(indexForMinimization), iteration);
 	}
@@ -174,8 +172,8 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 	 *            minimization methods pattern
 	 * @param iteration
 	 *            index in the pattern
-	 * @throws AutomataLibraryException
-	 *             thrown by minimization methods
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
@@ -183,7 +181,7 @@ public class MinimizeNwaCombinator<LETTER, STATE>
 			final Collection<Set<STATE>> partition,
 			final boolean addMapOldState2newState,
 			final MinimizationMethods[] pattern, final int iteration)
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		super(services, stateFactory, "MinimizeNwaCombinator", operand);
 		mPattern = Arrays.copyOf(pattern, pattern.length);
 		mCounter = iteration % mPattern.length;

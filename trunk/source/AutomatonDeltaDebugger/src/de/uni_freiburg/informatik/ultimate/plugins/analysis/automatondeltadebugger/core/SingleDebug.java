@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AbstractShrinker;
 
 /**
  * Reduces a list of objects in a binary search manner until a local minimum is
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * @param <STATE>
  *            state type
  */
-public class SingleDebug<T, LETTER, STATE> extends ADebug<T, LETTER, STATE> {
+public class SingleDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STATE> {
 	private ListIterator<T> mIterator;
 	
 	/**
@@ -60,8 +60,7 @@ public class SingleDebug<T, LETTER, STATE> extends ADebug<T, LETTER, STATE> {
 	 * @param shrinker
 	 *            shrinker
 	 */
-	public SingleDebug(final ATester<LETTER, STATE> tester,
-			final AShrinker<T, LETTER, STATE> shrinker) {
+	public SingleDebug(final AbstractTester<LETTER, STATE> tester, final AbstractShrinker<T, LETTER, STATE> shrinker) {
 		super(tester, shrinker);
 		mIterator = null;
 	}

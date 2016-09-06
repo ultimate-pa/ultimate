@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
@@ -42,56 +42,71 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-
 /**
- * Check if an NWA contains states which are not reachable in any run.
+ * Check if a nested word automaton contains states which are not reachable in any run.
+ * <p>
  * Does not change the input automaton.
- * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class HasUnreachableStates<LETTER,STATE>
-		extends DoubleDeckerVisitor<LETTER,STATE>
-		implements IOperation<LETTER,STATE> {
-	private final Set<STATE> mVisitedStates = new HashSet<STATE>();
-	private int mUnreachalbeStates = 0;
-
+public final class HasUnreachableStates<LETTER, STATE> extends DoubleDeckerVisitor<LETTER, STATE>
+		implements IOperation<LETTER, STATE> {
+	private final Set<STATE> mVisitedStates = new HashSet<>();
+	private int mUnreachableStates;
+	
 	/**
-	 * @param services Ultimate services
-	 * @param operand operand
-	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if timeout exceeds
 	 */
 	public HasUnreachableStates(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER,STATE> operand)
-					throws AutomataOperationCanceledException  {
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mTraversedNwa = operand;
-		mLogger.info(startMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		
 		traverseDoubleDeckerGraph();
 		for (final STATE state : mTraversedNwa.getStates()) {
 			if (!mVisitedStates.contains(state)) {
-				mUnreachalbeStates++;
-				mLogger.warn("Unreachalbe state: " + state);
+				// TODO Christian 2016-09-04: The result is of Boolean type, so one could stop here.
+				mUnreachableStates++;
+				if (mLogger.isWarnEnabled()) {
+					mLogger.warn("Unreachable state: " + state);
+				}
 			}
 		}
-		mLogger.info(exitMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
-
+	
 	@Override
 	protected Collection<STATE> getInitialStates() {
 		mVisitedStates.addAll(mTraversedNwa.getInitialStates());
 		return mTraversedNwa.getInitialStates();
 	}
-
+	
 	@Override
 	protected Collection<STATE> visitAndGetInternalSuccessors(
 			final DoubleDecker<STATE> doubleDecker) {
 		final STATE state = doubleDecker.getUp();
-		final Set<STATE> succs = new HashSet<STATE>();
+		final Set<STATE> succs = new HashSet<>();
 		for (final LETTER letter : mTraversedNwa.lettersInternal(state)) {
-			for (final OutgoingInternalTransition<LETTER, STATE> trans :
-					mTraversedNwa.internalSuccessors(state, letter)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : mTraversedNwa.internalSuccessors(state,
+					letter)) {
 				succs.add(trans.getSucc());
 			}
 		}
@@ -99,16 +114,13 @@ public class HasUnreachableStates<LETTER,STATE>
 		return succs;
 	}
 	
-	
-
 	@Override
 	protected Collection<STATE> visitAndGetCallSuccessors(
 			final DoubleDecker<STATE> doubleDecker) {
 		final STATE state = doubleDecker.getUp();
-		final Set<STATE> succs = new HashSet<STATE>();
+		final Set<STATE> succs = new HashSet<>();
 		for (final LETTER letter : mTraversedNwa.lettersCall(state)) {
-			for (final OutgoingCallTransition<LETTER, STATE> trans :
-					mTraversedNwa.callSuccessors(state, letter)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : mTraversedNwa.callSuccessors(state, letter)) {
 				succs.add(trans.getSucc());
 			}
 		}
@@ -116,48 +128,44 @@ public class HasUnreachableStates<LETTER,STATE>
 		return succs;
 	}
 	
-	
-
 	@Override
 	protected Collection<STATE> visitAndGetReturnSuccessors(
 			final DoubleDecker<STATE> doubleDecker) {
 		final STATE state = doubleDecker.getUp();
 		final STATE hier = doubleDecker.getDown();
-		final Set<STATE> succs = new HashSet<STATE>();
+		final Set<STATE> succs = new HashSet<>();
 		for (final LETTER letter : mTraversedNwa.lettersReturn(state)) {
-			for (final OutgoingReturnTransition<LETTER, STATE> trans :
-					mTraversedNwa.returnSuccessors(state, hier, letter)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : mTraversedNwa.returnSuccessors(state, hier,
+					letter)) {
 				succs.add(trans.getSucc());
 			}
 		}
 		mVisitedStates.addAll(succs);
 		return succs;
 	}
-
+	
 	@Override
 	public String operationName() {
-		return "detectUnreachableStates";
+		return "HasUnreachableStates";
 	}
-
+	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + " Operand "
-			+ mTraversedNwa.sizeInformation();
+		return "Start " + operationName() + " Operand " + mTraversedNwa.sizeInformation();
 	}
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Operand has "
-			+ mUnreachalbeStates + " unreachalbe states";
+		return "Finished " + operationName() + " Operand has " + mUnreachableStates + " unreachable states";
 	}
 	
-	public boolean result() {
-		return mUnreachalbeStates != 0;
-	}
-
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public Boolean getResult() {
+		return mUnreachableStates != 0;
+	}
+	
+	@Override
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
 }

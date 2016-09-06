@@ -240,20 +240,20 @@ public class SimplifyDDA extends NonRecursive {
 							mNegated, params[mParamCtr], mContext));
 				} else if (mParamCtr < params.length) {
 					// The context contains:
-					//  param[len-1] ... param[mparamCtr] 
-					//      simplify(param[mparamCtr-2])... simplify(param[0])
-					// we need to replace param[mparamCtr]
-					// by simplify(param[mparamCtr-1]).
+					//  param[len-1] ... param[mParamCtr] 
+					//      simplify(param[mParamCtr-2])... simplify(param[0])
+					// we need to replace param[mParamCtr]
+					// by simplify(param[mParamCtr-1]).
 					/*  this is dangerous:  the simplified formulas may depend
 					 * on their context, therefore we cannot simply merge them.
-					for (int i = 0; i < mparamCtr; i++) {
-						mcontext.pop();
+					for (int i = 0; i < mParamCtr; i++) {
+						mContext.pop();
 					}
-					for (int i = mparamCtr-1; i >= 0; i--) {
+					for (int i = mParamCtr-1; i >= 0; i--) {
 						Term sibling = simplifier.negateSibling(
 							params[i], connective, i, params.length);
 						sibling = simplifier.createSimplify(sibling);
-						mcontext.push(sibling);
+						mContext.push(sibling);
 					}
 					*/
 					mContext.pop();
@@ -262,8 +262,8 @@ public class SimplifyDDA extends NonRecursive {
 							mNegated, params[mParamCtr], mContext));
 				} else {
 					/*
-					for (int i = 0; i < mparamCtr-1; i++) {
-						mcontext.pop();
+					for (int i = 0; i < mParamCtr-1; i++) {
+						mContext.pop();
 					}
 					*/
 				}

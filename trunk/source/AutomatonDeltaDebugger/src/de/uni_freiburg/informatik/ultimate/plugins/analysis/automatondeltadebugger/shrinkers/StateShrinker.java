@@ -36,9 +36,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 
 /**
  * Removes states.
- * This shrinker removes any kind of states. Especially, it does not make an
- * exception to initial states. Transitions are added iff all respective states
- * are still present.
+ * <p>
+ * This shrinker removes any kind of states. Especially, it does not make an exception to initial states. Transitions
+ * are added iff all respective states are still present.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -46,8 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
  * @param <STATE>
  *            state type
  */
-public class StateShrinker<LETTER, STATE>
-		extends AShrinker<STATE, LETTER, STATE> {
+public class StateShrinker<LETTER, STATE> extends AbstractShrinker<STATE, LETTER, STATE> {
 	@Override
 	public INestedWordAutomaton<LETTER, STATE>
 			createAutomaton(final List<STATE> states) {

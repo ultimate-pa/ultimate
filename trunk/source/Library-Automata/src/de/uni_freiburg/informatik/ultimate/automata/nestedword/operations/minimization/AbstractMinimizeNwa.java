@@ -38,11 +38,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
@@ -67,12 +67,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <STATE>
  *            state type
  */
-public abstract class AbstractMinimizeNwa<LETTER, STATE>
-		extends UnaryNwaOperation<LETTER, STATE>
-		implements IMinimizeNwa<LETTER, STATE>, IOperation<LETTER, STATE> {
+public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
+		implements IMinimizeNwa<LETTER, STATE> {
 	/**
-	 * The operand as more specific interface.
-	 * It shadows the superclass field with the same name.
+	 * The operand.
 	 */
 	protected final INestedWordAutomaton<LETTER, STATE> mOperand;
 	/**
@@ -112,7 +110,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	protected AbstractMinimizeNwa(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory, final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
-		super(services, operand);
+		super(services);
 		mOperand = operand;
 		mName = name;
 		mResult = null;
@@ -153,6 +151,11 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	public final String exitMessage() {
 		return "Finished " + operationName() + ". Reduced states from "
 				+ mOperand.size() + " to " + getResult().size() + '.';
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override
@@ -493,10 +496,10 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 * any call and return transitions.
 	 * 
 	 * @return true iff input automaton is a DFA
-	 * @throws AutomataLibraryException
-	 *             thrown by determinism check
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
-	protected final boolean isDfa() throws AutomataLibraryException {
+	protected final boolean isDfa() throws AutomataOperationCanceledException {
 		return (isDeterministic() && isFiniteAutomaton());
 	}
 	
@@ -504,11 +507,11 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 * This method checks whether the input automaton is deterministic.
 	 * 
 	 * @return true iff automaton is deterministic
-	 * @throws AutomataLibraryException
-	 *             thrown by determinism check
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	protected final boolean isDeterministic()
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		return new IsDeterministic<LETTER, STATE>(mServices, mOperand).getResult();
 	}
 	
@@ -552,8 +555,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 *            state factory
 	 * @return pair <tt>(b, m)</tt> where <tt>b = true</tt> iff result check succeeded, otherwise <tt>m</tt> contains an
 	 *         error message
-	 * @throws AutomataLibraryException
-	 *             when tests call failing methods
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	protected Pair<Boolean, String> checkResultHelper(final IStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {

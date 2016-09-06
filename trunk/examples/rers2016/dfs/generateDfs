@@ -1,0 +1,16 @@
+#! /bin/bash
+
+for i in {10..18}; do
+	echo "Generating Problem $i"
+	bruteforceFile="../bruteforce/Problem$i.c"
+	dfsFile="problem$i.c"
+
+	tailStart="$(grep -Fn 'int inputs[]' "$bruteforceFile" | head -n 1 | cut -d: -f1)"
+	totalLength="$(wc -l "$bruteforceFile" | cut -d' ' -f1)"
+	tailLength="$(( totalLength - tailStart  + 1 ))"
+
+	cat dfsHead.c <(tail -n "$tailLength" "$bruteforceFile") > "$dfsFile"
+
+	echo "Compiling Problem $i"
+	clang -O3 -o problem"$i" "$dfsFile"
+done

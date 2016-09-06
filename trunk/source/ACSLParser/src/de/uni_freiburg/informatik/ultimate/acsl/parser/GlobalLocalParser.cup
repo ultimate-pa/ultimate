@@ -6,8 +6,8 @@ File-History:
 
 package de.uni_freiburg.informatik.ultimate.acsl.parser;
 
-import java_cup.runtime.*;
-import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
+import com.github.jhoenicke.javacup.runtime.*;
+import com.github.jhoenicke.javacup.runtime.ComplexSymbolFactory.ComplexSymbol;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -51,7 +51,7 @@ parser code {:
 	 * @param sf the SymbolFactory object.
 	 * @param ILogger the ILogger object to be used.
 	 */
-	public Parser(java_cup.runtime.Scanner s, java_cup.runtime.SymbolFactory sf, ILogger ILogger) {
+	public Parser(com.github.jhoenicke.javacup.runtime.Scanner s, com.github.jhoenicke.javacup.runtime.SymbolFactory sf, ILogger ILogger) {
 		this(s, sf);
 		mILogger = ILogger;
 	}

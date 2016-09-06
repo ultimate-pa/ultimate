@@ -38,8 +38,8 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
@@ -2288,7 +2288,7 @@ public class NestedWordAutomaton<LETTER, STATE>
 	}
 	
 	@Deprecated
-	public NestedRun<LETTER, STATE> getAcceptingNestedRun() throws AutomataLibraryException {
+	public NestedRun<LETTER, STATE> getAcceptingNestedRun() throws AutomataOperationCanceledException {
 		final NestedRun<LETTER, STATE> result = (new IsEmpty<LETTER, STATE>(mServices, this).getNestedRun());
 		return result;
 	}

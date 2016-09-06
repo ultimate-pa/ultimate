@@ -248,7 +248,7 @@ public class OctValue implements Comparable<OctValue> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		OctValue other = (OctValue) obj;
+		final OctValue other = (OctValue) obj;
 		if (mValue == null) {
 			if (other.mValue != null) {
 				return false;

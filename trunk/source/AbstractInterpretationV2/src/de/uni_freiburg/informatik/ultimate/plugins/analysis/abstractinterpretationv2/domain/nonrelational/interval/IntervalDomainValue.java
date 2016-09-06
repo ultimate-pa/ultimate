@@ -148,6 +148,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 *            The value to compare against.
 	 * @return A new {@link IntervalDomainValue} that is the result of the greater or equal operation.
 	 */
+	@Override
 	public IntervalDomainValue greaterOrEqual(final IntervalDomainValue other) {
 		assert other != null;
 
@@ -190,6 +191,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 *            The value to compare against.
 	 * @return A new {@link IntervalDomainValue} that is the result of the less or equal operation.
 	 */
+	@Override
 	public IntervalDomainValue lessOrEqual(final IntervalDomainValue other) {
 		assert other != null;
 
@@ -344,6 +346,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 *            The other interval.
 	 * @return A new evaluation result corresponding to the addition of the two input intervals.
 	 */
+	@Override
 	public IntervalDomainValue add(final IntervalDomainValue other) {
 
 		assert other != null;
@@ -593,6 +596,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 *            The other interval.
 	 * @return A new interval representing the result of <code>firstResult</code> * <code>secondRestult</code>.
 	 */
+	@Override
 	public IntervalDomainValue multiply(final IntervalDomainValue other) {
 		assert other != null;
 
@@ -633,6 +637,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 *            The other interval.
 	 * @return A new interval representing the result of <code>firstResult</code> - <code>secondResult</code>.
 	 */
+	@Override
 	public IntervalDomainValue subtract(final IntervalDomainValue other) {
 		assert other != null;
 
@@ -673,6 +678,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 *            The modulo operation is an integer operation.
 	 * @return A new {@link IntervalDomainValue} which corresponds to the application of the modulus operator.
 	 */
+	@Override
 	public IntervalDomainValue modulo(final IntervalDomainValue divisor, final boolean integerDivision) {
 
 		assert divisor != null;
@@ -1215,6 +1221,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 *            Another {@link IntervalDomainValue} of the form [x; y].
 	 * @return A new {@link IntervalDomainValue} corresponding to the result of the computation of the division.
 	 */
+	@Override
 	public IntervalDomainValue divide(final IntervalDomainValue other) {
 		return divideInternally(other);
 	}
@@ -1227,6 +1234,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 *            Another {@link IntervalDomainValue} of the form [x; y].
 	 * @return A new {@link IntervalDomainValue} corresponding to the result of the computation of the division.
 	 */
+	@Override
 	public IntervalDomainValue integerDivide(final IntervalDomainValue other) {
 		IntervalDomainValue result;
 

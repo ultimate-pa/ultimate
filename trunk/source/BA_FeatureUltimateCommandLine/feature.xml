@@ -145,13 +145,6 @@
          unpack="false"/>
 
    <plugin
-         id="UltimateCLI"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="de.uni_freiburg.informatik.ultimate.boogie.printer"
          download-size="0"
          install-size="0"
@@ -298,8 +291,23 @@
          version="0.0.0"
          unpack="false"/>
 
+
    <plugin
          id="PEATestTransformer"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.apache.commons.cli"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.cli"
          download-size="0"
          install-size="0"
          version="0.0.0"

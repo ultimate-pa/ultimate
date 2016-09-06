@@ -36,7 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLRUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -105,9 +105,9 @@ public class IndexAnalyzer {
 					mInvariantEqualitiesBefore.constructListOfEqualities(mScript));
 			final Term notequalsOriginal = SmtUtils.and(mScript,
 					mInvariantEqualitiesBefore.constructListOfNotEquals(mScript));
-			final Term equalitiesRenamed = TransFormulaUtils.translateTermVariablesToInVars(mScript, mTransFormula,
+			final Term equalitiesRenamed = TransFormulaLRUtils.translateTermVariablesToInVars(mScript, mTransFormula,
 					equalitiesOriginal, mSymbolTable, mRepvarFactory);
-			final Term notequalsRenamed = TransFormulaUtils.translateTermVariablesToInVars(mScript, mTransFormula,
+			final Term notequalsRenamed = TransFormulaLRUtils.translateTermVariablesToInVars(mScript, mTransFormula,
 					notequalsOriginal, mSymbolTable, mRepvarFactory);
 			termWithAdditionalInvariants = Util.and(mScript, mTerm, equalitiesRenamed, notequalsRenamed);
 		} else {
@@ -177,18 +177,18 @@ public class IndexAnalyzer {
 	}
 
 	private boolean isInVarDoubleton(final Doubleton<Term> doubleton) {
-		final boolean fstIndexIsInvarIndex = TransFormulaUtils.allVariablesAreInVars(doubleton.getOneElement(),
+		final boolean fstIndexIsInvarIndex = TransFormulaLRUtils.allVariablesAreInVars(doubleton.getOneElement(),
 				mTransFormula);
-		final boolean sndIndexIsInvarIndex = TransFormulaUtils.allVariablesAreInVars(doubleton.getOtherElement(),
+		final boolean sndIndexIsInvarIndex = TransFormulaLRUtils.allVariablesAreInVars(doubleton.getOtherElement(),
 				mTransFormula);
 		final boolean isInvarPair = fstIndexIsInvarIndex && sndIndexIsInvarIndex;
 		return isInvarPair;
 	}
 
 	private boolean isOutVarDoubleton(final Doubleton<Term> doubleton) {
-		final boolean fstIndexIsOutvarIndex = TransFormulaUtils.allVariablesAreOutVars(doubleton.getOneElement(),
+		final boolean fstIndexIsOutvarIndex = TransFormulaLRUtils.allVariablesAreOutVars(doubleton.getOneElement(),
 				mTransFormula);
-		final boolean sndIndexIsOutvarIndex = TransFormulaUtils.allVariablesAreOutVars(doubleton.getOtherElement(),
+		final boolean sndIndexIsOutvarIndex = TransFormulaLRUtils.allVariablesAreOutVars(doubleton.getOtherElement(),
 				mTransFormula);
 		final boolean isOutvarPair = fstIndexIsOutvarIndex && sndIndexIsOutvarIndex;
 		return isOutvarPair;
@@ -290,9 +290,9 @@ public class IndexAnalyzer {
 	private Doubleton<Term> constructDefiningDoubleton(final Doubleton<Term> inVarDoubleton) {
 		final Term oneElement = inVarDoubleton.getOneElement();
 		final Term otherElement = inVarDoubleton.getOtherElement();
-		final Term translatedOne = TransFormulaUtils.translateTermVariablesToDefinitions(mScript, mTransFormula,
+		final Term translatedOne = TransFormulaLRUtils.translateTermVariablesToDefinitions(mScript, mTransFormula,
 				oneElement);
-		final Term translatedOther = TransFormulaUtils.translateTermVariablesToDefinitions(mScript, mTransFormula,
+		final Term translatedOther = TransFormulaLRUtils.translateTermVariablesToDefinitions(mScript, mTransFormula,
 				otherElement);
 		return new Doubleton<Term>(translatedOne, translatedOther);
 

@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.parallel;
@@ -39,13 +39,11 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeIncremental;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.Interrupt;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.Interrupt;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -78,9 +76,32 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class MinimizeDfaIncrementalParallel<LETTER, STATE>
-		extends AbstractMinimizeIncremental<LETTER, STATE>
-		implements IMinimize, IOperation<LETTER, STATE> {
+public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinimizeIncremental<LETTER, STATE>
+		implements IMinimize {
+	/**
+	 * True if Incremental algorithm shall help Hopcroft algorithm, false
+	 * otherwise.
+	 */
+	public static final boolean HELP_HOPCROFT = true;
+	
+	/**
+	 * Option: Separate states with different transitions.
+	 * 
+	 * <p>That is, if there is a letter {@code l} where one of the states has an
+	 * outgoing transitions with {@code l} and one has not (hence this
+	 * transition would go to an implicit sink state.
+	 * 
+	 * <p>NOTE: This is only reasonable if the input automaton is not total.
+	 * Furthermore, the method becomes incomplete (i.e., may not find the
+	 * minimum) if dead ends have not been removed beforehand.
+	 */
+	private static final boolean OPTION_NEQ_TRANS = false;
+	/**
+	 * Boolean variable for determining to run the algorithm with or without
+	 * producing tasks for parallel execution.
+	 */
+	private static boolean sParallel = false;
+	
 	/**
 	 * The number of states in the input automaton (often used).
 	 */
@@ -122,12 +143,6 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE>
 	 */
 
 	/**
-	 * True if Incremental algorithm shall help Hopcroft algorithm, false
-	 * otherwise.
-	 */
-	public static final boolean HELP_HOPCROFT = true;
-
-	/**
 	 * Double holding the cpu time in seconds.
 	 */
 	private double mRunTime;
@@ -139,30 +154,10 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE>
 	 */
 	private MinimizeDfaHopcroftParallel<LETTER, STATE> mHopcroftAlgorithm;
 	/**
-	 * Boolean variable for determining to run the algorithm with or without
-	 * producing tasks for parallel execution.
-	 */
-	private static boolean sParallel = false;
-	/**
 	 * This variable will be true as soon as the union-find data structure is
 	 * initialized.
 	 */
 	private boolean mInitialized = false;
-
-	// ----------------------- options for tweaking ----------------------- //
-
-	/**
-	 * Option: Separate states with different transitions.
-	 * 
-	 * <p>That is, if there is a letter {@code l} where one of the states has an
-	 * outgoing transitions with {@code l} and one has not (hence this
-	 * transition would go to an implicit sink state.
-	 * 
-	 * <p>NOTE: This is only reasonable if the input automaton is not total.
-	 * Furthermore, the method becomes incomplete (i.e., may not find the
-	 * minimum) if dead ends have not been removed beforehand.
-	 */
-	private static final boolean OPTION_NEQ_TRANS = false;
 
 	// --------------------------- class methods --------------------------- //
 
@@ -173,13 +168,13 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE>
 	 * @param stateFactory state factory
 	 * @param operand
 	 *            input automaton (DFA)
-	 * @throws AutomataLibraryException
-	 *             thrown when execution is cancelled
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public MinimizeDfaIncrementalParallel(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, new Interrupt());
 	}
 
@@ -192,13 +187,13 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE>
 	 *            input automaton (DFA)
 	 * @param interrupt
 	 *            interrupt
-	 * @throws AutomataLibraryException
-	 *             thrown when execution is cancelled
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public MinimizeDfaIncrementalParallel(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
-			final Interrupt interrupt) throws AutomataLibraryException {
+			final Interrupt interrupt) throws AutomataOperationCanceledException {
 		super(services, stateFactory, "MinimizeAMR", operand, interrupt);
 		
 		/*
@@ -222,15 +217,15 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE>
 	 *            input automaton (DFA)
 	 * @param interrupt
 	 *            interrupt
-	 * @throws AutomataLibraryException
-	 *             thrown by DFA check
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public MinimizeDfaIncrementalParallel(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt, final ArrayList<STATE> int2state,
 			final HashMap<STATE, Integer> state2int)
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		super(services, stateFactory, "MinimizeAMR", operand, interrupt);
 		mInt2state = int2state;
 		mState2int = state2int;
@@ -286,7 +281,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE>
 	/**
 	 * This method is only executed if the algorithm is run non-parallel.
 	 */
-	private void executeAlgorithm() throws AutomataLibraryException {
+	private void executeAlgorithm() throws AutomataOperationCanceledException {
 
 		initialize();
 		// Do time measurement
@@ -297,7 +292,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE>
 		mLogger.info(exitMessage());
 	}
 
-	private void initialize() throws AutomataLibraryException {
+	private void initialize() throws AutomataOperationCanceledException {
 
 		assert super.isDfa() : "The input automaton is no DFA.";
 
@@ -355,7 +350,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE>
 
 	protected void minimizeParallel(final LinkedBlockingQueue<Runnable> taskQueue,
 			final MinimizeDfaHopcroftParallel<LETTER, STATE> hopcroft)
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 		mLogger.info("Inc: started");
 		mTaskQueue = taskQueue;
 		mHopcroftAlgorithm = hopcroft;
@@ -369,7 +364,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE>
 	 *             thrown when execution is cancelled
 	 */
 	private void minimize()
-			throws AutomataLibraryException {
+			throws AutomataOperationCanceledException {
 
 		// try minimization as long as possible
 		findEquiv();

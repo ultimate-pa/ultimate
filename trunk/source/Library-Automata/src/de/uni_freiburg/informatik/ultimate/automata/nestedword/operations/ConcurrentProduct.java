@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
@@ -40,132 +40,128 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-
 /**
- * Given a PetriNet, constructs a finite Automaton that recognizes the same
- * language.
- * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <LETTER> Symbol
- * @param <STATE> Content
+ * Given a PetriNet, constructs a finite Automaton that recognizes the same language.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            Symbol
+ * @param <STATE>
+ *            Content
  */
-public class ConcurrentProduct<LETTER,STATE>
-		extends BinaryNwaOperation<LETTER, STATE> {
+public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
+	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	
 	private final boolean mConcurrentPrefixProduct;
-
-	private final NestedWordAutomaton<LETTER,STATE> mResult;
+	
+	private final NestedWordAutomaton<LETTER, STATE> mResult;
 	
 	/**
 	 * List of state pairs from the input automata for which
 	 * <ul>
-	 * <li> there has already been a state in the result constructed
-	 * <li> outgoing transitions of this state have not yet been constructed.
+	 * <li>there has already been a state in the result constructed
+	 * <li>outgoing transitions of this state have not yet been constructed.
 	 * </ul>
- 	 */
+	 */
 	private final StatePairQueue mWorklist = new StatePairQueue();
 	
 	/**
 	 * Map from state pairs of the input automata to corresponding states
-	 * in the result automaton. 
+	 * in the result automaton.
 	 */
-	private final StatePair2StateMap mInputPair2resultState = 
-		new StatePair2StateMap();
+	private final StatePair2StateMap mInputPair2resultState = new StatePair2StateMap();
 	
-
 	/**
 	 * Common symbols of the Alphabets of the input automata.
 	 */
 	private final HashSet<LETTER> mSynchronizationAlphabet;
-
+	
 	private final IStateFactory<STATE> mContentFactory;
 	
-
 	/**
-	 * @param services Ultimate services
-	 * @param fstOperand first operand
-	 * @param sndOperand second operand
+	 * @param services
+	 *            Ultimate services
+	 * @param fstOperand
+	 *            first operand
+	 * @param sndOperand
+	 *            second operand
+	 * @param concurrentPrefixProduct
+	 *            {@code true} iff a concurrent prefix product should be created (i.e., a place is final if at least one
+	 *            of the old places was final)
 	 */
-	public ConcurrentProduct(final AutomataLibraryServices services, 
-			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
-			final boolean concurrentPrefixProduct) {
-		super(services, fstOperand, sndOperand);
+	public ConcurrentProduct(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand, final boolean concurrentPrefixProduct) {
+		super(services);
+		mFstOperand = fstOperand;
+		mSndOperand = sndOperand;
 		mConcurrentPrefixProduct = concurrentPrefixProduct;
 		mContentFactory = fstOperand.getStateFactory();
-//FIXME
-//		if (mContentFactory != nwa2.getContentFactory()) {
-//			throw new IllegalArgumentException("Both NWAs have to use" +
-//					"same ContentFactory");
-//		}
+		/*FIXME
+		if (mContentFactory != nwa2.getContentFactory()) {
+			throw new IllegalArgumentException("Both NWAs have to use" +
+					"same ContentFactory");
+		}
+		*/
 		
-		if (!fstOperand.getCallAlphabet().isEmpty()
+		if (mLogger.isWarnEnabled() && (!fstOperand.getCallAlphabet().isEmpty()
 				|| !fstOperand.getReturnAlphabet().isEmpty()
 				|| !sndOperand.getCallAlphabet().isEmpty()
-				|| !sndOperand.getReturnAlphabet().isEmpty()) {
+				|| !sndOperand.getReturnAlphabet().isEmpty())) {
 			mLogger.warn("Call alphabet and return alphabet are ignored.");
 		}
-		mSynchronizationAlphabet = new HashSet<LETTER>(fstOperand.getInternalAlphabet());
+		mSynchronizationAlphabet = new HashSet<>(fstOperand.getInternalAlphabet());
 		mSynchronizationAlphabet.retainAll(sndOperand.getInternalAlphabet());
-		final Set<LETTER> commonAlphabet = new HashSet<LETTER>(fstOperand.getInternalAlphabet());
+		final Set<LETTER> commonAlphabet = new HashSet<>(fstOperand.getInternalAlphabet());
 		commonAlphabet.addAll(sndOperand.getInternalAlphabet());
-		mResult = new NestedWordAutomaton<LETTER,STATE>(
-				mServices, commonAlphabet,
-									 new HashSet<LETTER>(0),
-									 new HashSet<LETTER>(0),
-									 mContentFactory);
+		// TODO Christian 2016-09-04: Use Collections.emptySet() or is it intended that a user modifies the result?
+		mResult = new NestedWordAutomaton<>(mServices, commonAlphabet, new HashSet<LETTER>(0), new HashSet<LETTER>(0),
+				mContentFactory);
 		constructInitialStates();
 		while (!mWorklist.isEmpty()) {
 			mWorklist.dequeuePair();
 			final STATE state1 = mWorklist.getDequeuedPairFst();
 			final STATE state2 = mWorklist.getDequeuedPairSnd();
-			constructOutgoingTransitions(state1,state2);
+			constructOutgoingTransitions(state1, state2);
 		}
 	}
-
-	
 	
 	/**
 	 * Returns the automaton state that represents the state pair
 	 * (state1,state2). If this state is not yet constructed, construct it
 	 * and enqueue the pair (state1,state2). If it has to be
-	 * constructed it is an initial state iff isInitial is true. 
+	 * constructed it is an initial state iff isInitial is true.
 	 */
 	private STATE getState(final STATE state1, final STATE state2,
 			final boolean isInitial) {
-		STATE state = 
-					mInputPair2resultState.get(state1, state2);
+		STATE state =
+				mInputPair2resultState.get(state1, state2);
 		if (state == null) {
 			boolean isFinal;
 			if (mConcurrentPrefixProduct) {
 				isFinal = mFstOperand.isFinal(state1) || mSndOperand.isFinal(state2);
-			} else {			
+			} else {
 				isFinal = mFstOperand.isFinal(state1) && mSndOperand.isFinal(state2);
 			}
 			final STATE content1 = state1;
 			final STATE content2 = state2;
 			state = mContentFactory.getContentOnConcurrentProduct(
-					content1,content2);
+					content1, content2);
 			mResult.addState(isInitial, isFinal, state);
-			mInputPair2resultState.put(state1,state2,state);
+			mInputPair2resultState.put(state1, state2, state);
 			mWorklist.enqueue(state1, state2);
 		}
 		return state;
 	}
 	
-
-	
-	
-	private void constructOutgoingTransitions(final STATE state1,	final STATE state2) {
-		final STATE state = getState(state1,state2,false);
-		final HashSet<LETTER> commonOutSymbols = 
-				new HashSet<LETTER>(mFstOperand.lettersInternal(state1));
+	private void constructOutgoingTransitions(final STATE state1, final STATE state2) {
+		final STATE state = getState(state1, state2, false);
+		final HashSet<LETTER> commonOutSymbols = new HashSet<>(mFstOperand.lettersInternal(state1));
 		commonOutSymbols.retainAll(mSndOperand.lettersInternal(state2));
-		final HashSet<LETTER> state1OnlySymbols = 
-				new HashSet<LETTER>(mFstOperand.lettersInternal(state1));
+		final HashSet<LETTER> state1OnlySymbols = new HashSet<>(mFstOperand.lettersInternal(state1));
 		state1OnlySymbols.removeAll(mSynchronizationAlphabet);
-		final HashSet<LETTER> state2OnlySymbols = 
-				new HashSet<LETTER>(mSndOperand.lettersInternal(state2));
+		final HashSet<LETTER> state2OnlySymbols = new HashSet<>(mSndOperand.lettersInternal(state2));
 		state2OnlySymbols.removeAll(mSynchronizationAlphabet);
 		
 		for (final LETTER symbol : commonOutSymbols) {
@@ -185,7 +181,7 @@ public class ConcurrentProduct<LETTER,STATE>
 		
 		for (final LETTER symbol : state1OnlySymbols) {
 			final Iterable<OutgoingInternalTransition<LETTER, STATE>> trans1it =
-				mFstOperand.internalSuccessors(state1, symbol);
+					mFstOperand.internalSuccessors(state1, symbol);
 			for (final OutgoingInternalTransition<LETTER, STATE> trans1 : trans1it) {
 				final STATE succ1 = trans1.getSucc();
 				final STATE succ = getState(succ1, state2, false);
@@ -202,34 +198,42 @@ public class ConcurrentProduct<LETTER,STATE>
 				mResult.addInternalTransition(state, symbol, succ);
 			}
 		}
-
 		
 	}
-
-	public void constructInitialStates() {
+	
+	private void constructInitialStates() {
 		for (final STATE state1 : mFstOperand.getInitialStates()) {
 			for (final STATE state2 : mSndOperand.getInitialStates()) {
 				getState(state1, state2, true);
 			}
 		}
 	}
-
+	
 	@Override
-	public INestedWordAutomaton<LETTER,STATE> getResult() {
+	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+		return mFstOperand;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+		return mSndOperand;
+	}
+	
+	@Override
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 	
-
 	/**
-	 * Maps pairs of states to states. 
-	 * @author heizmann@informatik.uni-freiburg.de
+	 * Maps pairs of states to states.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class StatePair2StateMap {
-		private final Map<STATE,Map<STATE,STATE>> mBackingMap =
-			new HashMap<STATE, Map<STATE,STATE>>();
+		private final Map<STATE, Map<STATE, STATE>> mBackingMap = new HashMap<>();
 		
-		public STATE get(final STATE state1, final STATE state2) {
-			final Map<STATE,STATE> snd2result = mBackingMap.get(state1);
+		protected STATE get(final STATE state1, final STATE state2) {
+			final Map<STATE, STATE> snd2result = mBackingMap.get(state1);
 			if (snd2result == null) {
 				return null;
 			} else {
@@ -237,48 +241,45 @@ public class ConcurrentProduct<LETTER,STATE>
 			}
 		}
 		
-		public void put(final STATE state1,
-						final STATE state2,
-						final STATE state) {
-			Map<STATE,STATE> snd2result = mBackingMap.get(state1);
+		protected void put(final STATE state1, final STATE state2, final STATE state) {
+			Map<STATE, STATE> snd2result = mBackingMap.get(state1);
 			if (snd2result == null) {
-				snd2result = new HashMap<STATE,STATE>();
-				mBackingMap.put(state1,snd2result);
+				snd2result = new HashMap<>();
+				mBackingMap.put(state1, snd2result);
 			}
-			snd2result.put(state2,state);
+			snd2result.put(state2, state);
 		}
 	}
-
 	
 	/**
 	 * Queue for pairs of states. Pairs are not dequeued in the same order as
-	 * inserted. 
-	 * @author heizmann@informatik.uni-freiburg.de
+	 * inserted.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class StatePairQueue {
-		private final Map<STATE,Set<STATE>> mQueue =
-			new HashMap<STATE,Set<STATE>>();
+		private final Map<STATE, Set<STATE>> mQueue = new HashMap<>();
 		
 		private STATE mDequeuedPairFst;
 		private STATE mDequeuedPairSnd;
 		
-		public void enqueue(final STATE state1, final STATE state2) {
+		protected void enqueue(final STATE state1, final STATE state2) {
 			Set<STATE> secondComponets = mQueue.get(state1);
 			if (secondComponets == null) {
-				secondComponets = new HashSet<STATE>();
-				mQueue.put(state1,secondComponets);
+				secondComponets = new HashSet<>();
+				mQueue.put(state1, secondComponets);
 			}
 			secondComponets.add(state2);
 		}
 		
-		public void dequeuePair() {
-			assert (mDequeuedPairFst == null && mDequeuedPairSnd == null) : 
-				"Results from last dequeue not yet collected!";
+		protected void dequeuePair() {
+			assert mDequeuedPairFst == null
+					&& mDequeuedPairSnd == null : "Results from last dequeue not yet collected!";
 			final Iterator<STATE> it1 = mQueue.keySet().iterator();
 			mDequeuedPairFst = it1.next();
-			assert (mQueue.get(mDequeuedPairFst) !=  null);
+			assert mQueue.get(mDequeuedPairFst) != null;
 			final Set<STATE> secondComponets = mQueue.get(mDequeuedPairFst);
-			assert (secondComponets != null);
+			assert secondComponets != null;
 			final Iterator<STATE> it2 = secondComponets.iterator();
 			mDequeuedPairSnd = it2.next();
 			
@@ -288,20 +289,20 @@ public class ConcurrentProduct<LETTER,STATE>
 			}
 		}
 		
-		public STATE getDequeuedPairFst() {
-			assert (mDequeuedPairFst != null) : "No pair dequeued";
+		protected STATE getDequeuedPairFst() {
+			assert mDequeuedPairFst != null : "No pair dequeued";
 			final STATE result = mDequeuedPairFst;
 			mDequeuedPairFst = null;
 			return result;
 		}
-
+		
 		public STATE getDequeuedPairSnd() {
-			assert (mDequeuedPairSnd != null) : "No pair dequeued";
+			assert mDequeuedPairSnd != null : "No pair dequeued";
 			final STATE result = mDequeuedPairSnd;
 			mDequeuedPairSnd = null;
 			return result;
 		}
-
+		
 		public boolean isEmpty() {
 			return mQueue.isEmpty();
 		}

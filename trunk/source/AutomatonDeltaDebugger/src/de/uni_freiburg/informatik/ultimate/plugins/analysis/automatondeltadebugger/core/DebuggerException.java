@@ -71,13 +71,15 @@ public class DebuggerException extends Exception {
 	
 	@Override
 	public String toString() {
-		final StringBuilder b = new StringBuilder();
-		b.append(this.getClass().getSimpleName());
-		b.append("(");
-		b.append(mClassOfThrower == null ? "null" : mClassOfThrower.toString());
-		b.append(" : ");
-		b.append(mMessage);
-		b.append(")");
-		return b.toString();
+		final StringBuilder builder = new StringBuilder();
+		// @formatter:off
+		builder.append(this.getClass().getSimpleName())
+				.append('(')
+				.append(mClassOfThrower == null ? "null" : mClassOfThrower.toString())
+				.append(" : ")
+				.append(mMessage)
+				.append(')');
+		// @formatter:on
+		return builder.toString();
 	}
 }

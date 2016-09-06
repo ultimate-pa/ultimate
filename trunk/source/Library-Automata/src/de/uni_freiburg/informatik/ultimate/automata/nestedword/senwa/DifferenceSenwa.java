@@ -36,9 +36,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
@@ -52,16 +52,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class DifferenceSenwa<LETTER, STATE> implements
-		ISuccessorVisitor<LETTER, STATE>,
-		IOperation<LETTER, STATE>,
-		IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
+public class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> implements
+		ISuccessorVisitor<LETTER, STATE>, IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 		
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-	
 	private final INestedWordAutomaton<LETTER, STATE> mMinuend;
 	private final INestedWordAutomaton<LETTER, STATE> mSubtrahend;
 	
@@ -130,8 +124,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
 			final boolean removeDeadEndsImmediately)
 					throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mContentFactory = minuend.getStateFactory();
 		
 		this.mMinuend = minuend;
@@ -279,6 +272,16 @@ public class DifferenceSenwa<LETTER, STATE> implements
 			}
 		}
 		return resSuccs;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+		return mMinuend;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+		return mSubtrahend;
 	}
 	
 	@Override

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet;
@@ -37,7 +37,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -51,10 +50,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <S> Symbol
  * @param <C> Content
  */
-public class PetriNet2FiniteAutomaton<S,C>
-		extends UnaryNetOperation<S, C>
-		implements IOperation<S,C> {
-	
+public class PetriNet2FiniteAutomaton<S,C> extends UnaryNetOperation<S, C> {
+	private final IPetriNet<S, C> mOperand;
 	private final NestedWordAutomaton<S,C> mResult;
 	
 	/**
@@ -77,9 +74,10 @@ public class PetriNet2FiniteAutomaton<S,C>
 	 * @param services Ultimate services
 	 * @param operand operand Petri net
 	 */
-	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services, 
+	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services,
 			final IPetriNet<S,C> operand) {
-		super(services, operand);
+		super(services);
+		mOperand = operand;
 		mLogger.info(startMessage());
 		mContentFactory = operand.getStateFactory();
 		final Set<S> alphabet = new HashSet<S>(operand.getAlphabet());
@@ -109,7 +107,7 @@ public class PetriNet2FiniteAutomaton<S,C>
 	/**
 	 * Returns the automaton state that represents marking. If this state is not
 	 * yet constructed, construct it and enqueue the marking. If it has to be
-	 * constructed it is an initial state iff isInitial is true. 
+	 * constructed it is an initial state iff isInitial is true.
 	 */
 	private C getState(final Marking<S,C> marking, final boolean isInitial) {
 		C state = mMarking2State.get(marking);
@@ -150,8 +148,8 @@ public class PetriNet2FiniteAutomaton<S,C>
 		}
 	}
 	
-//	
-//	private boolean isEnabled(ITransition<S,C> transition, 
+//
+//	private boolean isEnabled(ITransition<S,C> transition,
 //													Set<Place<S,C>> marking) {
 //		if (marking.containsAll(transition.getPredecessors())) {
 //			return true;
@@ -166,6 +164,11 @@ public class PetriNet2FiniteAutomaton<S,C>
 			transitions.addAll(place.getSuccessors());
 		}
 		return transitions;
+	}
+	
+	@Override
+	protected IPetriNet<S, C> getOperand() {
+		return mOperand;
 	}
 	
 	@Override

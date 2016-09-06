@@ -15,4 +15,5 @@ Require-Bundle: UltimateCore,
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.PEATestTransformer.SplPatternParser
-Import-Package: de.uni_freiburg.informatik.ultimate.util
+Import-Package: de.uni_freiburg.informatik.ultimate.util,
+ org.eclipse.cdt.utils.coff

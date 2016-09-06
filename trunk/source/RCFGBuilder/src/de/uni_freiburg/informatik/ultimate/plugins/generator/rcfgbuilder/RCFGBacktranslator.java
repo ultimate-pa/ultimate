@@ -175,7 +175,12 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 			if (branchEncoders == null) {
 				final CodeBlock someBranch = bi2cb.entrySet().iterator().next().getValue();
 				addCodeBlock(someBranch, trace, branchEncoders, relevanceInformation);
-				final IPayload p = cb.getSource().getPayload();
+				final IPayload p;
+				if (cb.getSource() != null) {
+					p = cb.getSource().getPayload();
+				} else {
+					p = null;
+				}
 				if (p == null) {
 					mLogger.error("unable to determine which branch was taken, unable to determine the location");
 				} else {

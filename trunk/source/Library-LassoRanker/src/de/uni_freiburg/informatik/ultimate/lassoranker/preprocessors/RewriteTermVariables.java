@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLRUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -133,7 +133,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 		final ArrayList<IProgramVar> rankVarsWithCommonInVarOutVar = new ArrayList<>();
 		for (final Map.Entry<IProgramVar, Term> entry : tf.getInVars().entrySet()) {
 			if (hasToBeReplaced(entry.getValue())) {
-				if (TransFormulaUtils.inVarAndOutVarCoincide(entry.getKey(), tf)) {
+				if (TransFormulaLRUtils.inVarAndOutVarCoincide(entry.getKey(), tf)) {
 					rankVarsWithCommonInVarOutVar.add(entry.getKey());
 				} else {
 					rankVarsWithDistinctInVar.add(entry.getKey());
@@ -142,7 +142,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 		}
 		for (final Map.Entry<IProgramVar, Term> entry : tf.getOutVars().entrySet()) {
 			if (hasToBeReplaced(entry.getValue())) {
-				if (TransFormulaUtils.inVarAndOutVarCoincide(entry.getKey(), tf)) {
+				if (TransFormulaLRUtils.inVarAndOutVarCoincide(entry.getKey(), tf)) {
 					// do nothing, was already added
 				} else {
 					rankVarsWithDistinctOutVar.add(entry.getKey());

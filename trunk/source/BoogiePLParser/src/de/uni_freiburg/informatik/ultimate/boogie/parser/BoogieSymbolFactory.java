@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.parser;
 
-import java_cup.runtime.Symbol;
-import java_cup.runtime.SymbolFactory;
+import com.github.jhoenicke.javacup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.SymbolFactory;
 
 public class BoogieSymbolFactory implements SymbolFactory {
 	class BoogieSymbol extends Symbol {

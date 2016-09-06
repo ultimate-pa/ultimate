@@ -357,8 +357,7 @@ public final class ResultChecker {
 	
 	public static <LETTER, STATE> NestedLassoWord<LETTER> getRandomNestedLassoWord(
 			final INestedWordAutomatonSimple<LETTER, STATE> automaton,
-			final int size)
-					throws AutomataLibraryException {
+			final int size) {
 		final NestedWord<LETTER> stem =
 				(new GetRandomNestedWord<LETTER, STATE>(automaton, size)).getResult();
 		final NestedWord<LETTER> loop =

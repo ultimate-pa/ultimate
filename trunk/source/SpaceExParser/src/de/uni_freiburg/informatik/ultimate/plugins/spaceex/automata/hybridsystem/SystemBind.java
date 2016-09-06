@@ -43,8 +43,8 @@ public class SystemBind {
 	private final Map<String, String> mVariableMap;
 	private final Map<String, Double> mConstantMap;
 	
-	private double mXPosition;
-	private double mYPosition;
+	private final double mXPosition;
+	private final double mYPosition;
 
 	protected SystemBind(BindType bind, ILogger logger) {
 		mBind = bind;

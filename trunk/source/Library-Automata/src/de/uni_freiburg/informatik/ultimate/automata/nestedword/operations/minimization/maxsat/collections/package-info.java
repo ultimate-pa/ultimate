@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
+ * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
  * 
@@ -25,7 +25,6 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-
 /**
  * Max-SAT-based minimization for nested word automata.
  * 

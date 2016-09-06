@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
@@ -85,8 +85,8 @@ public class TraceAbstractionStarter {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mToolchainStorage;
 
-	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IToolchainStorage storage, final RootNode rcfgRootNode,
-			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
+	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IToolchainStorage storage,
+			final RootNode rcfgRootNode, final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		mServices = services;
 		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -101,7 +101,8 @@ public class TraceAbstractionStarter {
 	private Result mOverallResult;
 	private IElement mArtifact;
 
-	private void runCegarLoops(final RootNode rcfgRootNode, final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
+	private void runCegarLoops(final RootNode rcfgRootNode,
+			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		final RootAnnot rootAnnot = rcfgRootNode.getRootAnnot();
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
@@ -110,11 +111,12 @@ public class TraceAbstractionStarter {
 		settings += " " + (taPrefs.differenceSenwa() ? "SeNWA" : "NWA");
 		settings += " Interpolation:" + taPrefs.interpolation();
 		settings += " Determinization: " + taPrefs.interpolantAutomatonEnhancement();
-		System.out.println(settings);
+		mLogger.info(settings);
 
-		final SmtManager smtManager = new SmtManager(rootAnnot.getScript(), rootAnnot.getBoogie2SMT(),
-				rootAnnot.getModGlobVarManager(), mServices, interpolationModeSwitchNeeded(),
-				rootAnnot.getManagedScript(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+		final SmtManager smtManager =
+				new SmtManager(rootAnnot.getScript(), rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(),
+						mServices, interpolationModeSwitchNeeded(), rootAnnot.getManagedScript(),
+						taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
 
 		final Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
@@ -149,8 +151,8 @@ public class TraceAbstractionStarter {
 			} else {
 				longDescription = errNodesOfAllProc.size() + " specifications checked. All of them hold";
 			}
-			final AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(Activator.PLUGIN_NAME,
-					longDescription);
+			final AllSpecificationsHoldResult result =
+					new AllSpecificationsHoldResult(Activator.PLUGIN_NAME, longDescription);
 			reportResult(result);
 		}
 
@@ -193,8 +195,9 @@ public class TraceAbstractionStarter {
 				final HoareAnnotation hoare = getHoareAnnotation(finalNode);
 				if (hoare != null) {
 					final Term formula = hoare.getFormula();
-					final ProcedureContractResult<RcfgElement, Term> result = new ProcedureContractResult<RcfgElement, Term>(
-							Activator.PLUGIN_NAME, finalNode, backTranslatorService, proc, formula);
+					final ProcedureContractResult<RcfgElement, Term> result =
+							new ProcedureContractResult<RcfgElement, Term>(Activator.PLUGIN_NAME, finalNode,
+									backTranslatorService, proc, formula);
 
 					reportResult(result);
 					// TODO: Add setting that controls the generation of those witness invariants; for now, just
@@ -249,8 +252,9 @@ public class TraceAbstractionStarter {
 		}
 	}
 
-	private void iterate(final String name, final RootNode root, final TAPreferences taPrefs, final SmtManager smtManager,
-			final TraceAbstractionBenchmarks taBenchmark, final Collection<ProgramPoint> errorLocs,
+	private void iterate(final String name, final RootNode root, final TAPreferences taPrefs,
+			final SmtManager smtManager, final TraceAbstractionBenchmarks taBenchmark,
+			final Collection<ProgramPoint> errorLocs,
 			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		BasicCegarLoop basicCegarLoop;
 		final LanguageOperation languageOperation = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
@@ -356,8 +360,8 @@ public class TraceAbstractionStarter {
 			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
 		}
-		reportResult(new CounterExampleResult<RcfgElement, RCFGEdge, Term>(getErrorPP(pe),
-				Activator.PLUGIN_NAME, mServices.getBacktranslationService(), pe));
+		reportResult(new CounterExampleResult<RcfgElement, RCFGEdge, Term>(getErrorPP(pe), Activator.PLUGIN_NAME,
+				mServices.getBacktranslationService(), pe));
 	}
 
 	private void reportTimeoutResult(final Collection<ProgramPoint> errorLocs,
@@ -378,7 +382,8 @@ public class TraceAbstractionStarter {
 		}
 	}
 
-	private void reportUnproveableResult(final RcfgProgramExecution pe, final List<UnprovabilityReason> unproabilityReasons) {
+	private void reportUnproveableResult(final RcfgProgramExecution pe,
+			final List<UnprovabilityReason> unproabilityReasons) {
 		final ProgramPoint errorPP = getErrorPP(pe);
 		final UnprovableResult<RcfgElement, RCFGEdge, Term> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Term>(
 				Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);

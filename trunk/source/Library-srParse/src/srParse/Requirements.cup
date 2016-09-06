@@ -3,7 +3,7 @@ package srParse;
 import java.io.IOException;
 import java.io.FileReader;
 import java.util.Vector;
-import java_cup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.Symbol;
 
 import pea.CDD;
 import pea.BooleanDecision;

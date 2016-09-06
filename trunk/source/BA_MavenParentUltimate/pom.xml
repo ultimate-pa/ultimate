@@ -1,8 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>Ultimate</groupId>
-	<artifactId>MavenParentUltimate</artifactId>
+	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
+	<artifactId>de.uni_freiburg.informatik.ultimate.pom</artifactId>
 	<version>0.0.1</version>
 	<packaging>pom</packaging>
 	<url>https://ultimate.informatik.uni-freiburg.de</url>
@@ -61,7 +61,8 @@
 		<sonar.exclusions>
 			src/jdd/**,
 			src/net/sf/javabdd/**,
-			src/java_cup/**,
+			src/com.github.jhoenicke.javacup/**,
+			src/org/apache/commons/cli/**,
 			src/srParse/ReqLexer.java,
 			src/srParse/ReqParser.java,
 			src/srParse/ReqSymbols.java,
@@ -109,6 +110,8 @@
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/SubchainType.java,
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainListType.java,
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainModelType.java
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/OptionType.java
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/RunDefinition.java
 		</sonar.exclusions>
 
 		<!-- Exclude from sonar duplication analysis -->
@@ -319,6 +322,7 @@
 		<module>../HornClauseGraphBuilder</module>
 		<module>../PEATestTransofrmer</module>
 		<module>../TreeAutomizer</module>
+		<module>../Library-ApacheCommonsCLI</module>
 	</modules>
 
 	<profiles>

@@ -20,16 +20,15 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determinize;
@@ -57,9 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public class MinimizeNfaBrzozowski<LETTER, STATE>
-		extends AbstractMinimizeNwa<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	/**
 	 * Constructor.
 	 * 
@@ -69,7 +66,7 @@ public class MinimizeNfaBrzozowski<LETTER, STATE>
 	 * @throws AutomataOperationCanceledException when execution is cancelled
 	 */
 	public MinimizeNfaBrzozowski(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, 
+			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
 					throws AutomataOperationCanceledException {
 		super(services, stateFactory, "MinimizeBrzozowski", operand);
@@ -113,7 +110,7 @@ public class MinimizeNfaBrzozowski<LETTER, STATE>
 	private INestedWordAutomaton<LETTER, STATE> reverse(
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
 		final NestedWordAutomaton<LETTER, STATE> reversed =
-				new NestedWordAutomaton<LETTER, STATE>(mServices, 
+				new NestedWordAutomaton<LETTER, STATE>(mServices,
 						automaton.getInternalAlphabet(),
 						automaton.getCallAlphabet(),
 						automaton.getReturnAlphabet(),

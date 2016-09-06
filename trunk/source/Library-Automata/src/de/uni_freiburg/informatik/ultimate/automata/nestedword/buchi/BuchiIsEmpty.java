@@ -30,13 +30,11 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.AcceptingComponentsAnalysis;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Class that provides the Buchi emptiness check for nested word automata.
@@ -47,9 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  *            Content. Type of the labels (the content) of the automata states.
  * @version 2010-12-18
  */
-public class BuchiIsEmpty<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	
-	private final AutomataLibraryServices mServices;
+public class BuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	INestedWordAutomatonSimple<LETTER, STATE> mNwa;
 	NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
 	AcceptingComponentsAnalysis<LETTER, STATE> mSccs;
@@ -57,8 +53,7 @@ public class BuchiIsEmpty<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	public BuchiIsEmpty(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		super(services);
 		mNwa = nwa;
 		mLogger.info(startMessage());
 		try {
@@ -81,13 +76,13 @@ public class BuchiIsEmpty<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Operand " + mNwa.sizeInformation();
+	public String exitMessage() {
+		return "Finished " + operationName() + " Result is " + mResult;
 	}
 	
 	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + " Result is " + mResult;
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mNwa;
 	}
 	
 	@Override
@@ -95,9 +90,7 @@ public class BuchiIsEmpty<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return mResult;
 	}
 	
-	private final ILogger mLogger;
-	
-	public NestedLassoRun<LETTER, STATE> getAcceptingNestedLassoRun() throws AutomataLibraryException {
+	public NestedLassoRun<LETTER, STATE> getAcceptingNestedLassoRun() throws AutomataOperationCanceledException {
 		if (mResult) {
 			mLogger.info("There is no accepting nested lasso run");
 			return null;

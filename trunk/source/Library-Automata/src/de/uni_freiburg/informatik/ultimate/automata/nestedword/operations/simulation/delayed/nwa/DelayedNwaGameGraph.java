@@ -121,7 +121,7 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 			mNwa = new RemoveUnreachable<LETTER, STATE>(services, preparedNwa).getResult();
 		}
 		mGeneration = new NwaGameGraphGeneration<LETTER, STATE>(services, getProgressTimer(), getLogger(), mNwa, this,
-				ESimulationType.DELAYED, possibleEquivalenceClasses);
+				ESimulationType.DELAYED, possibleEquivalenceClasses, true);
 	}
 
 	/*
