@@ -267,29 +267,36 @@ public class OptionBuilder {
 
 		switch (item.getType()) {
 		case Boolean:
-			sb.append("This option is a flag.");
+			sb.append("This option is a flag. ");
+			addDefaultValue(item, sb);
 			break;
 		case Color:
 			sb.append("<arg> is a string representing a color. ");
-			sb.append("The string has to be of the form \"red,green,blue\", where 0 <= red,green,blue <= 255.");
+			sb.append("The string has to be of the form \"red,green,blue\", where 0 <= red,green,blue <= 255. ");
+			addDefaultValue(item, sb);
 			break;
 		case Directory:
 			sb.append("<arg> is a string representing an absolute path ");
-			sb.append("to a single directory on the local file system.");
+			sb.append("to a single directory on the local file system. ");
+			addDefaultValue(item, sb);
 			break;
 		case File:
-			sb.append("<arg> is a string representing an absolute path on the local file system to a single file.");
+			sb.append("<arg> is a string representing an absolute path on the local file system to a single file. ");
+			addDefaultValue(item, sb);
 			break;
 		case Path:
 			sb.append("<arg> is a string representing one or multiple paths to a file or directory on the system. ");
-			sb.append("If multiple paths are specified by the user, they are separated by a semicolon.");
+			sb.append("If multiple paths are specified by the user, they are separated by a semicolon. ");
+			addDefaultValue(item, sb);
 			break;
 		case Integer:
-			sb.append("<arg> is a string representing an integer.");
+			sb.append("<arg> is a string representing an integer. ");
+			addDefaultValue(item, sb);
 			break;
 		case MultilineString:
 		case String:
-			sb.append("<arg> is a single line of text.");
+			sb.append("<arg> is a single line of text. ");
+			addDefaultValue(item, sb);
 			break;
 		default:
 			break;
@@ -307,6 +314,10 @@ public class OptionBuilder {
 			sb.append(".");
 		}
 		return sb.toString();
+	}
+
+	private void addDefaultValue(final UltimatePreferenceItem<?> item, final StringBuilder sb) {
+		sb.append("The default value is " + item.getDefaultValue() + ".");
 	}
 
 	private String convertLabelToLongName(final String pluginId, final UltimatePreferenceItem<?> item) {
