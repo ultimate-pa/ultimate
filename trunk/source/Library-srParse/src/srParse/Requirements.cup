@@ -26,6 +26,7 @@ import srParse.pattern.ResponseChain12Pattern;
 import srParse.pattern.ResponseChain21Pattern;
 import srParse.pattern.ResponsePattern;
 import srParse.pattern.UniversalityPattern;
+import srParse.pattern.InitializationPattern;
 
 import pea.BoogieBooleanExpressionDecision;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -127,8 +128,8 @@ scan with {: return nextToken(); :}
 
 
 /* Keywords */
-terminal GLOBALLY, BEFORE, AFTER, BETWEEN, AND, UNTIL;
-terminal IT, IS, NEVER, ALWAYS, THE, CASE, THAT;
+terminal GLOBALLY, BEFORE, AFTER, BETWEEN, AND, UNTIL, INPUT, OUTPUT, INTERNAL;
+terminal IT, IS, NEVER, ALWAYS, THE, CASE, THAT, INITIALLY;
 terminal IF, HOLD, HOLDS, HELD, EVENTUALLY;
 terminal TRANSITIONS, TO, STATES, IN, WHICH, OCCUR, AT, TWICE;
 terminal THEN, PREVIOUSLY, AS, WELL;
@@ -147,6 +148,7 @@ terminal PLUS, MINUS;
 terminal TIMES, DIVIDE, MOD;
 terminal TRUE, FALSE;
 terminal String ID;
+terminal String TYPE;
 terminal String REALNUMBER;
 terminal String NUMBER;
 
@@ -177,6 +179,12 @@ property ::= scope:s COMMA? pattern:p DOT?
              {: p.setScope(s); RESULT = p; :}
            | error
              {: RESULT = null; :}
+          	| INPUT cid:i IS ID:t
+		  	{: RESULT = new InitializationPattern(i,t); :}
+		  	| OUTPUT cid:i IS ID:t
+		  	{: RESULT = new InitializationPattern(i,t,false); :}
+		 	| INTERNAL cid:i IS ID:t
+		  	{: RESULT = new InitializationPattern(i,t,true); :}
            ;
 
 scope ::=

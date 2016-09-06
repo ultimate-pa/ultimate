@@ -33,7 +33,7 @@ public class PeaTestTransformer implements ISource {
 		Collection<CounterExampleResult> cex = ResultUtil.filterResults(services.getResultService().getResults(),
 				CounterExampleResult.class);
 		previousToolFoundErrors = !cex.isEmpty();
-		PeaTestBackTranslator backtranslator = new PeaTestBackTranslator(BoogieASTNode.class, Expression.class, this.sysInfo);
+		PeaTestBackTranslator backtranslator = new PeaTestBackTranslator(BoogieASTNode.class, Expression.class, this.sysInfo, "", "");
 		if (!previousToolFoundErrors && mServices.getPreferenceProvider(this.getPluginID())
 				.getBoolean(PreferenceInitializer.LABEL_DOBACKTRANSLATE)) {
 			services.getBacktranslationService().addTranslator(backtranslator);

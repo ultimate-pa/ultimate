@@ -12,6 +12,7 @@ import pea.PhaseSet;
 import pea.Trace2PEACompiler;
 import pea.CounterTrace.DCPhase;
 import pea.PEATestAutomaton;
+import srParse.pattern.InitializationPattern;
 import srParse.pattern.PatternType;
 
 /**
@@ -24,7 +25,7 @@ public class PeaSystemModel {
 	
 	private final SystemInformation sysInfo;
 	private final ILogger logger;
-	private final ArrayList<PatternType> patterns;
+	private final ArrayList<PatternType> patterns = new ArrayList<PatternType>();
 	private final ArrayList<CounterTrace> counterTraces;
 	private final ArrayList<PhaseEventAutomata> peas;
 	
@@ -36,7 +37,23 @@ public class PeaSystemModel {
 	public PeaSystemModel(ILogger logger, SystemInformation sysInfo, ArrayList<PatternType> patterns){
 		this.sysInfo = sysInfo;
 		this.logger = logger;
-		this.patterns = patterns;
+		for(PatternType pattern: patterns){
+			if(pattern instanceof InitializationPattern){
+				InitializationPattern aux = ((InitializationPattern) pattern);
+				switch(aux.getAccessability()){
+				case in:
+					this.sysInfo.addInputVariable(aux.getIdent(), aux.getType());
+				case internal:
+					this.sysInfo.addInternalVariable(aux.getIdent(), aux.getType());
+				case out:
+					this.sysInfo.addOutputVariable(aux.getIdent(), aux.getType());
+				default:
+					new RuntimeException("Unknown Initialization pattern");
+				}
+			} else {
+				this.patterns.add(pattern);
+			}
+		}
 		
 		this.logger.debug("Transforming to DCTraces");
 		this.counterTraces = this.translateToDc(patterns);
@@ -123,8 +140,8 @@ public class PeaSystemModel {
 		// Translate to Counter Traces
 		ArrayList<CounterTrace> counterTraces = new ArrayList<CounterTrace>();
 		for(PatternType pattern : patterns){
+			// make PEA from remaining patterns
 			CounterTrace counterTrace = patternToDc.translate(pattern);
-			
 			counterTraces.add(counterTrace);
 		}
 		return counterTraces;

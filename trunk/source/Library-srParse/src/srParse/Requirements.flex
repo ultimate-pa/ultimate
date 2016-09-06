@@ -52,6 +52,10 @@ RealIntegerLiteral = {DecIntegerLiteral} "." [0-9]+
 
 <YYINITIAL>  {
    "execution"      { return symbol(ReqSymbols.EXECUTION); }
+   "initially"      { return symbol(ReqSymbols.INITIALLY); }
+   "Input"      	{ return symbol(ReqSymbols.INPUT); }
+   "Output"      	{ return symbol(ReqSymbols.OUTPUT); }
+   "Internal"     	 { return symbol(ReqSymbols.INTERNAL); }
    "one"            { return symbol(ReqSymbols.ONE); }
    "sequence"       { return symbol(ReqSymbols.SEQUENCE); }
    "such"           { return symbol(ReqSymbols.SUCH); }

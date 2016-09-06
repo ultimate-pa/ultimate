@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.PEATestTransformer.SplPatternParser;
 
+import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SystemInformation;
 import pea.CDD;
 import pea.CounterTrace;
 import pea.PhaseEventAutomata;
@@ -12,6 +13,7 @@ import srParse.srParseScopeGlob;
 import srParse.pattern.BndExistencePattern;
 import srParse.pattern.BndInvariancePattern;
 import srParse.pattern.BndResponsePattern;
+import srParse.pattern.InitializationPattern;
 import srParse.pattern.InstAbsPattern;
 import srParse.pattern.InvariantPattern;
 import srParse.pattern.PatternType;

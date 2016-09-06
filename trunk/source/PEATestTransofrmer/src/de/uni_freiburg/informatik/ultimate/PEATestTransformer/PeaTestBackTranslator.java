@@ -18,11 +18,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import pea.Phase;
 
-public class PeaTestBackTranslator extends DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression> {
+public class PeaTestBackTranslator extends DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression, String, String> {
 	
 	private SystemInformation sysInfo;
 
-	public PeaTestBackTranslator(Class<BoogieASTNode> traceElementType, Class<Expression> expressionType, SystemInformation sysInfo) {
+	public PeaTestBackTranslator(Class<BoogieASTNode> traceElementType, Class<Expression> expressionType, SystemInformation sysInfo, String a, String b) {
 		super(traceElementType, traceElementType, expressionType,
 				expressionType);
 		this.sysInfo = sysInfo; 
