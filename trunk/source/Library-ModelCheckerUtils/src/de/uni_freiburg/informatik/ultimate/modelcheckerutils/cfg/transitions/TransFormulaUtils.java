@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -425,53 +426,68 @@ public class TransFormulaUtils {
 		{
 			final List<UnmodifiableTransFormula> callAndBeforeList = new ArrayList<UnmodifiableTransFormula>(beforeCall);
 			callAndBeforeList.add(callTf);
+			callAndBeforeList.add(oldVarsAssignment);
 			final UnmodifiableTransFormula[] callAndBeforeArray = callAndBeforeList.toArray(new UnmodifiableTransFormula[callAndBeforeList.size()]);
 			final UnmodifiableTransFormula composition = sequentialComposition(logger, services, mgdScript, simplify, extPqe, transformToCNF,
 					xnfConversionTechnique, simplificationTechnique, callAndBeforeArray);
 
 			// remove outVars that relate to scope of caller
-			// - local vars that are no inParams of callee
-			// - oldVars of variables that can be modified by callee
-			final List<IProgramVar> varsToRemove = new ArrayList<IProgramVar>();
+			// remove all but the following
+			// - in params of called procedure
+			// - oldVars that are modified by called procedure
+			// - non-oldVars of variables that are not modified by the called procedure
+			// additionally, we have to replace oldVars that are not modified by the 
+			// called procedure by the corresponding non-oldVars
+			final List<IProgramVar> outVarsToRemove = new ArrayList<IProgramVar>();
 			for (final IProgramVar bv : composition.getOutVars().keySet()) {
-				if (bv.isGlobal()) {
-					if (bv.isOldvar() && oldVarsAssignment.getOutVars().containsKey(bv)) {
-						varsToRemove.add(bv);
-					}
+				final boolean isInterfaceVariable = isInterfaceVariable(bv, callTf, oldVarsAssignment, procBeforeCall, procAfterCall, true, false);
+				if (isInterfaceVariable) {
+					// keep variable
 				} else {
-					if (!callTf.getOutVars().containsKey(bv)) {
-						// bv is local but not inParam of called procedure
-						varsToRemove.add(bv);
-					}
+					outVarsToRemove.add(bv);
 				}
+				
 			}
-			callAndBeforeTF = TransFormulaBuilder.constructCopy(composition, Collections.emptySet(), varsToRemove, mgdScript);
+			callAndBeforeTF = TransFormulaBuilder.constructCopy(composition, Collections.emptySet(), outVarsToRemove, mgdScript);
 		}
 
-		final UnmodifiableTransFormula oldAssignAndAfterTF;
+		final UnmodifiableTransFormula globalVarAssignAndAfterTF;
 		{
 			final List<UnmodifiableTransFormula> oldAssignAndAfterList = new ArrayList<UnmodifiableTransFormula>(Arrays.asList(afterCall));
-			oldAssignAndAfterList.add(0, oldVarsAssignment);
-			final UnmodifiableTransFormula[] oldAssignAndAfterArray = oldAssignAndAfterList.toArray(new UnmodifiableTransFormula[0]);
+			oldAssignAndAfterList.add(0, globalVarsAssignment);
+			final UnmodifiableTransFormula[] globalVarAssignAndAfterArray = oldAssignAndAfterList.toArray(new UnmodifiableTransFormula[0]);
 			final UnmodifiableTransFormula composition = sequentialComposition(logger, services, mgdScript, simplify, extPqe, transformToCNF,
-					xnfConversionTechnique, simplificationTechnique, oldAssignAndAfterArray);
+					xnfConversionTechnique, simplificationTechnique, globalVarAssignAndAfterArray);
 
 			// remove inVars that relate to scope of callee
-			// - local vars that are no inParams of callee
-			// - oldVars of variables that can be modified by callee
 			final List<IProgramVar> inVarsToRemove = new ArrayList<IProgramVar>();
 			for (final IProgramVar bv : composition.getInVars().keySet()) {
-				if (bv.isGlobal()) {
-					if (bv.isOldvar() && oldVarsAssignment.getOutVars().containsKey(bv)) {
-						inVarsToRemove.add(bv);
-					}
+				final boolean isInterfaceVariable = isInterfaceVariable(bv, callTf, oldVarsAssignment, procBeforeCall, procAfterCall, false, true);
+				if (isInterfaceVariable) {
+					// keep variable
 				} else {
-					if (!callTf.getOutVars().containsKey(bv)) {
-						// bv is local but not inParam of called procedure
-						inVarsToRemove.add(bv);
-					}
+					inVarsToRemove.add(bv);
 				}
+				
 			}
+			
+			
+//			// remove inVars that relate to scope of callee
+//			// - local vars that are no inParams of callee
+//			// - oldVars of variables that can be modified by callee
+//			final List<IProgramVar> inVarsToRemove = new ArrayList<IProgramVar>();
+//			for (final IProgramVar bv : composition.getInVars().keySet()) {
+//				if (bv.isGlobal()) {
+//					if (bv.isOldvar() && oldVarsAssignment.getOutVars().containsKey(bv)) {
+//						inVarsToRemove.add(bv);
+//					}
+//				} else {
+//					if (!callTf.getOutVars().containsKey(bv)) {
+//						// bv is local but not inParam of called procedure
+//						inVarsToRemove.add(bv);
+//					}
+//				}
+//			}
 			
 
 
@@ -486,26 +502,26 @@ public class TransFormulaUtils {
 //					}
 //				}
 //			}
-			oldAssignAndAfterTF = TransFormulaBuilder.constructCopy(composition, inVarsToRemove, Collections.emptySet(), mgdScript);
+			globalVarAssignAndAfterTF = TransFormulaBuilder.constructCopy(composition, inVarsToRemove, Collections.emptySet(), mgdScript);
 		}
 		
 		
 
-		final UnmodifiableTransFormula tmpresult = sequentialComposition(logger, services, mgdScript, simplify, 
+		final UnmodifiableTransFormula result = sequentialComposition(logger, services, mgdScript, simplify, 
 				extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique,
-				callAndBeforeTF, oldAssignAndAfterTF);
+				callAndBeforeTF, globalVarAssignAndAfterTF);
 		
 		
-		final List<IProgramVar> outVarsToRemove = new ArrayList<IProgramVar>();
-		// remove outVars that do not relate to scope of end procedure
-		for (final IProgramVar bv : tmpresult.getOutVars().keySet()) {
-			if (!bv.isGlobal()) {
-				if (!bv.getProcedure().equals(procAtEnd)) {
-					outVarsToRemove.add(bv);
-				}
-			}
-		}
-		final UnmodifiableTransFormula result = TransFormulaBuilder.constructCopy(tmpresult, Collections.emptySet(), outVarsToRemove, mgdScript);
+//		final List<IProgramVar> outVarsToRemove = new ArrayList<IProgramVar>();
+//		// remove outVars that do not relate to scope of end procedure
+//		for (final IProgramVar bv : tmpresult.getOutVars().keySet()) {
+//			if (!bv.isGlobal()) {
+//				if (!bv.getProcedure().equals(procAtEnd)) {
+//					outVarsToRemove.add(bv);
+//				}
+//			}
+//		}
+//		final UnmodifiableTransFormula result = TransFormulaBuilder.constructCopy(tmpresult, Collections.emptySet(), outVarsToRemove, mgdScript);
 		
 		if (recursiveProcedureChange) {
 			// we have to havoc all local variables that do not yet occur
@@ -525,6 +541,68 @@ public class TransFormulaUtils {
 					"sequentialCompositionWithPendingCall - incorrect result";
 		return result;
 	}
+
+
+	/**
+	 * Check if {@link IProgramVar} is variable at the interface between 
+	 * caller and callee. This is used for interprocedural sequential
+	 * compositions with pending calls.
+	 * We say that a variable is an interface variable if it is either
+	 * - an inparam of the callee (local variable)
+	 * - an oldvar that is in the callee's set of modifiable variables
+	 * - an non-old global variable that is not in the callee's set of modifiable
+	 * variables.
+	 */
+	private static boolean isInterfaceVariable(final IProgramVar bv, 
+			final UnmodifiableTransFormula callTf, final UnmodifiableTransFormula oldVarsAssignment, 
+			final String procBeforeCall, final String procAfterCall,
+			final boolean tolerateLocalVarsOfCaller, final boolean tolerateLocalVarsOfCallee) {
+		final boolean isInterfaceVariable;
+		if (bv.isGlobal()) {
+			if (bv.isOldvar()) {
+				if (oldVarsAssignment.getOutVars().containsKey(bv)) {
+					// is a modifiable oldvar
+					isInterfaceVariable = true;
+				} else {
+					// has to be renamed to non-old var
+					throw new AssertionError("not yet implemented");
+				}
+			} else {
+				if (oldVarsAssignment.getInVars().containsKey(bv)) {
+					isInterfaceVariable = false;
+				} else {
+					// global and not modified by procedure
+					isInterfaceVariable = true;
+				}
+			}
+		} else {
+			if (bv.getProcedure().equals(procAfterCall)) {
+				if (callTf.getAssignedVars().contains(bv)) {
+					// is an inparam
+					isInterfaceVariable = true;
+				} else {
+					if (tolerateLocalVarsOfCallee) {
+						// no AssertionError
+					} else {
+						if (procBeforeCall.equals(procAfterCall) && tolerateLocalVarsOfCaller) {
+							// no AssertionError
+						} else {
+							throw new AssertionError("local var of callee is no inparam " + bv);
+						}
+					}
+					isInterfaceVariable = false;
+				}
+			} else if (bv.getProcedure().equals(procBeforeCall)) {
+				if (!tolerateLocalVarsOfCaller) {
+					throw new AssertionError("local var of caller " + bv);
+				} 
+				isInterfaceVariable = false;
+			} else {
+				throw new AssertionError("local var neither from caller nor callee " + bv);
+			}
+		}
+		return isInterfaceVariable;
+	}
 	
 	
 	private static boolean predicateBasedResultCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
@@ -538,7 +616,8 @@ public class TransFormulaUtils {
 		final PredicateTransformer pt = new PredicateTransformer(services, mgdScript, simplificationTechnique, xnfConversionTechnique);
 		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);
 		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));
-		final Term resultComposition = pt.strongestPostcondition(truePredicate, result);
+		Term resultComposition = pt.strongestPostcondition(truePredicate, result);
+		resultComposition = new QuantifierPusher(mgdScript, services).transform(resultComposition);
 		final IPredicate resultCompositionPredicate = bpf.newPredicate(resultComposition);
 		IPredicate beforeCallPredicate = truePredicate;
 		for (final UnmodifiableTransFormula tf : beforeCall) {
@@ -547,7 +626,8 @@ public class TransFormulaUtils {
 		}
 		final Term afterCallTerm = pt.strongestPostconditionCall(beforeCallPredicate, callTf, globalVarsAssignment, oldVarsAssignment, modifiableGlobals);
 		final IPredicate afterCallPredicate = bpf.newPredicate(afterCallTerm);
-		final Term endTerm = pt.strongestPostcondition(afterCallPredicate, afterCallTf);
+		Term endTerm = pt.strongestPostcondition(afterCallPredicate, afterCallTf);
+		endTerm = new QuantifierPusher(mgdScript, services).transform(endTerm);
 		final IPredicate endPredicate = bpf.newPredicate(endTerm);
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final Validity check1 = mic.checkImplication(endPredicate, false, resultCompositionPredicate, false);
@@ -645,13 +725,15 @@ public class TransFormulaUtils {
 		final PredicateTransformer pt = new PredicateTransformer(services, mgdScript, simplificationTechnique, xnfConversionTechnique);
 		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);
 		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));
-		final Term resultComposition = pt.strongestPostcondition(truePredicate, result);
+		Term resultComposition = pt.strongestPostcondition(truePredicate, result);
+		resultComposition = new QuantifierPusher(mgdScript, services).transform(resultComposition);
 		final IPredicate resultCompositionPredicate = bpf.newPredicate(resultComposition); 
 		final Term afterCallTerm = pt.strongestPostconditionCall(truePredicate, callTf, globalVarsAssignment, oldVarsAssignment, modifiableGlobals);
 		final IPredicate afterCallPredicate = bpf.newPredicate(afterCallTerm);
 		final Term beforeReturnTerm = pt.strongestPostcondition(afterCallPredicate, procedureTf);
 		final IPredicate beforeReturnPredicate = bpf.newPredicate(beforeReturnTerm);
-		final Term afterReturnTerm = pt.strongestPostcondition(beforeReturnPredicate, truePredicate, returnTf, callTf, globalVarsAssignment, oldVarsAssignment);
+		Term afterReturnTerm = pt.strongestPostcondition(beforeReturnPredicate, truePredicate, returnTf, callTf, globalVarsAssignment, oldVarsAssignment);
+		afterReturnTerm = new QuantifierPusher(mgdScript, services).transform(afterReturnTerm);
 		final IPredicate afterReturnPredicate = bpf.newPredicate(afterReturnTerm);
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final Validity check1 = mic.checkImplication(afterReturnPredicate, false, resultCompositionPredicate, false);
