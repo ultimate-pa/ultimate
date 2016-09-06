@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
-import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
+import de.uni_freiburg.informatik.ultimate.ep.UltimateExtensionPoints;
 
 /**
  * This class controls all aspects of the application's execution.
@@ -158,8 +158,8 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 	private int activateController() {
 		mLogger.info("Initializing controller ...");
 		if (getCurrentController() == null) {
-			mLogger.fatal("No controller present! Ultimate will exit.");
-			throw new IllegalArgumentException("No controller present!");
+			mLogger.fatal("Could not find a controller. Ultimate will exit.");
+			return -1;
 		}
 		// TODO: Find better way than this cast
 		mLoggingService.setCurrentControllerID(getCurrentControllerID());
@@ -249,7 +249,7 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 	public static synchronized String[] getPluginNames() {
 		if (sPluginNames == null) {
 			final List<String> lil = new ArrayList<>();
-			for (final String ep : ExtensionPoints.PLUGIN_EPS) {
+			for (final String ep : UltimateExtensionPoints.PLUGIN_EPS) {
 				for (final IConfigurationElement elem : Platform.getExtensionRegistry()
 						.getConfigurationElementsFor(ep)) {
 					final String classname = elem.getAttribute("class");

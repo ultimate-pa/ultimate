@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
+import de.uni_freiburg.informatik.ultimate.ep.UltimateExtensionPoints;
 
 /**
  *
@@ -322,17 +322,17 @@ final class PluginFactory implements IServiceFactoryFactory {
 		final String qualifiedName = clazz.getName();
 		switch (qualifiedName) {
 		case "de.uni_freiburg.informatik.ultimate.core.model.IController":
-			return ExtensionPoints.EP_CONTROLLER;
+			return UltimateExtensionPoints.EP_CONTROLLER;
 		case "de.uni_freiburg.informatik.ultimate.core.model.ISource":
-			return ExtensionPoints.EP_SOURCE;
+			return UltimateExtensionPoints.EP_SOURCE;
 		case "de.uni_freiburg.informatik.ultimate.core.model.IOutput":
-			return ExtensionPoints.EP_OUTPUT;
+			return UltimateExtensionPoints.EP_OUTPUT;
 		case "de.uni_freiburg.informatik.ultimate.core.model.IGenerator":
-			return ExtensionPoints.EP_GENERATOR;
+			return UltimateExtensionPoints.EP_GENERATOR;
 		case "de.uni_freiburg.informatik.ultimate.core.model.IAnalysis":
-			return ExtensionPoints.EP_ANALYSIS;
+			return UltimateExtensionPoints.EP_ANALYSIS;
 		case "de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory":
-			return ExtensionPoints.EP_SERVICE;
+			return UltimateExtensionPoints.EP_SERVICE;
 		default:
 			throw new IllegalArgumentException();
 		}
