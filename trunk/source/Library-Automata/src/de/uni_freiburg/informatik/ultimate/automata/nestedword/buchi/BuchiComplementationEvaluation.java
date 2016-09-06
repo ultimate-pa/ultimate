@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2009-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  *
  * This file is part of the ULTIMATE Automata Library.
@@ -44,16 +45,42 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
  * Auxiliary class for doing some benchmarks.
  * 
- * @author heizmann@informatik.uni-freiburg.de
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
  * @param <STATE>
  *            state type
  */
-public class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
-	
+public final class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final String mResult;
+	
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param nwa
+	 *            input nested word automaton
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
+	public BuchiComplementationEvaluation(final AutomataLibraryServices services,
+			final IStateFactory<STATE> stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> nwa)
+			throws AutomataOperationCanceledException {
+		super(services);
+		mOperand = new NestedWordAutomatonReachableStates<>(mServices, nwa);
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		mResult = evaluate(stateFactory);
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
+	}
 	
 	@Override
 	public String operationName() {
@@ -62,35 +89,29 @@ public class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNwaOpera
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Operand " + mOperand.sizeInformation() + " Result " + mResult;
+		return "Finished " + operationName() + ". Operand " + mOperand.sizeInformation() + ". Result " + mResult;
 	}
 	
-	public BuchiComplementationEvaluation(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> input) throws AutomataLibraryException {
-		super(services);
-		this.mOperand = new NestedWordAutomatonReachableStates<>(mServices, input);
-		mLogger.info(startMessage());
-		mResult = evaluate(stateFactory);
-		mLogger.info(exitMessage());
+	@Override
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		return true;
 	}
 	
-	private String evaluate(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	@Override
+	public String getResult() {
+		return mResult;
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
+	}
+	
+	private String evaluate(final IStateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
 		final LinkedHashMap<String, Integer> results = new LinkedHashMap<>();
-		{
-			final String name = "BuchiComplementBS";
-			final NestedWordAutomatonReachableStates<LETTER, STATE> result =
-					(new BuchiComplementNCSB<LETTER, STATE>(mServices, stateFactory, mOperand)).getResult();
-			addToResultsWithSizeReduction(results, name, result);
-		}
+		evaluateBs(stateFactory, results);
 		for (final FkvOptimization fkvOptimization : FkvOptimization.values()) {
-			{
-				final String name = "FKV_" + fkvOptimization;
-				final NestedWordAutomatonReachableStates<LETTER, STATE> result =
-						(new BuchiComplementFKV<LETTER, STATE>(mServices, stateFactory, mOperand,
-								fkvOptimization.toString(), Integer.MAX_VALUE)).getResult();
-				addToResultsWithSizeReduction(results, name, result);
-			}
+			evaluateFkv(stateFactory, results, fkvOptimization);
 //			{
 //				String name = "FKV_" + fkvOptimization + "_MaxRank3";
 //			NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementFKV<LETTER, STATE>(mServices,
@@ -101,7 +122,24 @@ public class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNwaOpera
 		return prettyPrint(results);
 	}
 	
-	private String prettyPrint(final LinkedHashMap<String, Integer> results) {
+	private void evaluateBs(final IStateFactory<STATE> stateFactory,
+			final LinkedHashMap<String, Integer> results) throws AutomataOperationCanceledException {
+		final String name = "BuchiComplementBS";
+		final NestedWordAutomatonReachableStates<LETTER, STATE> result =
+				(new BuchiComplementNCSB<LETTER, STATE>(mServices, stateFactory, mOperand)).getResult();
+		addToResultsWithSizeReduction(results, name, result);
+	}
+	
+	private void evaluateFkv(final IStateFactory<STATE> stateFactory, final LinkedHashMap<String, Integer> results,
+			final FkvOptimization fkvOptimization) throws AutomataOperationCanceledException {
+		final String name = "FKV_" + fkvOptimization;
+		final NestedWordAutomatonReachableStates<LETTER, STATE> result =
+				(new BuchiComplementFKV<LETTER, STATE>(mServices, stateFactory, mOperand,
+						fkvOptimization.toString(), Integer.MAX_VALUE)).getResult();
+		addToResultsWithSizeReduction(results, name, result);
+	}
+	
+	private static String prettyPrint(final LinkedHashMap<String, Integer> results) {
 		final StringBuilder sb = new StringBuilder();
 		for (final Entry<String, Integer> entry : results.entrySet()) {
 			sb.append(entry.getKey());
@@ -133,21 +171,4 @@ public class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNwaOpera
 		final int size = result.getStates().size();
 		results.put(name, size);
 	}
-	
-	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		return true;
-	}
-	
-	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
-		return mOperand;
-	}
-	
-	@Override
-	public String getResult() {
-		return mResult;
-	}
-	
 }
