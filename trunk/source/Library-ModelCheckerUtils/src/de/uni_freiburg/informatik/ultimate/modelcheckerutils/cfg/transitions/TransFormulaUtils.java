@@ -542,7 +542,7 @@ public class TransFormulaUtils {
 		final IPredicate resultCompositionPredicate = bpf.newPredicate(resultComposition);
 		IPredicate beforeCallPredicate = truePredicate;
 		for (final UnmodifiableTransFormula tf : beforeCall) {
-			final Term tmp = pt.strongestPostcondition(truePredicate, tf);
+			final Term tmp = pt.strongestPostcondition(beforeCallPredicate, tf);
 			beforeCallPredicate = bpf.newPredicate(tmp);
 		}
 		final Term afterCallTerm = pt.strongestPostconditionCall(beforeCallPredicate, callTf, globalVarsAssignment, oldVarsAssignment, modifiableGlobals);
