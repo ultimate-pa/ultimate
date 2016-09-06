@@ -9,8 +9,19 @@ for i in {10..18}; do
 	totalLength="$(wc -l "$bruteforceFile" | cut -d' ' -f1)"
 	tailLength="$(( totalLength - tailStart  + 1 ))"
 
-	cat dfsHead.c <(tail -n "$tailLength" "$bruteforceFile") > "$dfsFile"
+	inputMin="$(grep -Po '#define\s*INPUT_MIN\s*\K.*' -- "$bruteforceFile")"
+	inputMax="$(grep -Po '#define\s*INPUT_MAX\s*\K.*' -- "$bruteforceFile")"
 
-	echo "Compiling Problem $i"
-	clang -O3 -o problem"$i" "$dfsFile"
+	cat \
+		<(sed "s#scriptInsertInputMinHere#$inputMin#" -- dfsHead.c | sed "s#scriptInsertInputMaxHere#$inputMax#") \
+		<(tail -n "$tailLength" -- "$bruteforceFile") \
+		> "$dfsFile"
 done
+
+for i in {10..18}; do
+	echo "Compiling Problem $i"
+	#clang -O3 -o problem"$i" "$dfsFile"
+	gcc --std=c99 -O3 -o problem"$i" "$dfsFile"
+done
+
+echo "Done"

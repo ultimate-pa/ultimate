@@ -6,8 +6,8 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Define input sequences
-#define INPUT_MIN 1
-#define INPUT_MAX 10
+#define INPUT_MIN scriptInsertInputMinHere
+#define INPUT_MAX scriptInsertInputMaxHere
 #define INPUT_COUNT (INPUT_MAX - INPUT_MIN + 1)
 #define INPUT_SEQ_LENGTH 150
 
