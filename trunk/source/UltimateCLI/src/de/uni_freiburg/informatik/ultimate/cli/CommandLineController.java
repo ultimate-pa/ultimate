@@ -55,7 +55,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 /**
- * The current command line controller for Ultimate provides a user interface for the command line.
+ * The {@link CommandLineController} class provides a user interface for command lines based on the {@link IController}
+ * interface.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
@@ -134,19 +135,8 @@ public class CommandLineController implements IController<RunDefinition> {
 				throw new ParseException("Missing required option: " + CommandLineOptions.OPTION_NAME_INPUTFILES);
 			}
 
-			if (fullParams.hasSettings()) {
-				core.loadPreferences(fullParams.getSettingsFile());
-			}
-
-			mToolchain = fullParams.createToolchainData();
-
-			fullParams.applyCliSettings(mToolchain.getServices());
-
-			final File[] inputFiles = fullParams.getInputFiles();
-			final BasicToolchainJob tcj =
-					new DefaultToolchainJob("Processing Toolchain", core, this, mLogger, inputFiles);
-			tcj.schedule();
-			tcj.join();
+			prepareToolchain(core, fullParams);
+			executeToolchain(core, fullParams, mLogger, mToolchain);
 
 		} catch (final ParseException pex) {
 			printParseException(args, fullParser, pex);
@@ -159,6 +149,49 @@ public class CommandLineController implements IController<RunDefinition> {
 			return -1;
 		}
 		return IApplication.EXIT_OK;
+	}
+
+	/**
+	 * Creates one or many {@link BasicToolchainJob}s, schedules them and waits for their termination. Upon normal
+	 * termination of this method, the controller will terminate with success return code.
+	 *
+	 * During the execution of a toolchain, {@link ICore} may perform asynchronous callbacks to
+	 * {@link #displayToolchainResults(IToolchainData, Map)} and/or
+	 * {@link #displayException(IToolchainData, String, Throwable)} to signal results right before ending.
+	 *
+	 * @param core
+	 *            The {@link ICore} instance managing all toolchains.
+	 * @param cliParams
+	 *            The settings picked up from the command line
+	 * @param logger
+	 *            The {@link ILogger} instance that should be used to communicate with the user.
+	 * @param toolchain
+	 *            The user-selected toolchain.
+	 *
+	 * @throws ParseException
+	 *             If lazy parsing of command line options fails (i.e., when accessing the input files stored in
+	 *             <code>cliParams</code>, this exception might be thrown.
+	 * @throws InvalidFileException
+	 *             If a file is not valid or does not exist, this exception might be thrown.
+	 * @throws InterruptedException
+	 *             If during toolchain execution the thread is interrupted, this exception might be thrown.
+	 */
+	protected void executeToolchain(final ICore<RunDefinition> core, final ParsedParameter cliParams,
+			final ILogger logger, final IToolchainData<RunDefinition> toolchain)
+			throws ParseException, InvalidFileException, InterruptedException {
+		final File[] inputFiles = cliParams.getInputFiles();
+		final BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, logger, inputFiles);
+		tcj.schedule();
+		tcj.join();
+	}
+
+	private void prepareToolchain(final ICore<RunDefinition> core, final ParsedParameter fullParams)
+			throws ParseException, InvalidFileException {
+		if (fullParams.hasSettings()) {
+			core.loadPreferences(fullParams.getSettingsFile());
+		}
+		mToolchain = fullParams.createToolchainData();
+		fullParams.applyCliSettings(mToolchain.getServices());
 	}
 
 	private static void printHelp(final CommandLineParser toolchainStageParser,
