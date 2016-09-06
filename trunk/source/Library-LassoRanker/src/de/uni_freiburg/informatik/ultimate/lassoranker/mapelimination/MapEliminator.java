@@ -57,6 +57,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbolFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
@@ -189,7 +191,7 @@ public class MapEliminator {
 	private void findAllIndices() {
 		// Get all array indices from each transformula (only necessary, if it contains arrays)
 		for (final TransFormulaLR tf : mTransFormulas) {
-			findIndices(tf.getFormula(), tf);
+			findIndices(tf);
 		}
 		// Merge the indices of the related arrays using union-find
 		final UnionFind<Term> unionFind = new UnionFind<>();
@@ -218,23 +220,21 @@ public class MapEliminator {
 	}
 
 	/**
-	 * A recursive method that finds arrays / indices in the given {@code term} and stores it in the maps
+	 * A method that finds arrays and their indices in the given {@code transformula} and stores them in the maps
 	 *
-	 * @param term
-	 *            A SMT-Term
 	 * @param transformula
-	 *            A TransFormulaLR (needed to get the global definitions of the term)
 	 */
-	// TODO: Use non-recursive version
-	private void findIndices(final Term term, final TransFormulaLR transformula) {
-		if (term instanceof ApplicationTerm) {
-			final ApplicationTerm a = (ApplicationTerm) term;
-			final FunctionSymbol function = a.getFunction();
-			final Term[] params = a.getParameters();
-			if ("=".equals(function.getName()) && params[0].getSort().isArraySort()) {
-				// Get relations of different arrays (the indices need to be shared then)
-				final ArrayWrite arrayWrite = new ArrayWrite(term);
-				// The new array can be also a store-expression, so also
+	private void findIndices(final TransFormulaLR transformula) {
+		final Term term = transformula.getFormula();
+		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectDeep(term, false)) {
+			final ArrayWrite arrayWrite = new ArrayWrite(select.getArray());
+			findIndicesArrayWrite(arrayWrite, transformula);
+			addArrayToRelation(arrayWrite.getOldArray(), select.getIndex(), transformula);
+		}
+		for (final ApplicationTerm t : new ApplicationTermFinder("=", false).findMatchingSubterms(term)) {
+			if (t.getParameters()[0].getSort().isArraySort()) {
+				final ArrayWrite arrayWrite = new ArrayWrite(t);
+				// The new array can be also a store-expression, so also find indices in this expression
 				final ArrayWrite arrayWrite2 = new ArrayWrite(arrayWrite.getNewArray());
 				findIndicesArrayWrite(arrayWrite, transformula);
 				findIndicesArrayWrite(arrayWrite2, transformula);
@@ -243,25 +243,20 @@ public class MapEliminator {
 				if (allVariablesAreVisible(array1, transformula) && allVariablesAreVisible(array2, transformula)) {
 					final Term globalArray1 = translateTermVariablesToDefinitions(mScript, transformula, array1);
 					final Term globalArray2 = translateTermVariablesToDefinitions(mScript, transformula, array2);
+					// If the two arrays are different, add them to the set of related arrays
+					// (the indices need to be shared then)
 					if (globalArray1 != globalArray2) {
 						mRelatedArays.add(new Doubleton<Term>(globalArray1, globalArray2));
 					}
 				}
-			} else if ("select".equals(function.getName())) {
-				final MultiDimensionalSelect select = new MultiDimensionalSelect(term);
-				final ArrayIndex index = select.getIndex();
-				for (final Term t : index) {
-					findIndices(t, transformula);
-				}
-				final ArrayWrite arrayWrite = new ArrayWrite(select.getArray());
-				findIndicesArrayWrite(arrayWrite, transformula);
-				addArrayToRelation(arrayWrite.getOldArray(), index, transformula);
-			} else {
-				if (!function.isIntern()) {
-					addCallToRelation(function.getName(), params, transformula);
-				}
-				for (final Term t : params) {
-					findIndices(t, transformula);
+			}
+		}
+		for (final NonTheorySymbol<?> s : new NonTheorySymbolFinder().findNonTheorySymbols(term)) {
+			final Object symbol = s.getSymbol();
+			if (symbol instanceof FunctionSymbol) {
+				final String function = ((FunctionSymbol) symbol).getName();
+				for (final ApplicationTerm t : new ApplicationTermFinder(function, false).findMatchingSubterms(term)) {
+					addCallToRelation(function, t.getParameters(), transformula);
 				}
 			}
 		}
@@ -269,10 +264,6 @@ public class MapEliminator {
 
 	private void findIndicesArrayWrite(final ArrayWrite arrayWrite, final TransFormulaLR transformula) {
 		for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
-			for (final Term t : store.getIndex()) {
-				findIndices(t, transformula);
-			}
-			findIndices(store.getValue(), transformula);
 			addArrayToRelation(arrayWrite.getOldArray(), store.getIndex(), transformula);
 		}
 	}
@@ -367,9 +358,9 @@ public class MapEliminator {
 		final List<Term> conjuncts = new ArrayList<Term>();
 		// Handle array havoc's
 		processArrayHavocs(newTF, assignedVars);
-		// Handle reads and writes
-		final Term processedTerm = process(originalTerm, newTF, invariants);
-		conjuncts.addAll(Arrays.asList(SmtUtils.getConjuncts(processedTerm)));
+		// Replace store-expressions
+		final Term storeFreeTerm = replaceStoreExpressions(originalTerm, newTF, invariants);
+		conjuncts.addAll(Arrays.asList(SmtUtils.getConjuncts(storeFreeTerm)));
 		conjuncts.addAll(getInVarEqualities(newTF, invariants));
 		conjuncts.addAll(getOutVarEqualities(newTF, assignedVars, invariants));
 		conjuncts.addAll(invariants.constructListOfEqualities(mScript));
@@ -432,6 +423,14 @@ public class MapEliminator {
 		return result;
 	}
 
+	/**
+	 * This methods creates a term from the list of conjuncts, replaces all select-expresions and uf-calls with
+	 * replacementsVars and sets the formula of the transformula to the simplified version
+	 *
+	 * @param transformula
+	 * @param conjuncts
+	 * @param assignedVars
+	 */
 	private void replaceReadsAndSetFormula(final TransFormulaLR transformula, final List<Term> conjuncts,
 			final Set<Term> assignedVars) {
 		Term newTerm;
@@ -548,8 +547,8 @@ public class MapEliminator {
 	}
 
 	/**
-	 * A recursive method, that returns an array-free term, which replaces {@code term} and adds the neeeded
-	 * in-/out-vars to {@code transformula}
+	 * This methods replaces all store-expressions in the {@code term} and adds the neeeded in-/out-vars to the
+	 * {@code transformula} (The returned term can still contain select-expressions or uninterpreted functions!)
 	 *
 	 * @param term
 	 *            The term to be replaced
@@ -558,81 +557,59 @@ public class MapEliminator {
 	 * @param assignedVars
 	 *            A set of vars, that have been assigned
 	 * @param invariants
-	 * @param overapproximate
-	 * @return A new array-free term
+	 * @return A term, that doen't contain store-expressions
 	 */
-	// TODO: Use non-recursive version
-	private Term process(final Term term, final TransFormulaLR transformula, final EqualityAnalysisResult invariants) {
-		if (term instanceof ApplicationTerm) {
-			final ApplicationTerm a = (ApplicationTerm) term;
-			final FunctionSymbol function = a.getFunction();
-			final Term[] params = a.getParameters();
-			if ("select".equals(function.getName())) {
-				// Handle array read (only (select store ...)-expressions are replaced here)
-				return processArrayRead(term, transformula, invariants);
-			}
-			if ("=".equals(function.getName()) && params[0].getSort().isArraySort()) {
-				// Handle array assignment
-				return processArrayWrite(term, transformula, invariants);
-			}
-			// Process recursively
-			final int length = params.length;
-			final Term[] newParams = new Term[length];
-			for (int i = 0; i < length; i++) {
-				newParams[i] = process(params[i], transformula, invariants);
-			}
-			final Term newTerm = mScript.term(function.getName(), newParams);
-			return newTerm;
-		}
-		return term;
-	}
-
-	private ArrayIndex processArrayIndex(final ArrayIndex arrayIndex, final TransFormulaLR transformula,
+	private Term replaceStoreExpressions(final Term term, final TransFormulaLR transformula,
 			final EqualityAnalysisResult invariants) {
-		final List<Term> list = new ArrayList<>();
-		for (final Term t : arrayIndex) {
-			list.add(process(t, transformula, invariants));
+		final Map<Term, Term> substitutionMap = new HashMap<>();
+		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectDeep(term, false)) {
+			if (SmtUtils.isFunctionApplication(select.getArray(), "store")) {
+				final Term selectTerm = select.getSelectTerm();
+				substitutionMap.put(selectTerm,
+						replaceStoreExpressionsInArrayRead(selectTerm, transformula, invariants));
+			}
 		}
-		return new ArrayIndex(list);
+		for (final ApplicationTerm t : new ApplicationTermFinder("=", false).findMatchingSubterms(term)) {
+			if (t.getParameters()[0].getSort().isArraySort()) {
+				substitutionMap.put(t, replaceStoreExpressionsInArrayWrite(t, transformula, invariants));
+			}
+		}
+		final Substitution substitution = new Substitution(mManagedScript, substitutionMap);
+		return substitution.transform(substitution.transform(term));
 	}
 
-	private Term processArrayRead(final Term term, final TransFormulaLR transformula,
+	private Term replaceStoreExpressionsInArrayRead(final Term term, final TransFormulaLR transformula,
 			final EqualityAnalysisResult invariants) {
 		final MultiDimensionalSelect multiDimensionalSelect = new MultiDimensionalSelect(term);
-		final Term array = multiDimensionalSelect.getArray();
-		// If there is a select-store-expression, create an aux-var
-		if (SmtUtils.isFunctionApplication(array, "store")) {
-			final ArrayIndex index = processArrayIndex(multiDimensionalSelect.getIndex(), transformula, invariants);
-			final ArrayWrite arrayWrite = new ArrayWrite(array);
-			final Set<ArrayIndex> processedIndices = new HashSet<>();
-			final TermVariable auxVar = mManagedScript.constructFreshTermVariable("aux", term.getSort());
-			mAuxVars.add(auxVar);
-			for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
-				final ArrayIndex assignedIndex = processArrayIndex(store.getIndex(), transformula, invariants);
-				if (processedIndices.contains(assignedIndex)) {
-					continue;
-				}
-				final Term value = process(store.getValue(), transformula, invariants);
-				if (areIndicesEqual(index, assignedIndex, invariants)
-						&& areAllIndicesUnequal(index, processedIndices, invariants)) {
-					mAuxVarTerms.add(SmtUtils.binaryEquality(mScript, auxVar, value));
-				} else if (!mOnlyTrivialImplicationsArrayWrite) {
-					final Term newTerm = indexEqualityInequalityImpliesValueEquality(index, assignedIndex,
-							processedIndices, auxVar, value, invariants, transformula);
-					mAuxVarTerms.add(newTerm);
-				}
-				processedIndices.add(assignedIndex);
+		final ArrayIndex index = multiDimensionalSelect.getIndex();
+		final ArrayWrite arrayWrite = new ArrayWrite(multiDimensionalSelect.getArray());
+		final Set<ArrayIndex> processedIndices = new HashSet<>();
+		final TermVariable auxVar = mManagedScript.constructFreshTermVariable("aux", term.getSort());
+		mAuxVars.add(auxVar);
+		for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
+			final ArrayIndex assignedIndex = store.getIndex();
+			if (processedIndices.contains(assignedIndex)) {
+				continue;
 			}
-			final Term selectTerm = SmtUtils.multiDimensionalSelect(mScript, arrayWrite.getOldArray(), index);
-			final Term arrayRead = indexEqualityInequalityImpliesValueEquality(index, index, processedIndices, auxVar,
-					selectTerm, invariants, transformula);
-			mAuxVarTerms.add(arrayRead);
-			return auxVar;
+			final Term value = store.getValue();
+			if (areIndicesEqual(index, assignedIndex, invariants)
+					&& areAllIndicesUnequal(index, processedIndices, invariants)) {
+				mAuxVarTerms.add(SmtUtils.binaryEquality(mScript, auxVar, value));
+			} else if (!mOnlyTrivialImplicationsArrayWrite) {
+				final Term newTerm = indexEqualityInequalityImpliesValueEquality(index, assignedIndex, processedIndices,
+						auxVar, value, invariants, transformula);
+				mAuxVarTerms.add(newTerm);
+			}
+			processedIndices.add(assignedIndex);
 		}
-		return term;
+		final Term selectTerm = SmtUtils.multiDimensionalSelect(mScript, arrayWrite.getOldArray(), index);
+		final Term arrayRead = indexEqualityInequalityImpliesValueEquality(index, index, processedIndices, auxVar,
+				selectTerm, invariants, transformula);
+		mAuxVarTerms.add(arrayRead);
+		return auxVar;
 	}
 
-	private Term processArrayWrite(final Term term, final TransFormulaLR transformula,
+	private Term replaceStoreExpressionsInArrayWrite(final Term term, final TransFormulaLR transformula,
 			final EqualityAnalysisResult invariants) {
 		final ArrayWrite arrayWrite = new ArrayWrite(term);
 		final Term oldArray = arrayWrite.getOldArray();
@@ -652,11 +629,11 @@ public class MapEliminator {
 		final SelectTemplate newTemplate = new SelectTemplate(globalNewArray, mScript);
 		final Set<ArrayIndex> processedIndices = new HashSet<>();
 		for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
-			final ArrayIndex assignedIndex = processArrayIndex(store.getIndex(), transformula, invariants);
+			final ArrayIndex assignedIndex = store.getIndex();
 			if (processedIndices.contains(assignedIndex)) {
 				continue;
 			}
-			final Term value = process(store.getValue(), transformula, invariants);
+			final Term value = store.getValue();
 			for (final ArrayIndex globalIndex : mFunctionsToIndices.getImage(newTemplate)) {
 				final ArrayIndex index = getLocalIndex(globalIndex, transformula, newIsInVar);
 				if (processedIndices.contains(index)) {
