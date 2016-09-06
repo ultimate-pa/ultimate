@@ -65,4 +65,14 @@ public class DeltaDebuggerController extends CommandLineController {
 			final Map<String, List<IResult>> results) {
 		super.displayToolchainResults(toolchain, results);
 	}
+
+	@Override
+	public String getPluginID() {
+		return Activator.PLUGIN_ID;
+	}
+
+	@Override
+	public String getPluginName() {
+		return Activator.PLUGIN_NAME;
+	}
 }

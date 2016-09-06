@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.cli;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -67,12 +68,14 @@ public class ToolchainLocator {
 		mLogger = logger;
 	}
 
-	public Predicate<String> createFilterForAvailableTools() {
+	public Predicate<String> createFilterForAvailableTools(final Collection<String> alwaysAllowedIds) {
 		Predicate<String> rtr = a -> false;
 
-		// the current cli controller and the core are always allowed
-		rtr = rtr.or(Activator.PLUGIN_ID::equalsIgnoreCase);
+		// the the core is always allowed
 		rtr = rtr.or(de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator.PLUGIN_ID::equalsIgnoreCase);
+		for (final String id : alwaysAllowedIds) {
+			rtr = rtr.or(id::equalsIgnoreCase);
+		}
 
 		final Map<File, IToolchainData<RunDefinition>> availableToolchains = locateToolchains();
 		final Set<String> availablePluginIds = availableToolchains.values().stream()

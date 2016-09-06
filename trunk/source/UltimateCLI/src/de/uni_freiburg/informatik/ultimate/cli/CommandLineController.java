@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.cli;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -277,7 +278,7 @@ public class CommandLineController implements IController<RunDefinition> {
 
 	private Predicate<String> getPluginFilter(final ICore<RunDefinition> core, final File toolchainFileOrDir) {
 		final ToolchainLocator locator = new ToolchainLocator(toolchainFileOrDir, core, mLogger);
-		return locator.createFilterForAvailableTools();
+		return locator.createFilterForAvailableTools(Collections.singleton(getPluginID()));
 	}
 
 	private void printAvailableToolchains(final ICore<RunDefinition> core) {
