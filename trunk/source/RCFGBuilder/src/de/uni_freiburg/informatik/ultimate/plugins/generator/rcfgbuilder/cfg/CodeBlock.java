@@ -219,7 +219,6 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 		if (source != null) {
 			setSource(source);
 			source.addOutgoing(this);
-			setPreceedingProcedure(source);
 			// s_Logger.debug("Edge " + this + " is successor of Node " +
 			// source);
 		}
@@ -229,7 +228,6 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 		if (target != null) {
 			setTarget(target);
 			target.addIncoming(this);
-			setSucceedingProcedure(target);
 			// s_Logger.debug("Node " + target + " is successor of Edge " +
 			// this);
 		}
@@ -267,5 +265,25 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 
 	@Override
 	public abstract String toString();
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge#setTarget(de.uni_freiburg.informatik.ultimate.core.model.models.IModifiableExplicitEdgesMultigraph)
+	 */
+	@Override
+	public void setTarget(final RCFGNode target) {
+		setSucceedingProcedure(target);
+		super.setTarget(target);
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge#setSource(de.uni_freiburg.informatik.ultimate.core.model.models.IModifiableExplicitEdgesMultigraph)
+	 */
+	@Override
+	public void setSource(final RCFGNode source) {
+		setPreceedingProcedure(source);
+		super.setSource(source);
+	}
+	
+	
 
 }
