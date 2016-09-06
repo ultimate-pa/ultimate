@@ -77,12 +77,15 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 
 	protected UnmodifiableTransFormula mTransitionFormula;
 	protected UnmodifiableTransFormula mTransitionFormulaWithBranchEncoders;
+	
+	private String mPrecedingProcedure;
+	private String mSucceedingProcedure;
 
 	protected RCFGEdgeAnnotation mAnnotation;
 
 	int mOccurenceInCounterexamples = 0;
 
-	CodeBlock(int serialNumber, ProgramPoint source, ProgramPoint target, ILogger logger) {
+	CodeBlock(final int serialNumber, final ProgramPoint source, final ProgramPoint target, final ILogger logger) {
 		super(source, target, (source == null ? new Payload() : new Payload(source.getPayload().getLocation())));
 		mSerialnumber = serialNumber;
 		mLogger = logger;
@@ -91,7 +94,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			protected Object getFieldValue(String field) {
+			protected Object getFieldValue(final String field) {
 				return CodeBlock.this.getFieldValue(field);
 			}
 
@@ -103,6 +106,8 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
 		connectSource(source);
 		connectTarget(target);
+		setPreceedingProcedure(source);
+		setSucceedingProcedure(target);
 	}
 
 	/**
@@ -110,7 +115,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	 * have serial number "-1" and hence they will have the same hash code.
 	 */
 	@Deprecated
-	public CodeBlock(ProgramPoint source, ProgramPoint target, ILogger logger) {
+	public CodeBlock(final ProgramPoint source, final ProgramPoint target, final ILogger logger) {
 		super(source, target, (source == null ? new Payload() : new Payload(source.getPayload().getLocation())));
 		mSerialnumber = -1;
 		mLogger = logger;
@@ -119,7 +124,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			protected Object getFieldValue(String field) {
+			protected Object getFieldValue(final String field) {
 				return CodeBlock.this.getFieldValue(field);
 			}
 
@@ -133,7 +138,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 		connectTarget(target);
 	}
 
-	protected Object getFieldValue(String field) {
+	protected Object getFieldValue(final String field) {
 		if (field == "TransitionFormula") {
 			return mTransitionFormula;
 		} else if (field == "OccurenceInCounterexamples") {
@@ -158,7 +163,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 		return mTransitionFormulaWithBranchEncoders;
 	}
 
-	public void setTransitionFormula(UnmodifiableTransFormula transFormula) {
+	public void setTransitionFormula(final UnmodifiableTransFormula transFormula) {
 		mTransitionFormula = transFormula;
 		mTransitionFormulaWithBranchEncoders = transFormula;
 	}
@@ -179,20 +184,52 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	public int hashCode() {
 		return getSerialNumber();
 	}
+	
+	private void setPreceedingProcedure(final RCFGNode source) {
+		if (source instanceof ProgramPoint) {
+			final String name = ((ProgramPoint) source).getProcedure();
+			if (mPrecedingProcedure == null) {
+				mPrecedingProcedure = name;
+			} else {
+				if (mPrecedingProcedure.equals(name)) {
+					// do nothing
+				} else {
+					throw new AssertionError("proc must not change");
+				}
+			}
+		}
+	}
+	
+	private void setSucceedingProcedure(final RCFGNode source) {
+		if (source instanceof ProgramPoint) {
+			final String name = ((ProgramPoint) source).getProcedure();
+			if (mSucceedingProcedure == null) {
+				mSucceedingProcedure = name;
+			} else {
+				if (mSucceedingProcedure.equals(name)) {
+					// do nothing
+				} else {
+					throw new AssertionError("proc must not change");
+				}
+			}
+		}
+	}
 
-	public final void connectSource(RCFGNode source) {
+	public final void connectSource(final RCFGNode source) {
 		if (source != null) {
 			setSource(source);
 			source.addOutgoing(this);
+			setPreceedingProcedure(source);
 			// s_Logger.debug("Edge " + this + " is successor of Node " +
 			// source);
 		}
 	}
 
-	public final void connectTarget(RCFGNode target) {
+	public final void connectTarget(final RCFGNode target) {
 		if (target != null) {
 			setTarget(target);
 			target.addIncoming(this);
+			setSucceedingProcedure(target);
 			// s_Logger.debug("Node " + target + " is successor of Edge " +
 			// this);
 		}
@@ -203,9 +240,14 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	 * result is the name of the caller, if CodeBlock is a return the result is the callee (from which we return).
 	 */
 	@Override
-	public String getPreceedingProcedure() {
-		final ProgramPoint pp = (ProgramPoint) getSource();
-		return pp.getProcedure();
+	public String getPrecedingProcedure() {
+		if (mPrecedingProcedure == null) {
+			throw new NullPointerException("Preceding procedure has not yet been determined.");
+		} else {
+			return mPrecedingProcedure;
+		}
+//		final ProgramPoint pp = (ProgramPoint) getSource();
+//		return pp.getProcedure();
 	}
 
 	/**
@@ -214,8 +256,13 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	 */
 	@Override
 	public String getSucceedingProcedure() {
-		final ProgramPoint pp = (ProgramPoint) getTarget();
-		return pp.getProcedure();
+		if (mSucceedingProcedure == null) {
+			throw new NullPointerException("Succeeding procedure has not yet been determined.");
+		} else {
+			return mSucceedingProcedure;
+		}
+//		final ProgramPoint pp = (ProgramPoint) getTarget();
+//		return pp.getProcedure();
 	}
 
 	@Override
