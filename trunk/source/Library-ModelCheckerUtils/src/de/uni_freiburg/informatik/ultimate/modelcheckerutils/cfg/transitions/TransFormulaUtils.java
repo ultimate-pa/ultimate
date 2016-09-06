@@ -507,21 +507,29 @@ public class TransFormulaUtils {
 		
 		
 
-		final UnmodifiableTransFormula result = sequentialComposition(logger, services, mgdScript, simplify, 
+		final UnmodifiableTransFormula tmpresult = sequentialComposition(logger, services, mgdScript, simplify, 
 				extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique,
 				callAndBeforeTF, globalVarAssignAndAfterTF);
 		
-		
-//		final List<IProgramVar> outVarsToRemove = new ArrayList<IProgramVar>();
-//		// remove outVars that do not relate to scope of end procedure
-//		for (final IProgramVar bv : tmpresult.getOutVars().keySet()) {
-//			if (!bv.isGlobal()) {
-//				if (!bv.getProcedure().equals(procAtEnd)) {
-//					outVarsToRemove.add(bv);
-//				}
-//			}
-//		}
-//		final UnmodifiableTransFormula result = TransFormulaBuilder.constructCopy(tmpresult, Collections.emptySet(), outVarsToRemove, mgdScript);
+		final UnmodifiableTransFormula result;
+		if (procAfterCall.equals(procAtEnd)) {
+			result = tmpresult;
+		} else {
+			final List<IProgramVar> outVarsToRemove = new ArrayList<IProgramVar>();
+			// remove inparams of callee that are still in the outvars
+			for (final IProgramVar pv : tmpresult.getOutVars().keySet()) {
+				if (callTf.getAssignedVars().contains(pv)) {
+					// pv is inparam, we have to remove it
+					outVarsToRemove.add(pv);
+				}
+			}
+			if (outVarsToRemove.isEmpty()) {
+				// nothing to remove
+				result = tmpresult;
+			} else {
+				result = TransFormulaBuilder.constructCopy(tmpresult, Collections.emptySet(), outVarsToRemove, mgdScript);
+			}
+	}
 		
 		if (recursiveProcedureChange) {
 			// we have to havoc all local variables that do not yet occur
