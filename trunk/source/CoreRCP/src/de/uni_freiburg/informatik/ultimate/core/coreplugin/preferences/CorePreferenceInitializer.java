@@ -158,7 +158,9 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 			VALUE_FATAL_LOGGING_PREF, VALUE_INFO_LOGGING_PREF, VALUE_TRACE_LOGGING_PREF, VALUE_WARN_LOGGING_PREF };
 
 	public static final String LABEL_TIMEOUT = "Toolchain timeout in seconds";
-	public static final int VALUE_TIMEOUT = 0;
+	private static final int VALUE_TIMEOUT = 0;
+	private static final String DESC_TIMEOUT =
+			"Specify the time in seconds after which Ultimate will terminate due to a timeout. The value has to be larger or equal to 0. A value of 0 disables the timeout.";
 
 	/**
 	 * Messages
@@ -230,7 +232,7 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 				new UltimatePreferenceItem<String>(LABEL_COLOR_FATAL, DEFAULT_VALUE_COLOR_FATAL, PreferenceType.Color),
 
 				// Toolchain
-				new UltimatePreferenceItem<Integer>(LABEL_TIMEOUT, VALUE_TIMEOUT, PreferenceType.Integer,
+				new UltimatePreferenceItem<Integer>(LABEL_TIMEOUT, VALUE_TIMEOUT, DESC_TIMEOUT, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1000000)), };
 	}
 
