@@ -311,9 +311,9 @@
 		<module>../SmtParser</module>
 		<module>../SyntaxChecker</module>
 		<module>../HeapSeparator</module>
-		
 		<module>../TreeAutomizer</module>
 		<module>../Library-ApacheCommonsCLI</module>
+		<module>../UltimateDeltaDebugger</module>
 	</modules>
 
 	<profiles>
