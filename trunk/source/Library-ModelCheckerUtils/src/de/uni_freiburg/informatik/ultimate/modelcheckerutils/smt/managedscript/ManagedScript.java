@@ -298,10 +298,12 @@ public class ManagedScript {
 			if (mVariableNames.contains(varname)) {
 				throw new IllegalArgumentException("A variable with that name was already constructed: " + varname);
 			} else {
-				return mScript.variable(varname, sort);
+				final TermVariable result = mScript.variable(varname, sort);
+				mTv2Basename.put(result, varname);
+				return result;
 			}
 		}
 	}
-	
+
 	
 }

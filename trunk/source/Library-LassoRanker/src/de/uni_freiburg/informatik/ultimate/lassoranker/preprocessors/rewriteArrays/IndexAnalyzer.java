@@ -92,7 +92,7 @@ public class IndexAnalyzer {
 		mTerm = term;
 		mSymbolTable = symbolTable;
 		mRepvarFactory = replacementVarFactory;
-		mScript = symbolTable.getScript();
+		mScript = symbolTable.getScript().getScript();
 		mTransFormula = tf;
 		mInvariantEqualitiesBefore = invariantEqualitiesBefore;
 		mInvariantEqualitiesAfter = invariantEqualitiesAfter;

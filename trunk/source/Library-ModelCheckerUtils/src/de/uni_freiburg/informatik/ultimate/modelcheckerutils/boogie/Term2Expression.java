@@ -105,7 +105,7 @@ public class Term2Expression implements Serializable {
 
 		mTypeSortTranslator = tsTranslation;
 		mBoogie2SmtSymbolTable = boogie2SmtSymbolTable;
-		mScript = boogie2SmtSymbolTable.getScript();
+		mScript = boogie2SmtSymbolTable.getScript().getScript();
 	}
 
 	Set<IdentifierExpression> mfreeVariables = new HashSet<IdentifierExpression>();
