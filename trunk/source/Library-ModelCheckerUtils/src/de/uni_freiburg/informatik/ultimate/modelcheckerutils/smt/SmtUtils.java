@@ -1133,7 +1133,10 @@ public class SmtUtils {
 		return false;
 	}
 	
-	public static boolean isUninterpretedFunction(final Term term) {
+	/**
+	 * @return true iff term is {@link ApplicationTerm} with uninterpreted function-symbol.
+	 */
+	public static boolean isUninterpretedFunctionCall(final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final FunctionSymbol fun = ((ApplicationTerm) term).getFunction();
 			return !fun.isIntern();
