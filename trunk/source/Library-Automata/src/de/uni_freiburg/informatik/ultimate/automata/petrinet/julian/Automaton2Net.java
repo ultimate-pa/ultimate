@@ -28,58 +28,70 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class Automaton2Net<LETTER, STATE> extends GeneralOperation<LETTER, STATE> {
-
+/**
+ * Transforms an {@link INestedWordAutomaton} to a {@link PetriNetJulian}.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ * @param <LETTER> letter type
+ * @param <STATE> state/place type
+ */
+public final class Automaton2Net<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final IPetriNet<LETTER, STATE> mNet;
-
+	
 	/**
 	 * Constructor.
 	 * 
-	 * @param services Ultimate services
-	 * @param operand operand
-	 * @throws AutomataLibraryException if construction fails
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @throws AutomataLibraryException
+	 *             if construction fails
 	 */
-	public Automaton2Net(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand)
-					throws AutomataLibraryException {
+	public Automaton2Net(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand)
+			throws AutomataLibraryException {
 		super(services);
 		mOperand = operand;
-		mLogger.info(startMessage());
-		mNet = new PetriNetJulian<LETTER, STATE>(mServices, mOperand);
-		mLogger.info(exitMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		mNet = new PetriNetJulian<>(mServices, mOperand);
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
-
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
+	}
+	
 	@Override
 	public IPetriNet<LETTER, STATE> getResult() {
 		return mNet;
 	}
-
+	
 	@Override
 	public String operationName() {
-		return "automaton2net";
+		return "Automaton2Net";
 	}
-
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Operand "
-				+ mOperand.sizeInformation();
-	}
-
+	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". PetriNet "
-				+ mNet.sizeInformation();
+		return "Finished " + operationName() + ". PetriNet " + mNet.sizeInformation();
 	}
-
+	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
 }
