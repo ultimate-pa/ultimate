@@ -5,7 +5,7 @@
          point="de.uni_freiburg.informatik.ultimate.ep.controller">
       <impl
             class="de.uni_freiburg.informatik.ultimate.deltadebugger.DeltaDebuggerController"
-            isGraphical="false"/>
+            isGraphical="false" preference="50"/>
    </extension>  
 </plugin>
 

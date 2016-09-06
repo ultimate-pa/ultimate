@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -49,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.UltimateExtensionPoints;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -243,22 +246,52 @@ final class PluginFactory implements IServiceFactoryFactory {
 	 * @throws CoreException
 	 */
 	private IController<RunDefinition> loadControllerPlugin(final IExtensionRegistry reg) {
+		// first, determine who will be the controller
 		final List<IConfigurationElement> configElements = mAvailableToolsByClass.get(IController.class);
 
-		if (configElements.size() != 1) {
-			mLogger.fatal("Invalid configuration. You should have only 1 IController plugin, but you have "
-					+ configElements.size());
-
-			if (configElements.size() == 0) {
-				return null;
-			}
-
-			for (final IConfigurationElement elem : configElements) {
-				mLogger.fatal(elem.getAttribute("class"));
-			}
+		if (configElements.isEmpty()) {
+			mLogger.fatal(
+					"Invalid configuration. You should have at least one IController plugin, but there are none.");
 			return null;
 		}
-		final IConfigurationElement controllerDescriptor = configElements.get(0);
+
+		if (configElements.size() == 1) {
+			// just take the only one
+			return loadControllerPlugin(configElements.get(0));
+		}
+
+		// ok, there are multiple ones. We have to see if they can be discriminated by their preference value
+		final List<Pair<IConfigurationElement, Integer>> elemsWithPreference =
+				configElements.stream().map(elem -> new Pair<>(elem, Integer.valueOf(elem.getAttribute("preference"))))
+						.collect(Collectors.toList());
+
+		final Optional<Pair<IConfigurationElement, Integer>> preferredElemOptional =
+				elemsWithPreference.stream().min((a, b) -> a.getSecond().compareTo(b.getSecond()));
+		if (!preferredElemOptional.isPresent()) {
+			throw new AssertionError("Java8 is broken");
+		}
+		final Pair<IConfigurationElement, Integer> preferredElem = preferredElemOptional.get();
+		final int minValue = preferredElem.getSecond();
+
+		// check if the minimum is unambiguous
+		final List<Pair<IConfigurationElement, Integer>> preferredElements =
+				elemsWithPreference.stream().filter(a -> a.getSecond().equals(minValue)).collect(Collectors.toList());
+		final int preferredElementsSize = preferredElements.size();
+		if (preferredElementsSize == 1) {
+			// it is, we take the preferred element.
+			return loadControllerPlugin(preferredElem.getFirst());
+		}
+		// it is not, we have to give up
+
+		mLogger.fatal("Invalid configuration. You should have only one preferred IController plugin, but you have "
+				+ preferredElementsSize);
+		for (final Pair<IConfigurationElement, Integer> elem : preferredElements) {
+			mLogger.fatal(elem.getFirst().getAttribute("class") + " has preference value " + elem.getSecond());
+		}
+		return null;
+	}
+
+	private IController<RunDefinition> loadControllerPlugin(final IConfigurationElement controllerDescriptor) {
 		final IController<RunDefinition> controller = createInstance(controllerDescriptor);
 		mGuiMode = new Boolean(controllerDescriptor.getAttribute("isGraphical")).booleanValue();
 		mSettingsManager.registerPlugin(controller);

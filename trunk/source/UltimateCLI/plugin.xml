@@ -5,7 +5,7 @@
          point="de.uni_freiburg.informatik.ultimate.ep.controller">
       <impl
             class="de.uni_freiburg.informatik.ultimate.cli.CommandLineController"
-            isGraphical="false"/>
+            isGraphical="false" preference="100"/>
    </extension>  
 </plugin>
 
