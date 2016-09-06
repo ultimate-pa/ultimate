@@ -108,10 +108,13 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	 * Return all states <i>down</i> such that a configuration is reachable,
 	 * where <i>up</i> is the current state and <i>down</i> is the topmost stack
 	 * element.
+	 * 
+	 * @deprecated Use the {@link #isDoubleDecker(Object, Object)} check instead.
 	 */
 	@Override
-	public Set<STATE> getDownStates(final STATE up) {
-		final STATE entry = getEntry(up);
+	@Deprecated
+	public Set<STATE> getDownStates(final STATE upState) {
+		final STATE entry = getEntry(upState);
 		return getCallPredecessors(entry);
 	}
 	

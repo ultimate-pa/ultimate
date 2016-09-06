@@ -130,10 +130,15 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE>
 		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices, this)).getResult() : "down states inconsistent";
 	}
 	
+	/**
+	 * {@inheritDoc}
+	 * @deprecated Use the {@link #isDoubleDecker(Object, Object)} check instead.
+	 */
 	@Override
-	public Set<STATE> getDownStates(final STATE up) {
+	@Deprecated
+	public Set<STATE> getDownStates(final STATE upState) {
 		if (mAncestorComputation != null) {
-			return mAncestorComputation.getDownStates(up);
+			return mAncestorComputation.getDownStates(upState);
 		}
 		throw new UnsupportedOperationException();
 	}

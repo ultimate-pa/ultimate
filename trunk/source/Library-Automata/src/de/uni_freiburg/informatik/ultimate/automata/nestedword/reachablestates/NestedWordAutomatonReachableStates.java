@@ -673,9 +673,14 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				DownStateProp.REACH_FINAL_INFTY, DownStateProp.REACHABLE_AFTER_NONLIVE_REMOVAL);
 	}
 	
+	/**
+	 * {@inheritDoc}
+	 * @deprecated Use the {@link #isDoubleDecker(Object, Object)} check instead.
+	 */
 	@Override
-	public Set<STATE> getDownStates(final STATE state) {
-		final StateContainer<LETTER, STATE> cont = mStates.get(state);
+	@Deprecated
+	public Set<STATE> getDownStates(final STATE upState) {
+		final StateContainer<LETTER, STATE> cont = mStates.get(upState);
 		return cont.getDownStates().keySet();
 	}
 	

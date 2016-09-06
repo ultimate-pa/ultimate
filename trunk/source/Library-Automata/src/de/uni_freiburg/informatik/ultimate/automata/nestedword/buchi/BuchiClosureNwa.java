@@ -357,7 +357,12 @@ public final class BuchiClosureNwa<LETTER, STATE>
 		return ((IDoubleDeckerAutomaton<LETTER, STATE>) mOperand).isDoubleDecker(upState, downState);
 	}
 	
+	/**
+	 * {@inheritDoc}
+	 * @deprecated Use the {@link #isDoubleDecker(Object, Object)} check instead.
+	 */
 	@Override
+	@Deprecated
 	public Set<STATE> getDownStates(final STATE upState) {
 		return ((IDoubleDeckerAutomaton<LETTER, STATE>) mOperand).getDownStates(upState);
 	}
