@@ -1,5 +1,7 @@
+<rundefinition>
+<name>Automizer for Boogie</name>
 <toolchain>
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"/>
-</toolchain>
+</toolchain></rundefinition>

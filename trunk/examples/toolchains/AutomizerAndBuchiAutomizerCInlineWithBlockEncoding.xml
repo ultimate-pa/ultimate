@@ -1,3 +1,5 @@
+<rundefinition>
+<name>Automizer and BüchiAutomizer for C (with Blockencoding and Inlining)</name>
 <toolchain>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.procedureinliner"/>
@@ -6,4 +8,4 @@
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding" />
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer"/>
-</toolchain>
+</toolchain></rundefinition>

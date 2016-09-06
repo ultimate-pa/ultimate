@@ -1,5 +1,8 @@
-﻿<toolchain>
+﻿<rundefinition>
+<name>Abstract Interpretation</name>
+<toolchain>
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2"/>
 </toolchain>
+</rundefinition>
