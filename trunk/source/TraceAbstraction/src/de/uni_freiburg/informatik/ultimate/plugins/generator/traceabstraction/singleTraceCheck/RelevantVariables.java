@@ -288,7 +288,7 @@ public class RelevantVariables {
 			final UnmodifiableTransFormula tfReturn = mTraceWithFormulas.getFormulaFromNonCallPos(i-1);
 			final UnmodifiableTransFormula localVarAssignmentAtCall = 
 					mTraceWithFormulas.getLocalVarAssignment(correspondingCallPosition);
-			final String callee = mTraceWithFormulas.getTrace().getSymbol(i-1).getPreceedingProcedure();
+			final String callee = mTraceWithFormulas.getTrace().getSymbol(i-1).getPrecedingProcedure();
 			result = computeSuccessorRvReturn(currentRelevantVariables, 
 					relevantVariablesBeforeCall, tfReturn, localVarAssignmentAtCall, callee, correspondingCallPosition, i-1);
 		} else {
@@ -525,7 +525,7 @@ public class RelevantVariables {
 			final UnmodifiableTransFormula oldVarAssignment =mTraceWithFormulas.getOldVarAssignment(correspondingCallPosition);
 			final UnmodifiableTransFormula localVarAssignment =mTraceWithFormulas.getLocalVarAssignment(correspondingCallPosition);
 			final UnmodifiableTransFormula tfReturn = mTraceWithFormulas.getFormulaFromNonCallPos(i);
-			final String callee = mTraceWithFormulas.getTrace().getSymbol(i).getPreceedingProcedure();
+			final String callee = mTraceWithFormulas.getTrace().getSymbol(i).getPrecedingProcedure();
 			result = computePredecessorRvReturn(currentRelevantVariables, 
 					tfReturn, oldVarAssignment, localVarAssignment, callee, correspondingCallPosition, i);
 		} else {

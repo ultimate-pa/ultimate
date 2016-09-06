@@ -48,9 +48,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
@@ -413,7 +412,14 @@ public class TransFormulaUtils {
 			final IUltimateServiceProvider services, 
 			final Set<IProgramVar> modifiableGlobalsOfEndProcedure, 
 			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique, 
-			final Boogie2SmtSymbolTable symbolTable) {
+			final Boogie2SmtSymbolTable symbolTable,
+			final String procAtStart, final String procBeforeCall, final String procAfterCall, final String procAtEnd) {
+		assert procAtStart != null : "proc at start must not be null";
+		if (!procAtStart.equals(procBeforeCall)) {
+			throw new UnsupportedOperationException("proc change before call");
+		}
+		final boolean recursiveProcedureChange =  (procBeforeCall.equals(procAtEnd));
+		
 		logger.debug("sequential composition (pending call) with" + (simplify ? "" : "out") + " formula simplification");
 		final UnmodifiableTransFormula callAndBeforeTF;
 		{
@@ -467,23 +473,51 @@ public class TransFormulaUtils {
 				}
 			}
 			
-			final List<IProgramVar> outVarsToRemove = new ArrayList<IProgramVar>();
-			for (final IProgramVar bv : composition.getOutVars().keySet()) {
-				if (bv instanceof IProgramOldVar) {
-					final IProgramNonOldVar nonOld = ((IProgramOldVar) bv).getNonOldVar();
-					if (modifiableGlobalsOfEndProcedure.contains(nonOld)) {
-						// do nothing - bv should be outVar
-					} else {
-						outVarsToRemove.add(bv);
-					}
-				}
-			}
-			oldAssignAndAfterTF = TransFormulaBuilder.constructCopy(composition, inVarsToRemove, outVarsToRemove, mgdScript);
-		}
 
-		final UnmodifiableTransFormula result = sequentialComposition(logger, services, mgdScript, simplify, 
+
+			
+//			for (final IProgramVar bv : composition.getOutVars().keySet()) {
+//				if (bv instanceof IProgramOldVar) {
+//					final IProgramNonOldVar nonOld = ((IProgramOldVar) bv).getNonOldVar();
+//					if (modifiableGlobalsOfEndProcedure.contains(nonOld)) {
+//						// do nothing - bv should be outVar
+//					} else {
+//						outVarsToRemove.add(bv);
+//					}
+//				}
+//			}
+			oldAssignAndAfterTF = TransFormulaBuilder.constructCopy(composition, inVarsToRemove, Collections.emptySet(), mgdScript);
+		}
+		
+		
+
+		final UnmodifiableTransFormula tmpresult = sequentialComposition(logger, services, mgdScript, simplify, 
 				extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique,
 				callAndBeforeTF, oldAssignAndAfterTF);
+		
+		
+		final List<IProgramVar> outVarsToRemove = new ArrayList<IProgramVar>();
+		// remove outVars that do not relate to scope of end procedure
+		for (final IProgramVar bv : tmpresult.getOutVars().keySet()) {
+			if (!bv.isGlobal()) {
+				if (!bv.getProcedure().equals(procAtEnd)) {
+					outVarsToRemove.add(bv);
+				}
+			}
+		}
+		final UnmodifiableTransFormula result = TransFormulaBuilder.constructCopy(tmpresult, Collections.emptySet(), outVarsToRemove, mgdScript);
+		
+		if (recursiveProcedureChange) {
+			// we have to havoc all local variables that do not yet occur
+			final Map<String, LocalBoogieVar> locals = symbolTable.getLocals(procAtEnd);
+			for (final Entry<String, LocalBoogieVar> entry : locals.entrySet()) {
+				if (!result.getInVars().containsKey(entry.getValue()) &&
+						!result.getOutVars().containsKey(entry.getValue())) {
+					result.mOutVars.put(entry.getValue(), mgdScript.constructFreshCopy(entry.getValue().getTermVariable()));
+				}
+				
+			}
+		}
 		assert !result.getBranchEncoders().isEmpty() || predicateBasedResultCheck(services, mgdScript, 
 				xnfConversionTechnique, simplificationTechnique, 
 				beforeCall,

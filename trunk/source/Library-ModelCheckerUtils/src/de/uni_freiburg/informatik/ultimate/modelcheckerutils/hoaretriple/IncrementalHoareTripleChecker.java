@@ -280,7 +280,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			predcondition = mManagedScript.annotate(this, predcondition, annot);
 		}
 		LBool quickCheck = mManagedScript.assertTerm(this, predcondition);
-		final String predProc = mAssertedAction.getPreceedingProcedure();
+		final String predProc = mAssertedAction.getPrecedingProcedure();
 		final Set<IProgramVar> oldVarsOfModifiable = mModifiableGlobalVariableManager.
 				getOldVarsAssignment(predProc).getAssignedVars();
 		final Collection<Term> oldVarEqualities = constructNonModOldVarsEquality(p.getVars(), oldVarsOfModifiable);
@@ -367,7 +367,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		if (act instanceof IReturnAction) {
 			mHierConstants = new ScopedHashMap<IProgramVar,Term>();
 			final IReturnAction ret = (IReturnAction) act;
-			final String proc = ret.getPreceedingProcedure();
+			final String proc = ret.getPrecedingProcedure();
 			final UnmodifiableTransFormula ovaTF = mModifiableGlobalVariableManager.
 					getOldVarsAssignment(proc);
 			Term ovaFormula = ovaTF.getFormula();
@@ -442,7 +442,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		Term hierFormula = p.getFormula();
 		
 		// rename globals that are not modifiable by callee to default constants
-		final String callee = mAssertedAction.getPreceedingProcedure();
+		final String callee = mAssertedAction.getPrecedingProcedure();
 		final Set<IProgramVar> modifiableGlobalsCallee = mModifiableGlobalVariableManager.
 				getModifiedBoogieVars(callee);
 		hierFormula = renameNonModifiableNonOldGlobalsToDefaultConstants(
@@ -607,7 +607,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		final Set<IProgramVar> assignedVars = ((IReturnAction) mAssertedAction).getAssignmentOfReturn().getAssignedVars();
 		Term renamedFormula = renameVarsToPrimedConstants(assignedVars, p.getFormula());
 		
-		final String callee = mAssertedAction.getPreceedingProcedure();
+		final String callee = mAssertedAction.getPrecedingProcedure();
 		final Set<IProgramVar> modifiableGlobalsCallee = mModifiableGlobalVariableManager.
 				getModifiedBoogieVars(callee);
 		

@@ -568,7 +568,10 @@ public class IterativePredicateTransformer {
 						return TransFormulaUtils.sequentialCompositionWithPendingCall(mMgdScript, true,
 								false, s_TransformSummaryToCNF, transformulasToComputeSummaryFor,
 								callTf, oldVarsAssignment, globalVarsAssignment,
-								summaryAfterPendingCall, mLogger, mServices, modifiableGlobalsOfEndProcedure, mXnfConversionTechnique, mSimplificationTechnique, mSymbolTable);
+								summaryAfterPendingCall, mLogger, mServices, modifiableGlobalsOfEndProcedure, 
+								mXnfConversionTechnique, mSimplificationTechnique, mSymbolTable, 
+								trace.getSymbol(start).getPrecedingProcedure(), trace.getSymbol(i).getPrecedingProcedure(), 
+								trace.getSymbol(i).getSucceedingProcedure(), nameEndProcedure);
 					}
 				} else {
 					final UnmodifiableTransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
@@ -577,7 +580,10 @@ public class IterativePredicateTransformer {
 					return TransFormulaUtils.sequentialCompositionWithPendingCall(mMgdScript, true, false,
 							s_TransformSummaryToCNF, transformulasToComputeSummaryFor,
 							callTf, oldVarsAssignment, null, summaryAfterPendingCall,
-							mLogger, mServices, modifiableGlobalsOfEndProcedure, mXnfConversionTechnique, mSimplificationTechnique, mSymbolTable);
+							mLogger, mServices, modifiableGlobalsOfEndProcedure, mXnfConversionTechnique, 
+							mSimplificationTechnique, mSymbolTable, 
+							trace.getSymbol(start).getPrecedingProcedure(), trace.getSymbol(i).getPrecedingProcedure(), 
+							trace.getSymbol(i).getSucceedingProcedure(), nameEndProcedure);
 				}
 			} else if (trace.getSymbol(i) instanceof Return) {
 				// Nothing to do

@@ -55,7 +55,7 @@ public class RcfgLibraryModeResultReporter<STATE extends IAbstractState<STATE, C
 	public void reportSafe(final CodeBlock first, final String msg) {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new GenericResultAtElement<>(first, Activator.PLUGIN_ID, mServices.getBacktranslationService(),
-						"Procedure " + first.getPreceedingProcedure() + " is safe", msg, Severity.INFO));
+						"Procedure " + first.getPrecedingProcedure() + " is safe", msg, Severity.INFO));
 	}
 
 }

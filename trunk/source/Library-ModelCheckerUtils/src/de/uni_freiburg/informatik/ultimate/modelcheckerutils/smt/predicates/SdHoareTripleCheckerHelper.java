@@ -200,7 +200,7 @@ public class SdHoareTripleCheckerHelper {
 			} else if (sat == Validity.NOT_CHECKED) {
 				return null;
 			} else if (sat == Validity.INVALID) {
-				final String proc = act.getPreceedingProcedure();
+				final String proc = act.getPrecedingProcedure();
 				assert proc.equals(act.getSucceedingProcedure()) : "internal statement must not change procedure";
 				if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, proc) || 
 						mModifiableGlobalVariableManager.containsNonModifiableOldVars(post, proc)) {
@@ -310,7 +310,7 @@ public class SdHoareTripleCheckerHelper {
 	
 	public Validity sdecReturn(IPredicate pre, IPredicate hier, IReturnAction ret, IPredicate post) {
 		if (hierPostIndependent(hier, ret, post) 
-				&& preHierIndependent(pre, hier, ret.getLocalVarsAssignmentOfCall(), ret.getPreceedingProcedure())
+				&& preHierIndependent(pre, hier, ret.getLocalVarsAssignmentOfCall(), ret.getPrecedingProcedure())
 				&& prePostIndependent(pre, ret, post)) {
 			mHoareTripleCheckerStatistics.getSDsCounter().incRe();
 			return Validity.INVALID;
@@ -348,7 +348,7 @@ public class SdHoareTripleCheckerHelper {
 			return null;
 		}
 
-		final String proc = ret.getPreceedingProcedure();
+		final String proc = ret.getPrecedingProcedure();
 		final Set<IProgramVar> modifiableGlobals = 
 				mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 		final boolean assignedVarsRestrictedByPre = 
@@ -465,7 +465,7 @@ public class SdHoareTripleCheckerHelper {
 	private boolean hierPostIndependent(IPredicate hier, IReturnAction ret, IPredicate post) {
 		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 		
-		final String proc = ret.getPreceedingProcedure();
+		final String proc = ret.getPrecedingProcedure();
 		final Set<IProgramVar> modifiableGlobals = 
 				mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 		
@@ -548,7 +548,7 @@ public class SdHoareTripleCheckerHelper {
 	
 	public Validity sdecReturnSelfloopHier(IPredicate p, IReturnAction ret) {
 		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
-		final String proc = ret.getPreceedingProcedure();
+		final String proc = ret.getPrecedingProcedure();
 		final Set<IProgramVar> modifiableGlobals = 
 				mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 

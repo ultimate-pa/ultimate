@@ -454,7 +454,7 @@ public class FlowSensitiveFaultLocalizer {
 				smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
 		final IPredicate pre = smtManager.getPredicateFactory().newPredicate(
 				smtManager.getPredicateFactory().not(weakestPreconditionLeft));
-		final String preceeding = counterexampleWord.getSymbolAt(startPosition).getPreceedingProcedure();
+		final String preceeding = counterexampleWord.getSymbolAt(startPosition).getPrecedingProcedure();
 		final String succeeding = counterexampleWord.getSymbolAt(endPosition).getSucceedingProcedure();
 		final BasicInternalAction basic = new BasicInternalAction(preceeding, succeeding, markhor);
 		final ERelevanceStatus relevance = rc.relevanceInternal(pre, basic, 

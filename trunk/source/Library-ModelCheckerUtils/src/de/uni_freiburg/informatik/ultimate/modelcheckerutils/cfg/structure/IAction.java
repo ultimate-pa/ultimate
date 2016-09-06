@@ -38,7 +38,7 @@ public interface IAction {
 	 * @return Identifier of the procedure in which the system/program is
 	 * before this action is executed.
 	 */
-	public String getPreceedingProcedure();
+	public String getPrecedingProcedure();
 	
 	/**
 	 * @return Identifier of the procedure in which the system/program is

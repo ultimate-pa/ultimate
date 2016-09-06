@@ -204,7 +204,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		// }
 
 		final UnmodifiableTransFormula tf = ta.getTransformula();
-		final String procPred = ta.getPreceedingProcedure();
+		final String procPred = ta.getPrecedingProcedure();
 		final String procSucc = ta.getSucceedingProcedure();
 //		assert proc.equals(ta.getSucceedingProcedure()) : "different procedure before and after";
 		final Set<IProgramVar> modifiableGlobalsPred = mModifiableGlobals.getModifiedBoogieVars(procPred);
@@ -252,7 +252,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		mIndexedConstants = new ScopedHashMap<String, Term>();
 		// OldVars not renamed if modifiable.
 		// All variables get index 0.
-		final String caller = ta.getPreceedingProcedure();
+		final String caller = ta.getPrecedingProcedure();
 		final Set<IProgramVar> modifiableGlobalsCaller = mModifiableGlobals.getModifiedBoogieVars(caller);
 		final Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<IProgramVar>(0), 4, 0,
 				Integer.MIN_VALUE, null, -5, 0, mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCaller);
@@ -324,7 +324,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 				mManagedScript.getScript());
 		// fCall = (new FormulaUnLet()).unlet(fCall);
 
-		final String callee = ta.getPreceedingProcedure();
+		final String callee = ta.getPrecedingProcedure();
 		final Set<IProgramVar> modifiableGlobalsCallee = mModifiableGlobals.getModifiedBoogieVars(callee);
 
 		final String caller = ta.getSucceedingProcedure();
