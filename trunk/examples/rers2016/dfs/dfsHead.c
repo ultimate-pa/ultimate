@@ -94,10 +94,12 @@ void dfs(int depth) {
 }
 
 int main(int argc, char *argv[]) {
-	srand(time(NULL));
 	for (int i = 0; i < 100; ++i) {
 		SHORTEST_SEQ_TO_ERR[i] = INPUT_SEQ_LENGTH + 1;
 	}
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	srand(ts.tv_nsec);
 
 	reset_eca();
 	reset_error();

@@ -21,7 +21,7 @@ done
 for i in {10..18}; do
 	echo "Compiling Problem $i"
 	#clang -O3 -o problem"$i" "$dfsFile"
-	gcc --std=c99 -O3 -o problem"$i" "$dfsFile"
+	gcc --std=gnu99 -O3 -o problem"$i" "$dfsFile"
 done
 
 echo "Done"
