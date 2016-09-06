@@ -90,7 +90,8 @@ public class CommandLineController implements IController<RunDefinition> {
 			toolchainStageParams = toolchainStageParser.parse(args);
 
 		} catch (final ParseException pex) {
-			printParseException(args, toolchainStageParser, pex);
+			printParseException(args, pex);
+			toolchainStageParser.printHelp();
 			return -1;
 		}
 
@@ -132,14 +133,17 @@ public class CommandLineController implements IController<RunDefinition> {
 			}
 
 			if (!fullParams.hasInputFiles()) {
-				throw new ParseException("Missing required option: " + CommandLineOptions.OPTION_NAME_INPUTFILES);
+				printParseException(args, new ParseException("Missing required option: " + CommandLineOptions.OPTION_NAME_INPUTFILES));
+				printHelp(fullParser, fullParams);
+				return -1;
 			}
 
 			prepareToolchain(core, fullParams);
 			executeToolchain(core, fullParams, mLogger, mToolchain);
 
 		} catch (final ParseException pex) {
-			printParseException(args, fullParser, pex);
+			printParseException(args, pex);
+			fullParser.printHelp();
 			return -1;
 		} catch (final InvalidFileException e) {
 			mLogger.error("File in arguments violated specification: " + e.getMessage());
@@ -194,21 +198,18 @@ public class CommandLineController implements IController<RunDefinition> {
 		fullParams.applyCliSettings(mToolchain.getServices());
 	}
 
-	private static void printHelp(final CommandLineParser toolchainStageParser,
-			final ParsedParameter toolchainStageParams) {
-		if (toolchainStageParams.showExperimentals()) {
-			toolchainStageParser.printHelpWithExperimentals();
+	private static void printHelp(final CommandLineParser parser, final ParsedParameter params) {
+		if (params.showExperimentals()) {
+			parser.printHelpWithExperimentals();
 		} else {
-			toolchainStageParser.printHelp();
+			parser.printHelp();
 		}
 	}
 
-	private void printParseException(final String[] args, final CommandLineParser toolchainStageParser,
-			final ParseException pex) {
+	private void printParseException(final String[] args, final ParseException pex) {
 		mLogger.error(pex.getMessage());
 		mLogger.error("Arguments were \"" + String.join(" ", args) + "\"");
 		mLogger.error("--");
-		toolchainStageParser.printHelp();
 	}
 
 	@Override

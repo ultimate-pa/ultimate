@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public class OptionBuilder {
 
 	private static final int MAX_NAME_LENGTH = 160;
-	private static final int MIN_WIDTH = 0;
+	private static final int MIN_WIDTH = 80;
 
 	private final ICore<RunDefinition> mCore;
 	private final Map<String, Triple<String, String, UltimatePreferenceItem<?>>> mCliName2UltimatePreferences;
