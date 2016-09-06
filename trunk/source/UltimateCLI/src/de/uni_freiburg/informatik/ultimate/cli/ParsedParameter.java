@@ -36,7 +36,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.ParseException;
 import org.xml.sax.SAXException;
 
-import de.uni_freiburg.informatik.ultimate.cli.exceptions.InvalidFileException;
+import de.uni_freiburg.informatik.ultimate.cli.exceptions.InvalidFileArgumentException;
 import de.uni_freiburg.informatik.ultimate.cli.options.CommandLineOptions;
 import de.uni_freiburg.informatik.ultimate.cli.options.OptionBuilder;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
@@ -97,9 +97,9 @@ public class ParsedParameter {
 		return mCli.hasOption(CommandLineOptions.OPTION_NAME_EXPERIMENTAL);
 	}
 
-	public String getSettingsFile() throws ParseException, InvalidFileException {
+	public String getSettingsFile() throws ParseException, InvalidFileArgumentException {
 		final File file = getParsedOption(CommandLineOptions.OPTION_NAME_SETTINGS);
-		checkFileExists(file);
+		checkFileExists(file, CommandLineOptions.OPTION_LONG_NAME_SETTINGS);
 		return file.getAbsolutePath();
 	}
 
@@ -115,31 +115,33 @@ public class ParsedParameter {
 		return mCli.hasOption(CommandLineOptions.OPTION_NAME_INPUTFILES);
 	}
 
-	public File getToolchainFile() throws ParseException {
-		return getParsedOption(CommandLineOptions.OPTION_NAME_TOOLCHAIN);
+	public File getToolchainFile() throws ParseException, InvalidFileArgumentException {
+		final File file = getParsedOption(CommandLineOptions.OPTION_NAME_TOOLCHAIN);
+		checkFileExists(file, CommandLineOptions.OPTION_LONG_NAME_TOOLCHAIN);
+		return file;
 	}
 
-	public IToolchainData<RunDefinition> createToolchainData() throws InvalidFileException, ParseException {
+	public IToolchainData<RunDefinition> createToolchainData() throws InvalidFileArgumentException, ParseException {
 		final File toolchainFile = getToolchainFile();
 		try {
 			return mCore.createToolchainData(toolchainFile.getAbsolutePath());
 		} catch (final FileNotFoundException e1) {
-			throw new InvalidFileException(
+			throw new InvalidFileArgumentException(
 					"Toolchain file not found at specified path: " + toolchainFile.getAbsolutePath());
 		} catch (final SAXException | JAXBException e1) {
-			throw new InvalidFileException(
+			throw new InvalidFileArgumentException(
 					"Toolchain file at path " + toolchainFile.getAbsolutePath() + " was malformed: " + e1.getMessage());
 		}
 	}
 
-	public File[] getInputFiles() throws InvalidFileException, ParseException {
+	public File[] getInputFiles() throws InvalidFileArgumentException, ParseException {
 		final File[] inputFilesArgument = getInputFileArgument();
 		if (inputFilesArgument == null || inputFilesArgument.length == 0) {
-			throw new InvalidFileException("No input file specified");
+			throw new InvalidFileArgumentException("No input file specified");
 		}
 
 		for (final File file : inputFilesArgument) {
-			checkFileExists(file);
+			checkFileExists(file, CommandLineOptions.OPTION_LONG_NAME_INPUTFILES);
 		}
 		return inputFilesArgument;
 	}
@@ -155,15 +157,18 @@ public class ParsedParameter {
 		return files;
 	}
 
-	private static void checkFileExists(final File file) throws InvalidFileException {
+	private static void checkFileExists(final File file, final String argumentName)
+			throws InvalidFileArgumentException {
 		if (file == null) {
 			throw new IllegalArgumentException("file");
 		}
 		if (!file.exists()) {
-			throw new InvalidFileException("File " + file.getAbsolutePath() + " does not exist");
+			throw new InvalidFileArgumentException("Argument of \"" + argumentName + "\" has invalid value \""
+					+ file.getAbsolutePath() + "\": File does not exist");
 		}
 		if (!file.canRead()) {
-			throw new InvalidFileException("Cannot read file " + file.getAbsolutePath());
+			throw new InvalidFileArgumentException("Argument of \"" + argumentName + "\" has invalid value \""
+					+ file.getAbsolutePath() + "\": File cannot be read");
 		}
 	}
 

@@ -37,7 +37,7 @@ import org.apache.commons.cli.ParseException;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.app.IApplication;
 
-import de.uni_freiburg.informatik.ultimate.cli.exceptions.InvalidFileException;
+import de.uni_freiburg.informatik.ultimate.cli.exceptions.InvalidFileArgumentException;
 import de.uni_freiburg.informatik.ultimate.cli.options.CommandLineOptions;
 import de.uni_freiburg.informatik.ultimate.cli.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
@@ -119,6 +119,10 @@ public class CommandLineController implements IController<RunDefinition> {
 		} catch (final ParseException pex) {
 			mLogger.error("Could not find the provided toolchain file: " + pex.getMessage());
 			return -1;
+		} catch (final InvalidFileArgumentException e) {
+			mLogger.error(e.getMessage());
+			printArgs(args);
+			return -1;
 		}
 
 		// second, perform real parsing
@@ -133,7 +137,8 @@ public class CommandLineController implements IController<RunDefinition> {
 			}
 
 			if (!fullParams.hasInputFiles()) {
-				printParseException(args, new ParseException("Missing required option: " + CommandLineOptions.OPTION_NAME_INPUTFILES));
+				printParseException(args,
+						new ParseException("Missing required option: " + CommandLineOptions.OPTION_NAME_INPUTFILES));
 				printHelp(fullParser, fullParams);
 				return -1;
 			}
@@ -145,8 +150,9 @@ public class CommandLineController implements IController<RunDefinition> {
 			printParseException(args, pex);
 			fullParser.printHelp();
 			return -1;
-		} catch (final InvalidFileException e) {
-			mLogger.error("File in arguments violated specification: " + e.getMessage());
+		} catch (final InvalidFileArgumentException e) {
+			mLogger.error(e.getMessage());
+			printArgs(args);
 			return -1;
 		} catch (@SuppressWarnings("squid:S2142") final InterruptedException e) {
 			mLogger.fatal("Exception during execution of toolchain", e);
@@ -175,14 +181,14 @@ public class CommandLineController implements IController<RunDefinition> {
 	 * @throws ParseException
 	 *             If lazy parsing of command line options fails (i.e., when accessing the input files stored in
 	 *             <code>cliParams</code>, this exception might be thrown.
-	 * @throws InvalidFileException
+	 * @throws InvalidFileArgumentException
 	 *             If a file is not valid or does not exist, this exception might be thrown.
 	 * @throws InterruptedException
 	 *             If during toolchain execution the thread is interrupted, this exception might be thrown.
 	 */
 	protected void executeToolchain(final ICore<RunDefinition> core, final ParsedParameter cliParams,
 			final ILogger logger, final IToolchainData<RunDefinition> toolchain)
-			throws ParseException, InvalidFileException, InterruptedException {
+			throws ParseException, InvalidFileArgumentException, InterruptedException {
 		final File[] inputFiles = cliParams.getInputFiles();
 		final BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, logger, inputFiles);
 		tcj.schedule();
@@ -190,7 +196,7 @@ public class CommandLineController implements IController<RunDefinition> {
 	}
 
 	private void prepareToolchain(final ICore<RunDefinition> core, final ParsedParameter fullParams)
-			throws ParseException, InvalidFileException {
+			throws ParseException, InvalidFileArgumentException {
 		if (fullParams.hasSettings()) {
 			core.loadPreferences(fullParams.getSettingsFile());
 		}
@@ -208,8 +214,12 @@ public class CommandLineController implements IController<RunDefinition> {
 
 	private void printParseException(final String[] args, final ParseException pex) {
 		mLogger.error(pex.getMessage());
-		mLogger.error("Arguments were \"" + String.join(" ", args) + "\"");
+		printArgs(args);
 		mLogger.error("--");
+	}
+
+	private void printArgs(final String[] args) {
+		mLogger.error("Arguments were \"" + String.join(" ", args) + "\"");
 	}
 
 	@Override
@@ -266,9 +276,6 @@ public class CommandLineController implements IController<RunDefinition> {
 	}
 
 	private Predicate<String> getPluginFilter(final ICore<RunDefinition> core, final File toolchainFileOrDir) {
-		if (toolchainFileOrDir == null) {
-			return a -> true;
-		}
 		final ToolchainLocator locator = new ToolchainLocator(toolchainFileOrDir, core, mLogger);
 		return locator.createFilterForAvailableTools();
 	}

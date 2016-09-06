@@ -40,8 +40,11 @@ import org.apache.commons.cli.Option;
 public final class CommandLineOptions {
 
 	public static final String OPTION_NAME_TOOLCHAIN = "tc";
+	public static final String OPTION_LONG_NAME_TOOLCHAIN = "toolchain";
 	public static final String OPTION_NAME_INPUTFILES = "i";
+	public static final String OPTION_LONG_NAME_INPUTFILES = "input";
 	public static final String OPTION_NAME_SETTINGS = "s";
+	public static final String OPTION_LONG_NAME_SETTINGS = "settings";
 	public static final String OPTION_NAME_HELP = "h";
 	public static final String OPTION_NAME_VERSION = "version";
 	public static final String OPTION_NAME_EXPERIMENTAL = "experimental";
@@ -57,13 +60,13 @@ public final class CommandLineOptions {
 	public static List<Option> createFinalCLIOptions(final boolean requireToolchain, final boolean requireInputFile) {
 		// add CLI options
 		final List<Option> rtr = new ArrayList<>();
-		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_TOOLCHAIN).longOpt("toolchain").type(File.class).hasArg()
-				.required(requireToolchain).argName("FILE").desc("Specify the path to an Ultimate toolchain file")
-				.build());
-		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_INPUTFILES).longOpt("input").hasArgs()
+		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_TOOLCHAIN).longOpt(OPTION_LONG_NAME_TOOLCHAIN)
+				.type(File.class).hasArg().required(requireToolchain).argName("FILE")
+				.desc("Specify the path to an Ultimate toolchain file").build());
+		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_INPUTFILES).longOpt(OPTION_LONG_NAME_INPUTFILES).hasArgs()
 				.required(requireInputFile).argName("FILE").build());
-		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_SETTINGS).longOpt("settings").type(File.class).hasArg()
-				.argName("FILE").build());
+		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_SETTINGS).longOpt(OPTION_LONG_NAME_SETTINGS)
+				.type(File.class).hasArg().argName("FILE").build());
 		rtr.add(Option.builder(CommandLineOptions.OPTION_NAME_HELP).longOpt("help").type(Boolean.class).build());
 		rtr.add(Option.builder().longOpt(CommandLineOptions.OPTION_NAME_VERSION).type(Boolean.class).build());
 		rtr.add(Option.builder().longOpt(CommandLineOptions.OPTION_NAME_EXPERIMENTAL).type(Boolean.class)

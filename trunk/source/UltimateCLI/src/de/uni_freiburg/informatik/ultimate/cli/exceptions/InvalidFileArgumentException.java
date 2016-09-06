@@ -27,35 +27,35 @@
 package de.uni_freiburg.informatik.ultimate.cli.exceptions;
 
 /**
- * An {@link InvalidFileException} exception is thrown if a file or a path to a file is not as expected: maybe the file does not
+ * An {@link InvalidFileArgumentException} exception is thrown if a file or a path to a file is not as expected: maybe the file does not
  * exist or the file is malformed.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class InvalidFileException extends Exception {
+public class InvalidFileArgumentException extends Exception {
 
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * Create an {@link InvalidFileException} exception.
+	 * Create an {@link InvalidFileArgumentException} exception.
 	 * 
 	 * @param message
 	 *            a message detailing why this exception was thrown.
 	 */
-	public InvalidFileException(final String message) {
+	public InvalidFileArgumentException(final String message) {
 		super(message);
 	}
 
 	/**
-	 * Create an {@link InvalidFileException} exception.
+	 * Create an {@link InvalidFileArgumentException} exception.
 	 * 
 	 * @param message
 	 *            a message detailing why this exception was thrown.
 	 * @param cause
 	 *            an earlier exception that lead to this exception.
 	 */
-	public InvalidFileException(final String message, final Exception cause) {
+	public InvalidFileArgumentException(final String message, final Exception cause) {
 		super(message, cause);
 	}
 }

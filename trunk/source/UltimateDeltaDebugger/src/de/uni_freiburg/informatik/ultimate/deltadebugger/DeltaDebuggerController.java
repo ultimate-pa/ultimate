@@ -33,7 +33,7 @@ import org.apache.commons.cli.ParseException;
 
 import de.uni_freiburg.informatik.ultimate.cli.CommandLineController;
 import de.uni_freiburg.informatik.ultimate.cli.ParsedParameter;
-import de.uni_freiburg.informatik.ultimate.cli.exceptions.InvalidFileException;
+import de.uni_freiburg.informatik.ultimate.cli.exceptions.InvalidFileArgumentException;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
@@ -50,7 +50,7 @@ public class DeltaDebuggerController extends CommandLineController {
 	@Override
 	protected void executeToolchain(final ICore<RunDefinition> core, final ParsedParameter cliParams,
 			final ILogger logger, final IToolchainData<RunDefinition> toolchain)
-			throws ParseException, InvalidFileException, InterruptedException {
+			throws ParseException, InvalidFileArgumentException, InterruptedException {
 		super.executeToolchain(core, cliParams, logger, toolchain);
 	}
 
