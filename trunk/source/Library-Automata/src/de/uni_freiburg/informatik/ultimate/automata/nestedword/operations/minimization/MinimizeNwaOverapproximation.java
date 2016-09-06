@@ -27,13 +27,18 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.TimeoutFlag;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -41,6 +46,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
  * Calls another minimization procedure and interrupts it after a certain time.<br>
  * Correspondingly, the result may not be language-preserving, but it is certainly an overapproximation of the input.
+ * <p>
+ * The user may pass additional automata such that the result does not recognize any of their words, assuming that the
+ * operand did not recognize them.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -48,16 +56,14 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
+public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
 	/**
 	 * Default timeout: 1 second.
 	 */
 	public static final int DEFAULT_TIMEOUT = 1_000;
 	
-	private final AbstractMinimizeNwaDd<LETTER, STATE> mBackgroundMinimizer;
-	
 	/**
-	 * Constructor with default time.
+	 * Basic constructor with default timeout.
 	 * 
 	 * @param services
 	 *            Ultimate services
@@ -71,11 +77,11 @@ public class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractMinimiz
 	public MinimizeNwaOverapproximation(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, null, false, DEFAULT_TIMEOUT);
+		this(services, stateFactory, operand, DEFAULT_TIMEOUT);
 	}
 	
 	/**
-	 * Basic constructor.
+	 * Basic constructor with given timeout.
 	 * 
 	 * @param services
 	 *            Ultimate services
@@ -91,7 +97,7 @@ public class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractMinimiz
 	public MinimizeNwaOverapproximation(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand, final int time)
 			throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, null, false, time);
+		this(services, stateFactory, operand, null, false, time, Collections.emptyList());
 	}
 	
 	/**
@@ -109,18 +115,22 @@ public class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractMinimiz
 	 *            true iff map (old state -> new state) should be created
 	 * @param time
 	 *            time in milliseconds for the minimization to run
+	 * @param forbiddenLanguages
+	 *            automata whose accepted words should not be accepted by the result
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
 	public MinimizeNwaOverapproximation(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
-			final Collection<Set<STATE>> initialPartition, final boolean addMapOldState2newState, final int time)
+			final Collection<Set<STATE>> initialPartition, final boolean addMapOldState2newState, final int time,
+			final Collection<INestedWordAutomaton<LETTER, STATE>> forbiddenLanguages)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, "MinimizeNwaOverapproximation", operand);
 		final TimeoutFlag<LETTER, STATE> timeout = new TimeoutFlag<>(time);
-		mBackgroundMinimizer = new MinimizeSevpa<>(services, operand, initialPartition, stateFactory,
-				addMapOldState2newState, timeout);
-		directResultConstruction(mBackgroundMinimizer.getResult());
+		final MinimizeSevpa<LETTER, STATE> backgroundMinimizer = new MinimizeSevpa<>(services, operand,
+				initialPartition, stateFactory, addMapOldState2newState, timeout);
+		constructResult(backgroundMinimizer.getConstructionInterrupted(), backgroundMinimizer.getResult(),
+				forbiddenLanguages, stateFactory);
 	}
 	
 	@Override
@@ -141,5 +151,65 @@ public class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractMinimiz
 					"The result recognizes less words than before.", mOperand);
 		}
 		return correct;
+	}
+	
+	private void constructResult(final boolean wasInterrrupted,
+			final IDoubleDeckerAutomaton<LETTER, STATE> minimizerResult,
+			final Collection<INestedWordAutomaton<LETTER, STATE>> forbiddenLanguages,
+			final IStateFactory<STATE> stateFactoryIntersect)
+			throws AutomataOperationCanceledException {
+		if (!wasInterrrupted || forbiddenLanguages.isEmpty() || mOperand.size() == minimizerResult.size()) {
+			// no special handling necessary
+			directResultConstruction(minimizerResult);
+			return;
+		}
+		
+		minimizeWithDifferenceRefinement(minimizerResult, forbiddenLanguages, stateFactoryIntersect);
+	}
+	
+	/**
+	 * Uses a standard minimization which is interrupted when the time is up. Afterward it checks that the intersection
+	 * of the result with each of the forbidden automata is empty. If not, the result is refined by taking the
+	 * difference of the two automata.
+	 */
+	private void minimizeWithDifferenceRefinement(final IDoubleDeckerAutomaton<LETTER, STATE> minimizerResult,
+			final Collection<INestedWordAutomaton<LETTER, STATE>> forbiddenLanguages,
+			final IStateFactory<STATE> stateFactoryIntersect)
+			throws AutomataOperationCanceledException, AssertionError {
+		INestedWordAutomaton<LETTER, STATE> refinedResult = minimizerResult;
+		
+		for (final INestedWordAutomaton<LETTER, STATE> automaton : forbiddenLanguages) {
+			final INestedWordAutomaton<LETTER, STATE> intersection;
+			try {
+				intersection =
+						new Intersect<LETTER, STATE>(mServices, stateFactoryIntersect, refinedResult, automaton)
+								.getResult();
+			} catch (final AutomataOperationCanceledException e) {
+				throw e;
+			} catch (final AutomataLibraryException e) {
+				throw new AssertionError(e.getMessage());
+			}
+			
+			if (!new IsEmpty<>(mServices, intersection).getResult()) {
+				try {
+					// refine current result
+					refinedResult =
+							new Difference<LETTER, STATE>(mServices, stateFactoryIntersect, refinedResult, automaton)
+									.getResult();
+				} catch (final AutomataOperationCanceledException e) {
+					throw e;
+				} catch (final AutomataLibraryException e) {
+					throw new AssertionError(e.getMessage());
+				}
+			}
+		}
+		if (refinedResult.size() >= mOperand.size()) {
+			if (mLogger.isWarnEnabled()) {
+				mLogger.warn("Minimization did not decrease the size.");
+			}
+			directResultConstruction(mOperand);
+		} else {
+			directResultConstruction(refinedResult);
+		}
 	}
 }

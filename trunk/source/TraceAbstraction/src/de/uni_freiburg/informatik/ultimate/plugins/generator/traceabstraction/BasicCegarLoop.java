@@ -165,6 +165,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	private final boolean mDoFaultLocalizationNonFlowSensitive;
 	private final boolean mDoFaultLocalizationFlowSensitive;
 	private HashSet<ProgramPoint> mHoareAnnotationPositions;
+	
+	private final Collection<INestedWordAutomaton<CodeBlock, IPredicate>> mStoredRawInterpolantAutomata;
 
 	public BasicCegarLoop(final String name, final RootNode rootNode, final SmtManager smtManager,
 			final TAPreferences taPrefs, final Collection<ProgramPoint> errorLocs,
@@ -226,6 +228,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mInterpolantAutomatonBuilderFactory = new InterpolantAutomatonBuilderFactory(mServices, mSmtManager,
 				mPredicateFactoryInterpolantAutomata, mRootNode, mAbsIntRunner, taPrefs, mInterpolation,
 				mInterpolantAutomatonConstructionProcedure, mCegarLoopBenchmark);
+		
+		mStoredRawInterpolantAutomata = checkStoreCounterExamples(mPref) ? new ArrayList<>() : null;
 	}
 
 	@Override
@@ -832,8 +836,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				break;
 			}
 			case NWA_OVERAPPROXIMATION: {
+				assert mStoredRawInterpolantAutomata != null;
+				mStoredRawInterpolantAutomata.add(mInterpolAutomaton);
 				newAbstractionRaw = new MinimizeNwaOverapproximation<CodeBlock, IPredicate>(services,
-						predicateFactoryRefinement, oldAbstraction, MINIMIZATION_TIMEOUT);
+						predicateFactoryRefinement, oldAbstraction, partition, mComputeHoareAnnotation,
+						MINIMIZATION_TIMEOUT, mStoredRawInterpolantAutomata);
 				wasMinimized = true;
 				break;
 			}
@@ -1123,5 +1130,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mWitnessAutomaton = witnessAutomaton;
 
 	}
-
+	
+	private final boolean checkStoreCounterExamples(final TAPreferences pref) {
+		return pref.minimize() == Minimization.NWA_OVERAPPROXIMATION;
+	}
 }
