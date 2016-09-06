@@ -58,7 +58,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			//### BPL
 			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total_Debug.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_noPredAbs.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_refineAlways.epf"),
@@ -108,9 +108,9 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 	};
-	// @formatter:on
 
-	private static final String[] INPUT = new String[] { "examples/programs/abstractInterpretation/regression",
+	private static final String[] INPUT = new String[] {
+			"examples/programs/abstractInterpretation/regression",
 			// "examples/programs/abstractInterpretation/regression/all",
 			// "examples/programs/abstractInterpretation/regression/all/loop-nested-assume-unsafe.bpl",
 			// "examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
@@ -118,7 +118,6 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			// "examples/programs/abstractInterpretation/regression/procedure-Loops.bpl",
 			// "examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
 	};
-
 	// @formatter:on
 
 	@Override
