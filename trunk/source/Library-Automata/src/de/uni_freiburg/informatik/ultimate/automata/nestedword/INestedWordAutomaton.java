@@ -45,9 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Summa
  *            state type
  * @see INestedWordAutomatonSimple
  */
-public interface INestedWordAutomaton<LETTER, STATE>
-		extends INestedWordAutomatonSimple<LETTER, STATE> {
-	
+public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomatonSimple<LETTER, STATE> {
 	/**
 	 * @return The set of states of this automaton. <b>Use with caution!</b>
 	 *         Some implementations (e.g., automaton which represents result of
@@ -135,8 +133,7 @@ public interface INestedWordAutomaton<LETTER, STATE>
 	 *            letter
 	 * @return incoming internal transitions
 	 */
-	Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
-			final STATE succ, final LETTER letter);
+	Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ, final LETTER letter);
 	
 	/**
 	 * Incoming internal transitions for all letters.
@@ -145,8 +142,7 @@ public interface INestedWordAutomaton<LETTER, STATE>
 	 *            successor state
 	 * @return incoming internal transitions
 	 */
-	Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
-			final STATE succ);
+	Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ);
 	
 	/**
 	 * Incoming call transitions for a given letter.
@@ -157,8 +153,7 @@ public interface INestedWordAutomaton<LETTER, STATE>
 	 *            letter
 	 * @return incoming call transitions
 	 */
-	Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
-			final STATE succ, final LETTER letter);
+	Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ, final LETTER letter);
 	
 	/**
 	 * Incoming call transitions for all letters.
@@ -167,8 +162,7 @@ public interface INestedWordAutomaton<LETTER, STATE>
 	 *            successor state
 	 * @return incoming call transitions
 	 */
-	Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
-			final STATE succ);
+	Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ);
 	
 	/**
 	 * Incoming return transitions for a given hierarchical predecessor state and letter.
@@ -181,8 +175,8 @@ public interface INestedWordAutomaton<LETTER, STATE>
 	 *            letter
 	 * @return incoming return transitions
 	 */
-	Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
-			final STATE succ, final STATE hier, final LETTER letter);
+	Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final STATE hier,
+			final LETTER letter);
 	
 	/**
 	 * Incoming return transitions for a given letter and all hierarchical predecessor states.
@@ -193,8 +187,7 @@ public interface INestedWordAutomaton<LETTER, STATE>
 	 *            letter
 	 * @return incoming return transitions
 	 */
-	Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
-			final STATE succ, final LETTER letter);
+	Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final LETTER letter);
 	
 	/**
 	 * Incoming return transitions for all letters and hierarchical predecessor states.
@@ -203,8 +196,7 @@ public interface INestedWordAutomaton<LETTER, STATE>
 	 *            successor state
 	 * @return incoming return transitions
 	 */
-	Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
-			final STATE succ);
+	Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ);
 	
 	/**
 	 * Outgoing return transitions for a given letter and all hierarchical predecessor states.
@@ -215,8 +207,7 @@ public interface INestedWordAutomaton<LETTER, STATE>
 	 *            letter
 	 * @return outgoing return transitions
 	 */
-	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-			final STATE state, final LETTER letter);
+	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final LETTER letter);
 	
 	/**
 	 * Outgoing return transitions for all letters and hierarchical predecessor states.
@@ -225,8 +216,7 @@ public interface INestedWordAutomaton<LETTER, STATE>
 	 *            state
 	 * @return outgoing return transitions
 	 */
-	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-			final STATE state);
+	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state);
 	
 	/**
 	 * Summary transitions for a given letter and hierarchical predecessor state.
@@ -237,8 +227,7 @@ public interface INestedWordAutomaton<LETTER, STATE>
 	 *            letter
 	 * @return summary transitions
 	 */
-	Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(
-			final STATE hier, final LETTER letter);
+	Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier, final LETTER letter);
 	
 	/**
 	 * Summary transitions for a given hierarchical predecessor state and all letters.
@@ -247,6 +236,5 @@ public interface INestedWordAutomaton<LETTER, STATE>
 	 *            hierarchical predecessor state
 	 * @return summary transitions
 	 */
-	Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(
-			final STATE hier);
+	Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier);
 }
