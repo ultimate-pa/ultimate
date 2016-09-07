@@ -96,7 +96,7 @@ public class MapEliminator {
 	private final HashRelation<ArrayIndex, ApplicationTermTemplate> mIndicesToFunctions;
 
 	// A term that contains information about the the created aux-vars
-	private final List<Term> mAuxVarTerms;
+	private List<Term> mAuxVarTerms;
 
 	// The created aux-vars (needed for quantifier-elimination)
 	private final Set<TermVariable> mAuxVars;
@@ -557,9 +557,12 @@ public class MapEliminator {
 	}
 
 	/***
+	 * Returns the corresponding replacementVar (or auxVar) for the given {@code term}. The replacementVars have to be
+	 * already to it added by calling {@code addReplacementVarsToTransFormula}
+	 *
 	 * @param term
 	 * @param transformula
-	 * @return
+	 * @return A replacement- or aux-var
 	 */
 	private Term getReplacementVar(final Term term, final TransFormulaLR transformula) {
 		if (!allVariablesAreInVars(term, transformula) && !allVariablesAreOutVars(term, transformula)) {
@@ -569,6 +572,8 @@ public class MapEliminator {
 		}
 		final Term definition = translateTermVariablesToDefinitions(mScript, transformula, term);
 		final IProgramVar var = mReplacementVarFactory.getOrConstuctReplacementVar(definition);
+		assert transformula.getInVars().containsKey(var) && transformula.getOutVars().containsKey(var) : var
+				+ " was not added to the transformula!";
 		if (allVariablesAreInVars(term, transformula)) {
 			return transformula.getInVars().get(var);
 		} else {
@@ -605,6 +610,7 @@ public class MapEliminator {
 			}
 		}
 		final Substitution substitution = new Substitution(mManagedScript, substitutionMap);
+		mAuxVarTerms = substitution.transform(mAuxVarTerms);
 		return substitution.transform(substitution.transform(term));
 	}
 
