@@ -1,5 +1,5 @@
 /*
- * PDebounceValidation.c
+ * GasCake02 is an example for a PDT1-style filter. 
  *
  * This test case implements a design error.
  * Two (redundant) inputs are separately debounced (on/off delay). 
