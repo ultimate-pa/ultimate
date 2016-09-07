@@ -473,7 +473,6 @@
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-UltimateTestTest</module>
-				<module>../UltimateRegressionTest</module>
 			</modules>
 		</profile>
 
