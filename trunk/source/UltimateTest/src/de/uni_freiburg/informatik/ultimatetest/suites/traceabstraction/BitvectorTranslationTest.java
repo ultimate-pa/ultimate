@@ -116,7 +116,7 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 		"examples/programs/bitvector",
 //		"examples/programs/quantifier/regression",
 //		"examples/programs/quantifier",
-//		"examples/programs/recursivePrograms",
+//		"examples/programs/recursive/regression",
 //		"examples/programs/toy",
 	};
 	

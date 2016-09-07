@@ -43,7 +43,7 @@ public class CraigInterpolationTest extends
 	private static final String[] mDirectories = {
 //		"examples/programs/regression",
 //		"examples/programs/quantifier",
-		"examples/programs/recursivePrograms",
+		"examples/programs/recursive/regression",
 //		"examples/programs/toy"
 //		"examples/termination/AProVE"
 //		"examples/svcomp/recursive/",

@@ -101,7 +101,7 @@ public class BuchiAutomizerLassoRankerTests extends AbstractBuchiAutomizerTestSu
 //		"examples/lassos/arrays",
 //		"examples/termination/svcomp-sorted/success/",
 //		"examples/programs/quantifier",
-//		"examples/programs/recursivePrograms",
+//		"examples/programs/recursive/regression",
 //		"examples/programs/toy"
 		"examples/programs/termination/",
 //		"examples/termination/cooperatingT2/difficult/solved",

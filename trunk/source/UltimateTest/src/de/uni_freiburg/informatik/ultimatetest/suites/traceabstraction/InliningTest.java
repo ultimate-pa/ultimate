@@ -43,7 +43,7 @@ public class InliningTest extends AbstractTraceAbstractionTestSuite {
 		"examples/programs/regression",
 		"examples/programs/quantifier/",
 //		"examples/programs/quantifier/regression",
-		"examples/programs/recursivePrograms",
+		"examples/programs/recursive/regression",
 		"examples/programs/toy",
 	};
 	

@@ -44,14 +44,14 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 	private static final String[] mUltimateRepository_ForwardPredicates = {
 		"examples/programs/regression",
 		"examples/programs/quantifier/regression",
-//		"examples/programs/recursivePrograms",
+//		"examples/programs/recursive/regression",
 //		"examples/programs/toy",
 	};
 	
 	private static final String[] mUltimateRepository_TreeInterpolation = {
 		"examples/programs/regression",
 //		"examples/programs/quantifier",
-//		"examples/programs/recursivePrograms",
+//		"examples/programs/recursive/regression",
 //		"examples/programs/toy",
 	};
 
