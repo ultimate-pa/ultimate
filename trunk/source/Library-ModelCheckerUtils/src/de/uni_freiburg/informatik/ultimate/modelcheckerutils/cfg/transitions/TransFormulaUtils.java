@@ -449,6 +449,13 @@ public class TransFormulaUtils {
 				
 			}
 			callAndBeforeTF = TransFormulaBuilder.constructCopy(composition, Collections.emptySet(), outVarsToRemove, mgdScript);
+			// now we havoc all oldvars that are not modified by the callee
+			// TODO: Rename the ones that are not modified by the caller
+			for (final Entry<String, IProgramVar> entry : symbolTable.getOldVars().entrySet()) {
+				if (!oldVarsAssignment.getAssignedVars().contains(entry.getValue())) {
+					callAndBeforeTF.mOutVars.put(entry.getValue(), mgdScript.constructFreshCopy(entry.getValue().getTermVariable()));
+				}
+			}
 		}
 
 		final UnmodifiableTransFormula globalVarAssignAndAfterTF;
@@ -529,7 +536,9 @@ public class TransFormulaUtils {
 			} else {
 				result = TransFormulaBuilder.constructCopy(tmpresult, Collections.emptySet(), outVarsToRemove, mgdScript);
 			}
-	}
+		}
+		
+
 		
 		if (recursiveProcedureChange) {
 			// we have to havoc all local variables that do not yet occur
