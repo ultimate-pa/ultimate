@@ -30,7 +30,7 @@ final class DaemonFactory implements ThreadFactory {
 
     private static final String OJALGO_DAEMON_GROUP = "ojAlgo-daemon-group";
     private static final String PREFIX = "ojAlgo-daemon-";
-    private static final int PRIORITY = Thread.NORmPRIORITY - 1;
+    private static final int PRIORITY = Thread.NORM_PRIORITY - 1;
 
     private final AtomicInteger myNextThreadID = new AtomicInteger(1);
     private final ThreadGroup myThreadGroup;

@@ -2,27 +2,27 @@
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -75,12 +75,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 
 /**
  * Processes Boogie {@link Statement}s and returns a new {@link IntervalDomainState} for the given statement.
- * 
+ *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public abstract class NonrelationalStatementProcessor<STATE extends NonrelationalState<STATE, V>, V extends INonrelationalValue<V>>
-		extends BoogieVisitor {
+        extends BoogieVisitor {
 
 	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
 	private final BoogieSymbolTable mSymbolTable;
@@ -94,7 +94,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	private Map<LeftHandSide, IBoogieVar> mTemporaryVars;
 
 	protected NonrelationalStatementProcessor(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
-			final Boogie2SmtSymbolTable bpl2SmtTable, final int maxParallelStates) {
+	        final Boogie2SmtSymbolTable bpl2SmtTable, final int maxParallelStates) {
 		mBoogie2SmtSymbolTable = bpl2SmtTable;
 		mSymbolTable = boogieSymbolTable;
 		mLogger = logger;
@@ -108,7 +108,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	}
 
 	public List<STATE> process(final STATE oldState, final Statement statement,
-			final Map<LeftHandSide, IBoogieVar> tmpVars) {
+	        final Map<LeftHandSide, IBoogieVar> tmpVars) {
 		assert oldState != null;
 		assert statement != null;
 		assert tmpVars != null;
@@ -147,6 +147,15 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected Expression processExpression(final Expression expr) {
+		// TODO: implement proper array handling. Currently, TOP is returned for all array accesses.
+		if (expr instanceof ArrayStoreExpression) {
+			mExpressionEvaluator.addEvaluator(mEvaluatorFactory.createSingletonValueTopEvaluator());
+			return expr;
+		} else if (expr instanceof ArrayAccessExpression) {
+			mExpressionEvaluator.addEvaluator(mEvaluatorFactory.createSingletonValueTopEvaluator());
+			return expr;
+		}
+
 		final Expression newExpr = normalizeExpression(expr);
 		assert newExpr != null;
 
@@ -156,8 +165,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		} else {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
-						.append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
-						.append(BoogiePrettyPrinter.print(newExpr)).toString());
+				        .append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
+				        .append(BoogiePrettyPrinter.print(newExpr)).toString());
 			}
 			return processExpression(newExpr);
 		}
@@ -167,7 +176,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	/**
 	 * Override this method to add evaluators for this (already preprocessed) expression.
-	 * 
+	 *
 	 * @param evaluator
 	 *            The current root evaluator.
 	 * @param evaluatorFactory
@@ -176,13 +185,13 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	 *            The preprocessed expression.
 	 */
 	protected void addEvaluators(final ExpressionEvaluator<V, STATE, CodeBlock> evaluator,
-			final IEvaluatorFactory<V, STATE, CodeBlock> evaluatorFactory, final Expression expr) {
+	        final IEvaluatorFactory<V, STATE, CodeBlock> evaluatorFactory, final Expression expr) {
 
 	}
 
 	/**
 	 * Override this method if you want to apply some sort of normalization.
-	 * 
+	 *
 	 * @param expr
 	 *            The expression that is about to be processed.
 	 * @return The normalized expression or the old expression, if nothing had to be changed.
@@ -211,8 +220,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 			mReturnState.addAll(currentStateList.get(0));
 		} else {
 			// just mush them all together
-			final Optional<STATE> result =
-					currentStateList.stream().flatMap(a -> a.stream()).reduce((a, b) -> a.merge(b));
+			final Optional<STATE> result = currentStateList.stream().flatMap(a -> a.stream())
+			        .reduce((a, b) -> a.merge(b));
 			mReturnState.add(result.get());
 		}
 	}
@@ -236,7 +245,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 		if (results.isEmpty()) {
 			throw new UnsupportedOperationException(
-					"There is supposed to be at least on evaluation result for assignment expressions.");
+			        "There is supposed to be at least on evaluation result for assignment expressions.");
 		}
 
 		for (final IEvaluationResult<V> res : results) {
@@ -287,13 +296,13 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 		for (final IEvaluationResult<V> res : result) {
 			if (res.getValue().isBottom() || res.getBooleanValue().getValue() == Value.BOTTOM
-					|| res.getBooleanValue().getValue() == Value.FALSE) {
+			        || res.getBooleanValue().getValue() == Value.FALSE) {
 				if (mOldState.getVariables().size() != 0) {
 					mReturnState.add(mOldState.bottomState());
 				}
 			} else {
-				final List<STATE> resultStates =
-						mExpressionEvaluator.getRootEvaluator().inverseEvaluate(res, mOldState);
+				final List<STATE> resultStates = mExpressionEvaluator.getRootEvaluator().inverseEvaluate(res,
+				        mOldState);
 				mReturnState.addAll(resultStates);
 			}
 		}
@@ -332,22 +341,22 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final IntegerLiteral expr) {
-		final IEvaluator<V, STATE, CodeBlock> evaluator =
-				mEvaluatorFactory.createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
+		final IEvaluator<V, STATE, CodeBlock> evaluator = mEvaluatorFactory
+		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 
 	@Override
 	protected void visit(final RealLiteral expr) {
-		final IEvaluator<V, STATE, CodeBlock> evaluator =
-				mEvaluatorFactory.createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
+		final IEvaluator<V, STATE, CodeBlock> evaluator = mEvaluatorFactory
+		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 
 	@Override
 	protected void visit(final BinaryExpression expr) {
-		final INAryEvaluator<V, STATE, CodeBlock> evaluator =
-				mEvaluatorFactory.createNAryExpressionEvaluator(2, EvaluatorUtils.getEvaluatorType(expr.getType()));
+		final INAryEvaluator<V, STATE, CodeBlock> evaluator = mEvaluatorFactory.createNAryExpressionEvaluator(2,
+		        EvaluatorUtils.getEvaluatorType(expr.getType()));
 		evaluator.setOperator(expr.getOperator());
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
@@ -372,7 +381,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 			} else {
 				// TODO Handle bitshifts, bitwise and, bitwise or, etc.
 				throw new UnsupportedOperationException(
-						"The function application for not inlined functions is not yet supported.");
+				        "The function application for not inlined functions is not yet supported.");
 			}
 		}
 
@@ -381,16 +390,16 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final IdentifierExpression expr) {
-		final IEvaluator<V, STATE, CodeBlock> evaluator =
-				mEvaluatorFactory.createSingletonVariableExpressionEvaluator(getBoogieVar(expr));
+		final IEvaluator<V, STATE, CodeBlock> evaluator = mEvaluatorFactory
+		        .createSingletonVariableExpressionEvaluator(getBoogieVar(expr));
 		mExpressionEvaluator.addEvaluator(evaluator);
 		super.visit(expr);
 	}
 
 	@Override
 	protected void visit(final UnaryExpression expr) {
-		final INAryEvaluator<V, STATE, CodeBlock> evaluator =
-				mEvaluatorFactory.createNAryExpressionEvaluator(1, EvaluatorUtils.getEvaluatorType(expr.getType()));
+		final INAryEvaluator<V, STATE, CodeBlock> evaluator = mEvaluatorFactory.createNAryExpressionEvaluator(1,
+		        EvaluatorUtils.getEvaluatorType(expr.getType()));
 		evaluator.setOperator(expr.getOperator());
 		mExpressionEvaluator.addEvaluator(evaluator);
 		super.visit(expr);
@@ -398,8 +407,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final BooleanLiteral expr) {
-		final IEvaluator<V, STATE, CodeBlock> evaluator =
-				mEvaluatorFactory.createSingletonLogicalValueExpressionEvaluator(new BooleanValue(expr.getValue()));
+		final IEvaluator<V, STATE, CodeBlock> evaluator = mEvaluatorFactory
+		        .createSingletonLogicalValueExpressionEvaluator(new BooleanValue(expr.getValue()));
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 
@@ -419,8 +428,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		mExpressionEvaluator.addEvaluator(evaluator);
 
 		// Create a new expression for the negative case
-		final UnaryExpression newUnary =
-				new UnaryExpression(expr.getLocation(), UnaryExpression.Operator.LOGICNEG, expr.getCondition());
+		final UnaryExpression newUnary = new UnaryExpression(expr.getLocation(), UnaryExpression.Operator.LOGICNEG,
+		        expr.getCondition());
 
 		// This expression should be added first to the evaluator inside the handling of processExpression.
 		processExpression(newUnary);
