@@ -276,48 +276,42 @@ public class AnalysisChooseDialog extends Dialog {
 	 */
 	private void moveItem(final int swtDirection) {
 		// get currently selected items
-		final int ri = mSelectedToolsTable.getSelectionIndex();
-		final int li = mAvailableToolsTable.getSelectionIndex();
-		TableItem rightside = null;
-		TableItem leftside = null;
-		if (ri != -1) {
-			rightside = mSelectedToolsTable.getItem(ri);
-		}
-		if (li != -1) {
-			leftside = mAvailableToolsTable.getItem(li);
+		final int rItemIdx = mSelectedToolsTable.getSelectionIndex();
+		final int lItemIdx = mAvailableToolsTable.getSelectionIndex();
+		final TableItem rightItem = rItemIdx == -1 ? null : mSelectedToolsTable.getItem(rItemIdx);
+		final TableItem leftItem = lItemIdx == -1 ? null : mAvailableToolsTable.getItem(lItemIdx);
+
+		if (rightItem == null && leftItem == null) {
+			return;
 		}
 
-		// make an action according to provided direction
-		switch (swtDirection) {
-		case SWT.LEFT:
-			if (ri != -1) {
-				mSelectedToolsTable.getItem(ri).dispose();
-			}
-			break;
-		case SWT.RIGHT:
-			if (li != -1) {
-				final TableItem ti = new TableItem(mSelectedToolsTable, SWT.NONE);
-				ti.setData(leftside.getData());
-				setCaption(ti);
-			}
-			break;
-		case SWT.UP:
-		case SWT.DOWN:
-			if (rightside != null) {
-				// compute with which item we should switch
-				final int otherindex = ri + (swtDirection == SWT.UP ? -1 : +1);
-				if (ri != -1 && otherindex >= 0 && otherindex < mSelectedToolsTable.getItemCount()) {
-					final TableItem oldItem = mSelectedToolsTable.getItem(ri);
-					final Object data = oldItem.getData();
-					oldItem.dispose();
-					final TableItem newItem = new TableItem(mSelectedToolsTable, SWT.NONE, otherindex);
-					newItem.setData(data);
-					setCaption(newItem);
-					mSelectedToolsTable.select(otherindex);
-				}
+		if (swtDirection == SWT.LEFT && rightItem != null) {
+			mSelectedToolsTable.getItem(rItemIdx).dispose();
+			return;
+		}
 
-			}
+		if (swtDirection == SWT.RIGHT && leftItem != null) {
+			final TableItem ti = new TableItem(mSelectedToolsTable, SWT.NONE);
+			ti.setData(leftItem.getData());
+			setCaption(ti);
+			return;
+		}
 
+		if ((swtDirection == SWT.UP || swtDirection == SWT.DOWN) && rightItem != null) {
+			// compute with which item we should switch
+			final int otherindex = rItemIdx + (swtDirection == SWT.UP ? -1 : +1);
+			if (rItemIdx == -1 || otherindex < 0 || otherindex >= mSelectedToolsTable.getItemCount()) {
+				// we are the only item or we cannot move
+				return;
+			}
+			final TableItem oldItem = mSelectedToolsTable.getItem(rItemIdx);
+			final Object data = oldItem.getData();
+			oldItem.dispose();
+			final TableItem newItem = new TableItem(mSelectedToolsTable, SWT.NONE, otherindex);
+			newItem.setData(data);
+			setCaption(newItem);
+			mSelectedToolsTable.select(otherindex);
+			return;
 		}
 	}
 
