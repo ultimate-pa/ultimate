@@ -346,7 +346,7 @@ public class MapEliminator {
 		final HashRelation<ApplicationTermTemplate, ArrayIndex> localIndices = new HashRelation<>();
 		for (final ApplicationTermTemplate array : mFunctionsToIndices.getDomain()) {
 			for (final ArrayIndex globalIndex : mFunctionsToIndices.getImage(array)) {
-				for (final ArrayIndex index : getInOutVarIndices(globalIndex, newTF, assignedVars)) {
+				for (final ArrayIndex index : getInOutVarIndices(globalIndex, newTF)) {
 					localIndices.addPair(array, index);
 				}
 			}
@@ -355,11 +355,9 @@ public class MapEliminator {
 		final IndexAnalyzer indexAnalyzer = new IndexAnalyzer(originalTerm, doubletons, mSymbolTable, newTF,
 				equalityAnalysisBefore, equalityAnalysisAfter, mLogger, mReplacementVarFactory);
 		final EqualityAnalysisResult invariants = indexAnalyzer.getResult();
-		final List<Term> conjuncts = new ArrayList<Term>();
-		// Handle array havoc's
-		processArrayHavocs(newTF, assignedVars);
 		// Replace store-expressions
 		final Term storeFreeTerm = replaceStoreExpressions(originalTerm, newTF, invariants);
+		final List<Term> conjuncts = new ArrayList<Term>();
 		conjuncts.addAll(Arrays.asList(SmtUtils.getConjuncts(storeFreeTerm)));
 		conjuncts.addAll(getInVarEqualities(newTF, invariants));
 		conjuncts.addAll(getOutVarEqualities(newTF, assignedVars, invariants));
@@ -372,7 +370,9 @@ public class MapEliminator {
 				conjuncts.addAll(processIndexAssignment(newTF, t, assignedVars, invariants));
 			}
 		}
-		replaceReadsAndSetFormula(newTF, conjuncts, assignedVars);
+		conjuncts.addAll(mAuxVarTerms);
+		final Term replacedTerm = replaceReadExpressions(newTF, SmtUtils.and(mScript, conjuncts), assignedVars);
+		setFormulaAndSimplify(newTF, replacedTerm, assignedVars);
 		return newTF;
 	}
 
@@ -424,80 +424,32 @@ public class MapEliminator {
 	}
 
 	/**
-	 * This methods creates a term from the list of conjuncts, replaces all select-expresions and uf-calls with
-	 * replacementsVars and sets the formula of the transformula to the simplified version
+	 * This methods eliminates aux-var from the term, sets it to the transformula and simplifies the transformula then
 	 *
 	 * @param transformula
 	 * @param conjuncts
 	 * @param assignedVars
 	 */
-	private void replaceReadsAndSetFormula(final TransFormulaLR transformula, final List<Term> conjuncts,
+	private void setFormulaAndSimplify(final TransFormulaLR transformula, final Term term,
 			final Set<Term> assignedVars) {
+		// store-expressions have already be replaced
+		// It remains to replace select-expressions and uf-calls by introducing replacementVars
 		Term newTerm;
 		if (mAuxVars.isEmpty()) {
-			newTerm = SmtUtils.and(mScript, conjuncts);
+			newTerm = term;
 		} else {
 			// If aux-vars have been created, eliminate them
-			conjuncts.addAll(mAuxVarTerms);
-			final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, mAuxVars,
-					SmtUtils.and(mScript, conjuncts));
+			final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, mAuxVars, term);
 			newTerm = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript, quantified,
 					mSimplificationTechnique, mXnfConversionTechnique);
+			// To be safe add all created aux-vars to the transformula (if not needed they're removed again)
+			transformula.addAuxVars(mAuxVars);
 			mAuxVars.clear();
 			mAuxVarTerms.clear();
 		}
-		// store-expressions have been replace earlier
-		// It remains to replace select-expressions and uf-calls by introducing replacementVars
-		final Map<Term, Term> substitution = new HashMap<>();
-		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectShallow(newTerm, false)) {
-			final Term term = select.getSelectTerm();
-			substitution.put(term, getReplacementVar(term, transformula, assignedVars));
-		}
-		for (final String functionName : mUninterpretedFunctions) {
-			for (final Term term : new ApplicationTermFinder(functionName, true).findMatchingSubterms(newTerm)) {
-				substitution.put(term, getReplacementVar(term, transformula, assignedVars));
-			}
-		}
-		final Term replacedTerm = new Substitution(mManagedScript, substitution).transform(newTerm);
-		if (!SmtUtils.isArrayFree(replacedTerm)) {
-			throw new UnsupportedOperationException("The rewritten transformula still contains arrays!");
-		}
-		transformula.setFormula(SmtUtils.simplify(mManagedScript, replacedTerm, mServices, mSimplificationTechnique));
+		assert SmtUtils.isArrayFree(newTerm) : "The rewritten transformula still contains arrays!";
+		transformula.setFormula(SmtUtils.simplify(mManagedScript, newTerm, mServices, mSimplificationTechnique));
 		clearTransFormula(transformula);
-	}
-
-	private Term getReplacementVar(final Term term, final TransFormulaLR transformula, final Set<Term> assignedVars) {
-		if (!allVariablesAreInVars(term, transformula) && !allVariablesAreOutVars(term, transformula)) {
-			final TermVariable auxVar = mReplacementVarFactory.getOrConstructAuxVar("aux", term.getSort());
-			mAuxVars.add(auxVar);
-			return auxVar;
-		}
-		final Term definition = translateTermVariablesToDefinitions(mScript, transformula, term);
-		final IProgramVar var = mReplacementVarFactory.getOrConstuctReplacementVar(definition);
-		boolean isAssigned = false;
-		for (final TermVariable t : definition.getFreeVars()) {
-			if (assignedVars.contains(t)) {
-				isAssigned = true;
-				break;
-			}
-		}
-		final Term termVar = getFreshTermVar(definition);
-		if (!transformula.getInVars().containsKey(var)) {
-			transformula.addInVar(var, termVar);
-		}
-		if (!transformula.getOutVars().containsKey(var)) {
-			if (isAssigned) {
-				transformula.addOutVar(var, getFreshTermVar(definition));
-			} else {
-				transformula.addOutVar(var, termVar);
-			}
-		}
-
-		if (allVariablesAreInVars(term, transformula)) {
-			return transformula.getInVars().get(var);
-		} else {
-			return transformula.getOutVars().get(var);
-		}
 	}
 
 	/**
@@ -543,6 +495,84 @@ public class MapEliminator {
 		}
 		for (final TermVariable tv : auxVarsToRemove) {
 			transformula.removeAuxVar(tv);
+		}
+	}
+
+	/***
+	 * Replaces all "simple" select-expressions (without store) and uf-calls int the {@code term} with the replacement-
+	 * or aux-vars
+	 *
+	 * @param transformula
+	 * @param term
+	 * @param assignedVars
+	 * @return A new term that is free of select's and uf-calls
+	 */
+	private Term replaceReadExpressions(final TransFormulaLR transformula, final Term term,
+			final Set<Term> assignedVars) {
+		addReplacementVarsToTransFormula(transformula, assignedVars);
+		final Map<Term, Term> substitution = new HashMap<>();
+		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectShallow(term, false)) {
+			final Term selectTerm = select.getSelectTerm();
+			substitution.put(selectTerm, getReplacementVar(selectTerm, transformula));
+		}
+		for (final String functionName : mUninterpretedFunctions) {
+			for (final Term functionCall : new ApplicationTermFinder(functionName, true).findMatchingSubterms(term)) {
+				substitution.put(functionCall, getReplacementVar(functionCall, transformula));
+			}
+		}
+		return new Substitution(mManagedScript, substitution).transform(term);
+	}
+
+	/***
+	 * Adds all replacement-vars as in- and out-vars to the transformula.
+	 *
+	 * @param transformula
+	 * @param assignedVars
+	 */
+	private void addReplacementVarsToTransFormula(final TransFormulaLR transformula, final Set<Term> assignedVars) {
+		for (final ApplicationTermTemplate template : mFunctionsToIndices.getDomain()) {
+			for (final ArrayIndex index : mFunctionsToIndices.getImage(template)) {
+				final Term term = template.getTerm(index);
+				final IProgramVar var = mReplacementVarFactory.getOrConstuctReplacementVar(term);
+				boolean isAssigned = false;
+				for (final TermVariable t : term.getFreeVars()) {
+					if (assignedVars.contains(t)) {
+						isAssigned = true;
+						break;
+					}
+				}
+				final Term termVar = getFreshTermVar(term);
+				if (!transformula.getInVars().containsKey(var)) {
+					transformula.addInVar(var, termVar);
+				}
+				if (!transformula.getOutVars().containsKey(var)) {
+					if (isAssigned) {
+						transformula.addOutVar(var, getFreshTermVar(term));
+					} else {
+						transformula.addOutVar(var, termVar);
+					}
+				}
+			}
+		}
+	}
+
+	/***
+	 * @param term
+	 * @param transformula
+	 * @return
+	 */
+	private Term getReplacementVar(final Term term, final TransFormulaLR transformula) {
+		if (!allVariablesAreInVars(term, transformula) && !allVariablesAreOutVars(term, transformula)) {
+			final TermVariable auxVar = mReplacementVarFactory.getOrConstructAuxVar("aux", term.getSort());
+			mAuxVars.add(auxVar);
+			return auxVar;
+		}
+		final Term definition = translateTermVariablesToDefinitions(mScript, transformula, term);
+		final IProgramVar var = mReplacementVarFactory.getOrConstuctReplacementVar(definition);
+		if (allVariablesAreInVars(term, transformula)) {
+			return transformula.getInVars().get(var);
+		} else {
+			return transformula.getOutVars().get(var);
 		}
 	}
 
@@ -671,41 +701,6 @@ public class MapEliminator {
 			}
 		}
 		return SmtUtils.and(mScript, result);
-	}
-
-	private void processArrayHavocs(final TransFormulaLR transformula, final Set<Term> assignedVars) {
-		// Just different in- and out-vars for all arrays cells of the havoced arrays
-		for (final Term array : getHavocedArrays(transformula)) {
-			final SelectTemplate template = new SelectTemplate(array, mScript);
-			for (final ArrayIndex index : mFunctionsToIndices.getImage(template)) {
-				final Term term = template.getTerm(index);
-				final IProgramVar var = mReplacementVarFactory.getOrConstuctReplacementVar(term);
-				// Create for all indices different in- and out-vars if not existing
-				if (!transformula.getInVars().containsKey(var)) {
-					transformula.addInVar(var, getFreshTermVar(term));
-				}
-				if (!transformula.getOutVars().containsKey(var)) {
-					transformula.addOutVar(var, getFreshTermVar(term));
-				}
-			}
-		}
-	}
-
-	private Set<Term> getHavocedArrays(final TransFormulaLR transformula) {
-		final Set<Term> result = new HashSet<>();
-		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(transformula.getFormula().getFreeVars()));
-		for (final ApplicationTermTemplate template : mFunctionsToIndices.getDomain()) {
-			if (template.getIdentifier() instanceof TermVariable) {
-				final TermVariable array = (TermVariable) template.getIdentifier();
-				final IProgramVar var = mSymbolTable.getBoogieVar(array);
-				final Term inVar = transformula.getInVars().get(var);
-				final Term outVar = transformula.getOutVars().get(var);
-				if (inVar != outVar && !freeVars.contains(outVar)) {
-					result.add(array);
-				}
-			}
-		}
-		return result;
 	}
 
 	private List<Term> processIndexAssignment(final TransFormulaLR transformula, final Term assignedTerm,
@@ -944,8 +939,7 @@ public class MapEliminator {
 				transformula);
 	}
 
-	private Set<ArrayIndex> getInOutVarIndices(final ArrayIndex index, final TransFormulaLR transformula,
-			final Set<Term> assignedVars) {
+	private Set<ArrayIndex> getInOutVarIndices(final ArrayIndex index, final TransFormulaLR transformula) {
 		Set<List<Term>> lists = new HashSet<>();
 		lists.add(new ArrayList<Term>());
 		for (final Term t : index) {
