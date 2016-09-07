@@ -30,10 +30,6 @@
 
 package de.uni_freiburg.informatik.ultimate.core.model.translation;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 
 /**
@@ -44,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
  * @author Oleksii Saukh
  * @date 02.01.2012
  */
-@FunctionalInterface
 public interface IValuation {
 	/**
 	 * This method returns the Variable Values for current position on the failure path. How this is done is in the
@@ -53,11 +48,11 @@ public interface IValuation {
 	 * The method returns a map which maps from the variable name to the values. The values are modeled as
 	 * <code>Entry&lt;IBoogieType, List&lt;String&gt;&gt;</code>, where {@link IBoogieType} signals the type of the
 	 * Variable (so <code>Integer</code>, <code>Double</code> or <code>Array&lt;Integer&gt;</code>) and the List
-	 * represent the values of the single variable or the array.
+	 * represent the values of the single variable or the array. See also: {@link VariableValuesMap}.
 	 *
 	 * @param index
 	 *            the current position on the failure path.
 	 * @return the values as Strings for the variables.
 	 */
-	Map<String, Entry<IBoogieType, List<String>>> getValuesForFailurePathIndex(final int index);
+	VariableValuesMap getValuesForFailurePathIndex(final int index);
 }
