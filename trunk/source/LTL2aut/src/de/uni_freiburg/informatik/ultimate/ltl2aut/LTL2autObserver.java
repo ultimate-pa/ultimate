@@ -62,28 +62,27 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  * @author Langenfeld
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- *
  */
 public class LTL2autObserver implements IUnmanagedObserver {
-
+	
 	private static final String LTL_MARKER = "#LTLProperty:";
 	private static final String IRS_MARKER = "#IRS:";
-
+	
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 	private final ILogger mLogger;
-
+	
 	private String mInputFile;
 	private NWAContainer mNWAContainer;
 	private LTLPropertyCheck mCheck;
 	private BoogieSymbolTable mSymbolTable;
-
+	
 	public LTL2autObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		mServices = services;
 		mStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
-
+	
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
 		mNWAContainer = null;
@@ -91,7 +90,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		mSymbolTable = null;
 		mCheck = null;
 	}
-
+	
 	@Override
 	public void finish() throws Throwable {
 		// TODO: Change s.t. this plugin returns an NWA with Boogie code
@@ -117,29 +116,29 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			irs = getIRS(Arrays.copyOfRange(specification, 1, specification.length));
 			mCheck = new LTLPropertyCheck(ltlProperty, irs, null);
 		}
-
+		
 		final String ltl2baProperty = getLTL2BAProperty(ltlProperty);
 		final AstNode node = getNeverClaim(ltl2baProperty);
 		final CodeBlockFactory cbf = CodeBlockFactory.getFactory(mStorage);
 		final INestedWordAutomaton<CodeBlock, String> nwa = createNWAFromNeverClaim(node, irs, mSymbolTable, cbf);
 		mLogger.info("LTL Property is: " + prettyPrintProperty(irs, ltlProperty));
-
+		
 		mNWAContainer = new NWAContainer(nwa);
 		mCheck.annotate(mNWAContainer);
 	}
-
+	
 	private String getLTL2BAProperty(final String ltlProperty) {
 		String rtr = ltlProperty.toLowerCase();
 		rtr = rtr.replaceAll("f", "<>");
 		rtr = rtr.replaceAll("g", "[]");
 		rtr = rtr.replaceAll("x", "X");
 		rtr = rtr.replaceAll("u", "U");
-		rtr = rtr.replaceAll("r", "\\/");
+		rtr = rtr.replaceAll("r", "R");
 		rtr = rtr.replaceAll("<==>", "<->");
 		rtr = rtr.replaceAll("==>", "->");
 		return rtr;
 	}
-
+	
 	private String prettyPrintProperty(final Map<String, CheckableExpression> irs, final String property) {
 		String rtr = property;
 		for (final Entry<String, CheckableExpression> entry : irs.entrySet()) {
@@ -148,7 +147,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		}
 		return rtr;
 	}
-
+	
 	private String[] getSpecification() throws IOException {
 		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.LABEL_PROPERTYFROMFILE) && mInputFile != null) {
@@ -157,18 +156,18 @@ public class LTL2autObserver implements IUnmanagedObserver {
 				return property;
 			}
 		}
-
+		
 		mLogger.info("Using LTL specification from settings.");
 		final String property =
 				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferenceInitializer.LABEL_PPROPERTY);
 		return property.split("\n");
 	}
-
+	
 	private String[] extractPropertyFromFile() throws IOException {
 		final List<String> properties = new ArrayList<>();
 		final List<String> irs = new ArrayList<>();
 		readInputFile(properties, irs);
-
+		
 		if (properties.isEmpty()) {
 			mLogger.info("No LTL specification in input file.");
 			return new String[0];
@@ -186,7 +185,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			return rtr;
 		}
 	}
-
+	
 	private void readInputFile(final List<String> properties, final List<String> irs) throws IOException {
 		BufferedReader br;
 		String line = null;
@@ -207,7 +206,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			throw e;
 		}
 	}
-
+	
 	private AstNode getNeverClaim(final String property) throws Throwable {
 		try {
 			mLogger.debug("Parsing LTL property...");
@@ -217,7 +216,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			throw e;
 		}
 	}
-
+	
 	private Map<String, CheckableExpression> getIRS(final String[] entries) throws Throwable {
 		// TODO: finish
 		// mLogger.debug("Parsing mapping from AP to BoogieCode...");
@@ -247,7 +246,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		throw new UnsupportedOperationException("Unfinished");
 		// return aps;
 	}
-
+	
 	private INestedWordAutomaton<CodeBlock, String> createNWAFromNeverClaim(final AstNode neverclaim,
 			final Map<String, CheckableExpression> irs, final BoogieSymbolTable symbolTable, final CodeBlockFactory cbf)
 			throws Exception {
@@ -264,7 +263,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			throw new IllegalArgumentException(
 					"The CodeBlockFactory is missing. Did you run the RCFGBuilder before this plugin?");
 		}
-
+		
 		INestedWordAutomaton<CodeBlock, String> nwa;
 		mLogger.debug("Transforming NeverClaim to NestedWordAutomaton...");
 		try {
@@ -279,12 +278,12 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		}
 		return nwa;
 	}
-
+	
 	@Override
 	public boolean performedChanges() {
 		return false;
 	}
-
+	
 	@Override
 	public boolean process(final IElement root) throws Throwable {
 		if (root instanceof Unit) {
@@ -295,9 +294,9 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		}
 		return true;
 	}
-
+	
 	public NWAContainer getNWAContainer() {
 		return mNWAContainer;
 	}
-
+	
 }
