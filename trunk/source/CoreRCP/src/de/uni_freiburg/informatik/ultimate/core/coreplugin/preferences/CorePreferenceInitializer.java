@@ -118,11 +118,11 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	public static final String DEFAULT_VALUE_COLOR_FATAL = "255,85,85";
 
 	// Model manager
-	public static final String LABEL_MmDROP_MODELS = "Drop models when Ultimate exits";
-	public static final boolean VALUE_MmDROP_MODELS = true;
+	public static final String LABEL_DROP_MODELS = "Drop models when Ultimate exits";
+	public static final boolean VALUE_DROP_MODELS = true;
 
-	public static final String LABEL_MmTMPDIRECTORY = "Repository directory";
-	public static final String VALUE_MmTMPDIRECTORY = System.getProperty("java.io.tmpdir");
+	public static final String LABEL_TMP_DIRECTORY = "Repository directory";
+	public static final String VALUE_TMP_DIRECTORY = System.getProperty("java.io.tmpdir");
 
 	public static final String PREFID_ROOT = "ultimate.logging.root";
 	public static final String PREFID_CORE = "ultimate.logging.core";
@@ -143,7 +143,7 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 
 	public static final String DEFAULT_VALUE_ROOT_PREF = "DEBUG";
 	public static final String DEFAULT_VALUE_TOOLS_PREF = "WARN";
-	public static final String DEFAULT_VALUE_CORE_PREF = "WARN";
+	public static final String DEFAULT_VALUE_CORE_PREF = "INFO";
 	public static final String DEFAULT_VALUE_CONTROLLER_PREF = "INFO";
 	public static final String DEFAULT_VALUE_PLUGINS_PREF = "INFO";
 
@@ -201,9 +201,8 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 				new UltimatePreferenceItem<String>(LABEL_LOGFILE_DIR, VALUE_LOGFILE_DIR, PreferenceType.Directory),
 
 				// ModelManager
-				new UltimatePreferenceItem<Boolean>(LABEL_MmDROP_MODELS, VALUE_MmDROP_MODELS, PreferenceType.Boolean),
-				new UltimatePreferenceItem<String>(LABEL_MmTMPDIRECTORY, VALUE_MmTMPDIRECTORY,
-						PreferenceType.Directory),
+				new UltimatePreferenceItem<Boolean>(LABEL_DROP_MODELS, VALUE_DROP_MODELS, PreferenceType.Boolean),
+				new UltimatePreferenceItem<String>(LABEL_TMP_DIRECTORY, VALUE_TMP_DIRECTORY, PreferenceType.Directory),
 
 				new UltimatePreferenceItem<String>(LABEL_LOG4J_PATTERN, VALUE_LOG4J_PATTERN, PreferenceType.String),
 				new UltimatePreferenceItem<String>(LABEL_LOG4J_CONTROLLER_PATTERN, VALUE_LOG4J_CONTROLLER_PATTERN,

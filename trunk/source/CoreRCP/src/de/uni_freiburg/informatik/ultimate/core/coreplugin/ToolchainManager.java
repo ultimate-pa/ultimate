@@ -126,7 +126,7 @@ public class ToolchainManager {
 
 	private IModelManager createModelManager() {
 		final String tmp_dir = new RcpPreferenceProvider(Activator.PLUGIN_ID)
-				.getString(CorePreferenceInitializer.LABEL_MmTMPDIRECTORY);
+				.getString(CorePreferenceInitializer.LABEL_TMP_DIRECTORY);
 		return new PersistenceAwareModelManager(tmp_dir, mLogger);
 	}
 
