@@ -27,11 +27,15 @@
 package de.uni_freiburg.informatik.ultimate.cli;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.apache.commons.cli.ParseException;
 import org.eclipse.core.runtime.Platform;
@@ -278,18 +282,20 @@ public class CommandLineController implements IController<RunDefinition> {
 	private Predicate<String> getPluginFilter(final ICore<RunDefinition> core, final File toolchainFileOrDir) {
 		final ToolchainLocator locator = new ToolchainLocator(toolchainFileOrDir, core, mLogger);
 
+		final Set<String> allowedIds = new HashSet<>();
 		// all plugins in the toolchain are allowed
-		Predicate<String> rtr = locator.createFilterForAvailableTools();
-
+		allowedIds.addAll(locator.createFilterForAvailableTools());
 		// the the core is allowed
-		rtr = rtr.or(de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator.PLUGIN_ID::equalsIgnoreCase);
-
+		allowedIds.add(de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator.PLUGIN_ID);
 		// the current controller (aka, we) are allowed
-		rtr = rtr.or(getPluginID()::equalsIgnoreCase);
+		allowedIds.add(getPluginID());
+		// parser are allowed
+		Arrays.stream(core.getRegisteredUltimatePlugins()).filter(a -> a instanceof ISource).map(a -> a.getPluginID())
+				.forEach(allowedIds::add);
 
-		// TODO: parser are allowed
-
-		return rtr;
+		// convert to lower case and build matching predicate
+		final Set<String> lowerCaseIds = allowedIds.stream().map(a -> a.toLowerCase()).collect(Collectors.toSet());
+		return a -> lowerCaseIds.contains(a.toLowerCase());
 	}
 
 	private void printAvailableToolchains(final ICore<RunDefinition> core) {
