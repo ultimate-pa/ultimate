@@ -79,16 +79,10 @@ public class LTLXBAExecutor {
 		try {
 			return (AstNode) new Parser(new Lexer(file)).parse().value;
 		} catch (final Exception ex) {
-			final StringBuilder sb = new StringBuilder();
-			sb.append("Exception during parsing of LTLXBA output:");
-			sb.append(CoreUtil.getPlatformLineSeparator());
-			sb.append(ex.getMessage());
-			sb.append(CoreUtil.getPlatformLineSeparator());
-			sb.append("Tool said:");
-			sb.append(CoreUtil.getPlatformLineSeparator());
-			sb.append(toolOutput);
-			mLogger.fatal(sb.toString());
-			throw new Exception(sb.toString());
+			mLogger.fatal("Exception during parsing of LTLXBA output for formula " + ltlFormula, ex);
+			mLogger.fatal("Tool said:");
+			mLogger.fatal(toolOutput);
+			throw ex;
 		}
 	}
 	
