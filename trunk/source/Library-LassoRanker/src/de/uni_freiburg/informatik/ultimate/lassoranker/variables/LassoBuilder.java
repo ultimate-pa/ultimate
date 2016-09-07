@@ -179,16 +179,20 @@ public class LassoBuilder {
 	
 	/**
 	 * Run a few sanity checks
+	 * @param task task that run before construction of this lasso
 	 * @return false if something is fishy
 	 */
-	public boolean isSane() {
+	public boolean isSane(final String task) {
 		boolean sane = true;
 		for (final LassoUnderConstruction luc : mLassosUC) {
 			sane &= luc.getStem().auxVarsDisjointFromInOutVars();
+			assert sane : "inconsistent lasso after " + task + ": auxVarsDisjointFromInOutVars";
 			sane &= luc.getStem().allAreInOutAux(luc.getStem().getFormula().getFreeVars()) == null;
-
+			assert sane : "inconsistent lasso after " + task + ": allAreInOutAux";
 			sane &= luc.getLoop().auxVarsDisjointFromInOutVars();
+			assert sane : "inconsistent lasso after " + task + ": auxVarsDisjointFromInOutVars";
 			sane &= luc.getLoop().allAreInOutAux(luc.getLoop().getFormula().getFreeVars()) == null;
+			assert sane : "inconsistent lasso after " + task + ": allAreInOutAux";
 		}
 		return sane;
 	}
@@ -276,7 +280,7 @@ public class LassoBuilder {
 			mPreprocessingBenchmark.addPreprocessingData(
 						preprocessor.getDescription(), 
 						computeMaxDagSize());
-			assert isSane() : "lasso failed sanity check";
+			assert isSane(preprocessor.getClass().getSimpleName()) : "lasso failed sanity check";
 		}
 		
 	}

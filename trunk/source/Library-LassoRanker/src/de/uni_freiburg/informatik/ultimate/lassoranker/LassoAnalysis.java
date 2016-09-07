@@ -283,7 +283,7 @@ public class LassoAnalysis {
 		mLogger.info("Starting lasso preprocessing...");
 		final LassoBuilder lassoBuilder = new LassoBuilder(mLogger, mOldScript, mMgdScript, mStemTransition,
 				mLoopTransition, mPreferences.nlaHandling);
-		assert lassoBuilder.isSane();
+		assert lassoBuilder.isSane("initial lasso construction");
 		lassoBuilder.preprocess(getPreProcessors(lassoBuilder, mPreferences.overapproximateArrayIndexConnection),
 				getPreProcessors(lassoBuilder, false));
 
