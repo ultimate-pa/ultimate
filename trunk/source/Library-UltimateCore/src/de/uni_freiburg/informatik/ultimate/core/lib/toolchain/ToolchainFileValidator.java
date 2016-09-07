@@ -58,7 +58,10 @@ public class ToolchainFileValidator {
 
 	public RunDefinition createEmptyToolchain() {
 		final ObjectFactory objFac = new ObjectFactory();
-		return objFac.createRunDefinition();
+		final RunDefinition rtr = objFac.createRunDefinition();
+		rtr.setName("Unknown");
+		rtr.setToolchain(objFac.createToolchainListType());
+		return rtr;
 	}
 
 	/**
