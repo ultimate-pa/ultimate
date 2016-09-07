@@ -1105,6 +1105,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		try {
 			return (new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(services), nia,
 					NestedWord.nestedWord(word), false, false)).getResult();
+		} catch (final AutomataOperationCanceledException e) {
+			throw e;
 		} catch (final AutomataLibraryException e) {
 			throw new AssertionError(e);
 		}
