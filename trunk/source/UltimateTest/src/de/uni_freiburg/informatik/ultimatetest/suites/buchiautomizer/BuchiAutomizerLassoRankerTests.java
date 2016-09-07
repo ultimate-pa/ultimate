@@ -124,12 +124,14 @@ public class BuchiAutomizerLassoRankerTests extends AbstractBuchiAutomizerTestSu
 
 
 	private static final String[] BPL_TOOLCHAINS = {
-		"BuchiAutomizerBplWithBlockEncoding.xml",
+		"BuchiAutomizerBpl.xml",
+//		"BuchiAutomizerBplWithBlockEncoding.xml",
 //		"BuchiAutomizerBplInlineWithBlockEncoding.xml",
 	};
 
 	private static final String[] C_TOOLCHAINS = {
-		"BuchiAutomizerCWithBlockEncoding.xml",
+		"BuchiAutomizerC.xml",
+//		"BuchiAutomizerCWithBlockEncoding.xml",
 //		"BuchiAutomizerCInlineWithBlockEncoding.xml",
 	};
 
