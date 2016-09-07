@@ -1,5 +1,6 @@
+//#Safe
 //////////////////////////////////////////////////////////////////
-/////////// testing the property AG(x==0 or x!= 0)
+/////////// testing the property AG(x==0 or x!=0)
 // 1 while(*) {
 // 2   x := 1;
 // 3   n := *;
@@ -25,6 +26,7 @@ procedure Test()
 }
 
 procedure encT(x : int, n : int) returns (ret : bool)
+ensures x==1 ==> ret != false;
 {
 	var x_local : int;
 	var n_local : int;
@@ -95,6 +97,7 @@ procedure encT(x : int, n : int) returns (ret : bool)
 
 // -------
 procedure encLT(x : int, n : int) returns (ret : bool)
+ensures (x == 0 || x == 1) ==> ret != false;
 {
 	var x_local : int;
 	var n_local : int;
@@ -116,6 +119,7 @@ procedure encLT(x : int, n : int) returns (ret : bool)
 }
 
 procedure encLLT(x : int, n : int) returns (ret : bool)
+ensures x == 0 <==> ret !=false;
 {
 	if (x == 0) {
 		ret := true;
@@ -125,8 +129,9 @@ procedure encLLT(x : int, n : int) returns (ret : bool)
 }
 
 procedure encRLT(x : int, n : int) returns (ret : bool)
+ensures x == 1 <==> ret !=false;
 {
-	if (x != 0) {
+	if (x == 1) {
 		ret := true;
 	} else {
 		ret := false;

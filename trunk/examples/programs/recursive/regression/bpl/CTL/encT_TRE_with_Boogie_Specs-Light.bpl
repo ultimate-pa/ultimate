@@ -1,3 +1,4 @@
+//#Safe
 //////////////////////////////////////////////////////////////////
 /////////// testing the property AG(x==0 or x!=0)
 // 1 while(*) {
@@ -38,12 +39,6 @@ ensures x==1 ==> ret != false;
 	havoc star;
 	while(star) {
 
-		// BLOCK 1
-		call blockCall := encLT(x_local, n_local);
-		if (!blockCall) { ret := false; return; }
-		havoc star;
-		if (star) {	ret := true; return;}
-		// END BLOCK 1
 	
 		x_local := 1;
 		// BLOCK 1
@@ -55,20 +50,8 @@ ensures x==1 ==> ret != false;
 		
 		havoc n_local;
 		while (n_local > 0) {
-			// BLOCK 1
-			call blockCall := encLT(x_local, n_local);
-			if (!blockCall) { ret := false; return; }
-			havoc star;
-			if (star) {	ret := true; return;}
-			// END BLOCK 1
 		
 			n_local := n_local -1;
-			// BLOCK 1
-			call blockCall := encLT(x_local, n_local);
-			if (!blockCall) { ret := false; return; }
-			havoc star;
-			if (star) {	ret := true; return;}
-			// END BLOCK 1
 			
 		}
 		
@@ -84,12 +67,6 @@ ensures x==1 ==> ret != false;
 	}
 	while (true) 
 	{
-		// BLOCK 1
-		call blockCall := encLT(x_local, n_local);
-		if (!blockCall) { ret := false; return; }
-		havoc star;
-		if (star) {	ret := true; return;}
-		// END BLOCK 1
 
 	}
 }

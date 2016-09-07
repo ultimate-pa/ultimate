@@ -1,4 +1,4 @@
- 
+//#Safe 
 type bStack = [int][int]bool;
 type iStack = [int][int]int;
 type iArray = [int]int;
