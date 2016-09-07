@@ -259,7 +259,7 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 						Arrays.asList(beforeCall), call.getLocalVarsAssignment(), oldVarsAssignment, globalVarsAssignment,
 						tfForCodeBlocks, logger, services, modifiableGlobalsOfEndProcedure, 
 						xnfConversionTechnique, simplificationTechnique, symbolTable, 
-						nameStartProcedure, call.getPrecedingProcedure(), call.getCallStatement().getMethodName(), nameEndProcedure);
+						nameStartProcedure, call.getPrecedingProcedure(), call.getCallStatement().getMethodName(), nameEndProcedure, modGlobVarManager);
 			} else {
 				assert beforeCall == null;
 				final String proc = call.getCallStatement().getMethodName();

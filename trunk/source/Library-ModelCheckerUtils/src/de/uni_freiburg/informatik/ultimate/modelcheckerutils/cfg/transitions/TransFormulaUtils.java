@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -414,7 +415,8 @@ public class TransFormulaUtils {
 			final Set<IProgramVar> modifiableGlobalsOfEndProcedure, 
 			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique, 
 			final Boogie2SmtSymbolTable symbolTable,
-			final String procAtStart, final String procBeforeCall, final String procAfterCall, final String procAtEnd) {
+			final String procAtStart, final String procBeforeCall, final String procAfterCall, final String procAtEnd,
+			final ModifiableGlobalVariableManager modGlobVarManager) {
 		assert procAtStart != null : "proc at start must not be null";
 		if (!procAtStart.equals(procBeforeCall)) {
 			throw new UnsupportedOperationException("proc change before call");
@@ -449,13 +451,22 @@ public class TransFormulaUtils {
 				
 			}
 			callAndBeforeTF = TransFormulaBuilder.constructCopy(composition, Collections.emptySet(), outVarsToRemove, mgdScript);
-			// now we havoc all oldvars that are not modified by the callee
-			// TODO: Rename the ones that are not modified by the caller
-			for (final Entry<String, IProgramVar> entry : symbolTable.getOldVars().entrySet()) {
-				if (!oldVarsAssignment.getAssignedVars().contains(entry.getValue())) {
-					callAndBeforeTF.mOutVars.put(entry.getValue(), mgdScript.constructFreshCopy(entry.getValue().getTermVariable()));
+			// now we havoc all oldvars that are modifiable by the caller 
+			// but not modifiable y the callee
+			final Set<IProgramVar> modifiableByCaller = modGlobVarManager.getOldVarsAssignment(procBeforeCall).getAssignedVars();
+			for (final IProgramVar oldVar : modifiableByCaller) {
+				if (!oldVarsAssignment.getAssignedVars().contains(oldVar)) {
+					callAndBeforeTF.mOutVars.put(oldVar, mgdScript.constructFreshCopy(oldVar.getTermVariable()));
 				}
 			}
+			
+//			// now we havoc all oldvars that are not modified by the callee
+//			// TODO: Rename the ones that are not modified by the caller
+//			for (final Entry<String, IProgramVar> entry : symbolTable.getOldVars().entrySet()) {
+//				if (!oldVarsAssignment.getAssignedVars().contains(entry.getValue())) {
+//					callAndBeforeTF.mOutVars.put(entry.getValue(), mgdScript.constructFreshCopy(entry.getValue().getTermVariable()));
+//				}
+//			}
 		}
 
 		final UnmodifiableTransFormula globalVarAssignAndAfterTF;
@@ -582,7 +593,7 @@ public class TransFormulaUtils {
 					isInterfaceVariable = true;
 				} else {
 					// has to be renamed to non-old var
-					throw new AssertionError("not yet implemented");
+					throw new AssertionError("oldvars not yet implemented");
 				}
 			} else {
 				if (oldVarsAssignment.getInVars().containsKey(bv)) {

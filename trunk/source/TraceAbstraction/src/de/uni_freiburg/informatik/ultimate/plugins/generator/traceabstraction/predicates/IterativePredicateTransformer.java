@@ -571,7 +571,7 @@ public class IterativePredicateTransformer {
 								summaryAfterPendingCall, mLogger, mServices, modifiableGlobalsOfEndProcedure, 
 								mXnfConversionTechnique, mSimplificationTechnique, mSymbolTable, 
 								trace.getSymbol(start).getPrecedingProcedure(), trace.getSymbol(i).getPrecedingProcedure(), 
-								trace.getSymbol(i).getSucceedingProcedure(), nameEndProcedure);
+								trace.getSymbol(i).getSucceedingProcedure(), nameEndProcedure, mModifiedGlobals);
 					}
 				} else {
 					final UnmodifiableTransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
@@ -583,7 +583,7 @@ public class IterativePredicateTransformer {
 							mLogger, mServices, modifiableGlobalsOfEndProcedure, mXnfConversionTechnique, 
 							mSimplificationTechnique, mSymbolTable, 
 							trace.getSymbol(start).getPrecedingProcedure(), trace.getSymbol(i).getPrecedingProcedure(), 
-							trace.getSymbol(i).getSucceedingProcedure(), nameEndProcedure);
+							trace.getSymbol(i).getSucceedingProcedure(), nameEndProcedure, mModifiedGlobals);
 				}
 			} else if (trace.getSymbol(i) instanceof Return) {
 				// Nothing to do
