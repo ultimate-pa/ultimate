@@ -61,7 +61,7 @@
 		<sonar.exclusions>
 			src/jdd/**,
 			src/net/sf/javabdd/**,
-			src/com.github.jhoenicke.javacup/**,
+			src/com/github/jhoenicke/javacup/**,
 			src/org/apache/commons/cli/**,
 			src/srParse/ReqLexer.java,
 			src/srParse/ReqParser.java,
