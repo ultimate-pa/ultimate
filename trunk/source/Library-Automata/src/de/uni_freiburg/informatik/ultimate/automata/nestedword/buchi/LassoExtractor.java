@@ -37,14 +37,32 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class LassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
-	
+/**
+ * Extracts lasso words from an {@link INestedWordAutomatonSimple}.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
+public final class LassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
 	
 	private final List<NestedLassoRun<LETTER, STATE>> mNestedLassoRuns;
 	private final List<NestedLassoWord<LETTER>> mNestedLassoWords;
 	
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
 	public LassoExtractor(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
@@ -53,11 +71,11 @@ public class LassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 		if (mOperand instanceof NestedWordAutomatonReachableStates) {
 			mReach = (NestedWordAutomatonReachableStates<LETTER, STATE>) mOperand;
 		} else {
-			mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mOperand);
+			mReach = new NestedWordAutomatonReachableStates<>(mServices, mOperand);
 		}
 		mReach.getOrComputeAcceptingComponents();
 		mNestedLassoRuns = mReach.getOrComputeAcceptingComponents().getAllNestedLassoRuns();
-		mNestedLassoWords = new ArrayList<NestedLassoWord<LETTER>>(mNestedLassoRuns.size());
+		mNestedLassoWords = new ArrayList<>(mNestedLassoRuns.size());
 		if (mNestedLassoRuns.isEmpty() && mReach.getOrComputeAcceptingComponents().getNestedLassoRun() == null) {
 			assert (new BuchiIsEmpty<LETTER, STATE>(mServices, mReach)).getResult();
 		} else {
@@ -89,8 +107,7 @@ public class LassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
 	

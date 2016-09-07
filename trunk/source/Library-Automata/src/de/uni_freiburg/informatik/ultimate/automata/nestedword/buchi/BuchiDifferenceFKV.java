@@ -35,80 +35,86 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IState
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-
-public class BuchiDifferenceFKV<LETTER,STATE> extends AbstractBuchiDifference<LETTER, STATE> {
-	private BuchiComplementFKVNwa<LETTER,STATE> mSndComplemented;
+/**
+ * Buchi difference "<tt>FKV</tt>".
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
+public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDifference<LETTER, STATE> {
+	private BuchiComplementFKVNwa<LETTER, STATE> mSndComplemented;
 	
 	/**
-	 * Creates a PowersetDeterminizer.
+	 * Constructor which creates a PowersetDeterminizer.
 	 * 
-	 * @param services Ultimate services
-	 * @param stateFactory state factory used by PowersetDeterminizer
-	 * @param fstOperand first operand
-	 * @param sndOperand second operand
-	 * @throws AutomataLibraryException if construction fails
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory used by PowersetDeterminizer
+	 * @param fstOperand
+	 *            first operand
+	 * @param sndOperand
+	 *            second operand
+	 * @throws AutomataLibraryException
+	 *             if construction fails
 	 */
-	public BuchiDifferenceFKV(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand)
-					throws AutomataLibraryException {
-		/**
-		 * TODO Christian 2016-08-12: Is it really intended to use the state
-		 *      factory of the first operand instead of the one passed in the
-		 *      constructor here?
-		 */
-		super(services, fstOperand.getStateFactory(), fstOperand, sndOperand);
-		final IStateDeterminizer<LETTER, STATE> stateDeterminizer =
-				new PowersetDeterminizer<LETTER,STATE>(sndOperand, true, stateFactory);
-		mLogger.info(startMessage());
-		constructResult(stateDeterminizer, Integer.MAX_VALUE, FkvOptimization.HeiMat2);
-		mLogger.info(exitMessage());
+	public BuchiDifferenceFKV(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
+		this(services, fstOperand.getStateFactory(), fstOperand, sndOperand,
+				new PowersetDeterminizer<>(sndOperand, true, stateFactory), FkvOptimization.HeiMat2, Integer.MAX_VALUE);
 	}
 	
 	/**
-	 * Constructor with state determinizer.
+	 * Full constructor with state determinizer.
 	 * 
-	 * @param services Ultimate services
-	 * @param stateFactory state factory
-	 * @param fstOperand first operand
-	 * @param sndOperand second operand
-	 * @param stateDeterminizer state determinizer
-	 * @param optimization optimization parameter
-	 * @param userDefinedMaxRank user defined max. rank
-	 * @throws AutomataLibraryException if construction fails
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param fstOperand
+	 *            first operand
+	 * @param sndOperand
+	 *            second operand
+	 * @param stateDeterminizer
+	 *            state determinizer
+	 * @param optimization
+	 *            optimization parameter
+	 * @param userDefinedMaxRank
+	 *            user defined max. rank
+	 * @throws AutomataLibraryException
+	 *             if construction fails
 	 */
-	public BuchiDifferenceFKV(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
-			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
-			final String optimization,
-			final int userDefinedMaxRank)
-					throws AutomataLibraryException {
+	public BuchiDifferenceFKV(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final FkvOptimization optimization,
+			final int userDefinedMaxRank) throws AutomataLibraryException {
 		super(services, stateFactory, fstOperand, sndOperand);
-		mLogger.info(startMessage());
-		constructResult(stateDeterminizer, userDefinedMaxRank,
-				FkvOptimization.valueOf(optimization));
-		mLogger.info(exitMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		constructResult(stateDeterminizer, userDefinedMaxRank, optimization);
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 	
-	private void constructResult(
-			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
-			final int userDefinedMaxRank,
-			final FkvOptimization optimization)
-					throws AutomataLibraryException {
-		mSndComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(
-				mServices, mSndOperand, stateDeterminizer, mStateFactory,
+	private void constructResult(final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
+			final int userDefinedMaxRank, final FkvOptimization optimization) throws AutomataLibraryException {
+		mSndComplemented = new BuchiComplementFKVNwa<>(mServices, mSndOperand, stateDeterminizer, mStateFactory,
 				optimization, userDefinedMaxRank);
-		
 		constructDifferenceFromComplement();
 	}
 	
 	public int getHighestRank() {
 		return mSndComplemented.getHighesRank();
 	}
-		
+	
 	@Override
 	public String operationName() {
 		return "buchiDifferenceFKV";
@@ -121,16 +127,11 @@ public class BuchiDifferenceFKV<LETTER,STATE> extends AbstractBuchiDifference<LE
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". First operand "
-				+ mFstOperand.sizeInformation() + ". Second operand "
-				+ mSndOperand.sizeInformation() + " Result "
-				+ mResult.sizeInformation()
-				+ " Complement of second has " + mSndComplemented.size()
-				+ " states "
-				+ mSndComplemented.getPowersetStates() + " powerset states"
-				+ mSndComplemented.getRankStates() + " rank states"
-				+ " the highest rank that occured is "
-				+ mSndComplemented.getHighesRank();
+		return "Finished " + operationName() + ". First operand " + mFstOperand.sizeInformation() + " Second operand "
+				+ mSndOperand.sizeInformation() + " Result " + mResult.sizeInformation()
+				+ " Complement of second has " + mSndComplemented.size() + " states "
+				+ mSndComplemented.getPowersetStates() + " powerset states" + mSndComplemented.getRankStates()
+				+ " rank states. The highest rank that occured is " + mSndComplemented.getHighesRank();
 	}
 	
 	@Override

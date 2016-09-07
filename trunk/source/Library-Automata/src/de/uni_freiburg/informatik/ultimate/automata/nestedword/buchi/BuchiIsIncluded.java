@@ -37,76 +37,92 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * Operation that checks if the language of the first Buchi automaton is
  * included in the language of the second Buchi automaton.
  * 
- * @author heizmann@informatik.uni-freiburg.de
- * 
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LETTER,STATE> {
-
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand1;
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand2;
-
+public final class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
+	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
+	
 	private final Boolean mResult;
-
+	
 	private final NestedLassoRun<LETTER, STATE> mCounterexample;
-
+	
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param fstOperand
+	 *            first operand
+	 * @param sndOperand
+	 *            second operand
+	 * @throws AutomataLibraryException
+	 *             if construction fails
+	 */
 	public BuchiIsIncluded(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa1,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa2)
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand)
 			throws AutomataLibraryException {
 		super(services);
-		mOperand1 = nwa1;
-		mOperand2 = nwa2;
-		mLogger.info(startMessage());
-
+		mFstOperand = fstOperand;
+		mSndOperand = sndOperand;
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		
 		final INestedWordAutomaton<LETTER, STATE> sndComplement = (new BuchiComplementFKV<LETTER, STATE>(
-				mServices, stateFactory, mOperand2)).getResult();
-		final INestedWordAutomaton<LETTER, STATE> difference = (new BuchiIntersectDD<LETTER, STATE>(
-				mServices, mOperand1, sndComplement, true)).getResult();
-		final BuchiIsEmpty<LETTER, STATE> emptinessCheck = new BuchiIsEmpty<LETTER, STATE>(
-				mServices, difference);
-
+				mServices, stateFactory, mSndOperand)).getResult();
+		final INestedWordAutomaton<LETTER, STATE> difference =
+				(new BuchiIntersectDD<LETTER, STATE>(mServices, mFstOperand, sndComplement, true)).getResult();
+		final BuchiIsEmpty<LETTER, STATE> emptinessCheck = new BuchiIsEmpty<>(mServices, difference);
+		
 		mResult = emptinessCheck.getResult();
 		mCounterexample = emptinessCheck.getAcceptingNestedLassoRun();
-		mLogger.info(exitMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
-
+	
 	@Override
 	public String operationName() {
-		return "isIncluded";
+		return "BuchiIsIncluded";
 	}
-
+	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Language is "
-				+ (mResult ? "" : "not ") + "included";
+		return "Finished " + operationName() + ". Language is " + (mResult ? "" : "not ") + "included";
 	}
 	
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
-		return mOperand1;
+		return mFstOperand;
 	}
 	
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
-		return mOperand2;
+		return mSndOperand;
 	}
-
+	
 	@Override
 	public Boolean getResult() {
 		return mResult;
 	}
-
+	
 	public NestedLassoRun<LETTER, STATE> getCounterexample() {
 		return mCounterexample;
 	}
-
+	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
-
 }

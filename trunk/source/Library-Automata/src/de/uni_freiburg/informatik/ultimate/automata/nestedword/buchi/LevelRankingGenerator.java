@@ -36,30 +36,45 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 /**
  * Builder used by buchiComplementFKV to obtain TightLevelRankingStateGenerators.
  * 
- * @author Matthias Heizmann
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
  * @param <STATE>
  *            state type
+ * @param <CONSTRAINT>
+ *            constraint type
  */
 public abstract class LevelRankingGenerator<LETTER, STATE, CONSTRAINT extends LevelRankingConstraint<LETTER, STATE>> {
-	
 	protected final AutomataLibraryServices mServices;
 	protected final ILogger mLogger;
 	protected final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	protected final int mUserDefinedMaxRank;
 	
-	public LevelRankingGenerator(
-			final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand,
-			final int userDefinedMaxRank) {
-		super();
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @param userDefinedMaxRank
+	 *            user-defined maximal rank
+	 */
+	public LevelRankingGenerator(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand, final int userDefinedMaxRank) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
 		mUserDefinedMaxRank = userDefinedMaxRank;
 	}
 	
+	/**
+	 * @param constraint
+	 *            The constraint.
+	 * @param predecessorIsSubsetComponent
+	 *            {@code true} iff the predecessor is of subset component type
+	 * @return level rankings
+	 */
 	public abstract Collection<LevelRankingState<LETTER, STATE>> generateLevelRankings(CONSTRAINT constraint,
 			boolean predecessorIsSubsetComponent);
 }

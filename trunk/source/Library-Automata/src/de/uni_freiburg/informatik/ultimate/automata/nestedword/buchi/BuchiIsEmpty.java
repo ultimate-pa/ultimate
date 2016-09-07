@@ -39,40 +39,58 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
  * Class that provides the Buchi emptiness check for nested word automata.
  * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author wuxio
+ * @version 2010-12-18
  * @param <LETTER>
  *            Symbol. Type of the symbols used as alphabet.
  * @param <STATE>
  *            Content. Type of the labels (the content) of the automata states.
- * @version 2010-12-18
  */
-public class BuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
-	INestedWordAutomatonSimple<LETTER, STATE> mNwa;
-	NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
-	AcceptingComponentsAnalysis<LETTER, STATE> mSccs;
-	final Boolean mResult;
+public final class BuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
+	private AcceptingComponentsAnalysis<LETTER, STATE> mSccs;
+	private final Boolean mResult;
 	
-	public BuchiIsEmpty(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataOperationCanceledException {
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
+	public BuchiIsEmpty(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		super(services);
-		mNwa = nwa;
-		mLogger.info(startMessage());
+		mOperand = operand;
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
 		try {
-			if (mNwa instanceof NestedWordAutomatonReachableStates) {
-				mReach = (NestedWordAutomatonReachableStates<LETTER, STATE>) mNwa;
+			if (mOperand instanceof NestedWordAutomatonReachableStates) {
+				mReach = (NestedWordAutomatonReachableStates<LETTER, STATE>) mOperand;
 			} else {
-				mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mNwa);
+				mReach = new NestedWordAutomatonReachableStates<>(mServices, mOperand);
 			}
 			mSccs = mReach.getOrComputeAcceptingComponents();
 			mResult = mSccs.buchiIsEmpty();
 		} catch (final AutomataOperationCanceledException oce) {
 			throw new AutomataOperationCanceledException(getClass());
 		}
-		mLogger.info(exitMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 	
 	@Override
 	public String operationName() {
-		return "buchiIsEmpty";
+		return "BuchiIsEmpty";
 	}
 	
 	@Override
@@ -82,7 +100,7 @@ public class BuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE
 	
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
-		return mNwa;
+		return mOperand;
 	}
 	
 	@Override
@@ -90,20 +108,27 @@ public class BuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE
 		return mResult;
 	}
 	
+	/**
+	 * @return An accepting nested lasso run.
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
 	public NestedLassoRun<LETTER, STATE> getAcceptingNestedLassoRun() throws AutomataOperationCanceledException {
 		if (mResult) {
-			mLogger.info("There is no accepting nested lasso run");
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("There is no accepting nested lasso run");
+			}
 			return null;
 		} else {
-			mLogger.info("Starting construction of run");
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("Starting construction of run");
+			}
 			return mReach.getOrComputeAcceptingComponents().getNestedLassoRun();
 		}
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
-	
 }

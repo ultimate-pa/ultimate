@@ -32,32 +32,61 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.AbstractIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
+/**
+ * Buchi intersect with double deckers.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE> state type
+ */
 public class BuchiIntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE> {
-
+	/**
+	 * Constructor which does not minimize the result.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param fstOperand
+	 *            first operand
+	 * @param sndOperand
+	 *            second operand
+	 * @throws AutomataLibraryException
+	 *             if construction fails
+	 */
 	public BuchiIntersectDD(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa)
-			throws AutomataLibraryException {
-		super(services, true, false, fstNwa, sndNwa);
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
+		this(services, fstOperand, sndOperand, false);
 	}
-
+	
+	/**
+	 * Full constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param fstNwa
+	 *            first operand
+	 * @param sndNwa
+	 *            second operand
+	 * @param minimizeResult
+	 *            {@code true} iff result is minimized
+	 * @throws AutomataLibraryException
+	 *             if construction fails
+	 */
 	public BuchiIntersectDD(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa,
-			final boolean minimizeResult)
+			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa, final boolean minimizeResult)
 			throws AutomataLibraryException {
 		super(services, true, minimizeResult, fstNwa, sndNwa);
 	}
-
+	
 	@Override
 	public String operationName() {
-		return "buchiIntersectDD";
+		return "BuchiIntersectDD";
 	}
-
+	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
-
 }

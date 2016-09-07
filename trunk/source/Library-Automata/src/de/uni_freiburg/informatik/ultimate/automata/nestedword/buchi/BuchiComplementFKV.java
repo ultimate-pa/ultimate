@@ -68,7 +68,6 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	private final FkvOptimization mOptimization;
 	
 	/**
-	 * /**
 	 * Extended constructor.
 	 * 
 	 * @param services
@@ -244,7 +243,7 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	
 	@Override
 	public String operationName() {
-		return "buchiComplementFKV";
+		return "BuchiComplementFKV";
 	}
 	
 	@Override

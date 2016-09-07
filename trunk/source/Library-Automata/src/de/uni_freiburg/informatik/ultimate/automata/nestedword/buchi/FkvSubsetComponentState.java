@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
@@ -34,23 +34,22 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * Represents a state of the subset component.
  * 
- * @author Matthias Heizmann
- * 
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class FkvSubsetComponentState<LETTER, STATE> implements IFkvState<LETTER, STATE> {
-	
 	private final DeterminizedState<LETTER, STATE> mDeterminizedState;
 	private final HashRelation<StateWithRankInfo<STATE>, StateWithRankInfo<STATE>> mDown2Up;
 	
-
 	FkvSubsetComponentState(final DeterminizedState<LETTER, STATE> detState) {
 		mDeterminizedState = detState;
 		mDown2Up = new HashRelation<>();
-		for (final STATE down : detState.getDownStates()) {
-			for (final STATE up : detState.getUpStates(down)) {
-				mDown2Up.addPair(new StateWithRankInfo<STATE>(down), new StateWithRankInfo<STATE>(up));
+		for (final STATE downState : detState.getDownStates()) {
+			for (final STATE upState : detState.getUpStates(downState)) {
+				mDown2Up.addPair(new StateWithRankInfo<STATE>(downState), new StateWithRankInfo<STATE>(upState));
 			}
 		}
 	}
@@ -58,18 +57,17 @@ public class FkvSubsetComponentState<LETTER, STATE> implements IFkvState<LETTER,
 	public DeterminizedState<LETTER, STATE> getDeterminizedState() {
 		return mDeterminizedState;
 	}
-
+	
 	@Override
 	public Set<StateWithRankInfo<STATE>> getDownStates() {
 		return mDown2Up.getDomain();
 	}
-
+	
 	@Override
-	public Iterable<StateWithRankInfo<STATE>> getUpStates(
-			final StateWithRankInfo<STATE> downState) {
+	public Iterable<StateWithRankInfo<STATE>> getUpStates(final StateWithRankInfo<STATE> downState) {
 		return mDown2Up.getImage(downState);
 	}
-
+	
 	@Override
 	public String toString() {
 		return mDeterminizedState.toString();
@@ -79,7 +77,7 @@ public class FkvSubsetComponentState<LETTER, STATE> implements IFkvState<LETTER,
 	public int hashCode() {
 		return mDeterminizedState.hashCode();
 	}
-
+	
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -91,7 +89,7 @@ public class FkvSubsetComponentState<LETTER, STATE> implements IFkvState<LETTER,
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final FkvSubsetComponentState other = (FkvSubsetComponentState) obj;
+		final FkvSubsetComponentState<?, ?> other = (FkvSubsetComponentState<?, ?>) obj;
 		if (mDeterminizedState == null) {
 			if (other.mDeterminizedState != null) {
 				return false;
@@ -101,10 +99,4 @@ public class FkvSubsetComponentState<LETTER, STATE> implements IFkvState<LETTER,
 		}
 		return true;
 	}
-	
-
-	
-	
-
-
 }

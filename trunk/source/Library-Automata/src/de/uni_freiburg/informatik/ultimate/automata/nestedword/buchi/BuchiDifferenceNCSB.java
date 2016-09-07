@@ -32,32 +32,48 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-
-public class BuchiDifferenceNCSB<LETTER,STATE> extends AbstractBuchiDifference<LETTER, STATE> {
-	private BuchiComplementNCSBNwa<LETTER,STATE> mSndComplemented;
+/**
+ * Buchi difference "<tt>NCSB</tt>".
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
+public final class BuchiDifferenceNCSB<LETTER, STATE> extends AbstractBuchiDifference<LETTER, STATE> {
+	private BuchiComplementNCSBNwa<LETTER, STATE> mSndComplemented;
 	
 	/**
 	 * Constructor.
 	 * 
-	 * @param services Ultimate services
-	 * @param stateFactory state factory
-	 * @param fstOperand first operand
-	 * @param sndOperand second operand
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param fstOperand
+	 *            first operand
+	 * @param sndOperand
+	 *            second operand
+	 * @throws AutomataLibraryException
+	 *             if construction fails
 	 */
-	public BuchiDifferenceNCSB(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER,STATE> sndOperand
-			) throws AutomataLibraryException {
+	public BuchiDifferenceNCSB(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services, stateFactory, fstOperand, sndOperand);
-		mLogger.info(startMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
 		constructResult();
-		mLogger.info(exitMessage());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 	
 	private void constructResult() throws AutomataLibraryException {
-		mSndComplemented = new BuchiComplementNCSBNwa<LETTER, STATE>(
-				mServices, mSndOperand, mStateFactory);
+		mSndComplemented = new BuchiComplementNCSBNwa<>(mServices, mSndOperand, mStateFactory);
 		constructDifferenceFromComplement();
 	}
 	
@@ -70,7 +86,7 @@ public class BuchiDifferenceNCSB<LETTER,STATE> extends AbstractBuchiDifference<L
 	public BuchiComplementNCSBNwa<LETTER, STATE> getSndComplemented() {
 		return mSndComplemented;
 	}
-
+	
 	@Override
 	public String operationName() {
 		return "buchiDifferenceBS";

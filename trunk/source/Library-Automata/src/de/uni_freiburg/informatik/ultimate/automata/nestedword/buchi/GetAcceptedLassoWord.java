@@ -29,25 +29,41 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class GetAcceptedLassoWord<LETTER, STATE> extends UnaryNwaOperation<LETTER,STATE> {
-
-	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+/**
+ * Returns an accepted lasso word for a given {@link INestedWordAutomatonSimple}.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
+public final class GetAcceptedLassoWord<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedLassoWord<LETTER> mAcceptedWord;
-
+	
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
 	public GetAcceptedLassoWord(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
-		final BuchiIsEmpty<LETTER, STATE> isEmpty = new BuchiIsEmpty<LETTER, STATE>(mServices, operand);
+		final BuchiIsEmpty<LETTER, STATE> isEmpty = new BuchiIsEmpty<>(mServices, operand);
 		if (isEmpty.getResult()) {
-			throw new IllegalArgumentException(
-					"unable to get word from emtpy language");
+			throw new IllegalArgumentException("unable to get word from emtpy language");
 		} else {
 			mAcceptedWord = isEmpty.getAcceptingNestedLassoRun().getNestedLassoWord();
 		}
@@ -58,28 +74,25 @@ public class GetAcceptedLassoWord<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-
+	
 	@Override
 	public NestedLassoWord<LETTER> getResult() {
 		return mAcceptedWord;
 	}
-
+	
 	@Override
 	public String operationName() {
-		return "getAcceptedLassoWord";
+		return "GetAcceptedLassoWord";
 	}
-
+	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Length of stem: "
-				+ mAcceptedWord.getStem().length() + " Length of loop:"
-				+ mAcceptedWord.getLoop().length();
+		return "Finished " + operationName() + ". Length of stem: " + mAcceptedWord.getStem().length()
+				+ " Length of loop:" + mAcceptedWord.getLoop().length();
 	}
-
+	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
-
 }

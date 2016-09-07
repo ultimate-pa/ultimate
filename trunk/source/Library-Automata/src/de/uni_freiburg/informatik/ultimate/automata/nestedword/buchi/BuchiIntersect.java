@@ -38,38 +38,74 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
-	
+/**
+ * Buchi intersection.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
+public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
-	private BuchiIntersectNwa<LETTER, STATE> mIntersect;
 	private NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private final IStateFactory<STATE> mStateFactory;
 	
+	/**
+	 * Constructor which uses the state factory of the first operand.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param fstOperand
+	 *            first operand
+	 * @param sndOperand
+	 *            second operand
+	 * @throws AutomataLibraryException
+	 *             if construction fails
+	 */
 	public BuchiIntersect(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
-		super(services);
-		mFstOperand = fstOperand;
-		mSndOperand = sndOperand;
-		mStateFactory = mFstOperand.getStateFactory();
-		doIntersect();
+		this(services, fstOperand, sndOperand, fstOperand.getStateFactory());
 	}
 	
+	/**
+	 * Full constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param fstOperand
+	 *            first operand
+	 * @param sndOperand
+	 *            second operand
+	 * @param stateFactory
+	 *            state factory
+	 * @throws AutomataLibraryException
+	 *             if construction fails
+	 */
 	public BuchiIntersect(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
-			final IStateFactory<STATE> sf) throws AutomataLibraryException {
+			final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
-		mStateFactory = sf;
+		mStateFactory = stateFactory;
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
 		doIntersect();
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 	
 	@Override
 	public String operationName() {
-		return "buchiIntersect";
+		return "BuchiIntersect";
 	}
 	
 	@Override
@@ -78,10 +114,9 @@ public class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, ST
 	}
 	
 	private void doIntersect() throws AutomataLibraryException {
-		mLogger.info(startMessage());
-		mIntersect = new BuchiIntersectNwa<LETTER, STATE>(mFstOperand, mSndOperand, mStateFactory);
-		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mIntersect);
-		mLogger.info(exitMessage());
+		final BuchiIntersectNwa<LETTER, STATE> intersect =
+				new BuchiIntersectNwa<>(mFstOperand, mSndOperand, mStateFactory);
+		mResult = new NestedWordAutomatonReachableStates<>(mServices, intersect);
 	}
 	
 	@Override
@@ -100,8 +135,10 @@ public class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, ST
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> sf) throws AutomataLibraryException {
-		mLogger.info("Start testing correctness of " + operationName());
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Start testing correctness of " + operationName());
+		}
 		boolean correct = true;
 //		final INestedWordAutomaton<LETTER, STATE> resultDD =
 //				(new BuchiIntersectDD<LETTER, STATE>(mServices, mFstOperand, mSndOperand)).getResult();
@@ -110,31 +147,28 @@ public class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, ST
 		correct &= resultCheckWithRandomWords();
 		assert correct;
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
-					operationName() + "Failed", "language is different",
-					mFstOperand, mSndOperand);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+					"language is different", mFstOperand, mSndOperand);
 		}
-		mLogger.info("Finished testing correctness of " + operationName());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of " + operationName());
+		}
 		return correct;
 	}
 	
 	private boolean resultCheckWithRandomWords() throws AutomataLibraryException {
-		final List<NestedLassoWord<LETTER>> lassoWords =
-				new ArrayList<NestedLassoWord<LETTER>>();
-		final BuchiIsEmpty<LETTER, STATE> resultEmptiness =
-				new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
+		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<>();
+		final BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<>(mServices, mResult);
 		if (!resultEmptiness.getResult()) {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		final BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness =
-				new BuchiIsEmpty<LETTER, STATE>(mServices, mFstOperand);
+		final BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness = new BuchiIsEmpty<>(mServices, mFstOperand);
 		if (fstOperandEmptiness.getResult()) {
 			assert resultEmptiness.getResult();
 		} else {
 			lassoWords.add(fstOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		final BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness =
-				new BuchiIsEmpty<LETTER, STATE>(mServices, mSndOperand);
+		final BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness = new BuchiIsEmpty<>(mServices, mSndOperand);
 		if (sndOperandEmptiness.getResult()) {
 			assert resultEmptiness.getResult();
 		} else {
@@ -156,11 +190,10 @@ public class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, ST
 	
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand1,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand2)
-					throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand2) throws AutomataLibraryException {
 		final boolean op1 = (new BuchiAccepts<LETTER, STATE>(mServices, operand1, nlw)).getResult();
 		final boolean op2 = (new BuchiAccepts<LETTER, STATE>(mServices, operand2, nlw)).getResult();
 		final boolean res = (new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
-		return ((op1 && op2) == res);
+		return (op1 && op2) == res;
 	}
 }
