@@ -27,9 +27,7 @@
  * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
-/**
- * Valuation for the counter example result class.
- */
+
 package de.uni_freiburg.informatik.ultimate.core.model.translation;
 
 import java.util.List;
@@ -39,6 +37,8 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 
 /**
+ * Valuation for the counter example result class.
+ *
  * @author Markus Lindenmann
  * @author Stefan Wissert
  * @author Oleksii Saukh
@@ -48,11 +48,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 public interface IValuation {
 	/**
 	 * This method returns the Variable Values for current position on the failure path. How this is done is in the
-	 * responsibility of each ModelChecker, that have to implement this interface. <br>
-	 * <br>
+	 * responsibility of each ModelChecker, that have to implement this interface. <br />
+	 * <br />
 	 * The method returns a map which maps from the variable name to the values. The values are modeled as
-	 * SimpleEntry<IType, List<String>>, where IType signals the type of the Variable (so Integer, Double or Array
-	 * <Integer>) and the List represent the values of the single variable or the array.
+	 * <code>Entry&lt;IBoogieType, List&lt;String&gt;&gt;</code>, where {@link IBoogieType} signals the type of the
+	 * Variable (so <code>Integer</code>, <code>Double</code> or <code>Array&lt;Integer&gt;</code>) and the List
+	 * represent the values of the single variable or the array.
 	 *
 	 * @param index
 	 *            the current position on the failure path.
