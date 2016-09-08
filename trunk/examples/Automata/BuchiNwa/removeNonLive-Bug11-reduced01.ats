@@ -1,0 +1,41 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2016-09-08
+
+NestedWordAutomaton result = removeNonLiveStates(nwa);
+print(numberOfStates(result));
+//assert(numberOfStates(result) == 4);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
+	internalAlphabet = {"assume !(x > 100);" "assume x > 100;res := x - 10;" },
+	returnAlphabet = {"return;" },
+	states = {"q_1" "q_3" "q_2" "q_5" "q_4" "q_6" "qF_1" "qF_6" "qF_7" "qF_2" "qF_3" "qI_1" "qF_4" "qF_5" },
+	initialStates = {"qI_1" },
+	finalStates = {"qF_1" "qF_6" "qF_7" "qF_2" "qF_3" "qF_4" "qF_5" },
+	callTransitions = {
+		("q_2" "call res := McCarthy(x + 11);" "q_3")
+		("q_5" "call res := McCarthy(res);" "qF_1")
+		("q_4" "call res := McCarthy(res);" "qF_1")
+		("q_4" "call res := McCarthy(res);" "q_3")
+		("q_6" "call res := McCarthy(x + 11);" "qF_6")
+		("qF_7" "call res := McCarthy(res);" "qF_1")
+		("qF_2" "call res := McCarthy(x + 11);" "qF_3")
+		("qI_1" "call res := McCarthy(x + 11);" "q_1")
+		("qF_5" "call res := McCarthy(x + 11);" "qF_3")
+	},
+	internalTransitions = {
+		("q_1" "assume !(x > 100);" "q_6")
+		("q_1" "assume x > 100;res := x - 10;" "q_2")
+		("q_3" "assume !(x > 100);" "q_5")
+		("q_3" "assume x > 100;res := x - 10;" "q_4")
+	},
+	returnTransitions = {
+		("qF_1" "q_5" "return;" "qF_2")
+		("qF_1" "q_4" "return;" "qF_4")
+		("qF_1" "qF_7" "return;" "qF_4")
+		("qF_6" "q_6" "return;" "qF_7")
+		("qF_3" "qF_2" "return;" "qF_2")
+		("qF_3" "qF_5" "return;" "qF_2")
+		("qF_4" "qI_1" "return;" "qF_5")
+	}
+);
