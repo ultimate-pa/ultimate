@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance;
@@ -120,7 +120,7 @@ public final class ComparisonTables {
 			}
 			final long averageOfValuesForBuechiStates = Math
 					.round((sumOfAllValuesForBuechiStates + 0.0) / amountOfValuesForBuechiStates);
-			String valueAsString = averageOfValuesForBuechiStates + "";
+			String valueAsString = Long.toString(averageOfValuesForBuechiStates);
 			if (averageOfValuesForBuechiStates == 0) {
 				valueAsString = NO_VALUE;
 			}
@@ -152,8 +152,8 @@ public final class ComparisonTables {
 			if (averageOfValuesForSimSteps == 0 || averageOfValuesForGraphStates == 0) {
 				valueAsString = NO_VALUE;
 			} else {
-				valueAsString = roundTo((averageOfValuesForSimSteps + 0.0) / averageOfValuesForGraphStates,
-						DECIMAL_PLACES) + "";
+				valueAsString = Float.toString(roundTo((averageOfValuesForSimSteps + 0.0) / averageOfValuesForGraphStates,
+						DECIMAL_PLACES));
 			}
 			row += separator + valueAsString;
 
@@ -169,24 +169,23 @@ public final class ComparisonTables {
 			}
 			final long averageOfValuesForOverallTime = Math
 					.round((sumOfAllValuesForOverallTime + 0.0) / amountOfValuesForOverallTime);
-			valueAsString = "";
 			if (averageOfValuesForOverallTime == 0) {
 				valueAsString = NO_VALUE;
 			} else {
 				final float valueInSeconds = millisToSeconds(averageOfValuesForOverallTime);
-				valueAsString = valueInSeconds + "";
+				valueAsString = Float.toString(valueInSeconds);
 			}
 			row += separator + valueAsString;
 
 			// Simulation steps
-			valueAsString = averageOfValuesForSimSteps + "";
+			valueAsString = Long.toString(averageOfValuesForSimSteps);
 			if (averageOfValuesForSimSteps == 0) {
 				valueAsString = NO_VALUE;
 			}
 			row += separator + valueAsString;
 
 			// Gamegraph states
-			valueAsString = averageOfValuesForGraphStates + "";
+			valueAsString = Long.toString(averageOfValuesForGraphStates);
 			if (averageOfValuesForGraphStates == 0) {
 				valueAsString = NO_VALUE;
 			}
@@ -204,7 +203,7 @@ public final class ComparisonTables {
 			}
 			final long averageOfValuesForRemovedStates = Math
 					.round((sumOfAllValuesForRemovedStates + 0.0) / amountOfValuesForRemovedStates);
-			valueAsString = averageOfValuesForRemovedStates + "";
+			valueAsString = Long.toString(averageOfValuesForRemovedStates);
 			if (averageOfValuesForRemovedStates == 0) {
 				valueAsString = NO_VALUE;
 			}
@@ -318,12 +317,12 @@ public final class ComparisonTables {
 					amountOfValues++;
 				}
 				final long averageOfValues = Math.round((sumOfAllValues + 0.0) / amountOfValues);
-				String valueAsString = "";
+				String valueAsString;
 				if (averageOfValues == 0) {
 					valueAsString = NO_VALUE;
 				} else {
 					final float valueInSeconds = millisToSeconds(averageOfValues);
-					valueAsString = valueInSeconds + "";
+					valueAsString = Float.toString(valueInSeconds);
 				}
 
 				row += separator + valueAsString;
@@ -345,7 +344,7 @@ public final class ComparisonTables {
 				}
 
 				final long averageOfValues = Math.round((sumOfAllValues + 0.0) / amountOfValues);
-				String valueAsString = averageOfValues + "";
+				String valueAsString = Long.toString(averageOfValues);
 				if (averageOfValues == 0) {
 					valueAsString = NO_VALUE;
 				}
@@ -353,7 +352,7 @@ public final class ComparisonTables {
 					final Double sumOfAllValuesAsDouble = convertTransitionDensityToDouble(measure, sumOfAllValues);
 					if (sumOfAllValuesAsDouble != null) {
 						final double averageOfValuesAsDouble = sumOfAllValuesAsDouble / amountOfValues;
-						valueAsString = averageOfValuesAsDouble + "";
+						valueAsString = Double.toString(averageOfValuesAsDouble);
 						if (averageOfValuesAsDouble == 0.0) {
 							valueAsString = NO_VALUE;
 						}
@@ -423,7 +422,7 @@ public final class ComparisonTables {
 			}
 			final long averageOfValuesForBuechiStates = Math
 					.round((sumOfAllValuesForBuechiStates + 0.0) / amountOfValuesForBuechiStates);
-			String valueAsString = averageOfValuesForBuechiStates + "";
+			String valueAsString = Long.toString(averageOfValuesForBuechiStates);
 			if (averageOfValuesForBuechiStates == 0) {
 				valueAsString = NO_VALUE;
 			}
@@ -441,12 +440,11 @@ public final class ComparisonTables {
 			}
 			final long averageOfValuesForOverallTime = Math
 					.round((sumOfAllValuesForOverallTime + 0.0) / amountOfValuesForOverallTime);
-			valueAsString = "";
 			if (averageOfValuesForOverallTime == 0) {
 				valueAsString = NO_VALUE;
 			} else {
 				final float valueInSeconds = millisToSeconds(averageOfValuesForOverallTime);
-				valueAsString = valueInSeconds + "";
+				valueAsString = Float.toString(valueInSeconds);
 			}
 			row += separator + valueAsString;
 
@@ -466,7 +464,6 @@ public final class ComparisonTables {
 					amountOfValues++;
 				}
 				final long averageOfValues = Math.round((sumOfAllValues + 0.0) / amountOfValues);
-				valueAsString = "";
 				if (averageOfValues == 0 || averageOfValuesForOverallTime == 0) {
 					valueAsString = NO_VALUE;
 				} else {
@@ -474,7 +471,7 @@ public final class ComparisonTables {
 					if (averageOfPercentages == 0) {
 						valueAsString = NO_VALUE;
 					} else {
-						valueAsString = averageOfPercentages + "";
+						valueAsString = Integer.toString(averageOfPercentages);
 					}
 				}
 				row += separator + valueAsString;
@@ -533,7 +530,7 @@ public final class ComparisonTables {
 				// Amount of Buechi states
 				final int buechiStates = performanceOfSimulation
 						.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES);
-				String buechiStatesAsString = buechiStates + "";
+				String buechiStatesAsString = Integer.toString(buechiStates);
 				if (buechiStates == SimulationPerformance.NO_COUNTING_RESULT) {
 					buechiStatesAsString = NO_VALUE;
 				}
@@ -544,12 +541,12 @@ public final class ComparisonTables {
 						.getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS);
 				final int graphStates = performanceOfSimulation
 						.getCountingMeasureResult(ECountingMeasure.GAMEGRAPH_VERTICES);
-				String workMeasureAsString = "";
+				String workMeasureAsString;
 				if (simSteps == SimulationPerformance.NO_COUNTING_RESULT
 						|| graphStates == SimulationPerformance.NO_COUNTING_RESULT) {
 					workMeasureAsString = NO_VALUE;
 				} else {
-					workMeasureAsString = roundTo((simSteps + 0.0) / graphStates, DECIMAL_PLACES) + "";
+					workMeasureAsString = Float.toString(roundTo((simSteps + 0.0) / graphStates, DECIMAL_PLACES));
 				}
 				row += separator + workMeasureAsString;
 
@@ -557,24 +554,26 @@ public final class ComparisonTables {
 				final long value = performanceOfSimulation.getTimeMeasureResult(ETimeMeasure.OVERALL,
 						EMultipleDataOption.ADDITIVE);
 
-				String valueAsString = "";
+				String valueAsString;
 				if (value == SimulationPerformance.NO_TIME_RESULT) {
 					valueAsString = NO_VALUE;
 				} else {
 					final float valueInSeconds = millisToSeconds(value);
-					valueAsString = valueInSeconds + "";
+					valueAsString = Float.toString(valueInSeconds);
 				}
 				row += separator + valueAsString;
 
 				// Simulation steps
-				String simStepsAsString = simSteps + "";
+				String simStepsAsString;
 				if (simSteps == SimulationPerformance.NO_COUNTING_RESULT) {
 					simStepsAsString = NO_VALUE;
+				} else {
+					simStepsAsString = Integer.toString(simSteps);
 				}
 				row += separator + simStepsAsString;
 
 				// Amount of Gamegraph states
-				String graphStatesAsString = graphStates + "";
+				String graphStatesAsString = Integer.toString(graphStates);
 				if (graphStates == SimulationPerformance.NO_COUNTING_RESULT) {
 					graphStatesAsString = NO_VALUE;
 				}
@@ -583,7 +582,7 @@ public final class ComparisonTables {
 				// Removed states
 				final int removedStates = performanceOfSimulation
 						.getCountingMeasureResult(ECountingMeasure.REMOVED_STATES);
-				String removedStatesAsString = removedStates + "";
+				String removedStatesAsString = Integer.toString(removedStates);
 				if (removedStates == SimulationPerformance.NO_COUNTING_RESULT) {
 					removedStatesAsString = NO_VALUE;
 				}
@@ -684,12 +683,12 @@ public final class ComparisonTables {
 					final long value = performanceOfSimulation.getTimeMeasureResult(measure,
 							EMultipleDataOption.ADDITIVE);
 
-					String valueAsString = "";
+					String valueAsString;
 					if (value == SimulationPerformance.NO_TIME_RESULT) {
 						valueAsString = NO_VALUE;
 					} else {
 						final float valueInSeconds = millisToSeconds(value);
-						valueAsString = valueInSeconds + "";
+						valueAsString = Float.toString(valueInSeconds);
 					}
 
 					row += separator + valueAsString;
@@ -697,14 +696,14 @@ public final class ComparisonTables {
 				for (final ECountingMeasure measure : countingMeasures) {
 					final int value = performanceOfSimulation.getCountingMeasureResult(measure);
 
-					String valueAsString = value + "";
+					String valueAsString = Integer.toString(value);
 					if (value == SimulationPerformance.NO_COUNTING_RESULT) {
 						valueAsString = NO_VALUE;
 					} else {
 						if (convertTransitionDensityToDouble) {
 							final Double valueAsDouble = convertTransitionDensityToDouble(measure, value);
 							if (valueAsDouble != null) {
-								valueAsString = valueAsDouble + "";
+								valueAsString = Double.toString(valueAsDouble);
 							}
 						}
 					}
@@ -771,9 +770,11 @@ public final class ComparisonTables {
 				// Amount of Buechi states
 				final int buechiStates = performanceOfSimulation
 						.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES);
-				String buechiStatesAsString = buechiStates + "";
+				String buechiStatesAsString;
 				if (buechiStates == SimulationPerformance.NO_COUNTING_RESULT) {
 					buechiStatesAsString = NO_VALUE;
+				} else {
+					buechiStatesAsString = Integer.toString(buechiStates);
 				}
 				row += separator + buechiStatesAsString;
 
@@ -781,13 +782,13 @@ public final class ComparisonTables {
 				long value = performanceOfSimulation.getTimeMeasureResult(ETimeMeasure.OVERALL,
 						EMultipleDataOption.ADDITIVE);
 
-				String valueAsString = "";
+				String valueAsString;
 				long overallTime = 0;
 				if (value == SimulationPerformance.NO_TIME_RESULT) {
 					valueAsString = NO_VALUE;
 				} else {
 					final float valueInSeconds = millisToSeconds(value);
-					valueAsString = valueInSeconds + "";
+					valueAsString = Float.toString(valueInSeconds);
 					overallTime = value;
 				}
 				row += separator + valueAsString;
@@ -801,7 +802,6 @@ public final class ComparisonTables {
 					// Calculate the percentage of the value to the overall time
 					value = performanceOfSimulation.getTimeMeasureResult(measure, EMultipleDataOption.ADDITIVE);
 
-					valueAsString = "";
 					if (value == SimulationPerformance.NO_TIME_RESULT || overallTime == 0) {
 						valueAsString = NO_VALUE;
 					} else {
@@ -809,7 +809,7 @@ public final class ComparisonTables {
 						if (percentage == 0) {
 							valueAsString = NO_VALUE;
 						} else {
-							valueAsString = percentage + "";
+							valueAsString = Integer.toString(percentage);
 						}
 					}
 
