@@ -310,8 +310,29 @@ public class TransFormulaBuilder {
 	}
 	
 	
-	public static UnmodifiableTransFormula constructCopy(final TransFormula tf, 
-			final Collection<IProgramVar> inVarsToRemove, final Collection<IProgramVar> outVarsToRemove, final ManagedScript script, final Map<IProgramVar, TermVariable> additionalOutVars) {
+	/**
+	 * Construct copy of a given {@link Transformula} with minor modifications 
+	 * that are specified by the arguments of this method.
+	 * @param script {@link ManagedScript} that was used to construct the 
+	 * {@link Term}s in the input {@link Transformula}
+	 * @param tf input {@link Transformula}
+	 * @param inVarsToRemove {@link IProgramVar}s whose inVars are removed in 
+	 * the result. If the inVar instance is not also an outVar the 
+	 * {@link TermVariable} becomes an auxVar. 
+	 * @param outVarsToRemove {@link IProgramVar}s whose outVars are removed in 
+	 * the result. If the outVar instance is not also an inVar the 
+	 * {@link TermVariable} becomes an auxVar.
+	 * @param additionalOutVars Map from {@link IProgramVar}s to 
+	 * {@link TermVariable}s that specifies new outVar instances that are added.
+	 * It is only allowed to add outVars for {@link IProgramVar}s that do not 
+	 * have an outVar (at the point in time where outVars specified in the
+	 * preceding parameter have been removed).
+	 * @return Copy if the input {@link Transformula} whith modifications 
+	 * specified by the other parameters of this method.
+	 */
+	public static UnmodifiableTransFormula constructCopy(final ManagedScript script, final TransFormula tf, 
+			final Collection<IProgramVar> inVarsToRemove, final Collection<IProgramVar> outVarsToRemove, 
+			final Map<IProgramVar, TermVariable> additionalOutVars) {
 		Set<TermVariable> branchEncoders;
 		if (tf instanceof UnmodifiableTransFormula) {
 			branchEncoders = ((UnmodifiableTransFormula) tf).getBranchEncoders();
@@ -348,7 +369,7 @@ public class TransFormulaBuilder {
 		for (final Entry<IProgramVar, TermVariable> entry : additionalOutVars.entrySet()) {
 			final TermVariable oldValue = tfb.mOutVars.put(entry.getKey(), entry.getValue());
 			if (oldValue != null) {
-				throw new IllegalArgumentException("Will not introduce " + entry.getKey() + " it has alreay an outVar");
+				throw new IllegalArgumentException("Will not add outvar for " + entry.getKey() + " it already  has an outVar");
 			}
 		}
 		

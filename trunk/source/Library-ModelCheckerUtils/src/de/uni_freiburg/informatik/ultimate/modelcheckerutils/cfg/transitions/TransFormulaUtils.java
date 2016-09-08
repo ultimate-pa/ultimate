@@ -471,7 +471,7 @@ public class TransFormulaUtils {
 		
 			}
 			
-			callAndBeforeTF = TransFormulaBuilder.constructCopy(composition, Collections.emptySet(), outVarsToRemove, mgdScript, varsToHavoc);
+			callAndBeforeTF = TransFormulaBuilder.constructCopy(mgdScript, composition, Collections.emptySet(), outVarsToRemove, varsToHavoc);
 			
 //			// now we havoc all oldvars that are not modified by the callee
 //			// TODO: Rename the ones that are not modified by the caller
@@ -533,7 +533,7 @@ public class TransFormulaUtils {
 //					}
 //				}
 //			}
-			globalVarAssignAndAfterTF = TransFormulaBuilder.constructCopy(composition, inVarsToRemove, Collections.emptySet(), mgdScript, Collections.emptyMap());
+			globalVarAssignAndAfterTF = TransFormulaBuilder.constructCopy(mgdScript, composition, inVarsToRemove, Collections.emptySet(), Collections.emptyMap());
 		}
 		
 		
@@ -558,7 +558,7 @@ public class TransFormulaUtils {
 				// nothing to remove
 				result = tmpresult;
 			} else {
-				result = TransFormulaBuilder.constructCopy(tmpresult, Collections.emptySet(), outVarsToRemove, mgdScript, Collections.emptyMap());
+				result = TransFormulaBuilder.constructCopy(mgdScript, tmpresult, Collections.emptySet(), outVarsToRemove, Collections.emptyMap());
 			}
 		}
 		
@@ -786,7 +786,7 @@ public class TransFormulaUtils {
 				}
 			}
 		}
-		final UnmodifiableTransFormula result = TransFormulaBuilder.constructCopy(composition, inVarsToRemove, outVarsToRemove, mgdScript, additionalOutVars);
+		final UnmodifiableTransFormula result = TransFormulaBuilder.constructCopy(mgdScript, composition, inVarsToRemove, outVarsToRemove, additionalOutVars);
 
 		assert SmtUtils.neitherKeyNorValueIsNull(result.getOutVars()) : "sequentialCompositionWithCallAndReturn introduced null entries";
 		assert (isIntraprocedural(result));
