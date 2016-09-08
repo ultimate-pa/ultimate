@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -627,10 +628,10 @@ public class Statements2TransFormula {
 	}
 
 	public TranslationResult statementSequence(final boolean simplify, final SimplicationTechnique simplicationTechnique, 
-			final String procId, final Statement... statements) {
+			final String procId, final List<Statement> statements) {
 		initialize(procId);
-		for (int i = statements.length - 1; i >= 0; i--) {
-			final Statement st = statements[i];
+		for (int i = statements.size() - 1; i >= 0; i--) {
+			final Statement st = statements.get(i);
 			if (st instanceof AssumeStatement) {
 				addAssume((AssumeStatement) st);
 			} else if (st instanceof AssignmentStatement) {
