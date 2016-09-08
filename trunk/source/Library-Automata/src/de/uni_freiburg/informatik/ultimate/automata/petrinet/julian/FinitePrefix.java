@@ -26,31 +26,34 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.order;
 
-public class FinitePrefix<LETTER,STATE> extends UnaryNetOperation<LETTER, STATE> {
+public class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER, STATE> {
 	private final IPetriNet<LETTER, STATE> mOperand;
-	private final BranchingProcess<LETTER,STATE> mResult;
+	private final BranchingProcess<LETTER, STATE> mResult;
 	
 	/**
 	 * Constructor.
 	 * 
-	 * @param services Ultimate services
-	 * @param operand operand
-	 * @throws AutomataLibraryException if construction fails
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public FinitePrefix(final AutomataLibraryServices services,
-			final PetriNetJulian<LETTER,STATE> operand)
-					throws AutomataLibraryException {
+			final PetriNetJulian<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
-		final PetriNetUnfolder<LETTER,STATE> unf =
-				new PetriNetUnfolder<LETTER,STATE>(
+		final PetriNetUnfolder<LETTER, STATE> unf =
+				new PetriNetUnfolder<LETTER, STATE>(
 						mServices, operand, order.ERV, true, false);
 		mResult = unf.getFinitePrefix();
 		mLogger.info(exitMessage());
@@ -64,16 +67,16 @@ public class FinitePrefix<LETTER,STATE> extends UnaryNetOperation<LETTER, STATE>
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName()
-			+ " Result " + mResult.sizeInformation();
+				+ " Result " + mResult.sizeInformation();
 	}
 	
 	@Override
 	protected IPetriNet<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-
+	
 	@Override
-	public BranchingProcess<LETTER,STATE> getResult() {
+	public BranchingProcess<LETTER, STATE> getResult() {
 		return mResult;
 	}
 }

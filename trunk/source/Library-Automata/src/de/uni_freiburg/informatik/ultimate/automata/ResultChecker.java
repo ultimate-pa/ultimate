@@ -330,7 +330,7 @@ public final class ResultChecker {
 	public static <LETTER, STATE> INestedWordAutomatonOldApi<LETTER, STATE> getOldApiNwa(
 			final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		if (nwa instanceof INestedWordAutomatonOldApi) {
 			return (INestedWordAutomatonOldApi<LETTER, STATE>) nwa;
 		} else {
@@ -347,7 +347,7 @@ public final class ResultChecker {
 	public static <LETTER, STATE> INestedWordAutomaton<LETTER, STATE> getNormalNwa(
 			final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa)
-					throws AutomataLibraryException {
+					throws AutomataOperationCanceledException {
 		if (nwa instanceof INestedWordAutomaton) {
 			return (INestedWordAutomaton<LETTER, STATE>) nwa;
 		} else {

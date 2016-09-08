@@ -270,12 +270,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
 		final INestedWordAutomaton<CodeBlock, IPredicate> abstraction =
 				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
-		try {
-			mCounterexample = (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), abstraction))
+		mCounterexample = (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), abstraction))
 					.getNestedRun();
-		} catch (final AutomataOperationCanceledException e) {
-			e.printStackTrace();
-		}
 
 		if (mCounterexample == null) {
 			return true;
