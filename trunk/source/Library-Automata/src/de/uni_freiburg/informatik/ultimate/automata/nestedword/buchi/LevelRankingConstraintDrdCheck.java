@@ -39,18 +39,28 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * LevelRankingConstraintWithDelayedRankDecreaseCheck.
  * 
- * @author Matthias Heizmann
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
  * @param <STATE>
  *            state type
  */
 public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingConstraint<LETTER, STATE> {
-	
 	private final HashRelation3<StateWithRankInfo<STATE>, STATE, Integer> mRanksOfPredecessorsNonAcceptingPredecessors;
-	private final HashRelation3<StateWithRankInfo<STATE>, STATE, Integer>
-		mRanksOfPredecessorsNonAcceptingPredecessorsEven;
+	private final HashRelation3<StateWithRankInfo<STATE>, STATE, Integer> mRanksOfPredecessorsNonAcceptingPredecessorsEven;
 	
+	/**
+	 * Extended constructor.
+	 * 
+	 * @param operand
+	 *            operand
+	 * @param predecessorOwasEmpty
+	 *            {code true} iff predecessor O was empty
+	 * @param userDefinedMaxRank
+	 *            user-defined maximal rank
+	 * @param useDoubleDeckers
+	 *            {code true} iff double deckers should be used
+	 */
 	public LevelRankingConstraintDrdCheck(final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final boolean predecessorOwasEmpty,
 			final int userDefinedMaxRank, final boolean useDoubleDeckers) {
@@ -59,6 +69,9 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 		mRanksOfPredecessorsNonAcceptingPredecessorsEven = new HashRelation3<>();
 	}
 	
+	/**
+	 * Constructor with no automaton.
+	 */
 	public LevelRankingConstraintDrdCheck() {
 		super();
 		mRanksOfPredecessorsNonAcceptingPredecessors = null;
@@ -66,16 +79,15 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 	}
 	
 	@Override
-	protected void addConstraint(final StateWithRankInfo<STATE> down, final STATE up, final Integer predecessorRank,
-			final boolean predecessorIsInO,
-			final boolean predecessorIsAccepting) {
+	protected void addConstraint(final StateWithRankInfo<STATE> downState, final STATE upState,
+			final Integer predecessorRank, final boolean predecessorIsInO, final boolean predecessorIsAccepting) {
 		if (!predecessorIsAccepting) {
-			mRanksOfPredecessorsNonAcceptingPredecessors.addTriple(down, up, predecessorRank);
+			mRanksOfPredecessorsNonAcceptingPredecessors.addTriple(downState, upState, predecessorRank);
 			if (isEven(predecessorRank)) {
-				mRanksOfPredecessorsNonAcceptingPredecessorsEven.addTriple(down, up, predecessorRank);
+				mRanksOfPredecessorsNonAcceptingPredecessorsEven.addTriple(downState, upState, predecessorRank);
 			}
 		}
-		super.addConstraint(down, up, predecessorRank, predecessorIsInO, predecessorIsAccepting);
+		super.addConstraint(downState, upState, predecessorRank, predecessorIsInO, predecessorIsAccepting);
 	}
 	
 	/**
@@ -90,71 +102,83 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 	 * This interferes with other optimizations (e.g., tight level rankings,
 	 * elastic level rankings) because there the not voluntarily decreased
 	 * path was lost is some state in between was not tight (resp. elastic)
+	 * 
+	 * @return {@code true} iff it is a target of a delayed rank decrease
 	 */
 	public boolean isTargetOfDelayedRankDecrease() {
 		if (isNonAcceptingSink()) {
 			return false;
 		}
 		for (final Entry<StateWithRankInfo<STATE>, HashMap<STATE, Integer>> entry : mLevelRanking.entrySet()) {
-			for (final STATE up : entry.getValue().keySet()) {
+			for (final STATE upState : entry.getValue().keySet()) {
 				final Set<Integer> predRanksOfNonAccepting =
-						mRanksOfPredecessorsNonAcceptingPredecessors.projectToTrd(entry.getKey(), up);
+						mRanksOfPredecessorsNonAcceptingPredecessors.projectToTrd(entry.getKey(), upState);
 				if (predRanksOfNonAccepting.size() <= 1) {
 					return false;
-				} else {
-					final TreeSet<Integer> even = new TreeSet<>();
-					final TreeSet<Integer> odd = new TreeSet<>();
-					for (final Integer i : predRanksOfNonAccepting) {
-						if (isEven(i)) {
-							even.add(i);
-						} else {
-							assert isOdd(i);
-							odd.add(i);
-						}
-					}
-					if (odd.isEmpty() || even.isEmpty()) {
-						return false;
-					} else {
-						final Integer largestOdd = odd.last();
-						final Integer largestEven = even.last();
-						if (largestOdd > largestEven) {
-							odd.remove(largestOdd);
-						}
-						return !odd.isEmpty() && !even.isEmpty();
-					}
 				}
+				final TreeSet<Integer> even = new TreeSet<>();
+				final TreeSet<Integer> odd = new TreeSet<>();
+				sortRanks(predRanksOfNonAccepting, even, odd);
+				if (odd.isEmpty() || even.isEmpty()) {
+					return false;
+				}
+				final Integer largestOdd = odd.last();
+				final Integer largestEven = even.last();
+				if (largestOdd > largestEven) {
+					odd.remove(largestOdd);
+				}
+				return !odd.isEmpty() && !even.isEmpty();
 			}
 		}
 		return false;
 	}
 	
-	public boolean nonAcceptingPredecessorsWithEvenRanksIsEmpty(final StateWithRankInfo<STATE> down, final STATE up) {
-		return mRanksOfPredecessorsNonAcceptingPredecessorsEven.projectToTrd(down, up).isEmpty();
+	/**
+	 * @param downState
+	 *            The down state.
+	 * @param upState
+	 *            up state
+	 * @return {@code true} iff there is no non-accepting predecessor with even rank
+	 */
+	public boolean nonAcceptingPredecessorsWithEvenRanksIsEmpty(final StateWithRankInfo<STATE> downState,
+			final STATE upState) {
+		return mRanksOfPredecessorsNonAcceptingPredecessorsEven.projectToTrd(downState, upState).isEmpty();
 	}
 	
-	private boolean isEligibleForVoluntaryRankDecrease(final StateWithRankInfo<STATE> down, final STATE up,
+	private boolean isEligibleForVoluntaryRankDecrease(final StateWithRankInfo<STATE> downState, final STATE upState,
 			final boolean allowDelayedRankDecrease) {
-		final Integer constraint = getRank(down, up);
+		final Integer constraint = getRank(downState, upState);
 		if (allowDelayedRankDecrease) {
-			return (isEven(constraint) && !mOperand.isFinal(up));
+			return isEven(constraint) && !mOperand.isFinal(upState);
 		} else {
 			final Set<Integer> nonAcceptingEvenranks =
-					mRanksOfPredecessorsNonAcceptingPredecessorsEven.projectToTrd(down, up);
-			return (isEven(constraint) && !mOperand.isFinal(up) && nonAcceptingEvenranks.isEmpty());
+					mRanksOfPredecessorsNonAcceptingPredecessorsEven.projectToTrd(downState, upState);
+			return isEven(constraint) && !mOperand.isFinal(upState) && nonAcceptingEvenranks.isEmpty();
 		}
 	}
 	
 	@Override
 	public Set<DoubleDecker<StateWithRankInfo<STATE>>> getPredecessorWasAccepting() {
 		final Set<DoubleDecker<StateWithRankInfo<STATE>>> result = new HashSet<>();
-		for (final StateWithRankInfo<STATE> down : getDownStates()) {
-			for (final StateWithRankInfo<STATE> up : getUpStates(down)) {
-				if (isEligibleForVoluntaryRankDecrease(down, up.getState(), true)) {
-					result.add(new DoubleDecker<StateWithRankInfo<STATE>>(down, up));
+		for (final StateWithRankInfo<STATE> downState : getDownStates()) {
+			for (final StateWithRankInfo<STATE> upState : getUpStates(downState)) {
+				if (isEligibleForVoluntaryRankDecrease(downState, upState.getState(), true)) {
+					result.add(new DoubleDecker<StateWithRankInfo<STATE>>(downState, upState));
 				}
 			}
 		}
 		return result;
 	}
 	
+	private static void sortRanks(final Set<Integer> predRanksOfNonAccepting, final TreeSet<Integer> even,
+			final TreeSet<Integer> odd) {
+		for (final Integer i : predRanksOfNonAccepting) {
+			if (isEven(i)) {
+				even.add(i);
+			} else {
+				assert isOdd(i);
+				odd.add(i);
+			}
+		}
+	}
 }

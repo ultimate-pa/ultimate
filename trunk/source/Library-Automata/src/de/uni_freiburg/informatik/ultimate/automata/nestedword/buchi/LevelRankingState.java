@@ -47,13 +47,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
  * TODO Encode O in mLevelRanking. E.g. map DoubleDecker in O instead of
  * its rank to rank-1000.
  * 
- * @author Matthias Heizmann
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
  * @param <STATE>
  *            state type
  */
 public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE> {
+	private static final String NOT_APPLICABLE = "not applicable";
+	private static final int TWO = 2;
+	private static final int THREE = 3;
 	protected final Map<StateWithRankInfo<STATE>, HashMap<STATE, Integer>> mLevelRanking;
 	protected final Map<StateWithRankInfo<STATE>, Set<STATE>> mO;
 	
@@ -65,8 +68,8 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 	protected int mHighestRank;
 	
 	LevelRankingState(final INestedWordAutomatonSimple<LETTER, STATE> operand) {
-		mLevelRanking = new HashMap<StateWithRankInfo<STATE>, HashMap<STATE, Integer>>();
-		mO = new HashMap<StateWithRankInfo<STATE>, Set<STATE>>();
+		mLevelRanking = new HashMap<>();
+		mO = new HashMap<>();
 		mOperand = operand;
 		mHighestRank = -1;
 	}
@@ -87,19 +90,19 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 		mOperand = null;
 	}
 	
-	Map<StateWithRankInfo<STATE>, HashMap<STATE, Integer>> copyLevelRanking(
-			final Map<StateWithRankInfo<STATE>, HashMap<STATE, Integer>> lr) {
-		final Map<StateWithRankInfo<STATE>, HashMap<STATE, Integer>> result =
-				new HashMap<StateWithRankInfo<STATE>, HashMap<STATE, Integer>>();
-		for (final Entry<StateWithRankInfo<STATE>, HashMap<STATE, Integer>> entry : lr.entrySet()) {
+	final Map<StateWithRankInfo<STATE>, HashMap<STATE, Integer>> copyLevelRanking(
+			final Map<StateWithRankInfo<STATE>, HashMap<STATE, Integer>> levelRanking) {
+		final Map<StateWithRankInfo<STATE>, HashMap<STATE, Integer>> result = new HashMap<>();
+		for (final Entry<StateWithRankInfo<STATE>, HashMap<STATE, Integer>> entry : levelRanking.entrySet()) {
 			result.put(entry.getKey(), new HashMap<STATE, Integer>(entry.getValue()));
 		}
 		return result;
 	}
 	
-	Map<StateWithRankInfo<STATE>, Set<STATE>> copyO(final Map<StateWithRankInfo<STATE>, Set<STATE>> lr) {
-		final Map<StateWithRankInfo<STATE>, Set<STATE>> result = new HashMap<StateWithRankInfo<STATE>, Set<STATE>>();
-		for (final Entry<StateWithRankInfo<STATE>, Set<STATE>> entry : lr.entrySet()) {
+	final Map<StateWithRankInfo<STATE>, Set<STATE>>
+			copyO(final Map<StateWithRankInfo<STATE>, Set<STATE>> levelRanking) {
+		final Map<StateWithRankInfo<STATE>, Set<STATE>> result = new HashMap<>();
+		for (final Entry<StateWithRankInfo<STATE>, Set<STATE>> entry : levelRanking.entrySet()) {
 			result.put(entry.getKey(), new HashSet<STATE>(entry.getValue()));
 		}
 		return result;
@@ -116,7 +119,7 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 	
 	@Override
 	public Iterable<StateWithRankInfo<STATE>> getUpStates(final StateWithRankInfo<STATE> downState) {
-		final ArrayList<StateWithRankInfo<STATE>> result = new ArrayList<StateWithRankInfo<STATE>>();
+		final ArrayList<StateWithRankInfo<STATE>> result = new ArrayList<>();
 		for (final STATE state : mLevelRanking.get(downState).keySet()) {
 			final int rank = getRank(downState, state);
 			final boolean inO = inO(downState, state);
@@ -125,50 +128,64 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 		return result;
 	}
 	
-	protected void addRank(final StateWithRankInfo<STATE> down, final STATE up, final Integer rank,
+	protected void addRank(final StateWithRankInfo<STATE> downState, final STATE upState, final Integer rank,
 			final boolean addToO) {
 		assert rank != null;
-		assert isEven(rank) || !mOperand.isFinal(up) : "final states must have even ranks";
-		HashMap<STATE, Integer> up2rank = mLevelRanking.get(down);
+		assert isEven(rank) || !mOperand.isFinal(upState) : "final states must have even ranks";
+		HashMap<STATE, Integer> up2rank = mLevelRanking.get(downState);
 		if (up2rank == null) {
-			up2rank = new HashMap<STATE, Integer>();
-			mLevelRanking.put(down, up2rank);
+			up2rank = new HashMap<>();
+			mLevelRanking.put(downState, up2rank);
 		}
-		assert !up2rank.containsKey(up);
-		up2rank.put(up, rank);
+		assert !up2rank.containsKey(upState);
+		up2rank.put(upState, rank);
 		if (addToO) {
-			assert isEven(getRank(down, up)) : "has to be even";
-			addToO(down, up);
+			assert isEven(getRank(downState, upState)) : "has to be even";
+			addToO(downState, upState);
 		}
 		if (mHighestRank < rank) {
 			mHighestRank = rank;
 		}
 	}
 	
-	protected void addToO(final StateWithRankInfo<STATE> down, final STATE up) {
-		Set<STATE> upStates = mO.get(down);
+	protected void addToO(final StateWithRankInfo<STATE> downState, final STATE upState) {
+		Set<STATE> upStates = mO.get(downState);
 		if (upStates == null) {
-			upStates = new HashSet<STATE>();
-			mO.put(down, upStates);
+			upStates = new HashSet<>();
+			mO.put(downState, upStates);
 		}
-		upStates.add(up);
+		upStates.add(upState);
 	}
 	
-	public Integer getRank(final StateWithRankInfo<STATE> down, final STATE up) {
-		final HashMap<STATE, Integer> up2rank = mLevelRanking.get(down);
+	/**
+	 * @param downState
+	 *            The down state.
+	 * @param upState
+	 *            up state
+	 * @return the rank of the down/up state pair
+	 */
+	public Integer getRank(final StateWithRankInfo<STATE> downState, final STATE upState) {
+		final HashMap<STATE, Integer> up2rank = mLevelRanking.get(downState);
 		if (up2rank == null) {
 			return null;
 		} else {
-			return up2rank.get(up);
+			return up2rank.get(upState);
 		}
 	}
 	
-	public boolean inO(final StateWithRankInfo<STATE> down, final STATE up) {
-		final Set<STATE> upStates = mO.get(down);
+	/**
+	 * @param downState
+	 *            The down state.
+	 * @param upState
+	 *            up state
+	 * @return {@code true} iff the down/up state pair is in O
+	 */
+	public boolean inO(final StateWithRankInfo<STATE> downState, final STATE upState) {
+		final Set<STATE> upStates = mO.get(downState);
 		if (upStates == null) {
 			return false;
 		}
-		return upStates.contains(up);
+		return upStates.contains(upState);
 	}
 	
 	boolean isOempty() {
@@ -191,9 +208,7 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime
-				* result
-				+ ((mLevelRanking == null) ? 0 : mLevelRanking.hashCode());
+		result = prime * result + ((mLevelRanking == null) ? 0 : mLevelRanking.hashCode());
 		result = prime * result + ((mO == null) ? 0 : mO.hashCode());
 		return result;
 	}
@@ -212,7 +227,7 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final LevelRankingState<LETTER, STATE> other = (LevelRankingState<LETTER, STATE>) obj;
+		final LevelRankingState<?, ?> other = (LevelRankingState<?, ?>) obj;
 		if (mLevelRanking == null) {
 			if (other.mLevelRanking != null) {
 				return false;
@@ -232,11 +247,11 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 	
 	private int[] constructRanksHistogram() {
 		assert mHighestRank >= 0;
-		assert mHighestRank < Integer.MAX_VALUE : "not applicable";
+		assert mHighestRank < Integer.MAX_VALUE : NOT_APPLICABLE;
 		final int[] ranks = new int[mHighestRank + 1];
-		for (final StateWithRankInfo<STATE> down : getDownStates()) {
-			for (final StateWithRankInfo<STATE> up : getUpStates(down)) {
-				ranks[up.getRank()]++;
+		for (final StateWithRankInfo<STATE> downState : getDownStates()) {
+			for (final StateWithRankInfo<STATE> upState : getUpStates(downState)) {
+				ranks[upState.getRank()]++;
 			}
 		}
 		return ranks;
@@ -244,12 +259,12 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 	
 	boolean isTight() {
 		assert mHighestRank >= 0;
-		assert mHighestRank < Integer.MAX_VALUE : "not applicable";
+		assert mHighestRank < Integer.MAX_VALUE : NOT_APPLICABLE;
 		if (isEven(mHighestRank)) {
 			return false;
 		} else {
 			final int[] ranks = constructRanksHistogram();
-			for (int i = 1; i <= mHighestRank; i += 2) {
+			for (int i = 1; i <= mHighestRank; i += TWO) {
 				if (ranks[i] == 0) {
 					return false;
 				}
@@ -263,12 +278,12 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 	 */
 	boolean isMaximallyTight() {
 		assert mHighestRank >= 0;
-		assert mHighestRank < Integer.MAX_VALUE : "not applicable";
+		assert mHighestRank < Integer.MAX_VALUE : NOT_APPLICABLE;
 		if (isEven(mHighestRank)) {
 			return false;
 		} else {
 			final int[] ranks = constructRanksHistogram();
-			for (int i = 1; i < mHighestRank; i += 2) {
+			for (int i = 1; i < mHighestRank; i += TWO) {
 				if (ranks[i] != 1) {
 					return false;
 				}
@@ -276,33 +291,32 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 			if (ranks[mHighestRank] == 0) {
 				return false;
 			}
-			for (int i = 0; i < mHighestRank - 1; i += 2) {
+			for (int i = 0; i < mHighestRank - 1; i += TWO) {
 				if (ranks[i] != 0) {
 					return false;
 				}
 			}
-			
 			return true;
 		}
 	}
 	
 	boolean isElastic() {
 		assert mHighestRank >= 0;
-		assert mHighestRank < Integer.MAX_VALUE : "not applicable";
+		assert mHighestRank < Integer.MAX_VALUE : NOT_APPLICABLE;
 		if (isEven(mHighestRank)) {
 			return false;
 		} else {
 			final int[] ranks = constructRanksHistogram();
 			final int[] oddRanks = new int[ranks.length];
-			for (int i = 1; i < ranks.length; i += 2) {
+			for (int i = 1; i < ranks.length; i += TWO) {
 				oddRanks[i] = ranks[i];
 			}
 			final int[] downwardAggregatedOddranks = oddRanks.clone();
-			for (int i = ranks.length - 3; i > 0; i -= 2) {
-				downwardAggregatedOddranks[i] += downwardAggregatedOddranks[i + 2];
+			for (int i = ranks.length - THREE; i > 0; i -= TWO) {
+				downwardAggregatedOddranks[i] += downwardAggregatedOddranks[i + TWO];
 			}
 			int requiredAmount = 1;
-			for (int i = ranks.length - 1; i > 0; i -= 2) {
+			for (int i = ranks.length - 1; i > 0; i -= TWO) {
 				if (downwardAggregatedOddranks[i] < requiredAmount) {
 					return false;
 				}
@@ -312,27 +326,27 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 		}
 	}
 	
-//	@Override
-//	public Set<STATE> getDownStates() {
-//		throw new UnsupportedOperationException("need rank info");
-//	}
-//
-//	@Override
-//	public Set<STATE> getUpStates(STATE caller) {
-//		throw new UnsupportedOperationException("need rank info");
-//	}
-	
-	public static boolean isOdd(final int i) {
-		if (i >= 0) {
-			return i % 2 == 1;
+	/**
+	 * @param number
+	 *            A number.
+	 * @return {@code true} iff the number is odd and nonnegative
+	 */
+	public static boolean isOdd(final int number) {
+		if (number >= 0) {
+			return number % 2 != 0;
 		} else {
 			throw new IllegalArgumentException();
 		}
 	}
 	
-	public static boolean isEven(final int i) {
-		if (i >= 0) {
-			return i % 2 == 0;
+	/**
+	 * @param number
+	 *            A number.
+	 * @return {@code true} iff the number is even and nonnegative
+	 */
+	public static boolean isEven(final int number) {
+		if (number >= 0) {
+			return number % 2 == 0;
 		} else {
 			throw new IllegalArgumentException();
 		}

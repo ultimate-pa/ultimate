@@ -65,7 +65,7 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		this(services, fstOperand.getStateFactory(), fstOperand, sndOperand,
-				new PowersetDeterminizer<>(sndOperand, true, stateFactory), FkvOptimization.HeiMat2, Integer.MAX_VALUE);
+				new PowersetDeterminizer<>(sndOperand, true, stateFactory), FkvOptimization.HEI_MAT_2, Integer.MAX_VALUE);
 	}
 	
 	/**

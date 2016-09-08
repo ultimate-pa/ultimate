@@ -19,39 +19,48 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 
-
 /**
  * State together with an int and a boolean.
  * Such a triple is needed for rank-based complementations of Büchi automata.
- * There we assign a state a rank store if it is contained in a set O 
- * (O for odd: state never had an odd rank since the set O was emptied the 
+ * There we assign a state a rank store if it is contained in a set O
+ * (O for odd: state never had an odd rank since the set O was emptied the
  * last time).
  * The rank has to be nonnegative. A state can only be "in O" if the rank
  * is even.
- * We use this class in the complementation to store rank and "in O" 
+ * We use this class in the complementation to store rank and "in O"
  * information about down states.
  * States of the "subset component" do not yet have a rank. To accomodate for
  * this we use Integer.MIN_VALUE to store that a state does not have a rank.
  * In the toString() representation we use the infinity symbol ∞ for states
  * that do not yet have a rank.
- * @author Matthias Heizmann
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <STATE>
+ *            state type
  */
 public class StateWithRankInfo<STATE> {
+	public static final int NO_RANK = Integer.MIN_VALUE;
 	
-	public static final int s_NoRank = Integer.MIN_VALUE;
 	private final STATE mState;
 	private final int mRank;
 	private final boolean mInO;
 	
 	/**
 	 * Constructor for states that have a rank.
+	 * 
+	 * @param state
+	 *            state
+	 * @param rank
+	 *            rank
+	 * @param inO
+	 *            {@code true} iff the state is in O
 	 */
 	public StateWithRankInfo(final STATE state, final int rank, final boolean inO) {
 		super();
@@ -65,19 +74,25 @@ public class StateWithRankInfo<STATE> {
 //		}
 		mInO = inO;
 	}
-
+	
 	/**
 	 * Constructor for states that do not yet have a rank.
+	 * 
+	 * @param state
+	 *            state
 	 */
 	public StateWithRankInfo(final STATE state) {
 		super();
 		mState = state;
-		mRank = s_NoRank;
+		mRank = NO_RANK;
 		mInO = false;
 	}
 	
+	/**
+	 * @return {@code true} iff the rank is not the <tt>no rank</tt> value.
+	 */
 	public boolean hasRank() {
-		return mRank != s_NoRank;
+		return mRank != NO_RANK;
 	}
 	
 	public STATE getState() {
@@ -113,7 +128,7 @@ public class StateWithRankInfo<STATE> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final StateWithRankInfo other = (StateWithRankInfo) obj;
+		final StateWithRankInfo<?> other = (StateWithRankInfo<?>) obj;
 		if (mInO != other.mInO) {
 			return false;
 		}
@@ -147,8 +162,4 @@ public class StateWithRankInfo<STATE> {
 		sb.append(")");
 		return sb.toString();
 	}
-
-	
-	
-	
 }

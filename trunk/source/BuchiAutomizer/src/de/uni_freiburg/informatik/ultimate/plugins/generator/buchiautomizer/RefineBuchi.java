@@ -329,7 +329,7 @@ public class RefineBuchi {
 				if (setting.isAlwaysSemiDeterministic()) {
 					newAbstraction = nsbcDifference(abstraction, setting, benchmarkGenerator);
 				} else {
-					final FkvOptimization optimization = FkvOptimization.Elastic;
+					final FkvOptimization optimization = FkvOptimization.ELASTIC;
 					newAbstraction = rankBasedOptimization(abstraction, setting, benchmarkGenerator, stateDeterminizer,
 							optimization);
 				}
@@ -337,21 +337,21 @@ public class RefineBuchi {
 				final FkvOptimization optimization;
 				switch (complementationConstruction) {
 				case Elastic:
-					optimization = FkvOptimization.Elastic;
+					optimization = FkvOptimization.ELASTIC;
 					break;
 				case Ncsb:
 					throw new AssertionError("should be handled elsewhere");
 				case HeiMat2:
-					optimization = FkvOptimization.HeiMat2;
+					optimization = FkvOptimization.HEI_MAT_2;
 					break;
 				case TightBasic:
-					optimization = FkvOptimization.TightLevelRankings;
+					optimization = FkvOptimization.TIGHT_LEVEL_RANKINGS;
 					break;
 				case TightHighEven:
-					optimization = FkvOptimization.HighEven;
+					optimization = FkvOptimization.HIGH_EVEN;
 					break;
 				case TightRO:
-					optimization = FkvOptimization.Schewe;
+					optimization = FkvOptimization.SCHEWE;
 					break;
 				default:
 					throw new AssertionError("unknown optimization");
