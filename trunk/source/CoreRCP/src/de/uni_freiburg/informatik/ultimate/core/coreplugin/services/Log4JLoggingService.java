@@ -125,6 +125,13 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		sId++;
 	}
 
+	public void reloadLoggers() {
+		recreateLoggerHierarchie();
+		reinitializeDefaultAppenders();
+		reattachAppenders();
+		getLoggerById(Activator.PLUGIN_ID).debug("Logger refreshed");
+	}
+
 	private void reinitializeDefaultAppenders() {
 		mRootAppenders.clear();
 		mControllerAppenders.clear();
@@ -457,14 +464,8 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 	private final class RefreshingPreferenceChangeListener implements IPreferenceChangeListener {
 
-		private int mLastEventHashCode;
-
 		@Override
 		public void preferenceChange(final PreferenceChangeEvent event) {
-			if (mLastEventHashCode == event.hashCode()) {
-				return;
-			}
-			mLastEventHashCode = event.hashCode();
 			// do things if it concerns the loggers
 			final Object newValue = event.getNewValue();
 			final Object oldValue = event.getOldValue();
@@ -484,10 +485,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 			}
 
 			// this is an event for which we should refresh the logging service
-			recreateLoggerHierarchie();
-			reinitializeDefaultAppenders();
-			reattachAppenders();
-			getLoggerById(Activator.PLUGIN_ID).debug("Logger refreshed");
+			reloadLoggers();
 		}
 	}
 
