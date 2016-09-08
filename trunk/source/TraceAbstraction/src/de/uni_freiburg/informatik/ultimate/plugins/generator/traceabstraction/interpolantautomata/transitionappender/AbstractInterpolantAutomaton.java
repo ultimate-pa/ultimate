@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender;
@@ -33,7 +33,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache;
@@ -65,28 +64,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * <li> that has a transition (ψ, st, φ) only if the Hoare triple {ψ} st {φ}
  *  is valid.
  * </ul>
- *  
+ * 
  *  The on-demand construction works as follows.
  *  Initially, the automaton does not have any transitions. Furthermore,
- *  the automaton is always in one of the following two modes 
+ *  the automaton is always in one of the following two modes
  *  Mode.ON_DEMAND_CONSTRUCTION or Mode.READ_ONLY.
- *  The user can switch between both modes using the 
- *  {@code #switchToOnDemandConstructionMode()} and the 
+ *  The user can switch between both modes using the
+ *  {@code #switchToOnDemandConstructionMode()} and the
  *  {@code #switchToReadonlyMode()} methods.
- *  New transitions are only added if the automaton is in 
- *  ON_DEMAND_CONSTRUCTION mode. Furthermore, 
- *  new transitions are only added on-demand while the user asks the for 
+ *  New transitions are only added if the automaton is in
+ *  ON_DEMAND_CONSTRUCTION mode. Furthermore,
+ *  new transitions are only added on-demand while the user asks the for
  *  successors (e.g., via the {@code #internalSuccessors(IPredicate)} method.
  *  If the automaton is asked for successors of a given state ψ, the automaton
- *  first checks if outgoing transitions for this state were already 
+ *  first checks if outgoing transitions for this state were already
  *  constructed({@code #mAlreadyConstrucedAutomaton}).
  *  If these were already constructed, these successors are returned.
  *  Otherwise the successors are constructed and then returned.
  *  The construction of successor is defined by the subclasses of this class.
  *  Note that while constructing successor transitions new states may be added.
- *  In the construction of successors information from the automaton 
+ *  In the construction of successors information from the automaton
  *  {@code #mInputInterpolantAutomaton} can be used.
- *  
+ * 
  * @author Matthias Heizmann
  * 
  */
@@ -114,12 +113,12 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	/**
 	 * @param useEfficientTotalAutomatonBookkeeping If the constructed automaton
 	 * is guaranteed to be we use a more efficient bookkeeping for
-	 * already computed successors. 
+	 * already computed successors.
 	 */
-	public AbstractInterpolantAutomaton(final IUltimateServiceProvider services, 
+	public AbstractInterpolantAutomaton(final IUltimateServiceProvider services,
 			final SmtManager smtManager, final IHoareTripleChecker hoareTripleChecker,
 			final boolean useEfficientTotalAutomatonBookkeeping,
-			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction, final IPredicate falseState,
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction, final IPredicate falseState,
 			final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, final ILogger logger) {
 		super();
 		mServices = services;
@@ -551,7 +550,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	 */
 	private class DefaultSuccessorComputationBookkeeping implements	ISuccessorComputationBookkeeping {
 
-		private final NwaCacheBookkeeping<CodeBlock, IPredicate> mResultBookkeeping = 
+		private final NwaCacheBookkeeping<CodeBlock, IPredicate> mResultBookkeeping =
 				new NwaCacheBookkeeping<CodeBlock, IPredicate>();
 
 		@Override

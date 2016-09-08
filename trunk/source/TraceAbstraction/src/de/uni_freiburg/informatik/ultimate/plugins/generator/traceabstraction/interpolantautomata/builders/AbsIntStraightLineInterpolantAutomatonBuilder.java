@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -75,7 +75,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 	private final IRun<CodeBlock, IPredicate> mCurrentCounterExample;
 
 	public AbsIntStraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
+	        final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
 	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 	        final PredicateUnifier predUnifier, final SmtManager smtManager,
 	        final IRun<CodeBlock, IPredicate> currentCounterExample,
@@ -93,7 +93,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> constructAutomaton(
-	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
+	        final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
 	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 	        final PredicateUnifier predicateUnifier) {
 

@@ -160,13 +160,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	protected final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
 
-	private INestedWordAutomaton<WitnessEdge, WitnessNode> mWitnessAutomaton;
+	private INestedWordAutomatonSimple<WitnessEdge, WitnessNode> mWitnessAutomaton;
 
 	private final boolean mDoFaultLocalizationNonFlowSensitive;
 	private final boolean mDoFaultLocalizationFlowSensitive;
 	private HashSet<ProgramPoint> mHoareAnnotationPositions;
 
-	private final Collection<INestedWordAutomaton<CodeBlock, IPredicate>> mStoredRawInterpolantAutomata;
+	private final Collection<INestedWordAutomatonSimple<CodeBlock, IPredicate>> mStoredRawInterpolantAutomata;
 
 	public BasicCegarLoop(final String name, final RootNode rootNode, final SmtManager smtManager,
 			final TAPreferences taPrefs, final Collection<ProgramPoint> errorLocs,
@@ -268,8 +268,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	@Override
 	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
-		final INestedWordAutomaton<CodeBlock, IPredicate> abstraction =
-				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
+		final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction =
+				(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction;
 		mCounterexample = (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), abstraction))
 					.getNestedRun();
 
@@ -614,7 +614,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE);
 					final NondeterministicInterpolantAutomaton nondet =
 							new NondeterministicInterpolantAutomaton(mServices, mSmtManager, mModGlobVarManager, htc,
-									(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, interpolAutomaton,
+									(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction, interpolAutomaton,
 									predicateUnifier, mLogger, conservativeSuccessorCandidateSelection, secondChance);
 					final PowersetDeterminizer<CodeBlock, IPredicate> psd2 =
 							new PowersetDeterminizer<CodeBlock, IPredicate>(nondet, true,
@@ -668,11 +668,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				}
 			} else {// complement and intersection instead of difference
 
-				final INestedWordAutomaton<CodeBlock, IPredicate> dia =
+				final INestedWordAutomatonSimple<CodeBlock, IPredicate> dia =
 						determinizeInterpolantAutomaton(interpolAutomaton);
 
 				mLogger.debug("Start complementation");
-				final INestedWordAutomaton<CodeBlock, IPredicate> nia =
+				final INestedWordAutomatonSimple<CodeBlock, IPredicate> nia =
 						(new ComplementDD<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 								mPredicateFactoryInterpolantAutomata, dia)).getResult();
 				assert (!accepts(mServices, nia, mCounterexample.getWord()));
@@ -744,7 +744,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// +a.numberOfIncomingInternalTransitions(p);
 		// }
 		final boolean stillAccepted = (new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction,
+				(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction,
 				(NestedWord<CodeBlock>) mCounterexample.getWord())).getResult();
 		if (stillAccepted) {
 			return false;
@@ -1096,7 +1096,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	// }
 
 	protected static boolean accepts(final IUltimateServiceProvider services,
-			final INestedWordAutomaton<CodeBlock, IPredicate> nia, final Word<CodeBlock> word)
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> nia, final Word<CodeBlock> word)
 			throws AutomataOperationCanceledException {
 		try {
 			return (new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(services), nia,
@@ -1119,7 +1119,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// do nothing
 	}
 
-	public void setWitnessAutomaton(final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
+	public void setWitnessAutomaton(final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
 		mWitnessAutomaton = witnessAutomaton;
 
 	}

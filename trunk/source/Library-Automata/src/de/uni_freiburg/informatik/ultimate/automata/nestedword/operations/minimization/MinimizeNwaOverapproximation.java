@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
@@ -123,7 +124,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 	public MinimizeNwaOverapproximation(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final Collection<Set<STATE>> initialPartition, final boolean addMapOldState2newState, final int time,
-			final Collection<INestedWordAutomaton<LETTER, STATE>> forbiddenLanguages)
+			final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, "MinimizeNwaOverapproximation", operand);
 		final TimeoutFlag<LETTER, STATE> timeout = new TimeoutFlag<>(time);
@@ -155,7 +156,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 	
 	private void constructResult(final boolean wasInterrrupted,
 			final IDoubleDeckerAutomaton<LETTER, STATE> minimizerResult,
-			final Collection<INestedWordAutomaton<LETTER, STATE>> forbiddenLanguages,
+			final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages,
 			final IStateFactory<STATE> stateFactoryIntersect)
 			throws AutomataOperationCanceledException {
 		if (!wasInterrrupted || forbiddenLanguages.isEmpty() || mOperand.size() == minimizerResult.size()) {
@@ -173,12 +174,12 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 	 * difference of the two automata.
 	 */
 	private void minimizeWithDifferenceRefinement(final IDoubleDeckerAutomaton<LETTER, STATE> minimizerResult,
-			final Collection<INestedWordAutomaton<LETTER, STATE>> forbiddenLanguages,
+			final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages,
 			final IStateFactory<STATE> stateFactoryIntersect)
 			throws AutomataOperationCanceledException, AssertionError {
 		INestedWordAutomaton<LETTER, STATE> refinedResult = minimizerResult;
 		
-		for (final INestedWordAutomaton<LETTER, STATE> automaton : forbiddenLanguages) {
+		for (final INestedWordAutomatonSimple<LETTER, STATE> automaton : forbiddenLanguages) {
 			final INestedWordAutomaton<LETTER, STATE> intersection;
 			try {
 				intersection =

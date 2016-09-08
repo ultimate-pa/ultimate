@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
@@ -35,7 +35,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -67,26 +67,26 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * - furthermore we have to check if the input was indeed a lasso program
  * - therefore we construct an automaton that has the shape of the found lasso
  * and check if the language of the RCFG-Büchi-automaton is already included
- * in the lasso automaton (via constructing difference and checking emptiness).    
+ * in the lasso automaton (via constructing difference and checking emptiness).
  * @author Matthias Heizmann
  */
 public class LassoExtractorBuchi extends AbstractLassoExtractor {
 	
-	private final IUltimateServiceProvider mServices;	
-	private final INestedWordAutomaton<CodeBlock, IPredicate> mCfgAutomaton;
-	private INestedWordAutomaton<CodeBlock, IPredicate> mLassoAutomaton;
+	private final IUltimateServiceProvider mServices;
+	private final INestedWordAutomatonSimple<CodeBlock, IPredicate> mCfgAutomaton;
+	private INestedWordAutomatonSimple<CodeBlock, IPredicate> mLassoAutomaton;
 	private final IStateFactory<IPredicate> mPredicateFactory;
 	private final SmtManager mSmtManager;
 	private final ILogger mLogger;
 	
-	public LassoExtractorBuchi(final IUltimateServiceProvider services, final RootNode rootNode, final SmtManager smtManager, final ILogger logger) 
+	public LassoExtractorBuchi(final IUltimateServiceProvider services, final RootNode rootNode, final SmtManager smtManager, final ILogger logger)
 			throws AutomataLibraryException {
 		mServices = services;
 		mLogger = logger;
 		mPredicateFactory = new PredicateFactoryResultChecking(smtManager);
 		mCfgAutomaton = constructCfgAutomaton(rootNode, smtManager);
 		mSmtManager = smtManager;
-		final NestedLassoRun<CodeBlock, IPredicate> run = 
+		final NestedLassoRun<CodeBlock, IPredicate> run =
 				(new BuchiIsEmpty<>(new AutomataLibraryServices(mServices), mCfgAutomaton)).getAcceptingNestedLassoRun();
 
 		if (run == null) {
@@ -95,10 +95,10 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 		} else {
 			final NestedLassoWord<CodeBlock> nlw = run.getNestedLassoWord();
 			final InCaReAlphabet<CodeBlock> alphabet = new InCaReAlphabet<>(mCfgAutomaton);
-			mLassoAutomaton = (new LassoAutomatonBuilder(alphabet, 
+			mLassoAutomaton = (new LassoAutomatonBuilder(alphabet,
 					mPredicateFactory, nlw.getStem(), nlw.getLoop())).getResult();
-			final INestedWordAutomaton<CodeBlock, IPredicate> difference = 
-					(new BuchiDifferenceFKV<>(new AutomataLibraryServices(mServices), mPredicateFactory, 
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> difference =
+					(new BuchiDifferenceFKV<>(new AutomataLibraryServices(mServices), mPredicateFactory,
 							mCfgAutomaton, mLassoAutomaton)).getResult();
 			final boolean isEmpty = (new BuchiIsEmpty<>(new AutomataLibraryServices(mServices), difference)).getResult();
 			if (isEmpty) {
@@ -124,12 +124,12 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 	}
 	
 
-	private INestedWordAutomaton<CodeBlock, IPredicate> constructCfgAutomaton(
+	private INestedWordAutomatonSimple<CodeBlock, IPredicate> constructCfgAutomaton(
 			final RootNode rootNode, final SmtManager smtManager) {
-		final CFG2NestedWordAutomaton cFG2NestedWordAutomaton = 
+		final CFG2NestedWordAutomaton cFG2NestedWordAutomaton =
 				new CFG2NestedWordAutomaton(mServices, true ,smtManager, mLogger);
 		final Collection<ProgramPoint> allNodes = new HashSet<ProgramPoint>();
-		for (final Map<String, ProgramPoint> prog2pp : 
+		for (final Map<String, ProgramPoint> prog2pp :
 						rootNode.getRootAnnot().getProgramPoints().values()) {
 			allNodes.addAll(prog2pp.values());
 		}
@@ -194,7 +194,7 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 			}
 		}
 
-		public INestedWordAutomaton<CodeBlock, IPredicate> getResult() {
+		public INestedWordAutomatonSimple<CodeBlock, IPredicate> getResult() {
 			return mResult;
 		}
 	}

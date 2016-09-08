@@ -37,6 +37,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
@@ -62,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C> {
 	private final PetriNetJulian<S, C> mOperand;
-	private final NestedWordAutomaton<S, C> mNwa;
+	private final INestedWordAutomaton<S, C> mNwa;
 	private final IStateFactory<C> mContentFactory;
 	
 	private PetriNetJulian<S, C> mResult;
@@ -374,11 +375,11 @@ public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C>
 			mLogger.info("Testing correctness of " + operationName());
 		}
 		
-		final INestedWordAutomaton<S, C> op1AsNwa =
+		final INestedWordAutomatonSimple<S, C> op1AsNwa =
 				(new PetriNet2FiniteAutomaton<S, C>(mServices, mOperand)).getResult();
-		final INestedWordAutomaton<S, C> rcResult =
+		final INestedWordAutomatonSimple<S, C> rcResult =
 				(new DifferenceDD<S, C>(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
-		final INestedWordAutomaton<S, C> resultAsNwa =
+		final INestedWordAutomatonSimple<S, C> resultAsNwa =
 				(new PetriNet2FiniteAutomaton<S, C>(mServices, mResult)).getResult();
 		
 		boolean correct = true;

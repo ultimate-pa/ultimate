@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -110,7 +111,7 @@ public class AbstractInterpretationRunner {
 	 * </ul>
 	 */
 	public void generateFixpoints(final IRun<CodeBlock, IPredicate> currentCex,
-	        final INestedWordAutomaton<CodeBlock, IPredicate> currentAbstraction) {
+	        final INestedWordAutomatonSimple<CodeBlock, IPredicate> currentAbstraction) {
 		assert currentCex != null : "Cannot run AI on empty counterexample";
 		assert currentAbstraction != null : "Cannot run AI on empty abstraction";
 		if (mMode == AbstractInterpretationMode.NONE) {
@@ -283,7 +284,7 @@ public class AbstractInterpretationRunner {
 	}
 
 	private boolean hasAiProgress(final boolean result,
-	        final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
+	        final INestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
 	        final IRun<CodeBlock, IPredicate> cex) {
 		if (result) {
 			return result;

@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
@@ -97,7 +97,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 	 * @param xnfConversionTechnique
 	 */
 	public AbsIntTotalInterpolationAutomatonBuilder(final IUltimateServiceProvider services,
-	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
+	        final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
 	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 	        final PredicateUnifier predicateUnifier, final SmtManager smtManager,
 	        final IRun<CodeBlock, IPredicate> currentCounterExample) {
@@ -111,7 +111,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> constructAutomaton(
-	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
+	        final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
 	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 	        final PredicateUnifier predicateUnifier) {
 
@@ -222,7 +222,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 	 * @param result
 	 * @param predicateToStates
 	 */
-	private void enhanceResult(final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
+	private void enhanceResult(final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
 	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 	        final NestedWordAutomaton<CodeBlock, IPredicate> result,
 	        final Map<IPredicate, Set<IAbstractState<?, CodeBlock, IBoogieVar>>> predicateToStates) {

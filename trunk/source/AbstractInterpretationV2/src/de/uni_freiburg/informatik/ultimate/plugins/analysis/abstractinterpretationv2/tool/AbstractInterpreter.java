@@ -33,7 +33,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.function.Supplier;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -107,7 +107,7 @@ public final class AbstractInterpreter {
 	 */
 	public static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
 			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, ProgramPoint>
-			runOnPathProgram(final RootNode root, final INestedWordAutomaton<CodeBlock, ?> abstraction,
+			runOnPathProgram(final RootNode root, final INestedWordAutomatonSimple<CodeBlock, ?> abstraction,
 					final NestedRun<CodeBlock, ?> counterexample, final IProgressAwareTimer timer,
 					final IUltimateServiceProvider services) {
 		assert counterexample != null && counterexample.getLength() > 0 : "Invalid counterexample";
