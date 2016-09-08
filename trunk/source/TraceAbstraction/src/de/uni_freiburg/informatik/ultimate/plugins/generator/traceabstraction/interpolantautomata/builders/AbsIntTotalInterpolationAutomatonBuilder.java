@@ -159,7 +159,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 
 				// Add mapping from predicate -> Set<STATE> to be able to determine all STATES the predicate is
 				// originating from.
-				if (predicateToStates.get(target) == null) {
+				if (!predicateToStates.containsKey(target)) {
 					predicateToStates.put(target, nextStates.stream().collect(Collectors.toSet()));
 				} else {
 					predicateToStates.get(target).addAll(nextStates.stream().collect(Collectors.toSet()));
