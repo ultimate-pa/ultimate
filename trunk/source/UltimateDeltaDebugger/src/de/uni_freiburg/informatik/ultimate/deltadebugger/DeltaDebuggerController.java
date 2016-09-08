@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.deltadebugger;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -48,10 +49,37 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public class DeltaDebuggerController extends CommandLineController {
 
 	@Override
-	protected void executeToolchain(final ICore<RunDefinition> core, final ParsedParameter cliParams,
+	protected void startExecutingToolchain(final ICore<RunDefinition> core, final ParsedParameter cliParams,
 			final ILogger logger, final IToolchainData<RunDefinition> toolchain)
 			throws ParseException, InvalidFileArgumentException, InterruptedException {
-		super.executeToolchain(core, cliParams, logger, toolchain);
+		final File[] initialInputFiles = cliParams.getInputFiles();
+
+		// copy initialInputFiles to tmp
+		final File[] inputFiles = initialInputFiles;
+
+		// start a first run
+		executeToolchain(core, inputFiles, logger, toolchain);
+		executeToolchain(core, inputFiles, logger, toolchain);
+		executeToolchain(core, inputFiles, logger, toolchain);
+		executeToolchain(core, inputFiles, logger, toolchain);
+
+		// register global state in the two display functions
+
+		while (true) {
+			// change the inputfiles with the delta debugging algo and determine if it is time to terminate
+			// start a new toolchain on a reduced input
+			final File[] reducedInput = computeReducedInput();
+			if (computeReducedInput().length == 0) {
+				// terminate
+				break;
+			}
+			executeToolchain(core, reducedInput, logger, toolchain);
+		}
+
+	}
+
+	private File[] computeReducedInput() {
+		return new File[0];
 	}
 
 	@Override

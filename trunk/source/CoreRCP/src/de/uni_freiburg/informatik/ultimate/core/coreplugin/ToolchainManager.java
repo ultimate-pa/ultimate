@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.Log4JLogging
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultSummarizer;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.PluginType;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
@@ -125,8 +124,8 @@ public class ToolchainManager {
 	}
 
 	private IModelManager createModelManager() {
-		final String tmp_dir = new RcpPreferenceProvider(Activator.PLUGIN_ID)
-				.getString(CorePreferenceInitializer.LABEL_TMP_DIRECTORY);
+		final String tmp_dir =
+				new RcpPreferenceProvider(Activator.PLUGIN_ID).getString(CorePreferenceInitializer.LABEL_TMP_DIRECTORY);
 		return new PersistenceAwareModelManager(tmp_dir, mLogger);
 	}
 
@@ -300,8 +299,8 @@ public class ToolchainManager {
 								.getBoolean(CorePreferenceInitializer.LABEL_LONG_RESULT);
 				final ILogger controllerLogger = mToolchainData.getServices().getLoggingService().getControllerLogger();
 				ResultUtil.logResults(controllerLogger, resultService, appendCompleteLongDescription);
-				final ResultSummarizer resultSummary = new ResultSummarizer(resultService);
-				controllerLogger.info(resultSummary.getOldResultMessage());
+				// final ResultSummarizer resultSummary = new ResultSummarizer(resultService);
+				// controllerLogger.info(resultSummary.getOldResultMessage());
 				mCurrentController.displayToolchainResults(mToolchainData, resultService.getResults());
 				mModelManager.removeAll();
 			}

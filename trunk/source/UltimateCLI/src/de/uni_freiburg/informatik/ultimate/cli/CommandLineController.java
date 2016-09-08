@@ -148,7 +148,7 @@ public class CommandLineController implements IController<RunDefinition> {
 			}
 
 			prepareToolchain(core, fullParams);
-			executeToolchain(core, fullParams, mLogger, mToolchain);
+			startExecutingToolchain(core, fullParams, mLogger, mToolchain);
 
 		} catch (final ParseException pex) {
 			printParseException(args, pex);
@@ -190,10 +190,15 @@ public class CommandLineController implements IController<RunDefinition> {
 	 * @throws InterruptedException
 	 *             If during toolchain execution the thread is interrupted, this exception might be thrown.
 	 */
-	protected void executeToolchain(final ICore<RunDefinition> core, final ParsedParameter cliParams,
+	protected void startExecutingToolchain(final ICore<RunDefinition> core, final ParsedParameter cliParams,
 			final ILogger logger, final IToolchainData<RunDefinition> toolchain)
 			throws ParseException, InvalidFileArgumentException, InterruptedException {
 		final File[] inputFiles = cliParams.getInputFiles();
+		executeToolchain(core, inputFiles, logger, toolchain);
+	}
+
+	protected void executeToolchain(final ICore<RunDefinition> core, final File[] inputFiles, final ILogger logger,
+			final IToolchainData<RunDefinition> toolchain) throws InterruptedException {
 		final BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, logger, inputFiles);
 		tcj.schedule();
 		tcj.join();
