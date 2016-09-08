@@ -127,7 +127,7 @@ public class LTLXBAExecutor {
 		rtr.add(prefs.getString(PreferenceInitializer.LABEL_TOOLLOCATION));
 		rtr.add("-f");
 		rtr.add(ltlFormula);
-		return rtr.toArray(new String[0]);
+		return rtr.toArray(new String[rtr.size()]);
 	}
 	
 }
