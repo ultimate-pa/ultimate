@@ -706,29 +706,64 @@ public class TransFormulaUtils {
 		final UnmodifiableTransFormula composition = sequentialComposition(logger, services, mgdScript, 
 				simplify, extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique,
 				callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf);
+		
+		// remove invars except for
+		// local vars that occur in arguments of the call
+		// oldvars that are modifiable by the callee unless they occur in 
+		// arguments of the call
 		final List<IProgramVar> inVarsToRemove = new ArrayList<IProgramVar>();
 		for (final IProgramVar bv : composition.getInVars().keySet()) {
 			if (bv.isGlobal()) {
-				if (bv.isOldvar() && oldVarsAssignment.getOutVars().containsKey(bv)) {
-					inVarsToRemove.add(bv);
+				if (bv.isOldvar()) {
+					final boolean isModifiableByCallee = oldVarsAssignment.getAssignedVars().contains(bv);
+					if (isModifiableByCallee) {
+						final boolean occursInArguments = callTf.getInVars().containsKey(bv);
+						if (occursInArguments) {
+							// keep, invar instance refers to start of caller
+						} else {
+							// remove, invar instance refers to start of callee
+							inVarsToRemove.add(bv);
+						}
+					} else {
+						// keep, invar instance refers to start of caller
+					}
+				} else {
+					// keep, invar instance's scope is caller or before
+					// (because for the modifiables the oldvarsassignment
+					// introduced a new instance
 				}
 			} else {
-				if (!callTf.getInVars().containsKey(bv)) {
-					// bv is local but not argument of procedure call
+				final boolean occursInArguments = callTf.getInVars().containsKey(bv);
+				if (occursInArguments) {
+					// keep, invar instance's scope is caller
+				} else {
+					// remove, this is a local variables of callee
 					inVarsToRemove.add(bv);
 				}
 			}
 		}
 
+		// remove outvars except for
+		// local vars that are outvars of return
+		// oldvars that are modifiable by the callee
+		// note that it is not possible that return assigns an oldvar
 		final List<IProgramVar> outVarsToRemove = new ArrayList<IProgramVar>();
 		for (final IProgramVar bv : composition.getOutVars().keySet()) {
 			if (bv.isGlobal()) {
-				if (bv.isOldvar() && oldVarsAssignment.getOutVars().containsKey(bv)) {
-					outVarsToRemove.add(bv);
+				if (bv.isOldvar()) {
+					final boolean isModifiableByCallee = oldVarsAssignment.getAssignedVars().contains(bv);
+					if (isModifiableByCallee) {
+						// remove, outvar instance refers to instance at beginning of calleee
+						outVarsToRemove.add(bv);
+					} else {
+						// keep, outvar instance refers to start of caller
+					}
+				} else {
+					// keep
 				}
 			} else {
 				if (!returnTf.getOutVars().containsKey(bv)) {
-					// bv is local but not result of procedure call
+					// bv is local var of callee
 					outVarsToRemove.add(bv);
 				}
 			}
@@ -737,18 +772,17 @@ public class TransFormulaUtils {
 		// inVars, they should not count as havoced, we have to add them to 
 		// outvars 
 		final Map<IProgramVar, TermVariable> additionalOutVars = new HashMap<>();
-		{
-			for (final Entry<IProgramVar, TermVariable> entry : callTf.getInVars().entrySet()) {
-				if (outVarsToRemove.contains(entry.getKey())) {
-					throw new AssertionError("first you remove it, then you want to add it. Matthias check it this is ok.");
-				}
-				if (!composition.getOutVars().containsKey(entry.getKey())) {
-					final TermVariable inVar = composition.getInVars().get(entry.getKey());
-					if (inVar == null) {
-						// do nothing, not in formula any more
-					} else {
-						additionalOutVars.put(entry.getKey(), inVar);
-					}
+		for (final Entry<IProgramVar, TermVariable> entry : callTf.getInVars().entrySet()) {
+			// we add the invar as outvar if there is not yet an outvar,
+			// or we remove the outvar (e.g., in recursive programs in can
+			// happen that the outvar instance does not coincide with
+			// the invar but the outvar instance belongs to the caller
+			if (!composition.getOutVars().containsKey(entry.getKey()) || outVarsToRemove.contains(entry.getKey())) {
+				final TermVariable inVar = composition.getInVars().get(entry.getKey());
+				if (inVar == null) {
+					// do nothing, not in formula any more
+				} else {
+					additionalOutVars.put(entry.getKey(), inVar);
 				}
 			}
 		}
