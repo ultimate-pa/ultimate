@@ -15,7 +15,7 @@ while (( problemId <= maxProblemId )) && (( h < "${#hosts[@]}" )); do
 		"screen -d -m -S 'dfs$i' bash -c 'cd ~/ultimate/trunk/examples/rers2016/dfs/; ./startDfsProblem $problemId; exec bash;'"
 	then
 		echo "Successfully started problem$problemId on host $host"
-		echo "$problemId $host" >>  workerhosts
+		echo "problem$problemId $host" >>  workerhosts
 		(( problemId++ ))
 	else
 		echo Failed
