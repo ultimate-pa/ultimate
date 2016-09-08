@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -310,7 +311,7 @@ public class TransFormulaBuilder {
 	
 	
 	public static UnmodifiableTransFormula constructCopy(final TransFormula tf, 
-			final Collection<IProgramVar> inVarsToRemove, final Collection<IProgramVar> outVarsToRemove, final ManagedScript script) {
+			final Collection<IProgramVar> inVarsToRemove, final Collection<IProgramVar> outVarsToRemove, final ManagedScript script, final Map<IProgramVar, TermVariable> additionalOutVars) {
 		Set<TermVariable> branchEncoders;
 		if (tf instanceof UnmodifiableTransFormula) {
 			branchEncoders = ((UnmodifiableTransFormula) tf).getBranchEncoders();
@@ -338,12 +339,19 @@ public class TransFormulaBuilder {
 			final TermVariable outVar = tfb.mOutVars.get(pv);
 			tfb.mOutVars.remove(pv);
 			if (inVar != outVar) {
-				// outVar does not occurs already as inVar, we have to add outVar
+				// outVar does not occur already as inVar, we have to add outVar
 				// to auxVars
 				final boolean modified = auxVars.add(outVar);
 				assert modified : "similar var already there";
 			}
 		}
+		for (final Entry<IProgramVar, TermVariable> entry : additionalOutVars.entrySet()) {
+			final TermVariable oldValue = tfb.mOutVars.put(entry.getKey(), entry.getValue());
+			if (oldValue != null) {
+				throw new IllegalArgumentException("Will not introduce " + entry.getKey() + " it has alreay an outVar");
+			}
+		}
+		
 		final Infeasibility infeasibility;
 		if (tf instanceof UnmodifiableTransFormula) {
 			infeasibility = ((UnmodifiableTransFormula) tf).isInfeasible();

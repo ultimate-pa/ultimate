@@ -450,22 +450,24 @@ public class TransFormulaUtils {
 				}
 				
 			}
-			callAndBeforeTF = TransFormulaBuilder.constructCopy(composition, Collections.emptySet(), outVarsToRemove, mgdScript);
+			final Map<IProgramVar, TermVariable> varsToHavoc = new HashMap<IProgramVar, TermVariable>();
 			// now we havoc all oldvars that are modifiable by the caller 
 			// but not modifiable y the callee
 			final Set<IProgramVar> modifiableByCaller = modGlobVarManager.getOldVarsAssignment(procBeforeCall).getAssignedVars();
 			for (final IProgramVar oldVar : modifiableByCaller) {
 				if (!oldVarsAssignment.getAssignedVars().contains(oldVar)) {
-					callAndBeforeTF.mOutVars.put(oldVar, mgdScript.constructFreshCopy(oldVar.getTermVariable()));
+					varsToHavoc.put(oldVar, mgdScript.constructFreshCopy(oldVar.getTermVariable()));
 				}
 			}
 			
 			// we have to havoc all local variables of the caller
 			final Map<String, LocalBoogieVar> locals = symbolTable.getLocals(procBeforeCall);
 			for (final Entry<String, LocalBoogieVar> entry : locals.entrySet()) {
-				callAndBeforeTF.mOutVars.put(entry.getValue(), mgdScript.constructFreshCopy(entry.getValue().getTermVariable()));
+				varsToHavoc.put(entry.getValue(), mgdScript.constructFreshCopy(entry.getValue().getTermVariable()));
 		
 			}
+			
+			callAndBeforeTF = TransFormulaBuilder.constructCopy(composition, Collections.emptySet(), outVarsToRemove, mgdScript, varsToHavoc);
 			
 //			// now we havoc all oldvars that are not modified by the callee
 //			// TODO: Rename the ones that are not modified by the caller
@@ -527,7 +529,7 @@ public class TransFormulaUtils {
 //					}
 //				}
 //			}
-			globalVarAssignAndAfterTF = TransFormulaBuilder.constructCopy(composition, inVarsToRemove, Collections.emptySet(), mgdScript);
+			globalVarAssignAndAfterTF = TransFormulaBuilder.constructCopy(composition, inVarsToRemove, Collections.emptySet(), mgdScript, Collections.emptyMap());
 		}
 		
 		
@@ -552,7 +554,7 @@ public class TransFormulaUtils {
 				// nothing to remove
 				result = tmpresult;
 			} else {
-				result = TransFormulaBuilder.constructCopy(tmpresult, Collections.emptySet(), outVarsToRemove, mgdScript);
+				result = TransFormulaBuilder.constructCopy(tmpresult, Collections.emptySet(), outVarsToRemove, mgdScript, Collections.emptyMap());
 			}
 		}
 		
@@ -727,20 +729,28 @@ public class TransFormulaUtils {
 				}
 			}
 		}
-		final UnmodifiableTransFormula result = TransFormulaBuilder.constructCopy(composition, inVarsToRemove, outVarsToRemove, mgdScript);
+		// our composition might have introduced arguments of the caller as
+		// inVars, they should not count as havoced, we have to add them to 
+		// outvars 
+		final Map<IProgramVar, TermVariable> additionalOutVars = new HashMap<>();
 		{
 			for (final Entry<IProgramVar, TermVariable> entry : callTf.getInVars().entrySet()) {
-				if (!result.getOutVars().containsKey(entry.getKey())) {
-					final TermVariable inVar = result.getInVars().get(entry.getKey());
+				if (outVarsToRemove.contains(entry.getKey())) {
+					throw new AssertionError("first you remove it, then you want to add it. Matthias check it this is ok.");
+				}
+				if (!composition.getOutVars().containsKey(entry.getKey())) {
+					final TermVariable inVar = composition.getInVars().get(entry.getKey());
 					if (inVar == null) {
 						// do nothing, not in formula any more
 					} else {
-						result.mOutVars.put(entry.getKey(), inVar);
+						additionalOutVars.put(entry.getKey(), inVar);
 					}
 				}
 			}
 		}
-		assert SmtUtils.neitherKeyNorValueIsNull(result.mOutVars) : "sequentialCompositionWithCallAndReturn introduced null entries";
+		final UnmodifiableTransFormula result = TransFormulaBuilder.constructCopy(composition, inVarsToRemove, outVarsToRemove, mgdScript, additionalOutVars);
+
+		assert SmtUtils.neitherKeyNorValueIsNull(result.getOutVars()) : "sequentialCompositionWithCallAndReturn introduced null entries";
 		assert (isIntraprocedural(result));
 		assert !result.getBranchEncoders().isEmpty() || predicateBasedResultCheck(services, mgdScript, 
 				xnfConversionTechnique, simplificationTechnique, 
