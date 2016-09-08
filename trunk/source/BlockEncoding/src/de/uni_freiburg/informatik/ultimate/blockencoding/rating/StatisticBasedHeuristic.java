@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -56,7 +56,7 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 	/**
 	 * @param strategy
 	 */
-	public StatisticBasedHeuristic(RatingStrategy strategy, ILogger logger) {
+	public StatisticBasedHeuristic(final RatingStrategy strategy, final ILogger logger) {
 		super(strategy);
 		mLogger = logger;
 		mSupportedStrategies = new ArrayList<RatingStrategy>();
@@ -85,7 +85,7 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 	}
 
 	@Override
-	public boolean isRatingStrategySupported(RatingStrategy strategy) {
+	public boolean isRatingStrategySupported(final RatingStrategy strategy) {
 		return mSupportedStrategies.contains(strategy);
 	}
 
@@ -122,7 +122,7 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 		return Integer.toString(meanValue);
 	}
 
-	private String computeMultiplicativeBoundary(String pref) {
+	private String computeMultiplicativeBoundary(final String pref) {
 		int value;
 		if (!pref.equals("")) {
 			final int preference = Integer.parseInt(pref);
@@ -133,6 +133,6 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 			value = EncodingStatistics.totalRCFGRating / EncodingStatistics.countOfBasicEdges;
 		}
 		mLogger.warn("BoundValue: " + value);
-		return new Integer(value).toString();
+		return Integer.toString(value);
 	}
 }
