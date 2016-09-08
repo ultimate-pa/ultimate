@@ -275,7 +275,8 @@ public class TransFormulaLRUtils {
 		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (final TermVariable tv : term.getFreeVars()) {
 			final IProgramVar bv = symbolTable.getBoogieVar(tv);
-			final Term inVar = tf.getInVars().get(bv); 
+			final Term inVar = tf.getInVars().get(bv);
+			assert inVar != null : "no inVar for " + bv;
 			substitutionMapping.put(tv, inVar);
 		}
 		return (new Substitution(script, substitutionMapping)).transform(term);
