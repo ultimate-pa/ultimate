@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -84,8 +84,8 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		mId = sId;
 	}
 
-	protected VPDomainState(Set<IBoogieVar> variablesMap, Map<String, Set<Expression>> varExprMap,
-			Set<Expression> exprSet, Map<String, Set<Expression>> ptrReadintMap, boolean isFixpoint) {
+	protected VPDomainState(final Set<IBoogieVar> variablesMap, final Map<String, Set<Expression>> varExprMap,
+			final Set<Expression> exprSet, final Map<String, Set<Expression>> ptrReadintMap, final boolean isFixpoint) {
 		mVariables = variablesMap;
 		mVarExprMap = new HashMap<String, Set<Expression>>(varExprMap);
 		mExprSet = new HashSet<Expression>(exprSet);
@@ -108,7 +108,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	}
 
 	@Override
-	public VPDomainState addVariable(IBoogieVar variable) {
+	public VPDomainState addVariable(final IBoogieVar variable) {
 		assert variable != null;
 
 		final Set<IBoogieVar> newVarMap = new HashSet<>(mVariables);
@@ -119,7 +119,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	}
 
 	@Override
-	public VPDomainState removeVariable(IBoogieVar variable) {
+	public VPDomainState removeVariable(final IBoogieVar variable) {
 		assert variable != null;
 		final Set<IBoogieVar> newVarMap = new HashSet<>(mVariables);
 		newVarMap.remove(variable);
@@ -127,7 +127,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	}
 
 	@Override
-	public VPDomainState addVariables(Collection<IBoogieVar> variables) {
+	public VPDomainState addVariables(final Collection<IBoogieVar> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 
@@ -143,7 +143,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	}
 
 	@Override
-	public VPDomainState removeVariables(Collection<IBoogieVar> variables) {
+	public VPDomainState removeVariables(final Collection<IBoogieVar> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 
@@ -152,7 +152,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	}
 
 	@Override
-	public boolean containsVariable(IBoogieVar var) {
+	public boolean containsVariable(final IBoogieVar var) {
 		return mVariables.contains(var);
 	}
 
@@ -170,7 +170,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		return mIsFixpoint;
 	}
 
-	public VPDomainState setFixpoint(boolean value) {
+	public VPDomainState setFixpoint(final boolean value) {
 		return new VPDomainState(mVariables, mVarExprMap, mExprSet, mPtrReadintMap, value);
 	}
 
@@ -201,7 +201,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	}
 
 	@Override
-	public boolean equals(Object other) {
+	public boolean equals(final Object other) {
 		if (other == null) {
 			return false;
 		}
@@ -218,7 +218,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	}
 
 	@Override
-	public boolean isEqualTo(VPDomainState other) {
+	public boolean isEqualTo(final VPDomainState other) {
 		if (!hasSameVariables(other)) {
 			return false;
 		}
@@ -231,7 +231,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		return true;
 	}
 
-	protected boolean hasSameVariables(VPDomainState other) {
+	protected boolean hasSameVariables(final VPDomainState other) {
 		if (other == null) {
 			return false;
 		}
@@ -284,7 +284,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		return new HashMap<String, Set<Expression>>(mVarExprMap);
 	}
 
-	protected void setExpressionMap(Map<String, Set<Expression>> exprMap) {
+	protected void setExpressionMap(final Map<String, Set<Expression>> exprMap) {
 
 		assert exprMap != null;
 
@@ -295,14 +295,14 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		}
 	}
 
-	protected void setExpressionSet(Set<Expression> exprSet) {
+	protected void setExpressionSet(final Set<Expression> exprSet) {
 
 		assert exprSet != null;
 		mExprSet.clear();
 		mExprSet.addAll(exprSet);
 	}
 
-	protected void setPtrReadinMap(Map<String, Set<Expression>> ptrReadinMap) {
+	protected void setPtrReadinMap(final Map<String, Set<Expression>> ptrReadinMap) {
 
 		assert ptrReadinMap != null;
 
@@ -338,7 +338,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	}
 
 	@Override
-	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
+	public Term getTerm(final Script script, final Boogie2SMT bpl2smt) {
 		return script.term("true");
 	}
 
@@ -353,7 +353,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	 * @param partition
 	 * @return the variables grouping information
 	 */
-	public static Map<String, String> generateVarGroupInfo(Map<String, Set<String>> partition) {
+	public static Map<String, String> generateVarGroupInfo(final Map<String, Set<String>> partition) {
 
 		final Iterator<String> partitionIter = partition.keySet().iterator();
 		String groupNumber;
@@ -381,7 +381,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	 *            to be sorted out.
 	 * @return a new partition map that no index is skipped.
 	 */
-	public static Map<String, Set<String>> reIndexGroups(Map<String, Set<String>> partition) {
+	public static Map<String, Set<String>> reIndexGroups(final Map<String, Set<String>> partition) {
 
 		final Map<String, Set<String>> result = new HashMap<String, Set<String>>();
 
@@ -395,14 +395,14 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 			if (partition.get(key).isEmpty()) {
 				continue;
 			}
-			result.put(new Integer(index).toString(), partition.get(key));
+			result.put(Integer.toString(index), partition.get(key));
 			index++;
 		}
 
 		return result;
 	}
 
-	public static String getNextIndex(Map<String, Set<String>> partition) {
+	public static String getNextIndex(final Map<String, Set<String>> partition) {
 
 		if (partition.isEmpty()) {
 			return "1";
@@ -411,16 +411,15 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		final Set<String> keySet = partition.keySet();
 		final Iterator<String> keySetIter = keySet.iterator();
 
-		Integer max = new Integer(keySetIter.next());
-		String next;
+		int max = Integer.parseInt(keySetIter.next());
 
 		while (keySetIter.hasNext()) {
-			next = keySetIter.next();
-			if (max.compareTo(new Integer(next)) < 0) {
-				max = new Integer(next);
+			final int next = Integer.parseInt(keySetIter.next());
+			if (max < next) {
+				max = next;
 			}
 		}
-		return new Integer((max.intValue() + 1)).toString();
+		return Integer.toString(max + 1);
 	}
 
 	@Override
