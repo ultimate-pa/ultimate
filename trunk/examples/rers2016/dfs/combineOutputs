@@ -1,0 +1,8 @@
+#! /bin/bash
+
+mkdir -p outputsCombined
+for dir in "$@"; do
+  for i in {10..18}; do
+      cat -- "$dir/dfs$i"-*.out > "outputsCombined/dfs$i-0.out" 
+  done
+done

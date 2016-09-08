@@ -1,0 +1,8 @@
+#! /bin/bash
+
+for i in {10..18}; do
+  echo
+  echo "$i -------------------"
+  sdiff -t -w 24 <(cut -d' ' -f1 "result$i.txt") <(grep -Pv '^#' "../bruteforce/result$i.txt" | cut -d' ' -f1)
+  # TODO display conflicting lines (A | B) as two lines: (A <  ) (  > B)
+done
