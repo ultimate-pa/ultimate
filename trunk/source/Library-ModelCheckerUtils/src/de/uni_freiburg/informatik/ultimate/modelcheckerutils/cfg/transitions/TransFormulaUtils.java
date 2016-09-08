@@ -460,6 +460,13 @@ public class TransFormulaUtils {
 				}
 			}
 			
+			// we have to havoc all local variables of the caller
+			final Map<String, LocalBoogieVar> locals = symbolTable.getLocals(procBeforeCall);
+			for (final Entry<String, LocalBoogieVar> entry : locals.entrySet()) {
+				callAndBeforeTF.mOutVars.put(entry.getValue(), mgdScript.constructFreshCopy(entry.getValue().getTermVariable()));
+		
+			}
+			
 //			// now we havoc all oldvars that are not modified by the callee
 //			// TODO: Rename the ones that are not modified by the caller
 //			for (final Entry<String, IProgramVar> entry : symbolTable.getOldVars().entrySet()) {
@@ -551,17 +558,17 @@ public class TransFormulaUtils {
 		
 
 		
-		if (recursiveProcedureChange) {
-			// we have to havoc all local variables that do not yet occur
-			final Map<String, LocalBoogieVar> locals = symbolTable.getLocals(procAtEnd);
-			for (final Entry<String, LocalBoogieVar> entry : locals.entrySet()) {
-				if (!result.getInVars().containsKey(entry.getValue()) &&
-						!result.getOutVars().containsKey(entry.getValue())) {
-					result.mOutVars.put(entry.getValue(), mgdScript.constructFreshCopy(entry.getValue().getTermVariable()));
-				}
-				
-			}
-		}
+//		if (recursiveProcedureChange) {
+//			// we have to havoc all local variables that do not yet occur
+//			final Map<String, LocalBoogieVar> locals = symbolTable.getLocals(procAtEnd);
+//			for (final Entry<String, LocalBoogieVar> entry : locals.entrySet()) {
+//				if (!result.getInVars().containsKey(entry.getValue()) &&
+//						!result.getOutVars().containsKey(entry.getValue())) {
+//					result.mOutVars.put(entry.getValue(), mgdScript.constructFreshCopy(entry.getValue().getTermVariable()));
+//				}
+//				
+//			}
+//		}
 		assert !result.getBranchEncoders().isEmpty() || predicateBasedResultCheck(services, mgdScript, 
 				xnfConversionTechnique, simplificationTechnique, 
 				beforeCall,
