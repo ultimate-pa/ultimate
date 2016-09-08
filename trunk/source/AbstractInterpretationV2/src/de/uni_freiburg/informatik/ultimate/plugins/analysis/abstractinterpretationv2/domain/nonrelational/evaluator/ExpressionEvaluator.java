@@ -119,4 +119,17 @@ public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTI
 	public boolean isFinished() {
 		return isEmpty() && (mRootEvaluator != null);
 	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+
+		sb.append(mRootEvaluator);
+
+		if (!mEvaluators.isEmpty()) {
+			sb.append(", Stack: ").append(mEvaluators);
+		}
+
+		return sb.toString();
+	}
 }
