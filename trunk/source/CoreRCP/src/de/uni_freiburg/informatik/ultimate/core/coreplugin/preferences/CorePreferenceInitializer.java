@@ -124,15 +124,13 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	public static final String LABEL_TMP_DIRECTORY = "Repository directory";
 	public static final String VALUE_TMP_DIRECTORY = System.getProperty("java.io.tmpdir");
 
-	public static final String PREFID_ROOT = "ultimate.logging.root";
-	public static final String PREFID_CORE = "ultimate.logging.core";
-	public static final String PREFID_CONTROLLER = "ultimate.logging.controller";
-	public static final String PREFID_TOOLS = "ultimate.logging.tools";
-	public static final String PREFID_PLUGINS = "ultimate.logging.plugins";
-	public static final String PREFID_DETAILS = "ultimate.logging.details";
-	public static final String PREFID_TOOLDETAILS = "ultimate.logging.tooldetails";
-
-	public static final String EXTERNAL_TOOLS_PREFIX = "external.";
+	public static final String LABEL_LOGLEVEL_ROOT = "ultimate.logging.root";
+	public static final String LABEL_LOGLEVEL_CORE = "ultimate.logging.core";
+	public static final String LABEL_LOGLEVEL_CONTROLLER = "ultimate.logging.controller";
+	public static final String LABEL_LOGLEVEL_TOOLS = "ultimate.logging.tools";
+	public static final String LABEL_LOGLEVEL_PLUGINS = "ultimate.logging.plugins";
+	public static final String LABEL_LOGLEVEL_PLUGIN_SPECIFIC = "ultimate.logging.details";
+	public static final String LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC = "ultimate.logging.tooldetails";
 
 	public static final String LABEL_ROOT_PREF = "Root log level";
 	public static final String LABEL_TOOLS_PREF = "Log level for external tools";
@@ -220,7 +218,7 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 						PreferenceType.String, null, new LogLevelValidator()),
 				new UltimatePreferenceItem<String>(LABEL_TOOLS_PREF, DEFAULT_VALUE_TOOLS_PREF, PreferenceType.String,
 						null, new LogLevelValidator()),
-				new UltimatePreferenceItem<String>(PREFID_DETAILS, "", PreferenceType.String, null, true, null, null),
+				new UltimatePreferenceItem<String>(LABEL_LOGLEVEL_PLUGIN_SPECIFIC, "", PreferenceType.String, null, true, null, null),
 
 				// Log colours
 				new UltimatePreferenceItem<String>(LABEL_COLOR_DEBUG, DEFAULT_VALUE_COLOR_DEBUG, PreferenceType.Color),

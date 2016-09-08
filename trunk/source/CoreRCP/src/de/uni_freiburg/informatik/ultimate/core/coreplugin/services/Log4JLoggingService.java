@@ -74,16 +74,15 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	private static final String[] RELEVANT_SETTINGS = new String[] { CorePreferenceInitializer.LABEL_LOG4J_PATTERN,
 			CorePreferenceInitializer.LABEL_LOGFILE, CorePreferenceInitializer.LABEL_LOGFILE_NAME,
 			CorePreferenceInitializer.LABEL_LOGFILE_DIR, CorePreferenceInitializer.LABEL_APPEXLOGFILE,
-			CorePreferenceInitializer.EXTERNAL_TOOLS_PREFIX, CorePreferenceInitializer.PREFID_ROOT,
-			CorePreferenceInitializer.PREFID_PLUGINS, CorePreferenceInitializer.PREFID_TOOLS,
-			CorePreferenceInitializer.PREFID_CONTROLLER, CorePreferenceInitializer.PREFID_CORE,
-			CorePreferenceInitializer.PREFID_DETAILS, CorePreferenceInitializer.LABEL_ROOT_PREF,
-			CorePreferenceInitializer.LABEL_TOOLS_PREF, CorePreferenceInitializer.LABEL_CORE_PREF,
-			CorePreferenceInitializer.LABEL_CONTROLLER_PREF, CorePreferenceInitializer.LABEL_PLUGINS_PREF,
-			CorePreferenceInitializer.LABEL_PLUGIN_DETAIL_PREF, CorePreferenceInitializer.LABEL_COLOR_DEBUG,
-			CorePreferenceInitializer.LABEL_COLOR_INFO, CorePreferenceInitializer.LABEL_COLOR_WARNING,
-			CorePreferenceInitializer.LABEL_COLOR_ERROR, CorePreferenceInitializer.LABEL_COLOR_FATAL,
-			CorePreferenceInitializer.LABEL_LOG4J_CONTROLLER_PATTERN };
+			CorePreferenceInitializer.LABEL_LOGLEVEL_ROOT, CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGINS,
+			CorePreferenceInitializer.LABEL_LOGLEVEL_TOOLS, CorePreferenceInitializer.LABEL_LOGLEVEL_CONTROLLER,
+			CorePreferenceInitializer.LABEL_LOGLEVEL_CORE, CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGIN_SPECIFIC,
+			CorePreferenceInitializer.LABEL_ROOT_PREF, CorePreferenceInitializer.LABEL_TOOLS_PREF,
+			CorePreferenceInitializer.LABEL_CORE_PREF, CorePreferenceInitializer.LABEL_CONTROLLER_PREF,
+			CorePreferenceInitializer.LABEL_PLUGINS_PREF, CorePreferenceInitializer.LABEL_PLUGIN_DETAIL_PREF,
+			CorePreferenceInitializer.LABEL_COLOR_DEBUG, CorePreferenceInitializer.LABEL_COLOR_INFO,
+			CorePreferenceInitializer.LABEL_COLOR_WARNING, CorePreferenceInitializer.LABEL_COLOR_ERROR,
+			CorePreferenceInitializer.LABEL_COLOR_FATAL, CorePreferenceInitializer.LABEL_LOG4J_CONTROLLER_PATTERN };
 
 	private static final String APPENDER_NAME_CONSOLE = "ConsoleAppender";
 	private static final String APPENDER_NAME_LOGFILE = "LogfileAppender";
@@ -92,6 +91,13 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	private static final String LOGGER_NAME_PLUGINS = "plugins";
 	private static final String LOGGER_NAME_TOOLS = "tools";
 	private static final String LOGGER_NAME_NONCONTROLLER = "noncontroller";
+
+	/**
+	 * Used to distinguish between loggers that were created using {@link #getLogger(String)} and using
+	 * {@link #getLoggerForExternalTool(String)}.
+	 */
+	private static final String LOGGER_NAME_PREFIX_TOOLS = "external.";
+
 	private static final String STORE_KEY = "LoggingService";
 
 	private static int sId;
@@ -202,7 +208,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 		// actual plugin loggers
 		final LoggerRepository piRepos = pluginsLogger.getLoggerRepository();
-		final String[] plugins = getDefinedLogLevels();
+		final String[] plugins = getIdsWithDefinedLogLevels(CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGIN_SPECIFIC);
 
 		for (final String plugin : plugins) {
 			final Logger logger = piRepos.getLogger(getPluginLoggerName(plugin));
@@ -212,7 +218,8 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 		// actual tool loggers
 		final LoggerRepository toolRepos = toolslog.getLoggerRepository();
-		final String[] tools = getDefinedLogLevels();
+		final String[] tools =
+				getIdsWithDefinedLogLevels(CorePreferenceInitializer.LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC);
 		for (final String tool : tools) {
 			final Logger logger = toolRepos.getLogger(getToolLoggerName(tool));
 			logger.setLevel(Level.toLevel(getLogLevel(tool)));
@@ -243,7 +250,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	 * @return <code>true</code> if and only if this id denotes an external tool.
 	 */
 	private static boolean isExternalTool(final String id) {
-		return id.startsWith(CorePreferenceInitializer.EXTERNAL_TOOLS_PREFIX);
+		return id.startsWith(LOGGER_NAME_PREFIX_TOOLS);
 	}
 
 	/**
@@ -291,29 +298,29 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	/**
 	 * Returns the full name of a tool logger given the tools name.
 	 */
-	private String getToolLoggerName(final String tool) {
-		return getToolLoggerName() + '.' + tool;
+	private static String getToolLoggerName(final String toolId) {
+		return getToolLoggerName() + '.' + LOGGER_NAME_PREFIX_TOOLS + toolId;
 	}
 
-	private String getToolLoggerName() {
+	private static String getToolLoggerName() {
 		return LOGGER_NAME_NONCONTROLLER + '.' + LOGGER_NAME_TOOLS;
 	}
 
 	/**
 	 * Returns the full name of a plugin logger given the plugin name.
 	 */
-	private String getPluginLoggerName(final String plugin) {
+	private static String getPluginLoggerName(final String plugin) {
 		return getPluginLoggerName() + "." + plugin;
 	}
 
-	private String getPluginLoggerName() {
+	private static String getPluginLoggerName() {
 		return LOGGER_NAME_NONCONTROLLER + '.' + LOGGER_NAME_PLUGINS;
 	}
 
 	/**
 	 * Returns the full name of the core logger given the core name.
 	 */
-	private String getCoreLoggerName() {
+	private static String getCoreLoggerName() {
 		return LOGGER_NAME_NONCONTROLLER + '.' + Activator.PLUGIN_ID;
 	}
 
@@ -335,11 +342,11 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	}
 
 	private String[] getLoggingDetailsPreference() {
-		return convert(mPreferenceStore.getString(CorePreferenceInitializer.PREFID_DETAILS));
+		return convert(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGIN_SPECIFIC));
 	}
 
-	private String[] getDefinedLogLevels() {
-		final String[] pref = convert(mPreferenceStore.getString(CorePreferenceInitializer.PREFID_DETAILS));
+	private String[] getIdsWithDefinedLogLevels(final String preferenceLabel) {
+		final String[] pref = convert(mPreferenceStore.getString(preferenceLabel));
 		final String[] retVal = new String[pref.length];
 		for (int i = 0; i < retVal.length; i++) {
 			retVal[i] = pref[i].substring(0, pref[i].lastIndexOf('='));
@@ -368,7 +375,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 	@Override
 	public ILogger getLoggerForExternalTool(final String id) {
-		return convert(getLoggerById(CorePreferenceInitializer.EXTERNAL_TOOLS_PREFIX + id));
+		return convert(getLoggerById(LOGGER_NAME_PREFIX_TOOLS + id));
 	}
 
 	@Override
@@ -450,8 +457,14 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 	private final class RefreshingPreferenceChangeListener implements IPreferenceChangeListener {
 
+		private int mLastEventHashCode;
+
 		@Override
 		public void preferenceChange(final PreferenceChangeEvent event) {
+			if (mLastEventHashCode == event.hashCode()) {
+				return;
+			}
+			mLastEventHashCode = event.hashCode();
 			// do things if it concerns the loggers
 			final Object newValue = event.getNewValue();
 			final Object oldValue = event.getOldValue();
