@@ -43,7 +43,7 @@
 
 
 
-print(buchiComplementFKV(nwa,"Schewe", 777));
+print(buchiComplementFKV(nwa,"SCHEWE", 777));
 
 
 NestedWordAutomaton nwa = (

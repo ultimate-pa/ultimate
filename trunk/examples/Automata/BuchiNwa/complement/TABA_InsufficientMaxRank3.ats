@@ -48,14 +48,14 @@ NestedWordAutomaton bs = buchiComplementNCSB(buchiInterpolantAutomaton);
 print(numberOfStates(bs));
 
 // Matthias' implementation of rank-based complementation with maxrank restricted to 3.
-NestedWordAutomaton fkvMaxrank3 = buchiComplementFKV(buchiInterpolantAutomaton,"HeiMat2",3);
+NestedWordAutomaton fkvMaxrank3 = buchiComplementFKV(buchiInterpolantAutomaton,"HEIMAT2",3);
 // print(fkvMaxrank3);
 print(numberOfStates(fkvMaxrank3));
 // produces a wrong result, does not accept a.b^\omega
 assert(buchiAccepts(fkvMaxrank3, ["a", "b"]));
 
 // Matthias' implementation of rank-based complementation with maxrank restricted to 5.
-NestedWordAutomaton fkvMaxrank5 = buchiComplementFKV(buchiInterpolantAutomaton,"HeiMat2",5);
+NestedWordAutomaton fkvMaxrank5 = buchiComplementFKV(buchiInterpolantAutomaton,"HEIMAT2",5);
 // print(fkvMaxrank5);
 print(numberOfStates(fkvMaxrank5));
 
