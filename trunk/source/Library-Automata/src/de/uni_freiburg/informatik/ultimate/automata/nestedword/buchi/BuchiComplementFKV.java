@@ -81,7 +81,7 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	 */
 	public BuchiComplementFKV(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, FkvOptimization.HEI_MAT_2.toString(), Integer.MAX_VALUE);
+		this(services, stateFactory, operand, FkvOptimization.HEIMAT2.toString(), Integer.MAX_VALUE);
 	}
 	
 	/**
@@ -122,7 +122,7 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	public BuchiComplementFKV(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataOperationCanceledException {
-		this(services, operand.getStateFactory(), operand, stateDeterminizer, FkvOptimization.HEI_MAT_2,
+		this(services, operand.getStateFactory(), operand, stateDeterminizer, FkvOptimization.HEIMAT2,
 				Integer.MAX_VALUE);
 	}
 	

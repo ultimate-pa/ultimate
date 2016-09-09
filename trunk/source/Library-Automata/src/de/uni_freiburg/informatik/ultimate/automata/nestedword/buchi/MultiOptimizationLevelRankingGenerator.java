@@ -71,8 +71,8 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	public enum FkvOptimization {
-		HEI_MAT_1,
-		HEI_MAT_2,
+		HEIMAT1,
+		HEIMAT2,
 		TIGHT_LEVEL_RANKINGS,
 		HIGH_EVEN,
 		SCHEWE,
@@ -102,9 +102,9 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 	public Collection<LevelRankingState<LETTER, STATE>> generateLevelRankings(
 			final CONSTRAINT constraint, final boolean predecessorIsSubsetComponent) {
 		switch (mOptimization) {
-			case HEI_MAT_1:
+			case HEIMAT1:
 				return new HeiMatTightLevelRankingStateGenerator(constraint, false).computeResult();
-			case HEI_MAT_2:
+			case HEIMAT2:
 				return new HeiMatTightLevelRankingStateGenerator(constraint, true).computeResult();
 			case HIGH_EVEN:
 				return new HighEvenTightLevelRankingStateGenerator(constraint).computeResult();

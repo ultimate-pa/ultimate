@@ -342,7 +342,7 @@ public class RefineBuchi {
 				case Ncsb:
 					throw new AssertionError("should be handled elsewhere");
 				case HeiMat2:
-					optimization = FkvOptimization.HEI_MAT_2;
+					optimization = FkvOptimization.HEIMAT2;
 					break;
 				case TightBasic:
 					optimization = FkvOptimization.TIGHT_LEVEL_RANKINGS;
