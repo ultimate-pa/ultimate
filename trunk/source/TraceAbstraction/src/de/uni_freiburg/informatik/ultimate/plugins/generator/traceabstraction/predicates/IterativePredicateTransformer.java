@@ -592,7 +592,7 @@ public class IterativePredicateTransformer {
 			}
 		}
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, true, false,
-				s_TransformSummaryToCNF, mXnfConversionTechnique, mSimplificationTechnique, transformulasToComputeSummaryFor.toArray(new UnmodifiableTransFormula[transformulasToComputeSummaryFor.size()]));
+				s_TransformSummaryToCNF, mXnfConversionTechnique, mSimplificationTechnique, transformulasToComputeSummaryFor);
 
 	}
 

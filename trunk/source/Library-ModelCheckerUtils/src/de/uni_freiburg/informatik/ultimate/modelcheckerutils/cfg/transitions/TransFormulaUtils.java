@@ -83,7 +83,7 @@ public class TransFormulaUtils {
 	public static UnmodifiableTransFormula sequentialComposition(final ILogger logger, final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean simplify, final boolean extPqe, final boolean tranformToCNF,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique,
-			final UnmodifiableTransFormula... transFormula) {
+			final List<UnmodifiableTransFormula> transFormula) {
 		logger.debug("sequential composition with" + (simplify ? "" : "out") + " formula simplification");
 		final Script script = mgdScript.getScript();
 		final Set<TermVariable> auxVars = new HashSet<TermVariable>();
@@ -92,10 +92,10 @@ public class TransFormulaUtils {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, false);
 
 		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-		for (int i = transFormula.length - 1; i >= 0; i--) {
-			for (final IProgramVar var : transFormula[i].getOutVars().keySet()) {
+		for (int i = transFormula.size() - 1; i >= 0; i--) {
+			for (final IProgramVar var : transFormula.get(i).getOutVars().keySet()) {
 
-				final TermVariable outVar = transFormula[i].getOutVars().get(var);
+				final TermVariable outVar = transFormula.get(i).getOutVars().get(var);
 				TermVariable newOutVar;
 				if (tfb.containsInVar(var)) {
 					newOutVar = tfb.getInVar(var);
@@ -107,7 +107,7 @@ public class TransFormulaUtils {
 				if (!tfb.containsOutVar(var)) {
 					tfb.addOutVar(var, newOutVar);
 				}
-				final TermVariable inVar = transFormula[i].getInVars().get(var);
+				final TermVariable inVar = transFormula.get(i).getInVars().get(var);
 				if (inVar == null) {
 					// case: var is assigned without reading or havoced
 					if (tfb.getOutVar(var) != newOutVar) {
@@ -129,19 +129,19 @@ public class TransFormulaUtils {
 					}
 				}
 			}
-			for (final TermVariable oldAuxVar : transFormula[i].getAuxVars()) {
+			for (final TermVariable oldAuxVar : transFormula.get(i).getAuxVars()) {
 				final TermVariable newAuxVar = mgdScript.constructFreshCopy(oldAuxVar);
 				substitutionMapping.put(oldAuxVar, newAuxVar);
 				auxVars.add(newAuxVar);
 			}
-			tfb.addBranchEncoders(transFormula[i].getBranchEncoders());
+			tfb.addBranchEncoders(transFormula.get(i).getBranchEncoders());
 
-			for (final IProgramVar var : transFormula[i].getInVars().keySet()) {
-				if (transFormula[i].getOutVars().containsKey(var)) {
+			for (final IProgramVar var : transFormula.get(i).getInVars().keySet()) {
+				if (transFormula.get(i).getOutVars().containsKey(var)) {
 					// nothing do to, this var was already considered above
 				} else {
 					// case var occurs only as inVar: var is not modfied.
-					final TermVariable inVar = transFormula[i].getInVars().get(var);
+					final TermVariable inVar = transFormula.get(i).getInVars().get(var);
 					TermVariable newInVar;
 					if (tfb.containsInVar(var)) {
 						newInVar = tfb.getInVar(var);
@@ -152,7 +152,7 @@ public class TransFormulaUtils {
 					substitutionMapping.put(inVar, newInVar);
 				}
 			}
-			final Term originalFormula = transFormula[i].getFormula();
+			final Term originalFormula = transFormula.get(i).getFormula();
 			final Term updatedFormula = (new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping)).transform(originalFormula);
 			formula = Util.and(script, formula, updatedFormula);
 		}
@@ -164,7 +164,7 @@ public class TransFormulaUtils {
 				formula = simplified;
 			} catch (final ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(UnmodifiableTransFormula.class, tce.getRunningTaskInfo() +
-						" while doing sequential composition of " + transFormula.length + " TransFormulas");
+						" while doing sequential composition of " + transFormula.size() + " TransFormulas");
 			}
 		}
 
@@ -421,7 +421,6 @@ public class TransFormulaUtils {
 		if (!procAtStart.equals(procBeforeCall)) {
 			throw new UnsupportedOperationException("proc change before call");
 		}
-		final boolean recursiveProcedureChange =  (procBeforeCall.equals(procAtEnd));
 		
 		logger.debug("sequential composition (pending call) with" + (simplify ? "" : "out") + " formula simplification");
 		final UnmodifiableTransFormula callAndBeforeTF;
@@ -429,9 +428,8 @@ public class TransFormulaUtils {
 			final List<UnmodifiableTransFormula> callAndBeforeList = new ArrayList<UnmodifiableTransFormula>(beforeCall);
 			callAndBeforeList.add(callTf);
 			callAndBeforeList.add(oldVarsAssignment);
-			final UnmodifiableTransFormula[] callAndBeforeArray = callAndBeforeList.toArray(new UnmodifiableTransFormula[callAndBeforeList.size()]);
 			final UnmodifiableTransFormula composition = sequentialComposition(logger, services, mgdScript, simplify, extPqe, transformToCNF,
-					xnfConversionTechnique, simplificationTechnique, callAndBeforeArray);
+					xnfConversionTechnique, simplificationTechnique, callAndBeforeList);
 
 			// remove outVars that relate to scope of caller
 			// remove all but the following
@@ -486,10 +484,8 @@ public class TransFormulaUtils {
 		{
 			final List<UnmodifiableTransFormula> oldAssignAndAfterList = new ArrayList<UnmodifiableTransFormula>(Arrays.asList(afterCall));
 			oldAssignAndAfterList.add(0, globalVarsAssignment);
-			final UnmodifiableTransFormula[] globalVarAssignAndAfterArray =
-					oldAssignAndAfterList.toArray(new UnmodifiableTransFormula[oldAssignAndAfterList.size()]);
 			final UnmodifiableTransFormula composition = sequentialComposition(logger, services, mgdScript, simplify, extPqe, transformToCNF,
-					xnfConversionTechnique, simplificationTechnique, globalVarAssignAndAfterArray);
+					xnfConversionTechnique, simplificationTechnique, oldAssignAndAfterList);
 
 			// remove inVars that relate to scope of callee
 			final List<IProgramVar> inVarsToRemove = new ArrayList<IProgramVar>();
@@ -541,7 +537,7 @@ public class TransFormulaUtils {
 
 		final UnmodifiableTransFormula tmpresult = sequentialComposition(logger, services, mgdScript, simplify,
 				extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique,
-				callAndBeforeTF, globalVarAssignAndAfterTF);
+				Arrays.asList(new UnmodifiableTransFormula[] {callAndBeforeTF, globalVarAssignAndAfterTF}));
 		
 		final UnmodifiableTransFormula result;
 		if (procAfterCall.equals(procAtEnd)) {
@@ -706,7 +702,7 @@ public class TransFormulaUtils {
 		logger.debug("sequential composition (call/return) with" + (simplify ? "" : "out") + " formula simplification");
 		final UnmodifiableTransFormula composition = sequentialComposition(logger, services, mgdScript,
 				simplify, extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique,
-				callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf);
+				Arrays.asList(new UnmodifiableTransFormula[] {callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf}));
 		
 		// remove invars except for
 		// local vars that occur in arguments of the call

@@ -226,7 +226,7 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 			assert afterLastUnmatchedCall.isEmpty();
 			// no pending call in codeBlocks
 			tfForCodeBlocks = TransFormulaUtils.sequentialComposition(logger, services, mgdScript, simplify, extPqe,
-					tranformToCNF, xnfConversionTechnique, simplificationTechnique, beforeFirstPendingCall.toArray(new UnmodifiableTransFormula[beforeFirstPendingCall.size()]));
+					tranformToCNF, xnfConversionTechnique, simplificationTechnique, beforeFirstPendingCall);
 		} else {
 			// there is a pending call in codeBlocks
 			assert ret == null : "no pending call between call and return possible!";

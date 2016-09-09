@@ -426,13 +426,15 @@ public class FlowSensitiveFaultLocalizer {
 				final UnmodifiableTransFormula subBranchMarkhorFormula = computeMarkhorFormula(branchOut,branchIn,counterexampleWord,
 						informationFromCFG,smtManager);
 				combinedTransitionFormula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-						smtManager, false, false, false, mXnfConversionTechnique, mSimplificationTechnique, combinedTransitionFormula,subBranchMarkhorFormula);
+						smtManager, false, false, false, mXnfConversionTechnique, mSimplificationTechnique, 
+						Arrays.asList(new UnmodifiableTransFormula[] {combinedTransitionFormula,subBranchMarkhorFormula}));
 			} else{
 				// It is a normal statement.
 				final CodeBlock statement = counterexampleWord.getSymbol(i);
 				final UnmodifiableTransFormula transitionFormula = statement.getTransitionFormula();
 				combinedTransitionFormula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-						smtManager, false, false, false, mXnfConversionTechnique, mSimplificationTechnique, combinedTransitionFormula,transitionFormula);
+						smtManager, false, false, false, mXnfConversionTechnique, mSimplificationTechnique, 
+						Arrays.asList(new UnmodifiableTransFormula[] {combinedTransitionFormula,transitionFormula}));
 			}
 		}
 		final UnmodifiableTransFormula markhor = TransFormulaUtils.computeMarkhorTransFormula(combinedTransitionFormula,
