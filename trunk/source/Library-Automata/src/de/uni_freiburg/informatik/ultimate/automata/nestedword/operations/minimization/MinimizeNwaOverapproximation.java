@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
@@ -155,7 +154,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 	}
 	
 	private void constructResult(final boolean wasInterrrupted,
-			final IDoubleDeckerAutomaton<LETTER, STATE> minimizerResult,
+			final INestedWordAutomaton<LETTER, STATE> minimizerResult,
 			final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages,
 			final IStateFactory<STATE> stateFactoryIntersect)
 			throws AutomataOperationCanceledException {
@@ -173,7 +172,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 	 * of the result with each of the forbidden automata is empty. If not, the result is refined by taking the
 	 * difference of the two automata.
 	 */
-	private void minimizeWithDifferenceRefinement(final IDoubleDeckerAutomaton<LETTER, STATE> minimizerResult,
+	private void minimizeWithDifferenceRefinement(final INestedWordAutomaton<LETTER, STATE> minimizerResult,
 			final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages,
 			final IStateFactory<STATE> stateFactoryIntersect)
 			throws AutomataOperationCanceledException, AssertionError {
