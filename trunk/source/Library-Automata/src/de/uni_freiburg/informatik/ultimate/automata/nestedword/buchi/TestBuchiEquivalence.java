@@ -120,7 +120,7 @@ public final class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperatio
 		mSndOperand = sndOperand;
 		mStateFactory = stateFactory;
 		
-		if (INestedWordAutomatonSimple.sameAlphabet(mFstOperand, mSndOperand)) {
+		if (!INestedWordAutomatonSimple.sameAlphabet(mFstOperand, mSndOperand)) {
 			throw new AutomataLibraryException(this.getClass(), "The operands have different alphabets.");
 		}
 		
