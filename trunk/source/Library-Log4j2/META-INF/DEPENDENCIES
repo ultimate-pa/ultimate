@@ -1,0 +1,17 @@
+// ------------------------------------------------------------------
+// Transitive dependencies of this project determined from the
+// maven pom organized by organization.
+// ------------------------------------------------------------------
+
+Apache Log4j 1.x Compatibility API
+
+
+From: 'Apache Software Foundation' (http://www.apache.org)
+  - Apache Log4j API (http://logging.apache.org/log4j/2.x/log4j-api/) org.apache.logging.log4j:log4j-api:jar:2.6.2
+    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Log4j Core (http://logging.apache.org/log4j/2.x/log4j-core/) org.apache.logging.log4j:log4j-core:jar:2.6.2
+    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
+
+
+
+

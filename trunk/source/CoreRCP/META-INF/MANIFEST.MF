@@ -11,6 +11,7 @@ Require-Bundle: org.eclipse.core.runtime;visibility:=reexport,
  Library-SMTLIB,
  Library-UltimateUtil,
  Library-log4j,
+ Library-Log4j2;bundle-version="2.6.2",
  Library-ApacheCommonsLang
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.core.coreplugin,

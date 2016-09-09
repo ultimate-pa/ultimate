@@ -263,6 +263,7 @@
 		<module>../RCFGBuilder</module>
 		<module>../CodeCheck</module>
 		<module>../Library-log4j</module>
+		<module>../Library-Log4j2</module>
 		<module>../ACSLParser</module>
 		<module>../SMTSolverBridge</module>
 		<module>../Library-Batik</module>
