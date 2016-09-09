@@ -1,5 +1,5 @@
 /*
- * GasCake03.c
+ * GasCake03.c / PLowPassFilter
  *
  *
  */
@@ -55,64 +55,8 @@ extern float32 tclRange_f32(float32 _min_f32, float32 _max_f32);
 extern float64 tclRange_f64(float64 _min_f64, float64 _max_f64); 
  
 
-static boolean tclTestRandomFunc_b(void) {
-	return (boolean)(rand() & 0x01);
-}
-
-static uint8 tclTestRandomFunc_u8(void) {
-	return (uint8)(rand() & 0xFF);
-}
-
-static sint8 tclTestRandomFunc_s8(void) {
-	return (sint8)(rand() & 0xFF);
-}
-
-static char8 tclTestRandomFunc_c8(void) {
-	return (char8)(rand() & 0xFF);
-}
-
-
-static uint16 tclTestRandomFunc_u16(void) {
-	return (uint16)(rand() & 0xFFFF);
-}
-
-static sint16 tclTestRandomFunc_s16(void) {
-	return (sint16)(rand() & 0xFFFF);
-}
-
-static uint32 tclTestRandomFunc_u32(void) {
-	return (uint32)(rand());
-}
-
-static sint32 tclTestRandomFunc_s32(void) {
-	return (sint32)(rand());
-}
-
-static float32 tclTestRandomFunc_f32(void) {
-
-	float32 value_f32;
-	sint32 value_s32;
-	value_s32 = (sint32)(rand());
-	memcpy((void*)&value_f32,(void*) &value_s32, sizeof(value_f32));
-	return value_f32;
-}
-
-static float64 tclTestRandomFunc_f64(void) {
-
-	float64 value_f64;
-	sint32 value_ps32[2];
-	value_ps32[0] = (sint32)(rand());
-	value_ps32[1] = (sint32)(rand());
-
-	memcpy((void*)&value_f64,(void*) value_ps32, sizeof(value_f64));
-	return value_f64;
-}
-
-
 volatile static uint8 inputSignal_u8 = 0;
 volatile static boolean stop_b = 0;
-
-
 static uint8 filter(uint8 _input_u8,uint8 _initValue_u8,boolean _reset_b);
 
 void PLowPassFilter(void)
