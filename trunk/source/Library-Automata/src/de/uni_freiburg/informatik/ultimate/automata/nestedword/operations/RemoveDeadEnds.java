@@ -34,10 +34,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.TransitionConsistencyCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ReachableStatesCopy;
@@ -87,7 +87,7 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		try {
 			mReach = new NestedWordAutomatonReachableStates<>(mServices, mOperand);
 			mReach.computeDeadEnds();
-			mResult = new NestedWordAutomatonFilteredStates<>(mServices, mReach, mReach.getWithOutDeadEnds());
+			mResult = new DoubleDeckerAutomatonFilteredStates<>(mServices, mReach, mReach.getWithOutDeadEnds());
 		} catch (final AutomataOperationCanceledException oce) {
 			throw new AutomataOperationCanceledException(getClass());
 		}

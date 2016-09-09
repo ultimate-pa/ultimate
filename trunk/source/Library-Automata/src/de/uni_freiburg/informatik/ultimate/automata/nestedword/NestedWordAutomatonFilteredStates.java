@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.DownStateConsistencyCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
@@ -64,15 +63,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.FilteredIterable;
  */
 public class NestedWordAutomatonFilteredStates<LETTER, STATE>
 		implements INestedWordAutomatonOldApi<LETTER, STATE>,
-		INestedWordAutomaton<LETTER, STATE>,
-		IDoubleDeckerAutomaton<LETTER, STATE> {
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-	private final INestedWordAutomatonOldApi<LETTER, STATE> mNwa;
-	private final Set<STATE> mRemainingStates;
-	private final Set<STATE> mNewInitials;
-	private final Set<STATE> mNewFinals;
-	private final NestedWordAutomatonReachableStates<LETTER, STATE>.AncestorComputation mAncestorComputation;
+		INestedWordAutomaton<LETTER, STATE> {
+	protected final AutomataLibraryServices mServices;
+	protected final ILogger mLogger;
+	protected final NestedWordAutomatonReachableStates<LETTER, STATE> mNwa;
+	protected final Set<STATE> mRemainingStates;
+	protected final Set<STATE> mNewInitials;
+	protected final Set<STATE> mNewFinals;
+	protected final NestedWordAutomatonReachableStates<LETTER, STATE>.AncestorComputation mAncestorComputation;
 	private final StateBasedTransitionFilterPredicateProvider<LETTER, STATE> mTransitionFilter;
 	
 	/**
@@ -90,7 +88,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE>
 	 *             if timeout exceeds
 	 */
 	public NestedWordAutomatonFilteredStates(final AutomataLibraryServices services,
-			final INestedWordAutomatonOldApi<LETTER, STATE> automaton,
+			final NestedWordAutomatonReachableStates<LETTER, STATE> automaton,
 			final Set<STATE> remainingStates, final Set<STATE> newInitials, final Set<STATE> newFinals)
 					throws AutomataOperationCanceledException {
 		mServices = services;
@@ -101,7 +99,6 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE>
 		mNewFinals = newFinals;
 		mAncestorComputation = null;
 		mTransitionFilter = new StateBasedTransitionFilterPredicateProvider<>(mRemainingStates);
-		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices, this)).getResult() : "down states inconsistent";
 	}
 	
 	/**
@@ -127,20 +124,6 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE>
 		mNewFinals = ancestorComputation.getFinals();
 		mAncestorComputation = ancestorComputation;
 		mTransitionFilter = new StateBasedTransitionFilterPredicateProvider<>(mRemainingStates);
-		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices, this)).getResult() : "down states inconsistent";
-	}
-	
-	/**
-	 * {@inheritDoc}
-	 * @deprecated Use the {@link #isDoubleDecker(Object, Object)} check instead.
-	 */
-	@Override
-	@Deprecated
-	public Set<STATE> getDownStates(final STATE upState) {
-		if (mAncestorComputation != null) {
-			return mAncestorComputation.getDownStates(upState);
-		}
-		throw new UnsupportedOperationException();
 	}
 	
 	@Override
@@ -530,8 +513,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE>
 				.getDefinitionAsString();
 	}
 	
-	@Override
-	public boolean isDoubleDecker(final STATE up, final STATE down) {
+	private boolean isDoubleDecker(final STATE up, final STATE down) {
 		return mAncestorComputation.isDownState(up, down);
 	}
 	

@@ -91,7 +91,9 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 		
 		mReach = new NestedWordAutomatonReachableStates<>(mServices, mOperand);
 		mReach.computeNonLiveStates();
-		mResult = new NestedWordAutomatonFilteredStates<>(mServices, mReach, mReach.getOnlyLiveStates());
+		final NestedWordAutomatonFilteredStates<LETTER, STATE> filtered = 
+				new NestedWordAutomatonFilteredStates<>(mServices, mReach, mReach.getOnlyLiveStates());
+		mResult = new NestedWordAutomatonReachableStates<>(mServices, filtered);
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
