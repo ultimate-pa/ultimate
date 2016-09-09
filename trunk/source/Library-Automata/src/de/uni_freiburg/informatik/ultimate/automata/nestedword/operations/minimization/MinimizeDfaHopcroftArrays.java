@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
+public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	// ArrayList and HashMap for mapping STATE to int and vice versa.
 	private ArrayList<STATE> mInt2state;
 	private HashMap<STATE, Integer> mState2int;

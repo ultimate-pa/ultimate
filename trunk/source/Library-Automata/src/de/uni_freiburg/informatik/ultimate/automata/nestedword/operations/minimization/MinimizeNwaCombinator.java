@@ -245,7 +245,7 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinimizeNwaDd<
 				return (IDoubleDeckerAutomaton<LETTER, STATE>) ((MinimizeSevpa<LETTER, STATE>) mCurrent).getResult();
 			
 			case SHRINK_NWA:
-				return ((ShrinkNwa<LETTER, STATE>) mCurrent).getResult();
+				return (IDoubleDeckerAutomaton<LETTER, STATE>) ((ShrinkNwa<LETTER, STATE>) mCurrent).getResult();
 			
 			case NONE:
 				return (IDoubleDeckerAutomaton<LETTER, STATE>) mCurrent;

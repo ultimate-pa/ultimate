@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
+public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	/**
 	 * Default timeout: 1 second.
 	 */
