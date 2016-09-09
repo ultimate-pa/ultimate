@@ -408,9 +408,12 @@ public class TransFormulaUtils {
 	 * 	          in which the afterCall TransFormula ends.
 	 * @param symbolTable
 	 */
-	public static UnmodifiableTransFormula sequentialCompositionWithPendingCall(final ManagedScript mgdScript, final boolean simplify,
-			final boolean extPqe, final boolean transformToCNF, final List<UnmodifiableTransFormula> beforeCall, final UnmodifiableTransFormula callTf,
-			final UnmodifiableTransFormula oldVarsAssignment, final UnmodifiableTransFormula globalVarsAssignment, final UnmodifiableTransFormula afterCall, final ILogger logger,
+	public static UnmodifiableTransFormula sequentialCompositionWithPendingCall(
+			final ManagedScript mgdScript, final boolean simplify, 
+			final boolean extPqe, final boolean transformToCNF, 
+			final List<UnmodifiableTransFormula> beforeCall, final UnmodifiableTransFormula callTf,
+			final UnmodifiableTransFormula oldVarsAssignment, final UnmodifiableTransFormula globalVarsAssignment, 
+			final UnmodifiableTransFormula afterCall, final ILogger logger,
 			final IUltimateServiceProvider services,
 			final Set<IProgramVar> modifiableGlobalsOfEndProcedure,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique,
@@ -425,35 +428,35 @@ public class TransFormulaUtils {
 		logger.debug("sequential composition (pending call) with" + (simplify ? "" : "out") + " formula simplification");
 		final UnmodifiableTransFormula callAndBeforeTF;
 		{
-			final List<UnmodifiableTransFormula> callAndBeforeList = new ArrayList<UnmodifiableTransFormula>(beforeCall);
-			callAndBeforeList.add(callTf);
-			callAndBeforeList.add(oldVarsAssignment);
-			final UnmodifiableTransFormula composition = sequentialComposition(logger, services, mgdScript, simplify, extPqe, transformToCNF,
-					xnfConversionTechnique, simplificationTechnique, callAndBeforeList);
+			final List<UnmodifiableTransFormula> callAndBefore = 
+					new ArrayList<UnmodifiableTransFormula>(beforeCall);
+			callAndBefore.add(callTf);
+			callAndBefore.add(oldVarsAssignment);
+			final UnmodifiableTransFormula composition = sequentialComposition(
+					logger, services, mgdScript, simplify, extPqe, transformToCNF,
+					xnfConversionTechnique, simplificationTechnique, callAndBefore);
 
-			// remove outVars that relate to scope of caller
-			// remove all but the following
-			// - in params of called procedure
-			// - oldVars that are modified by called procedure
-			// - non-oldVars of variables that are not modified by the called procedure
-			// additionally, we have to replace oldVars that are not modified by the
-			// called procedure by the corresponding non-oldVars
+			// remove outVars that are not "interface variables"
+			// see isInterfaceVariable()
 			final List<IProgramVar> outVarsToRemove = new ArrayList<IProgramVar>();
 			for (final IProgramVar bv : composition.getOutVars().keySet()) {
-				final boolean isInterfaceVariable = isInterfaceVariable(bv, callTf, oldVarsAssignment, procBeforeCall, procAfterCall, true, false);
+				final boolean isInterfaceVariable = isInterfaceVariable(
+						bv, callTf, oldVarsAssignment, procBeforeCall, procAfterCall, true, false);
 				if (isInterfaceVariable) {
 					// keep variable
 				} else {
 					outVarsToRemove.add(bv);
 				}
-				
 			}
+			
 			final Map<IProgramVar, TermVariable> varsToHavoc = new HashMap<IProgramVar, TermVariable>();
-			// now we havoc all oldvars that are modifiable by the caller
+			// we havoc all oldvars that are modifiable by the caller
 			// but not modifiable y the callee
-			final Set<IProgramVar> modifiableByCaller = modGlobVarManager.getOldVarsAssignment(procBeforeCall).getAssignedVars();
+			final Set<IProgramVar> modifiableByCaller = 
+					modGlobVarManager.getOldVarsAssignment(procBeforeCall).getAssignedVars();
 			for (final IProgramVar oldVar : modifiableByCaller) {
-				if (!oldVarsAssignment.getAssignedVars().contains(oldVar)) {
+				final boolean modifiableByCallee = oldVarsAssignment.getAssignedVars().contains(oldVar);
+				if (!modifiableByCallee) {
 					varsToHavoc.put(oldVar, mgdScript.constructFreshCopy(oldVar.getTermVariable()));
 				}
 			}
@@ -466,86 +469,57 @@ public class TransFormulaUtils {
 				if (!isInParamOfCallee) {
 					varsToHavoc.put(localVar, mgdScript.constructFreshCopy(localVar.getTermVariable()));
 				}
-		
 			}
 			
-			callAndBeforeTF = TransFormulaBuilder.constructCopy(mgdScript, composition, Collections.emptySet(), outVarsToRemove, varsToHavoc);
+			callAndBeforeTF = TransFormulaBuilder.constructCopy(mgdScript, 
+					composition, Collections.emptySet(), outVarsToRemove, varsToHavoc);
 			
-//			// now we havoc all oldvars that are not modified by the callee
-//			// TODO: Rename the ones that are not modified by the caller
-//			for (final Entry<String, IProgramVar> entry : symbolTable.getOldVars().entrySet()) {
-//				if (!oldVarsAssignment.getAssignedVars().contains(entry.getValue())) {
-//					callAndBeforeTF.mOutVars.put(entry.getValue(), mgdScript.constructFreshCopy(entry.getValue().getTermVariable()));
-//				}
-//			}
 		}
 
 		final UnmodifiableTransFormula globalVarAssignAndAfterTF;
 		{
-			final List<UnmodifiableTransFormula> oldAssignAndAfterList = new ArrayList<UnmodifiableTransFormula>(Arrays.asList(afterCall));
+			final List<UnmodifiableTransFormula> oldAssignAndAfterList = 
+					new ArrayList<UnmodifiableTransFormula>(Arrays.asList(afterCall));
 			oldAssignAndAfterList.add(0, globalVarsAssignment);
-			final UnmodifiableTransFormula composition = sequentialComposition(logger, services, mgdScript, simplify, extPqe, transformToCNF,
+			final UnmodifiableTransFormula composition = sequentialComposition(
+					logger, services, mgdScript, simplify, extPqe, transformToCNF,
 					xnfConversionTechnique, simplificationTechnique, oldAssignAndAfterList);
 
-			// remove inVars that relate to scope of callee
+			// remove inVars that are not "interface variables"
+			// see isInterfaceVariable()
 			final List<IProgramVar> inVarsToRemove = new ArrayList<IProgramVar>();
 			for (final IProgramVar bv : composition.getInVars().keySet()) {
-				final boolean isInterfaceVariable = isInterfaceVariable(bv, callTf, oldVarsAssignment, procBeforeCall, procAfterCall, false, true);
+				final boolean isInterfaceVariable = isInterfaceVariable(
+						bv, callTf, oldVarsAssignment, procBeforeCall, procAfterCall, false, true);
 				if (isInterfaceVariable) {
 					// keep variable
 				} else {
 					inVarsToRemove.add(bv);
 				}
-				
 			}
 			
-			
-//			// remove inVars that relate to scope of callee
-//			// - local vars that are no inParams of callee
-//			// - oldVars of variables that can be modified by callee
-//			final List<IProgramVar> inVarsToRemove = new ArrayList<IProgramVar>();
-//			for (final IProgramVar bv : composition.getInVars().keySet()) {
-//				if (bv.isGlobal()) {
-//					if (bv.isOldvar() && oldVarsAssignment.getOutVars().containsKey(bv)) {
-//						inVarsToRemove.add(bv);
-//					}
-//				} else {
-//					if (!callTf.getOutVars().containsKey(bv)) {
-//						// bv is local but not inParam of called procedure
-//						inVarsToRemove.add(bv);
-//					}
-//				}
-//			}
-			
-
-
-			
-//			for (final IProgramVar bv : composition.getOutVars().keySet()) {
-//				if (bv instanceof IProgramOldVar) {
-//					final IProgramNonOldVar nonOld = ((IProgramOldVar) bv).getNonOldVar();
-//					if (modifiableGlobalsOfEndProcedure.contains(nonOld)) {
-//						// do nothing - bv should be outVar
-//					} else {
-//						outVarsToRemove.add(bv);
-//					}
-//				}
-//			}
-			globalVarAssignAndAfterTF = TransFormulaBuilder.constructCopy(mgdScript, composition, inVarsToRemove, Collections.emptySet(), Collections.emptyMap());
+			globalVarAssignAndAfterTF = TransFormulaBuilder.constructCopy(mgdScript, 
+					composition, inVarsToRemove, Collections.emptySet(), Collections.emptyMap());
 		}
 		
-		
-
-		final UnmodifiableTransFormula tmpresult = sequentialComposition(logger, services, mgdScript, simplify,
+		final UnmodifiableTransFormula preliminaryResult = sequentialComposition(logger, services, mgdScript, simplify,
 				extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique,
 				Arrays.asList(new UnmodifiableTransFormula[] {callAndBeforeTF, globalVarAssignAndAfterTF}));
 		
+		// If the procedure does not change after the call, we already have
+		// the result. Otherwise we have to remove the inparams since they
+		// do not have the scope of the procedure at the end
+		// Note that in case of recursive procedure calls we do not have to
+		// remove anything. If the after-call-formula was build correctly
+		// it ensures that the inparam instances are not outvars after the
+		// composition above.
 		final UnmodifiableTransFormula result;
 		if (procAfterCall.equals(procAtEnd)) {
-			result = tmpresult;
+			result = preliminaryResult;
 		} else {
 			final List<IProgramVar> outVarsToRemove = new ArrayList<IProgramVar>();
 			// remove inparams of callee that are still in the outvars
-			for (final IProgramVar pv : tmpresult.getOutVars().keySet()) {
+			for (final IProgramVar pv : preliminaryResult.getOutVars().keySet()) {
 				if (callTf.getAssignedVars().contains(pv)) {
 					// pv is inparam, we have to remove it
 					outVarsToRemove.add(pv);
@@ -553,29 +527,17 @@ public class TransFormulaUtils {
 			}
 			if (outVarsToRemove.isEmpty()) {
 				// nothing to remove
-				result = tmpresult;
+				result = preliminaryResult;
 			} else {
-				result = TransFormulaBuilder.constructCopy(mgdScript, tmpresult, Collections.emptySet(), outVarsToRemove, Collections.emptyMap());
+				result = TransFormulaBuilder.constructCopy(mgdScript, 
+						preliminaryResult, Collections.emptySet(), outVarsToRemove, Collections.emptyMap());
 			}
 		}
-		
 
-		
-//		if (recursiveProcedureChange) {
-//			// we have to havoc all local variables that do not yet occur
-//			final Map<String, LocalBoogieVar> locals = symbolTable.getLocals(procAtEnd);
-//			for (final Entry<String, LocalBoogieVar> entry : locals.entrySet()) {
-//				if (!result.getInVars().containsKey(entry.getValue()) &&
-//						!result.getOutVars().containsKey(entry.getValue())) {
-//					result.mOutVars.put(entry.getValue(), mgdScript.constructFreshCopy(entry.getValue().getTermVariable()));
-//				}
-//
-//			}
-//		}
 		assert !result.getBranchEncoders().isEmpty() || predicateBasedResultCheck(services, mgdScript,
 				xnfConversionTechnique, simplificationTechnique,
-				beforeCall,
-				callTf, oldVarsAssignment, globalVarsAssignment, afterCall, result, symbolTable, modifiableGlobalsOfEndProcedure) :
+				beforeCall,	callTf, oldVarsAssignment, globalVarsAssignment, afterCall, result, 
+				symbolTable, modifiableGlobalsOfEndProcedure) :
 					"sequentialCompositionWithPendingCall - incorrect result";
 		return result;
 	}
