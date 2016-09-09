@@ -37,6 +37,7 @@ import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -477,18 +478,18 @@ public class IntegerTranslation extends AExpressionTranslation {
 				} else {
 					oldWrappedIfNeeded = operand.lrVal.getValue();
 				}
-				if (mUnsignedTreatment == UnsignedTreatment.ASSUME_ALL) {
+				if (mUnsignedTreatment == UnsignedTreatment.ASSERT) {
 					final BigInteger maxValuePlusOne =
 							mTypeSizes.getMaxValueOfPrimitiveType(resultType).add(BigInteger.ONE);
-					final AssumeStatement assumeGeq0 = new AssumeStatement(loc,
+					final AssertStatement assumeGeq0 = new AssertStatement(loc,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
 									oldWrappedIfNeeded, new IntegerLiteral(loc, SFO.NR0)));
 					operand.stmt.add(assumeGeq0);
 
-					final AssumeStatement assumeLtMax = new AssumeStatement(loc,
+					final AssertStatement assertLtMax = new AssertStatement(loc,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
 									oldWrappedIfNeeded, new IntegerLiteral(loc, maxValuePlusOne.toString())));
-					operand.stmt.add(assumeLtMax);
+					operand.stmt.add(assertLtMax);
 				} else {
 					// do nothing
 				}

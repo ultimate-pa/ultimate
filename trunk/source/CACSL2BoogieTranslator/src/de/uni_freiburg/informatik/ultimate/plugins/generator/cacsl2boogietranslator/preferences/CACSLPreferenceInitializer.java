@@ -87,7 +87,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	}
 
 	public enum UnsignedTreatment {
-		IGNORE, ASSUME_SOME, ASSUME_ALL, WRAPAROUND
+		IGNORE, ASSERT, WRAPAROUND
 	}
 
 	public enum Signedness {
