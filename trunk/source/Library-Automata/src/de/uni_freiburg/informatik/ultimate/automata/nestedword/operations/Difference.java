@@ -33,9 +33,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomatonFilteredStates;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
@@ -57,7 +57,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 	private IntersectNwa<LETTER, STATE> mIntersect;
 	private NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
-	private NestedWordAutomatonFilteredStates<LETTER, STATE> mResultWOdeadEnds;
+	private DoubleDeckerAutomatonFilteredStates<LETTER, STATE> mResultWOdeadEnds;
 	private final IStateFactory<STATE> mStateFactory;
 	
 	// TODO Christian 2016-09-04: These fields are only used locally. Is there some functionality missing?
@@ -188,7 +188,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	}
 	
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() {
+	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
 		if (mResultWOdeadEnds == null) {
 			return mResult;
 		} else {
@@ -224,7 +224,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	@Override
 	public boolean removeDeadEnds() throws AutomataOperationCanceledException {
 		mResult.computeDeadEnds();
-		mResultWOdeadEnds = new NestedWordAutomatonFilteredStates<>(mServices, mResult, mResult.getWithOutDeadEnds());
+		mResultWOdeadEnds = new DoubleDeckerAutomatonFilteredStates<>(mServices, mResult, mResult.getWithOutDeadEnds());
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("With dead ends: " + mResult.getStates().size());
 			mLogger.info("Without dead ends: " + mResultWOdeadEnds.getStates().size());
