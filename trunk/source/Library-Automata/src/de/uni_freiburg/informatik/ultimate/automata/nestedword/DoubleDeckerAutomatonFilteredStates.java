@@ -68,7 +68,7 @@ public class DoubleDeckerAutomatonFilteredStates<LETTER, STATE> extends NestedWo
 			final Set<STATE> remainingStates, final Set<STATE> newInitials, final Set<STATE> newFinals)
 					throws AutomataOperationCanceledException {
 		super(services, automaton, remainingStates, newInitials, newFinals);
-		assert (successorOfRemovedStatesAreRemoved());
+//		assert (successorOfRemovedStatesAreRemoved());
 		assert (new DownStateConsistencyCheck<LETTER, STATE>(services, this)).getResult() : "down states inconsistent";
 	}
 	
@@ -112,7 +112,7 @@ public class DoubleDeckerAutomatonFilteredStates<LETTER, STATE> extends NestedWo
 			final NestedWordAutomatonReachableStates<LETTER, STATE>.AncestorComputation ancestorComputation)
 					throws AutomataOperationCanceledException {
 		super(services, automaton, ancestorComputation);
-		assert (successorOfRemovedStatesAreRemoved());
+//		assert (successorOfRemovedStatesAreRemoved());
 		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices, this)).getResult() : "down states inconsistent";
 	}
 	
