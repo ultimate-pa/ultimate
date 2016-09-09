@@ -67,17 +67,4 @@ public abstract class BinaryNwaOperation<LETTER, STATE>
 	 * @return The second operand.
 	 */
 	protected abstract INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand();
-	
-	/**
-	 * @return true iff the alphabets of the two operands differ.
-	 */
-	protected boolean alphabetsDiffer() {
-		if (!getFirstOperand().getInternalAlphabet().equals(getSecondOperand().getInternalAlphabet())) {
-			return true;
-		}
-		if (!getFirstOperand().getCallAlphabet().equals(getSecondOperand().getCallAlphabet())) {
-			return true;
-		}
-		return !getFirstOperand().getReturnAlphabet().equals(getSecondOperand().getReturnAlphabet());
-	}
 }

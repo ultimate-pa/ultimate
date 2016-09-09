@@ -157,18 +157,20 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 */
 	Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			final STATE state, final LETTER letter);
-			
+	
 	/**
 	 * All internal successor transitions for a given state.
+	 * 
 	 * @param state
 	 *            state
 	 * @return outgoing internal transitions
 	 */
 	Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			final STATE state);
-			
+	
 	/**
 	 * All call successor transitions for a given state and letter.
+	 * 
 	 * @param state
 	 *            state
 	 * @param letter
@@ -177,7 +179,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 */
 	Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			final STATE state, final LETTER letter);
-			
+	
 	/**
 	 * All call successor transitions for a given state.
 	 * 
@@ -187,9 +189,10 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 */
 	Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			final STATE state);
-			
+	
 	/**
 	 * All return successor transitions for a given state, hierarchical predecessor, and letter.
+	 * 
 	 * @param state
 	 *            state
 	 * @param hier
@@ -200,7 +203,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 */
 	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			final STATE state, final STATE hier, final LETTER letter);
-			
+	
 	/**
 	 * All return successor transitions for a given state and hierarchical predecessor.
 	 * 
@@ -212,4 +215,22 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 */
 	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			final STATE state, final STATE hier);
+	
+	/**
+	 * Checks whether two nested word automata have the same internal, call, and return alphabets.
+	 * 
+	 * @param fstOperand
+	 *            first operand
+	 * @param sndOperand
+	 *            second operand
+	 * @return {@code true} iff the automata have the same alphabets
+	 */
+	static <LETTER, STATE> boolean sameAlphabet(final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) {
+		boolean result;
+		result = fstOperand.getInternalAlphabet().equals(sndOperand.getInternalAlphabet());
+		result = result && fstOperand.getCallAlphabet().equals(sndOperand.getCallAlphabet());
+		result = result && fstOperand.getReturnAlphabet().equals(sndOperand.getReturnAlphabet());
+		return result;
+	}
 }

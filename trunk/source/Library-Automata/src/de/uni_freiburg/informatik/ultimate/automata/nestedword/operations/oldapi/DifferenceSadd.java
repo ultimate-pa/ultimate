@@ -123,7 +123,7 @@ public class DifferenceSadd<LETTER, STATE> extends BinaryNwaOperation<LETTER, ST
 		mContentFactory = minuend.getStateFactory();
 		this.mMinuend = minuend;
 		this.mSubtrahend = subtrahend;
-		if (!NestedWordAutomaton.sameAlphabet(this.mMinuend, this.mSubtrahend)) {
+		if (!INestedWordAutomatonSimple.sameAlphabet(this.mMinuend, this.mSubtrahend)) {
 			throw new AutomataLibraryException(this.getClass(),
 					"Unable to apply operation to automata with different alphabets.");
 		}
@@ -163,7 +163,7 @@ public class DifferenceSadd<LETTER, STATE> extends BinaryNwaOperation<LETTER, ST
 		mContentFactory = minuend.getStateFactory();
 		this.mMinuend = minuend;
 		this.mSubtrahend = subtrahend;
-		if (!NestedWordAutomaton.sameAlphabet(this.mMinuend, this.mSubtrahend)) {
+		if (!INestedWordAutomatonSimple.sameAlphabet(this.mMinuend, this.mSubtrahend)) {
 			throw new AutomataLibraryException(this.getClass(),
 					"Unable to apply operation to automata with different alphabets.");
 		}

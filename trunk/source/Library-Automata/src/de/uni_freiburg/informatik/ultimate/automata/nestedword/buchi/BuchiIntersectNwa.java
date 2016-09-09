@@ -35,7 +35,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
@@ -79,7 +78,7 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 			throws AutomataLibraryException {
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
-		if (!NestedWordAutomaton.sameAlphabet(mFstOperand, mSndOperand)) {
+		if (!INestedWordAutomatonSimple.sameAlphabet(mFstOperand, mSndOperand)) {
 			throw new AutomataLibraryException(this.getClass(),
 					"Unable to apply operation to automata with different alphabets.");
 		}
