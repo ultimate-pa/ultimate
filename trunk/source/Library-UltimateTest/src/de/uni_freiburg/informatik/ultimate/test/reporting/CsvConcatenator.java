@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE UnitTest Library.
  * 
@@ -39,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderTransformer;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
 /**
@@ -48,33 +50,61 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
  * {@link ICsvProvider} of a specified type. Each row is extended by an entry
  * for the following.
  * <ul>
- * <li>File
- * <li>Setting
- * <li>Toolchain
+ * <li>File</li>
+ * <li>Setting</li>
+ * <li>Toolchain</li>
  * </ul>
  * Furthermore the rows of each Benchmark and each test case are concatenated to
  * a single CSV.
  * 
- * @author heizmann@informatik.uni-freiburg.de
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class CsvConcatenator implements ITestSummary {
-	
 	private final Class<? extends UltimateTestSuite> mUltimateTestSuite;
 	private final Class<? extends ICsvProviderProvider<?>> mBenchmark;
+	private final ICsvProviderTransformer<Object> mTransformer;
 	private ICsvProvider<Object> mCsvProvider;
 	
+	/**
+	 * Constructor without a transformer.
+	 * 
+	 * @param ultimateTestSuite
+	 *            Ultimate test suite
+	 * @param benchmark
+	 *            benchmark
+	 */
 	public CsvConcatenator(final Class<? extends UltimateTestSuite> ultimateTestSuite,
 			final Class<? extends ICsvProviderProvider<?>> benchmark) {
-		super();
+		this(ultimateTestSuite, benchmark, null);
+	}
+	
+	/**
+	 * Constructor with a transformer which is automatically applied to the result in {@link #getSummaryLog()}.
+	 * 
+	 * @param ultimateTestSuite
+	 *            Ultimate test suite
+	 * @param benchmark
+	 *            benchmark
+	 * @param transformer
+	 *            transformer which is applied before output
+	 */
+	public CsvConcatenator(final Class<? extends UltimateTestSuite> ultimateTestSuite,
+			final Class<? extends ICsvProviderProvider<?>> benchmark,
+			final ICsvProviderTransformer<Object> transformer) {
 		mUltimateTestSuite = ultimateTestSuite;
 		mBenchmark = benchmark;
+		mTransformer = transformer;
 		final List<String> emtpyList = Collections.emptyList();
 		mCsvProvider = new SimpleCsvProvider<Object>(emtpyList);
 	}
 	
 	@Override
 	public String getSummaryLog() {
-		return mCsvProvider.toCsv(null, null).toString();
+		final ICsvProvider<Object> csvProvider = (mTransformer == null)
+				? mCsvProvider
+				: mTransformer.transform(mCsvProvider);
+		return csvProvider.toCsv(null, null).toString();
 	}
 	
 	@Override
