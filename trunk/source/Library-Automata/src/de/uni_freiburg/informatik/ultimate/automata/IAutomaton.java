@@ -51,8 +51,8 @@ public interface IAutomaton<LETTER, STATE> {
 	 * @deprecated Automata should not provide their state factory anymore.
 	 */
 	@Deprecated
-			IStateFactory<STATE> getStateFactory();
-			
+	IStateFactory<STATE> getStateFactory();
+	
 	/**
 	 * @return Size of the automaton. E.g., the number of states.
 	 */
@@ -62,4 +62,18 @@ public interface IAutomaton<LETTER, STATE> {
 	 * @return Some human readable information about the size of the automaton.
 	 */
 	String sizeInformation();
+	
+	/**
+	 * Checks whether two automata have the same alphabet.
+	 * 
+	 * @param fstOperand
+	 *            first operand
+	 * @param sndOperand
+	 *            second operand
+	 * @return {@code true} iff the automata have the same alphabet
+	 */
+	static <LETTER, STATE> boolean sameAlphabet(final IAutomaton<LETTER, STATE> fstOperand,
+			final IAutomaton<LETTER, STATE> sndOperand) {
+		return fstOperand.getAlphabet().equals(sndOperand.getAlphabet());
+	}
 }

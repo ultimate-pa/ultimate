@@ -36,6 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -98,7 +99,7 @@ public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C>
 			mLogger.info(startMessage());
 		}
 		
-		if (!net.getAlphabet().equals(nwa.getInternalAlphabet())) {
+		if (!IAutomaton.sameAlphabet(net, nwa)) {
 			throw new IllegalArgumentException("net and nwa must use same alphabet");
 		}
 		if (nwa.getInitialStates().size() != 1) {
