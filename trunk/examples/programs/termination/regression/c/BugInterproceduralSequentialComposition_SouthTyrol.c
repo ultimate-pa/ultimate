@@ -1,4 +1,4 @@
-//#nonterminating
+//#Nonterminating
 /*
  * Date: 2016-09-07
  * Author: Matthias Heizmann
@@ -21,7 +21,7 @@ int mountain(int *x)
 
 int hill(int useless, int *x)
 {
-	cstrlen(x);
+	mountain(x);
 	return 0;
 }
 

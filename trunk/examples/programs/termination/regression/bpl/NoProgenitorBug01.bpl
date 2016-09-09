@@ -1,4 +1,4 @@
-//#nonterminating
+//#Nonterminating
 /*
  * Date: 2016-08-31
  * Author: Matthias Heizmann

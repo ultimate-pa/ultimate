@@ -1,3 +1,4 @@
+//#Terminating
 /*
  * In r11928 the C2Boogie translation constructed the label Loop~3 twice and
  * therefore this program was wrongly considered nonterminating.
