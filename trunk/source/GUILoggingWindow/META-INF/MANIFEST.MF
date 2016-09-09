@@ -7,6 +7,5 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: Library-UltimateCore,
  UltimateCore,
  org.eclipse.ui.workbench,
- org.eclipse.jface,
- Library-log4j 
+ org.eclipse.jface
 Export-Package: de.uni_freiburg.informatik.ultimate.gui.views

@@ -20,7 +20,6 @@ Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.transfomers
 Require-Bundle: Library-UltimateCore,
  UltimateCore,
- Library-log4j,
  Library-SMTLIB,
  Library-UltimateUtil,
  Library-BoogieAST,

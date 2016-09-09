@@ -8,7 +8,6 @@ Require-Bundle:
  Library-UltimateModel,
  Library-UltimateCore,
  UltimateCore,
- Library-log4j,
  Library-SMTLIB,
  GUIGeneratedPreferencePages,
  GUILoggingWindow

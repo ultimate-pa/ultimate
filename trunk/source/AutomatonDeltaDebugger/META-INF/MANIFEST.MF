@@ -6,7 +6,6 @@ Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.Activator
 Require-Bundle: Library-UltimateCore,
  UltimateCore,
- Library-log4j,
  de.uni_freiburg.informatik.ultimate.automata,
  Library-UltimateUtil,
  AutomataScriptParser,

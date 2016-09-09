@@ -5,7 +5,6 @@ Bundle-SymbolicName: Library-LassoRanker
 Bundle-Version: 0.9.5
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.analysis.lassoranker.Activator
 Require-Bundle: Library-UltimateCore,
- Library-log4j,
  Library-UltimateUtil,
  Library-BoogieAST,
  UltimateCore,

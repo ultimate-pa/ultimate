@@ -13,7 +13,6 @@ Export-Package: de.uni_freiburg.informatik.ultimate.core.lib.exceptions,
  de.uni_freiburg.informatik.ultimate.core.lib.toolchain,
  de.uni_freiburg.informatik.ultimate.core.lib.translation,
  de.uni_freiburg.informatik.ultimate.core.lib.util
-Require-Bundle: Library-log4j,
- Library-UltimateModel;visibility:=reexport,
+Require-Bundle: Library-UltimateModel;visibility:=reexport,
  Library-UltimateUtil,
  Library-SMTLIB

@@ -6,7 +6,6 @@ Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.source.smtparser.Activator
 Require-Bundle: Library-UltimateCore,
  UltimateCore,
- Library-log4j,
  Library-SMTLIB,
  SMTInterpol,
  SMTSolverBridge,

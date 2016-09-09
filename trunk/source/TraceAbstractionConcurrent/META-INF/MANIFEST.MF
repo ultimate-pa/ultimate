@@ -3,8 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: TraceAbstractionConcurrent
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;singleton:=true
 Bundle-Version: 0.0.1
-Require-Bundle: UltimateCore, 
- Library-log4j,
+Require-Bundle: UltimateCore,
  Library-UltimateUtil,
  Library-UltimateCore,
  Library-ModelCheckerUtils,
@@ -12,7 +11,7 @@ Require-Bundle: UltimateCore,
  Library-BoogieAST,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.automata,
- de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction 
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent

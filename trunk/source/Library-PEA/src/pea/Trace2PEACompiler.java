@@ -1,25 +1,25 @@
-/* $Id: Trace2PEACompiler.java 408 2009-07-17 09:54:06Z jfaber $ 
+/* $Id: Trace2PEACompiler.java 408 2009-07-17 09:54:06Z jfaber $
  *
  * This file is part of the PEA tool set
- * 
- * The PEA tool set is a collection of tools for 
+ *
+ * The PEA tool set is a collection of tools for
  * Phase Event Automata (PEA). See
  * http://csd.informatik.uni-oldenburg.de/projects/peatools.html
  * for more information.
- * 
+ *
  * Copyright (C) 2005-2006, Department for Computing Science,
  *                          University of Oldenburg
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
@@ -37,8 +37,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.log4j.PropertyConfigurator;
-
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.CounterTrace.DCPhase;
 import pea.modelchecking.MCTrace;
@@ -47,7 +45,7 @@ import pea.modelchecking.MCTrace;
  * This class offers functionality to construct a phase event automaton from a given countertrace or a given
  * model-checkable trace.
  * <p>
- * 
+ *
  * @author Jochen Hoenicke
  * @author Roland Meyer
  * @see pea.PhaseEventAutomata
@@ -97,12 +95,12 @@ public class Trace2PEACompiler {
 	 * in log4j logger. If the string is empty, the default name <code>Trace2PEACompiler</code> is used. An application
 	 * using a Trace2PEACompiler object has to make sure that the logger is initialised via
 	 * <code>PropertyConfigurator.configure()</code>.
-	 * 
+	 *
 	 * @param loggerName
 	 * @see ILogger
 	 * @see PropertyConfigurator
 	 */
-	public Trace2PEACompiler(String loggerName) {
+	public Trace2PEACompiler(final String loggerName) {
 		logger = ILogger.getLogger(loggerName);
 
 		allPhases = new TreeMap<PhaseBits, Phase>();
@@ -123,7 +121,7 @@ public class Trace2PEACompiler {
 	 * @param phases
 	 *            the array of DCPhases in the countertrace
 	 */
-	public HashMap<Transition, PhaseSet> getTrans2Phases(DCPhase phases[]) {
+	public HashMap<Transition, PhaseSet> getTrans2Phases(final DCPhase phases[]) {
 		final HashMap<Transition, PhaseSet> pea2ph = new HashMap<Transition, PhaseSet>();
 		for (final Transition t : trans2phases.keySet()) {
 			final PhaseBits pb = trans2phases.get(t);
@@ -134,7 +132,7 @@ public class Trace2PEACompiler {
 
 	/**
 	 * Constructs a phase event automaton named <code>name</code> from the given countertrace.
-	 * 
+	 *
 	 * @param name
 	 *            The name attribute of the phase event automaton is set to <code>name</code>.
 	 * @param ct
@@ -143,7 +141,7 @@ public class Trace2PEACompiler {
 	 * @see pea.PhaseEventAutomata
 	 * @see pea.CounterTrace
 	 */
-	public PhaseEventAutomata compile(String name, CounterTrace ct) {
+	public PhaseEventAutomata compile(final String name, final CounterTrace ct) {
 		resetAll();
 		this.name = name;
 		countertrace = ct;
@@ -153,7 +151,7 @@ public class Trace2PEACompiler {
 
 	/**
 	 * Constructs a phase event automaton named <code>name</code> from the given model-checkable trace.
-	 * 
+	 *
 	 * @param name
 	 *            The name attribute of the phase event automaton is set to <code>name</code>.
 	 * @param mcTrace
@@ -163,7 +161,7 @@ public class Trace2PEACompiler {
 	 * @see pea.PhaseEventAutomata
 	 * @see pea.modelchecking.MCTrace
 	 */
-	public PEATestAutomaton compile(String name, MCTrace mcTrace) {
+	public PEATestAutomaton compile(final String name, final MCTrace mcTrace) {
 		resetAll();
 		this.name = name;
 		countertrace = mcTrace.getTrace();
@@ -203,13 +201,13 @@ public class Trace2PEACompiler {
 
 	/**
 	 * Return the condition when we have seen the $i$th trace element completely if we are currently in the state state.
-	 * 
+	 *
 	 * @param state
 	 *            the phase bits for the current state.
 	 * @param i
 	 *            the number of the trace element.
 	 */
-	private CDD complete(PhaseBits state, int i) {
+	private CDD complete(final PhaseBits state, final int i) {
 		CDD result;
 
 		/*
@@ -236,7 +234,7 @@ public class Trace2PEACompiler {
 				}
 			} else {
 				if (countertrace.phases[i].boundType < 0 && (canseep(state) & ibit) == 0
-						&& (state.exactbound & ibit) == 0) {
+				        && (state.exactbound & ibit) == 0) {
 					/*
 					 * The phase has a strict upper bound. It is only complete if that bound has not yet been reached.
 					 */
@@ -283,11 +281,9 @@ public class Trace2PEACompiler {
 				 * We can only keep the state if event is not in forbid set.
 				 */
 				@SuppressWarnings("unchecked")
-				final
-				Set<String> empty = Collections.EMPTY_SET;
+				final Set<String> empty = Collections.EMPTY_SET;
 				@SuppressWarnings("unchecked")
-				final
-				Set<String> forbid = countertrace.phases[p].forbid;
+				final Set<String> forbid = countertrace.phases[p].forbid;
 				final CDD atom = EventDecision.create(empty, forbid);
 				keep[p] = keep[p].and(atom);
 			}
@@ -316,7 +312,7 @@ public class Trace2PEACompiler {
 		// may be demanded to be able to neglect the phase.
 		lastphase = countertrace.phases.length - 1;
 		while (!buildTotal && lastphase > 0 && countertrace.phases[lastphase].allowEmpty == true
-				&& (canPossiblySeep & (1 << lastphase)) != 0) {
+		        && (canPossiblySeep & (1 << lastphase)) != 0) {
 			lastphase = lastphase - 1;
 		}
 		logger.debug("Lastphase = " + lastphase);
@@ -325,14 +321,14 @@ public class Trace2PEACompiler {
 	/**
 	 * Compute for each phase whether we can seep through from the predecessor phase.
 	 */
-	private final int canseep(PhaseBits p) {
+	private final int canseep(final PhaseBits p) {
 		return (p.active & ~p.waiting) << 1 & canPossiblySeep;
 	}
 
 	/**
 	 * Precompute the CDDs further using the current state information.
 	 */
-	private void initTrans(PhaseBits srcBits) {
+	private void initTrans(final PhaseBits srcBits) {
 		for (int p = 0, pbit = 1; p < countertrace.phases.length; p++, pbit += pbit) {
 			/*
 			 * Now calculate the condition under which we can keep the current state.
@@ -353,7 +349,7 @@ public class Trace2PEACompiler {
 
 			cEnter[p] = p > 0 ? complete(srcBits, p - 1).and(enter[p]) : CDD.FALSE;
 			logger.debug("initTrans for " + srcBits + "," + p + ": complete: " + complete(srcBits, p) + " enter: "
-					+ cEnter[p] + "  keep: " + cKeep[p]);
+			        + cEnter[p] + "  keep: " + cKeep[p]);
 		}
 	}
 
@@ -361,7 +357,7 @@ public class Trace2PEACompiler {
 	 * If not present, creates a new phase according to the parameters <code>stateInv</code> and <code>destBits</code>
 	 * and a transition from phase <code>src</code> to the newly created phase with guard <code>guard</code> and resets
 	 * <code>resets</code>. The parameter <code>src</code> is the source phase itself.
-	 * 
+	 *
 	 * @param srcBits
 	 *            Bits of source phase of the new transition
 	 * @param src
@@ -374,14 +370,14 @@ public class Trace2PEACompiler {
 	 *            Resets of the new Transition
 	 * @param destBits
 	 *            Bits of the new phase
-	 * 
+	 *
 	 * @see pea.CounterTrace.DCPhase
 	 * @see pea.Transition
 	 * @see pea.PhaseBits
 	 * @see pea.CDD
 	 */
-	private void buildNewTrans(PhaseBits srcBits, Phase src, CDD guard, CDD stateInv, String[] resets,
-			PhaseBits destBits) {
+	private void buildNewTrans(final PhaseBits srcBits, final Phase src, CDD guard, final CDD stateInv,
+	        final String[] resets, final PhaseBits destBits) {
 		Phase dest;
 		if (allPhases.containsKey(destBits)) {
 			logger.debug("Destination phase already exists");
@@ -390,13 +386,13 @@ public class Trace2PEACompiler {
 			CDD clockInv = CDD.TRUE;
 			for (int p = 0, pbit = 1; pbit <= destBits.active; p++, pbit += pbit) {
 				if ((destBits.waiting & pbit) != 0
-						|| (countertrace.phases[p].boundType < 0 && (canseep(destBits) & pbit) == 0)) {
+				        || (countertrace.phases[p].boundType < 0 && (canseep(destBits) & pbit) == 0)) {
 					/*
 					 * Phase invariants only apply to waiting states and states with upper bounds that cannot be
 					 * reentered immediately.
 					 */
 					if (!buildTotal && p == lastphase && countertrace.phases[p].boundType > 0
-							&& (destBits.exactbound & pbit) != 0) {
+					        && (destBits.exactbound & pbit) != 0) {
 
 						// There is a very special case in which clock invariant
 						// must be strict. It only occurs, if countertrace
@@ -431,7 +427,7 @@ public class Trace2PEACompiler {
 	 * Builds up all successor states of a phase event automaton state recursively. The recursion terminates when all
 	 * phases in the countertrace are handled or the stateinvariant of the successor state turns out to be false.
 	 * Dependant on the <code>buildTotal</code> attribute states satisfying the formula are built or omitted.
-	 * 
+	 *
 	 * @param srcBits
 	 *            Bits of the phase that initiates the recursion.
 	 * @param src
@@ -451,18 +447,18 @@ public class Trace2PEACompiler {
 	 *            Bit of phases with exact bounds in the newly created state. Is built up during the recursion.
 	 * @param p
 	 *            Actual handled phase of the DC formula. Used for terminating the recursion.
-	 * 
+	 *
 	 * @see pea.CounterTrace.DCPhase
 	 * @see pea.PhaseBits
 	 * @see pea.CDD
 	 */
-	private void recursiveBuildTrans(PhaseBits srcBits, Phase src, CDD guard, CDD stateInv, String[] resets, int active,
-			int waiting, int exactbound, int p) {
+	private void recursiveBuildTrans(final PhaseBits srcBits, final Phase src, final CDD guard, CDD stateInv,
+	        final String[] resets, final int active, final int waiting, final int exactbound, final int p) {
 		if (guard.and(stateInv.prime()) == CDD.FALSE) {
 			return;
 		}
-		logger.debug("recursiveBuildTrans: " + srcBits + "->" + new PhaseBits(active, exactbound, waiting) + " ("
-				+ p + ") partial guards: " + guard + " inv: " + stateInv);
+		logger.debug("recursiveBuildTrans: " + srcBits + "->" + new PhaseBits(active, exactbound, waiting) + " (" + p
+		        + ") partial guards: " + guard + " inv: " + stateInv);
 		if (p == countertrace.phases.length) {
 			// If countertrace automata are built, the phase satisfying the
 			// formula is omitted. Building test automata
@@ -492,7 +488,7 @@ public class Trace2PEACompiler {
 			 * doesn't hold in the state invariant.
 			 */
 			recursiveBuildTrans(srcBits, src, guard, stateInv.and(countertrace.phases[p].invariant.negate()), resets,
-					active, waiting, exactbound, p + 1);
+			        active, waiting, exactbound, p + 1);
 		} else {
 			/*
 			 * Make sure that the phase can neither be kept nor entered.
@@ -513,7 +509,7 @@ public class Trace2PEACompiler {
 		if (countertrace.phases[p].boundType > 0) {
 			/*
 			 * This phase has a lower bound (> or >=):
-			 * 
+			 *
 			 * If we can keep it we should do so.
 			 */
 			final CDD keep = guard.and(cKeep[p]);
@@ -523,14 +519,14 @@ public class Trace2PEACompiler {
 					 * if previous state was waiting, we can either keep waiting, or enter non-waiting state.
 					 */
 					recursiveBuildTrans(srcBits, src, keep.and(cless[p]), stateInv, resets, active | pbit,
-							waiting | pbit, exactbound | (srcBits.exactbound & pbit), p + 1);
+					        waiting | pbit, exactbound | (srcBits.exactbound & pbit), p + 1);
 
 					recursiveBuildTrans(srcBits, src, keep.and(cless[p].negate()), stateInv, resets, active | pbit,
-							waiting, exactbound, p + 1);
+					        waiting, exactbound, p + 1);
 				} else {
 					/* We can keep it in non-waiting state. */
 					recursiveBuildTrans(srcBits, src, keep, stateInv, resets, active | pbit, waiting, exactbound,
-							p + 1);
+					        p + 1);
 				}
 			}
 
@@ -546,7 +542,7 @@ public class Trace2PEACompiler {
 				if (enterExact != CDD.FALSE) {
 					logger.debug("Phase " + p + " can be entered exact");
 					recursiveBuildTrans(srcBits, src, enterExact, stateInv, resetsPlus, active | pbit, waiting | pbit,
-							exactbound | pbit, p + 1);
+					        exactbound | pbit, p + 1);
 				}
 				enterStrict = canseepdest ? remaining.and(cEnter[p].negate()) : CDD.FALSE;
 			} else {
@@ -558,12 +554,12 @@ public class Trace2PEACompiler {
 			 */
 			if (enterStrict != CDD.FALSE) {
 				recursiveBuildTrans(srcBits, src, enterStrict, stateInv, resetsPlus, active | pbit, waiting | pbit,
-						exactbound, p + 1);
+				        exactbound, p + 1);
 			}
 		} else if (countertrace.phases[p].boundType < 0) {
 			/*
 			 * This phase has an upper bound ( < or <=):
-			 * 
+			 *
 			 * If we can enter it we should do so.
 			 */
 			if (canseepdest) {
@@ -603,15 +599,15 @@ public class Trace2PEACompiler {
 				if (enterNormal != CDD.FALSE) {
 
 					recursiveBuildTrans(srcBits, src, enterNormal, stateInv, resetsPlus, active | pbit, waiting,
-							exactbound, p + 1);
+					        exactbound, p + 1);
 				}
 				if (enterExact != CDD.FALSE) {
 					recursiveBuildTrans(srcBits, src, enterExact, stateInv, resetsPlus, active | pbit, waiting,
-							exactbound | pbit, p + 1);
+					        exactbound | pbit, p + 1);
 				}
 				if (keep != CDD.FALSE) {
 					recursiveBuildTrans(srcBits, src, keep, stateInv, resets, active | pbit, waiting,
-							exactbound | (srcBits.exactbound & pbit), p + 1);
+					        exactbound | (srcBits.exactbound & pbit), p + 1);
 				}
 
 			}
@@ -626,7 +622,7 @@ public class Trace2PEACompiler {
 			}
 			if (enterKeep != CDD.FALSE) {
 				recursiveBuildTrans(srcBits, src, enterKeep, stateInv, resets, active | pbit, waiting, exactbound,
-						p + 1);
+				        p + 1);
 			}
 		}
 	}
@@ -634,16 +630,16 @@ public class Trace2PEACompiler {
 	/**
 	 * Precomputes cdds with the phase information offered by <code>srcBits</code> and afterwards initiates the
 	 * recursion for finding successor states.
-	 * 
+	 *
 	 * @param srcBits
 	 *            Source bits of the state initiating the recursion
 	 * @param src
 	 *            Source phase initiating the recursion
-	 * 
+	 *
 	 * @see pea.CounterTrace.DCPhase
 	 * @see pea.PhaseBits
 	 */
-	private void findTrans(PhaseBits srcBits, Phase src) {
+	private void findTrans(final PhaseBits srcBits, final Phase src) {
 		initTrans(srcBits);
 		recursiveBuildTrans(srcBits, src, noSyncEvent, CDD.TRUE, new String[0], 0, 0, 0, 0);
 	}
@@ -656,9 +652,9 @@ public class Trace2PEACompiler {
 	 * <p>
 	 * In future versions of this class the attribute <code>allowEmpty</code> in <code>CounterTrace.DCPhase</code> needs
 	 * to be inspected to find out, whether phases in the trace may be entered without having to use seep.
-	 * 
+	 *
 	 * @return The test automaton for the countertrace or model-checkable trace
-	 * 
+	 *
 	 * @see pea.PEATestAutomaton
 	 * @see pea.PhaseEventAutomata
 	 * @see pea.CounterTrace.DCPhase
@@ -683,13 +679,13 @@ public class Trace2PEACompiler {
 		if (entrySync != null) {
 			/*
 			 * Test automata method <p>
-			 * 
+			 *
 			 * Generates a new initial state which replaces all other initial states. From this state a transition to
 			 * all former initial states is constructed where all clocks in the automaton are reset and the event
 			 * <code>entrySync</code> is demanded, the event <code>exitSync</code> is forbidden. The method is only
 			 * called if there is an entry sync. Furthermore a reflexive transition is constructed for the new state
 			 * that forbids <code>entrySync</code> and <code>exitSync</code>.
-			 * 
+			 *
 			 */
 
 			logger.debug("Trying to add transitions from start state");
@@ -801,8 +797,7 @@ public class Trace2PEACompiler {
 
 		PhaseEventAutomata pea;
 		if (exitSync != null) {
-			pea = new PEATestAutomaton(name, phases, init, peaClocks, finalPhases)
-					.removeUnreachableLocations();
+			pea = new PEATestAutomaton(name, phases, init, peaClocks, finalPhases).removeUnreachableLocations();
 		} else {
 			pea = new PhaseEventAutomata(name, phases, init, peaClocks, variables, events, null);
 		}
@@ -810,7 +805,7 @@ public class Trace2PEACompiler {
 		return pea;
 	}
 
-	private void addVariables(CDD cdd, HashMap<String, String> variables, HashSet<String> events) {
+	private void addVariables(final CDD cdd, final HashMap<String, String> variables, final HashSet<String> events) {
 		final Decision dec = cdd.getDecision();
 		if (dec instanceof EventDecision) {
 			events.add(((EventDecision) dec).getEvent());
@@ -828,7 +823,7 @@ public class Trace2PEACompiler {
 	/**
 	 * Test automata method
 	 * <p>
-	 * 
+	 *
 	 * Generates a new state named <code>Trace2PEACompiler.FINAL + "_" + this.name</code>. From every state in the
 	 * automaton a guard is computed for a new transition to this final state. The transition depends on the
 	 * <code>spec</code> attribute. If this attribute is <code>true</code> that guard states that the formula needs to
@@ -837,7 +832,7 @@ public class Trace2PEACompiler {
 	 * missing events may not appear appropriately. If the guard turns out to be equivalent to false the edge to the
 	 * final state is omitted. Furthermore all edges demand the <code>exitSync</code> and forbid the
 	 * <code>entrySync</code>.
-	 * 
+	 *
 	 * @see pea.modelchecking.MCTrace
 	 */
 	private Phase buildExitSyncTransitions() {

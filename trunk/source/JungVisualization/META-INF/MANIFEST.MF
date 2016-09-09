@@ -6,9 +6,8 @@ Bundle-Version: 0.0.1
 Require-Bundle: Library-UltimateCore,
  Library-Jung,
  Library-Batik,
- Library-log4j,
  UltimateCore,
  de.uni_freiburg.informatik.ultimate.gui
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator

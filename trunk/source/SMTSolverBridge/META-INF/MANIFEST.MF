@@ -9,6 +9,5 @@ Require-Bundle: Library-UltimateCore,
  JavaCup,
  Library-SMTLIB,
  Library-UltimateUtil,
- Library-log4j,
  SMTInterpol,
  UltimateCore
