@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -271,8 +272,8 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 	}
 	
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() {
-		return mTraversedNwa;
+	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
+		return (IDoubleDeckerAutomaton<LETTER, STATE>) mTraversedNwa;
 	}
 	
 	@Override
