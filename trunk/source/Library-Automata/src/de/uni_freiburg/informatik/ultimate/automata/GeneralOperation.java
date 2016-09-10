@@ -38,8 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            state type
  */
-public abstract class GeneralOperation<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public abstract class GeneralOperation<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	/**
 	 * Ultimate services.
 	 */
@@ -92,25 +91,10 @@ public abstract class GeneralOperation<LETTER, STATE>
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isWarnEnabled()) {
 			mLogger.warn("No result check for " + operationName() + " available yet.");
 		}
 		return true;
-	}
-	
-	/**
-	 * @return Logger message for starting the {@link #checkResult(IStateFactory)} method.
-	 */
-	protected final String startCheckMessage() {
-		return "Testing correctness of " + operationName() + '.';
-	}
-	
-	/**
-	 * @return Logger message for exiting the {@link #checkResult(IStateFactory)} method.
-	 */
-	protected final String exitCheckMessage() {
-		return "Finished testing correctness of " + operationName() + '.';
 	}
 }
