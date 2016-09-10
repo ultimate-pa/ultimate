@@ -25,10 +25,11 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization;
+package de.uni_freiburg.informatik.ultimate.automata.alternating.visualization;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.AutomatonState;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
