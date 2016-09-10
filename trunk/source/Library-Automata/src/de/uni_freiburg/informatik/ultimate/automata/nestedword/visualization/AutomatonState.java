@@ -37,15 +37,21 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class AutomatonState
-		extends
+public final class AutomatonState extends
 		ModifiableExplicitEdgesMultigraph<AutomatonState, AutomatonTransition, AutomatonState, AutomatonTransition> {
 	private static final long serialVersionUID = 264254789648279608L;
 	
 	private final String mName;
 	
+	/**
+	 * Constructor.
+	 * 
+	 * @param content
+	 *            state content
+	 * @param isAccepting
+	 *            {@code true} iff the state is accepting
+	 */
 	public AutomatonState(final Object content, final boolean isAccepting) {
-		
 		final DefaultAnnotations acceptance = new DefaultAnnotations();
 		acceptance.put("isAccepting", isAccepting);
 		final Map<String, IAnnotations> annotations = getPayload().getAnnotations();

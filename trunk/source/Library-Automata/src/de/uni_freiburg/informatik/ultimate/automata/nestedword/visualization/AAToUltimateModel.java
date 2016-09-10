@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization;
@@ -31,21 +31,32 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
-
-public class AAToUltimateModel<LETTER,STATE> {
-//	private static ILogger mLogger = 
-//		NestedWordAutomata.getLogger();
-//	
-	public IElement getUltimateModelOfAA(final AlternatingAutomaton<LETTER,STATE> aaSimple)
+/**
+ * Converts an {@link AlternatingAutomaton} to an Ultimate model.
+ * 
+ * @author Markus Pomrehn
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
+public class AAToUltimateModel<LETTER, STATE> {
+	/**
+	 * 
+	 * @param operand
+	 *            An alternating automaton.
+	 * @return Ultimate model
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
+	public IElement getUltimateModelOfAA(final AlternatingAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 //		final AlternatingAutomaton<LETTER,STATE> aa;
 //		aa = (AlternatingAutomaton<LETTER, STATE>) aaSimple;
-		System.out.println("Foo");
-		final AutomatonState graphroot = new AutomatonState(
-				"Sucessors of this node are the initial states", false);
 //		Map<STATE,AutomatonState> constructed =	new HashMap<STATE,AutomatonState>();
 //		LinkedList<STATE> queue = new LinkedList<STATE>();
-//	
+//
 //		// add all initial states to model - all are successors of the graphroot
 //		for (STATE state : aa.getInitialStates()) {
 //			queue.add(state);
@@ -55,12 +66,12 @@ public class AAToUltimateModel<LETTER,STATE> {
 //			new AutomatonTransition((AutomatonState) graphroot,
 //											Transition.INTERNAL,"", null, vsn);
 //		}
-//		
+//
 //		while (!queue.isEmpty()) {
 //			STATE state = queue.removeFirst();
 //			AutomatonState vsn = constructed.get(state);
-//			
-//			for (OutgoingInternalTransition<LETTER, STATE> trans : 
+//
+//			for (OutgoingInternalTransition<LETTER, STATE> trans :
 //												nwa.internalSuccessors(state)) {
 //				LETTER symbol = trans.getLetter();
 //				STATE succState = trans.getSucc();
@@ -77,8 +88,8 @@ public class AAToUltimateModel<LETTER,STATE> {
 //				}
 //				new AutomatonTransition(vsn,Transition.INTERNAL,symbol,null,succVSN);
 //			}
-//			
-//			for (OutgoingCallTransition<LETTER, STATE> trans : 
+//
+//			for (OutgoingCallTransition<LETTER, STATE> trans :
 //													nwa.callSuccessors(state)) {
 //				LETTER symbol = trans.getLetter();
 //				STATE succState = trans.getSucc();
@@ -95,7 +106,7 @@ public class AAToUltimateModel<LETTER,STATE> {
 //				new AutomatonTransition(vsn, Transition.CALL, symbol, null,	succVSN);
 //			}
 //			for(STATE hierPredState : nwa.getStates()) {
-//				for (OutgoingReturnTransition<LETTER, STATE> trans : 
+//				for (OutgoingReturnTransition<LETTER, STATE> trans :
 //							nwa.returnSuccessorsGivenHier(state, hierPredState)) {
 //					LETTER symbol = trans.getLetter();
 //					STATE succState = trans.getSucc();
@@ -113,6 +124,7 @@ public class AAToUltimateModel<LETTER,STATE> {
 //				}
 //			}
 //		}
-		return graphroot;
+		System.out.println("Foo");
+		return new AutomatonState("Sucessors of this node are the initial states", false);
 	}
 }

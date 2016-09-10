@@ -110,7 +110,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		mStateFactory = operand.getStateFactory();
 		mEmptyStackState = mStateFactory.createEmptyStackState();
-		final MetaState metaInitialState = getMetaState1(mTma.mInitialState, mTma.mInitialTma);
+		final MetaState metaInitialState = getMetaState1(mTma.getmInitialState(), mTma.getmInitialTma());
 		mInitialState = metaInitialState.mOutputState;
 		mInitialStateSet.add(mInitialState);
 	}
@@ -227,7 +227,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		if (mFinalStateSet == null) {
 			final Set<Integer> reachableTmas = mTma.statesWithLeftRejectingPartners();
 			for (final Integer tmaNb : reachableTmas) {
-				final MetaState metaState = getMetaState1(mTma.mInitialState, tmaNb);
+				final MetaState metaState = getMetaState1(mTma.getmInitialState(), tmaNb);
 				/**
 				 * Christian 2016-08-16: BUG: mFinalStateSet is null here.
 				 */
@@ -251,7 +251,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		if (metaState == null) {
 			throw new IllegalArgumentException(STATE_STRING + state + IS_NOT_YET_KNOWN);
 		}
-		return metaState.mStateNb.equals(mTma.mInitialState) && !metaState.mTmaNb.equals(mTma.mInitialTma);
+		return metaState.mStateNb.equals(mTma.getmInitialState()) && !metaState.mTmaNb.equals(mTma.getmInitialTma());
 	}
 	
 	@Override
@@ -308,16 +308,16 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			// If we are in the initial TMA, we have to add transitions to the
 			// initial states of some of the TMAs in the looping part of the
 			// complement automaton.
-			if (mState.mTmaNb.equals(mTma.mInitialTma)) {
+			if (mState.mTmaNb.equals(mTma.getmInitialTma())) {
 				for (final Integer otherTmaNb : mTma.rightRejectingPartners(succStateNb)) {
-					mResult.add(getMetaState1(mTma.mInitialState, otherTmaNb));
+					mResult.add(getMetaState1(mTma.getmInitialState(), otherTmaNb));
 				}
 			} else {
 				// Otherwise we are in a TMA in the looping part. If we can reach
 				// the final state (of this TMA), we have to add a transition that
 				// loops back to the initial state.
 				if (succStateNb.equals(mState.mTmaNb)) {
-					mResult.add(getMetaState1(mTma.mInitialState, mState.mTmaNb));
+					mResult.add(getMetaState1(mTma.getmInitialState(), mState.mTmaNb));
 				}
 			}
 			// Convert set of MetaStates to set of STATEs.
@@ -364,7 +364,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		// complement automaton, we have to add the transitions from the
 		// initial part and those from within the same TMA that loop back to
 		// the initial state.
-		if (mState.mStateNb.equals(mTma.mInitialState) && !mState.mTmaNb.equals(mTma.mInitialTma)) {
+		if (mState.mStateNb.equals(mTma.getmInitialState()) && !mState.mTmaNb.equals(mTma.getmInitialTma())) {
 			// Transitions from the initial part
 			final Set<Integer> leftRejectingPartnerSet = mTma.leftRejectingPartners(mState.mTmaNb);
 			for (final Integer leftRejectingPartner : leftRejectingPartnerSet) {
@@ -732,8 +732,9 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	 */
 	private class TransitionMonoidAutomaton {
 		// number assigned to copy of τ(ε)
-		public final Integer mInitialState = 0;
-		public final Integer mInitialTma = mInitialState;
+		private final Integer mInitialState = 0;
+		
+		private final Integer mInitialTma = mInitialState;
 		
 		private final INestedWordAutomaton<LETTER, STATE> mOrigAutomaton;
 		
@@ -834,6 +835,14 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 					}
 				}
 			}
+		}
+		
+		public Integer getmInitialState() {
+			return mInitialState;
+		}
+		
+		public Integer getmInitialTma() {
+			return mInitialTma;
 		}
 		
 		/**
