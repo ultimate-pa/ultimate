@@ -705,13 +705,21 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 				return false;
 			}
 			final MetaState other = (MetaState) obj;
-			if ((mStateNb == null) && (other.mStateNb != null)) {
+			if (mStateNb == null) {
+				if (other.mStateNb != null) {
+					return false;
+				}
+			} else if (!mStateNb.equals(other.mStateNb)) {
 				return false;
 			}
-			if ((mTmaNb == null) && (other.mTmaNb != null)) {
+			if (mTmaNb == null) {
+				if (other.mTmaNb != null) {
+					return false;
+				}
+			} else if (!mTmaNb.equals(other.mTmaNb)) {
 				return false;
 			}
-			return mStateNb.equals(other.mStateNb) && mTmaNb.equals(other.mTmaNb);
+			return true;
 		}
 	}
 	
@@ -724,8 +732,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	 */
 	private class TransitionMonoidAutomaton {
 		// number assigned to copy of τ(ε)
-		public Integer mInitialState = 0;
-		public Integer mInitialTma = mInitialState;
+		public final Integer mInitialState = 0;
+		public final Integer mInitialTma = mInitialState;
 		
 		private final INestedWordAutomaton<LETTER, STATE> mOrigAutomaton;
 		
@@ -1046,13 +1054,21 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 					return false;
 				}
 				final Transition other = (Transition) obj;
-				if ((mQ1 == null) && (other.mQ1 != null)) {
+				if (mQ1 == null) {
+					if (other.mQ1 != null) {
+						return false;
+					}
+				} else if (!mQ1.equals(other.mQ1)) {
 					return false;
 				}
-				if ((mQ2 == null) && (other.mQ2 != null)) {
+				if (mQ2 == null) {
+					if (other.mQ2 != null) {
+						return false;
+					}
+				} else if (!mQ2.equals(other.mQ2)) {
 					return false;
 				}
-				return mQ1.equals(other.mQ1) && mQ2.equals(other.mQ2);
+				return true;
 			}
 		}
 	}
