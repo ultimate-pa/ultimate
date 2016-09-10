@@ -33,24 +33,37 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 
 /**
- * Provides static methods that are helpful for working with nested word automata 
+ * Provides static methods that are helpful for working with nested word automata.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class NestedWordAutomataUtils {
+public final class NestedWordAutomataUtils {
+	private NestedWordAutomataUtils() {
+		// prevent instantiation of this class
+	}
 	
+	/**
+	 * Applies a function to all direct successors of a state.
+	 * 
+	 * @param operand
+	 *            The operand.
+	 * @param state
+	 *            state
+	 * @param f
+	 *            consumer
+	 */
 	public static <LETTER, STATE> void applyToReachableSuccessors(
-			final IDoubleDeckerAutomaton<LETTER, STATE> mOperand, final STATE state, final Consumer<STATE> f) {
-		for (final OutgoingInternalTransition<LETTER, STATE> t : mOperand.internalSuccessors(state)) {
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final STATE state, final Consumer<STATE> f) {
+		for (final OutgoingInternalTransition<LETTER, STATE> t : operand.internalSuccessors(state)) {
 			f.accept(t.getSucc());
 		}
-		for (final OutgoingCallTransition<LETTER, STATE> t : mOperand.callSuccessors(state)) {
+		for (final OutgoingCallTransition<LETTER, STATE> t : operand.callSuccessors(state)) {
 			f.accept(t.getSucc());
 		}
-		for (final OutgoingReturnTransition<LETTER, STATE> t : mOperand.returnSuccessors(state)) {
-			if (mOperand.isDoubleDecker(state, t.getHierPred())) {
+		for (final OutgoingReturnTransition<LETTER, STATE> t : operand.returnSuccessors(state)) {
+			if (operand.isDoubleDecker(state, t.getHierPred())) {
 				f.accept(t.getSucc());
 			}
 		}
 	}
-
 }

@@ -34,10 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 
 /**
- * undocumented!
- * <p>
- * NOTE: The interface INestedWordAutomatonOldApi can be removed when also
- * removing the respective overridden methods.
+ * Extension of {@link NestedWordAutomatonFilteredStates} for double deckers.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -47,8 +44,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.N
  */
 public class DoubleDeckerAutomatonFilteredStates<LETTER, STATE> extends NestedWordAutomatonFilteredStates<LETTER, STATE>
 		implements IDoubleDeckerAutomaton<LETTER, STATE> {
-	
 	/**
+	 * Extended constructor.
+	 * 
 	 * @param services
 	 *            Ultimate services
 	 * @param automaton
@@ -65,10 +63,31 @@ public class DoubleDeckerAutomatonFilteredStates<LETTER, STATE> extends NestedWo
 	public DoubleDeckerAutomatonFilteredStates(final AutomataLibraryServices services,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> automaton,
 			final Set<STATE> remainingStates, final Set<STATE> newInitials, final Set<STATE> newFinals)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		super(services, automaton, remainingStates, newInitials, newFinals);
 //		assert (successorOfRemovedStatesAreRemoved());
 		assert (new DownStateConsistencyCheck<LETTER, STATE>(services, this)).getResult() : "down states inconsistent";
+	}
+	
+	/**
+	 * Short constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param automaton
+	 *            automaton
+	 * @param ancestorComputation
+	 *            ancestor computation object
+	 * @throws AutomataOperationCanceledException
+	 *             if timeout exceeds
+	 */
+	public DoubleDeckerAutomatonFilteredStates(final AutomataLibraryServices services,
+			final NestedWordAutomatonReachableStates<LETTER, STATE> automaton,
+			final NestedWordAutomatonReachableStates<LETTER, STATE>.AncestorComputation ancestorComputation)
+			throws AutomataOperationCanceledException {
+		super(services, automaton, ancestorComputation);
+//		assert (successorOfRemovedStatesAreRemoved());
+		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices, this)).getResult() : "down states inconsistent";
 	}
 	
 	private boolean successorOfRemovedStatesAreRemoved() {
@@ -81,42 +100,9 @@ public class DoubleDeckerAutomatonFilteredStates<LETTER, STATE> extends NestedWo
 		return f.doesPropertyHold();
 	}
 	
-	private class WasStateRemovedChecker implements Consumer<STATE> {
-		boolean mPropertyHolds = true;
-		@Override
-		public void accept(final STATE s) {
-			final boolean wasRemoved = !mRemainingStates.contains(s);
-			assert wasRemoved : "state " + s + " was not removed but some predecessor was";
-			mPropertyHolds &= wasRemoved;
-		}
-		
-		public boolean doesPropertyHold() {
-			return mPropertyHolds;
-		}
-	}
-
-	/**
-	 * @param services
-	 *            Ultimate services
-	 * @param automaton
-	 *            automaton
-	 * @param ancestorComputation
-	 *            ancester computation object
-	 * @throws AutomataOperationCanceledException
-	 *             if timeout exceeds
-	 */
-	public DoubleDeckerAutomatonFilteredStates(
-			final AutomataLibraryServices services,
-			final NestedWordAutomatonReachableStates<LETTER, STATE> automaton,
-			final NestedWordAutomatonReachableStates<LETTER, STATE>.AncestorComputation ancestorComputation)
-					throws AutomataOperationCanceledException {
-		super(services, automaton, ancestorComputation);
-//		assert (successorOfRemovedStatesAreRemoved());
-		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices, this)).getResult() : "down states inconsistent";
-	}
-	
 	/**
 	 * {@inheritDoc}
+	 * 
 	 * @deprecated Use the {@link #isDoubleDecker(Object, Object)} check instead.
 	 */
 	@Override
@@ -129,8 +115,30 @@ public class DoubleDeckerAutomatonFilteredStates<LETTER, STATE> extends NestedWo
 	}
 	
 	@Override
-	public boolean isDoubleDecker(final STATE up, final STATE down) {
-		return mAncestorComputation.isDownState(up, down);
+	public boolean isDoubleDecker(final STATE upState, final STATE downState) {
+		return mAncestorComputation.isDownState(upState, downState);
 	}
 	
+	/**
+	 * Checks whether a state was removed.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 */
+	private class WasStateRemovedChecker implements Consumer<STATE> {
+		private boolean mPropertyHolds = true;
+		
+		@Override
+		public void accept(final STATE state) {
+			final boolean wasRemoved = !mRemainingStates.contains(state);
+			assert wasRemoved : "state " + state + " was not removed but some predecessor was";
+			mPropertyHolds &= wasRemoved;
+		}
+		
+		/**
+		 * @return {@code true} iff property holds.
+		 */
+		public boolean doesPropertyHold() {
+			return mPropertyHolds;
+		}
+	}
 }
