@@ -522,14 +522,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), oldAbstraction,
 							interpolAutomaton, bed, mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
 
-					mLogger.info("Internal Transitions: " + bed.mAnswerInternalAutomaton
-							+ " answers given by automaton " + bed.mAnswerInternalCache + " answers given by cache "
-							+ bed.mAnswerInternalSolver + " answers given by solver");
-					mLogger.info("Call Transitions: " + bed.mAnswerCallAutomaton + " answers given by automaton "
-							+ bed.mAnswerCallCache + " answers given by cache " + bed.mAnswerCallSolver
+					mLogger.info("Internal Transitions: " + bed.getmAnswerInternalAutomaton()
+							+ " answers given by automaton " + bed.getmAnswerInternalCache() + " answers given by cache "
+							+ bed.getmAnswerInternalSolver() + " answers given by solver");
+					mLogger.info("Call Transitions: " + bed.getmAnswerCallAutomaton() + " answers given by automaton "
+							+ bed.getmAnswerCallCache() + " answers given by cache " + bed.getmAnswerCallSolver()
 							+ " answers given by solver");
-					mLogger.info("Return Transitions: " + bed.mAnswerReturnAutomaton + " answers given by automaton "
-							+ bed.mAnswerReturnCache + " answers given by cache " + bed.mAnswerReturnSolver
+					mLogger.info("Return Transitions: " + bed.getmAnswerReturnAutomaton() + " answers given by automaton "
+							+ bed.getmAnswerReturnCache() + " answers given by cache " + bed.getmAnswerReturnSolver()
 							+ " answers given by solver");
 					break;
 				case SELFLOOP:
