@@ -3,7 +3,12 @@
 #include <math.h>
 #include <stdlib.h>
 
+
+//@ ltl invariant constraint0: (AP(false) R (! AP(input==3) || (AP(true) U ((AP(output==21) && ! AP(output==23)) && X (! AP(output==23) U AP(output==22))))));
 //@ ltl invariant constraint20: ! (AP(true) U AP(output==22)) || (AP(output != 26) U (AP(output == 24) || AP( output == 22)));
+
+//@ ltl invariant constraint1: (AP(false) R (! AP(input==4) || ((! ((AP(output==19) && ! AP(input==3)) && X (! AP(input==3) U (AP(output==25) && ! AP(input==3)))) U (AP(input==3) || AP(output==21))) || (AP(false) R ! (AP(output==19) && X (AP(true) U AP(output==25)))))));
+
 
     extern void __VERIFIER_error(int);
 

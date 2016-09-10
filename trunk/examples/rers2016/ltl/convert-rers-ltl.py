@@ -25,6 +25,8 @@ def main():
 
     alltheregeexps.append((re.compile('\|'),'||'))
     alltheregeexps.append((re.compile('\&'),'&&'))
+    alltheregeexps.append((re.compile('true'),'AP(true)'))
+    alltheregeexps.append((re.compile('false'),'AP(false)'))
 
     with open(sys.argv[1]) as f:
         for line in f:
