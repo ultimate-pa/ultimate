@@ -61,54 +61,20 @@ public class StateBasedTransitionFilterPredicateProvider<LETTER, STATE> {
 	public StateBasedTransitionFilterPredicateProvider(final Set<STATE> states) {
 		mStates = states;
 		
-		mInternalPredecessorsPredicate = new IPredicate<IncomingInternalTransition<LETTER, STATE>>() {
-			@Override
-			public boolean evaluate(final IncomingInternalTransition<LETTER, STATE> trans) {
-				return mStates.contains(trans.getPred());
-			}
-		};
+		mInternalPredecessorsPredicate = trans -> mStates.contains(trans.getPred());
 		
-		mCallPredecessorPredicate = new IPredicate<IncomingCallTransition<LETTER, STATE>>() {
-			@Override
-			public boolean evaluate(final IncomingCallTransition<LETTER, STATE> trans) {
-				return mStates.contains(trans.getPred());
-			}
-		};
+		mCallPredecessorPredicate = trans -> mStates.contains(trans.getPred());
 		
-		mInternalSuccessorPredicate = new IPredicate<OutgoingInternalTransition<LETTER, STATE>>() {
-			@Override
-			public boolean evaluate(final OutgoingInternalTransition<LETTER, STATE> trans) {
-				return mStates.contains(trans.getSucc());
-			}
-		};
+		mInternalSuccessorPredicate = trans -> mStates.contains(trans.getSucc());
 		
-		mCallSuccessorPredicate = new IPredicate<OutgoingCallTransition<LETTER, STATE>>() {
-			@Override
-			public boolean evaluate(final OutgoingCallTransition<LETTER, STATE> trans) {
-				return mStates.contains(trans.getSucc());
-			}
-		};
+		mCallSuccessorPredicate = trans -> mStates.contains(trans.getSucc());
 		
-		mReturnPredecessorPredicate = new IPredicate<IncomingReturnTransition<LETTER, STATE>>() {
-			@Override
-			public boolean evaluate(final IncomingReturnTransition<LETTER, STATE> trans) {
-				return mStates.contains(trans.getLinPred()) && mStates.contains(trans.getHierPred());
-			}
-		};
+		mReturnPredecessorPredicate =
+				trans -> mStates.contains(trans.getLinPred()) && mStates.contains(trans.getHierPred());
 		
-		mReturnSuccessorPredicate = new IPredicate<OutgoingReturnTransition<LETTER, STATE>>() {
-			@Override
-			public boolean evaluate(final OutgoingReturnTransition<LETTER, STATE> trans) {
-				return mStates.contains(trans.getHierPred()) && mStates.contains(trans.getSucc());
-			}
-		};
+		mReturnSuccessorPredicate = trans -> mStates.contains(trans.getHierPred()) && mStates.contains(trans.getSucc());
 		
-		mReturnSummaryPredicate = new IPredicate<SummaryReturnTransition<LETTER, STATE>>() {
-			@Override
-			public boolean evaluate(final SummaryReturnTransition<LETTER, STATE> trans) {
-				return mStates.contains(trans.getSucc()) && mStates.contains(trans.getLinPred());
-			}
-		};
+		mReturnSummaryPredicate = trans -> mStates.contains(trans.getSucc()) && mStates.contains(trans.getLinPred());
 	}
 	
 	public IPredicate<IncomingInternalTransition<LETTER, STATE>> getInternalPredecessorsPredicate() {
