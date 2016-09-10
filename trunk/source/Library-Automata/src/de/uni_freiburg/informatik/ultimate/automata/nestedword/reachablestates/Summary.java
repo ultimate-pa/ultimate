@@ -19,26 +19,32 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
 
+/**
+ * A summary transition.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
 class Summary<LETTER, STATE> {
 	private final StateContainer<LETTER, STATE> mHierPred;
 	private final StateContainer<LETTER, STATE> mLinPred;
 	private final LETTER mLetter;
 	private final StateContainer<LETTER, STATE> mSucc;
 	
-	public Summary(final StateContainer<LETTER, STATE> hierPred, 
-			final StateContainer<LETTER, STATE> linPred,
-			final LETTER letter,
-			final StateContainer<LETTER, STATE> succ) {
-		super();
+	public Summary(final StateContainer<LETTER, STATE> hierPred, final StateContainer<LETTER, STATE> linPred,
+			final LETTER letter, final StateContainer<LETTER, STATE> succ) {
 		mHierPred = hierPred;
 		mLinPred = linPred;
 		mLetter = letter;
@@ -61,10 +67,15 @@ class Summary<LETTER, STATE> {
 		return mSucc;
 	}
 	
+	/**
+	 * @param nwars
+	 *            A nested word automaton with reachable states information.
+	 * @return incoming return transition (if none exists, an exception is thrown)
+	 */
 	public IncomingReturnTransition<LETTER, STATE> obtainIncomingReturnTransition(
 			final NestedWordAutomatonReachableStates<LETTER, STATE> nwars) {
-		for (final IncomingReturnTransition<LETTER, STATE> inTrans  : 
-			nwars.returnPredecessors(getSucc().getState(), getHierPred().getState(), getLetter())) {
+		for (final IncomingReturnTransition<LETTER, STATE> inTrans : nwars.returnPredecessors(getSucc().getState(),
+				getHierPred().getState(), getLetter())) {
 			if (getLinPred().getState().equals(inTrans.getLinPred())) {
 				return inTrans;
 			}
@@ -76,12 +87,9 @@ class Summary<LETTER, STATE> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result
-				+ ((mHierPred == null) ? 0 : mHierPred.hashCode());
-		result = prime * result
-				+ ((mLinPred == null) ? 0 : mLinPred.hashCode());
-		result = prime * result
-				+ ((mSucc == null) ? 0 : mSucc.hashCode());
+		result = prime * result + ((mHierPred == null) ? 0 : mHierPred.hashCode());
+		result = prime * result + ((mLinPred == null) ? 0 : mLinPred.hashCode());
+		result = prime * result + ((mSucc == null) ? 0 : mSucc.hashCode());
 		return result;
 	}
 	
@@ -96,7 +104,7 @@ class Summary<LETTER, STATE> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final Summary other = (Summary) obj;
+		final Summary<?, ?> other = (Summary<?, ?>) obj;
 		if (mHierPred == null) {
 			if (other.mHierPred != null) {
 				return false;
@@ -125,6 +133,4 @@ class Summary<LETTER, STATE> {
 	public String toString() {
 		return "(" + mHierPred + ", " + mLinPred + ", " + mSucc + ")";
 	}
-	
-	
 }

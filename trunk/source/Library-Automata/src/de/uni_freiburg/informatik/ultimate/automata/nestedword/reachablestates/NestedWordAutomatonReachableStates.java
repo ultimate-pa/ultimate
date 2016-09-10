@@ -687,7 +687,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		assert mAcceptingSummaries == null;
 		mAcceptingSummaries = new AcceptingSummariesComputation();
 		mAcceptingComponentsAnalysis = new AcceptingComponentsAnalysis<LETTER, STATE>(
-				this, mAcceptingSummaries, mServices, mStates.keySet(), mInitialStates);
+				mServices, this, mAcceptingSummaries, mStates.keySet(), mInitialStates);
 	}
 	
 	/**
@@ -765,7 +765,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			mAcceptingSummaries = new AcceptingSummariesComputation();
 		}
 		final AcceptingComponentsAnalysis<LETTER, STATE> sccComputation =
-				new AcceptingComponentsAnalysis<>(this, mAcceptingSummaries, mServices, stateSubset, startStates);
+				new AcceptingComponentsAnalysis<>(mServices, this, mAcceptingSummaries, stateSubset, startStates);
 		return sccComputation.getSccComputation().getBalls();
 	}
 	
