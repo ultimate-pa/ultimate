@@ -22,9 +22,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
@@ -630,7 +630,7 @@ public class FunctionHandler {
 				}
 				spec[nrSpec] = new ModifiesSpecification(loc, false, modifyList);
 			}
-			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired() && 
+			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired() &&
 					(main.getCheckedMethod() == SFO.EMPTY || main.getCheckedMethod().equals(mId))) {
 				if (mCheckMemoryLeakAtEndOfMain) {
 					// add a specification to check for memory leaks
@@ -682,9 +682,7 @@ public class FunctionHandler {
 				&& mProcedureToCFunctionType.get(methodName).takesVarArgs()) {
 			final int noParameterWOVarArgs = mProcedureToCFunctionType.get(methodName).getParameterTypes().length;
 			inParams = new IASTInitializerClause[noParameterWOVarArgs];
-			for (int i = 0; i < noParameterWOVarArgs; i++) {
-				inParams[i] = arguments[i];
-			}
+			System.arraycopy(arguments, 0, inParams, 0, noParameterWOVarArgs);
 			// .. and if it is really called with more that its normal parameter
 			// number, we throw an exception, because we may be unsound
 			// (the code before this does not make that much sense, but maybe some
@@ -1021,9 +1019,7 @@ public class FunctionHandler {
 		}
 
 		final IASTInitializerClause[] newArgs = new IASTInitializerClause[arguments.length + 1];
-		for (int i = 0; i < newArgs.length - 1; i++) {
-			newArgs[i] = arguments[i];
-		}
+		System.arraycopy(arguments, 0, newArgs, 0, arguments.length);
 		newArgs[newArgs.length - 1] = functionName;
 
 		return handleFunctionCallGivenNameAndArguments(main, memoryHandler, structHandler, loc, procName, newArgs);

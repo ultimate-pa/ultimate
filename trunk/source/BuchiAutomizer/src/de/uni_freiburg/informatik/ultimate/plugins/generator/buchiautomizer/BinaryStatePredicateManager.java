@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiAutomizer plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
@@ -117,8 +117,8 @@ public class BinaryStatePredicateManager {
 	private final IUltimateServiceProvider mServices;
 	
 
-	public BinaryStatePredicateManager(final SmtManager smtManager, 
-			final IUltimateServiceProvider services, 
+	public BinaryStatePredicateManager(final SmtManager smtManager,
+			final IUltimateServiceProvider services,
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -247,18 +247,18 @@ public class BinaryStatePredicateManager {
 	 * 
 	 * @param loopTermination
 	 * @param termArg
-	 * @param removeSuperfluousSupportingInvariants 
+	 * @param removeSuperfluousSupportingInvariants
 	 * @param loopTf TransFormula for loop, has to be provided if we remove
 	 * superfluous supporting invariants.
-	 * @param loopTf 
-	 * @param modifiableGlobalsAtHonda 
-	 * @param loop 
-	 * @param stem 
-	 * @param loop 
-	 * @param stem 
+	 * @param loopTf
+	 * @param modifiableGlobalsAtHonda
+	 * @param loop
+	 * @param stem
+	 * @param loop
+	 * @param stem
 	 */
-	public void computePredicates(final boolean loopTermination, final TerminationArgument termArg, 
-			final boolean removeSuperfluousSupportingInvariants, final UnmodifiableTransFormula stemTf, 
+	public void computePredicates(final boolean loopTermination, final TerminationArgument termArg,
+			final boolean removeSuperfluousSupportingInvariants, final UnmodifiableTransFormula stemTf,
 			final UnmodifiableTransFormula loopTf, final Set<IProgramVar> modifiableGlobalsAtHonda) {
 		assert mLoopTermination == null;
 		assert mTerminationArgument == null;
@@ -284,7 +284,7 @@ public class BinaryStatePredicateManager {
 		mRankEquality = computeRankEquality();
 		mRankDecreaseAndBound = computeRankDecreaseAndBound();
 		mSiConjunction = computeSiConjunction(mTerminationArgument.getSupportingInvariants(),
-				mTerminationArgument.getArrayIndexSupportingInvariants(), 
+				mTerminationArgument.getArrayIndexSupportingInvariants(),
 				removeSuperfluousSupportingInvariants, stemTf, loopTf, modifiableGlobalsAtHonda);
 		final boolean siConjunctionIsTrue = isTrue(mSiConjunction);
 		if (siConjunctionIsTrue) {
@@ -324,7 +324,7 @@ public class BinaryStatePredicateManager {
 			}
 		}
 		final int superfluous = siTerms.size() - neededSiTerms.size();
-		mLogger.info(superfluous + " out of " + siTerms.size() + 
+		mLogger.info(superfluous + " out of " + siTerms.size() +
 				" supporting invariants were superfluous and have been removed");
 		return neededSiTerms;
 	}
@@ -340,9 +340,9 @@ public class BinaryStatePredicateManager {
 		final IPredicate siSubsetAndRankDecreaseAndBound = mPredicateFactory.newPredicate(
 						SmtUtils.and(mScript, siSubsetAndRankDecreaseAndBoundList));
 		final LBool sat = PredicateUtils.isInductiveHelper(
-				mScript, 
-				siSubsetAndRankEquality, 
-				siSubsetAndRankDecreaseAndBound, loopTf, 
+				mScript,
+				siSubsetAndRankEquality,
+				siSubsetAndRankDecreaseAndBound, loopTf,
 				modifiableGlobals, modifiableGlobals);
 		switch (sat) {
 		case SAT:
@@ -371,8 +371,8 @@ public class BinaryStatePredicateManager {
 			final IPredicate succPred = mPredicateFactory.newPredicate(
 							succTerm);
 			final LBool sat = PredicateUtils.isInductiveHelper(
-					mScript, 
-					siSubsetAndRankEquality, 
+					mScript,
+					siSubsetAndRankEquality,
 					succPred, loopTf, modifiableGlobals, modifiableGlobals);
 			if (sat != LBool.UNSAT) {
 				throw new AssertionError("Incorrect supporting invariant. Not inductive: " + succTerm);
@@ -404,9 +404,9 @@ public class BinaryStatePredicateManager {
 	}
 
 	private IPredicate computeSiConjunction(
-			final Collection<SupportingInvariant> siList, 
-			final Collection<Term> aisi, 
-			final boolean removeSuperfluousSupportingInvariants, 
+			final Collection<SupportingInvariant> siList,
+			final Collection<Term> aisi,
+			final boolean removeSuperfluousSupportingInvariants,
 			final UnmodifiableTransFormula stemTf,
 			final UnmodifiableTransFormula loopTf, final Set<IProgramVar> modifiableGlobals) {
 		List<Term> siTerms = new ArrayList<Term>(siList.size() + aisi.size());
@@ -428,7 +428,7 @@ public class BinaryStatePredicateManager {
 		final Term conjunction = SmtUtils.and(mScript, siTerms);
 		final Term si;
 		if (true) {
-			final Term simplified = SmtUtils.simplify(mManagedScript, conjunction, mServices, mSimplificationTechnique);   
+			final Term simplified = SmtUtils.simplify(mManagedScript, conjunction, mServices, mSimplificationTechnique);
 			final Term normalized = (new AffineSubtermNormalizer(mManagedScript.getScript(), mLogger)).transform(simplified);
 			si = normalized;
 			if (SmtUtils.isFalse(si)) {
@@ -470,9 +470,9 @@ public class BinaryStatePredicateManager {
 		final IPredicate postcondPredicate = mPredicateFactory.newPredicate(
 						SmtUtils.and(mScript, postcondition));
 		final LBool sat = PredicateUtils.isInductiveHelper(
-				mManagedScript.getScript(), 
-				precondPredicate, 
-				postcondPredicate, transFormula, 
+				mManagedScript.getScript(),
+				precondPredicate,
+				postcondPredicate, transFormula,
 				preconditionModifiableGlobals, postconditionModifiableGlobals);
 		return sat == LBool.UNSAT;
 	}
@@ -526,9 +526,7 @@ public class BinaryStatePredicateManager {
 		final IPredicate[] disjuncts = new IPredicate[mLexTerms.length];
 		for (int i = 0; i < mLexTerms.length; i++) {
 			final IPredicate[] conjuncts = new IPredicate[i + 1];
-			for (int j = 0; j < i; j++) {
-				conjuncts[j] = mLexEquality[j];
-			}
+			System.arraycopy(mLexEquality, 0, conjuncts, 0, i);
 			conjuncts[i] = mLexDecrease[i];
 			final Term conjunction = mPredicateFactory.and(conjuncts);
 			disjuncts[i] = mPredicateFactory.newPredicate(conjunction);
@@ -582,7 +580,7 @@ public class BinaryStatePredicateManager {
 
 	public boolean checkRankDecrease(final NestedWord<CodeBlock> loop, final ModifiableGlobalVariableManager modGlobVarManager) {
 		final TraceChecker traceChecker = new TraceChecker(mRankEqualityAndSi, mRankDecreaseAndBound,
-				new TreeMap<Integer, IPredicate>(), loop, mSmtManager, modGlobVarManager, 
+				new TreeMap<Integer, IPredicate>(), loop, mSmtManager, modGlobVarManager,
 				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
 		final LBool loopCheck = traceChecker.isCorrect();
 		return (loopCheck == LBool.UNSAT);

@@ -326,11 +326,8 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 		mCords.init(mNumberOfTransitions);
 		if (mNumberOfTransitions > 0) {
 			final Integer[] test = new Integer[mCords.mElements.length];
-			for (int i = 0; i < test.length; ++i) {
-				test[i] = mCords.mElements[i];
-			}
+			System.arraycopy(mCords.mElements, 0, test, 0, test.length);
 			Arrays.sort(test, new Comparator<Integer>() {
-				
 				@Override
 				public int compare(final Integer x, final Integer y) {
 					return Integer.compare(mLabels[x], mLabels[y]);

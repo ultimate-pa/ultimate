@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -88,15 +88,15 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * @param smtManager
 	 *            the smt manager for constructing the default
 	 *            {@link IInvariantPatternProcessorFactory}
-	 * @param simplicationTechnique 
-	 * @param xnfConversionTechnique 
+	 * @param simplicationTechnique
+	 * @param xnfConversionTechnique
 	 * @return a default invariant pattern processor factory
 	 */
 	private static IInvariantPatternProcessorFactory<?> createDefaultFactory(
 			final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
-			final PredicateUnifier predicateUnifier, final SmtManager smtManager, 
-			final boolean useNonlinerConstraints, final Settings solverSettings, 
+			final PredicateUnifier predicateUnifier, final SmtManager smtManager,
+			final boolean useNonlinerConstraints, final Settings solverSettings,
 			final SimplicationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		final ILinearInequalityInvariantPatternStrategy strategy = new LocationIndependentLinearInequalityInvariantPatternStrategy(
 				1, 1, 1, 1, 5);
@@ -127,18 +127,18 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 *            {@link IInvariantPatternProcessorFactory}
 	 * @param modGlobVarManager
 	 *            reserved for future use.
-	 * @param simplicationTechnique 
-	 * @param xnfConversionTechnique 
+	 * @param simplicationTechnique
+	 * @param xnfConversionTechnique
 	 */
 	public PathInvariantsGenerator(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final NestedRun<? extends IAction, IPredicate> run,
 			final IPredicate precondition, final IPredicate postcondition,
 			final PredicateUnifier predicateUnifier, final SmtManager smtManager,
-			final ModifiableGlobalVariableManager modGlobVarManager, 
-			final boolean useNonlinerConstraints, final Settings solverSettings, 
+			final ModifiableGlobalVariableManager modGlobVarManager,
+			final boolean useNonlinerConstraints, final Settings solverSettings,
 			final SimplicationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		this(services, run, precondition, postcondition, predicateUnifier,
-				modGlobVarManager, createDefaultFactory(services, storage, 
+				modGlobVarManager, createDefaultFactory(services, storage,
 						predicateUnifier, smtManager, useNonlinerConstraints, solverSettings, simplicationTechnique, xnfConversionTechnique));
 	}
 
@@ -291,7 +291,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * Returns a sequence of interpolants (see definition in
 	 * {@link IInterpolantGenerator}) the trace which is mRun.getWord() with an
 	 * additional property. If the ProgramPoint and position i and k coincide
-	 * the the interpolants at position i and k coincide.
+	 * then the interpolants at position i and k coincide.
 	 * 
 	 * @return sequence of interpolants according to the run provided in the
 	 *         constructor or null if no such sequence has been found; without
@@ -299,13 +299,11 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 */
 	@Override
 	public IPredicate[] getInterpolants() {
-		if (mInterpolants == null){
+		if (mInterpolants == null) {
 			return null;
 		}
 		final IPredicate[] interpolantMapWithOutFirstInterpolant = new IPredicate[mInterpolants.length - 2];
-		for (int i = 0; i < mInterpolants.length - 2; i++) {
-			interpolantMapWithOutFirstInterpolant[i] = mInterpolants[i+1];
-		}
+		System.arraycopy(mInterpolants, 1, interpolantMapWithOutFirstInterpolant, 0, mInterpolants.length - 2);
 		return interpolantMapWithOutFirstInterpolant;
 	}
 }
