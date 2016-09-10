@@ -220,8 +220,8 @@ public class ModifiableGlobalVariableManager {
 	public boolean containsNonModifiableOldVars(final IPredicate pred, final String proc) {
 		final Set<String> modiableGlobals = mModifiedVars.get(proc);
 		for (final IProgramVar bv : pred.getVars()) {
-			if (bv.isOldvar()) {
-				if (!modiableGlobals.contains(bv.getIdentifier())) {
+			if (bv instanceof IProgramOldVar) {
+				if (!modiableGlobals.contains(((IProgramOldVar) bv).getIdentifierOfNonOldVar())) {
 					return true;
 				}
 			}

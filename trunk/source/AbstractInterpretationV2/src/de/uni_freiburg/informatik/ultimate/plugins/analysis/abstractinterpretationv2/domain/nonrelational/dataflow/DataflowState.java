@@ -207,7 +207,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 			if (entry.getValue().isEmpty()) {
 				continue;
 			}
-			sb.append(entry.getKey().getIdentifier());
+			sb.append(entry.getKey().getGloballyUniqueId());
 			sb.append("->");
 			if (entry.getValue().size() == 1) {
 				sb.append(entry.getValue().iterator().next().getSerialNumber());
@@ -316,11 +316,11 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		return sId;
 	}
 
-	public Set<ProgramPoint> getNowriteLocations(IProgramVar iProgramVar) {
+	public Set<ProgramPoint> getNowriteLocations(final IProgramVar iProgramVar) {
 		return mNoWrite.get(iProgramVar);
 	}
 	
-	public Set<CodeBlock> getReachingDefinitions(IProgramVar var) {
+	public Set<CodeBlock> getReachingDefinitions(final IProgramVar var) {
 		return mReachDef.get(var);
 	}
 }

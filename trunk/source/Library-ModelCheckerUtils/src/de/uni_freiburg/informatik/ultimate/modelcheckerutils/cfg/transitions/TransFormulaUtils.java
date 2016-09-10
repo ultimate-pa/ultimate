@@ -267,7 +267,7 @@ public class TransFormulaUtils {
 				// variable is assigned in all branches.
 				if (!tfb.containsInVar(bv) && !assignedInAll(bv, transFormulas)) {
 					final Sort sort = tf.getOutVars().get(bv).getSort();
-					final String inVarName = bv.getIdentifier() + "_In" + serialNumber;
+					final String inVarName = bv.getGloballyUniqueId() + "_In" + serialNumber;
 					tfb.addInVar(bv, mgdScript.variable(inVarName, sort));
 				}
 
@@ -288,7 +288,7 @@ public class TransFormulaUtils {
 		// coincide with the invar in some of the transFormulas
 		for (final IProgramVar bv : assignedInSomeBranch.keySet()) {
 			final Sort sort = assignedInSomeBranch.get(bv);
-			final String outVarName = bv.getIdentifier() + "_Out" + serialNumber;
+			final String outVarName = bv.getGloballyUniqueId() + "_Out" + serialNumber;
 			tfb.addOutVar(bv, mgdScript.variable(outVarName, sort));
 		}
 

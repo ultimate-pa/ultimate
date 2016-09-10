@@ -150,6 +150,6 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 
 	@Override
 	public String toString() {
-		return mVariableName.getIdentifier();
+		return mVariableName.getGloballyUniqueId();
 	}
 }

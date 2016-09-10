@@ -61,7 +61,7 @@ public class ReplacementVar implements IProgramVar {
 	}
 
 	@Override
-	public String getIdentifier() {
+	public String getGloballyUniqueId() {
 		return mName;
 	}
 
@@ -100,8 +100,4 @@ public class ReplacementVar implements IProgramVar {
 		throw new UnsupportedOperationException("Matthias will implement this if you need it.");
 	}
 
-	@Override
-	public String getGloballyUniqueId() {
-		return getIdentifier();
-	}
 }

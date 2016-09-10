@@ -38,7 +38,6 @@ public interface IProgramVar {
 	 */
 	String getGloballyUniqueId();
 
-	String getIdentifier();
 
 	/**
 	 * Returns the procedure in which this variable was declared. If this a global variable, then null is returned.

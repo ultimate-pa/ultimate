@@ -28,11 +28,22 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables;
 
 public interface ILocalProgramVar extends IProgramVar {
 
-	/**
-	 * Returns the procedure in which this variable was declared. If this a 
-	 * global variable, then null is returned.
-	 */
+
+	String getIdentifier();
+	
 	@Override
-	String getProcedure();
+	default public String getGloballyUniqueId() {
+		return getProcedure() + "_" + getIdentifier();
+	};
+	
+	@Override
+	default boolean isGlobal() {
+		return false;
+	}
+	
+	@Override
+	default boolean isOldvar() {
+		return false;
+	}
 
 }

@@ -253,7 +253,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		final Map<String, IBoogieVar> rtr = new HashMap<>();
 		for (final Entry<String, IProgramNonOldVar> entry : mBoogieVarTable.getGlobals().entrySet()) {
 			final BoogieOldVar oldVar = (BoogieOldVar) mBoogieVarTable.getBoogieVar(entry.getKey(), sc, true);
-			rtr.put("old(" + oldVar.getIdentifier() + ")", oldVar);
+			rtr.put("old(" + oldVar.getIdentifierOfNonOldVar() + ")", oldVar);
 		}
 		return rtr;
 	}

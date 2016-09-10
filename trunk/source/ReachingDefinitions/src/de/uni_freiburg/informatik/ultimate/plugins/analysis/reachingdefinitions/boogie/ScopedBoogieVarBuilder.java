@@ -36,6 +36,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 public class ScopedBoogieVarBuilder {
@@ -43,21 +46,21 @@ public class ScopedBoogieVarBuilder {
 	private final BoogieSymbolTable mSymbolTable;
 	private final Hashtable<VariableUID, ScopedBoogieVar> mVarCache;
 
-	public ScopedBoogieVarBuilder(BoogieSymbolTable table) {
+	public ScopedBoogieVarBuilder(final BoogieSymbolTable table) {
 		mSymbolTable = table;
 		mVarCache = new Hashtable<>();
 	}
 
-	public ScopedBoogieVar getScopedBoogieVar(VariableLHS lhs, UnmodifiableTransFormula tf) {
+	public ScopedBoogieVar getScopedBoogieVar(final VariableLHS lhs, final UnmodifiableTransFormula tf) {
 		return getScopedBoogieVar(lhs.getIdentifier(), lhs.getDeclarationInformation(), tf);
 	}
 
-	public ScopedBoogieVar getScopedBoogieVar(IdentifierExpression identifier, UnmodifiableTransFormula tf) {
+	public ScopedBoogieVar getScopedBoogieVar(final IdentifierExpression identifier, final UnmodifiableTransFormula tf) {
 		return getScopedBoogieVar(identifier.getIdentifier(), identifier.getDeclarationInformation(), tf);
 
 	}
 
-	private ScopedBoogieVar getScopedBoogieVar(String identifier, DeclarationInformation info, UnmodifiableTransFormula tf) {
+	private ScopedBoogieVar getScopedBoogieVar(final String identifier, final DeclarationInformation info, final UnmodifiableTransFormula tf) {
 		final VariableDeclaration decl = (VariableDeclaration) mSymbolTable.getDeclaration(identifier,
 				info.getStorageClass(), info.getProcedure());
 		final VariableUID uid = new VariableUID(decl, identifier);
@@ -71,7 +74,7 @@ public class ScopedBoogieVarBuilder {
 		return rtr;
 	}
 
-	private IProgramVar getBoogieVarFromTransformula(String identifier, DeclarationInformation info, UnmodifiableTransFormula tf) {
+	private IProgramVar getBoogieVarFromTransformula(final String identifier, final DeclarationInformation info, final UnmodifiableTransFormula tf) {
 		// TODO: Check if this is the "right" way to get the correct BoogieVar
 
 		final HashSet<IProgramVar> vars = new HashSet<IProgramVar>();
@@ -86,18 +89,20 @@ public class ScopedBoogieVarBuilder {
 		return vars.iterator().next();
 	}
 
-	private IProgramVar getBoogieVarFromSet(String identifier, DeclarationInformation info, Set<IProgramVar> vars) {
+	private IProgramVar getBoogieVarFromSet(final String identifier, final DeclarationInformation info, final Set<IProgramVar> vars) {
 		for (final IProgramVar in : vars) {
-			if (in.getIdentifier().equals(identifier)) {
-				if (in.isOldvar()) {
-					continue;
-				}
-				if (in.isGlobal()) {
+			if (in instanceof ILocalProgramVar) {
+				if (((ILocalProgramVar) in).getIdentifier().equals(identifier)) {
 					return in;
 				}
-				if (in.getProcedure().equals(info.getProcedure())) {
+			} else if (in instanceof IProgramNonOldVar) {
+				if (((ILocalProgramVar) in).getIdentifier().equals(identifier)) {
 					return in;
 				}
+			} else if (in instanceof IProgramOldVar) {
+				continue;
+			} else {
+				throw new UnsupportedOperationException("unknown king of IProgramVarIProgramVar " + in.getClass().getSimpleName());
 			}
 		}
 		return null;
@@ -108,7 +113,7 @@ public class ScopedBoogieVarBuilder {
 		private final VariableDeclaration Declaration;
 		private final String Identifier;
 
-		public VariableUID(VariableDeclaration decl, String ident) {
+		public VariableUID(final VariableDeclaration decl, final String ident) {
 			Declaration = decl;
 			Identifier = ident;
 		}
@@ -124,7 +129,7 @@ public class ScopedBoogieVarBuilder {
 		}
 
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(final Object obj) {
 			if (this == obj) {
 				return true;
 			}
