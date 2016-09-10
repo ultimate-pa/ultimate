@@ -19,25 +19,27 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions;
 
 /**
- * Interface for outgoing (resp. incoming) transitions of nested word automata. 
+ * Interface for outgoing (resp. incoming) transitions of nested word automata.
  * For reasons of efficiency these transitions do not contain the predecessor
  * (resp. successor) because the automaton already stores this information.
- * 
- * @param <LETTER> letter type
- * @param <STATE> state type
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public interface ITransitionlet<LETTER,STATE> {
-	
+public interface ITransitionlet<LETTER, STATE> {
 	/**
-	 * @return letter of the transition
+	 * @return The letter of the transition.
 	 */
 	LETTER getLetter();
 }

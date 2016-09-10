@@ -19,32 +19,35 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions;
 
 import java.text.MessageFormat;
 
-
 /**
  * Outgoing call transition of a state.
  * 
- * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class OutgoingCallTransition<LETTER,STATE> implements IOutgoingTransitionlet<LETTER,STATE> {
-	
-	private final LETTER mLetter; 
+public class OutgoingCallTransition<LETTER, STATE> implements IOutgoingTransitionlet<LETTER, STATE> {
+	private final LETTER mLetter;
 	private final STATE mSucc;
 	
 	/**
-	 * @param letter letter
-	 * @param succ successor state
+	 * Constructor.
+	 * 
+	 * @param letter
+	 *            letter
+	 * @param succ
+	 *            successor state
 	 */
 	public OutgoingCallTransition(final LETTER letter, final STATE succ) {
 		mLetter = letter;
@@ -65,5 +68,4 @@ public class OutgoingCallTransition<LETTER,STATE> implements IOutgoingTransition
 	public String toString() {
 		return MessageFormat.format("( _ , {0} , {1} )", getLetter(), getSucc());
 	}
-	
 }

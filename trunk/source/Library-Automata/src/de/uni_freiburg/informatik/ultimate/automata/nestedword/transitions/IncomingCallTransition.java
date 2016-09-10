@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions;
@@ -31,19 +31,23 @@ import java.text.MessageFormat;
 /**
  * Call Transition of a successor state.
  * 
- * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class IncomingCallTransition<LETTER,STATE> implements ITransitionlet<LETTER,STATE> {
-	
-	private final LETTER mLetter; 
+public class IncomingCallTransition<LETTER, STATE> implements ITransitionlet<LETTER, STATE> {
+	private final LETTER mLetter;
 	private final STATE mPred;
 	
 	/**
-	 * @param pred predecessor state
-	 * @param letter letter
+	 * Constructor.
+	 * 
+	 * @param pred
+	 *            predecessor state
+	 * @param letter
+	 *            letter
 	 */
 	public IncomingCallTransition(final STATE pred, final LETTER letter) {
 		mPred = pred;
@@ -61,6 +65,6 @@ public class IncomingCallTransition<LETTER,STATE> implements ITransitionlet<LETT
 	
 	@Override
 	public String toString() {
-		return MessageFormat.format("( {0} , {1} , _ )",getPred(), getLetter());
+		return MessageFormat.format("( {0} , {1} , _ )", getPred(), getLetter());
 	}
 }
