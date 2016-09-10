@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.TestBuchiEquivalence;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomDfa;
@@ -85,8 +84,8 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 		final Set<String> alphabet = new HashSet<>();
 		alphabet.add("a");
 		alphabet.add("b");
-		INestedWordAutomaton<String, String> buechi = new NestedWordAutomaton<>(new AutomataLibraryServices(services),
-				alphabet, null, null, snf);
+		INestedWordAutomaton<String, String> buechi;
+//				= new NestedWordAutomaton<>(new AutomataLibraryServices(services), alphabet, null, null, snf);
 
 		// Big example from Matthias cardboard
 		// buechi.addState(true, false, "q0");

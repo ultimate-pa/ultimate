@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public final class BuchiComplementRE<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
-	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private INestedWordAutomaton<LETTER, STATE> mResult;
 	
 	private boolean mBuchiComplementReApplicable;
@@ -66,7 +66,7 @@ public final class BuchiComplementRE<LETTER, STATE> extends UnaryNwaOperation<LE
 	 *             if construction fails
 	 */
 	public BuchiComplementRE(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataLibraryException {
 		super(services);
 		mOperand = operand;
 		

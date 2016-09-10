@@ -179,7 +179,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 		INestedWordAutomaton<LETTER, STATE> refinedResult = minimizerResult;
 		
 		for (final INestedWordAutomatonSimple<LETTER, STATE> automaton : forbiddenLanguages) {
-			final INestedWordAutomaton<LETTER, STATE> intersection;
+			final INestedWordAutomatonSimple<LETTER, STATE> intersection;
 			try {
 				intersection =
 						new Intersect<LETTER, STATE>(mServices, stateFactoryIntersect, refinedResult, automaton)

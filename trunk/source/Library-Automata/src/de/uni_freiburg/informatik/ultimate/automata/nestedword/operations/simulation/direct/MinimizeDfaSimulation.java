@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -142,7 +143,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> extends UnaryNwaOperation<LETT
 			final DirectSimulation<LETTER, STATE> sccSim = new DirectSimulation<LETTER, STATE>(
 					mServices.getProgressMonitorService(), mLogger, true, stateFactory, graph);
 			sccSim.doSimulation();
-			final INestedWordAutomaton<LETTER, STATE> sccResult = sccSim.getResult();
+			final INestedWordAutomatonSimple<LETTER, STATE> sccResult = sccSim.getResult();
 			if (mResult.size() != sccResult.size()) {
 				throw new AssertionError();
 			}

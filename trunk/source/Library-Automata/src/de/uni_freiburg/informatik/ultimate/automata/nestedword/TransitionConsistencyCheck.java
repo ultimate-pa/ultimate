@@ -49,8 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Summa
  *            state type
  */
 public class TransitionConsistencyCheck<LETTER, STATE> {
-	
-	private final IDoubleDeckerAutomaton<LETTER, STATE> mNwa;
+	private final INestedWordAutomaton<LETTER, STATE> mNwa;
 	
 	/**
 	 * Constructor.
@@ -58,7 +57,7 @@ public class TransitionConsistencyCheck<LETTER, STATE> {
 	 * @param nwa
 	 *            double decker automaton
 	 */
-	public TransitionConsistencyCheck(final IDoubleDeckerAutomaton<LETTER, STATE> nwa) {
+	public TransitionConsistencyCheck(final INestedWordAutomaton<LETTER, STATE> nwa) {
 		mNwa = nwa;
 	}
 	
@@ -82,9 +81,11 @@ public class TransitionConsistencyCheck<LETTER, STATE> {
 	 * (this may go against the idea of the class, discuss this).</li>
 	 * </ol>
 	 * 
-	 * @param state state
+	 * @param state
+	 *            state
 	 * @return true iff all transitions are stored consistently for the given state.
 	 */
+	@SuppressWarnings("squid:MethodCyclomaticComplexity")
 	private boolean consistentForState(final STATE state) {
 		boolean result = true;
 		for (final OutgoingInternalTransition<LETTER, STATE> trans : mNwa.internalSuccessors(state)) {

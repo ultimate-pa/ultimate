@@ -106,8 +106,8 @@ public final class ResultChecker {
 	
 	public static <LETTER, STATE> boolean buchiComplement(
 			final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand,
-			final INestedWordAutomaton<LETTER, STATE> result)
+			final INestedWordAutomatonSimple<LETTER, STATE> operand,
+			final INestedWordAutomatonSimple<LETTER, STATE> result)
 					throws AutomataLibraryException {
 		final ILogger logger =
 				services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
