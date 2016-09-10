@@ -272,19 +272,20 @@ public class PredicateUtils {
 			final UnmodifiableTransFormula tf, final Set<IProgramVar> modifiableGlobalsBefore, final Set<IProgramVar> modifiableGlobalsAfter) {
 		script.push(1);
 
-		final Set<IProgramVar> empty = Collections.emptySet();
+		final List<Term> positiveConjuncts = new ArrayList<Term>();
 		{
+			// add oldvar equalities for precond and tf
 			final Set<IProgramNonOldVar> unprimedOldVarEqualities = new HashSet<>();
 			final Set<IProgramNonOldVar> primedOldVarEqualities = new HashSet<>();
 
-			findNonModifiablesGlobals(precond.getVars(), modifiableGlobalsBefore, empty, unprimedOldVarEqualities,
+			findNonModifiablesGlobals(precond.getVars(), modifiableGlobalsBefore, Collections.emptySet(), unprimedOldVarEqualities,
 					primedOldVarEqualities);
-			findNonModifiablesGlobals(tf.getInVars().keySet(), modifiableGlobalsBefore, empty, unprimedOldVarEqualities,
+			findNonModifiablesGlobals(tf.getInVars().keySet(), modifiableGlobalsBefore, Collections.emptySet(), unprimedOldVarEqualities,
 					primedOldVarEqualities);
 			findNonModifiablesGlobals(tf.getOutVars().keySet(), modifiableGlobalsAfter, tf.getAssignedVars(),
 					unprimedOldVarEqualities, primedOldVarEqualities);
 
-			final List<Term> positiveConjuncts = new ArrayList<Term>();
+			
 			for (final IProgramNonOldVar bv : unprimedOldVarEqualities) {
 				positiveConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, false,
 						script));
@@ -293,29 +294,40 @@ public class PredicateUtils {
 				positiveConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, true,
 						script));
 			}
-			final Term tfRenamed = tf.getClosedFormula();
-			assert tfRenamed != null;
+		}
+		{
+			// add precond
 			final Term precondRenamed = precond.getClosedFormula();
 			assert precondRenamed != null;
 			positiveConjuncts.add(precondRenamed);
-			positiveConjuncts.add(tfRenamed);
-			final Term positive = SmtUtils.and(script, positiveConjuncts);
-			script.assertTerm(positive);
 		}
 		{
+			//add tf
+			final Term tfRenamed = tf.getClosedFormula();
+			assert tfRenamed != null;
+			positiveConjuncts.add(tfRenamed);
+
+		}
+		{
+			// add oldvar equalities for postcond
 			final Set<IProgramNonOldVar> unprimedOldVarEqualities = new HashSet<>();
 			final Set<IProgramNonOldVar> primedOldVarEqualities = new HashSet<>();
-			final List<Term> negativeConjuncts = new ArrayList<Term>();
+		
 			findNonModifiablesGlobals(postcond.getVars(), modifiableGlobalsAfter, tf.getAssignedVars(),
 					unprimedOldVarEqualities, primedOldVarEqualities);
 			for (final IProgramNonOldVar bv : unprimedOldVarEqualities) {
-				negativeConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, false,
+				positiveConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, false,
 						script));
 			}
 			for (final IProgramNonOldVar bv : primedOldVarEqualities) {
-				negativeConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, true,
+				positiveConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, true,
 						script));
 			}
+		}
+		final Term positive = SmtUtils.and(script, positiveConjuncts);
+		script.assertTerm(positive);
+		{
+			final List<Term> negativeConjuncts = new ArrayList<Term>();
 			final Term postcondRenamed = rename(script, postcond, tf.getAssignedVars());
 			negativeConjuncts.add(postcondRenamed);
 			final Term negative = SmtUtils.and(script, negativeConjuncts);
