@@ -255,7 +255,7 @@ public class TransFormulaUtils {
 			for (final IProgramVar bv : tf.getInVars().keySet()) {
 				if (!tfb.containsInVar(bv)) {
 					final Sort sort = tf.getInVars().get(bv).getSort();
-					final String inVarName = bv.getIdentifier() + "_In" + serialNumber;
+					final String inVarName = bv.getGloballyUniqueId() + "_In" + serialNumber;
 					tfb.addInVar(bv, mgdScript.variable(inVarName, sort));
 				}
 			}
