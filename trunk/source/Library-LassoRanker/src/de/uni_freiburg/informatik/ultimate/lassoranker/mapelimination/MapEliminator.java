@@ -566,7 +566,8 @@ public class MapEliminator {
 	 */
 	private Term getReplacementVar(final Term term, final TransFormulaLR transformula) {
 		if (!allVariablesAreInVars(term, transformula) && !allVariablesAreOutVars(term, transformula)) {
-			final TermVariable auxVar = mReplacementVarFactory.getOrConstructAuxVar("aux", term.getSort());
+			final TermVariable auxVar = mReplacementVarFactory.getOrConstructAuxVar(niceTermString(term),
+					term.getSort());
 			mAuxVars.add(auxVar);
 			return auxVar;
 		}
@@ -620,7 +621,7 @@ public class MapEliminator {
 		final ArrayIndex index = multiDimensionalSelect.getIndex();
 		final ArrayWrite arrayWrite = new ArrayWrite(multiDimensionalSelect.getArray());
 		final Set<ArrayIndex> processedIndices = new HashSet<>();
-		final TermVariable auxVar = mManagedScript.constructFreshTermVariable("aux", term.getSort());
+		final TermVariable auxVar = mReplacementVarFactory.getOrConstructAuxVar(niceTermString(term), term.getSort());
 		mAuxVars.add(auxVar);
 		for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
 			final ArrayIndex assignedIndex = store.getIndex();
