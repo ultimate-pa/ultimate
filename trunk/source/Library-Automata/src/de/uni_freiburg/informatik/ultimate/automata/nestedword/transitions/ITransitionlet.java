@@ -37,6 +37,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions;
  * @param <STATE>
  *            state type
  */
+@FunctionalInterface
 public interface ITransitionlet<LETTER, STATE> {
 	/**
 	 * @return The letter of the transition.
