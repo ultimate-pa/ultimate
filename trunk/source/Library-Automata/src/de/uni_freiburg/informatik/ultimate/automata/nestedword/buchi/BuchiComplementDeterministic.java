@@ -70,7 +70,7 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 	private final HashMap<STATE, STATE> mOld2NonFinal = new HashMap<>();
 	
 	/**
-	 * Constructor
+	 * Constructor.
 	 * 
 	 * @param services
 	 *            Ultimate services

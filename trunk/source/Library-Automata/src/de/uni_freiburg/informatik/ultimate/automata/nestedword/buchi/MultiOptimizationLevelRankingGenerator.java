@@ -766,6 +766,36 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 			return super.mConstraint.toString() + " Unrestricted: " + super.mUnrestrictedDoubleDeckerWithRankInfo;
 		}
 		
+		void assignRemainingUnrestricted(final Integer rank, final LevelRankingState<LETTER, STATE> lrs,
+				final int unassignedUnrestrictedIn) {
+			int unassignedUnrestricted = unassignedUnrestrictedIn;
+			assert rank % 2 != 0 : "maxrank is always odd";
+			final Integer noRankBound = Integer.MAX_VALUE;
+			if (mUnrestrictedMaxRank2DoubleDeckerWithRankInfo.getDomain().contains(noRankBound)) {
+				for (final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker : mUnrestrictedMaxRank2DoubleDeckerWithRankInfo
+						.getImage(noRankBound)) {
+					lrs.addRank(doubleDecker.getDown(), doubleDecker.getUp().getState(), rank, false);
+					unassignedUnrestricted--;
+				}
+			}
+			assert unassignedUnrestricted >= 0;
+			int rankBound = rank + 1;
+			while (unassignedUnrestricted > 0) {
+				if (mUnrestrictedMaxRank2DoubleDeckerWithRankInfo.getDomain().contains(rankBound)) {
+					for (final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker : mUnrestrictedMaxRank2DoubleDeckerWithRankInfo
+							.getImage(rankBound)) {
+						lrs.addRank(doubleDecker.getDown(), doubleDecker.getUp().getState(), rank, false);
+						unassignedUnrestricted--;
+					}
+				}
+				rankBound++;
+				if (rankBound > 1000) {
+					throw new AssertionError(
+							"forgotten rank bound?, there are no automata with rank > 1000 in the nature");
+				}
+			}
+		}
+		
 		/**
 		 * LevelRankingWithSacrificeInformation.
 		 * 
@@ -905,36 +935,6 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 				HeiMatTightLevelRankingStateGenerator.this.assignRemainingUnrestricted(rank, mLrs,
 						unassignedUnrestricted);
 				mUnSatisfiedOddRanks.clear();
-			}
-		}
-		
-		void assignRemainingUnrestricted(final Integer rank, final LevelRankingState<LETTER, STATE> lrs,
-				final int unassignedUnrestrictedIn) {
-			int unassignedUnrestricted = unassignedUnrestrictedIn;
-			assert rank % 2 != 0 : "maxrank is always odd";
-			final Integer noRankBound = Integer.MAX_VALUE;
-			if (mUnrestrictedMaxRank2DoubleDeckerWithRankInfo.getDomain().contains(noRankBound)) {
-				for (final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker : mUnrestrictedMaxRank2DoubleDeckerWithRankInfo
-						.getImage(noRankBound)) {
-					lrs.addRank(doubleDecker.getDown(), doubleDecker.getUp().getState(), rank, false);
-					unassignedUnrestricted--;
-				}
-			}
-			assert unassignedUnrestricted >= 0;
-			int rankBound = rank + 1;
-			while (unassignedUnrestricted > 0) {
-				if (mUnrestrictedMaxRank2DoubleDeckerWithRankInfo.getDomain().contains(rankBound)) {
-					for (final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker : mUnrestrictedMaxRank2DoubleDeckerWithRankInfo
-							.getImage(rankBound)) {
-						lrs.addRank(doubleDecker.getDown(), doubleDecker.getUp().getState(), rank, false);
-						unassignedUnrestricted--;
-					}
-				}
-				rankBound++;
-				if (rankBound > 1000) {
-					throw new AssertionError(
-							"forgotten rank bound?, there are no automata with rank > 1000 in the nature");
-				}
 			}
 		}
 	}
