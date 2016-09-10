@@ -272,7 +272,7 @@ public class PredicateUtils {
 			final UnmodifiableTransFormula tf, final Set<IProgramVar> modifiableGlobalsBefore, final Set<IProgramVar> modifiableGlobalsAfter) {
 		script.push(1);
 
-		final List<Term> positiveConjuncts = new ArrayList<Term>();
+		final List<Term> conjuncts = new ArrayList<Term>();
 		{
 			// add oldvar equalities for precond and tf
 			final Set<IProgramNonOldVar> unprimedOldVarEqualities = new HashSet<>();
@@ -287,11 +287,11 @@ public class PredicateUtils {
 
 			
 			for (final IProgramNonOldVar bv : unprimedOldVarEqualities) {
-				positiveConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, false,
+				conjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, false,
 						script));
 			}
 			for (final IProgramNonOldVar bv : primedOldVarEqualities) {
-				positiveConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, true,
+				conjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, true,
 						script));
 			}
 		}
@@ -299,13 +299,13 @@ public class PredicateUtils {
 			// add precond
 			final Term precondRenamed = precond.getClosedFormula();
 			assert precondRenamed != null;
-			positiveConjuncts.add(precondRenamed);
+			conjuncts.add(precondRenamed);
 		}
 		{
 			//add tf
 			final Term tfRenamed = tf.getClosedFormula();
 			assert tfRenamed != null;
-			positiveConjuncts.add(tfRenamed);
+			conjuncts.add(tfRenamed);
 
 		}
 		{
@@ -316,23 +316,19 @@ public class PredicateUtils {
 			findNonModifiablesGlobals(postcond.getVars(), modifiableGlobalsAfter, tf.getAssignedVars(),
 					unprimedOldVarEqualities, primedOldVarEqualities);
 			for (final IProgramNonOldVar bv : unprimedOldVarEqualities) {
-				positiveConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, false,
+				conjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, false,
 						script));
 			}
 			for (final IProgramNonOldVar bv : primedOldVarEqualities) {
-				positiveConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, true,
+				conjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, true,
 						script));
 			}
 		}
-		final Term positive = SmtUtils.and(script, positiveConjuncts);
-		script.assertTerm(positive);
 		{
-			final List<Term> negativeConjuncts = new ArrayList<Term>();
 			final Term postcondRenamed = rename(script, postcond, tf.getAssignedVars());
-			negativeConjuncts.add(postcondRenamed);
-			final Term negative = SmtUtils.and(script, negativeConjuncts);
-			script.assertTerm(SmtUtils.not(script, negative));
+			conjuncts.add(SmtUtils.not(script, postcondRenamed));
 		}
+		script.assertTerm(SmtUtils.and(script, conjuncts));
 		final LBool result = script.checkSat();
 
 		script.pop(1);
