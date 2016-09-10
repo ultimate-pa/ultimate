@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CFGConsoleOut plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CFGConsoleOut plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CFGConsoleOut plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.output.cfgconsoleout;
@@ -52,22 +52,22 @@ public class CFGConsoleOutObserver implements IUnmanagedObserver {
 	private final IUltimateServiceProvider mServices;
 	private final PrintWriter mWriter;
 
-	public CFGConsoleOutObserver(IUltimateServiceProvider services) {
+	public CFGConsoleOutObserver(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mWriter = new PrintWriter(System.out);
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) throws Throwable {
 		mSeenList = new HashMap<IElement, String>();
 		mNumRoots = -1;
 	}
 
 	@Override
-	public boolean process(IElement root) {
+	public boolean process(final IElement root) {
 		if (root instanceof IWalkable) {
-			dfstraverse((IWalkable) root, "" + (++mNumRoots));
+			dfstraverse((IWalkable) root, Integer.toString(++mNumRoots));
 		}
 		return false;
 	}
@@ -76,7 +76,7 @@ public class CFGConsoleOutObserver implements IUnmanagedObserver {
 	public void finish() {
 	}
 
-	private void dfstraverse(IWalkable node, String numbering) {
+	private void dfstraverse(final IWalkable node, final String numbering) {
 		if(!mLogger.isInfoEnabled()){
 			return;
 		}

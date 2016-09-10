@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
@@ -50,17 +50,17 @@ public class CDeclaration {
 //		mIsOnHeap = onHeap;//TODO actually make use of this flag
 //		mIsInitializerTranslated = false;
 //	}
-//	
+//
 	/**
-	 * We can give either an initializer from C-AST and an ResultExpression. 
+	 * We can give either an initializer from C-AST and an ResultExpression.
 	 * @param type
 	 * @param name
 	 * @param cAstInitializer
 	 * @param initializer
 	 * @param onHeap
 	 */
-	public CDeclaration(CType type, String name, IASTInitializer cAstInitializer, 
-			ExpressionResult initializer, boolean onHeap, CStorageClass storageClass) {
+	public CDeclaration(final CType type, final String name, final IASTInitializer cAstInitializer,
+			final ExpressionResult initializer, final boolean onHeap, final CStorageClass storageClass) {
 		mType = type;
 		mName = name;
 		mCAstInitializer = cAstInitializer;
@@ -79,11 +79,11 @@ public class CDeclaration {
 //		mIsInitializerTranslated = true;
 //    }
 
-	public CDeclaration(CType type, String name, CStorageClass storageClass) {
+	public CDeclaration(final CType type, final String name, final CStorageClass storageClass) {
 		this(type, name, null, null, false, storageClass);
 	}
 	
-	public CDeclaration(CType type, String name) {
+	public CDeclaration(final CType type, final String name) {
 		this(type, name, (IASTInitializer) null, null, false, CStorageClass.UNSPECIFIED);
 	}
 
@@ -114,17 +114,17 @@ public class CDeclaration {
 	
 	@Override
 	public String toString() {
-		return "" + mType + " " + mName + " = " + mInitializer;
+		return mType.toString() + ' ' + mName + " = " + mInitializer;
 	}
 	
 	/**
 	 * Triggers the translation of the untranslated initializer from the CAST into a ResultDeclaration
 	 * that we work with.
-	 * (Earlier this was done in visit IASTDeclarator, i.e. where the declarator was dispatched, but 
+	 * (Earlier this was done in visit IASTDeclarator, i.e. where the declarator was dispatched, but
 	 * this is too early when we have something like struct list myList = { &myList}, because we need to
 	 * have some symbolTable entry for translating this initializer, see visit ISimpleDeclaraton for this, too.)
 	 */
-	public void translateInitializer(Dispatcher main) {
+	public void translateInitializer(final Dispatcher main) {
 		assert !mIsInitializerTranslated : "initializer has already been translated";
 		if (mCAstInitializer != null) {
 			assert mInitializer == null;
@@ -141,7 +141,7 @@ public class CDeclaration {
     	return mstorageClass == CStorageClass.EXTERN;
     }
 
-	public void setStorageClass(CStorageClass storageClass) {
+	public void setStorageClass(final CStorageClass storageClass) {
 		mstorageClass = storageClass;
 	}
 }
