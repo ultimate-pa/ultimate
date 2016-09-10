@@ -202,7 +202,7 @@ public class Expression2Term {
 				result = mScript.term("store", arrayBeforeIndex[i], indexTerm[i], result);
 			}
 			assert (result != null);
-			assert (result.toString() instanceof Object);
+			assert resultContainsNoNull(result);
 			return result;
 
 		} else if (exp instanceof BinaryExpression) {
@@ -402,11 +402,16 @@ public class Expression2Term {
 					throw new AssertionError();
 				}
 			}
-			assert (result.toString() instanceof Object);
+			assert resultContainsNoNull(result);
 			return result;
 		} else {
 			throw new AssertionError("Unsupported expression " + exp);
 		}
+	}
+
+	private boolean resultContainsNoNull(Term result) {
+		// toString crashes if the result contains a null element 
+		return result.toString() instanceof Object;
 	}
 	
 	abstract class TranslationResult {
