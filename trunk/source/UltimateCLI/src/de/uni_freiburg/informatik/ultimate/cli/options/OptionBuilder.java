@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class OptionBuilder {
-
+	
 	private static final int MAX_NAME_LENGTH = 160;
 	private static final int MIN_WIDTH = 80;
 
@@ -227,7 +227,7 @@ public class OptionBuilder {
 
 		switch (item.getType()) {
 		case Boolean:
-			return builder.hasArg(false).type(Boolean.class).build();
+			return builder.hasArg(true).numberOfArgs(1).type(Boolean.class).build();
 		case Integer:
 			return builder.hasArg(true).numberOfArgs(1).type(Integer.class).build();
 		case Combo:
@@ -267,7 +267,7 @@ public class OptionBuilder {
 
 		switch (item.getType()) {
 		case Boolean:
-			sb.append("This option is a flag. ");
+			sb.append("This option can either be true or false. ");
 			addDefaultValue(item, sb);
 			break;
 		case Color:
