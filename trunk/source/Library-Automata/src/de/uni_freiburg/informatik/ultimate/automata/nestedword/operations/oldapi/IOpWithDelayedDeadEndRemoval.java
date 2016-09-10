@@ -31,24 +31,63 @@ import java.text.MessageFormat;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 
+/**
+ * Interface for operations with delayed dead end removal.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
 public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
-	
+	/**
+	 * @return Removed up-down entries.
+	 */
 	Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry();
 	
+	/**
+	 * Removes dead ends.
+	 * 
+	 * @return {@code true} iff states were removed
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
 	boolean removeDeadEnds() throws AutomataOperationCanceledException;
 	
-	INestedWordAutomaton<LETTER,STATE> getResult();
+	/**
+	 * @return The operation result.
+	 */
+	INestedWordAutomaton<LETTER, STATE> getResult();
 	
+	/**
+	 * @return The time it took to remove the dead ends.
+	 */
 	long getDeadEndRemovalTime();
 	
+	/**
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 * @param <STATE>
+	 *            state type
+	 */
 	public class UpDownEntry<STATE> {
 		private final STATE mUp;
 		private final STATE mDown;
 		private final STATE mEntry;
 		
-		public UpDownEntry(final STATE up, final STATE down, final STATE entry) {
-			mUp = up;
-			mDown = down;
+		/**
+		 * Constructor.
+		 * 
+		 * @param upState
+		 *            up state
+		 * @param downState
+		 *            dow state
+		 * @param entry
+		 *            entry
+		 */
+		public UpDownEntry(final STATE upState, final STATE downState, final STATE entry) {
+			mUp = upState;
+			mDown = downState;
 			mEntry = entry;
 		}
 		
@@ -73,10 +112,8 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result
-					+ ((mDown == null) ? 0 : mDown.hashCode());
-			result = prime * result
-					+ ((mEntry == null) ? 0 : mEntry.hashCode());
+			result = prime * result + ((mDown == null) ? 0 : mDown.hashCode());
+			result = prime * result + ((mEntry == null) ? 0 : mEntry.hashCode());
 			result = prime * result + ((mUp == null) ? 0 : mUp.hashCode());
 			return result;
 		}
@@ -92,7 +129,7 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
-			final UpDownEntry other = (UpDownEntry) obj;
+			final UpDownEntry<?> other = (UpDownEntry<?>) obj;
 			if (mDown == null) {
 				if (other.mDown != null) {
 					return false;
@@ -117,5 +154,4 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 			return true;
 		}
 	}
-
 }

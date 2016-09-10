@@ -31,34 +31,38 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
+/**
+ * Computes the intersection of two nested word automata.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
 public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE> {
-
-	public IntersectDD(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa)
-			throws AutomataLibraryException {
+	public IntersectDD(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa) throws AutomataLibraryException {
 		super(services, false, false, fstNwa, sndNwa);
 	}
-
-	public IntersectDD(
-			final AutomataLibraryServices services,
-			final boolean minimizeResult,
+	
+	public IntersectDD(final AutomataLibraryServices services, final boolean minimizeResult,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa)
 			throws AutomataLibraryException {
 		super(services, false, minimizeResult, fstNwa, sndNwa);
 	}
-
+	
 	@Override
 	public String operationName() {
-		return "intersectDD";
+		return "IntersectDD";
 	}
-
+	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		mLogger.warn("Correctness of result was not tested");
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		if (mLogger.isWarnEnabled()) {
+			mLogger.warn("Correctness of result was not tested");
+		}
 		return true;
 	}
-
 }

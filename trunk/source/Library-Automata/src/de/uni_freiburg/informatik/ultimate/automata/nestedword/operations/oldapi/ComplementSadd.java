@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public final class ComplementSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
-	private INestedWordAutomatonSimple<LETTER, STATE> mDeterminizedOperand;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mDeterminizedOperand;
 	private final INestedWordAutomaton<LETTER, STATE> mResult;
 	
 	/**
