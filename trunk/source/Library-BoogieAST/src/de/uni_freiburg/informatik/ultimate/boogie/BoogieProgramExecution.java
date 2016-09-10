@@ -142,7 +142,7 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	private static <SE> String backtranslationWorkaround(final List<ITranslator<?, ?, ?, ?, ?, ?>> translatorSequence,
 	        final SE expr) {
 		final Object backExpr = DefaultTranslator.translateExpressionIteratively(expr,
-		        translatorSequence.toArray(new ITranslator[0]));
+		        translatorSequence.toArray(new ITranslator[translatorSequence.size()]));
 
 		// If the result is a Boogie expression, we use the Boogie pretty
 		// printer

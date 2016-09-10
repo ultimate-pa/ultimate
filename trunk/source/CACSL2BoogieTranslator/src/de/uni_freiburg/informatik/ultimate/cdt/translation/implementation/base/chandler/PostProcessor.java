@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
@@ -113,10 +113,10 @@ public class PostProcessor {
 
 	/**
 	 * Constructor.
-	 * @param overapproximateFloatingPointOperations 
+	 * @param overapproximateFloatingPointOperations
 	 */
-	public PostProcessor(final Dispatcher dispatcher, final ILogger logger, 
-			final AExpressionTranslation expressionTranslation, 
+	public PostProcessor(final Dispatcher dispatcher, final ILogger logger,
+			final AExpressionTranslation expressionTranslation,
 			final boolean overapproximateFloatingPointOperations) {
 		mInitializedGlobals = new LinkedHashSet<String>();
 		mDispatcher = dispatcher;
@@ -133,11 +133,11 @@ public class PostProcessor {
 	 *            a reference to the main dispatcher.
 	 * @param loc
 	 *            the location of the translation unit.
-	 * @param memoryHandler 
+	 * @param memoryHandler
 	 * @param arrayHandler
 	 *            a reference to the arrayHandler.
-	 * @param structHandler 
-	 * @param typeHandler 
+	 * @param structHandler
+	 * @param typeHandler
 	 * @param initStatements
 	 *            a list of all global init statements.
 	 * @param procedures
@@ -148,15 +148,15 @@ public class PostProcessor {
 	 *            a list of used, but not declared types.
 	 * @param functions
 	 *            a list of functions to add to the TU.
-	 * @param mDeclarationsGlobalInBoogie 
-	 * @param expressionTranslation 
+	 * @param mDeclarationsGlobalInBoogie
+	 * @param expressionTranslation
 	 * @param uninitGlobalVars
 	 *            a set of uninitialized global variables.
 	 * @return a declaration list holding the init() and start() procedure.
 	 */
-	public ArrayList<Declaration> postProcess(final Dispatcher main, final ILocation loc, final MemoryHandler memoryHandler, 
+	public ArrayList<Declaration> postProcess(final Dispatcher main, final ILocation loc, final MemoryHandler memoryHandler,
 			final ArrayHandler arrayHandler, final FunctionHandler functionHandler, final StructHandler structHandler,
-			final TypeHandler typeHandler, final Set<String> undefinedTypes, 
+			final TypeHandler typeHandler, final Set<String> undefinedTypes,
 			final LinkedHashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie, final AExpressionTranslation expressionTranslation) {
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
@@ -179,7 +179,7 @@ public class PostProcessor {
 	}
 	
 	private ArrayList<Declaration> declareConversionFunctions(
-			final Dispatcher main, final FunctionHandler functionHandler, 
+			final Dispatcher main, final FunctionHandler functionHandler,
 			final MemoryHandler memoryHandler, final StructHandler structHandler) {
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
@@ -196,24 +196,24 @@ public class PostProcessor {
 		final VarList[] oneRealParam = new VarList[] { realParam };
 		final VarList intParam = new VarList(ignoreLoc, new String[] { outInt }, new PrimitiveType(ignoreLoc, SFO.INT));
 //		VarList[] oneIntParam = new VarList[] { intParam };
-//		Expression inRealGeq0 = new BinaryExpression(ignoreLoc, 
+//		Expression inRealGeq0 = new BinaryExpression(ignoreLoc,
 //				BinaryExpression.Operator.COMPGEQ, inRealIdex, new IntegerLiteral(ignoreLoc, SFO.NR0));
-//		
+//
 //		Expression roundDown = new BinaryExpression(ignoreLoc, BinaryExpression.Operator.LOGICAND,
-//				new BinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPLEQ, 
+//				new BinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPLEQ,
 //						new BinaryExpression(ignoreLoc, BinaryExpression.Operator.ARITHMINUS, inRealIdex, new IntegerLiteral(ignoreLoc, SFO.NR1)),
 //						outIntIdex),
-//				new BinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPLEQ, 
+//				new BinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPLEQ,
 //						outIntIdex,
 //						inRealIdex));
 //		Expression roundUp = new BinaryExpression(ignoreLoc, BinaryExpression.Operator.LOGICAND,
-//				new BinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPLEQ, 
+//				new BinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPLEQ,
 //						inRealIdex,
 //						outIntIdex),
-//			new BinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPLEQ, 
+//			new BinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPLEQ,
 //						new BinaryExpression(ignoreLoc, BinaryExpression.Operator.ARITHPLUS, inRealIdex, new IntegerLiteral(ignoreLoc, SFO.NR1)),
 //						outIntIdex));
-//			
+//
 //		Specification toIntSpec = new EnsuresSpecification(ignoreLoc, false, new IfThenElseExpression(ignoreLoc, inRealGeq0, roundDown, roundUp));
 //		decls.add(new Procedure(ignoreLoc, new Attribute[0], SFO.TO_INT, new String[0], oneRealParam, oneIntParam, new Specification[] { toIntSpec }, null));
 
@@ -225,7 +225,7 @@ public class PostProcessor {
 	}
 
 	private ArrayList<Declaration> declareFunctionPointerProcedures(
-			final Dispatcher main, final FunctionHandler functionHandler, 
+			final Dispatcher main, final FunctionHandler functionHandler,
 			final MemoryHandler memoryHandler, final StructHandler structHandler) {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final ArrayList<Declaration> result = new ArrayList<>();
@@ -237,15 +237,15 @@ public class PostProcessor {
 			final VarList[] inParams = functionHandler.getProcedures().get(procName).getInParams();
 			final VarList[] outParams = functionHandler.getProcedures().get(procName).getOutParams();
 			assert outParams.length <= 1;
-			final Procedure functionPointerMuxProc = new Procedure(ignoreLoc, new Attribute[0], 
-					procName, 
-					new String[0], 
-					inParams, 
-					outParams, 
-//					FIXME: it seems an odd convention that giving it "null" as Specification makes it an implementation 
+			final Procedure functionPointerMuxProc = new Procedure(ignoreLoc, new Attribute[0],
+					procName,
+					new String[0],
+					inParams,
+					outParams,
+//					FIXME: it seems an odd convention that giving it "null" as Specification makes it an implementation
 					//(instead of a procedure) in Boogie
-//					new Specification[0], 
-					null, 
+//					new Specification[0],
+					null,
 					functionHandler.getFunctionPointerFunctionBody(ignoreLoc, main, memoryHandler, structHandler, procName, cFunc, inParams, outParams));
 			result.add(functionPointerMuxProc);
 		}
@@ -279,11 +279,11 @@ public class PostProcessor {
 	 *            the location of the translation unit. declaration.
 	 * @param main
 	 *            a reference to the main dispatcher.
-	 * @param memoryHandler 
+	 * @param memoryHandler
 	 * @param arrayHandler
 	 *            a reference to the arrayHandler.
-	 * @param structHandler 
-	 * @param declarationsGlobalInBoogie 
+	 * @param structHandler
+	 * @param declarationsGlobalInBoogie
 	 * @param initStatements
 	 *            a list of all global init statements.
 	 * @param uninitGlobalVars
@@ -291,8 +291,8 @@ public class PostProcessor {
 	 * @return a list the initialized variables.
 	 */
 	private ArrayList<Declaration> createUltimateInitProcedure(final ILocation translationUnitLoc,
-			final Dispatcher main, final MemoryHandler memoryHandler, final ArrayHandler arrayHandler, final FunctionHandler functionHandler,   
-			final StructHandler structHandler, final LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie, 
+			final Dispatcher main, final MemoryHandler memoryHandler, final ArrayHandler arrayHandler, final FunctionHandler functionHandler,
+			final StructHandler structHandler, final LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie,
 			final AExpressionTranslation expressionTranslation) {
 		functionHandler.beginUltimateInit(main, translationUnitLoc, SFO.INIT);
 		final ArrayList<Statement> initStatements = new ArrayList<Statement>();
@@ -312,9 +312,9 @@ public class PostProcessor {
 			}
 
 			final VariableLHS slhs = new VariableLHS(translationUnitLoc, SFO.NULL);
-			initStatements.add(0, new AssignmentStatement(translationUnitLoc, 
-					new LeftHandSide[] { slhs }, 
-					new Expression[] { new StructConstructor(translationUnitLoc, new String[]{"base", "offset"}, 
+			initStatements.add(0, new AssignmentStatement(translationUnitLoc,
+					new LeftHandSide[] { slhs },
+					new Expression[] { new StructConstructor(translationUnitLoc, new String[]{"base", "offset"},
 							new Expression[]{
 							expressionTranslation.constructLiteralForIntegerType(translationUnitLoc, expressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO),
 							expressionTranslation.constructLiteralForIntegerType(translationUnitLoc, expressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO)
@@ -340,7 +340,7 @@ public class PostProcessor {
 			final ExpressionResult initializer = en.getValue().getInitializer();
 			
 			/*
-			 * global variables with external linkage are not implicitly initialized. (They are initialized by 
+			 * global variables with external linkage are not implicitly initialized. (They are initialized by
 			 * the module that provides them..)
 			 */
 //			if (main.cHandler.getSymbolTable().get(en.getValue().getName(), currentDeclsLoc).isExtern())
@@ -352,15 +352,15 @@ public class PostProcessor {
 				for (final String id : vl.getIdentifiers()) {
 					if (main.mCHandler.isHeapVar(id)) {
 						final LocalLValue llVal = new LocalLValue(new VariableLHS(currentDeclsLoc, id), en.getValue().getType());
-						initStatements.add(memoryHandler.getMallocCall(main, functionHandler, 
+						initStatements.add(memoryHandler.getMallocCall(main, functionHandler,
 								llVal, currentDeclsLoc));
 					}
 
 					//					if (initializer != null) {
-					//						assert ((VariableDeclaration)en.getKey()).getVariables().length == 1 
+					//						assert ((VariableDeclaration)en.getKey()).getVariables().length == 1
 					//								&& ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers().length == 1;
-					final ExpressionResult initRex = 
-							main.mCHandler.getInitHandler().initVar(currentDeclsLoc, main, 
+					final ExpressionResult initRex =
+							main.mCHandler.getInitHandler().initVar(currentDeclsLoc, main,
 									new VariableLHS(currentDeclsLoc, id), en.getValue().getType(), initializer);
 					initStatements.addAll(initRex.stmt);
 					initStatements.addAll(CHandler.createHavocsForAuxVars(initRex.auxVars));
@@ -368,7 +368,7 @@ public class PostProcessor {
 					 {
 						initDecl.add((VariableDeclaration) d);
 					//					} else { //no initializer --> default initialization
-					//						ResultExpression nullInitializer = main.cHandler.getInitHandler().initVar(loc, main, 
+					//						ResultExpression nullInitializer = main.cHandler.getInitHandler().initVar(loc, main,
 					//								new VariableLHS(loc, id), en.getValue().getType(), null) ;
 					//
 					//						initStatements.addAll(nullInitializer.stmt);
@@ -397,8 +397,8 @@ public class PostProcessor {
 		final Procedure initProcedureDecl = new Procedure(translationUnitLoc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], specsInit, null);
 		final Body initBody = new Body(translationUnitLoc,
-				initDecl.toArray(new VariableDeclaration[0]),
-				initStatements.toArray(new Statement[0]));
+				initDecl.toArray(new VariableDeclaration[initDecl.size()]),
+				initStatements.toArray(new Statement[initStatements.size()]));
 		decl.add(new Procedure(translationUnitLoc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], null, initBody));
 
@@ -460,7 +460,7 @@ public class PostProcessor {
 			for (final Specification spec : checkedMethodSpec) {
 				if (spec instanceof RequiresSpecification) {
 					reqSpecsAssumes.add(
-							new AssumeStatement(loc, 
+							new AssumeStatement(loc,
 									((RequiresSpecification) spec).getFormula()));
 				}
 			}
@@ -489,11 +489,11 @@ public class PostProcessor {
 						new Attribute[0], new VarList[] { tempVar });
 				startDecl.add(tmpVar);
 				startStmt.add(new CallStatement(loc, false,
-						new VariableLHS[] { new VariableLHS(loc, checkMethodRet) }, 
-						checkedMethod, args.toArray(new Expression[0])));
+						new VariableLHS[] { new VariableLHS(loc, checkMethodRet) },
+						checkedMethod, args.toArray(new Expression[args.size()])));
 			} else { // void
 				startStmt.add(new CallStatement(loc, false, new VariableLHS[0],
-						checkedMethod, args.toArray(new Expression[0])));
+						checkedMethod, args.toArray(new Expression[args.size()])));
 			}
 
 			final LinkedHashSet<VariableLHS> startModifiesClause = new LinkedHashSet<VariableLHS>();
@@ -504,17 +504,17 @@ public class PostProcessor {
 			//				for (String t : new String[] { SFO.INT, SFO.POINTER,
 			//						SFO.REAL/*, SFO.BOOL */}) {
 			//					startModifiesClause.add(new VariableLHS(loc, SFO.MEMORY + "_" + t));
-			//				}		
+			//				}
 			//			}
 			for (final String id: modifiedGlobals.get(checkedMethod)) {
 				startModifiesClause.add(new VariableLHS(loc, id));
 			}
 			specsStart[0] = new ModifiesSpecification(loc, false,
-					startModifiesClause.toArray(new VariableLHS[0]));
+					startModifiesClause.toArray(new VariableLHS[startModifiesClause.size()]));
 
 			final Body startBody = new Body(loc,
-					startDecl.toArray(new VariableDeclaration[0]),
-					startStmt.toArray(new Statement[0]));
+					startDecl.toArray(new VariableDeclaration[startDecl.size()]),
+					startStmt.toArray(new Statement[startStmt.size()]));
 			decl.add(new Procedure(loc, new Attribute[0], SFO.START,
 					new String[0], new VarList[0], new VarList[0], null,
 					startBody));
@@ -541,7 +541,7 @@ public class PostProcessor {
 	}
 	
 	/**
-	 * Generate type declarations like, e.g., the following.   
+	 * Generate type declarations like, e.g., the following.
 	 *     type { :isUnsigned true } { :bitsize 16 } C_USHORT = bv16;
 	 * This allow us to use type synonyms like C_USHORT during the translation.
 	 * This is yet not consequently implemented.
@@ -549,20 +549,20 @@ public class PostProcessor {
 	 * modular and can ease debugging.
 	 * However, that this located in this class and fixed to bitvectors is a
 	 * workaround.
-	 * @param typeHandler 
+	 * @param typeHandler
 	 */
-	public static ArrayList<Declaration> declarePrimitiveDataTypeSynonyms(final ILocation loc, 
+	public static ArrayList<Declaration> declarePrimitiveDataTypeSynonyms(final ILocation loc,
 			final TypeSizes typeSizes, final TypeHandler typeHandler) {
 		final ArrayList<Declaration> decls = new ArrayList<Declaration>();
 		for (final CPrimitive.CPrimitives cPrimitive: CPrimitive.CPrimitives.values()) {
 			final CPrimitive cPrimitiveO = new CPrimitive(cPrimitive);
 			if (cPrimitiveO.getGeneralType() == CPrimitiveCategory.INTTYPE) {
 				final Attribute[] attributes = new Attribute[2];
-				attributes[0] = new NamedAttribute(loc, "isUnsigned", 
+				attributes[0] = new NamedAttribute(loc, "isUnsigned",
 						new Expression[]{ new BooleanLiteral(loc, typeSizes.isUnsigned(cPrimitiveO))});
 				final int bytesize = typeSizes.getSize(cPrimitive);
 				final int bitsize = bytesize * 8;
-				attributes[1] = new NamedAttribute(loc, "bitsize", 
+				attributes[1] = new NamedAttribute(loc, "bitsize",
 						new Expression[]{ new IntegerLiteral(loc, String.valueOf(bitsize))});
 				final String identifier = "C_" + cPrimitive.name();
 				final String[] typeParams = new String[0];
@@ -579,11 +579,11 @@ public class PostProcessor {
 	 * @param loc
 	 * @param typesizes
 	 * @param typeHandler
-	 * @param expressionTranslation 
+	 * @param expressionTranslation
 	 * @return
 	 */
 	public static ArrayList<Declaration> declareFloatDataTypes(final ILocation loc,
-			final TypeSizes typesizes, final TypeHandler typeHandler, 
+			final TypeSizes typesizes, final TypeHandler typeHandler,
 			final boolean overapproximateFloat, final AExpressionTranslation expressionTranslation) {
 		final ArrayList<Declaration> decls = new ArrayList<Declaration>();
 		
@@ -610,9 +610,9 @@ public class PostProcessor {
 			attributesRNE = new Attribute[]{attributeRNE};
 			attributesRTZ = new Attribute[]{attributeRTZ};
 		}
-		decls.add(new ConstDeclaration(loc, attributesRNE, false, new VarList(loc, new String[]{BitvectorTranslation.BOOGIE_ROUNDING_MODE_RNE}, 
+		decls.add(new ConstDeclaration(loc, attributesRNE, false, new VarList(loc, new String[]{BitvectorTranslation.BOOGIE_ROUNDING_MODE_RNE},
 				new NamedType(loc, BitvectorTranslation.BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0])),null, false));
-		decls.add(new ConstDeclaration(loc, attributesRTZ, false, new VarList(loc, new String[]{BitvectorTranslation.BOOGIE_ROUNDING_MODE_RTZ}, 
+		decls.add(new ConstDeclaration(loc, attributesRTZ, false, new VarList(loc, new String[]{BitvectorTranslation.BOOGIE_ROUNDING_MODE_RTZ},
 				new NamedType(loc, BitvectorTranslation.BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0])),null, false));
 		
 		for (final CPrimitive.CPrimitives cPrimitive: CPrimitive.CPrimitives.values()) {
@@ -624,7 +624,7 @@ public class PostProcessor {
 				
 				if (!overapproximateFloat) {
 					final BitvectorTranslation bt = ((BitvectorTranslation) expressionTranslation);
-					// declare floating point constructors here because we might 
+					// declare floating point constructors here because we might
 					// always need them for our backtranslation
 					bt.declareFloatingPointConstructors(loc, new CPrimitive(cPrimitive));
 					bt.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_MINUS_INF, new CPrimitive(cPrimitive));
@@ -667,7 +667,7 @@ public class PostProcessor {
 				final String[] typeParams = new String[0];
 				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams ));
 			}
-		}	
+		}
 		return decls;
 	}
 			

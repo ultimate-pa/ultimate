@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
@@ -85,7 +85,7 @@ public class InitializationHandler {
 
 	private final MemoryHandler mMemoryHandler;
 
-	private final AExpressionTranslation mExpressionTranslation;	
+	private final AExpressionTranslation mExpressionTranslation;
 
 	public InitializationHandler(
 			final FunctionHandler functionHandler, final StructHandler structHandler,
@@ -121,7 +121,7 @@ public class InitializationHandler {
 	 * types. Array and structure types are collectively called aggregate
 	 * types."</i></blockquote>
 	 * 
-	 * -- version for Expression that have an identifier in the program, i.e. where 
+	 * -- version for Expression that have an identifier in the program, i.e. where
 	 *  onHeap is determined via the corresponding store in the CHandler  --
 	 * 
 	 * @param lhs
@@ -132,7 +132,7 @@ public class InitializationHandler {
 	 * @param cType
 	 *            The CType of the initialized variable
 	 * 
-	 * @return 
+	 * @return
 	 */
 	public ExpressionResult initVar(final ILocation loc, final Dispatcher main,
 			final LeftHandSide lhs, final CType cType, final ExpressionResult initializerRaw) {
@@ -150,10 +150,10 @@ public class InitializationHandler {
 		}
 
 		if (var == null) {
-			return initVar(loc, main, 
+			return initVar(loc, main,
 					cType, initializerRaw);
 		} else {
-			return initVar(loc, main, 
+			return initVar(loc, main,
 					var, cType, initializerRaw);
 		}
 	}
@@ -161,7 +161,7 @@ public class InitializationHandler {
 
 	/**
 	 * Helper for variable initialization. This version does not take any form of the initialized
-	 * variable as an argument but instead returns a ResultExpression with an lrValue that can be 
+	 * variable as an argument but instead returns a ResultExpression with an lrValue that can be
 	 * stored in such a variable.
 	 */
 	private ExpressionResult initVar(final ILocation loc, final Dispatcher main,
@@ -178,7 +178,7 @@ public class InitializationHandler {
 		//carry over
 		ExpressionResult initializer = null;
 		if (initializerRaw != null) {
-			initializer = 
+			initializer =
 					initializerRaw.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 			stmt.addAll(initializer.stmt);
 			decl.addAll(initializer.decl);
@@ -218,7 +218,7 @@ public class InitializationHandler {
 				if (initializerUnderlyingType instanceof CPointer
 						|| initializerUnderlyingType instanceof CArray) {
 					rhs = initializer.lrVal.getValue();
-				} else if (initializerUnderlyingType instanceof CPrimitive 
+				} else if (initializerUnderlyingType instanceof CPrimitive
 						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == CPrimitiveCategory.INTTYPE){
 					final BigInteger pointerOffsetValue = mExpressionTranslation.extractIntegerValue((RValue) initializer.lrVal);
 					if (pointerOffsetValue == null) {
@@ -264,7 +264,7 @@ public class InitializationHandler {
 		} else if (lCType instanceof CStruct) {
 			final CStruct structType = (CStruct) lCType;
 
-			final ExpressionResult scRex = makeStructConstructorFromRERL(main, loc, 
+			final ExpressionResult scRex = makeStructConstructorFromRERL(main, loc,
 					(ExpressionListRecResult) initializer,
 					structType);
 
@@ -276,12 +276,12 @@ public class InitializationHandler {
 			lrVal = new RValue(rhs, lCType);
 		} else if (lCType instanceof CEnum) {
 			if (initializer == null) {
-				rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, 
+				rhs = mExpressionTranslation.constructLiteralForIntegerType(loc,
 						new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
 			} else {
 				initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 				rhs = initializer.lrVal.getValue();
-			}		
+			}
 			lrVal = new RValue(rhs, lCType);
 		} else {
 			final String msg = "Unknown type - don't know how to initialize!";
@@ -295,7 +295,7 @@ public class InitializationHandler {
 
 	/**
 	 * Same as other initVar but with an LRValue as argument, not a LHS
-	 * if var is a HeapLValue, something on Heap is initialized, 
+	 * if var is a HeapLValue, something on Heap is initialized,
 	 * if it is a LocalLValue something off the Heap is initialized
 	 */
 	private ExpressionResult initVar(final ILocation loc, final Dispatcher main,
@@ -373,7 +373,7 @@ public class InitializationHandler {
 						cType));
 			} else {
 				assert lhs != null;
-				final AssignmentStatement assignment = new AssignmentStatement(loc, 
+				final AssignmentStatement assignment = new AssignmentStatement(loc,
 						new LeftHandSide[] { lhs },
 						new Expression[] { rhs } );
 				addOverApprToStatementAnnots(overappr, assignment);
@@ -387,7 +387,7 @@ public class InitializationHandler {
 				if (initializerUnderlyingType instanceof CPointer
 						|| initializerUnderlyingType instanceof CArray) {
 					rhs = initializer.lrVal.getValue();
-				} else if (initializerUnderlyingType instanceof CPrimitive 
+				} else if (initializerUnderlyingType instanceof CPrimitive
 						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == CPrimitiveCategory.INTTYPE){
 					final BigInteger offsetValue = mExpressionTranslation.extractIntegerValue((RValue) initializer.lrVal);
 					if (offsetValue.equals(BigInteger.ZERO)) {
@@ -407,7 +407,7 @@ public class InitializationHandler {
 				stmt.addAll(mMemoryHandler.getWriteCall(loc, (HeapLValue) var, rhs, lCType));
 			} else {
 				assert lhs != null;
-				final AssignmentStatement assignment = new AssignmentStatement(loc, 
+				final AssignmentStatement assignment = new AssignmentStatement(loc,
 						new LeftHandSide[] { lhs },
 						new Expression[] { rhs } );
 				addOverApprToStatementAnnots(overappr, assignment);
@@ -416,10 +416,10 @@ public class InitializationHandler {
 			}
 		} else if (lCType instanceof CArray) {
 
-			if (onHeap) { 
+			if (onHeap) {
 				final IdentifierExpression arrayAddress = (IdentifierExpression)((HeapLValue) var).getAddress();
 				lhs = new VariableLHS(arrayAddress.getLocation(),
-						arrayAddress.getIdentifier());			
+						arrayAddress.getIdentifier());
 
 				//done in simpleDec
 //				CallStatement mallocRex = mMemoryHandler.getMallocCall(main, mFunctionHandler,
@@ -427,13 +427,13 @@ public class InitializationHandler {
 //				stmt.add(mallocRex);
 
 				if (initializer == null) {
-					final ExpressionResult aInit = initArrayOnHeap(main, loc, 
-							null, arrayAddress, (CArray) lCType);				
+					final ExpressionResult aInit = initArrayOnHeap(main, loc,
+							null, arrayAddress, (CArray) lCType);
 					stmt.addAll(aInit.stmt);
 					decl.addAll(aInit.decl);
 					auxVars.putAll(aInit.auxVars);
 				} else if (initializer instanceof ExpressionListRecResult) {
-					final ExpressionResult aInit = initArrayOnHeap(main, loc, 
+					final ExpressionResult aInit = initArrayOnHeap(main, loc,
 							((ExpressionListRecResult) initializer).list, arrayAddress, (CArray) lCType);
 					stmt.addAll(aInit.stmt);
 					decl.addAll(aInit.decl);
@@ -473,7 +473,7 @@ public class InitializationHandler {
 
 			if (onHeap) {
 				assert var != null;
-				final ExpressionResult heapWrites = initStructOnHeapFromRERL(main, loc, 
+				final ExpressionResult heapWrites = initStructOnHeapFromRERL(main, loc,
 						((HeapLValue) var).getAddress(),
 						(ExpressionListRecResult) initializer,
 						structType);
@@ -483,7 +483,7 @@ public class InitializationHandler {
 				overappr.addAll(heapWrites.overappr);
 				auxVars.putAll(heapWrites.auxVars);
 			} else {
-				final ExpressionResult scRex = makeStructConstructorFromRERL(main, loc, 
+				final ExpressionResult scRex = makeStructConstructorFromRERL(main, loc,
 						(ExpressionListRecResult) initializer,
 						structType);
 
@@ -499,19 +499,19 @@ public class InitializationHandler {
 			}
 		} else if (lCType instanceof CEnum) {
 			if (initializer == null) {
-				rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, 
+				rhs = mExpressionTranslation.constructLiteralForIntegerType(loc,
 						new CPrimitive(CPrimitive.CPrimitives.INT), BigInteger.ZERO);
 			} else {
 				initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 				rhs = initializer.lrVal.getValue();
-			}		
+			}
 			if (onHeap) {
 				stmt.addAll(mMemoryHandler.getWriteCall(loc, (HeapLValue) var,
 						rhs,
 						cType));
 			} else {
 				assert lhs != null;
-				final Statement assignment = new AssignmentStatement(loc, 
+				final Statement assignment = new AssignmentStatement(loc,
 						new LeftHandSide[] { lhs },
 						new Expression[] { rhs } );
 				addOverApprToStatementAnnots(overappr, assignment);
@@ -542,7 +542,7 @@ public class InitializationHandler {
 	 * @param arrayType The type of the array (containing its size and value type)
 	 * @return a list of statements that do the initialization
 	 */
-	private ExpressionResult initArrayOnHeap(final Dispatcher main, final ILocation loc, 
+	private ExpressionResult initArrayOnHeap(final Dispatcher main, final ILocation loc,
 			final ArrayList<ExpressionListRecResult> list, final Expression startAddress,
 			final CArray arrayType) {
 		final ArrayList<Statement> stmt = new ArrayList<>();
@@ -550,7 +550,7 @@ public class InitializationHandler {
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 		final ArrayList<Overapprox> overApp = new ArrayList<>();
 
-		final Expression sizeOfCell = mMemoryHandler.calculateSizeOf(loc, arrayType.getValueType()); 
+		final Expression sizeOfCell = mMemoryHandler.calculateSizeOf(loc, arrayType.getValueType());
 		final RValue[] dimensions = arrayType.getDimensions();
 		final BigInteger dimBigInteger = mExpressionTranslation.extractIntegerValue(arrayType.getDimensions()[0]);
 		if (dimBigInteger == null) {
@@ -580,23 +580,23 @@ public class InitializationHandler {
 				final Expression iAsExpression = mExpressionTranslation.constructLiteralForIntegerType(
 						loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(i));
 				Expression writeOffset = mExpressionTranslation.constructArithmeticExpression(
-						loc, IASTBinaryExpression.op_multiply, 
-						iAsExpression, mExpressionTranslation.getCTypeOfPointerComponents(), 
-						sizeOfCell, mExpressionTranslation.getCTypeOfPointerComponents()); 
+						loc, IASTBinaryExpression.op_multiply,
+						iAsExpression, mExpressionTranslation.getCTypeOfPointerComponents(),
+						sizeOfCell, mExpressionTranslation.getCTypeOfPointerComponents());
 						
 				writeOffset = mExpressionTranslation.constructArithmeticExpression(
-						loc, IASTBinaryExpression.op_plus, 
-						newStartAddressOffset, mExpressionTranslation.getCTypeOfPointerComponents(), 
-						writeOffset, mExpressionTranslation.getCTypeOfPointerComponents()); 
+						loc, IASTBinaryExpression.op_plus,
+						newStartAddressOffset, mExpressionTranslation.getCTypeOfPointerComponents(),
+						writeOffset, mExpressionTranslation.getCTypeOfPointerComponents());
 						
 				final Expression writeLocation = MemoryHandler.constructPointerFromBaseAndOffset(
 						newStartAddressBase,
-						writeOffset, 
+						writeOffset,
 						loc);
 
 //				TODO: we may need to pass statements, decls, ...
 				if (list != null && list.size() > i && list.get(i).lrVal != null) {
-					final RValue val = (RValue) list.get(i).lrVal; 
+					final RValue val = (RValue) list.get(i).lrVal;
 					decl.addAll(list.get(i).decl);
 					auxVars.putAll(list.get(i).auxVars);
 					stmt.addAll(list.get(i).stmt);
@@ -606,14 +606,14 @@ public class InitializationHandler {
 					if (valueType instanceof CArray) {
 						throw new AssertionError("this should not be the case as we are in the inner/outermost array right??");
 					} else if  (valueType instanceof CStruct) {
-						final ExpressionResult sInit = initStructOnHeapFromRERL(main, loc, 
+						final ExpressionResult sInit = initStructOnHeapFromRERL(main, loc,
 								writeLocation, list != null && list.size() > i ? list.get(i) : null, (CStruct) valueType);
 						stmt.addAll(sInit.stmt);
 						decl.addAll(sInit.decl);
 						auxVars.putAll(sInit.auxVars);
-					} else if (valueType instanceof CPrimitive 
+					} else if (valueType instanceof CPrimitive
 							|| valueType instanceof CPointer) {
-						final ExpressionResult pInit = main.mCHandler.getInitHandler().initVar(loc, main, 
+						final ExpressionResult pInit = main.mCHandler.getInitHandler().initVar(loc, main,
 								(VariableLHS) null, valueType, null);
 						assert pInit.stmt.isEmpty() && pInit.decl.isEmpty() && pInit.auxVars.isEmpty();
 						final RValue val = (RValue) pInit.lrVal;
@@ -625,41 +625,41 @@ public class InitializationHandler {
 			}
 			return new ExpressionResult(stmt, null, decl, auxVars, overApp);
 		} else {
-			for (int i = 0; i < currentSizeInt; i++) { 
+			for (int i = 0; i < currentSizeInt; i++) {
 				Expression newStartAddressOffsetInner = newStartAddressOffset;
 
 				Expression blockOffset = sizeOfCell;
 				for (int j = 1; j < dimensions.length; j++) {
 					blockOffset = mExpressionTranslation.constructArithmeticExpression(
-							loc, IASTBinaryExpression.op_multiply, 
-							dimensions[j].getValue(), (CPrimitive) dimensions[j].getCType(), 
-							blockOffset, mExpressionTranslation.getCTypeOfPointerComponents()); 
+							loc, IASTBinaryExpression.op_multiply,
+							dimensions[j].getValue(), (CPrimitive) dimensions[j].getCType(),
+							blockOffset, mExpressionTranslation.getCTypeOfPointerComponents());
 				}
 				final Expression iAsExpression = mExpressionTranslation.constructLiteralForIntegerType(
 						loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(i));
 				blockOffset = mExpressionTranslation.constructArithmeticExpression(
-						loc, IASTBinaryExpression.op_multiply, 
-						iAsExpression, mExpressionTranslation.getCTypeOfPointerComponents(), 
-						blockOffset, mExpressionTranslation.getCTypeOfPointerComponents()); 
+						loc, IASTBinaryExpression.op_multiply,
+						iAsExpression, mExpressionTranslation.getCTypeOfPointerComponents(),
+						blockOffset, mExpressionTranslation.getCTypeOfPointerComponents());
 
 				newStartAddressOffsetInner = mExpressionTranslation.constructArithmeticExpression(
-						loc, IASTBinaryExpression.op_plus, 
-						newStartAddressOffsetInner, mExpressionTranslation.getCTypeOfPointerComponents(), 
-						blockOffset, mExpressionTranslation.getCTypeOfPointerComponents()); 
+						loc, IASTBinaryExpression.op_plus,
+						newStartAddressOffsetInner, mExpressionTranslation.getCTypeOfPointerComponents(),
+						blockOffset, mExpressionTranslation.getCTypeOfPointerComponents());
 
 				final ArrayList<RValue> innerDims = new ArrayList<RValue>(Arrays.asList(arrayType.getDimensions()));
 				innerDims.remove(0);//TODO ??
-				final CArray innerArrayType = new CArray(innerDims.toArray(new RValue[0]), 
+				final CArray innerArrayType = new CArray(innerDims.toArray(new RValue[innerDims.size()]),
 						arrayType.getValueType());
 
-				final ExpressionResult initRex = initArrayOnHeap(main, 
-								loc, 
+				final ExpressionResult initRex = initArrayOnHeap(main,
+								loc,
 								list != null ? list.get(i).list : null,
 										MemoryHandler.constructPointerFromBaseAndOffset(
 												newStartAddressBase,
-												newStartAddressOffsetInner, 
+												newStartAddressOffsetInner,
 												loc),
-												innerArrayType); 
+												innerArrayType);
 				stmt.addAll(initRex.stmt);
 				decl.addAll(initRex.decl);
 				auxVars.putAll(initRex.auxVars);
@@ -670,16 +670,16 @@ public class InitializationHandler {
 	}
 
 	/**
-	 * Initializes an array that is represented as a boogie array, either with some given values 
+	 * Initializes an array that is represented as a boogie array, either with some given values
 	 * or to its default values.
 	 * @param list The values that the array should be initialized with, null for default init
-	 * @param innerArrayAccessLHS Something representing the array that is to be initialized 
-	 * currently (in case of a nested array this may again represent an arrayAccess, otherwise 
+	 * @param innerArrayAccessLHS Something representing the array that is to be initialized
+	 * currently (in case of a nested array this may again represent an arrayAccess, otherwise
 	 * the array identifier)
 	 * @param arrayType The type of the array (containing its size and value type)
 	 * @return a list of statements that do the initialization
 	 */
-	private ExpressionResult initBoogieArray(final Dispatcher main, final ILocation loc, 
+	private ExpressionResult initBoogieArray(final Dispatcher main, final ILocation loc,
 			final ArrayList<ExpressionListRecResult> list, final LeftHandSide innerArrayAccessLHS,
 			final CArray arrayType) {
 		final ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -714,17 +714,17 @@ public class InitializationHandler {
 					if (valueType instanceof CArray) {
 						throw new AssertionError("this should not be the case as we are in the inner/outermost array right??");
 					} else if  (valueType instanceof CStruct) {
-						final ExpressionResult sInit = makeStructConstructorFromRERL(main, loc, 
+						final ExpressionResult sInit = makeStructConstructorFromRERL(main, loc,
 								null, (CStruct) valueType);
 						stmt.addAll(sInit.stmt);
 						decl.addAll(sInit.decl);
 						auxVars.putAll(sInit.auxVars);
 						overApp.addAll(sInit.overappr);
 						val = (RValue) sInit.lrVal;
-					} else if (valueType instanceof CPrimitive 
+					} else if (valueType instanceof CPrimitive
 							|| valueType instanceof CPointer
 							|| valueType instanceof CEnum) {
-						val = (RValue) (main.mCHandler.getInitHandler().initVar(loc, main, 
+						val = (RValue) (main.mCHandler.getInitHandler().initVar(loc, main,
 								(VariableLHS) null, valueType, null)).lrVal;
 					} else {
 						throw new UnsupportedSyntaxException(loc, "trying to init unknown type " + valueType);
@@ -735,10 +735,10 @@ public class InitializationHandler {
 				final CPrimitive indexType = (CPrimitive) dimensions[0].getCType();
 				final Expression index = mExpressionTranslation.constructLiteralForIntegerType(loc, indexType, BigInteger.valueOf(i));
 				if (innerArrayAccessLHS instanceof ArrayLHS) {
-					final ArrayList<Expression> innerIndices = 
+					final ArrayList<Expression> innerIndices =
 							new ArrayList<Expression>(Arrays.asList(((ArrayLHS) innerArrayAccessLHS).getIndices()));
 					innerIndices.add(index);
-					newIndices = innerIndices.toArray(new Expression[0]);
+					newIndices = innerIndices.toArray(new Expression[innerIndices.size()]);
 					newLHS = ((ArrayLHS) innerArrayAccessLHS).getArray();
 				} else {
 					newIndices = new Expression[] { index };
@@ -746,14 +746,14 @@ public class InitializationHandler {
 				}
 
 				final ArrayLHS arrayAccessLHS = new ArrayLHS(loc, newLHS, newIndices);
-				final Statement assignment = new AssignmentStatement(loc, 
+				final Statement assignment = new AssignmentStatement(loc,
 						new LeftHandSide[] { arrayAccessLHS }, new Expression[] { val.getValue() });
 				addOverApprToStatementAnnots(overApp, assignment);
 				stmt.add(assignment);
 			}
 			return new ExpressionResult(stmt, null, decl, auxVars, overApp);
 		} else {
-			for (int i = 0; i < currentSizeInt; i++) { 
+			for (int i = 0; i < currentSizeInt; i++) {
 
 				Expression[] newIndices = null;
 				LeftHandSide newLHS = null;
@@ -763,19 +763,19 @@ public class InitializationHandler {
 				final CPrimitive indexType = new CPrimitive(CPrimitives.INT);
 				final Expression index = mExpressionTranslation.constructLiteralForIntegerType(loc, indexType, BigInteger.valueOf(i));
 				if (innerArrayAccessLHS instanceof ArrayLHS) {
-					final ArrayList<Expression> innerIndices = 
+					final ArrayList<Expression> innerIndices =
 							new ArrayList<Expression>(Arrays.asList(((ArrayLHS) innerArrayAccessLHS).getIndices()));
 					innerIndices.add(index);
-					newIndices = innerIndices.toArray(new Expression[0]);
+					newIndices = innerIndices.toArray(new Expression[innerIndices.size()]);
 					newLHS = ((ArrayLHS) innerArrayAccessLHS).getArray();
-				} else { 
+				} else {
 					newIndices = new Expression[] { index };
 					newLHS = innerArrayAccessLHS;
 				}
 
 				final ArrayList<RValue> innerDims = new ArrayList<RValue>(Arrays.asList(arrayType.getDimensions()));
 				innerDims.remove(0);//TODO ??
-				final CArray innerArrayType = new CArray(innerDims.toArray(new RValue[0]), 
+				final CArray innerArrayType = new CArray(innerDims.toArray(new RValue[innerDims.size()]),
 						arrayType.getValueType());
 
 				final ArrayList<ExpressionListRecResult> listRecCall;
@@ -786,9 +786,9 @@ public class InitializationHandler {
 				} else {
 					listRecCall = list.get(i).list;
 				}
-				final ExpressionResult initRex = initBoogieArray(main, 
+				final ExpressionResult initRex = initBoogieArray(main,
 								loc, listRecCall,
-										new ArrayLHS(loc, newLHS, newIndices), innerArrayType); 
+										new ArrayLHS(loc, newLHS, newIndices), innerArrayType);
 				stmt.addAll(initRex.stmt);
 				decl.addAll(initRex.decl);
 				auxVars.putAll(initRex.auxVars);
@@ -802,8 +802,8 @@ public class InitializationHandler {
 	/**
 	 * Generate the write calls for the initialization of the struct onHeap.
 	 */
-	private ExpressionResult initStructOnHeapFromRERL(final Dispatcher main, final ILocation loc, 
-			final Expression startAddress, 
+	private ExpressionResult initStructOnHeapFromRERL(final Dispatcher main, final ILocation loc,
+			final Expression startAddress,
 			final ExpressionListRecResult rerlIn, final CStruct structType) {
 		ExpressionListRecResult rerl = null;
 		if (rerlIn == null) {
@@ -828,7 +828,7 @@ public class InitializationHandler {
 		} else {
 			newStartAddressBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
 			newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
-		}	
+		}
 
 		//everything for the new Result
 		final ArrayList<Statement> newStmt = new ArrayList<Statement>();
@@ -850,25 +850,25 @@ public class InitializationHandler {
 			final CType underlyingFieldType = fieldTypes[i].getUnderlyingType();
 
 			final Expression fieldAddressBase = newStartAddressBase;
-			final Expression fieldAddressOffset = mStructHandler.computeStructFieldOffset(mMemoryHandler, loc, i, 
+			final Expression fieldAddressOffset = mStructHandler.computeStructFieldOffset(mMemoryHandler, loc, i,
 					newStartAddressOffset, structType);
 			final StructConstructor fieldPointer = MemoryHandler.constructPointerFromBaseAndOffset(
 					fieldAddressBase, fieldAddressOffset, loc);
 			final HeapLValue fieldHlv = new HeapLValue(fieldPointer, underlyingFieldType);
 
-			ExpressionResult fieldWrites = null; 
+			ExpressionResult fieldWrites = null;
 
 			if (isUnion) {
 				assert rerl.list.size() == 0 || rerl.list.size() == 1 : "union initializers must have only one field";
 				//TODO: maybe not use auxiliary variables so lavishly
 				if (!unionAlreadyInitialized
-						&& rerl.list.size() == 1 
+						&& rerl.list.size() == 1
 						&& (rerl.list.get(0).field == null || rerl.list.get(0).field.equals("")
 						|| fieldIds[i].equals(rerl.list.get(0).field))
 						&& (underlyingFieldType instanceof CStruct
 								|| rerl.list.get(0).lrVal.getCType().equals(underlyingFieldType))) {
 					//use the value from the rerl to initialize the union
-					fieldWrites = main.mCHandler.getInitHandler().initVar(loc, main, 
+					fieldWrites = main.mCHandler.getInitHandler().initVar(loc, main,
 							fieldHlv,
 							underlyingFieldType, rerl.list.get(0)
 							);
@@ -881,8 +881,8 @@ public class InitializationHandler {
 					fieldWrites.stmt.addAll(mMemoryHandler.getWriteCall(loc, fieldHlv,
 							new IdentifierExpression(loc, tmpId),
 							underlyingFieldType));
-					final VariableDeclaration auxVarDec = new VariableDeclaration(loc, new Attribute[0], 
-							new VarList[] { new VarList(loc, new String[] { tmpId }, 
+					final VariableDeclaration auxVarDec = new VariableDeclaration(loc, new Attribute[0],
+							new VarList[] { new VarList(loc, new String[] { tmpId },
 									main.mTypeHandler.ctype2asttype(loc, underlyingFieldType)) } );
 					fieldWrites.decl.add(auxVarDec);
 					fieldWrites.auxVars.put(auxVarDec, loc);
@@ -890,12 +890,12 @@ public class InitializationHandler {
 
 			} else {
 				if(underlyingFieldType instanceof CPrimitive) {
-					fieldWrites = main.mCHandler.getInitHandler().initVar(loc, main, 
-							fieldHlv, underlyingFieldType, 
+					fieldWrites = main.mCHandler.getInitHandler().initVar(loc, main,
+							fieldHlv, underlyingFieldType,
 							i < rerl.list.size() ? rerl.list.get(i) : null);
 				} else if (underlyingFieldType instanceof CPointer) {
-					fieldWrites = main.mCHandler.getInitHandler().initVar(loc, main, 
-							fieldHlv, underlyingFieldType, 
+					fieldWrites = main.mCHandler.getInitHandler().initVar(loc, main,
+							fieldHlv, underlyingFieldType,
 							i < rerl.list.size() ? rerl.list.get(i) : null);
 				} else if (underlyingFieldType instanceof CArray) {
 					final ArrayList<Statement> fieldStmt = new ArrayList<Statement>();
@@ -909,8 +909,8 @@ public class InitializationHandler {
 						arrayInitRerl = rerl.list.get(i);
 					}
 
-					final ExpressionResult aInit = initArrayOnHeap(main, loc, 
-							arrayInitRerl == null ? null : arrayInitRerl.list, 
+					final ExpressionResult aInit = initArrayOnHeap(main, loc,
+							arrayInitRerl == null ? null : arrayInitRerl.list,
 									fieldPointer,
 									 (CArray) underlyingFieldType);
 					fieldStmt.addAll(aInit.stmt);
@@ -918,26 +918,26 @@ public class InitializationHandler {
 					fieldAuxVars.putAll(aInit.auxVars);
 					fieldOverApp.addAll(aInit.overappr);
 
-					fieldWrites = new ExpressionResult(fieldStmt, 
+					fieldWrites = new ExpressionResult(fieldStmt,
 							null,
 							fieldDecl, fieldAuxVars, fieldOverApp);
 				} else if (underlyingFieldType instanceof CEnum) {
 					//like CPrimitive (?)
-					fieldWrites = main.mCHandler.getInitHandler().initVar(loc, main, 
-							fieldHlv, underlyingFieldType, 
+					fieldWrites = main.mCHandler.getInitHandler().initVar(loc, main,
+							fieldHlv, underlyingFieldType,
 							i < rerl.list.size() ? rerl.list.get(i) : null);
 //					throw new UnsupportedSyntaxException(loc, "..");
 				} else if (underlyingFieldType instanceof CStruct) {
-					final ExpressionListRecResult fieldRerl = i < rerl.list.size() ? 
+					final ExpressionListRecResult fieldRerl = i < rerl.list.size() ?
 							rerl.list.get(i) : new ExpressionListRecResult();
-							fieldWrites = initStructOnHeapFromRERL(main, loc, 
+							fieldWrites = initStructOnHeapFromRERL(main, loc,
 									fieldPointer, fieldRerl, (CStruct) underlyingFieldType);
 
 				} else if (underlyingFieldType instanceof CNamed) {
 					throw new AssertionError("This should not be the case as we took the underlying type.");
 				} else {
 					throw new UnsupportedSyntaxException(loc, "..");
-				}	
+				}
 			}
 			newStmt.addAll(fieldWrites.stmt);
 			newDecl.addAll(fieldWrites.decl);
@@ -947,14 +947,14 @@ public class InitializationHandler {
 		final ExpressionResult result = new ExpressionResult(newStmt,
 				new RValue(MemoryHandler.constructPointerFromBaseAndOffset(newStartAddressBase, newStartAddressOffset, loc), structType), newDecl, newAuxVars, newOverappr);
 		return result;
-	} 
+	}
 
 	/**
-	 * Takes a ResultExpressionListRec and a CStruct(type) and generates a StructConstructor with the 
+	 * Takes a ResultExpressionListRec and a CStruct(type) and generates a StructConstructor with the
 	 * nesting structure from the CStruct and the values from the RERL.
 	 * If the RERL is null, the default initialization (int: 0, Ptr: NULL, ...) is used for each entry.
 	 */
-	private ExpressionResult makeStructConstructorFromRERL(final Dispatcher main, final ILocation loc, 
+	private ExpressionResult makeStructConstructorFromRERL(final Dispatcher main, final ILocation loc,
 			final ExpressionListRecResult rerlIn, final CStruct structType) {
 		ExpressionListRecResult rerl = null;
 		if (rerlIn == null) {
@@ -993,20 +993,20 @@ public class InitializationHandler {
 
 			final CType underlyingFieldType = fieldTypes[i].getUnderlyingType();
 
-			ExpressionResult fieldContents = null; 
+			ExpressionResult fieldContents = null;
 
 			if (isUnion) {
 				assert rerl.list.size() == 0 || rerl.list.size() == 1 : "union initializers must have only one field";
 				//TODO: maybe not use auxiliary variables so lavishly
 				final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.UNION, underlyingFieldType);
 				if (!unionAlreadyInitialized
-						&& rerl.list.size() == 1 
+						&& rerl.list.size() == 1
 						&& (rerl.list.get(0).field == null || rerl.list.get(0).field.equals("")
 						|| fieldIds[i].equals(rerl.list.get(0).field))
 						&& (underlyingFieldType instanceof CStruct
 								|| rerl.list.get(0).lrVal.getCType().equals(underlyingFieldType))) {
 					//use the value from the rerl to initialize the union
-					fieldContents = main.mCHandler.getInitHandler().initVar(loc, main, 
+					fieldContents = main.mCHandler.getInitHandler().initVar(loc, main,
 							new VariableLHS(loc, tmpId),
 							underlyingFieldType, rerl.list.get(0));
 					fieldContents.lrVal = new RValue(new IdentifierExpression(loc, tmpId), underlyingFieldType);
@@ -1016,19 +1016,19 @@ public class InitializationHandler {
 					fieldContents = new ExpressionResult(
 							new RValue(new IdentifierExpression(loc, tmpId), underlyingFieldType));
 				}
-				final VariableDeclaration auxVarDec = new VariableDeclaration(loc, new Attribute[0], 
-						new VarList[] { new VarList(loc, new String[] { tmpId }, 
+				final VariableDeclaration auxVarDec = new VariableDeclaration(loc, new Attribute[0],
+						new VarList[] { new VarList(loc, new String[] { tmpId },
 								main.mTypeHandler.ctype2asttype(loc, underlyingFieldType)) } );
 				fieldContents.decl.add(auxVarDec);
 				fieldContents.auxVars.put(auxVarDec, loc);
 			} else {
 				if(underlyingFieldType instanceof CPrimitive) {
-					fieldContents = main.mCHandler.getInitHandler().initVar(loc, main, 
-							(VariableLHS) null, underlyingFieldType, 
+					fieldContents = main.mCHandler.getInitHandler().initVar(loc, main,
+							(VariableLHS) null, underlyingFieldType,
 							i < rerl.list.size() ? rerl.list.get(i) : null);
 				} else if (underlyingFieldType instanceof CPointer) {
-					fieldContents = main.mCHandler.getInitHandler().initVar(loc, main, 
-							(VariableLHS) null, underlyingFieldType, 
+					fieldContents = main.mCHandler.getInitHandler().initVar(loc, main,
+							(VariableLHS) null, underlyingFieldType,
 							i < rerl.list.size() ? rerl.list.get(i) : null);
 				} else if (underlyingFieldType instanceof CArray) {
 					final ArrayList<Statement> fieldStmt = new ArrayList<Statement>();
@@ -1047,14 +1047,14 @@ public class InitializationHandler {
 					final Expression fieldEx = new IdentifierExpression(loc, tmpId);
 					final HeapLValue lrVal = new HeapLValue(fieldEx, underlyingFieldType);
 
-					final VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, 
+					final VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId,
 							main.mTypeHandler.ctype2asttype(loc, underlyingFieldType),
 							loc);
 					fieldAuxVars.put(tVarDecl, loc);
 					fieldDecl.add(tVarDecl);
 					final VariableLHS fieldLHS = new VariableLHS(loc, tmpId);
-					final ExpressionResult aInit = main.mCHandler.getInitHandler().initBoogieArray(main, loc, 
-							arrayInitRerl == null ? null : arrayInitRerl.list, 
+					final ExpressionResult aInit = main.mCHandler.getInitHandler().initBoogieArray(main, loc,
+							arrayInitRerl == null ? null : arrayInitRerl.list,
 									fieldLHS, (CArray) underlyingFieldType);
 					
 					fieldStmt.addAll(aInit.stmt);
@@ -1062,26 +1062,26 @@ public class InitializationHandler {
 					fieldAuxVars.putAll(aInit.auxVars);
 					fieldOverApp.addAll(aInit.overappr);
 
-					fieldContents = new ExpressionResult(fieldStmt, lrVal, fieldDecl, 
+					fieldContents = new ExpressionResult(fieldStmt, lrVal, fieldDecl,
 							fieldAuxVars, fieldOverApp);
 				} else if (underlyingFieldType instanceof CEnum) {
 					//like CPrimitive
-					fieldContents = main.mCHandler.getInitHandler().initVar(loc, main, 
-							(VariableLHS) null, underlyingFieldType, 
+					fieldContents = main.mCHandler.getInitHandler().initVar(loc, main,
+							(VariableLHS) null, underlyingFieldType,
 							i < rerl.list.size() ? rerl.list.get(i) : null);
 				} else if (underlyingFieldType instanceof CStruct) {
 					if (i < rerl.list.size()) {
 						fieldContents = makeStructConstructorFromRERL(main, loc,
 								rerl.list.get(i), (CStruct) underlyingFieldType);
 					} else {
-						fieldContents = makeStructConstructorFromRERL(main, loc, 
+						fieldContents = makeStructConstructorFromRERL(main, loc,
 								new ExpressionListRecResult(), (CStruct) underlyingFieldType);
-					}	
+					}
 				} else if (underlyingFieldType instanceof CNamed) {
 					throw new AssertionError("This should not be the case as we took the underlying type.");
 				} else {
 					throw new UnsupportedSyntaxException(loc, "..");
-				}	
+				}
 			}
 			newStmt.addAll(fieldContents.stmt);
 			newDecl.addAll(fieldContents.decl);
@@ -1096,11 +1096,11 @@ public class InitializationHandler {
 			}
 		}
 		final StructConstructor sc = new StructConstructor(loc, new InferredType(Type.Struct),
-				fieldIdentifiers.toArray(new String[0]), 
-				fieldValues.toArray(new Expression[0]));
+				fieldIdentifiers.toArray(new String[fieldIdentifiers.size()]),
+				fieldValues.toArray(new Expression[fieldValues.size()]));
 
 		final ExpressionResult result = new ExpressionResult(newStmt,
 				new RValue(sc, structType), newDecl, newAuxVars, newOverappr);
 		return result;
-	} 
+	}
 }

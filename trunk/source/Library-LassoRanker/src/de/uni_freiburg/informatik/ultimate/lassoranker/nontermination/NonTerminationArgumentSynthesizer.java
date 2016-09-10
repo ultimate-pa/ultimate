@@ -418,7 +418,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 				conjuction[msettings.number_of_gevs] = t_honda;
 				disjunction.add(Util.and(mscript, conjuction));
 			}
-			t2 = Util.or(mscript, disjunction.toArray(new Term[0]));
+			t2 = Util.or(mscript, disjunction.toArray(new Term[disjunction.size()]));
 		}
 		
 		// t3: constraints on the lambdas and the nus
@@ -449,7 +449,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 				}
 				conjunction.add(Util.or(mscript, disjunction.toArray(new Term[disjunction.size()])));
 			}
-			t3 = Util.and(mscript, conjunction.toArray(new Term[0]));
+			t3 = Util.and(mscript, conjunction.toArray(new Term[conjunction.size()]));
 		}
 
 		mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t1)));
@@ -527,11 +527,11 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			}
 			conjunction.add(mscript.term(rays ? ">=" : ieq.getInequalitySymbol(),
 					SmtUtils.sum(mscript, msort,
-							summands.toArray(new Term[0])),
+							summands.toArray(new Term[summands.size()])),
 					minteger_mode ? mscript.numeral(BigInteger.ZERO)
 							: mscript.decimal("0")));
 		}
-		return Util.and(mscript, conjunction.toArray(new Term[0]));
+		return Util.and(mscript, conjunction.toArray(new Term[conjunction.size()]));
 	}
 	
 	/**

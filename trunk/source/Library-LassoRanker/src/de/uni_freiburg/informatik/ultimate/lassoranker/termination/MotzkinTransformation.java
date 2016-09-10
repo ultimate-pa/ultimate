@@ -254,7 +254,7 @@ public class MotzkinTransformation extends InstanceCounting {
 				}
 			}
 			final Term sum = SmtUtils.sum(mscript, mscript.sort("Real"),
-					summands.toArray(new Term[0]));
+					summands.toArray(new Term[summands.size()]));
 			conjunction.add(mscript.term("=", sum, mscript.decimal("0")));
 		}
 		
@@ -269,7 +269,7 @@ public class MotzkinTransformation extends InstanceCounting {
 				}
 			}
 			final Term sum = SmtUtils.sum(mscript, mscript.sort("Real"),
-					summands.toArray(new Term[0]));
+					summands.toArray(new Term[summands.size()]));
 			conjunction.add(mscript.term("<=", sum, mscript.decimal("0")));
 		}
 		
@@ -285,7 +285,7 @@ public class MotzkinTransformation extends InstanceCounting {
 				}
 			}
 			final Term sum = SmtUtils.sum(mscript, mscript.sort("Real"),
-					summands.toArray(new Term[0]));
+					summands.toArray(new Term[summands.size()]));
 			final Term classical = mscript.term("<", sum, mscript.decimal("0"));
 			
 			// μ ≠ 0   -- strict inequalities
@@ -300,11 +300,11 @@ public class MotzkinTransformation extends InstanceCounting {
 			}
 			final Term non_classical = mscript.term(">",
 					SmtUtils.sum(mscript, mscript.sort("Real"),
-							summands.toArray(new Term[0])),
+							summands.toArray(new Term[summands.size()])),
 					mscript.decimal("0"));
 			
 			conjunction.add(Util.or(mscript, classical, non_classical));
-			return Util.and(mscript, conjunction.toArray(new Term[0]));
+			return Util.and(mscript, conjunction.toArray(new Term[conjunction.size()]));
 		}
 	}
 	
@@ -395,7 +395,7 @@ public class MotzkinTransformation extends InstanceCounting {
 					}
 				}
 				conjunction.add(
-						Util.or(mscript, disjunction.toArray(new Term[0])));
+						Util.or(mscript, disjunction.toArray(new Term[disjunction.size()])));
 			} else {
 				// Fixed values
 				final Term zero = mscript.decimal("0");
@@ -411,7 +411,7 @@ public class MotzkinTransformation extends InstanceCounting {
 					disjunction.add(doTransform(fixed_coefficients, vars));
 				}
 				conjunction.add(
-						Util.or(mscript, disjunction.toArray(new Term[0])));
+						Util.or(mscript, disjunction.toArray(new Term[disjunction.size()])));
 			}
 		} else if (manalysis_type == AnalysisType.Nonlinear) {
 			conjunction.add(doTransform(mcoefficients, vars));
@@ -433,7 +433,7 @@ public class MotzkinTransformation extends InstanceCounting {
 		} else {
 			assert false;
 		}
-		Term t = Util.and(mscript, conjunction.toArray(new Term[0]));
+		Term t = Util.and(mscript, conjunction.toArray(new Term[conjunction.size()]));
 		
 		// Possibly annotate the term
 		if (mannotate_terms && annotation != null) {

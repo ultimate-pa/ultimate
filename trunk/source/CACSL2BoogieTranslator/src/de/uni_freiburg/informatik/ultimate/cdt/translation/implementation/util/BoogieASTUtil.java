@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -114,7 +114,7 @@ public class BoogieASTUtil {
         }
         lhsList.add(((VariableLHS) l).getIdentifier());
         Collections.reverse(lhsList);
-        return lhsList.toArray(new String[0]);
+        return lhsList.toArray(new String[lhsList.size()]);
     }
 
     /**
@@ -127,7 +127,7 @@ public class BoogieASTUtil {
      *            .
      * @return the created LHS object.
      */
-    public static LeftHandSide getLHSforExpression(Expression e) {
+    public static LeftHandSide getLHSforExpression(final Expression e) {
         assert e instanceof IdentifierExpression
                 || e instanceof StructAccessExpression
                 || e instanceof ArrayAccessExpression;

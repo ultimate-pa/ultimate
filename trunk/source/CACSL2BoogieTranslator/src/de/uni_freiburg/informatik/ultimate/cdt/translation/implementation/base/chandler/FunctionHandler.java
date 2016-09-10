@@ -314,7 +314,7 @@ public class FunctionHandler {
 			final List<Specification> specFromDec = Arrays.asList(proc.getSpecification());
 			final ArrayList<Specification> newSpecs = new ArrayList<Specification>(Arrays.asList(spec));
 			newSpecs.addAll(specFromDec);
-			spec = newSpecs.toArray(new Specification[0]);
+			spec = newSpecs.toArray(new Specification[newSpecs.size()]);
 
 			proc = new Procedure(proc.getLocation(), proc.getAttributes(), proc.getIdentifier(), proc.getTypeParams(),
 					declIn, proc.getOutParams(), spec, null);
@@ -1050,7 +1050,7 @@ public class FunctionHandler {
 				final ContractResult resContr = (ContractResult) retranslateRes;
 				specList.addAll(Arrays.asList(resContr.specs));
 			}
-			spec = specList.toArray(new Specification[0]);
+			spec = specList.toArray(new Specification[specList.size()]);
 			for (int i = 0; i < spec.length; i++) {
 				if (spec[i] instanceof ModifiesSpecification) {
 					mModifiedGlobalsIsUserDefined.add(methodName);
@@ -1278,7 +1278,7 @@ public class FunctionHandler {
 			final List<Specification> specFromDef = Arrays.asList(proc.getSpecification());
 			final ArrayList<Specification> newSpecs = new ArrayList<Specification>(Arrays.asList(spec));
 			newSpecs.addAll(specFromDef);
-			spec = newSpecs.toArray(new Specification[0]);
+			spec = newSpecs.toArray(new Specification[newSpecs.size()]);
 			// TODO something else to take over for a declaration after the
 			// definition?
 		}
@@ -1540,7 +1540,8 @@ public class FunctionHandler {
 			final VarList[] type = mProcedures.get(methodName).getOutParams();
 			if (type.length == 0) { // void
 				// C has only one return statement -> no need for forall
-				call = new CallStatement(loc, false, new VariableLHS[0], methodName, args.toArray(new Expression[0]));
+				call = new CallStatement(loc, false, new VariableLHS[0], methodName,
+						args.toArray(new Expression[args.size()]));
 			} else if (type.length == 1) { // one return value
 				final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
 				expr = new IdentifierExpression(loc, tmpId);
@@ -1549,7 +1550,7 @@ public class FunctionHandler {
 				decl.add(tmpVar);
 				final VariableLHS tmpLhs = new VariableLHS(loc, tmpId);
 				call = new CallStatement(loc, false, new VariableLHS[] { tmpLhs }, methodName,
-						args.toArray(new Expression[0]));
+						args.toArray(new Expression[args.size()]));
 			} else { // unsupported!
 				// String msg = "Cannot handle multiple out params! "
 				// + loc.toString();
@@ -1575,7 +1576,7 @@ public class FunctionHandler {
 			decl.add(tmpVar);
 			final VariableLHS lhs = new VariableLHS(loc, ident);
 			call = new CallStatement(loc, false, new VariableLHS[] { lhs }, methodName,
-					args.toArray(new Expression[0]));
+					args.toArray(new Expression[args.size()]));
 		}
 		stmt.add(call);
 		final CType returnCType = mMethodsCalledBeforeDeclared.contains(methodName) ? new CPrimitive(CPrimitives.INT)
