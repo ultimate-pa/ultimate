@@ -45,54 +45,61 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class SenwaBuilder<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
+/**
+ * Builder for a {@link Senwa}.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
+public final class SenwaBuilder<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
 		implements ISuccessorVisitor<LETTER, STATE> {
-	
 	private final Senwa<LETTER, STATE> mSenwa;
 	private final INestedWordAutomaton<LETTER, STATE> mNwa;
 //	private final Set<STATE> mAdded = new HashSet<>();
 	
-	private final Map<STATE,STATE> mResult2Operand = new HashMap<>();
-	private final Map<STATE,Map<STATE,STATE>> mEntry2Operand2Result = new HashMap<>();
-
+	private final Map<STATE, STATE> mResult2Operand = new HashMap<>();
+	private final Map<STATE, Map<STATE, STATE>> mEntry2Operand2Result = new HashMap<>();
+	
 	/**
 	 * Constructor.
 	 * 
-	 * @param services Ultimate services
-	 * @param nwa nested word automaton
-	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 * @param services
+	 *            Ultimate services
+	 * @param nwa
+	 *            nested word automaton
+	 * @throws AutomataOperationCanceledException
+	 *             if timeout exceeds
 	 */
-	public SenwaBuilder(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> nwa)
-					throws AutomataOperationCanceledException {
+	public SenwaBuilder(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> nwa)
+			throws AutomataOperationCanceledException {
 		super(services);
 		mNwa = nwa;
 		mLogger.info(startMessage());
-		mSenwa = new Senwa<LETTER, STATE>(mServices,
-				mNwa.getInternalAlphabet(), mNwa.getCallAlphabet(),
-				mNwa.getReturnAlphabet(), mNwa.getStateFactory());
+		mSenwa = new Senwa<>(mServices, mNwa.getInternalAlphabet(), mNwa.getCallAlphabet(), mNwa.getReturnAlphabet(),
+				mNwa.getStateFactory());
 		new SenwaWalker<LETTER, STATE>(mServices, mSenwa, this, true);
 		mLogger.info(exitMessage());
 	}
 	
-	
 	@Override
 	public String operationName() {
-		return "senwa";
+		return "SenwaBuilder";
 	}
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result has " + mSenwa.sizeInformation();
+		return "Finished " + operationName() + ". Result " + mSenwa.sizeInformation();
 	}
-	
 	
 	private STATE getOrConstructResultState(final STATE opEntry, final STATE opState, final boolean isInitial) {
 		assert mNwa.getStates().contains(opState);
 		assert mNwa.getStates().contains(opEntry);
 		Map<STATE, STATE> op2res = mEntry2Operand2Result.get(opEntry);
 		if (op2res == null) {
-			op2res = new HashMap<STATE, STATE>();
+			op2res = new HashMap<>();
 			mEntry2Operand2Result.put(opEntry, op2res);
 		}
 		STATE resState = op2res.get(opState);
@@ -114,26 +121,24 @@ public class SenwaBuilder<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE
 		return opState;
 	}
 	
-
 	@Override
 	public Iterable<STATE> getInitialStates() {
-		final Set<STATE> resInits = new HashSet<STATE>();
+		final Set<STATE> resInits = new HashSet<>();
 		for (final STATE opState : mNwa.getInitialStates()) {
 			final STATE resState = getOrConstructResultState(opState, opState, true);
 			resInits.add(resState);
 		}
 		return resInits;
 	}
-
+	
 	@Override
 	public Iterable<STATE> visitAndGetInternalSuccessors(final STATE resState) {
 		final STATE resEntry = mSenwa.getEntry(resState);
 		final STATE opEntry = getOperandState(resEntry);
-		final Set<STATE> resSuccs = new HashSet<STATE>();
+		final Set<STATE> resSuccs = new HashSet<>();
 		final STATE opState = getOperandState(resState);
 		for (final LETTER letter : mNwa.lettersInternal(opState)) {
-			for (final OutgoingInternalTransition<LETTER, STATE> trans :
-					mNwa.internalSuccessors(opState, letter)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : mNwa.internalSuccessors(opState, letter)) {
 				final STATE opSucc = trans.getSucc();
 				final STATE resSucc = getOrConstructResultState(opEntry, opSucc, false);
 				resSuccs.add(resSucc);
@@ -142,14 +147,13 @@ public class SenwaBuilder<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE
 		}
 		return resSuccs;
 	}
-
+	
 	@Override
 	public Iterable<STATE> visitAndGetCallSuccessors(final STATE resState) {
-		final Set<STATE> resSuccs = new HashSet<STATE>();
+		final Set<STATE> resSuccs = new HashSet<>();
 		final STATE opState = getOperandState(resState);
 		for (final LETTER letter : mNwa.lettersCall(opState)) {
-			for (final OutgoingCallTransition<LETTER, STATE> trans :
-					mNwa.callSuccessors(opState, letter)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : mNwa.callSuccessors(opState, letter)) {
 				final STATE opSucc = trans.getSucc();
 				final STATE resSucc = getOrConstructResultState(opSucc, opSucc, false);
 				resSuccs.add(resSucc);
@@ -158,18 +162,16 @@ public class SenwaBuilder<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE
 		}
 		return resSuccs;
 	}
-
+	
 	@Override
-	public Iterable<STATE> visitAndGetReturnSuccessors(final STATE resState,
-			final STATE resHier) {
+	public Iterable<STATE> visitAndGetReturnSuccessors(final STATE resState, final STATE resHier) {
 		final STATE opState = getOperandState(resState);
 		final STATE opHier = getOperandState(resHier);
 		final STATE resHierEntry = mSenwa.getEntry(resHier);
 		final STATE opHierEntry = getOperandState(resHierEntry);
-		final Set<STATE> resSuccs = new HashSet<STATE>();
+		final Set<STATE> resSuccs = new HashSet<>();
 		for (final LETTER letter : mNwa.lettersReturn(opState)) {
-			for (final OutgoingReturnTransition<LETTER, STATE> trans :
-					mNwa.returnSuccessors(opState, opHier, letter)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : mNwa.returnSuccessors(opState, opHier, letter)) {
 				final STATE opSucc = trans.getSucc();
 				final STATE resSucc = getOrConstructResultState(opHierEntry, opSucc, false);
 				resSuccs.add(resSucc);
@@ -185,23 +187,20 @@ public class SenwaBuilder<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE
 	}
 	
 	@Override
-	public Senwa<LETTER,STATE> getResult() {
+	public Senwa<LETTER, STATE> getResult() {
 		return mSenwa;
 	}
-
+	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
-		boolean correct = true;
-		correct &= new IsIncluded<>(mServices, stateFactory, mNwa, mSenwa).getResult();
-		correct &= new IsIncluded<>(mServices, stateFactory, mSenwa, mNwa).getResult();
+		boolean correct;
+		correct = new IsIncluded<>(mServices, stateFactory, mNwa, mSenwa).getResult();
+		correct = correct && new IsIncluded<>(mServices, stateFactory, mSenwa, mNwa).getResult();
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
-					operationName() + "Failed", "", mNwa);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mNwa);
 		}
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
-
 }
