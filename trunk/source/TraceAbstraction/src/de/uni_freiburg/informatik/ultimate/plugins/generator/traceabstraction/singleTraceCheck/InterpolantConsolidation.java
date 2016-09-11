@@ -235,7 +235,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			if (mLogger.isWarnEnabled()) {
 				mLogger.warn("Error while computing interpolants");
 			}
-			throw new AutomataOperationCanceledException(this.getClass());
+			throw new AssertionError(e);
 		}
 
 		// 6. Interpolant Consolidation step
