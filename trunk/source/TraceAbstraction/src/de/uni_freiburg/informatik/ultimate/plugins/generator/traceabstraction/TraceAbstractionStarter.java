@@ -161,7 +161,7 @@ public class TraceAbstractionStarter {
 		mLogger.debug("Continue processing: " + mServices.getProgressMonitorService().continueProcessing());
 		if (taPrefs.computeHoareAnnotation() && mOverallResult != Result.TIMEOUT
 				&& mServices.getProgressMonitorService().continueProcessing()) {
-			assert (new HoareAnnotationChecker(mServices, rcfgRootNode, smtManager).isInductive());
+			assert (new HoareAnnotationChecker(mServices, rcfgRootNode, smtManager).isInductive()) : "incorrect Hoare annotation";
 
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
 			final Term trueterm = smtManager.getScript().term("true");
