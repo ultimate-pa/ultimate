@@ -468,7 +468,7 @@ public class NestedSsaBuilder {
 		public Term getVersioneeredTerm() {
 			final Substitution subst = new Substitution(mScript, mSubstitutionMapping);
 			final Term result = subst.transform(mformula);
-			assert result.getFreeVars().length == 0 : "free vars in versioneered term: " + String.valueOf(result.getFreeVars());
+			assert result.getFreeVars().length == 0 : "free vars in versioneered term: " + result.getFreeVars();
 			return result;
 		}
 

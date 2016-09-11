@@ -143,10 +143,10 @@ public class AbstractInterpretationRunner {
 			mLogger.info("Running AI on error trace of length " + currentCex.getLength()
 			        + " with the following transitions: ");
 			mLogger.info(String.join(", ", pathProgramSet.stream().map(a -> a.hashCode()).sorted()
-			        .map(a -> "[" + String.valueOf(a) + "]").collect(Collectors.toList())));
+			        .map(a -> '[' + String.valueOf(a) + ']').collect(Collectors.toList())));
 			if (mLogger.isDebugEnabled()) {
 				for (final CodeBlock trans : pathProgramSet) {
-					mLogger.debug("[" + trans.hashCode() + "] " + trans);
+					mLogger.debug('[' + trans.hashCode() + "] " + trans);
 				}
 			}
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result = AbstractInterpreter

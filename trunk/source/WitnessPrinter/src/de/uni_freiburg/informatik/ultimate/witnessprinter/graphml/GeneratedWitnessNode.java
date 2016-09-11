@@ -41,7 +41,7 @@ public class GeneratedWitnessNode {
 	GeneratedWitnessNode(final long currentNodeId, final boolean isEntry, final boolean isError, final boolean isSink) {
 		mIsEntry = isEntry;
 		mIsError = isError;
-		mId = "N" + String.valueOf(currentNodeId);
+		mId = 'N' + String.valueOf(currentNodeId);
 		mIsSink = isSink;
 		mInvariant = null;
 	}
