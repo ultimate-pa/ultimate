@@ -166,7 +166,7 @@ public abstract class RunToolchainAction extends Action {
 				rtr.add(file);
 			}
 		}
-		return rtr.toArray(new File[0]);
+		return rtr.toArray(new File[rtr.size()]);
 	}
 
 	private Collection<ISource> getAvailableSourcePlugins() {

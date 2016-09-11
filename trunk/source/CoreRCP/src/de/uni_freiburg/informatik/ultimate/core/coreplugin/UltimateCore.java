@@ -257,7 +257,7 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 					lil.add(classname.substring(0, classname.lastIndexOf(".")));
 				}
 			}
-			sPluginNames = lil.toArray(new String[0]);
+			sPluginNames = lil.toArray(new String[lil.size()]);
 		}
 		return sPluginNames;
 	}
