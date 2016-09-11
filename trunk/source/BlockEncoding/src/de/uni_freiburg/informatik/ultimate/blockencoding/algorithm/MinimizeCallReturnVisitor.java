@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -75,14 +75,14 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	/**
 	 * 
 	 */
-	public MinimizeCallReturnVisitor(ILogger logger, AbstractMinimizationVisitor amVisitor) {
+	public MinimizeCallReturnVisitor(final ILogger logger, final AbstractMinimizationVisitor amVisitor) {
 		mLogger = logger;
 		nodesForReVisit = new HashSet<MinimizedNode>();
 		this.amVisitor = amVisitor;
 	}
 
 	@Override
-	public void visitNode(MinimizedNode node) {
+	public void visitNode(final MinimizedNode node) {
 		mActualCallStack = new HashSet<MinimizedNode>();
 		internalVisitNode(node);
 	}
@@ -93,7 +93,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	 * @param node
 	 *            the Method-Entry-Node to inspect.
 	 */
-	private void internalVisitNode(MinimizedNode node) {
+	private void internalVisitNode(final MinimizedNode node) {
 		// By calling this method, the parameter node is the the method head
 		// --> we check the edges for Call-Edges
 		mActualCallStack.add(node);
@@ -190,7 +190,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	 * predecessor is deadcode, but edge was added because it is a call.
 	 * Added by Matthias 24.10.2013
 	 */
-	private boolean predecessorSuccIsNull(IMinimizedEdge edge) {
+	private boolean predecessorSuccIsNull(final IMinimizedEdge edge) {
 		final MinimizedNode predecessor = edge.getSource();
 		return predecessor.getOutgoingEdges() == null;
 	}
@@ -204,8 +204,8 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	 * @param callEdge
 	 * @param subEdges
 	 */
-	private void directEdgesToErrorLocation(IMinimizedEdge callEdge,
-			IMinimizedEdge[] subEdges) {
+	private void directEdgesToErrorLocation(final IMinimizedEdge callEdge,
+			final IMinimizedEdge[] subEdges) {
 		// First step is to add the new edges to callEdge.getSource->Outgoing
 		final ArrayList<IMinimizedEdge> newOutEdgeLevel = new ArrayList<IMinimizedEdge>(
 				callEdge.getSource().getOutgoingEdges());
@@ -235,7 +235,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	 * @return the already minimized edge or an Call-Edge for further
 	 *         minimization
 	 */
-	private IMinimizedEdge[] tryToMergeMethod(MinimizedNode node) {
+	private IMinimizedEdge[] tryToMergeMethod(final MinimizedNode node) {
 		// Remark 04.04.2013: It may be possible that one incoming edge is a
 		// self-loop, if one incoming edge is not a call or root edge should be
 		// sufficient as check
@@ -293,7 +293,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 			final ArrayList<IMinimizedEdge> edges = new ArrayList<IMinimizedEdge>();
 			edges.add(subsituteEdge);
 			edges.addAll(errorLocationEdges);
-			return edges.toArray(new IMinimizedEdge[0]);
+			return edges.toArray(new IMinimizedEdge[edges.size()]);
 		} else if (subsituteEdge != null) {
 			return new IMinimizedEdge[] { subsituteEdge };
 		}
@@ -310,7 +310,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	 * @param callEdge
 	 * @param substitute
 	 */
-	private void minimizeCallReturnEdge(IBasicEdge callEdge,
+	private void minimizeCallReturnEdge(final IBasicEdge callEdge,
 			IMinimizedEdge substitute) {
 		final MinimizedNode callingNode = callEdge.getSource();
 		// Note: It is possible that callingNode has more than two outgoing

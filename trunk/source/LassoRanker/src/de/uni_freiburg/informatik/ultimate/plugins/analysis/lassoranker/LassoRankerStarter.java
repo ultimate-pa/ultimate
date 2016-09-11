@@ -332,7 +332,7 @@ public class LassoRankerStarter {
 				templates.add(new ComposedLexicographicTemplate(parts));
 			}
 		}
-		return templates.toArray(new RankingTemplate[0]);
+		return templates.toArray(new RankingTemplate[templates.size()]);
 	}
 
 	/**
