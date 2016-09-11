@@ -120,14 +120,13 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 					return;
 				}
 
-				if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_UNTIL_FIXPOINT) && continueOptimization
-						&& maxIters != 0) {
-					if (maxIters > 0) {
-						maxIters--;
-					}
-					continue;
+				if (!ups.getBoolean(PreferenceInitializer.OPTIMIZE_UNTIL_FIXPOINT) || !continueOptimization
+						|| maxIters == 0) {
+					break;
 				}
-				break;
+				if (maxIters > 0) {
+					maxIters--;
+				}
 			}
 			reportSizeBenchmark("Optimized Product", mProduct);
 
