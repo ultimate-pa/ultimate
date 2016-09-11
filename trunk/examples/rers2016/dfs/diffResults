@@ -1,21 +1,31 @@
 #! /bin/bash
 
+# Compares findings of DFS and BFS bruteforcers side by side.
+# Columns are: DFS BSF
+
+# Returnes all error labels ("error_0" - "error_99") in alphabetical order
+function allErrorsAlphaSorted {
+	seq 0 99 | sed 's/^/error_/' | sort
+}
+
+# Takes a file with one error label per line (for instance "error_0")
+# Sorts according to the error number
+# Inserts empty lines for missing error labels
+function errorSort {
+	paste \
+		<(allErrorsAlphaSorted) \
+		<(comm <(allErrorsAlphaSorted) <(sort "$1") | sed 's/$/\t\t/' | cut -f3) |
+	sort -k 1,1V |
+	cut -f2
+}
+
 for i in {10..18}; do
 	echo
-	echo "$i ---------------"
-	comm \
-		<(cut -d' ' -f1 "result$i.txt" | sort) \
-		<(grep -Fv '#' "../bruteforce/result$i.txt" | cut -d' ' -f1 | sort) |
-	# Make sure that there are at least 3 field per line
-	# -> prevents "cut" from printing wrong values for missing fields
-	sed 's/$/\t\t\t/' > commResults
-	
-	paste -d ',' \
-	  <(cut -f 1,3 commResults | tr -d '\t') \
-	  <(cut -f 2,3 commResults  | tr -d '\t') |
-	sort -t ',' -k 2,2V |
-	tr ',' ' ' |
+	echo "--------$i--------"
+	echo "--DFS---  --BSF---"
+	paste \
+		<(errorSort <(cut -d' ' -f1 "result$i.txt")) \
+		<(errorSort <(grep -Fv '#' "../bruteforce/result$i.txt" | cut -d' ' -f1)) |
+	grep -vP '^\s*$' |
 	column -tn
 done
-
-rm -f commResults

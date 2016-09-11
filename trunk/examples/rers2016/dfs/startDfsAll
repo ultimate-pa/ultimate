@@ -1,27 +1,33 @@
 #! /bin/bash
 
 # hostnames (shuffled for better workload, assuming that everyone tries tfpool01 first)
-mapfile -t hosts < <(seq -w 01 45 | sed 's/^/tfpool/' | shuf)
+mapfile -t hosts < <(seq -w 01 45 | sed 's/^/tfpool/' | shuf )
 h=0
 
-problemId=10
+# skip Problem10, because we already know everything about Problem10
+problemId=11
 maxProblemId=18
 
+hostsPerProblem=4
+
 date +"%Y-%m-%d %H:%M:%S" >> workerhosts
-while (( problemId <= maxProblemId )) && (( h < "${#hosts[@]}" )); do
-	host="${hosts[$h]}"
-	echo Trying host $host
-	if ssh -o ConnectTimeout=1 -o BatchMode=yes -o StrictHostKeyChecking=no "$host" \
-		"screen -d -m -S 'dfs$i' bash -c 'cd ~/ultimate/trunk/examples/rers2016/dfs/; ./startDfsProblem $problemId; exec bash;'"
-	then
-		echo "Successfully started problem$problemId on host $host"
-		echo "problem$problemId $host" >>  workerhosts
-		(( problemId++ ))
-	else
-		echo Failed
-	fi
-	(( h++ ))
-	echo
+while (( problemId <= maxProblemId && h < "${#hosts[@]}" )); do
+	for (( multihost=0; multihost < hostsPerProblem && h < "${#hosts[@]}"; )); do
+		host="${hosts[$h]}"
+		echo Trying host $host
+		if ssh -o ConnectTimeout=1 -o BatchMode=yes -o StrictHostKeyChecking=no "$host" \
+			"screen -d -m -S 'dfs$i' bash -c 'cd ~/ultimate/trunk/examples/rers2016/dfs/; ./startDfsProblem $problemId; exec bash;'"
+		then
+			echo "Successfully started problem$problemId on host $host"
+			echo "problem$problemId $host" >>  workerhosts
+			(( multihost++ ))
+		else
+			echo Failed
+		fi
+		(( h++ ))
+		echo
+	done
+	(( problemId++ ))
 done
 
 if (( problemId <= maxProblemId )); then
