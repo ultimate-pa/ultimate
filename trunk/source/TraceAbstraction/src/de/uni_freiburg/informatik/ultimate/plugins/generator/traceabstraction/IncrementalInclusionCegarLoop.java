@@ -270,7 +270,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 			case EAGER_CONSERVATIVE:
 			{
 				final boolean conservativeSuccessorCandidateSelection = mPref.interpolantAutomatonEnhancement() == mPref.interpolantAutomatonEnhancement();
-				final boolean secondChance = (mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE);;
+				final boolean secondChance = (mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE);
 				final NondeterministicInterpolantAutomaton nondet = new NondeterministicInterpolantAutomaton(mServices,
 						mSmtManager, mModGlobVarManager, edgeChecker,
 						(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction,
