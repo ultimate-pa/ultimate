@@ -251,7 +251,7 @@ public class Event<S, C> implements Serializable {
 		if (!getMark().equals(e.getMark())) {
 			return false;
 		}
-		if (!(order.compare(e, this) < 0)) {
+		if (order.compare(e, this) >= 0) {
 			return false;
 		}
 		setCompanion(e);

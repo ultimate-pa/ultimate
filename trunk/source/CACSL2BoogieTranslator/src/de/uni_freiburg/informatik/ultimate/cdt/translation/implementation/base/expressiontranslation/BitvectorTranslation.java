@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
@@ -428,7 +428,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			throw new UnsupportedOperationException("non-primitive types not supported yet " + resultType);
 		}
 		final CPrimitive resultPrimitive = resultType;
-		if (!(resultPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE)) {
+		if (resultPrimitive.getGeneralType() != CPrimitiveCategory.INTTYPE) {
 			throw new UnsupportedOperationException("non-integer types not supported yet " + resultType);
 		}
 
