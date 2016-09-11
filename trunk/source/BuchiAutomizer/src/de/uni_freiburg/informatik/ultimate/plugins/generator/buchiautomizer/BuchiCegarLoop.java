@@ -816,13 +816,11 @@ public class BuchiCegarLoop {
 		try {
 			diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), mAbstraction,
 					determinized, psd, mStateFactoryForRefinement, true);
+		} catch (final AutomataOperationCanceledException e) {
+			mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+			throw e;
 		} catch (final AutomataLibraryException e) {
-			if (e instanceof AutomataOperationCanceledException) {
-				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-				throw (AutomataOperationCanceledException) e;
-			} else {
-				throw new AssertionError();
-			}
+			throw new AssertionError();
 		} catch (final ToolchainCanceledException e) {
 			mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 			throw e;

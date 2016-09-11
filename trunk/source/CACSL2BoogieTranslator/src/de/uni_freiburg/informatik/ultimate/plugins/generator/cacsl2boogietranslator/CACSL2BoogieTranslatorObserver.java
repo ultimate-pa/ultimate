@@ -245,25 +245,21 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			map.setMap(main.getIdentifierMapping());
 			mStorage.putStorable(IdentifierMapping.getStorageKey(), map);
 			mService.getBacktranslationService().addTranslator(backtranslator);
-		} catch (final Exception t) {
-			final IResult result;
-			// String message =
-			// "There was an error during the translation process! [" +
-			// t.getClass() + ", "
-			// + t.getMessage() + "]";
-			if (t instanceof IncorrectSyntaxException) {
-				result = new SyntaxErrorResult(Activator.PLUGIN_NAME, ((IncorrectSyntaxException) t).getLocation(),
-						t.getLocalizedMessage());
-			} else if (t instanceof UnsupportedSyntaxException) {
-				result = new UnsupportedSyntaxResult<IElement>(Activator.PLUGIN_NAME,
-						((UnsupportedSyntaxException) t).getLocation(), t.getLocalizedMessage());
-			} else {
-				throw t;
-			}
-			mService.getResultService().reportResult(Activator.PLUGIN_ID, result);
-			mLogger.warn(result.getShortDescription() + " " + result.getLongDescription());
-			mService.getProgressMonitorService().cancelToolchain();
+		} catch (final IncorrectSyntaxException e) {
+			final IResult result = new SyntaxErrorResult(Activator.PLUGIN_NAME,
+					e.getLocation(), e.getLocalizedMessage());
+			commonDoTranslationExceptionHandling(result);
+		} catch (final UnsupportedSyntaxException e) {
+			final IResult result = new UnsupportedSyntaxResult<IElement>(Activator.PLUGIN_NAME,
+					e.getLocation(), e.getLocalizedMessage());
+			commonDoTranslationExceptionHandling(result);
 		}
+	}
+
+	private void commonDoTranslationExceptionHandling(final IResult result) {
+		mService.getResultService().reportResult(Activator.PLUGIN_ID, result);
+		mLogger.warn(result.getShortDescription() + ' ' + result.getLongDescription());
+		mService.getProgressMonitorService().cancelToolchain();
 	}
 
 	@Override

@@ -226,12 +226,16 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 					pfconsol.removeConsolidatedPredicatesOnDifferentLevels(stateToLevel);
 				}
 			}
-
-		} catch (final AutomataLibraryException e) {
-			if (e instanceof AutomataOperationCanceledException) {
+		} catch (final AutomataOperationCanceledException e) {
+			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Timeout while computing interpolants");
 			}
-			throw ((AutomataOperationCanceledException)e);
+			throw e;
+		} catch (final AutomataLibraryException e) {
+			if (mLogger.isWarnEnabled()) {
+				mLogger.warn("Error while computing interpolants");
+			}
+			throw new AutomataOperationCanceledException(this.getClass());
 		}
 
 		// 6. Interpolant Consolidation step
