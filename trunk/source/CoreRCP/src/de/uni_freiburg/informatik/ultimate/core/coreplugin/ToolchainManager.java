@@ -406,7 +406,6 @@ public class ToolchainManager {
 							+ (cause == null ? e.getMessage() : cause.getMessage()));
 				}
 			}
-			return;
 		}
 
 		private final ISource selectParser(final File file) {

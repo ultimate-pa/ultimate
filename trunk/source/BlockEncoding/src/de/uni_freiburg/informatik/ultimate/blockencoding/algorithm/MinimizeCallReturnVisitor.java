@@ -182,7 +182,6 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 			}
 		}
 		// No Call-Edges, nothing to do here
-		return;
 	}
 	
 	/**

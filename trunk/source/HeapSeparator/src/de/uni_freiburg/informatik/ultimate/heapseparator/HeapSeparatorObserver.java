@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiProgramProduct plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -63,7 +63,7 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 
 	@Override
 	public void finish() throws Throwable {
-		return;
+		// do nothing
 	}
 
 	@Override
@@ -104,52 +104,52 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	void testSetup(final RootAnnot ra) {
 		
 		final IProgramVar m = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
-				"m", 
-				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				"m",
+				new DeclarationInformation(StorageClass.LOCAL, "p"),
 				false);
 		
 		final IProgramVar p = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
-				"p", 
-				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				"p",
+				new DeclarationInformation(StorageClass.LOCAL, "p"),
 				false);
 
 		final IProgramVar q = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
-				"q", 
-				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				"q",
+				new DeclarationInformation(StorageClass.LOCAL, "p"),
 				false);
 
 		final IProgramVar i = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
-				"#i", 
-				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				"#i",
+				new DeclarationInformation(StorageClass.LOCAL, "p"),
 				false);
 
 		final IProgramVar j = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
-				"#j", 
-				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				"#j",
+				new DeclarationInformation(StorageClass.LOCAL, "p"),
 				false);
 		
 		final IProgramVar m1 = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
-				"m1", 
-				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				"m1",
+				new DeclarationInformation(StorageClass.LOCAL, "p"),
 				false);
 
 		final IProgramVar m2 = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
-				"m2", 
-				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				"m2",
+				new DeclarationInformation(StorageClass.LOCAL, "p"),
 				false);
 	
 		
-//		BoogieVar m1 = new LocalBoogieVar("m1", "p", 
-//				//m.getIType(), 
+//		BoogieVar m1 = new LocalBoogieVar("m1", "p",
+//				//m.getIType(),
 //				null,
 //				mscript.variable("m1_tv", m.getTermVariable().getSort()),
 //				null,null
 ////				(ApplicationTerm) mscript.term("m1_dc"),
 ////				(ApplicationTerm) mscript.term("m1_pc")
 //				);
-//		
-//		BoogieVar m2 = new LocalBoogieVar("m2", "p", 
-//				//m.getIType(), 
+//
+//		BoogieVar m2 = new LocalBoogieVar("m2", "p",
+//				//m.getIType(),
 //				null,
 //				mscript.variable("m2_tv", m.getTermVariable().getSort()),
 //				null,null

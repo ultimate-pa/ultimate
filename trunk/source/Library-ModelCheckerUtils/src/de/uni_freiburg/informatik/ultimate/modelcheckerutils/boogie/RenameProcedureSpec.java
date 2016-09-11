@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
@@ -56,7 +56,7 @@ public class RenameProcedureSpec extends BoogieTransformer {
 	public RenameProcedureSpec() {
 	}
 	
-	public void buildRenaming(VarList[] specVars, VarList[] implVars) {
+	public void buildRenaming(final VarList[] specVars, final VarList[] implVars) {
 		int j1 = 0, j2 = 0;
 		String[] implIds = new String[0];
 
@@ -79,10 +79,9 @@ public class RenameProcedureSpec extends BoogieTransformer {
 				j2++;
 			}
 		}
-		return;
-	}		
+	}
 	
-	public Specification[] renameSpecs(Procedure proc, Procedure impl) {
+	public Specification[] renameSpecs(final Procedure proc, final Procedure impl) {
 		final Specification[] oldSpecs = proc.getSpecification();
 		final Specification[] specs = oldSpecs.clone();
 		boolean changed = false;
@@ -120,14 +119,14 @@ public class RenameProcedureSpec extends BoogieTransformer {
 	}
 	
 	@Override
-	public Expression processExpression(Expression expr) {
+	public Expression processExpression(final Expression expr) {
 		/* TODO: handle name conflicts in quantifiers */
 		if (expr instanceof IdentifierExpression) {
 			final IdentifierExpression id = (IdentifierExpression) expr;
 			final String newName = renaming.get(id.getIdentifier());
 			if (newName != null) {
 			    final IdentifierExpression newExpr = new IdentifierExpression(
-			    		expr.getLocation(), expr.getType(), newName, 
+			    		expr.getLocation(), expr.getType(), newName,
 			    		id.getDeclarationInformation());
 			    ModelUtils.copyAnnotations(expr, newExpr);
 			    return newExpr;

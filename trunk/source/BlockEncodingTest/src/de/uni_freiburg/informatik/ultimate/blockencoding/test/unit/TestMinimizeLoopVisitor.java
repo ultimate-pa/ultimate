@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -111,7 +111,7 @@ public class TestMinimizeLoopVisitor extends TestCase {
 		}
 	}
 
-	private void testMinimizationOfFunction(ProgramPoint entryPoint) {
+	private void testMinimizationOfFunction(final ProgramPoint entryPoint) {
 		assertNotNull(entryPoint.getIncomingEdges());
 		// It can happen that while minimizing we already created an Min.Node we
 		// have to use here
@@ -141,10 +141,9 @@ public class TestMinimizeLoopVisitor extends TestCase {
 		// there are maybe other nodes that are still not minimized
 		visitedEdges.clear();
 		checkSeqBranchMinimization(minEntryPoint);
-		return;
 	}
 
-	private void collectMergeableNodes(MinimizedNode node) {
+	private void collectMergeableNodes(final MinimizedNode node) {
 		assertNotNull(node.getOutgoingEdges());
 		if (node.getOutgoingEdges().size() == 0) {
 			return;
@@ -170,7 +169,7 @@ public class TestMinimizeLoopVisitor extends TestCase {
 		}
 	}
 	
-	private void checkSeqBranchMinimization(MinimizedNode node) {
+	private void checkSeqBranchMinimization(final MinimizedNode node) {
 		assertNotNull(node.getOutgoingEdges());
 		if (node.getOutgoingEdges().size() == 0) {
 			return;
@@ -193,7 +192,7 @@ public class TestMinimizeLoopVisitor extends TestCase {
 		}
 	}
 
-	private boolean checkForSequentialMerge(MinimizedNode node) {
+	private boolean checkForSequentialMerge(final MinimizedNode node) {
 		// In this run there can be nodes with one incoming and two outgoing
 		// edges, which we also want to merge
 		if (node.getIncomingEdges().size() == 1
