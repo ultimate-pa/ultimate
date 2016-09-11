@@ -632,7 +632,6 @@ public class TransFormulaUtils {
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final Validity check1 = mic.checkImplication(endPredicate, false, resultCompositionPredicate, false);
 		final Validity check2 = mic.checkImplication(resultCompositionPredicate, false, endPredicate, false);
-		assert check1 != Validity.UNKNOWN && check2 != Validity.UNKNOWN : "SMT solver too weak for correctness check";
 		assert check1 == Validity.VALID && check2 == Validity.VALID : "sequentialCompositionWithPendingCall - incorrect result";
 		return check1 == Validity.VALID && check2 == Validity.VALID;
 	}
@@ -780,7 +779,6 @@ public class TransFormulaUtils {
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final Validity check1 = mic.checkImplication(afterReturnPredicate, false, resultCompositionPredicate, false);
 		final Validity check2 = mic.checkImplication(resultCompositionPredicate, false, afterReturnPredicate, false);
-		assert check1 != Validity.UNKNOWN && check2 != Validity.UNKNOWN : "SMT solver too weak for correctness check";
 		assert check1 == Validity.VALID && check2 == Validity.VALID : "sequentialCompositionWithCallAndReturn - incorrect result";
 		return check1 == Validity.VALID && check2 == Validity.VALID;
 	}
