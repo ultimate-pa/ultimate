@@ -24,7 +24,6 @@
 
    <windowImages/>
 
-
    <launcher name="UltimateDebug">
       <solaris/>
       <win useIco="false">
@@ -32,10 +31,12 @@
       </win>
    </launcher>
 
-
    <vm>
       <windows include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7</windows>
    </vm>
+
+   <plugins>
+   </plugins>
 
    <features>
       <feature id="BA_FeatureUltimateDebug" version="0.0.1"/>
@@ -43,14 +44,11 @@
    </features>
 
    <configurations>
-     <plugin id="GUIGeneratedPreferencePages" autoStart="true" startLevel="4" />
-     <plugin id="UltimateGui" autoStart="true" startLevel="5" />
-     <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="1" />
-	 <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="2" />
-     <plugin id="org.eclipse.equinox.ds" autoStart="true" startLevel="3" />
-     <plugin id="org.eclipse.equinox.event" autoStart="true" startLevel="3" />
+      <plugin id="GUIGeneratedPreferencePages" autoStart="true" startLevel="4" />
+      <plugin id="UltimateGui" autoStart="true" startLevel="5" />
+      <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.equinox.ds" autoStart="true" startLevel="3" />
+      <plugin id="org.eclipse.equinox.event" autoStart="true" startLevel="3" />
    </configurations>
-  <configurations>
 
-  </configurations>
 </product>
