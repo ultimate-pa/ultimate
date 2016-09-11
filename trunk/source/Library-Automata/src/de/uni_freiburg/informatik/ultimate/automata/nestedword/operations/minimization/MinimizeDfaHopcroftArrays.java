@@ -334,9 +334,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 				}
 			});
 			
-			for (int i = 0; i < test.length; ++i) {
-				mCords.mElements[i] = test[i];
-			}
+			System.arraycopy(test, 0, mCords.mElements, 0, test.length);
 			
 			mCords.mNumberOfSets = mNumberOfMarkedElemInSet[0] = 0;
 			int a = mLabels[mCords.mElements[0]];
