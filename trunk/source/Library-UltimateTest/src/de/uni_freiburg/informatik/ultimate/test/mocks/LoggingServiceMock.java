@@ -31,6 +31,7 @@ import java.io.Writer;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
 
 /**
@@ -72,6 +73,24 @@ final class LoggingServiceMock implements ILoggingService {
 
 	@Override
 	public void removeWriter(final Writer writer) {
+
+	}
+
+	@Override
+	public void reloadLoggers() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void setCurrentControllerID(final String name) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void store(final IToolchainStorage storage) {
+		// TODO Auto-generated method stub
 
 	}
 }
