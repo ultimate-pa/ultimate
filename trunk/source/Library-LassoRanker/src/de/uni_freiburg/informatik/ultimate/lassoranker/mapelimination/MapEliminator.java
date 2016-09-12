@@ -230,7 +230,7 @@ public class MapEliminator {
 		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectDeep(term, false)) {
 			final ArrayWrite arrayWrite = new ArrayWrite(select.getArray());
 			findIndicesArrayWrite(arrayWrite, transformula);
-			addArrayToRelation(arrayWrite.getOldArray(), select.getIndex(), transformula);
+			addArrayAccessToRelation(arrayWrite.getOldArray(), select.getIndex(), transformula);
 		}
 		for (final ApplicationTerm t : new ApplicationTermFinder("=", false).findMatchingSubterms(term)) {
 			if (t.getParameters()[0].getSort().isArraySort()) {
@@ -257,7 +257,8 @@ public class MapEliminator {
 			if (symbol instanceof FunctionSymbol) {
 				final String function = ((FunctionSymbol) symbol).getName();
 				for (final ApplicationTerm t : new ApplicationTermFinder(function, false).findMatchingSubterms(term)) {
-					addCallToRelation(function, t.getParameters(), transformula);
+					final ArrayIndex index = new ArrayIndex(Arrays.asList(t.getParameters()));
+					addCallToRelation(function, index, transformula);
 				}
 			}
 		}
@@ -265,15 +266,15 @@ public class MapEliminator {
 
 	private void findIndicesArrayWrite(final ArrayWrite arrayWrite, final TransFormulaLR transformula) {
 		for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
-			addArrayToRelation(arrayWrite.getOldArray(), store.getIndex(), transformula);
+			addArrayAccessToRelation(arrayWrite.getOldArray(), store.getIndex(), transformula);
 		}
 	}
 
 	/**
 	 * Adds the info, that {@code array} is accessed by {@code index} to the hash relations
 	 */
-	private void addArrayToRelation(final Term array, final ArrayIndex index, final TransFormulaLR transformula) {
-		if (allVariablesAreVisible(array, transformula) && allVariablesAreVisible(index, transformula)) {
+	private void addArrayAccessToRelation(final Term array, final ArrayIndex index, final TransFormulaLR transformula) {
+		if (allVariablesAreVisible(array, transformula) && isIndexAdded(index, transformula)) {
 			final ArrayIndex globalIndex = new ArrayIndex(
 					translateTermVariablesToDefinitions(mScript, transformula, index));
 			final Term globalArray = translateTermVariablesToDefinitions(mScript, transformula, array);
@@ -287,18 +288,16 @@ public class MapEliminator {
 	}
 
 	/**
-	 * Adds the info, that the function with name {@code functionName} is applied to {@code arguments} to the hash
-	 * relations
+	 * Adds the info, that the function with name {@code functionName} is applied to {@code index} to the hash relations
 	 */
-	private void addCallToRelation(final String functionName, final Term[] arguments,
+	private void addCallToRelation(final String functionName, final ArrayIndex index,
 			final TransFormulaLR transformula) {
-		final List<Term> argumentsList = Arrays.asList(arguments);
-		if (!argumentsList.isEmpty()) {
+		if (!index.isEmpty()) {
 			mUninterpretedFunctions.add(functionName);
 		}
-		if (allVariablesAreVisible(argumentsList, transformula)) {
+		if (isIndexAdded(index, transformula)) {
 			final ArrayIndex globalIndex = new ArrayIndex(
-					translateTermVariablesToDefinitions(mScript, transformula, argumentsList));
+					translateTermVariablesToDefinitions(mScript, transformula, index));
 			for (final TermVariable var : globalIndex.getFreeVars()) {
 				mVariablesToIndices.addPair(var, globalIndex);
 			}
@@ -306,6 +305,22 @@ public class MapEliminator {
 			mFunctionsToIndices.addPair(template, globalIndex);
 			mIndicesToFunctions.addPair(globalIndex, template);
 		}
+	}
+
+	/**
+	 * Returns true iff the index should be added to the hash-relations. This is the case, if it contains neither
+	 * aux-vars nor store-expressions
+	 */
+	private static boolean isIndexAdded(final ArrayIndex index, final TransFormulaLR transformula) {
+		if (!allVariablesAreVisible(index, transformula)) {
+			return false;
+		}
+		for (final Term t : index) {
+			if (!new ApplicationTermFinder("store", true).findMatchingSubterms(t).isEmpty()) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -366,15 +381,18 @@ public class MapEliminator {
 		conjuncts.addAll(Arrays.asList(SmtUtils.getConjuncts(storeFreeTerm)));
 		conjuncts.addAll(getInVarEqualities(newTF, invariants));
 		conjuncts.addAll(getOutVarEqualities(newTF, assignedVars, invariants));
+		conjuncts.addAll(mAdditionalConjuncts);
+		if (!mOnlyTrivialImplicationsIndexAssignment) {
+			conjuncts.addAll(getAllImplicationsForIndexAssignment(assignedVars, newTF, invariants));
+		}
 		conjuncts.addAll(invariants.constructListOfEqualities(mScript));
 		if (mAddInequalities) {
 			conjuncts.addAll(invariants.constructListOfNotEquals(mScript));
 		}
-		if (!mOnlyTrivialImplicationsIndexAssignment) {
-			conjuncts.addAll(getAllImplicationsForIndexAssignment(assignedVars, newTF, invariants));
-		}
-		conjuncts.addAll(mAdditionalConjuncts);
-		final Term replacedTerm = replaceReadExpressions(newTF, SmtUtils.and(mScript, conjuncts));
+		final Term newTerm = SmtUtils.and(mScript, conjuncts);
+		final Set<ApplicationTerm> storeTerms = new ApplicationTermFinder("store", true).findMatchingSubterms(newTerm);
+		assert storeTerms.isEmpty() : "The formula contains still store-expressions";
+		final Term replacedTerm = replaceReadExpressions(newTF, newTerm);
 		setFormulaAndSimplify(newTF, replacedTerm);
 		return newTF;
 	}
@@ -510,9 +528,10 @@ public class MapEliminator {
 	private Term replaceReadExpressions(final TransFormulaLR transformula, final Term term) {
 		addReplacementVarsToTransFormula(transformula);
 		final Map<Term, Term> substitution = new HashMap<>();
-		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectShallow(term, false)) {
-			final Term selectTerm = select.getSelectTerm();
-			substitution.put(selectTerm, getReplacementVar(selectTerm, transformula));
+		for (final ApplicationTerm select : new ApplicationTermFinder("select", true).findMatchingSubterms(term)) {
+			if (!select.getSort().isArraySort()) {
+				substitution.put(select, getReplacementVar(select, transformula));
+			}
 		}
 		for (final String functionName : mUninterpretedFunctions) {
 			for (final Term functionCall : new ApplicationTermFinder(functionName, true).findMatchingSubterms(term)) {
@@ -792,19 +811,20 @@ public class MapEliminator {
 		final Map<Term, Term> substitution = new HashMap<>();
 		for (final TermVariable var : term.getFreeVars()) {
 			final IProgramVar programVar = mSymbolTable.getBoogieVar(var);
-			final Term localVar;
-			if (returnInVar) {
-				if (!transformula.getInVars().containsKey(programVar)) {
-					transformula.addInVar(programVar, getFreshTermVar(var));
-				}
-				localVar = transformula.getInVars().get(programVar);
-			} else {
-				if (!transformula.getOutVars().containsKey(programVar)) {
-					transformula.addOutVar(programVar, getFreshTermVar(var));
-				}
-				localVar = transformula.getOutVars().get(programVar);
+			// Add the missing in-/out-vars to the transformula if necessary
+			final TermVariable freshTermVar = getFreshTermVar(var);
+			if (!transformula.getInVars().containsKey(programVar)) {
+				transformula.addInVar(programVar, freshTermVar);
 			}
-			substitution.put(var, localVar);
+			if (!transformula.getOutVars().containsKey(programVar)) {
+				transformula.addOutVar(programVar, freshTermVar);
+			}
+			// Put the in-/out-var-version of this variable to the substitution-map
+			if (returnInVar) {
+				substitution.put(var, transformula.getInVars().get(programVar));
+			} else {
+				substitution.put(var, transformula.getOutVars().get(programVar));
+			}
 		}
 		return new Substitution(mManagedScript, substitution).transform(term);
 	}
