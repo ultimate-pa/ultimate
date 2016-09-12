@@ -56,32 +56,30 @@ public class InductivityCheck {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
-	private final INestedWordAutomaton<CodeBlock, IPredicate> nwa;
-
 	private final IHoareTripleChecker mHoareTripleChecker;
 	private final boolean mAntiInductivity;
 	private final boolean mAssertInductivity;
-	private final int[] yield = new int[3];
+	private final int[] mYield;
 	private final boolean mResult;
 
 	public InductivityCheck(final IUltimateServiceProvider services,
-			final INestedWordAutomaton<CodeBlock, IPredicate> mNwa, final boolean mAntiInductivity,
-			final boolean mAssertInductivity, final IHoareTripleChecker hoareTripleChecker) {
+			final INestedWordAutomaton<CodeBlock, IPredicate> nwa, final boolean antiInductivity,
+			final boolean assertInductivity, final IHoareTripleChecker hoareTripleChecker) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		nwa = mNwa;
 		mHoareTripleChecker = hoareTripleChecker;
-		this.mAntiInductivity = mAntiInductivity;
-		this.mAssertInductivity = mAssertInductivity;
-		mResult = checkInductivity();
+		mYield = new int[3];
+		mAntiInductivity = antiInductivity;
+		mAssertInductivity = assertInductivity;
+		mResult = checkInductivity(nwa);
 	}
 
 	public boolean getResult() {
 		return mResult;
 	}
 
-	private boolean checkInductivity() {
+	private boolean checkInductivity(final INestedWordAutomaton<CodeBlock, IPredicate> nwa) {
 		if (mAntiInductivity) {
 			mLogger.debug("Start checking anti-inductivity of automaton");
 		} else {
@@ -128,8 +126,8 @@ public class InductivityCheck {
 		if (mHoareTripleChecker instanceof IncrementalHoareTripleChecker) {
 			((IncrementalHoareTripleChecker) mHoareTripleChecker).clearAssertionStack();
 		}
-		mLogger.info("Interpolant automaton has " + (yield[0] + yield[1] + yield[2]) + " edges. " + yield[0]
-				+ " inductive. " + yield[1] + " not inductive. " + yield[2] + " times theorem prover too"
+		mLogger.info("Interpolant automaton has " + (mYield[0] + mYield[1] + mYield[2]) + " edges. " + mYield[0]
+				+ " inductive. " + mYield[1] + " not inductive. " + mYield[2] + " times theorem prover too"
 				+ " weak to decide inductivity. ");
 		return result;
 	}
@@ -138,7 +136,7 @@ public class InductivityCheck {
 		boolean result = true;
 		switch (inductivity) {
 		case VALID: {
-			yield[0]++;
+			mYield[0]++;
 			if (mAntiInductivity) {
 				mLogger.warn("Transition " + state + " " + trans + " not anti inductive");
 				result = false;
@@ -147,7 +145,7 @@ public class InductivityCheck {
 			break;
 		}
 		case INVALID: {
-			yield[1]++;
+			mYield[1]++;
 			if (!mAntiInductivity) {
 				mLogger.warn("Transition " + state + " " + trans + " not inductive");
 				result = false;
@@ -156,7 +154,7 @@ public class InductivityCheck {
 			break;
 		}
 		case UNKNOWN: {
-			yield[2]++;
+			mYield[2]++;
 			break;
 		}
 		default:
