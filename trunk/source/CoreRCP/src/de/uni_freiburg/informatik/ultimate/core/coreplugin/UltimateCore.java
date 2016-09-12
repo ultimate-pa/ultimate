@@ -253,7 +253,7 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 				for (final IConfigurationElement elem : Platform.getExtensionRegistry()
 				        .getConfigurationElementsFor(ep)) {
 					final String classname = elem.getAttribute("class");
-					lil.add(classname.substring(0, classname.lastIndexOf(".")));
+					lil.add(classname.substring(0, classname.lastIndexOf('.')));
 				}
 			}
 			sPluginNames = lil.toArray(new String[lil.size()]);

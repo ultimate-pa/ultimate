@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE DebugGUI plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.gui.preferencepages;
@@ -65,7 +65,7 @@ public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPrefere
 	}
 
 	@Override
-	protected void setThePreference(String[] items) {
+	protected void setThePreference(final String[] items) {
 		final StringBuffer buffer = new StringBuffer();
 		for (int i = 0; i < items.length; i++) {
 			buffer.append(items[i]);
@@ -75,13 +75,13 @@ public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPrefere
 	}
 
 	@Override
-	protected String getInfoContent(List detailList) {
+	protected String getInfoContent(final List detailList) {
 		final String response = CorePreferenceInitializer.ALL_PLUGINS_PRESENT;
 		final StringBuffer invalidPluginIds = new StringBuffer();
 		invalidPluginIds.append(CorePreferenceInitializer.PLUGINS_NOT_PRESENT);
 		boolean error = false;
 		for (final String line : detailList.getItems()) {
-			final String pluginId = line.substring(0, line.lastIndexOf("="));
+			final String pluginId = line.substring(0, line.lastIndexOf('='));
 			if (!isActivePluginId(pluginId)) {
 				error = true;
 				invalidPluginIds.append(pluginId + "\n");
@@ -93,7 +93,7 @@ public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPrefere
 		return response;
 	}
 
-	private boolean isActivePluginId(String pluginId) {
+	private boolean isActivePluginId(final String pluginId) {
 		// hack until this class is auto-generated
 		final String[] plugins = UltimateCore.getPluginNames();
 		boolean retVal = false;
@@ -122,7 +122,7 @@ public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPrefere
 		return return_list;
 	}
 
-	private static String[] convert(String preferenceValue) {
+	private static String[] convert(final String preferenceValue) {
 		final StringTokenizer tokenizer = new StringTokenizer(preferenceValue,
 				CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
 		final int tokenCount = tokenizer.countTokens();

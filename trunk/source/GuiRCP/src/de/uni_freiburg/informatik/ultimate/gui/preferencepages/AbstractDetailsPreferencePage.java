@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE DebugGUI plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission
  * to convey the resulting work.
  */
 /*
@@ -73,7 +73,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 	 * @see PreferencePage#createContents(Composite)
 	 */
 	@Override
-	protected Control createContents(Composite parent) {
+	protected Control createContents(final Composite parent) {
 
 		final Composite entryTable = new Composite(parent, SWT.NULL);
 		// Create a data that takes up the extra space in the dialog .
@@ -111,7 +111,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 		addButton.setText("Add to List"); //$NON-NLS-1$
 		addButton.addSelectionListener(new SelectionAdapter() {
 			@Override
-			public void widgetSelected(SelectionEvent event) {
+			public void widgetSelected(final SelectionEvent event) {
 				final String text = newEntryText.getText();
 				if (entryIsValid(text)) {
 					detailList.add(newEntryText.getText(), detailList.getItemCount());
@@ -139,7 +139,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 		removeButton.setText("Remove Selection"); //$NON-NLS-1$
 		removeButton.addSelectionListener(new SelectionAdapter() {
 			@Override
-			public void widgetSelected(SelectionEvent event) {
+			public void widgetSelected(final SelectionEvent event) {
 				detailList.remove(detailList.getSelectionIndex());
 				fillInfoLabel(detailList);
 			}
@@ -149,7 +149,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 		editButton.setText("Edit Selected"); //$NON-NLS-1$
 		editButton.addSelectionListener(new SelectionAdapter() {
 			@Override
-			public void widgetSelected(SelectionEvent event) {
+			public void widgetSelected(final SelectionEvent event) {
 				final int index = detailList.getSelectionIndex();
 				if (index == -1) {
 					return;
@@ -189,15 +189,15 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 	 * 
 	 * @param detailList
 	 */
-	private void fillInfoLabel(List detailList) {
+	private void fillInfoLabel(final List detailList) {
 		final String content = getInfoContent(detailList);
 		infoLabel.setText(content);
 	}
 
 	protected abstract String getInfoContent(List detailList);
 
-	private boolean entryIsValid(String text) {
-		final int eqIndex = text.lastIndexOf("=");
+	private boolean entryIsValid(final String text) {
+		final int eqIndex = text.lastIndexOf('=');
 		if (eqIndex <= 0) {
 			raiseInvalidEntryError();
 			return false;
@@ -237,7 +237,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 	 * @see IWorkbenchPreferencePage#init(IWorkbench)
 	 */
 	@Override
-	public void init(IWorkbench workbench) {
+	public void init(final IWorkbench workbench) {
 		// Initialize the preference store we wish to use
 		setPreferenceStore(getCorrectPreferenceStore());
 	}

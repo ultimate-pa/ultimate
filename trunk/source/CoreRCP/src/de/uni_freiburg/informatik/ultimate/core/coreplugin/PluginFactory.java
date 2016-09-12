@@ -347,7 +347,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 	}
 
 	private String createPluginID(final String classname) {
-		final String rtr = classname.substring(0, classname.lastIndexOf("."));
+		final String rtr = classname.substring(0, classname.lastIndexOf('.'));
 		return rtr;
 	}
 
