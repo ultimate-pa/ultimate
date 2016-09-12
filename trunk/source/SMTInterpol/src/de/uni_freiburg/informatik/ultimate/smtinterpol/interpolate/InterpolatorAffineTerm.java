@@ -39,9 +39,9 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffin
 
 
 /**
- *  Represents a modifiable affin term, i.e. SUM_i c_i * x_i + c, 
+ *  Represents a modifiable affin term, i.e. SUM_i c_i * x_i + c,
  *  where the x_i are initially nonbasic variable.
- *    
+ * 
  *  @author hoenicke.
  */
 public class InterpolatorAffineTerm {
@@ -52,33 +52,33 @@ public class InterpolatorAffineTerm {
 		mConstant = InfinitNumber.ZERO;
 	}
 
-	public InterpolatorAffineTerm(InterpolatorAffineTerm iat) {
+	public InterpolatorAffineTerm(final InterpolatorAffineTerm iat) {
 		mConstant = iat.getConstant();
 		mSummands.putAll(iat.getSummands());
 	}
 
-	public InterpolatorAffineTerm(Map<LinVar, Rational> sum, InfinitNumber c) {
+	public InterpolatorAffineTerm(final Map<LinVar, Rational> sum, final InfinitNumber c) {
 		mConstant = c;
 		for (final Entry<LinVar, Rational> entry : sum.entrySet()) {
 			mSummands.put(entry.getKey().getSharedTerm().getTerm(), entry.getValue());
 		}
 	}
 
-	public InterpolatorAffineTerm(MutableAffinTerm mat) {
+	public InterpolatorAffineTerm(final MutableAffinTerm mat) {
 		this(mat.getSummands(), mat.getConstant());
 	}
 
-	public InterpolatorAffineTerm add(Rational c) {
+	public InterpolatorAffineTerm add(final Rational c) {
 		mConstant = mConstant.add(new InfinitNumber(c, 0));
 		return this;
 	}
 	
-	public InterpolatorAffineTerm add(InfinitNumber c) {
+	public InterpolatorAffineTerm add(final InfinitNumber c) {
 		mConstant = mConstant.add(c);
 		return this;
 	}
 
-	public InterpolatorAffineTerm add(Rational c, MutableAffinTerm a) {
+	public InterpolatorAffineTerm add(final Rational c, final MutableAffinTerm a) {
 		if (c != Rational.ZERO) {
 			addLinVarMap(c, a.getSummands());
 			mConstant = mConstant.add(a.getConstant().mul(c));
@@ -86,13 +86,13 @@ public class InterpolatorAffineTerm {
 		return this;
 	}
 
-	public InterpolatorAffineTerm add(Rational c, Term term) {
+	public InterpolatorAffineTerm add(final Rational c, final Term term) {
 		if (!c.equals(Rational.ZERO)) {
 			addSimple(c, term);
 		}
 		return this;
 	}
-	public InterpolatorAffineTerm add(Rational c, SharedTerm term) {
+	public InterpolatorAffineTerm add(final Rational c, final SharedTerm term) {
 		if (c.equals(Rational.ZERO)) {
 			return this;
 		}
@@ -103,7 +103,7 @@ public class InterpolatorAffineTerm {
 		}
 		return this;
 	}
-	public InterpolatorAffineTerm add(Rational c, LinVar var) {
+	public InterpolatorAffineTerm add(final Rational c, final LinVar var) {
 		if (c.equals(Rational.ZERO)) {
 			return this;
 		}
@@ -117,23 +117,23 @@ public class InterpolatorAffineTerm {
 		return this;
 	}
 
-	private void addLinVarMap(Rational c, Map<LinVar, Rational> linterm) {
+	private void addLinVarMap(final Rational c, final Map<LinVar, Rational> linterm) {
 		for (final Map.Entry<LinVar, Rational> summand : linterm.entrySet()) {
 			addSimple(c.mul(summand.getValue()), summand.getKey());
 		}
 	}
 
-	private void addMap(Rational c, Map<Term, Rational> linterm) {
+	private void addMap(final Rational c, final Map<Term, Rational> linterm) {
 		for (final Map.Entry<Term, Rational> summand : linterm.entrySet()) {
 			addSimple(c.mul(summand.getValue()), summand.getKey());
 		}
 	}
 	
-	private void addSimple(Rational c, LinVar term) {
+	private void addSimple(final Rational c, final LinVar term) {
 		addSimple(c, term.getSharedTerm().getRealTerm());
 	}
 	
-	private void addSimple(Rational c, Term term) {
+	private void addSimple(Rational c, final Term term) {
 		assert (/*!term.getLinVar().isInitiallyBasic() &&*/ !c.equals(Rational.ZERO));
 		final Rational oldc = mSummands.remove(term);
 		if (oldc != null) {
@@ -145,7 +145,7 @@ public class InterpolatorAffineTerm {
 		mSummands.put(term,c);
 	}
 
-	public InterpolatorAffineTerm add(Rational c, InterpolatorAffineTerm a) {
+	public InterpolatorAffineTerm add(final Rational c, final InterpolatorAffineTerm a) {
 		if (c != Rational.ZERO) {
 			addMap(c, a.mSummands);
 			mConstant = mConstant.add(a.mConstant.mul(c));
@@ -153,7 +153,7 @@ public class InterpolatorAffineTerm {
 		return this;
 	}
 
-	public InterpolatorAffineTerm mul(Rational c) {
+	public InterpolatorAffineTerm mul(final Rational c) {
 		if (c.equals(Rational.ZERO)) {
 			mSummands.clear();
 		} else if (!c.equals(Rational.ONE)) {
@@ -165,7 +165,7 @@ public class InterpolatorAffineTerm {
 		return this;
 	}
 	
-	public InterpolatorAffineTerm div(Rational c) {
+	public InterpolatorAffineTerm div(final Rational c) {
 		return mul(c.inverse());
 	}
 	public InterpolatorAffineTerm negate() {
@@ -184,7 +184,7 @@ public class InterpolatorAffineTerm {
 	public Rational getGCD() {
 		assert (!mSummands.isEmpty());
 		final Iterator<Rational> it = mSummands.values().iterator();
-		Rational gcd = it.next(); 
+		Rational gcd = it.next();
 		final boolean firstSign = gcd.isNegative();
 		gcd = gcd.abs();
 		while (it.hasNext()) {
@@ -226,7 +226,7 @@ public class InterpolatorAffineTerm {
 		if (isFirst) {
 			sb.append(mConstant);
 		} else {
-			final int signum = mConstant.compareTo(InfinitNumber.ZERO); 
+			final int signum = mConstant.compareTo(InfinitNumber.ZERO);
 			if (signum < 0) {
 				sb.append(" - ");
 				sb.append(mConstant.mul(Rational.MONE));
@@ -240,8 +240,8 @@ public class InterpolatorAffineTerm {
 	
 	/**
 	 * Convert the affine term to a term in our core theory.
-	 */ 
-	public Term toSMTLib(Theory t, boolean isInt) {
+	 */
+	public Term toSMTLib(final Theory t, final boolean isInt) {
 		assert(mConstant.mEps == 0);
 		final Sort numSort = isInt ? t.getSort("Int") : t.getSort("Real");
 		assert(numSort != null);
@@ -253,7 +253,7 @@ public class InterpolatorAffineTerm {
 			negate = t.getFunction("-", numSort);
 		}
 		assert (!isInt || mConstant.mA.isIntegral());
-		Term comb = mConstant.mA.equals(Rational.ZERO) ? null 
+		Term comb = mConstant.mA.equals(Rational.ZERO) ? null
 				: isInt ? t.numeral(mConstant.mA.numerator())
 				: t.rational(mConstant.mA.numerator(), mConstant.mA.denominator());
 		for (final Map.Entry<Term,Rational> me : mSummands.entrySet()) {
@@ -299,11 +299,11 @@ public class InterpolatorAffineTerm {
 	 * @param t   Theory used in conversion.
 	 * @return A term for <code>this <= val</code>.
 	 */
-	public Term toLeq0(Theory t) {
+	public Term toLeq0(final Theory t) {
 		assert(mConstant.mEps >= 0);
 		if (isConstant()) {
 			return mConstant.compareTo(InfinitNumber.ZERO) <= 0 ? t.mTrue : t.mFalse;
-		} 
+		}
 		final boolean isInt = isInt();
 		final Sort numSort = isInt ? t.getSort("Int") : t.getSort("Real");
 		assert(numSort != null);
@@ -357,6 +357,7 @@ public class InterpolatorAffineTerm {
 			break;
 		default:
 			tlcomb = t.term(plus, lcomb.toArray(new Term[lcomb.size()]));
+			break;
 		}
 		switch (rcomb.size()) {
 		case 0:
@@ -367,7 +368,8 @@ public class InterpolatorAffineTerm {
 			break;
 		default:
 			trcomb = t.term(plus, rcomb.toArray(new Term[rcomb.size()]));
-		}				
+			break;
+		}
 		return t.term(constant.mEps == 0 ? "<=" : "<",
 				tlcomb, trcomb);
 	}
