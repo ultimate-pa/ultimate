@@ -17,7 +17,7 @@ print(numberOfStates(cfg7));
 NestedLassoWord nlw = [  "y := 0;" "assume y < k;" "call rec(y);"< "y := 0;" "assume y >= k;assume true;" >"return;" "y := y + 1;" "assume y < k;" "call rec(y);"< "y := 0;" "assume y < k;" "call rec(y);"< "y := 0;" "assume y >= k;assume true;" >"return;" "y := y + 1;" "assume y < k;" "call rec(y);"< "y := 0;" "assume y < k;" "call rec(y);"< "y := 0;" "assume y >= k;assume true;" >"return;" "y := y + 1;" "assume y >= k;assume true;" >"return;" "y := y + 1;" "assume y < k;" "call rec(y);"<  , "y := 0;" "assume y < k;" "call rec(y);"< "y := 0;" "assume y >= k;assume true;" >"return;" "y := y + 1;" "assume y < k;" "call rec(y);"< "y := 0;" "assume y < k;" "call rec(y);"< "y := 0;" "assume y >= k;assume true;" >"return;" "y := y + 1;" "assume y >= k;assume true;" >"return;" "y := y + 1;" "assume y < k;" "call rec(y);"<  ];
 print(buchiAccepts(cfg3, nlw));
 print(buchiAccepts(ia, nlw));
-NestedWordAutomaton complement = buchiComplementBS(ia);
+NestedWordAutomaton complement = buchiComplementNCSB(ia);
 print(buchiAccepts(complement, nlw));
 
 
