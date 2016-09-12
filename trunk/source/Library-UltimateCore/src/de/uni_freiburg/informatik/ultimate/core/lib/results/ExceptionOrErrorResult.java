@@ -41,7 +41,7 @@ public class ExceptionOrErrorResult extends AbstractResult {
 	public ExceptionOrErrorResult(final String plugin, final Throwable throwable) {
 		super(getPluginName(plugin, throwable));
 		if (throwable instanceof ToolchainExceptionWrapper) {
-			mThrowable = ((ToolchainExceptionWrapper) throwable).getWrappedThrowable();
+			mThrowable = ((ToolchainExceptionWrapper) throwable).getCause();
 		} else {
 			mThrowable = throwable;
 		}
