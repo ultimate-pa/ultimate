@@ -27,9 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders;
 
-import java.util.HashMap;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Builder for counter-example-based abstract interpretation interpolant automata. This builder constructs a straight
@@ -64,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  */
 public class AbsIntStraightLineInterpolantAutomatonBuilder
-        implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
+		implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
 
 	private static final long PRINT_PREDS_LIMIT = 30;
 
@@ -75,11 +76,11 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 	private final IRun<CodeBlock, IPredicate> mCurrentCounterExample;
 
 	public AbsIntStraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-	        final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
-	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
-	        final PredicateUnifier predUnifier, final SmtManager smtManager,
-	        final IRun<CodeBlock, IPredicate> currentCounterExample,
-	        final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
+			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
+			final PredicateUnifier predUnifier, final SmtManager smtManager,
+			final IRun<CodeBlock, IPredicate> currentCounterExample,
+			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSmtManager = smtManager;
@@ -93,15 +94,15 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> constructAutomaton(
-	        final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
-	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
-	        final PredicateUnifier predicateUnifier) {
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
+			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
+			final PredicateUnifier predicateUnifier) {
 
 		mLogger.info("Creating automaton from AI predicates.");
 
 		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<CodeBlock, IPredicate>(
-		        new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
-		        oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
+				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
+				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
 
 		final NestedRun<CodeBlock, IPredicate> cex = (NestedRun<CodeBlock, IPredicate>) mCurrentCounterExample;
 		final Word<CodeBlock> word = cex.getWord();
@@ -109,7 +110,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 		final int wordlength = word.length();
 		assert wordlength > 1 : "Unexpected: length of word smaller or equal to 1.";
 
-		final Map<Call, IPredicate> callHierarchyPredicates = new HashMap<>();
+		final Deque<Pair<Call, IPredicate>> callStack = new ArrayDeque<>();
 
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
 		final Set<IPredicate> alreadyThereAsState = new HashSet<>();
@@ -121,20 +122,16 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 			final CodeBlock symbol = word.getSymbol(i);
 
 			@SuppressWarnings("unchecked")
-			final Set<IAbstractState<?, ?, ?>> nextStates = (Set<IAbstractState<?, ?, ?>>) aiResult.getLoc2States()
-			        .get(symbol.getTarget());
+			final Set<IAbstractState<?, ?, ?>> nextStates =
+					(Set<IAbstractState<?, ?, ?>>) aiResult.getLoc2States().get(symbol.getTarget());
 
 			final IPredicate target;
 			if (nextStates == null) {
 				target = falsePredicate;
 			} else {
 				target = predicateUnifier.getOrConstructPredicateForDisjunction(
-				        nextStates.stream().map(s -> s.getTerm(mSmtManager.getScript(), mSmtManager.getBoogie2Smt()))
-				                .map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
-			}
-
-			if (mLogger.isDebugEnabled()) {
-				writeTransitionAddLog(i, symbol, nextStates, previous, target);
+						nextStates.stream().map(s -> s.getTerm(mSmtManager.getScript(), mSmtManager.getBoogie2Smt()))
+								.map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
 			}
 
 			if (alreadyThereAsState.add(target)) {
@@ -142,16 +139,25 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 			}
 
 			// Add transition
+			final Pair<Call, IPredicate> hierarchicalPreState;
 			if (symbol instanceof Call) {
+				hierarchicalPreState = new Pair<>((Call) symbol, previous);
 				result.addCallTransition(previous, symbol, target);
-				callHierarchyPredicates.put((Call) symbol, previous);
+				callStack.addFirst(hierarchicalPreState);
 			} else if (symbol instanceof Return) {
 				final Return returnSymbol = (Return) symbol;
-				final IPredicate hierarchyState = callHierarchyPredicates.get(returnSymbol.getCorrespondingCall());
-				assert hierarchyState != null : "Return does not have a corresponding call.";
-				result.addReturnTransition(previous, hierarchyState, symbol, target);
+				assert !callStack.isEmpty() : "Return does not have a corresponding call.";
+				hierarchicalPreState = callStack.removeFirst();
+				assert returnSymbol.getCorrespondingCall() == hierarchicalPreState.getFirst() : "Callstack broken";
+				result.addReturnTransition(previous, hierarchicalPreState.getSecond(), symbol, target);
 			} else {
+				hierarchicalPreState = null;
 				result.addInternalTransition(previous, symbol, target);
+			}
+
+			if (mLogger.isDebugEnabled()) {
+				writeTransitionAddLog(i, symbol, nextStates, previous,
+						hierarchicalPreState == null ? null : hierarchicalPreState.getSecond(), target);
 			}
 
 			previous = target;
@@ -166,27 +172,39 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 
 		if (PRINT_PREDS_LIMIT < alreadyThereAsState.size()) {
 			mLogger.info("Using "
-			        + alreadyThereAsState.size() + " predicates from AI: " + String.join(",", alreadyThereAsState
-			                .stream().limit(PRINT_PREDS_LIMIT).map(a -> a.toString()).collect(Collectors.toList()))
-			        + "...");
+					+ alreadyThereAsState.size() + " predicates from AI: " + String.join(",", alreadyThereAsState
+							.stream().limit(PRINT_PREDS_LIMIT).map(a -> a.toString()).collect(Collectors.toList()))
+					+ "...");
 		} else {
 			mLogger.info("Using " + alreadyThereAsState.size() + " predicates from AI: " + String.join(",",
-			        alreadyThereAsState.stream().map(a -> a.toString()).collect(Collectors.toList())));
+					alreadyThereAsState.stream().map(a -> a.toString()).collect(Collectors.toList())));
 		}
 
 		return result;
 	}
 
 	private void writeTransitionAddLog(final int i, final CodeBlock symbol,
-	        final Set<IAbstractState<?, ?, ?>> nextStates, final IPredicate source, final IPredicate target) {
+			final Set<IAbstractState<?, ?, ?>> nextStates, final IPredicate source,
+			final IPredicate hierarchicalPreState, final IPredicate target) {
 		final String divider = "------------------------------------------------";
 		if (i == 0) {
 			mLogger.debug(divider);
 		}
 		mLogger.debug("Transition: " + symbol);
-		mLogger.debug("Original Target States: " + (nextStates == null ? "NONE" : nextStates));
-		mLogger.debug("Source Term: " + source);
-		mLogger.debug("Target Term: " + target);
+		if (nextStates == null) {
+			mLogger.debug("AI Post States: NONE");
+		} else {
+			mLogger.debug("AI Post States:");
+			for (final IAbstractState<?, ?, ?> nextState : nextStates) {
+				mLogger.debug("  " + nextState);
+			}
+		}
+
+		mLogger.debug("Pre Term: " + source);
+		if (hierarchicalPreState != null) {
+			mLogger.debug("HierachicalPre Term: " + hierarchicalPreState);
+		}
+		mLogger.debug("Post Term: " + target);
 		mLogger.debug(divider);
 	}
 }
