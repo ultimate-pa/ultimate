@@ -293,7 +293,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 
 	private IController<RunDefinition> loadControllerPlugin(final IConfigurationElement controllerDescriptor) {
 		final IController<RunDefinition> controller = createInstance(controllerDescriptor);
-		mGuiMode = Boolean.getBoolean(controllerDescriptor.getAttribute("isGraphical"));
+		mGuiMode = Boolean.valueOf(controllerDescriptor.getAttribute("isGraphical"));
 		mSettingsManager.registerPlugin(controller);
 
 		mLogger.info("Loaded " + (mGuiMode ? "graphical " : "") + "controller " + controller.getPluginName());
