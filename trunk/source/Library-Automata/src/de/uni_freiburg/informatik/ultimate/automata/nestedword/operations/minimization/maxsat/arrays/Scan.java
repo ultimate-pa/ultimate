@@ -196,32 +196,32 @@ final class Scan {
 		}
 	}
 
-	private static void expectString(final java.io.StreamTokenizer in, final String x)
-			throws java.io.IOException, ParseNwaException {
+	private static void expectString(final StreamTokenizer in, final String x)
+			throws IOException, ParseNwaException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_WORD || !in.sval.equals(x)) {
 			throw new ParseNwaException("expected " + x + ", but got " + in.sval);
 		}
 	}
 
-	private static void expectEol(final java.io.StreamTokenizer in)
-			throws java.io.IOException, ParseNwaException {
+	private static void expectEol(final StreamTokenizer in)
+			throws IOException, ParseNwaException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_EOL) {
 			throw new ParseNwaException("expected EOL");
 		}
 	}
 
-	private static void expectEof(final java.io.StreamTokenizer in)
-			throws java.io.IOException, ParseNwaException {
+	private static void expectEof(final StreamTokenizer in)
+			throws IOException, ParseNwaException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_EOF) {
 			throw new ParseNwaException("expected EOF");
 		}
 	}
 
-	private static int parseInt(final java.io.StreamTokenizer in)
-			throws java.io.IOException, ParseNwaException {
+	private static int parseInt(final StreamTokenizer in)
+			throws IOException, ParseNwaException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_NUMBER) {
 			throw new ParseNwaException("expected number");
@@ -229,8 +229,8 @@ final class Scan {
 		return (int) in.nval;
 	}
 
-	private static int parseInt(final java.io.StreamTokenizer in, final int max)
-			throws java.io.IOException, ParseNwaException {
+	private static int parseInt(final StreamTokenizer in, final int max)
+			throws IOException, ParseNwaException {
 		in.nextToken();
 		if (in.ttype != StreamTokenizer.TT_NUMBER) {
 			throw new ParseNwaException("expected number");

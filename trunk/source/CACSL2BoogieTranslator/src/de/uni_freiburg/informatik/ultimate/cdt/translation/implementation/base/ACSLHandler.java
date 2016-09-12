@@ -856,7 +856,7 @@ public class ACSLHandler implements IACSLHandler {
 //        CArray arrayType = new CArray(dimensions, idExprRes.lrVal.cType); --> wrong, i think (alex)
 //        arrayType.getDimensions().length == args.size()
             
-        de.uni_freiburg.informatik.ultimate.boogie.ast.Expression expr;
+        Expression expr;
         if (subExpr instanceof IdentifierExpression) {
             final IdentifierExpression idEx = (IdentifierExpression) subExpr;
             final String bId = idEx.getIdentifier();
