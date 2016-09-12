@@ -521,6 +521,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			break;
 		default:
 			mOperator.name();
+			break;
 		}
 
 		sb.append(mRightSubEvaluator);

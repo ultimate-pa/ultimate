@@ -443,6 +443,10 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 						hierPreds = null;
 						continue;
 					}
+					/*
+					 * TODO Christian 2016-09-12: This possible fall-through should be documented. If it was not
+					 *      intended, it should be fixed.
+					 */
 				case 2:
 					iter = mNestedAbstraction.callSuccessors(s).iterator();
 					continue;

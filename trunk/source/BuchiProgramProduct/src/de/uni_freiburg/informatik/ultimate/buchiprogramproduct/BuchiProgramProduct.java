@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiProgramProduct plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct;
@@ -97,6 +97,10 @@ public class BuchiProgramProduct implements IGenerator {
 		switch (graphType.getCreator()) {
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
 			mModelIsRCFG = true;
+			/*
+			 * TODO Christian 2016-09-12: This fall-through should be documented. If it was not intended, it should be
+			 *      fixed.
+			 */
 		case "de.uni_freiburg.informatik.ultimate.ltl2aut":
 			mUseBuchiProductObserver = true;
 			mUseful++;
