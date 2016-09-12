@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.test.unit;
@@ -90,12 +90,11 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 		final RootNode rootNode = (RootNode) mRcfgNode;
 		String fileName = "";
 		for (final String key : rootNode.getRootAnnot().getEntryNodes().keySet()) {
-			if (key.equals("ULTIMATE.init") || key.equals("ULTIMATE.start")) {
-				continue;
+			if (!key.equals("ULTIMATE.init") && !key.equals("ULTIMATE.start")) {
+				fileName = rootNode.getRootAnnot().getEntryNodes().get(key)
+						.getPayload().getLocation().getFileName();
+				break;
 			}
-			fileName = rootNode.getRootAnnot().getEntryNodes().get(key)
-					.getPayload().getLocation().getFileName();
-			break;
 		}
 		mLogger.error("Start Test on File: " + fileName);
 	}
@@ -121,8 +120,8 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 		}
 	}
 
-	private void compareOriginalAndMinimizedGraph(ProgramPoint originalNode,
-			MinimizedNode minNode) {
+	private void compareOriginalAndMinimizedGraph(final ProgramPoint originalNode,
+			final MinimizedNode minNode) {
 		if (mVisitedMinNodes.contains(minNode)
 				&& mVisitedOrigNodes.contains(originalNode)) {
 			return;

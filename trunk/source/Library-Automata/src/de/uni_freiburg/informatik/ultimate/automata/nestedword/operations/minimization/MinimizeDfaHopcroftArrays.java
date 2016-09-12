@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
+public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	// ArrayList and HashMap for mapping STATE to int and vice versa.
 	private ArrayList<STATE> mInt2state;
 	private HashMap<STATE, Integer> mState2int;
@@ -326,20 +326,15 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 		mCords.init(mNumberOfTransitions);
 		if (mNumberOfTransitions > 0) {
 			final Integer[] test = new Integer[mCords.mElements.length];
-			for (int i = 0; i < test.length; ++i) {
-				test[i] = mCords.mElements[i];
-			}
+			System.arraycopy(mCords.mElements, 0, test, 0, test.length);
 			Arrays.sort(test, new Comparator<Integer>() {
-				
 				@Override
 				public int compare(final Integer x, final Integer y) {
 					return Integer.compare(mLabels[x], mLabels[y]);
 				}
 			});
 			
-			for (int i = 0; i < test.length; ++i) {
-				mCords.mElements[i] = test[i];
-			}
+			System.arraycopy(test, 0, mCords.mElements, 0, test.length);
 			
 			mCords.mNumberOfSets = mNumberOfMarkedElemInSet[0] = 0;
 			int a = mLabels[mCords.mElements[0]];

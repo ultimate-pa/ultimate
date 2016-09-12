@@ -614,12 +614,10 @@ public class MainDispatcher extends Dispatcher {
 				checkForQuantifiers(invariant.getInvariant());
 				acslNode = Parser.parseComment("lstart\n assert " + invariant.getInvariant() + ";",
 						invariant.getStartline(), invariant.getEndline(), mLogger);
-			} catch (final Exception e) {
-				if (e instanceof ACSLSyntaxErrorException) {
+			} catch (final ACSLSyntaxErrorException e) {
 					throw new UnsupportedSyntaxException(loc, e.getMessage());
-				} else {
-					throw new AssertionError(e);
-				}
+			} catch (final Exception e) {
+				throw new AssertionError(e);
 			}
 			final Result translationResult = dispatch(acslNode);
 			final List<AssertStatement> invariants = new ArrayList<>();

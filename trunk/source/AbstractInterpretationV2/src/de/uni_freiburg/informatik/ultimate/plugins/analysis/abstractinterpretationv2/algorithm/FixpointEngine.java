@@ -651,7 +651,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 	private StringBuilder getLogMessageMergeStates(final int availablePostStatesCount,
 	        final Collection<STATE> availablePostStates) {
-		final List<String> postStates = availablePostStates.stream().map(a -> "[" + String.valueOf(a.hashCode()) + "]")
+		final List<String> postStates = availablePostStates.stream().map(a -> '[' + String.valueOf(a.hashCode()) + ']')
 		        .collect(Collectors.toList());
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Merging ")
 		        .append(availablePostStatesCount).append(" states at target location: ")

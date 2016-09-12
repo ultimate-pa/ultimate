@@ -2,27 +2,27 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * Copyright (C) 2015 Vincent Langenfeld (langenfv@informatik.uni-freiburg.de)
- * 
+ *
  * This file is part of the ULTIMATE LTL2Aut plug-in.
- * 
+ *
  * The ULTIMATE LTL2Aut plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE LTL2Aut plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE LTL2Aut plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LTL2Aut plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LTL2Aut plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LTL2Aut plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa;
@@ -73,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 
 /**
  * Never2Automaton converts the never claim description of an automaton into an an NWA automaton of the AutomataLibrary.
- * 
+ *
  * @author Langenfeld
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @note the transformation from Ast to Automaton also brings a transformation from Promela Ast to Boogie Ast nodes.
@@ -93,23 +93,24 @@ public class Never2Automaton {
 
 	/**
 	 * The Never2Automaton instance will build a Büchi automaton from the input.
-	 * 
+	 *
 	 * @param ast
 	 * @param irs
 	 * @param services
 	 * @param cbf
 	 * @throws Exception
 	 */
-	public Never2Automaton(final AstNode ast, final BoogieSymbolTable boogieSymbolTable, final Map<String, CheckableExpression> irs,
-			final ILogger logger, final IUltimateServiceProvider services, final CodeBlockFactory cbf) throws Exception {
+	public Never2Automaton(final AstNode ast, final BoogieSymbolTable boogieSymbolTable,
+			final Map<String, CheckableExpression> irs, final ILogger logger, final IUltimateServiceProvider services,
+			final CodeBlockFactory cbf) throws Exception {
 		mServices = services;
 		mLogger = logger;
 		mNeverClaim = ast;
 		mIRS = irs;
 		mCodeblockFactory = cbf;
 
-		final IPreferenceProvider ups = mServices.getPreferenceProvider(
-				de.uni_freiburg.informatik.ultimate.ltl2aut.Activator.PLUGIN_ID);
+		final IPreferenceProvider ups =
+				mServices.getPreferenceProvider(de.uni_freiburg.informatik.ultimate.ltl2aut.Activator.PLUGIN_ID);
 		mUseSBE = ups.getBoolean(PreferenceInitializer.LABEL_OPTIMIZE_SBE);
 		mRewriteAssumeDuringSBE = ups.getBoolean(PreferenceInitializer.LABEL_OPTIMIZE_REWRITEASSUME);
 
@@ -125,7 +126,7 @@ public class Never2Automaton {
 
 	/**
 	 * get the constructed automaton
-	 * 
+	 *
 	 * @return automaton
 	 */
 	public INestedWordAutomaton<CodeBlock, String> getAutomaton() {
@@ -135,7 +136,7 @@ public class Never2Automaton {
 	/**
 	 * Walks the AST for labeled blocks and extracts the names as Nodes in the automaton. Nodes starting with "accept"
 	 * are accepting nodes, the one called init is the initial one.
-	 * 
+	 *
 	 * @see LTL2BA, LTL3BA output format
 	 * @param branch
 	 *            Ast of the Automaton description in Promela
@@ -177,7 +178,7 @@ public class Never2Automaton {
 
 	/**
 	 * Collect all symbols that the automaton will have from the AST which will be all conditions found in the AST.
-	 * 
+	 *
 	 * @param mNeverClaim
 	 *            Ast of the Automaton description in Promela
 	 * @return
@@ -260,7 +261,7 @@ public class Never2Automaton {
 
 	/**
 	 * Translates the atomic propositions from LTL2Aut.AstNode into Boogie ASTNode for further processing.
-	 * 
+	 *
 	 * @return root node of the proposition as Boogie ASTNodes
 	 * @throws Exception
 	 */
@@ -293,9 +294,9 @@ public class Never2Automaton {
 
 			final CheckableExpression left = toBoogieAst(branch.getOutgoingNodes().get(0));
 			CheckableExpression right = toBoogieAst(branch.getOutgoingNodes().get(1));
-			CheckableExpression expr = new CheckableExpression(
-					new BinaryExpression(null, op, left.getExpression(), right.getExpression()),
-					mergeStatements(left, right));
+			CheckableExpression expr =
+					new CheckableExpression(new BinaryExpression(null, op, left.getExpression(), right.getExpression()),
+							mergeStatements(left, right));
 
 			if (branch.getOutgoingNodes().size() > 2) {
 				for (int i = 2; i < branch.getOutgoingNodes().size(); i++) {
@@ -327,9 +328,9 @@ public class Never2Automaton {
 			}
 			final CheckableExpression left = toBoogieAst(branch.getOutgoingNodes().get(0));
 			final CheckableExpression right = toBoogieAst(branch.getOutgoingNodes().get(1));
-			final CheckableExpression expr = new CheckableExpression(
-					new BinaryExpression(null, op, left.getExpression(), right.getExpression()),
-					mergeStatements(left, right));
+			final CheckableExpression expr =
+					new CheckableExpression(new BinaryExpression(null, op, left.getExpression(), right.getExpression()),
+							mergeStatements(left, right));
 			return expr;
 		} else if (branch instanceof IntLiteral) {
 			return new CheckableExpression(new IntegerLiteral(null, Integer.toString(((IntLiteral) branch).getValue())),
@@ -345,6 +346,13 @@ public class Never2Automaton {
 			return new CheckableExpression(
 					new UnaryExpression(null, UnaryExpression.Operator.LOGICNEG, right.getExpression()),
 					right.getStatements());
+		} else if (branch instanceof Name) {
+			final Name name = (Name) branch;
+			if ("true".equalsIgnoreCase(name.getIdent())) {
+				return new CheckableExpression(new BooleanLiteral(null, true), null);
+			} else if ("false".equalsIgnoreCase(name.getIdent())) {
+				return new CheckableExpression(new BooleanLiteral(null, false), null);
+			}
 		}
 
 		throw new Exception(String.format("Type %s should not occur as part of a atomic Proposition in LTL",

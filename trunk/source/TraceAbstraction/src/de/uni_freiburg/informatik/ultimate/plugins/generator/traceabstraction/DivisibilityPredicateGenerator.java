@@ -57,15 +57,15 @@ public class DivisibilityPredicateGenerator {
 	private final PredicateUnifier mPredicateUnifier;
 	private final Boogie2SMT boogie2smt;
 
-	public DivisibilityPredicateGenerator(SmtManager smtManger,
-			PredicateUnifier predicateUnifier) {
+	public DivisibilityPredicateGenerator(final SmtManager smtManger,
+			final PredicateUnifier predicateUnifier) {
 		super();
 		mScript = smtManger.getScript();
 		mPredicateUnifier = predicateUnifier;
 		boogie2smt = smtManger.getBoogie2Smt();
 	}
 
-	public Collection<IPredicate> divisibilityPredicates(Collection<IPredicate> preds) {
+	public Collection<IPredicate> divisibilityPredicates(final Collection<IPredicate> preds) {
 		final Map<IProgramVar, Integer> offsetVar2size = new HashMap<>();
 		final List<IPredicate> result = new ArrayList<IPredicate>();
 		for (final IPredicate pred : preds) {
@@ -94,19 +94,19 @@ public class DivisibilityPredicateGenerator {
 		return result;
 	}
 
-	private int getSize(IProgramVar bv) {
+	private int getSize(final IProgramVar bv) {
 		return 4;
 	}
 
-	private boolean isOffsetVar(IProgramVar bv) {
+	private boolean isOffsetVar(final IProgramVar bv) {
 		if (bv.getTermVariable().getSort().getName().equals("Int")) {
-			return bv.getIdentifier().contains("offset");
+			return bv.getGloballyUniqueId().contains("offset");
 		} else {
 			return false;
 		}
 	}
 	
-	private boolean isLengthArray(Term term) {
+	private boolean isLengthArray(final Term term) {
 		if (term instanceof TermVariable) {
 			final TermVariable tv = (TermVariable) term;
 			if (tv.toString().contains("#length")) {
@@ -119,7 +119,7 @@ public class DivisibilityPredicateGenerator {
 		}
 	}
 
-	private Term getDivisibilityTerm(Term term, Integer value) {
+	private Term getDivisibilityTerm(final Term term, final Integer value) {
 		final Term divisor = mScript.numeral(BigInteger.valueOf(value));
 		final Term zero = mScript.numeral(BigInteger.ZERO);
 		final Term divisible = mScript.term("=", mScript.term("mod", term, divisor), zero); 

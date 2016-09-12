@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determinize;
@@ -758,7 +759,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 		// Remove unreachable states which can occur due to transition removal
 		if (areThereRemoveableTransitions) {
-			final NestedWordAutomatonReachableStates<LETTER, STATE> nwaReachableStates =
+			final INestedWordAutomaton<LETTER, STATE> nwaReachableStates =
 					new RemoveUnreachable<LETTER, STATE>(mServices, result).getResult();
 			return nwaReachableStates;
 		} else {
@@ -1395,7 +1396,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			mLogger.debug("Generating summarize edges.");
 		}
 		// Create the game automaton, we will use it for summarize computation
-		final INestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton = createGameAutomaton();
+		final INestedWordAutomatonSimple<GameLetter<LETTER, STATE>, IGameState> gameAutomaton = createGameAutomaton();
 		final NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonWithSummaries =
 				new RemoveUnreachable<>(mServices, gameAutomaton).getResult();
 
@@ -1434,7 +1435,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 		// Determinizing is very expensive, it is the dominant part of the
 		// whole algorithm
-		final INestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton =
+		final INestedWordAutomatonSimple<GameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton =
 				new Determinize<GameLetter<LETTER, STATE>, IGameState>(mServices,
 						gameAutomatonWithSummaries.getStateFactory(), gameAutomatonWithSummaries, summarySources)
 								.getResult();
@@ -2358,7 +2359,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
-	private INestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> createGameAutomaton()
+	private INestedWordAutomatonSimple<GameLetter<LETTER, STATE>, IGameState> createGameAutomaton()
 			throws AutomataOperationCanceledException {
 		final Set<GameLetter<LETTER, STATE>> internalGameAlphabet = new HashSet<>();
 		final Set<GameLetter<LETTER, STATE>> callGameAlphabet = new HashSet<>();

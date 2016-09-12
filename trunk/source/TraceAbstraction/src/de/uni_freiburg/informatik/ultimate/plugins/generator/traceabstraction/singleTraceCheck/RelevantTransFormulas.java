@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
@@ -64,23 +64,23 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 	/**
 	 * If index i is an internal position or a return transition in the
 	 * nested trace Term[i] represents the i-th statement.
-	 * If index i is a call position Term[i] represents the assignment 
+	 * If index i is a call position Term[i] represents the assignment
 	 * {@code g_1,...,g_n := old(g_1),...,old(g_n)} where g_1,...,g_n are the
-	 * global variables modified by the called procedure.  
+	 * global variables modified by the called procedure.
 	 */
 	private final UnmodifiableTransFormula[] mTransFormulas;
 	
 	/**
-	 * Maps a call position to a formula that represents the assignment 
+	 * Maps a call position to a formula that represents the assignment
 	 * {@code g_1,...,g_n := old(g_1),...,old(g_n)} where g_1,...,g_n are the
-	 * global variables modified by the called procedure.  
+	 * global variables modified by the called procedure.
 	 */
 	private final Map<Integer,UnmodifiableTransFormula> mGlobalAssignmentTransFormulaAtCall;
 	
 	/**
-	 * Maps a call position to a formula that represents the assignment 
+	 * Maps a call position to a formula that represents the assignment
 	 * {@code old(g_1),...,old(g_n) := g_1,...,g_n} where g_1,...,g_n are the
-	 * global variables modified by the called procedure.  
+	 * global variables modified by the called procedure.
 	 */
 	private final Map<Integer, UnmodifiableTransFormula> mOldVarsAssignmentTransFormulasAtCall;
 	
@@ -93,7 +93,7 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 	 * Sum of the size of all formulas that are in the unsatisfiable core.
 	 */
 	private int mSumSizeFormulasInUnsatCore = 0;
-	private final int mSumSizeFormulasNotInUnsatCore = 0; 
+	private final int mSumSizeFormulasNotInUnsatCore = 0;
 	
 	public RelevantTransFormulas(final NestedWord<? extends IAction> nestedTrace,
 			final IPredicate precondition, final IPredicate postcondition,
@@ -110,7 +110,7 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 		mGlobalAssignmentTransFormulaAtCall = new HashMap<Integer, UnmodifiableTransFormula>();
 		mOldVarsAssignmentTransFormulasAtCall = new HashMap<Integer, UnmodifiableTransFormula>();
 		mScript = script;
-		generateRelevantTransFormulas(unsat_core, localVarAssignmentsAtCallInUnsatCore, 
+		generateRelevantTransFormulas(unsat_core, localVarAssignmentsAtCallInUnsatCore,
 				oldVarAssignmentAtCallInUnsatCore, modGlobalVarManager);
 		
 	}
@@ -133,7 +133,7 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 		generateRelevantTransFormulas(unsat_core, modGlobalVarManager, aaa, aac);
 	}
 	
-	private void generateRelevantTransFormulas(final Set<IAction> unsat_core, 
+	private void generateRelevantTransFormulas(final Set<IAction> unsat_core,
 			final boolean[] localVarAssignmentsAtCallInUnsatCore,
 			final boolean[] oldVarAssignmentAtCallInUnsatCore,
 			final ModifiableGlobalVariableManager modGlobalVarManager) {
@@ -143,7 +143,7 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 					final ICallAction call = (ICallAction) super.getTrace().getSymbol(i);
 					mGlobalAssignmentTransFormulaAtCall.put(i,
 							modGlobalVarManager.getGlobalVarsAssignment(call.getSucceedingProcedure()));
-					mOldVarsAssignmentTransFormulasAtCall.put(i, 
+					mOldVarsAssignmentTransFormulasAtCall.put(i,
 							modGlobalVarManager.getOldVarsAssignment(call.getSucceedingProcedure()));
 					if (localVarAssignmentsAtCallInUnsatCore[i]) {
 						mTransFormulas[i] = call.getLocalVarsAssignment();
@@ -163,7 +163,7 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 					if (oldVarAssignmentAtCallInUnsatCore[i]) {
 						mOldVarsAssignmentTransFormulasAtCall.put(i, modGlobalVarManager.getOldVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName()));
 					} else {
-						mOldVarsAssignmentTransFormulasAtCall.put(i, 
+						mOldVarsAssignmentTransFormulasAtCall.put(i,
 								buildTransFormulaForStmtNotInUnsatCore(
 										modGlobalVarManager.getOldVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName())));
 					}
@@ -178,7 +178,7 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 		
 	}
 	
-	private void generateRelevantTransFormulas(final Set<Term> unsat_core, 
+	private void generateRelevantTransFormulas(final Set<Term> unsat_core,
 			final ModifiableGlobalVariableManager modGlobalVarManager,
 			final AnnotateAndAsserter aaa,
 			final AnnotateAndAssertConjunctsOfCodeBlocks aac) {
@@ -190,27 +190,27 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 				Set<Term> conjunctsInUnsatCore = filterRelevantConjunctsAndRestoreEqualities(
 						unsat_core, annot2Original, conjuncts_annot, aac.getSplitEqualityMapping());
 				mTransFormulas[i]  = buildTransFormulaWithRelevantConjuncts(((CodeBlock) super.getTrace().getSymbol(i)).getTransitionFormula(),
-						conjunctsInUnsatCore.toArray(new Term[0]));
+						conjunctsInUnsatCore.toArray(new Term[conjunctsInUnsatCore.size()]));
 				// 2. Global Var assignment
 				conjuncts_annot = SmtUtils.getConjuncts(aaa.getAnnotatedSsa().getGlobalVarAssignment(i));
 				conjunctsInUnsatCore = filterRelevantConjunctsAndRestoreEqualities(unsat_core, annot2Original, conjuncts_annot,
 						aac.getSplitEqualityMapping());
 				mGlobalAssignmentTransFormulaAtCall.put(i, buildTransFormulaWithRelevantConjuncts(
 						modGlobalVarManager.getGlobalVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName()),
-						conjunctsInUnsatCore.toArray(new Term[0])));
+						conjunctsInUnsatCore.toArray(new Term[conjunctsInUnsatCore.size()])));
 				// 3. Old Var Assignment
 				conjuncts_annot = SmtUtils.getConjuncts(aaa.getAnnotatedSsa().getOldVarAssignment(i));
 				conjunctsInUnsatCore = filterRelevantConjunctsAndRestoreEqualities(unsat_core, annot2Original, conjuncts_annot,
 						aac.getSplitEqualityMapping());
 				mOldVarsAssignmentTransFormulasAtCall.put(i, buildTransFormulaWithRelevantConjuncts(
 						modGlobalVarManager.getOldVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName()),
-						conjunctsInUnsatCore.toArray(new Term[0])));
+						conjunctsInUnsatCore.toArray(new Term[conjunctsInUnsatCore.size()])));
 			} else {
 				final Term[] conjuncts_annot = SmtUtils.getConjuncts(aaa.getAnnotatedSsa().getFormulaFromNonCallPos(i));
 				final Set<Term> conjunctsInUnsatCore = filterRelevantConjunctsAndRestoreEqualities(
 						unsat_core, annot2Original, conjuncts_annot, aac.getSplitEqualityMapping());
 				mTransFormulas[i]  = buildTransFormulaWithRelevantConjuncts(((CodeBlock) super.getTrace().getSymbol(i)).getTransitionFormula(),
-						conjunctsInUnsatCore.toArray(new Term[0]));
+						conjunctsInUnsatCore.toArray(new Term[conjunctsInUnsatCore.size()]));
 			}
 		}
 		
@@ -227,7 +227,7 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 		final Set<Term> conjuncts_annotInequalitiesSuccRestored = new HashSet<Term>();
 		
 		for (int j = 0; j < conjuncts_annot.length; j++) {
-			// Check current annotated conjunct if and only if we didn't have restored its inequality 
+			// Check current annotated conjunct if and only if we didn't have restored its inequality
 			if (!conjuncts_annotInequalitiesSuccRestored.contains(conjuncts_annot[j])) {
 				if (sem.getInequality2CorrespondingInequality().containsKey(conjuncts_annot[j])) {
 					final Term firstInequality = conjuncts_annot[j];
@@ -264,7 +264,7 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 	}
 	
 	private UnmodifiableTransFormula buildTransFormulaForStmtNotInUnsatCore(final UnmodifiableTransFormula tf) {
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, 
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null,
 				tf.getBranchEncoders().isEmpty(), tf.getBranchEncoders(), true);
 		for (final IProgramVar bv : tf.getAssignedVars()) {
 			if (tf.getOutVars().containsKey(bv)) {

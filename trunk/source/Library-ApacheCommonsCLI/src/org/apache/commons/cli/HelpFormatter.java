@@ -838,20 +838,15 @@ public class HelpFormatter {
 		int x = 0;
 
 		for (final Iterator<Option> it = optList.iterator(); it.hasNext();) {
+			final int nextLineTabStop = max + descPad;
 			final Option option = it.next();
 			final StringBuilder optBuf = new StringBuilder(prefixList.get(x++).toString());
+			renderWrappedText(sb, width, nextLineTabStop, optBuf.toString());
 
 			if (option.getDescription() != null) {
-				if (optBuf.length() < max) {
-					optBuf.append(createPadding(max - optBuf.length()));
-				}
-				optBuf.append(dpad);
-				optBuf.append(option.getDescription());
+				sb.append(getNewLine());
+				renderWrappedText(sb, width, descPad, dpad + option.getDescription());
 			}
-
-			final int nextLineTabStop = max + descPad;
-
-			renderWrappedText(sb, width, nextLineTabStop, optBuf.toString());
 
 			if (it.hasNext()) {
 				sb.append(getNewLine());
@@ -880,7 +875,6 @@ public class HelpFormatter {
 
 		if (pos == -1) {
 			sb.append(rtrim(text));
-
 			return sb;
 		}
 		sb.append(rtrim(text.substring(0, pos))).append(getNewLine());

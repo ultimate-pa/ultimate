@@ -101,7 +101,7 @@ public class BuchiAutomizerLassoRankerTests extends AbstractBuchiAutomizerTestSu
 //		"examples/lassos/arrays",
 //		"examples/termination/svcomp-sorted/success/",
 //		"examples/programs/quantifier",
-//		"examples/programs/recursivePrograms",
+//		"examples/programs/recursive/regression",
 //		"examples/programs/toy"
 		"examples/programs/termination/",
 //		"examples/termination/cooperatingT2/difficult/solved",
@@ -124,12 +124,14 @@ public class BuchiAutomizerLassoRankerTests extends AbstractBuchiAutomizerTestSu
 
 
 	private static final String[] BPL_TOOLCHAINS = {
-		"BuchiAutomizerBplWithBlockEncoding.xml",
+		"BuchiAutomizerBpl.xml",
+//		"BuchiAutomizerBplWithBlockEncoding.xml",
 //		"BuchiAutomizerBplInlineWithBlockEncoding.xml",
 	};
 
 	private static final String[] C_TOOLCHAINS = {
-		"BuchiAutomizerCWithBlockEncoding.xml",
+		"BuchiAutomizerC.xml",
+//		"BuchiAutomizerCWithBlockEncoding.xml",
 //		"BuchiAutomizerCInlineWithBlockEncoding.xml",
 	};
 

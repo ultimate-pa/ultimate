@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
@@ -86,7 +86,7 @@ public class TraceAbstractionStarter {
 	private final IToolchainStorage mToolchainStorage;
 
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final RootNode rcfgRootNode, final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
+			final RootNode rcfgRootNode, final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
 		mServices = services;
 		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -102,7 +102,7 @@ public class TraceAbstractionStarter {
 	private IElement mArtifact;
 
 	private void runCegarLoops(final RootNode rcfgRootNode,
-			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
+			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
 		final RootAnnot rootAnnot = rcfgRootNode.getRootAnnot();
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
@@ -161,7 +161,7 @@ public class TraceAbstractionStarter {
 		mLogger.debug("Continue processing: " + mServices.getProgressMonitorService().continueProcessing());
 		if (taPrefs.computeHoareAnnotation() && mOverallResult != Result.TIMEOUT
 				&& mServices.getProgressMonitorService().continueProcessing()) {
-			assert (new HoareAnnotationChecker(mServices, rcfgRootNode, smtManager).isInductive());
+			assert (new HoareAnnotationChecker(mServices, rcfgRootNode, smtManager).isInductive()) : "incorrect Hoare annotation";
 
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
 			final Term trueterm = smtManager.getScript().term("true");
@@ -255,7 +255,7 @@ public class TraceAbstractionStarter {
 	private void iterate(final String name, final RootNode root, final TAPreferences taPrefs,
 			final SmtManager smtManager, final TraceAbstractionBenchmarks taBenchmark,
 			final Collection<ProgramPoint> errorLocs,
-			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
+			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
 		BasicCegarLoop basicCegarLoop;
 		final LanguageOperation languageOperation = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);

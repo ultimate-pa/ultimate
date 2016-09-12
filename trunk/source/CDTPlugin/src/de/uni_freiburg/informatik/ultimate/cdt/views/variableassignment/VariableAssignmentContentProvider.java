@@ -74,8 +74,8 @@ public class VariableAssignmentContentProvider implements ITreeContentProvider {
 		if (mValuation == null || index == null) {
 			return;
 		}
-		final Set<Entry<String, Entry<IBoogieType, List<String>>>> entrySet =
-				mValuation.getValuesForFailurePathIndex(index).entrySet();
+		final Set<Entry<String, Entry<IBoogieType, List<String>>>> entrySet = mValuation
+		        .getValuesForFailurePathIndex(index).getMap().entrySet();
 		for (final Entry<String, Entry<IBoogieType, List<String>>> entry : entrySet) {
 			if (entry.getValue().getKey() instanceof ArrayType) {
 				final VarAssNode parent = new VarAssNode(entry.getKey(), "");

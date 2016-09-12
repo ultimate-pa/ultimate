@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions;
@@ -32,13 +32,15 @@ import de.uni_freiburg.informatik.ultimate.util.IPredicate;
 
 /**
  * Provides IPredicates for filtering of transitions where the filtering
- * is based on a given set of states. The predicates evaluate to true iff 
+ * is based on a given set of states. The predicates evaluate to true iff
  * each state that occurs in the transition is contained in the given set
  * of states.
- * @author Matthias Heizmann
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class StateBasedTransitionFilterPredicateProvider<LETTER, STATE> {
 	protected final Set<STATE> mStates;
@@ -51,85 +53,54 @@ public class StateBasedTransitionFilterPredicateProvider<LETTER, STATE> {
 	private final IPredicate<SummaryReturnTransition<LETTER, STATE>> mReturnSummaryPredicate;
 	
 	/**
-	 * @param states states for filtering
+	 * Constructor.
+	 * 
+	 * @param states
+	 *            states for filtering
 	 */
 	public StateBasedTransitionFilterPredicateProvider(final Set<STATE> states) {
 		mStates = states;
 		
-		mInternalPredecessorsPredicate = new IPredicate<IncomingInternalTransition<LETTER,STATE>>() {
-			@Override
-			public boolean evaluate(final IncomingInternalTransition<LETTER, STATE> trans) {
-				return mStates.contains(trans.getPred());
-			}
-		};
-
-		mCallPredecessorPredicate = new IPredicate<IncomingCallTransition<LETTER,STATE>>() {
-			@Override
-			public boolean evaluate(final IncomingCallTransition<LETTER, STATE> trans) {
-				return mStates.contains(trans.getPred());
-			}
-		};
-
-		mInternalSuccessorPredicate = new IPredicate<OutgoingInternalTransition<LETTER,STATE>>() {
-			@Override
-			public boolean evaluate(final OutgoingInternalTransition<LETTER, STATE> trans) {
-				return mStates.contains(trans.getSucc());
-			}
-		};
-
-		mCallSuccessorPredicate = new IPredicate<OutgoingCallTransition<LETTER,STATE>>() {
-			@Override
-			public boolean evaluate(final OutgoingCallTransition<LETTER, STATE> trans) {
-				return mStates.contains(trans.getSucc());
-			}
-		};
-
-		mReturnPredecessorPredicate = new IPredicate<IncomingReturnTransition<LETTER,STATE>>() {
-			@Override
-			public boolean evaluate(final IncomingReturnTransition<LETTER, STATE> trans) {
-				return mStates.contains(trans.getLinPred()) && mStates.contains(trans.getHierPred());
-			}
-		};
+		mInternalPredecessorsPredicate = trans -> mStates.contains(trans.getPred());
 		
-		mReturnSuccessorPredicate = new IPredicate<OutgoingReturnTransition<LETTER,STATE>>() {
-			@Override
-			public boolean evaluate(final OutgoingReturnTransition<LETTER, STATE> trans) {
-				return mStates.contains(trans.getHierPred()) && mStates.contains(trans.getSucc());
-			}
-		};
-
-		mReturnSummaryPredicate = new IPredicate<SummaryReturnTransition<LETTER,STATE>>() {
-			@Override
-			public boolean evaluate(final SummaryReturnTransition<LETTER, STATE> trans) {
-				return mStates.contains(trans.getSucc()) && mStates.contains(trans.getLinPred());
-			}
-		};
+		mCallPredecessorPredicate = trans -> mStates.contains(trans.getPred());
+		
+		mInternalSuccessorPredicate = trans -> mStates.contains(trans.getSucc());
+		
+		mCallSuccessorPredicate = trans -> mStates.contains(trans.getSucc());
+		
+		mReturnPredecessorPredicate =
+				trans -> mStates.contains(trans.getLinPred()) && mStates.contains(trans.getHierPred());
+		
+		mReturnSuccessorPredicate = trans -> mStates.contains(trans.getHierPred()) && mStates.contains(trans.getSucc());
+		
+		mReturnSummaryPredicate = trans -> mStates.contains(trans.getSucc()) && mStates.contains(trans.getLinPred());
 	}
-
+	
 	public IPredicate<IncomingInternalTransition<LETTER, STATE>> getInternalPredecessorsPredicate() {
 		return mInternalPredecessorsPredicate;
 	}
-
+	
 	public IPredicate<IncomingCallTransition<LETTER, STATE>> getCallPredecessorPredicate() {
 		return mCallPredecessorPredicate;
 	}
-
+	
 	public IPredicate<OutgoingInternalTransition<LETTER, STATE>> getInternalSuccessorPredicate() {
 		return mInternalSuccessorPredicate;
 	}
-
+	
 	public IPredicate<OutgoingCallTransition<LETTER, STATE>> getCallSuccessorPredicate() {
 		return mCallSuccessorPredicate;
 	}
-
+	
 	public IPredicate<IncomingReturnTransition<LETTER, STATE>> getReturnPredecessorPredicate() {
 		return mReturnPredecessorPredicate;
 	}
-
+	
 	public IPredicate<OutgoingReturnTransition<LETTER, STATE>> getReturnSuccessorPredicate() {
 		return mReturnSuccessorPredicate;
 	}
-
+	
 	public IPredicate<SummaryReturnTransition<LETTER, STATE>> getReturnSummaryPredicate() {
 		return mReturnSummaryPredicate;
 	}

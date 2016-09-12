@@ -46,11 +46,13 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * Buchi Complementation based on
  * 2004ATVA - Friedgut,Kupferman,Vardi - Büchi Complementation Made Tighter.
  * 
- * @author heizmann@informatik.uni-freiburg.de
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	/**
 	 * TODO Allow definition of a maximal rank for cases where you know that
 	 * this is sound. E.g. if the automaton is reverse deterministic a maximal
@@ -65,68 +67,106 @@ public class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 	private final BuchiComplementFKVNwa<LETTER, STATE> mComplemented;
 	private final FkvOptimization mOptimization;
 	
-	@Override
-	public String operationName() {
-		return "buchiComplementFKV";
+	/**
+	 * Extended constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
+	public BuchiComplementFKV(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand, FkvOptimization.HEIMAT2.toString(), Integer.MAX_VALUE);
 	}
 	
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + " with optimization " + mOptimization
-				+ ". Operand " + mOperand.sizeInformation();
-	}
-	
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + " with optimization " + mOptimization
-				+ ". Operand " + mOperand.sizeInformation() + " Result " + mResult.sizeInformation()
-				+ mComplemented.getPowersetStates() + " powerset states" + mComplemented.getRankStates()
-				+ " rank states. The highest rank that occured is " + mComplemented.getHighesRank();
-	}
-	
-	public int getHighestRank() {
-		return mComplemented.getHighesRank();
-	}
-	
-	public BuchiComplementFKV(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> input,
-			final String optimization,
+	/**
+	 * Constructor which uses a {@link PowersetDeterminizer}.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            operand
+	 * @param optimization
+	 *            optimization parameter
+	 * @param userDefinedMaxRank
+	 *            user-defined maximal rank
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
+	public BuchiComplementFKV(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand, final String optimization,
 			final int userDefinedMaxRank) throws AutomataOperationCanceledException {
-		super(services);
-		this.mStateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
-		this.mStateFactory = input.getStateFactory();
-		this.mOperand = input;
-		this.mUserDefinedMaxRank = userDefinedMaxRank;
-		this.mOptimization = FkvOptimization.valueOf(optimization);
-		mLogger.info(startMessage());
-		mComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(mServices, input, mStateDeterminizer, mStateFactory,
-				mOptimization, mUserDefinedMaxRank);
-		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mComplemented);
-		mLogger.info(exitMessage());
+		this(services, operand.getStateFactory(), operand, new PowersetDeterminizer<>(operand, true, stateFactory),
+				FkvOptimization.valueOf(optimization), userDefinedMaxRank);
 	}
 	
+	/**
+	 * Constructor with a given {@link IStateDeterminizer}.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @param stateDeterminizer
+	 *            state determinizer
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
 	public BuchiComplementFKV(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> input) throws AutomataOperationCanceledException {
-		this(services, stateFactory, input, FkvOptimization.HeiMat2.toString(), Integer.MAX_VALUE);
+			final INestedWordAutomatonSimple<LETTER, STATE> operand,
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataOperationCanceledException {
+		this(services, operand.getStateFactory(), operand, stateDeterminizer, FkvOptimization.HEIMAT2,
+				Integer.MAX_VALUE);
+	}
+	
+	/**
+	 * Full constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            operand
+	 * @param optimization
+	 *            optimization parameter
+	 * @param userDefinedMaxRank
+	 *            user-defined maximal rank
+	 * @param stateDeterminizer
+	 *            state determinizer
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
+	private BuchiComplementFKV(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand,
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final FkvOptimization optimization,
+			final int userDefinedMaxRank)
+			throws AutomataOperationCanceledException {
+		super(services);
+		mStateFactory = stateFactory;
+		mOperand = operand;
+		mStateDeterminizer = stateDeterminizer;
+		mUserDefinedMaxRank = userDefinedMaxRank;
+		mOptimization = optimization;
 		
-	}
-	
-	public BuchiComplementFKV(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> input,
-			final IStateDeterminizer<LETTER, STATE> stateDeterminizier) throws AutomataOperationCanceledException {
-		super(services);
-		this.mStateDeterminizer = stateDeterminizier;
-		this.mStateFactory = input.getStateFactory();
-		this.mOperand = input;
-		this.mUserDefinedMaxRank = Integer.MAX_VALUE;
-		this.mOptimization = FkvOptimization.HeiMat2;
-		mLogger.info(startMessage());
-		mComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(mServices, input, mStateDeterminizer, mStateFactory,
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		
+		mComplemented = new BuchiComplementFKVNwa<>(mServices, operand, mStateDeterminizer, mStateFactory,
 				mOptimization, mUserDefinedMaxRank);
-		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mComplemented);
-		mLogger.info(exitMessage());
+		mResult = new NestedWordAutomatonReachableStates<>(mServices, mComplemented);
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 	
 	@Override
@@ -134,13 +174,13 @@ public class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 			throws AutomataLibraryException {
 		final boolean underApproximationOfComplement = false;
 		mLogger.info("Start testing correctness of " + operationName());
-		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
-		final BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, mOperand);
+		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<>();
+		final BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<>(mServices, mOperand);
 		final boolean operandEmpty = operandEmptiness.getResult();
 		if (!operandEmpty) {
 			lassoWords.add(operandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		final BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
+		final BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<>(mServices, mResult);
 		final boolean resultEmpty = resultEmptiness.getResult();
 		if (!resultEmpty) {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
@@ -190,39 +230,38 @@ public class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 				thistime = checkAcceptance(nlw, mOperand, underApproximationOfComplement);
 			}
 			correct &= thistime;
-//			assert correct;
+			assert correct;
 		}
 		
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
-					operationName() + "Failed", "language is different",
-					mOperand, mResult);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+					"language is different", mOperand, mResult);
 		}
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 	
-	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand,
-			final boolean underApproximationOfComplement)
-					throws AutomataLibraryException {
-		final boolean op =
-				(new BuchiAccepts<LETTER, STATE>(mServices, operand, nlw)).getResult();
-		final boolean res =
-				(new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
-		boolean correct;
-		if (underApproximationOfComplement) {
-			correct = !res || op;
-		} else {
-			correct = op ^ res;
-		}
-//		assert correct : operationName() + " wrong result!";
-		return correct;
+	@Override
+	public String operationName() {
+		return "BuchiComplementFKV";
 	}
 	
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
-		return mOperand;
+	public String startMessage() {
+		return "Start " + operationName() + " with optimization " + mOptimization
+				+ ". Operand " + mOperand.sizeInformation();
+	}
+	
+	@Override
+	public String exitMessage() {
+		return "Finished " + operationName() + " with optimization " + mOptimization
+				+ ". Operand " + mOperand.sizeInformation() + " Result " + mResult.sizeInformation()
+				+ mComplemented.getPowersetStates() + " powerset states" + mComplemented.getRankStates()
+				+ " rank states. The highest rank that occured is " + mComplemented.getHighesRank();
+	}
+	
+	public int getHighestRank() {
+		return mComplemented.getHighesRank();
 	}
 	
 	@Override
@@ -230,4 +269,22 @@ public class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 		return mResult;
 	}
 	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
+	}
+	
+	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand, final boolean underApproximationOfComplement)
+			throws AutomataLibraryException {
+		final boolean op = (new BuchiAccepts<LETTER, STATE>(mServices, operand, nlw)).getResult();
+		final boolean res = (new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
+		boolean correct;
+		if (underApproximationOfComplement) {
+			correct = !res || op;
+		} else {
+			correct = op ^ res;
+		}
+		return correct;
+	}
 }

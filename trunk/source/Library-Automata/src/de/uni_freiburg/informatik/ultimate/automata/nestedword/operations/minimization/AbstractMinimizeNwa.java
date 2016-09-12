@@ -182,7 +182,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 				StatisticsType.STATES_REDUCTION_ABSOLUTE);
 		result.addPercentageDataInverted(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
 				StatisticsType.STATES_REDUCTION_RELATIVE);
-				
+		
 		return result;
 	}
 	
@@ -254,13 +254,9 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @param addMapping
 	 *            true iff mapping 'old state -> new state' is added
 	 */
-	protected void constructResultFromPartition(
-			final IPartition<STATE> partition, final boolean addMapping) {
-		assert (mOperand instanceof IDoubleDeckerAutomaton) : "Operand must be an IDoubleDeckerAutomaton.";
+	protected void constructResultFromPartition(final IPartition<STATE> partition, final boolean addMapping) {
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-				new QuotientNwaConstructor<>(mServices, mStateFactory,
-						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand,
-						partition, addMapping);
+				new QuotientNwaConstructor<>(mServices, mStateFactory, mOperand, partition, addMapping);
 		constructResultFromQuotientConstructor(quotientNwaConstructor);
 	}
 	
@@ -272,14 +268,9 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @param addMapping
 	 *            true iff mapping 'old state -> new state' is added
 	 */
-	protected void constructResultFromUnionFind(
-			final UnionFind<STATE> unionFind,
-			final boolean addMapping) {
-		assert (mOperand instanceof IDoubleDeckerAutomaton) : "Operand must be an IDoubleDeckerAutomaton.";
+	protected void constructResultFromUnionFind(final UnionFind<STATE> unionFind, final boolean addMapping) {
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-				new QuotientNwaConstructor<>(mServices, mStateFactory,
-						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand,
-						unionFind, addMapping);
+				new QuotientNwaConstructor<>(mServices, mStateFactory, mOperand, unionFind, addMapping);
 		constructResultFromQuotientConstructor(quotientNwaConstructor);
 	}
 	

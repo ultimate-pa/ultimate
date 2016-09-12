@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IValuation;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.VariableValuesMap;
 
 /**
  *
@@ -59,7 +60,7 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	private final Map<Integer, ProgramState<Expression>> mPartialProgramStateMapping;
 
 	public BoogieProgramExecution(final Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
-			final List<AtomicTraceElement<BoogieASTNode>> trace) {
+	        final List<AtomicTraceElement<BoogieASTNode>> trace) {
 		mTrace = trace;
 		mPartialProgramStateMapping = partialProgramStateMapping;
 	}
@@ -89,20 +90,20 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 
 	@Override
 	public String toString() {
-		final ProgramExecutionFormatter<BoogieASTNode, Expression> pef =
-				new ProgramExecutionFormatter<>(new BoogieBacktranslationValueProvider());
+		final ProgramExecutionFormatter<BoogieASTNode, Expression> pef = new ProgramExecutionFormatter<>(
+		        new BoogieBacktranslationValueProvider());
 		return pef.formatProgramExecution(this);
 	}
 
 	public IValuation getValuation(final List<ITranslator<?, ?, ?, ?, ?, ?>> translatorSequence) {
 		return new IValuation() {
 			@Override
-			public Map<String, Entry<IBoogieType, List<String>>> getValuesForFailurePathIndex(final int index) {
+			public VariableValuesMap getValuesForFailurePathIndex(final int index) {
 				final ProgramState<Expression> ps = getProgramState(index);
 				if (ps == null) {
-					return getEmtpyProgramState();
+					return new VariableValuesMap(getEmtpyProgramState());
 				} else {
-					return translateProgramState(ps);
+					return new VariableValuesMap(translateProgramState(ps));
 				}
 			}
 
@@ -110,7 +111,8 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 				return Collections.emptyMap();
 			}
 
-			public Map<String, Entry<IBoogieType, List<String>>> translateProgramState(final ProgramState<Expression> ps) {
+			public Map<String, Entry<IBoogieType, List<String>>> translateProgramState(
+		            final ProgramState<Expression> ps) {
 				final Map<String, Entry<IBoogieType, List<String>>> result = new HashMap<>();
 				for (final Expression var : ps.getVariables()) {
 					final String varString = backtranslationWorkaround(translatorSequence, var);
@@ -138,9 +140,9 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	 * @return a string corresponding to the backtranslated expression
 	 */
 	private static <SE> String backtranslationWorkaround(final List<ITranslator<?, ?, ?, ?, ?, ?>> translatorSequence,
-			final SE expr) {
-		final Object backExpr =
-				DefaultTranslator.translateExpressionIteratively(expr, translatorSequence.toArray(new ITranslator[0]));
+	        final SE expr) {
+		final Object backExpr = DefaultTranslator.translateExpressionIteratively(expr,
+		        translatorSequence.toArray(new ITranslator[translatorSequence.size()]));
 
 		// If the result is a Boogie expression, we use the Boogie pretty
 		// printer

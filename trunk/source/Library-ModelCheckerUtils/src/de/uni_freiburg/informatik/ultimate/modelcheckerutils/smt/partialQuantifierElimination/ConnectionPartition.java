@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination;
@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 /**
- * Partition set of terms into equivalence classes. 
+ * Partition set of terms into equivalence classes.
  * We call two terms connected if both share a common NonTheorySymbols.
  * we define two terms to be equivalent (resp. this partition) if they
  * are in the transitive closure of the connection relation.
@@ -50,13 +50,13 @@ public class ConnectionPartition {
 	UnionFind<NonTheorySymbol<?>> unionFind = new UnionFind<NonTheorySymbol<?>>();
 	List<Term> mTermWithoutTvs = new ArrayList<Term>();
 	
-	public ConnectionPartition(Collection<Term> parameters) {
+	public ConnectionPartition(final Collection<Term> parameters) {
 		for (final Term term : parameters) {
 			addTerm(term);
 		}
 	}
 
-	private void addTerm(Term term) {
+	private void addTerm(final Term term) {
 		final Set<NonTheorySymbol<?>> symbols = NonTheorySymbol.extractNonTheorySymbols(term);
 		if (symbols.size() == 0) {
 			mTermWithoutTvs.add(term);
@@ -80,7 +80,7 @@ public class ConnectionPartition {
 		}
 	}
 	
-	private void add(Term term, NonTheorySymbol<?> symbol) {
+	private void add(final Term term, final NonTheorySymbol<?> symbol) {
 		Set<Term> terms = mSymbol2Terms.get(symbol);
 		if (terms == null) {
 			terms = new HashSet<Term>();
@@ -96,11 +96,7 @@ public class ConnectionPartition {
 			public Iterator<Set<Term>> iterator() {
 
 				return new Iterator<Set<Term>>() {
-					private Iterator<NonTheorySymbol<?>> mIt;
-
-					{
-						mIt = unionFind.getAllRepresentatives().iterator();
-					}
+					private final Iterator<NonTheorySymbol<?>> mIt = unionFind.getAllRepresentatives().iterator();;
 
 					@Override
 					public boolean hasNext() {
@@ -123,7 +119,7 @@ public class ConnectionPartition {
 		};
 	}
 	
-	Set<Term> getTermsOfConnectedVariables(Set<NonTheorySymbol<?>> eqMembers) {
+	Set<Term> getTermsOfConnectedVariables(final Set<NonTheorySymbol<?>> eqMembers) {
 		final Set<Term> result = new HashSet<Term>();
 		for (final NonTheorySymbol<?> symbol : eqMembers) {
 			result.addAll(mSymbol2Terms.get(symbol));

@@ -108,7 +108,7 @@ public class DefaultTransFormulas extends NestedFormulas<UnmodifiableTransFormul
 			return call.getSucceedingProcedure();
 		} else if (super.getTrace().isPendingReturn(i)) {
 			final IReturnAction ret = (IReturnAction) super.getTrace().getSymbolAt(i);
-			return ret.getPreceedingProcedure();
+			return ret.getPrecedingProcedure();
 		} else {
 			throw new UnsupportedOperationException("only available for call and pending return");
 		}

@@ -23,9 +23,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -125,7 +125,7 @@ public class TypeHandler implements ITypeHandler {
     
     /**
      * if true we translate CPrimitives whose general type is INT to int.
-     * If false we translate CPrimitives whose general type is INT to 
+     * If false we translate CPrimitives whose general type is INT to
      * identically named types,
      */
     private final boolean mUseIntForAllIntegerTypes;
@@ -154,9 +154,9 @@ public class TypeHandler implements ITypeHandler {
 
 	/**
      * Constructor.
-	 * @param useIntForAllIntegerTypes 
+	 * @param useIntForAllIntegerTypes
      */
-    public TypeHandler(boolean useIntForAllIntegerTypes) {
+    public TypeHandler(final boolean useIntForAllIntegerTypes) {
     	mUseIntForAllIntegerTypes = useIntForAllIntegerTypes;
         mDefinedTypes = new LinkedScopedHashMap<String, TypesResult>();
         mIncompleteType = new LinkedHashSet<String>();
@@ -176,7 +176,7 @@ public class TypeHandler implements ITypeHandler {
     }
 
     @Override
-    public Result visit(Dispatcher main, IASTNode node) {
+    public Result visit(final Dispatcher main, final IASTNode node) {
         final String msg = "TypeHandler: Not yet implemented: " + node.toString();
         final ILocation loc = LocationFactory.createCLocation(node);
         throw new UnsupportedSyntaxException(loc, msg);
@@ -187,13 +187,13 @@ public class TypeHandler implements ITypeHandler {
      */
     @Deprecated
 	@Override
-    public Result visit(Dispatcher main, ACSLNode node) {
+    public Result visit(final Dispatcher main, final ACSLNode node) {
         throw new UnsupportedOperationException(
                 "Implementation Error: use ACSL handler for " + node.getClass());
     }
 
     @Override
-    public Result visit(Dispatcher main, IASTSimpleDeclSpecifier node) {
+    public Result visit(final Dispatcher main, final IASTSimpleDeclSpecifier node) {
     	// we have model.boogie.ast.PrimitiveType, which should
     	// only contain BOOL, INT, REAL ...
     	final ILocation loc = LocationFactory.createCLocation(node);
@@ -234,7 +234,7 @@ public class TypeHandler implements ITypeHandler {
     		 * This assumes that x is an array of pointers to functions; the type described is that of the values of the functions.
     		 * Here is an example with a typename as the argument:
     		 *     typeof (int *)
-    		 * Here the type described is that of pointers to int.  
+    		 * Here the type described is that of pointers to int.
     		 */
     		final Result opRes = main.dispatch(node.getDeclTypeExpression());
     		if (opRes instanceof ExpressionResult) {
@@ -263,7 +263,7 @@ public class TypeHandler implements ITypeHandler {
     }
 
     @Override
-    public Result visit(Dispatcher main, IASTNamedTypeSpecifier node) {
+    public Result visit(final Dispatcher main, IASTNamedTypeSpecifier node) {
         final ILocation loc = LocationFactory.createCLocation(node);
         if (node instanceof CASTTypedefNameSpecifier) {
             node = node;
@@ -277,7 +277,7 @@ public class TypeHandler implements ITypeHandler {
     }
 
     @Override
-    public Result visit(Dispatcher main, IASTEnumerationSpecifier node) {
+    public Result visit(final Dispatcher main, final IASTEnumerationSpecifier node) {
         final ILocation loc = LocationFactory.createCLocation(node);
         final String cId = node.getName().toString();
         // values of enum have type int
@@ -293,15 +293,15 @@ public class TypeHandler implements ITypeHandler {
             if (e.getValue() != null) {
             	final ExpressionResult rex = (ExpressionResult) main.dispatch(e.getValue());
             	fValues[i] = rex.lrVal.getValue();
-//            	assert (fValues[i] instanceof IntegerLiteral) || 
-//            		(fValues[i] instanceof BitvecLiteral) : 
+//            	assert (fValues[i] instanceof IntegerLiteral) ||
+//            		(fValues[i] instanceof BitvecLiteral) :
 //            			"assuming that only IntegerLiterals or BitvecLiterals can occur while translating an enum constant";
             } else {
             	fValues[i] = null;
             }
         }
         final CEnum cEnum = new CEnum(enumId, fNames, fValues);
-        final ASTType at = cPrimitive2asttype(loc, intType); 
+        final ASTType at = cPrimitive2asttype(loc, intType);
         final TypesResult result = new TypesResult(at, false, false, cEnum);
        
         final String incompleteTypeName = "ENUM~" + cId;
@@ -324,7 +324,7 @@ public class TypeHandler implements ITypeHandler {
     }
     
     @Override
-    public Result visit(Dispatcher main, IASTElaboratedTypeSpecifier node) {
+    public Result visit(final Dispatcher main, final IASTElaboratedTypeSpecifier node) {
     	final ILocation loc = LocationFactory.createCLocation(node);
     	if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct
     			|| node.getKind() == IASTElaboratedTypeSpecifier.k_enum
@@ -335,13 +335,13 @@ public class TypeHandler implements ITypeHandler {
     		//            if (mDefinedTypes.containsKey(type)) {
     		final TypesResult originalType = mDefinedTypes.get(type);
 //    		if (originalType == null && node.getKind() == IASTElaboratedTypeSpecifier.k_enum)
-//    			// --> we have an incomplete enum --> do nothing 
+//    			// --> we have an incomplete enum --> do nothing
 //    			//(i cannot think of an effect of an incomplete enum declaration right now..)
 //    			return new ResultSkip();
     		if (originalType != null) {
     			// --> we have a normal struct, union or enum declaration
     			final TypesResult withoutBoogieTypedef = new TypesResult(
-    					originalType.getType(), originalType.isConst, 
+    					originalType.getType(), originalType.isConst,
     					originalType.isVoid, originalType.cType);
     			return withoutBoogieTypedef;
     		} else {
@@ -352,7 +352,7 @@ public class TypeHandler implements ITypeHandler {
     			} else if (node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
     				incompleteTypeName = "UNION~" + type;
     			} else {
-    				incompleteTypeName = "ENUM~" + type; 
+    				incompleteTypeName = "ENUM~" + type;
     			}
 
     			mIncompleteType.add(incompleteTypeName);
@@ -384,7 +384,7 @@ public class TypeHandler implements ITypeHandler {
   
     
     @Override
-    public Result visit(Dispatcher main, IASTCompositeTypeSpecifier node) {
+    public Result visit(final Dispatcher main, final IASTCompositeTypeSpecifier node) {
         final ILocation loc = LocationFactory.createCLocation(node);
         final ArrayList<VarList> fields = new ArrayList<VarList>();
         // TODO : include inactives? what are inactives?
@@ -415,12 +415,12 @@ public class TypeHandler implements ITypeHandler {
         String name = null;
         if (node.getKey() == IASTCompositeTypeSpecifier.k_struct) {
         	name = "STRUCT~" + cId;
-        	cvar = new CStruct(fNames.toArray(new String[0]),
-                    fTypes.toArray(new CType[0]));
+        	cvar = new CStruct(fNames.toArray(new String[fNames.size()]),
+                    fTypes.toArray(new CType[fTypes.size()]));
         } else if (node.getKey() == IASTCompositeTypeSpecifier.k_union) {
         	name = "UNION~" + cId;
-        	cvar = new CUnion(fNames.toArray(new String[0]),
-                    fTypes.toArray(new CType[0]));
+        	cvar = new CUnion(fNames.toArray(new String[fNames.size()]),
+                    fTypes.toArray(new CType[fTypes.size()]));
         } else {
         	throw new UnsupportedOperationException();
         }
@@ -448,8 +448,8 @@ public class TypeHandler implements ITypeHandler {
     }
 
     @Override
-    public InferredType visit(Dispatcher main,
-            org.eclipse.cdt.core.dom.ast.IType type) {
+    public InferredType visit(final Dispatcher main,
+            final org.eclipse.cdt.core.dom.ast.IType type) {
     	if (type instanceof CPointerType) {
     		return new InferredType(Type.Pointer);
     	} else {
@@ -464,7 +464,7 @@ public class TypeHandler implements ITypeHandler {
     }
 
     @Override
-    public InferredType visit(Dispatcher main, ITypedef type) {
+    public InferredType visit(final Dispatcher main, final ITypedef type) {
     	assert false : "I don't think this should still be used";
         if (!mDefinedTypes.containsKey(type.getName())) {
             final String msg = "Unknown C typedef: " + type.getName();
@@ -549,7 +549,7 @@ public class TypeHandler implements ITypeHandler {
     }
 
     @Override
-    public InferredType visit(Dispatcher main, IArrayType type) {
+    public InferredType visit(final Dispatcher main, final IArrayType type) {
         return main.dispatch(type.getType());
     }
     
@@ -564,7 +564,7 @@ public class TypeHandler implements ITypeHandler {
     }
 
     @Override
-	public ASTType ctype2asttype(ILocation loc, CType cType) {
+	public ASTType ctype2asttype(final ILocation loc, final CType cType) {
 		if (cType instanceof CPrimitive) {
 			return cPrimitive2asttype(loc, (CPrimitive) cType);
 		} else if (cType instanceof CPointer) {
@@ -584,9 +584,9 @@ public class TypeHandler implements ITypeHandler {
 			}
 			final VarList[] fields = new VarList[cstruct.getFieldCount()];
 			for (int i = 0; i < cstruct.getFieldCount(); i++) {
-				fields[i] = new VarList(loc, 
-						new String[] {cstruct.getFieldIds()[i]}, 
-						ctype2asttype(loc, cstruct.getFieldTypes()[i])); 
+				fields[i] = new VarList(loc,
+						new String[] {cstruct.getFieldIds()[i]},
+						ctype2asttype(loc, cstruct.getFieldTypes()[i]));
 			}
 			return new StructType(loc, fields);
 		} else if (cType instanceof CNamed) {
@@ -594,7 +594,7 @@ public class TypeHandler implements ITypeHandler {
 			return new NamedType(loc, ((CNamed) cType).getName(), new ASTType[0]);
 		} else if (cType instanceof CFunction) {
 //				throw new UnsupportedSyntaxException(loc, "how to translate function type?");
-//			return null; 
+//			return null;
 			return constructPointerType(loc);
 		} else if (cType instanceof CEnum) {
 //			return new NamedType(loc, ((CEnum) cType).getIdentifier(), new ASTType[0]);
@@ -603,7 +603,7 @@ public class TypeHandler implements ITypeHandler {
 		throw new UnsupportedSyntaxException(loc, "unknown type");
 	}
     
-    private ASTType cPrimitive2asttype(ILocation loc, CPrimitive cPrimitive) {
+    private ASTType cPrimitive2asttype(final ILocation loc, final CPrimitive cPrimitive) {
 		switch (cPrimitive.getGeneralType()) {
 		case VOID:
 			return null; //(alex:) seems to be lindemm's convention, see FunctionHandler.isInParamVoid(..)
@@ -625,7 +625,7 @@ public class TypeHandler implements ITypeHandler {
 		}
     }
     
-    public ASTType bytesize2asttype(ILocation loc, CPrimitiveCategory generalprimitive, int bytesize) {
+    public ASTType bytesize2asttype(final ILocation loc, final CPrimitiveCategory generalprimitive, final int bytesize) {
 		switch (generalprimitive) {
 		case VOID:
 			throw new UnsupportedOperationException();
@@ -656,32 +656,32 @@ public class TypeHandler implements ITypeHandler {
     }
     
     @Override
-    public void addDefinedType(String id, TypesResult type) {
+    public void addDefinedType(final String id, final TypesResult type) {
     	mDefinedTypes.put(id, type);
     }
 
 	@Override
-	public ASTType constructPointerType(ILocation loc) {
+	public ASTType constructPointerType(final ILocation loc) {
 		mPointerTypeNeeded = true;
 		return new NamedType(null, SFO.POINTER, new ASTType[0]);
 	}
 	
 	/**
-	 * Construct list of type declarations that are needed because the 
-	 * corresponding types are introduced by the translation, e.g., pointers. 
+	 * Construct list of type declarations that are needed because the
+	 * corresponding types are introduced by the translation, e.g., pointers.
 	 */
-	public ArrayList<Declaration> constructTranslationDefiniedDelarations(ILocation tuLoc, 
-			AExpressionTranslation expressionTranslation) {
+	public ArrayList<Declaration> constructTranslationDefiniedDelarations(final ILocation tuLoc,
+			final AExpressionTranslation expressionTranslation) {
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		if (mPointerTypeNeeded) {
-			final VarList fBase = new VarList(tuLoc, new String[] { SFO.POINTER_BASE }, 
+			final VarList fBase = new VarList(tuLoc, new String[] { SFO.POINTER_BASE },
 					ctype2asttype(tuLoc, expressionTranslation.getCTypeOfPointerComponents()));
-			final VarList fOffset = new VarList(tuLoc, new String[] { SFO.POINTER_OFFSET }, 
+			final VarList fOffset = new VarList(tuLoc, new String[] { SFO.POINTER_OFFSET },
 					ctype2asttype(tuLoc, expressionTranslation.getCTypeOfPointerComponents()));
 			final VarList[] fields = new VarList[] { fBase, fOffset };
 			final ASTType pointerType = new StructType(tuLoc, fields);
 			// Pointer is non-finite, right? (ZxZ)..
-			decl.add(new TypeDeclaration(tuLoc, new Attribute[0], false, 
+			decl.add(new TypeDeclaration(tuLoc, new Attribute[0], false,
 					SFO.POINTER, new String[0], pointerType));
 		}
 		return decl;

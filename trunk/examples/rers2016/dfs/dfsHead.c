@@ -6,8 +6,8 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Define input sequences
-#define INPUT_MIN 1
-#define INPUT_MAX 10
+#define INPUT_MIN scriptInsertInputMinHere
+#define INPUT_MAX scriptInsertInputMaxHere
 #define INPUT_COUNT (INPUT_MAX - INPUT_MIN + 1)
 #define INPUT_SEQ_LENGTH 150
 
@@ -94,10 +94,12 @@ void dfs(int depth) {
 }
 
 int main(int argc, char *argv[]) {
-	srand(time(NULL));
 	for (int i = 0; i < 100; ++i) {
 		SHORTEST_SEQ_TO_ERR[i] = INPUT_SEQ_LENGTH + 1;
 	}
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	srand(ts.tv_nsec);
 
 	reset_eca();
 	reset_error();

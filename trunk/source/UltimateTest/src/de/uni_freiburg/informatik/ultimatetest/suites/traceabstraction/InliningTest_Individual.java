@@ -59,8 +59,8 @@ public class InliningTest_Individual extends AbstractTraceAbstractionTestSuite {
 //		"examples/BoogiePL/schaetzc/TestMultiQuant.bpl",
 		
 		// Former problem with requires specifications of main procedures.
-		"examples/programs/recursivePrograms/Katharinenberg.bpl",
-		"examples/programs/recursivePrograms/Katharinenberg.c",
+		"examples/programs/recursive/regression/Katharinenberg.bpl",
+		"examples/programs/recursive/regression/Katharinenberg.c",
 	};
 	
 	private static final boolean sTraceAbstractionBoogie = true;

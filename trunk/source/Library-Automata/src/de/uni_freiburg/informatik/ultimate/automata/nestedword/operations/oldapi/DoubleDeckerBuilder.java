@@ -36,27 +36,39 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 
-public abstract class DoubleDeckerBuilder<LETTER,STATE>
-		extends DoubleDeckerVisitor<LETTER,STATE>
+/**
+ * Builds {@link DoubleDecker}s.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
+public abstract class DoubleDeckerBuilder<LETTER, STATE> extends DoubleDeckerVisitor<LETTER, STATE>
 		implements IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
-
-	Set<STATE> mSuccessorsConstructedIn = new HashSet<STATE>();
-	Set<STATE> mSuccessorsConstructedCa = new HashSet<STATE>();
-//	Set<STATE> mSuccessorsConstructedRe = new HashSet<STATE>();
+	protected Set<STATE> mSuccessorsConstructedIn = new HashSet<>();
+	protected Set<STATE> mSuccessorsConstructedCa = new HashSet<>();
+//	protected Set<STATE> mSuccessorsConstructedRe = new HashSet<>();
 	
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 */
 	public DoubleDeckerBuilder(final AutomataLibraryServices services) {
 		super(services);
 	}
 	
 	@Override
-	protected Collection<STATE> visitAndGetInternalSuccessors(
-			final DoubleDecker<STATE> doubleDecker) {
+	protected Collection<STATE> visitAndGetInternalSuccessors(final DoubleDecker<STATE> doubleDecker) {
 		final STATE up = doubleDecker.getUp();
 		if (mSuccessorsConstructedIn.contains(up)) {
-			final HashSet<STATE> succs = new HashSet<STATE>();
+			final HashSet<STATE> succs = new HashSet<>();
 			for (final LETTER letter : mTraversedNwa.lettersInternal(up)) {
-				for (final OutgoingInternalTransition<LETTER, STATE> trans :
-						mTraversedNwa.internalSuccessors(up, letter)) {
+				for (final OutgoingInternalTransition<LETTER, STATE> trans : mTraversedNwa.internalSuccessors(up,
+						letter)) {
 					succs.add(trans.getSucc());
 				}
 			}
@@ -68,14 +80,12 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE>
 	}
 	
 	@Override
-	protected Collection<STATE> visitAndGetCallSuccessors(
-			final DoubleDecker<STATE> doubleDecker) {
+	protected Collection<STATE> visitAndGetCallSuccessors(final DoubleDecker<STATE> doubleDecker) {
 		final STATE up = doubleDecker.getUp();
 		if (mSuccessorsConstructedCa.contains(up)) {
-			final HashSet<STATE> succs = new HashSet<STATE>();
+			final HashSet<STATE> succs = new HashSet<>();
 			for (final LETTER letter : mTraversedNwa.lettersCall(up)) {
-				for (final OutgoingCallTransition<LETTER, STATE> trans :
-						mTraversedNwa.callSuccessors(up, letter)) {
+				for (final OutgoingCallTransition<LETTER, STATE> trans : mTraversedNwa.callSuccessors(up, letter)) {
 					succs.add(trans.getSucc());
 				}
 			}
@@ -85,34 +95,26 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE>
 			return buildCallSuccessors(doubleDecker);
 		}
 	}
-
-
-
+	
 	@Override
-	protected Collection<STATE> visitAndGetReturnSuccessors(
-			final DoubleDecker<STATE> doubleDecker) {
+	protected Collection<STATE> visitAndGetReturnSuccessors(final DoubleDecker<STATE> doubleDecker) {
 //		STATE up = doubleDecker.getUp();
 //		if (mSuccessorsConstructedRe.contains(up)) {
 //			return mTraversedNwa.succReturn(up);
 //		} else {
 //			mSuccessorsConstructedRe.add(up);
-			return buildReturnSuccessors(doubleDecker);
+		return buildReturnSuccessors(doubleDecker);
 //		}
 	}
 	
-
-	protected abstract Collection<STATE> buildInternalSuccessors(
-			DoubleDecker<STATE> doubleDecker);
-
-	protected abstract Collection<STATE> buildCallSuccessors(
-			DoubleDecker<STATE> doubleDecker);
-
-	protected abstract Collection<STATE> buildReturnSuccessors(
-			DoubleDecker<STATE> doubleDecker);
+	protected abstract Collection<STATE> buildInternalSuccessors(DoubleDecker<STATE> doubleDecker);
+	
+	protected abstract Collection<STATE> buildCallSuccessors(DoubleDecker<STATE> doubleDecker);
+	
+	protected abstract Collection<STATE> buildReturnSuccessors(DoubleDecker<STATE> doubleDecker);
 	
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mTraversedNwa;
 	}
-
 }

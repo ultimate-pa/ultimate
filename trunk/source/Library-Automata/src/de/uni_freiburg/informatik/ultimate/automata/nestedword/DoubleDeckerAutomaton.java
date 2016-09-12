@@ -42,10 +42,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class DoubleDeckerAutomaton<LETTER, STATE>
-		extends NestedWordAutomaton<LETTER, STATE>
+public class DoubleDeckerAutomaton<LETTER, STATE> extends NestedWordAutomaton<LETTER, STATE>
 		implements IDoubleDeckerAutomaton<LETTER, STATE> {
-		
 	private static final String UP2DOWN_NOT_SET = "up2down not set";
 	
 	private Map<STATE, Map<STATE, ReachFinal>> mUp2Down;
@@ -80,7 +78,13 @@ public class DoubleDeckerAutomaton<LETTER, STATE>
 		return mUp2Down != null;
 	}
 	
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @deprecated Use the {@link #isDoubleDecker(Object, Object)} check instead.
+	 */
 	@Override
+	@Deprecated
 	public Set<STATE> getDownStates(final STATE upState) {
 		if (up2DownIsSet()) {
 			return mUp2Down.get(upState).keySet();

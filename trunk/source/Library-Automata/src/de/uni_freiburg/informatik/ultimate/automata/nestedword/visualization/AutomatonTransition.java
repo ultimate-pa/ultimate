@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization;
@@ -31,27 +31,58 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 
 /**
  * Ultimate model of an automaton transition.
- * @author heizmann@informatik.uni-freiburg.de 
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class AutomatonTransition
+public final class AutomatonTransition
 		extends ModifiableMultigraphEdge<AutomatonState, AutomatonTransition, AutomatonState, AutomatonTransition> {
-
 	private static final long serialVersionUID = -2531826841396458461L;
 	
+	/**
+	 * Transition type.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 */
 	public enum Transition {
-		CALL, INTERNAL, RETURN, INITIAL
+		/**
+		 * Call transition.
+		 */
+		CALL,
+		/**
+		 * Internal transition.
+		 */
+		INTERNAL,
+		/**
+		 * Return transition.
+		 */
+		RETURN,
+		/**
+		 * Initial transition.
+		 */
+		INITIAL
 	}
 	
 	private String mName;
 	
-	public AutomatonTransition(final AutomatonState state,
-							   final Transition type,
-							   final Object transitionLabel,
-							   final String linPred,
-							   final AutomatonState succState) {
+	/**
+	 * Constructor.
+	 * 
+	 * @param state
+	 *            state
+	 * @param type
+	 *            transition type
+	 * @param transitionLabel
+	 *            transition label
+	 * @param linPred
+	 *            linear predecessor name
+	 * @param succState
+	 *            successor state representation
+	 */
+	public AutomatonTransition(final AutomatonState state, final Transition type, final Object transitionLabel,
+			final String linPred, final AutomatonState succState) {
 		super(state, succState);
-		assert (type == Transition.RETURN || linPred == null);
-		assert (type != Transition.RETURN || linPred != null);
+		assert type == Transition.RETURN || linPred == null;
+		assert type != Transition.RETURN || linPred != null;
 		switch (type) {
 			case CALL:
 				mName = "Call";
@@ -65,7 +96,8 @@ public class AutomatonTransition
 			case INITIAL:
 				mName = "";
 				break;
-			default: throw new IllegalArgumentException();
+			default:
+				throw new IllegalArgumentException();
 		}
 		mName = mName + ": " + transitionLabel;
 		if (type == Transition.RETURN) {

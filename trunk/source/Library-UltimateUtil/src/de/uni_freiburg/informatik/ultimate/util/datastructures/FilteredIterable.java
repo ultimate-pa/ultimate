@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Util Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
@@ -33,63 +33,63 @@ import de.uni_freiburg.informatik.ultimate.util.IPredicate;
 /**
  * Filter a given Iterable. Iterator returns only elements on which a given
  * predicate evaluates to true.
- * @author Matthias Heizmann
- *
- * @param <T>
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <T> element type
  */
 public class FilteredIterable<T> implements Iterable<T> {
 	final Iterable<T> mIterable;
 	final IPredicate<T> mPredicate;
 	
-	public FilteredIterable(Iterable<T> iterable, IPredicate<T> remainingElements) {
+	public FilteredIterable(final Iterable<T> iterable, final IPredicate<T> remainingElements) {
 		mIterable = iterable;
 		mPredicate = remainingElements;
 	}
 	
 	@Override
 	public Iterator<T> iterator() {
-		return new Iterator<T>() {
-			final Iterator<T> mIterator;
-			T mnext = null;
-			{
-				mIterator = mIterable.iterator();
-				if (mIterator.hasNext()) {
-					getNextThatSatisfiesPredicate();
-				}
-			}
-			private void getNextThatSatisfiesPredicate() {
-				if (mIterator.hasNext()) {
-					mnext = mIterator.next();
-					while (mnext != null && !mPredicate.evaluate(mnext)) {
-						if (mIterator.hasNext()) {
-							mnext = mIterator.next();
-						} else {
-							mnext = null;
-						}
-					}
-				} else {
-					mnext = null;
-				}
-			}
-
-			@Override
-			public boolean hasNext() {
-				return mnext != null;
-			}
-
-			@Override
-			public T next() {
-				final T result = mnext;
-				getNextThatSatisfiesPredicate();
-				return result;
-			}
-
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException();
-			}
-
-		};
+		return new PredicateIterator(mIterable);
 	}
-
+	
+	private final class PredicateIterator implements Iterator<T> {
+		final Iterator<T> mIterator;
+		T mNext;
+		
+		public PredicateIterator(final Iterable<T> iterable) {
+			mIterator = iterable.iterator();
+			getNextThatSatisfiesPredicate();
+		}
+		
+		private void getNextThatSatisfiesPredicate() {
+			if (mIterator.hasNext()) {
+				mNext = mIterator.next();
+				while (mNext != null && !mPredicate.evaluate(mNext)) {
+					if (mIterator.hasNext()) {
+						mNext = mIterator.next();
+					} else {
+						mNext = null;
+					}
+				}
+			} else {
+				mNext = null;
+			}
+		}
+		
+		@Override
+		public boolean hasNext() {
+			return mNext != null;
+		}
+		
+		@Override
+		public T next() {
+			final T result = mNext;
+			getNextThatSatisfiesPredicate();
+			return result;
+		}
+		
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+	}
 }

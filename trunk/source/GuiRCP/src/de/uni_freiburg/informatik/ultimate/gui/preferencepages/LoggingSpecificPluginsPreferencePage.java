@@ -51,7 +51,7 @@ public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPrefere
 
 	@Override
 	protected String[] getDefaults() {
-		return convert(mPreferenceStore.getDefaultString(CorePreferenceInitializer.PREFID_DETAILS));
+		return convert(mPreferenceStore.getDefaultString(CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGIN_SPECIFIC));
 	}
 
 	@Override
@@ -61,7 +61,7 @@ public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPrefere
 
 	@Override
 	protected String[] getPreferenceAsStringArray() {
-		return convert(mPreferenceStore.getString(CorePreferenceInitializer.PREFID_DETAILS));
+		return convert(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGIN_SPECIFIC));
 	}
 
 	@Override
@@ -71,7 +71,7 @@ public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPrefere
 			buffer.append(items[i]);
 			buffer.append(CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
 		}
-		mPreferenceStore.setValue(CorePreferenceInitializer.PREFID_DETAILS, buffer.toString());
+		mPreferenceStore.setValue(CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGIN_SPECIFIC, buffer.toString());
 	}
 
 	@Override

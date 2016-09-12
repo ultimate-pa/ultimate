@@ -73,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 @SuppressWarnings("squid:UselessParenthesesCheck")
-public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
+public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	/*
 	 * EXPERIMENTAL
 	 * deterministic finite automata can be handled more efficiently

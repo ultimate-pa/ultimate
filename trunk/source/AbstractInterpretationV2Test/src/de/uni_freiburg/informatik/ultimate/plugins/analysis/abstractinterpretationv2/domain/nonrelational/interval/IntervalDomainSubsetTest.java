@@ -94,7 +94,7 @@ public class IntervalDomainSubsetTest {
 		}
 
 		@Override
-		public String getIdentifier() {
+		public String getGloballyUniqueId() {
 			return mName;
 		}
 

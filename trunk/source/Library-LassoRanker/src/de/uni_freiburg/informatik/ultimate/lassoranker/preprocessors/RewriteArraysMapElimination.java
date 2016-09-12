@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.mapelimination.MapEliminator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.EqualitySupportingInvariantAnalysis;
@@ -120,6 +121,9 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 		final TransFormulaLR newLoop = elim.getRewrittenTransFormula(lasso.getLoop(), equalityAnalysisLoop,
 				equalityAnalysisLoop);
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
+		assert RewriteArrays2.checkStemImplication(mServices, 
+				mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID), lasso, newLasso,
+				mSymbolTable, mManagedScript) : "result of RewriteArrays too strong";
 		return Collections.singleton(newLasso);
 	}
 }

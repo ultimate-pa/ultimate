@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AutomataScriptInterpreter plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AutomataScriptInterpreter plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AutomataScriptInterpreter plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter;
@@ -44,7 +44,7 @@ public class ListExistingOperations {
 	private final List<String> mOperationList = new ArrayList<String>();
 
 	public ListExistingOperations(
-			Map<String, Set<Class<?>>> existingOperations) {
+			final Map<String, Set<Class<?>>> existingOperations) {
 		mExistingOperations = existingOperations;
 		for (final String operation : mExistingOperations.keySet()) {
 			for (final Class<?> clazz : mExistingOperations.get(operation)) {
@@ -56,7 +56,7 @@ public class ListExistingOperations {
 	}
 	
 	
-	private String constructorStringRepresentation(Constructor<?> constructor) {
+	private String constructorStringRepresentation(final Constructor<?> constructor) {
 		final StringBuilder result = new StringBuilder();
 		result.append(constructor.getDeclaringClass().getSimpleName());
 		result.append("(");
@@ -76,7 +76,7 @@ public class ListExistingOperations {
 	 */
 	public String prettyPrint() {
 		final StringBuilder result = new StringBuilder();
-		final String[] sorted = mOperationList.toArray(new String[0]);
+		final String[] sorted = mOperationList.toArray(new String[mOperationList.size()]);
 		Arrays.sort(sorted);
 		for(final String op : sorted) {
 			result.append(op);

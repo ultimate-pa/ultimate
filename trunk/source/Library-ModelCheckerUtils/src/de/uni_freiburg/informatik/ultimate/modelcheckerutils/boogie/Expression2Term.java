@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
@@ -101,8 +101,8 @@ public class Expression2Term {
 	private final IUltimateServiceProvider mServices;
 	private static final String s_Overapproximation = "overapproximation";
 
-	public Expression2Term(final IUltimateServiceProvider services, final Script script, 
-			final TypeSortTranslator typeSortTranslator, 
+	public Expression2Term(final IUltimateServiceProvider services, final Script script,
+			final TypeSortTranslator typeSortTranslator,
 			final Boogie2SmtSymbolTable boogie2SmtSymbolTable, final IOperationTranslator operationTranslator, final ManagedScript variableManager) {
 		super();
 		mServices = services;
@@ -126,7 +126,7 @@ public class Expression2Term {
 		mSmtIdentifierProviders = null;
 		mAuxVars = null;
 		mOverapproximations = null;
-		return result; 
+		return result;
 	}
 
 	public MultiTermResult translateToTerms(final IdentifierTranslator[] identifierTranslators, final Expression[] expressions) {
@@ -145,7 +145,7 @@ public class Expression2Term {
 		mSmtIdentifierProviders = null;
 		mAuxVars = null;
 		mOverapproximations = null;
-		return result; 
+		return result;
 	}
 
 	Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, final boolean isOldContext, final BoogieASTNode boogieASTNode) {
@@ -202,7 +202,7 @@ public class Expression2Term {
 				result = mScript.term("store", arrayBeforeIndex[i], indexTerm[i], result);
 			}
 			assert (result != null);
-			assert (result.toString() instanceof Object);
+			assert resultContainsNoNull(result);
 			return result;
 
 		} else if (exp instanceof BinaryExpression) {
@@ -215,16 +215,16 @@ public class Expression2Term {
 				final String negationFuncname = mOperationTranslator.opTranslation(
 						UnaryExpression.Operator.LOGICNEG, PrimitiveType.TYPE_BOOL);
 				final BigInteger[] indices = new BigInteger[0];
-            	return SmtUtils.termWithLocalSimplification(mScript, 
+            	return SmtUtils.termWithLocalSimplification(mScript,
             			negationFuncname, indices,
-            			SmtUtils.termWithLocalSimplification(mScript, 
-            			equalityFuncname, indices, 
+            			SmtUtils.termWithLocalSimplification(mScript,
+            			equalityFuncname, indices,
 					    translate(binexp.getLeft()), translate(binexp.getRight())));
             } else {
 				final String funcname = mOperationTranslator.opTranslation(
 						op, binexp.getLeft().getType(), binexp.getRight().getType());
 				final BigInteger[] indices = null;
-			    return SmtUtils.termWithLocalSimplification(mScript, 
+			    return SmtUtils.termWithLocalSimplification(mScript,
 			    		funcname, indices,
 					    translate(binexp.getLeft()), translate(binexp.getRight()));
             }
@@ -253,8 +253,8 @@ public class Expression2Term {
 
 		} else if (exp instanceof BitVectorAccessExpression) {
 			final BigInteger[] indices = new BigInteger[2];
-			indices[0] = new BigInteger(new Integer(((BitVectorAccessExpression) exp).getEnd() - 1).toString());
-			indices[1] = new BigInteger(new Integer(((BitVectorAccessExpression) exp).getStart()).toString());
+			indices[0] = new BigInteger(Integer.toString(((BitVectorAccessExpression) exp).getEnd() - 1));
+			indices[1] = new BigInteger(Integer.toString(((BitVectorAccessExpression) exp).getStart()));
 
 			final Term result = mScript.term("extract", indices, null, translate(((BitVectorAccessExpression) exp).getBitvec()));
 			assert result != null;
@@ -402,11 +402,16 @@ public class Expression2Term {
 					throw new AssertionError();
 				}
 			}
-			assert (result.toString() instanceof Object);
+			assert resultContainsNoNull(result);
 			return result;
 		} else {
 			throw new AssertionError("Unsupported expression " + exp);
 		}
+	}
+
+	private boolean resultContainsNoNull(Term result) {
+		// toString crashes if the result contains a null element 
+		return result.toString() instanceof Object;
 	}
 	
 	abstract class TranslationResult {

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.termination;
@@ -169,7 +169,7 @@ public class AffineFunction implements Serializable {
 	private static Term constructSummand(final Script script, final Term t,
 			final BigInteger coefficient) {
 		if (coefficient.equals(BigInteger.ONE)) {
-			return t; 
+			return t;
 		} else {
 			return script.term("*", script.numeral(coefficient), t);
 		}
@@ -189,7 +189,7 @@ public class AffineFunction implements Serializable {
 		}
 		summands.add(script.numeral(mconstant));
 		return SmtUtils.sum(script, script.sort("Real"),
-				summands.toArray(new Term[0]));
+				summands.toArray(new Term[summands.size()]));
 	}
 	
 	/**

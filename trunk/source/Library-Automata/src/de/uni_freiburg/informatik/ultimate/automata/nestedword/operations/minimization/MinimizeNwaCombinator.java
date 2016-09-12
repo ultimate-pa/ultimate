@@ -242,10 +242,10 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinimizeNwaDd<
 	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
 		switch (mPattern[mCounter]) {
 			case MINIMIZE_SEVPA:
-				return ((MinimizeSevpa<LETTER, STATE>) mCurrent).getResult();
+				return (IDoubleDeckerAutomaton<LETTER, STATE>) ((MinimizeSevpa<LETTER, STATE>) mCurrent).getResult();
 			
 			case SHRINK_NWA:
-				return ((ShrinkNwa<LETTER, STATE>) mCurrent).getResult();
+				return (IDoubleDeckerAutomaton<LETTER, STATE>) ((ShrinkNwa<LETTER, STATE>) mCurrent).getResult();
 			
 			case NONE:
 				return (IDoubleDeckerAutomaton<LETTER, STATE>) mCurrent;
@@ -254,7 +254,7 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinimizeNwaDd<
 				throw new IllegalArgumentException(UNDEFINED_ENUM_STATE_MESSAGE);
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public Map<STATE, STATE> getOldState2newState() {

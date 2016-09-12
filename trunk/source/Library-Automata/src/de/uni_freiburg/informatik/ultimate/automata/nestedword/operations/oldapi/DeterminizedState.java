@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi;
@@ -47,23 +47,34 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * represents the state "before the last call statement", i.e. the second state
  * represents "the top of the stack".
  * 
- * @param <LETTER> Symbol
- * @param <STATE> Content
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            Symbol
+ * @param <STATE>
+ *            Content
  */
-public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTER, STATE> {
-	
+public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETTER, STATE> {
 	/**
-	 * Set of ordered pairs. The pair (present,caller) is in this set iff 
-	 * present is contained in the image of caller.  
+	 * Set of ordered pairs. The pair (present,caller) is in this set iff
+	 * present is contained in the image of caller.
 	 */
-	private final Map<STATE,Set<STATE>> mCaller2presents;
+	private final Map<STATE, Set<STATE>> mCaller2presents;
+	private boolean mContainsFinal;
+	private STATE mCachedResultingState;
+	
 	private boolean mConstructionFinished;
 	private int mHashCode;
-	private boolean mContainsFinal = false;
-	private STATE mCachedResultingState = null;
 	
-	public DeterminizedState(final INestedWordAutomatonSimple<LETTER,STATE> nwa) {
-		mCaller2presents = new HashMap<STATE,Set<STATE>>();
+	/**
+	 * Constructor.
+	 * <p>
+	 * TODO Christian 2016-09-10: The parameter is not used - a bug?
+	 * 
+	 * @param nwa
+	 *            nested word automaton
+	 */
+	public DeterminizedState(final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+		mCaller2presents = new HashMap<>();
 	}
 	
 	@Override
@@ -71,32 +82,32 @@ public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTE
 		return mCaller2presents.keySet();
 	}
 	
-	
 	@Override
 	public Set<STATE> getUpStates(final STATE caller) {
 		return mCaller2presents.get(caller);
 	}
 	
-
 	/**
 	 * @return true iff for some pair in the set, the first entry is an
-	 *     accepting state.
+	 *         accepting state.
 	 */
 	public boolean containsFinal() {
 		return mContainsFinal;
 	}
 	
 	/**
+	 * @param nwa
+	 *            A nested word automaton.
 	 * @return true iff for all pair in the set, the first entry is an
-	 *     accepting state and the set is not empty
+	 *         accepting state and the set is not empty
 	 */
-	public boolean allFinal(final INestedWordAutomatonSimple<LETTER,STATE> nwa) {
+	public boolean allFinal(final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		if (mCaller2presents.isEmpty()) {
 			return false;
 		}
 		for (final Entry<STATE, Set<STATE>> entry : mCaller2presents.entrySet()) {
-			for (final STATE up : entry.getValue()) {
-				if (!nwa.isFinal(up)) {
+			for (final STATE upState : entry.getValue()) {
+				if (!nwa.isFinal(upState)) {
 					return false;
 				}
 			}
@@ -104,9 +115,10 @@ public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTE
 		return true;
 	}
 	
-
 	/**
-	 * By the contentFactory created content for the determinized state.
+	 * @param stateFactory
+	 *            A state factory.
+	 * @return content created by the factory for the determinized state
 	 */
 	public STATE getContent(final IStateFactory<STATE> stateFactory) {
 		if (mCachedResultingState == null) {
@@ -114,12 +126,18 @@ public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTE
 		}
 		return mCachedResultingState;
 	}
-
-
+	
 	/**
-	 * Add the pair (caller,present) to the set. 
+	 * Adds the pair (caller,present) to the nested word automaton.
+	 * 
+	 * @param caller
+	 *            caller state
+	 * @param present
+	 *            present state
+	 * @param nwa
+	 *            nested word automaton
 	 */
-	public void addPair(final STATE caller, final STATE present, final INestedWordAutomatonSimple<LETTER,STATE> nwa) {
+	public void addPair(final STATE caller, final STATE present, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		if (mConstructionFinished) {
 			throw new IllegalArgumentException("Construction finished must not add pairs.");
 		}
@@ -128,28 +146,27 @@ public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTE
 		}
 		Set<STATE> presentStates = mCaller2presents.get(caller);
 		if (presentStates == null) {
-			presentStates = new HashSet<STATE>();
+			presentStates = new HashSet<>();
 			mCaller2presents.put(caller, presentStates);
 		}
 		presentStates.add(present);
 	}
 	
-	
 	/**
 	 * Two DeterminizedStates are equivalent iff they represent the same set of
-	 * state pairs. 
+	 * state pairs.
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(final Object obj) {
-		if (obj instanceof DeterminizedState) {
-			final DeterminizedState<LETTER,STATE> detState = (DeterminizedState<LETTER,STATE>) obj;
-			return mCaller2presents.equals(detState.mCaller2presents);
-		} else {
+		if (obj == null) {
 			return false;
 		}
+		if (this.getClass() != obj.getClass()) {
+			return false;
+		}
+		final DeterminizedState<?, ?> detState = (DeterminizedState<?, ?>) obj;
+		return mCaller2presents.equals(detState.mCaller2presents);
 	}
-	
 	
 	@Override
 	public int hashCode() {
@@ -160,22 +177,26 @@ public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTE
 		return mHashCode;
 	}
 	
-
 	@Override
 	public String toString() {
 		return mCaller2presents.toString();
 	}
 	
-	public boolean isSubsetOf(final DeterminizedState<LETTER,STATE> superset) {
-		for (final STATE down : getDownStates()) {
-			final Set<STATE> supersetUpStates = superset.getUpStates(down);
+	/**
+	 * @param superset
+	 *            Another determinized state.
+	 * @return {@code true} iff all states represented by {@code this} are also represented by the other determinized
+	 *         state
+	 */
+	public boolean isSubsetOf(final DeterminizedState<LETTER, STATE> superset) {
+		for (final STATE downState : getDownStates()) {
+			final Set<STATE> supersetUpStates = superset.getUpStates(downState);
 			if (supersetUpStates == null) {
 				return false;
-			} else {
-				for (final STATE up : getUpStates(down)) {
-					if (!supersetUpStates.contains(up)) {
-						return false;
-					}
+			}
+			for (final STATE upState : getUpStates(downState)) {
+				if (!supersetUpStates.contains(upState)) {
+					return false;
 				}
 			}
 		}
@@ -186,9 +207,12 @@ public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTE
 		return mCaller2presents.isEmpty();
 	}
 	
+	/**
+	 * @return The degree of nondeterminism with respect to outgoing transitions.
+	 */
 	public int degreeOfNondeterminism() {
 		int degree = 0;
-		for ( final STATE down : getDownStates()) {
+		for (final STATE down : getDownStates()) {
 			degree += getUpStates(down).size();
 		}
 		return degree;

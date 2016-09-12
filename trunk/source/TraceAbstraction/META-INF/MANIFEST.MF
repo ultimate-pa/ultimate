@@ -3,8 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: TraceAbstraction
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;singleton:=true
 Bundle-Version: 0.0.1
-Require-Bundle: Library-UltimateCore, 
- Library-log4j,
+Require-Bundle: Library-UltimateCore,
  Library-ModelCheckerUtils,
  Library-SMTLIB,
  Library-UltimateUtil,

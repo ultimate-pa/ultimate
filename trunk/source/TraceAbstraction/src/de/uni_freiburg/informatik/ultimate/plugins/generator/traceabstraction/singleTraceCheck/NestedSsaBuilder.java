@@ -214,7 +214,7 @@ public class NestedSsaBuilder {
 			mPendingContext2PendingReturn.put(startOfCallingContext, pendingReturnPosition);
 			final Return ret = (Return) mFormulas.getTrace().getSymbol(pendingReturnPosition);
 			final Call correspondingCall = ret.getCorrespondingCall();
-			mcurrentProcedure = correspondingCall.getPreceedingProcedure();
+			mcurrentProcedure = correspondingCall.getPrecedingProcedure();
 
 			reVersionModifiableGlobals();
 			if (i == numberPendingContexts - 1) {
@@ -267,7 +267,7 @@ public class NestedSsaBuilder {
 		if (mcurrentProcedure == null) {
 			assert numberPendingContexts == 0;
 			final IAction firstCodeBlock = mFormulas.getTrace().getSymbolAt(0);
-			mcurrentProcedure = firstCodeBlock.getPreceedingProcedure();
+			mcurrentProcedure = firstCodeBlock.getPrecedingProcedure();
 		}
 		reVersionModifiableGlobals();
 		if (pendingReturns.length == 0) {
@@ -468,7 +468,7 @@ public class NestedSsaBuilder {
 		public Term getVersioneeredTerm() {
 			final Substitution subst = new Substitution(mScript, mSubstitutionMapping);
 			final Term result = subst.transform(mformula);
-			assert result.getFreeVars().length == 0 : "free vars in versioneered term: " + String.valueOf(result.getFreeVars());
+			assert result.getFreeVars().length == 0 : "free vars in versioneered term: " + result.getFreeVars();
 			return result;
 		}
 

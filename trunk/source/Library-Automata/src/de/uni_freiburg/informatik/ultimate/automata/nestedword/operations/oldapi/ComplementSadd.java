@@ -36,21 +36,63 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDete
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class ComplementSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+/**
+ * Complements a nested word automaton.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
+public final class ComplementSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mDeterminizedOperand;
+	private final INestedWordAutomaton<LETTER, STATE> mResult;
 	
-	protected INestedWordAutomaton<LETTER, STATE> mOperand;
-	protected INestedWordAutomaton<LETTER, STATE> mDeterminizedOperand;
-	protected INestedWordAutomaton<LETTER, STATE> mResult;
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled.
+	 */
+	public ComplementSadd(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+		super(services);
+		mOperand = operand;
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		
+		if (!new IsDeterministic<LETTER, STATE>(services, mOperand).getResult()) {
+			mDeterminizedOperand = (new DeterminizeSadd<LETTER, STATE>(mServices, mOperand)).getResult();
+		} else {
+			mDeterminizedOperand = mOperand;
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Operand is already deterministic");
+			}
+		}
+		mResult = new ReachableStatesCopy<LETTER, STATE>(mServices, mDeterminizedOperand, true, true, false, false)
+				.getResult();
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
+	}
 	
 	@Override
 	public String operationName() {
-		return "complementSadd";
+		return "ComplementSadd";
 	}
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result "
-				+ mResult.sizeInformation();
+		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}
 	
 	@Override
@@ -63,35 +105,21 @@ public class ComplementSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 		return mResult;
 	}
 	
-	public ComplementSadd(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand)
-					throws AutomataOperationCanceledException {
-		super(services);
-		mOperand = operand;
-		
-		mLogger.info(startMessage());
-		if (!new IsDeterministic<LETTER, STATE>(services, mOperand).getResult()) {
-			mDeterminizedOperand =
-					(new DeterminizeSadd<LETTER, STATE>(mServices, mOperand)).getResult();
-		} else {
-			mDeterminizedOperand = mOperand;
-			mLogger.debug("Operand is already deterministic");
-		}
-		mResult = new ReachableStatesCopy<LETTER, STATE>(
-				mServices, mDeterminizedOperand, true, true, false, false).getResult();
-		mLogger.info(exitMessage());
-	}
-	
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		mLogger.debug("Testing correctness of complement");
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Testing correctness of complement");
+		}
+		
 		boolean correct = true;
 		final INestedWordAutomaton<LETTER, STATE> intersectionOperandResult =
 				(new IntersectDD<LETTER, STATE>(mServices, false, mOperand, mResult)).getResult();
-		correct &= ((new IsEmpty<LETTER, STATE>(mServices, intersectionOperandResult)).getResult() == true);
-		mLogger.debug("Finished testing correctness of complement");
+		correct &= (new IsEmpty<LETTER, STATE>(mServices, intersectionOperandResult)).getResult();
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of complement");
+		}
 		return correct;
 	}
-	
 }

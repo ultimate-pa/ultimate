@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
@@ -30,40 +30,42 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 
 /**
  * Infinite run of a Büchi nested word automaton for a nested word of the
- * form u.v^ω
+ * form <tt>u.v^ω</tt>.
  * 
- * @author Matthias Heizmann
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class NestedLassoRun<LETTER,STATE> {
-	private final NestedRun<LETTER,STATE> mStem;
-	private final NestedRun<LETTER,STATE> mLoop;
+public class NestedLassoRun<LETTER, STATE> {
+	private final NestedRun<LETTER, STATE> mStem;
+	private final NestedRun<LETTER, STATE> mLoop;
 	
 	/**
 	 * Constructor.
 	 * 
-	 * @param stem stem
-	 * @param loop loop
+	 * @param stem
+	 *            stem
+	 * @param loop
+	 *            loop
 	 */
-	public NestedLassoRun(final NestedRun<LETTER,STATE> stem,
+	public NestedLassoRun(final NestedRun<LETTER, STATE> stem,
 			final NestedRun<LETTER, STATE> loop) {
-		this.mStem = stem;
-		this.mLoop = loop;
+		mStem = stem;
+		mLoop = loop;
 	}
 	
-	public NestedRun<LETTER,STATE> getStem() {
+	public NestedRun<LETTER, STATE> getStem() {
 		return mStem;
 	}
 	
-	public NestedRun<LETTER,STATE> getLoop() {
+	public NestedRun<LETTER, STATE> getLoop() {
 		return mLoop;
 	}
 	
 	public NestedLassoWord<LETTER> getNestedLassoWord() {
-		return new NestedLassoWord<LETTER>(this.getStem().getWord(), 
-									  this.getLoop().getWord());
+		return new NestedLassoWord<>(getStem().getWord(), getLoop().getWord());
 	}
 	
 	@Override

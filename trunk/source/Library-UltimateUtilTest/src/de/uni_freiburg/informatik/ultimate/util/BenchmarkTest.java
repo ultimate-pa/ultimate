@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 public class BenchmarkTest {
 
 	@BeforeClass
-	public static void Setup() {
+	public static void setUp() {
 
 	}
 

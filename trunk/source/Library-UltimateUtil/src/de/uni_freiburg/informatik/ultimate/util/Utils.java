@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Util Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util;
@@ -47,7 +47,7 @@ public class Utils {
 	 *            true iff SI units should be used (base 1000, without the "i")
 	 * @return
 	 */
-	public static String humanReadableByteCount(long bytes, boolean si) {
+	public static String humanReadableByteCount(final long bytes, final boolean si) {
 		final int unit = si ? 1000 : 1024;
 		if (bytes < unit) {
 			return bytes + " B";
@@ -57,13 +57,13 @@ public class Utils {
 		return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
 	}
 	
-	public static String humanReadableNumber(long number) {
+	public static String humanReadableNumber(final long number) {
 		final int unit = 1000 ;
 		if (number < unit) {
-			return number + "";
+			return Long.toString(number);
 		}
 		final int exp = (int) (Math.log(number) / Math.log(unit));
-		final String pre = ("KMGTPE").charAt(exp - 1)+"";
+		final String pre = String.valueOf(("KMGTPE").charAt(exp - 1));
 		return String.format("%.1f %s", number / Math.pow(unit, exp), pre);
 	}
 
@@ -75,7 +75,7 @@ public class Utils {
 	 * @param delimiter
 	 * @return
 	 */
-	public static String join(Collection<?> collection, String delimiter) {
+	public static String join(final Collection<?> collection, final String delimiter) {
 		final StringBuilder builder = new StringBuilder();
 		final Iterator<?> iter = collection.iterator();
 		while (iter.hasNext()) {
@@ -102,7 +102,7 @@ public class Utils {
 	 *            The decimal accurracy of the ouptut.
 	 * @return A String with unit symbol.
 	 */
-	public static String humanReadableTime(long time, TimeUnit unit, int decimal) {
+	public static String humanReadableTime(final long time, final TimeUnit unit, final int decimal) {
 		return humanReadableTime((double) time, unit, decimal);
 	}
 
@@ -120,7 +120,7 @@ public class Utils {
 	 *            The decimal accurracy of the ouptut.
 	 * @return A String with unit symbol.
 	 */
-	public static String humanReadableTime(double time, TimeUnit unit, int decimal) {
+	public static String humanReadableTime(final double time, final TimeUnit unit, final int decimal) {
 		final String[] units = { "ns", "µs", "ms", "s", "m", "h", "d" };
 
 		switch (unit) {
@@ -172,7 +172,7 @@ public class Utils {
 	 * Filter Collection to all elements that are subclasses of clazz.
 	 */
 	@SuppressWarnings("unchecked")
-	public static <E> Collection<E> filter(Collection<?> iterable, Class<E> clazz) {
+	public static <E> Collection<E> filter(final Collection<?> iterable, final Class<E> clazz) {
 		final ArrayList<E> filteredList = new ArrayList<E>();
 		for (final Object e: iterable) {
 			if (clazz.isAssignableFrom(e.getClass())) {
@@ -185,7 +185,7 @@ public class Utils {
 	/**
 	 * Construct a new HashSet that contains the elements of a given Iterable.
 	 */
-	public static <E> HashSet<E> constructHashSet(Iterable<E> iterable) {
+	public static <E> HashSet<E> constructHashSet(final Iterable<E> iterable) {
 		final HashSet<E> result = new HashSet<E>();
 		for (final E element : iterable) {
 			result.add(element);
@@ -197,7 +197,7 @@ public class Utils {
 	 * @return a new HashMap that contains all key-value pairs of map whose
 	 * key is contained in filter.
 	 */
-	public static <K,V> HashMap<K,V> constructFilteredMap(Map<K,V> map, Collection<K> filter) {
+	public static <K,V> HashMap<K,V> constructFilteredMap(final Map<K,V> map, final Collection<K> filter) {
 		final HashMap<K,V> result = new HashMap<>();
 		for (final K key : filter) {
 			final V value = map.get(key);

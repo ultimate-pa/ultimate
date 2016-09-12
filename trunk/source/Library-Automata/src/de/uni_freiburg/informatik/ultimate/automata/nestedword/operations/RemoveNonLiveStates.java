@@ -91,7 +91,9 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 		
 		mReach = new NestedWordAutomatonReachableStates<>(mServices, mOperand);
 		mReach.computeNonLiveStates();
-		mResult = new NestedWordAutomatonFilteredStates<>(mServices, mReach, mReach.getOnlyLiveStates());
+		final NestedWordAutomatonFilteredStates<LETTER, STATE> filtered =
+				new NestedWordAutomatonFilteredStates<>(mServices, mReach, mReach.getOnlyLiveStates());
+		mResult = new NestedWordAutomatonReachableStates<>(mServices, filtered);
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
@@ -129,14 +131,8 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 //		correct = correct && (ResultChecker.nwaLanguageInclusion(mInput, mResult) == null);
 //		correct = correct && (ResultChecker.nwaLanguageInclusion(mResult, mInput) == null);
 		assert correct;
-		INestedWordAutomaton<LETTER, STATE> input;
-		if (mOperand instanceof INestedWordAutomaton) {
-			input = (INestedWordAutomaton<LETTER, STATE>) mOperand;
-		} else {
-			input = (new RemoveUnreachable<LETTER, STATE>(mServices, mOperand)).getResult();
-		}
 		final ReachableStatesCopy<LETTER, STATE> rsc =
-				new ReachableStatesCopy<>(mServices, input, false, false, false, false);
+				new ReachableStatesCopy<>(mServices, mOperand, false, false, false, false);
 //		Set<UpDownEntry<STATE>> rsaEntries = new HashSet<UpDownEntry<STATE>>();
 //		for (UpDownEntry<STATE> rde : mReach.getRemovedUpDownEntry()) {
 //			rsaEntries.add(rde);

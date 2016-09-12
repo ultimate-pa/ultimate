@@ -69,9 +69,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  */
 public abstract class TransFormula {
 
-	protected final Map<IProgramVar, TermVariable> mInVars;
-	protected final Map<IProgramVar, TermVariable> mOutVars;
-	protected final Set<TermVariable> mAuxVars;
+	private final Map<IProgramVar, TermVariable> mInVars;
+	private final Map<IProgramVar, TermVariable> mOutVars;
+	private final Set<TermVariable> mAuxVars;
 
 	public TransFormula(final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars,
 			final Set<TermVariable> auxVars) {

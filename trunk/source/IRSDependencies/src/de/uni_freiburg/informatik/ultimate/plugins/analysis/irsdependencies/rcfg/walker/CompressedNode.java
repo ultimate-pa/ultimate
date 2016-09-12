@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IRSDependencies plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker;
@@ -42,7 +42,7 @@ public class CompressedNode extends RCFGNode {
 
 	private final SCC mComponent;
 
-	public CompressedNode(SCC component) {
+	public CompressedNode(final SCC component) {
 		if (component == null || component.isEmpty()) {
 			throw new IllegalArgumentException();
 		} else {
@@ -74,11 +74,11 @@ public class CompressedNode extends RCFGNode {
 		return mComponent.toString();
 	}
 
-	public boolean contains(RCFGNode node) {
+	public boolean contains(final RCFGNode node) {
 		return mComponent.contains(node);
 	}
 	
-	public List<RCFGEdge> getShortestPathToExit(RCFGEdge start){
+	public List<RCFGEdge> getShortestPathToExit(final RCFGEdge start){
 		if(!mIncomingEdges.contains(start)){
 			return null;
 		}
@@ -94,7 +94,7 @@ public class CompressedNode extends RCFGNode {
 	
 
 	
-	protected List<RCFGEdge> shortestPathToExit(RCFGEdge start) {
+	protected List<RCFGEdge> shortestPathToExit(final RCFGEdge start) {
 
 		final LinkedList<EdgeDecorator> queue = new LinkedList<>();
 		final HashMap<RCFGEdge, EdgeDecorator> set = new HashMap<>();
@@ -137,13 +137,13 @@ public class CompressedNode extends RCFGNode {
 
 	}
 	
-	protected EdgeDecorator getContainer(HashMap<RCFGEdge, EdgeDecorator> set,
-			RCFGEdge edge){
-		return getContainer(set, edge, 2); 
+	protected EdgeDecorator getContainer(final HashMap<RCFGEdge, EdgeDecorator> set,
+			final RCFGEdge edge){
+		return getContainer(set, edge, 2);
 	}
 	
-	private EdgeDecorator getContainer(HashMap<RCFGEdge, EdgeDecorator> set,
-			RCFGEdge edge2, int unrollings) {
+	private EdgeDecorator getContainer(final HashMap<RCFGEdge, EdgeDecorator> set,
+			final RCFGEdge edge2, final int unrollings) {
 		EdgeDecorator container;
 
 		if (set.containsKey(edge2)) {
@@ -163,7 +163,7 @@ public class CompressedNode extends RCFGNode {
 
 		public EdgeDecorator pre;
 
-		public EdgeDecorator(RCFGEdge edge, int visits) {
+		public EdgeDecorator(final RCFGEdge edge, final int visits) {
 			Node = edge.getTarget();
 			Edge = edge;
 			Visits = visits;
@@ -171,12 +171,11 @@ public class CompressedNode extends RCFGNode {
 
 		@Override
 		public String toString() {
-			return Edge.toString() + "->" + Node.toString() + " ("
-					+ String.valueOf(Visits) + ")";
+			return Edge.toString() + "->" + Node.toString() + " (" + Visits + ')';
 		}
 
 		@Override
-		public int compareTo(EdgeDecorator other) {
+		public int compareTo(final EdgeDecorator other) {
 			if (Visits == other.Visits) {
 				return 0;
 			} else if (Visits > other.Visits) {

@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -48,44 +49,73 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, STATE>
+/**
+ * Wrapper of a nested word automaton where reachability information is stored.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
+public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
-		
-	private final Map<STATE, STATE> mOld2new = new HashMap<STATE, STATE>();
-	private final Map<STATE, STATE> mNew2old = new HashMap<STATE, STATE>();
+	private final Map<STATE, STATE> mOld2new = new HashMap<>();
+	private final Map<STATE, STATE> mNew2old = new HashMap<>();
 	
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final boolean mComplement;
 	
 	/**
-	 * Given an INestedWordAutomaton nwa return a NestedWordAutomaton that has
+	 * Short constructor which does not use the additional options.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 * @see #ReachableStatesCopy(AutomataLibraryServices, INestedWordAutomatonSimple, boolean, boolean, boolean,
+	 *      boolean)
+	 */
+	public ReachableStatesCopy(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+		this(services, operand, false, false, false, false);
+	}
+	
+	/**
+	 * Given an {@link INestedWordAutomatonSimple} return an {@link INestedWordAutomaton} that has
 	 * the same states, but all states that are not reachable are omitted.
 	 * Each state of the result also occurred in the input. Only the auxiliary
 	 * empty stack state of the result is different.
 	 * 
 	 * @param services
 	 *            Ultimate services
-	 * @param nwa
-	 *            NWA
+	 * @param operand
+	 *            operand
+	 * @param totalize
+	 *            {@code true} iff automaton should be totalized
+	 * @param complement
+	 *            {@code true} iff automaton should be complemented
+	 * @param removeDeadEnds
+	 *            {@code true} iff dead ends should be removed
+	 * @param removeNonLiveStates
+	 *            {@code true} iff non-live states should be removed
 	 * @throws AutomataOperationCanceledException
-	 *             if timeout exceeds
+	 *             if operation was canceled
 	 */
 	public ReachableStatesCopy(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa,
-			final boolean totalize, final boolean complement,
-			final boolean removeDeadEnds, final boolean removeNonLiveStates)
-					throws AutomataOperationCanceledException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand, final boolean totalize, final boolean complement,
+			final boolean removeDeadEnds, final boolean removeNonLiveStates) throws AutomataOperationCanceledException {
 		super(services);
 		if (complement && !totalize) {
 			throw new IllegalArgumentException("complement requires totalize");
 		}
 		mComplement = complement;
-		mOperand = nwa;
+		mOperand = operand;
 		mLogger.info(startMessage());
-		mTraversedNwa = new DoubleDeckerAutomaton<LETTER, STATE>(
-				mServices,
-				nwa.getInternalAlphabet(), nwa.getCallAlphabet(),
-				nwa.getReturnAlphabet(), nwa.getStateFactory());
+		mTraversedNwa = new DoubleDeckerAutomaton<LETTER, STATE>(mServices, operand.getInternalAlphabet(),
+				operand.getCallAlphabet(), operand.getReturnAlphabet(), operand.getStateFactory());
 		super.mRemoveDeadEnds = removeDeadEnds;
 		super.mRemoveNonLiveStates = removeNonLiveStates;
 		final boolean operandHasInitialStates = mOperand.getInitialStates().iterator().hasNext();
@@ -98,26 +128,6 @@ public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETT
 		if (totalize) {
 			makeAutomatonTotal(sinkState);
 		}
-		mLogger.info(exitMessage());
-//		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices,
-//				(IDoubleDeckerAutomaton) mTraversedNwa)).getResult() : "down states inconsistent";
-	}
-	
-	public ReachableStatesCopy(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> nwa)
-					throws AutomataOperationCanceledException {
-		super(services);
-		mOperand = nwa;
-		mLogger.info(startMessage());
-		mTraversedNwa = new DoubleDeckerAutomaton<LETTER, STATE>(
-				mServices,
-				nwa.getInternalAlphabet(), nwa.getCallAlphabet(),
-				nwa.getReturnAlphabet(), nwa.getStateFactory());
-		super.mRemoveDeadEnds = false;
-		super.mRemoveNonLiveStates = false;
-		mComplement = false;
-		traverseDoubleDeckerGraph();
-		((DoubleDeckerAutomaton<LETTER, STATE>) super.mTraversedNwa).setUp2Down(getUp2DownMapping());
 		mLogger.info(exitMessage());
 //		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices,
 //				(IDoubleDeckerAutomaton) mTraversedNwa)).getResult() : "down states inconsistent";
@@ -141,17 +151,21 @@ public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETT
 					((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addCallTransition(state, letter, sinkState);
 				}
 			}
-			for (final LETTER symbol : mTraversedNwa.getReturnAlphabet()) {
-				for (final STATE hier : mTraversedNwa.getStates()) {
-					if (!mTraversedNwa.returnSuccessors(state, hier, symbol).iterator().hasNext()) {
-						((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addReturnTransition(state, hier, symbol,
-								sinkState);
-					}
+			makeAutomatonTotalReturn(sinkState, state);
+		}
+	}
+	
+	private void makeAutomatonTotalReturn(final STATE sinkState, final STATE state) {
+		for (final LETTER symbol : mTraversedNwa.getReturnAlphabet()) {
+			for (final STATE hier : mTraversedNwa.getStates()) {
+				if (!mTraversedNwa.returnSuccessors(state, hier, symbol).iterator().hasNext()) {
+					((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addReturnTransition(state, hier, symbol,
+							sinkState);
 				}
 			}
 		}
 	}
-
+	
 	private STATE addSinkState() {
 		final STATE sinkState = mTraversedNwa.getStateFactory().createSinkStateContent();
 		final boolean isInitial = !mOperand.getInitialStates().iterator().hasNext();
@@ -162,25 +176,22 @@ public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETT
 	
 	@Override
 	public String operationName() {
-		return "reachableStatesCopy";
+		return "ReachableStatesCopy";
 	}
 	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Input "
-				+ mOperand.sizeInformation();
+		return "Start " + operationName() + ". Operand " + mOperand.sizeInformation();
 	}
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result "
-				+ mTraversedNwa.sizeInformation();
+		return "Finished " + operationName() + " Result " + mTraversedNwa.sizeInformation();
 	}
 	
 	@Override
 	protected Collection<STATE> getInitialStates() {
-//		final Collection<STATE> newInitialStates = new ArrayList<STATE>(mInput.getInitialStates().size());
-		final Collection<STATE> newInitialStates = new ArrayList<STATE>();
+		final Collection<STATE> newInitialStates = new ArrayList<>();
 		for (final STATE oldUpState : mOperand.getInitialStates()) {
 			final STATE newState = constructOrGetResState(oldUpState, true);
 			newInitialStates.add(newState);
@@ -206,7 +217,7 @@ public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETT
 	
 	@Override
 	protected Collection<STATE> buildInternalSuccessors(final DoubleDecker<STATE> doubleDecker) {
-		final ArrayList<STATE> succs = new ArrayList<STATE>();
+		final ArrayList<STATE> succs = new ArrayList<>();
 		final STATE newUpState = doubleDecker.getUp();
 		final STATE oldUpState = mNew2old.get(newUpState);
 		for (final LETTER symbol : mOperand.lettersInternal(oldUpState)) {
@@ -221,9 +232,11 @@ public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETT
 	}
 	
 	@Override
+	@SuppressWarnings("squid:S1698")
 	protected Collection<STATE> buildReturnSuccessors(final DoubleDecker<STATE> doubleDecker) {
-		final ArrayList<STATE> succs = new ArrayList<STATE>();
+		final ArrayList<STATE> succs = new ArrayList<>();
 		final STATE newDownState = doubleDecker.getDown();
+		// equality intended here
 		if (newDownState == mTraversedNwa.getEmptyStackState()) {
 			return succs;
 		}
@@ -245,7 +258,7 @@ public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETT
 	
 	@Override
 	protected Collection<STATE> buildCallSuccessors(final DoubleDecker<STATE> doubleDecker) {
-		final ArrayList<STATE> succs = new ArrayList<STATE>();
+		final ArrayList<STATE> succs = new ArrayList<>();
 		final STATE newUpState = doubleDecker.getUp();
 		final STATE oldUpState = mNew2old.get(newUpState);
 		for (final LETTER symbol : mOperand.lettersCall(oldUpState)) {
@@ -259,14 +272,12 @@ public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETT
 	}
 	
 	@Override
-	public final INestedWordAutomaton<LETTER, STATE> getResult() {
-		return mTraversedNwa;
+	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
+		return (IDoubleDeckerAutomaton<LETTER, STATE>) mTraversedNwa;
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-			
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
 		if (!mRemoveNonLiveStates) {
 			mLogger.info("Start testing correctness of " + operationName());
@@ -275,10 +286,10 @@ public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETT
 				input = mOperand;
 			} else {
 				// intersection of operand and result should be empty
-				final INestedWordAutomaton<LETTER, STATE> intersectionOperandResult =
+				final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
 						(new IntersectDD<LETTER, STATE>(mServices, mOperand, mTraversedNwa)).getResult();
 				correct &= (new IsEmpty<LETTER, STATE>(mServices, intersectionOperandResult)).getResult();
-				final INestedWordAutomaton<LETTER, STATE> resultSadd =
+				final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
 						(new ComplementDD<LETTER, STATE>(mServices, stateFactory, mOperand)).getResult();
 				input = resultSadd;
 			}
@@ -288,11 +299,9 @@ public class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETT
 			mLogger.info("Finished testing correctness of " + operationName());
 		}
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
-					operationName() + "Failed", "language is different",
-					mTraversedNwa);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+					"language is different", mTraversedNwa);
 		}
 		return correct;
 	}
-	
 }

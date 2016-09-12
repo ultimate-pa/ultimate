@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiAutomizer plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
@@ -201,10 +201,10 @@ public class RefineBuchi {
 	}
 
 	INestedWordAutomaton<CodeBlock, IPredicate> refineBuchi(
-			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction,
 			final NestedLassoRun<CodeBlock, IPredicate> mCounterexample, final int mIteration, final RefinementSetting setting,
 			final BinaryStatePredicateManager bspm, final BuchiModGlobalVarManager buchiModGlobalVarManager,
-			final InterpolationTechnique interpolation, final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator, 
+			final InterpolationTechnique interpolation, final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
 			final BComplementationConstruction complementationConstruction)
 			throws AutomataLibraryException {
 		final NestedWord<CodeBlock> stem = mCounterexample.getStem().getWord();
@@ -274,7 +274,7 @@ public class RefineBuchi {
 			if (!mInterpolAutomaton.getStates().contains(pu.getFalsePredicate())) {
 				mInterpolAutomaton.addState(false, true, pu.getFalsePredicate());
 			}
-			mInterpolAutomatonUsedInRefinement = new NondeterministicInterpolantAutomaton(mServices, mSmtManager, 
+			mInterpolAutomatonUsedInRefinement = new NondeterministicInterpolantAutomaton(mServices, mSmtManager,
 					buchiModGlobalVarManager, bhtc, abstraction, mInterpolAutomaton, pu, mLogger, false, true);
 			break;
 		case ScroogeNondeterminism:
@@ -329,7 +329,7 @@ public class RefineBuchi {
 				if (setting.isAlwaysSemiDeterministic()) {
 					newAbstraction = nsbcDifference(abstraction, setting, benchmarkGenerator);
 				} else {
-					final FkvOptimization optimization = FkvOptimization.Elastic;
+					final FkvOptimization optimization = FkvOptimization.ELASTIC;
 					newAbstraction = rankBasedOptimization(abstraction, setting, benchmarkGenerator, stateDeterminizer,
 							optimization);
 				}
@@ -337,21 +337,21 @@ public class RefineBuchi {
 				final FkvOptimization optimization;
 				switch (complementationConstruction) {
 				case Elastic:
-					optimization = FkvOptimization.Elastic;
+					optimization = FkvOptimization.ELASTIC;
 					break;
 				case Ncsb:
 					throw new AssertionError("should be handled elsewhere");
 				case HeiMat2:
-					optimization = FkvOptimization.HeiMat2;
+					optimization = FkvOptimization.HEIMAT2;
 					break;
 				case TightBasic:
-					optimization = FkvOptimization.TightLevelRankings;
+					optimization = FkvOptimization.TIGHT_LEVEL_RANKINGS;
 					break;
 				case TightHighEven:
-					optimization = FkvOptimization.HighEven;
+					optimization = FkvOptimization.HIGH_EVEN;
 					break;
 				case TightRO:
-					optimization = FkvOptimization.Schewe;
+					optimization = FkvOptimization.SCHEWE;
 					break;
 				default:
 					throw new AssertionError("unknown optimization");
@@ -385,12 +385,12 @@ public class RefineBuchi {
 			
 		} else {
 			final BuchiComplementFKV<CodeBlock, IPredicate> complNwa = new BuchiComplementFKV<CodeBlock, IPredicate>(
-					new AutomataLibraryServices(mServices), 
+					new AutomataLibraryServices(mServices),
 					mInterpolAutomatonUsedInRefinement, stateDeterminizer);
 			finishComputation(mInterpolAutomatonUsedInRefinement, setting);
 			benchmarkGenerator.reportHighestRank(complNwa.getHighestRank());
 			assert (complNwa.checkResult(mStateFactoryInterpolAutom));
-			final INestedWordAutomaton<CodeBlock, IPredicate> complement = complNwa.getResult();
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> complement = complNwa.getResult();
 			assert !(new BuchiAccepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), complement, mCounterexample.getNestedLassoWord()))
 					.getResult();
 			final BuchiIntersect<CodeBlock, IPredicate> interNwa = new BuchiIntersect<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), abstraction,
@@ -453,10 +453,10 @@ public class RefineBuchi {
 	}
 	
 	private INestedWordAutomaton<CodeBlock, IPredicate> nsbcDifference(
-			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction, final RefinementSetting setting,
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction, final RefinementSetting setting,
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) throws AutomataLibraryException {
 		INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction;
-		final BuchiDifferenceNCSB<CodeBlock, IPredicate> diff = new BuchiDifferenceNCSB<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), 
+		final BuchiDifferenceNCSB<CodeBlock, IPredicate> diff = new BuchiDifferenceNCSB<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 				mStateFactoryForRefinement, abstraction, mInterpolAutomatonUsedInRefinement);
 		finishComputation(mInterpolAutomatonUsedInRefinement, setting);
 		benchmarkGenerator.reportHighestRank(3);
@@ -466,14 +466,14 @@ public class RefineBuchi {
 	}
 
 	private INestedWordAutomaton<CodeBlock, IPredicate> rankBasedOptimization(
-			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction, final RefinementSetting setting,
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction, final RefinementSetting setting,
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
 			final IStateDeterminizer<CodeBlock, IPredicate> stateDeterminizer, final FkvOptimization optimization)
 					throws AutomataLibraryException {
 		INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction;
-		final BuchiDifferenceFKV<CodeBlock, IPredicate> diff = new BuchiDifferenceFKV<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), 
+		final BuchiDifferenceFKV<CodeBlock, IPredicate> diff = new BuchiDifferenceFKV<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 				mStateFactoryForRefinement, abstraction, mInterpolAutomatonUsedInRefinement, stateDeterminizer,
-				optimization.toString(),
+				optimization,
 				Integer.MAX_VALUE);
 		finishComputation(mInterpolAutomatonUsedInRefinement, setting);
 		benchmarkGenerator.reportHighestRank(diff.getHighestRank());
@@ -483,7 +483,7 @@ public class RefineBuchi {
 	}
 
 	private InterpolatingTraceChecker constructTraceChecker(final IPredicate precond, final IPredicate postcond,
-			final NestedWord<CodeBlock> word, final SmtManager smtManager, final BuchiModGlobalVarManager buchiModGlobalVarManager, 
+			final NestedWord<CodeBlock> word, final SmtManager smtManager, final BuchiModGlobalVarManager buchiModGlobalVarManager,
 			final PredicateUnifier pu, final InterpolationTechnique interpolation) {
 		final InterpolatingTraceChecker itc;
 		switch (mInterpolation) {
@@ -527,7 +527,7 @@ public class RefineBuchi {
 	private boolean isUsefulInterpolantAutomaton(
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> interpolAutomatonUsedInRefinement,
 			final NestedLassoRun<CodeBlock, IPredicate> counterexample) throws AutomataLibraryException {
-		INestedWordAutomaton<CodeBlock, IPredicate> oldApi;
+		INestedWordAutomatonSimple<CodeBlock, IPredicate> oldApi;
 		oldApi = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), interpolAutomatonUsedInRefinement)).getResult();
 		final NestedWord<CodeBlock> stem = counterexample.getStem().getWord();
 		final NestedWord<CodeBlock> loop = counterexample.getLoop().getWord();
@@ -581,7 +581,7 @@ public class RefineBuchi {
 			final NestedWord<CodeBlock> stem, final IPredicate[] stemInterpolants, final IPredicate honda, final NestedWord<CodeBlock> loop,
 			final IPredicate[] loopInterpolants, final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
 		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<CodeBlock, IPredicate>(
-				new AutomataLibraryServices(mServices), 
+				new AutomataLibraryServices(mServices),
 				abstraction.getInternalAlphabet(), abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(),
 				abstraction.getStateFactory());
 		final boolean emptyStem = stem.length() == 0;

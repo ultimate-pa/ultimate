@@ -49,11 +49,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Stores a mapping from Boogie identifiers to BoogieVars and a mapping from TermVariables that are representatives of
@@ -76,7 +76,7 @@ public class Boogie2SmtSymbolTable {
 	private static final String s_INDICESIDENTIFIER = "indices";
 
 	private final BoogieDeclarations mBoogieDeclarations;
-	private final Script mScript;
+	private final ManagedScript mScript;
 	private final TypeSortTranslator mTypeSortTranslator;
 	private final Map<String, BoogieNonOldVar> mGlobals = new HashMap<String, BoogieNonOldVar>();
 	private final Map<String, BoogieOldVar> mOldGlobals = new HashMap<String, BoogieOldVar>();
@@ -103,32 +103,33 @@ public class Boogie2SmtSymbolTable {
 	final Map<String, Map<String, Expression[]>> mBoogieFunction2Attributes =
 			new HashMap<String, Map<String, Expression[]>>();
 
-	public Boogie2SmtSymbolTable(final BoogieDeclarations boogieDeclarations, final Script script,
+	public Boogie2SmtSymbolTable(final BoogieDeclarations boogieDeclarations, final ManagedScript script,
 			final TypeSortTranslator typeSortTranslator) {
 		super();
 		mScript = script;
 		mTypeSortTranslator = typeSortTranslator;
 		mBoogieDeclarations = boogieDeclarations;
 
-		mScript.echo(new QuotedObject("Start declaration of constants"));
+		mScript.lock(this);
+		mScript.echo(this, new QuotedObject("Start declaration of constants"));
 		for (final ConstDeclaration decl : mBoogieDeclarations.getConstDeclarations()) {
 			declareConstants(decl);
 		}
-		mScript.echo(new QuotedObject("Finished declaration of constants"));
+		mScript.echo(this, new QuotedObject("Finished declaration of constants"));
 
-		mScript.echo(new QuotedObject("Start declaration of functions"));
+		mScript.echo(this, new QuotedObject("Start declaration of functions"));
 		for (final FunctionDeclaration decl : mBoogieDeclarations.getFunctionDeclarations()) {
 			declareFunction(decl);
 		}
-		mScript.echo(new QuotedObject("Finished declaration of functions"));
+		mScript.echo(this, new QuotedObject("Finished declaration of functions"));
 
-		mScript.echo(new QuotedObject("Start declaration of global variables"));
+		mScript.echo(this, new QuotedObject("Start declaration of global variables"));
 		for (final VariableDeclaration decl : mBoogieDeclarations.getGlobalVarDeclarations()) {
 			declareGlobalVariables(decl);
 		}
-		mScript.echo(new QuotedObject("Finished declaration global variables"));
+		mScript.echo(this, new QuotedObject("Finished declaration global variables"));
 
-		mScript.echo(new QuotedObject("Start declaration of local variables"));
+		mScript.echo(this, new QuotedObject("Start declaration of local variables"));
 		for (final String procId : mBoogieDeclarations.getProcSpecification().keySet()) {
 			final Procedure procSpec = mBoogieDeclarations.getProcSpecification().get(procId);
 			final Procedure procImpl = mBoogieDeclarations.getProcImplementation().get(procId);
@@ -138,7 +139,8 @@ public class Boogie2SmtSymbolTable {
 				declareSpecImpl(procSpec, procImpl);
 			}
 		}
-		mScript.echo(new QuotedObject("Finished declaration local variables"));
+		mScript.echo(this, new QuotedObject("Finished declaration local variables"));
+		mScript.unlock(this);
 	}
 
 	private <T extends BoogieVar> void putNew(final String procId, final String varId, final T bv,
@@ -175,7 +177,13 @@ public class Boogie2SmtSymbolTable {
 		return impl.getBody() != null;
 	}
 
-	public Script getScript() {
+	/**
+	 * 
+	 * @deprecated I don't think that a symbol table is the right facility to
+	 * pass the {@link ManagedScript}.
+	 */
+	@Deprecated
+	public ManagedScript getScript() {
 		return mScript;
 	}
 
@@ -261,7 +269,7 @@ public class Boogie2SmtSymbolTable {
 				}
 				final String constId = varlist.getIdentifiers()[0];
 				final ApplicationTerm constant =
-						(ApplicationTerm) mScript.term(attributeDefinedIdentifier, indices, null);
+						(ApplicationTerm) mScript.term(this, attributeDefinedIdentifier, indices, null);
 				final BoogieConst boogieConst = new BoogieConst(constId, iType, constant);
 				final BoogieConst previousValue = mConstants.put(constId, boogieConst);
 				assert previousValue == null : "constant already contained";
@@ -270,8 +278,8 @@ public class Boogie2SmtSymbolTable {
 			}
 		}
 		for (final String constId : varlist.getIdentifiers()) {
-			mScript.declareFun(constId, paramTypes, sort);
-			final ApplicationTerm constant = (ApplicationTerm) mScript.term(constId);
+			mScript.declareFun(this, constId, paramTypes, sort);
+			final ApplicationTerm constant = (ApplicationTerm) mScript.term(this, constId);
 			final BoogieConst boogieConst = new BoogieConst(constId, iType, constant);
 			final BoogieConst previousValue = mConstants.put(constId, boogieConst);
 			assert previousValue == null : "constant already contained";
@@ -325,7 +333,7 @@ public class Boogie2SmtSymbolTable {
 		final Sort resultSort = mTypeSortTranslator.getSort(resultType, funcdecl);
 		if (attributeDefinedIdentifier == null) {
 			// no builtin function, we have to declare it
-			mScript.declareFun(smtID, paramSorts, resultSort);
+			mScript.declareFun(this, smtID, paramSorts, resultSort);
 		}
 		mBoogieFunction2SmtFunction.put(id, smtID);
 		mSmtFunction2BoogieFunction.put(smtID, id);
@@ -640,8 +648,8 @@ public class Boogie2SmtSymbolTable {
 		ApplicationTerm primedConstant;
 		{
 			final String primedConstantName = "c_" + name + "_primed";
-			mScript.declareFun(primedConstantName, new Sort[0], sort);
-			primedConstant = (ApplicationTerm) mScript.term(primedConstantName);
+			mScript.declareFun(this, primedConstantName, new Sort[0], sort);
+			primedConstant = (ApplicationTerm) mScript.term(this, primedConstantName);
 		}
 		return primedConstant;
 	}
@@ -650,8 +658,8 @@ public class Boogie2SmtSymbolTable {
 		ApplicationTerm defaultConstant;
 		{
 			final String defaultConstantName = "c_" + name;
-			mScript.declareFun(defaultConstantName, new Sort[0], sort);
-			defaultConstant = (ApplicationTerm) mScript.term(defaultConstantName);
+			mScript.declareFun(this, defaultConstantName, new Sort[0], sort);
+			defaultConstant = (ApplicationTerm) mScript.term(this, defaultConstantName);
 		}
 		return defaultConstant;
 	}

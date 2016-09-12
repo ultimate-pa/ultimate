@@ -79,9 +79,14 @@ public class ChangeInitialStatesShrinker<LETTER, STATE> extends BridgeShrinker<P
 		
 		// add all old states except for the two states passed
 		final Set<STATE> oldStates = new HashSet<>(mAutomatonBackup.getStates());
-		oldStates.remove(oldInit);
-		oldStates.remove(newInit);
-		mFactory.addStates(automaton, oldStates);
+		boolean wasPresent = oldStates.remove(oldInit);
+		assert wasPresent;
+		wasPresent = oldStates.remove(newInit);
+		assert wasPresent;
+		
+		for (final STATE state : oldStates) {
+			mFactory.addState(automaton, state, mAutomatonBackup.isInitial(state), mAutomatonBackup.isFinal(state));
+		}
 		
 		// add two transitions with swapped initial status
 		mFactory.addState(automaton, oldInit, false, mAutomatonBackup.isFinal(oldInit));
@@ -96,9 +101,11 @@ public class ChangeInitialStatesShrinker<LETTER, STATE> extends BridgeShrinker<P
 		 */
 		mFactory.setAutomaton(automaton);
 		
+		assert sameNumberOfInitialStates(mAutomatonBackup, automaton);
+		
 		return automaton;
 	}
-	
+
 	@Override
 	public List<Pair<STATE, STATE>> extractList() {
 		// there are still more things to change
@@ -158,5 +165,14 @@ public class ChangeInitialStatesShrinker<LETTER, STATE> extends BridgeShrinker<P
 		super.noError(newAutomaton);
 		mFactory.setAutomaton(mAutomatonBackup);
 		mPairs.remove(0);
+	}
+	
+	private boolean sameNumberOfInitialStates(final INestedWordAutomaton<LETTER, STATE> automaton1,
+			final INestedWordAutomaton<LETTER, STATE> automaton2) {
+		final boolean result = automaton1.getInitialStates().size() == automaton2.getInitialStates().size();
+		if (! result) {
+			return false;
+		}
+		return result;
 	}
 }

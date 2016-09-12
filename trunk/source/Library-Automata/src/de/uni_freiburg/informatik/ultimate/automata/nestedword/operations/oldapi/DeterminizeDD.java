@@ -47,9 +47,17 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
+/**
+ * Determinizes a nested word automaton.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
 public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
-		
 	protected INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	protected IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 	protected IStateFactory<STATE> mContentFactory;
@@ -57,64 +65,76 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 	/**
 	 * Maps a DeterminizedState to its representative in the resulting automaton.
 	 */
-	protected Map<DeterminizedState<LETTER, STATE>, STATE> mDet2res =
-			new HashMap<DeterminizedState<LETTER, STATE>, STATE>();
-			
+	protected Map<DeterminizedState<LETTER, STATE>, STATE> mDet2res = new HashMap<>();
+	
 	/**
 	 * Maps a state in resulting automaton to the DeterminizedState for which it
 	 * was created.
 	 */
-	protected final Map<STATE, DeterminizedState<LETTER, STATE>> mRes2det =
-			new HashMap<STATE, DeterminizedState<LETTER, STATE>>();
-			
-	@Override
-	public String operationName() {
-		return "determinizeDD";
+	protected final Map<STATE, DeterminizedState<LETTER, STATE>> mRes2det = new HashMap<>();
+	/**
+	 * Constructor which uses a {@link PowersetDeterminizer}.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @param stateFactory
+	 *            state factory used in the state determinizer
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
+	public DeterminizeDD(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+		this(services, operand, new PowersetDeterminizer<LETTER, STATE>(operand, true, stateFactory));
 	}
 	
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + " Operand " + mOperand.sizeInformation();
-	}
-	
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + mTraversedNwa.sizeInformation();
-	}
-	
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @param stateDeterminizer
+	 *            state determinizer
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
 	public DeterminizeDD(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> input,
-			final IStateDeterminizer<LETTER, STATE> stateDeterminizer)
-					throws AutomataOperationCanceledException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand,
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataOperationCanceledException {
 		super(services);
-		this.mContentFactory = input.getStateFactory();
-		this.mOperand = input;
+		this.mContentFactory = operand.getStateFactory();
+		this.mOperand = operand;
 		mLogger.debug(startMessage());
 		this.mStateDeterminizer = stateDeterminizer;
-		super.mTraversedNwa = new NestedWordAutomaton<LETTER, STATE>(
-				mServices,
-				input.getInternalAlphabet(),
-				input.getCallAlphabet(),
-				input.getReturnAlphabet(),
-				input.getStateFactory());
+		super.mTraversedNwa = new NestedWordAutomaton<LETTER, STATE>(mServices, operand.getInternalAlphabet(),
+				operand.getCallAlphabet(), operand.getReturnAlphabet(), operand.getStateFactory());
 		mRemoveDeadEnds = false;
 		traverseDoubleDeckerGraph();
-		assert (new IsDeterministic<>(mServices, mTraversedNwa).getResult());
+		assert new IsDeterministic<>(mServices, mTraversedNwa).getResult();
 		mLogger.debug(exitMessage());
 	}
 	
-	public DeterminizeDD(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> input)
-					throws AutomataOperationCanceledException {
-		this(services, input,
-				new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory));
+	@Override
+	public String operationName() {
+		return "DeterminizeDD";
+	}
+	
+	@Override
+	public final String startMessage() {
+		return "Start " + operationName() + ". Operand " + mOperand.sizeInformation();
+	}
+	
+	@Override
+	public final String exitMessage() {
+		return "Finished " + operationName() + ". Result " + mTraversedNwa.sizeInformation();
 	}
 	
 	@Override
 	protected Collection<STATE> getInitialStates() {
-//		final ArrayList<STATE> resInitials =
-//				new ArrayList<>(mOperand.getInitialStates().size());
+//		final ArrayList<STATE> resInitials = new ArrayList<>(mOperand.getInitialStates().size());
 		final ArrayList<STATE> resInitials = new ArrayList<>();
 		final DeterminizedState<LETTER, STATE> detState = mStateDeterminizer.initialState();
 		final STATE resState = mStateDeterminizer.getState(detState);
@@ -127,16 +147,14 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 	}
 	
 	@Override
-	protected Collection<STATE> buildInternalSuccessors(
-			final DoubleDecker<STATE> doubleDecker) {
-		final List<STATE> resInternalSuccessors = new LinkedList<STATE>();
+	protected Collection<STATE> buildInternalSuccessors(final DoubleDecker<STATE> doubleDecker) {
+		final List<STATE> resInternalSuccessors = new LinkedList<>();
 		final STATE resState = doubleDecker.getUp();
 		
 		final DeterminizedState<LETTER, STATE> detState = mRes2det.get(resState);
 		
 		for (final LETTER symbol : mOperand.getInternalAlphabet()) {
-			final DeterminizedState<LETTER, STATE> detSucc =
-					mStateDeterminizer.internalSuccessor(detState, symbol);
+			final DeterminizedState<LETTER, STATE> detSucc = mStateDeterminizer.internalSuccessor(detState, symbol);
 			final STATE resSucc = getResState(detSucc);
 			((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addInternalTransition(resState, symbol, resSucc);
 			resInternalSuccessors.add(resSucc);
@@ -145,16 +163,14 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 	}
 	
 	@Override
-	protected Collection<STATE> buildCallSuccessors(
-			final DoubleDecker<STATE> doubleDecker) {
-		final List<STATE> resCallSuccessors = new LinkedList<STATE>();
+	protected Collection<STATE> buildCallSuccessors(final DoubleDecker<STATE> doubleDecker) {
+		final List<STATE> resCallSuccessors = new LinkedList<>();
 		final STATE resState = doubleDecker.getUp();
 		
 		final DeterminizedState<LETTER, STATE> detState = mRes2det.get(resState);
 		
 		for (final LETTER symbol : mOperand.getCallAlphabet()) {
-			final DeterminizedState<LETTER, STATE> detSucc =
-					mStateDeterminizer.callSuccessor(detState, symbol);
+			final DeterminizedState<LETTER, STATE> detSucc = mStateDeterminizer.callSuccessor(detState, symbol);
 			final STATE resSucc = getResState(detSucc);
 			((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addCallTransition(resState, symbol, resSucc);
 			resCallSuccessors.add(resSucc);
@@ -163,17 +179,18 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 	}
 	
 	@Override
-	protected Collection<STATE> buildReturnSuccessors(
-			final DoubleDecker<STATE> doubleDecker) {
-		final List<STATE> resReturnSuccessors = new LinkedList<STATE>();
-		final STATE resState = doubleDecker.getUp();
+	@SuppressWarnings("squid:S1698")
+	protected Collection<STATE> buildReturnSuccessors(final DoubleDecker<STATE> doubleDecker) {
+		final List<STATE> resReturnSuccessors = new LinkedList<>();
 		final STATE resLinPred = doubleDecker.getDown();
-		final DeterminizedState<LETTER, STATE> detState = mRes2det.get(resState);
-		final DeterminizedState<LETTER, STATE> detLinPred = mRes2det.get(resLinPred);
+		// equality intended here
 		if (resLinPred == mTraversedNwa.getEmptyStackState()) {
 			return resReturnSuccessors;
 		}
 		
+		final STATE resState = doubleDecker.getUp();
+		final DeterminizedState<LETTER, STATE> detLinPred = mRes2det.get(resLinPred);
+		final DeterminizedState<LETTER, STATE> detState = mRes2det.get(resState);
 		for (final LETTER symbol : mOperand.getReturnAlphabet()) {
 			final DeterminizedState<LETTER, STATE> detSucc =
 					mStateDeterminizer.returnSuccessor(detState, detLinPred, symbol);
@@ -203,21 +220,18 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Testing correctness of determinization");
 			final INestedWordAutomatonSimple<LETTER, STATE> operandOld =
-					(new RemoveUnreachable(mServices, mOperand)).getResult();
+					(new RemoveUnreachable<LETTER, STATE>(mServices, mOperand)).getResult();
 			final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
 					(new DeterminizeSadd<LETTER, STATE>(mServices, operandOld)).getResult();
 			correct &= new IsIncluded<>(mServices, stateFactory, resultSadd, mTraversedNwa).getResult();
 			correct &= new IsIncluded<>(mServices, stateFactory, mTraversedNwa, resultSadd).getResult();
 			mLogger.info("Finished testing correctness of determinization");
-			
 		}
 		return correct;
 	}
-	
 }

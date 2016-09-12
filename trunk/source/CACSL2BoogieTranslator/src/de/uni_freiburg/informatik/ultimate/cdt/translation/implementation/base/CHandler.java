@@ -24,9 +24,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -518,7 +518,7 @@ public class CHandler implements ICHandler {
 		checkForACSL(main, null, decl, node, null);
 
 		// the overall translation result:
-		final Unit boogieUnit = new Unit(loc, decl.toArray(new Declaration[0]));
+		final Unit boogieUnit = new Unit(loc, decl.toArray(new Declaration[decl.size()]));
 
 		// annotate the Unit with LTLPropertyChecks if applicable
 		for (final LTLExpressionExtractor ex : mGlobAcslExtractors) {
@@ -624,7 +624,8 @@ public class CHandler implements ICHandler {
 
 			endScope();
 		}
-		// return new Result(new Body(loc, decl.toArray(new VariableDeclaration[0]), stmt.toArray(new Statement[0])));
+		//return new Result(new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]),
+		//		stmt.toArray(new Statement[stmt.size()])));
 		return new CompoundStatementExpressionResult(stmt, expr, decl, new HashMap<VariableDeclaration, ILocation>(),
 				new ArrayList<Overapprox>());
 	}
@@ -1283,7 +1284,7 @@ public class CHandler implements ICHandler {
 			final Expression one;
 			if (ctype.isFloatingType()) {
 				one = mExpressionTranslation.constructLiteralForFloatingType(loc, cPrimitive, BigDecimal.ONE);
-			} else {			
+			} else {
 				one = mExpressionTranslation.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
 			}
 			addIntegerBoundsCheck(main, loc, result, cPrimitive, op, value, one);
@@ -1540,7 +1541,8 @@ public class CHandler implements ICHandler {
 			outerThenPart.add(
 					new AssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { rr.lrVal.getValue() }));
 			final IfStatement ifStatement =
-					new IfStatement(loc, tmpRval.getValue(), outerThenPart.toArray(new Statement[0]), new Statement[0]);
+					new IfStatement(loc, tmpRval.getValue(), outerThenPart.toArray(new Statement[outerThenPart.size()]),
+							new Statement[0]);
 			annots = ifStatement.getPayload().getAnnotations();
 			// for (Overapprox overapprItem : overappr) {
 			// annots.put(Overapprox.getIdentifier(), overapprItem);
@@ -1597,7 +1599,8 @@ public class CHandler implements ICHandler {
 			outerElsePart.add(
 					new AssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { rr.lrVal.getValue() }));
 			final IfStatement ifStatement =
-					new IfStatement(loc, tmpRval.getValue(), new Statement[0], outerElsePart.toArray(new Statement[0]));
+					new IfStatement(loc, tmpRval.getValue(), new Statement[0],
+							outerElsePart.toArray(new Statement[outerElsePart.size()]));
 			annots = ifStatement.getPayload().getAnnotations();
 			for (final Overapprox overapprItem : overappr) {
 				annots.put(Overapprox.getIdentifier(), overapprItem);
@@ -2349,8 +2352,8 @@ public class CHandler implements ICHandler {
 		assert thenStmt != null;
 		assert elseStmt != null;
 		// TODO : handle if(pointer), if(pointer==NULL) and if(pointer==0)
-		final IfStatement ifStmt = new IfStatement(loc, cond.getValue(), thenStmt.toArray(new Statement[0]),
-				elseStmt.toArray(new Statement[0]));
+		final IfStatement ifStmt = new IfStatement(loc, cond.getValue(),
+				thenStmt.toArray(new Statement[thenStmt.size()]), elseStmt.toArray(new Statement[elseStmt.size()]));
 		final Map<String, IAnnotations> annots = ifStmt.getPayload().getAnnotations();
 		for (final Overapprox overapprItem : overappr) {
 			annots.put(Overapprox.getIdentifier(), overapprItem);
@@ -2539,7 +2542,7 @@ public class CHandler implements ICHandler {
 				final ExpressionResult caseExpression = (ExpressionResult) main.dispatch(child);
 				if (locC != null) {
 					final IfStatement ifStmt = new IfStatement(locC, new IdentifierExpression(locC, switchFlag),
-							ifBlock.toArray(new Statement[0]), new Statement[0]);
+							ifBlock.toArray(new Statement[ifBlock.size()]), new Statement[0]);
 					final Map<String, IAnnotations> annots = ifStmt.getPayload().getAnnotations();
 
 					for (final Overapprox overapprItem : caseExpression.overappr) {
@@ -2613,7 +2616,7 @@ public class CHandler implements ICHandler {
 		assert cond != null;
 		if (locC != null) {
 			final IfStatement ifStmt = new IfStatement(locC, new IdentifierExpression(locC, switchFlag),
-					ifBlock.toArray(new Statement[0]), new Statement[0]);
+					ifBlock.toArray(new Statement[ifBlock.size()]), new Statement[0]);
 			final Map<String, IAnnotations> annots = ifStmt.getPayload().getAnnotations();
 			for (final Overapprox overapprItem : overappr) {
 				annots.put(Overapprox.getIdentifier(), overapprItem);
@@ -2718,7 +2721,7 @@ public class CHandler implements ICHandler {
 			if (assertWitnessInvariant != null) {
 				stmt.add(assertWitnessInvariant);
 			}
-		} 
+		}
 		final String[] name = new String[] { node.getName().toString() };
 		stmt.add(new GotoStatement(LocationFactory.createCLocation(node), name));
 		return new ExpressionResult(stmt, null);
@@ -2800,8 +2803,8 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Handle conditional operator according to Section 6.5.15 of C11. Assumes that opCondition, opPositive, and 
-	 * opNegative are the results from handling the operands. Requires that the {@link LRValue} of operands is 
+	 * Handle conditional operator according to Section 6.5.15 of C11. Assumes that opCondition, opPositive, and
+	 * opNegative are the results from handling the operands. Requires that the {@link LRValue} of operands is
 	 * an {@link RValue} (i.e., switchToRValueIfNecessary was applied if needed).
 	 * TODO: Check all corner cases, write some testfiles.
 	 */
@@ -2884,8 +2887,9 @@ public class CHandler implements ICHandler {
 			auxVars.putAll(opNegative.auxVars);
 			overappr.addAll(opNegative.overappr);
 		}
-		final Statement ifStatement = new IfStatement(loc, opCondition.lrVal.getValue(), ifStatements.toArray(new Statement[0]),
-				elseStatements.toArray(new Statement[0]));
+		final Statement ifStatement = new IfStatement(loc, opCondition.lrVal.getValue(),
+				ifStatements.toArray(new Statement[ifStatements.size()]),
+				elseStatements.toArray(new Statement[elseStatements.size()]));
 		final Map<String, IAnnotations> annots = ifStatement.getPayload().getAnnotations();
 		for (final Overapprox overapprItem : overappr) {
 			annots.put(Overapprox.getIdentifier(), overapprItem);
@@ -3373,7 +3377,7 @@ public class CHandler implements ICHandler {
 	 * @param condResult
 	 *            the condition of the loop
 	 * @param loopLabel
-	 * @param witnessInvariant 
+	 * @param witnessInvariant
 	 * @return a result object holding the translated loop (i.e. a while loop)
 	 */
 	private Result handleLoops(final Dispatcher main, final IASTStatement node, Result bodyResult, ExpressionResult condResult,
@@ -3488,7 +3492,7 @@ public class CHandler implements ICHandler {
 			final ArrayList<Statement> thenStmt = new ArrayList<Statement>(createHavocsForAuxVars(condResult.auxVars));
 			thenStmt.add(new BreakStatement(loc));
 			final Statement[] elseStmt = createHavocsForAuxVars(condResult.auxVars).toArray(new Statement[0]);
-			ifStmt = new IfStatement(loc, cond, thenStmt.toArray(new Statement[0]), elseStmt);
+			ifStmt = new IfStatement(loc, cond, thenStmt.toArray(new Statement[thenStmt.size()]), elseStmt);
 		}
 
 		if (node instanceof IASTWhileStatement || node instanceof IASTForStatement) {
@@ -3542,7 +3546,7 @@ public class CHandler implements ICHandler {
 
 		final ILocation ignoreLocation = LocationFactory.createIgnoreCLocation(node);
 		final WhileStatement whileStmt = new WhileStatement(ignoreLocation, new BooleanLiteral(ignoreLocation, true),
-				spec, bodyBlock.toArray(new Statement[0]));
+				spec, bodyBlock.toArray(new Statement[bodyBlock.size()]));
 		final Map<String, IAnnotations> annots = whileStmt.getPayload().getAnnotations();
 		for (final Overapprox overapprItem : overappr) {
 			annots.put(Overapprox.getIdentifier(), overapprItem);

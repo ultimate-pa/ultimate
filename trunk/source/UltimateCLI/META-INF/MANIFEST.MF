@@ -8,3 +8,5 @@ Require-Bundle: Library-UltimateCore,
  UltimateCore,
  org.apache.commons.cli,
  Library-UltimateUtil
+Export-Package: de.uni_freiburg.informatik.ultimate.cli,
+ de.uni_freiburg.informatik.ultimate.cli.exceptions

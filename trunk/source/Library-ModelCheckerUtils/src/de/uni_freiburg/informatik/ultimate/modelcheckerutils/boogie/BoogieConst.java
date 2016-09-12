@@ -45,16 +45,20 @@ public class BoogieConst implements IBoogieVar {
 	 */
 	private final ApplicationTerm mSmtConstant;
 
-	public BoogieConst(String identifier, IBoogieType iType,
-			ApplicationTerm smtConstant) {
+	public BoogieConst(final String identifier, final IBoogieType iType,
+			final ApplicationTerm smtConstant) {
 		mIdentifier = identifier;
 		mIType = iType;
 		mSmtConstant = smtConstant;
 	}
 	
-	@Override
 	public String getIdentifier() {
 		return mIdentifier;
+	}
+	
+	@Override
+	public String getGloballyUniqueId() {
+		return getIdentifier();
 	}
 
 	@Override
@@ -73,7 +77,7 @@ public class BoogieConst implements IBoogieVar {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -107,4 +111,5 @@ public class BoogieConst implements IBoogieVar {
 		}
 		return true;
 	}
+
 }

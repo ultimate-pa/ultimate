@@ -3,848 +3,848 @@
 #include <math.h>
 #include <stdlib.h>
 
-    extern void __VERIFIER_error(int);
+    extern void __VERIFIER_error(int8_t );
 
 	// inputs
-	int inputs[] = {5,6,1,7,2,8,3,9,10,4};
+	int8_t  inputs[] = {5,6,1,7,2,8,3,9,10,4};
 
 	void errorCheck();
-	void calculate_output(int);
-	void calculate_outputm1(int);
-	void calculate_outputm2(int);
-	void calculate_outputm3(int);
-	void calculate_outputm4(int);
-	void calculate_outputm5(int);
-	void calculate_outputm6(int);
-	void calculate_outputm7(int);
-	void calculate_outputm8(int);
-	void calculate_outputm9(int);
-	void calculate_outputm10(int);
-	void calculate_outputm11(int);
-	void calculate_outputm12(int);
-	void calculate_outputm13(int);
-	void calculate_outputm14(int);
-	void calculate_outputm15(int);
-	void calculate_outputm16(int);
-	void calculate_outputm17(int);
-	void calculate_outputm18(int);
-	void calculate_outputm19(int);
-	void calculate_outputm20(int);
-	void calculate_outputm21(int);
-	void calculate_outputm22(int);
-	void calculate_outputm23(int);
-	void calculate_outputm24(int);
-	void calculate_outputm25(int);
-	void calculate_outputm26(int);
-	void calculate_outputm27(int);
-	void calculate_outputm28(int);
-	void calculate_outputm29(int);
-	void calculate_outputm30(int);
-	void calculate_outputm31(int);
-	void calculate_outputm32(int);
-	void calculate_outputm33(int);
-	void calculate_outputm34(int);
-	void calculate_outputm35(int);
-	void calculate_outputm36(int);
-	void calculate_outputm37(int);
-	void calculate_outputm38(int);
-	void calculate_outputm39(int);
-	void calculate_outputm40(int);
-	void calculate_outputm41(int);
-	void calculate_outputm42(int);
-	void calculate_outputm43(int);
-	void calculate_outputm44(int);
-	void calculate_outputm45(int);
-	void calculate_outputm46(int);
-	void calculate_outputm47(int);
-	void calculate_outputm48(int);
-	void calculate_outputm49(int);
-	void calculate_outputm50(int);
-	void calculate_outputm51(int);
-	void calculate_outputm52(int);
-	void calculate_outputm53(int);
-	void calculate_outputm54(int);
-	void calculate_outputm55(int);
-	void calculate_outputm56(int);
-	void calculate_outputm57(int);
-	void calculate_outputm58(int);
-	void calculate_outputm59(int);
-	void calculate_outputm60(int);
-	void calculate_outputm61(int);
-	void calculate_outputm62(int);
-	void calculate_outputm63(int);
-	void calculate_outputm64(int);
-	void calculate_outputm65(int);
-	void calculate_outputm66(int);
-	void calculate_outputm67(int);
-	void calculate_outputm68(int);
-	void calculate_outputm69(int);
-	void calculate_outputm70(int);
-	void calculate_outputm71(int);
-	void calculate_outputm72(int);
-	void calculate_outputm73(int);
-	void calculate_outputm74(int);
-	void calculate_outputm75(int);
-	void calculate_outputm76(int);
-	void calculate_outputm77(int);
-	void calculate_outputm78(int);
-	void calculate_outputm79(int);
-	void calculate_outputm80(int);
-	void calculate_outputm81(int);
-	void calculate_outputm82(int);
-	void calculate_outputm83(int);
-	void calculate_outputm84(int);
-	void calculate_outputm85(int);
-	void calculate_outputm86(int);
-	void calculate_outputm87(int);
-	void calculate_outputm88(int);
-	void calculate_outputm89(int);
-	void calculate_outputm90(int);
-	void calculate_outputm91(int);
-	void calculate_outputm92(int);
-	void calculate_outputm93(int);
-	void calculate_outputm94(int);
-	void calculate_outputm95(int);
-	void calculate_outputm96(int);
-	void calculate_outputm97(int);
-	void calculate_outputm98(int);
-	void calculate_outputm99(int);
-	void calculate_outputm100(int);
-	void calculate_outputm101(int);
-	void calculate_outputm102(int);
-	void calculate_outputm103(int);
-	void calculate_outputm104(int);
-	void calculate_outputm105(int);
-	void calculate_outputm106(int);
-	void calculate_outputm107(int);
-	void calculate_outputm108(int);
-	void calculate_outputm109(int);
-	void calculate_outputm110(int);
-	void calculate_outputm111(int);
-	void calculate_outputm112(int);
-	void calculate_outputm113(int);
-	void calculate_outputm114(int);
-	void calculate_outputm115(int);
-	void calculate_outputm116(int);
-	void calculate_outputm117(int);
-	void calculate_outputm118(int);
-	void calculate_outputm119(int);
-	void calculate_outputm120(int);
-	void calculate_outputm121(int);
-	void calculate_outputm122(int);
-	void calculate_outputm123(int);
-	void calculate_outputm124(int);
-	void calculate_outputm125(int);
-	void calculate_outputm126(int);
-	void calculate_outputm127(int);
-	void calculate_outputm128(int);
-	void calculate_outputm129(int);
-	void calculate_outputm130(int);
-	void calculate_outputm131(int);
-	void calculate_outputm132(int);
-	void calculate_outputm133(int);
-	void calculate_outputm134(int);
-	void calculate_outputm135(int);
-	void calculate_outputm136(int);
-	void calculate_outputm137(int);
-	void calculate_outputm138(int);
-	void calculate_outputm139(int);
-	void calculate_outputm140(int);
-	void calculate_outputm141(int);
-	void calculate_outputm142(int);
-	void calculate_outputm143(int);
-	void calculate_outputm144(int);
-	void calculate_outputm145(int);
-	void calculate_outputm146(int);
-	void calculate_outputm147(int);
-	void calculate_outputm148(int);
-	void calculate_outputm149(int);
-	void calculate_outputm150(int);
-	void calculate_outputm151(int);
-	void calculate_outputm152(int);
-	void calculate_outputm153(int);
-	void calculate_outputm154(int);
-	void calculate_outputm155(int);
-	void calculate_outputm156(int);
-	void calculate_outputm157(int);
-	void calculate_outputm158(int);
-	void calculate_outputm159(int);
-	void calculate_outputm160(int);
-	void calculate_outputm161(int);
-	void calculate_outputm162(int);
-	void calculate_outputm163(int);
-	void calculate_outputm164(int);
-	void calculate_outputm165(int);
-	void calculate_outputm166(int);
-	void calculate_outputm167(int);
-	void calculate_outputm168(int);
-	void calculate_outputm169(int);
-	void calculate_outputm170(int);
-	void calculate_outputm171(int);
-	void calculate_outputm172(int);
-	void calculate_outputm173(int);
-	void calculate_outputm174(int);
-	void calculate_outputm175(int);
-	void calculate_outputm176(int);
-	void calculate_outputm177(int);
-	void calculate_outputm178(int);
-	void calculate_outputm179(int);
-	void calculate_outputm180(int);
-	void calculate_outputm181(int);
-	void calculate_outputm182(int);
-	void calculate_outputm183(int);
-	void calculate_outputm184(int);
-	void calculate_outputm185(int);
-	void calculate_outputm186(int);
-	void calculate_outputm187(int);
-	void calculate_outputm188(int);
-	void calculate_outputm189(int);
-	void calculate_outputm190(int);
-	void calculate_outputm191(int);
-	void calculate_outputm192(int);
-	void calculate_outputm193(int);
-	void calculate_outputm194(int);
-	void calculate_outputm195(int);
-	void calculate_outputm196(int);
-	void calculate_outputm197(int);
-	void calculate_outputm198(int);
-	void calculate_outputm199(int);
-	void calculate_outputm200(int);
-	void calculate_outputm201(int);
-	void calculate_outputm202(int);
-	void calculate_outputm203(int);
-	void calculate_outputm204(int);
-	void calculate_outputm205(int);
-	void calculate_outputm206(int);
-	void calculate_outputm207(int);
-	void calculate_outputm208(int);
-	void calculate_outputm209(int);
-	void calculate_outputm210(int);
-	void calculate_outputm211(int);
-	void calculate_outputm212(int);
-	void calculate_outputm213(int);
-	void calculate_outputm214(int);
-	void calculate_outputm215(int);
-	void calculate_outputm216(int);
-	void calculate_outputm217(int);
-	void calculate_outputm218(int);
-	void calculate_outputm219(int);
-	void calculate_outputm220(int);
-	void calculate_outputm221(int);
-	void calculate_outputm222(int);
-	void calculate_outputm223(int);
-	void calculate_outputm224(int);
-	void calculate_outputm225(int);
-	void calculate_outputm226(int);
-	void calculate_outputm227(int);
-	void calculate_outputm228(int);
-	void calculate_outputm229(int);
-	void calculate_outputm230(int);
-	void calculate_outputm231(int);
-	void calculate_outputm232(int);
-	void calculate_outputm233(int);
-	void calculate_outputm234(int);
-	void calculate_outputm235(int);
-	void calculate_outputm236(int);
-	void calculate_outputm237(int);
-	void calculate_outputm238(int);
-	void calculate_outputm239(int);
-	void calculate_outputm240(int);
-	void calculate_outputm241(int);
-	void calculate_outputm242(int);
-	void calculate_outputm243(int);
-	void calculate_outputm244(int);
-	void calculate_outputm245(int);
-	void calculate_outputm246(int);
-	void calculate_outputm247(int);
-	void calculate_outputm248(int);
-	void calculate_outputm249(int);
-	void calculate_outputm250(int);
-	void calculate_outputm251(int);
-	void calculate_outputm252(int);
-	void calculate_outputm253(int);
-	void calculate_outputm254(int);
-	void calculate_outputm255(int);
-	void calculate_outputm256(int);
-	void calculate_outputm257(int);
-	void calculate_outputm258(int);
-	void calculate_outputm259(int);
-	void calculate_outputm260(int);
-	void calculate_outputm261(int);
-	void calculate_outputm262(int);
-	void calculate_outputm263(int);
-	void calculate_outputm264(int);
-	void calculate_outputm265(int);
-	void calculate_outputm266(int);
-	void calculate_outputm267(int);
-	void calculate_outputm268(int);
-	void calculate_outputm269(int);
-	void calculate_outputm270(int);
-	void calculate_outputm271(int);
-	void calculate_outputm272(int);
-	void calculate_outputm273(int);
-	void calculate_outputm274(int);
-	void calculate_outputm275(int);
-	void calculate_outputm276(int);
-	void calculate_outputm277(int);
-	void calculate_outputm278(int);
-	void calculate_outputm279(int);
-	void calculate_outputm280(int);
-	void calculate_outputm281(int);
-	void calculate_outputm282(int);
-	void calculate_outputm283(int);
-	void calculate_outputm284(int);
-	void calculate_outputm285(int);
-	void calculate_outputm286(int);
-	void calculate_outputm287(int);
-	void calculate_outputm288(int);
-	void calculate_outputm289(int);
-	void calculate_outputm290(int);
-	void calculate_outputm291(int);
-	void calculate_outputm292(int);
-	void calculate_outputm293(int);
-	void calculate_outputm294(int);
-	void calculate_outputm295(int);
-	void calculate_outputm296(int);
-	void calculate_outputm297(int);
-	void calculate_outputm298(int);
-	void calculate_outputm299(int);
-	void calculate_outputm300(int);
-	void calculate_outputm301(int);
-	void calculate_outputm302(int);
-	void calculate_outputm303(int);
-	void calculate_outputm304(int);
-	void calculate_outputm305(int);
-	void calculate_outputm306(int);
-	void calculate_outputm307(int);
-	void calculate_outputm308(int);
-	void calculate_outputm309(int);
-	void calculate_outputm310(int);
-	void calculate_outputm311(int);
-	void calculate_outputm312(int);
-	void calculate_outputm313(int);
-	void calculate_outputm314(int);
-	void calculate_outputm315(int);
-	void calculate_outputm316(int);
-	void calculate_outputm317(int);
-	void calculate_outputm318(int);
-	void calculate_outputm319(int);
-	void calculate_outputm320(int);
-	void calculate_outputm321(int);
-	void calculate_outputm322(int);
-	void calculate_outputm323(int);
-	void calculate_outputm324(int);
-	void calculate_outputm325(int);
-	void calculate_outputm326(int);
-	void calculate_outputm327(int);
-	void calculate_outputm328(int);
-	void calculate_outputm329(int);
-	void calculate_outputm330(int);
-	void calculate_outputm331(int);
-	void calculate_outputm332(int);
-	void calculate_outputm333(int);
-	void calculate_outputm334(int);
-	void calculate_outputm335(int);
-	void calculate_outputm336(int);
-	void calculate_outputm337(int);
-	void calculate_outputm338(int);
-	void calculate_outputm339(int);
-	void calculate_outputm340(int);
-	void calculate_outputm341(int);
-	void calculate_outputm342(int);
-	void calculate_outputm343(int);
-	void calculate_outputm344(int);
-	void calculate_outputm345(int);
-	void calculate_outputm346(int);
-	void calculate_outputm347(int);
-	void calculate_outputm348(int);
-	void calculate_outputm349(int);
-	void calculate_outputm350(int);
-	void calculate_outputm351(int);
-	void calculate_outputm352(int);
-	void calculate_outputm353(int);
-	void calculate_outputm354(int);
-	void calculate_outputm355(int);
-	void calculate_outputm356(int);
-	void calculate_outputm357(int);
-	void calculate_outputm358(int);
-	void calculate_outputm359(int);
-	void calculate_outputm360(int);
-	void calculate_outputm361(int);
-	void calculate_outputm362(int);
-	void calculate_outputm363(int);
-	void calculate_outputm364(int);
-	void calculate_outputm365(int);
-	void calculate_outputm366(int);
-	void calculate_outputm367(int);
-	void calculate_outputm368(int);
-	void calculate_outputm369(int);
-	void calculate_outputm370(int);
-	void calculate_outputm371(int);
-	void calculate_outputm372(int);
-	void calculate_outputm373(int);
-	void calculate_outputm374(int);
-	void calculate_outputm375(int);
-	void calculate_outputm376(int);
-	void calculate_outputm377(int);
-	void calculate_outputm378(int);
-	void calculate_outputm379(int);
-	void calculate_outputm380(int);
-	void calculate_outputm381(int);
-	void calculate_outputm382(int);
-	void calculate_outputm383(int);
-	void calculate_outputm384(int);
-	void calculate_outputm385(int);
-	void calculate_outputm386(int);
-	void calculate_outputm387(int);
-	void calculate_outputm388(int);
-	void calculate_outputm389(int);
-	void calculate_outputm390(int);
-	void calculate_outputm391(int);
-	void calculate_outputm392(int);
-	void calculate_outputm393(int);
-	void calculate_outputm394(int);
-	void calculate_outputm395(int);
-	void calculate_outputm396(int);
-	void calculate_outputm397(int);
-	void calculate_outputm398(int);
-	void calculate_outputm399(int);
-	void calculate_outputm400(int);
-	void calculate_outputm401(int);
-	void calculate_outputm402(int);
-	void calculate_outputm403(int);
-	void calculate_outputm404(int);
-	void calculate_outputm405(int);
-	void calculate_outputm406(int);
-	void calculate_outputm407(int);
-	void calculate_outputm408(int);
-	void calculate_outputm409(int);
-	void calculate_outputm410(int);
-	void calculate_outputm411(int);
-	void calculate_outputm412(int);
-	void calculate_outputm413(int);
-	void calculate_outputm414(int);
-	void calculate_outputm415(int);
-	void calculate_outputm416(int);
-	void calculate_outputm417(int);
-	void calculate_outputm418(int);
-	void calculate_outputm419(int);
-	void calculate_outputm420(int);
-	void calculate_outputm421(int);
-	void calculate_outputm422(int);
-	void calculate_outputm423(int);
-	void calculate_outputm424(int);
-	void calculate_outputm425(int);
-	void calculate_outputm426(int);
-	void calculate_outputm427(int);
-	void calculate_outputm428(int);
-	void calculate_outputm429(int);
-	void calculate_outputm430(int);
-	void calculate_outputm431(int);
-	void calculate_outputm432(int);
-	void calculate_outputm433(int);
-	void calculate_outputm434(int);
-	void calculate_outputm435(int);
-	void calculate_outputm436(int);
-	void calculate_outputm437(int);
-	void calculate_outputm438(int);
-	void calculate_outputm439(int);
-	void calculate_outputm440(int);
-	void calculate_outputm441(int);
-	void calculate_outputm442(int);
-	void calculate_outputm443(int);
-	void calculate_outputm444(int);
-	void calculate_outputm445(int);
-	void calculate_outputm446(int);
-	void calculate_outputm447(int);
-	void calculate_outputm448(int);
-	void calculate_outputm449(int);
-	void calculate_outputm450(int);
-	void calculate_outputm451(int);
-	void calculate_outputm452(int);
-	void calculate_outputm453(int);
-	void calculate_outputm454(int);
-	void calculate_outputm455(int);
-	void calculate_outputm456(int);
-	void calculate_outputm457(int);
-	void calculate_outputm458(int);
-	void calculate_outputm459(int);
-	void calculate_outputm460(int);
-	void calculate_outputm461(int);
-	void calculate_outputm462(int);
-	void calculate_outputm463(int);
-	void calculate_outputm464(int);
-	void calculate_outputm465(int);
-	void calculate_outputm466(int);
-	void calculate_outputm467(int);
-	void calculate_outputm468(int);
-	void calculate_outputm469(int);
-	void calculate_outputm470(int);
-	void calculate_outputm471(int);
-	void calculate_outputm472(int);
-	void calculate_outputm473(int);
-	void calculate_outputm474(int);
-	void calculate_outputm475(int);
-	void calculate_outputm476(int);
-	void calculate_outputm477(int);
-	void calculate_outputm478(int);
-	void calculate_outputm479(int);
-	void calculate_outputm480(int);
-	void calculate_outputm481(int);
-	void calculate_outputm482(int);
-	void calculate_outputm483(int);
-	void calculate_outputm484(int);
+	void calculate_output(int8_t );
+	void calculate_outputm1(int8_t );
+	void calculate_outputm2(int8_t );
+	void calculate_outputm3(int8_t );
+	void calculate_outputm4(int8_t );
+	void calculate_outputm5(int8_t );
+	void calculate_outputm6(int8_t );
+	void calculate_outputm7(int8_t );
+	void calculate_outputm8(int8_t );
+	void calculate_outputm9(int8_t );
+	void calculate_outputm10(int8_t );
+	void calculate_outputm11(int8_t );
+	void calculate_outputm12(int8_t );
+	void calculate_outputm13(int8_t );
+	void calculate_outputm14(int8_t );
+	void calculate_outputm15(int8_t );
+	void calculate_outputm16(int8_t );
+	void calculate_outputm17(int8_t );
+	void calculate_outputm18(int8_t );
+	void calculate_outputm19(int8_t );
+	void calculate_outputm20(int8_t );
+	void calculate_outputm21(int8_t );
+	void calculate_outputm22(int8_t );
+	void calculate_outputm23(int8_t );
+	void calculate_outputm24(int8_t );
+	void calculate_outputm25(int8_t );
+	void calculate_outputm26(int8_t );
+	void calculate_outputm27(int8_t );
+	void calculate_outputm28(int8_t );
+	void calculate_outputm29(int8_t );
+	void calculate_outputm30(int8_t );
+	void calculate_outputm31(int8_t );
+	void calculate_outputm32(int8_t );
+	void calculate_outputm33(int8_t );
+	void calculate_outputm34(int8_t );
+	void calculate_outputm35(int8_t );
+	void calculate_outputm36(int8_t );
+	void calculate_outputm37(int8_t );
+	void calculate_outputm38(int8_t );
+	void calculate_outputm39(int8_t );
+	void calculate_outputm40(int8_t );
+	void calculate_outputm41(int8_t );
+	void calculate_outputm42(int8_t );
+	void calculate_outputm43(int8_t );
+	void calculate_outputm44(int8_t );
+	void calculate_outputm45(int8_t );
+	void calculate_outputm46(int8_t );
+	void calculate_outputm47(int8_t );
+	void calculate_outputm48(int8_t );
+	void calculate_outputm49(int8_t );
+	void calculate_outputm50(int8_t );
+	void calculate_outputm51(int8_t );
+	void calculate_outputm52(int8_t );
+	void calculate_outputm53(int8_t );
+	void calculate_outputm54(int8_t );
+	void calculate_outputm55(int8_t );
+	void calculate_outputm56(int8_t );
+	void calculate_outputm57(int8_t );
+	void calculate_outputm58(int8_t );
+	void calculate_outputm59(int8_t );
+	void calculate_outputm60(int8_t );
+	void calculate_outputm61(int8_t );
+	void calculate_outputm62(int8_t );
+	void calculate_outputm63(int8_t );
+	void calculate_outputm64(int8_t );
+	void calculate_outputm65(int8_t );
+	void calculate_outputm66(int8_t );
+	void calculate_outputm67(int8_t );
+	void calculate_outputm68(int8_t );
+	void calculate_outputm69(int8_t );
+	void calculate_outputm70(int8_t );
+	void calculate_outputm71(int8_t );
+	void calculate_outputm72(int8_t );
+	void calculate_outputm73(int8_t );
+	void calculate_outputm74(int8_t );
+	void calculate_outputm75(int8_t );
+	void calculate_outputm76(int8_t );
+	void calculate_outputm77(int8_t );
+	void calculate_outputm78(int8_t );
+	void calculate_outputm79(int8_t );
+	void calculate_outputm80(int8_t );
+	void calculate_outputm81(int8_t );
+	void calculate_outputm82(int8_t );
+	void calculate_outputm83(int8_t );
+	void calculate_outputm84(int8_t );
+	void calculate_outputm85(int8_t );
+	void calculate_outputm86(int8_t );
+	void calculate_outputm87(int8_t );
+	void calculate_outputm88(int8_t );
+	void calculate_outputm89(int8_t );
+	void calculate_outputm90(int8_t );
+	void calculate_outputm91(int8_t );
+	void calculate_outputm92(int8_t );
+	void calculate_outputm93(int8_t );
+	void calculate_outputm94(int8_t );
+	void calculate_outputm95(int8_t );
+	void calculate_outputm96(int8_t );
+	void calculate_outputm97(int8_t );
+	void calculate_outputm98(int8_t );
+	void calculate_outputm99(int8_t );
+	void calculate_outputm100(int8_t );
+	void calculate_outputm101(int8_t );
+	void calculate_outputm102(int8_t );
+	void calculate_outputm103(int8_t );
+	void calculate_outputm104(int8_t );
+	void calculate_outputm105(int8_t );
+	void calculate_outputm106(int8_t );
+	void calculate_outputm107(int8_t );
+	void calculate_outputm108(int8_t );
+	void calculate_outputm109(int8_t );
+	void calculate_outputm110(int8_t );
+	void calculate_outputm111(int8_t );
+	void calculate_outputm112(int8_t );
+	void calculate_outputm113(int8_t );
+	void calculate_outputm114(int8_t );
+	void calculate_outputm115(int8_t );
+	void calculate_outputm116(int8_t );
+	void calculate_outputm117(int8_t );
+	void calculate_outputm118(int8_t );
+	void calculate_outputm119(int8_t );
+	void calculate_outputm120(int8_t );
+	void calculate_outputm121(int8_t );
+	void calculate_outputm122(int8_t );
+	void calculate_outputm123(int8_t );
+	void calculate_outputm124(int8_t );
+	void calculate_outputm125(int8_t );
+	void calculate_outputm126(int8_t );
+	void calculate_outputm127(int8_t );
+	void calculate_outputm128(int8_t );
+	void calculate_outputm129(int8_t );
+	void calculate_outputm130(int8_t );
+	void calculate_outputm131(int8_t );
+	void calculate_outputm132(int8_t );
+	void calculate_outputm133(int8_t );
+	void calculate_outputm134(int8_t );
+	void calculate_outputm135(int8_t );
+	void calculate_outputm136(int8_t );
+	void calculate_outputm137(int8_t );
+	void calculate_outputm138(int8_t );
+	void calculate_outputm139(int8_t );
+	void calculate_outputm140(int8_t );
+	void calculate_outputm141(int8_t );
+	void calculate_outputm142(int8_t );
+	void calculate_outputm143(int8_t );
+	void calculate_outputm144(int8_t );
+	void calculate_outputm145(int8_t );
+	void calculate_outputm146(int8_t );
+	void calculate_outputm147(int8_t );
+	void calculate_outputm148(int8_t );
+	void calculate_outputm149(int8_t );
+	void calculate_outputm150(int8_t );
+	void calculate_outputm151(int8_t );
+	void calculate_outputm152(int8_t );
+	void calculate_outputm153(int8_t );
+	void calculate_outputm154(int8_t );
+	void calculate_outputm155(int8_t );
+	void calculate_outputm156(int8_t );
+	void calculate_outputm157(int8_t );
+	void calculate_outputm158(int8_t );
+	void calculate_outputm159(int8_t );
+	void calculate_outputm160(int8_t );
+	void calculate_outputm161(int8_t );
+	void calculate_outputm162(int8_t );
+	void calculate_outputm163(int8_t );
+	void calculate_outputm164(int8_t );
+	void calculate_outputm165(int8_t );
+	void calculate_outputm166(int8_t );
+	void calculate_outputm167(int8_t );
+	void calculate_outputm168(int8_t );
+	void calculate_outputm169(int8_t );
+	void calculate_outputm170(int8_t );
+	void calculate_outputm171(int8_t );
+	void calculate_outputm172(int8_t );
+	void calculate_outputm173(int8_t );
+	void calculate_outputm174(int8_t );
+	void calculate_outputm175(int8_t );
+	void calculate_outputm176(int8_t );
+	void calculate_outputm177(int8_t );
+	void calculate_outputm178(int8_t );
+	void calculate_outputm179(int8_t );
+	void calculate_outputm180(int8_t );
+	void calculate_outputm181(int8_t );
+	void calculate_outputm182(int8_t );
+	void calculate_outputm183(int8_t );
+	void calculate_outputm184(int8_t );
+	void calculate_outputm185(int8_t );
+	void calculate_outputm186(int8_t );
+	void calculate_outputm187(int8_t );
+	void calculate_outputm188(int8_t );
+	void calculate_outputm189(int8_t );
+	void calculate_outputm190(int8_t );
+	void calculate_outputm191(int8_t );
+	void calculate_outputm192(int8_t );
+	void calculate_outputm193(int8_t );
+	void calculate_outputm194(int8_t );
+	void calculate_outputm195(int8_t );
+	void calculate_outputm196(int8_t );
+	void calculate_outputm197(int8_t );
+	void calculate_outputm198(int8_t );
+	void calculate_outputm199(int8_t );
+	void calculate_outputm200(int8_t );
+	void calculate_outputm201(int8_t );
+	void calculate_outputm202(int8_t );
+	void calculate_outputm203(int8_t );
+	void calculate_outputm204(int8_t );
+	void calculate_outputm205(int8_t );
+	void calculate_outputm206(int8_t );
+	void calculate_outputm207(int8_t );
+	void calculate_outputm208(int8_t );
+	void calculate_outputm209(int8_t );
+	void calculate_outputm210(int8_t );
+	void calculate_outputm211(int8_t );
+	void calculate_outputm212(int8_t );
+	void calculate_outputm213(int8_t );
+	void calculate_outputm214(int8_t );
+	void calculate_outputm215(int8_t );
+	void calculate_outputm216(int8_t );
+	void calculate_outputm217(int8_t );
+	void calculate_outputm218(int8_t );
+	void calculate_outputm219(int8_t );
+	void calculate_outputm220(int8_t );
+	void calculate_outputm221(int8_t );
+	void calculate_outputm222(int8_t );
+	void calculate_outputm223(int8_t );
+	void calculate_outputm224(int8_t );
+	void calculate_outputm225(int8_t );
+	void calculate_outputm226(int8_t );
+	void calculate_outputm227(int8_t );
+	void calculate_outputm228(int8_t );
+	void calculate_outputm229(int8_t );
+	void calculate_outputm230(int8_t );
+	void calculate_outputm231(int8_t );
+	void calculate_outputm232(int8_t );
+	void calculate_outputm233(int8_t );
+	void calculate_outputm234(int8_t );
+	void calculate_outputm235(int8_t );
+	void calculate_outputm236(int8_t );
+	void calculate_outputm237(int8_t );
+	void calculate_outputm238(int8_t );
+	void calculate_outputm239(int8_t );
+	void calculate_outputm240(int8_t );
+	void calculate_outputm241(int8_t );
+	void calculate_outputm242(int8_t );
+	void calculate_outputm243(int8_t );
+	void calculate_outputm244(int8_t );
+	void calculate_outputm245(int8_t );
+	void calculate_outputm246(int8_t );
+	void calculate_outputm247(int8_t );
+	void calculate_outputm248(int8_t );
+	void calculate_outputm249(int8_t );
+	void calculate_outputm250(int8_t );
+	void calculate_outputm251(int8_t );
+	void calculate_outputm252(int8_t );
+	void calculate_outputm253(int8_t );
+	void calculate_outputm254(int8_t );
+	void calculate_outputm255(int8_t );
+	void calculate_outputm256(int8_t );
+	void calculate_outputm257(int8_t );
+	void calculate_outputm258(int8_t );
+	void calculate_outputm259(int8_t );
+	void calculate_outputm260(int8_t );
+	void calculate_outputm261(int8_t );
+	void calculate_outputm262(int8_t );
+	void calculate_outputm263(int8_t );
+	void calculate_outputm264(int8_t );
+	void calculate_outputm265(int8_t );
+	void calculate_outputm266(int8_t );
+	void calculate_outputm267(int8_t );
+	void calculate_outputm268(int8_t );
+	void calculate_outputm269(int8_t );
+	void calculate_outputm270(int8_t );
+	void calculate_outputm271(int8_t );
+	void calculate_outputm272(int8_t );
+	void calculate_outputm273(int8_t );
+	void calculate_outputm274(int8_t );
+	void calculate_outputm275(int8_t );
+	void calculate_outputm276(int8_t );
+	void calculate_outputm277(int8_t );
+	void calculate_outputm278(int8_t );
+	void calculate_outputm279(int8_t );
+	void calculate_outputm280(int8_t );
+	void calculate_outputm281(int8_t );
+	void calculate_outputm282(int8_t );
+	void calculate_outputm283(int8_t );
+	void calculate_outputm284(int8_t );
+	void calculate_outputm285(int8_t );
+	void calculate_outputm286(int8_t );
+	void calculate_outputm287(int8_t );
+	void calculate_outputm288(int8_t );
+	void calculate_outputm289(int8_t );
+	void calculate_outputm290(int8_t );
+	void calculate_outputm291(int8_t );
+	void calculate_outputm292(int8_t );
+	void calculate_outputm293(int8_t );
+	void calculate_outputm294(int8_t );
+	void calculate_outputm295(int8_t );
+	void calculate_outputm296(int8_t );
+	void calculate_outputm297(int8_t );
+	void calculate_outputm298(int8_t );
+	void calculate_outputm299(int8_t );
+	void calculate_outputm300(int8_t );
+	void calculate_outputm301(int8_t );
+	void calculate_outputm302(int8_t );
+	void calculate_outputm303(int8_t );
+	void calculate_outputm304(int8_t );
+	void calculate_outputm305(int8_t );
+	void calculate_outputm306(int8_t );
+	void calculate_outputm307(int8_t );
+	void calculate_outputm308(int8_t );
+	void calculate_outputm309(int8_t );
+	void calculate_outputm310(int8_t );
+	void calculate_outputm311(int8_t );
+	void calculate_outputm312(int8_t );
+	void calculate_outputm313(int8_t );
+	void calculate_outputm314(int8_t );
+	void calculate_outputm315(int8_t );
+	void calculate_outputm316(int8_t );
+	void calculate_outputm317(int8_t );
+	void calculate_outputm318(int8_t );
+	void calculate_outputm319(int8_t );
+	void calculate_outputm320(int8_t );
+	void calculate_outputm321(int8_t );
+	void calculate_outputm322(int8_t );
+	void calculate_outputm323(int8_t );
+	void calculate_outputm324(int8_t );
+	void calculate_outputm325(int8_t );
+	void calculate_outputm326(int8_t );
+	void calculate_outputm327(int8_t );
+	void calculate_outputm328(int8_t );
+	void calculate_outputm329(int8_t );
+	void calculate_outputm330(int8_t );
+	void calculate_outputm331(int8_t );
+	void calculate_outputm332(int8_t );
+	void calculate_outputm333(int8_t );
+	void calculate_outputm334(int8_t );
+	void calculate_outputm335(int8_t );
+	void calculate_outputm336(int8_t );
+	void calculate_outputm337(int8_t );
+	void calculate_outputm338(int8_t );
+	void calculate_outputm339(int8_t );
+	void calculate_outputm340(int8_t );
+	void calculate_outputm341(int8_t );
+	void calculate_outputm342(int8_t );
+	void calculate_outputm343(int8_t );
+	void calculate_outputm344(int8_t );
+	void calculate_outputm345(int8_t );
+	void calculate_outputm346(int8_t );
+	void calculate_outputm347(int8_t );
+	void calculate_outputm348(int8_t );
+	void calculate_outputm349(int8_t );
+	void calculate_outputm350(int8_t );
+	void calculate_outputm351(int8_t );
+	void calculate_outputm352(int8_t );
+	void calculate_outputm353(int8_t );
+	void calculate_outputm354(int8_t );
+	void calculate_outputm355(int8_t );
+	void calculate_outputm356(int8_t );
+	void calculate_outputm357(int8_t );
+	void calculate_outputm358(int8_t );
+	void calculate_outputm359(int8_t );
+	void calculate_outputm360(int8_t );
+	void calculate_outputm361(int8_t );
+	void calculate_outputm362(int8_t );
+	void calculate_outputm363(int8_t );
+	void calculate_outputm364(int8_t );
+	void calculate_outputm365(int8_t );
+	void calculate_outputm366(int8_t );
+	void calculate_outputm367(int8_t );
+	void calculate_outputm368(int8_t );
+	void calculate_outputm369(int8_t );
+	void calculate_outputm370(int8_t );
+	void calculate_outputm371(int8_t );
+	void calculate_outputm372(int8_t );
+	void calculate_outputm373(int8_t );
+	void calculate_outputm374(int8_t );
+	void calculate_outputm375(int8_t );
+	void calculate_outputm376(int8_t );
+	void calculate_outputm377(int8_t );
+	void calculate_outputm378(int8_t );
+	void calculate_outputm379(int8_t );
+	void calculate_outputm380(int8_t );
+	void calculate_outputm381(int8_t );
+	void calculate_outputm382(int8_t );
+	void calculate_outputm383(int8_t );
+	void calculate_outputm384(int8_t );
+	void calculate_outputm385(int8_t );
+	void calculate_outputm386(int8_t );
+	void calculate_outputm387(int8_t );
+	void calculate_outputm388(int8_t );
+	void calculate_outputm389(int8_t );
+	void calculate_outputm390(int8_t );
+	void calculate_outputm391(int8_t );
+	void calculate_outputm392(int8_t );
+	void calculate_outputm393(int8_t );
+	void calculate_outputm394(int8_t );
+	void calculate_outputm395(int8_t );
+	void calculate_outputm396(int8_t );
+	void calculate_outputm397(int8_t );
+	void calculate_outputm398(int8_t );
+	void calculate_outputm399(int8_t );
+	void calculate_outputm400(int8_t );
+	void calculate_outputm401(int8_t );
+	void calculate_outputm402(int8_t );
+	void calculate_outputm403(int8_t );
+	void calculate_outputm404(int8_t );
+	void calculate_outputm405(int8_t );
+	void calculate_outputm406(int8_t );
+	void calculate_outputm407(int8_t );
+	void calculate_outputm408(int8_t );
+	void calculate_outputm409(int8_t );
+	void calculate_outputm410(int8_t );
+	void calculate_outputm411(int8_t );
+	void calculate_outputm412(int8_t );
+	void calculate_outputm413(int8_t );
+	void calculate_outputm414(int8_t );
+	void calculate_outputm415(int8_t );
+	void calculate_outputm416(int8_t );
+	void calculate_outputm417(int8_t );
+	void calculate_outputm418(int8_t );
+	void calculate_outputm419(int8_t );
+	void calculate_outputm420(int8_t );
+	void calculate_outputm421(int8_t );
+	void calculate_outputm422(int8_t );
+	void calculate_outputm423(int8_t );
+	void calculate_outputm424(int8_t );
+	void calculate_outputm425(int8_t );
+	void calculate_outputm426(int8_t );
+	void calculate_outputm427(int8_t );
+	void calculate_outputm428(int8_t );
+	void calculate_outputm429(int8_t );
+	void calculate_outputm430(int8_t );
+	void calculate_outputm431(int8_t );
+	void calculate_outputm432(int8_t );
+	void calculate_outputm433(int8_t );
+	void calculate_outputm434(int8_t );
+	void calculate_outputm435(int8_t );
+	void calculate_outputm436(int8_t );
+	void calculate_outputm437(int8_t );
+	void calculate_outputm438(int8_t );
+	void calculate_outputm439(int8_t );
+	void calculate_outputm440(int8_t );
+	void calculate_outputm441(int8_t );
+	void calculate_outputm442(int8_t );
+	void calculate_outputm443(int8_t );
+	void calculate_outputm444(int8_t );
+	void calculate_outputm445(int8_t );
+	void calculate_outputm446(int8_t );
+	void calculate_outputm447(int8_t );
+	void calculate_outputm448(int8_t );
+	void calculate_outputm449(int8_t );
+	void calculate_outputm450(int8_t );
+	void calculate_outputm451(int8_t );
+	void calculate_outputm452(int8_t );
+	void calculate_outputm453(int8_t );
+	void calculate_outputm454(int8_t );
+	void calculate_outputm455(int8_t );
+	void calculate_outputm456(int8_t );
+	void calculate_outputm457(int8_t );
+	void calculate_outputm458(int8_t );
+	void calculate_outputm459(int8_t );
+	void calculate_outputm460(int8_t );
+	void calculate_outputm461(int8_t );
+	void calculate_outputm462(int8_t );
+	void calculate_outputm463(int8_t );
+	void calculate_outputm464(int8_t );
+	void calculate_outputm465(int8_t );
+	void calculate_outputm466(int8_t );
+	void calculate_outputm467(int8_t );
+	void calculate_outputm468(int8_t );
+	void calculate_outputm469(int8_t );
+	void calculate_outputm470(int8_t );
+	void calculate_outputm471(int8_t );
+	void calculate_outputm472(int8_t );
+	void calculate_outputm473(int8_t );
+	void calculate_outputm474(int8_t );
+	void calculate_outputm475(int8_t );
+	void calculate_outputm476(int8_t );
+	void calculate_outputm477(int8_t );
+	void calculate_outputm478(int8_t );
+	void calculate_outputm479(int8_t );
+	void calculate_outputm480(int8_t );
+	void calculate_outputm481(int8_t );
+	void calculate_outputm482(int8_t );
+	void calculate_outputm483(int8_t );
+	void calculate_outputm484(int8_t );
 
-	 int a372 = 6;
-	 int a43  = 35;
-	 int a213 = 2;
-	 int a14 = 3;
-	 int a352  = 35;
-	 int a128  = 33;
-	 int a161 = 12;
-	 int a123 = 3;
-	 int a5  = 35;
-	 int a218 = 5;
-	 int a166  = 32;
-	 int a211  = 36;
-	 int a560  = 33;
-	 int a355 = 12;
-	 int a250  = 35;
-	 int a101 = 5;
-	 int a361 = 6;
-	 int a357 = 11;
-	 int a290 = 9;
-	 int a578  = 33;
-	 int a261  = 35;
-	 int a0  = 34;
-	 int a233 = 6;
-	 int a201 = 4;
-	 int a295 = 9;
-	 int a212  = 33;
-	 int a365 = 1;
-	 int a274 = 3;
-	 int a84 = 12;
-	 int a271  = 32;
-	 int a264 = 12;
-	 int a507  = 33;
-	 int a47 = 8;
-	 int a326  = 33;
-	 int a154  = 36;
-	 int a351  = 33;
-	 int cf = 1;
-	 int a303 = 9;
-	 int a342 = 4;
-	 int a146  = 34;
-	 int a347 = 10;
-	 int a508  = 33;
-	 int a259 = 8;
-	 int a475  = 33;
-	 int a142  = 36;
-	 int a502  = 33;
-	 int a358 = 6;
-	 int a336 = 10;
-	 int a325 = 11;
-	 int a482  = 33;
-	 int a275  = 33;
-	 int a399 = 3;
-	 int a133 = 3;
-	 int a382 = 3;
-	 int a135  = 33;
-	 int a150 = 11;
-	 int a323 = 10;
-	 int a263 = 6;
-	 int a278  = 36;
-	 int a330 = 6;
-	 int a394  = 33;
-	 int a234 = 10;
-	 int a335  = 35;
-	 int a9  = 34;
-	 int a143 = 17;
-	 int a174 = 16;
-	 int a270 = 4;
-	 int a393 = 15;
-	 int a363 = 5;
-	 int a102  = 35;
-	 int a217 = 8;
-	 int a360  = 36;
-	 int a229 = 3;
-	 int a480  = 33;
-	 int a93 = 8;
-	 int a192  = 33;
-	 int a183 = 12;
-	 int a302  = 33;
-	 int a185  = 36;
-	 int a554  = 33;
-	 int a119  = 32;
-	 int a387  = 36;
-	 int a25  = 33;
-	 int a99 = 3;
-	 int a16 = 17;
-	 int a505  = 33;
-	 int a220  = 33;
-	 int a463  = 33;
-	 int a130  = 32;
-	 int a411  = 33;
-	 int a498  = 33;
-	 int a237  = 34;
-	 int a592  = 33;
-	 int a254  = 33;
-	 int a167  = 34;
-	 int a283 = 7;
-	 int a134  = 32;
-	 int a370 = 3;
-	 int a350  = 32;
-	 int a56 = 9;
-	 int a582  = 33;
-	 int a215  = 33;
-	 int a322 = 1;
-	 int a317 = 5;
-	 int a313 = 1;
-	 int a209 = 4;
-	 int a165 = 8;
-	 int a280  = 33;
-	 int a15  = 34;
-	 int a149 = 6;
-	 int a244 = 7;
-	 int a169  = 32;
-	 int a510  = 33;
-	 int a117 = 4;
-	 int a103 = 14;
-	 int a518  = 33;
-	 int a445  = 33;
-	 int a51  = 32;
-	 int a129  = 36;
-	 int a586  = 33;
-	 int a300 = 14;
-	 int a151 = 10;
-	 int a214 = 2;
-	 int a324 = 5;
-	 int a122  = 32;
-	 int a207  = 34;
-	 int a243 = 6;
-	 int a7  = 36;
-	 int a225  = 36;
-	 int a86  = 32;
-	 int a8  = 32;
-	 int a114  = 34;
-	 int a299  = 35;
-	 int a172 = 15;
-	 int a80  = 35;
-	 int a30  = 32;
-	 int a141  = 35;
-	 int a297 = 4;
-	 int a37  = 32;
-	 int a27  = 32;
-	 int a585  = 33;
-	 int a52 = 6;
-	 int a199 = 4;
-	 int a379  = 33;
-	 int a314 = 11;
-	 int a273 = 10;
-	 int a77  = 32;
-	 int a253 = 6;
-	 int a266  = 35;
-	 int a474  = 33;
-	 int a109 = 6;
-	 int a138 = 5;
-	 int a528  = 33;
-	 int a315 = 5;
-	 int a44 = 9;
-	 int a373 = 3;
-	 int a602  = 33;
-	 int a90 = 5;
-	 int a38  = 36;
-	 int a546  = 33;
-	 int a87 = 6;
-	 int a24 = 10;
-	 int a221 = 1;
-	 int a35 = 7;
-	 int a521  = 33;
-	 int a407  = 33;
-	 int a419  = 33;
-	 int a39 = 1;
-	 int a431  = 33;
-	 int a464  = 33;
-	 int a465  = 33;
-	 int a339  = 36;
-	 int a404  = 33;
-	 int a318  = 33;
-	 int a558  = 33;
-	 int a60 = 8;
-	 int a453  = 33;
-	 int a371 = 14;
-	 int a262  = 33;
-	 int a418  = 33;
-	 int a319 = 5;
-	 int a164  = 35;
-	 int a190  = 33;
-	 int a307  = 33;
-	 int a277 = 7;
-	 int a203 = 2;
-	 int a281 = 1;
-	 int a202 = 10;
-	 int a494  = 33;
-	 int a94 = 2;
-	 int a292 = 17;
-	 int a126  = 34;
-	 int a156  = 32;
-	 int a170  = 36;
-	 int a69 = 10;
-	 int a380 = 3;
-	 int a345 = 9;
-	 int a384 = 2;
-	 int a520  = 33;
-	 int a75  = 36;
-	 int a309  = 32;
-	 int a310 = 1;
-	 int a160 = 12;
-	 int a334 = 7;
-	 int a356 = 8;
-	 int a45  = 35;
-	 int a81  = 36;
-	 int a390 = 9;
-	 int a458  = 33;
-	 int a106 = 12;
-	 int a446  = 33;
-	 int a432  = 33;
-	 int a396 = 6;
-	 int a343  = 35;
-	 int a196  = 34;
-	 int a67  = 35;
-	 int a375  = 33;
-	 int a493  = 33;
-	 int a227  = 33;
-	 int a328  = 33;
-	 int a366  = 33;
-	 int a364 = 7;
-	 int a304 = 5;
-	 int a228 = 3;
-	 int a144 = 4;
-	 int a226 = 2;
-	 int a289 = 2;
-	 int a435  = 33;
-	 int a64 = 12;
-	 int a18 = 12;
-	 int a305 = 11;
-	 int a587  = 33;
-	 int a231 = 6;
-	 int a532  = 33;
-	 int a173  = 36;
-	 int a367 = 3;
-	 int a246 = 6;
-	 int a282 = 7;
-	 int a71  = 32;
-	 int a247 = 10;
-	 int a200 = 8;
-	 int a359 = 9;
-	 int a416  = 33;
-	 int a400 = 7;
-	 int a136  = 35;
-	 int a107  = 35;
-	 int a125 = 13;
-	 int a337 = 4;
-	 int a402  = 33;
-	 int a544  = 33;
-	 int a137  = 34;
-	 int a223 = 8;
-	 int a346 = 1;
-	 int a49 = 8;
-	 int a1  = 33;
-	 int a556  = 33;
-	 int a34  = 33;
-	 int a434  = 33;
-	 int a23 = 6;
-	 int a306  = 33;
-	 int a4 = 12;
-	 int a368 = 4;
-	 int a341  = 34;
-	 int a121 = 7;
-	 int a26 = 8;
-	 int a79  = 33;
-	 int a241 = 6;
-	 int a252 = 10;
-	 int a230 = 7;
-	 int a206 = 9;
-	 int a61  = 32;
-	 int a3  = 33;
-	 int a216  = 33;
-	 int a308 = 12;
-	 int a374 = 7;
-	 int a348 = 4;
-	 int a477  = 33;
-	 int a205 = 8;
-	 int a31 = 5;
-	 int a116  = 34;
-	 int a260 = 7;
-	 int a187  = 35;
-	 int a159  = 36;
-	 int a124 = 9;
-	 int a236 = 6;
-	 int a242 = 2;
-	 int a152  = 34;
-	 int a327  = 32;
-	 int a33 = 3;
-	 int a62  = 36;
-	 int a353 = 2;
-	 int a72  = 36;
-	 int a118 = 7;
-	 int a476  = 33;
-	 int a158  = 32;
-	 int a486  = 33;
-	 int a369 = 1;
-	 int a59 = 11;
-	 int a127  = 32;
-	 int a331  = 36;
-	 int a175 = 3;
-	 int a376 = 3;
-	 int a294  = 33;
-	 int a312 = 1;
-	 int a19 = 2;
-	 int a70 = 8;
-	 int a111 = 5;
-	 int a516  = 33;
-	 int a238  = 33;
-	 int a594  = 33;
-	 int a398 = 2;
-	 int a58 = 1;
-	 int a96 = 0;
-	 int a132 = -15;
-	 int a179 = 1;
-	 int a78 = 1;
-	 int a104 = 1;
-	 int a29 = 1;
-	 int a88 = 1;
-	 int a157 = -15;
-	 int a2 = 1;
-	 int a97 = 1;
-	 int a147 = -15;
-	 int a22 = -15;
-	 int a197 = -15;
-	 int a171 = 0;
-	 int a148 = 1;
-	 int a120 = 1;
-	 int a91 = 2;
-	 int a50 = 1;
-	 int a83 = -15;
-	 int a176 = -15;
-	 int a184 = 1;
-	 int a85 = 1;
-	 int a186 = 1;
-	 int a140 = 1;
-	 int a55 = 1;
-	 int a28 = 1;
-	 int a76 = 1;
-	 int a20 = -15;
-	 int a115 = 1;
-	 int a182 = 1;
-	 int a13 = -15;
-	 int a131 = -15;
-	 int a63 = 1;
-	 int a6 = -15;
-	 int a92 = -15;
-	 int a113 = 2;
-	 int a65 = 3;
-	 int a73 = 0;
+	 int8_t  a372 = 6;
+	 int8_t  a43  = 35;
+	 int8_t  a213 = 2;
+	 int8_t  a14 = 3;
+	 int8_t  a352  = 35;
+	 int8_t  a128  = 33;
+	 int8_t  a161 = 12;
+	 int8_t  a123 = 3;
+	 int8_t  a5  = 35;
+	 int8_t  a218 = 5;
+	 int8_t  a166  = 32;
+	 int8_t  a211  = 36;
+	 int8_t  a560  = 33;
+	 int8_t  a355 = 12;
+	 int8_t  a250  = 35;
+	 int8_t  a101 = 5;
+	 int8_t  a361 = 6;
+	 int8_t  a357 = 11;
+	 int8_t  a290 = 9;
+	 int8_t  a578  = 33;
+	 int8_t  a261  = 35;
+	 int8_t  a0  = 34;
+	 int8_t  a233 = 6;
+	 int8_t  a201 = 4;
+	 int8_t  a295 = 9;
+	 int8_t  a212  = 33;
+	 int8_t  a365 = 1;
+	 int8_t  a274 = 3;
+	 int8_t  a84 = 12;
+	 int8_t  a271  = 32;
+	 int8_t  a264 = 12;
+	 int8_t  a507  = 33;
+	 int8_t  a47 = 8;
+	 int8_t  a326  = 33;
+	 int8_t  a154  = 36;
+	 int8_t  a351  = 33;
+	 int8_t  cf = 1;
+	 int8_t  a303 = 9;
+	 int8_t  a342 = 4;
+	 int8_t  a146  = 34;
+	 int8_t  a347 = 10;
+	 int8_t  a508  = 33;
+	 int8_t  a259 = 8;
+	 int8_t  a475  = 33;
+	 int8_t  a142  = 36;
+	 int8_t  a502  = 33;
+	 int8_t  a358 = 6;
+	 int8_t  a336 = 10;
+	 int8_t  a325 = 11;
+	 int8_t  a482  = 33;
+	 int8_t  a275  = 33;
+	 int8_t  a399 = 3;
+	 int8_t  a133 = 3;
+	 int8_t  a382 = 3;
+	 int8_t  a135  = 33;
+	 int8_t  a150 = 11;
+	 int8_t  a323 = 10;
+	 int8_t  a263 = 6;
+	 int8_t  a278  = 36;
+	 int8_t  a330 = 6;
+	 int8_t  a394  = 33;
+	 int8_t  a234 = 10;
+	 int8_t  a335  = 35;
+	 int8_t  a9  = 34;
+	 int8_t  a143 = 17;
+	 int8_t  a174 = 16;
+	 int8_t  a270 = 4;
+	 int8_t  a393 = 15;
+	 int8_t  a363 = 5;
+	 int8_t  a102  = 35;
+	 int8_t  a217 = 8;
+	 int8_t  a360  = 36;
+	 int8_t  a229 = 3;
+	 int8_t  a480  = 33;
+	 int8_t  a93 = 8;
+	 int8_t  a192  = 33;
+	 int8_t  a183 = 12;
+	 int8_t  a302  = 33;
+	 int8_t  a185  = 36;
+	 int8_t  a554  = 33;
+	 int8_t  a119  = 32;
+	 int8_t  a387  = 36;
+	 int8_t  a25  = 33;
+	 int8_t  a99 = 3;
+	 int8_t  a16 = 17;
+	 int8_t  a505  = 33;
+	 int8_t  a220  = 33;
+	 int8_t  a463  = 33;
+	 int8_t  a130  = 32;
+	 int8_t  a411  = 33;
+	 int8_t  a498  = 33;
+	 int8_t  a237  = 34;
+	 int8_t  a592  = 33;
+	 int8_t  a254  = 33;
+	 int8_t  a167  = 34;
+	 int8_t  a283 = 7;
+	 int8_t  a134  = 32;
+	 int8_t  a370 = 3;
+	 int8_t  a350  = 32;
+	 int8_t  a56 = 9;
+	 int8_t  a582  = 33;
+	 int8_t  a215  = 33;
+	 int8_t  a322 = 1;
+	 int8_t  a317 = 5;
+	 int8_t  a313 = 1;
+	 int8_t  a209 = 4;
+	 int8_t  a165 = 8;
+	 int8_t  a280  = 33;
+	 int8_t  a15  = 34;
+	 int8_t  a149 = 6;
+	 int8_t  a244 = 7;
+	 int8_t  a169  = 32;
+	 int8_t  a510  = 33;
+	 int8_t  a117 = 4;
+	 int8_t  a103 = 14;
+	 int8_t  a518  = 33;
+	 int8_t  a445  = 33;
+	 int8_t  a51  = 32;
+	 int8_t  a129  = 36;
+	 int8_t  a586  = 33;
+	 int8_t  a300 = 14;
+	 int8_t  a151 = 10;
+	 int8_t  a214 = 2;
+	 int8_t  a324 = 5;
+	 int8_t  a122  = 32;
+	 int8_t  a207  = 34;
+	 int8_t  a243 = 6;
+	 int8_t  a7  = 36;
+	 int8_t  a225  = 36;
+	 int8_t  a86  = 32;
+	 int8_t  a8  = 32;
+	 int8_t  a114  = 34;
+	 int8_t  a299  = 35;
+	 int8_t  a172 = 15;
+	 int8_t  a80  = 35;
+	 int8_t  a30  = 32;
+	 int8_t  a141  = 35;
+	 int8_t  a297 = 4;
+	 int8_t  a37  = 32;
+	 int8_t  a27  = 32;
+	 int8_t  a585  = 33;
+	 int8_t  a52 = 6;
+	 int8_t  a199 = 4;
+	 int8_t  a379  = 33;
+	 int8_t  a314 = 11;
+	 int8_t  a273 = 10;
+	 int8_t  a77  = 32;
+	 int8_t  a253 = 6;
+	 int8_t  a266  = 35;
+	 int8_t  a474  = 33;
+	 int8_t  a109 = 6;
+	 int8_t  a138 = 5;
+	 int8_t  a528  = 33;
+	 int8_t  a315 = 5;
+	 int8_t  a44 = 9;
+	 int8_t  a373 = 3;
+	 int8_t  a602  = 33;
+	 int8_t  a90 = 5;
+	 int8_t  a38  = 36;
+	 int8_t  a546  = 33;
+	 int8_t  a87 = 6;
+	 int8_t  a24 = 10;
+	 int8_t  a221 = 1;
+	 int8_t  a35 = 7;
+	 int8_t  a521  = 33;
+	 int8_t  a407  = 33;
+	 int8_t  a419  = 33;
+	 int8_t  a39 = 1;
+	 int8_t  a431  = 33;
+	 int8_t  a464  = 33;
+	 int8_t  a465  = 33;
+	 int8_t  a339  = 36;
+	 int8_t  a404  = 33;
+	 int8_t  a318  = 33;
+	 int8_t  a558  = 33;
+	 int8_t  a60 = 8;
+	 int8_t  a453  = 33;
+	 int8_t  a371 = 14;
+	 int8_t  a262  = 33;
+	 int8_t  a418  = 33;
+	 int8_t  a319 = 5;
+	 int8_t  a164  = 35;
+	 int8_t  a190  = 33;
+	 int8_t  a307  = 33;
+	 int8_t  a277 = 7;
+	 int8_t  a203 = 2;
+	 int8_t  a281 = 1;
+	 int8_t  a202 = 10;
+	 int8_t  a494  = 33;
+	 int8_t  a94 = 2;
+	 int8_t  a292 = 17;
+	 int8_t  a126  = 34;
+	 int8_t  a156  = 32;
+	 int8_t  a170  = 36;
+	 int8_t  a69 = 10;
+	 int8_t  a380 = 3;
+	 int8_t  a345 = 9;
+	 int8_t  a384 = 2;
+	 int8_t  a520  = 33;
+	 int8_t  a75  = 36;
+	 int8_t  a309  = 32;
+	 int8_t  a310 = 1;
+	 int8_t  a160 = 12;
+	 int8_t  a334 = 7;
+	 int8_t  a356 = 8;
+	 int8_t  a45  = 35;
+	 int8_t  a81  = 36;
+	 int8_t  a390 = 9;
+	 int8_t  a458  = 33;
+	 int8_t  a106 = 12;
+	 int8_t  a446  = 33;
+	 int8_t  a432  = 33;
+	 int8_t  a396 = 6;
+	 int8_t  a343  = 35;
+	 int8_t  a196  = 34;
+	 int8_t  a67  = 35;
+	 int8_t  a375  = 33;
+	 int8_t  a493  = 33;
+	 int8_t  a227  = 33;
+	 int8_t  a328  = 33;
+	 int8_t  a366  = 33;
+	 int8_t  a364 = 7;
+	 int8_t  a304 = 5;
+	 int8_t  a228 = 3;
+	 int8_t  a144 = 4;
+	 int8_t  a226 = 2;
+	 int8_t  a289 = 2;
+	 int8_t  a435  = 33;
+	 int8_t  a64 = 12;
+	 int8_t  a18 = 12;
+	 int8_t  a305 = 11;
+	 int8_t  a587  = 33;
+	 int8_t  a231 = 6;
+	 int8_t  a532  = 33;
+	 int8_t  a173  = 36;
+	 int8_t  a367 = 3;
+	 int8_t  a246 = 6;
+	 int8_t  a282 = 7;
+	 int8_t  a71  = 32;
+	 int8_t  a247 = 10;
+	 int8_t  a200 = 8;
+	 int8_t  a359 = 9;
+	 int8_t  a416  = 33;
+	 int8_t  a400 = 7;
+	 int8_t  a136  = 35;
+	 int8_t  a107  = 35;
+	 int8_t  a125 = 13;
+	 int8_t  a337 = 4;
+	 int8_t  a402  = 33;
+	 int8_t  a544  = 33;
+	 int8_t  a137  = 34;
+	 int8_t  a223 = 8;
+	 int8_t  a346 = 1;
+	 int8_t  a49 = 8;
+	 int8_t  a1  = 33;
+	 int8_t  a556  = 33;
+	 int8_t  a34  = 33;
+	 int8_t  a434  = 33;
+	 int8_t  a23 = 6;
+	 int8_t  a306  = 33;
+	 int8_t  a4 = 12;
+	 int8_t  a368 = 4;
+	 int8_t  a341  = 34;
+	 int8_t  a121 = 7;
+	 int8_t  a26 = 8;
+	 int8_t  a79  = 33;
+	 int8_t  a241 = 6;
+	 int8_t  a252 = 10;
+	 int8_t  a230 = 7;
+	 int8_t  a206 = 9;
+	 int8_t  a61  = 32;
+	 int8_t  a3  = 33;
+	 int8_t  a216  = 33;
+	 int8_t  a308 = 12;
+	 int8_t  a374 = 7;
+	 int8_t  a348 = 4;
+	 int8_t  a477  = 33;
+	 int8_t  a205 = 8;
+	 int8_t  a31 = 5;
+	 int8_t  a116  = 34;
+	 int8_t  a260 = 7;
+	 int8_t  a187  = 35;
+	 int8_t  a159  = 36;
+	 int8_t  a124 = 9;
+	 int8_t  a236 = 6;
+	 int8_t  a242 = 2;
+	 int8_t  a152  = 34;
+	 int8_t  a327  = 32;
+	 int8_t  a33 = 3;
+	 int8_t  a62  = 36;
+	 int8_t  a353 = 2;
+	 int8_t  a72  = 36;
+	 int8_t  a118 = 7;
+	 int8_t  a476  = 33;
+	 int8_t  a158  = 32;
+	 int8_t  a486  = 33;
+	 int8_t  a369 = 1;
+	 int8_t  a59 = 11;
+	 int8_t  a127  = 32;
+	 int8_t  a331  = 36;
+	 int8_t  a175 = 3;
+	 int8_t  a376 = 3;
+	 int8_t  a294  = 33;
+	 int8_t  a312 = 1;
+	 int8_t  a19 = 2;
+	 int8_t  a70 = 8;
+	 int8_t  a111 = 5;
+	 int8_t  a516  = 33;
+	 int8_t  a238  = 33;
+	 int8_t  a594  = 33;
+	 int8_t  a398 = 2;
+	 int8_t  a58 = 1;
+	 int8_t  a96 = 0;
+	 int8_t  a132 = -15;
+	 int8_t  a179 = 1;
+	 int8_t  a78 = 1;
+	 int8_t  a104 = 1;
+	 int8_t  a29 = 1;
+	 int8_t  a88 = 1;
+	 int8_t  a157 = -15;
+	 int8_t  a2 = 1;
+	 int8_t  a97 = 1;
+	 int8_t  a147 = -15;
+	 int8_t  a22 = -15;
+	 int8_t  a197 = -15;
+	 int8_t  a171 = 0;
+	 int8_t  a148 = 1;
+	 int8_t  a120 = 1;
+	 int8_t  a91 = 2;
+	 int8_t  a50 = 1;
+	 int8_t  a83 = -15;
+	 int8_t  a176 = -15;
+	 int8_t  a184 = 1;
+	 int8_t  a85 = 1;
+	 int8_t  a186 = 1;
+	 int8_t  a140 = 1;
+	 int8_t  a55 = 1;
+	 int8_t  a28 = 1;
+	 int8_t  a76 = 1;
+	 int8_t  a20 = -15;
+	 int8_t  a115 = 1;
+	 int8_t  a182 = 1;
+	 int8_t  a13 = -15;
+	 int8_t  a131 = -15;
+	 int8_t  a63 = 1;
+	 int8_t  a6 = -15;
+	 int8_t  a92 = -15;
+	 int8_t  a113 = 2;
+	 int8_t  a65 = 3;
+	 int8_t  a73 = 0;
 
 
 	void errorCheck() {
@@ -1249,7 +1249,7 @@
 	    __VERIFIER_error(99);
 	    }
 	}
- void calculate_outputm56(int input) {
+ void calculate_outputm56(int8_t  input) {
     if(((a463 == 33 && a368 == 4) && ((a334 == 7 && (a353 == 2 && (a486 == 33 && ((input == 7) &&  cf==1 )))) && a398 == 2))) {
     	a184 += (a184 + 20) > a184 ? 1 : 0;
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -1348,10 +1348,10 @@
     	a376 = 5;
     	a528 = 34 ;
     	a144 = 11; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm57(int input) {
+ void calculate_outputm57(int8_t  input) {
     if((((((a370 == 3 && a242 == 2) && a518 == 33) && a411 == 33) && a505 == 33) && (a205 == 8 && ( cf==1  && (input == 10))))) {
     	a148 += (a148 + 20) > a148 ? 1 : 0;
     	cf = 0;
@@ -1379,7 +1379,7 @@
     	a254 = 34 ;
     	a407 = 32 ;
     	a23 = 13; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a520 == 33 && (( cf==1  && (input == 5)) && a374 == 7)) && (((a532 == 33 && a520 == 33) && a233 == 6) && a313 == 1))) {
     	cf = 0;
@@ -1455,10 +1455,10 @@
     	a498 = 34 ;
     	a434 = 32 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm58(int input) {
+ void calculate_outputm58(int8_t  input) {
     if(((a359 == 9 && (a304 == 5 && (a380 == 3 && (a416 == 33 && ((input == 7) &&  cf==1 ))))) && (a220 == 33 && a398 == 2))) {
     	a91 -= (a91 - 20) < a91 ? 3 : 0;
     	cf = 0;
@@ -1517,7 +1517,7 @@
     	a446 = 33 ;
     	a474 = 32 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a544 == 33 && a312 == 1) && (((a233 == 6 && (a476 == 33 && ((input == 1) &&  cf==1 ))) && a474 == 33) && a518 == 33))) {
     	cf = 0;
@@ -1626,7 +1626,7 @@
     	a582 = 34 ;
     	a304 = 7;
     	a125 = 14; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((((((input == 6) &&  cf==1 ) && a558 == 33) && a318 == 33) && a244 == 7) && ((a274 == 3 && a516 == 33) && a226 == 2))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -1702,10 +1702,10 @@
     	a486 = 33 ;
     	a228 = 3;
     	a118 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm59(int input) {
+ void calculate_outputm59(int8_t  input) {
     if(((a498 == 33 && a380 == 3) && (a356 == 8 && (a431 == 33 && ((((input == 10) &&  cf==1 ) && a223 == 8) && a374 == 7))))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
     	cf = 0;
@@ -1785,7 +1785,7 @@
     	a356 = 10;
     	a206 = 9;
     	a118 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a585 == 33 && (a229 == 3 && (( cf==1  && (input == 5)) && a476 == 33))) && a480 == 33) && (a241 == 6 && a227 == 33))) {
     	a113 -= (a113 - 20) < a113 ? 3 : 0;
@@ -1929,7 +1929,7 @@
     	a582 = 32 ;
     	a578 = 34 ;
     	a118 = 9;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a346 == 1 && ((a493 == 33 && (a366 == 33 && ((input == 1) &&  cf==1 ))) && a366 == 33)) && (a312 == 1 && a358 == 6))) {
     	cf = 0;
@@ -2033,10 +2033,10 @@
     	a373 = 5;
     	a263 = 8;
     	a160 = 12;
-    	}/* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm60(int input) {
+ void calculate_outputm60(int8_t  input) {
     if(((a382 == 3 && a507 == 33) && (a263 == 6 && (a318 == 33 && (a346 == 1 && (( cf==1  && (input == 10)) && a336 == 10)))))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
     	cf = 0;
@@ -2050,10 +2050,10 @@
     	a375 = 32 ;
     	a558 = 32 ;
     	a371 = 12; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm1(int input) {
+ void calculate_outputm1(int8_t  input) {
     if(((a585 == 33 && (a227 == 33 && a546 == 33)) && (a399 == 3 && (a218 == 5 && (a336 == 10 && (a250 == 33 &&  cf==1 )))))) {
     	if(((a209 == 4 && ((a0 == 32 &&  cf==1 ) && a369 == 1)) && ((a358 == 6 && (a201 == 4 && a476 == 33)) && a201 == 4))) {
     		calculate_outputm56(input);
@@ -2078,7 +2078,7 @@
     	} 
     } 
 }
- void calculate_outputm61(int input) {
+ void calculate_outputm61(int8_t  input) {
     if(((((( cf==1  && (input == 6)) && a353 == 2) && a310 == 1) && a374 == 7) && (a263 == 6 && (a446 == 33 && a236 == 6)))) {
     	cf = 0;
     	a107 = 36 ;
@@ -2120,7 +2120,7 @@
     	a49 = 6;
     	a528 = 32 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((( cf==1  && (input == 8)) && a318 == 33) && (a453 == 33 && ((a453 == 33 && (a418 == 33 && a582 == 33)) && a348 == 4)))) {
     	a65 -= (a65 - 20) < a65 ? 2 : 0;
@@ -2164,7 +2164,7 @@
     	a482 = 34 ;
     	a546 = 32 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a313 == 1 && (a474 == 33 && ((a277 == 7 && a373 == 3) && a528 == 33))) && (a236 == 6 && ((input == 5) &&  cf==1 )))) {
     	a2 -= (a2 - 20) < a2 ? 4 : 0;
@@ -2236,10 +2236,10 @@
     	a474 = 32 ;
     	a494 = 32 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm62(int input) {
+ void calculate_outputm62(int8_t  input) {
     if(((a582 == 33 && a453 == 33) && (a578 == 33 && (a206 == 9 && (a229 == 3 && (( cf==1  && (input == 8)) && a214 == 2)))))) {
     	cf = 0;
     	a398 = 3;
@@ -2280,7 +2280,7 @@
     	a582 = 32 ;
     	a247 = 11;
     	a363 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((a384 == 2 && ((input == 5) &&  cf==1 )) && a379 == 33) && a544 == 33) && ((a297 == 4 && a205 == 8) && a398 == 2))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -2357,7 +2357,7 @@
     	a398 = 3;
     	a353 = 2;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a213 == 2 && (a375 == 33 && a521 == 33)) && (a587 == 33 && (a477 == 33 && (a546 == 33 && ((input == 2) &&  cf==1 )))))) {
     	a2 += (a2 + 20) > a2 ? 1 : 0;
@@ -2457,10 +2457,10 @@
     	a558 = 34 ;
     	a510 = 32 ;
     	a330 = 7; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm63(int input) {
+ void calculate_outputm63(int8_t  input) {
     if(((a358 == 6 && ((((input == 2) &&  cf==1 ) && a244 == 7) && a498 == 33)) && (a434 == 33 && (a578 == 33 && a313 == 1)))) {
     	a58 -= (a58 - 20) < a58 ? 2 : 0;
     	cf = 0;
@@ -2514,10 +2514,10 @@
     	a254 = 34 ;
     	a304 = 7;
     	a49 = 2; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm64(int input) {
+ void calculate_outputm64(int8_t  input) {
     if(((a205 == 8 && (a398 == 2 && (a326 == 33 && (a310 == 1 && a313 == 1)))) && (a323 == 10 && ( cf==1  && (input == 8))))) {
     	cf = 0;
     	a384 = 3;
@@ -2614,7 +2614,7 @@
     	a544 = 34 ;
     	a326 = 34 ;
     	a144 = 11; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a337 == 4 && (((input == 10) &&  cf==1 ) && a336 == 10)) && a359 == 9) && ((a205 == 8 && a262 == 33) && a260 == 7))) {
     	a65 -= (a65 - 20) < a65 ? 1 : 0;
@@ -2652,7 +2652,7 @@
     	a80 = 36 ;
     	a242 = 4;
     	a49 = 9; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((a365 == 1 && a353 == 2) && a592 == 33) && ((a516 == 33 && (( cf==1  && (input == 1)) && a463 == 33)) && a586 == 33))) {
     	cf = 0;
@@ -2714,10 +2714,10 @@
     	a587 = 33 ;
     	a384 = 3;
     	a118 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm65(int input) {
+ void calculate_outputm65(int8_t  input) {
     if(((((( cf==1  && (input == 8)) && a318 == 33) && a205 == 8) && a323 == 10) && (a254 == 33 && (a336 == 10 && a289 == 2)))) {
     	a91 -= (a91 - 20) < a91 ? 4 : 0;
     	cf = 0;
@@ -2743,7 +2743,7 @@
     	a336 = 12;
     	a183 = 7;
     	a160 = 12; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((((input == 6) &&  cf==1 ) && a516 == 33) && a464 == 33) && (a310 == 1 && ((a594 == 33 && a313 == 1) && a476 == 33)))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -2811,7 +2811,7 @@
     	a476 = 34 ;
     	a356 = 10;
     	a118 = 9; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a554 == 33 && ((input == 9) &&  cf==1 )) && ((((a370 == 3 && a474 == 33) && a295 == 9) && a507 == 33) && a458 == 33))) {
     	a85 += (a85 + 20) > a85 ? 3 : 0;
@@ -2879,7 +2879,7 @@
     	a233 = 6;
     	a435 = 32 ;
     	a118 = 9; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a546 == 33 && ((a223 == 8 && ( cf==1  && (input == 10))) && a228 == 3)) && (a475 == 33 && (a318 == 33 && a494 == 33)))) {
     	a179 += (a179 + 20) > a179 ? 3 : 0;
@@ -2906,10 +2906,10 @@
     	a384 = 4;
     	a464 = 34 ;
     	a160 = 12; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm66(int input) {
+ void calculate_outputm66(int8_t  input) {
     if(((a376 == 3 && (a262 == 33 && ((a544 == 33 && ( cf==1  && (input == 2))) && a382 == 3))) && (a220 == 33 && a382 == 3))) {
     	a2 -= (a2 - 20) < a2 ? 2 : 0;
     	cf = 0;
@@ -3009,7 +3009,7 @@
     	a274 = 4;
     	a480 = 34 ;
     	a150 = 10; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a323 == 10 && a310 == 1) && ((a270 == 4 && ((((input == 8) &&  cf==1 ) && a280 == 33) && a348 == 4)) && a227 == 33))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -3068,10 +3068,10 @@
     	a493 = 32 ;
     	a419 = 32 ;
     	a151 = 12; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm67(int input) {
+ void calculate_outputm67(int8_t  input) {
     if(((((((input == 9) &&  cf==1 ) && a370 == 3) && a546 == 33) && a431 == 33) && ((a376 == 3 && a345 == 9) && a544 == 33))) {
     	a29 += (a29 + 20) > a29 ? 2 : 0;
     	cf = 0;
@@ -3121,7 +3121,7 @@
     	a220 = 32 ;
     	a446 = 32 ;
     	a49 = 7; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a582 == 33 && (((input == 6) &&  cf==1 ) && a554 == 33)) && (((a505 == 33 && a277 == 7) && a384 == 2) && a233 == 6))) {
     	a85 += (a85 + 20) > a85 ? 3 : 0;
@@ -3166,10 +3166,10 @@
     	a289 = 3;
     	a336 = 11;
     	a150 = 13; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm68(int input) {
+ void calculate_outputm68(int8_t  input) {
     if((((a494 == 33 && (( cf==1  && (input == 1)) && a532 == 33)) && a476 == 33) && (a380 == 3 && (a356 == 8 && a544 == 33)))) {
     	a85 -= (a85 - 20) < a85 ? 1 : 0;
     	cf = 0;
@@ -3284,7 +3284,7 @@
     	a544 = 33 ;
     	a252 = 10;
     	a357 = 10; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((( cf==1  && (input == 7)) && (a482 == 33 && (a365 == 1 && (a585 == 33 && ((a213 == 2 && a464 == 33) && a416 == 33)))))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -3410,7 +3410,7 @@
     	a247 = 10;
     	a520 = 32 ;
     	a23 = 11; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a594 == 33 && (a337 == 4 && a528 == 33)) && (a375 == 33 && (a247 == 10 && (a263 == 6 && ( cf==1  && (input == 5))))))) {
     	cf = 0;
@@ -3528,10 +3528,10 @@
     	a465 = 32 ;
     	a227 = 32 ;
     	a290 = 12; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm69(int input) {
+ void calculate_outputm69(int8_t  input) {
     if(((a404 == 33 && (((input == 6) &&  cf==1 ) && a373 == 3)) && (((a359 == 9 && a345 == 9) && a411 == 33) && a396 == 6))) {
     	a184 += (a184 + 20) > a184 ? 2 : 0;
     	cf = 0;
@@ -3624,7 +3624,7 @@
     	a463 = 32 ;
     	a223 = 9;
     	a23 = 13; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a215 == 33 && ((a382 == 3 && a295 == 9) && a233 == 6)) && ((( cf==1  && (input == 10)) && a262 == 33) && a520 == 33))) {
     	cf = 0;
@@ -3725,7 +3725,7 @@
     	a480 = 32 ;
     	a532 = 32 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((((a281 == 1 && ((input == 5) &&  cf==1 )) && a242 == 2) && a400 == 7) && (a431 == 33 && (a228 == 3 && a358 == 6))) && a58 <= -5)) {
     	a179 -= (a179 - 20) < a179 ? 1 : 0;
@@ -3745,7 +3745,7 @@
     	a229 = 4;
     	a502 = 32 ;
     	a52 = 9; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((((a368 == 4 && (a560 == 33 && a507 == 33)) && a203 == 2) && ((a260 == 7 && ( cf==1  && (input == 4))) && a242 == 2)) && a96 >= 2)) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -3760,7 +3760,7 @@
     	a215 = 34 ;
     	a39 = 3;
     	a243 = 10; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((a546 == 33 && (((a376 == 3 && ((( cf==1  && (input == 9)) && a558 == 33) && a546 == 33)) && a374 == 7) && a402 == 33))) {
     	a157 += (a157 + 20) > a157 ? 2 : 0;
@@ -3810,10 +3810,10 @@
     	a228 = 5;
     	a585 = 32 ;
     	a99 = 1; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm70(int input) {
+ void calculate_outputm70(int8_t  input) {
     if(((((a263 == 6 && a379 == 33) && a399 == 3) && a247 == 10) && ((( cf==1  && (input == 8)) && a532 == 33) && a254 == 33))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
     	cf = 0;
@@ -3850,7 +3850,7 @@
     	a594 = 34 ;
     	a379 = 34 ;
     	a283 = 10; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a374 == 7 && a518 == 33) && a475 == 33) && ((a465 == 33 && (a476 == 33 && ( cf==1  && (input == 9)))) && a594 == 33))) {
     	a29 += (a29 + 20) > a29 ? 4 : 0;
@@ -3961,7 +3961,7 @@
     	a252 = 11;
     	a370 = 4;
     	a56 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a274 == 3 && (a463 == 33 && (a242 == 2 && a365 == 1))) && a356 == 8) && (a582 == 33 && ( cf==1  && (input == 1))))) {
     	a91 -= (a91 - 20) < a91 ? 1 : 0;
@@ -3988,7 +3988,7 @@
     	a223 = 8;
     	a18 = 12;
     	a174 = 13; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a508 == 33 && (a528 == 33 && a326 == 33)) && ((a587 == 33 && (a282 == 7 && ( cf==1  && (input == 6)))) && a402 == 33))) {
     	a113 -= (a113 - 20) < a113 ? 3 : 0;
@@ -4099,10 +4099,10 @@
     	a18 = 14;
     	a508 = 32 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm71(int input) {
+ void calculate_outputm71(int8_t  input) {
     if(((( cf==1  && (input == 8)) && a254 == 33) && ((a587 == 33 && ((a242 == 2 && a254 == 33) && a241 == 6)) && a416 == 33))) {
     	a148 += (a148 + 20) > a148 ? 1 : 0;
     	cf = 0;
@@ -4136,10 +4136,10 @@
     	a310 = 2;
     	a502 = 32 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm72(int input) {
+ void calculate_outputm72(int8_t  input) {
     if(((a532 == 33 && a477 == 33) && (a326 == 33 && ((a480 == 33 && (( cf==1  && (input == 5)) && a353 == 2)) && a262 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a78 -= (a78 - 20) < a78 ? 3 : 0;
@@ -4263,7 +4263,7 @@
     	a274 = 10;
     	a556 = 36 ;
     	a16 = 14; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((( cf==1  && (input == 4)) && a445 == 33) && ((a446 == 33 && ((a244 == 7 && a270 == 4) && a304 == 5)) && a396 == 6))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -4301,7 +4301,7 @@
     	a205 = 11;
     	a330 = 13;
     	a322 = 2; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a259 == 8 && (a318 == 33 && (a578 == 33 && ( cf==1  && (input == 1))))) && (a502 == 33 && (a475 == 33 && a260 == 7)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -4319,7 +4319,7 @@
     	a94 = 4;
     	a18 = 14;
     	a60 = 11; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((a373 == 3 && (a229 == 3 && (((a281 == 1 && (a227 == 33 && ((input == 10) &&  cf==1 ))) && a587 == 33) && a587 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -4341,7 +4341,7 @@
     	a18 = 13;
     	a52 = 5;
     	a200 = 12; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((((input == 9) &&  cf==1 ) && a246 == 6) && a380 == 3) && (a244 == 7 && (a353 == 2 && (a260 == 7 && a310 == 1))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -4575,7 +4575,7 @@
     	a475 = 33 ;
     	a379 = 35 ;
     	a26 = 11;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((((( cf==1  && (input == 2)) && a446 == 33) && a532 == 33) && a521 == 33) && ((a253 == 6 && a364 == 7) && a465 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -4679,7 +4679,7 @@
     	a226 = 8;
     	a233 = 11;
     	a117 = 7; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a594 == 33 && (a227 == 33 && a326 == 33)) && a348 == 4) && (a419 == 33 && (( cf==1  && (input == 7)) && a356 == 8)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -4704,7 +4704,7 @@
     	a119 = 32 ;
     	a4 = 10;
     	a121 = 9;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a229 == 3 && (a310 == 1 && a223 == 8)) && a374 == 7) && (a560 == 33 && (((input == 6) &&  cf==1 ) && a356 == 8)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -4721,7 +4721,7 @@
     	a122 = 35 ;
     	a111 = 4;
     	a283 = 5; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a270 == 4 && (a379 == 33 && a399 == 3)) && (((( cf==1  && (input == 8)) && a465 == 33) && a282 == 7) && a477 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -4877,7 +4877,7 @@
     	a387 = 35 ;
     	a43 = 34 ;
     	a18 = 15;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a227 == 33 && (a345 == 9 && a263 == 6)) && (a336 == 10 && (a312 == 1 && (a270 == 4 && ((input == 3) &&  cf==1 )))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -5021,10 +5021,10 @@
     	a464 = 34 ;
     	a411 = 35 ;
     	a52 = 10;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm2(int input) {
+ void calculate_outputm2(int8_t  input) {
     if((((a118 == 3 &&  cf==1 ) && a458 == 33) && (((a326 == 33 && (a254 == 33 && a263 == 6)) && a546 == 33) && a376 == 3))) {
     	if(((a282 == 7 && a486 == 33) && (a520 == 33 && (a223 == 8 && (a201 == 4 && (a260 == 7 && (a175 == 3 &&  cf==1 ))))))) {
     		calculate_outputm61(input);
@@ -5072,7 +5072,7 @@
     	} 
     } 
 }
- void calculate_outputm74(int input) {
+ void calculate_outputm74(int8_t  input) {
     if(((a209 == 4 && (a213 == 2 && ( cf==1  && (input == 8)))) && (((a280 == 33 && a396 == 6) && a323 == 10) && a432 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a78 += (a78 + 20) > a78 ? 3 : 0;
@@ -5193,7 +5193,7 @@
     	a369 = 7;
     	a317 = 7;
     	a367 = 6; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a324 == 5 && a270 == 4) && a374 == 7) && (a358 == 6 && ((a528 == 33 && ((input == 4) &&  cf==1 )) && a520 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -5307,7 +5307,7 @@
     	a270 = 6;
     	a330 = 11;
     	a305 = 7; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a486 == 33 && (a445 == 33 && ((input == 7) &&  cf==1 ))) && a353 == 2) && (a521 == 33 && (a418 == 33 && a282 == 7)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -5446,7 +5446,7 @@
     	a330 = 7;
     	a368 = 7;
     	a23 = 11; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((((a229 == 3 && ((input == 3) &&  cf==1 )) && a431 == 33) && a233 == 6) && a220 == 33) && (a317 == 5 && a578 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -5566,7 +5566,7 @@
     	a228 = 3;
     	a594 = 36 ;
     	a18 = 15; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a280 == 33 && (((input == 5) &&  cf==1 ) && a254 == 33)) && (a578 == 33 && ((a400 == 7 && a324 == 5) && a587 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -5685,7 +5685,7 @@
     	a402 = 36 ;
     	a435 = 35 ;
     	a144 = 11; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((a262 == 33 && (a458 == 33 && ((input == 2) &&  cf==1 ))) && a246 == 6) && (a587 == 33 && (a518 == 33 && a476 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -5830,7 +5830,7 @@
     	a152 = 36 ;
     	a366 = 36 ;
     	a18 = 15;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a475 == 33 && (a376 == 3 && ((input == 1) &&  cf==1 ))) && a244 == 7) && (a323 == 10 && (a227 == 33 && a282 == 7)))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -5863,7 +5863,7 @@
     	a247 = 17;
     	a30 = 34 ;
     	a123 = 5; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a418 == 33 && ((input == 9) &&  cf==1 )) && a263 == 6) && (((a345 == 9 && a215 == 33) && a213 == 2) && a297 == 4))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -5887,7 +5887,7 @@
     	a18 = 12;
     	a394 = 35 ;
     	a4 = 6; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((((input == 10) &&  cf==1 ) && a203 == 2) && a384 == 2) && ((a474 == 33 && (a247 == 10 && a554 == 33)) && a228 == 3))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -5980,7 +5980,7 @@
     	a281 = 8;
     	a434 = 32 ;
     	a160 = 12; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a220 == 33 && (a556 == 33 && (a376 == 3 && a508 == 33))) && (a475 == 33 && (a376 == 3 && ((input == 6) &&  cf==1 ))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -6046,10 +6046,10 @@
     	a336 = 12;
     	a502 = 34 ;
     	a199 = 9; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm75(int input) {
+ void calculate_outputm75(int8_t  input) {
     if(((((a384 == 2 && ( cf==1  && (input == 7))) && a379 == 33) && a602 == 33) && ((a586 == 33 && a297 == 4) && a494 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a78 -= (a78 - 20) < a78 ? 3 : 0;
@@ -6080,7 +6080,7 @@
     	a241 = 6;
     	a18 = 10;
     	a357 = 13; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((( cf==1  && (input == 5)) && (a398 == 2 && (a493 == 33 && (a465 == 33 && (a253 == 6 && (a419 == 33 && a373 == 3))))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -6099,7 +6099,7 @@
     	a341 = 36 ;
     	a119 = 33 ;
     	a47 = 9; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((input == 8) &&  cf==1 ) && (a242 == 2 && ((a494 == 33 && (a312 == 1 && (a297 == 4 && a465 == 33))) && a432 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -6268,7 +6268,7 @@
     	a346 = 5;
     	a407 = 36 ;
     	a18 = 12;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a379 == 33 && a432 == 33) && a477 == 33) && (((( cf==1  && (input == 6)) && a270 == 4) && a407 == 33) && a260 == 7))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -6386,7 +6386,7 @@
     	a560 = 35 ;
     	a94 = 5;
     	a33 = 4; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a528 == 33 && (((input == 2) &&  cf==1 ) && a558 == 33)) && ((a254 == 33 && (a246 == 6 && a356 == 8)) && a356 == 8))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -6626,7 +6626,7 @@
     	a359 = 9;
     	a476 = 33 ;
     	a69 = 9;
-    	}/* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((((a282 == 7 && (( cf==1  && (input == 9)) && a480 == 33)) && a281 == 1) && ((a373 == 3 && a475 == 33) && a505 == 33))) {
     	a78 += (a78 + 20) > a78 ? 2 : 0;
@@ -6704,7 +6704,7 @@
     	a366 = 34 ;
     	a18 = 12;
     	a99 = 3; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((((a260 == 7 && (a353 == 2 && a434 == 33)) && a326 == 33) && a532 == 33) && (( cf==1  && (input == 10)) && a411 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -6956,7 +6956,7 @@
     	a364 = 7;
     	a228 = 9;
     	a164 = 35 ;
-    	}/* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((((((a458 == 33 && ((input == 1) &&  cf==1 )) && a477 == 33) && a262 == 33) && a407 == 33) && (a262 == 33 && a463 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -7085,7 +7085,7 @@
     	a206 = 13;
     	a236 = 12;
     	a18 = 15; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((((a434 == 33 && a376 == 3) && a554 == 33) && a585 == 33) && ((a578 == 33 && ( cf==1  && (input == 3))) && a260 == 7))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -7214,7 +7214,7 @@
     	a203 = 8;
     	a334 = 11;
     	a303 = 9; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((((a502 == 33 && (a505 == 33 && a241 == 6)) && a213 == 2) && a546 == 33) && (a282 == 7 && ((input == 4) &&  cf==1 )))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -7252,10 +7252,10 @@
     	a26 = 9;
     	a585 = 32 ;
     	a243 = 10;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm78(int input) {
+ void calculate_outputm78(int8_t  input) {
     if((((a206 == 9 && (a259 == 8 && ( cf==1  && (input == 10)))) && a213 == 2) && (a435 == 33 && (a323 == 10 && a227 == 33)))) {
     	a148 += (a148 + 20) > a148 ? 1 : 0;
     	cf = 0;
@@ -7297,7 +7297,7 @@
     	a494 = 34 ;
     	a353 = 4;
     	a202 = 6; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a368 == 4 && (a214 == 2 && ((input == 1) &&  cf==1 ))) && (((a373 == 3 && a310 == 1) && a486 == 33) && a520 == 33))) {
     	a91 -= (a91 - 20) < a91 ? 1 : 0;
@@ -7341,10 +7341,10 @@
     	a297 = 5;
     	a206 = 10;
     	a56 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm80(int input) {
+ void calculate_outputm80(int8_t  input) {
     if(((a345 == 9 && ((a304 == 5 && a373 == 3) && a384 == 2)) && ((a218 == 5 && ( cf==1  && (input == 6))) && a277 == 7))) {
     	a113 -= (a113 - 20) < a113 ? 3 : 0;
     	cf = 0;
@@ -7378,10 +7378,10 @@
     	a505 = 34 ;
     	a304 = 6;
     	a56 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm82(int input) {
+ void calculate_outputm82(int8_t  input) {
     if(((a373 == 3 && a431 == 33) && ((((a365 == 1 && ((input == 3) &&  cf==1 )) && a313 == 1) && a274 == 3) && a431 == 33))) {
     	a179 += (a179 + 20) > a179 ? 2 : 0;
     	a88 += (a88 + 20) > a88 ? 2 : 0;
@@ -7503,7 +7503,7 @@
     	a206 = 14;
     	a558 = 32 ;
     	a118 = 10; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a432 == 33 && (a297 == 4 && (((input == 5) &&  cf==1 ) && a398 == 2))) && ((a502 == 33 && a203 == 2) && a398 == 2))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -7722,7 +7722,7 @@
     	a263 = 8;
     	a480 = 34 ;
     	a372 = 9;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((((input == 7) &&  cf==1 ) && a502 == 33) && (a558 == 33 && (((a310 == 1 && a463 == 33) && a345 == 9) && a209 == 4)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -7946,7 +7946,7 @@
     	a252 = 13;
     	a480 = 36 ;
     	a118 = 10;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a244 == 7 && (a493 == 33 && ( cf==1  && (input == 4)))) && (a213 == 2 && (a434 == 33 && (a326 == 33 && a558 == 33))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -8084,7 +8084,7 @@
     	a220 = 36 ;
     	a318 = 35 ;
     	a69 = 9; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a205 == 8 && (a587 == 33 && ((((input == 1) &&  cf==1 ) && a252 == 10) && a505 == 33))) && (a370 == 3 && a434 == 33))) {
     	a104 -= (a104 - 20) < a104 ? 2 : 0;
@@ -8105,7 +8105,7 @@
     	a343 = 33 ;
     	a341 = 34 ;
     	a18 = 12; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((((a330 == 6 && (a585 == 33 && ((input == 8) &&  cf==1 ))) && a594 == 33) && a348 == 4) && (a370 == 3 && a373 == 3))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -8243,7 +8243,7 @@
     	a476 = 33 ;
     	a516 = 33 ;
     	a109 = 2; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((( cf==1  && (input == 9)) && a396 == 6) && (a366 == 33 && (a259 == 8 && ((a260 == 7 && a493 == 33) && a453 == 33))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -8263,7 +8263,7 @@
     	a183 = 12;
     	a26 = 5;
     	a322 = 6; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((((input == 10) &&  cf==1 ) && a464 == 33) && ((a463 == 33 && (a282 == 7 && (a586 == 33 && a474 == 33))) && a507 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -8404,7 +8404,7 @@
     	a339 = 32 ;
     	a18 = 10;
     	a305 = 13;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a205 == 8 && (a356 == 8 && (a375 == 33 && ((input == 2) &&  cf==1 )))) && (a318 == 33 && (a236 == 6 && a356 == 8)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -8459,7 +8459,7 @@
     	a546 = 35 ;
     	a528 = 32 ;
     	a355 = 10; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a345 == 9 && ( cf==1  && (input == 6))) && (a594 == 33 && (a233 == 6 && ((a411 == 33 && a365 == 1) && a368 == 4))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -8608,10 +8608,10 @@
     	a402 = 33 ;
     	a289 = 9;
     	a125 = 9;
-    	}/* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm3(int input) {
+ void calculate_outputm3(int8_t  input) {
     if(((a546 == 33 && (a312 == 1 && ((a445 == 33 && ( cf==1  && a190 == 33)) && a228 == 3))) && (a213 == 2 && a578 == 33))) {
     	if(((((a365 == 1 && (a587 == 33 && ( cf==1  && a72 == 36))) && a318 == 33) && a312 == 1) && (a502 == 33 && a359 == 9))) {
     		calculate_outputm74(input);
@@ -8636,7 +8636,7 @@
     	} 
     } 
 }
- void calculate_outputm83(int input) {
+ void calculate_outputm83(int8_t  input) {
     if(((a453 == 33 && ((input == 1) &&  cf==1 )) && (((a348 == 4 && (a263 == 6 && a445 == 33)) && a486 == 33) && a458 == 33))) {
     	a29 += (a29 + 20) > a29 ? 2 : 0;
     	cf = 0;
@@ -8723,7 +8723,7 @@
     	a528 = 34 ;
     	a334 = 9;
     	a342 = 8; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a532 == 33 && a446 == 33) && (((a353 == 2 && (( cf==1  && (input == 9)) && a382 == 3)) && a318 == 33) && a246 == 6))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -8907,7 +8907,7 @@
     	a215 = 33 ;
     	a241 = 6;
     	a118 = 9;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((a374 == 7 && a366 == 33) && a348 == 4) && a227 == 33) && ((( cf==1  && (input == 6)) && a502 == 33) && a334 == 7))) {
     	a91 -= (a91 - 20) < a91 ? 3 : 0;
@@ -8968,7 +8968,7 @@
     	a214 = 3;
     	a419 = 34 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a477 == 33 && a364 == 7) && ((a556 == 33 && (a376 == 3 && (( cf==1  && (input == 5)) && a317 == 5))) && a382 == 3))) {
     	a2 -= (a2 - 20) < a2 ? 3 : 0;
@@ -9010,10 +9010,10 @@
     	a418 = 32 ;
     	a364 = 8;
     	a150 = 13; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm85(int input) {
+ void calculate_outputm85(int8_t  input) {
     if(((a223 == 8 && (( cf==1  && (input == 8)) && a244 == 7)) && ((a431 == 33 && (a304 == 5 && a263 == 6)) && a586 == 33))) {
     	a171 -= (a171 - 20) < a171 ? 3 : 0;
     	cf = 0;
@@ -9117,7 +9117,7 @@
     	a374 = 8;
     	a554 = 32 ;
     	a283 = 7; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a236 == 6 && (a370 == 3 && a520 == 33)) && (((a326 == 33 && ( cf==1  && (input == 7))) && a602 == 33) && a229 == 3))) {
     	a91 -= (a91 - 20) < a91 ? 4 : 0;
@@ -9179,10 +9179,10 @@
     	a400 = 8;
     	a282 = 8;
     	a56 = 9; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm86(int input) {
+ void calculate_outputm86(int8_t  input) {
     if((((( cf==1  && (input == 1)) && a494 == 33) && a521 == 33) && (((a475 == 33 && a373 == 3) && a242 == 2) && a236 == 6))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a78 -= (a78 - 20) < a78 ? 3 : 0;
@@ -9429,7 +9429,7 @@
     	a318 = 32 ;
     	a236 = 6;
     	a393 = 13;
-    	}/* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a369 == 1 && (a582 == 33 && (a246 == 6 && (a399 == 3 && ( cf==1  && (input == 2)))))) && (a544 == 33 && a587 == 33))) {
     	a104 += (a104 + 20) > a104 ? 2 : 0;
@@ -9498,7 +9498,7 @@
     	a223 = 11;
     	a366 = 32 ;
     	a4 = 8;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((((a482 == 33 && (a297 == 4 && a262 == 33)) && a281 == 1) && a382 == 3) && (a229 == 3 && ( cf==1  && (input == 9))))) {
     	a58 -= (a58 - 20) < a58 ? 2 : 0;
@@ -9531,7 +9531,7 @@
     	a502 = 35 ;
     	a419 = 35 ;
     	a322 = 2; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((((a493 == 33 && (a252 == 10 && a432 == 33)) && a295 == 9) && a434 == 33) && (a582 == 33 && ( cf==1  && (input == 3))))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -9604,7 +9604,7 @@
     	a419 = 33 ;
     	a602 = 32 ;
     	a143 = 17;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a399 == 3 && a281 == 1) && a546 == 33) && ((a281 == 1 && (a304 == 5 && ((input == 6) &&  cf==1 ))) && a432 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -9682,7 +9682,7 @@
     	a254 = 33 ;
     	a510 = 33 ;
     	a49 = 5; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a434 == 33 && a337 == 4) && a209 == 4) && (((a453 == 33 && ( cf==1  && (input == 10))) && a382 == 3) && a274 == 3))) {
     	a88 -= (a88 - 20) < a88 ? 2 : 0;
@@ -9701,7 +9701,7 @@
     	a127 = 32 ;
     	a52 = 8;
     	a393 = 16; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a348 == 4 && (a453 == 33 && ((input == 7) &&  cf==1 ))) && (a206 == 9 && (a404 == 33 && (a280 == 33 && a520 == 33))))) {
     	a29 += (a29 + 20) > a29 ? 1 : 0;
@@ -9809,7 +9809,7 @@
     	a126 = 32 ;
     	a250 = 33 ;
     	a18 = 15;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a218 == 5 && (a318 == 33 && (a310 == 1 && a318 == 33))) && a476 == 33) && (( cf==1  && (input == 4)) && a380 == 3))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -9829,7 +9829,7 @@
     	a18 = 13;
     	a52 = 5;
     	a200 = 12; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a544 == 33 && (a334 == 7 && a205 == 8)) && a486 == 33) && ((( cf==1  && (input == 8)) && a205 == 8) && a226 == 2))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -9969,7 +9969,7 @@
     	a353 = 4;
     	a396 = 10;
     	a264 = 15; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a324 == 5 && (a379 == 33 && ( cf==1  && (input == 5)))) && (((a358 == 6 && a400 == 7) && a521 == 33) && a368 == 4))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -10218,10 +10218,10 @@
     	a404 = 36 ;
     	a407 = 32 ;
     	a49 = 4;
-    	}/* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm87(int input) {
+ void calculate_outputm87(int8_t  input) {
     if((((a220 == 33 && (a418 == 33 && (a270 == 4 && a464 == 33))) && a313 == 1) && (a294 == 33 && ( cf==1  && (input == 9))))) {
     	a78 += (a78 + 20) > a78 ? 1 : 0;
     	a104 += (a104 + 20) > a104 ? 1 : 0;
@@ -10280,7 +10280,7 @@
     	a18 = 16;
     	a49 = 5;
     	a52 = 6;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a602 == 33 && (a375 == 33 && ((input == 6) &&  cf==1 ))) && a229 == 3) && ((a556 == 33 && a458 == 33) && a475 == 33))) {
     	a96 += (a96 + 20) > a96 ? 2 : 0;
@@ -10304,7 +10304,7 @@
     	a18 = 13;
     	a52 = 8;
     	a44 = 10; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a337 == 4 && (a330 == 6 && (a281 == 1 && (a359 == 9 && ( cf==1  && (input == 2)))))) && (a465 == 33 && a505 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -10327,7 +10327,7 @@
     	a0 = 32 ; 
     	}else {
     	a510 = 34 ;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((((( cf==1  && (input == 3)) && a203 == 2) && a270 == 4) && a475 == 33) && ((a259 == 8 && a220 == 33) && a399 == 3))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -10438,7 +10438,7 @@
     	a366 = 36 ;
     	a398 = 6;
     	a367 = 4; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a375 == 33 && (a365 == 1 && (a304 == 5 && a431 == 33))) && ((( cf==1  && (input == 4)) && a507 == 33) && a370 == 3))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -10566,7 +10566,7 @@
     	a585 = 35 ;
     	a528 = 33 ;
     	a19 = 8;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a376 == 3 && ((a324 == 5 && a587 == 33) && a304 == 5)) && (a297 == 4 && (( cf==1  && (input == 7)) && a359 == 9)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -10681,7 +10681,7 @@
     	a486 = 33 ;
     	a297 = 10;
     	a367 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a270 == 4 && (a464 == 33 && ( cf==1  && (input == 5)))) && (a215 == 33 && (a474 == 33 && (a554 == 33 && a244 == 7))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -10823,7 +10823,7 @@
     	a486 = 35 ;
     	a370 = 8;
     	a94 = 1; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a476 == 33 && ( cf==1  && (input == 1))) && ((a431 == 33 && (a520 == 33 && (a234 == 10 && a602 == 33))) && a313 == 1))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -10953,7 +10953,7 @@
     	a404 = 35 ;
     	a203 = 7;
     	a26 = 7; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if((((a324 == 5 && ((input == 10) &&  cf==1 )) && a280 == 33) && ((a434 == 33 && (a370 == 3 && a228 == 3)) && a407 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -11068,7 +11068,7 @@
     	a399 = 5;
     	a521 = 34 ;
     	a217 = 10; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((((a411 == 33 && a324 == 5) && a453 == 33) && a280 == 33) && (a532 == 33 && (((input == 8) &&  cf==1 ) && a411 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -11089,10 +11089,10 @@
     	a49 = 2;
     	a18 = 16;
     	a123 = 3; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm88(int input) {
+ void calculate_outputm88(int8_t  input) {
     if(((a510 == 33 && (a324 == 5 && a380 == 3)) && (a358 == 6 && (a274 == 3 && (a345 == 9 && ((input == 8) &&  cf==1 )))))) {
     	a96 -= (a96 - 20) < a96 ? 4 : 0;
     	cf = 0;
@@ -11218,7 +11218,7 @@
     	a407 = 34 ;
     	a218 = 7;
     	a172 = 17; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a356 == 8 && (a253 == 6 && ((a404 == 33 && ( cf==1  && (input == 2))) && a214 == 2))) && (a578 == 33 && a213 == 2))) {
     	a148 += (a148 + 20) > a148 ? 4 : 0;
@@ -11333,7 +11333,7 @@
     	a546 = 34 ;
     	a334 = 9;
     	a330 = 6; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a475 == 33 && a431 == 33) && a203 == 2) && (a358 == 6 && ((a494 == 33 && ((input == 9) &&  cf==1 )) && a399 == 3)))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -11513,10 +11513,10 @@
     	a544 = 32 ;
     	a330 = 8;
     	a319 = 9;
-    	}/* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm89(int input) {
+ void calculate_outputm89(int8_t  input) {
     if(((a263 == 6 && (( cf==1  && (input == 8)) && a546 == 33)) && ((a259 == 8 && (a505 == 33 && a556 == 33)) && a556 == 33))) {
     	cf = 0;
     	a18 = 11;
@@ -11529,7 +11529,7 @@
     	a556 = 34 ;
     	a505 = 34 ;
     	a117 = 3; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a274 == 3 && (((((input == 7) &&  cf==1 ) && a259 == 8) && a312 == 1) && a374 == 7)) && (a214 == 2 && a482 == 33))) {
     	a73 -= (a73 - 20) < a73 ? 3 : 0;
@@ -11591,7 +11591,7 @@
     	a263 = 6;
     	a203 = 4;
     	a49 = 2; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((((a242 == 2 && a201 == 4) && a228 == 3) && a214 == 2) && a431 == 33) && (a528 == 33 && ( cf==1  && (input == 2))))) {
     	cf = 0;
@@ -11652,10 +11652,10 @@
     	a518 = 34 ;
     	a482 = 33 ;
     	a49 = 2; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm90(int input) {
+ void calculate_outputm90(int8_t  input) {
     if((((a475 == 33 && (((input == 2) &&  cf==1 ) && a366 == 33)) && a259 == 8) && ((a337 == 4 && a242 == 2) && a252 == 10))) {
     	a148 += (a148 + 20) > a148 ? 1 : 0;
     	cf = 0;
@@ -11689,10 +11689,10 @@
     	a528 = 32 ;
     	a366 = 34 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm4(int input) {
+ void calculate_outputm4(int8_t  input) {
     if(((a111 == 3 &&  cf==1 ) && (((a474 == 33 && ((a259 == 8 && a554 == 33) && a348 == 4)) && a494 == 33) && a507 == 33))) {
     	if(((a336 == 10 && ((a346 == 1 && ( cf==1  && a167 == 36)) && a274 == 3)) && ((a502 == 33 && a446 == 33) && a205 == 8))) {
     		calculate_outputm83(input);
@@ -11723,7 +11723,7 @@
     	} 
     } 
 }
- void calculate_outputm91(int input) {
+ void calculate_outputm91(int8_t  input) {
     if((((((input == 8) &&  cf==1 ) && a376 == 3) && a446 == 33) && (a359 == 9 && ((a368 == 4 && a375 == 33) && a203 == 2)))) {
     	cf = 0;
     	a398 = 3;
@@ -11763,7 +11763,7 @@
     	a373 = 4;
     	a432 = 32 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a482 == 33 && (a368 == 4 && a398 == 2)) && (a477 == 33 && ((a546 == 33 && ((input == 7) &&  cf==1 )) && a215 == 33)))) {
     	a179 += (a179 + 20) > a179 ? 4 : 0;
@@ -11800,10 +11800,10 @@
     	a476 = 32 ;
     	a310 = 2;
     	a342 = 8; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm93(int input) {
+ void calculate_outputm93(int8_t  input) {
     if(((((a578 == 33 && a416 == 33) && a229 == 3) && a324 == 5) && ((( cf==1  && (input == 9)) && a312 == 1) && a281 == 1))) {
     	a96 -= (a96 - 20) < a96 ? 4 : 0;
     	cf = 0;
@@ -11849,7 +11849,7 @@
     	a453 = 34 ;
     	a318 = 34 ;
     	a49 = 7; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((((a244 == 7 && (( cf==1  && (input == 6)) && a364 == 7)) && a510 == 33) && a270 == 4) && (a432 == 33 && a280 == 33))) {
     	a91 -= (a91 - 20) < a91 ? 3 : 0;
@@ -11893,10 +11893,10 @@
     	a229 = 5;
     	a228 = 4;
     	a150 = 13; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm94(int input) {
+ void calculate_outputm94(int8_t  input) {
     if(((a252 == 10 && a214 == 2) && (a229 == 3 && (a494 == 33 && (a376 == 3 && (( cf==1  && (input == 6)) && a246 == 6)))))) {
     	a179 += (a179 + 20) > a179 ? 4 : 0;
     	cf = 0;
@@ -11931,10 +11931,10 @@
     	a482 = 34 ;
     	a209 = 5;
     	a56 = 9; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm95(int input) {
+ void calculate_outputm95(int8_t  input) {
     if(((a233 == 6 && ((a263 == 6 && a244 == 7) && a317 == 5)) && (a532 == 33 && (a560 == 33 && ((input == 1) &&  cf==1 ))))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
     	cf = 0;
@@ -11974,7 +11974,7 @@
     	a334 = 9;
     	a282 = 9;
     	a26 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a213 == 2 && a374 == 7) && ((a368 == 4 && ((((input == 5) &&  cf==1 ) && a310 == 1) && a434 == 33)) && a312 == 1))) {
     	a96 -= (a96 - 20) < a96 ? 4 : 0;
@@ -12054,7 +12054,7 @@
     	a209 = 5;
     	a502 = 32 ;
     	a342 = 8; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a370 == 3 && (((a556 == 33 && ((input == 10) &&  cf==1 )) && a587 == 33) && a216 == 33)) && (a205 == 8 && a365 == 1))) {
     	a148 += (a148 + 20) > a148 ? 3 : 0;
@@ -12134,10 +12134,10 @@
     	a201 = 5;
     	a379 = 32 ;
     	a342 = 8; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm5(int input) {
+ void calculate_outputm5(int8_t  input) {
     if((((a453 == 33 && (a144 == 4 &&  cf==1 )) && a336 == 10) && ((a223 == 8 && (a259 == 8 && a370 == 3)) && a476 == 33))) {
     	if(((a246 == 6 && ((a379 == 33 && a359 == 9) && a510 == 33)) && (((a275 == 34 &&  cf==1 ) && a508 == 33) && a508 == 33))) {
     		calculate_outputm91(input);
@@ -12159,7 +12159,7 @@
     	} 
     } 
 }
- void calculate_outputm97(int input) {
+ void calculate_outputm97(int8_t  input) {
     if(((((a476 == 32 && ( cf==1  && (input == 5))) && a382 == 4) && a205 == 9) && (a502 == 32 && (a516 == 32 && a582 == 32)))) {
     	a148 += (a148 + 20) > a148 ? 2 : 0;
     	cf = 0;
@@ -12257,7 +12257,7 @@
     	a310 = 1;
     	a345 = 9;
     	a118 = 9; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((((a418 == 32 && ((a359 == 10 && a247 == 11) && a446 == 32)) && a407 == 32) && (a453 == 32 && ((input == 6) &&  cf==1 )))) {
     	a65 -= (a65 - 20) < a65 ? 2 : 0;
@@ -12320,7 +12320,7 @@
     	a209 = 4;
     	a480 = 34 ;
     	a151 = 5; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((((input == 9) &&  cf==1 ) && a254 == 32) && ((a602 == 32 && (a411 == 32 && (a214 == 3 && a313 == 2))) && a592 == 32))) {
     	a29 += (a29 + 20) > a29 ? 1 : 0;
@@ -12418,7 +12418,7 @@
     	a520 = 32 ;
     	a404 = 32 ;
     	a201 = 5; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((((a317 == 6 && a528 == 32) && a263 == 7) && a582 == 32) && (a379 == 32 && (((input == 2) &&  cf==1 ) && a586 == 32)))) {
     	a91 -= (a91 - 20) < a91 ? 4 : 0;
@@ -12439,10 +12439,10 @@
     	a418 = 34 ;
     	a107 = 36 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm98(int input) {
+ void calculate_outputm98(int8_t  input) {
     if((((a294 == 32 && (a416 == 32 && a282 == 8)) && a586 == 32) && ((a396 == 7 && ( cf==1  && (input == 10))) && a294 == 32))) {
     	a91 -= (a91 - 20) < a91 ? 3 : 0;
     	cf = 0;
@@ -12550,7 +12550,7 @@
     	a259 = 9;
     	a294 = 32 ;
     	a393 = 13; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a498 == 32 && (a213 == 3 && (a337 == 5 && ( cf==1  && (input == 6))))) && a254 == 32) && (a205 == 9 && a554 == 32))) {
     	a73 -= (a73 - 20) < a73 ? 4 : 0;
@@ -12569,7 +12569,7 @@
     	a482 = 34 ;
     	a364 = 7;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a201 == 5 && (((input == 7) &&  cf==1 ) && a505 == 32)) && (a516 == 32 && ((a554 == 32 && a214 == 3) && a213 == 3)))) {
     	cf = 0;
@@ -12587,10 +12587,10 @@
     	a94 = 5;
     	a602 = 34 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm99(int input) {
+ void calculate_outputm99(int8_t  input) {
     if(((a411 == 32 && ((a498 == 32 && a592 == 32) && a521 == 32)) && ((a465 == 32 && ((input == 2) &&  cf==1 )) && a480 == 32))) {
     	cf = 0;
     	a498 = 33 ;
@@ -12599,10 +12599,10 @@
     	a270 = 6;
     	a49 = 6;
     	a363 = 4; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm101(int input) {
+ void calculate_outputm101(int8_t  input) {
     if(((a304 == 6 && a353 == 3) && (((a398 == 3 && (a558 == 32 && ( cf==1  && (input == 6)))) && a228 == 4) && a474 == 32))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
     	cf = 0;
@@ -12626,10 +12626,10 @@
     	a326 = 34 ;
     	a486 = 33 ;
     	a200 = 10; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm6(int input) {
+ void calculate_outputm6(int8_t  input) {
     if(((a402 == 32 && (a546 == 32 && (a475 == 32 && (a505 == 32 && ( cf==1  && a80 == 33))))) && (a554 == 32 && a464 == 32))) {
     	if(((a310 == 2 && ((a396 == 7 && (a446 == 32 && a313 == 2)) && a223 == 9)) && (a592 == 32 && (a390 == 8 &&  cf==1 )))) {
     		calculate_outputm97(input);
@@ -12647,7 +12647,7 @@
     	} 
     } 
 }
- void calculate_outputm102(int input) {
+ void calculate_outputm102(int8_t  input) {
     if(((a213 == 3 && (a502 == 32 && (((input == 6) &&  cf==1 ) && a594 == 32))) && (a560 == 32 && (a594 == 32 && a592 == 32)))) {
     	a171 -= (a171 - 20) < a171 ? 1 : 0;
     	cf = 0;
@@ -12745,7 +12745,7 @@
     	a289 = 3;
     	a560 = 33 ;
     	a103 = 17; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a262 == 32 && (a364 == 8 && ((input == 8) &&  cf==1 ))) && a587 == 32) && (a432 == 32 && (a252 == 11 && a508 == 32)))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -12856,7 +12856,7 @@
     	a587 = 32 ;
     	a324 = 6;
     	a94 = 1; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a376 == 4 && (((input == 1) &&  cf==1 ) && a556 == 32)) && (a254 == 32 && ((a521 == 32 && a379 == 32) && a213 == 3)))) {
     	a91 -= (a91 - 20) < a91 ? 4 : 0;
@@ -13033,7 +13033,7 @@
     	a516 = 33 ;
     	a227 = 34 ;
     	a26 = 7;
-    	}/* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a223 == 9 && a215 == 32) && (a356 == 9 && (((( cf==1  && (input == 2)) && a592 == 32) && a205 == 9) && a382 == 4)))) {
     	cf = 0;
@@ -13143,10 +13143,10 @@
     	a586 = 32 ;
     	a317 = 7;
     	a49 = 4; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm103(int input) {
+ void calculate_outputm103(int8_t  input) {
     if((((a376 == 4 && ((a294 == 32 && ((input == 7) &&  cf==1 )) && a453 == 32)) && a214 == 3) && (a411 == 32 && a370 == 4))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -13165,7 +13165,7 @@
     	a18 = 13;
     	a52 = 8;
     	a44 = 15; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((((a376 == 4 && a369 == 2) && a356 == 9) && a418 == 32) && ((((input == 10) &&  cf==1 ) && a310 == 2) && a380 == 4))) {
     	a78 -= (a78 - 20) < a78 ? 3 : 0;
@@ -13248,7 +13248,7 @@
     	a229 = 6;
     	a521 = 34 ;
     	a16 = 15; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a379 == 32 && (a476 == 32 && ( cf==1  && (input == 1)))) && ((a228 == 4 && (a431 == 32 && a234 == 11)) && a242 == 3))) {
     	a104 += (a104 + 20) > a104 ? 2 : 0;
@@ -13264,7 +13264,7 @@
     	a156 = 35 ;
     	a18 = 16;
     	a303 = 5; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a463 == 32 && (a324 == 6 && (a476 == 32 && a586 == 32))) && (a587 == 32 && (((input == 2) &&  cf==1 ) && a374 == 8)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -13408,7 +13408,7 @@
     	a521 = 36 ;
     	a379 = 34 ;
     	a84 = 8; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a247 == 11 && a366 == 32) && ((a218 == 6 && ((a310 == 2 && ((input == 5) &&  cf==1 )) && a463 == 32)) && a209 == 5))) {
     	a96 -= (a96 - 20) < a96 ? 4 : 0;
@@ -13443,7 +13443,7 @@
     	a122 = 34 ;
     	a185 = 35 ;
     	a18 = 9; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a476 == 32 && a507 == 32) && a359 == 10) && (a396 == 7 && (a464 == 32 && (a313 == 2 && ( cf==1  && (input == 8))))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -13465,7 +13465,7 @@
     	a18 = 11;
     	a170 = 32 ;
     	a26 = 11; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a274 == 4 && a365 == 2) && ((a411 == 32 && (a558 == 32 && (( cf==1  && (input == 3)) && a247 == 11))) && a218 == 6))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -13483,7 +13483,7 @@
     	a130 = 36 ;
     	a18 = 11;
     	a39 = 5; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((((( cf==1  && (input == 6)) && a494 == 32) && a419 == 32) && a206 == 10) && ((a411 == 32 && a521 == 32) && a445 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -13564,7 +13564,7 @@
     	a463 = 36 ;
     	a365 = 6;
     	a175 = 10; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((a334 == 8 && a241 == 7) && a453 == 32) && a236 == 7) && (a396 == 7 && (( cf==1  && (input == 9)) && a458 == 32)))) {
     	a88 -= (a88 - 20) < a88 ? 2 : 0;
@@ -13584,7 +13584,7 @@
     	a49 = 2;
     	a51 = 32 ;
     	a123 = 3; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a274 == 4 && (( cf==1  && (input == 4)) && a486 == 32)) && a508 == 32) && ((a323 == 11 && a560 == 32) && a323 == 11))) {
     	a104 += (a104 + 20) > a104 ? 3 : 0;
@@ -13739,10 +13739,10 @@
     	a226 = 3;
     	a356 = 11;
     	a39 = 6;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm104(int input) {
+ void calculate_outputm104(int8_t  input) {
     if(((a364 == 8 && a236 == 7) && ((((( cf==1  && (input == 1)) && a336 == 11) && a353 == 3) && a206 == 10) && a445 == 32))) {
     	a132 += (a132 + 20) > a132 ? 2 : 0;
     	a148 -= (a148 - 20) < a148 ? 4 : 0;
@@ -13851,10 +13851,10 @@
     	a398 = 3;
     	a226 = 4;
     	a118 = 10; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm105(int input) {
+ void calculate_outputm105(int8_t  input) {
     if(((a313 == 2 && ((((input == 2) &&  cf==1 ) && a223 == 9) && a587 == 32)) && ((a242 == 3 && a369 == 2) && a516 == 32))) {
     	a29 += (a29 + 20) > a29 ? 1 : 0;
     	cf = 0;
@@ -13953,7 +13953,7 @@
     	a463 = 32 ;
     	a337 = 5;
     	a47 = 5; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 1)) && a602 == 32) && a476 == 32) && (a398 == 3 && (a318 == 32 && (a297 == 5 && a241 == 7))))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -14059,7 +14059,7 @@
     	a353 = 3;
     	a404 = 32 ;
     	a367 = 4; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a304 == 6 && (a465 == 32 && a396 == 7)) && (a435 == 32 && (a323 == 11 && (a334 == 8 && ( cf==1  && (input == 9))))))) {
     	a186 -= (a186 - 20) < a186 ? 3 : 0;
@@ -14084,10 +14084,10 @@
     	a318 = 33 ;
     	a122 = 32 ;
     	a367 = 9; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm7(int input) {
+ void calculate_outputm7(int8_t  input) {
     if(((a299 == 32 &&  cf==1 ) && (a310 == 2 && (a263 == 7 && ((a602 == 32 && (a476 == 32 && a364 == 8)) && a400 == 8))))) {
     	if(((a374 == 8 && (a528 == 32 && ( cf==1  && a31 == 5))) && ((a374 == 8 && (a594 == 32 && a358 == 7)) && a274 == 4))) {
     		calculate_outputm102(input);
@@ -14107,7 +14107,7 @@
     	} 
     } 
 }
- void calculate_outputm106(int input) {
+ void calculate_outputm106(int8_t  input) {
     if(((a318 == 32 && a520 == 32) && ((a228 == 4 && ((( cf==1  && (input == 1)) && a494 == 32) && a218 == 6)) && a602 == 32))) {
     	a78 -= (a78 - 20) < a78 ? 3 : 0;
     	a29 -= (a29 - 20) < a29 ? 2 : 0;
@@ -14244,7 +14244,7 @@
     	a518 = 33 ;
     	a317 = 6;
     	a172 = 17; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a295 == 10 && (a254 == 32 && (a505 == 32 && a364 == 8))) && ((((input == 2) &&  cf==1 ) && a252 == 11) && a348 == 5))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -14441,7 +14441,7 @@
     	a259 = 15;
     	a510 = 34 ;
     	a305 = 11;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a270 == 5 && (((input == 8) &&  cf==1 ) && a516 == 32)) && (((a546 == 32 && a203 == 3) && a262 == 32) && a556 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -14461,7 +14461,7 @@
     	a94 = 4;
     	a18 = 14;
     	a101 = 2; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a254 == 32 && (a317 == 6 && ((input == 6) &&  cf==1 ))) && (a476 == 32 && (a346 == 2 && (a345 == 10 && a592 == 32))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -14569,7 +14569,7 @@
     	a560 = 32 ;
     	a226 = 7;
     	a151 = 5; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a546 == 32 && (a594 == 32 && (a407 == 32 && a345 == 10))) && (a516 == 32 && (a370 == 4 && ((input == 3) &&  cf==1 ))))) {
     	a104 -= (a104 - 20) < a104 ? 3 : 0;
@@ -14586,7 +14586,7 @@
     	a393 = 14;
     	a59 = 15;
     	a230 = 8; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a375 == 32 && ((((input == 10) &&  cf==1 ) && a505 == 32) && a364 == 8)) && ((a465 == 32 && a356 == 9) && a558 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -14607,7 +14607,7 @@
     	a156 = 35 ;
     	a49 = 5;
     	a303 = 5; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a364 == 8 && ( cf==1  && (input == 7))) && (a431 == 32 && (a474 == 32 && (a477 == 32 && (a353 == 3 && a365 == 2)))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -14731,7 +14731,7 @@
     	a359 = 9;
     	a508 = 36 ;
     	a49 = 9;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a229 == 4 && ((input == 4) &&  cf==1 )) && a241 == 7) && (a280 == 32 && ((a435 == 32 && a242 == 3) && a592 == 32)))) {
     	a88 += (a88 + 20) > a88 ? 2 : 0;
@@ -14872,7 +14872,7 @@
     	a280 = 34 ;
     	a380 = 5;
     	a19 = 8; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((((((input == 9) &&  cf==1 ) && a486 == 32) && a274 == 4) && a507 == 32) && a465 == 32) && (a263 == 7 && a346 == 2))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -15003,7 +15003,7 @@
     	a585 = 35 ;
     	a560 = 35 ;
     	a303 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((input == 5) &&  cf==1 ) && a416 == 32) && (((a324 == 6 && (a216 == 32 && a587 == 32)) && a369 == 2) && a334 == 8))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -15211,10 +15211,10 @@
     	a330 = 6;
     	a214 = 6;
     	a322 = 8;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm107(int input) {
+ void calculate_outputm107(int8_t  input) {
     if(((a274 == 4 && (a241 == 7 && a399 == 4)) && ((a206 == 10 && (( cf==1  && (input == 10)) && a474 == 32)) && a498 == 32))) {
     	a179 -= (a179 - 20) < a179 ? 1 : 0;
     	cf = 0;
@@ -15276,7 +15276,7 @@
     	a602 = 33 ;
     	a260 = 7;
     	a23 = 13; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a201 == 5 && (a376 == 4 && a494 == 32)) && a585 == 32) && ((( cf==1  && (input == 2)) && a602 == 32) && a368 == 5))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -15358,7 +15358,7 @@
     	a486 = 33 ;
     	a223 = 8;
     	a70 = 6; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if((((input == 8) &&  cf==1 ) && ((a453 == 32 && (((a241 == 7 && a592 == 32) && a458 == 32) && a411 == 32)) && a585 == 32))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -15392,10 +15392,10 @@
     	a313 = 3;
     	a37 = 36 ;
     	a319 = 2; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm108(int input) {
+ void calculate_outputm108(int8_t  input) {
     if(((a453 == 32 && (a375 == 32 && (a400 == 8 && ((input == 2) &&  cf==1 )))) && (a313 == 2 && (a396 == 7 && a295 == 10)))) {
     	a184 -= (a184 - 20) < a184 ? 1 : 0;
     	cf = 0;
@@ -15486,10 +15486,10 @@
     	a368 = 4;
     	a18 = 9;
     	a118 = 9;
-    	}/* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm109(int input) {
+ void calculate_outputm109(int8_t  input) {
     if(((a521 == 32 && (a528 == 32 && ((a477 == 32 && a289 == 3) && a475 == 32))) && (a259 == 9 && ( cf==1  && (input == 10))))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -15538,7 +15538,7 @@
     	a277 = 8;
     	a365 = 5;
     	a202 = 6; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((((a215 == 32 && ((input == 7) &&  cf==1 )) && a446 == 32) && a366 == 32) && ((a544 == 32 && a356 == 9) && a262 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -15562,7 +15562,7 @@
     	a254 = 35 ;
     	a119 = 33 ;
     	a18 = 12; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a213 == 3 && (a502 == 32 && a247 == 11)) && (a486 == 32 && ((a518 == 32 && ((input == 4) &&  cf==1 )) && a502 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -15584,7 +15584,7 @@
     	a393 = 16;
     	a367 = 9;
     	a172 = 14; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a214 == 3 && (a229 == 4 && a206 == 10)) && a556 == 32) && ((((input == 8) &&  cf==1 ) && a263 == 7) && a220 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -15653,7 +15653,7 @@
     	a330 = 9;
     	a324 = 9;
     	a314 = 10; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a312 == 2 && (a368 == 5 && (((input == 3) &&  cf==1 ) && a223 == 9))) && (a263 == 7 && (a432 == 32 && a546 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -15785,7 +15785,7 @@
     	a382 = 3;
     	a520 = 32 ;
     	a18 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((a594 == 32 && ((a592 == 32 && (a384 == 3 && (a359 == 10 && (((input == 9) &&  cf==1 ) && a431 == 32)))) && a399 == 4))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -15981,7 +15981,7 @@
     	a216 = 32 ;
     	a323 = 13;
     	a60 = 13;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a446 == 32 && (a578 == 32 && a313 == 2)) && a480 == 32) && (a368 == 5 && (a586 == 32 && ( cf==1  && (input == 1)))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -16111,7 +16111,7 @@
     	a30 = 32 ;
     	a18 = 13;
     	a52 = 7;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a476 == 32 && (a326 == 32 && ((input == 5) &&  cf==1 ))) && (((a528 == 32 && a419 == 32) && a270 == 5) && a374 == 8))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -16161,7 +16161,7 @@
     	a356 = 14;
     	a247 = 11;
     	a18 = 9;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((((input == 6) &&  cf==1 ) && a259 == 9) && a560 == 32) && (a528 == 32 && (a348 == 5 && (a337 == 5 && a215 == 32))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -16194,7 +16194,7 @@
     	a477 = 34 ;
     	a206 = 12;
     	a24 = 6; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a326 == 32 && (a254 == 32 && ((input == 2) &&  cf==1 ))) && ((a480 == 32 && (a236 == 7 && a253 == 7)) && a270 == 5))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -16218,10 +16218,10 @@
     	a18 = 16;
     	a116 = 35 ;
     	a121 = 8;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm110(int input) {
+ void calculate_outputm110(int8_t  input) {
     if((((a334 == 8 && (a220 == 32 && a375 == 32)) && a336 == 11) && ((((input == 6) &&  cf==1 ) && a376 == 4) && a594 == 32))) {
     	a2 -= (a2 - 20) < a2 ? 4 : 0;
     	cf = 0;
@@ -16330,7 +16330,7 @@
     	a310 = 2;
     	a446 = 32 ;
     	a283 = 7; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a289 == 3 && a326 == 32) && (a379 == 32 && (a356 == 9 && ((((input == 7) &&  cf==1 ) && a554 == 32) && a587 == 32))))) {
     	a171 -= (a171 - 20) < a171 ? 1 : 0;
@@ -16440,7 +16440,7 @@
     	a252 = 11;
     	a220 = 32 ;
     	a49 = 3; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a404 == 32 && ( cf==1  && (input == 9))) && ((a379 == 32 && ((a446 == 32 && a376 == 4) && a446 == 32)) && a532 == 32))) {
     	a179 += (a179 + 20) > a179 ? 4 : 0;
@@ -16568,10 +16568,10 @@
     	a358 = 6;
     	a241 = 6;
     	a94 = 5; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm111(int input) {
+ void calculate_outputm111(int8_t  input) {
     if(((a209 == 5 && (a218 == 6 && (a505 == 32 && a336 == 11))) && ((a310 == 2 && ( cf==1  && (input == 4))) && a507 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a179 -= (a179 - 20) < a179 ? 2 : 0;
@@ -16725,7 +16725,7 @@
     	a411 = 36 ;
     	a432 = 35 ;
     	a56 = 7;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a323 == 11 && a282 == 8) && a374 == 8) && ((a477 == 32 && (( cf==1  && (input == 3)) && a213 == 3)) && a398 == 3))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -16746,7 +16746,7 @@
     	a49 = 8;
     	a18 = 16;
     	a47 = 5; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((((a358 == 7 && a376 == 4) && a209 == 5) && a419 == 32) && (a582 == 32 && (a516 == 32 && ((input == 8) &&  cf==1 ))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -16857,7 +16857,7 @@
     	a510 = 34 ;
     	a280 = 34 ;
     	a49 = 9; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a297 == 5 && (a486 == 32 && a516 == 32)) && (a203 == 3 && ((((input == 10) &&  cf==1 ) && a318 == 32) && a281 == 2)))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -17004,7 +17004,7 @@
     	a270 = 9;
     	a508 = 35 ;
     	a118 = 10; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((((a326 == 32 && a274 == 4) && a312 == 2) && a407 == 32) && a508 == 32) && (( cf==1  && (input == 7)) && a532 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -17113,7 +17113,7 @@
     	a411 = 33 ;
     	a546 = 35 ;
     	a144 = 7; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((((a262 == 32 && (a578 == 32 && a502 == 32)) && a253 == 7) && a505 == 32) && (a398 == 3 && ((input == 5) &&  cf==1 )))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -17228,7 +17228,7 @@
     	a602 = 35 ;
     	a505 = 35 ;
     	a94 = 7; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a337 == 5 && (a337 == 5 && ((input == 2) &&  cf==1 ))) && (a304 == 6 && (a502 == 32 && (a215 == 32 && a432 == 32))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -17307,7 +17307,7 @@
     	a253 = 13;
     	a587 = 32 ;
     	a14 = 5; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a205 == 9 && (a585 == 32 && ((a464 == 32 && (((input == 6) &&  cf==1 ) && a277 == 8)) && a382 == 4))) && a546 == 32)) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -17451,7 +17451,7 @@
     	a594 = 32 ;
     	a602 = 32 ;
     	a18 = 12; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a356 == 9 && ((a508 == 32 && (a253 == 7 && a280 == 32)) && a297 == 5)) && (a366 == 32 && ( cf==1  && (input == 1))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -17624,7 +17624,7 @@
     	a498 = 34 ;
     	a330 = 13;
     	a49 = 6;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a560 == 32 && ((a402 == 32 && a458 == 32) && a213 == 3)) && a402 == 32) && (a242 == 3 && ( cf==1  && (input == 9))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -17650,10 +17650,10 @@
     	a212 = 34 ;
     	a1 = 36 ;
     	a393 = 13;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm112(int input) {
+ void calculate_outputm112(int8_t  input) {
     if(((a376 == 4 && ( cf==1  && (input == 5))) && (a282 == 8 && (a318 == 32 && (a474 == 32 && (a214 == 3 && a252 == 11)))))) {
     	a186 += (a186 + 20) > a186 ? 1 : 0;
     	cf = 0;
@@ -17764,7 +17764,7 @@
     	a396 = 6;
     	a317 = 7;
     	a118 = 9;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a532 == 32 && ((a592 == 32 && ( cf==1  && (input == 7))) && a379 == 32)) && (a334 == 8 && (a227 == 32 && a494 == 32)))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -17773,10 +17773,10 @@
     	a94 = 2;
     	a18 = 14;
     	a103 = 16; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm113(int input) {
+ void calculate_outputm113(int8_t  input) {
     if(((a411 == 32 && ((a419 == 32 && ( cf==1  && (input == 10))) && a223 == 9)) && ((a233 == 7 && a366 == 32) && a345 == 10))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
     	cf = 0;
@@ -17843,7 +17843,7 @@
     	a205 = 9;
     	a544 = 32 ;
     	a295 = 10; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a379 == 32 && ((a337 == 5 && ((input == 5) &&  cf==1 )) && a434 == 32)) && (a374 == 8 && (a253 == 7 && a419 == 32)))) {
     	a91 -= (a91 - 20) < a91 ? 3 : 0;
@@ -17861,10 +17861,10 @@
     	a396 = 8;
     	a289 = 4;
     	a49 = 4; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm114(int input) {
+ void calculate_outputm114(int8_t  input) {
     if(((((a262 == 32 && (a521 == 32 && a218 == 6)) && a241 == 7) && a294 == 32) && (a228 == 4 && ((input == 4) &&  cf==1 )))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -17973,7 +17973,7 @@
     	a486 = 32 ;
     	a218 = 12;
     	a49 = 2; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a216 == 32 && ((a370 == 4 && a326 == 32) && a493 == 32)) && ((((input == 9) &&  cf==1 ) && a560 == 32) && a270 == 5))) {
     	a179 += (a179 + 20) > a179 ? 2 : 0;
@@ -18069,7 +18069,7 @@
     	a432 = 33 ;
     	a398 = 7;
     	a33 = 7; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((((a370 == 4 && a337 == 5) && a348 == 5) && ((a304 == 6 && (a334 == 8 && ((input == 8) &&  cf==1 ))) && a241 == 7))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -18236,7 +18236,7 @@
     	a220 = 32 ;
     	a5 = 33 ;
     	a393 = 10;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a254 == 32 && (a399 == 4 && (a295 == 10 && (a477 == 32 && (a399 == 4 && a507 == 32))))) && ((input == 6) &&  cf==1 ))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -18358,7 +18358,7 @@
     	a252 = 13;
     	a400 = 9;
     	a23 = 11; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((((((input == 5) &&  cf==1 ) && a464 == 32) && a375 == 32) && a228 == 4) && a418 == 32) && (a400 == 8 && a380 == 4))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -18474,7 +18474,7 @@
     	a369 = 7;
     	a477 = 32 ;
     	a144 = 7;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a295 == 10 && a203 == 3) && a477 == 32) && (a233 == 7 && ((a402 == 32 && ( cf==1  && (input == 3))) && a260 == 8)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -18600,7 +18600,7 @@
     	a260 = 10;
     	a369 = 6;
     	a221 = 7; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((((input == 7) &&  cf==1 ) && a399 == 4) && a274 == 4) && (a252 == 11 && ((a458 == 32 && a282 == 8) && a201 == 5)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -18621,7 +18621,7 @@
     	a18 = 16;
     	a116 = 36 ;
     	a47 = 5; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a227 == 32 && (a373 == 4 && (a510 == 32 && (( cf==1  && (input == 2)) && a228 == 4)))) && (a507 == 32 && a229 == 4))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -18640,7 +18640,7 @@
     	a44 = 10;
     	a18 = 14;
     	a101 = 2; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a434 == 32 && (a364 == 8 && a368 == 5)) && a201 == 5) && ((( cf==1  && (input == 1)) && a228 == 4) && a399 == 4))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -18805,7 +18805,7 @@
     	a516 = 36 ;
     	a214 = 9;
     	a319 = 9;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a498 == 32 && (a586 == 32 && a365 == 2)) && a384 == 3) && ((a227 == 32 && ( cf==1  && (input == 10))) && a407 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -19012,10 +19012,10 @@
     	a560 = 32 ;
     	a304 = 9;
     	a243 = 9;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm115(int input) {
+ void calculate_outputm115(int8_t  input) {
     if(((((( cf==1  && (input == 8)) && a482 == 32) && a585 == 32) && a246 == 7) && ((a375 == 32 && a205 == 9) && a376 == 4))) {
     	a179 += (a179 + 20) > a179 ? 3 : 0;
     	cf = 0;
@@ -19192,7 +19192,7 @@
     	a431 = 33 ;
     	a346 = 2;
     	a118 = 9;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a246 == 7 && ((a546 == 32 && a578 == 32) && a263 == 7)) && (a227 == 32 && (a233 == 7 && ( cf==1  && (input == 7)))))) {
     	a85 -= (a85 - 20) < a85 ? 2 : 0;
@@ -19374,7 +19374,7 @@
     	a376 = 3;
     	a369 = 1;
     	a144 = 4;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 9)) && a493 == 32) && a587 == 32) && ((a502 == 32 && (a203 == 3 && a246 == 7)) && a304 == 6))) {
     	cf = 0;
@@ -19425,7 +19425,7 @@
     	a366 = 32 ;
     	a510 = 32 ;
     	a342 = 8; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a400 == 8 && ((a317 == 6 && ( cf==1  && (input == 6))) && a400 == 8)) && (a274 == 4 && (a313 == 2 && a326 == 32)))) {
     	a186 -= (a186 - 20) < a186 ? 3 : 0;
@@ -19501,17 +19501,17 @@
     	a370 = 4;
     	a313 = 3;
     	a70 = 6; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm117(int input) {
+ void calculate_outputm117(int8_t  input) {
     if((( cf==1  && (input == 7)) && ((a262 == 32 && (((a201 == 5 && a544 == 32) && a578 == 32) && a270 == 5)) && a209 == 5))) {
     	cf = 0;
     	a307 = 35 ;
     	a18 = 14;
     	a94 = 5;
     	a149 = 12; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a434 == 32 && (a236 == 7 && ( cf==1  && (input == 1)))) && (a507 == 32 && (a348 == 5 && (a476 == 32 && a502 == 32))))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -19586,7 +19586,7 @@
     	a463 = 33 ;
     	a494 = 32 ;
     	a117 = 2; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((((( cf==1  && (input == 5)) && a289 == 3) && a384 == 3) && a345 == 10) && ((a592 == 32 && a358 == 7) && a263 == 7))) {
     	cf = 0;
@@ -19661,7 +19661,7 @@
     	a312 = 1;
     	a387 = 33 ;
     	a371 = 12; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a419 == 32 && ((input == 6) &&  cf==1 )) && ((((a201 == 5 && a358 == 7) && a464 == 32) && a373 == 4) && a518 == 32))) {
     	a2 -= (a2 - 20) < a2 ? 2 : 0;
@@ -19718,10 +19718,10 @@
     	a304 = 7;
     	a419 = 33 ;
     	a94 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm118(int input) {
+ void calculate_outputm118(int8_t  input) {
     if((a399 == 4 && ((((a326 == 32 && (((input == 9) &&  cf==1 ) && a446 == 32)) && a263 == 7) && a369 == 2) && a228 == 4))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
     	cf = 0;
@@ -19759,10 +19759,10 @@
     	a379 = 32 ;
     	a399 = 4;
     	a150 = 13; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm8(int input) {
+ void calculate_outputm8(int8_t  input) {
     if((((a246 == 7 && ((a431 == 32 && (( cf==1  && a305 == 7) && a366 == 32)) && a346 == 2)) && a337 == 5) && a585 == 32)) {
     	if((((a346 == 2 && (a419 == 32 && a546 == 32)) && a244 == 8) && ((( cf==1  && a250 == 36) && a477 == 32) && a277 == 8))) {
     		calculate_outputm106(input);
@@ -19814,7 +19814,7 @@
     	} 
     } 
 }
- void calculate_outputm119(int input) {
+ void calculate_outputm119(int8_t  input) {
     if(((( cf==1  && (input == 1)) && a554 == 32) && (a464 == 32 && (((a246 == 7 && a310 == 2) && a458 == 32) && a505 == 32)))) {
     	a76 += (a76 + 20) > a76 ? 4 : 0;
     	cf = 0;
@@ -19825,10 +19825,10 @@
     	a464 = 34 ;
     	a18 = 11;
     	a151 = 12; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm121(int input) {
+ void calculate_outputm121(int8_t  input) {
     if((((a402 == 32 && a508 == 32) && a404 == 32) && (a369 == 2 && (a206 == 10 && (((input == 5) &&  cf==1 ) && a274 == 4))))) {
     	a171 -= (a171 - 20) < a171 ? 1 : 0;
     	cf = 0;
@@ -19986,7 +19986,7 @@
     	a374 = 7;
     	a356 = 10;
     	a118 = 9;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((((a203 == 3 && a313 == 2) && a518 == 32) && a592 == 32) && ((((input == 10) &&  cf==1 ) && a375 == 32) && a458 == 32))) {
     	a148 += (a148 + 20) > a148 ? 4 : 0;
@@ -19995,7 +19995,7 @@
     	a49 = 8;
     	a116 = 32 ;
     	a87 = 3; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a244 == 8 && a270 == 5) && ((a359 == 10 && ((((input == 6) &&  cf==1 ) && a480 == 32) && a407 == 32)) && a366 == 32))) {
     	a29 += (a29 + 20) > a29 ? 1 : 0;
@@ -20066,7 +20066,7 @@
     	a274 = 5;
     	a477 = 34 ;
     	a305 = 11; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a431 == 32 && (a247 == 11 && (a263 == 7 && a558 == 32))) && (a346 == 2 && (( cf==1  && (input == 2)) && a464 == 32)))) {
     	cf = 0;
@@ -20117,10 +20117,10 @@
     	a274 = 5;
     	a233 = 8;
     	a319 = 2; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm122(int input) {
+ void calculate_outputm122(int8_t  input) {
     if((((a274 == 4 && a253 == 7) && a295 == 10) && (a521 == 32 && ((((input == 9) &&  cf==1 ) && a262 == 32) && a345 == 10)))) {
     	a85 += (a85 + 20) > a85 ? 4 : 0;
     	cf = 0;
@@ -20133,10 +20133,10 @@
     	a532 = 34 ;
     	a482 = 34 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm123(int input) {
+ void calculate_outputm123(int8_t  input) {
     if(((a507 == 32 && (((input == 8) &&  cf==1 ) && a510 == 32)) && ((a203 == 3 && (a234 == 11 && a334 == 8)) && a382 == 4))) {
     	cf = 0;
     	a486 = 33 ;
@@ -20247,7 +20247,7 @@
     	a368 = 5;
     	a1 = 33 ;
     	a39 = 7; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a246 == 7 && a486 == 32) && a216 == 32) && ((a246 == 7 && (( cf==1  && (input == 1)) && a445 == 32)) && a282 == 8))) {
     	a96 -= (a96 - 20) < a96 ? 4 : 0;
@@ -20292,7 +20292,7 @@
     	a594 = 34 ;
     	a323 = 12;
     	a49 = 7; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a373 == 4 && a277 == 8) && a431 == 32) && ((a259 == 9 && (( cf==1  && (input == 5)) && a270 == 5)) && a520 == 32))) {
     	cf = 0;
@@ -20380,10 +20380,10 @@
     	a254 = 32 ;
     	a464 = 32 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm124(int input) {
+ void calculate_outputm124(int8_t  input) {
     if(((a510 == 32 && (((( cf==1  && (input == 10)) && a465 == 32) && a213 == 3) && a289 == 3)) && (a236 == 7 && a236 == 7))) {
     	a184 += (a184 + 20) > a184 ? 2 : 0;
     	cf = 0;
@@ -20407,7 +20407,7 @@
     	a254 = 34 ;
     	a502 = 33 ;
     	a23 = 13; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a282 == 8 && a297 == 5) && ((a206 == 10 && (a594 == 32 && (a578 == 32 && ( cf==1  && (input == 5))))) && a554 == 32))) {
     	a85 += (a85 + 20) > a85 ? 1 : 0;
@@ -20460,10 +20460,10 @@
     	a323 = 11;
     	a435 = 32 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm126(int input) {
+ void calculate_outputm126(int8_t  input) {
     if((((a518 == 32 && ( cf==1  && (input == 7))) && a324 == 6) && (a330 == 7 && ((a493 == 32 && a358 == 7) && a411 == 32)))) {
     	a29 += (a29 + 20) > a29 ? 4 : 0;
     	cf = 0;
@@ -20572,7 +20572,7 @@
     	a359 = 9;
     	a18 = 13;
     	a125 = 14; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((( cf==1  && (input == 9)) && a228 == 4) && (a379 == 32 && (a215 == 32 && (a348 == 5 && (a318 == 32 && a313 == 2)))))) {
     	a2 -= (a2 - 20) < a2 ? 3 : 0;
@@ -20606,7 +20606,7 @@
     	a326 = 34 ;
     	a365 = 3;
     	a202 = 6; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a404 == 32 && ((a318 == 32 && ((input == 6) &&  cf==1 )) && a508 == 32)) && (a558 == 32 && (a206 == 10 && a330 == 7)))) {
     	a148 += (a148 + 20) > a148 ? 4 : 0;
@@ -20656,7 +20656,7 @@
     	a396 = 7;
     	a477 = 33 ;
     	a342 = 8; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a585 == 32 && (a259 == 9 && ((a528 == 32 && a431 == 32) && a477 == 32))) && (((input == 10) &&  cf==1 ) && a582 == 32))) {
     	cf = 0;
@@ -20705,10 +20705,10 @@
     	a369 = 2;
     	a367 = 3;
     	a342 = 8; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm9(int input) {
+ void calculate_outputm9(int8_t  input) {
     if(((a544 == 32 && (a270 == 5 && ( cf==1  && a202 == 6))) && (a407 == 32 && (a464 == 32 && (a336 == 11 && a373 == 4))))) {
     	if((((a228 == 4 && ((a136 == 35 &&  cf==1 ) && a206 == 10)) && a556 == 32) && (a458 == 32 && (a602 == 32 && a402 == 32)))) {
     		calculate_outputm119(input);
@@ -20736,7 +20736,7 @@
     	} 
     } 
 }
- void calculate_outputm128(int input) {
+ void calculate_outputm128(int8_t  input) {
     if(((a234 == 11 && (a233 == 7 && (a578 == 32 && (a223 == 9 && a209 == 5)))) && (a474 == 32 && ((input == 8) &&  cf==1 )))) {
     	a76 -= (a76 - 20) < a76 ? 2 : 0;
     	cf = 0;
@@ -20849,10 +20849,10 @@
     	a26 = 9;
     	a209 = 5;
     	a39 = 7; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm129(int input) {
+ void calculate_outputm129(int8_t  input) {
     if((a505 == 32 && (a482 == 32 && (a229 == 4 && (((((input == 9) &&  cf==1 ) && a370 == 4) && a477 == 32) && a585 == 32))))) {
     	a29 += (a29 + 20) > a29 ? 1 : 0;
     	cf = 0;
@@ -20961,7 +20961,7 @@
     	a246 = 7;
     	a465 = 32 ;
     	a125 = 14; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a262 == 32 && (a411 == 32 && a556 == 32)) && (a477 == 32 && ((((input == 10) &&  cf==1 ) && a282 == 8) && a206 == 10)))) {
     	cf = 0;
@@ -21047,7 +21047,7 @@
     	a482 = 34 ;
     	a366 = 33 ;
     	a283 = 10; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((((a330 == 7 && a247 == 11) && a246 == 7) && a446 == 32) && ((( cf==1  && (input == 8)) && a498 == 32) && a373 == 4))) {
     	a91 -= (a91 - 20) < a91 ? 3 : 0;
@@ -21104,7 +21104,7 @@
     	a477 = 33 ;
     	a587 = 32 ;
     	a342 = 8; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a434 == 32 && (a236 == 7 && (((input == 2) &&  cf==1 ) && a345 == 10))) && ((a380 == 4 && a323 == 11) && a404 == 32))) {
     	a29 += (a29 + 20) > a29 ? 4 : 0;
@@ -21221,10 +21221,10 @@
     	a289 = 3;
     	a364 = 9;
     	a94 = 5; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm130(int input) {
+ void calculate_outputm130(int8_t  input) {
     if(((a594 == 32 && (a477 == 32 && a482 == 32)) && (a375 == 32 && (a494 == 32 && (( cf==1  && (input == 6)) && a516 == 32))))) {
     	a148 += (a148 + 20) > a148 ? 1 : 0;
     	cf = 0;
@@ -21329,7 +21329,7 @@
     	a592 = 32 ;
     	a313 = 3;
     	a337 = 5; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((((a364 == 8 && ((a474 == 32 && a241 == 7) && a520 == 32)) && a253 == 7) && a400 == 8) && ((input == 1) &&  cf==1 ))) {
     	a85 += (a85 + 20) > a85 ? 4 : 0;
@@ -21343,10 +21343,10 @@
     	a94 = 5;
     	a307 = 32 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm131(int input) {
+ void calculate_outputm131(int8_t  input) {
     if((((a578 == 32 && (a556 == 32 && ((input == 6) &&  cf==1 ))) && a220 == 32) && ((a346 == 2 && a520 == 32) && a558 == 32))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
     	cf = 0;
@@ -21405,10 +21405,10 @@
     	a366 = 33 ;
     	a554 = 32 ;
     	a357 = 10; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm10(int input) {
+ void calculate_outputm10(int8_t  input) {
     if(((a228 == 4 && (a558 == 32 && ((a602 == 32 && a399 == 4) && a263 == 7))) && (( cf==1  && a1 == 32) && a465 == 32))) {
     	if(((a203 == 3 && (a592 == 32 && ((a464 == 32 && (a398 == 3 && a498 == 32)) && a419 == 32))) && (a129 == 33 &&  cf==1 ))) {
     		calculate_outputm128(input);
@@ -21426,7 +21426,7 @@
     	} 
     } 
 }
- void calculate_outputm134(int input) {
+ void calculate_outputm134(int8_t  input) {
     if(((a356 == 9 && a317 == 6) && ((a404 == 32 && ((a416 == 32 && ((input == 5) &&  cf==1 )) && a453 == 32)) && a246 == 7))) {
     	a186 -= (a186 - 20) < a186 ? 1 : 0;
     	cf = 0;
@@ -21461,7 +21461,7 @@
     	a326 = 34 ;
     	a26 = 5;
     	a49 = 7; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((( cf==1  && (input == 9)) && a578 == 32) && (a262 == 32 && (a502 == 32 && ((a254 == 32 && a453 == 32) && a317 == 6))))) {
     	cf = 0;
@@ -21496,7 +21496,7 @@
     	a26 = 5;
     	a310 = 3;
     	a49 = 7; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a233 == 7 && ((a521 == 32 && ( cf==1  && (input == 7))) && a263 == 7)) && (a544 == 32 && (a326 == 32 && a399 == 4)))) {
     	a171 -= (a171 - 20) < a171 ? 4 : 0;
@@ -21567,10 +21567,10 @@
     	a532 = 34 ;
     	a375 = 32 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm135(int input) {
+ void calculate_outputm135(int8_t  input) {
     if(((a310 == 2 && (a399 == 4 && (a220 == 32 && ( cf==1  && (input == 10))))) && (a241 == 7 && (a364 == 8 && a384 == 3)))) {
     	cf = 0;
     	a446 = 32 ;
@@ -21677,7 +21677,7 @@
     	a402 = 32 ;
     	a376 = 4;
     	a393 = 13; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a407 == 32 && (((input == 7) &&  cf==1 ) && a396 == 7)) && a253 == 7) && (a310 == 2 && (a297 == 5 && a280 == 32)))) {
     	a148 += (a148 + 20) > a148 ? 2 : 0;
@@ -21694,7 +21694,7 @@
     	a205 = 8;
     	a602 = 34 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a445 == 32 && a323 == 11) && ((a233 == 7 && ((( cf==1  && (input == 6)) && a334 == 8) && a398 == 3)) && a254 == 32))) {
     	cf = 0;
@@ -21710,10 +21710,10 @@
     	a233 = 6;
     	a477 = 33 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm137(int input) {
+ void calculate_outputm137(int8_t  input) {
     if(((a416 == 32 && (( cf==1  && (input == 5)) && a334 == 8)) && ((a521 == 32 && (a477 == 32 && a317 == 6)) && a252 == 11))) {
     	a171 -= (a171 - 20) < a171 ? 2 : 0;
     	cf = 0;
@@ -21727,7 +21727,7 @@
     	a18 = 14;
     	a205 = 8;
     	a56 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a280 == 32 && (a365 == 2 && a277 == 8)) && ((a227 == 32 && (( cf==1  && (input == 9)) && a528 == 32)) && a205 == 9))) {
     	cf = 0;
@@ -21741,10 +21741,10 @@
     	a307 = 32 ;
     	a498 = 34 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm138(int input) {
+ void calculate_outputm138(int8_t  input) {
     if(((((input == 7) &&  cf==1 ) && a282 == 8) && (a252 == 11 && ((a464 == 32 && (a384 == 3 && a244 == 8)) && a205 == 9)))) {
     	cf = 0;
     	a49 = 6;
@@ -21810,7 +21810,7 @@
     	a297 = 5;
     	a400 = 7;
     	a363 = 4; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a310 == 2 && (a486 == 32 && a399 == 4)) && a374 == 8) && ((((input == 9) &&  cf==1 ) && a510 == 32) && a281 == 2))) {
     	a179 += (a179 + 20) > a179 ? 4 : 0;
@@ -21830,7 +21830,7 @@
     	a238 = 33 ;
     	a558 = 34 ;
     	a347 = 16; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a463 == 32 && (a206 == 10 && (a260 == 8 && a558 == 32))) && (a205 == 9 && (((input == 2) &&  cf==1 ) && a498 == 32)))) {
     	cf = 0;
@@ -21913,7 +21913,7 @@
     	a463 = 33 ;
     	a262 = 33 ;
     	a99 = 1; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a233 == 7 && ((a346 == 2 && ((input == 1) &&  cf==1 )) && a324 == 6)) && a253 == 7) && (a310 == 2 && a206 == 10))) {
     	a179 -= (a179 - 20) < a179 ? 2 : 0;
@@ -22015,10 +22015,10 @@
     	a254 = 33 ;
     	a348 = 6;
     	a283 = 10; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm140(int input) {
+ void calculate_outputm140(int8_t  input) {
     if(((a274 == 4 && a336 == 11) && (a494 == 32 && ((a463 == 32 && (a336 == 11 && ((input == 8) &&  cf==1 ))) && a465 == 32)))) {
     	a96 += (a96 + 20) > a96 ? 1 : 0;
     	cf = 0;
@@ -22077,7 +22077,7 @@
     	a18 = 16;
     	a520 = 34 ;
     	a49 = 4; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((((a229 == 4 && ( cf==1  && (input == 7))) && a205 == 9) && ((a346 == 2 && (a379 == 32 && a477 == 32)) && a398 == 3))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -22143,10 +22143,10 @@
     	a521 = 33 ;
     	a203 = 3;
     	a99 = 1; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm141(int input) {
+ void calculate_outputm141(int8_t  input) {
     if((a203 == 3 && (a398 == 3 && ((a516 == 32 && (a364 == 8 && (((input == 6) &&  cf==1 ) && a594 == 32))) && a399 == 4)))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
     	cf = 0;
@@ -22200,7 +22200,7 @@
     	a528 = 32 ;
     	a271 = 33 ;
     	a123 = 10;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a419 == 32 && (((input == 10) &&  cf==1 ) && a445 == 32)) && a475 == 32) && (a592 == 32 && (a241 == 7 && a295 == 10)))) {
     	a29 += (a29 + 20) > a29 ? 4 : 0;
@@ -22235,7 +22235,7 @@
     	a215 = 32 ;
     	a270 = 5;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a465 == 32 && ((a384 == 3 && (a463 == 32 && a201 == 5)) && a226 == 3)) && (a223 == 9 && ( cf==1  && (input == 9))))) {
     	a186 -= (a186 - 20) < a186 ? 4 : 0;
@@ -22248,10 +22248,10 @@
     	a214 = 3;
     	a247 = 11;
     	a103 = 16; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm11(int input) {
+ void calculate_outputm11(int8_t  input) {
     if((((a244 == 8 && (( cf==1  && a59 == 11) && a247 == 11)) && a508 == 32) && (a475 == 32 && (a317 == 6 && a366 == 32)))) {
     	if(((a280 == 32 && a482 == 32) && (a407 == 32 && ((a323 == 11 && (( cf==1  && a170 == 33) && a560 == 32)) && a380 == 4)))) {
     		calculate_outputm134(input);
@@ -22277,7 +22277,7 @@
     	} 
     } 
 }
- void calculate_outputm143(int input) {
+ void calculate_outputm143(int8_t  input) {
     if(((((input == 7) &&  cf==1 ) && a480 == 32) && (a228 == 4 && (a234 == 11 && (a418 == 32 && (a297 == 5 && a313 == 2)))))) {
     	a184 -= (a184 - 20) < a184 ? 2 : 0;
     	cf = 0;
@@ -22340,7 +22340,7 @@
     	a402 = 32 ;
     	a280 = 32 ;
     	a49 = 4; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a205 == 9 && (((a353 == 3 && ( cf==1  && (input == 5))) && a399 == 4) && a416 == 32)) && (a274 == 4 && a346 == 2))) {
     	cf = 0;
@@ -22411,10 +22411,10 @@
     	a418 = 33 ;
     	a376 = 3;
     	a118 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm144(int input) {
+ void calculate_outputm144(int8_t  input) {
     if((((((a480 == 32 && a463 == 32) && a209 == 5) && a236 == 7) && a520 == 32) && (((input == 7) &&  cf==1 ) && a585 == 32))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
     	cf = 0;
@@ -22481,7 +22481,7 @@
     	a516 = 34 ;
     	a252 = 12;
     	a49 = 2; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a277 == 8 && (a399 == 4 && a594 == 32)) && ((a274 == 4 && (( cf==1  && (input == 8)) && a379 == 32)) && a317 == 6))) {
     	a91 -= (a91 - 20) < a91 ? 2 : 0;
@@ -22514,7 +22514,7 @@
     	a476 = 32 ;
     	a260 = 8;
     	a123 = 10; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a521 == 32 && (a528 == 32 && (a226 == 3 && ((input == 9) &&  cf==1 )))) && a312 == 2) && (a334 == 8 && a419 == 32))) {
     	a184 -= (a184 - 20) < a184 ? 4 : 0;
@@ -22631,7 +22631,7 @@
     	a227 = 32 ;
     	a419 = 32 ;
     	a39 = 7; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a585 == 32 && (a374 == 8 && a201 == 5)) && (((a317 == 6 && ((input == 10) &&  cf==1 )) && a532 == 32) && a252 == 11))) {
     	a29 += (a29 + 20) > a29 ? 3 : 0;
@@ -22698,10 +22698,10 @@
     	a262 = 34 ;
     	a337 = 5;
     	a23 = 13; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm146(int input) {
+ void calculate_outputm146(int8_t  input) {
     if(((((a375 == 32 && a364 == 8) && a418 == 32) && a323 == 11) && ((a521 == 32 && ( cf==1  && (input == 7))) && a594 == 32))) {
     	a73 -= (a73 - 20) < a73 ? 2 : 0;
     	cf = 0;
@@ -22806,7 +22806,7 @@
     	a578 = 32 ;
     	a312 = 2;
     	a355 = 11; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((((a254 == 32 && a508 == 32) && a326 == 32) && a317 == 6) && (a353 == 3 && (((input == 9) &&  cf==1 ) && a379 == 32)))) {
     	a184 -= (a184 - 20) < a184 ? 4 : 0;
@@ -22877,7 +22877,7 @@
     	a220 = 32 ;
     	a317 = 7;
     	a49 = 4; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a253 == 7 && (a330 == 7 && (a445 == 32 && a482 == 32))) && ((( cf==1  && (input == 6)) && a227 == 32) && a294 == 32))) {
     	a171 -= (a171 - 20) < a171 ? 2 : 0;
@@ -22983,10 +22983,10 @@
     	a518 = 34 ;
     	a358 = 7;
     	a355 = 11; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm147(int input) {
+ void calculate_outputm147(int8_t  input) {
     if(((a206 == 10 && (a262 == 32 && (a220 == 32 && a317 == 6))) && (a313 == 2 && (((input == 10) &&  cf==1 ) && a312 == 2)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a179 += (a179 + 20) > a179 ? 3 : 0;
@@ -23064,7 +23064,7 @@
     	a122 = 34 ;
     	a185 = 33 ;
     	a18 = 9;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a263 == 7 && (a521 == 32 && a242 == 3)) && (a585 == 32 && (a482 == 32 && (a458 == 32 && ((input == 5) &&  cf==1 )))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -23088,7 +23088,7 @@
     	a270 = 5;
     	a416 = 33 ;
     	a143 = 17; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a520 == 32 && a214 == 3) && (a364 == 8 && (((((input == 3) &&  cf==1 ) && a399 == 4) && a510 == 32) && a493 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -23107,7 +23107,7 @@
     	a38 = 36 ;
     	a271 = 35 ;
     	a18 = 15; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a368 == 5 && ((a236 == 7 && a554 == 32) && a404 == 32)) && a324 == 6) && (a446 == 32 && ( cf==1  && (input == 9))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -23230,7 +23230,7 @@
     	a477 = 32 ;
     	a464 = 34 ;
     	a94 = 1; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a375 == 32 && (a416 == 32 && (a556 == 32 && a404 == 32))) && (a375 == 32 && (((input == 7) &&  cf==1 ) && a229 == 4)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -23467,7 +23467,7 @@
     	a252 = 17;
     	a227 = 35 ;
     	a52 = 11;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a304 == 6 && ( cf==1  && (input == 6))) && ((((a474 == 32 && a446 == 32) && a482 == 32) && a218 == 6) && a270 == 5))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -23581,7 +23581,7 @@
     	a594 = 35 ;
     	a228 = 4;
     	a99 = 1;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a464 == 32 && (a399 == 4 && (a411 == 32 && (a382 == 4 && ((input == 2) &&  cf==1 ))))) && (a516 == 32 && a585 == 32))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -23706,7 +23706,7 @@
     	a368 = 10;
     	a505 = 32 ;
     	a49 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a546 == 32 && (a233 == 7 && (a521 == 32 && ( cf==1  && (input == 4))))) && (a464 == 32 && (a318 == 32 && a546 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -23813,7 +23813,7 @@
     	a418 = 34 ;
     	a331 = 32 ;
     	a94 = 7; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a274 == 4 && (((input == 1) &&  cf==1 ) && a220 == 32)) && (a396 == 7 && (a516 == 32 && (a376 == 4 && a310 == 2))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -24039,7 +24039,7 @@
     	a560 = 32 ;
     	a270 = 10;
     	a69 = 10;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a297 == 5 && (a396 == 7 && ( cf==1  && (input == 8)))) && a358 == 7) && ((a432 == 32 && a445 == 32) && a345 == 10))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -24101,10 +24101,10 @@
     	a393 = 14;
     	a59 = 12;
     	a264 = 13;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm148(int input) {
+ void calculate_outputm148(int8_t  input) {
     if(((((((input == 6) &&  cf==1 ) && a486 == 32) && a582 == 32) && a365 == 2) && ((a260 == 8 && a337 == 5) && a206 == 10))) {
     	cf = 0;
     	a446 = 33 ;
@@ -24116,10 +24116,10 @@
     	a396 = 6;
     	a49 = 6;
     	a70 = 6; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm12(int input) {
+ void calculate_outputm12(int8_t  input) {
     if(((((a507 == 32 && a348 == 5) && a252 == 11) && a323 == 11) && ((a435 == 32 && (a52 == 7 &&  cf==1 )) && a313 == 2))) {
     	if(((a228 == 4 && (a465 == 32 && (a201 == 5 && a295 == 10))) && (a379 == 32 && (a376 == 4 && (a159 == 34 &&  cf==1 ))))) {
     		calculate_outputm143(input);
@@ -24144,7 +24144,7 @@
     	} 
     } 
 }
- void calculate_outputm150(int input) {
+ void calculate_outputm150(int8_t  input) {
     if(((a282 == 8 && ((a465 == 32 && (a336 == 11 && a498 == 32)) && a453 == 32)) && (a602 == 32 && ((input == 8) &&  cf==1 )))) {
     	a113 -= (a113 - 20) < a113 ? 3 : 0;
     	cf = 0;
@@ -24173,10 +24173,10 @@
     	a282 = 9;
     	a281 = 3;
     	a160 = 12; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm151(int input) {
+ void calculate_outputm151(int8_t  input) {
     if(((a480 == 32 && (a213 == 3 && ((a274 == 4 && ( cf==1  && (input == 1))) && a493 == 32))) && (a259 == 9 && a578 == 32))) {
     	a96 += (a96 + 20) > a96 ? 1 : 0;
     	cf = 0;
@@ -24264,7 +24264,7 @@
     	a370 = 3;
     	a337 = 4;
     	a26 = 4; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a554 == 32 && (a236 == 7 && a474 == 32)) && a277 == 8) && (a206 == 10 && (((input == 8) &&  cf==1 ) && a402 == 32)))) {
     	a65 -= (a65 - 20) < a65 ? 3 : 0;
@@ -24322,7 +24322,7 @@
     	a431 = 32 ;
     	a516 = 33 ;
     	a33 = 5; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if((((a242 == 3 && (a220 == 32 && (((input == 10) &&  cf==1 ) && a587 == 32))) && a398 == 3) && (a384 == 3 && a585 == 32))) {
     	a184 -= (a184 - 20) < a184 ? 1 : 0;
@@ -24367,7 +24367,7 @@
     	a227 = 33 ;
     	a356 = 9;
     	a49 = 9; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 2)) && a544 == 32) && a464 == 32) && ((a226 == 3 && (a474 == 32 && a431 == 32)) && a346 == 2))) {
     	a113 -= (a113 - 20) < a113 ? 3 : 0;
@@ -24453,7 +24453,7 @@
     	a480 = 32 ;
     	a364 = 8;
     	a357 = 10; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((((a209 == 5 && a297 == 5) && a370 == 4) && (((a282 == 8 && ((input == 5) &&  cf==1 )) && a254 == 32) && a586 == 32)) && a148 <= -9)) {
     	a148 += (a148 + 20) > a148 ? 1 : 0;
@@ -24461,7 +24461,7 @@
     	a80 = 32 ;
     	a393 = 9;
     	a357 = 13; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a520 == 32 && ((input == 3) &&  cf==1 )) && a227 == 32) && (((a380 == 4 && a558 == 32) && a369 == 2) && a323 == 11))) {
     	a76 += (a76 + 20) > a76 ? 3 : 0;
@@ -24484,7 +24484,7 @@
     	a274 = 5;
     	a411 = 34 ;
     	a44 = 15; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((((((input == 9) &&  cf==1 ) && a502 == 32) && a399 == 4) && ((a458 == 32 && (a431 == 32 && a280 == 32)) && a253 == 7)) && a171 >= 0)) {
     	cf = 0;
@@ -24492,10 +24492,10 @@
     	a18 = 16;
     	a49 = 5;
     	a303 = 5; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm152(int input) {
+ void calculate_outputm152(int8_t  input) {
     if((((a560 == 32 && a216 == 32) && a376 == 4) && (((a494 == 32 && ((input == 8) &&  cf==1 )) && a244 == 8) && a236 == 7))) {
     	a184 -= (a184 - 20) < a184 ? 2 : 0;
     	cf = 0;
@@ -24573,7 +24573,7 @@
     	a348 = 6;
     	a518 = 34 ;
     	a372 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a370 == 4 && (a477 == 32 && a508 == 32)) && (a518 == 32 && (a260 == 8 && (a578 == 32 && ((input == 7) &&  cf==1 )))))) {
     	a171 -= (a171 - 20) < a171 ? 3 : 0;
@@ -24650,7 +24650,7 @@
     	a323 = 11;
     	a458 = 34 ;
     	a305 = 13; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((((( cf==1  && (input == 9)) && a558 == 32) && a295 == 10) && a373 == 4) && ((a587 == 32 && a334 == 8) && a382 == 4))) {
     	a76 -= (a76 - 20) < a76 ? 1 : 0;
@@ -24689,10 +24689,10 @@
     	a370 = 5;
     	a486 = 34 ;
     	a26 = 11; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm153(int input) {
+ void calculate_outputm153(int8_t  input) {
     if((((a366 == 32 && a366 == 32) && a510 == 32) && (a274 == 4 && ((( cf==1  && (input == 1)) && a336 == 11) && a209 == 5)))) {
     	a2 -= (a2 - 20) < a2 ? 3 : 0;
     	cf = 0;
@@ -24804,7 +24804,7 @@
     	a434 = 34 ;
     	a262 = 34 ;
     	a160 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a348 == 5 && (a215 == 32 && (a602 == 32 && a528 == 32))) && a346 == 2) && (((input == 8) &&  cf==1 ) && a374 == 8))) {
     	a73 -= (a73 - 20) < a73 ? 2 : 0;
@@ -24921,7 +24921,7 @@
     	a379 = 32 ;
     	a434 = 32 ;
     	a308 = 14; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((((input == 2) &&  cf==1 ) && a236 == 7) && (a493 == 32 && (((a242 == 3 && a458 == 32) && a310 == 2) && a463 == 32)))) {
     	a29 += (a29 + 20) > a29 ? 1 : 0;
@@ -24935,10 +24935,10 @@
     	a26 = 6;
     	a18 = 11;
     	a290 = 14; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm154(int input) {
+ void calculate_outputm154(int8_t  input) {
     if(((a578 == 32 && ((a380 == 4 && a418 == 32) && a464 == 32)) && ((( cf==1  && (input == 10)) && a477 == 32) && a253 == 7))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
     	cf = 0;
@@ -25051,7 +25051,7 @@
     	a214 = 2;
     	a498 = 34 ;
     	a151 = 6; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a418 == 32 && ((((input == 1) &&  cf==1 ) && a544 == 32) && a476 == 32)) && a356 == 9) && (a356 == 9 && a582 == 32))) {
     	a91 -= (a91 - 20) < a91 ? 1 : 0;
@@ -25176,7 +25176,7 @@
     	a242 = 3;
     	a295 = 11;
     	a26 = 4; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a218 == 6 && (((input == 5) &&  cf==1 ) && a477 == 32)) && (a560 == 32 && ((a493 == 32 && a399 == 4) && a358 == 7)))) {
     	a29 += (a29 + 20) > a29 ? 3 : 0;
@@ -25283,7 +25283,7 @@
     	a312 = 2;
     	a353 = 2;
     	a94 = 1; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((((input == 7) &&  cf==1 ) && a348 == 5) && a318 == 32) && a399 == 4) && (a374 == 8 && (a254 == 32 && a582 == 32)))) {
     	cf = 0;
@@ -25449,10 +25449,10 @@
     	a602 = 32 ;
     	a518 = 32 ;
     	a319 = 6;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm155(int input) {
+ void calculate_outputm155(int8_t  input) {
     if(((((a518 == 32 && (a228 == 4 && a295 == 10)) && a313 == 2) && a260 == 8) && (( cf==1  && (input == 9)) && a376 == 4))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 += (a104 + 20) > a104 ? 1 : 0;
@@ -25487,7 +25487,7 @@
     	a18 = 12;
     	a254 = 34 ;
     	a47 = 4; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((((a289 == 3 && a398 == 3) && a380 == 4) && a476 == 32) && ((( cf==1  && (input == 3)) && a396 == 7) && a516 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -25505,7 +25505,7 @@
     	a183 = 12;
     	a26 = 5;
     	a322 = 6; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a498 == 32 && a246 == 7) && ((a334 == 8 && (a326 == 32 && (a247 == 11 && ((input == 8) &&  cf==1 )))) && a281 == 2))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -25526,7 +25526,7 @@
     	a18 = 9;
     	a190 = 32 ;
     	a121 = 12; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((((( cf==1  && (input == 1)) && a587 == 32) && a494 == 32) && a521 == 32) && ((a368 == 5 && a241 == 7) && a482 == 32))) {
     	a96 += (a96 + 20) > a96 ? 2 : 0;
@@ -25547,7 +25547,7 @@
     	a18 = 16;
     	a352 = 34 ;
     	a49 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a464 == 32 && (a419 == 32 && (a520 == 32 && (a396 == 7 && ( cf==1  && (input == 6)))))) && (a234 == 11 && a282 == 8))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -25567,7 +25567,7 @@
     	a190 = 32 ;
     	a18 = 9;
     	a121 = 12; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a209 == 5 && (a510 == 32 && a270 == 5)) && a324 == 6) && ((a532 == 32 && ((input == 7) &&  cf==1 )) && a380 == 4))) {
     	a88 += (a88 + 20) > a88 ? 1 : 0;
@@ -25686,7 +25686,7 @@
     	a326 = 32 ;
     	a494 = 34 ;
     	a118 = 10; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a505 == 32 && (a493 == 32 && (a277 == 8 && a364 == 8))) && (a318 == 32 && (a201 == 5 && ( cf==1  && (input == 2)))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -25828,7 +25828,7 @@
     	a72 = 35 ;
     	a281 = 8;
     	a18 = 9;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((((a411 == 32 && ((input == 4) &&  cf==1 )) && a507 == 32) && a587 == 32) && a380 == 4) && (a312 == 2 && a277 == 8))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -25942,7 +25942,7 @@
     	a216 = 32 ;
     	a544 = 34 ;
     	a118 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a345 == 10 && (a346 == 2 && (a337 == 5 && a480 == 32))) && (a270 == 5 && (((input == 10) &&  cf==1 ) && a297 == 5)))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -26124,7 +26124,7 @@
     	a416 = 33 ;
     	a578 = 35 ;
     	a23 = 13;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a374 == 8 && (a227 == 32 && a234 == 11)) && a366 == 32) && (a418 == 32 && (((input == 5) &&  cf==1 ) && a241 == 7)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -26230,10 +26230,10 @@
     	a234 = 16;
     	a554 = 36 ;
     	a4 = 11; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm157(int input) {
+ void calculate_outputm157(int8_t  input) {
     if((((a476 == 32 && a274 == 4) && a508 == 32) && (((a241 == 7 && ((input == 8) &&  cf==1 )) && a254 == 32) && a201 == 5))) {
     	a171 -= (a171 - 20) < a171 ? 4 : 0;
     	cf = 0;
@@ -26355,7 +26355,7 @@
     	a374 = 9;
     	a370 = 5;
     	a160 = 12;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a398 == 3 && (a376 == 4 && ( cf==1  && (input == 6)))) && ((a416 == 32 && (a312 == 2 && a507 == 32)) && a209 == 5))) {
     	a148 -= (a148 - 20) < a148 ? 2 : 0;
@@ -26438,7 +26438,7 @@
     	a493 = 32 ;
     	a310 = 1;
     	a118 = 9; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((((a359 == 10 && ((input == 9) &&  cf==1 )) && a216 == 32) && a280 == 32) && ((a336 == 11 && a236 == 7) && a241 == 7))) {
     	a171 -= (a171 - 20) < a171 ? 4 : 0;
@@ -26521,7 +26521,7 @@
     	a323 = 12;
     	a356 = 10;
     	a118 = 9; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a416 == 32 && (a216 == 32 && ( cf==1  && (input == 10)))) && (a236 == 7 && ((a295 == 10 && a262 == 32) && a434 == 32)))) {
     	a148 += (a148 + 20) > a148 ? 1 : 0;
@@ -26586,10 +26586,10 @@
     	a348 = 6;
     	a400 = 7;
     	a49 = 4; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm158(int input) {
+ void calculate_outputm158(int8_t  input) {
     if(((a304 == 6 && a254 == 32) && (a480 == 32 && (((( cf==1  && (input == 5)) && a474 == 32) && a263 == 7) && a453 == 32)))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
     	cf = 0;
@@ -26678,10 +26678,10 @@
     	a528 = 32 ;
     	a294 = 32 ;
     	a303 = 9; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm159(int input) {
+ void calculate_outputm159(int8_t  input) {
     if((((a407 == 32 && ((input == 9) &&  cf==1 )) && a510 == 32) && (a582 == 32 && (a475 == 32 && (a592 == 32 && a220 == 32))))) {
     	cf = 0;
     	a582 = 34 ;
@@ -26698,10 +26698,10 @@
     	a592 = 33 ;
     	a238 = 33 ;
     	a347 = 16; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm13(int input) {
+ void calculate_outputm13(int8_t  input) {
     if(((a259 == 9 && (((a367 == 3 &&  cf==1 ) && a345 == 10) && a277 == 8)) && ((a411 == 32 && a480 == 32) && a297 == 5))) {
     	if(((a205 == 9 && (a281 == 2 && a432 == 32)) && (((a282 == 8 && (a342 == 3 &&  cf==1 )) && a334 == 8) && a445 == 32))) {
     		calculate_outputm150(input);
@@ -26740,7 +26740,7 @@
     	} 
     } 
 }
- void calculate_outputm160(int input) {
+ void calculate_outputm160(int8_t  input) {
     if((((a226 == 4 && a229 == 5) && a582 == 34) && (a366 == 34 && ((( cf==1  && (input == 6)) && a205 == 10) && a544 == 34)))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
     	cf = 0;
@@ -26787,7 +26787,7 @@
     	a366 = 32 ;
     	a528 = 32 ;
     	a123 = 10;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a348 == 6 && (a356 == 10 && ((input == 10) &&  cf==1 ))) && (a556 == 34 && ((a435 == 34 && a585 == 34) && a241 == 8)))) {
     	a85 += (a85 + 20) > a85 ? 1 : 0;
@@ -26851,7 +26851,7 @@
     	a400 = 8;
     	a585 = 32 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a326 == 34 && a280 == 34) && a346 == 3) && (a379 == 34 && (a532 == 34 && (( cf==1  && (input == 9)) && a418 == 34))))) {
     	a148 += (a148 + 20) > a148 ? 4 : 0;
@@ -26874,10 +26874,10 @@
     	a334 = 8;
     	a379 = 32 ;
     	a103 = 16; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm161(int input) {
+ void calculate_outputm161(int8_t  input) {
     if(((a228 == 5 && (a602 == 34 && (a376 == 5 && ((a214 == 4 && a384 == 4) && a216 == 34)))) && ((input == 7) &&  cf==1 ))) {
     	a65 -= (a65 - 20) < a65 ? 4 : 0;
     	cf = 0;
@@ -26977,7 +26977,7 @@
     	a544 = 33 ;
     	a252 = 12;
     	a59 = 11; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a376 == 5 && (a546 == 34 && a380 == 5)) && (((( cf==1  && (input == 2)) && a544 == 34) && a366 == 34) && a434 == 34))) {
     	cf = 0;
@@ -27030,10 +27030,10 @@
     	a215 = 32 ;
     	a214 = 2;
     	a47 = 6; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm162(int input) {
+ void calculate_outputm162(int8_t  input) {
     if((a402 == 34 && (a262 == 34 && (a520 == 34 && (((a505 == 34 && ( cf==1  && (input == 5))) && a374 == 9) && a416 == 34))))) {
     	cf = 0;
     	a220 = 34 ;
@@ -27145,7 +27145,7 @@
     	a585 = 34 ;
     	a582 = 32 ;
     	a144 = 8; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a407 == 34 && (( cf==1  && (input == 9)) && a246 == 8)) && (a482 == 34 && (a234 == 12 && (a532 == 34 && a498 == 34))))) {
     	a58 -= (a58 - 20) < a58 ? 1 : 0;
@@ -27174,7 +27174,7 @@
     	a337 = 5;
     	a233 = 7;
     	a123 = 10; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a263 == 8 && (((a244 == 9 && a544 == 34) && a336 == 12) && a486 == 34)) && (a486 == 34 && ( cf==1  && (input == 10))))) {
     	a171 += (a171 + 20) > a171 ? 1 : 0;
@@ -27247,10 +27247,10 @@
     	a18 = 13;
     	a336 = 12;
     	a23 = 10; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm163(int input) {
+ void calculate_outputm163(int8_t  input) {
     if(((a379 == 34 && a263 == 8) && (a214 == 4 && (a365 == 3 && ((a407 == 34 && ((input == 4) &&  cf==1 )) && a270 == 6))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a78 += (a78 + 20) > a78 ? 3 : 0;
@@ -27270,7 +27270,7 @@
     	a339 = 32 ;
     	a393 = 11;
     	a305 = 13; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((((input == 8) &&  cf==1 ) && a407 == 34) && (a592 == 34 && (a318 == 34 && (a312 == 3 && (a480 == 34 && a384 == 4)))))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -27484,7 +27484,7 @@
     	a418 = 36 ;
     	a432 = 36 ;
     	a77 = 34 ;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a356 == 10 && ((a476 == 34 && a587 == 34) && a404 == 34)) && ((((input == 3) &&  cf==1 ) && a476 == 34) && a480 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -27518,7 +27518,7 @@
     	a280 = 33 ;
     	a313 = 5;
     	a123 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a346 == 3 && (a337 == 6 && (a312 == 3 && ((input == 2) &&  cf==1 )))) && ((a233 == 8 && a336 == 12) && a592 == 34))) {
     	a88 += (a88 + 20) > a88 ? 3 : 0;
@@ -27659,7 +27659,7 @@
     	a369 = 6;
     	a407 = 36 ;
     	a314 = 13;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a364 == 9 && (a262 == 34 && (((input == 6) &&  cf==1 ) && a418 == 34))) && ((a508 == 34 && a262 == 34) && a218 == 7))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -27885,7 +27885,7 @@
     	a374 = 9;
     	a507 = 33 ;
     	a93 = 13;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a216 == 34 && (a336 == 12 && (a274 == 5 && (a364 == 9 && ((input == 1) &&  cf==1 ))))) && (a411 == 34 && a334 == 9))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -27908,7 +27908,7 @@
     	a52 = 8;
     	a18 = 13;
     	a44 = 10; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a546 == 34 && ( cf==1  && (input == 10))) && (a373 == 5 && (a274 == 5 && (a365 == 3 && (a348 == 6 && a419 == 34)))))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -28018,7 +28018,7 @@
     	a582 = 36 ;
     	a218 = 10;
     	a305 = 10; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((((a432 == 34 && ((input == 7) &&  cf==1 )) && a475 == 34) && a263 == 8) && (a353 == 4 && (a310 == 3 && a416 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -28258,7 +28258,7 @@
     	a353 = 4;
     	a295 = 13;
     	a18 = 12;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a253 == 8 && a206 == 11) && (a281 == 3 && ((a223 == 10 && (( cf==1  && (input == 5)) && a494 == 34)) && a446 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -28280,7 +28280,7 @@
     	a4 = 9;
     	a18 = 12;
     	a39 = 2; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a297 == 6 && (a398 == 4 && (((input == 9) &&  cf==1 ) && a368 == 6))) && ((a244 == 9 && a234 == 12) && a260 == 9))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -28362,10 +28362,10 @@
     	a364 = 13;
     	a384 = 6;
     	a347 = 16; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm164(int input) {
+ void calculate_outputm164(int8_t  input) {
     if((((a384 == 4 && a520 == 34) && a528 == 34) && (a477 == 34 && (a353 == 4 && (((input == 9) &&  cf==1 ) && a236 == 8))))) {
     	a2 -= (a2 - 20) < a2 ? 3 : 0;
     	cf = 0;
@@ -28465,7 +28465,7 @@
     	a396 = 6;
     	a399 = 4;
     	a70 = 6; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a399 == 5 && (a480 == 34 && ( cf==1  && (input == 2)))) && (((a229 == 5 && a507 == 34) && a226 == 4) && a416 == 34))) {
     	a96 += (a96 + 20) > a96 ? 2 : 0;
@@ -28494,7 +28494,7 @@
     	a353 = 3;
     	a544 = 32 ;
     	a49 = 4; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((( cf==1  && (input == 7)) && a205 == 10) && (a376 == 5 && (((a205 == 10 && a345 == 11) && a544 == 34) && a346 == 3)))) {
     	cf = 0;
@@ -28589,10 +28589,10 @@
     	a493 = 33 ;
     	a237 = 32 ;
     	a49 = 4; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm14(int input) {
+ void calculate_outputm14(int8_t  input) {
     if(((a228 == 5 && (a142 == 33 &&  cf==1 )) && (a585 == 34 && (((a369 == 3 && a259 == 10) && a556 == 34) && a376 == 5)))) {
     	if(((a396 == 8 && (a516 == 34 && a373 == 5)) && (a297 == 6 && ((a402 == 34 && ( cf==1  && a303 == 5)) && a274 == 5)))) {
     		calculate_outputm160(input);
@@ -28617,7 +28617,7 @@
     	} 
     } 
 }
- void calculate_outputm165(int input) {
+ void calculate_outputm165(int8_t  input) {
     if(((a246 == 8 && a418 == 34) && ((a445 == 34 && ((a365 == 3 && ( cf==1  && (input == 7))) && a247 == 12)) && a330 == 8))) {
     	cf = 0;
     	a94 = 5;
@@ -28662,7 +28662,7 @@
     	a307 = 32 ;
     	a295 = 10;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a475 == 34 && (a234 == 12 && (a368 == 6 && a592 == 34))) && (a508 == 34 && (((input == 6) &&  cf==1 ) && a465 == 34)))) {
     	a29 += (a29 + 20) > a29 ? 3 : 0;
@@ -28709,7 +28709,7 @@
     	a226 = 3;
     	a380 = 4;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((a498 == 34 && (a400 == 9 && (a312 == 3 && ((input == 10) &&  cf==1 )))) && a419 == 34) && a280 == 34) && a480 == 34)) {
     	a179 += (a179 + 20) > a179 ? 3 : 0;
@@ -28828,10 +28828,10 @@
     	a254 = 32 ;
     	a498 = 34 ;
     	a393 = 13; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm166(int input) {
+ void calculate_outputm166(int8_t  input) {
     if(((a326 == 34 && (a366 == 34 && a446 == 34)) && (a289 == 4 && (a402 == 34 && (a270 == 6 && ((input == 2) &&  cf==1 )))))) {
     	cf = 0;
     	a544 = 33 ;
@@ -28849,10 +28849,10 @@
     	a407 = 32 ;
     	a228 = 3;
     	a314 = 10; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm167(int input) {
+ void calculate_outputm167(int8_t  input) {
     if(((a233 == 8 && ((input == 1) &&  cf==1 )) && ((a594 == 34 && ((a586 == 34 && a214 == 4) && a375 == 34)) && a247 == 12))) {
     	cf = 0;
     	a260 = 8;
@@ -28878,10 +28878,10 @@
     	a376 = 4;
     	a158 = 36 ;
     	a26 = 4; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm168(int input) {
+ void calculate_outputm168(int8_t  input) {
     if(((a498 == 34 && (a407 == 34 && a373 == 5)) && (a373 == 5 && (a233 == 8 && (( cf==1  && (input == 1)) && a396 == 8))))) {
     	a85 += (a85 + 20) > a85 ? 3 : 0;
     	cf = 0;
@@ -28985,7 +28985,7 @@
     	a464 = 32 ;
     	a476 = 33 ;
     	a138 = 6; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a518 == 34 && (a277 == 9 && a510 == 34)) && (a475 == 34 && (a297 == 6 && (a233 == 8 && ((input == 9) &&  cf==1 )))))) {
     	a76 -= (a76 - 20) < a76 ? 1 : 0;
@@ -29096,7 +29096,7 @@
     	a602 = 34 ;
     	a348 = 6;
     	a18 = 9; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a259 == 10 && (a254 == 34 && a374 == 9)) && a398 == 4) && (a234 == 12 && (( cf==1  && (input == 10)) && a205 == 10)))) {
     	cf = 0;
@@ -29211,10 +29211,10 @@
     	a330 = 8;
     	a494 = 32 ;
     	a143 = 14; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm169(int input) {
+ void calculate_outputm169(int8_t  input) {
     if((((a370 == 5 && (a206 == 11 && a242 == 4)) && a384 == 4) && ((a330 == 8 && ((input == 1) &&  cf==1 )) && a365 == 3))) {
     	a120 += (a120 + 20) > a120 ? 4 : 0;
     	a91 += (a91 + 20) > a91 ? 2 : 0;
@@ -29236,7 +29236,7 @@
     	a518 = 33 ;
     	a39 = 6;
     	a117 = 3; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a337 == 6 && (a464 == 34 && (((a432 == 34 && a432 == 34) && a486 == 34) && a324 == 7))) && ((input == 5) &&  cf==1 ))) {
     	a50 += (a50 + 20) > a50 ? 4 : 0;
@@ -29327,10 +29327,10 @@
     	a253 = 6;
     	a407 = 34 ;
     	a26 = 10; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm171(int input) {
+ void calculate_outputm171(int8_t  input) {
     if((((a227 == 34 && ((input == 10) &&  cf==1 )) && (((a431 == 34 && (a380 == 5 && a463 == 34)) && a244 == 9) && a544 == 34)) && a120 == 9858)) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
     	cf = 0;
@@ -29338,7 +29338,7 @@
     	a52 = 8;
     	a127 = 33 ;
     	a393 = 16; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((((input == 1) &&  cf==1 ) && a369 == 3) && (a453 == 34 && ((a375 == 34 && (a215 == 34 && a582 == 34)) && a464 == 34)))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -29460,7 +29460,7 @@
     	a242 = 3;
     	a313 = 2;
     	a355 = 11; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a587 == 34 && (((input == 2) &&  cf==1 ) && a592 == 34)) && (a402 == 34 && (a270 == 6 && (a493 == 34 && a336 == 12)))) && a91 >= 0)) {
     	cf = 0;
@@ -29476,7 +29476,7 @@
     	a310 = 2;
     	a59 = 15;
     	a230 = 8; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a402 == 34 && ((a521 == 34 && ((input == 7) &&  cf==1 )) && a585 == 34)) && (a480 == 34 && (a247 == 12 && a201 == 6))) && (a83 % 2==0))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -29485,7 +29485,7 @@
     	a49 = 8;
     	a116 = 36 ;
     	a47 = 5; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a356 == 10 && (a554 == 34 && a493 == 34)) && (a365 == 3 && ((((input == 8) &&  cf==1 ) && a518 == 34) && a226 == 4)))) {
     	a76 += (a76 + 20) > a76 ? 4 : 0;
@@ -29517,7 +29517,7 @@
     	a482 = 34 ;
     	a324 = 6;
     	a305 = 13; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a297 == 6 && (a399 == 5 && a556 == 34)) && (a310 == 3 && (a324 == 7 && (((input == 4) &&  cf==1 ) && a244 == 9)))) && a50 == 6944)) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -29526,7 +29526,7 @@
     	a352 = 34 ;
     	a18 = 16;
     	a49 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a521 == 34 && (( cf==1  && (input == 6)) && a586 == 34)) && (((a379 == 34 && a313 == 3) && a382 == 5) && a274 == 5))) {
     	a76 += (a76 + 20) > a76 ? 1 : 0;
@@ -29580,7 +29580,7 @@
     	a359 = 9;
     	a502 = 33 ;
     	a49 = 2; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a407 == 34 && (((a592 == 34 && a260 == 9) && a375 == 34) && a313 == 3)) && a346 == 3) && ( cf==1  && (input == 9)))) {
     	a179 += (a179 + 20) > a179 ? 3 : 0;
@@ -29612,7 +29612,7 @@
     	a493 = 32 ;
     	a592 = 32 ;
     	a94 = 7; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a384 == 4 && a407 == 34) && (a336 == 12 && (a218 == 7 && (a416 == 34 && (a400 == 9 && ((input == 3) &&  cf==1 ))))))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -29633,10 +29633,10 @@
     	a404 = 32 ;
     	a226 = 3;
     	a23 = 8; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm15(int input) {
+ void calculate_outputm15(int8_t  input) {
     if(((((a244 == 9 && (a229 == 5 && (a183 == 7 &&  cf==1 ))) && a594 == 34) && a226 == 4) && (a214 == 4 && a510 == 34))) {
     	if((((a475 == 34 && (a480 == 34 && (a297 == 6 && (a317 == 7 && a289 == 4)))) && a366 == 34) && ( cf==1  && a160 == 7))) {
     		calculate_outputm165(input);
@@ -29660,7 +29660,7 @@
     	} 
     } 
 }
- void calculate_outputm174(int input) {
+ void calculate_outputm174(int8_t  input) {
     if(((((a486 == 34 && a396 == 8) && a507 == 34) && a323 == 12) && (a528 == 34 && (( cf==1  && (input == 8)) && a498 == 34)))) {
     	a91 -= (a91 - 20) < a91 ? 3 : 0;
     	cf = 0;
@@ -29765,7 +29765,7 @@
     	a241 = 6;
     	a520 = 33 ;
     	a118 = 9;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a330 == 8 && a464 == 34) && a544 == 34) && (a435 == 34 && (a505 == 34 && (( cf==1  && (input == 5)) && a544 == 34))))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -29871,10 +29871,10 @@
     	a518 = 33 ;
     	a502 = 33 ;
     	a118 = 9;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm175(int input) {
+ void calculate_outputm175(int8_t  input) {
     if(((a404 == 34 && (a223 == 10 && ((a463 == 34 && a227 == 34) && a528 == 34))) && (((input == 1) &&  cf==1 ) && a578 == 34))) {
     	a184 -= (a184 - 20) < a184 ? 1 : 0;
     	cf = 0;
@@ -29961,7 +29961,7 @@
     	a453 = 34 ;
     	a432 = 32 ;
     	a94 = 1; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a324 == 7 && ((input == 6) &&  cf==1 )) && a432 == 34) && ((a259 == 10 && (a463 == 34 && a486 == 34)) && a242 == 4))) {
     	cf = 0;
@@ -30072,7 +30072,7 @@
     	a396 = 8;
     	a330 = 8;
     	a150 = 13; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a578 == 34 && a358 == 8) && (a434 == 34 && (((a446 == 34 && ((input == 5) &&  cf==1 )) && a498 == 34) && a323 == 12)))) {
     	a171 -= (a171 - 20) < a171 ? 1 : 0;
@@ -30106,7 +30106,7 @@
     	a373 = 5;
     	a317 = 7;
     	a355 = 12; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((((a404 == 34 && (( cf==1  && (input == 9)) && a379 == 34)) && a304 == 7) && a411 == 34) && a234 == 12) && a521 == 34)) {
     	a113 -= (a113 - 20) < a113 ? 2 : 0;
@@ -30122,10 +30122,10 @@
     	a295 = 10;
     	a253 = 7;
     	a123 = 9; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm177(int input) {
+ void calculate_outputm177(int8_t  input) {
     if(((a252 == 12 && (a216 == 34 && a502 == 34)) && (a206 == 11 && ((( cf==1  && (input == 9)) && a259 == 10) && a282 == 9)))) {
     	a65 -= (a65 - 20) < a65 ? 2 : 0;
     	cf = 0;
@@ -30241,7 +30241,7 @@
     	a434 = 34 ;
     	a520 = 34 ;
     	a305 = 8; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a326 == 34 && (((input == 5) &&  cf==1 ) && a356 == 10)) && a358 == 8) && (a518 == 34 && (a203 == 4 && a476 == 34)))) {
     	cf = 0;
@@ -30279,10 +30279,10 @@
     	a480 = 32 ;
     	a465 = 32 ;
     	a151 = 9; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm178(int input) {
+ void calculate_outputm178(int8_t  input) {
     if(((a453 == 34 && ((a254 == 34 && ((input == 9) &&  cf==1 )) && a502 == 34)) && (a507 == 34 && (a270 == 6 && a281 == 3)))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
     	cf = 0;
@@ -30404,7 +30404,7 @@
     	a370 = 5;
     	a592 = 32 ;
     	a118 = 9;
-    	}/* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a432 == 34 && ((a554 == 34 && ( cf==1  && (input == 1))) && a233 == 8)) && ((a404 == 34 && a253 == 8) && a498 == 34))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -30505,10 +30505,10 @@
     	a216 = 34 ;
     	a432 = 33 ;
     	a94 = 5; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm179(int input) {
+ void calculate_outputm179(int8_t  input) {
     if(((a507 == 34 && (a404 == 34 && ((input == 6) &&  cf==1 ))) && (((a578 == 34 && a582 == 34) && a312 == 3) && a396 == 8))) {
     	a29 += (a29 + 20) > a29 ? 3 : 0;
     	cf = 0;
@@ -30535,10 +30535,10 @@
     	a532 = 32 ;
     	a507 = 32 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm180(int input) {
+ void calculate_outputm180(int8_t  input) {
     if((((a508 == 34 && a556 == 34) && a382 == 5) && (a253 == 8 && ((a520 == 34 && ( cf==1  && (input == 8))) && a213 == 4)))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
     	cf = 0;
@@ -30546,7 +30546,7 @@
     	a18 = 13;
     	a52 = 5;
     	a93 = 6; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((((a228 == 5 && ((input == 1) &&  cf==1 )) && a558 == 34) && a370 == 5) && ((a434 == 34 && a277 == 9) && a458 == 34))) {
     	cf = 0;
@@ -30629,10 +30629,10 @@
     	a507 = 32 ;
     	a560 = 32 ;
     	a369 = 3; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm181(int input) {
+ void calculate_outputm181(int8_t  input) {
     if((((a318 == 34 && a434 == 34) && a282 == 9) && (a602 == 34 && (a374 == 9 && (a353 == 4 && ( cf==1  && (input == 2))))))) {
     	a148 += (a148 + 20) > a148 ? 1 : 0;
     	cf = 0;
@@ -30720,7 +30720,7 @@
     	a476 = 34 ;
     	a253 = 6;
     	a118 = 9; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a205 == 10 && ((((input == 1) &&  cf==1 ) && a554 == 34) && a399 == 5)) && a585 == 34) && (a242 == 4 && a373 == 5))) {
     	a85 += (a85 + 20) > a85 ? 4 : 0;
@@ -30763,7 +30763,7 @@
     	a280 = 32 ;
     	a475 = 32 ;
     	a23 = 13; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((( cf==1  && (input == 9)) && a445 == 34) && (a382 == 5 && ((a445 == 34 && (a345 == 11 && a592 == 34)) && a586 == 34)))) {
     	cf = 0;
@@ -30861,7 +30861,7 @@
     	a359 = 10;
     	a317 = 7;
     	a263 = 6; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a373 == 5 && a419 == 34) && ((a375 == 34 && (a323 == 12 && (((input == 7) &&  cf==1 ) && a587 == 34))) && a280 == 34))) {
     	a73 -= (a73 - 20) < a73 ? 3 : 0;
@@ -30960,10 +30960,10 @@
     	a277 = 8;
     	a510 = 32 ;
     	a317 = 7; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm182(int input) {
+ void calculate_outputm182(int8_t  input) {
     if(((a418 == 34 && ( cf==1  && (input == 10))) && ((a373 == 5 && ((a356 == 10 && a247 == 12) && a477 == 34)) && a374 == 9))) {
     	a184 -= (a184 - 20) < a184 ? 1 : 0;
     	cf = 0;
@@ -31005,7 +31005,7 @@
     	a508 = 33 ;
     	a475 = 32 ;
     	a151 = 10; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a262 == 34 && ((a313 == 3 && a218 == 7) && a416 == 34)) && ((((input == 8) &&  cf==1 ) && a554 == 34) && a353 == 4))) {
     	cf = 0;
@@ -31017,7 +31017,7 @@
     	a247 = 11;
     	a30 = 34 ;
     	a123 = 5; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((a585 == 34 && ( cf==1  && (input == 9))) && a274 == 5) && (a247 == 12 && ((a396 == 8 && a399 == 5) && a453 == 34)))) {
     	a2 -= (a2 - 20) < a2 ? 4 : 0;
@@ -31111,7 +31111,7 @@
     	a493 = 33 ;
     	a236 = 6;
     	a243 = 9; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((( cf==1  && (input == 2)) && a464 == 34) && ((a317 == 7 && (a201 == 6 && (a507 == 34 && a324 == 7))) && a510 == 34))) {
     	cf = 0;
@@ -31178,18 +31178,18 @@
     	a209 = 5;
     	a323 = 11;
     	a367 = 6; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm183(int input) {
+ void calculate_outputm183(int8_t  input) {
     if(((((a353 == 4 && a379 == 34) && a346 == 3) && a297 == 6) && ((( cf==1  && (input == 7)) && a432 == 34) && a556 == 34))) {
     	a29 += (a29 + 20) > a29 ? 3 : 0;
     	cf = 0;
     	 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm16(int input) {
+ void calculate_outputm16(int8_t  input) {
     if((((a312 == 3 && (a359 == 11 && (a476 == 34 && a241 == 8))) && a310 == 3) && (( cf==1  && a290 == 8) && a262 == 34))) {
     	if((((a318 == 34 && a465 == 34) && a214 == 4) && (a546 == 34 && (a396 == 8 && (( cf==1  && a51 == 32) && a493 == 34))))) {
     		calculate_outputm174(input);
@@ -31230,7 +31230,7 @@
     	} 
     } 
 }
- void calculate_outputm187(int input) {
+ void calculate_outputm187(int8_t  input) {
     if((a544 == 34 && (a304 == 7 && ((a317 == 7 && ((a247 == 12 && ((input == 3) &&  cf==1 )) && a475 == 34)) && a374 == 9)))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -31277,7 +31277,7 @@
     	a313 = 4;
     	a359 = 10;
     	a151 = 10; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((a582 == 34 && a431 == 34) && a498 == 34) && a330 == 8) && (a398 == 4 && (( cf==1  && (input == 7)) && a418 == 34)))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -31490,7 +31490,7 @@
     	a229 = 3;
     	a336 = 14;
     	a118 = 10;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a458 == 34 && ((a546 == 34 && (a560 == 34 && a213 == 4)) && a482 == 34)) && (( cf==1  && (input == 4)) && a518 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -31612,7 +31612,7 @@
     	a242 = 9;
     	a387 = 36 ;
     	a283 = 11; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a280 == 34 && (a411 == 34 && a464 == 34)) && a510 == 34) && (a520 == 34 && (((input == 2) &&  cf==1 ) && a516 == 34)))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -31759,7 +31759,7 @@
     	a353 = 8;
     	a502 = 34 ;
     	a18 = 12; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a474 == 34 && a560 == 34) && (a476 == 34 && (a416 == 34 && (a215 == 34 && (((input == 1) &&  cf==1 ) && a373 == 5)))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -31782,7 +31782,7 @@
     	a119 = 32 ;
     	a394 = 35 ;
     	a4 = 6; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a520 == 34 && (a544 == 34 && a242 == 4)) && a218 == 7) && (a532 == 34 && (( cf==1  && (input == 5)) && a253 == 8)))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -31982,7 +31982,7 @@
     	a223 = 14;
     	a498 = 34 ;
     	a303 = 2;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a532 == 34 && (( cf==1  && (input == 9)) && a582 == 34)) && (a229 == 5 && (a218 == 7 && (a521 == 34 && a313 == 3))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -32093,7 +32093,7 @@
     	a127 = 32 ;
     	a52 = 8;
     	a393 = 16;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a260 == 9 && (a263 == 8 && a464 == 34)) && a505 == 34) && (a368 == 6 && (( cf==1  && (input == 8)) && a213 == 4)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -32282,7 +32282,7 @@
     	a358 = 9;
     	a233 = 13;
     	a230 = 10;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a215 == 34 && a464 == 34) && (a214 == 4 && (a295 == 11 && ((a594 == 34 && ((input == 6) &&  cf==1 )) && a508 == 34))))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -32435,7 +32435,7 @@
     	a521 = 34 ;
     	a94 = 8;
     	a23 = 8;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a407 == 34 && (a213 == 4 && ( cf==1  && (input == 10)))) && a220 == 34) && (a486 == 34 && (a345 == 11 && a482 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -32595,10 +32595,10 @@
     	a368 = 6;
     	a498 = 33 ;
     	a44 = 13;
-    	}/* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm188(int input) {
+ void calculate_outputm188(int8_t  input) {
     if(((a498 == 34 && (a521 == 34 && a374 == 9)) && (a277 == 9 && (a297 == 6 && (a407 == 34 && ((input == 7) &&  cf==1 )))))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
     	cf = 0;
@@ -32651,7 +32651,7 @@
     	a532 = 32 ;
     	a582 = 32 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((((a435 == 34 && (a228 == 5 && ( cf==1  && (input == 8)))) && a263 == 8) && a337 == 6) && (a578 == 34 && a229 == 5))) {
     	a171 -= (a171 - 20) < a171 ? 4 : 0;
@@ -32753,10 +32753,10 @@
     	a218 = 6;
     	a262 = 34 ;
     	a94 = 5; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm17(int input) {
+ void calculate_outputm17(int8_t  input) {
     if(((a380 == 5 && ( cf==1  && a187 == 32)) && (a215 == 34 && (a365 == 3 && ((a294 == 34 && a594 == 34) && a516 == 34))))) {
     	if(((a215 == 34 && ( cf==1  && a86 == 36)) && (a274 == 5 && ((a345 == 11 && (a418 == 34 && a402 == 34)) && a324 == 7)))) {
     		calculate_outputm187(input);
@@ -32768,7 +32768,7 @@
     	} 
     } 
 }
- void calculate_outputm190(int input) {
+ void calculate_outputm190(int8_t  input) {
     if(((a260 == 9 && a216 == 34) && (a346 == 3 && (a373 == 5 && (a544 == 34 && (a233 == 8 && ( cf==1  && (input == 5)))))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 += (a104 + 20) > a104 ? 3 : 0;
@@ -32912,7 +32912,7 @@
     	a419 = 32 ;
     	a482 = 32 ;
     	a283 = 7; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a214 == 4 && (((((input == 7) &&  cf==1 ) && a348 == 6) && a399 == 5) && a244 == 9)) && (a289 == 4 && a400 == 9))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -33153,7 +33153,7 @@
     	a94 = 2;
     	a282 = 11;
     	a103 = 12;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a586 == 34 && (a594 == 34 && (a323 == 12 && ( cf==1  && (input == 2))))) && ((a419 == 34 && a374 == 9) && a206 == 11))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -33390,7 +33390,7 @@
     	a498 = 36 ;
     	a201 = 9;
     	a160 = 7;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((((a244 == 9 && (a546 == 34 && ((input == 9) &&  cf==1 ))) && a282 == 9) && a289 == 4) && a411 == 34) && a594 == 34)) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -33486,7 +33486,7 @@
     	a380 = 4;
     	a18 = 13;
     	a111 = 6;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a474 == 34 && ((input == 10) &&  cf==1 )) && a281 == 3) && (((a253 == 8 && a262 == 34) && a474 == 34) && a465 == 34))) {
     	a78 -= (a78 - 20) < a78 ? 2 : 0;
@@ -33585,7 +33585,7 @@
     	a183 = 11;
     	a26 = 5;
     	a49 = 3;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a209 == 6 && ((a281 == 3 && (a304 == 7 && ((input == 6) &&  cf==1 ))) && a528 == 34)) && (a369 == 3 && a476 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -33697,7 +33697,7 @@
     	a404 = 33 ;
     	a376 = 3;
     	a393 = 16; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a379 == 34 && (a411 == 34 && (a508 == 34 && a431 == 34))) && ((a463 == 34 && ((input == 4) &&  cf==1 )) && a247 == 12))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -33819,7 +33819,7 @@
     	a445 = 35 ;
     	a380 = 10;
     	a49 = 7; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a336 == 12 && a365 == 3) && a453 == 34) && (a297 == 6 && ((a294 == 34 && ((input == 1) &&  cf==1 )) && a313 == 3)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -34053,7 +34053,7 @@
     	a330 = 8;
     	a498 = 35 ;
     	a175 = 3;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((((input == 8) &&  cf==1 ) && a369 == 3) && a203 == 4) && (a223 == 10 && (a373 == 5 && (a411 == 34 && a382 == 5))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -34081,7 +34081,7 @@
     	a81 = 32 ;
     	a52 = 5;
     	a143 = 17;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a281 == 3 && (a602 == 34 && (a364 == 9 && ((input == 3) &&  cf==1 )))) && (a254 == 34 && (a262 == 34 && a465 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -34227,10 +34227,10 @@
     	a558 = 32 ;
     	a233 = 9;
     	a305 = 8; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm191(int input) {
+ void calculate_outputm191(int8_t  input) {
     if((((((input == 1) &&  cf==1 ) && a244 == 9) && a336 == 12) && (a330 == 8 && ((a213 == 4 && a416 == 34) && a446 == 34)))) {
     	a85 += (a85 + 20) > a85 ? 3 : 0;
     	cf = 0;
@@ -34284,10 +34284,10 @@
     	a353 = 3;
     	a384 = 3;
     	a33 = 5; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm192(int input) {
+ void calculate_outputm192(int8_t  input) {
     if(((a592 == 34 && (a324 == 7 && (a458 == 34 && a263 == 8))) && (a215 == 34 && (( cf==1  && (input == 9)) && a458 == 34)))) {
     	a29 += (a29 + 20) > a29 ? 4 : 0;
     	cf = 0;
@@ -34301,10 +34301,10 @@
     	a402 = 33 ;
     	a52 = 5;
     	a283 = 10; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm18(int input) {
+ void calculate_outputm18(int8_t  input) {
     if(((a214 == 4 && a270 == 6) && (a384 == 4 && (a508 == 34 && (a508 == 34 && (a274 == 5 && (a190 == 33 &&  cf==1 ))))))) {
     	if(((a477 == 34 && (((a464 == 34 && (a353 == 4 && ( cf==1  && a133 == 6))) && a259 == 10) && a226 == 4)) && a486 == 34)) {
     		calculate_outputm190(input);
@@ -34321,7 +34321,7 @@
     	} 
     } 
 }
- void calculate_outputm195(int input) {
+ void calculate_outputm195(int8_t  input) {
     if(((((a554 == 34 && (( cf==1  && (input == 8)) && a324 == 7)) && a560 == 34) && a326 == 34) && (a544 == 34 && a521 == 34))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
     	cf = 0;
@@ -34435,7 +34435,7 @@
     	a370 = 5;
     	a330 = 8;
     	a308 = 9; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a582 == 34 && (a592 == 34 && ((a262 == 34 && a482 == 34) && a277 == 9))) && (((input == 1) &&  cf==1 ) && a592 == 34))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -34514,7 +34514,7 @@
     	a502 = 33 ;
     	a585 = 32 ;
     	a49 = 4; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a242 == 4 && (a546 == 34 && (a364 == 9 && a445 == 34))) && a297 == 6) && (((input == 6) &&  cf==1 ) && a358 == 8))) {
     	a29 += (a29 + 20) > a29 ? 2 : 0;
@@ -34633,7 +34633,7 @@
     	a400 = 7;
     	a310 = 1;
     	a39 = 5; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((a418 == 34 && (a587 == 34 && ((((a281 == 3 && ((input == 5) &&  cf==1 )) && a218 == 7) && a260 == 9) && a226 == 4)))) {
     	cf = 0;
@@ -34755,10 +34755,10 @@
     	a508 = 33 ;
     	a587 = 32 ;
     	a18 = 12; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm198(int input) {
+ void calculate_outputm198(int8_t  input) {
     if(((a554 == 34 && (a252 == 12 && ((input == 3) &&  cf==1 ))) && (a234 == 12 && (a214 == 4 && (a404 == 34 && a310 == 3))))) {
     	a88 -= (a88 - 20) < a88 ? 3 : 0;
     	a147 += (a147 + 20) > a147 ? 1 : 0;
@@ -34941,7 +34941,7 @@
     	a324 = 9;
     	a365 = 5;
     	a160 = 12;
-    	}/* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((((a216 == 34 && a411 == 34) && a435 == 34) && a368 == 6) && (a520 == 34 && (((input == 8) &&  cf==1 ) && a236 == 8)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -34959,7 +34959,7 @@
     	a187 = 33 ;
     	a26 = 7;
     	a35 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a502 == 34 && (a323 == 12 && a554 == 34)) && (a582 == 34 && (a502 == 34 && (( cf==1  && (input == 7)) && a419 == 34))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -35058,7 +35058,7 @@
     	a358 = 13;
     	a233 = 7;
     	a103 = 12; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a213 == 4 && ((a317 == 7 && ( cf==1  && (input == 4))) && a585 == 34)) && ((a404 == 34 && a592 == 34) && a203 == 4))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -35121,7 +35121,7 @@
     	a368 = 7;
     	a578 = 36 ;
     	a319 = 6;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a379 == 34 && (a282 == 9 && ((a364 == 9 && ( cf==1  && (input == 9))) && a205 == 10))) && (a282 == 9 && a532 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -35140,7 +35140,7 @@
     	a18 = 13;
     	a351 = 34 ;
     	a52 = 7; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a226 == 4 && (a348 == 6 && a453 == 34)) && ((a236 == 8 && (a346 == 3 && ( cf==1  && (input == 1)))) && a289 == 4))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -35215,7 +35215,7 @@
     	a416 = 36 ;
     	a464 = 36 ;
     	a49 = 4; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a318 == 34 && (a304 == 7 && a520 == 34)) && a400 == 9) && ((a400 == 9 && ( cf==1  && (input == 5))) && a334 == 9))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -35425,7 +35425,7 @@
     	a205 = 15;
     	a585 = 36 ;
     	a230 = 10;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a520 == 34 && (a528 == 34 && ( cf==1  && (input == 10)))) && a384 == 4) && ((a520 == 34 && a206 == 11) && a407 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -35565,7 +35565,7 @@
     	a586 = 33 ;
     	a297 = 9;
     	a103 = 17; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a252 == 12 && ((a252 == 12 && (a304 == 7 && a528 == 34)) && a277 == 9)) && (((input == 2) &&  cf==1 ) && a419 == 34))) {
     	a78 += (a78 + 20) > a78 ? 1 : 0;
@@ -35782,7 +35782,7 @@
     	a411 = 35 ;
     	a476 = 35 ;
     	a355 = 8;
-    	}/* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((a458 == 34 && a463 == 34) && a318 == 34) && (a510 == 34 && ((a216 == 34 && ( cf==1  && (input == 6))) && a493 == 34)))) {
     	a179 += (a179 + 20) > a179 ? 4 : 0;
@@ -36048,10 +36048,10 @@
     	a602 = 32 ;
     	a312 = 7;
     	a49 = 3;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm199(int input) {
+ void calculate_outputm199(int8_t  input) {
     if(((a216 == 34 && (((a493 == 34 && a209 == 6) && a365 == 3) && a270 == 6)) && (( cf==1  && (input == 1)) && a510 == 34))) {
     	a65 -= (a65 - 20) < a65 ? 4 : 0;
     	cf = 0;
@@ -36089,10 +36089,10 @@
     	a202 = 6; 
     	}else {
 
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm200(int input) {
+ void calculate_outputm200(int8_t  input) {
     if((( cf==1  && (input == 5)) && (a594 == 34 && (a578 == 34 && (((a544 == 34 && a227 == 34) && a445 == 34) && a317 == 7))))) {
     	cf = 0;
     	if((a380 == 8 || (!(a206 == 11) && (a330 == 8 && a282 == 13)))) {
@@ -36188,7 +36188,7 @@
     	a9 = 33 ;
     	a411 = 33 ;
     	a118 = 9;
-    	}/* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a380 == 5 && (a203 == 4 && (a218 == 7 && a254 == 34))) && ((( cf==1  && (input == 9)) && a209 == 6) && a346 == 3))) {
     	cf = 0;
@@ -36256,10 +36256,10 @@
     	a544 = 33 ;
     	a236 = 6;
     	a118 = 9; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm202(int input) {
+ void calculate_outputm202(int8_t  input) {
     if(((a223 == 10 && (a520 == 34 && (a254 == 34 && (a602 == 34 && a203 == 4)))) && (a215 == 34 && ( cf==1  && (input == 8))))) {
     	a65 -= (a65 - 20) < a65 ? 2 : 0;
     	cf = 0;
@@ -36335,7 +36335,7 @@
     	a69 = 10; 
     	}else {
 
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a374 == 9 && (( cf==1  && (input == 7)) && a382 == 5)) && a560 == 34) && ((a203 == 4 && a280 == 34) && a223 == 10))) {
     	a179 += (a179 + 20) > a179 ? 3 : 0;
@@ -36395,7 +36395,7 @@
     	a480 = 34 ;
     	a246 = 8;
     	a49 = 2; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a505 == 34 && (( cf==1  && (input == 2)) && a516 == 34)) && (a304 == 7 && (a345 == 11 && (a516 == 34 && a556 == 34))))) {
     	a2 -= (a2 - 20) < a2 ? 4 : 0;
@@ -36455,10 +36455,10 @@
     	a431 = 34 ;
     	a411 = 34 ;
     	a49 = 2; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm203(int input) {
+ void calculate_outputm203(int8_t  input) {
     if(((a297 == 6 && ((((input == 6) &&  cf==1 ) && a236 == 8) && a453 == 34)) && (a399 == 5 && (a374 == 9 && a294 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a88 += (a88 + 20) > a88 ? 2 : 0;
@@ -36537,7 +36537,7 @@
     	a407 = 32 ;
     	a205 = 10;
     	a305 = 10; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((((a546 == 34 && ( cf==1  && (input == 3))) && a289 == 4) && a431 == 34) && (a263 == 8 && (a578 == 34 && a476 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -36641,7 +36641,7 @@
     	a227 = 32 ;
     	a486 = 36 ;
     	a59 = 11; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a368 == 6 && (a486 == 34 && a233 == 8)) && (a379 == 34 && ((a241 == 8 && ((input == 9) &&  cf==1 )) && a458 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -36872,7 +36872,7 @@
     	a205 = 13;
     	a228 = 4;
     	a49 = 6;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a213 == 4 && ((a435 == 34 && a482 == 34) && a463 == 34)) && ((a348 == 6 && ( cf==1  && (input == 10))) && a295 == 11))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -37018,7 +37018,7 @@
     	a190 = 32 ;
     	a18 = 9;
     	a121 = 11;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a216 == 34 && (a201 == 6 && (a247 == 12 && (a358 == 8 && (( cf==1  && (input == 2)) && a375 == 34))))) && a228 == 5)) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -37165,7 +37165,7 @@
     	a400 = 14;
     	a446 = 36 ;
     	a19 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a326 == 34 && ((input == 4) &&  cf==1 )) && a282 == 9) && ((a346 == 3 && (a502 == 34 && a463 == 34)) && a337 == 6))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -37313,7 +37313,7 @@
     	a532 = 35 ;
     	a223 = 12;
     	a322 = 8;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a282 == 9 && (((input == 7) &&  cf==1 ) && a585 == 34)) && (((a376 == 5 && a209 == 6) && a516 == 34) && a594 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -37401,7 +37401,7 @@
     	a218 = 9;
     	a227 = 32 ;
     	a372 = 9; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((((a373 == 5 && (( cf==1  && (input == 8)) && a432 == 34)) && a253 == 8) && a370 == 5) && (a334 == 9 && a416 == 34))) {
     	a96 -= (a96 - 20) < a96 ? 4 : 0;
@@ -37498,7 +37498,7 @@
     	a227 = 33 ;
     	a587 = 32 ;
     	a144 = 7; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((((input == 5) &&  cf==1 ) && a402 == 34) && a324 == 7) && (((a453 == 34 && a260 == 9) && a560 == 34) && a334 == 9))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -37535,7 +37535,7 @@
     	a463 = 35 ;
     	a364 = 10;
     	a87 = 3; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a205 == 10 && ((a382 == 5 && a313 == 3) && a358 == 8)) && a508 == 34) && (a373 == 5 && ( cf==1  && (input == 1))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -37770,10 +37770,10 @@
     	a374 = 7;
     	a602 = 34 ;
     	a303 = 9;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm204(int input) {
+ void calculate_outputm204(int8_t  input) {
     if((((a318 == 34 && a516 == 34) && a214 == 4) && ((a364 == 9 && (((input == 3) &&  cf==1 ) && a270 == 6)) && a215 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 -= (a104 - 20) < a104 ? 1 : 0;
@@ -37836,7 +37836,7 @@
     	a382 = 6;
     	a209 = 8;
     	a18 = 9; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a209 == 6 && ((a233 == 8 && (a229 == 5 && a263 == 8)) && a294 == 34)) && (( cf==1  && (input == 10)) && a312 == 3))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -38021,7 +38021,7 @@
     	a206 = 9;
     	a201 = 4;
     	a49 = 7;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((((a274 == 5 && a365 == 3) && a546 == 34) && a229 == 5) && ((((input == 7) &&  cf==1 ) && a223 == 10) && a324 == 7))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -38123,7 +38123,7 @@
     	a399 = 10;
     	a546 = 36 ;
     	a35 = 7; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a317 == 7 && ( cf==1  && (input == 1))) && (a458 == 34 && (((a382 == 5 && a252 == 12) && a396 == 8) && a326 == 34)))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -38143,7 +38143,7 @@
     	a26 = 11;
     	a34 = 36 ;
     	a44 = 11; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((( cf==1  && (input == 9)) && a215 == 34) && (a369 == 3 && (a277 == 9 && (a209 == 6 && (a282 == 9 && a364 == 9)))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -38255,7 +38255,7 @@
     	a521 = 34 ;
     	a482 = 34 ;
     	a18 = 9;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a480 == 34 && ( cf==1  && (input == 6))) && (a317 == 7 && (a556 == 34 && (a330 == 8 && (a274 == 5 && a516 == 34)))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -38389,7 +38389,7 @@
     	a396 = 9;
     	a364 = 13;
     	a69 = 9;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a486 == 34 && ((a560 == 34 && ((a516 == 34 && a277 == 9) && a482 == 34)) && a254 == 34)) && ((input == 4) &&  cf==1 ))) {
     	a58 -= (a58 - 20) < a58 ? 1 : 0;
@@ -38504,7 +38504,7 @@
     	a486 = 36 ;
     	a402 = 34 ;
     	a283 = 11; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a532 == 34 && ((a458 == 34 && a445 == 34) && a375 == 34)) && a380 == 5) && (a594 == 34 && ( cf==1  && (input == 8))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -38524,7 +38524,7 @@
     	a122 = 36 ;
     	a43 = 33 ;
     	a144 = 5; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a602 == 34 && a289 == 4) && a585 == 34) && (a223 == 10 && (a213 == 4 && (((input == 2) &&  cf==1 ) && a493 == 34))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -38638,7 +38638,7 @@
     	a380 = 9;
     	a213 = 9;
     	a109 = 8; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a254 == 34 && a368 == 6) && ((a359 == 11 && (a324 == 7 && (a407 == 34 && ((input == 5) &&  cf==1 )))) && a399 == 5))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -38773,10 +38773,10 @@
     	a505 = 33 ;
     	a236 = 13;
     	a94 = 1; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm205(int input) {
+ void calculate_outputm205(int8_t  input) {
     if((((( cf==1  && (input == 7)) && a380 == 5) && a324 == 7) && (a482 == 34 && ((a445 == 34 && a262 == 34) && a382 == 5)))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
     	cf = 0;
@@ -38850,7 +38850,7 @@
     	a532 = 32 ;
     	a246 = 7;
     	a70 = 6; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a375 == 34 && (a252 == 12 && a259 == 10)) && a556 == 34) && (a310 == 3 && (a295 == 11 && ((input == 10) &&  cf==1 ))))) {
     	a179 += (a179 + 20) > a179 ? 4 : 0;
@@ -38870,7 +38870,7 @@
     	a18 = 16;
     	a348 = 5;
     	a49 = 4; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a369 == 3 && (a396 == 8 && a337 == 6)) && (a578 == 34 && (a592 == 34 && (a446 == 34 && ( cf==1  && (input == 9))))))) {
     	cf = 0;
@@ -38971,10 +38971,10 @@
     	a253 = 8;
     	a282 = 8;
     	a353 = 3; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm19(int input) {
+ void calculate_outputm19(int8_t  input) {
     if((((a242 == 4 && a201 == 6) && a216 == 34) && ((a510 == 34 && ((a39 == 3 &&  cf==1 ) && a263 == 8)) && a317 == 7))) {
     	if(((a318 == 34 && ((a220 == 34 && a241 == 8) && a201 == 6)) && (a223 == 10 && (( cf==1  && a243 == 9) && a419 == 34)))) {
     		calculate_outputm195(input);
@@ -39010,7 +39010,7 @@
     	} 
     } 
 }
- void calculate_outputm206(int input) {
+ void calculate_outputm206(int8_t  input) {
     if((((a432 == 34 && ((a546 == 34 && ((input == 10) &&  cf==1 )) && a330 == 8)) && a482 == 34) && (a345 == 11 && a368 == 6))) {
     	a179 += (a179 + 20) > a179 ? 2 : 0;
     	cf = 0;
@@ -39126,7 +39126,7 @@
     	a326 = 34 ;
     	a602 = 32 ;
     	a94 = 6; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a474 == 34 && ((((input == 8) &&  cf==1 ) && a476 == 34) && a227 == 34)) && (a353 == 4 && (a486 == 34 && a244 == 9)))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -39175,7 +39175,7 @@
     	a353 = 2;
     	a380 = 4;
     	a305 = 11; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((((a216 == 34 && ((((input == 2) &&  cf==1 ) && a486 == 34) && a384 == 4)) && a445 == 34) && a602 == 34) && a404 == 34)) {
     	cf = 0;
@@ -39355,7 +39355,7 @@
     	a226 = 4;
     	a129 = 34 ;
     	a393 = 13;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a345 == 11 && (a431 == 34 && ((input == 9) &&  cf==1 ))) && a366 == 34) && ((a214 == 4 && a375 == 34) && a434 == 34))) {
     	a2 -= (a2 - 20) < a2 ? 3 : 0;
@@ -39482,10 +39482,10 @@
     	a318 = 33 ;
     	a416 = 32 ;
     	a221 = 7; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm207(int input) {
+ void calculate_outputm207(int8_t  input) {
     if(((((a528 == 34 && a379 == 34) && a364 == 9) && a346 == 3) && (a476 == 34 && (a263 == 8 && ( cf==1  && (input == 7)))))) {
     	a171 -= (a171 - 20) < a171 ? 2 : 0;
     	cf = 0;
@@ -39582,7 +39582,7 @@
     	a242 = 2;
     	a313 = 1;
     	a18 = 12; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a578 == 34 && (a510 == 34 && a435 == 34)) && a318 == 34) && (a365 == 3 && (((input == 9) &&  cf==1 ) && a201 == 6)))) {
     	a186 -= (a186 - 20) < a186 ? 1 : 0;
@@ -39655,7 +39655,7 @@
     	a370 = 4;
     	a365 = 2;
     	a69 = 8; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a465 == 34 && (a317 == 7 && (a206 == 11 && a277 == 9))) && ((a330 == 8 && ((input == 8) &&  cf==1 )) && a379 == 34))) {
     	a171 -= (a171 - 20) < a171 ? 2 : 0;
@@ -39670,7 +39670,7 @@
     	a234 = 10;
     	a341 = 36 ;
     	a47 = 4; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a370 == 5 && ((((input == 2) &&  cf==1 ) && a404 == 34) && a203 == 4)) && ((a274 == 5 && a505 == 34) && a304 == 7))) {
     	a171 += (a171 + 20) > a171 ? 1 : 0;
@@ -39772,10 +39772,10 @@
     	a498 = 33 ;
     	a370 = 4;
     	a150 = 8; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm208(int input) {
+ void calculate_outputm208(int8_t  input) {
     if(((a435 == 34 && (a400 == 9 && ((input == 7) &&  cf==1 ))) && (a346 == 3 && ((a228 == 5 && a294 == 34) && a507 == 34)))) {
     	a104 -= (a104 - 20) < a104 ? 1 : 0;
     	a88 -= (a88 - 20) < a88 ? 2 : 0;
@@ -39878,7 +39878,7 @@
     	a399 = 3;
     	a209 = 7;
     	a363 = 4; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a464 == 34 && (a213 == 4 && a532 == 34)) && (((a203 == 4 && ((input == 6) &&  cf==1 )) && a516 == 34) && a253 == 8))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -40126,7 +40126,7 @@
     	a432 = 34 ;
     	a369 = 2;
     	a103 = 12;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((((input == 3) &&  cf==1 ) && a324 == 7) && a379 == 34) && (a253 == 8 && (a494 == 34 && (a480 == 34 && a435 == 34))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -40255,7 +40255,7 @@
     	a376 = 8;
     	a431 = 34 ;
     	a94 = 1; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((a270 == 6 && (a402 == 34 && ( cf==1  && (input == 1)))) && a400 == 9) && a259 == 10) && (a486 == 34 && a304 == 7))) {
     	a78 += (a78 + 20) > a78 ? 2 : 0;
@@ -40335,7 +40335,7 @@
     	a294 = 36 ;
     	a282 = 14;
     	a35 = 7; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((((a445 == 34 && (((input == 10) &&  cf==1 ) && a464 == 34)) && a402 == 34) && a215 == 34) && (a229 == 5 && a434 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -40564,7 +40564,7 @@
     	a317 = 8;
     	a206 = 15;
     	a314 = 9;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a375 == 34 && a280 == 34) && (a323 == 12 && (a312 == 3 && (a502 == 34 && (((input == 2) &&  cf==1 ) && a348 == 6)))))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -40661,7 +40661,7 @@
     	a319 = 8;
     	a18 = 13;
     	a84 = 11;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a280 == 34 && a209 == 6) && (((a369 == 3 && (( cf==1  && (input == 8)) && a209 == 6)) && a431 == 34) && a431 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -40705,7 +40705,7 @@
     	a209 = 8;
     	a203 = 2;
     	a26 = 8; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a369 == 3 && (a262 == 34 && ((input == 5) &&  cf==1 ))) && a366 == 34) && (a502 == 34 && (a458 == 34 && a356 == 10)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -40849,7 +40849,7 @@
     	a446 = 34 ;
     	a528 = 36 ;
     	a357 = 10; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((((a259 == 10 && (a374 == 9 && ((input == 4) &&  cf==1 ))) && a241 == 8) && (a346 == 3 && (a465 == 34 && a262 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -40866,7 +40866,7 @@
     	a49 = 8;
     	a116 = 36 ;
     	a47 = 5; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((((a334 == 9 && ( cf==1  && (input == 9))) && a520 == 34) && a365 == 3) && (a486 == 34 && (a375 == 34 && a318 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -41006,10 +41006,10 @@
     	a507 = 36 ;
     	a498 = 32 ;
     	a355 = 13;
-    	}/* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm209(int input) {
+ void calculate_outputm209(int8_t  input) {
     if(((a432 == 34 && ((((input == 6) &&  cf==1 ) && a364 == 9) && a356 == 10)) && ((a233 == 8 && a474 == 34) && a365 == 3))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a179 += (a179 + 20) > a179 ? 2 : 0;
@@ -41032,7 +41032,7 @@
     	a18 = 16;
     	a306 = 35 ;
     	a49 = 7; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a262 == 34 && ((input == 7) &&  cf==1 )) && a419 == 34) && (a214 == 4 && (a502 == 34 && (a585 == 34 && a259 == 10))))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -41052,7 +41052,7 @@
     	a146 = 34 ;
     	a52 = 10;
     	a319 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a313 == 3 && (a323 == 12 && ((input == 1) &&  cf==1 ))) && ((a585 == 34 && (a578 == 34 && a474 == 34)) && a396 == 8))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -41069,7 +41069,7 @@
     	a351 = 34 ;
     	a18 = 13;
     	a52 = 7; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a384 == 4 && ((input == 9) &&  cf==1 )) && ((((a369 == 3 && a310 == 3) && a247 == 12) && a236 == 8) && a416 == 34))) {
     	a104 += (a104 + 20) > a104 ? 2 : 0;
@@ -41263,7 +41263,7 @@
     	a416 = 36 ;
     	a215 = 35 ;
     	a33 = 7;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a218 == 7 && a201 == 6) && (a244 == 9 && (a345 == 11 && ((((input == 10) &&  cf==1 ) && a482 == 34) && a345 == 11))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -41473,7 +41473,7 @@
     	a236 = 7;
     	a244 = 13;
     	a371 = 12;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a554 == 34 && ((( cf==1  && (input == 8)) && a253 == 8) && a476 == 34)) && ((a218 == 7 && a337 == 6) && a407 == 34))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -41587,7 +41587,7 @@
     	a348 = 8;
     	a310 = 5;
     	a24 = 10; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((( cf==1  && (input == 4)) && a404 == 34) && (a263 == 8 && (a396 == 8 && ((a205 == 10 && a216 == 34) && a348 == 6))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -41689,7 +41689,7 @@
     	a379 = 35 ;
     	a375 = 34 ;
     	a342 = 8; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a510 == 34 && a358 == 8) && a370 == 5) && (a407 == 34 && (a323 == 12 && (a554 == 34 && ( cf==1  && (input == 2))))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -41709,7 +41709,7 @@
     	a26 = 7;
     	a187 = 33 ;
     	a35 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((a518 == 34 && a379 == 34) && a493 == 34) && a463 == 34) && (a318 == 34 && (a520 == 34 && ( cf==1  && (input == 3)))))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -41840,7 +41840,7 @@
     	a594 = 35 ;
     	a558 = 36 ;
     	a160 = 12;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((((a244 == 9 && (a453 == 34 && a556 == 34)) && a474 == 34) && a229 == 5) && a532 == 34) && ((input == 5) &&  cf==1 ))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -41890,10 +41890,10 @@
     	a516 = 36 ;
     	a476 = 36 ;
     	a319 = 6; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm210(int input) {
+ void calculate_outputm210(int8_t  input) {
     if((((a435 == 34 && ((input == 1) &&  cf==1 )) && a407 == 34) && ((a323 == 12 && (a463 == 34 && a445 == 34)) && a546 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 -= (a104 - 20) < a104 ? 2 : 0;
@@ -42013,7 +42013,7 @@
     	a560 = 35 ;
     	a464 = 36 ;
     	a18 = 12; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((a259 == 10 && a262 == 34) && a216 == 34) && a263 == 8) && (a294 == 34 && (( cf==1  && (input == 4)) && a505 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -42031,7 +42031,7 @@
     	a393 = 14;
     	a59 = 12;
     	a264 = 13; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a324 == 7 && ( cf==1  && (input == 3))) && a532 == 34) && (a516 == 34 && (a482 == 34 && (a353 == 4 && a556 == 34))))) {
     	a96 -= (a96 - 20) < a96 ? 4 : 0;
@@ -42252,7 +42252,7 @@
     	a400 = 11;
     	a353 = 5;
     	a39 = 5;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a407 == 34 && (a233 == 8 && a578 == 34)) && (((a214 == 4 && ( cf==1  && (input == 6))) && a213 == 4) && a337 == 6))) {
     	a88 += (a88 + 20) > a88 ? 2 : 0;
@@ -42467,7 +42467,7 @@
     	a223 = 13;
     	a346 = 6;
     	a125 = 11;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((( cf==1  && (input == 5)) && a295 == 11) && ((a323 == 12 && ((a234 == 12 && a507 == 34) && a594 == 34)) && a380 == 5))) {
     	a104 -= (a104 - 20) < a104 ? 1 : 0;
@@ -42589,7 +42589,7 @@
     	a214 = 4;
     	a337 = 8;
     	a125 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a282 == 9 && (a365 == 3 && ((a337 == 6 && a368 == 6) && a297 == 6))) && a407 == 34) && ((input == 7) &&  cf==1 ))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -42607,7 +42607,7 @@
     	a309 = 33 ;
     	a18 = 13;
     	a393 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a241 == 8 && a252 == 12) && a446 == 34) && (a464 == 34 && ((( cf==1  && (input == 10)) && a382 == 5) && a373 == 5)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -42752,7 +42752,7 @@
     	a554 = 33 ;
     	a236 = 11;
     	a49 = 3;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((((((input == 2) &&  cf==1 ) && a201 == 6) && a353 == 4) && a532 == 34) && (a445 == 34 && (a402 == 34 && a214 == 4)))) {
     	a179 += (a179 + 20) > a179 ? 3 : 0;
@@ -42893,7 +42893,7 @@
     	a229 = 3;
     	a330 = 6;
     	a308 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a236 == 8 && ( cf==1  && (input == 8))) && a376 == 5) && (a374 == 9 && (a280 == 34 && (a434 == 34 && a369 == 3))))) {
     	a104 += (a104 + 20) > a104 ? 3 : 0;
@@ -43043,7 +43043,7 @@
     	a229 = 8;
     	a213 = 6;
     	a16 = 14; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a585 == 34 && ( cf==1  && (input == 9))) && a374 == 9) && ((a434 == 34 && (a505 == 34 && a464 == 34)) && a359 == 11))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -43255,10 +43255,10 @@
     	a234 = 14;
     	a475 = 34 ;
     	a94 = 3;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm211(int input) {
+ void calculate_outputm211(int8_t  input) {
     if(((a396 == 8 && ((( cf==1  && (input == 1)) && a226 == 4) && a587 == 34)) && (a582 == 34 && (a419 == 34 && a365 == 3)))) {
     	a76 += (a76 + 20) > a76 ? 2 : 0;
     	cf = 0;
@@ -43304,7 +43304,7 @@
     	a223 = 10;
     	a494 = 34 ;
     	a49 = 2; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a218 == 7 && (a376 == 5 && (a520 == 34 && ((input == 9) &&  cf==1 )))) && a277 == 9) && (a370 == 5 && a384 == 4))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -43327,7 +43327,7 @@
     	a228 = 4;
     	a520 = 32 ;
     	a49 = 7; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a431 == 34 && (a356 == 10 && (a252 == 12 && a337 == 6))) && ((a498 == 34 && ( cf==1  && (input == 5))) && a233 == 8))) {
     	a85 += (a85 + 20) > a85 ? 2 : 0;
@@ -43415,10 +43415,10 @@
     	a375 = 34 ;
     	a446 = 32 ;
     	a400 = 9; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm212(int input) {
+ void calculate_outputm212(int8_t  input) {
     if(((a465 == 34 && ((a336 == 12 && a486 == 34) && a582 == 34)) && ((a241 == 8 && ( cf==1  && (input == 7))) && a486 == 34))) {
     	cf = 0;
     	a382 = 3;
@@ -43515,7 +43515,7 @@
     	a313 = 2;
     	a464 = 33 ;
     	a393 = 10; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((((a281 == 3 && ( cf==1  && (input == 5))) && a554 == 34) && a246 == 8) && a398 == 4) && (a330 == 8 && a586 == 34))) {
     	a73 -= (a73 - 20) < a73 ? 4 : 0;
@@ -43553,7 +43553,7 @@
     	a446 = 34 ;
     	a18 = 13;
     	a314 = 10; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a244 == 9 && a434 == 34) && a209 == 6) && (a206 == 11 && ((( cf==1  && (input == 4)) && a337 == 6) && a400 == 9)))) {
     	a186 -= (a186 - 20) < a186 ? 4 : 0;
@@ -43568,7 +43568,7 @@
     	a228 = 4;
     	a434 = 32 ;
     	a23 = 13; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a375 == 34 && a400 == 9) && ((a228 == 5 && (a594 == 34 && (a205 == 10 && ((input == 6) &&  cf==1 )))) && a369 == 3))) {
     	a91 -= (a91 - 20) < a91 ? 1 : 0;
@@ -43610,7 +43610,7 @@
     	a260 = 9;
     	a404 = 34 ;
     	a303 = 5; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a348 == 6 && (a244 == 9 && a586 == 34)) && (a226 == 4 && ((((input == 9) &&  cf==1 ) && a510 == 34) && a233 == 8)))) {
     	a73 -= (a73 - 20) < a73 ? 3 : 0;
@@ -43692,10 +43692,10 @@
     	a358 = 6;
     	a241 = 6;
     	a90 = 4; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm20(int input) {
+ void calculate_outputm20(int8_t  input) {
     if((((a331 == 33 &&  cf==1 ) && a274 == 5) && (a312 == 3 && (a404 == 34 && (a262 == 34 && (a282 == 9 && a445 == 34)))))) {
     	if((((a453 == 34 && (a465 == 34 && a402 == 34)) && a215 == 34) && (a398 == 4 && ((a87 == 3 &&  cf==1 ) && a528 == 34)))) {
     		calculate_outputm206(input);
@@ -43726,7 +43726,7 @@
     	} 
     } 
 }
- void calculate_outputm213(int input) {
+ void calculate_outputm213(int8_t  input) {
     if(((a382 == 5 && (a226 == 4 && a402 == 34)) && (a464 == 34 && (a228 == 5 && (a294 == 34 && ( cf==1  && (input == 9))))))) {
     	a91 -= (a91 - 20) < a91 ? 1 : 0;
     	cf = 0;
@@ -43749,7 +43749,7 @@
     	a289 = 3;
     	a183 = 11;
     	a49 = 7; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((((( cf==1  && (input == 5)) && a384 == 4) && a482 == 34) && a532 == 34) && ((a376 == 5 && a407 == 34) && a297 == 6))) {
     	cf = 0;
@@ -43772,7 +43772,7 @@
     	a475 = 32 ;
     	a505 = 34 ;
     	a49 = 7; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((((a396 == 8 && ((input == 7) &&  cf==1 )) && a475 == 34) && a445 == 34) && (a263 == 8 && (a253 == 8 && a312 == 3)))) {
     	a148 += (a148 + 20) > a148 ? 3 : 0;
@@ -43866,10 +43866,10 @@
     	a556 = 32 ;
     	a260 = 8;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm215(int input) {
+ void calculate_outputm215(int8_t  input) {
     if(((a453 == 34 && ( cf==1  && (input == 7))) && (((a227 == 34 && (a546 == 34 && a234 == 12)) && a336 == 12) && a326 == 34))) {
     	a179 -= (a179 - 20) < a179 ? 2 : 0;
     	cf = 0;
@@ -44018,7 +44018,7 @@
     	a376 = 3;
     	a374 = 7;
     	a355 = 9;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a602 == 34 && (a587 == 34 && a280 == 34)) && a281 == 3) && ((a206 == 11 && ( cf==1  && (input == 6))) && a434 == 34))) {
     	a148 -= (a148 - 20) < a148 ? 2 : 0;
@@ -44034,7 +44034,7 @@
     	a190 = 33 ;
     	a373 = 3;
     	a18 = 9; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if((((a289 == 4 && (a592 == 34 && ((input == 8) &&  cf==1 ))) && a358 == 8) && (a399 == 5 && (a486 == 34 && a370 == 5)))) {
     	cf = 0;
@@ -44127,7 +44127,7 @@
     	a518 = 33 ;
     	a336 = 10;
     	a124 = 7; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a464 == 34 && ((input == 1) &&  cf==1 )) && (a434 == 34 && (((a214 == 4 && a407 == 34) && a521 == 34) && a220 == 34)))) {
     	cf = 0;
@@ -44166,7 +44166,7 @@
     	a486 = 32 ;
     	a312 = 2;
     	a290 = 14; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a486 == 34 && (a277 == 9 && ( cf==1  && (input == 5)))) && a294 == 34) && ((a216 == 34 && a295 == 11) && a476 == 34))) {
     	cf = 0;
@@ -44243,10 +44243,10 @@
     	a558 = 34 ;
     	a318 = 32 ;
     	a200 = 11; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm216(int input) {
+ void calculate_outputm216(int8_t  input) {
     if(((a262 == 34 && ((a233 == 8 && a507 == 34) && a419 == 34)) && (a592 == 34 && (( cf==1  && (input == 2)) && a203 == 4)))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
     	cf = 0;
@@ -44334,7 +44334,7 @@
     	a174 = 11;
     	a482 = 33 ;
     	a99 = 1; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((((((input == 9) &&  cf==1 ) && a463 == 34) && a262 == 34) && a270 == 6) && ((a304 == 7 && a297 == 6) && a220 == 34))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -44371,7 +44371,7 @@
     	a304 = 5;
     	a226 = 3;
     	a347 = 16; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a475 == 34 && (a364 == 9 && a463 == 34)) && (((a246 == 8 && ( cf==1  && (input == 1))) && a494 == 34) && a262 == 34))) {
     	a2 -= (a2 - 20) < a2 ? 2 : 0;
@@ -44449,7 +44449,7 @@
     	a585 = 34 ;
     	a400 = 9;
     	a283 = 10; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((((((input == 7) &&  cf==1 ) && a486 == 34) && a419 == 34) && (a365 == 3 && ((a558 == 34 && a206 == 11) && a260 == 9)))) {
     	a85 += (a85 + 20) > a85 ? 4 : 0;
@@ -44540,10 +44540,10 @@
     	a366 = 34 ;
     	a247 = 11;
     	a363 = 4; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm217(int input) {
+ void calculate_outputm217(int8_t  input) {
     if(((a435 == 34 && ((a226 == 4 && (a209 == 6 && ( cf==1  && (input == 10)))) && a215 == 34)) && (a215 == 34 && a206 == 11))) {
     	a148 -= (a148 - 20) < a148 ? 1 : 0;
     	cf = 0;
@@ -44651,7 +44651,7 @@
     	a304 = 7;
     	a297 = 6;
     	a160 = 12;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((((a477 == 34 && a419 == 34) && a330 == 8) && a399 == 5) && (a602 == 34 && (a587 == 34 && ((input == 9) &&  cf==1 ))))) {
     	a91 += (a91 + 20) > a91 ? 1 : 0;
@@ -44741,7 +44741,7 @@
     	a419 = 33 ;
     	a498 = 34 ;
     	a118 = 9; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 8)) && a356 == 10) && a259 == 10) && (a262 == 34 && ((a465 == 34 && a445 == 34) && a282 == 9)))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -44788,7 +44788,7 @@
     	a229 = 5;
     	a493 = 33 ;
     	a160 = 12; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((((a330 == 8 && ( cf==1  && (input == 6))) && a353 == 4) && a508 == 34) && (a216 == 34 && (a365 == 3 && a233 == 8)))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -44857,10 +44857,10 @@
     	a201 = 5;
     	a216 = 32 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm218(int input) {
+ void calculate_outputm218(int8_t  input) {
     if(((a234 == 12 && ((( cf==1  && (input == 1)) && a348 == 6) && a458 == 34)) && ((a214 == 4 && a585 == 34) && a493 == 34))) {
     	a73 += (a73 + 20) > a73 ? 1 : 0;
     	cf = 0;
@@ -44900,7 +44900,7 @@
     	a586 = 33 ;
     	a465 = 33 ;
     	a199 = 9; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((( cf==1  && (input == 5)) && a400 == 9) && (a592 == 34 && (a312 == 3 && (a226 == 4 && (a592 == 34 && a419 == 34)))))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -44914,10 +44914,10 @@
     	a348 = 5;
     	a18 = 10;
     	a44 = 13; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm219(int input) {
+ void calculate_outputm219(int8_t  input) {
     if((((a366 == 34 && (a336 == 12 && (( cf==1  && (input == 1)) && a477 == 34))) && a375 == 34) && (a209 == 6 && a432 == 34))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
     	cf = 0;
@@ -44959,7 +44959,7 @@
     	a18 = 16;
     	a318 = 32 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a502 == 34 && ((a493 == 34 && a348 == 6) && a400 == 9)) && (a407 == 34 && (a317 == 7 && ( cf==1  && (input == 10)))))) {
     	a2 -= (a2 - 20) < a2 ? 3 : 0;
@@ -45029,7 +45029,7 @@
     	a407 = 32 ;
     	a446 = 32 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a453 == 34 && a404 == 34) && (a295 == 11 && ((a586 == 34 && (((input == 2) &&  cf==1 ) && a253 == 8)) && a247 == 12)))) {
     	a96 += (a96 + 20) > a96 ? 2 : 0;
@@ -45072,7 +45072,7 @@
     	a379 = 32 ;
     	a384 = 3;
     	a363 = 4; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a493 == 34 && (a384 == 4 && a432 == 34)) && (a233 == 8 && ((((input == 5) &&  cf==1 ) && a254 == 34) && a528 == 34)))) {
     	cf = 0;
@@ -45154,10 +45154,10 @@
     	a587 = 34 ;
     	a356 = 9;
     	a23 = 13; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm220(int input) {
+ void calculate_outputm220(int8_t  input) {
     if(((a464 == 34 && (a326 == 34 && (a411 == 34 && ( cf==1  && (input == 6))))) && ((a384 == 4 && a304 == 7) && a324 == 7))) {
     	a65 -= (a65 - 20) < a65 ? 3 : 0;
     	cf = 0;
@@ -45308,7 +45308,7 @@
     	a201 = 6;
     	a216 = 34 ;
     	a118 = 9;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a510 == 34 && (a227 == 34 && a203 == 4)) && ((a223 == 10 && (a384 == 4 && ((input == 7) &&  cf==1 ))) && a310 == 3))) {
     	a91 -= (a91 - 20) < a91 ? 2 : 0;
@@ -45398,7 +45398,7 @@
     	a246 = 8;
     	a396 = 6;
     	a118 = 9; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a312 == 3 && (a356 == 10 && a203 == 4)) && (a358 == 8 && (a353 == 4 && (((input == 1) &&  cf==1 ) && a464 == 34))))) {
     	cf = 0;
@@ -45495,10 +45495,10 @@
     	a477 = 33 ;
     	a218 = 6;
     	a125 = 14; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm222(int input) {
+ void calculate_outputm222(int8_t  input) {
     if(((((a345 == 11 && ( cf==1  && (input == 6))) && a445 == 34) && a242 == 4) && ((a323 == 12 && a358 == 8) && a246 == 8))) {
     	a65 -= (a65 - 20) < a65 ? 1 : 0;
     	cf = 0;
@@ -45605,10 +45605,10 @@
     	a446 = 34 ;
     	a592 = 32 ;
     	a52 = 7; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm21(int input) {
+ void calculate_outputm21(int8_t  input) {
     if(((a34 == 33 &&  cf==1 ) && (a587 == 34 && (a330 == 8 && (a247 == 12 && ((a270 == 6 && a464 == 34) && a280 == 34)))))) {
     	if((((a229 == 5 && (((a380 == 5 && (a170 == 33 &&  cf==1 )) && a476 == 34) && a214 == 4)) && a244 == 9) && a330 == 8)) {
     		calculate_outputm213(input);
@@ -45642,7 +45642,7 @@
     	} 
     } 
 }
- void calculate_outputm225(int input) {
+ void calculate_outputm225(int8_t  input) {
     if(((a312 == 1 && (a229 == 3 && a521 == 33)) && (a518 == 33 && (a505 == 33 && (a510 == 33 && ((input == 1) &&  cf==1 )))))) {
     	a85 += (a85 + 20) > a85 ? 3 : 0;
     	cf = 0;
@@ -45676,10 +45676,10 @@
     	a402 = 32 ;
     	a348 = 6;
     	a342 = 8; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm227(int input) {
+ void calculate_outputm227(int8_t  input) {
     if((((((input == 6) &&  cf==1 ) && a263 == 6) && a227 == 33) && ((a324 == 5 && (a216 == 33 && a280 == 33)) && a227 == 33))) {
     	a29 += (a29 + 20) > a29 ? 2 : 0;
     	cf = 0;
@@ -45795,7 +45795,7 @@
     	a60 = 13; 
     	}else {
 
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a445 == 33 && (( cf==1  && (input == 7)) && a592 == 33)) && a353 == 2) && (a334 == 7 && (a323 == 10 && a373 == 3)))) {
     	cf = 0;
@@ -45858,7 +45858,7 @@
     	a107 = 34 ;
     	a18 = 16;
     	a70 = 6; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((( cf==1  && (input == 10)) && (a253 == 6 && ((((a494 == 33 && a233 == 6) && a475 == 33) && a274 == 3) && a345 == 9)))) {
     	a29 += (a29 + 20) > a29 ? 4 : 0;
@@ -45942,7 +45942,7 @@
     	a253 = 7;
     	a370 = 4;
     	a151 = 5; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a582 == 33 && a521 == 33) && a398 == 2) && (a226 == 2 && (a201 == 4 && (a253 == 6 && ( cf==1  && (input == 5))))))) {
     	cf = 0;
@@ -46005,10 +46005,10 @@
     	a458 = 32 ;
     	a419 = 33 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm228(int input) {
+ void calculate_outputm228(int8_t  input) {
     if(((((a465 == 33 && a586 == 33) && a476 == 33) && a494 == 33) && ((( cf==1  && (input == 7)) && a274 == 3) && a310 == 1))) {
     	cf = 0;
     	a67 = 36 ;
@@ -46023,7 +46023,7 @@
     	a477 = 32 ;
     	a365 = 2;
     	a103 = 16; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((input == 5) &&  cf==1 ) && (((((a304 == 5 && a521 == 33) && a398 == 2) && a380 == 3) && a345 == 9) && a246 == 6))) {
     	a2 += (a2 + 20) > a2 ? 2 : 0;
@@ -46065,10 +46065,10 @@
     	a107 = 34 ;
     	a369 = 1;
     	a70 = 6; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm229(int input) {
+ void calculate_outputm229(int8_t  input) {
     if(((a247 == 10 && ((( cf==1  && (input == 8)) && a594 == 33) && a227 == 33)) && (a382 == 3 && (a407 == 33 && a494 == 33)))) {
     	cf = 0;
     	a209 = 5;
@@ -46176,10 +46176,10 @@
     	a270 = 6;
     	a475 = 32 ;
     	a39 = 7; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm231(int input) {
+ void calculate_outputm231(int8_t  input) {
     if((((a464 == 33 && (a310 == 1 && (a324 == 5 && a281 == 1))) && a353 == 2) && (a216 == 33 && ( cf==1  && (input == 1))))) {
     	a76 += (a76 + 20) > a76 ? 1 : 0;
     	cf = 0;
@@ -46266,7 +46266,7 @@
     	a260 = 7;
     	a602 = 32 ;
     	a118 = 9; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a532 == 33 && (a346 == 1 && ((input == 2) &&  cf==1 ))) && a554 == 33) && ((a434 == 33 && a458 == 33) && a502 == 33))) {
     	a29 -= (a29 - 20) < a29 ? 1 : 0;
@@ -46358,7 +46358,7 @@
     	a480 = 34 ;
     	a482 = 34 ;
     	a283 = 10; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a376 == 3 && a280 == 33) && a274 == 3) && ((a213 == 2 && (((input == 6) &&  cf==1 ) && a453 == 33)) && a463 == 33))) {
     	a76 += (a76 + 20) > a76 ? 2 : 0;
@@ -46396,10 +46396,10 @@
     	a560 = 32 ;
     	a544 = 32 ;
     	a305 = 13; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm22(int input) {
+ void calculate_outputm22(int8_t  input) {
     if(((a345 == 9 && ((a592 == 33 && a234 == 10) && a380 == 3)) && ((a402 == 33 && ( cf==1  && a341 == 32)) && a594 == 33))) {
     	if((((a374 == 7 && (a173 == 33 &&  cf==1 )) && a369 == 1) && ((a544 == 33 && (a246 == 6 && a246 == 6)) && a370 == 3))) {
     		calculate_outputm225(input);
@@ -46422,7 +46422,7 @@
     	} 
     } 
 }
- void calculate_outputm233(int input) {
+ void calculate_outputm233(int8_t  input) {
     if(((a304 == 5 && ((a226 == 2 && (( cf==1  && (input == 6)) && a326 == 33)) && a345 == 9)) && (a334 == 7 && a474 == 33))) {
     	a29 += (a29 + 20) > a29 ? 2 : 0;
     	cf = 0;
@@ -46532,7 +46532,7 @@
     	a594 = 32 ;
     	a463 = 33 ;
     	a364 = 7; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a384 == 2 && (a587 == 33 && (a223 == 8 && (a260 == 7 && ((input == 9) &&  cf==1 ))))) && (a215 == 33 && a582 == 33))) {
     	a2 -= (a2 - 20) < a2 ? 4 : 0;
@@ -46639,7 +46639,7 @@
     	a244 = 9;
     	a317 = 7;
     	a99 = 8; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a203 == 2 && (( cf==1  && (input == 1)) && a318 == 33)) && ((a458 == 33 && (a241 == 6 && a400 == 7)) && a375 == 33))) {
     	a29 += (a29 + 20) > a29 ? 1 : 0;
@@ -46763,7 +46763,7 @@
     	a289 = 3;
     	a476 = 34 ;
     	a94 = 1; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a384 == 2 && ( cf==1  && (input == 5))) && ((a220 == 33 && ((a304 == 5 && a516 == 33) && a477 == 33)) && a259 == 8))) {
     	a2 -= (a2 - 20) < a2 ? 2 : 0;
@@ -46883,10 +46883,10 @@
     	a486 = 33 ;
     	a227 = 33 ;
     	a19 = 9; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm234(int input) {
+ void calculate_outputm234(int8_t  input) {
     if(((a310 == 1 && (a368 == 4 && (a358 == 6 && (a216 == 33 && a554 == 33)))) && (( cf==1  && (input == 5)) && a407 == 33))) {
     	cf = 0;
     	a137 = 33 ;
@@ -46902,7 +46902,7 @@
     	a18 = 14;
     	a227 = 32 ;
     	a361 = 9; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a228 == 3 && (a400 == 7 && (a407 == 33 && a582 == 33))) && (a229 == 3 && (( cf==1  && (input == 9)) && a227 == 33)))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -46957,10 +46957,10 @@
     	a508 = 32 ;
     	a227 = 32 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm235(int input) {
+ void calculate_outputm235(int8_t  input) {
     if(((a297 == 4 && ((a453 == 33 && (a359 == 9 && (a474 == 33 && ((input == 8) &&  cf==1 )))) && a281 == 1)) && a223 == 8)) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a179 += (a179 + 20) > a179 ? 4 : 0;
@@ -47088,7 +47088,7 @@
     	a458 = 35 ;
     	a516 = 33 ;
     	a31 = 5;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a312 == 1 && a560 == 33) && a464 == 33) && (a416 == 33 && ((( cf==1  && (input == 5)) && a244 == 7) && a289 == 2)))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -47107,7 +47107,7 @@
     	a18 = 15;
     	a387 = 32 ;
     	a144 = 5; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a435 == 33 && (a252 == 10 && a432 == 33)) && ((a446 == 33 && (( cf==1  && (input == 4)) && a518 == 33)) && a334 == 7))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -47353,7 +47353,7 @@
     	a480 = 32 ;
     	a227 = 33 ;
     	a393 = 11;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a370 == 3 && (((input == 9) &&  cf==1 ) && a223 == 8)) && a546 == 33) && (a556 == 33 && (a277 == 7 && a521 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -47391,7 +47391,7 @@
     	a521 = 36 ;
     	a516 = 34 ;
     	a49 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a228 == 3 && (( cf==1  && (input == 3)) && a289 == 2)) && a369 == 1) && (a369 == 1 && (a223 == 8 && a242 == 2)))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -47411,7 +47411,7 @@
     	a307 = 33 ;
     	a94 = 5;
     	a357 = 9; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a318 == 33 && (a346 == 1 && (a259 == 8 && ((input == 1) &&  cf==1 )))) && a376 == 3) && (a446 == 33 && a209 == 4))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -47571,7 +47571,7 @@
     	a585 = 36 ;
     	a400 = 8;
     	a39 = 1;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((((a213 == 2 && (a592 == 33 && a310 == 1)) && a398 == 2) && a242 == 2) && (a554 == 33 && ( cf==1  && (input == 2))))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -47606,7 +47606,7 @@
     	a477 = 32 ;
     	a384 = 5;
     	a172 = 14; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a418 == 33 && (a594 == 33 && (a226 == 2 && ( cf==1  && (input == 7))))) && a475 == 33) && (a380 == 3 && a323 == 10))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -47639,7 +47639,7 @@
     	a416 = 34 ;
     	a312 = 1;
     	a149 = 12; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a521 == 33 && (a445 == 33 && (a295 == 9 && a516 == 33))) && ((a518 == 33 && ( cf==1  && (input == 6))) && a317 == 5))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -47723,7 +47723,7 @@
     	a366 = 34 ;
     	a379 = 36 ;
     	a174 = 13;
-    	}/* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((a241 == 6 && (a578 == 33 && ((input == 10) &&  cf==1 ))) && a205 == 8) && ((a432 == 33 && a521 == 33) && a582 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -47971,10 +47971,10 @@
     	a226 = 5;
     	a252 = 10;
     	a31 = 7;
-    	}/* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm236(int input) {
+ void calculate_outputm236(int8_t  input) {
     if(((a370 == 3 && ((a313 == 1 && (((input == 7) &&  cf==1 ) && a398 == 2)) && a330 == 6)) && (a274 == 3 && a241 == 6))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
     	cf = 0;
@@ -47992,7 +47992,7 @@
     	a404 = 32 ;
     	a370 = 4;
     	a49 = 9; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a310 == 1 && a431 == 33) && (a259 == 8 && (((a205 == 8 && ((input == 9) &&  cf==1 )) && a353 == 2) && a364 == 7)))) {
     	a73 -= (a73 - 20) < a73 ? 4 : 0;
@@ -48051,7 +48051,7 @@
     	a404 = 32 ;
     	a242 = 3;
     	a342 = 8; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a465 == 33 && ((input == 2) &&  cf==1 )) && ((a280 == 33 && ((a324 == 5 && a516 == 33) && a263 == 6)) && a223 == 8))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -48111,7 +48111,7 @@
     	a431 = 32 ;
     	a404 = 32 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a463 == 33 && (a404 == 33 && a336 == 10)) && (((a244 == 7 && ( cf==1  && (input == 1))) && a416 == 33) && a203 == 2))) {
     	cf = 0;
@@ -48170,10 +48170,10 @@
     	a307 = 32 ;
     	a310 = 2;
     	a56 = 9; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm238(int input) {
+ void calculate_outputm238(int8_t  input) {
     if((( cf==1  && (input == 9)) && (a282 == 7 && ((((a280 == 33 && a376 == 3) && a416 == 33) && a516 == 33) && a228 == 3)))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
     	cf = 0;
@@ -48285,7 +48285,7 @@
     	a247 = 11;
     	a246 = 7;
     	a305 = 8; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((( cf==1  && (input == 5)) && a259 == 8) && (((a482 == 33 && (a400 == 7 && a396 == 6)) && a587 == 33) && a310 == 1))) {
     	a171 -= (a171 - 20) < a171 ? 2 : 0;
@@ -48400,10 +48400,10 @@
     	a546 = 32 ;
     	a476 = 32 ;
     	a49 = 3; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm240(int input) {
+ void calculate_outputm240(int8_t  input) {
     if(((a419 == 33 && (a453 == 33 && ( cf==1  && (input == 8)))) && (((a280 == 33 && a358 == 6) && a582 == 33) && a241 == 6))) {
     	a186 -= (a186 - 20) < a186 ? 4 : 0;
     	cf = 0;
@@ -48521,7 +48521,7 @@
     	a578 = 33 ;
     	a295 = 11;
     	a357 = 14; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a236 == 6 && (a289 == 2 && (a592 == 33 && a209 == 4))) && ((((input == 6) &&  cf==1 ) && a226 == 2) && a324 == 5))) {
     	a65 -= (a65 - 20) < a65 ? 4 : 0;
@@ -48538,10 +48538,10 @@
     	a486 = 33 ;
     	a262 = 33 ;
     	a18 = 15; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm241(int input) {
+ void calculate_outputm241(int8_t  input) {
     if(((( cf==1  && (input == 7)) && a546 == 33) && (a324 == 5 && (((a294 == 33 && a521 == 33) && a516 == 33) && a242 == 2)))) {
     	cf = 0;
     	a215 = 33 ;
@@ -48603,7 +48603,7 @@
     	a465 = 32 ;
     	a336 = 11;
     	a99 = 1; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a227 == 33 && ((a554 == 33 && a289 == 2) && a205 == 8)) && ((a463 == 33 && ((input == 8) &&  cf==1 )) && a317 == 5))) {
     	a186 -= (a186 - 20) < a186 ? 4 : 0;
@@ -48669,10 +48669,10 @@
     	a348 = 6;
     	a592 = 32 ;
     	a49 = 4; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm242(int input) {
+ void calculate_outputm242(int8_t  input) {
     if(((((a241 == 6 && ( cf==1  && (input == 5))) && a297 == 4) && a220 == 33) && (a445 == 33 && (a262 == 33 && a419 == 33)))) {
     	a104 -= (a104 - 20) < a104 ? 1 : 0;
     	a22 += (a22 + 20) > a22 ? 1 : 0;
@@ -48836,7 +48836,7 @@
     	a366 = 33 ;
     	a399 = 7;
     	a16 = 15;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a505 == 33 && a510 == 33) && ((((( cf==1  && (input == 3)) && a546 == 33) && a282 == 7) && a396 == 6) && a262 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -48862,7 +48862,7 @@
     	a310 = 2;
     	a384 = 6;
     	a4 = 12; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a458 == 33 && ((a498 == 33 && ((input == 7) &&  cf==1 )) && a518 == 33)) && (a458 == 33 && (a398 == 2 && a396 == 6)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -48983,7 +48983,7 @@
     	a510 = 32 ;
     	a370 = 7;
     	a26 = 7; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a585 == 33 && ((a324 == 5 && a370 == 3) && a242 == 2)) && ((((input == 4) &&  cf==1 ) && a370 == 3) && a486 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -49178,7 +49178,7 @@
     	a474 = 34 ;
     	a585 = 35 ;
     	a49 = 4;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a215 == 33 && ((a505 == 33 && a475 == 33) && a558 == 33)) && ((a521 == 33 && ( cf==1  && (input == 2))) && a244 == 7))) {
     	a96 += (a96 + 20) > a96 ? 1 : 0;
@@ -49206,7 +49206,7 @@
     	a393 = 15;
     	a52 = 5;
     	a314 = 9;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a295 == 9 && (a274 == 3 && a330 == 6)) && (a323 == 10 && ((((input == 1) &&  cf==1 ) && a532 == 33) && a247 == 10)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -49425,7 +49425,7 @@
     	a236 = 12;
     	a396 = 13;
     	a283 = 7;
-    	}/* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a326 == 33 && ((( cf==1  && (input == 9)) && a323 == 10) && a346 == 1)) && ((a398 == 2 && a464 == 33) && a326 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -49665,7 +49665,7 @@
     	a558 = 33 ;
     	a242 = 5;
     	a49 = 9;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a407 == 33 && ( cf==1  && (input == 10))) && a324 == 5) && (((a359 == 9 && a602 == 33) && a370 == 3) && a486 == 33))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -49802,7 +49802,7 @@
     	a242 = 8;
     	a376 = 9;
     	a124 = 8;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a216 == 33 && ( cf==1  && (input == 6))) && a592 == 33) && (a586 == 33 && (a368 == 4 && (a313 == 1 && a498 == 33))))) {
     	a78 += (a78 + 20) > a78 ? 1 : 0;
@@ -49823,7 +49823,7 @@
     	a122 = 35 ;
     	a111 = 4;
     	a283 = 5; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a578 == 33 && ((a206 == 9 && a236 == 6) && a370 == 3)) && (a416 == 33 && (a252 == 10 && ( cf==1  && (input == 8)))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -50028,10 +50028,10 @@
     	a214 = 6;
     	a370 = 8;
     	a144 = 4;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm244(int input) {
+ void calculate_outputm244(int8_t  input) {
     if(((((a384 == 2 && ((input == 1) &&  cf==1 )) && a404 == 33) && a398 == 2) && ((a458 == 33 && a229 == 3) && a407 == 33))) {
     	a113 -= (a113 - 20) < a113 ? 2 : 0;
     	cf = 0;
@@ -50099,7 +50099,7 @@
     	a482 = 32 ;
     	a369 = 3;
     	a49 = 7; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a246 == 6 && (a310 == 1 && (( cf==1  && (input == 5)) && a407 == 33))) && ((a594 == 33 && a310 == 1) && a369 == 1))) {
     	a171 -= (a171 - 20) < a171 ? 3 : 0;
@@ -50138,10 +50138,10 @@
     	a384 = 3;
     	a209 = 5;
     	a319 = 2; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm245(int input) {
+ void calculate_outputm245(int8_t  input) {
     if(((a304 == 5 && a366 == 33) && (a398 == 2 && (a516 == 33 && (a259 == 8 && (((input == 9) &&  cf==1 ) && a356 == 8)))))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
     	cf = 0;
@@ -50167,7 +50167,7 @@
     	a587 = 32 ;
     	a594 = 32 ;
     	a103 = 16; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a297 == 4 && (a247 == 10 && (a330 == 6 && a521 == 33))) && (a508 == 33 && (a216 == 33 && ((input == 10) &&  cf==1 ))))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -50229,7 +50229,7 @@
     	a346 = 2;
     	a518 = 32 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((a254 == 33 && a353 == 2) && a493 == 33) && a365 == 1) && ((a280 == 33 && ((input == 6) &&  cf==1 )) && a312 == 1))) {
     	a2 -= (a2 - 20) < a2 ? 3 : 0;
@@ -50265,10 +50265,10 @@
     	a30 = 35 ;
     	a431 = 32 ;
     	a125 = 11; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm246(int input) {
+ void calculate_outputm246(int8_t  input) {
     if((((a370 == 3 && a453 == 33) && a346 == 1) && (a494 == 33 && ((( cf==1  && (input == 4)) && a520 == 33) && a419 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 += (a104 + 20) > a104 ? 3 : 0;
@@ -50441,7 +50441,7 @@
     	a289 = 8;
     	a432 = 36 ;
     	a355 = 12;
-    	}/* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((((a253 == 6 && a310 == 1) && a209 == 4) && a223 == 8) && ((a253 == 6 && ((input == 3) &&  cf==1 )) && a263 == 6))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -50633,7 +50633,7 @@
     	a431 = 35 ;
     	a323 = 13;
     	a4 = 11;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a260 == 7 && (a214 == 2 && ( cf==1  && (input == 1)))) && a206 == 9) && ((a236 == 6 && a585 == 33) && a586 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -50698,7 +50698,7 @@
     	a465 = 35 ;
     	a482 = 36 ;
     	a172 = 17; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a242 == 2 && (a348 == 4 && a602 == 33)) && a486 == 33) && (a366 == 33 && (((input == 5) &&  cf==1 ) && a554 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -50835,7 +50835,7 @@
     	a216 = 34 ;
     	a353 = 8;
     	a308 = 9; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((((input == 6) &&  cf==1 ) && a486 == 33) && (a216 == 33 && (a475 == 33 && (a493 == 33 && (a214 == 2 && a432 == 33)))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -50856,7 +50856,7 @@
     	a52 = 8;
     	a18 = 13;
     	a44 = 15; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((((a375 == 33 && ((input == 7) &&  cf==1 )) && a326 == 33) && a277 == 7) && a233 == 6) && (a289 == 2 && a324 == 5))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -50876,7 +50876,7 @@
     	a18 = 11;
     	a170 = 32 ;
     	a26 = 11; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a379 == 33 && ((a370 == 3 && a334 == 7) && a476 == 33)) && a277 == 7) && (a326 == 33 && ((input == 10) &&  cf==1 )))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -50895,7 +50895,7 @@
     	a18 = 11;
     	a183 = 11;
     	a49 = 3; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((a477 == 33 && a227 == 33) && a384 == 2) && (a477 == 33 && ((((input == 8) &&  cf==1 ) && a376 == 3) && a260 == 7)))) {
     	a78 += (a78 + 20) > a78 ? 1 : 0;
@@ -51015,7 +51015,7 @@
     	a434 = 33 ;
     	a348 = 9;
     	a49 = 6; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a345 == 9 && ( cf==1  && (input == 2))) && ((a465 == 33 && ((a345 == 9 && a215 == 33) && a216 == 33)) && a353 == 2))) {
     	a96 -= (a96 - 20) < a96 ? 4 : 0;
@@ -51141,7 +51141,7 @@
     	a366 = 33 ;
     	a493 = 33 ;
     	a319 = 6;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((((input == 9) &&  cf==1 ) && a592 == 33) && a223 == 8) && ((a380 == 3 && (a370 == 3 && a259 == 8)) && a294 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -51164,10 +51164,10 @@
     	a18 = 15;
     	a387 = 32 ;
     	a111 = 8; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm248(int input) {
+ void calculate_outputm248(int8_t  input) {
     if(((a254 == 33 && ((input == 10) &&  cf==1 )) && (((a516 == 33 && (a435 == 33 && a369 == 1)) && a419 == 33) && a532 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 += (a104 + 20) > a104 ? 3 : 0;
@@ -51277,7 +51277,7 @@
     	a348 = 9;
     	a252 = 17;
     	a94 = 3; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a214 == 2 && ( cf==1  && (input == 9))) && a518 == 33) && ((a507 == 33 && (a364 == 7 && a446 == 33)) && a336 == 10))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -51422,7 +51422,7 @@
     	a241 = 9;
     	a396 = 13;
     	a149 = 12; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a324 == 5 && (a544 == 33 && ((input == 8) &&  cf==1 ))) && ((a280 == 33 && (a234 == 10 && a229 == 3)) && a396 == 6))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -51458,7 +51458,7 @@
     	a227 = 34 ;
     	a330 = 13;
     	a18 = 9; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a252 == 10 && ((input == 5) &&  cf==1 )) && (a203 == 2 && ((a365 == 1 && (a404 == 33 && a558 == 33)) && a364 == 7)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -51574,7 +51574,7 @@
     	a476 = 36 ;
     	a464 = 33 ;
     	a325 = 11; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a270 == 4 && (a263 == 6 && ( cf==1  && (input == 6)))) && ((a353 == 2 && (a416 == 33 && a507 == 33)) && a475 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -51813,7 +51813,7 @@
     	a382 = 7;
     	a520 = 32 ;
     	a49 = 4;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a520 == 33 && (a582 == 33 && ((input == 2) &&  cf==1 ))) && (a345 == 9 && ((a304 == 5 && a252 == 10) && a215 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -51908,7 +51908,7 @@
     	a578 = 33 ;
     	a353 = 2;
     	a26 = 5; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a282 == 7 && ((a201 == 4 && ( cf==1  && (input == 1))) && a375 == 33)) && a505 == 33) && (a356 == 8 && a348 == 4))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -52025,7 +52025,7 @@
     	a560 = 33 ;
     	a246 = 12;
     	a26 = 7; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 7)) && a359 == 9) && a416 == 33) && (a554 == 33 && ((a384 == 2 && a434 == 33) && a318 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -52044,7 +52044,7 @@
     	a49 = 8;
     	a18 = 16;
     	a121 = 8; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a602 == 33 && ( cf==1  && (input == 4))) && a602 == 33) && (a220 == 33 && ((a582 == 33 && a532 == 33) && a432 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -52301,7 +52301,7 @@
     	a356 = 15;
     	a482 = 36 ;
     	a59 = 11;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a282 == 7 && ((((input == 3) &&  cf==1 ) && a345 == 9) && a229 == 3)) && ((a263 == 6 && a516 == 33) && a297 == 4))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -52390,10 +52390,10 @@
     	a277 = 11;
     	a465 = 32 ;
     	a141 = 34 ; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm249(int input) {
+ void calculate_outputm249(int8_t  input) {
     if(((((a364 == 7 && (a324 == 5 && a578 == 33)) && a326 == 33) && a556 == 33) && (((input == 7) &&  cf==1 ) && a476 == 33))) {
     	a148 += (a148 + 20) > a148 ? 1 : 0;
     	cf = 0;
@@ -52496,10 +52496,10 @@
     	a446 = 34 ;
     	a234 = 11;
     	a39 = 5; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm250(int input) {
+ void calculate_outputm250(int8_t  input) {
     if(((a398 == 2 && (a486 == 33 && ((input == 6) &&  cf==1 ))) && (a345 == 9 && ((a364 == 7 && a274 == 3) && a295 == 9)))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
     	cf = 0;
@@ -52630,7 +52630,7 @@
     	a602 = 34 ;
     	a226 = 3;
     	a56 = 9; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((((a498 == 33 && a247 == 10) && a218 == 5) && a464 == 33) && ((a382 == 3 && ((input == 7) &&  cf==1 )) && a233 == 6))) {
     	cf = 0;
@@ -52736,7 +52736,7 @@
     	a218 = 6;
     	a228 = 4;
     	a70 = 6; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a201 == 4 && (a246 == 6 && a560 == 33)) && (((((input == 10) &&  cf==1 ) && a345 == 9) && a379 == 33) && a209 == 4))) {
     	a91 -= (a91 - 20) < a91 ? 3 : 0;
@@ -52861,10 +52861,10 @@
     	a205 = 10;
     	a318 = 34 ;
     	a342 = 10; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm23(int input) {
+ void calculate_outputm23(int8_t  input) {
     if((((((a218 == 5 && a234 == 10) && a582 == 33) && a458 == 33) && a233 == 6) && (a345 == 9 && (a4 == 5 &&  cf==1 )))) {
     	if(((a304 == 5 && (a404 == 33 && ((a317 == 5 && (a16 == 13 &&  cf==1 )) && a218 == 5))) && (a379 == 33 && a337 == 4))) {
     		calculate_outputm233(input);
@@ -52924,7 +52924,7 @@
     	} 
     } 
 }
- void calculate_outputm251(int input) {
+ void calculate_outputm251(int8_t  input) {
     if(((a323 == 10 && ( cf==1  && (input == 2))) && ((a384 == 2 && ((a359 == 9 && a556 == 33) && a498 == 33)) && a379 == 33))) {
     	a186 -= (a186 - 20) < a186 ? 4 : 0;
     	cf = 0;
@@ -53016,7 +53016,7 @@
     	a521 = 34 ;
     	a482 = 34 ;
     	a172 = 17;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a560 == 33 && a364 == 7) && a516 == 33) && ((a312 == 1 && (((input == 6) &&  cf==1 ) && a213 == 2)) && a260 == 7))) {
     	cf = 0;
@@ -53126,7 +53126,7 @@
     	a346 = 2;
     	a318 = 32 ;
     	a19 = 8; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a313 == 1 && (a369 == 1 && ((( cf==1  && (input == 7)) && a253 == 6) && a399 == 3))) && (a411 == 33 && a246 == 6))) {
     	a65 -= (a65 - 20) < a65 ? 3 : 0;
@@ -53250,7 +53250,7 @@
     	a374 = 8;
     	a482 = 34 ;
     	a151 = 12; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a310 == 1 && (( cf==1  && (input == 10)) && a520 == 33)) && (a434 == 33 && ((a345 == 9 && a364 == 7) && a353 == 2)))) {
     	a29 -= (a29 - 20) < a29 ? 2 : 0;
@@ -53440,10 +53440,10 @@
     	a480 = 32 ;
     	a310 = 3;
     	a26 = 11;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm252(int input) {
+ void calculate_outputm252(int8_t  input) {
     if((((a205 == 8 && a494 == 33) && a334 == 7) && (((a215 == 33 && ( cf==1  && (input == 2))) && a364 == 7) && a396 == 6))) {
     	a186 -= (a186 - 20) < a186 ? 3 : 0;
     	cf = 0;
@@ -53461,7 +53461,7 @@
     	a521 = 32 ;
     	a236 = 7;
     	a361 = 9; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a486 == 33 && (a379 == 33 && (((input == 1) &&  cf==1 ) && a280 == 33))) && a578 == 33) && (a336 == 10 && a376 == 3))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -53535,7 +53535,7 @@
     	a493 = 32 ;
     	a244 = 7;
     	a23 = 13; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a206 == 9 && (a227 == 33 && a281 == 1)) && (((((input == 10) &&  cf==1 ) && a294 == 33) && a493 == 33) && a241 == 6))) {
     	a186 += (a186 + 20) > a186 ? 1 : 0;
@@ -53640,10 +53640,10 @@
     	a310 = 2;
     	a236 = 7;
     	a355 = 11; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm24(int input) {
+ void calculate_outputm24(int8_t  input) {
     if(((a346 == 1 && ((a445 == 33 && a262 == 33) && a521 == 33)) && (((a62 == 33 &&  cf==1 ) && a312 == 1) && a215 == 33))) {
     	if((((((a211 == 33 &&  cf==1 ) && a270 == 4) && a205 == 8) && a216 == 33) && ((a582 == 33 && a379 == 33) && a318 == 33))) {
     		calculate_outputm251(input);
@@ -53653,7 +53653,7 @@
     	} 
     } 
 }
- void calculate_outputm253(int input) {
+ void calculate_outputm253(int8_t  input) {
     if((((a585 == 33 && (a227 == 33 && ((input == 7) &&  cf==1 ))) && a546 == 33) && (a434 == 33 && (a337 == 4 && a546 == 33)))) {
     	a186 -= (a186 - 20) < a186 ? 4 : 0;
     	cf = 0;
@@ -53687,10 +53687,10 @@
     	a520 = 32 ;
     	a532 = 34 ;
     	a342 = 8; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm254(int input) {
+ void calculate_outputm254(int8_t  input) {
     if((((((a453 == 33 && ((input == 5) &&  cf==1 )) && a592 == 33) && a587 == 33) && a585 == 33) && (a348 == 4 && a418 == 33))) {
     	a29 += (a29 + 20) > a29 ? 2 : 0;
     	cf = 0;
@@ -53780,7 +53780,7 @@
     	a382 = 4;
     	a366 = 32 ;
     	a342 = 8; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a356 == 8 && (a317 == 5 && a521 == 33)) && (a280 == 33 && (a227 == 33 && (((input == 1) &&  cf==1 ) && a228 == 3))))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -53821,7 +53821,7 @@
     	a142 = 32 ;
     	a521 = 34 ;
     	a26 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a226 == 2 && a330 == 6) && (a494 == 33 && (a510 == 33 && ((a201 == 4 && ( cf==1  && (input == 10))) && a247 == 10))))) {
     	a2 += (a2 + 20) > a2 ? 2 : 0;
@@ -53912,10 +53912,10 @@
     	a215 = 34 ;
     	a382 = 4;
     	a342 = 8; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm255(int input) {
+ void calculate_outputm255(int8_t  input) {
     if(((a431 == 33 && (a253 == 6 && (a418 == 33 && a507 == 33))) && ((( cf==1  && (input == 8)) && a216 == 33) && a215 == 33))) {
     	a29 += (a29 + 20) > a29 ? 3 : 0;
     	cf = 0;
@@ -53950,7 +53950,7 @@
     	a418 = 32 ;
     	a233 = 7;
     	a125 = 11; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((( cf==1  && (input == 10)) && (a334 == 7 && ((a376 == 3 && ((a324 == 5 && a521 == 33) && a374 == 7)) && a516 == 33)))) {
     	a113 += (a113 + 20) > a113 ? 2 : 0;
@@ -54044,7 +54044,7 @@
     	a254 = 34 ;
     	a382 = 4;
     	a23 = 13; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a518 == 33 && (a416 == 33 && (((input == 7) &&  cf==1 ) && a304 == 5))) && a404 == 33) && (a521 == 33 && a220 == 33))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -54107,7 +54107,7 @@
     	a416 = 34 ;
     	a404 = 34 ;
     	a49 = 2; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a544 == 33 && ((input == 9) &&  cf==1 )) && a532 == 33) && ((a359 == 9 && (a348 == 4 && a411 == 33)) && a516 == 33))) {
     	cf = 0;
@@ -54219,10 +54219,10 @@
     	a376 = 5;
     	a463 = 34 ;
     	a39 = 7; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm256(int input) {
+ void calculate_outputm256(int8_t  input) {
     if(((a458 == 33 && (a493 == 33 && (a310 == 1 && a587 == 33))) && ((((input == 2) &&  cf==1 ) && a384 == 2) && a241 == 6))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -54309,7 +54309,7 @@
     	a411 = 32 ;
     	a494 = 32 ;
     	a39 = 1;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a587 == 33 && (a560 == 33 && a242 == 2)) && ((a379 == 33 && (a498 == 33 && ( cf==1  && (input == 3)))) && a297 == 4))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -54414,7 +54414,7 @@
     	a556 = 33 ;
     	a411 = 32 ;
     	a26 = 7; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a234 == 10 && (((input == 6) &&  cf==1 ) && a502 == 33)) && (a458 == 33 && ((a475 == 33 && a592 == 33) && a532 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -54440,7 +54440,7 @@
     	a4 = 7;
     	a119 = 32 ;
     	a35 = 12;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a368 == 4 && ((a289 == 2 && a310 == 1) && a482 == 33)) && (a446 == 33 && (( cf==1  && (input == 8)) && a458 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -54632,7 +54632,7 @@
     	a323 = 11;
     	a369 = 7;
     	a150 = 13;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a323 == 10 && (a346 == 1 && (a334 == 7 && a477 == 33))) && a494 == 33) && (a418 == 33 && ((input == 9) &&  cf==1 )))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -54652,7 +54652,7 @@
     	a94 = 8;
     	a23 = 6;
     	a325 = 4; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((((( cf==1  && (input == 5)) && a346 == 1) && a520 == 33) && a294 == 33) && ((a586 == 33 && a465 == 33) && a546 == 33))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -54691,7 +54691,7 @@
     	a482 = 34 ;
     	a431 = 34 ;
     	a52 = 9; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a295 == 9 && (a241 == 6 && ((a206 == 9 && a295 == 9) && a419 == 33))) && (( cf==1  && (input == 10)) && a546 == 33))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -54806,7 +54806,7 @@
     	a463 = 35 ;
     	a544 = 33 ;
     	a150 = 9; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a482 == 33 && ((a384 == 2 && a431 == 33) && a477 == 33)) && a434 == 33) && (((input == 1) &&  cf==1 ) && a419 == 33))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -54872,7 +54872,7 @@
     	a348 = 8;
     	a274 = 10;
     	a14 = 3; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a477 == 33 && a474 == 33) && (((a353 == 2 && (((input == 4) &&  cf==1 ) && a516 == 33)) && a297 == 4) && a435 == 33))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -54990,7 +54990,7 @@
     	a505 = 36 ;
     	a587 = 33 ;
     	a33 = 4; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a502 == 33 && (a482 == 33 && (a558 == 33 && a380 == 3))) && ((a345 == 9 && ( cf==1  && (input == 7))) && a399 == 3))) {
     	a96 -= (a96 - 20) < a96 ? 4 : 0;
@@ -55152,10 +55152,10 @@
     	a578 = 32 ;
     	a366 = 35 ;
     	a18 = 15;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm257(int input) {
+ void calculate_outputm257(int8_t  input) {
     if(((a505 == 33 && (a358 == 6 && a379 == 33)) && (a446 == 33 && (a348 == 4 && (((input == 4) &&  cf==1 ) && a326 == 33))))) {
     	a96 += (a96 + 20) > a96 ? 1 : 0;
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -55180,7 +55180,7 @@
     	a190 = 33 ;
     	a72 = 35 ;
     	a18 = 9; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a585 == 33 && (a520 == 33 && a206 == 9)) && (a280 == 33 && ((a465 == 33 && ( cf==1  && (input == 6))) && a477 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -55290,7 +55290,7 @@
     	a220 = 36 ;
     	a419 = 35 ;
     	a49 = 4; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a578 == 33 && ((( cf==1  && (input == 1)) && a274 == 3) && a346 == 1)) && ((a294 == 33 && a376 == 3) && a586 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -55397,7 +55397,7 @@
     	a270 = 4;
     	a330 = 7;
     	a305 = 13; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((( cf==1  && (input == 5)) && a532 == 33) && a407 == 33) && a244 == 7) && (a398 == 2 && (a370 == 3 && a242 == 2)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -55574,7 +55574,7 @@
     	a312 = 3;
     	a434 = 35 ;
     	a144 = 11;
-    	}/* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a411 == 33 && (a518 == 33 && (a326 == 33 && ( cf==1  && (input == 7))))) && ((a578 == 33 && a476 == 33) && a419 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -55593,7 +55593,7 @@
     	a1 = 36 ;
     	a212 = 34 ;
     	a393 = 13; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((a556 == 33 && (a359 == 9 && a502 == 33)) && a446 == 33) && ((a505 == 33 && ((input == 10) &&  cf==1 )) && a364 == 7))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -55669,7 +55669,7 @@
     	a244 = 9;
     	a206 = 9;
     	a347 = 16; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a270 == 4 && a214 == 2) && ((a281 == 1 && (a297 == 4 && (a247 == 10 && ((input == 3) &&  cf==1 )))) && a241 == 6))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -55702,7 +55702,7 @@
     	a94 = 8;
     	a446 = 36 ;
     	a23 = 13; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a493 == 33 && (a260 == 7 && a407 == 33)) && a356 == 8) && (a474 == 33 && (a507 == 33 && ( cf==1  && (input == 2)))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -55913,7 +55913,7 @@
     	a445 = 36 ;
     	a242 = 6;
     	a47 = 6;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a259 == 8 && (a376 == 3 && a214 == 2)) && (((a558 == 33 && ((input == 8) &&  cf==1 )) && a592 == 33) && a400 == 7))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -55937,7 +55937,7 @@
     	a134 = 34 ;
     	a18 = 16;
     	a151 = 7; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a554 == 33 && a242 == 2) && a241 == 6) && (a516 == 33 && ((( cf==1  && (input == 9)) && a236 == 6) && a317 == 5)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -56030,10 +56030,10 @@
     	a326 = 32 ;
     	a463 = 33 ;
     	a23 = 13; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm258(int input) {
+ void calculate_outputm258(int8_t  input) {
     if(((a244 == 7 && a546 == 33) && ((((((input == 3) &&  cf==1 ) && a458 == 33) && a582 == 33) && a214 == 2) && a494 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a78 += (a78 + 20) > a78 ? 1 : 0;
@@ -56290,7 +56290,7 @@
     	a585 = 35 ;
     	a399 = 3;
     	a118 = 6;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((((a364 == 7 && (a384 == 2 && a445 == 33)) && a281 == 1) && a214 == 2) && (( cf==1  && (input == 5)) && a223 == 8))) {
     	a104 -= (a104 - 20) < a104 ? 2 : 0;
@@ -56327,7 +56327,7 @@
     	a223 = 8;
     	a81 = 34 ;
     	a93 = 6;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a480 == 33 && (a554 == 33 && (a289 == 2 && (a233 == 6 && a280 == 33)))) && (( cf==1  && (input == 6)) && a546 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -56347,7 +56347,7 @@
     	a387 = 33 ;
     	a18 = 15;
     	a357 = 7; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a313 == 1 && a259 == 8) && ((a358 == 6 && (a218 == 5 && (( cf==1  && (input == 8)) && a384 == 2))) && a558 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -56449,7 +56449,7 @@
     	a477 = 32 ;
     	a544 = 33 ;
     	a23 = 7; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a348 == 4 && a475 == 33) && a435 == 33) && (a214 == 2 && (a358 == 6 && (( cf==1  && (input == 1)) && a464 == 33))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -56570,7 +56570,7 @@
     	a228 = 8;
     	a602 = 33 ;
     	a150 = 10; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((( cf==1  && (input == 4)) && a602 == 33) && ((((a498 == 33 && a270 == 4) && a253 == 6) && a233 == 6) && a206 == 9))) {
     	a58 -= (a58 - 20) < a58 ? 2 : 0;
@@ -56600,7 +56600,7 @@
     	a493 = 36 ;
     	a446 = 33 ;
     	a23 = 8; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((((a431 == 33 && a474 == 33) && a216 == 33) && a274 == 3) && (a380 == 3 && (a554 == 33 && ( cf==1  && (input == 7)))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -56682,7 +56682,7 @@
     	a431 = 34 ;
     	a119 = 32 ;
     	a16 = 15; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a236 == 6 && a379 == 33) && ((a494 == 33 && (a464 == 33 && (a334 == 7 && ((input == 9) &&  cf==1 )))) && a592 == 33))) {
     	a88 += (a88 + 20) > a88 ? 2 : 0;
@@ -56868,7 +56868,7 @@
     	a356 = 15;
     	a398 = 5;
     	a314 = 9;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a353 == 2 && a434 == 33) && (a244 == 7 && (((( cf==1  && (input == 2)) && a281 == 1) && a521 == 33) && a229 == 3)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -56967,7 +56967,7 @@
     	a234 = 16;
     	a520 = 36 ;
     	a23 = 7; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a337 == 4 && a345 == 9) && ((((a326 == 33 && ((input == 10) &&  cf==1 )) && a416 == 33) && a585 == 33) && a445 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -57191,10 +57191,10 @@
     	a52 = 6;
     	a384 = 4;
     	a314 = 9;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm25(int input) {
+ void calculate_outputm25(int8_t  input) {
     if(((a453 == 33 && ((a520 == 33 && a215 == 33) && a270 == 4)) && (a228 == 3 && ((a34 == 33 &&  cf==1 ) && a396 == 6)))) {
     	if(((a270 == 4 && (a434 == 33 && (a510 == 33 && (a263 == 6 && a263 == 6)))) && ((a135 == 32 &&  cf==1 ) && a356 == 8))) {
     		calculate_outputm253(input);
@@ -57220,7 +57220,7 @@
     	} 
     } 
 }
- void calculate_outputm259(int input) {
+ void calculate_outputm259(int8_t  input) {
     if(((a560 == 33 && (a384 == 2 && a458 == 33)) && (((((input == 5) &&  cf==1 ) && a446 == 33) && a254 == 33) && a432 == 33))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
     	cf = 0;
@@ -57305,7 +57305,7 @@
     	a384 = 3;
     	a592 = 34 ;
     	a49 = 4; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a253 == 6 && (a482 == 33 && ( cf==1  && (input == 9)))) && (a209 == 4 && ((a334 == 7 && a521 == 33) && a313 == 1))) && a29 <= -1)) {
     	cf = 0;
@@ -57324,7 +57324,7 @@
     	a18 = 16;
     	a295 = 10;
     	a123 = 4; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((((a416 == 33 && a498 == 33) && a337 == 4) && (a241 == 6 && (a214 == 2 && (((input == 4) &&  cf==1 ) && a375 == 33)))) && a104 == 1716)) {
     	a171 += (a171 + 20) > a171 ? 1 : 0;
@@ -57333,7 +57333,7 @@
     	a387 = 34 ;
     	a126 = 32 ;
     	a18 = 15; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a310 == 1 && (a369 == 1 && ((input == 8) &&  cf==1 ))) && a582 == 33) && (a242 == 2 && (a384 == 2 && a366 == 33)))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -57400,7 +57400,7 @@
     	a330 = 7;
     	a516 = 32 ;
     	a23 = 7; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a502 == 33 && (a521 == 33 && (a458 == 33 && ( cf==1  && (input == 1))))) && (a223 == 8 && (a220 == 33 && a518 == 33))) && a179 <= 3)) {
     	a171 -= (a171 - 20) < a171 ? 2 : 0;
@@ -57419,7 +57419,7 @@
     	a482 = 34 ;
     	a494 = 34 ;
     	a35 = 10; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a282 == 7 && ( cf==1  && (input == 7))) && (a215 == 33 && ((a253 == 6 && (a494 == 33 && a220 == 33)) && a358 == 6)))) {
     	a184 -= (a184 - 20) < a184 ? 3 : 0;
@@ -57490,7 +57490,7 @@
     	a358 = 7;
     	a135 = 34 ;
     	a355 = 12; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a369 == 1 && a330 == 6) && (((a380 == 3 && (( cf==1  && (input == 3)) && a345 == 9)) && a233 == 6) && a374 == 7)) && a78 == 5704)) {
     	a186 -= (a186 - 20) < a186 ? 4 : 0;
@@ -57499,7 +57499,7 @@
     	a18 = 9;
     	a122 = 34 ;
     	a121 = 11; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a453 == 33 && ((a376 == 3 && a252 == 10) && a505 == 33)) && (a458 == 33 && (a379 == 33 && ( cf==1  && (input == 2)))))) {
     	a65 += (a65 + 20) > a65 ? 2 : 0;
@@ -57521,7 +57521,7 @@
     	a18 = 16;
     	a215 = 32 ;
     	a123 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((a318 == 33 && (a464 == 33 && ((input == 10) &&  cf==1 ))) && a516 == 33) && a254 == 33) && (a498 == 33 && a463 == 33))) {
     	a88 += (a88 + 20) > a88 ? 2 : 0;
@@ -57600,10 +57600,10 @@
     	a214 = 3;
     	a486 = 32 ;
     	a347 = 16; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm260(int input) {
+ void calculate_outputm260(int8_t  input) {
     if(((a602 == 33 && (a330 == 6 && (a418 == 33 && a304 == 5))) && ((a464 == 33 && ( cf==1  && (input == 5))) && a297 == 4))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a78 += (a78 + 20) > a78 ? 2 : 0;
@@ -57624,7 +57624,7 @@
     	a18 = 13;
     	a393 = 10;
     	a44 = 15; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a398 == 2 && (((a262 == 33 && a578 == 33) && a260 == 7) && a521 == 33)) && (( cf==1  && (input == 9)) && a411 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -57690,7 +57690,7 @@
     	a220 = 33 ;
     	a508 = 36 ;
     	a300 = 11; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((((input == 3) &&  cf==1 ) && a505 == 33) && a282 == 7) && (a215 == 33 && (a317 == 5 && (a502 == 33 && a366 == 33))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -57840,7 +57840,7 @@
     	a79 = 32 ;
     	a18 = 15;
     	a111 = 8;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a226 == 2 && (a369 == 1 && (a228 == 3 && a554 == 33))) && (a382 == 3 && (a419 == 33 && ( cf==1  && (input == 2)))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -57975,7 +57975,7 @@
     	a546 = 36 ;
     	a370 = 8;
     	a52 = 7; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((((a521 == 33 && ((input == 8) &&  cf==1 )) && a312 == 1) && a294 == 33) && a396 == 6) && (a282 == 7 && a434 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -58026,7 +58026,7 @@
     	a205 = 10;
     	a277 = 11;
     	a90 = 4; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a477 == 33 && (a432 == 33 && ((a359 == 9 && a418 == 33) && a399 == 3))) && (((input == 6) &&  cf==1 ) && a556 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -58046,7 +58046,7 @@
     	a18 = 14;
     	a94 = 8;
     	a325 = 4; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if((((a324 == 5 && a463 == 33) && a226 == 2) && ((a324 == 5 && (((input == 7) &&  cf==1 ) && a486 == 33)) && a558 == 33))) {
     	a104 -= (a104 - 20) < a104 ? 2 : 0;
@@ -58153,7 +58153,7 @@
     	a215 = 32 ;
     	a295 = 16;
     	a26 = 11; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a407 == 33 && (a502 == 33 && a326 == 33)) && a295 == 9) && ((( cf==1  && (input == 4)) && a482 == 33) && a263 == 6))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -58368,7 +58368,7 @@
     	a486 = 33 ;
     	a474 = 32 ;
     	a47 = 6;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((((a546 == 33 && ((input == 10) &&  cf==1 )) && a220 == 33) && a532 == 33) && ((a399 == 3 && a510 == 33) && a508 == 33))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -58483,7 +58483,7 @@
     	a52 = 8;
     	a0 = 36 ;
     	a393 = 15;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((((((input == 1) &&  cf==1 ) && a336 == 10) && a532 == 33) && a516 == 33) && ((a364 == 7 && a445 == 33) && a516 == 33))) {
     	a58 -= (a58 - 20) < a58 ? 1 : 0;
@@ -58597,10 +58597,10 @@
     	a247 = 13;
     	a205 = 11;
     	a26 = 11; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm261(int input) {
+ void calculate_outputm261(int8_t  input) {
     if(((a477 == 33 && a270 == 4) && (a520 == 33 && ((a508 == 33 && (a486 == 33 && ((input == 1) &&  cf==1 ))) && a304 == 5)))) {
     	a132 += (a132 + 20) > a132 ? 2 : 0;
     	a148 -= (a148 - 20) < a148 ? 4 : 0;
@@ -58701,10 +58701,10 @@
     	a516 = 34 ;
     	a431 = 34 ;
     	a118 = 10; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm263(int input) {
+ void calculate_outputm263(int8_t  input) {
     if((((a246 == 6 && a380 == 3) && a594 == 33) && ((a510 == 33 && (( cf==1  && (input == 10)) && a330 == 6)) && a396 == 6))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 += (a104 + 20) > a104 ? 2 : 0;
@@ -58824,7 +58824,7 @@
     	a43 = 33 ;
     	a122 = 36 ;
     	a144 = 5;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a294 == 33 && (a233 == 6 && (a205 == 8 && ( cf==1  && (input == 6))))) && (a304 == 5 && (a453 == 33 && a227 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -58942,7 +58942,7 @@
     	a294 = 32 ;
     	a370 = 8;
     	a138 = 7; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a228 == 3 && (a359 == 9 && (a254 == 33 && (a445 == 33 && a558 == 33)))) && a380 == 3) && ( cf==1  && (input == 5)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -59035,7 +59035,7 @@
     	a404 = 36 ;
     	a366 = 35 ;
     	a16 = 15; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a364 == 7 && ((input == 7) &&  cf==1 )) && a399 == 3) && (a326 == 33 && (a233 == 6 && (a582 == 33 && a592 == 33))))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -59054,7 +59054,7 @@
     	a18 = 16;
     	a306 = 35 ;
     	a49 = 7; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a368 == 4 && a337 == 4) && ((a464 == 33 && (a585 == 33 && (((input == 4) &&  cf==1 ) && a474 == 33))) && a348 == 4))) {
     	a104 -= (a104 - 20) < a104 ? 3 : 0;
@@ -59150,7 +59150,7 @@
     	a209 = 6;
     	a411 = 32 ;
     	a35 = 6; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((((((input == 9) &&  cf==1 ) && a458 == 33) && a458 == 33) && a280 == 33) && ((a434 == 33 && a214 == 2) && a228 == 3))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -59256,7 +59256,7 @@
     	a558 = 35 ;
     	a358 = 11;
     	a124 = 5; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a234 == 10 && (a419 == 33 && a582 == 33)) && (a356 == 8 && ((((input == 3) &&  cf==1 ) && a262 == 33) && a289 == 2)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -59391,7 +59391,7 @@
     	a375 = 36 ;
     	a277 = 10;
     	a49 = 3; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a477 == 33 && ((a312 == 1 && a241 == 6) && a477 == 33)) && a376 == 3) && (a594 == 33 && ((input == 1) &&  cf==1 )))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -59407,7 +59407,7 @@
     	a4 = 10;
     	a119 = 32 ;
     	a121 = 9; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a277 == 7 && (a244 == 7 && a227 == 33)) && (a318 == 33 && (a374 == 7 && (a493 == 33 && ((input == 2) &&  cf==1 )))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -59582,7 +59582,7 @@
     	a18 = 11;
     	a26 = 5;
     	a160 = 12;
-    	}/* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if((((a228 == 3 && ((input == 8) &&  cf==1 )) && a445 == 33) && (a366 == 33 && ((a254 == 33 && a326 == 33) && a213 == 2)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -59712,10 +59712,10 @@
     	a318 = 36 ;
     	a252 = 11;
     	a125 = 14; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm26(int input) {
+ void calculate_outputm26(int8_t  input) {
     if(((a407 == 33 && a318 == 33) && ((a582 == 33 && (a587 == 33 && (a400 == 7 && (a174 == 11 &&  cf==1 )))) && a330 == 6))) {
     	if(((a486 == 33 && ((a99 == 1 &&  cf==1 ) && a246 == 6)) && (a209 == 4 && ((a234 == 10 && a505 == 33) && a359 == 9)))) {
     		calculate_outputm259(input);
@@ -59735,13 +59735,13 @@
     	} 
     } 
 }
- void calculate_outputm264(int input) {
+ void calculate_outputm264(int8_t  input) {
     if(((((a310 == 3 && a359 == 11) && a399 == 5) && ((a380 == 5 && (a400 == 9 && ( cf==1  && (input == 9)))) && a326 == 34)) && (a176 % 2==0))) {
     	cf = 0;
     	a52 = 8;
     	a127 = 32 ;
     	a393 = 16; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((a585 == 34 && a382 == 5) && a400 == 9) && (((( cf==1  && (input == 3)) && a336 == 12) && a213 == 4) && a324 == 7))) {
     	a179 += (a179 + 20) > a179 ? 3 : 0;
@@ -59750,7 +59750,7 @@
     	a18 = 11;
     	a309 = 34 ;
     	a39 = 1; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a201 == 6 && (a502 == 34 && ((a334 == 9 && a234 == 12) && a556 == 34))) && (((input == 7) &&  cf==1 ) && a528 == 34))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -59794,7 +59794,7 @@
     	a18 = 10;
     	a556 = 32 ;
     	a355 = 10; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((a546 == 34 && (a213 == 4 && ((a379 == 34 && (a480 == 34 && (a434 == 34 && ((input == 5) &&  cf==1 )))) && a582 == 34)))) {
     	a186 -= (a186 - 20) < a186 ? 1 : 0;
@@ -59846,7 +59846,7 @@
     	a334 = 7;
     	a318 = 33 ;
     	a18 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a544 == 34 && (a229 == 5 && a220 == 34)) && a592 == 34) && (a502 == 34 && (((input == 8) &&  cf==1 ) && a234 == 12)))) {
     	a91 -= (a91 - 20) < a91 ? 2 : 0;
@@ -59888,7 +59888,7 @@
     	a486 = 34 ;
     	a206 = 10;
     	a44 = 9; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((((a592 == 34 && a353 == 4) && a260 == 9) && (a274 == 5 && ((a474 == 34 && ((input == 4) &&  cf==1 )) && a313 == 3))) && a184 >= 1)) {
     	cf = 0;
@@ -59896,7 +59896,7 @@
     	a183 = 12;
     	a26 = 5;
     	a322 = 2; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a213 == 4 && a464 == 34) && a376 == 5) && ((a259 == 10 && (a594 == 34 && ((input == 10) &&  cf==1 ))) && a432 == 34))) {
     	cf = 0;
@@ -59955,10 +59955,10 @@
     	a270 = 6;
     	a507 = 34 ;
     	a49 = 5; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm265(int input) {
+ void calculate_outputm265(int8_t  input) {
     if((((a521 == 34 && (a463 == 34 && (a281 == 3 && ((input == 2) &&  cf==1 )))) && a270 == 6) && (a223 == 10 && a366 == 34))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
     	cf = 0;
@@ -60000,7 +60000,7 @@
     	a263 = 6;
     	a404 = 32 ;
     	a23 = 13; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((((a262 == 34 && (( cf==1  && (input == 8)) && a404 == 34)) && a263 == 8) && ((a399 == 5 && a502 == 34) && a475 == 34))) {
     	cf = 0;
@@ -60095,7 +60095,7 @@
     	a246 = 8;
     	a365 = 2;
     	a118 = 9; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 10)) && a281 == 3) && a304 == 7) && ((a463 == 34 && (a370 == 5 && a312 == 3)) && a365 == 3))) {
     	cf = 0;
@@ -60190,20 +60190,20 @@
     	a482 = 33 ;
     	a404 = 33 ;
     	a118 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm268(int input) {
+ void calculate_outputm268(int8_t  input) {
     if(((( cf==1  && (input == 5)) && a282 == 9) && (a582 == 34 && (a295 == 11 && ((a304 == 7 && a486 == 34) && a216 == 34))))) {
     	cf = 0;
     	a218 = 6;
     	a81 = 33 ;
     	a486 = 32 ;
     	a283 = 10; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm269(int input) {
+ void calculate_outputm269(int8_t  input) {
     if((((a602 == 34 && a396 == 8) && a270 == 6) && (a419 == 34 && ((a294 == 34 && ( cf==1  && (input == 7))) && a475 == 34)))) {
     	a171 -= (a171 - 20) < a171 ? 2 : 0;
     	cf = 0;
@@ -60281,7 +60281,7 @@
     	a323 = 11;
     	a465 = 32 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a494 == 34 && a507 == 34) && (a216 == 34 && (a399 == 5 && ((( cf==1  && (input == 6)) && a244 == 9) && a400 == 9))))) {
     	a171 -= (a171 - 20) < a171 ? 1 : 0;
@@ -60429,7 +60429,7 @@
     	a376 = 4;
     	a236 = 6;
     	a94 = 7;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a241 == 8 && ((input == 1) &&  cf==1 )) && a228 == 5) && ((a446 == 34 && (a297 == 6 && a282 == 9)) && a277 == 9))) {
     	cf = 0;
@@ -60454,10 +60454,10 @@
     	a528 = 32 ;
     	a244 = 8;
     	a125 = 11; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm27(int input) {
+ void calculate_outputm27(int8_t  input) {
     if(((a434 == 34 && a587 == 34) && ((a294 == 34 && ((a370 == 5 && (a81 == 33 &&  cf==1 )) && a520 == 34)) && a220 == 34))) {
     	if(((a431 == 34 && ( cf==1  && a283 == 10)) && (a259 == 10 && (a380 == 5 && (a274 == 5 && (a556 == 34 && a476 == 34)))))) {
     		calculate_outputm264(input);
@@ -60479,7 +60479,7 @@
     	} 
     } 
 }
- void calculate_outputm271(int input) {
+ void calculate_outputm271(int8_t  input) {
     if((((a281 == 3 && (( cf==1  && (input == 3)) && a215 == 34)) && a370 == 5) && ((a578 == 34 && a259 == 10) && a244 == 9))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -60607,7 +60607,7 @@
     	a464 = 35 ;
     	a463 = 34 ;
     	a393 = 11;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((a407 == 34 && ((a253 == 8 && (((((input == 1) &&  cf==1 ) && a326 == 34) && a477 == 34) && a356 == 10)) && a205 == 10))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -60731,7 +60731,7 @@
     	a367 = 9;
     	a393 = 16;
     	a172 = 14;
-    	}/* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 4)) && a418 == 34) && a431 == 34) && (a379 == 34 && (a445 == 34 && (a446 == 34 && a346 == 3))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -60757,7 +60757,7 @@
     	a510 = 35 ;
     	a521 = 33 ;
     	a123 = 4; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a318 == 34 && ((input == 5) &&  cf==1 )) && (a376 == 5 && (a431 == 34 && (a398 == 4 && (a213 == 4 && a382 == 5)))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -60771,7 +60771,7 @@
     	a52 = 5;
     	a81 = 35 ;
     	a200 = 12; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a505 == 34 && ((input == 7) &&  cf==1 )) && (a373 == 5 && (a201 == 6 && ((a366 == 34 && a382 == 5) && a254 == 34))))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -60986,7 +60986,7 @@
     	a510 = 36 ;
     	a602 = 32 ;
     	a49 = 3;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((a373 == 5 && (a262 == 34 && (((a558 == 34 && (( cf==1  && (input == 6)) && a348 == 6)) && a324 == 7) && a259 == 10)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -61133,7 +61133,7 @@
     	a183 = 11;
     	a18 = 11;
     	a49 = 3;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a416 == 34 && ((a482 == 34 && a253 == 8) && a432 == 34)) && ((((input == 9) &&  cf==1 ) && a419 == 34) && a369 == 3))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -61378,7 +61378,7 @@
     	a546 = 32 ;
     	a446 = 35 ;
     	a151 = 12;
-    	}/* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a592 == 34 && (a507 == 34 && (a446 == 34 && a446 == 34))) && (a554 == 34 && (a521 == 34 && ((input == 10) &&  cf==1 ))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -61516,7 +61516,7 @@
     	a274 = 4;
     	a247 = 15;
     	a18 = 12;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a486 == 34 && (a432 == 34 && ( cf==1  && (input == 2)))) && a592 == 34) && (a304 == 7 && (a464 == 34 && a262 == 34)))) {
     	a179 += (a179 + 20) > a179 ? 4 : 0;
@@ -61654,7 +61654,7 @@
     	a476 = 33 ;
     	a280 = 35 ;
     	a149 = 12; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a419 == 34 && ( cf==1  && (input == 8))) && a586 == 34) && (a474 == 34 && ((a558 == 34 && a520 == 34) && a374 == 9)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -61672,10 +61672,10 @@
     	a146 = 34 ;
     	a52 = 10;
     	a319 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm272(int input) {
+ void calculate_outputm272(int8_t  input) {
     if(((a558 == 34 && (a260 == 9 && (a505 == 34 && a366 == 34))) && ((((input == 9) &&  cf==1 ) && a241 == 8) && a214 == 4))) {
     	a85 -= (a85 - 20) < a85 ? 2 : 0;
     	cf = 0;
@@ -61756,7 +61756,7 @@
     	a270 = 5;
     	a346 = 2;
     	a70 = 6; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((( cf==1  && (input == 10)) && a313 == 3) && ((a585 == 34 && (a407 == 34 && (a247 == 12 && a262 == 34))) && a353 == 4))) {
     	cf = 0;
@@ -61826,7 +61826,7 @@
     	a463 = 32 ;
     	a475 = 34 ;
     	a49 = 4; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a594 == 34 && (a289 == 4 && a582 == 34)) && ((a213 == 4 && (a334 == 9 && ((input == 8) &&  cf==1 ))) && a399 == 5))) {
     	a186 -= (a186 - 20) < a186 ? 2 : 0;
@@ -61897,7 +61897,7 @@
     	a407 = 34 ;
     	a416 = 32 ;
     	a49 = 4; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a346 == 3 && ((input == 6) &&  cf==1 )) && (a396 == 8 && ((a242 == 4 && (a229 == 5 && a226 == 4)) && a375 == 34)))) {
     	a73 += (a73 + 20) > a73 ? 1 : 0;
@@ -61979,10 +61979,10 @@
     	a396 = 6;
     	a373 = 3;
     	a70 = 6; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm273(int input) {
+ void calculate_outputm273(int8_t  input) {
     if(((((a373 == 5 && ((input == 7) &&  cf==1 )) && a585 == 34) && a498 == 34) && ((a318 == 34 && a227 == 34) && a323 == 12))) {
     	a184 += (a184 + 20) > a184 ? 1 : 0;
     	cf = 0;
@@ -62027,7 +62027,7 @@
     	a242 = 3;
     	a203 = 3;
     	a23 = 13; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a323 == 12 && a368 == 6) && (a434 == 34 && ((a554 == 34 && (((input == 2) &&  cf==1 ) && a242 == 4)) && a318 == 34)))) {
     	a184 -= (a184 - 20) < a184 ? 4 : 0;
@@ -62073,7 +62073,7 @@
     	a382 = 4;
     	a416 = 32 ;
     	a23 = 13; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a227 == 34 && (a477 == 34 && (a330 == 8 && a366 == 34))) && ((a560 == 34 && ((input == 10) &&  cf==1 )) && a554 == 34))) {
     	cf = 0;
@@ -62166,7 +62166,7 @@
     	a528 = 34 ;
     	a201 = 5;
     	a70 = 6; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a297 == 6 && a446 == 34) && (a209 == 6 && ((a476 == 34 && (a382 == 5 && ((input == 1) &&  cf==1 ))) && a402 == 34)))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -62260,10 +62260,10 @@
     	a396 = 6;
     	a318 = 33 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm274(int input) {
+ void calculate_outputm274(int8_t  input) {
     if((((a508 == 34 && ((a516 == 34 && ( cf==1  && (input == 10))) && a326 == 34)) && a502 == 34) && (a304 == 7 && a586 == 34))) {
     	a184 -= (a184 - 20) < a184 ? 3 : 0;
     	cf = 0;
@@ -62306,7 +62306,7 @@
     	a242 = 3;
     	a368 = 5;
     	a300 = 11; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 2)) && a453 == 34) && a353 == 4) && ((a384 == 4 && (a502 == 34 && a253 == 8)) && a463 == 34))) {
     	a113 -= (a113 - 20) < a113 ? 2 : 0;
@@ -62368,7 +62368,7 @@
     	a313 = 3;
     	a260 = 8;
     	a87 = 3; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a379 == 34 && a382 == 5) && a236 == 8) && (((((input == 1) &&  cf==1 ) && a281 == 3) && a227 == 34) && a546 == 34))) {
     	a179 -= (a179 - 20) < a179 ? 1 : 0;
@@ -62530,7 +62530,7 @@
     	a445 = 33 ;
     	a277 = 7;
     	a35 = 7;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a493 == 34 && (a323 == 12 && a446 == 34)) && (a494 == 34 && ((a445 == 34 && ( cf==1  && (input == 7))) && a262 == 34)))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -62643,10 +62643,10 @@
     	a226 = 4;
     	a218 = 6;
     	a393 = 16; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm28(int input) {
+ void calculate_outputm28(int8_t  input) {
     if((((a45 == 33 &&  cf==1 ) && a324 == 7) && ((((a294 == 34 && a282 == 9) && a218 == 7) && a203 == 4) && a411 == 34))) {
     	if(((a510 == 34 && (a368 == 6 && a465 == 34)) && ((a432 == 34 && (a404 == 34 && (a138 == 7 &&  cf==1 ))) && a313 == 3))) {
     		calculate_outputm271(input);
@@ -62666,7 +62666,7 @@
     	} 
     } 
 }
- void calculate_outputm275(int input) {
+ void calculate_outputm275(int8_t  input) {
     if((((a586 == 34 && (((a215 == 34 && a259 == 10) && a418 == 34) && a233 == 8)) && a324 == 7) && ( cf==1  && (input == 5)))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
     	cf = 0;
@@ -62774,7 +62774,7 @@
     	a324 = 5;
     	a482 = 33 ;
     	a118 = 9;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((((( cf==1  && (input == 8)) && a337 == 6) && a215 == 34) && a254 == 34) && ((a520 == 34 && a494 == 34) && a411 == 34))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -62883,10 +62883,10 @@
     	a416 = 33 ;
     	a206 = 9;
     	a118 = 9;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm276(int input) {
+ void calculate_outputm276(int8_t  input) {
     if(((a419 == 34 && ( cf==1  && (input == 7))) && (a404 == 34 && ((a324 == 7 && (a373 == 5 && a229 == 5)) && a400 == 9)))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
     	cf = 0;
@@ -63005,7 +63005,7 @@
     	a310 = 3;
     	a223 = 8;
     	a355 = 13; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a480 == 34 && ((a281 == 3 && a247 == 12) && a554 == 34)) && ((((input == 6) &&  cf==1 ) && a373 == 5) && a369 == 3))) {
     	a73 -= (a73 - 20) < a73 ? 1 : 0;
@@ -63082,7 +63082,7 @@
     	a446 = 34 ;
     	a229 = 3;
     	a322 = 1; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a482 == 34 && (a587 == 34 && a585 == 34)) && (a263 == 8 && (a521 == 34 && (a345 == 11 && ((input == 10) &&  cf==1 )))))) {
     	a91 -= (a91 - 20) < a91 ? 2 : 0;
@@ -63205,7 +63205,7 @@
     	a253 = 7;
     	a465 = 32 ;
     	a18 = 12; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a558 == 34 && a475 == 34) && ((((( cf==1  && (input == 2)) && a582 == 34) && a348 == 6) && a402 == 34) && a518 == 34))) {
     	a73 -= (a73 - 20) < a73 ? 3 : 0;
@@ -63399,10 +63399,10 @@
     	a236 = 7;
     	a274 = 3;
     	a144 = 7;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm277(int input) {
+ void calculate_outputm277(int8_t  input) {
     if((((a399 == 5 && a556 == 34) && a594 == 34) && (((((input == 4) &&  cf==1 ) && a464 == 34) && a373 == 5) && a446 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 += (a104 + 20) > a104 ? 2 : 0;
@@ -63514,7 +63514,7 @@
     	a594 = 34 ;
     	a228 = 6;
     	a121 = 8; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((((a507 == 34 && (a220 == 34 && ( cf==1  && (input == 10)))) && a277 == 9) && ((a407 == 34 && a432 == 34) && a474 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -63642,7 +63642,7 @@
     	a274 = 8;
     	a220 = 34 ;
     	a94 = 3; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a464 == 34 && ((input == 2) &&  cf==1 )) && (a396 == 8 && (a345 == 11 && ((a602 == 34 && a482 == 34) && a404 == 34))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -63667,7 +63667,7 @@
     	a393 = 12;
     	a136 = 36 ;
     	a202 = 6; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a560 == 34 && (a594 == 34 && (a294 == 34 && a233 == 8))) && (a560 == 34 && (( cf==1  && (input == 8)) && a246 == 8)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -63685,7 +63685,7 @@
     	a393 = 12;
     	a18 = 10;
     	a202 = 12; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a373 == 5 && (a297 == 6 && ((a582 == 34 && a546 == 34) && a502 == 34))) && (a558 == 34 && ( cf==1  && (input == 1))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -63707,7 +63707,7 @@
     	a18 = 11;
     	a39 = 4;
     	a151 = 7; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((((a310 == 3 && a380 == 5) && a214 == 4) && a434 == 34) && ((((input == 5) &&  cf==1 ) && a216 == 34) && a370 == 5))) {
     	a78 += (a78 + 20) > a78 ? 2 : 0;
@@ -63930,7 +63930,7 @@
     	a353 = 5;
     	a304 = 9;
     	a26 = 11;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a373 == 5 && ( cf==1  && (input == 7))) && a364 == 9) && (a560 == 34 && (a416 == 34 && (a359 == 11 && a556 == 34))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -63949,7 +63949,7 @@
     	a18 = 14;
     	a45 = 33 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((((input == 9) &&  cf==1 ) && a364 == 9) && (a560 == 34 && (a374 == 9 && (a359 == 11 && (a356 == 10 && a359 == 11)))))) {
     	a104 -= (a104 - 20) < a104 ? 3 : 0;
@@ -64055,7 +64055,7 @@
     	a359 = 15;
     	a445 = 34 ;
     	a150 = 10; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a201 == 6 && (a416 == 34 && (((input == 6) &&  cf==1 ) && a280 == 34))) && (a445 == 34 && (a312 == 3 && a380 == 5)))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -64135,7 +64135,7 @@
     	a206 = 15;
     	a312 = 4;
     	a305 = 10; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((a554 == 34 && (a369 == 3 && ((a380 == 5 && ((( cf==1  && (input == 3)) && a475 == 34) && a585 == 34)) && a431 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -64155,10 +64155,10 @@
     	a52 = 8;
     	a393 = 10;
     	a44 = 10; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm278(int input) {
+ void calculate_outputm278(int8_t  input) {
     if(((a398 == 4 && (a346 == 3 && a585 == 34)) && ((a201 == 6 && (a502 == 34 && ((input == 8) &&  cf==1 ))) && a228 == 5))) {
     	a91 -= (a91 - 20) < a91 ? 2 : 0;
     	cf = 0;
@@ -64269,7 +64269,7 @@
     	a213 = 4;
     	a297 = 6;
     	a202 = 7; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a432 == 34 && (a373 == 5 && a295 == 11)) && a592 == 34) && ((((input == 5) &&  cf==1 ) && a560 == 34) && a214 == 4))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -64389,7 +64389,7 @@
     	a334 = 8;
     	a498 = 34 ;
     	a305 = 9; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a260 == 9 && (a369 == 3 && ( cf==1  && (input == 10)))) && (a374 == 9 && ((a356 == 10 && a494 == 34) && a404 == 34)))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -64591,7 +64591,7 @@
     	a270 = 5;
     	a399 = 5;
     	a230 = 9;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a281 == 3 && (a277 == 9 && a294 == 34)) && (a201 == 6 && ((a312 == 3 && ((input == 2) &&  cf==1 )) && a326 == 34)))) {
     	cf = 0;
@@ -64679,10 +64679,10 @@
     	a241 = 7;
     	a592 = 32 ;
     	a94 = 7; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm280(int input) {
+ void calculate_outputm280(int8_t  input) {
     if(((a528 == 34 && (a399 == 5 && ( cf==1  && (input == 6)))) && ((a434 == 34 && (a498 == 34 && a345 == 11)) && a446 == 34))) {
     	a76 -= (a76 - 20) < a76 ? 2 : 0;
     	cf = 0;
@@ -64724,7 +64724,7 @@
     	a463 = 33 ;
     	a365 = 2;
     	a361 = 9; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a582 == 34 && ((a494 == 34 && a244 == 9) && a396 == 8)) && ((( cf==1  && (input == 1)) && a370 == 5) && a602 == 34))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -64749,7 +64749,7 @@
     	a365 = 2;
     	a494 = 32 ;
     	a125 = 11; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 7)) && a370 == 5) && a475 == 34) && (((a493 == 34 && a486 == 34) && a203 == 4) && a453 == 34))) {
     	a91 -= (a91 - 20) < a91 ? 3 : 0;
@@ -64828,10 +64828,10 @@
     	a587 = 33 ;
     	a498 = 33 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm281(int input) {
+ void calculate_outputm281(int8_t  input) {
     if(((((a376 == 5 && (((input == 1) &&  cf==1 ) && a463 == 34)) && a213 == 4) && a434 == 34) && (a247 == 12 && a587 == 34))) {
     	a29 += (a29 + 20) > a29 ? 1 : 0;
     	cf = 0;
@@ -64853,7 +64853,7 @@
     	a312 = 2;
     	a337 = 5;
     	a289 = 3; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a345 == 11 && (((a229 == 5 && a585 == 34) && a594 == 34) && a229 == 5)) && (a404 == 34 && ( cf==1  && (input == 10))))) {
     	cf = 0;
@@ -64871,10 +64871,10 @@
     	a271 = 33 ;
     	a213 = 3;
     	a123 = 10; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm282(int input) {
+ void calculate_outputm282(int8_t  input) {
     if(((a280 == 34 && (a289 == 4 && ((input == 7) &&  cf==1 ))) && (a228 == 5 && (a558 == 34 && (a432 == 34 && a379 == 34))))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
     	cf = 0;
@@ -64967,7 +64967,7 @@
     	a242 = 2;
     	a312 = 2;
     	a353 = 3; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a277 == 9 && ((a520 == 34 && a510 == 34) && a404 == 34)) && a247 == 12) && (( cf==1  && (input == 2)) && a532 == 34))) {
     	a148 += (a148 + 20) > a148 ? 4 : 0;
@@ -65061,7 +65061,7 @@
     	a218 = 6;
     	a345 = 10;
     	a241 = 6; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a486 == 34 && (((((input == 5) &&  cf==1 ) && a369 == 3) && a400 == 9) && a260 == 9)) && (a396 == 8 && a206 == 11))) {
     	a186 += (a186 + 20) > a186 ? 1 : 0;
@@ -65149,7 +65149,7 @@
     	a358 = 6;
     	a214 = 2;
     	a118 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a364 == 9 && (((input == 1) &&  cf==1 ) && a446 == 34)) && ((a407 == 34 && (a203 == 4 && a516 == 34)) && a317 == 7))) {
     	cf = 0;
@@ -65188,10 +65188,10 @@
     	a532 = 33 ;
     	a295 = 10;
     	a347 = 16; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm29(int input) {
+ void calculate_outputm29(int8_t  input) {
     if(((a507 == 34 && (a494 == 34 && a206 == 11)) && (a228 == 5 && (((a30 == 33 &&  cf==1 ) && a419 == 34) && a246 == 8)))) {
     	if(((a317 == 7 && (a216 == 34 && (a516 == 34 && (a486 == 34 && a465 == 34)))) && (a214 == 4 && (a109 == 2 &&  cf==1 )))) {
     		calculate_outputm275(input);
@@ -65220,7 +65220,7 @@
     	} 
     } 
 }
- void calculate_outputm285(int input) {
+ void calculate_outputm285(int8_t  input) {
     if(((a546 == 34 && ( cf==1  && (input == 6))) && (a277 == 9 && (((a337 == 6 && a242 == 4) && a516 == 34) && a480 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a88 -= (a88 - 20) < a88 ? 3 : 0;
@@ -65350,7 +65350,7 @@
     	a203 = 9;
     	a594 = 32 ;
     	a94 = 5;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((((a602 == 34 && a507 == 34) && a364 == 9) && a241 == 8) && a505 == 34) && (( cf==1  && (input == 5)) && a215 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -65485,7 +65485,7 @@
     	a556 = 36 ;
     	a26 = 6;
     	a94 = 5;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((input == 8) &&  cf==1 ) && (a281 == 3 && (a476 == 34 && (a233 == 8 && (a233 == 8 && (a480 == 34 && a486 == 34))))))) {
     	a88 += (a88 + 20) > a88 ? 1 : 0;
@@ -65507,7 +65507,7 @@
     	a18 = 11;
     	a26 = 5;
     	a322 = 6;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a368 == 6 && (a502 == 34 && (a508 == 34 && ( cf==1  && (input == 9))))) && a480 == 34) && (a587 == 34 && a246 == 8))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -65752,7 +65752,7 @@
     	a203 = 9;
     	a510 = 33 ;
     	a18 = 9;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a477 == 34 && ((input == 4) &&  cf==1 )) && ((a482 == 34 && ((a453 == 34 && a281 == 3) && a310 == 3)) && a356 == 10))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -65773,7 +65773,7 @@
     	a26 = 5;
     	a18 = 11;
     	a49 = 3; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a373 == 5 && (a592 == 34 && ((input == 3) &&  cf==1 ))) && ((a365 == 3 && (a317 == 7 && a594 == 34)) && a396 == 8))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -65921,7 +65921,7 @@
     	a297 = 8;
     	a246 = 13;
     	a283 = 9;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((((input == 1) &&  cf==1 ) && a218 == 7) && (a594 == 34 && (a508 == 34 && ((a516 == 34 && a558 == 34) && a337 == 6))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -66007,7 +66007,7 @@
     	a205 = 15;
     	a528 = 36 ;
     	a49 = 4;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a346 == 3 && a494 == 34) && a312 == 3) && ((a518 == 34 && (((input == 10) &&  cf==1 ) && a366 == 34)) && a373 == 5))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -66122,7 +66122,7 @@
     	a546 = 33 ;
     	a330 = 12;
     	a23 = 13; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a528 == 34 && (a297 == 6 && a241 == 8)) && (a201 == 6 && (a223 == 10 && (a493 == 34 && ( cf==1  && (input == 2))))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -66211,7 +66211,7 @@
     	a274 = 8;
     	a458 = 33 ;
     	a393 = 11;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a289 == 4 && ((a263 == 8 && ((input == 7) &&  cf==1 )) && a465 == 34)) && ((a216 == 34 && a380 == 5) && a313 == 3))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -66327,10 +66327,10 @@
     	a578 = 34 ;
     	a206 = 12;
     	a367 = 4; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm286(int input) {
+ void calculate_outputm286(int8_t  input) {
     if(((((a368 == 6 && ( cf==1  && (input == 2))) && a508 == 34) && a502 == 34) && (a359 == 11 && (a400 == 9 && a236 == 8)))) {
     	cf = 0;
     	a435 = 32 ;
@@ -66345,7 +66345,7 @@
     	a226 = 3;
     	a334 = 8;
     	a103 = 16; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a431 == 34 && a205 == 10) && ((a277 == 9 && ((a516 == 34 && ((input == 9) &&  cf==1 )) && a234 == 12)) && a453 == 34))) {
     	a91 -= (a91 - 20) < a91 ? 1 : 0;
@@ -66455,7 +66455,7 @@
     	a402 = 33 ;
     	a228 = 4;
     	a93 = 11; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a312 == 3 && (a318 == 34 && (a560 == 34 && (a226 == 4 && ((input == 7) &&  cf==1 ))))) && (a310 == 3 && a532 == 34))) {
     	a171 += (a171 + 20) > a171 ? 1 : 0;
@@ -66576,10 +66576,10 @@
     	a336 = 12;
     	a585 = 32 ;
     	a149 = 12; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm289(int input) {
+ void calculate_outputm289(int8_t  input) {
     if((((a507 == 34 && ((input == 5) &&  cf==1 )) && a480 == 34) && (a494 == 34 && ((a445 == 34 && a368 == 6) && a281 == 3)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 += (a104 + 20) > a104 ? 3 : 0;
@@ -66601,7 +66601,7 @@
     	a18 = 16;
     	a134 = 34 ;
     	a151 = 7; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a244 == 9 && a368 == 6) && a356 == 10) && (a281 == 3 && ((a282 == 9 && ( cf==1  && (input == 10))) && a220 == 34)))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -66725,7 +66725,7 @@
     	a81 = 35 ;
     	a52 = 5;
     	a200 = 12;
-    	}/* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((((input == 6) &&  cf==1 ) && a254 == 34) && (((a345 == 11 && (a317 == 7 && a578 == 34)) && a382 == 5) && a215 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -66895,7 +66895,7 @@
     	a203 = 3;
     	a227 = 34 ;
     	a160 = 12;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((((a348 == 6 && a476 == 34) && a411 == 34) && a206 == 11) && (a262 == 34 && (( cf==1  && (input == 3)) && a592 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -67023,7 +67023,7 @@
     	a367 = 9;
     	a393 = 16;
     	a172 = 14;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((((a498 == 34 && (( cf==1  && (input == 2)) && a334 == 9)) && a234 == 12) && a465 == 34) && (a345 == 11 && a586 == 34))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -67042,7 +67042,7 @@
     	a94 = 5;
     	a307 = 33 ;
     	a357 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a445 == 34 && ((a400 == 9 && a475 == 34) && a432 == 34)) && a358 == 8) && (a215 == 34 && ( cf==1  && (input == 4))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -67061,7 +67061,7 @@
     	a18 = 11;
     	a187 = 33 ;
     	a35 = 10; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a227 == 34 && (( cf==1  && (input == 9)) && a578 == 34)) && a453 == 34) && ((a277 == 9 && a234 == 12) && a419 == 34))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -67215,7 +67215,7 @@
     	a346 = 3;
     	a508 = 35 ;
     	a16 = 14; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 1)) && a528 == 34) && a324 == 7) && ((a345 == 11 && (a578 == 34 && a323 == 12)) && a404 == 34))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -67234,7 +67234,7 @@
     	a170 = 32 ;
     	a34 = 33 ;
     	a26 = 11; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a465 == 34 && ( cf==1  && (input == 8))) && (a218 == 7 && (((a402 == 34 && a252 == 12) && a380 == 5) && a297 == 6)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -67428,7 +67428,7 @@
     	a384 = 7;
     	a282 = 14;
     	a16 = 15;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((((( cf==1  && (input == 7)) && a281 == 3) && a477 == 34) && a486 == 34) && (a304 == 7 && (a246 == 8 && a586 == 34)))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -67653,10 +67653,10 @@
     	a280 = 35 ;
     	a18 = 11;
     	a26 = 7;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm290(int input) {
+ void calculate_outputm290(int8_t  input) {
     if(((a602 == 34 && (a446 == 34 && ((a216 == 34 && a226 == 4) && a323 == 12))) && (a274 == 5 && ((input == 1) &&  cf==1 )))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
     	cf = 0;
@@ -67759,7 +67759,7 @@
     	a432 = 33 ;
     	a486 = 33 ;
     	a241 = 7; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a323 == 12 && (a218 == 7 && a277 == 9)) && (((a366 == 34 && ( cf==1  && (input == 8))) && a330 == 8) && a399 == 5))) {
     	a184 -= (a184 - 20) < a184 ? 3 : 0;
@@ -67874,10 +67874,10 @@
     	a260 = 7;
     	a228 = 3;
     	a118 = 9;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm292(int input) {
+ void calculate_outputm292(int8_t  input) {
     if((a465 == 34 && (a416 == 34 && ((a324 == 7 && ((a366 == 34 && ( cf==1  && (input == 9))) && a203 == 4)) && a370 == 5)))) {
     	a2 -= (a2 - 20) < a2 ? 3 : 0;
     	cf = 0;
@@ -67906,10 +67906,10 @@
     	a416 = 32 ;
     	a404 = 32 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm293(int input) {
+ void calculate_outputm293(int8_t  input) {
     if(((((a253 == 8 && (a277 == 9 && ((input == 1) &&  cf==1 ))) && a253 == 8) && a375 == 34) && (a254 == 34 && a398 == 4))) {
     	a2 -= (a2 - 20) < a2 ? 1 : 0;
     	cf = 0;
@@ -68032,10 +68032,10 @@
     	a206 = 11;
     	a544 = 33 ;
     	a144 = 4;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm294(int input) {
+ void calculate_outputm294(int8_t  input) {
     if(((((input == 1) &&  cf==1 ) && a334 == 9) && (((a528 == 34 && (a345 == 11 && a374 == 9)) && a476 == 34) && a379 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a78 -= (a78 - 20) < a78 ? 3 : 0;
@@ -68174,7 +68174,7 @@
     	a446 = 32 ;
     	a205 = 8;
     	a305 = 8; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a226 == 4 && ((input == 3) &&  cf==1 )) && ((a376 == 5 && (a214 == 4 && (a431 == 34 && a528 == 34))) && a416 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -68302,7 +68302,7 @@
     	a379 = 33 ;
     	a80 = 32 ;
     	a357 = 13;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a366 == 34 && (a404 == 34 && ((a263 == 8 && a206 == 11) && a254 == 34))) && (a418 == 34 && ( cf==1  && (input == 8))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -68320,7 +68320,7 @@
     	cf = 0;
     	a127 = 32 ;
     	a393 = 16; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a594 == 34 && (a228 == 5 && a246 == 8)) && ((a464 == 34 && (( cf==1  && (input == 6)) && a345 == 11)) && a205 == 10))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -68523,7 +68523,7 @@
     	a464 = 35 ;
     	a294 = 34 ;
     	a64 = 10;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a330 == 8 && (a216 == 34 && ( cf==1  && (input == 5)))) && ((a556 == 34 && (a356 == 10 && a465 == 34)) && a453 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -68733,7 +68733,7 @@
     	a474 = 34 ;
     	a226 = 4;
     	a90 = 4;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a277 == 9 && a380 == 5) && a510 == 34) && (a353 == 4 && ((a262 == 34 && ( cf==1  && (input == 9))) && a518 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -68838,7 +68838,7 @@
     	a384 = 2;
     	a312 = 5;
     	a70 = 10;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a399 == 5 && (a369 == 3 && a411 == 34)) && a304 == 7) && (a227 == 34 && (a521 == 34 && ( cf==1  && (input == 7)))))) {
     	a88 += (a88 + 20) > a88 ? 3 : 0;
@@ -69053,7 +69053,7 @@
     	a260 = 9;
     	a463 = 34 ;
     	a357 = 10;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a334 == 9 && (a382 == 5 && ((input == 2) &&  cf==1 ))) && ((a358 == 8 && (a411 == 34 && a220 == 34)) && a494 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -69116,7 +69116,7 @@
     	a518 = 35 ;
     	a252 = 13;
     	a14 = 3; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a252 == 12 && (a474 == 34 && a507 == 34)) && a532 == 34) && (a446 == 34 && (a510 == 34 && ( cf==1  && (input == 10)))))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -69249,7 +69249,7 @@
     	a554 = 36 ;
     	a356 = 12;
     	a18 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a384 == 4 && (a396 == 8 && ((input == 4) &&  cf==1 ))) && a446 == 34) && (a463 == 34 && (a508 == 34 && a418 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -69483,10 +69483,10 @@
     	a477 = 36 ;
     	a218 = 12;
     	a371 = 13;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm298(int input) {
+ void calculate_outputm298(int8_t  input) {
     if((((a201 == 6 && (a365 == 3 && a556 == 34)) && a435 == 34) && (a396 == 8 && (a510 == 34 && ( cf==1  && (input == 10)))))) {
     	a85 -= (a85 - 20) < a85 ? 2 : 0;
     	cf = 0;
@@ -69599,7 +69599,7 @@
     	a365 = 2;
     	a379 = 32 ;
     	a125 = 9; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((((input == 7) &&  cf==1 ) && a313 == 3) && a411 == 34) && (a435 == 34 && (a432 == 34 && (a274 == 5 && a252 == 12))))) {
     	a171 -= (a171 - 20) < a171 ? 1 : 0;
@@ -69718,7 +69718,7 @@
     	a578 = 32 ;
     	a494 = 32 ;
     	a144 = 4; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if((((a206 == 11 && ( cf==1  && (input == 1))) && a404 == 34) && (a474 == 34 && ((a376 == 5 && a396 == 8) && a223 == 10)))) {
     	a186 -= (a186 - 20) < a186 ? 4 : 0;
@@ -69770,10 +69770,10 @@
     	a402 = 34 ;
     	a368 = 6;
     	a26 = 11; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm30(int input) {
+ void calculate_outputm30(int8_t  input) {
     if(((a270 == 6 && a345 == 11) && ((a242 == 4 && (a560 == 34 && (( cf==1  && a393 == 9) && a227 == 34))) && a585 == 34))) {
     	if(((((a309 == 36 &&  cf==1 ) && a274 == 5) && a312 == 3) && (a364 == 9 && ((a416 == 34 && a356 == 10) && a348 == 6)))) {
     		calculate_outputm285(input);
@@ -69811,7 +69811,7 @@
     	} 
     } 
 }
- void calculate_outputm299(int input) {
+ void calculate_outputm299(int8_t  input) {
     if(((((((input == 6) &&  cf==1 ) && a326 == 34) && a402 == 34) && a602 == 34) && (a244 == 9 && (a304 == 7 && a274 == 5)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a78 -= (a78 - 20) < a78 ? 2 : 0;
@@ -69942,7 +69942,7 @@
     	a554 = 35 ;
     	a393 = 15;
     	a44 = 13;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a379 == 34 && (a480 == 34 && ( cf==1  && (input == 2)))) && (((a474 == 34 && a407 == 34) && a294 == 34) && a366 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -70051,7 +70051,7 @@
     	a480 = 34 ;
     	a317 = 10;
     	a367 = 7; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a554 == 34 && (((input == 10) &&  cf==1 ) && a310 == 3)) && ((a364 == 9 && (a585 == 34 && a518 == 34)) && a206 == 11))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -70179,7 +70179,7 @@
     	a294 = 36 ;
     	a220 = 33 ;
     	a49 = 3; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a326 == 34 && (a353 == 4 && a432 == 34)) && a505 == 34) && ((((input == 7) &&  cf==1 ) && a398 == 4) && a602 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -70269,7 +70269,7 @@
     	a396 = 12;
     	a262 = 36 ;
     	a175 = 10; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a494 == 34 && a445 == 34) && a379 == 34) && (a494 == 34 && (a220 == 34 && (( cf==1  && (input == 8)) && a366 == 34))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -70396,7 +70396,7 @@
     	a135 = 34 ;
     	a18 = 14;
     	a355 = 6;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a518 == 34 && (a304 == 7 && (a419 == 34 && (a477 == 34 && a323 == 12)))) && (((input == 5) &&  cf==1 ) && a475 == 34))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -70615,7 +70615,7 @@
     	a446 = 35 ;
     	a203 = 4;
     	a149 = 12;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a312 == 3 && (a295 == 11 && (a242 == 4 && a594 == 34))) && (a477 == 34 && (((input == 3) &&  cf==1 ) && a214 == 4)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -70650,7 +70650,7 @@
     	a295 = 15;
     	a494 = 33 ;
     	a123 = 4; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a205 == 10 && (((input == 4) &&  cf==1 ) && a411 == 34)) && (a602 == 34 && ((a364 == 9 && a233 == 8) && a375 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -70683,7 +70683,7 @@
     	a1 = 32 ;
     	a215 = 35 ;
     	a123 = 4; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((((a376 == 5 && ((input == 9) &&  cf==1 )) && a594 == 34) && a203 == 4) && ((a366 == 34 && a203 == 4) && a521 == 34))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -70872,7 +70872,7 @@
     	a214 = 4;
     	a348 = 10;
     	a26 = 11;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a502 == 34 && (a218 == 7 && a280 == 34)) && (((a214 == 4 && ((input == 1) &&  cf==1 )) && a416 == 34) && a402 == 34))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -71096,10 +71096,10 @@
     	a289 = 4;
     	a578 = 34 ;
     	a35 = 7;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm301(int input) {
+ void calculate_outputm301(int8_t  input) {
     if(((a532 == 34 && (a376 == 5 && a379 == 34)) && ((a419 == 34 && (a310 == 3 && ((input == 5) &&  cf==1 ))) && a379 == 34))) {
     	a179 += (a179 + 20) > a179 ? 2 : 0;
     	cf = 0;
@@ -71218,7 +71218,7 @@
     	a380 = 5;
     	a416 = 33 ;
     	a305 = 9; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a294 == 34 && (a400 == 9 && ((input == 10) &&  cf==1 ))) && (a399 == 5 && (a229 == 5 && (a233 == 8 && a376 == 5))))) {
     	a2 -= (a2 - 20) < a2 ? 2 : 0;
@@ -71284,7 +71284,7 @@
     	a432 = 33 ;
     	a418 = 33 ;
     	a230 = 9; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a274 == 5 && a348 == 6) && ((((a480 == 34 && ((input == 2) &&  cf==1 )) && a330 == 8) && a594 == 34) && a233 == 8))) {
     	a171 -= (a171 - 20) < a171 ? 1 : 0;
@@ -71414,7 +71414,7 @@
     	a260 = 8;
     	a544 = 33 ;
     	a355 = 11; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a227 == 34 && (a453 == 34 && ((input == 8) &&  cf==1 ))) && (a294 == 34 && ((a233 == 8 && a505 == 34) && a475 == 34)))) {
     	cf = 0;
@@ -71594,10 +71594,10 @@
     	a464 = 34 ;
     	a458 = 34 ;
     	a150 = 9;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm302(int input) {
+ void calculate_outputm302(int8_t  input) {
     if(((a398 == 4 && ((a206 == 11 && a234 == 12) && a578 == 34)) && ((( cf==1  && (input == 9)) && a458 == 34) && a463 == 34))) {
     	cf = 0;
     	a554 = 32 ;
@@ -71630,10 +71630,10 @@
     	a458 = 32 ;
     	a465 = 32 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm303(int input) {
+ void calculate_outputm303(int8_t  input) {
     if(((((a554 == 34 && a366 == 34) && a464 == 34) && a270 == 6) && (a475 == 34 && (a246 == 8 && ((input == 5) &&  cf==1 ))))) {
     	a171 -= (a171 - 20) < a171 ? 3 : 0;
     	cf = 0;
@@ -71705,7 +71705,7 @@
     	a317 = 7;
     	a402 = 32 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((((a215 == 34 && ((input == 10) &&  cf==1 )) && a246 == 8) && a364 == 9) && (a274 == 5 && (a520 == 34 && a366 == 34)))) {
     	a179 += (a179 + 20) > a179 ? 2 : 0;
@@ -71719,7 +71719,7 @@
     	a582 = 32 ;
     	a270 = 5;
     	a87 = 3; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a353 == 4 && (( cf==1  && (input == 2)) && a502 == 34)) && a348 == 6) && (a435 == 34 && (a435 == 34 && a252 == 12)))) {
     	a171 -= (a171 - 20) < a171 ? 4 : 0;
@@ -71760,7 +71760,7 @@
     	a218 = 7;
     	a229 = 4;
     	a319 = 2; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a324 == 7 && (a508 == 34 && a244 == 9)) && (a373 == 5 && ((a475 == 34 && ((input == 6) &&  cf==1 )) && a404 == 34)))) {
     	a179 += (a179 + 20) > a179 ? 4 : 0;
@@ -71844,10 +71844,10 @@
     	a209 = 5;
     	a214 = 3;
     	a305 = 11; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm304(int input) {
+ void calculate_outputm304(int8_t  input) {
     if(((a241 == 8 && (a334 == 9 && a592 == 34)) && (((( cf==1  && (input == 9)) && a324 == 7) && a282 == 9) && a528 == 34))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
     	cf = 0;
@@ -72010,7 +72010,7 @@
     	a241 = 7;
     	a435 = 32 ;
     	a357 = 10;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a558 == 34 && a205 == 10) && a493 == 34) && (((a324 == 7 && ( cf==1  && (input == 6))) && a398 == 4) && a498 == 34))) {
     	a76 += (a76 + 20) > a76 ? 4 : 0;
@@ -72125,10 +72125,10 @@
     	a402 = 32 ;
     	a252 = 11;
     	a390 = 8; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm306(int input) {
+ void calculate_outputm306(int8_t  input) {
     if(((a476 == 34 && ((input == 9) &&  cf==1 )) && ((((a233 == 8 && a544 == 34) && a558 == 34) && a241 == 8) && a554 == 34))) {
     	cf = 0;
     	a482 = 32 ;
@@ -72157,10 +72157,10 @@
     	a310 = 2;
     	a582 = 32 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm307(int input) {
+ void calculate_outputm307(int8_t  input) {
     if((((a463 == 34 && ((input == 6) &&  cf==1 )) && a260 == 9) && (((a493 == 34 && a560 == 34) && a227 == 34) && a474 == 34))) {
     	a76 += (a76 + 20) > a76 ? 4 : 0;
     	cf = 0;
@@ -72191,7 +72191,7 @@
     	a228 = 3;
     	a215 = 33 ;
     	a35 = 6; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((a586 == 34 && (((input == 7) &&  cf==1 ) && a246 == 8)) && a252 == 12) && a246 == 8) && (a546 == 34 && a323 == 12))) {
     	cf = 0;
@@ -72394,10 +72394,10 @@
     	a223 = 8;
     	a376 = 4;
     	a290 = 8;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm308(int input) {
+ void calculate_outputm308(int8_t  input) {
     if((((a282 == 9 && a209 == 6) && a334 == 9) && (a516 == 34 && ((((input == 1) &&  cf==1 ) && a505 == 34) && a554 == 34)))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
     	cf = 0;
@@ -72425,7 +72425,7 @@
     	a336 = 11;
     	a356 = 9;
     	a259 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a214 == 4 && (a324 == 7 && (a318 == 34 && ((input == 2) &&  cf==1 )))) && ((a229 == 5 && a282 == 9) && a277 == 9))) {
     	a179 += (a179 + 20) > a179 ? 3 : 0;
@@ -72440,10 +72440,10 @@
     	a310 = 2;
     	a339 = 36 ;
     	a305 = 13; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm31(int input) {
+ void calculate_outputm31(int8_t  input) {
     if(((a358 == 8 && a353 == 4) && (a587 == 34 && ((a304 == 7 && (( cf==1  && a150 == 7) && a229 == 5)) && a434 == 34)))) {
     	if((((a375 == 34 && a259 == 10) && a419 == 34) && ((a209 == 6 && (a270 == 6 && (a343 == 36 &&  cf==1 ))) && a374 == 9))) {
     		calculate_outputm299(input);
@@ -72479,7 +72479,7 @@
     	} 
     } 
 }
- void calculate_outputm310(int input) {
+ void calculate_outputm310(int8_t  input) {
     if(((((a411 == 34 && a326 == 34) && a233 == 8) && a419 == 34) && (a365 == 3 && (((input == 9) &&  cf==1 ) && a431 == 34)))) {
     	a96 -= (a96 - 20) < a96 ? 4 : 0;
     	cf = 0;
@@ -72685,7 +72685,7 @@
     	a233 = 6;
     	a544 = 33 ;
     	a221 = 3;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a431 == 34 && ( cf==1  && (input == 1))) && (((a356 == 10 && (a411 == 34 && a520 == 34)) && a213 == 4) && a312 == 3))) {
     	a29 += (a29 + 20) > a29 ? 4 : 0;
@@ -72793,10 +72793,10 @@
     	a313 = 3;
     	a418 = 32 ;
     	a322 = 8; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm311(int input) {
+ void calculate_outputm311(int8_t  input) {
     if((((( cf==1  && (input == 8)) && a260 == 9) && a358 == 8) && ((a330 == 8 && (a236 == 8 && a226 == 4)) && a518 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 += (a104 + 20) > a104 ? 2 : 0;
@@ -72939,7 +72939,7 @@
     	a520 = 35 ;
     	a384 = 4;
     	a18 = 9;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((((a446 == 34 && a418 == 34) && a312 == 3) && a366 == 34) && a418 == 34) && (a532 == 34 && ((input == 5) &&  cf==1 )))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -72959,7 +72959,7 @@
     	a393 = 12;
     	a80 = 35 ;
     	a202 = 12; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((((a359 == 11 && ( cf==1  && (input == 1))) && a228 == 5) && a277 == 9) && a510 == 34) && (a404 == 34 && a353 == 4))) {
     	a88 -= (a88 - 20) < a88 ? 3 : 0;
@@ -72982,7 +72982,7 @@
     	a81 = 32 ;
     	a223 = 11;
     	a143 = 17; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a369 == 3 && (a304 == 7 && ((input == 7) &&  cf==1 ))) && (a560 == 34 && ((a463 == 34 && a482 == 34) && a474 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -73018,7 +73018,7 @@
     	a528 = 35 ;
     	a346 = 6;
     	a23 = 13; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a493 == 34 && a346 == 3) && ((a518 == 34 && (a336 == 12 && (( cf==1  && (input == 10)) && a365 == 3))) && a220 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -73147,7 +73147,7 @@
     	a528 = 35 ;
     	a493 = 34 ;
     	a69 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a587 == 34 && (a556 == 34 && a482 == 34)) && (((( cf==1  && (input == 9)) && a348 == 6) && a521 == 34) && a215 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -73258,7 +73258,7 @@
     	a560 = 34 ;
     	a464 = 33 ;
     	a367 = 7; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a206 == 11 && ( cf==1  && (input == 3))) && (a244 == 9 && ((a334 == 9 && (a263 == 8 && a494 == 34)) && a528 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -73279,7 +73279,7 @@
     	a4 = 9;
     	a119 = 32 ;
     	a39 = 2; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a206 == 11 && (a498 == 34 && (( cf==1  && (input == 6)) && a205 == 10))) && ((a464 == 34 && a345 == 11) && a310 == 3))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -73404,7 +73404,7 @@
     	a4 = 7;
     	a119 = 32 ;
     	a35 = 12;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a404 == 34 && a520 == 34) && a274 == 5) && ((a227 == 34 && (((input == 4) &&  cf==1 ) && a364 == 9)) && a259 == 10))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -73630,7 +73630,7 @@
     	a374 = 8;
     	a463 = 36 ;
     	a69 = 9;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a463 == 34 && a241 == 8) && ((a209 == 6 && (a282 == 9 && (((input == 2) &&  cf==1 ) && a274 == 5))) && a379 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -73651,10 +73651,10 @@
     	a51 = 32 ;
     	a49 = 2;
     	a123 = 3; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm313(int input) {
+ void calculate_outputm313(int8_t  input) {
     if(((a407 == 34 && (a262 == 34 && a346 == 3)) && (a435 == 34 && ((a556 == 34 && ( cf==1  && (input == 2))) && a532 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 -= (a104 - 20) < a104 ? 1 : 0;
@@ -73796,7 +73796,7 @@
     	a277 = 8;
     	a346 = 4;
     	a69 = 12; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a445 == 34 && a274 == 5) && (a384 == 4 && ((a228 == 5 && (( cf==1  && (input == 6)) && a358 == 8)) && a463 == 34)))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -73821,7 +73821,7 @@
     	a18 = 14;
     	a23 = 6;
     	a325 = 4; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((((a324 == 7 && ((input == 4) &&  cf==1 )) && a215 == 34) && a241 == 8) && a510 == 34) && (a505 == 34 && a465 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -74058,7 +74058,7 @@
     	a274 = 5;
     	a260 = 11;
     	a118 = 10;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a213 == 4 && (a324 == 7 && (a247 == 12 && a402 == 34))) && a578 == 34) && (((input == 7) &&  cf==1 ) && a396 == 8))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -74189,7 +74189,7 @@
     	a463 = 36 ;
     	a416 = 36 ;
     	a175 = 3; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 8)) && a220 == 34) && a399 == 5) && (a280 == 34 && (a463 == 34 && (a370 == 5 && a380 == 5))))) {
     	a88 += (a88 + 20) > a88 ? 3 : 0;
@@ -74444,7 +74444,7 @@
     	a356 = 13;
     	a416 = 35 ;
     	a18 = 12;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a464 == 34 && (a521 == 34 && ((input == 9) &&  cf==1 ))) && (a274 == 5 && ((a310 == 3 && a474 == 34) && a375 == 34)))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -74529,7 +74529,7 @@
     	a505 = 33 ;
     	a201 = 7;
     	a49 = 2; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a399 == 5 && a247 == 12) && ((a203 == 4 && ((((input == 1) &&  cf==1 ) && a203 == 4) && a312 == 3)) && a213 == 4))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -74773,7 +74773,7 @@
     	a203 = 8;
     	a326 = 33 ;
     	a60 = 13;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a416 == 34 && (((input == 10) &&  cf==1 ) && a297 == 6)) && (a400 == 9 && (a254 == 34 && (a400 == 9 && a213 == 4))))) {
     	a78 -= (a78 - 20) < a78 ? 2 : 0;
@@ -74923,7 +74923,7 @@
     	a201 = 4;
     	a521 = 33 ;
     	a94 = 3;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a416 == 34 && ((((input == 5) &&  cf==1 ) && a528 == 34) && a223 == 10)) && (a233 == 8 && (a297 == 6 && a312 == 3)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -75053,7 +75053,7 @@
     	a254 = 36 ;
     	a463 = 36 ;
     	a151 = 5; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a317 == 7 && (a253 == 8 && (( cf==1  && (input == 3)) && a227 == 34))) && (a334 == 9 && (a295 == 11 && a209 == 6)))) {
     	a179 += (a179 + 20) > a179 ? 4 : 0;
@@ -75234,10 +75234,10 @@
     	a345 = 14;
     	a326 = 32 ;
     	a393 = 11;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm315(int input) {
+ void calculate_outputm315(int8_t  input) {
     if((((a223 == 10 && (a411 == 34 && a345 == 11)) && a274 == 5) && ((a602 == 34 && ((input == 7) &&  cf==1 )) && a289 == 4))) {
     	a29 += (a29 + 20) > a29 ? 3 : 0;
     	cf = 0;
@@ -75300,10 +75300,10 @@
     	a205 = 9;
     	a520 = 32 ;
     	a355 = 12; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm316(int input) {
+ void calculate_outputm316(int8_t  input) {
     if(((a482 == 34 && ( cf==1  && (input == 2))) && ((((a376 == 5 && a205 == 10) && a229 == 5) && a253 == 8) && a318 == 34))) {
     	a113 -= (a113 - 20) < a113 ? 4 : 0;
     	cf = 0;
@@ -75336,7 +75336,7 @@
     	a477 = 32 ;
     	a374 = 8;
     	a363 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a280 == 34 && a259 == 10) && a404 == 34) && (((( cf==1  && (input == 1)) && a236 == 8) && a560 == 34) && a246 == 8))) {
     	a148 += (a148 + 20) > a148 ? 2 : 0;
@@ -75522,10 +75522,10 @@
     	a241 = 6;
     	a382 = 3;
     	a118 = 9;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm317(int input) {
+ void calculate_outputm317(int8_t  input) {
     if(((a556 == 34 && (((input == 10) &&  cf==1 ) && a463 == 34)) && (a216 == 34 && (a246 == 8 && (a313 == 3 && a216 == 34))))) {
     	a148 += (a148 + 20) > a148 ? 4 : 0;
     	cf = 0;
@@ -75589,7 +75589,7 @@
     	a416 = 32 ;
     	a348 = 6;
     	a342 = 8; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a432 == 34 && (((input == 9) &&  cf==1 ) && a234 == 12)) && (((a218 == 7 && a528 == 34) && a259 == 10) && a216 == 34))) {
     	a29 += (a29 + 20) > a29 ? 4 : 0;
@@ -75637,7 +75637,7 @@
     	a507 = 34 ;
     	a215 = 34 ;
     	a202 = 6; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a465 == 34 && a464 == 34) && a528 == 34) && (a432 == 34 && (a376 == 5 && (( cf==1  && (input == 6)) && a382 == 5))))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -75702,7 +75702,7 @@
     	a376 = 4;
     	a247 = 11;
     	a342 = 8; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a587 == 34 && (( cf==1  && (input == 7)) && a252 == 12)) && ((a520 == 34 && (a326 == 34 && a317 == 7)) && a376 == 5))) {
     	a186 -= (a186 - 20) < a186 ? 2 : 0;
@@ -75799,10 +75799,10 @@
     	a582 = 34 ;
     	a220 = 32 ;
     	a125 = 14; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm318(int input) {
+ void calculate_outputm318(int8_t  input) {
     if(((a476 == 34 && (a247 == 12 && (a262 == 34 && (a521 == 34 && a594 == 34)))) && (a435 == 34 && ( cf==1  && (input == 7))))) {
     	a148 += (a148 + 20) > a148 ? 2 : 0;
     	cf = 0;
@@ -75875,7 +75875,7 @@
     	a418 = 33 ;
     	a233 = 6;
     	a118 = 9; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a304 == 7 && (a418 == 34 && ( cf==1  && (input == 6)))) && ((a334 == 9 && (a528 == 34 && a206 == 11)) && a398 == 4))) {
     	a2 -= (a2 - 20) < a2 ? 1 : 0;
@@ -75912,10 +75912,10 @@
     	a505 = 33 ;
     	a463 = 33 ;
     	a99 = 1; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm320(int input) {
+ void calculate_outputm320(int8_t  input) {
     if(((a434 == 34 && (( cf==1  && (input == 6)) && a364 == 9)) && (a592 == 34 && (a345 == 11 && (a233 == 8 && a418 == 34))))) {
     	a2 += (a2 + 20) > a2 ? 2 : 0;
     	cf = 0;
@@ -75949,7 +75949,7 @@
     	a477 = 33 ;
     	a205 = 8;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a233 == 8 && (a353 == 4 && (a270 == 6 && a592 == 34))) && a528 == 34) && (a280 == 34 && ((input == 10) &&  cf==1 )))) {
     	cf = 0;
@@ -76065,7 +76065,7 @@
     	a544 = 32 ;
     	a254 = 32 ;
     	a393 = 13; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a233 == 8 && a214 == 4) && a505 == 34) && (a203 == 4 && (a418 == 34 && (((input == 7) &&  cf==1 ) && a281 == 3))))) {
     	a148 += (a148 + 20) > a148 ? 1 : 0;
@@ -76100,10 +76100,10 @@
     	a373 = 4;
     	a592 = 32 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm32(int input) {
+ void calculate_outputm32(int8_t  input) {
     if(((a432 == 34 && (a402 == 34 && a313 == 3)) && (a297 == 6 && ((a324 == 7 && ( cf==1  && a319 == 2)) && a445 == 34)))) {
     	if((((a493 == 34 && a418 == 34) && a416 == 34) && (a560 == 34 && ((a434 == 34 && (a37 == 36 &&  cf==1 )) && a294 == 34)))) {
     		calculate_outputm310(input);
@@ -76143,7 +76143,7 @@
     	} 
     } 
 }
- void calculate_outputm322(int input) {
+ void calculate_outputm322(int8_t  input) {
     if(((a465 == 34 && ((((input == 6) &&  cf==1 ) && a546 == 34) && a435 == 34)) && (a586 == 34 && (a337 == 6 && a326 == 34)))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
     	cf = 0;
@@ -76170,10 +76170,10 @@
     	a215 = 32 ;
     	a218 = 6;
     	a56 = 9; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm323(int input) {
+ void calculate_outputm323(int8_t  input) {
     if(((((a368 == 6 && (a482 == 34 && ((input == 10) &&  cf==1 ))) && a289 == 4) && a370 == 5) && (a434 == 34 && a336 == 12))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
     	cf = 0;
@@ -76203,10 +76203,10 @@
     	a368 = 5;
     	a270 = 5;
     	a70 = 6; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm325(int input) {
+ void calculate_outputm325(int8_t  input) {
     if(((a434 == 34 && (a445 == 34 && ((((input == 1) &&  cf==1 ) && a505 == 34) && a379 == 34))) && (a336 == 12 && a277 == 9))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 -= (a104 - 20) < a104 ? 2 : 0;
@@ -76441,7 +76441,7 @@
     	a220 = 35 ;
     	a310 = 3;
     	a39 = 1;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a432 == 34 && ((a560 == 34 && (((input == 7) &&  cf==1 ) && a474 == 34)) && a205 == 10)) && (a587 == 34 && a359 == 11))) {
     	a88 += (a88 + 20) > a88 ? 3 : 0;
@@ -76671,7 +76671,7 @@
     	a458 = 35 ;
     	a402 = 36 ;
     	a18 = 12;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((input == 10) &&  cf==1 ) && (a544 == 34 && (a233 == 8 && ((a592 == 34 && (a554 == 34 && a498 == 34)) && a464 == 34))))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -76821,7 +76821,7 @@
     	a260 = 10;
     	a544 = 35 ;
     	a23 = 8;
-    	}/* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a434 == 34 && a254 == 34) && (a376 == 5 && ((a364 == 9 && (a359 == 11 && ((input == 5) &&  cf==1 ))) && a554 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -76858,7 +76858,7 @@
     	a295 = 16;
     	a215 = 35 ;
     	a123 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((input == 9) &&  cf==1 ) && a587 == 34) && (a521 == 34 && ((a294 == 34 && (a399 == 5 && a482 == 34)) && a446 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -77057,7 +77057,7 @@
     	a18 = 9;
     	a502 = 32 ;
     	a118 = 9;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a370 == 5 && ((((input == 8) &&  cf==1 ) && a398 == 4) && a262 == 34)) && ((a528 == 34 && a587 == 34) && a602 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -77181,7 +77181,7 @@
     	a446 = 35 ;
     	a585 = 34 ;
     	a64 = 10; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((((a310 == 3 && a482 == 34) && a214 == 4) && a399 == 5) && (a242 == 4 && (( cf==1  && (input == 4)) && a313 == 3)))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -77207,7 +77207,7 @@
     	a18 = 12;
     	a4 = 10;
     	a121 = 9;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a486 == 34 && a493 == 34) && ((((a295 == 11 && ((input == 2) &&  cf==1 )) && a280 == 34) && a480 == 34) && a435 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -77319,7 +77319,7 @@
     	a281 = 1;
     	a464 = 35 ;
     	a355 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a594 == 34 && ( cf==1  && (input == 6))) && (a544 == 34 && ((a244 == 9 && (a234 == 12 && a259 == 10)) && a233 == 8)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -77529,7 +77529,7 @@
     	a289 = 2;
     	a326 = 32 ;
     	a200 = 10;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a356 == 10 && (a370 == 5 && (a384 == 4 && a463 == 34))) && (a244 == 9 && (( cf==1  && (input == 3)) && a348 == 6)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -77550,10 +77550,10 @@
     	a309 = 33 ;
     	a52 = 8;
     	a393 = 9; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm326(int input) {
+ void calculate_outputm326(int8_t  input) {
     if((((( cf==1  && (input == 8)) && a475 == 34) && a507 == 34) && (a318 == 34 && (a578 == 34 && (a374 == 9 && a348 == 6))))) {
     	a113 -= (a113 - 20) < a113 ? 4 : 0;
     	cf = 0;
@@ -77639,7 +77639,7 @@
     	a49 = 6;
     	a556 = 32 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a586 == 34 && a218 == 7) && a358 == 8) && (a282 == 9 && ((a586 == 34 && ((input == 9) &&  cf==1 )) && a592 == 34)))) {
     	a2 -= (a2 - 20) < a2 ? 1 : 0;
@@ -77745,7 +77745,7 @@
     	a400 = 8;
     	a213 = 3;
     	a39 = 7; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a375 == 34 && a463 == 34) && a445 == 34) && (a297 == 6 && ((a359 == 11 && ( cf==1  && (input == 7))) && a373 == 5)))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -77779,10 +77779,10 @@
     	a318 = 33 ;
     	a463 = 33 ;
     	a18 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm327(int input) {
+ void calculate_outputm327(int8_t  input) {
     if(((a277 == 9 && a252 == 12) && (a458 == 34 && ((a402 == 34 && (((input == 8) &&  cf==1 ) && a233 == 8)) && a369 == 3)))) {
     	a171 += (a171 + 20) > a171 ? 1 : 0;
     	cf = 0;
@@ -77816,10 +77816,10 @@
     	a218 = 6;
     	a241 = 7;
     	a70 = 6; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm328(int input) {
+ void calculate_outputm328(int8_t  input) {
     if(((a254 == 34 && ( cf==1  && (input == 1))) && (a482 == 34 && (a554 == 34 && (a346 == 3 && (a521 == 34 && a382 == 5)))))) {
     	a171 -= (a171 - 20) < a171 ? 4 : 0;
     	cf = 0;
@@ -77876,10 +77876,10 @@
     	a587 = 32 ;
     	a480 = 32 ;
     	a33 = 5; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm33(int input) {
+ void calculate_outputm33(int8_t  input) {
     if((((( cf==1  && a172 == 11) && a532 == 34) && a475 == 34) && (((a242 == 4 && a586 == 34) && a313 == 3) && a241 == 8))) {
     	if((((a498 == 34 && (a241 == 8 && a602 == 34)) && a434 == 34) && (((a292 == 10 &&  cf==1 ) && a528 == 34) && a396 == 8))) {
     		calculate_outputm322(input);
@@ -77907,7 +77907,7 @@
     	} 
     } 
 }
- void calculate_outputm329(int input) {
+ void calculate_outputm329(int8_t  input) {
     if(((a475 == 34 && ((a366 == 34 && ((a494 == 34 && ((input == 10) &&  cf==1 )) && a323 == 12)) && a334 == 9)) && a486 == 34)) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 -= (a104 - 20) < a104 ? 2 : 0;
@@ -78019,7 +78019,7 @@
     	a382 = 9;
     	a418 = 34 ;
     	a111 = 9; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a474 == 34 && a556 == 34) && ((a274 == 5 && (a556 == 34 && (a359 == 11 && ( cf==1  && (input == 4))))) && a582 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -78038,7 +78038,7 @@
     	a4 = 7;
     	a119 = 32 ;
     	a35 = 12; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a463 == 34 && a518 == 34) && (a213 == 4 && (a398 == 4 && (a214 == 4 && (a434 == 34 && ((input == 2) &&  cf==1 ))))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -78071,7 +78071,7 @@
     	a262 = 35 ;
     	a270 = 9;
     	a357 = 13; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a474 == 34 && ((a234 == 12 && ( cf==1  && (input == 9))) && a586 == 34)) && a209 == 6) && (a215 == 34 && a233 == 8))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -78210,7 +78210,7 @@
     	a234 = 15;
     	a313 = 2;
     	a31 = 10; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a474 == 34 && a464 == 34) && (a348 == 6 && (((((input == 6) &&  cf==1 ) && a507 == 34) && a246 == 8) && a263 == 8)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -78298,7 +78298,7 @@
     	a205 = 13;
     	a309 = 36 ;
     	a393 = 9; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a213 == 4 && (a398 == 4 && (a223 == 10 && (( cf==1  && (input == 5)) && a556 == 34)))) && (a213 == 4 && a233 == 8))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -78390,7 +78390,7 @@
     	a474 = 35 ;
     	a373 = 6;
     	a94 = 6; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a407 == 34 && (a233 == 8 && (((input == 7) &&  cf==1 ) && a418 == 34))) && ((a546 == 34 && a220 == 34) && a546 == 34))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -78522,7 +78522,7 @@
     	a365 = 6;
     	a379 = 33 ;
     	a33 = 4;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a259 == 10 && a556 == 34) && a480 == 34) && ((a216 == 34 && (((input == 1) &&  cf==1 ) && a474 == 34)) && a370 == 5))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -78597,7 +78597,7 @@
     	a52 = 8;
     	a309 = 33 ;
     	a393 = 9;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a486 == 34 && (((input == 3) &&  cf==1 ) && a379 == 34)) && a313 == 3) && (a382 == 5 && (a582 == 34 && a476 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -78613,7 +78613,7 @@
     	a146 = 34 ;
     	a52 = 10;
     	a319 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a556 == 34 && a464 == 34) && a262 == 34) && (a323 == 12 && (a592 == 34 && (a369 == 3 && ( cf==1  && (input == 8))))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -78732,10 +78732,10 @@
     	a558 = 33 ;
     	a419 = 35 ;
     	a283 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm330(int input) {
+ void calculate_outputm330(int8_t  input) {
     if((((a370 == 5 && a474 == 34) && a346 == 3) && (a234 == 12 && ((((input == 10) &&  cf==1 ) && a246 == 8) && a263 == 8)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 -= (a104 - 20) < a104 ? 3 : 0;
@@ -78836,7 +78836,7 @@
     	a206 = 16;
     	a435 = 32 ;
     	a18 = 12; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((((a366 == 34 && a507 == 34) && a554 == 34) && a520 == 34) && a486 == 34) && (a369 == 3 && ( cf==1  && (input == 9))))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -78919,7 +78919,7 @@
     	a546 = 36 ;
     	a586 = 35 ;
     	a59 = 10; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a474 == 34 && ( cf==1  && (input == 4))) && ((((a532 == 34 && a263 == 8) && a312 == 3) && a493 == 34) && a516 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -79082,7 +79082,7 @@
     	a373 = 3;
     	a205 = 9;
     	a26 = 11;
-    	}/* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((((((input == 5) &&  cf==1 ) && a416 == 34) && a502 == 34) && a546 == 34) && ((a281 == 3 && a220 == 34) && a318 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -79158,7 +79158,7 @@
     	a18 = 15;
     	a283 = 6;
     	a33 = 8;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a498 == 34 && (((a407 == 34 && ( cf==1  && (input == 2))) && a205 == 10) && a578 == 34)) && (a402 == 34 && a280 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -79282,7 +79282,7 @@
     	a463 = 34 ;
     	a594 = 32 ;
     	a121 = 8; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a353 == 4 && (a411 == 34 && (a259 == 10 && a445 == 34))) && (a205 == 10 && (( cf==1  && (input == 8)) && a396 == 8)))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -79414,7 +79414,7 @@
     	a474 = 35 ;
     	a399 = 7;
     	a305 = 10; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a203 == 4 && (a260 == 9 && (a505 == 34 && a594 == 34))) && (a578 == 34 && (a396 == 8 && ( cf==1  && (input == 1)))))) {
     	a104 -= (a104 - 20) < a104 ? 3 : 0;
@@ -79524,7 +79524,7 @@
     	a486 = 33 ;
     	a404 = 32 ;
     	a26 = 10;
-    	}/* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a226 == 4 && (a205 == 10 && a379 == 34)) && (((((input == 7) &&  cf==1 ) && a498 == 34) && a402 == 34) && a416 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -79665,7 +79665,7 @@
     	a94 = 8;
     	a493 = 36 ;
     	a23 = 8;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a464 == 34 && ((a323 == 12 && ( cf==1  && (input == 3))) && a585 == 34)) && a330 == 8) && (a374 == 9 && a434 == 34))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -79804,7 +79804,7 @@
     	a26 = 7;
     	a187 = 33 ;
     	a35 = 11;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a323 == 12 && a544 == 34) && a297 == 6) && ((a358 == 8 && (( cf==1  && (input == 6)) && a407 == 34)) && a313 == 3))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -79826,10 +79826,10 @@
     	a59 = 12;
     	a393 = 14;
     	a264 = 13; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm331(int input) {
+ void calculate_outputm331(int8_t  input) {
     if(((a474 == 34 && (((( cf==1  && (input == 3)) && a400 == 9) && a289 == 4) && a215 == 34)) && (a259 == 10 && a310 == 3))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -79942,7 +79942,7 @@
     	a602 = 35 ;
     	a215 = 35 ;
     	a14 = 5; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a336 == 12 && (a270 == 6 && a280 == 34)) && (a323 == 12 && ((( cf==1  && (input == 5)) && a229 == 5) && a358 == 8)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -79999,7 +79999,7 @@
     	a366 = 32 ;
     	a345 = 13;
     	a319 = 6; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a556 == 34 && (a379 == 34 && (( cf==1  && (input == 7)) && a411 == 34))) && ((a505 == 34 && a368 == 6) && a228 == 5))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -80126,7 +80126,7 @@
     	a365 = 1;
     	a289 = 9;
     	a308 = 14; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a214 == 4 && (a368 == 6 && ( cf==1  && (input == 1)))) && a374 == 9) && (a359 == 11 && (a359 == 11 && a220 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -80152,7 +80152,7 @@
     	a387 = 35 ;
     	a38 = 35 ;
     	a18 = 15; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a407 == 34 && ((a220 == 34 && a464 == 34) && a246 == 8)) && ((( cf==1  && (input == 2)) && a226 == 4) && a281 == 3))) {
     	a179 += (a179 + 20) > a179 ? 3 : 0;
@@ -80175,7 +80175,7 @@
     	a26 = 9;
     	a39 = 3;
     	a243 = 5; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((( cf==1  && (input == 6)) && (a434 == 34 && (a474 == 34 && (a453 == 34 && (a216 == 34 && (a376 == 5 && a544 == 34))))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -80291,7 +80291,7 @@
     	a396 = 9;
     	a486 = 33 ;
     	a325 = 11; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((((a453 == 34 && ( cf==1  && (input == 9))) && a313 == 3) && a365 == 3) && a289 == 4) && (a334 == 9 && a532 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -80432,7 +80432,7 @@
     	a502 = 36 ;
     	a475 = 33 ;
     	a18 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a209 == 6 && a396 == 8) && a364 == 9) && (a458 == 34 && ((a498 == 34 && ((input == 8) &&  cf==1 )) && a411 == 34)))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -80542,7 +80542,7 @@
     	a270 = 9;
     	a334 = 14;
     	a342 = 3; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a475 == 34 && (((a358 == 8 && a516 == 34) && a213 == 4) && a280 == 34)) && (( cf==1  && (input == 10)) && a558 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -80623,7 +80623,7 @@
     	a18 = 12;
     	a4 = 9;
     	a39 = 2;
-    	}/* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((((a312 == 3 && a477 == 34) && a201 == 6) && a486 == 34) && ((a214 == 4 && ((input == 4) &&  cf==1 )) && a373 == 5))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -80749,10 +80749,10 @@
     	a493 = 35 ;
     	a233 = 11;
     	a355 = 13; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm332(int input) {
+ void calculate_outputm332(int8_t  input) {
     if(((a201 == 6 && (a317 == 7 && (a521 == 34 && (a379 == 34 && ( cf==1  && (input == 7)))))) && (a281 == 3 && a458 == 34))) {
     	cf = 0;
     	a358 = 7;
@@ -80854,7 +80854,7 @@
     	a384 = 3;
     	a367 = 10;
     	a303 = 9; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a365 == 3 && (a370 == 5 && a465 == 34)) && (((a370 == 5 && ((input == 9) &&  cf==1 )) && a364 == 9) && a431 == 34))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -80948,10 +80948,10 @@
     	a446 = 33 ;
     	a366 = 33 ;
     	a342 = 3; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm333(int input) {
+ void calculate_outputm333(int8_t  input) {
     if(((a259 == 10 && (a274 == 5 && ((( cf==1  && (input == 5)) && a247 == 12) && a508 == 34))) && (a213 == 4 && a402 == 34))) {
     	a186 -= (a186 - 20) < a186 ? 4 : 0;
     	cf = 0;
@@ -80982,10 +80982,10 @@
     	a247 = 11;
     	a213 = 3;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm334(int input) {
+ void calculate_outputm334(int8_t  input) {
     if(((a330 == 8 && ((a431 == 34 && (a312 == 3 && a201 == 6)) && a206 == 11)) && (a241 == 8 && ( cf==1  && (input == 8))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a88 += (a88 + 20) > a88 ? 2 : 0;
@@ -81122,7 +81122,7 @@
     	a505 = 35 ;
     	a218 = 8;
     	a94 = 3; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((a411 == 34 && (a214 == 4 && a477 == 34)) && a227 == 34) && ((a203 == 4 && ( cf==1  && (input == 4))) && a356 == 10))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -81346,7 +81346,7 @@
     	a254 = 36 ;
     	a317 = 7;
     	a308 = 14;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((((((input == 7) &&  cf==1 ) && a375 == 34) && a407 == 34) && a434 == 34) && (a281 == 3 && (a336 == 12 && a214 == 4)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -81600,7 +81600,7 @@
     	a289 = 9;
     	a365 = 7;
     	a4 = 6;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a215 == 34 && ( cf==1  && (input == 9))) && a464 == 34) && ((a594 == 34 && (a463 == 34 && a229 == 5)) && a234 == 12))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -81822,7 +81822,7 @@
     	a404 = 33 ;
     	a295 = 12;
     	a47 = 6;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((a411 == 34 && a411 == 34) && a400 == 9) && a241 == 8) && ((((input == 2) &&  cf==1 ) && a201 == 6) && a508 == 34))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -82025,7 +82025,7 @@
     	a330 = 13;
     	a458 = 36 ;
     	a125 = 14;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a270 == 6 && (((input == 3) &&  cf==1 ) && a463 == 34)) && a396 == 8) && ((a502 == 34 && a404 == 34) && a558 == 34))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -82163,7 +82163,7 @@
     	a295 = 16;
     	a458 = 34 ;
     	a39 = 1; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a475 == 34 && ((input == 10) &&  cf==1 )) && ((((a247 == 12 && a312 == 3) && a508 == 34) && a369 == 3) && a236 == 8))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -82301,7 +82301,7 @@
     	a52 = 8;
     	a393 = 10;
     	a44 = 15;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a317 == 7 && (a476 == 34 && a368 == 6)) && ((a435 == 34 && (a294 == 34 && ( cf==1  && (input == 5)))) && a281 == 3))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -82404,7 +82404,7 @@
     	a364 = 13;
     	a236 = 12;
     	a151 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a242 == 4 && a494 == 34) && ((a312 == 3 && ((((input == 6) &&  cf==1 ) && a493 == 34) && a295 == 11)) && a246 == 8))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -82542,7 +82542,7 @@
     	a510 = 36 ;
     	a242 = 8;
     	a49 = 9;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((((input == 1) &&  cf==1 ) && a274 == 5) && (a277 == 9 && (a482 == 34 && ((a445 == 34 && a368 == 6) && a375 == 34))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -82664,10 +82664,10 @@
     	a214 = 5;
     	a480 = 34 ;
     	a4 = 11; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm335(int input) {
+ void calculate_outputm335(int8_t  input) {
     if(((((a528 == 34 && ((input == 6) &&  cf==1 )) && a384 == 4) && a474 == 34) && ((a486 == 34 && a297 == 6) && a419 == 34))) {
     	a29 += (a29 + 20) > a29 ? 3 : 0;
     	cf = 0;
@@ -82743,7 +82743,7 @@
     	a220 = 34 ;
     	a528 = 32 ;
     	a283 = 11; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((a402 == 34 && (((input == 9) &&  cf==1 ) && a244 == 9)) && a209 == 6) && ((a218 == 7 && a592 == 34) && a474 == 34))) {
     	cf = 0;
@@ -82756,7 +82756,7 @@
     	a215 = 33 ;
     	a482 = 33 ;
     	a24 = 6; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a434 == 34 && a502 == 34) && (a209 == 6 && (((a602 == 34 && ((input == 1) &&  cf==1 )) && a376 == 5) && a546 == 34)))) {
     	cf = 0;
@@ -82854,10 +82854,10 @@
     	a544 = 32 ;
     	a359 = 10;
     	a31 = 5; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm336(int input) {
+ void calculate_outputm336(int8_t  input) {
     if(((((a582 == 34 && (a445 == 34 && ( cf==1  && (input == 9)))) && a594 == 34) && a592 == 34) && (a507 == 34 && a578 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 -= (a104 - 20) < a104 ? 1 : 0;
@@ -82893,7 +82893,7 @@
     	a312 = 8;
     	a260 = 9;
     	a23 = 8;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a246 == 8 && (a602 == 34 && (a259 == 10 && (a528 == 34 && a379 == 34)))) && (((input == 6) &&  cf==1 ) && a206 == 11))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -82916,7 +82916,7 @@
     	a136 = 36 ;
     	a393 = 12;
     	a202 = 6; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a233 == 8 && (a560 == 34 && (a274 == 5 && ((input == 10) &&  cf==1 )))) && a348 == 6) && (a334 == 9 && a336 == 12))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -82967,7 +82967,7 @@
     	a317 = 5;
     	a418 = 33 ;
     	a26 = 8; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a398 == 4 && (a209 == 6 && (( cf==1  && (input == 7)) && a359 == 11))) && (a262 == 34 && (a312 == 3 && a505 == 34)))) {
     	a104 += (a104 + 20) > a104 ? 3 : 0;
@@ -83034,7 +83034,7 @@
     	a464 = 35 ;
     	a323 = 11;
     	a393 = 9; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a465 == 34 && ((a374 == 9 && a400 == 9) && a282 == 9)) && (a498 == 34 && (( cf==1  && (input == 4)) && a585 == 34)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -83153,7 +83153,7 @@
     	a345 = 13;
     	a241 = 9;
     	a49 = 7;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a453 == 34 && (a465 == 34 && ((a498 == 34 && a242 == 4) && a330 == 8))) && (( cf==1  && (input == 3)) && a201 == 6))) {
     	a104 += (a104 + 20) > a104 ? 2 : 0;
@@ -83219,7 +83219,7 @@
     	a227 = 34 ;
     	a418 = 35 ;
     	a160 = 12; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a326 == 34 && (a246 == 8 && (a502 == 34 && (a546 == 34 && (a585 == 34 && ( cf==1  && (input == 5))))))) && a375 == 34)) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -83262,7 +83262,7 @@
     	a594 = 34 ;
     	a475 = 34 ;
     	a44 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((a218 == 7 && a602 == 34) && a274 == 5) && a336 == 12) && ((a348 == 6 && ((input == 2) &&  cf==1 )) && a521 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -83279,7 +83279,7 @@
     	a306 = 35 ;
     	a18 = 16;
     	a49 = 7; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((((( cf==1  && (input == 8)) && a253 == 8) && a432 == 34) && a233 == 8) && a215 == 34) && (a353 == 4 && a592 == 34))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -83298,7 +83298,7 @@
     	a52 = 8;
     	a309 = 33 ;
     	a393 = 9; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a411 == 34 && a585 == 34) && (a518 == 34 && (((a215 == 34 && ( cf==1  && (input == 1))) && a216 == 34) && a260 == 9)))) {
     	a78 += (a78 + 20) > a78 ? 2 : 0;
@@ -83318,10 +83318,10 @@
     	a187 = 33 ;
     	a26 = 7;
     	a35 = 9; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm337(int input) {
+ void calculate_outputm337(int8_t  input) {
     if(((((a432 == 34 && ( cf==1  && (input == 9))) && a262 == 34) && a532 == 34) && (a453 == 34 && (a253 == 8 && a465 == 34)))) {
     	cf = 0;
     	a416 = 32 ;
@@ -83373,7 +83373,7 @@
     	a244 = 9;
     	a326 = 32 ;
     	a342 = 8; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a419 == 34 && a379 == 34) && (((a336 == 12 && (( cf==1  && (input == 2)) && a242 == 4)) && a213 == 4) && a528 == 34))) {
     	a186 -= (a186 - 20) < a186 ? 1 : 0;
@@ -83396,10 +83396,10 @@
     	a128 = 33 ;
     	a465 = 33 ;
     	a49 = 9; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm34(int input) {
+ void calculate_outputm34(int8_t  input) {
     if(((a364 == 9 && (a244 == 9 && a236 == 8)) && (((a353 == 4 && ( cf==1  && a111 == 2)) && a259 == 10) && a418 == 34))) {
     	if(((a330 == 8 && (a380 == 5 && (((a141 == 34 &&  cf==1 ) && a521 == 34) && a353 == 4))) && (a252 == 12 && a556 == 34))) {
     		calculate_outputm329(input);
@@ -83440,7 +83440,7 @@
     	} 
     } 
 }
- void calculate_outputm338(int input) {
+ void calculate_outputm338(int8_t  input) {
     if(((a270 == 5 && ((input == 2) &&  cf==1 )) && ((((a407 == 32 && a498 == 32) && a379 == 32) && a277 == 8) && a453 == 32))) {
     	cf = 0;
     	a594 = 32 ;
@@ -83478,7 +83478,7 @@
     	a521 = 32 ;
     	a52 = 9;
     	a150 = 13; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a241 == 7 && (a407 == 32 && (a528 == 32 && a375 == 32))) && (a226 == 3 && (a234 == 11 && ( cf==1  && (input == 5)))))) {
     	a85 += (a85 + 20) > a85 ? 2 : 0;
@@ -83513,7 +83513,7 @@
     	a310 = 2;
     	a528 = 34 ;
     	a342 = 8; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((((a253 == 7 && a476 == 32) && a400 == 8) && a375 == 32) && (a382 == 4 && (((input == 9) &&  cf==1 ) && a453 == 32)))) {
     	a29 += (a29 + 20) > a29 ? 4 : 0;
@@ -83621,10 +83621,10 @@
     	a368 = 4;
     	a312 = 1;
     	a319 = 6;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm339(int input) {
+ void calculate_outputm339(int8_t  input) {
     if((((a270 == 5 && ((input == 5) &&  cf==1 )) && a374 == 8) && ((a297 == 5 && (a228 == 4 && a313 == 2)) && a432 == 32))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -83642,7 +83642,7 @@
     	a393 = 16;
     	a367 = 9;
     	a172 = 14; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a374 == 8 && (a358 == 7 && a234 == 11)) && (((((input == 8) &&  cf==1 ) && a345 == 10) && a356 == 9) && a419 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -83894,7 +83894,7 @@
     	a402 = 34 ;
     	a294 = 35 ;
     	a221 = 7;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a252 == 11 && ((a585 == 32 && ((input == 3) &&  cf==1 )) && a520 == 32)) && (a382 == 4 && (a205 == 9 && a280 == 32)))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -83962,7 +83962,7 @@
     	a227 = 34 ;
     	a368 = 11;
     	a14 = 3;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a348 == 5 && ((a554 == 32 && a330 == 7) && a445 == 32)) && (a270 == 5 && (((input == 7) &&  cf==1 ) && a337 == 5)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -84093,7 +84093,7 @@
     	a259 = 14;
     	a304 = 8;
     	a199 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a556 == 32 && a431 == 32) && a516 == 32) && (a270 == 5 && (a318 == 32 && (((input == 1) &&  cf==1 ) && a399 == 4))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -84124,7 +84124,7 @@
     	a18 = 11;
     	a480 = 33 ;
     	a44 = 15; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a201 == 5 && ((input == 4) &&  cf==1 )) && ((((a494 == 32 && a502 == 32) && a252 == 11) && a486 == 32) && a477 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -84197,7 +84197,7 @@
     	a263 = 10;
     	a505 = 36 ;
     	a56 = 7; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a209 == 5 && a532 == 32) && a334 == 8) && ((a246 == 7 && (((input == 6) &&  cf==1 ) && a220 == 32)) && a419 == 32))) {
     	a78 -= (a78 - 20) < a78 ? 1 : 0;
@@ -84267,7 +84267,7 @@
     	a477 = 36 ;
     	a373 = 6;
     	a94 = 3; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a544 == 32 && (a226 == 3 && (a346 == 2 && ( cf==1  && (input == 10))))) && a494 == 32) && (a270 == 5 && a382 == 4))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -84286,7 +84286,7 @@
     	a4 = 7;
     	a119 = 32 ;
     	a35 = 12; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 9)) && a582 == 32) && a396 == 7) && (a382 == 4 && ((a518 == 32 && a280 == 32) && a418 == 32)))) {
     	a96 += (a96 + 20) > a96 ? 2 : 0;
@@ -84498,7 +84498,7 @@
     	a486 = 34 ;
     	a356 = 8;
     	a322 = 3;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a480 == 32 && a435 == 32) && (((a373 == 4 && (a453 == 32 && ((input == 2) &&  cf==1 ))) && a209 == 5) && a330 == 7))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -84687,10 +84687,10 @@
     	a334 = 8;
     	a227 = 34 ;
     	a393 = 13;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm340(int input) {
+ void calculate_outputm340(int8_t  input) {
     if(((a476 == 32 && (a480 == 32 && (a318 == 32 && a520 == 32))) && (a359 == 10 && (((input == 6) &&  cf==1 ) && a532 == 32)))) {
     	a171 -= (a171 - 20) < a171 ? 1 : 0;
     	cf = 0;
@@ -84751,7 +84751,7 @@
     	a359 = 9;
     	a206 = 9;
     	a70 = 6; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((a259 == 9 && ((a215 == 32 && ((a505 == 32 && (a213 == 3 && ((input == 5) &&  cf==1 ))) && a215 == 32)) && a206 == 10))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -84772,10 +84772,10 @@
     	a505 = 34 ;
     	a592 = 33 ;
     	a342 = 8; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm342(int input) {
+ void calculate_outputm342(int8_t  input) {
     if(((((((input == 7) &&  cf==1 ) && a262 == 32) && a602 == 32) && a214 == 3) && (a546 == 32 && (a213 == 3 && a587 == 32)))) {
     	a113 -= (a113 - 20) < a113 ? 4 : 0;
     	cf = 0;
@@ -84798,10 +84798,10 @@
     	a242 = 2;
     	a246 = 6;
     	a99 = 1; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm343(int input) {
+ void calculate_outputm343(int8_t  input) {
     if(((a585 == 32 && a277 == 8) && (a254 == 32 && (((a236 == 7 && ( cf==1  && (input == 8))) && a205 == 9) && a348 == 5)))) {
     	a91 -= (a91 - 20) < a91 ? 3 : 0;
     	cf = 0;
@@ -84815,7 +84815,7 @@
     	a213 = 4;
     	a205 = 10;
     	a93 = 6; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a233 == 7 && ( cf==1  && (input == 1))) && ((a226 == 3 && ((a312 == 2 && a365 == 2) && a380 == 4)) && a241 == 7))) {
     	a76 += (a76 + 20) > a76 ? 1 : 0;
@@ -84889,10 +84889,10 @@
     	a369 = 3;
     	a380 = 5;
     	a94 = 3; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm344(int input) {
+ void calculate_outputm344(int8_t  input) {
     if((((((a326 == 32 && ( cf==1  && (input == 10))) && a348 == 5) && a508 == 32) && a295 == 10) && (a223 == 9 && a206 == 10))) {
     	cf = 0;
     	a368 = 5;
@@ -84930,7 +84930,7 @@
     	a318 = 34 ;
     	a393 = 14;
     	a59 = 11; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((((((input == 5) &&  cf==1 ) && a318 == 32) && a214 == 3) && a294 == 32) && (a201 == 5 && (a464 == 32 && a262 == 32)))) {
     	cf = 0;
@@ -85052,7 +85052,7 @@
     	a206 = 10;
     	a234 = 11;
     	a118 = 10; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a215 == 32 && a313 == 2) && (a374 == 8 && (((a375 == 32 && ((input == 6) &&  cf==1 )) && a482 == 32) && a330 == 7)))) {
     	a2 -= (a2 - 20) < a2 ? 4 : 0;
@@ -85081,17 +85081,17 @@
     	a247 = 12;
     	a379 = 32 ;
     	a47 = 6; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm345(int input) {
+ void calculate_outputm345(int8_t  input) {
     if((((a375 == 32 && (((a384 == 3 && (a505 == 32 && ((input == 6) &&  cf==1 ))) && a376 == 4) && a411 == 32)) && a310 == 2) && (a20 % 2==0))) {
     	cf = 0;
     	a156 = 36 ;
     	a49 = 5;
     	a18 = 16;
     	a52 = 6; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a602 == 32 && (a313 == 2 && (a586 == 32 && (a516 == 32 && ((input == 1) &&  cf==1 ))))) && (a382 == 4 && a297 == 5))) {
     	a113 -= (a113 - 20) < a113 ? 1 : 0;
@@ -85146,7 +85146,7 @@
     	a310 = 1;
     	a482 = 33 ;
     	a322 = 3; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 9)) && a348 == 5) && (a416 == 32 && (a475 == 32 && ((a402 == 32 && a318 == 32) && a398 == 3)))) && (a13 % 2==0))) {
     	a184 -= (a184 - 20) < a184 ? 4 : 0;
@@ -85155,7 +85155,7 @@
     	a49 = 4;
     	a18 = 16;
     	a273 = 12; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a336 == 11 && (a475 == 32 && a346 == 2)) && (((a234 == 11 && ( cf==1  && (input == 3))) && a226 == 3) && a259 == 9)) && (a131 % 2==0))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -85164,7 +85164,7 @@
     	a18 = 12;
     	a4 = 7;
     	a35 = 12; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((((a380 == 4 && (((input == 10) &&  cf==1 ) && a380 == 4)) && a493 == 32) && a234 == 11) && (a594 == 32 && a464 == 32)) && a115 == 7218)) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -85173,7 +85173,7 @@
     	a18 = 10;
     	a393 = 12;
     	a202 = 6; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((((a592 == 32 && a556 == 32) && a558 == 32) && ((a246 == 7 && (( cf==1  && (input == 4)) && a578 == 32)) && a407 == 32)) && a182 == 6080)) {
     	a184 -= (a184 - 20) < a184 ? 4 : 0;
@@ -85182,7 +85182,7 @@
     	a122 = 34 ;
     	a185 = 33 ;
     	a18 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((((a294 == 32 && (a201 == 5 && a507 == 32)) && a518 == 32) && (a313 == 2 && (a419 == 32 && ((input == 8) &&  cf==1 )))) && a63 == 3676)) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -85191,10 +85191,10 @@
     	a18 = 10;
     	a202 = 9;
     	a161 = 10; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm346(int input) {
+ void calculate_outputm346(int8_t  input) {
     if((((a498 == 32 && (((input == 2) &&  cf==1 ) && a359 == 10)) && a475 == 32) && (a585 == 32 && (a241 == 7 && a482 == 32)))) {
     	a171 -= (a171 - 20) < a171 ? 3 : 0;
     	cf = 0;
@@ -85320,7 +85320,7 @@
     	a486 = 32 ;
     	a453 = 34 ;
     	a18 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a312 == 2 && (a475 == 32 && (( cf==1  && (input == 5)) && a431 == 32))) && ((a223 == 9 && a369 == 2) && a399 == 4))) {
     	a29 += (a29 + 20) > a29 ? 4 : 0;
@@ -85422,7 +85422,7 @@
     	a236 = 6;
     	a277 = 8;
     	a39 = 6;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((( cf==1  && (input == 10)) && (((a281 == 2 && ((a474 == 32 && a297 == 5) && a247 == 11)) && a259 == 9) && a544 == 32))) {
     	a2 -= (a2 - 20) < a2 ? 3 : 0;
@@ -85537,7 +85537,7 @@
     	a368 = 6;
     	a280 = 33 ;
     	a355 = 8; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((((a400 == 8 && (( cf==1  && (input == 9)) && a289 == 3)) && a227 == 32) && a233 == 7) && (a482 == 32 && a594 == 32))) {
     	a2 -= (a2 - 20) < a2 ? 4 : 0;
@@ -85651,10 +85651,10 @@
     	a477 = 33 ;
     	a253 = 7;
     	a52 = 11; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm347(int input) {
+ void calculate_outputm347(int8_t  input) {
     if(((a382 == 4 && (a324 == 6 && (a558 == 32 && (a474 == 32 && a520 == 32)))) && (a582 == 32 && ((input == 4) &&  cf==1 )))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a29 += (a29 + 20) > a29 ? 2 : 0;
@@ -85763,7 +85763,7 @@
     	a380 = 9;
     	a223 = 15;
     	a111 = 6;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a220 == 32 && ((a203 == 3 && a216 == 32) && a213 == 3)) && (a554 == 32 && (a418 == 32 && ( cf==1  && (input == 10)))))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -85878,7 +85878,7 @@
     	a380 = 8;
     	a260 = 13;
     	a18 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a482 == 32 && a518 == 32) && a336 == 11) && (a554 == 32 && ((a228 == 4 && ((input == 7) &&  cf==1 )) && a313 == 2)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -85996,7 +85996,7 @@
     	a592 = 33 ;
     	a353 = 5;
     	a49 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((((input == 6) &&  cf==1 ) && a510 == 32) && a246 == 7) && (a310 == 2 && ((a585 == 32 && a334 == 8) && a445 == 32)))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -86018,7 +86018,7 @@
     	a116 = 36 ;
     	a49 = 8;
     	a47 = 5; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a366 == 32 && (a586 == 32 && a253 == 7)) && (a518 == 32 && ((a493 == 32 && ( cf==1  && (input == 9))) && a486 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -86122,7 +86122,7 @@
     	a310 = 5;
     	a317 = 5;
     	a111 = 6; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a254 == 32 && (a453 == 32 && ((a505 == 32 && a554 == 32) && a370 == 4))) && (((input == 3) &&  cf==1 ) && a560 == 32))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -86143,7 +86143,7 @@
     	a18 = 13;
     	a146 = 34 ;
     	a319 = 9; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a228 == 4 && (a419 == 32 && a260 == 8)) && (a223 == 9 && ((a297 == 5 && ( cf==1  && (input == 5))) && a474 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -86318,7 +86318,7 @@
     	a359 = 12;
     	a244 = 10;
     	a342 = 8;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a435 == 32 && (a304 == 6 && a310 == 2)) && (a586 == 32 && ((a345 == 10 && ((input == 8) &&  cf==1 )) && a475 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -86505,7 +86505,7 @@
     	a252 = 16;
     	a348 = 10;
     	a230 = 10;
-    	}/* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((((a280 == 32 && a585 == 32) && a317 == 6) && ((a226 == 3 && (a244 == 8 && ( cf==1  && (input == 2)))) && a431 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -86578,7 +86578,7 @@
     	a323 = 10;
     	a398 = 3;
     	a94 = 3;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((( cf==1  && (input == 1)) && (((a578 == 32 && ((a416 == 32 && a294 == 32) && a280 == 32)) && a398 == 3) && a554 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -86767,10 +86767,10 @@
     	a209 = 11;
     	a458 = 35 ;
     	a49 = 4;
-    	}/* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm348(int input) {
+ void calculate_outputm348(int8_t  input) {
     if(((((input == 6) &&  cf==1 ) && a518 == 32) && ((a281 == 2 && (a434 == 32 && (a594 == 32 && a493 == 32))) && a223 == 9))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
     	cf = 0;
@@ -86807,7 +86807,7 @@
     	a94 = 4;
     	a594 = 33 ;
     	a4 = 8;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a214 == 3 && (a205 == 9 && ( cf==1  && (input == 10)))) && (((a498 == 32 && a289 == 3) && a348 == 5) && a432 == 32))) {
     	a29 += (a29 + 20) > a29 ? 3 : 0;
@@ -86842,10 +86842,10 @@
     	a494 = 33 ;
     	a295 = 10;
     	a161 = 14; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm35(int input) {
+ void calculate_outputm35(int8_t  input) {
     if((((((a474 == 32 && a254 == 32) && a493 == 32) && a203 == 3) && a234 == 11) && (a521 == 32 && (a135 == 33 &&  cf==1 )))) {
     	if(((((a253 == 7 && (( cf==1  && a360 == 33) && a508 == 32)) && a558 == 32) && a480 == 32) && (a281 == 2 && a532 == 32))) {
     		calculate_outputm338(input);
@@ -86887,7 +86887,7 @@
     	} 
     } 
 }
- void calculate_outputm349(int input) {
+ void calculate_outputm349(int8_t  input) {
     if(((((input == 7) &&  cf==1 ) && a227 == 32) && (a213 == 3 && (((a508 == 32 && a226 == 3) && a376 == 4) && a254 == 32)))) {
     	cf = 0;
     	a458 = 32 ;
@@ -87024,7 +87024,7 @@
     	a435 = 32 ;
     	a223 = 8;
     	a39 = 5; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((((input == 2) &&  cf==1 ) && a554 == 32) && a364 == 8) && (a404 == 32 && ((a505 == 32 && a289 == 3) && a227 == 32)))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -87143,7 +87143,7 @@
     	a507 = 32 ;
     	a205 = 8;
     	a39 = 1; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a346 == 2 && (a215 == 32 && ((input == 9) &&  cf==1 ))) && (a554 == 32 && ((a578 == 32 && a337 == 5) && a220 == 32)))) {
     	a148 += (a148 + 20) > a148 ? 2 : 0;
@@ -87315,7 +87315,7 @@
     	a270 = 6;
     	a463 = 34 ;
     	a303 = 9;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a289 == 3 && (a477 == 32 && a213 == 3)) && (a358 == 7 && (a402 == 32 && (a206 == 10 && ((input == 5) &&  cf==1 )))))) {
     	cf = 0;
@@ -87423,10 +87423,10 @@
     	a544 = 33 ;
     	a203 = 3;
     	a49 = 9; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm350(int input) {
+ void calculate_outputm350(int8_t  input) {
     if(((((a546 == 32 && ((a505 == 32 && ((input == 10) &&  cf==1 )) && a477 == 32)) && a242 == 3) && a203 == 3) && a480 == 32)) {
     	a76 += (a76 + 20) > a76 ? 4 : 0;
     	cf = 0;
@@ -87533,7 +87533,7 @@
     	a214 = 2;
     	a289 = 3;
     	a118 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a346 == 2 && ((a464 == 32 && a379 == 32) && a434 == 32)) && ((( cf==1  && (input == 5)) && a366 == 32) && a368 == 5))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -87565,7 +87565,7 @@
     	a297 = 6;
     	a295 = 10;
     	a319 = 2; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((a507 == 32 && (((a241 == 7 && ((a407 == 32 && ( cf==1  && (input == 6))) && a247 == 11)) && a260 == 8) && a399 == 4))) {
     	a113 -= (a113 - 20) < a113 ? 2 : 0;
@@ -87602,7 +87602,7 @@
     	a218 = 6;
     	a418 = 34 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a259 == 9 && (a502 == 32 && (a407 == 32 && a510 == 32))) && a398 == 3) && (( cf==1  && (input == 9)) && a587 == 32))) {
     	a29 += (a29 + 20) > a29 ? 3 : 0;
@@ -87639,10 +87639,10 @@
     	a49 = 6;
     	a313 = 2;
     	a363 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm351(int input) {
+ void calculate_outputm351(int8_t  input) {
     if(((a582 == 32 && (a313 == 2 && a518 == 32)) && (a510 == 32 && ((a398 == 3 && ( cf==1  && (input == 5))) && a312 == 2)))) {
     	a171 += (a171 + 20) > a171 ? 1 : 0;
     	cf = 0;
@@ -87687,7 +87687,7 @@
     	a359 = 9;
     	a476 = 34 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((((input == 10) &&  cf==1 ) && a246 == 7) && (a404 == 32 && ((a326 == 32 && (a404 == 32 && a505 == 32)) && a366 == 32)))) {
     	a184 -= (a184 - 20) < a184 ? 1 : 0;
@@ -87756,13 +87756,13 @@
     	a259 = 9;
     	a560 = 33 ;
     	a151 = 5; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a400 == 8 && (a446 == 32 && ((a214 == 3 && a594 == 32) && a318 == 32))) && (( cf==1  && (input == 6)) && a445 == 32))) {
     	a91 -= (a91 - 20) < a91 ? 4 : 0;
     	cf = 0;
     	 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a366 == 32 && (a370 == 4 && (a464 == 32 && a458 == 32))) && (a216 == 32 && (a516 == 32 && ((input == 7) &&  cf==1 ))))) {
     	cf = 0;
@@ -87807,10 +87807,10 @@
     	a373 = 3;
     	a486 = 33 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm352(int input) {
+ void calculate_outputm352(int8_t  input) {
     if((((a416 == 32 && (a209 == 5 && a370 == 4)) && a402 == 32) && ((a375 == 32 && ( cf==1  && (input == 9))) && a324 == 6))) {
     	a96 -= (a96 - 20) < a96 ? 4 : 0;
     	cf = 0;
@@ -87919,7 +87919,7 @@
     	a244 = 9;
     	a544 = 32 ;
     	a393 = 13; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a582 == 32 && ((a252 == 11 && (a375 == 32 && ((input == 7) &&  cf==1 ))) && a498 == 32)) && (a274 == 4 && a205 == 9))) {
     	a179 += (a179 + 20) > a179 ? 2 : 0;
@@ -88088,7 +88088,7 @@
     	a404 = 32 ;
     	a374 = 8;
     	a357 = 10;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((((a592 == 32 && a445 == 32) && a274 == 4) && a317 == 6) && (a226 == 3 && (( cf==1  && (input == 5)) && a356 == 9)))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -88140,17 +88140,17 @@
     	a229 = 4;
     	a364 = 7;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm353(int input) {
+ void calculate_outputm353(int8_t  input) {
     if(((a330 == 7 && (a368 == 5 && (a435 == 32 && ( cf==1  && (input == 9))))) && (a594 == 32 && (a379 == 32 && a226 == 3)))) {
     	cf = 0;
     	 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm354(int input) {
+ void calculate_outputm354(int8_t  input) {
     if(((a453 == 32 && (a282 == 8 && ((a220 == 32 && ( cf==1  && (input == 1))) && a318 == 32))) && (a474 == 32 && a252 == 11))) {
     	a85 += (a85 + 20) > a85 ? 3 : 0;
     	cf = 0;
@@ -88188,7 +88188,7 @@
     	a274 = 4;
     	a281 = 2;
     	a70 = 6; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((((a458 == 32 && a418 == 32) && a528 == 32) && a418 == 32) && a253 == 7) && (( cf==1  && (input == 9)) && a380 == 4))) {
     	a148 += (a148 + 20) > a148 ? 4 : 0;
@@ -88268,7 +88268,7 @@
     	a323 = 12;
     	a310 = 1;
     	a118 = 9; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a398 == 3 && (a585 == 32 && a313 == 2)) && a418 == 32) && (a213 == 3 && (((input == 5) &&  cf==1 ) && a521 == 32)))) {
     	a184 -= (a184 - 20) < a184 ? 2 : 0;
@@ -88362,7 +88362,7 @@
     	a262 = 32 ;
     	a317 = 6;
     	a103 = 12;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a384 == 3 && a505 == 32) && a214 == 3) && ((a346 == 2 && (a404 == 32 && ((input == 8) &&  cf==1 ))) && a374 == 8))) {
     	a29 += (a29 + 20) > a29 ? 2 : 0;
@@ -88477,10 +88477,10 @@
     	a173 = 32 ;
     	a313 = 2;
     	a283 = 7; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm36(int input) {
+ void calculate_outputm36(int8_t  input) {
     if(((a418 == 32 && ((a379 == 32 && (a103 == 11 &&  cf==1 )) && a366 == 32)) && ((a262 == 32 && a205 == 9) && a227 == 32))) {
     	if((((((a322 == 3 &&  cf==1 ) && a233 == 7) && a404 == 32) && a254 == 32) && ((a326 == 32 && a209 == 5) && a505 == 32))) {
     		calculate_outputm349(input);
@@ -88508,7 +88508,7 @@
     	} 
     } 
 }
- void calculate_outputm355(int input) {
+ void calculate_outputm355(int8_t  input) {
     if(((((a214 == 3 && ((input == 6) &&  cf==1 )) && a400 == 8) && (((a380 == 4 && a505 == 32) && a215 == 32) && a399 == 4)) && a73 >= 1)) {
     	a179 += (a179 + 20) > a179 ? 2 : 0;
     	cf = 0;
@@ -88526,7 +88526,7 @@
     	a416 = 34 ;
     	a215 = 34 ;
     	a150 = 8; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((((((a376 == 4 && (a510 == 32 && a323 == 11)) && a498 == 32) && a480 == 32) && (((input == 10) &&  cf==1 ) && a516 == 32)) && (a6 % 2==0))) {
     	cf = 0;
@@ -88534,7 +88534,7 @@
     	a18 = 13;
     	a351 = 34 ;
     	a52 = 7; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((((a465 == 32 && ((input == 5) &&  cf==1 )) && a494 == 32) && a416 == 32) && (a358 == 7 && (a227 == 32 && a206 == 10))) && a65 >= 5)) {
     	cf = 0;
@@ -88552,7 +88552,7 @@
     	a119 = 33 ;
     	a334 = 7;
     	a18 = 12; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a312 == 2 && (a353 == 3 && (((a384 == 3 && a486 == 32) && a295 == 10) && a220 == 32))) && ( cf==1  && (input == 1))) && (a92 % 2==0))) {
     	a184 -= (a184 - 20) < a184 ? 3 : 0;
@@ -88561,7 +88561,7 @@
     	a367 = 9;
     	a18 = 10;
     	a172 = 14; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a482 == 32 && ((input == 8) &&  cf==1 )) && (a585 == 32 && ((a418 == 32 && (a260 == 8 && a505 == 32)) && a498 == 32)))) {
     	a58 -= (a58 - 20) < a58 ? 4 : 0;
@@ -88697,7 +88697,7 @@
     	a477 = 33 ;
     	a578 = 34 ;
     	a125 = 14; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((a556 == 32 && (a382 == 4 && (a419 == 32 && ( cf==1  && (input == 9))))) && (a384 == 3 && (a247 == 11 && a244 == 8))) && a113 >= 0)) {
     	a96 -= (a96 - 20) < a96 ? 4 : 0;
@@ -88716,7 +88716,7 @@
     	a214 = 2;
     	a244 = 7;
     	a18 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a246 == 7 && (a254 == 32 && a282 == 8)) && a244 == 8) && (a227 == 32 && (a227 == 32 && ((input == 2) &&  cf==1 ))))) {
     	a147 += (a147 + 20) > a147 ? 2 : 0;
@@ -88822,10 +88822,10 @@
     	a260 = 7;
     	a369 = 1;
     	a49 = 6; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm356(int input) {
+ void calculate_outputm356(int8_t  input) {
     if(((a205 == 9 && ((a396 == 7 && (a582 == 32 && a214 == 3)) && a578 == 32)) && (((input == 10) &&  cf==1 ) && a312 == 2))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
     	cf = 0;
@@ -88986,7 +88986,7 @@
     	a246 = 6;
     	a453 = 34 ;
     	a367 = 6;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((((a554 == 32 && (a521 == 32 && a226 == 3)) && a419 == 32) && a336 == 11) && (a518 == 32 && ( cf==1  && (input == 9))))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -89097,10 +89097,10 @@
     	a259 = 9;
     	a445 = 32 ;
     	a175 = 3; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm357(int input) {
+ void calculate_outputm357(int8_t  input) {
     if(((((a474 == 32 && a516 == 32) && a592 == 32) && a418 == 32) && (a215 == 32 && (( cf==1  && (input == 8)) && a480 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a88 -= (a88 - 20) < a88 ? 3 : 0;
@@ -89223,7 +89223,7 @@
     	a23 = 6;
     	a94 = 8;
     	a325 = 4;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a365 == 2 && (a586 == 32 && ((a556 == 32 && ( cf==1  && (input == 7))) && a310 == 2))) && (a507 == 32 && a458 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -89416,7 +89416,7 @@
     	a259 = 9;
     	a336 = 16;
     	a372 = 9;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a400 == 8 && (a242 == 3 && (a247 == 11 && a260 == 8))) && ((((input == 6) &&  cf==1 ) && a476 == 32) && a446 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -89568,7 +89568,7 @@
     	a18 = 11;
     	a34 = 36 ;
     	a44 = 11;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a474 == 32 && ((a434 == 32 && ( cf==1  && (input == 3))) && a241 == 7)) && ((a348 == 5 && a216 == 32) && a209 == 5))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -89798,7 +89798,7 @@
     	a30 = 33 ;
     	a532 = 33 ;
     	a109 = 4;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a253 == 7 && (a445 == 32 && (((input == 10) &&  cf==1 ) && a558 == 32))) && (a520 == 32 && (a234 == 11 && a463 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -89872,7 +89872,7 @@
     	a358 = 10;
     	a373 = 5;
     	a347 = 16; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a233 == 7 && (a556 == 32 && a482 == 32)) && ((a463 == 32 && (((input == 4) &&  cf==1 ) && a520 == 32)) && a400 == 8))) {
     	a96 -= (a96 - 20) < a96 ? 4 : 0;
@@ -89994,7 +89994,7 @@
     	a474 = 35 ;
     	a334 = 10;
     	a49 = 3; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((((a260 == 8 && a277 == 8) && a419 == 32) && a602 == 32) && ((( cf==1  && (input == 1)) && a502 == 32) && a337 == 5))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -90043,7 +90043,7 @@
     	a516 = 36 ;
     	a215 = 35 ;
     	a151 = 10; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a313 == 2 && (((input == 2) &&  cf==1 ) && a229 == 4)) && a277 == 8) && ((a323 == 11 && a356 == 9) && a203 == 3))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -90185,7 +90185,7 @@
     	a375 = 34 ;
     	a411 = 35 ;
     	a16 = 13; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a411 == 32 && (a205 == 9 && (a586 == 32 && a297 == 5))) && (a223 == 9 && (a337 == 5 && ( cf==1  && (input == 5)))))) {
     	a104 -= (a104 - 20) < a104 ? 2 : 0;
@@ -90258,7 +90258,7 @@
     	a393 = 16;
     	a18 = 10;
     	a342 = 8; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a366 == 32 && (a209 == 5 && ((a419 == 32 && ( cf==1  && (input == 9))) && a366 == 32))) && (a498 == 32 && a532 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -90379,10 +90379,10 @@
     	a376 = 3;
     	a359 = 11;
     	a94 = 1; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm358(int input) {
+ void calculate_outputm358(int8_t  input) {
     if((((a252 == 11 && a366 == 32) && a416 == 32) && (((((input == 7) &&  cf==1 ) && a259 == 9) && a310 == 2) && a246 == 7))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a179 += (a179 + 20) > a179 ? 3 : 0;
@@ -90491,7 +90491,7 @@
     	a323 = 13;
     	a418 = 35 ;
     	a99 = 1;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a263 == 7 && (( cf==1  && (input == 3)) && a323 == 11)) && a330 == 7) && ((a282 == 8 && a475 == 32) && a312 == 2))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -90715,7 +90715,7 @@
     	a493 = 36 ;
     	a477 = 32 ;
     	a124 = 5;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((( cf==1  && (input == 2)) && (((((a558 == 32 && a505 == 32) && a458 == 32) && a220 == 32) && a233 == 7) && a259 == 9))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -90734,7 +90734,7 @@
     	a130 = 36 ;
     	a18 = 11;
     	a39 = 5; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a398 == 3 && (a528 == 32 && a546 == 32)) && ((a358 == 7 && (((input == 5) &&  cf==1 ) && a532 == 32)) && a384 == 3))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -90850,7 +90850,7 @@
     	a26 = 9;
     	a586 = 36 ;
     	a117 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a358 == 7 && (a528 == 32 && a233 == 7)) && (a218 == 6 && (a477 == 32 && (a510 == 32 && ( cf==1  && (input == 4))))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -90971,7 +90971,7 @@
     	a434 = 36 ;
     	a373 = 8;
     	a264 = 14; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((((a270 == 5 && (a432 == 32 && ( cf==1  && (input == 8)))) && a260 == 8) && (a404 == 32 && (a359 == 10 && a206 == 10)))) {
     	a78 += (a78 + 20) > a78 ? 1 : 0;
@@ -91032,7 +91032,7 @@
     	a234 = 17;
     	a281 = 7;
     	a305 = 10; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a532 == 32 && (((input == 1) &&  cf==1 ) && a482 == 32)) && ((a280 == 32 && (a252 == 11 && a382 == 4)) && a376 == 4))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -91054,7 +91054,7 @@
     	a52 = 8;
     	a18 = 13;
     	a393 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a359 == 10 && (a382 == 4 && a510 == 32)) && a374 == 8) && ((a277 == 8 && ((input == 9) &&  cf==1 )) && a446 == 32))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -91188,7 +91188,7 @@
     	a233 = 10;
     	a464 = 33 ;
     	a18 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((((((input == 6) &&  cf==1 ) && a270 == 5) && a486 == 32) && a213 == 3) && ((a476 == 32 && a254 == 32) && a554 == 32))) {
     	a96 += (a96 + 20) > a96 ? 2 : 0;
@@ -91414,7 +91414,7 @@
     	a223 = 15;
     	a418 = 32 ;
     	a49 = 2;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((( cf==1  && (input == 10)) && (a382 == 4 && (a463 == 32 && (a558 == 32 && (a201 == 5 && (a318 == 32 && a554 == 32))))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -91526,10 +91526,10 @@
     	a558 = 33 ;
     	a374 = 12;
     	a33 = 4;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm359(int input) {
+ void calculate_outputm359(int8_t  input) {
     if(((a505 == 32 && (((input == 8) &&  cf==1 ) && a358 == 7)) && (a254 == 32 && ((a399 == 4 && a366 == 32) && a532 == 32)))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
     	cf = 0;
@@ -91539,10 +91539,10 @@
     	a49 = 6;
     	a358 = 6;
     	a363 = 4; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm37(int input) {
+ void calculate_outputm37(int8_t  input) {
     if(((a216 == 32 && ((a227 == 32 && (a259 == 9 && a345 == 10)) && a366 == 32)) && (a480 == 32 && ( cf==1  && a238 == 33)))) {
     	if(((a337 == 5 && (a282 == 8 && a246 == 7)) && (a380 == 4 && ((a554 == 32 && ( cf==1  && a347 == 16)) && a465 == 32)))) {
     		calculate_outputm355(input);
@@ -91565,7 +91565,7 @@
     	} 
     } 
 }
- void calculate_outputm360(int input) {
+ void calculate_outputm360(int8_t  input) {
     if(((a400 == 8 && (((a369 == 2 && a218 == 6) && a380 == 4) && a374 == 8)) && (((input == 2) &&  cf==1 ) && a324 == 6))) {
     	a148 += (a148 + 20) > a148 ? 2 : 0;
     	cf = 0;
@@ -91680,7 +91680,7 @@
     	a486 = 32 ;
     	a242 = 4;
     	a94 = 5; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a396 == 7 && ((a560 == 32 && a280 == 32) && a277 == 8)) && (a486 == 32 && (( cf==1  && (input == 9)) && a369 == 2)))) {
     	a2 -= (a2 - 20) < a2 ? 4 : 0;
@@ -91796,7 +91796,7 @@
     	a398 = 3;
     	a380 = 4;
     	a125 = 14; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a431 == 32 && ((a223 == 9 && (a411 == 32 && (a510 == 32 && a578 == 32))) && a346 == 2)) && ((input == 8) &&  cf==1 ))) {
     	a171 -= (a171 - 20) < a171 ? 2 : 0;
@@ -91849,7 +91849,7 @@
     	a586 = 32 ;
     	a399 = 4;
     	a342 = 8; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((a419 == 32 && (a463 == 32 && a353 == 3)) && a592 == 32) && (a432 == 32 && (a242 == 3 && ( cf==1  && (input == 10)))))) {
     	a29 += (a29 + 20) > a29 ? 1 : 0;
@@ -91930,10 +91930,10 @@
     	a295 = 11;
     	a246 = 8;
     	a283 = 10; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm361(int input) {
+ void calculate_outputm361(int8_t  input) {
     if((((((a419 == 32 && a554 == 32) && a246 == 7) && a215 == 32) && a411 == 32) && (a366 == 32 && ( cf==1  && (input == 6))))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -91953,7 +91953,7 @@
     	a45 = 33 ;
     	a94 = 6;
     	a70 = 6; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if((((a201 == 5 && a554 == 32) && a463 == 32) && (a348 == 5 && ((a544 == 32 && ( cf==1  && (input == 9))) && a416 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -92083,7 +92083,7 @@
     	a505 = 34 ;
     	a312 = 3;
     	a355 = 8; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a353 == 3 && (((a280 == 32 && a432 == 32) && a297 == 5) && a233 == 7)) && a374 == 8) && ((input == 5) &&  cf==1 ))) {
     	a58 -= (a58 - 20) < a58 ? 2 : 0;
@@ -92104,7 +92104,7 @@
     	a52 = 8;
     	a18 = 13;
     	a44 = 10; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a270 == 5 && a560 == 32) && (a399 == 4 && (a345 == 10 && (a280 == 32 && (((input == 10) &&  cf==1 ) && a374 == 8)))))) {
     	a104 += (a104 + 20) > a104 ? 3 : 0;
@@ -92219,7 +92219,7 @@
     	a474 = 34 ;
     	a376 = 6;
     	a109 = 8; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 8)) && a348 == 5) && a244 == 8) && (a373 == 4 && (a508 == 32 && (a359 == 10 && a486 == 32))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -92239,7 +92239,7 @@
     	a52 = 10;
     	a75 = 36 ;
     	a319 = 5; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a445 == 32 && a336 == 11) && ((((a475 == 32 && ( cf==1  && (input == 1))) && a345 == 10) && a416 == 32) && a242 == 3))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -92378,7 +92378,7 @@
     	a223 = 10;
     	a262 = 35 ;
     	a23 = 13;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a521 == 32 && (a353 == 3 && a205 == 9)) && (a373 == 4 && (a396 == 7 && (a587 == 32 && ((input == 7) &&  cf==1 )))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -92578,7 +92578,7 @@
     	a330 = 8;
     	a253 = 11;
     	a49 = 4;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((((input == 3) &&  cf==1 ) && a216 == 32) && a435 == 32) && (a201 == 5 && ((a345 == 10 && a398 == 3) && a507 == 32)))) {
     	a179 += (a179 + 20) > a179 ? 3 : 0;
@@ -92597,7 +92597,7 @@
     	a23 = 6;
     	a94 = 8;
     	a325 = 4; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a274 == 4 && ((a400 == 8 && (a359 == 10 && a518 == 32)) && a348 == 5)) && (a402 == 32 && ((input == 4) &&  cf==1 )))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -92629,7 +92629,7 @@
     	a416 = 36 ;
     	a494 = 34 ;
     	a18 = 12; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a382 == 4 && a359 == 10) && ((a432 == 32 && (a418 == 32 && (a458 == 32 && ((input == 2) &&  cf==1 )))) && a205 == 9))) {
     	a179 += (a179 + 20) > a179 ? 4 : 0;
@@ -92650,10 +92650,10 @@
     	a18 = 11;
     	a170 = 32 ;
     	a26 = 11; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm363(int input) {
+ void calculate_outputm363(int8_t  input) {
     if((((a382 == 4 && ((input == 7) &&  cf==1 )) && a411 == 32) && (((a416 == 32 && a399 == 4) && a398 == 3) && a312 == 2))) {
     	a29 += (a29 + 20) > a29 ? 3 : 0;
     	cf = 0;
@@ -92765,10 +92765,10 @@
     	a402 = 34 ;
     	a216 = 32 ;
     	a39 = 5; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm365(int input) {
+ void calculate_outputm365(int8_t  input) {
     if(((a510 == 32 && a453 == 32) && (a270 == 5 && ((a274 == 4 && (((input == 7) &&  cf==1 ) && a502 == 32)) && a227 == 32)))) {
     	cf = 0;
     	a252 = 10;
@@ -92811,7 +92811,7 @@
     	a528 = 34 ;
     	a107 = 34 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a482 == 32 && (a516 == 32 && ((input == 10) &&  cf==1 ))) && (a494 == 32 && (a227 == 32 && (a364 == 8 && a366 == 32))))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -92877,7 +92877,7 @@
     	a297 = 4;
     	a477 = 33 ;
     	a151 = 5; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((((a445 == 32 && a206 == 10) && a434 == 32) && a510 == 32) && ((a465 == 32 && ( cf==1  && (input == 5))) && a518 == 32))) {
     	a148 += (a148 + 20) > a148 ? 2 : 0;
@@ -93010,7 +93010,7 @@
     	a374 = 7;
     	a18 = 9;
     	a118 = 9;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a236 == 7 && a220 == 32) && a297 == 5) && (((( cf==1  && (input == 6)) && a431 == 32) && a400 == 8) && a274 == 4))) {
     	a179 += (a179 + 20) > a179 ? 2 : 0;
@@ -93147,10 +93147,10 @@
     	a353 = 2;
     	a458 = 33 ;
     	a221 = 2;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm38(int input) {
+ void calculate_outputm38(int8_t  input) {
     if(((((a324 == 6 && a337 == 5) && a337 == 5) && a402 == 32) && ((a209 == 5 && ( cf==1  && a44 == 9)) && a375 == 32))) {
     	if(((a289 == 3 && a270 == 5) && (a295 == 10 && (a334 == 8 && (a274 == 4 && (( cf==1  && a150 == 6) && a330 == 7)))))) {
     		calculate_outputm360(input);
@@ -93170,7 +93170,7 @@
     	} 
     } 
 }
- void calculate_outputm367(int input) {
+ void calculate_outputm367(int8_t  input) {
     if((((((input == 7) &&  cf==1 ) && a259 == 9) && a532 == 32) && ((a520 == 32 && (a374 == 8 && a223 == 9)) && a236 == 7))) {
     	a65 -= (a65 - 20) < a65 ? 2 : 0;
     	cf = 0;
@@ -93299,7 +93299,7 @@
     	a411 = 32 ;
     	a554 = 32 ;
     	a355 = 13; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a310 == 2 && (a241 == 7 && (( cf==1  && (input == 6)) && a475 == 32))) && a356 == 9) && (a578 == 32 && a236 == 7))) {
     	cf = 0;
@@ -93368,7 +93368,7 @@
     	a434 = 32 ;
     	a493 = 32 ;
     	a322 = 1; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a510 == 32 && (a277 == 8 && (( cf==1  && (input == 2)) && a434 == 32))) && (a453 == 32 && (a370 == 4 && a560 == 32)))) {
     	cf = 0;
@@ -93412,7 +93412,7 @@
     	a453 = 34 ;
     	a544 = 32 ;
     	a144 = 7; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a507 == 32 && (a411 == 32 && a379 == 32)) && (a431 == 32 && ((a434 == 32 && ((input == 10) &&  cf==1 )) && a223 == 9)))) {
     	cf = 0;
@@ -93530,10 +93530,10 @@
     	a507 = 33 ;
     	a493 = 32 ;
     	a18 = 12; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm368(int input) {
+ void calculate_outputm368(int8_t  input) {
     if(((( cf==1  && (input == 5)) && a480 == 32) && ((a218 == 6 && (a215 == 32 && (a353 == 3 && a246 == 7))) && a498 == 32))) {
     	a186 += (a186 + 20) > a186 ? 1 : 0;
     	cf = 0;
@@ -93609,7 +93609,7 @@
     	a366 = 34 ;
     	a416 = 34 ;
     	a399 = 5;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a374 == 8 && (((( cf==1  && (input == 2)) && a218 == 6) && a474 == 32) && a203 == 3)) && a317 == 6) && a323 == 11)) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -93691,7 +93691,7 @@
     	a334 = 9;
     	a270 = 6;
     	a319 = 6;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((((input == 1) &&  cf==1 ) && a365 == 2) && ((a205 == 9 && ((a546 == 32 && a493 == 32) && a310 == 2)) && a236 == 7))) {
     	a85 -= (a85 - 20) < a85 ? 2 : 0;
@@ -93747,10 +93747,10 @@
     	a312 = 1;
     	a310 = 2;
     	a33 = 5; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm369(int input) {
+ void calculate_outputm369(int8_t  input) {
     if(((a310 == 2 && (a458 == 32 && ( cf==1  && (input == 5)))) && (((a346 == 2 && a323 == 11) && a214 == 3) && a521 == 32))) {
     	a96 -= (a96 - 20) < a96 ? 4 : 0;
     	cf = 0;
@@ -93853,7 +93853,7 @@
     	a463 = 33 ;
     	a81 = 33 ;
     	a283 = 10; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a446 == 32 && (a348 == 5 && ((a518 == 32 && a464 == 32) && a508 == 32))) && (a236 == 7 && ( cf==1  && (input == 2))))) {
     	cf = 0;
@@ -93874,7 +93874,7 @@
     	a318 = 34 ;
     	a508 = 33 ;
     	a342 = 8; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a318 == 32 && (a310 == 2 && (a556 == 32 && ( cf==1  && (input == 7))))) && ((a262 == 32 && a218 == 6) && a502 == 32))) {
     	a179 += (a179 + 20) > a179 ? 4 : 0;
@@ -93967,17 +93967,17 @@
     	a358 = 7;
     	a330 = 8;
     	a49 = 7; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a229 == 4 && (a318 == 32 && ((input == 9) &&  cf==1 ))) && (a592 == 32 && ((a432 == 32 && a494 == 32) && a373 == 4))) && (a132 % 2==0))) {
     	cf = 0;
     	a185 = 32 ;
     	a137 = 36 ;
     	a94 = 7; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm370(int input) {
+ void calculate_outputm370(int8_t  input) {
     if(((a518 == 32 && a229 == 4) && (a274 == 4 && ((a475 == 32 && (a214 == 3 && ( cf==1  && (input == 6)))) && a382 == 4)))) {
     	a88 += (a88 + 20) > a88 ? 1 : 0;
     	a157 += (a157 + 20) > a157 ? 1 : 0;
@@ -94091,7 +94091,7 @@
     	a558 = 36 ;
     	a242 = 4;
     	a118 = 9; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((((a359 == 10 && (( cf==1  && (input == 2)) && a330 == 7)) && a376 == 4) && (a289 == 3 && (a482 == 32 && a432 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -94294,7 +94294,7 @@
     	a476 = 33 ;
     	a376 = 3;
     	a39 = 8;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a582 == 32 && (a234 == 11 && a396 == 7)) && (((( cf==1  && (input == 5)) && a223 == 9) && a373 == 4) && a587 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -94314,7 +94314,7 @@
     	a18 = 13;
     	a146 = 34 ;
     	a319 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a587 == 32 && (a521 == 32 && (a214 == 3 && a402 == 32))) && ((((input == 8) &&  cf==1 ) && a241 == 7) && a407 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -94394,7 +94394,7 @@
     	a241 = 8;
     	a418 = 32 ;
     	a371 = 12; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a446 == 32 && a236 == 7) && a544 == 32) && ((a242 == 3 && (a366 == 32 && ( cf==1  && (input == 1)))) && a586 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -94591,7 +94591,7 @@
     	a404 = 35 ;
     	a356 = 13;
     	a308 = 14;
-    	}/* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a474 == 32 && (a294 == 32 && a253 == 7)) && (a253 == 7 && ((a480 == 32 && ((input == 10) &&  cf==1 )) && a254 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -94721,7 +94721,7 @@
     	a246 = 7;
     	a582 = 36 ;
     	a118 = 6; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a532 == 32 && a368 == 5) && (((a560 == 32 && (( cf==1  && (input == 4)) && a365 == 2)) && a364 == 8) && a356 == 9))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -94845,7 +94845,7 @@
     	a592 = 33 ;
     	a345 = 12;
     	a322 = 8;
-    	}/* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((a585 == 32 && ((input == 7) &&  cf==1 )) && a587 == 32) && (a380 == 4 && ((a404 == 32 && a532 == 32) && a432 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -94948,7 +94948,7 @@
     	a326 = 33 ;
     	a277 = 14;
     	a49 = 7;
-    	}/* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a295 == 10 && (a480 == 32 && a582 == 32)) && (a418 == 32 && (a216 == 32 && (a234 == 11 && ((input == 3) &&  cf==1 )))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -94969,7 +94969,7 @@
     	a393 = 12;
     	a80 = 35 ;
     	a202 = 12; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a353 == 3 && a369 == 2) && (a446 == 32 && (a373 == 4 && ((a304 == 6 && ((input == 9) &&  cf==1 )) && a356 == 9))))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -95074,10 +95074,10 @@
     	a359 = 9;
     	a216 = 32 ;
     	a52 = 10; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm372(int input) {
+ void calculate_outputm372(int8_t  input) {
     if((((a201 == 5 && (a507 == 32 && a234 == 11)) && a209 == 5) && (a282 == 8 && (( cf==1  && (input == 3)) && a260 == 8)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 -= (a104 - 20) < a104 ? 3 : 0;
@@ -95173,7 +95173,7 @@
     	a247 = 15;
     	a476 = 34 ;
     	a14 = 5; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((((((input == 7) &&  cf==1 ) && a376 == 4) && a419 == 32) && a216 == 32) && (a407 == 32 && (a280 == 32 && a313 == 2)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -95193,7 +95193,7 @@
     	a130 = 36 ;
     	a18 = 11;
     	a39 = 5; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a582 == 32 && (a582 == 32 && a280 == 32)) && (((a252 == 11 && ((input == 4) &&  cf==1 )) && a345 == 10) && a234 == 11))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -95321,7 +95321,7 @@
     	a475 = 33 ;
     	a294 = 33 ;
     	a149 = 12; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a234 == 11 && (((input == 10) &&  cf==1 ) && a280 == 32)) && (a594 == 32 && (a252 == 11 && (a521 == 32 && a220 == 32))))) {
     	a88 -= (a88 - 20) < a88 ? 1 : 0;
@@ -95436,7 +95436,7 @@
     	a476 = 36 ;
     	a216 = 35 ;
     	a60 = 13;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a399 == 4 && ((( cf==1  && (input == 6)) && a546 == 32) && a365 == 2)) && ((a521 == 32 && a416 == 32) && a323 == 11))) {
     	a104 -= (a104 - 20) < a104 ? 1 : 0;
@@ -95512,7 +95512,7 @@
     	a353 = 2;
     	a592 = 35 ;
     	a367 = 7; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a458 == 32 && (a516 == 32 && (a348 == 5 && a586 == 32))) && ((( cf==1  && (input == 2)) && a205 == 9) && a446 == 32))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -95533,7 +95533,7 @@
     	a393 = 12;
     	a136 = 36 ;
     	a202 = 6; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a364 == 8 && (a209 == 5 && (a310 == 2 && a205 == 9))) && ((((input == 5) &&  cf==1 ) && a348 == 5) && a364 == 8))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -95606,7 +95606,7 @@
     	a253 = 6;
     	a336 = 13;
     	a325 = 11; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a404 == 32 && (a482 == 32 && ((input == 8) &&  cf==1 ))) && a252 == 11) && (a416 == 32 && (a366 == 32 && a337 == 5)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -95724,7 +95724,7 @@
     	a368 = 6;
     	a400 = 8;
     	a283 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a582 == 32 && ((input == 1) &&  cf==1 )) && ((a203 == 3 && (a310 == 2 && (a259 == 9 && a215 == 32))) && a432 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -95832,7 +95832,7 @@
     	a578 = 33 ;
     	a226 = 5;
     	a109 = 6; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a486 == 32 && (a475 == 32 && ((input == 9) &&  cf==1 ))) && ((a244 == 8 && (a368 == 5 && a507 == 32)) && a554 == 32))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -95964,10 +95964,10 @@
     	a234 = 13;
     	a434 = 35 ;
     	a144 = 11; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm373(int input) {
+ void calculate_outputm373(int8_t  input) {
     if(((((a209 == 5 && ( cf==1  && (input == 7))) && a465 == 32) && a520 == 32) && ((a318 == 32 && a594 == 32) && a282 == 8))) {
     	a29 += (a29 + 20) > a29 ? 4 : 0;
     	cf = 0;
@@ -95991,10 +95991,10 @@
     	a418 = 33 ;
     	a318 = 33 ;
     	a56 = 7; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm374(int input) {
+ void calculate_outputm374(int8_t  input) {
     if(((a418 == 32 && ((a582 == 32 && a416 == 32) && a226 == 3)) && ((a209 == 5 && ( cf==1  && (input == 1))) && a214 == 3))) {
     	a29 += (a29 + 20) > a29 ? 3 : 0;
     	cf = 0;
@@ -96151,7 +96151,7 @@
     	a281 = 2;
     	a79 = 34 ;
     	a144 = 4;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a458 == 32 && (a558 == 32 && (((input == 5) &&  cf==1 ) && a253 == 7))) && ((a407 == 32 && a435 == 32) && a407 == 32))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -96217,7 +96217,7 @@
     	a374 = 8;
     	a393 = 16;
     	a342 = 8; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((((a594 == 32 && (( cf==1  && (input == 10)) && a419 == 32)) && a475 == 32) && a458 == 32) && (a345 == 10 && a337 == 5))) {
     	cf = 0;
@@ -96282,10 +96282,10 @@
     	a370 = 4;
     	a465 = 32 ;
     	a342 = 8; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm39(int input) {
+ void calculate_outputm39(int8_t  input) {
     if(((a254 == 32 && ((a307 == 33 &&  cf==1 ) && a280 == 32)) && (a209 == 5 && ((a435 == 32 && a262 == 32) && a253 == 7)))) {
     	if(((a259 == 9 && (( cf==1  && a357 == 10) && a294 == 32)) && (a274 == 4 && ((a464 == 32 && a558 == 32) && a398 == 3)))) {
     		calculate_outputm367(input);
@@ -96316,7 +96316,7 @@
     	} 
     } 
 }
- void calculate_outputm376(int input) {
+ void calculate_outputm376(int8_t  input) {
     if((((a201 == 5 && (a318 == 32 && a226 == 3)) && a463 == 32) && ((( cf==1  && (input == 1)) && a516 == 32) && a476 == 32))) {
     	a184 -= (a184 - 20) < a184 ? 1 : 0;
     	cf = 0;
@@ -96391,7 +96391,7 @@
     	a201 = 6;
     	a464 = 34 ;
     	a49 = 7; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a556 == 32 && ((a380 == 4 && (a434 == 32 && a254 == 32)) && a419 == 32)) && (a374 == 8 && ( cf==1  && (input == 7))))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -96460,7 +96460,7 @@
     	a432 = 33 ;
     	a317 = 7;
     	a70 = 6; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a508 == 32 && (a446 == 32 && ( cf==1  && (input == 8)))) && (((a318 == 32 && a528 == 32) && a521 == 32) && a336 == 11))) {
     	a85 += (a85 + 20) > a85 ? 3 : 0;
@@ -96522,10 +96522,10 @@
     	a289 = 3;
     	a295 = 10;
     	a151 = 5; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm377(int input) {
+ void calculate_outputm377(int8_t  input) {
     if((((a282 == 8 && (a382 == 4 && a203 == 3)) && a366 == 32) && ((((input == 2) &&  cf==1 ) && a227 == 32) && a203 == 3))) {
     	a29 += (a29 + 20) > a29 ? 4 : 0;
     	cf = 0;
@@ -96646,7 +96646,7 @@
     	a396 = 7;
     	a374 = 8;
     	a283 = 7; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a396 == 7 && (a396 == 7 && a356 == 9)) && (((a404 == 32 && ((input == 1) &&  cf==1 )) && a379 == 32) && a254 == 32))) {
     	a113 -= (a113 - 20) < a113 ? 1 : 0;
@@ -96661,7 +96661,7 @@
     	a400 = 8;
     	a587 = 32 ;
     	a103 = 12; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a556 == 32 && ( cf==1  && (input == 7))) && a304 == 6) && (a233 == 7 && (a323 == 11 && (a582 == 32 && a434 == 32))))) {
     	a96 += (a96 + 20) > a96 ? 1 : 0;
@@ -96770,10 +96770,10 @@
     	a233 = 7;
     	a358 = 6;
     	a390 = 8; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm378(int input) {
+ void calculate_outputm378(int8_t  input) {
     if((((a317 == 6 && (( cf==1  && (input == 6)) && a544 == 32)) && a330 == 7) && ((a253 == 7 && a521 == 32) && a431 == 32))) {
     	a29 += (a29 + 20) > a29 ? 1 : 0;
     	cf = 0;
@@ -96795,10 +96795,10 @@
     	a510 = 32 ;
     	a592 = 33 ;
     	a342 = 8; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm379(int input) {
+ void calculate_outputm379(int8_t  input) {
     if((((((( cf==1  && (input == 9)) && a407 == 32) && a418 == 32) && a380 == 4) && a482 == 32) && (a366 == 32 && a432 == 32))) {
     	a29 += (a29 + 20) > a29 ? 2 : 0;
     	cf = 0;
@@ -96825,7 +96825,7 @@
     	a411 = 33 ;
     	a554 = 34 ;
     	a367 = 9; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a380 == 4 && ((input == 2) &&  cf==1 )) && a215 == 32) && (((a201 == 5 && a416 == 32) && a446 == 32) && a336 == 11))) {
     	a184 -= (a184 - 20) < a184 ? 2 : 0;
@@ -96912,7 +96912,7 @@
     	a324 = 5;
     	a318 = 32 ;
     	a47 = 5; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a356 == 9 && (a416 == 32 && a592 == 32)) && a396 == 7) && ((a510 == 32 && ( cf==1  && (input == 1))) && a446 == 32))) {
     	cf = 0;
@@ -97019,10 +97019,10 @@
     	a330 = 7;
     	a464 = 32 ;
     	a367 = 4; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm380(int input) {
+ void calculate_outputm380(int8_t  input) {
     if((((a556 == 32 && a465 == 32) && a435 == 32) && ((a578 == 32 && (( cf==1  && (input == 5)) && a330 == 7)) && a326 == 32))) {
     	a76 += (a76 + 20) > a76 ? 3 : 0;
     	cf = 0;
@@ -97034,7 +97034,7 @@
     	a453 = 34 ;
     	a353 = 2;
     	a56 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a508 == 32 && (( cf==1  && (input == 9)) && a404 == 32)) && (a289 == 3 && ((a289 == 3 && a277 == 8) && a434 == 32)))) {
     	a85 += (a85 + 20) > a85 ? 2 : 0;
@@ -97047,10 +97047,10 @@
     	a205 = 8;
     	a453 = 34 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm40(int input) {
+ void calculate_outputm40(int8_t  input) {
     if(((a431 == 32 && (( cf==1  && a45 == 35) && a218 == 6)) && (a289 == 3 && ((a445 == 32 && a353 == 3) && a554 == 32)))) {
     	if(((a521 == 32 && (a554 == 32 && a236 == 7)) && (a476 == 32 && (a602 == 32 && (( cf==1  && a166 == 32) && a270 == 5))))) {
     		calculate_outputm376(input);
@@ -97071,7 +97071,7 @@
     	} 
     } 
 }
- void calculate_outputm381(int input) {
+ void calculate_outputm381(int8_t  input) {
     if(((a312 == 2 && (( cf==1  && (input == 1)) && a382 == 4)) && ((a246 == 7 && (a435 == 32 && a521 == 32)) && a236 == 7))) {
     	a73 -= (a73 - 20) < a73 ? 4 : 0;
     	cf = 0;
@@ -97189,7 +97189,7 @@
     	a277 = 9;
     	a234 = 11;
     	a94 = 3; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a498 == 32 && (a282 == 8 && a280 == 32)) && a418 == 32) && ((a586 == 32 && ((input == 2) &&  cf==1 )) && a516 == 32))) {
     	a2 -= (a2 - 20) < a2 ? 3 : 0;
@@ -97306,7 +97306,7 @@
     	a369 = 1;
     	a346 = 2;
     	a16 = 14; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if((((a353 == 3 && (a227 == 32 && ( cf==1  && (input == 9)))) && a498 == 32) && (a229 == 4 && (a520 == 32 && a244 == 8)))) {
     	a184 += (a184 + 20) > a184 ? 1 : 0;
@@ -97426,10 +97426,10 @@
     	a229 = 4;
     	a201 = 5;
     	a69 = 12; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm382(int input) {
+ void calculate_outputm382(int8_t  input) {
     if(((a274 == 4 && (((input == 5) &&  cf==1 ) && a330 == 7)) && ((a582 == 32 && (a404 == 32 && a411 == 32)) && a498 == 32))) {
     	a171 += (a171 + 20) > a171 ? 1 : 0;
     	cf = 0;
@@ -97550,7 +97550,7 @@
     	a458 = 32 ;
     	a259 = 8;
     	a18 = 15; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a587 == 32 && (a337 == 5 && a556 == 32)) && a336 == 11) && ((a365 == 2 && ( cf==1  && (input == 10))) && a507 == 32))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -97671,7 +97671,7 @@
     	a353 = 2;
     	a313 = 2;
     	a47 = 6; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a213 == 3 && a234 == 11) && ((a229 == 4 && ((((input == 7) &&  cf==1 ) && a373 == 4) && a254 == 32)) && a280 == 32))) {
     	a76 += (a76 + 20) > a76 ? 3 : 0;
@@ -97706,7 +97706,7 @@
     	a373 = 3;
     	a445 = 33 ;
     	a14 = 3; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if((((a263 == 7 && a602 == 32) && a244 == 8) && (a382 == 4 && (a346 == 2 && (a398 == 3 && ( cf==1  && (input == 2))))))) {
     	a113 -= (a113 - 20) < a113 ? 4 : 0;
@@ -97829,10 +97829,10 @@
     	a404 = 34 ;
     	a558 = 34 ;
     	a111 = 3; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm383(int input) {
+ void calculate_outputm383(int8_t  input) {
     if(((a369 == 2 && ((a281 == 2 && (a324 == 6 && a398 == 3)) && a337 == 5)) && (( cf==1  && (input == 5)) && a214 == 3))) {
     	a96 -= (a96 - 20) < a96 ? 4 : 0;
     	cf = 0;
@@ -97867,7 +97867,7 @@
     	a505 = 33 ;
     	a334 = 7;
     	a99 = 1; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a236 == 7 && (( cf==1  && (input == 8)) && a295 == 10)) && (((a274 == 4 && a358 == 7) && a241 == 7) && a353 == 3))) {
     	cf = 0;
@@ -97937,7 +97937,7 @@
     	a375 = 32 ;
     	a356 = 9;
     	a56 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a518 == 32 && ((a215 == 32 && a373 == 4) && a318 == 32)) && (a582 == 32 && (((input == 2) &&  cf==1 ) && a330 == 7)))) {
     	a184 -= (a184 - 20) < a184 ? 1 : 0;
@@ -98038,10 +98038,10 @@
     	a544 = 34 ;
     	a220 = 34 ;
     	a283 = 10; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm384(int input) {
+ void calculate_outputm384(int8_t  input) {
     if(((a446 == 32 && ((a313 == 2 && ((input == 2) &&  cf==1 )) && a359 == 10)) && ((a516 == 32 && a464 == 32) && a446 == 32))) {
     	a73 += (a73 + 20) > a73 ? 1 : 0;
     	cf = 0;
@@ -98155,7 +98155,7 @@
     	a380 = 4;
     	a382 = 4;
     	a16 = 14; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a445 == 32 && (a554 == 32 && ( cf==1  && (input == 1)))) && ((a431 == 32 && (a218 == 6 && a280 == 32)) && a516 == 32))) {
     	a73 -= (a73 - 20) < a73 ? 2 : 0;
@@ -98274,7 +98274,7 @@
     	a400 = 7;
     	a236 = 7;
     	a94 = 3; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a263 == 7 && (( cf==1  && (input == 9)) && a289 == 3)) && a587 == 32) && (a334 == 8 && (a263 == 7 && a203 == 3)))) {
     	a65 -= (a65 - 20) < a65 ? 3 : 0;
@@ -98439,20 +98439,20 @@
     	a294 = 34 ;
     	a289 = 4;
     	a357 = 12;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm386(int input) {
+ void calculate_outputm386(int8_t  input) {
     if((( cf==1  && (input == 2)) && ((((a358 == 7 && (a546 == 32 && a532 == 32)) && a556 == 32) && a508 == 32) && a396 == 7))) {
     	cf = 0;
     	a49 = 8;
     	a18 = 16;
     	a116 = 32 ;
     	a87 = 3; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm41(int input) {
+ void calculate_outputm41(int8_t  input) {
     if(((a282 == 8 && ((a431 == 32 && a380 == 4) && a326 == 32)) && (a558 == 32 && (( cf==1  && a137 == 33) && a277 == 8)))) {
     	if(((a374 == 8 && (a407 == 32 && (a402 == 32 && a318 == 32))) && (a416 == 32 && (( cf==1  && a361 == 9) && a556 == 32)))) {
     		calculate_outputm381(input);
@@ -98479,7 +98479,7 @@
     	} 
     } 
 }
- void calculate_outputm388(int input) {
+ void calculate_outputm388(int8_t  input) {
     if((((((a359 == 10 && a244 == 8) && a445 == 32) && a337 == 5) && ((a229 == 4 && ( cf==1  && (input == 7))) && a270 == 5)) && a186 >= 5)) {
     	a73 -= (a73 - 20) < a73 ? 4 : 0;
     	cf = 0;
@@ -98495,7 +98495,7 @@
     	a18 = 15;
     	a79 = 34 ;
     	a144 = 5; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((((a330 == 7 && (a345 == 10 && (a247 == 11 && (a244 == 8 && a229 == 4)))) && (((input == 6) &&  cf==1 ) && a348 == 5)) && a55 == 7578)) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -98504,7 +98504,7 @@
     	a52 = 5;
     	a18 = 13;
     	a200 = 12; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a474 == 32 && (a402 == 32 && a516 == 32)) && ((a602 == 32 && (( cf==1  && (input == 9)) && a263 == 7)) && a310 == 2))) {
     	cf = 0;
@@ -98567,7 +98567,7 @@
     	a493 = 33 ;
     	a313 = 1;
     	a371 = 12; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a521 == 32 && (a220 == 32 && (a379 == 32 && a400 == 8))) && (a431 == 32 && (a431 == 32 && ( cf==1  && (input == 4))))) && a76 <= -5)) {
     	a91 -= (a91 - 20) < a91 ? 4 : 0;
@@ -98587,7 +98587,7 @@
     	a18 = 13;
     	a234 = 12;
     	a172 = 14; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a289 == 3 && (a521 == 32 && (a233 == 7 && a353 == 3))) && ((a242 == 3 && ( cf==1  && (input == 1))) && a346 == 2)) && a85 <= -13)) {
     	a186 -= (a186 - 20) < a186 ? 3 : 0;
@@ -98608,7 +98608,7 @@
     	a18 = 13;
     	a270 = 6;
     	a143 = 17; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a507 == 32 && a475 == 32) && (a434 == 32 && (((((input == 5) &&  cf==1 ) && a510 == 32) && a474 == 32) && a404 == 32))) && a140 == 68)) {
     	a148 += (a148 + 20) > a148 ? 1 : 0;
@@ -98617,7 +98617,7 @@
     	a341 = 36 ;
     	a18 = 12;
     	a47 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a209 == 5 && ((a213 == 3 && (((input == 3) &&  cf==1 ) && a326 == 32)) && a558 == 32)) && (a234 == 11 && a586 == 32)) && a28 == 4676)) {
     	cf = 0;
@@ -98625,7 +98625,7 @@
     	a18 = 9;
     	a122 = 36 ;
     	a106 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a380 == 4 && (a382 == 4 && a380 == 4)) && a435 == 32) && (a516 == 32 && (( cf==1  && (input == 8)) && a416 == 32)))) {
     	a179 += (a179 + 20) > a179 ? 3 : 0;
@@ -98654,10 +98654,10 @@
     	a445 = 34 ;
     	a205 = 9;
     	a44 = 13; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm390(int input) {
+ void calculate_outputm390(int8_t  input) {
     if(((a295 == 10 && ((a594 == 32 && (a520 == 32 && a346 == 2)) && a463 == 32)) && (a404 == 32 && ( cf==1  && (input == 5))))) {
     	a96 -= (a96 - 20) < a96 ? 4 : 0;
     	cf = 0;
@@ -98728,7 +98728,7 @@
     	a281 = 3;
     	a416 = 32 ;
     	a305 = 11; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a326 == 32 && (a203 == 3 && a582 == 32)) && ((a346 == 2 && (((input == 7) &&  cf==1 ) && a416 == 32)) && a201 == 5))) {
     	a148 += (a148 + 20) > a148 ? 3 : 0;
@@ -98777,7 +98777,7 @@
     	a446 = 34 ;
     	a585 = 32 ;
     	a319 = 2; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a518 == 32 && a446 == 32) && a216 == 32) && (a458 == 32 && ((( cf==1  && (input == 10)) && a404 == 32) && a324 == 6)))) {
     	a171 += (a171 + 20) > a171 ? 2 : 0;
@@ -98863,7 +98863,7 @@
     	a260 = 9;
     	a518 = 34 ;
     	a49 = 7; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a213 == 3 && ((input == 1) &&  cf==1 )) && a544 == 32) && ((a558 == 32 && (a502 == 32 && a602 == 32)) && a521 == 32))) {
     	a76 += (a76 + 20) > a76 ? 1 : 0;
@@ -98911,10 +98911,10 @@
     	a18 = 16;
     	a241 = 6;
     	a49 = 9; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm391(int input) {
+ void calculate_outputm391(int8_t  input) {
     if(((a310 == 2 && a476 == 32) && ((a373 == 4 && (a323 == 11 && (a203 == 3 && ( cf==1  && (input == 7))))) && a453 == 32))) {
     	a113 -= (a113 - 20) < a113 ? 4 : 0;
     	cf = 0;
@@ -98933,10 +98933,10 @@
     	a206 = 9;
     	a373 = 3;
     	a70 = 6; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm393(int input) {
+ void calculate_outputm393(int8_t  input) {
     if(((((a585 == 32 && ((input == 10) &&  cf==1 )) && a586 == 32) && a480 == 32) && (a313 == 2 && (a246 == 7 && a353 == 3)))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
     	cf = 0;
@@ -99081,7 +99081,7 @@
     	a379 = 34 ;
     	a528 = 34 ;
     	a160 = 12;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((((a274 == 4 && (a374 == 8 && ( cf==1  && (input == 3)))) && a494 == 32) && ((a353 == 3 && a585 == 32) && a289 == 3)) && (a147 % 2==0))) {
     	a85 -= (a85 - 20) < a85 ? 1 : 0;
@@ -99090,7 +99090,7 @@
     	a134 = 34 ;
     	a18 = 16;
     	a151 = 7; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a521 == 32 && (a218 == 6 && (a464 == 32 && a345 == 10))) && (a214 == 3 && (a434 == 32 && ((input == 1) &&  cf==1 )))) && (a197 % 2==0))) {
     	a91 -= (a91 - 20) < a91 ? 2 : 0;
@@ -99099,7 +99099,7 @@
     	a18 = 15;
     	a283 = 6;
     	a33 = 8; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a369 == 2 && (a324 == 6 && a411 == 32)) && (a578 == 32 && ((((input == 5) &&  cf==1 ) && a346 == 2) && a277 == 8)))) {
     	a96 -= (a96 - 20) < a96 ? 4 : 0;
@@ -99150,7 +99150,7 @@
     	a297 = 4;
     	a544 = 32 ;
     	a305 = 10; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a528 == 32 && (((input == 9) &&  cf==1 ) && a203 == 3)) && (((a402 == 32 && a242 == 3) && a411 == 32) && a368 == 5)) && (a22 % 2==0))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -99159,7 +99159,7 @@
     	a122 = 34 ;
     	a190 = 32 ;
     	a121 = 12; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a205 == 9 && a582 == 32) && a209 == 5) && (((a585 == 32 && ((input == 6) &&  cf==1 )) && a379 == 32) && a359 == 10))) {
     	cf = 0;
@@ -99173,10 +99173,10 @@
     	a122 = 35 ;
     	a586 = 33 ;
     	a283 = 5; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm394(int input) {
+ void calculate_outputm394(int8_t  input) {
     if((((a375 == 32 && a587 == 32) && a402 == 32) && ((a297 == 5 && (( cf==1  && (input == 8)) && a494 == 32)) && a502 == 32))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
     	cf = 0;
@@ -99291,7 +99291,7 @@
     	a532 = 32 ;
     	a223 = 9;
     	a308 = 14; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a295 == 10 && ((a432 == 32 && ( cf==1  && (input == 2))) && a326 == 32)) && ((a324 == 6 && a234 == 11) && a215 == 32))) {
     	cf = 0;
@@ -99310,7 +99310,7 @@
     	a18 = 11;
     	a475 = 34 ;
     	a290 = 14; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a582 == 32 && (a582 == 32 && a259 == 9)) && (a475 == 32 && (a295 == 10 && (((input == 1) &&  cf==1 ) && a216 == 32))))) {
     	a29 -= (a29 - 20) < a29 ? 2 : 0;
@@ -99426,10 +99426,10 @@
     	a474 = 34 ;
     	a274 = 5;
     	a160 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm42(int input) {
+ void calculate_outputm42(int8_t  input) {
     if((((a274 == 4 && a482 == 32) && a206 == 10) && (a458 == 32 && (a236 == 7 && (a201 == 5 && ( cf==1  && a23 == 7)))))) {
     	if((((((a312 == 2 && (a212 == 33 &&  cf==1 )) && a493 == 32) && a253 == 7) && a464 == 32) && (a474 == 32 && a260 == 8))) {
     		calculate_outputm388(input);
@@ -99454,7 +99454,7 @@
     	} 
     } 
 }
- void calculate_outputm395(int input) {
+ void calculate_outputm395(int8_t  input) {
     if(((a558 == 33 && ((a382 == 3 && ((input == 10) &&  cf==1 )) && a337 == 4)) && (a411 == 33 && (a213 == 2 && a218 == 5)))) {
     	a65 -= (a65 - 20) < a65 ? 1 : 0;
     	cf = 0;
@@ -99541,7 +99541,7 @@
     	a233 = 7;
     	a528 = 34 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 2)) && a502 == 33) && a463 == 33) && (a280 == 33 && (a510 == 33 && (a586 == 33 && a518 == 33))))) {
     	cf = 0;
@@ -99571,7 +99571,7 @@
     	a18 = 14;
     	a282 = 9;
     	a23 = 13; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a295 == 9 && (((input == 8) &&  cf==1 ) && a518 == 33)) && ((a373 == 3 && (a317 == 5 && a282 == 7)) && a516 == 33))) {
     	cf = 0;
@@ -99658,10 +99658,10 @@
     	a474 = 32 ;
     	a486 = 33 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm396(int input) {
+ void calculate_outputm396(int8_t  input) {
     if(((a205 == 8 && (a578 == 33 && a209 == 4)) && (a380 == 3 && (a474 == 33 && (a508 == 33 && ((input == 5) &&  cf==1 )))))) {
     	a148 += (a148 + 20) > a148 ? 2 : 0;
     	cf = 0;
@@ -99701,7 +99701,7 @@
     	a205 = 9;
     	a453 = 34 ;
     	a319 = 2; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a310 == 1 && (((input == 1) &&  cf==1 ) && a602 == 33)) && a546 == 33) && (a493 == 33 && (a345 == 9 && a507 == 33)))) {
     	a2 -= (a2 - 20) < a2 ? 2 : 0;
@@ -99772,10 +99772,10 @@
     	a294 = 32 ;
     	a445 = 32 ;
     	a49 = 7; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm398(int input) {
+ void calculate_outputm398(int8_t  input) {
     if((((a259 == 8 && ((input == 2) &&  cf==1 )) && a431 == 33) && ((a242 == 2 && (a262 == 33 && a373 == 3)) && a432 == 33))) {
     	cf = 0;
     	a521 = 32 ;
@@ -99840,7 +99840,7 @@
     	a582 = 32 ;
     	a510 = 34 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a359 == 9 && (a486 == 33 && (a434 == 33 && a432 == 33))) && (a586 == 33 && (a419 == 33 && ( cf==1  && (input == 6)))))) {
     	cf = 0;
@@ -99947,7 +99947,7 @@
     	a18 = 13;
     	a516 = 34 ;
     	a283 = 10; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((input == 8) &&  cf==1 ) && (((a477 == 33 && ((a532 == 33 && a215 == 33) && a263 == 6)) && a399 == 3) && a453 == 33))) {
     	cf = 0;
@@ -99969,10 +99969,10 @@
     	a578 = 34 ;
     	a174 = 11;
     	a99 = 1; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm399(int input) {
+ void calculate_outputm399(int8_t  input) {
     if(((a312 == 1 && a229 == 3) && (a274 == 3 && (a402 == 33 && (a560 == 33 && (((input == 1) &&  cf==1 ) && a379 == 33)))))) {
     	cf = 0;
     	a359 = 10;
@@ -100000,10 +100000,10 @@
     	a201 = 5;
     	a107 = 36 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm400(int input) {
+ void calculate_outputm400(int8_t  input) {
     if(((a369 == 1 && (a498 == 33 && a498 == 33)) && (a586 == 33 && ((a370 == 3 && ((input == 9) &&  cf==1 )) && a407 == 33)))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
     	cf = 0;
@@ -100028,10 +100028,10 @@
     	a18 = 16;
     	a260 = 8;
     	a70 = 6; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm401(int input) {
+ void calculate_outputm401(int8_t  input) {
     if(((a435 == 33 && ((a201 == 4 && ((input == 5) &&  cf==1 )) && a520 == 33)) && ((a528 == 33 && a312 == 1) && a236 == 6))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
     	cf = 0;
@@ -100046,7 +100046,7 @@
     	a502 = 32 ;
     	a582 = 32 ;
     	a44 = 13; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a365 == 1 && ((a592 == 33 && (a244 == 7 && a365 == 1)) && a554 == 33)) && (a453 == 33 && ((input == 1) &&  cf==1 )))) {
     	cf = 0;
@@ -100067,10 +100067,10 @@
     	a465 = 33 ;
     	a326 = 32 ;
     	a199 = 9; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm402(int input) {
+ void calculate_outputm402(int8_t  input) {
     if(((a528 == 33 && (a234 == 10 && (a502 == 33 && (a364 == 7 && a201 == 4)))) && (((input == 5) &&  cf==1 ) && a348 == 4))) {
     	a184 -= (a184 - 20) < a184 ? 3 : 0;
     	cf = 0;
@@ -100130,7 +100130,7 @@
     	a602 = 34 ;
     	a295 = 11;
     	a175 = 10; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 9)) && a203 == 2) && a493 == 33) && (((a229 == 3 && a407 == 33) && a453 == 33) && a247 == 10))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -100241,7 +100241,7 @@
     	a544 = 33 ;
     	a587 = 32 ;
     	a103 = 16; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a507 == 33 && (a411 == 33 && (a228 == 3 && (a585 == 33 && a431 == 33)))) && a282 == 7) && ( cf==1  && (input == 7)))) {
     	a73 -= (a73 - 20) < a73 ? 2 : 0;
@@ -100321,10 +100321,10 @@
     	a241 = 6;
     	a250 = 36 ;
     	a18 = 9; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm403(int input) {
+ void calculate_outputm403(int8_t  input) {
     if(((a382 == 3 && (a323 == 10 && a270 == 4)) && (a346 == 1 && (a324 == 5 && (a464 == 33 && ( cf==1  && (input == 1))))))) {
     	cf = 0;
     	a369 = 2;
@@ -100339,7 +100339,7 @@
     	a323 = 11;
     	a67 = 36 ;
     	a103 = 16; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a253 == 6 && a379 == 33) && (a233 == 6 && (a482 == 33 && ((( cf==1  && (input == 9)) && a398 == 2) && a396 == 6))))) {
     	a29 += (a29 + 20) > a29 ? 4 : 0;
@@ -100413,7 +100413,7 @@
     	a246 = 8;
     	a330 = 8;
     	a49 = 2; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a313 == 1 && (a218 == 5 && a220 == 33)) && (((( cf==1  && (input == 5)) && a518 == 33) && a508 == 33) && a262 == 33))) {
     	a85 += (a85 + 20) > a85 ? 3 : 0;
@@ -100552,10 +100552,10 @@
     	a431 = 33 ;
     	a9 = 33 ;
     	a118 = 9;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm43(int input) {
+ void calculate_outputm43(int8_t  input) {
     if(((a304 == 5 && a510 == 33) && (a223 == 8 && (a521 == 33 && (a518 == 33 && ((a371 == 7 &&  cf==1 ) && a334 == 7)))))) {
     	if(((((a516 == 33 && a281 == 1) && a244 == 7) && a358 == 6) && (a463 == 33 && (( cf==1  && a183 == 7) && a463 == 33)))) {
     		calculate_outputm395(input);
@@ -100593,7 +100593,7 @@
     	} 
     } 
 }
- void calculate_outputm405(int input) {
+ void calculate_outputm405(int8_t  input) {
     if(((a404 == 33 && ((( cf==1  && (input == 7)) && a463 == 33) && a215 == 33)) && ((a324 == 5 && a380 == 3) && a227 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 += (a104 + 20) > a104 ? 1 : 0;
@@ -100703,7 +100703,7 @@
     	a326 = 33 ;
     	a477 = 35 ;
     	a26 = 10; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a247 == 10 && (a317 == 5 && (a384 == 2 && (a334 == 7 && (((input == 6) &&  cf==1 ) && a330 == 6))))) && a205 == 8)) {
     	a104 -= (a104 - 20) < a104 ? 1 : 0;
@@ -100832,7 +100832,7 @@
     	a510 = 35 ;
     	a384 = 2;
     	a94 = 1; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a558 == 33 && a578 == 33) && a435 == 33) && (a226 == 2 && (a474 == 33 && (a445 == 33 && ((input == 9) &&  cf==1 )))))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -101074,7 +101074,7 @@
     	a380 = 7;
     	a560 = 32 ;
     	a230 = 10;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((( cf==1  && (input == 2)) && a229 == 3) && (((a365 == 1 && (a326 == 33 && a480 == 33)) && a270 == 4) && a356 == 8))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -101217,7 +101217,7 @@
     	a80 = 35 ;
     	a18 = 10;
     	a202 = 12;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a505 == 33 && (a416 == 33 && a323 == 10)) && (a556 == 33 && (a353 == 2 && (a558 == 33 && ((input == 10) &&  cf==1 )))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -101257,7 +101257,7 @@
     	a334 = 11;
     	a220 = 32 ;
     	a93 = 6; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a528 == 33 && (((input == 3) &&  cf==1 ) && a560 == 33)) && ((a411 == 33 && (a510 == 33 && a585 == 33)) && a520 == 33))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -101376,7 +101376,7 @@
     	a498 = 35 ;
     	a507 = 33 ;
     	a118 = 10; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a554 == 33 && (a252 == 10 && ((input == 4) &&  cf==1 ))) && ((a521 == 33 && (a228 == 3 && a345 == 9)) && a432 == 33))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -101470,7 +101470,7 @@
     	a313 = 7;
     	a356 = 12;
     	a393 = 11; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a518 == 33 && (a505 == 33 && a400 == 7)) && (a560 == 33 && ((a399 == 3 && ((input == 1) &&  cf==1 )) && a445 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -101598,7 +101598,7 @@
     	a334 = 9;
     	a400 = 13;
     	a94 = 1; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a602 == 33 && ((a263 == 6 && a228 == 3) && a295 == 9)) && a486 == 33) && (a274 == 3 && ( cf==1  && (input == 8))))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -101696,7 +101696,7 @@
     	a516 = 32 ;
     	a323 = 12;
     	a94 = 3; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a259 == 8 && (( cf==1  && (input == 5)) && a220 == 33)) && a400 == 7) && (a358 == 6 && (a358 == 6 && a404 == 33)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -101716,10 +101716,10 @@
     	a18 = 11;
     	a26 = 11;
     	a44 = 11; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm407(int input) {
+ void calculate_outputm407(int8_t  input) {
     if((((a465 == 33 && (a236 == 6 && (a560 == 33 && a334 == 7))) && a368 == 4) && (a592 == 33 && ((input == 7) &&  cf==1 )))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
     	cf = 0;
@@ -101841,7 +101841,7 @@
     	a260 = 8;
     	a369 = 2;
     	a221 = 7; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a446 == 33 && (a218 == 5 && a384 == 2)) && (a201 == 4 && (a241 == 6 && (a376 == 3 && ( cf==1  && (input == 9))))))) {
     	a2 -= (a2 - 20) < a2 ? 1 : 0;
@@ -101963,7 +101963,7 @@
     	a370 = 5;
     	a592 = 32 ;
     	a52 = 7; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a214 == 2 && (a384 == 2 && a380 == 3)) && a220 == 33) && ((((input == 8) &&  cf==1 ) && a262 == 33) && a560 == 33))) {
     	a171 -= (a171 - 20) < a171 ? 2 : 0;
@@ -102076,7 +102076,7 @@
     	a465 = 32 ;
     	a358 = 8;
     	a314 = 13; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a507 == 33 && ((a373 == 3 && ((input == 2) &&  cf==1 )) && a254 == 33)) && ((a370 == 3 && a324 == 5) && a407 == 33))) {
     	a184 -= (a184 - 20) < a184 ? 3 : 0;
@@ -102191,10 +102191,10 @@
     	a431 = 32 ;
     	a216 = 33 ;
     	a217 = 10; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm409(int input) {
+ void calculate_outputm409(int8_t  input) {
     if((((a494 == 33 && (( cf==1  && (input == 10)) && a379 == 33)) && a312 == 1) && ((a215 == 33 && a356 == 8) && a313 == 1))) {
     	a171 += (a171 + 20) > a171 ? 1 : 0;
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -102274,7 +102274,7 @@
     	a215 = 34 ;
     	a393 = 14;
     	a23 = 10; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a453 == 33 && a312 == 1) && a419 == 33) && (a282 == 7 && ((((input == 5) &&  cf==1 ) && a358 == 6) && a544 == 33)))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -102308,7 +102308,7 @@
     	a135 = 34 ;
     	a313 = 3;
     	a18 = 12; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 9)) && a374 == 7) && a241 == 6) && ((a236 == 6 && (a246 == 6 && a480 == 33)) && a330 == 6))) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -102353,10 +102353,10 @@
     	a365 = 2;
     	a560 = 32 ;
     	a123 = 10; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm411(int input) {
+ void calculate_outputm411(int8_t  input) {
     if(((a209 == 4 && ((a474 == 33 && ( cf==1  && (input == 10))) && a382 == 3)) && (a297 == 4 && (a498 == 33 && a312 == 1)))) {
     	a96 += (a96 + 20) > a96 ? 1 : 0;
     	cf = 0;
@@ -102407,7 +102407,7 @@
     	a546 = 34 ;
     	a364 = 8;
     	a283 = 10; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a592 == 33 && ( cf==1  && (input == 2))) && a242 == 2) && (a209 == 4 && (a380 == 3 && (a464 == 33 && a375 == 33))))) {
     	cf = 0;
@@ -102415,7 +102415,7 @@
     	a0 = 32 ;
     	a122 = 33 ;
     	a18 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((a227 == 33 && (a297 == 4 && a445 == 33)) && a592 == 33) && a369 == 1) && (( cf==1  && (input == 1)) && a247 == 10))) {
     	a2 -= (a2 - 20) < a2 ? 1 : 0;
@@ -102510,10 +102510,10 @@
     	a294 = 34 ;
     	a310 = 3;
     	a334 = 7; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm412(int input) {
+ void calculate_outputm412(int8_t  input) {
     if(((a366 == 33 && ((a345 == 9 && a404 == 33) && a337 == 4)) && ((((input == 2) &&  cf==1 ) && a587 == 33) && a474 == 33))) {
     	a2 -= (a2 - 20) < a2 ? 3 : 0;
     	cf = 0;
@@ -102580,7 +102580,7 @@
     	a318 = 34 ;
     	a493 = 34 ;
     	a49 = 7; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a435 == 33 && a382 == 3) && (a502 == 33 && (((a259 == 8 && ( cf==1  && (input == 1))) && a365 == 1) && a295 == 9)))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -102677,10 +102677,10 @@
     	a582 = 34 ;
     	a366 = 32 ;
     	a355 = 11; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm44(int input) {
+ void calculate_outputm44(int8_t  input) {
     if(((a594 == 33 && ((a532 == 33 && a313 == 1) && a398 == 2)) && ((a282 == 7 && (a79 == 33 &&  cf==1 )) && a493 == 33))) {
     	if(((((a465 == 33 && (a277 == 7 && ( cf==1  && a199 == 4))) && a482 == 33) && a585 == 33) && (a330 == 6 && a366 == 33))) {
     		calculate_outputm405(input);
@@ -102703,7 +102703,7 @@
     	} 
     } 
 }
- void calculate_outputm414(int input) {
+ void calculate_outputm414(int8_t  input) {
     if(((a592 == 33 && (a241 == 6 && a398 == 2)) && (a358 == 6 && ((((input == 7) &&  cf==1 ) && a494 == 33) && a498 == 33)))) {
     	a76 += (a76 + 20) > a76 ? 2 : 0;
     	cf = 0;
@@ -102737,10 +102737,10 @@
     	a418 = 32 ;
     	a393 = 16;
     	a342 = 8; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm415(int input) {
+ void calculate_outputm415(int8_t  input) {
     if(((a304 == 5 && (a252 == 10 && a544 == 33)) && (a578 == 33 && (a304 == 5 && (a259 == 8 && ( cf==1  && (input == 2))))))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
     	cf = 0;
@@ -102803,7 +102803,7 @@
     	a167 = 33 ;
     	a486 = 32 ;
     	a49 = 4; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((((( cf==1  && (input == 5)) && a493 == 33) && a205 == 8) && a407 == 33) && ((a411 == 33 && a502 == 33) && a209 == 4))) {
     	cf = 0;
@@ -102882,7 +102882,7 @@
     	a270 = 6;
     	a304 = 6;
     	a363 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a587 == 33 && ((a262 == 33 && ( cf==1  && (input == 7))) && a281 == 1)) && ((a213 == 2 && a203 == 2) && a324 == 5))) {
     	a2 -= (a2 - 20) < a2 ? 3 : 0;
@@ -102966,7 +102966,7 @@
     	a242 = 2;
     	a348 = 6;
     	a118 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a218 == 5 && a330 == 6) && ((a234 == 10 && ((( cf==1  && (input == 10)) && a241 == 6) && a516 == 33)) && a463 == 33))) {
     	a171 -= (a171 - 20) < a171 ? 4 : 0;
@@ -103072,10 +103072,10 @@
     	a294 = 32 ;
     	a431 = 34 ;
     	a49 = 7; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm416(int input) {
+ void calculate_outputm416(int8_t  input) {
     if((((((input == 8) &&  cf==1 ) && a369 == 1) && a399 == 3) && (a259 == 8 && ((a411 == 33 && a404 == 33) && a220 == 33)))) {
     	cf = 0;
     	a465 = 32 ;
@@ -103113,7 +103113,7 @@
     	a474 = 32 ;
     	a227 = 32 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a453 == 33 && (a246 == 6 && (((input == 6) &&  cf==1 ) && a578 == 33))) && ((a324 == 5 && a227 == 33) && a404 == 33))) {
     	a85 += (a85 + 20) > a85 ? 3 : 0;
@@ -103153,7 +103153,7 @@
     	a227 = 32 ;
     	a368 = 5;
     	a363 = 4; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a582 == 33 && (a277 == 7 && ((((input == 5) &&  cf==1 ) && a214 == 2) && a486 == 33))) && (a416 == 33 && a458 == 33))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -103223,10 +103223,10 @@
     	a582 = 32 ;
     	a498 = 34 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm418(int input) {
+ void calculate_outputm418(int8_t  input) {
     if(((a431 == 33 && ((a411 == 33 && (( cf==1  && (input == 6)) && a304 == 5)) && a475 == 33)) && (a445 == 33 && a234 == 10))) {
     	a2 -= (a2 - 20) < a2 ? 1 : 0;
     	cf = 0;
@@ -103303,7 +103303,7 @@
     	a376 = 4;
     	a304 = 6;
     	a342 = 8; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a274 == 3 && (a480 == 33 && a498 == 33)) && (a544 == 33 && (a229 == 3 && (( cf==1  && (input == 8)) && a416 == 33))))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -103381,7 +103381,7 @@
     	a446 = 34 ;
     	a556 = 32 ;
     	a342 = 8; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a294 == 33 && (a558 == 33 && ((input == 2) &&  cf==1 ))) && (((a263 == 6 && a418 == 33) && a228 == 3) && a254 == 33))) {
     	cf = 0;
@@ -103410,10 +103410,10 @@
     	a263 = 7;
     	a229 = 4;
     	a49 = 4; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm419(int input) {
+ void calculate_outputm419(int8_t  input) {
     if(((a274 == 3 && (a446 == 33 && (((input == 10) &&  cf==1 ) && a295 == 9))) && ((a304 == 5 && a528 == 33) && a399 == 3))) {
     	a179 += (a179 + 20) > a179 ? 3 : 0;
     	cf = 0;
@@ -103488,7 +103488,7 @@
     	a365 = 2;
     	a295 = 10;
     	a56 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a446 == 33 && (a508 == 33 && (a203 == 2 && a220 == 33))) && a465 == 33) && (a464 == 33 && ( cf==1  && (input == 5))))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -103568,7 +103568,7 @@
     	a218 = 6;
     	a259 = 9;
     	a23 = 13; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a365 == 1 && (a560 == 33 && (a214 == 2 && a477 == 33))) && ((a259 == 8 && ((input == 2) &&  cf==1 )) && a585 == 33))) {
     	cf = 0;
@@ -103614,7 +103614,7 @@
     	a244 = 9;
     	a365 = 2;
     	a363 = 4; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a353 == 2 && a262 == 33) && a521 == 33) && ((a368 == 4 && (((input == 1) &&  cf==1 ) && a399 == 3)) && a334 == 7))) {
     	a184 += (a184 + 20) > a184 ? 2 : 0;
@@ -103661,10 +103661,10 @@
     	a203 = 3;
     	a373 = 4;
     	a363 = 4; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm420(int input) {
+ void calculate_outputm420(int8_t  input) {
     if(((a411 == 33 && (a353 == 2 && ((input == 9) &&  cf==1 ))) && (((a289 == 2 && a353 == 2) && a556 == 33) && a502 == 33))) {
     	a29 += (a29 + 20) > a29 ? 4 : 0;
     	cf = 0;
@@ -103766,10 +103766,10 @@
     	a498 = 32 ;
     	a326 = 32 ;
     	a18 = 12; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm45(int input) {
+ void calculate_outputm45(int8_t  input) {
     if(((a368 == 4 && (a465 == 33 && a366 == 33)) && (a544 == 33 && ((( cf==1  && a126 == 33) && a453 == 33) && a374 == 7)))) {
     	if((((a411 == 33 && (a289 == 2 && a280 == 33)) && a480 == 33) && (((a39 == 1 &&  cf==1 ) && a498 == 33) && a220 == 33))) {
     		calculate_outputm414(input);
@@ -103797,7 +103797,7 @@
     	} 
     } 
 }
- void calculate_outputm421(int input) {
+ void calculate_outputm421(int8_t  input) {
     if((((a233 == 6 && a544 == 33) && a370 == 3) && ((a505 == 33 && (( cf==1  && (input == 9)) && a373 == 3)) && a369 == 1))) {
     	a85 += (a85 + 20) > a85 ? 4 : 0;
     	cf = 0;
@@ -103835,10 +103835,10 @@
     	a399 = 4;
     	a505 = 34 ;
     	a150 = 13; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm422(int input) {
+ void calculate_outputm422(int8_t  input) {
     if(((a494 == 33 && (a218 == 5 && (a295 == 9 && a416 == 33))) && (a365 == 1 && (a359 == 9 && ((input == 8) &&  cf==1 ))))) {
     	a2 -= (a2 - 20) < a2 ? 2 : 0;
     	cf = 0;
@@ -103846,7 +103846,7 @@
     	a0 = 32 ;
     	a250 = 33 ;
     	a18 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a400 == 7 && a281 == 1) && ((a334 == 7 && (a294 == 33 && (( cf==1  && (input == 5)) && a446 == 33))) && a516 == 33))) {
     	a73 -= (a73 - 20) < a73 ? 3 : 0;
@@ -103923,7 +103923,7 @@
     	a399 = 4;
     	a380 = 5;
     	a118 = 9; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a337 == 4 && a254 == 33) && ((a218 == 5 && ((a445 == 33 && ( cf==1  && (input == 10))) && a586 == 33)) && a532 == 33))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -103998,10 +103998,10 @@
     	a323 = 11;
     	a94 = 5;
     	a56 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm424(int input) {
+ void calculate_outputm424(int8_t  input) {
     if(((a365 == 1 && ( cf==1  && (input == 5))) && ((((a505 == 33 && a312 == 1) && a215 == 33) && a263 == 6) && a379 == 33))) {
     	cf = 0;
     	a307 = 32 ;
@@ -104043,7 +104043,7 @@
     	a259 = 9;
     	a365 = 2;
     	a56 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((((input == 2) &&  cf==1 ) && a399 == 3) && ((a482 == 33 && ((a336 == 10 && a477 == 33) && a396 == 6)) && a218 == 5))) {
     	a96 -= (a96 - 20) < a96 ? 4 : 0;
@@ -104083,7 +104083,7 @@
     	a270 = 6;
     	a345 = 11;
     	a123 = 10; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a463 == 33 && (( cf==1  && (input == 10)) && a592 == 33)) && (((a289 == 2 && a434 == 33) && a253 == 6) && a205 == 8))) {
     	a184 -= (a184 - 20) < a184 ? 1 : 0;
@@ -104123,10 +104123,10 @@
     	a336 = 11;
     	a203 = 4;
     	a123 = 10; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm46(int input) {
+ void calculate_outputm46(int8_t  input) {
     if(((a214 == 2 && a476 == 33) && ((a260 == 7 && ((a518 == 33 && (a38 == 32 &&  cf==1 )) && a435 == 33)) && a480 == 33))) {
     	if(((a318 == 33 && ((a305 == 11 &&  cf==1 ) && a432 == 33)) && (a558 == 33 && (a477 == 33 && (a435 == 33 && a532 == 33))))) {
     		calculate_outputm421(input);
@@ -104143,7 +104143,7 @@
     	} 
     } 
 }
- void calculate_outputm426(int input) {
+ void calculate_outputm426(int8_t  input) {
     if(((((a270 == 4 && a419 == 33) && a374 == 7) && a312 == 1) && ((( cf==1  && (input == 6)) && a445 == 33) && a416 == 33))) {
     	cf = 0;
     	a458 = 32 ;
@@ -104254,7 +104254,7 @@
     	a464 = 34 ;
     	a214 = 3;
     	a144 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((( cf==1  && (input == 2)) && ((((a404 == 33 && (a254 == 33 && a324 == 5)) && a313 == 1) && a236 == 6) && a289 == 2))) {
     	a85 += (a85 + 20) > a85 ? 4 : 0;
@@ -104303,7 +104303,7 @@
     	a297 = 6;
     	a384 = 4;
     	a49 = 7; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a242 == 2 && ((a502 == 33 && a398 == 2) && a411 == 33)) && ((a247 == 10 && ((input == 7) &&  cf==1 )) && a520 == 33))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -104408,10 +104408,10 @@
     	a223 = 8;
     	a494 = 32 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm428(int input) {
+ void calculate_outputm428(int8_t  input) {
     if(((((input == 1) &&  cf==1 ) && a247 == 10) && (((a223 == 8 && (a418 == 33 && a274 == 3)) && a486 == 33) && a242 == 2))) {
     	cf = 0;
     	a384 = 3;
@@ -104510,7 +104510,7 @@
     	a510 = 32 ;
     	a346 = 2;
     	a356 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a498 == 33 && (( cf==1  && (input == 5)) && a244 == 7)) && (a369 == 1 && ((a323 == 10 && a262 == 33) && a418 == 33)))) {
     	a29 += (a29 + 20) > a29 ? 1 : 0;
@@ -104542,7 +104542,7 @@
     	a434 = 32 ;
     	a418 = 34 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a400 == 7 && (((a465 == 33 && a348 == 4) && a521 == 33) && a214 == 2)) && (a216 == 33 && ( cf==1  && (input == 8))))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -104574,10 +104574,10 @@
     	a312 = 2;
     	a107 = 36 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm429(int input) {
+ void calculate_outputm429(int8_t  input) {
     if(((a370 == 3 && a602 == 33) && (a274 == 3 && (a201 == 4 && (a223 == 8 && (( cf==1  && (input == 2)) && a458 == 33)))))) {
     	a76 += (a76 + 20) > a76 ? 1 : 0;
     	cf = 0;
@@ -104611,7 +104611,7 @@
     	a18 = 14;
     	a274 = 4;
     	a23 = 13; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 7)) && a281 == 1) && a435 == 33) && (a399 == 3 && ((a474 == 33 && a282 == 7) && a336 == 10)))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -104646,7 +104646,7 @@
     	a335 = 34 ;
     	a201 = 6;
     	a23 = 13; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((((a220 == 33 && a252 == 10) && a419 == 33) && a289 == 2) && (a594 == 33 && (a330 == 6 && ((input == 1) &&  cf==1 ))))) {
     	a91 -= (a91 - 20) < a91 ? 3 : 0;
@@ -104733,7 +104733,7 @@
     	a228 = 3;
     	a242 = 2;
     	a118 = 9; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a348 == 4 && (a348 == 4 && a252 == 10)) && (((( cf==1  && (input == 10)) && a380 == 3) && a365 == 1) && a475 == 33))) {
     	a113 -= (a113 - 20) < a113 ? 1 : 0;
@@ -104820,10 +104820,10 @@
     	a578 = 34 ;
     	a289 = 3;
     	a118 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm430(int input) {
+ void calculate_outputm430(int8_t  input) {
     if(((a241 == 6 && (a445 == 33 && (( cf==1  && (input == 8)) && a205 == 8))) && (a313 == 1 && (a247 == 10 && a297 == 4)))) {
     	a2 += (a2 + 20) > a2 ? 2 : 0;
     	cf = 0;
@@ -104921,7 +104921,7 @@
     	a280 = 32 ;
     	a358 = 8;
     	a56 = 9; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a398 == 2 && ((a310 == 1 && ((input == 2) &&  cf==1 )) && a201 == 4)) && a365 == 1) && (a334 == 7 && a582 == 33))) {
     	a65 -= (a65 - 20) < a65 ? 2 : 0;
@@ -105032,7 +105032,7 @@
     	a384 = 3;
     	a334 = 9;
     	a283 = 10; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((((a373 == 3 && (a313 == 1 && a215 == 33)) && a365 == 1) && a295 == 9) && (a528 == 33 && ( cf==1  && (input == 5))))) {
     	a85 += (a85 + 20) > a85 ? 3 : 0;
@@ -105055,10 +105055,10 @@
     	a365 = 2;
     	a297 = 5;
     	a99 = 1; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm431(int input) {
+ void calculate_outputm431(int8_t  input) {
     if((((a528 == 33 && ( cf==1  && (input == 2))) && a532 == 33) && (a216 == 33 && (a263 == 6 && (a586 == 33 && a277 == 7))))) {
     	cf = 0;
     	if((((a324 == 6 && !(a166 == 32)) || a169 == 33) || a164 == 33)) {
@@ -105135,7 +105135,7 @@
     	a214 = 4;
     	a52 = 10;
     	a319 = 6;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((((a465 == 33 && ( cf==1  && (input == 1))) && a592 == 33) && a407 == 33) && (a242 == 2 && (a213 == 2 && a432 == 33)))) {
     	a148 += (a148 + 20) > a148 ? 1 : 0;
@@ -105194,7 +105194,7 @@
     	a94 = 5;
     	a532 = 32 ;
     	a33 = 5; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((((input == 5) &&  cf==1 ) && a318 == 33) && a396 == 6) && (a368 == 4 && (a431 == 33 && (a396 == 6 && a274 == 3))))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -105222,10 +105222,10 @@
     	a223 = 10;
     	a295 = 11;
     	a56 = 7; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm432(int input) {
+ void calculate_outputm432(int8_t  input) {
     if((((a346 == 1 && (a260 == 7 && (a337 == 4 && a407 == 33))) && a453 == 33) && (a359 == 9 && ( cf==1  && (input == 7))))) {
     	cf = 0;
     	a587 = 34 ;
@@ -105324,7 +105324,7 @@
     	a281 = 3;
     	a432 = 33 ;
     	a52 = 10; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a480 == 33 && (((input == 9) &&  cf==1 ) && a270 == 4)) && (((a445 == 33 && a554 == 33) && a282 == 7) && a475 == 33))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -105400,7 +105400,7 @@
     	a578 = 34 ;
     	a215 = 34 ;
     	a221 = 8;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a434 == 33 && (a399 == 3 && ( cf==1  && (input == 5)))) && (a578 == 33 && (a227 == 33 && (a368 == 4 && a345 == 9))))) {
     	a171 -= (a171 - 20) < a171 ? 3 : 0;
@@ -105508,7 +105508,7 @@
     	a205 = 9;
     	a247 = 11;
     	a231 = 7; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((((a398 == 2 && a411 == 33) && a201 == 4) && a474 == 33) && ((( cf==1  && (input == 6)) && a346 == 1) && a518 == 33))) {
     	cf = 0;
@@ -105698,10 +105698,10 @@
     	a498 = 33 ;
     	a476 = 34 ;
     	a372 = 9;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm47(int input) {
+ void calculate_outputm47(int8_t  input) {
     if(((((( cf==1  && a283 == 5) && a384 == 2) && a228 == 3) && a402 == 33) && (a582 == 33 && (a465 == 33 && a416 == 33)))) {
     	if((((a294 == 33 && a518 == 33) && a474 == 33) && ((a560 == 33 && (a274 == 3 && ( cf==1  && a99 == 8))) && a474 == 33))) {
     		calculate_outputm426(input);
@@ -105729,7 +105729,7 @@
     	} 
     } 
 }
- void calculate_outputm437(int input) {
+ void calculate_outputm437(int8_t  input) {
     if(((a602 == 32 && ((a317 == 6 && (a407 == 32 && a259 == 9)) && a254 == 32)) && (a558 == 32 && ((input == 1) &&  cf==1 )))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 -= (a104 - 20) < a104 ? 3 : 0;
@@ -105950,7 +105950,7 @@
     	a364 = 8;
     	a592 = 35 ;
     	a23 = 11;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a334 == 8 && (a398 == 3 && (a493 == 32 && a594 == 32))) && a445 == 32) && (a508 == 32 && ((input == 4) &&  cf==1 )))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -105969,7 +105969,7 @@
     	a18 = 10;
     	a393 = 16;
     	a172 = 14; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((((a411 == 32 && ((a418 == 32 && ((input == 9) &&  cf==1 )) && a477 == 32)) && a259 == 9) && (a252 == 11 && a507 == 32))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -106049,7 +106049,7 @@
     	a18 = 15;
     	a370 = 7;
     	a371 = 12;
-    	}/* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a475 == 32 && (((a382 == 4 && (a404 == 32 && a281 == 2)) && a252 == 11) && a274 == 4)) && ((input == 6) &&  cf==1 ))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -106112,7 +106112,7 @@
     	a226 = 7;
     	a324 = 10;
     	a355 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if((((a518 == 32 && (a407 == 32 && a358 == 7)) && a223 == 9) && ((( cf==1  && (input == 5)) && a458 == 32) && a458 == 32))) {
     	a104 -= (a104 - 20) < a104 ? 3 : 0;
@@ -106228,7 +106228,7 @@
     	a281 = 2;
     	a373 = 7;
     	a18 = 12; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a475 == 32 && (a493 == 32 && (a253 == 7 && a356 == 9))) && (a585 == 32 && (((input == 2) &&  cf==1 ) && a236 == 7)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -106365,7 +106365,7 @@
     	a216 = 34 ;
     	a324 = 7;
     	a357 = 10; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a544 == 32 && (a480 == 32 && a585 == 32)) && (((( cf==1  && (input == 10)) && a252 == 11) && a602 == 32) && a253 == 7))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -106384,7 +106384,7 @@
     	a306 = 35 ;
     	a275 = 33 ;
     	a49 = 7; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((a411 == 32 && (a213 == 3 && a592 == 32)) && a270 == 5) && (a465 == 32 && (( cf==1  && (input == 8)) && a244 == 8)))) {
     	a179 += (a179 + 20) > a179 ? 3 : 0;
@@ -106415,7 +106415,7 @@
     	a270 = 4;
     	a252 = 10;
     	a93 = 6; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((((a214 == 3 && a259 == 9) && a477 == 32) && a476 == 32) && ((a586 == 32 && ( cf==1  && (input == 3))) && a493 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -106436,7 +106436,7 @@
     	a212 = 34 ;
     	a18 = 10;
     	a393 = 13; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((((input == 7) &&  cf==1 ) && a474 == 32) && (((a252 == 11 && (a582 == 32 && a475 == 32)) && a556 == 32) && a317 == 6))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -106673,10 +106673,10 @@
     	a407 = 36 ;
     	a236 = 11;
     	a18 = 12;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm438(int input) {
+ void calculate_outputm438(int8_t  input) {
     if(((a252 == 11 && (a592 == 32 && a213 == 3)) && (((((input == 10) &&  cf==1 ) && a404 == 32) && a262 == 32) && a359 == 10))) {
     	a171 -= (a171 - 20) < a171 ? 2 : 0;
     	cf = 0;
@@ -106706,7 +106706,7 @@
     	a209 = 4;
     	a445 = 33 ;
     	a323 = 10; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a376 == 4 && (a446 == 32 && (( cf==1  && (input == 5)) && a297 == 5))) && (a465 == 32 && (a247 == 11 && a259 == 9)))) {
     	a171 -= (a171 - 20) < a171 ? 4 : 0;
@@ -106814,10 +106814,10 @@
     	a242 = 2;
     	a560 = 34 ;
     	a144 = 11; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm439(int input) {
+ void calculate_outputm439(int8_t  input) {
     if((((a384 == 3 && a206 == 10) && a465 == 32) && (((( cf==1  && (input == 3)) && a370 == 4) && a242 == 3) && a458 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a179 -= (a179 - 20) < a179 ? 2 : 0;
@@ -106929,7 +106929,7 @@
     	a209 = 8;
     	a365 = 8;
     	a118 = 10; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a578 == 32 && a359 == 10) && (a304 == 6 && ((a477 == 32 && (a382 == 4 && ((input == 5) &&  cf==1 ))) && a323 == 11)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -106950,7 +106950,7 @@
     	a116 = 35 ;
     	a49 = 8;
     	a121 = 8; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a445 == 32 && ((a520 == 32 && a218 == 6) && a359 == 10)) && (a398 == 3 && (a330 == 7 && ( cf==1  && (input == 10)))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -106979,7 +106979,7 @@
     	a246 = 8;
     	a518 = 36 ;
     	a103 = 16; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a502 == 32 && ((a465 == 32 && ((( cf==1  && (input == 9)) && a218 == 6) && a277 == 8)) && a205 == 9)) && a516 == 32)) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -107000,7 +107000,7 @@
     	a351 = 34 ;
     	a18 = 13;
     	a52 = 7; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a334 == 8 && (a507 == 32 && ((a223 == 9 && a411 == 32) && a384 == 3))) && (( cf==1  && (input == 4)) && a402 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -107107,7 +107107,7 @@
     	a122 = 32 ;
     	a234 = 15;
     	a367 = 6; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((((a274 == 4 && ((input == 6) &&  cf==1 )) && a435 == 32) && a486 == 32) && (a215 == 32 && (a334 == 8 && a528 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -107242,7 +107242,7 @@
     	a416 = 35 ;
     	a313 = 3;
     	a94 = 5;
-    	}/* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((((input == 8) &&  cf==1 ) && a326 == 32) && ((a366 == 32 && (a474 == 32 && (a594 == 32 && a209 == 5))) && a558 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -107322,7 +107322,7 @@
     	a233 = 6;
     	a246 = 9;
     	a305 = 7; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((((a507 == 32 && a242 == 3) && a382 == 4) && a477 == 32) && a337 == 5) && (a493 == 32 && ((input == 1) &&  cf==1 )))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -107500,7 +107500,7 @@
     	a434 = 32 ;
     	a375 = 34 ;
     	a117 = 3;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a226 == 3 && (a556 == 32 && a254 == 32)) && ((a560 == 32 && (a418 == 32 && ( cf==1  && (input == 7)))) && a241 == 7))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -107518,7 +107518,7 @@
     	a18 = 10;
     	a393 = 15;
     	a314 = 9; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((input == 2) &&  cf==1 ) && ((a592 == 32 && (((a521 == 32 && a244 == 8) && a418 == 32) && a475 == 32)) && a498 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -107537,10 +107537,10 @@
     	a250 = 33 ;
     	a126 = 32 ;
     	a18 = 15; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm440(int input) {
+ void calculate_outputm440(int8_t  input) {
     if((((( cf==1  && (input == 6)) && a477 == 32) && a220 == 32) && (a233 == 7 && (a244 == 8 && (a465 == 32 && a505 == 32))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 -= (a104 - 20) < a104 ? 3 : 0;
@@ -107764,7 +107764,7 @@
     	a463 = 35 ;
     	a398 = 9;
     	a200 = 10;
-    	}/* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a295 == 10 && (((( cf==1  && (input == 7)) && a312 == 2) && a404 == 32) && a475 == 32)) && (a253 == 7 && a201 == 5))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -107840,7 +107840,7 @@
     	a419 = 34 ;
     	a330 = 8;
     	a4 = 8;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a516 == 32 && (a294 == 32 && a201 == 5)) && a356 == 9) && (a486 == 32 && (a304 == 6 && ( cf==1  && (input == 3)))))) {
     	a104 += (a104 + 20) > a104 ? 2 : 0;
@@ -107932,7 +107932,7 @@
     	a502 = 35 ;
     	a205 = 8;
     	a94 = 3; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 8)) && a558 == 32) && a209 == 5) && ((a556 == 32 && (a521 == 32 && a254 == 32)) && a348 == 5))) {
     	a88 += (a88 + 20) > a88 ? 1 : 0;
@@ -108000,7 +108000,7 @@
     	a233 = 13;
     	a128 = 33 ;
     	a49 = 9; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a518 == 32 && (a379 == 32 && (( cf==1  && (input == 4)) && a370 == 4))) && (a310 == 2 && (a348 == 5 && a556 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -108143,7 +108143,7 @@
     	a578 = 34 ;
     	a313 = 7;
     	a283 = 7;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a201 == 5 && (a380 == 4 && ( cf==1  && (input == 2)))) && ((a560 == 32 && (a520 == 32 && a358 == 7)) && a277 == 8))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -108264,7 +108264,7 @@
     	a516 = 36 ;
     	a348 = 11;
     	a221 = 7; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 5)) && a228 == 4) && a281 == 2) && (a228 == 4 && (a520 == 32 && (a247 == 11 && a464 == 32))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -108374,7 +108374,7 @@
     	a289 = 5;
     	a358 = 11;
     	a303 = 9; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((a384 == 3 && (a518 == 32 && (a252 == 11 && ((input == 1) &&  cf==1 )))) && ((a252 == 11 && a475 == 32) && a370 == 4))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -108442,7 +108442,7 @@
     	a318 = 36 ;
     	a476 = 36 ;
     	a49 = 7; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a411 == 32 && (a373 == 4 && (a474 == 32 && (a373 == 4 && a247 == 11)))) && (( cf==1  && (input == 9)) && a585 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -108580,7 +108580,7 @@
     	a498 = 32 ;
     	a398 = 3;
     	a357 = 10; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a242 == 3 && (a364 == 8 && (( cf==1  && (input == 10)) && a399 == 4))) && a380 == 4) && (a379 == 32 && a396 == 7))) {
     	a88 -= (a88 - 20) < a88 ? 3 : 0;
@@ -108689,10 +108689,10 @@
     	a404 = 32 ;
     	a229 = 7;
     	a308 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm442(int input) {
+ void calculate_outputm442(int8_t  input) {
     if(((a365 == 2 && ((a465 == 32 && (a494 == 32 && a463 == 32)) && a398 == 3)) && (((input == 10) &&  cf==1 ) && a528 == 32))) {
     	a29 += (a29 + 20) > a29 ? 2 : 0;
     	cf = 0;
@@ -108731,16 +108731,16 @@
     	a125 = 11; 
     	}else {
 
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((((input == 1) &&  cf==1 ) && a475 == 32) && a431 == 32) && (a312 == 2 && ((a376 == 4 && a312 == 2) && a366 == 32)))) {
     	a85 += (a85 + 20) > a85 ? 1 : 0;
     	cf = 0;
     	 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm48(int input) {
+ void calculate_outputm48(int8_t  input) {
     if(((a233 == 7 && (a404 == 32 && ((a123 == 6 &&  cf==1 ) && a241 == 7))) && ((a263 == 7 && a493 == 32) && a554 == 32))) {
     	if(((((a558 == 32 && a227 == 32) && a252 == 11) && a407 == 32) && (a375 == 32 && (( cf==1  && a314 == 9) && a229 == 4)))) {
     		calculate_outputm437(input);
@@ -108763,7 +108763,7 @@
     	} 
     } 
 }
- void calculate_outputm443(int input) {
+ void calculate_outputm443(int8_t  input) {
     if((a434 == 32 && (a445 == 32 && ((a313 == 2 && ((( cf==1  && (input == 2)) && a214 == 3) && a594 == 32)) && a358 == 7)))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
     	cf = 0;
@@ -108781,7 +108781,7 @@
     	a94 = 8;
     	a335 = 34 ;
     	a23 = 13; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a310 == 2 && (a586 == 32 && (a373 == 4 && a353 == 3))) && a586 == 32) && (( cf==1  && (input == 10)) && a214 == 3))) {
     	cf = 0;
@@ -108799,10 +108799,10 @@
     	a445 = 34 ;
     	a400 = 7;
     	a23 = 13; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm444(int input) {
+ void calculate_outputm444(int8_t  input) {
     if(((a516 == 32 && ( cf==1  && (input == 6))) && ((a244 == 8 && (a556 == 32 && (a259 == 9 && a223 == 9))) && a453 == 32))) {
     	a29 += (a29 + 20) > a29 ? 1 : 0;
     	cf = 0;
@@ -108820,10 +108820,10 @@
     	a223 = 8;
     	a216 = 33 ;
     	a342 = 8; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm445(int input) {
+ void calculate_outputm445(int8_t  input) {
     if(((a336 == 11 && ((a464 == 32 && ((input == 8) &&  cf==1 )) && a480 == 32)) && ((a419 == 32 && a270 == 5) && a592 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a104 -= (a104 - 20) < a104 ? 3 : 0;
@@ -108946,7 +108946,7 @@
     	a546 = 35 ;
     	a476 = 35 ;
     	a150 = 13; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a556 == 32 && (a384 == 3 && a289 == 3)) && (((((input == 5) &&  cf==1 ) && a252 == 11) && a353 == 3) && a277 == 8))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -108968,7 +108968,7 @@
     	a45 = 33 ;
     	a94 = 6;
     	a70 = 6; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((((input == 6) &&  cf==1 ) && a364 == 8) && (a209 == 5 && ((a477 == 32 && (a220 == 32 && a313 == 2)) && a510 == 32)))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -109104,7 +109104,7 @@
     	a475 = 36 ;
     	a407 = 34 ;
     	a109 = 2; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a475 == 32 && (a602 == 32 && (((input == 10) &&  cf==1 ) && a520 == 32))) && (a262 == 32 && (a369 == 2 && a458 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -109214,7 +109214,7 @@
     	a387 = 35 ;
     	a38 = 36 ;
     	a18 = 15;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a546 == 32 && a346 == 2) && a353 == 3) && (((((input == 7) &&  cf==1 ) && a263 == 7) && a434 == 32) && a510 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -109326,7 +109326,7 @@
     	a586 = 34 ;
     	a480 = 35 ;
     	a144 = 7; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((((a528 == 32 && (a516 == 32 && ( cf==1  && (input == 4)))) && a582 == 32) && a330 == 7) && (a201 == 5 && a376 == 4))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -109346,7 +109346,7 @@
     	a49 = 4;
     	a237 = 35 ;
     	a273 = 12; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a215 == 32 && (((a592 == 32 && ((input == 3) &&  cf==1 )) && a252 == 11) && a312 == 2)) && (a289 == 3 && a365 == 2))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -109476,7 +109476,7 @@
     	a375 = 33 ;
     	a263 = 9;
     	a160 = 9; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a404 == 32 && a294 == 32) && a520 == 32) && (a226 == 3 && (a364 == 8 && (a556 == 32 && ( cf==1  && (input == 9))))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -109692,7 +109692,7 @@
     	a374 = 7;
     	a234 = 10;
     	a303 = 9;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a366 == 32 && (a379 == 32 && (a216 == 32 && a323 == 11))) && ((( cf==1  && (input == 2)) && a446 == 32) && a214 == 3))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -109908,7 +109908,7 @@
     	a592 = 36 ;
     	a218 = 10;
     	a39 = 7;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if((((((input == 1) &&  cf==1 ) && a411 == 32) && a578 == 32) && ((a582 == 32 && (a560 == 32 && a336 == 11)) && a458 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -109972,10 +109972,10 @@
     	a465 = 35 ;
     	a216 = 36 ;
     	a319 = 6;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm446(int input) {
+ void calculate_outputm446(int8_t  input) {
     if(((a369 == 2 && ((input == 10) &&  cf==1 )) && (a404 == 32 && (a262 == 32 && ((a318 == 32 && a317 == 6) && a554 == 32))))) {
     	cf = 0;
     	a307 = 32 ;
@@ -109983,10 +109983,10 @@
     	a602 = 34 ;
     	a18 = 14;
     	a56 = 9; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm447(int input) {
+ void calculate_outputm447(int8_t  input) {
     if(((((a482 == 32 && (a516 == 32 && a493 == 32)) && a375 == 32) && a374 == 8) && (( cf==1  && (input == 1)) && a586 == 32))) {
     	a171 -= (a171 - 20) < a171 ? 1 : 0;
     	cf = 0;
@@ -110000,7 +110000,7 @@
     	a206 = 9;
     	a359 = 9;
     	a70 = 6; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a556 == 32 && ((a334 == 8 && a359 == 10) && a532 == 32)) && (a477 == 32 && (a373 == 4 && ((input == 7) &&  cf==1 ))))) {
     	a179 += (a179 + 20) > a179 ? 2 : 0;
@@ -110061,10 +110061,10 @@
     	a446 = 32 ;
     	a396 = 7;
     	a56 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm449(int input) {
+ void calculate_outputm449(int8_t  input) {
     if(((((a376 == 4 && a476 == 32) && a475 == 32) && a419 == 32) && (a214 == 3 && (((input == 2) &&  cf==1 ) && a465 == 32)))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
     	cf = 0;
@@ -110189,7 +110189,7 @@
     	a236 = 6;
     	a518 = 32 ;
     	a172 = 14; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a493 == 32 && (a223 == 9 && a475 == 32)) && ((a556 == 32 && (( cf==1  && (input == 1)) && a476 == 32)) && a379 == 32))) {
     	cf = 0;
@@ -110306,10 +110306,10 @@
     	a270 = 6;
     	a476 = 32 ;
     	a118 = 6; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm450(int input) {
+ void calculate_outputm450(int8_t  input) {
     if(((a203 == 3 && (a477 == 32 && (a227 == 32 && a241 == 7))) && ((a317 == 6 && ((input == 9) &&  cf==1 )) && a369 == 2))) {
     	cf = 0;
     	a262 = 34 ;
@@ -110326,7 +110326,7 @@
     	a206 = 11;
     	a237 = 36 ;
     	a49 = 4; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a368 == 5 && a418 == 32) && a206 == 10) && (((( cf==1  && (input == 6)) && a560 == 32) && a201 == 5) && a384 == 3))) {
     	a85 += (a85 + 20) > a85 ? 3 : 0;
@@ -110414,7 +110414,7 @@
     	a482 = 32 ;
     	a475 = 34 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if(((( cf==1  && (input == 5)) && a463 == 32) && ((a348 == 5 && (a242 == 3 && (a516 == 32 && a236 == 7))) && a585 == 32))) {
     	a2 -= (a2 - 20) < a2 ? 4 : 0;
@@ -110518,7 +110518,7 @@
     	a366 = 34 ;
     	a586 = 34 ;
     	a109 = 4; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a227 == 32 && a379 == 32) && (a464 == 32 && (a587 == 32 && ((a205 == 9 && ((input == 10) &&  cf==1 )) && a365 == 2))))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -110589,10 +110589,10 @@
     	a398 = 3;
     	a369 = 1;
     	a283 = 10; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm49(int input) {
+ void calculate_outputm49(int8_t  input) {
     if((((a396 == 7 && a216 == 32) && a407 == 32) && ((a223 == 9 && (a486 == 32 && ( cf==1  && a134 == 33))) && a365 == 2))) {
     	if(((a510 == 32 && ((a445 == 32 && a463 == 32) && a494 == 32)) && ((a400 == 8 && ( cf==1  && a207 == 32)) && a396 == 7))) {
     		calculate_outputm443(input);
@@ -110621,7 +110621,7 @@
     	} 
     } 
 }
- void calculate_outputm451(int input) {
+ void calculate_outputm451(int8_t  input) {
     if(((a324 == 6 && (a486 == 32 && ( cf==1  && (input == 10)))) && (a260 == 8 && (a482 == 32 && (a270 == 5 && a416 == 32))))) {
     	a76 += (a76 + 20) > a76 ? 4 : 0;
     	cf = 0;
@@ -110692,7 +110692,7 @@
     	a282 = 7;
     	a602 = 33 ;
     	a183 = 7; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a382 == 4 && a313 == 2) && ((a310 == 2 && (a289 == 3 && (( cf==1  && (input == 1)) && a274 == 4))) && a359 == 10))) {
     	a76 += (a76 + 20) > a76 ? 1 : 0;
@@ -110838,7 +110838,7 @@
     	a346 = 3;
     	a214 = 4;
     	a106 = 14;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a336 == 11 && ((a546 == 32 && a356 == 9) && a324 == 6)) && (a218 == 6 && (((input == 9) &&  cf==1 ) && a373 == 4)))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -110948,10 +110948,10 @@
     	a345 = 10;
     	a587 = 34 ;
     	a18 = 9; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm452(int input) {
+ void calculate_outputm452(int8_t  input) {
     if((a400 == 8 && ((((a201 == 5 && (a554 == 32 && ((input == 2) &&  cf==1 ))) && a382 == 4) && a213 == 3) && a370 == 4))) {
     	a2 -= (a2 - 20) < a2 ? 4 : 0;
     	cf = 0;
@@ -111056,7 +111056,7 @@
     	a312 = 2;
     	a445 = 33 ;
     	a150 = 8; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a259 == 9 && ((a445 == 32 && (a586 == 32 && a411 == 32)) && a463 == 32)) && (a556 == 32 && ( cf==1  && (input == 8))))) {
     	a184 -= (a184 - 20) < a184 ? 3 : 0;
@@ -111070,7 +111070,7 @@
     	a494 = 33 ;
     	a119 = 33 ;
     	a47 = 4; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((a532 == 32 && (a528 == 32 && ((a407 == 32 && a594 == 32) && a270 == 5))) && a214 == 3) && ( cf==1  && (input == 9)))) {
     	a179 += (a179 + 20) > a179 ? 2 : 0;
@@ -111137,7 +111137,7 @@
     	a313 = 3;
     	a348 = 5;
     	a69 = 8; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a494 == 32 && (((a310 == 2 && a585 == 32) && a346 == 2) && a254 == 32)) && (( cf==1  && (input == 7)) && a411 == 32))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -111228,10 +111228,10 @@
     	a494 = 32 ;
     	a375 = 34 ;
     	a18 = 12; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm453(int input) {
+ void calculate_outputm453(int8_t  input) {
     if((((a396 == 7 && a216 == 32) && a453 == 32) && ((a201 == 5 && (a259 == 9 && ( cf==1  && (input == 8)))) && a348 == 5))) {
     	a2 -= (a2 - 20) < a2 ? 2 : 0;
     	cf = 0;
@@ -111270,7 +111270,7 @@
     	a281 = 1;
     	a254 = 32 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((((( cf==1  && (input == 2)) && a419 == 32) && a507 == 32) && a313 == 2) && a313 == 2) && (a418 == 32 && a380 == 4))) {
     	a2 -= (a2 - 20) < a2 ? 3 : 0;
@@ -111389,7 +111389,7 @@
     	a175 = 7; 
     	}else {
 
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a229 == 4 && ((a203 == 3 && a246 == 7) && a281 == 2)) && a247 == 11) && (a602 == 32 && ( cf==1  && (input == 5))))) {
     	a171 -= (a171 - 20) < a171 ? 1 : 0;
@@ -111451,10 +111451,10 @@
     	a502 = 32 ;
     	a432 = 32 ;
     	a56 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm454(int input) {
+ void calculate_outputm454(int8_t  input) {
     if(((((a546 == 32 && ( cf==1  && (input == 8))) && a310 == 2) && a216 == 32) && (a216 == 32 && (a345 == 10 && a463 == 32)))) {
     	a96 += (a96 + 20) > a96 ? 1 : 0;
     	cf = 0;
@@ -111506,7 +111506,7 @@
     	a304 = 6;
     	a435 = 32 ;
     	a342 = 8; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a216 == 32 && (a348 == 5 && (((input == 6) &&  cf==1 ) && a379 == 32))) && (a480 == 32 && (a507 == 32 && a411 == 32)))) {
     	cf = 0;
@@ -111558,7 +111558,7 @@
     	a494 = 32 ;
     	a281 = 2;
     	a342 = 8; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a518 == 32 && a295 == 10) && ((a337 == 5 && ((a434 == 32 && ( cf==1  && (input == 2))) && a554 == 32)) && a365 == 2))) {
     	cf = 0;
@@ -111572,10 +111572,10 @@
     	a480 = 34 ;
     	a253 = 8;
     	a289 = 4; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm457(int input) {
+ void calculate_outputm457(int8_t  input) {
     if(((a400 == 8 && ( cf==1  && (input == 8))) && (((a201 == 5 && (a518 == 32 && a263 == 7)) && a263 == 7) && a544 == 32))) {
     	a184 -= (a184 - 20) < a184 ? 2 : 0;
     	cf = 0;
@@ -111687,7 +111687,7 @@
     	a310 = 1;
     	a313 = 1;
     	a84 = 8; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
     if((((a369 == 2 && a229 == 4) && a242 == 3) && (a475 == 32 && ((((input == 7) &&  cf==1 ) && a366 == 32) && a586 == 32)))) {
     	a171 -= (a171 - 20) < a171 ? 3 : 0;
@@ -111804,7 +111804,7 @@
     	a398 = 4;
     	a463 = 34 ;
     	a39 = 7; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if((((a493 == 32 && (a528 == 32 && ((input == 1) &&  cf==1 ))) && a260 == 8) && (a416 == 32 && (a226 == 3 && a348 == 5)))) {
     	a91 -= (a91 - 20) < a91 ? 3 : 0;
@@ -111885,10 +111885,10 @@
     	a376 = 5;
     	a289 = 3;
     	a305 = 11; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm458(int input) {
+ void calculate_outputm458(int8_t  input) {
     if((((a227 == 32 && a228 == 4) && a560 == 32) && (a475 == 32 && (a280 == 32 && (a260 == 8 && ((input == 7) &&  cf==1 )))))) {
     	a171 -= (a171 - 20) < a171 ? 2 : 0;
     	cf = 0;
@@ -111920,10 +111920,10 @@
     	a205 = 10;
     	a475 = 34 ;
     	a26 = 11; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm50(int input) {
+ void calculate_outputm50(int8_t  input) {
     if((((a594 == 32 && (a237 == 32 &&  cf==1 )) && a434 == 32) && (a554 == 32 && (a364 == 8 && (a334 == 8 && a586 == 32))))) {
     	if(((a206 == 10 && (a244 == 8 && (a297 == 5 && (a398 == 3 && (a167 == 33 &&  cf==1 ))))) && (a214 == 3 && a259 == 9))) {
     		calculate_outputm451(input);
@@ -111949,7 +111949,7 @@
     	} 
     } 
 }
- void calculate_outputm459(int input) {
+ void calculate_outputm459(int8_t  input) {
     if(((((( cf==1  && (input == 7)) && a353 == 3) && a318 == 32) && a594 == 32) && (a404 == 32 && (a402 == 32 && a502 == 32)))) {
     	a184 -= (a184 - 20) < a184 ? 1 : 0;
     	cf = 0;
@@ -112061,7 +112061,7 @@
     	a400 = 7;
     	a556 = 32 ;
     	a94 = 5; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a203 == 3 && a585 == 32) && a259 == 9) && (a366 == 32 && (a234 == 11 && (a374 == 8 && ((input == 9) &&  cf==1 )))))) {
     	a91 -= (a91 - 20) < a91 ? 1 : 0;
@@ -112101,10 +112101,10 @@
     	a107 = 34 ;
     	a532 = 32 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm460(int input) {
+ void calculate_outputm460(int8_t  input) {
     if(((a313 == 2 && ((a602 == 32 && a234 == 11) && a556 == 32)) && (a252 == 11 && (((input == 6) &&  cf==1 ) && a205 == 9)))) {
     	a148 += (a148 + 20) > a148 ? 3 : 0;
     	cf = 0;
@@ -112216,7 +112216,7 @@
     	a190 = 34 ;
     	a295 = 11;
     	a69 = 9; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a493 == 32 && ((input == 7) &&  cf==1 )) && (a453 == 32 && (a260 == 8 && ((a585 == 32 && a369 == 2) && a297 == 5))))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -112238,10 +112238,10 @@
     	a544 = 32 ;
     	a218 = 6;
     	a151 = 12; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm462(int input) {
+ void calculate_outputm462(int8_t  input) {
     if((((a359 == 10 && ( cf==1  && (input == 9))) && a228 == 4) && (a236 == 7 && (a297 == 5 && (a446 == 32 && a226 == 3))))) {
     	a2 -= (a2 - 20) < a2 ? 2 : 0;
     	cf = 0;
@@ -112318,7 +112318,7 @@
     	a374 = 9;
     	a213 = 4;
     	a49 = 2; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a229 == 4 && (( cf==1  && (input == 1)) && a247 == 11)) && (a560 == 32 && (a431 == 32 && (a213 == 3 && a281 == 2))))) {
     	a186 -= (a186 - 20) < a186 ? 1 : 0;
@@ -112327,7 +112327,7 @@
     	a18 = 14;
     	a67 = 36 ;
     	a103 = 16; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((( cf==1  && (input == 5)) && a323 == 11) && (a602 == 32 && (a419 == 32 && ((a294 == 32 && a220 == 32) && a223 == 9))))) {
     	cf = 0;
@@ -112376,10 +112376,10 @@
     	a582 = 32 ;
     	a477 = 33 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm464(int input) {
+ void calculate_outputm464(int8_t  input) {
     if(((a209 == 5 && (a324 == 6 && a205 == 9)) && (((((input == 2) &&  cf==1 ) && a587 == 32) && a407 == 32) && a253 == 7))) {
     	a113 += (a113 + 20) > a113 ? 1 : 0;
     	cf = 0;
@@ -112444,7 +112444,7 @@
     	a480 = 34 ;
     	a359 = 9;
     	a70 = 6; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a330 == 7 && (((( cf==1  && (input == 5)) && a475 == 32) && a502 == 32) && a546 == 32)) && (a337 == 5 && a558 == 32))) {
     	a179 += (a179 + 20) > a179 ? 2 : 0;
@@ -112460,7 +112460,7 @@
     	a416 = 34 ;
     	a432 = 34 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a376 == 4 && (((a520 == 32 && a379 == 32) && a585 == 32) && a528 == 32)) && (((input == 6) &&  cf==1 ) && a201 == 5))) {
     	cf = 0;
@@ -112563,7 +112563,7 @@
     	a317 = 7;
     	a260 = 7;
     	a118 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a312 == 2 && (a295 == 10 && (a358 == 7 && ( cf==1  && (input == 10))))) && (a358 == 7 && (a274 == 4 && a465 == 32)))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -112667,10 +112667,10 @@
     	a280 = 33 ;
     	a396 = 6;
     	a118 = 9; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm465(int input) {
+ void calculate_outputm465(int8_t  input) {
     if(((a382 == 4 && (a205 == 9 && (a407 == 32 && a226 == 3))) && ((a252 == 11 && ( cf==1  && (input == 7))) && a270 == 5))) {
     	a65 -= (a65 - 20) < a65 ? 2 : 0;
     	cf = 0;
@@ -112792,7 +112792,7 @@
     	a376 = 3;
     	a445 = 33 ;
     	a118 = 9;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a323 == 11 && ((((input == 8) &&  cf==1 ) && a201 == 5) && a277 == 8)) && ((a304 == 6 && a205 == 9) && a465 == 32))) {
     	a85 += (a85 + 20) > a85 ? 2 : 0;
@@ -112905,10 +112905,10 @@
     	a411 = 32 ;
     	a253 = 8;
     	a94 = 5; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm51(int input) {
+ void calculate_outputm51(int8_t  input) {
     if((a521 == 32 && ((a348 == 5 && ((((a156 == 33 &&  cf==1 ) && a418 == 32) && a233 == 7) && a226 == 3)) && a295 == 10))) {
     	if((((a229 == 4 && (a246 == 7 && (a39 == 8 &&  cf==1 ))) && a498 == 32) && ((a369 == 2 && a419 == 32) && a602 == 32))) {
     		calculate_outputm459(input);
@@ -112933,7 +112933,7 @@
     	} 
     } 
 }
- void calculate_outputm466(int input) {
+ void calculate_outputm466(int8_t  input) {
     if(((((( cf==1  && (input == 9)) && a477 == 32) && a297 == 5) && a382 == 4) && ((a474 == 32 && a418 == 32) && a215 == 32))) {
     	a179 -= (a179 - 20) < a179 ? 2 : 0;
     	a73 -= (a73 - 20) < a73 ? 3 : 0;
@@ -112999,7 +112999,7 @@
     	a348 = 6;
     	a521 = 33 ;
     	a118 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a227 == 32 && (a370 == 4 && (a244 == 8 && a398 == 3))) && ((((input == 8) &&  cf==1 ) && a376 == 4) && a345 == 10))) {
     	a148 += (a148 + 20) > a148 ? 2 : 0;
@@ -113043,7 +113043,7 @@
     	a227 = 34 ;
     	a310 = 1;
     	a99 = 1; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((((a602 == 32 && a310 == 2) && a227 == 32) && a508 == 32) && ((a318 == 32 && ((input == 7) &&  cf==1 )) && a310 == 2))) {
     	a140 += (a140 + 20) > a140 ? 4 : 0;
@@ -113090,7 +113090,7 @@
     	a402 = 32 ;
     	a399 = 4;
     	a99 = 1; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((((((a510 == 32 && ( cf==1  && (input == 6))) && a544 == 32) && a558 == 32) && a507 == 32) && a323 == 11) && a253 == 7)) {
     	a96 -= (a96 - 20) < a96 ? 3 : 0;
@@ -113207,10 +113207,10 @@
     	a396 = 7;
     	a18 = 9;
     	a283 = 8; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm467(int input) {
+ void calculate_outputm467(int8_t  input) {
     if((((a528 == 32 && a295 == 10) && a364 == 8) && (a546 == 32 && (a282 == 8 && (a277 == 8 && ((input == 2) &&  cf==1 )))))) {
     	a179 += (a179 + 20) > a179 ? 2 : 0;
     	cf = 0;
@@ -113230,7 +113230,7 @@
     	a370 = 3;
     	a94 = 8;
     	a23 = 13; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((((((a280 == 32 && a242 == 3) && a226 == 3) && a226 == 3) && a582 == 32) && (( cf==1  && (input == 8)) && a263 == 7))) {
     	a85 += (a85 + 20) > a85 ? 2 : 0;
@@ -113304,7 +113304,7 @@
     	a373 = 3;
     	a209 = 4;
     	a70 = 6; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 10)) && a223 == 9) && a376 == 4) && (a203 == 3 && (a379 == 32 && (a247 == 11 && a546 == 32))))) {
     	a2 -= (a2 - 20) < a2 ? 1 : 0;
@@ -113399,10 +113399,10 @@
     	a246 = 8;
     	a528 = 34 ;
     	a118 = 9; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm468(int input) {
+ void calculate_outputm468(int8_t  input) {
     if((((a262 == 32 && a453 == 32) && (((a246 == 7 && (a289 == 3 && ( cf==1  && (input == 4)))) && a253 == 7) && a375 == 32)) && a96 >= 2)) {
     	a184 -= (a184 - 20) < a184 ? 4 : 0;
     	cf = 0;
@@ -113423,7 +113423,7 @@
     	a39 = 3;
     	a370 = 5;
     	a243 = 10; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a233 == 7 && (a216 == 32 && (a281 == 2 && a544 == 32))) && ((( cf==1  && (input == 5)) && a558 == 32) && a263 == 7)) && a58 <= -5)) {
     	a76 += (a76 + 20) > a76 ? 2 : 0;
@@ -113433,7 +113433,7 @@
     	a393 = 15;
     	a61 = 35 ;
     	a52 = 9; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((((input == 6) &&  cf==1 ) && a374 == 8) && (a554 == 32 && (a368 == 5 && (a263 == 7 && (a254 == 32 && a508 == 32)))))) {
     	a148 += (a148 + 20) > a148 ? 4 : 0;
@@ -113514,7 +113514,7 @@
     	a216 = 34 ;
     	a366 = 32 ;
     	a23 = 13; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a227 == 32 && (a520 == 32 && a578 == 32)) && (((a326 == 32 && ((input == 10) &&  cf==1 )) && a228 == 4) && a205 == 9))) {
     	a179 += (a179 + 20) > a179 ? 2 : 0;
@@ -113579,7 +113579,7 @@
     	a477 = 32 ;
     	a407 = 32 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if((((a465 == 32 && (a282 == 8 && ( cf==1  && (input == 9)))) && a445 == 32) && ((a544 == 32 && a304 == 6) && a404 == 32))) {
     	a157 += (a157 + 20) > a157 ? 2 : 0;
@@ -113638,10 +113638,10 @@
     	a374 = 7;
     	a505 = 33 ;
     	a99 = 1; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm469(int input) {
+ void calculate_outputm469(int8_t  input) {
     if(((a556 == 32 && ((a407 == 32 && (a280 == 32 && a486 == 32)) && a458 == 32)) && (a227 == 32 && ((input == 8) &&  cf==1 )))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
     	cf = 0;
@@ -113755,10 +113755,10 @@
     	a280 = 32 ;
     	a220 = 34 ;
     	a39 = 7; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm470(int input) {
+ void calculate_outputm470(int8_t  input) {
     if((((a396 == 7 && ( cf==1  && (input == 7))) && ((((a384 == 3 && a214 == 3) && a445 == 32) && a375 == 32) && a463 == 32)) && a88 == 3932)) {
     	a85 += (a85 + 20) > a85 ? 2 : 0;
     	cf = 0;
@@ -113766,7 +113766,7 @@
     	a52 = 8;
     	a18 = 13;
     	a393 = 15; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((((a330 == 7 && (a373 == 4 && a313 == 2)) && a528 == 32) && ((( cf==1  && (input == 3)) && a241 == 7) && a209 == 5)) && a97 == 8812)) {
     	a179 += (a179 + 20) > a179 ? 2 : 0;
@@ -113775,7 +113775,7 @@
     	a18 = 10;
     	a212 = 34 ;
     	a393 = 13; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a382 == 4 && ((a516 == 32 && a304 == 6) && a507 == 32)) && (a229 == 4 && (a223 == 9 && ( cf==1  && (input == 9)))))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -113794,7 +113794,7 @@
     	a505 = 34 ;
     	a463 = 34 ;
     	a84 = 11; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a218 == 6 && (( cf==1  && (input == 8)) && a594 == 32)) && ((a465 == 32 && (a556 == 32 && a520 == 32)) && a518 == 32))) {
     	a186 -= (a186 - 20) < a186 ? 3 : 0;
@@ -113938,7 +113938,7 @@
     	a244 = 7;
     	a594 = 33 ;
     	a94 = 7;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a205 == 9 && (a585 == 32 && a464 == 32)) && (a312 == 2 && ((a259 == 9 && ((input == 2) &&  cf==1 )) && a407 == 32)))) {
     	cf = 0;
@@ -114012,7 +114012,7 @@
     	a337 = 5;
     	a370 = 4;
     	a151 = 5; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a297 == 5 && (((a345 == 10 && a554 == 32) && a213 == 3) && a318 == 32)) && (a254 == 32 && ( cf==1  && (input == 6))))) {
     	cf = 0;
@@ -114065,7 +114065,7 @@
     	a312 = 3;
     	a463 = 34 ;
     	a319 = 2; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((((a494 == 32 && (a334 == 8 && (( cf==1  && (input == 1)) && a384 == 3))) && (a359 == 10 && (a234 == 11 && a520 == 32))) && a2 >= -1)) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -114073,7 +114073,7 @@
     	a128 = 32 ;
     	a275 = 35 ;
     	a49 = 9; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((a356 == 9 && ( cf==1  && (input == 4))) && (a453 == 32 && (a521 == 32 && ((a218 == 6 && a218 == 6) && a578 == 32)))) && (a157 % 2==0))) {
     	cf = 0;
@@ -114081,10 +114081,10 @@
     	a393 = 14;
     	a59 = 12;
     	a264 = 13; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm52(int input) {
+ void calculate_outputm52(int8_t  input) {
     if((((a366 == 32 && (a227 == 32 && (a416 == 32 && a373 == 4))) && a359 == 10) && (a418 == 32 && ( cf==1  && a107 == 33)))) {
     	if(((a379 == 32 && (a336 == 11 && ( cf==1  && a43 == 36))) && (a585 == 32 && (a346 == 2 && (a366 == 32 && a510 == 32))))) {
     		calculate_outputm466(input);
@@ -114109,7 +114109,7 @@
     	} 
     } 
 }
- void calculate_outputm472(int input) {
+ void calculate_outputm472(int8_t  input) {
     if(((a465 == 32 && (a345 == 10 && (a369 == 2 && ((a520 == 32 && a482 == 32) && a475 == 32)))) && ((input == 1) &&  cf==1 ))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a78 += (a78 + 20) > a78 ? 2 : 0;
@@ -114182,7 +114182,7 @@
     	a602 = 36 ;
     	a215 = 33 ;
     	a49 = 8; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a359 == 10 && (((input == 8) &&  cf==1 ) && a223 == 9)) && (a247 == 11 && ((a324 == 6 && a475 == 32) && a370 == 4)))) {
     	a78 += (a78 + 20) > a78 ? 1 : 0;
@@ -114309,7 +114309,7 @@
     	a375 = 36 ;
     	a528 = 36 ;
     	a35 = 6; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a262 == 32 && (a407 == 32 && a510 == 32)) && a592 == 32) && ((((input == 7) &&  cf==1 ) && a337 == 5) && a233 == 7))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -114498,7 +114498,7 @@
     	a379 = 33 ;
     	a474 = 35 ;
     	a160 = 11;
-    	}/* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if((((a214 == 3 && (a280 == 32 && a348 == 5)) && a592 == 32) && ((((input == 4) &&  cf==1 ) && a505 == 32) && a209 == 5))) {
     	a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -114679,7 +114679,7 @@
     	a458 = 34 ;
     	a486 = 36 ;
     	a16 = 13;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a486 == 32 && ((a486 == 32 && ((a334 == 8 && ( cf==1  && (input == 3))) && a582 == 32)) && a282 == 8)) && a432 == 32)) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -114696,7 +114696,7 @@
     	a18 = 10;
     	a393 = 12;
     	a202 = 12; 
-    	 /* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((a229 == 4 && ( cf==1  && (input == 5))) && a446 == 32) && (a244 == 8 && (a313 == 2 && (a477 == 32 && a376 == 4))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -114784,7 +114784,7 @@
     	a520 = 35 ;
     	a369 = 4;
     	a367 = 6; 
-    	 /* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a546 == 32 && (((a494 == 32 && a379 == 32) && a259 == 9) && a407 == 32)) && (a206 == 10 && ((input == 9) &&  cf==1 )))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -114803,7 +114803,7 @@
     	a341 = 36 ;
     	a18 = 12;
     	a47 = 9; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
     if(((a476 == 32 && a400 == 8) && (a348 == 5 && (a556 == 32 && (a218 == 6 && (((input == 2) &&  cf==1 ) && a585 == 32)))))) {
     	a78 -= (a78 - 20) < a78 ? 2 : 0;
@@ -114931,7 +114931,7 @@
     	a400 = 12;
     	a294 = 35 ;
     	a305 = 8;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if((((( cf==1  && (input == 6)) && a586 == 32) && a431 == 32) && (a345 == 10 && ((a336 == 11 && a493 == 32) && a214 == 3)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -114953,7 +114953,7 @@
     	a18 = 13;
     	a261 = 32 ;
     	a150 = 10; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a220 == 32 && (a528 == 32 && ((input == 10) &&  cf==1 ))) && (a587 == 32 && ((a366 == 32 && a330 == 7) && a546 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -115079,17 +115079,17 @@
     	a297 = 9;
     	a502 = 32 ;
     	a26 = 10; 
-    	 /* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm53(int input) {
+ void calculate_outputm53(int8_t  input) {
     if((((a323 == 11 && (a275 == 34 &&  cf==1 )) && a209 == 5) && ((a297 == 5 && (a295 == 10 && a476 == 32)) && a364 == 8))) {
     	if(((a233 == 7 && (a518 == 32 && ( cf==1  && a3 == 36))) && (((a229 == 4 && a247 == 11) && a560 == 32) && a263 == 7))) {
     		calculate_outputm472(input);
     	} 
     } 
 }
- void calculate_outputm473(int input) {
+ void calculate_outputm473(int8_t  input) {
     if((((a223 == 9 && (((input == 2) &&  cf==1 ) && a399 == 4)) && a366 == 32) && (a407 == 32 && (a323 == 11 && a400 == 8)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
     	a78 -= (a78 - 20) < a78 ? 3 : 0;
@@ -115124,7 +115124,7 @@
     	a334 = 11;
     	a520 = 36 ;
     	a84 = 11; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a592 == 32 && (a323 == 11 && (a209 == 5 && a505 == 32))) && ((((input == 4) &&  cf==1 ) && a277 == 8) && a379 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -115303,7 +115303,7 @@
     	a384 = 5;
     	a119 = 36 ;
     	a99 = 1;
-    	}/* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a477 == 32 && ((a348 == 5 && a587 == 32) && a546 == 32)) && (a263 == 7 && (( cf==1  && (input == 3)) && a402 == 32)))) {
     	a88 += (a88 + 20) > a88 ? 3 : 0;
@@ -115500,7 +115500,7 @@
     	a213 = 5;
     	a228 = 5;
     	a26 = 7;
-    	}/* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if(((a373 == 4 && ((a494 == 32 && a493 == 32) && a247 == 11)) && (a477 == 32 && (((input == 7) &&  cf==1 ) && a592 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -115645,7 +115645,7 @@
     	a206 = 9;
     	a476 = 33 ;
     	a292 = 10; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a508 == 32 && a297 == 5) && (a201 == 5 && (a560 == 32 && (a277 == 8 && (( cf==1  && (input == 9)) && a399 == 4)))))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -115769,7 +115769,7 @@
     	a482 = 35 ;
     	a201 = 10;
     	a199 = 4; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((((a215 == 32 && ( cf==1  && (input == 6))) && a578 == 32) && a366 == 32) && (a294 == 32 && (a241 == 7 && a205 == 9)))) {
     	a58 += (a58 + 20) > a58 ? 4 : 0;
@@ -115934,7 +115934,7 @@
     	a233 = 11;
     	a229 = 5;
     	a357 = 10;
-    	}/* printf("%d\n", 21) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 21) */; /* fflush(stdout) */; 
     } 
     if((((a364 == 8 && a521 == 32) && a558 == 32) && (((a366 == 32 && ((input == 1) &&  cf==1 )) && a244 == 8) && a400 == 8))) {
     	a104 += (a104 + 20) > a104 ? 2 : 0;
@@ -116136,7 +116136,7 @@
     	a419 = 36 ;
     	a203 = 7;
     	a160 = 12;
-    	}/* printf("%d\n", 22) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 22) */; /* fflush(stdout) */; 
     } 
     if(((a358 == 7 && a507 == 32) && ((a446 == 32 && ((a334 == 8 && ( cf==1  && (input == 10))) && a282 == 8)) && a324 == 6))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -116163,7 +116163,7 @@
     	a49 = 2;
     	a1 = 32 ;
     	a123 = 4;
-    	}/* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a337 == 5 && (a326 == 32 && ((((input == 8) &&  cf==1 ) && a323 == 11) && a416 == 32))) && (a480 == 32 && a502 == 32))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -116184,7 +116184,7 @@
     	a18 = 14;
     	a94 = 4;
     	a101 = 2; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a364 == 8 && a206 == 10) && (a505 == 32 && (((((input == 5) &&  cf==1 ) && a379 == 32) && a270 == 5) && a404 == 32)))) {
     	a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -116277,18 +116277,18 @@
     	a364 = 10;
     	a209 = 7;
     	a372 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm474(int input) {
+ void calculate_outputm474(int8_t  input) {
     if((((a400 == 8 && a364 == 8) && a384 == 3) && (a434 == 32 && ((a556 == 32 && ( cf==1  && (input == 7))) && a326 == 32)))) {
     	a184 -= (a184 - 20) < a184 ? 1 : 0;
     	cf = 0;
     	 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm475(int input) {
+ void calculate_outputm475(int8_t  input) {
     if(((((((input == 8) &&  cf==1 ) && a356 == 9) && a246 == 7) && a364 == 8) && ((a602 == 32 && a209 == 5) && a270 == 5))) {
     	a29 += (a29 + 20) > a29 ? 4 : 0;
     	cf = 0;
@@ -116337,7 +116337,7 @@
     	a375 = 33 ;
     	a364 = 7;
     	a118 = 9; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a259 == 9 && (( cf==1  && (input == 1)) && a464 == 32)) && a587 == 32) && ((a259 == 9 && a274 == 4) && a262 == 32))) {
     	a29 += (a29 + 20) > a29 ? 3 : 0;
@@ -116453,10 +116453,10 @@
     	a359 = 9;
     	a396 = 8;
     	a393 = 11; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm476(int input) {
+ void calculate_outputm476(int8_t  input) {
     if(((((a507 == 32 && a404 == 32) && a226 == 3) && a400 == 8) && (a353 == 3 && (a399 == 4 && ( cf==1  && (input == 10)))))) {
     	cf = 0;
     	if((a345 == 10 && a252 == 11)) {
@@ -116532,10 +116532,10 @@
     	a445 = 33 ;
     	a262 = 33 ;
     	a118 = 9;
-    	}/* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm479(int input) {
+ void calculate_outputm479(int8_t  input) {
     if(((a578 == 32 && (a262 == 32 && a446 == 32)) && (((((input == 7) &&  cf==1 ) && a474 == 32) && a382 == 4) && a592 == 32))) {
     	a171 -= (a171 - 20) < a171 ? 1 : 0;
     	cf = 0;
@@ -116650,7 +116650,7 @@
     	a336 = 11;
     	a505 = 33 ;
     	a94 = 5; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if((((a304 == 6 && a294 == 32) && a262 == 32) && (a508 == 32 && ((( cf==1  && (input == 9)) && a356 == 9) && a464 == 32)))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
@@ -116764,10 +116764,10 @@
     	a356 = 10;
     	a376 = 3;
     	a118 = 9;
-    	}/* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm54(int input) {
+ void calculate_outputm54(int8_t  input) {
     if((((a477 == 32 && a384 == 3) && a281 == 2) && (a280 == 32 && (((a116 == 33 &&  cf==1 ) && a554 == 32) && a453 == 32)))) {
     	if(((( cf==1  && a343 == 32) && a336 == 11) && (a206 == 10 && ((a520 == 32 && (a326 == 32 && a373 == 4)) && a498 == 32)))) {
     		calculate_outputm473(input);
@@ -116792,7 +116792,7 @@
     	} 
     } 
 }
- void calculate_outputm480(int input) {
+ void calculate_outputm480(int8_t  input) {
     if(((a458 == 32 && ((a295 == 10 && ((input == 9) &&  cf==1 )) && a480 == 32)) && ((a374 == 8 && a263 == 7) && a253 == 7))) {
     	a96 -= (a96 - 20) < a96 ? 1 : 0;
     	cf = 0;
@@ -116914,7 +116914,7 @@
     	a313 = 3;
     	a445 = 32 ;
     	a393 = 13; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if((((a585 == 32 && ((input == 2) &&  cf==1 )) && a376 == 4) && (((a404 == 32 && a431 == 32) && a263 == 7) && a260 == 8))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -117031,7 +117031,7 @@
     	a586 = 32 ;
     	a578 = 33 ;
     	a111 = 9; 
-    	 /* printf("%d\n", 17) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 17) */; /* fflush(stdout) */; 
     } 
     if(((a370 == 4 && ( cf==1  && (input == 8))) && (((a398 == 3 && (a366 == 32 && a507 == 32)) && a294 == 32) && a281 == 2))) {
     	a91 -= (a91 - 20) < a91 ? 2 : 0;
@@ -117139,10 +117139,10 @@
     	a359 = 9;
     	a356 = 9;
     	a4 = 6; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm482(int input) {
+ void calculate_outputm482(int8_t  input) {
     if(((((a482 == 32 && ( cf==1  && (input == 5))) && a318 == 32) && a453 == 32) && (a214 == 3 && (a330 == 7 && a336 == 11)))) {
     	a179 -= (a179 - 20) < a179 ? 2 : 0;
     	cf = 0;
@@ -117339,7 +117339,7 @@
     	a313 = 3;
     	a586 = 32 ;
     	a150 = 13;
-    	}/* printf("%d\n", 25) */; /* fflush(stdout) */; 
+    	}/* print8_t f("%d\n", 25) */; /* fflush(stdout) */; 
     } 
     if(((a477 == 32 && ((a318 == 32 && ((input == 9) &&  cf==1 )) && a432 == 32)) && (a482 == 32 && (a323 == 11 && a227 == 32)))) {
     	a113 += (a113 + 20) > a113 ? 1 : 0;
@@ -117453,7 +117453,7 @@
     	a323 = 11;
     	a263 = 7;
     	a99 = 8; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if(((a206 == 10 && ((( cf==1  && (input == 1)) && a228 == 4) && a282 == 8)) && ((a458 == 32 && a365 == 2) && a364 == 8))) {
     	a96 -= (a96 - 20) < a96 ? 2 : 0;
@@ -117580,7 +117580,7 @@
     	a262 = 32 ;
     	a236 = 6;
     	a94 = 1; 
-    	 /* printf("%d\n", 20) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 20) */; /* fflush(stdout) */; 
     } 
     if(((a326 == 32 && (a407 == 32 && a334 == 8)) && (a398 == 3 && ((a312 == 2 && ( cf==1  && (input == 6))) && a201 == 5)))) {
     	a58 += (a58 + 20) > a58 ? 3 : 0;
@@ -117699,10 +117699,10 @@
     	a368 = 4;
     	a587 = 32 ;
     	a16 = 13; 
-    	 /* printf("%d\n", 18) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 18) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm483(int input) {
+ void calculate_outputm483(int8_t  input) {
     if((((a375 == 32 && (( cf==1  && (input == 2)) && a280 == 32)) && a416 == 32) && (a246 == 7 && (a434 == 32 && a502 == 32)))) {
     	a179 += (a179 + 20) > a179 ? 4 : 0;
     	cf = 0;
@@ -117761,7 +117761,7 @@
     	a375 = 34 ;
     	a214 = 4;
     	a49 = 7; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
     if(((a434 == 32 && (a404 == 32 && a507 == 32)) && (((((input == 1) &&  cf==1 ) && a297 == 5) && a379 == 32) && a345 == 10))) {
     	cf = 0;
@@ -117849,10 +117849,10 @@
     	a380 = 4;
     	a399 = 4;
     	a355 = 11; 
-    	 /* printf("%d\n", 26) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 26) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm484(int input) {
+ void calculate_outputm484(int8_t  input) {
     if(((a602 == 32 && ( cf==1  && (input == 7))) && (a375 == 32 && (((a477 == 32 && a520 == 32) && a213 == 3) && a326 == 32)))) {
     	a2 -= (a2 - 20) < a2 ? 3 : 0;
     	cf = 0;
@@ -117918,7 +117918,7 @@
     	a277 = 7;
     	a558 = 32 ;
     	a70 = 6; 
-    	 /* printf("%d\n", 23) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 23) */; /* fflush(stdout) */; 
     } 
     if((((a474 == 32 && ( cf==1  && (input == 1))) && a528 == 32) && ((a375 == 32 && (a226 == 3 && a368 == 5)) && a304 == 6))) {
     	a2 -= (a2 - 20) < a2 ? 4 : 0;
@@ -117982,7 +117982,7 @@
     	a227 = 33 ;
     	a399 = 3;
     	a23 = 13; 
-    	 /* printf("%d\n", 16) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 16) */; /* fflush(stdout) */; 
     } 
     if(((a295 == 10 && a587 == 32) && (a434 == 32 && (a402 == 32 && ((( cf==1  && (input == 2)) && a353 == 3) && a494 == 32))))) {
     	a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -117994,7 +117994,7 @@
     	a49 = 6;
     	a602 = 34 ;
     	a363 = 4; 
-    	 /* printf("%d\n", 19) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 19) */; /* fflush(stdout) */; 
     } 
     if(((a516 == 32 && (a396 == 7 && ( cf==1  && (input == 8)))) && (a369 == 2 && ((a206 == 10 && a379 == 32) && a480 == 32)))) {
     	a58 += (a58 + 20) > a58 ? 1 : 0;
@@ -118090,10 +118090,10 @@
     	a205 = 10;
     	a227 = 34 ;
     	a49 = 7; 
-    	 /* printf("%d\n", 15) */; /* fflush(stdout) */; 
+    	 /* print8_t f("%d\n", 15) */; /* fflush(stdout) */; 
     } 
 }
- void calculate_outputm55(int input) {
+ void calculate_outputm55(int8_t  input) {
     if(((a560 == 32 && (a215 == 32 && ((( cf==1  && a128 == 33) && a280 == 32) && a582 == 32))) && (a435 == 32 && a375 == 32))) {
     	if((((((a375 == 32 && (a80 == 36 &&  cf==1 )) && a382 == 4) && a546 == 32) && a356 == 9) && (a281 == 2 && a445 == 32))) {
     		calculate_outputm480(input);
@@ -118114,7 +118114,7 @@
     } 
 }
 
- void calculate_output(int input) {
+ void calculate_output(int8_t  input) {
         cf = 1;
 
     if((a482 == 33 && ((a359 == 9 && (a318 == 33 && (a244 == 7 && (( cf==1  && a18 == 9) && a502 == 33)))) && a375 == 33))) {
@@ -118301,17 +118301,17 @@
     errorCheck();
 
     if( cf==1 ) 
-    	/* fprintf(stderr, "Invalid input: %d\n", input) */; 
+    	/* fprint8_t f(stderr, "Invalid input: %d\n", input) */; 
 }
 
-int main()
+int8_t  main()
 {
     // main i/o-loop
     while(1)
     {
         // read input
-        int input;
-        input = __VERIFIER_nondet_int(); /* scanf("%d", &input); */        
+        int8_t  input;
+        input = __VERIFIER_nondet_int8_t (); /* scanf("%d", &input); */        
         // operate eca engine
         if((input != 5) && (input != 6) && (input != 1) && (input != 7) && (input != 2) && (input != 8) && (input != 3) && (input != 9) && (input != 10) && (input != 4))
           return -2;

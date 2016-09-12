@@ -76,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
+public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	// size suggestion for random splits of blocks for efficiency reasons
 	public static final int SUGGESTED_RANDOM_SPLIT_SIZE = 200;
 	

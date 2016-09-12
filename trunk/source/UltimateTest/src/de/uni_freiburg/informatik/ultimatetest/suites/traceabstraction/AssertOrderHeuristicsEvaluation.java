@@ -111,7 +111,7 @@ public class AssertOrderHeuristicsEvaluation extends
 //		"examples/programs/random",
 //		"examples/programs/real-life",
 //		"examples/programs/reals",
-//		"examples/programs/recursivePrograms",
+//		"examples/programs/recursive/regression",
 //		"examples/programs/regression",
 //		"examples/programs/scalable",
 //		"examples/programs/toy",

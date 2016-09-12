@@ -2439,15 +2439,6 @@ public class NestedWordAutomaton<LETTER, STATE>
 		return result;
 	}
 	
-	public static <LETTER, STATE> boolean sameAlphabet(final INestedWordAutomatonSimple<LETTER, STATE> nwa1,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa2) {
-		boolean result = true;
-		result = result && nwa1.getInternalAlphabet().equals(nwa2.getInternalAlphabet());
-		result = result && nwa1.getCallAlphabet().equals(nwa2.getCallAlphabet());
-		result = result && nwa1.getReturnAlphabet().equals(nwa2.getReturnAlphabet());
-		return result;
-	}
-	
 	// public InternalTransitions
 	// getInternalTransitions(IAuxiliaryStateContainer<LETTER,STATE> state,
 	// LETTER symbol) {

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
@@ -44,7 +44,7 @@ public class ArrayEquality {
 	private final TermVariable lhs;
 	private final TermVariable rhs;
 
-	public ArrayEquality(Term term) throws ArrayEqualityException {
+	public ArrayEquality(final Term term) throws ArrayEqualityException {
 		if (!(term instanceof ApplicationTerm)) {
 			throw new ArrayEqualityException("no ApplicationTerm");
 		}
@@ -52,7 +52,7 @@ public class ArrayEquality {
 		if (!eqAppTerm.getFunction().getName().equals("=")) {
 			throw new ArrayEqualityException("no equality");
 		}
-		if (!(eqAppTerm.getParameters().length == 2)) {
+		if (eqAppTerm.getParameters().length != 2) {
 			throw new ArrayEqualityException("no binary equality");
 		}
 		mOriginalTerm = term;
@@ -96,7 +96,7 @@ public class ArrayEquality {
 
 		private static final long serialVersionUID = -5344050289008681972L;
 
-		public ArrayEqualityException(String message) {
+		public ArrayEqualityException(final String message) {
 			super(message);
 		}
 	}
@@ -109,7 +109,7 @@ public class ArrayEquality {
 		private final List<ArrayEquality> mArrayEqualities = new ArrayList<ArrayEquality>();
 		private final List<Term> remainingTerms = new ArrayList<Term>();
 
-		public ArrayEqualityExtractor(Term[] terms) {
+		public ArrayEqualityExtractor(final Term[] terms) {
 			for (final Term term : terms) {
 				ArrayEquality au;
 				try {

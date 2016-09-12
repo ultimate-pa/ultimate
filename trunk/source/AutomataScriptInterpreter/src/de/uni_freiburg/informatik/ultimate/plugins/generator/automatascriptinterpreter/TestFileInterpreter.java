@@ -216,7 +216,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			}
 			String message = "Right side has incorrect type." + System.getProperty("line.separator");
 			message = message.concat("Expected: " + var.getReturnType().getSimpleName() + "\tGot: "
-					+ children.get(1).getReturnType().getSimpleName() + "");
+					+ children.get(1).getReturnType().getSimpleName());
 			final String longDescription = message;
 			throw new InterpreterException(errorLocation, longDescription);
 			
@@ -268,7 +268,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			String message = "Right operand of \"" + be.getOperatorAsString() + "\" has incorrect type."
 					+ System.getProperty("line.separator");
 			message = message.concat("Expected: " + be.getReturnType().getSimpleName() + "\tGot: "
-					+ children.get(1).getReturnType().getSimpleName() + "");
+					+ children.get(1).getReturnType().getSimpleName());
 			final String longDescription = message;
 			throw new InterpreterException(errorLocation, longDescription);
 		}

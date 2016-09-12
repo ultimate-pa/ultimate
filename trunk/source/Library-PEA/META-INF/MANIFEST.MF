@@ -15,7 +15,6 @@ Export-Package: pea,
  pea.util,
  pea.util.z
 Require-Bundle: Library-UltimateCore,
- Library-log4j,
  Library-jdom,
  Library-xerces,
  BoogiePreprocessor,

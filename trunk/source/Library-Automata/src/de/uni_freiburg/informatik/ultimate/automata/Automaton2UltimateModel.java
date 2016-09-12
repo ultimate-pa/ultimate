@@ -28,8 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.automata;
 
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.alternating.visualization.AAToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.AAToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;

@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            Class of the states from the automata
  */
-public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
+public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	/**
 	 * Initial amount of blocks.
 	 */

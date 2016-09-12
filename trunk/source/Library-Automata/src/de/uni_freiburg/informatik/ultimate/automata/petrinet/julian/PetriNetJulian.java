@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
@@ -36,6 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -83,7 +84,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		assert (!constantTokenAmount() || transitionsPreserveTokenAmount());
 	}
 
-	public PetriNetJulian(final AutomataLibraryServices services, 
+	public PetriNetJulian(final AutomataLibraryServices services,
 			final INestedWordAutomaton<S, C> nwa)
 			throws AutomataLibraryException {
 		mServices = services;
@@ -246,14 +247,14 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 
 
 
-	public PetriNetRun<S, C> acceptingRun() throws AutomataLibraryException {
+	public PetriNetRun<S, C> acceptingRun() throws AutomataOperationCanceledException {
 		// NestedRun<S, C> test = getAcceptingNestedRun();
 		// System.out.print(test);
 		return (new PetriNetUnfolder<S, C>(mServices, this, PetriNetUnfolder.order.ERV,
 				false, true)).getAcceptingRun();
 	}
 
-	public NestedRun<S, C> getAcceptingNestedRun() throws AutomataLibraryException {
+	public NestedRun<S, C> getAcceptingNestedRun() {
 		final EmptinessPetruchio<S, C> ep = new EmptinessPetruchio<S, C>(mServices, this);
 		final NestedRun<S, C> result = ep.getResult();
 

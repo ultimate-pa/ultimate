@@ -28,10 +28,10 @@ public class BoogieUtil {
 	 *
 	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
 	 */
-	public static IBoogieVar createTemporaryIBoogieVar(String identifier, IBoogieType type) {
+	public static IBoogieVar createTemporaryIBoogieVar(final String identifier, final IBoogieType type) {
 		return new IBoogieVar() {
 			@Override
-			public String getIdentifier() {
+			public String getGloballyUniqueId() {
 				return identifier;
 			}
 
@@ -60,7 +60,7 @@ public class BoogieUtil {
 	 *            {@link IdentifierExpression}
 	 * @return expression references a variable or constant
 	 */
-	public static boolean isVariable(IdentifierExpression ie) {
+	public static boolean isVariable(final IdentifierExpression ie) {
 		final DeclarationInformation di = ie.getDeclarationInformation();
 		switch (di.getStorageClass()) {
 		case PROC_FUNC:
@@ -79,7 +79,7 @@ public class BoogieUtil {
 		}
 	}
 
-	public static boolean isGlobal(IBoogieVar ibv) {
+	public static boolean isGlobal(final IBoogieVar ibv) {
 		if (ibv instanceof IProgramVar) {
 			return ((IProgramVar) ibv).isGlobal();
 		} else if (ibv instanceof BoogieConst) {
@@ -89,7 +89,7 @@ public class BoogieUtil {
 		}
 	}
 
-	public static Operator negateRelOp(Operator relOp) {
+	public static Operator negateRelOp(final Operator relOp) {
 		switch (relOp) {
 		case COMPEQ:
 			return Operator.COMPNEQ;

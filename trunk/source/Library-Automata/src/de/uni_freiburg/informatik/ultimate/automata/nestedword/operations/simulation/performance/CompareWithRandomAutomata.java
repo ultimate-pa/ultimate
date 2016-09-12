@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomDfa;
@@ -54,11 +53,11 @@ public final class CompareWithRandomAutomata<LETTER, STATE> extends UnaryNwaOper
 	/**
 	 * The inputed buechi automaton.
 	 */
-	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	/**
 	 * The resulting buechi automaton.
 	 */
-	private final INestedWordAutomaton<LETTER, STATE> mResult;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mResult;
 
 	/**
 	 * Compares the different types of simulation methods for buechi reduction
@@ -75,7 +74,7 @@ public final class CompareWithRandomAutomata<LETTER, STATE> extends UnaryNwaOper
 	 *             framework.
 	 */
 	public CompareWithRandomAutomata(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mResult = operand;
@@ -90,7 +89,7 @@ public final class CompareWithRandomAutomata<LETTER, STATE> extends UnaryNwaOper
 		final int totalityInPerc = 10;
 		final int logEvery = 100;
 		final int amount = 1000;
-		INestedWordAutomaton<String, String> buechi;
+		INestedWordAutomatonSimple<String, String> buechi;
 
 		for (int i = 1; i <= amount; i++) {
 			if (i % logEvery == 0) {

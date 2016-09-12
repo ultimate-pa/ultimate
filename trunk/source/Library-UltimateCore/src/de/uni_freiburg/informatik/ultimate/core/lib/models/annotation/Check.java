@@ -116,6 +116,10 @@ public class Check extends AbstractAnnotations {
 		 * Invariant of a correctness witness
 		 */
 		WITNESS_INVARIANT,
+		/**
+		 * Unsigned int overflow
+		 */
+		UINT_OVERFLOW,
 		// add missing failure types...
 
 	}
@@ -168,6 +172,8 @@ public class Check extends AbstractAnnotations {
 			return "invariant of correctness witness holds";
 		case UNKNOWN:
 			return "unknown kind of specification holds";
+		case UINT_OVERFLOW:
+			return "there are no unsigned integer over- or underflows";
 		default:
 			throw new AssertionError();
 		}
@@ -205,6 +211,8 @@ public class Check extends AbstractAnnotations {
 			return "invariant of correctness witness can be violated";
 		case UNKNOWN:
 			return "unknown kind of specification may be violated";
+		case UINT_OVERFLOW:
+			return "an unsigned integer over- or underflow may occur";
 		default:
 			throw new AssertionError();
 		}

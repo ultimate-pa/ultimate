@@ -34,7 +34,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -67,7 +67,7 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAuto
 	private final ManagedScript mBoogie2Smt;
 
 	public AbsIntNonSmtInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predUnifier,
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predUnifier,
 			final ManagedScript smtManager, final Boogie2SmtSymbolTable symbolTable,
 			final IRun<CodeBlock, IPredicate> currentCounterexample,
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
@@ -87,13 +87,13 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAuto
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> getPathProgramAutomaton(
-			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predicateUnifier) {
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predicateUnifier) {
 		return getPathProgramAutomatonNew(oldAbstraction, predicateUnifier);
 		// return getPathProgramAutomatonOld(oldAbstraction, predicateUnifier);
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> getPathProgramAutomatonOld(
-			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predicateUnifier) {
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predicateUnifier) {
 
 		mLogger.info("Creating interpolant automaton from AI using only explored space.");
 
@@ -150,7 +150,7 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAuto
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> getPathProgramAutomatonNew(
-			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predicateUnifier) {
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predicateUnifier) {
 		mLogger.info("Creating interpolant automaton from AI using only explored space.");
 
 		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<>(

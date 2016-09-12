@@ -70,7 +70,7 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, Code
 	public STATE defineInitialVariables(final CodeBlock current, final STATE state) {
 		final Set<IProgramVar> vars = new HashSet<>();
 		mBoogieVarTable.getGlobals().entrySet().stream().forEach(a -> vars.add(a.getValue()));
-		mBoogieVarTable.getLocals(current.getPreceedingProcedure()).entrySet().stream()
+		mBoogieVarTable.getLocals(current.getPrecedingProcedure()).entrySet().stream()
 				.forEach(a -> vars.add(a.getValue()));
 
 		return state.addVariables(vars);
@@ -97,7 +97,7 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, Code
 		// - add old locals from the scope we are returning to
 		// - add globals that were masked by this scope from the scope we are returning to
 
-		final String sourceProc = action.getPreceedingProcedure();
+		final String sourceProc = action.getPrecedingProcedure();
 		final String targetProc = action.getSucceedingProcedure();
 		final Set<IProgramVar> varsNeededFromOldScope = new HashSet<>();
 
@@ -153,7 +153,7 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, Code
 	private STATE defineVariablesAfterCall(final CodeBlock action, final STATE localPreState) {
 		// if we call we just need to update all local variables, i.e., remove all the ones from the current scope
 		// and add all the ones from the new scope (thus also automatically masking globals)
-		final String remove = action.getPreceedingProcedure();
+		final String remove = action.getPrecedingProcedure();
 		final String add = action.getSucceedingProcedure();
 
 		// remove current locals

@@ -51,28 +51,42 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class BuchiComplementSVW<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
-	
+public final class BuchiComplementSVW<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final BuchiComplementAutomatonSVW<LETTER, STATE> mResult;
 	
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
+	public BuchiComplementSVW(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
+		super(services);
+		mOperand = operand;
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		mResult = new BuchiComplementAutomatonSVW<>(mServices, operand);
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
+	}
+	
 	@Override
 	public String operationName() {
-		return "buchiComplementSVW";
+		return "BuchiComplementSVW";
 	}
 	
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
-	}
-	
-	public BuchiComplementSVW(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		super(services);
-		mOperand = operand;
-		mLogger.info(startMessage());
-		mResult = new BuchiComplementAutomatonSVW<LETTER, STATE>(mServices, operand);
-		mLogger.info(exitMessage());
 	}
 	
 	@Override
@@ -86,9 +100,7 @@ public class BuchiComplementSVW<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return ResultChecker.buchiComplement(mServices, mOperand, mResult);
 	}
-	
 }

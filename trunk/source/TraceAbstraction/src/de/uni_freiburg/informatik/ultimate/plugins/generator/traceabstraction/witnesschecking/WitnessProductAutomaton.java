@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking;
@@ -35,7 +35,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -96,7 +95,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 		}
 		private ISLPredicate constructNewResultState(final IPredicate cfgAutomatonState, final WitnessNode witnessNode, final Integer stutteringSteps) {
 			return mSmtManager.getPredicateFactory().newTrueSLPredicateWithWitnessNode(
-					((ISLPredicate) cfgAutomatonState).getProgramPoint(), witnessNode, stutteringSteps); 
+					((ISLPredicate) cfgAutomatonState).getProgramPoint(), witnessNode, stutteringSteps);
 		}
 		
 		public IPredicate getCfgAutomatonState() {
@@ -120,7 +119,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	public WitnessProductAutomaton(
 			final IUltimateServiceProvider services,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> controlFlowAutomaton,
-			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton,
+			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton,
 			final SmtManager smtManager) {
 		mWitnessLocationMatcher = new WitnessLocationMatcher(services, controlFlowAutomaton, witnessAutomaton);
 		mControlFlowAutomaton = controlFlowAutomaton;
@@ -132,7 +131,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	}
 
 	private ProductState getOrConstructProductState(
-			final IPredicate cfgAutomatonState, 
+			final IPredicate cfgAutomatonState,
 			final WitnessNode witnessAutomatonState,
 			final Integer stutteringSteps) {
 		ProductState productState = mCfg2Witness2Result.get(cfgAutomatonState, witnessAutomatonState, stutteringSteps);

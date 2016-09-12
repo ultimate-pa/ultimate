@@ -5,7 +5,7 @@
          point="de.uni_freiburg.informatik.ultimate.ep.controller">
       <impl
             class="de.uni_freiburg.informatik.ultimate.gui.GuiController"
-            isGraphical="true"/>
+            isGraphical="true" preference="100"/>
    </extension>
    
    <extension

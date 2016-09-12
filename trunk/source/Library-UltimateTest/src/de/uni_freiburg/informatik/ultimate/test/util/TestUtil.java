@@ -536,8 +536,10 @@ public final class TestUtil {
 				new HashMap<String, TerminationAnalysisOverallResult>();
 		map.put("#rTerminationDerivable", TerminationAnalysisOverallResult.TERMINATING);
 		map.put("#rTermination", TerminationAnalysisOverallResult.TERMINATING);
+		map.put("#Terminating", TerminationAnalysisOverallResult.TERMINATING);
 		map.put("#rNonTerminationDerivable", TerminationAnalysisOverallResult.NONTERMINATING);
 		map.put("#rNonTermination", TerminationAnalysisOverallResult.NONTERMINATING);
+		map.put("#Nonterminating", TerminationAnalysisOverallResult.NONTERMINATING);
 		map.put("#SyntaxError", TerminationAnalysisOverallResult.SYNTAX_ERROR);
 		return map;
 	}

@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.incre
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.ComplementDeterministicNwa;
@@ -47,10 +46,12 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * the "real" incremental inclusion.
  * This implementation could be improved by applying a removal of dead ends
  * and a minimization to the difference after each step.
- * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class InclusionViaDifference<LETTER, STATE>
 		extends AbstractIncrementalInclusionCheck<LETTER, STATE> {
@@ -60,62 +61,68 @@ public class InclusionViaDifference<LETTER, STATE>
 	private NestedRun<LETTER, STATE> mAcceptingRun;
 	
 	private final boolean mRemoveDeadEnds = true;
-
+	
 	/**
-	 * @param services Ultimate services
-	 * @param stateFactory state factory
-	 * @param a minuend
-	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param nwaA
+	 *            minuend
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
-	public InclusionViaDifference(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> a)
-					throws AutomataOperationCanceledException {
-		this(services, stateFactory, stateFactory, a);
-		
+	public InclusionViaDifference(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwaA) throws AutomataOperationCanceledException {
+		this(services, stateFactory, stateFactory, nwaA);
 	}
 	
 	/**
 	 * Constructor that uses different stateFactories for intersection and
 	 * determinization. This is currently needed when we use the inclusion
 	 * check in program verification.
-	 * @param services Ultimate services
-	 * @param stateFactoryIntersect state factory for intersection
-	 * @param stateFactoryDeterminize state factory for determinization
-	 * @param a minuend
-	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactoryIntersect
+	 *            state factory for intersection
+	 * @param stateFactoryDeterminize
+	 *            state factory for determinization
+	 * @param nwaA
+	 *            minuend
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public InclusionViaDifference(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactoryIntersect,
 			final IStateFactory<STATE> stateFactoryDeterminize,
-			final INestedWordAutomatonSimple<LETTER, STATE> a)
-					throws AutomataOperationCanceledException {
-		super(services, a);
+			final INestedWordAutomatonSimple<LETTER, STATE> nwaA)
+			throws AutomataOperationCanceledException {
+		super(services, nwaA);
 		mStateFactoryIntersect = stateFactoryIntersect;
 		mStateFactoryDeterminize = stateFactoryDeterminize;
-		// initialize difference. B_1,...,B_n is emtpy
-		mDifference = a;
+		// initialize difference. B_1,...,B_n is empty
+		mDifference = nwaA;
 		mAcceptingRun = (new IsEmpty<LETTER, STATE>(mServices, mDifference)).getNestedRun();
 	}
-
+	
 	@Override
 	public NestedRun<LETTER, STATE> getCounterexample() {
 		return mAcceptingRun;
 	}
-
+	
 	@Override
-	public void addSubtrahend(final INestedWordAutomatonSimple<LETTER, STATE> nwa)
-			throws AutomataLibraryException {
+	public void addSubtrahend(final INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
 		super.addSubtrahend(nwa);
-		final INestedWordAutomatonSimple<LETTER, STATE> determinized =
-				new DeterminizeNwa<>(mServices, nwa, new PowersetDeterminizer<>(
-						nwa, true, mStateFactoryDeterminize), mStateFactoryDeterminize, null, true);
-		final INestedWordAutomatonSimple<LETTER, STATE> complemented =
-				new ComplementDeterministicNwa<>(determinized);
+		final INestedWordAutomatonSimple<LETTER, STATE> determinized = new DeterminizeNwa<>(mServices, nwa,
+				new PowersetDeterminizer<>(nwa, true, mStateFactoryDeterminize), mStateFactoryDeterminize, null, true);
+		final INestedWordAutomatonSimple<LETTER, STATE> complemented = new ComplementDeterministicNwa<>(determinized);
 		final INestedWordAutomatonSimple<LETTER, STATE> difference =
 				new IntersectNwa<>(mDifference, complemented, mStateFactoryIntersect, false);
 		if (mRemoveDeadEnds) {
-			final IDoubleDeckerAutomaton<LETTER, STATE> removedDeadEnds =
+			final INestedWordAutomatonSimple<LETTER, STATE> removedDeadEnds =
 					(new RemoveDeadEnds<LETTER, STATE>(mServices, difference)).getResult();
 			mDifference = removedDeadEnds;
 		} else {
@@ -125,7 +132,7 @@ public class InclusionViaDifference<LETTER, STATE>
 	}
 	
 	/**
-	 * @return number of states
+	 * @return The number of states in the difference.
 	 */
 	public int size() {
 		return mDifference.size();

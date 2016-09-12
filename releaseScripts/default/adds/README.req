@@ -1,0 +1,33 @@
+This archive contains Ultimate Requirements Analyzer.
+Please direct any questions to one of the maintainers and/or consult the
+websites.
+
+Websites:
+https://github.com/ultimate-pa/ultimate
+https://ultimate.informatik.uni-freiburg.de/
+
+Maintainers:
+dietsch@informatik.uni-freiburg.de
+heizmann@informatik.uni-freiburg.de
+nutz@informatik.uni-freiburg.de
+greitsch@informatik.uni-freiburg.de
+
+--------------------------------------------------------------------------------
+
+1. Usage
+The Ultimate Requirements Analyzer should be called with the run-script. For
+Linux, the script is called run.sh, for Windows, the script is called run.bat.
+To run the Requirements Analyzer, use the following command.
+Linux:
+
+   $ ./run.sh <requirements-file>
+
+Windows:
+
+   > run.bat <requirements-file>
+
+where
+ * <requirements-file> is the path to the file containing the requirements that
+ * should be checked.
+
+The result of the Requirements Analyzer is written to stdout.

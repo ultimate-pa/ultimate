@@ -88,7 +88,7 @@ public class Svcomp2016CTranslationTestSuite extends AbstractEvalTestSuite {
 			// "examples/programs/abstractInterpretationNoRec/",
 //			 "examples/programs/regression/bpl/",
 //			 "examples/programs/regression/c/",
-//			// "examples/programs/recursivePrograms",
+//			// "examples/programs/recursive/regression",
 //			
 //			 /* SV-COMP repo */
 //			"examples/svcomp/loops/", 

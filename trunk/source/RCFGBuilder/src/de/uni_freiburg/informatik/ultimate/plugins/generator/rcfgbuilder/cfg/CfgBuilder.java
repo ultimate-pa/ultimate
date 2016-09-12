@@ -1254,7 +1254,7 @@ public class CfgBuilder {
 			List<CodeBlock> result = null;
 			final Map<ProgramPoint, List<CodeBlock>> succ2edge = new HashMap<ProgramPoint, List<CodeBlock>>();
 			for (final RCFGEdge edge : pp.getOutgoingEdges()) {
-				if (!(edge instanceof Return)) {
+				if (!(edge instanceof Return) && !(edge instanceof Summary)) {
 					final CodeBlock cb = (CodeBlock) edge;
 					final ProgramPoint succ = (ProgramPoint) cb.getTarget();
 					List<CodeBlock> edges = succ2edge.get(succ);

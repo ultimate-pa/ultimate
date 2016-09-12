@@ -473,11 +473,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	/**
 	 * The inputed buechi automaton.
 	 */
-	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	/**
-	 * The resulting buechi automaton.
-	 */
-	private final INestedWordAutomaton<LETTER, STATE> mResult;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	/**
 	 * Holds time measures of the comparison.
 	 */
@@ -501,13 +497,12 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	 *             an empty call and return alphabet.
 	 */
 	public CompareReduceBuchiSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		verifyAutomatonValidity(operand);
 
 		mLoggedLines = new LinkedList<String>();
 		mOperand = operand;
-		mResult = operand;
 		mTimeMeasures = new LinkedHashMap<>();
 		mCountingMeasures = new LinkedHashMap<>();
 		mExternalOverallTime = 0;
@@ -572,8 +567,8 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
 	 */
 	@Override
-	public Object getResult() {
-		return mResult;
+	public String getResult() {
+		return "no result";
 	}
 
 	/*
@@ -596,7 +591,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	 * @throws IllegalArgumentException
 	 *             If the given automaton is not valid
 	 */
-	public void verifyAutomatonValidity(final INestedWordAutomaton<LETTER, STATE> automaton) {
+	public void verifyAutomatonValidity(final INestedWordAutomatonSimple<LETTER, STATE> automaton) {
 		if (!automaton.getCallAlphabet().isEmpty() || !automaton.getReturnAlphabet().isEmpty()) {
 			throw new IllegalArgumentException(
 					"The inputed automaton is no Buechi-automaton. It must have an empty call and return alphabet.");
@@ -682,7 +677,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	 * @return The out of memory performance object
 	 */
 	private SimulationPerformance createOutOfMemoryPerformance(final String name, final ESimulationType type,
-			final boolean useSCCs, final INestedWordAutomaton<LETTER, STATE> operand) {
+			final boolean useSCCs, final INestedWordAutomatonSimple<LETTER, STATE> operand) {
 		final SimulationPerformance performance = SimulationPerformance.createOutOfMemoryPerformance(type, useSCCs);
 		performance.setName(name);
 		performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, operand.size());
@@ -704,7 +699,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	 * @return The timed out performance object
 	 */
 	private SimulationPerformance createTimedOutPerformance(final String name, final ESimulationType type,
-			final boolean useSCCs, final INestedWordAutomaton<LETTER, STATE> operand) {
+			final boolean useSCCs, final INestedWordAutomatonSimple<LETTER, STATE> operand) {
 		final SimulationPerformance performance = SimulationPerformance.createTimedOutPerformance(type, useSCCs);
 		performance.setName(name);
 		performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, operand.size());
@@ -802,7 +797,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	@SuppressWarnings("unchecked")
 	protected void appendMethodPerformanceToLog(final Object method, final String name, final ESimulationType type,
 			final boolean usedSCCs, final boolean timedOut, final boolean outOfMemory,
-			final INestedWordAutomaton<LETTER, STATE> operand) {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
 		createAndResetPerformanceHead();
 
 		if (method instanceof ASimulation) {

@@ -38,57 +38,53 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class BuchiComplementRE<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
-	
-	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+/**
+ * Buchi complementation "<tt>RE</tt>".
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
+public final class BuchiComplementRE<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private INestedWordAutomaton<LETTER, STATE> mResult;
 	
-	private boolean mBuchiComplementREApplicable;
+	private boolean mBuchiComplementReApplicable;
 	
-	@Override
-	public String operationName() {
-		return "buchiComplementRE";
-	}
-	
-	@Override
-	public String exitMessage() {
-		if (mBuchiComplementREApplicable) {
-			return "Finished " + operationName() + " Result " + mResult.sizeInformation();
-		} else {
-			return "Unable to perform " + operationName() + "on this input";
-		}
-	}
-	
-	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
-		return mOperand;
-	}
-	
-	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() {
-		if (mBuchiComplementREApplicable) {
-			return mResult;
-		} else {
-			assert mResult == null;
-			throw new UnsupportedOperationException("Operation was not applicable");
-		}
-	}
-	
-	public BuchiComplementRE(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            operand
+	 * @throws AutomataLibraryException
+	 *             if construction fails
+	 */
+	public BuchiComplementRE(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataLibraryException {
 		super(services);
 		mOperand = operand;
-		mLogger.info(startMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		
 		final INestedWordAutomaton<LETTER, STATE> operandWithoutNonLiveStates =
 				(new ReachableStatesCopy<LETTER, STATE>(mServices, operand, false, false, false, true)).getResult();
 		if (new IsDeterministic<>(mServices, operandWithoutNonLiveStates).getResult()) {
-			mLogger.info("Rüdigers determinization knack not necessary, already deterministic");
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("Rüdigers determinization knack not necessary, already deterministic");
+			}
 			mResult = (new BuchiComplementDeterministic<LETTER, STATE>(mServices, operandWithoutNonLiveStates))
 					.getResult();
 		} else {
 			final PowersetDeterminizer<LETTER, STATE> pd =
-					new PowersetDeterminizer<LETTER, STATE>(operandWithoutNonLiveStates, true, stateFactory);
+					new PowersetDeterminizer<>(operandWithoutNonLiveStates, true, stateFactory);
 			final INestedWordAutomaton<LETTER, STATE> determinized =
 					(new DeterminizeUnderappox<LETTER, STATE>(mServices, operandWithoutNonLiveStates, pd)).getResult();
 			final INestedWordAutomaton<LETTER, STATE> determinizedComplement =
@@ -99,30 +95,62 @@ public class BuchiComplementRE<LETTER, STATE> extends UnaryNwaOperation<LETTER, 
 			final NestedLassoRun<LETTER, STATE> run =
 					(new BuchiIsEmpty<LETTER, STATE>(mServices, intersectionWithOperand)).getAcceptingNestedLassoRun();
 			if (run == null) {
-				mLogger.info("Rüdigers determinization knack applicable");
-				mBuchiComplementREApplicable = true;
+				if (mLogger.isInfoEnabled()) {
+					mLogger.info("Rüdigers determinization knack applicable");
+				}
+				mBuchiComplementReApplicable = true;
 				mResult = determinizedComplement;
 			} else {
-				mLogger.info("Rüdigers determinization knack not applicable");
-				mBuchiComplementREApplicable = false;
+				if (mLogger.isInfoEnabled()) {
+					mLogger.info("Rüdigers determinization knack not applicable");
+				}
+				mBuchiComplementReApplicable = false;
 				mResult = null;
 			}
 		}
-		
-		mLogger.info(exitMessage());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 	
 	/**
 	 * @return true if buchiComplementRE was applicable on the input.
 	 */
 	public boolean applicable() {
-		return mBuchiComplementREApplicable;
+		return mBuchiComplementReApplicable;
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public String operationName() {
+		return "BuchiComplementRE";
+	}
+	
+	@Override
+	public String exitMessage() {
+		if (mBuchiComplementReApplicable) {
+			return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
+		} else {
+			return "Unable to perform " + operationName() + "on this input";
+		}
+	}
+	
+	@Override
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
+		if (mBuchiComplementReApplicable) {
+			return mResult;
+		} else {
+			assert mResult == null;
+			throw new UnsupportedOperationException("Operation was not applicable");
+		}
+	}
+	
+	@Override
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return ResultChecker.buchiComplement(mServices, mOperand, mResult);
 	}
 	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
+	}
 }

@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
@@ -271,7 +271,7 @@ public class LassoRankerStarter {
 		final boolean withBranchEncoders = false;
 		final List<CodeBlock> codeBlocks = Collections.unmodifiableList(nw.asList());
 		return SequentialComposition.getInterproceduralTransFormula(mgdScript, modGlobVarManager, simplify, extPqe,
-				tranformToCNF, withBranchEncoders, mLogger, mServices, codeBlocks, 
+				tranformToCNF, withBranchEncoders, mLogger, mServices, codeBlocks,
 				mXnfConversionTechnique, mSimplificationTechnique, mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
 	}
 
@@ -332,7 +332,7 @@ public class LassoRankerStarter {
 				templates.add(new ComposedLexicographicTemplate(parts));
 			}
 		}
-		return templates.toArray(new RankingTemplate[0]);
+		return templates.toArray(new RankingTemplate[templates.size()]);
 	}
 
 	/**
@@ -363,7 +363,7 @@ public class LassoRankerStarter {
 		if (store.getBoolean(PreferencesInitializer.LABEL_enable_parallel_template)) {
 			templates.add(new ParallelTemplate(store.getInt(PreferencesInitializer.LABEL_parallel_template_size)));
 		}
-		return templates.toArray(new RankingTemplate[0]);
+		return templates.toArray(new RankingTemplate[templates.size()]);
 	}
 
 	private boolean isTerminationArgumentCorrect(final TerminationArgument arg, final UnmodifiableTransFormula stemTF, final UnmodifiableTransFormula loopTf) {

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender;
@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -47,11 +47,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 
 /**
  * Nondeterministic interpolant automaton with on-demand construction.
- * The set of successor states S for a given state ψ and a CodeBlock cb are 
+ * The set of successor states S for a given state ψ and a CodeBlock cb are
  * constructed as follows.
  * First, we check if state state ψ is the "false" state. If this is the case
  * S is the singleton set {false} and the construction is finished. Otherwise,
- * we add to S all states φ such that (ψ, cb, φ) is a transition in 
+ * we add to S all states φ such that (ψ, cb, φ) is a transition in
  * the given interpolant automaton {@code #mInputInterpolantAutomaton} (which
  * is typically the "canonical interpolant automaton" that was constructed for
  * a given trace).
@@ -60,17 +60,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * How may states we try depends on the construction
  * mode.
  * <ul>
- * <li> If we are in the conservative construction mode 
- * ({@code #mConservativeConstructionMode} is true) we check if the Hoare 
+ * <li> If we are in the conservative construction mode
+ * ({@code #mConservativeConstructionMode} is true) we check if the Hoare
  * triple (ψ, cb, ψ) is valid. If this is the case we add ψ to S.
- * <li> If we are in the non-conservative construction mode 
- * ({@code #mConservativeConstructionMode} is false) we check for each 
+ * <li> If we are in the non-conservative construction mode
+ * ({@code #mConservativeConstructionMode} is false) we check for each
  * nontrivial predicate φ (i.e., each predicate but "true" and "false") if the
  * Hoare triple (ψ, cb, φ) is valid. Whenever the Hoare triple is valid, we
  * add φ to the set S.
  * </ul>
- * Finally, we check if S is empty. If this is the case and mSecondChance is 
- * set we add "true" to S. Hence if mSecondChance is set this automaton is 
+ * Finally, we check if S is empty. If this is the case and mSecondChance is
+ * set we add "true" to S. Hence if mSecondChance is set this automaton is
  * total because S is never empty.
  * 
  * @author Matthias Heizmann
@@ -89,18 +89,18 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 	protected final boolean mSecondChance;
 	
 
-	public NondeterministicInterpolantAutomaton(IUltimateServiceProvider services, 
-			SmtManager smtManager, ModifiableGlobalVariableManager modglobvarman, IHoareTripleChecker hoareTripleChecker,
-			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
-			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
-			PredicateUnifier predicateUnifier, ILogger  logger, 
-			boolean conservativeSuccessorCandidateSelection, boolean secondChance) {
-		super(services, smtManager, hoareTripleChecker, true, abstraction, 
-				predicateUnifier, 
+	public NondeterministicInterpolantAutomaton(final IUltimateServiceProvider services,
+			final SmtManager smtManager, final ModifiableGlobalVariableManager modglobvarman, final IHoareTripleChecker hoareTripleChecker,
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction,
+			final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton,
+			final PredicateUnifier predicateUnifier, final ILogger  logger,
+			final boolean conservativeSuccessorCandidateSelection, final boolean secondChance) {
+		super(services, smtManager, hoareTripleChecker, true, abstraction,
+				predicateUnifier,
 				interpolantAutomaton, logger);
 		mConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
 		mSecondChance = secondChance;
-		final Collection<IPredicate> allPredicates = interpolantAutomaton.getStates(); 
+		final Collection<IPredicate> allPredicates = interpolantAutomaton.getStates();
 		
 		assert SmtUtils.isTrue(mIaTrueState.getFormula());
 		assert allPredicates.contains(mIaTrueState);
@@ -113,7 +113,7 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 		for (final IPredicate state : allPredicates) {
 			if (state != mIaTrueState && state != mIaFalseState) {
 				mNonTrivialPredicates.add(state);
-				// the following two lines are important if not (only) 
+				// the following two lines are important if not (only)
 				// true/false are initial/final states of the automaton.
 				final boolean isInitial = interpolantAutomaton.isInitial(state);
 				final boolean isFinal = interpolantAutomaton.isFinal(state);
@@ -154,8 +154,8 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 
 	
 	@Override
-	protected void addOtherSuccessors(IPredicate resPred, IPredicate resHier,
-			CodeBlock letter, SuccessorComputationHelper sch,
+	protected void addOtherSuccessors(final IPredicate resPred, final IPredicate resHier,
+			final CodeBlock letter, final SuccessorComputationHelper sch,
 			final Set<IPredicate> inputSuccs) {
 		Set<IPredicate> successorCandidates;
 		if (mConservativeSuccessorCandidateSelection) {
@@ -205,25 +205,25 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 	 */
 	@Override
 	protected void addInputAutomatonSuccs(
-			IPredicate resPred, IPredicate resHier, CodeBlock letter,
-			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs) {
-			final Collection<IPredicate> succs = 
+			final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+			final SuccessorComputationHelper sch, final Set<IPredicate> inputSuccs) {
+			final Collection<IPredicate> succs =
 					sch.getSuccsInterpolantAutomaton(resPred, resHier, letter);
 			copyAllButTrue(inputSuccs, succs);
-			final Collection<IPredicate> succsOfTrue = 
+			final Collection<IPredicate> succsOfTrue =
 					sch.getSuccsInterpolantAutomaton(mIaTrueState, resHier, letter);
 			copyAllButTrue(inputSuccs, succsOfTrue);
 			if (resHier != null) {
-				final Collection<IPredicate> succsForResPredTrue = 
+				final Collection<IPredicate> succsForResPredTrue =
 						sch.getSuccsInterpolantAutomaton(resPred, mIaTrueState, letter);
 				copyAllButTrue(inputSuccs, succsForResPredTrue);
-				final Collection<IPredicate> succsForTrueTrue = 
+				final Collection<IPredicate> succsForTrueTrue =
 						sch.getSuccsInterpolantAutomaton(mIaTrueState, mIaTrueState, letter);
 				copyAllButTrue(inputSuccs, succsForTrueTrue);
 			}
 	}
 	
-	private void copyAllButTrue(Set<IPredicate> target,	Collection<IPredicate> source) {
+	private void copyAllButTrue(final Set<IPredicate> target,	final Collection<IPredicate> source) {
 		for (final IPredicate pred : source) {
 			if (pred == mIaTrueState) {
 				// do nothing, transition to the "true" state are useless
@@ -234,9 +234,9 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 	}
 
 	@Override
-	protected void constructSuccessorsAndTransitions(IPredicate resPred,
-			IPredicate resHier, CodeBlock letter, 
-			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs) {
+	protected void constructSuccessorsAndTransitions(final IPredicate resPred,
+			final IPredicate resHier, final CodeBlock letter,
+			final SuccessorComputationHelper sch, final Set<IPredicate> inputSuccs) {
 		for (final IPredicate succ : inputSuccs) {
 			sch.addTransition(resPred, resHier, letter, succ);
 		}

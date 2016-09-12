@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -316,16 +315,15 @@ public class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C> {
 	 * Return some accepting run of PetriNet net, return null if net does not
 	 * have an accepting run.
 	 */
-	public PetriNetRun<S, C> getAcceptingRun() throws AutomataOperationCanceledException, AssertionError {
+	public PetriNetRun<S, C> getAcceptingRun() {
 		return mRun;
 	}
 
 	/**
 	 * Return the occurrence net which is the finite prefix of the unfolding of
 	 * net.
-	 * @throws AutomataOperationCanceledException if timeout exceeds
 	 */
-	public BranchingProcess<S, C> getFinitePrefix() throws AutomataOperationCanceledException {
+	public BranchingProcess<S, C> getFinitePrefix() {
 		return mUnfolding;
 	}
 
@@ -422,8 +420,7 @@ public class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C> {
 	}
 
 	@Override
-	public boolean checkResult(final IStateFactory<C> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<C> stateFactory) {
 		mLogger.info("Testing correctness of emptinessCheck");
 
 		boolean correct = true;

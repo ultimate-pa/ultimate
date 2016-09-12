@@ -1,0 +1,2 @@
+org.eclipse.osgi/debug/bundleTime=true
+org.eclipse.osgi/debug/loader=true

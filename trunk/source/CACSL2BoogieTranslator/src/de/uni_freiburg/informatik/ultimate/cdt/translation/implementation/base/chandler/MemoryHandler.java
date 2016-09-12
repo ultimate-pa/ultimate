@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -963,7 +963,7 @@ public class MemoryHandler {
 		final Expression equality = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, valueExpr, dataFromHeap);
 		sread.add(new EnsuresSpecification(loc, false, equality));
 		final Procedure result = new Procedure(loc, new Attribute[0], rda.getReadProcedureName(), new String[0], inRead,
-				outRead, sread.toArray(new Specification[0]), null);
+				outRead, sread.toArray(new Specification[sread.size()]), null);
 		return result;
 	}
 
@@ -1214,7 +1214,7 @@ public class MemoryHandler {
 
 		decl.add(new Procedure(tuLoc, new Attribute[0], SFO.FREE, new String[0],
 				new VarList[] { new VarList(tuLoc, new String[] { ADDR }, mTypeHandler.constructPointerType(tuLoc)) },
-				new VarList[0], specFree.toArray(new Specification[0]), null));
+				new VarList[0], specFree.toArray(new Specification[specFree.size()]), null));
 
 		if (ADD_IMPLEMENTATIONS) {
 			// procedure ~free(~addr:$Pointer$) returns() {
@@ -1264,7 +1264,7 @@ public class MemoryHandler {
 
 		decl.add(new Procedure(tuLoc, new Attribute[0], SFO.DEALLOC, new String[0],
 				new VarList[] { new VarList(tuLoc, new String[] { ADDR }, mTypeHandler.constructPointerType(tuLoc)) },
-				new VarList[0], specFree.toArray(new Specification[0]), null));
+				new VarList[0], specFree.toArray(new Specification[specFree.size()]), null));
 
 		return decl;
 	}
@@ -1325,7 +1325,7 @@ public class MemoryHandler {
 		decl.add(new Procedure(tuLoc, new Attribute[0], MemoryModelDeclarations.Ultimate_Alloc.getName(), new String[0],
 				new VarList[] { new VarList(tuLoc, new String[] { SIZE }, intType) },
 				new VarList[] { new VarList(tuLoc, new String[] { SFO.RES }, typeHandler.constructPointerType(tuLoc)) },
-				specMalloc.toArray(new Specification[0]), null));
+				specMalloc.toArray(new Specification[specMalloc.size()]), null));
 		if (ADD_IMPLEMENTATIONS) {
 			// procedure ~malloc(~size:int) returns (#res:pointer) {
 			// var ~addr : pointer;

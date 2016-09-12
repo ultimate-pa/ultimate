@@ -625,7 +625,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		final StringBuilder stringBuilder = new StringBuilder();
 		for (final IBoogieVar entry : mVariables) {
 
-			stringBuilder.append(entry.getIdentifier()).append(" = ");
+			stringBuilder.append(entry.getGloballyUniqueId()).append(" = ");
 
 			final V val = getVar2ValueNonrelational().get(entry);
 

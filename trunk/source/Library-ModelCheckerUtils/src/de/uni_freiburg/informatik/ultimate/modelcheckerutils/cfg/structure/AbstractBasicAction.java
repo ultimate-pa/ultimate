@@ -42,7 +42,7 @@ public abstract class AbstractBasicAction implements IAction {
 	}
 
 	@Override
-	public String getPreceedingProcedure() {
+	public String getPrecedingProcedure() {
 		return mPreceedingProcedure;
 	}
 

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.nontermination;
@@ -71,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  * 
  * We check the following constraints.
  * <pre>
- * exists z, x, y_1, ..., y_n, lambda_1, ..., lambda_n, nu_1, ..., nu_n 
+ * exists z, x, y_1, ..., y_n, lambda_1, ..., lambda_n, nu_1, ..., nu_n
  *    A_stem * (z, x) <= b_stem
  * /\ A_loop * (x, x + y_1 + ... + y_n) <= b_loop
  * /\ A_loop * (y_i, lambda_i * y_i + nu_i * y_{i+1}) <= 0   for each i
@@ -136,9 +136,9 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @param lasso the lasso program
 	 * @param preferences lasso ranker preferences
 	 * @param settings (local) settings for termination analysis
-	 * @param services 
-	 * @param storage 
-	 * @throws IOException 
+	 * @param services
+	 * @param storage
+	 * @throws IOException
 	 */
 	public NonTerminationArgumentSynthesizer(final Lasso lasso,
 			final LassoRankerPreferences preferences,
@@ -185,8 +185,8 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			solverMode = SolverMode.External_ModelsMode;
 		}
 		final String solverId = "NonTerminationArgumentSynthesis solver ";
-		return SolverBuilder.buildAndInitializeSolver(mservices, mstorage, 
-				solverMode, settings, 
+		return SolverBuilder.buildAndInitializeSolver(mservices, mstorage,
+				solverMode, settings,
 				false, false, null, solverId);
 	}
 	
@@ -327,7 +327,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 						false
 				));
 			}
-			t1 = Util.or(mscript, disjunction.toArray(new Term[0]));
+			t1 = Util.or(mscript, disjunction.toArray(new Term[disjunction.size()]));
 		}
 		
 		// vars_end + vars_gevs
@@ -418,7 +418,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 				conjuction[msettings.number_of_gevs] = t_honda;
 				disjunction.add(Util.and(mscript, conjuction));
 			}
-			t2 = Util.or(mscript, disjunction.toArray(new Term[0]));
+			t2 = Util.or(mscript, disjunction.toArray(new Term[disjunction.size()]));
 		}
 		
 		// t3: constraints on the lambdas and the nus
@@ -447,9 +447,9 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 					}
 					conjunction.add(mscript.term(">=", lambdas.get(i), one));
 				}
-				conjunction.add(Util.or(mscript, disjunction.toArray(new Term[0])));
+				conjunction.add(Util.or(mscript, disjunction.toArray(new Term[disjunction.size()])));
 			}
-			t3 = Util.and(mscript, conjunction.toArray(new Term[0]));
+			t3 = Util.and(mscript, conjunction.toArray(new Term[conjunction.size()]));
 		}
 
 		mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t1)));
@@ -527,11 +527,11 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			}
 			conjunction.add(mscript.term(rays ? ">=" : ieq.getInequalitySymbol(),
 					SmtUtils.sum(mscript, msort,
-							summands.toArray(new Term[0])),
+							summands.toArray(new Term[summands.size()])),
 					minteger_mode ? mscript.numeral(BigInteger.ZERO)
 							: mscript.decimal("0")));
 		}
-		return Util.and(mscript, conjunction.toArray(new Term[0]));
+		return Util.and(mscript, conjunction.toArray(new Term[conjunction.size()]));
 	}
 	
 	/**

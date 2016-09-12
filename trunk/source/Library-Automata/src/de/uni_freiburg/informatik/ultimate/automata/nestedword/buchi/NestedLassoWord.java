@@ -19,15 +19,22 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 
+/**
+ * A nested lasso word used in nested word automata.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ */
 public class NestedLassoWord<LETTER> {
 	private final NestedWord<LETTER> mStem;
 	private final NestedWord<LETTER> mLoop;
@@ -35,8 +42,10 @@ public class NestedLassoWord<LETTER> {
 	/**
 	 * Constructor.
 	 * 
-	 * @param stem stem
-	 * @param loop loop
+	 * @param stem
+	 *            stem
+	 * @param loop
+	 *            loop
 	 */
 	public NestedLassoWord(final NestedWord<LETTER> stem, final NestedWord<LETTER> loop) {
 		this.mStem = stem;

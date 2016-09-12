@@ -370,7 +370,7 @@ public class SolverBuilder {
 				+ new SimpleDateFormat("yyyy/MM/dd").format(new Date())
 				+ " by Ultimate. http://ultimate.informatik.uni-freiburg.de/" + System.lineSeparator();
 		result.setInfo(":source", advertising);
-		result.setInfo(":smt-lib-version", new BigDecimal(2.5));
+		result.setInfo(":smt-lib-version", new BigDecimal("2.5"));
 		result.setInfo(":category", new QuotedObject("industrial"));
 
 		storage.putStorable(solverId, new IStorable() {

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 
@@ -54,7 +54,7 @@ public class ConditionAnnotation extends ModernAnnotations {
 		return mIsNegated;
 	}
 
-	public void annotate(IElement node) {
+	public void annotate(final IElement node) {
 		node.getPayload().getAnnotations().put(KEY, this);
 	}
 
@@ -64,6 +64,6 @@ public class ConditionAnnotation extends ModernAnnotations {
 	
 	@Override
 	public String toString() {
-		return "IsNegated=" + String.valueOf(mIsNegated);
+		return "IsNegated=" + mIsNegated;
 	}
 }

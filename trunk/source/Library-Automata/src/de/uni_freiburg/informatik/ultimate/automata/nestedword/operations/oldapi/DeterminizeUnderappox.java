@@ -35,68 +35,76 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 
-
 /**
  * Determinization where a DeterminizedState is only accepting if all its
  * states are accepting. The language of the resulting automaton is a subset
  * of the language of the original automaton.
  * 
- * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-
 public class DeterminizeUnderappox<LETTER, STATE> extends DeterminizeDD<LETTER, STATE> {
-
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
+	 * @param stateDeterminizer
+	 *            state determinizer
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
 	public DeterminizeUnderappox(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER,STATE> input,
-			final IStateDeterminizer<LETTER,STATE> stateDeterminizer)
-			throws AutomataOperationCanceledException {
-		super(services, input, stateDeterminizer);
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataOperationCanceledException {
+		super(services, operand, stateDeterminizer);
 	}
 	
 	@Override
 	public String operationName() {
-		return "determinizeUnderapprox";
+		return "DeterminizeUnderapprox";
 	}
 	
 	/**
-	 * Opposed to Determinize, here a Determinized
-	 * state is only accepting if all its states are accepting.
+	 * As opposed to {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determinize Determinize},
+	 * here a determinized state is only accepting if all its states are accepting.
 	 */
 	@Override
 	protected Collection<STATE> getInitialStates() {
 //		final ArrayList<STATE> resInitials =
 //				new ArrayList<>(mOperand.getInitialStates().size());
 		final ArrayList<STATE> resInitials = new ArrayList<>();
-		final DeterminizedState<LETTER,STATE> detState = mStateDeterminizer.initialState();
+		final DeterminizedState<LETTER, STATE> detState = mStateDeterminizer.initialState();
 		final STATE resState = mStateDeterminizer.getState(detState);
-		((NestedWordAutomaton<LETTER,STATE>) mTraversedNwa).addState(true, detState.allFinal(mOperand), resState);
-		mDet2res.put(detState,resState);
+		((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(true, detState.allFinal(mOperand), resState);
+		mDet2res.put(detState, resState);
 		mRes2det.put(resState, detState);
 		resInitials.add(resState);
-
+		
 		return resInitials;
 	}
-	
-	
 	
 	/**
 	 * Get the state in the resulting automaton that represents a
 	 * DeterminizedState. If this state in the resulting automaton does not
-	 * exist yet, construct it. Opposed to Determinize, here a Determinized
-	 * state is only accepting if all its states are accepting.
+	 * exist yet, construct it. As opposed to
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determinize Determinize}, here a
+	 * determinized state is only accepting if all its states are accepting.
 	 */
 	@Override
-	protected STATE getResState(final DeterminizedState<LETTER,STATE> detState) {
+	protected STATE getResState(final DeterminizedState<LETTER, STATE> detState) {
 		if (mDet2res.containsKey(detState)) {
 			return mDet2res.get(detState);
 		} else {
 			final STATE resState = mStateDeterminizer.getState(detState);
-			((NestedWordAutomaton<LETTER,STATE>) mTraversedNwa).addState(false, detState.allFinal(mOperand), resState);
-			mDet2res.put(detState,resState);
-			mRes2det.put(resState,detState);
+			((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(false, detState.allFinal(mOperand), resState);
+			mDet2res.put(detState, resState);
+			mRes2det.put(resState, detState);
 			return resState;
 		}
 	}
@@ -105,5 +113,4 @@ public class DeterminizeUnderappox<LETTER, STATE> extends DeterminizeDD<LETTER, 
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mTraversedNwa;
 	}
-
 }

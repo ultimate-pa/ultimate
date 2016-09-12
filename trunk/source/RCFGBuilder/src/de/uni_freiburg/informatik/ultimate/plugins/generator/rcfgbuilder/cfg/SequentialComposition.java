@@ -168,12 +168,12 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 			final List<CodeBlock> codeBlocks,final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique, 
 			final Boogie2SmtSymbolTable symbolTable) {
 		return getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify, extPqe, tranformToCNF,
-				withBranchEncoders, null, null, null, logger, services, codeBlocks, xnfConversionTechnique, simplificationTechnique, symbolTable);
+				withBranchEncoders, null, null, null, null, logger, services, codeBlocks, xnfConversionTechnique, simplificationTechnique, symbolTable);
 	}
 
 	private static UnmodifiableTransFormula getInterproceduralTransFormula(final ManagedScript mgdScript,
 			final ModifiableGlobalVariableManager modGlobVarManager, final boolean simplify, final boolean extPqe, final boolean tranformToCNF,
-			final boolean withBranchEncoders, final UnmodifiableTransFormula[] beforeCall, final Call call, final Return ret, final ILogger logger,
+			final boolean withBranchEncoders, final String nameStartProcedure, final UnmodifiableTransFormula[] beforeCall, final Call call, final Return ret, final ILogger logger,
 			final IUltimateServiceProvider services, final List<CodeBlock> codeBlocks, 
 			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique, final Boogie2SmtSymbolTable symbolTable) {
 		final List<UnmodifiableTransFormula> beforeFirstPendingCall = new ArrayList<UnmodifiableTransFormula>();
@@ -199,7 +199,7 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 						final Return correspondingReturn = (Return) codeBlocks.get(i);
 						final List<CodeBlock> codeBlocksBetween = new ArrayList<CodeBlock>(afterLastUnmatchedCall);
 						final UnmodifiableTransFormula localTransFormula = getInterproceduralTransFormula(mgdScript,
-								modGlobVarManager, simplify, extPqe, tranformToCNF, withBranchEncoders, null,
+								modGlobVarManager, simplify, extPqe, tranformToCNF, withBranchEncoders, null, null,
 								lastUnmatchedCall, correspondingReturn, logger, services, codeBlocksBetween, 
 								xnfConversionTechnique, simplificationTechnique, symbolTable);
 						beforeFirstPendingCall.add(localTransFormula);
@@ -226,13 +226,13 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 			assert afterLastUnmatchedCall.isEmpty();
 			// no pending call in codeBlocks
 			tfForCodeBlocks = TransFormulaUtils.sequentialComposition(logger, services, mgdScript, simplify, extPqe,
-					tranformToCNF, xnfConversionTechnique, simplificationTechnique, beforeFirstPendingCall.toArray(new UnmodifiableTransFormula[beforeFirstPendingCall.size()]));
+					tranformToCNF, xnfConversionTechnique, simplificationTechnique, beforeFirstPendingCall);
 		} else {
 			// there is a pending call in codeBlocks
 			assert ret == null : "no pending call between call and return possible!";
 			final List<CodeBlock> codeBlocksBetween = afterLastUnmatchedCall;
 			tfForCodeBlocks = getInterproceduralTransFormula(mgdScript, modGlobVarManager, simplify, extPqe,
-					tranformToCNF, withBranchEncoders,
+					tranformToCNF, withBranchEncoders, codeBlocks.get(0).getPrecedingProcedure(),
 					beforeFirstPendingCall.toArray(new UnmodifiableTransFormula[beforeFirstPendingCall.size()]), lastUnmatchedCall,
 					null, logger, services, codeBlocksBetween, xnfConversionTechnique, simplificationTechnique, symbolTable);
 		}
@@ -256,15 +256,17 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 				final Set<IProgramVar> modifiableGlobalsOfEndProcedure =
 						modGlobVarManager.getModifiedBoogieVars(nameEndProcedure);
 				result = TransFormulaUtils.sequentialCompositionWithPendingCall(mgdScript, simplify, extPqe, tranformToCNF,
-						Arrays.asList(beforeCall), call.getTransitionFormula(), oldVarsAssignment, globalVarsAssignment,
-						tfForCodeBlocks, logger, services, modifiableGlobalsOfEndProcedure, xnfConversionTechnique, simplificationTechnique, symbolTable);
+						Arrays.asList(beforeCall), call.getLocalVarsAssignment(), oldVarsAssignment, globalVarsAssignment,
+						tfForCodeBlocks, logger, services, modifiableGlobalsOfEndProcedure, 
+						xnfConversionTechnique, simplificationTechnique, symbolTable, 
+						nameStartProcedure, call.getPrecedingProcedure(), call.getCallStatement().getMethodName(), nameEndProcedure, modGlobVarManager);
 			} else {
 				assert beforeCall == null;
 				final String proc = call.getCallStatement().getMethodName();
 				final UnmodifiableTransFormula oldVarsAssignment = modGlobVarManager.getOldVarsAssignment(proc);
 				final UnmodifiableTransFormula globalVarsAssignment = modGlobVarManager.getGlobalVarsAssignment(proc);
 				result = TransFormulaUtils.sequentialCompositionWithCallAndReturn(mgdScript, simplify, extPqe,
-						tranformToCNF, call.getTransitionFormula(), oldVarsAssignment, globalVarsAssignment,
+						tranformToCNF, call.getLocalVarsAssignment(), oldVarsAssignment, globalVarsAssignment,
 						tfForCodeBlocks, ret.getTransitionFormula(), logger, services, 
 						xnfConversionTechnique, simplificationTechnique, 
 						symbolTable, modGlobVarManager.getModifiedBoogieVars(proc));

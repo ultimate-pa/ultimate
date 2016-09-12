@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaOverapproximation;
@@ -106,7 +107,11 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 		/**
 		 * {@link MinimizeNwaOverapproximation}.
 		 */
-		MINIMIZE_NWA_OVERAPPROXIMATION
+		MINIMIZE_NWA_OVERAPPROXIMATION,
+		/**
+		 * {@link RemoveNonLiveStates}.
+		 */
+		REMOVE_NON_LIVE_STATES
 	}
 	
 	/**
@@ -156,6 +161,10 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 			
 			case MINIMIZE_NWA_OVERAPPROXIMATION:
 				operation = minimizeNwaOverapproximation(automaton, factory);
+				break;
+			
+			case REMOVE_NON_LIVE_STATES:
+				operation = removeNonLiveStates(automaton);
 				break;
 			
 			default:
@@ -288,5 +297,19 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveUnreachable<LETTER, STATE>(mServices, automaton).getResult();
 		return new MinimizeNwaOverapproximation<>(mServices, factory, preprocessed);
+	}
+	
+	/**
+	 * @param automaton
+	 *            The automaton.
+	 * @param factory
+	 *            state factory
+	 * @return new {@link MinimizeNwaOverapproximation} instance
+	 * @throws Throwable
+	 *             when error occurs
+	 */
+	private IOperation<LETTER, STATE> removeNonLiveStates(final INestedWordAutomaton<LETTER, STATE> automaton)
+			throws Throwable {
+		return new RemoveNonLiveStates<>(mServices, automaton);
 	}
 }

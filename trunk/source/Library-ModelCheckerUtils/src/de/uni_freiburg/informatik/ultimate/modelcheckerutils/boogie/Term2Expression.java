@@ -70,7 +70,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
@@ -105,7 +104,7 @@ public class Term2Expression implements Serializable {
 
 		mTypeSortTranslator = tsTranslation;
 		mBoogie2SmtSymbolTable = boogie2SmtSymbolTable;
-		mScript = boogie2SmtSymbolTable.getScript();
+		mScript = boogie2SmtSymbolTable.getScript().getScript();
 	}
 
 	Set<IdentifierExpression> mfreeVariables = new HashSet<IdentifierExpression>();
@@ -414,7 +413,7 @@ public class Term2Expression implements Serializable {
 	}
 	
 	private Expression translate(final TermVariable term) {
-		Expression result;
+		final Expression result;
 		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
 		if (mQuantifiedVariables.containsKey(term)) {
 			final VarList varList = mQuantifiedVariables.get(term);
@@ -432,16 +431,24 @@ public class Term2Expression implements Serializable {
 			mfreeVariables.add((IdentifierExpression) result);
 		}
 		else {
-			final IProgramVar bv = mBoogie2SmtSymbolTable.getBoogieVar(term);
+			final BoogieVar bv = (BoogieVar) mBoogie2SmtSymbolTable.getBoogieVar(term);
 			final ILocation loc = mBoogie2SmtSymbolTable.getAstNode(bv).getLocation();
 			final DeclarationInformation declInfo = 
 					mBoogie2SmtSymbolTable.getDeclarationInformation(bv);
-			result = new IdentifierExpression(loc, type, bv.getIdentifier(), 
-					declInfo);
-			if (bv.isOldvar()) {
+			if (bv instanceof LocalBoogieVar) {
+				result = new IdentifierExpression(loc, type, 
+						((LocalBoogieVar) bv).getIdentifier(), declInfo);
+			} else if (bv instanceof BoogieNonOldVar) {
+				result = new IdentifierExpression(loc, type, 
+						((BoogieNonOldVar) bv).getIdentifier(), declInfo);
+			} else if (bv instanceof BoogieOldVar) {
 				assert(bv.isGlobal());
+				final Expression nonOldExpression = new IdentifierExpression(loc, type, 
+						((BoogieOldVar) bv).getIdentifierOfNonOldVar(), declInfo);
 				result = new UnaryExpression(loc, type, 
-						UnaryExpression.Operator.OLD, result);
+						UnaryExpression.Operator.OLD, nonOldExpression);
+			} else {
+				throw new AssertionError("unsupported kind of variable " + bv.getClass().getSimpleName());
 			}
 		}
 		return result;

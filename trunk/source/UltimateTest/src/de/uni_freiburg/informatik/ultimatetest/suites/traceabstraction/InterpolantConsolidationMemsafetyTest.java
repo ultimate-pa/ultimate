@@ -40,7 +40,7 @@ public class InterpolantConsolidationMemsafetyTest extends AbstractTraceAbstract
 	private static final String[] mUltimateRepository = {
 //		"examples/programs/regression",
 //		"examples/programs/quantifier",
-//		"examples/programs/recursivePrograms",
+//		"examples/programs/recursive/regression",
 //		"examples/programs/toy/tooDifficultLoopInvariant",
 	};
 

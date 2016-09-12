@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiAutomizer plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
@@ -50,7 +50,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 	private BackwardCoveringInformation mBciBuchi = new BackwardCoveringInformation(0, 0);
 	private int mHighestRank = 0;
 	
-	private final List<PreprocessingBenchmark> mPreprocessingBenchmarks = 
+	private final List<PreprocessingBenchmark> mPreprocessingBenchmarks =
 			new ArrayList<PreprocessingBenchmark>();
 	private final List<TerminationAnalysisBenchmark> mTerminationAnalysisBenchmarks =
 			new ArrayList<>();
@@ -75,23 +75,23 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 		al.add(BuchiCegarLoopBenchmark.s_BuchiClosure);
 		al.add(BuchiCegarLoopBenchmark.s_NontrivialModuleStages);
 		al.add(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
-		return al.toArray(new String[0]);
+		return al.toArray(new String[al.size()]);
 	}
 
-	public void announceSuccessfullRefinementStage(int stage) {
+	public void announceSuccessfullRefinementStage(final int stage) {
 		mNontrivialModuleStages[stage]++;
 	}
 	
-	public void addBackwardCoveringInformationFinite(BackwardCoveringInformation bci) {
+	public void addBackwardCoveringInformationFinite(final BackwardCoveringInformation bci) {
 		mBciFinite = new BackwardCoveringInformation(mBciFinite, bci);
 	}
 	
-	public void addBackwardCoveringInformationBuchi(BackwardCoveringInformation bci) {
+	public void addBackwardCoveringInformationBuchi(final BackwardCoveringInformation bci) {
 		mBciBuchi = new BackwardCoveringInformation(mBciBuchi, bci);
 	}
 
 	@Override
-	public Object getValue(String key) {
+	public Object getValue(final String key) {
 		switch (key) {
 		case BuchiCegarLoopBenchmark.s_NonLiveStateRemoval:
 		case BuchiCegarLoopBenchmark.s_BuchiClosure:
@@ -128,7 +128,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 		}
 	}
 
-	public void reportLassoAnalysis(LassoChecker lassoChecker) {
+	public void reportLassoAnalysis(final LassoChecker lassoChecker) {
 		final LassoCheckResult lcr = lassoChecker.getLassoCheckResult();
 		mPreprocessingBenchmarks.addAll(lassoChecker.getPreprocessingBenchmarks());
 		mTerminationAnalysisBenchmarks.addAll(lassoChecker.getTerminationAnalysisBenchmarks());
@@ -216,7 +216,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 		}
 	}
 
-	public void reportHighestRank(int highestRank) {
+	public void reportHighestRank(final int highestRank) {
 		mHighestRank = Math.max(mHighestRank, highestRank);
 	}
 	

@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
  * Preprocessor for lassos that takes a preprocessor for TransFormulaLR to
  * translate stem and loop.
  * 
- * @author Jan Leike 
+ * @author Jan Leike
  * @author Matthias Heizmann
  */
 public class StemAndLoopPreprocessor extends LassoPreprocessor {
@@ -49,7 +49,7 @@ public class StemAndLoopPreprocessor extends LassoPreprocessor {
 	private final TransitionPreprocessor mTransitionPreprocessor;
 	
 	
-	public StemAndLoopPreprocessor(Script script, TransitionPreprocessor transitionPreProcessor) {
+	public StemAndLoopPreprocessor(final Script script, final TransitionPreprocessor transitionPreProcessor) {
 		super();
 		mScript = script;
 		mTransitionPreprocessor = transitionPreProcessor;
@@ -71,17 +71,14 @@ public class StemAndLoopPreprocessor extends LassoPreprocessor {
 	 */
 	@Override
 	public Collection<LassoUnderConstruction> process(
-			LassoUnderConstruction lasso) throws TermException {
+			final LassoUnderConstruction lasso) throws TermException {
 		final TransFormulaLR newStem = mTransitionPreprocessor.process(mScript, lasso.getStem());
-		assert mTransitionPreprocessor.checkSoundness(mScript, lasso.getStem(), newStem) : 
-			"Soundness check failed for preprocessor " + this.getClass().getSimpleName();;
+		assert mTransitionPreprocessor.checkSoundness(mScript, lasso.getStem(), newStem) :
+			"Soundness check failed for preprocessor " + this.getClass().getSimpleName();
 		final TransFormulaLR newLoop = mTransitionPreprocessor.process(mScript, lasso.getLoop());
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
-		assert mTransitionPreprocessor.checkSoundness(mScript, lasso.getLoop(), newLoop) : 
-			"Soundness check failed for preprocessor " + this.getClass().getSimpleName();;
+		assert mTransitionPreprocessor.checkSoundness(mScript, lasso.getLoop(), newLoop) :
+			"Soundness check failed for preprocessor " + this.getClass().getSimpleName();
 		return Collections.singleton(newLasso);
 	}
-	
-	
-	
 }

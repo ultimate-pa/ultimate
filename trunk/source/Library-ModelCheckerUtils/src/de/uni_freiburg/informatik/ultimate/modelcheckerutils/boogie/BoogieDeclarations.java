@@ -122,7 +122,7 @@ public class BoogieDeclarations {
 								new HashMap<String,Set<String>>();
 	
 	
-	public BoogieDeclarations(Unit unit, ILogger logger) {
+	public BoogieDeclarations(final Unit unit, final ILogger logger) {
 		mLogger = logger;
 		for (final Declaration decl : unit.getDeclarations()) {
 			if (decl instanceof Axiom) {
@@ -174,7 +174,7 @@ public class BoogieDeclarations {
 	 * specification. Write it to mEnsures, mEnsuresNonFree, mRequires,
 	 * mRequiresNonFree and mModifiedVars.
 	 */
-	private void extractContract(String procId) {
+	private void extractContract(final String procId) {
 		final Procedure procSpec = mProcSpecification.get(procId);
 		final Procedure procImpl = mProcImplementation.get(procId);
 		
@@ -232,8 +232,8 @@ public class BoogieDeclarations {
 			mEnsuresNonFree.put(procId, ensuresNonFree);
 			mRequires.put(procId, requires);
 			mRequiresNonFree.put(procId, requiresNonFree);
-			mModifiedVars.put(procId, modifiedVars);
 		}
+		mModifiedVars.put(procId, modifiedVars);
 	}
 
 	public List<Axiom> getAxioms() {

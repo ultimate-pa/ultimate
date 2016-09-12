@@ -19,14 +19,14 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiProgramProduct plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.productgenerator;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
@@ -39,9 +39,9 @@ public final class ProductLocationNameGenerator {
 
 	private static final String HELPER_STATE_PREFIX = "crhelper";
 	private int mHelperUnifique;
-	private final INestedWordAutomaton<CodeBlock, String> mNWA;
+	private final INestedWordAutomatonSimple<CodeBlock, String> mNWA;
 	
-	protected ProductLocationNameGenerator(final INestedWordAutomaton<CodeBlock, String> nwa) {
+	protected ProductLocationNameGenerator(final INestedWordAutomatonSimple<CodeBlock, String> nwa) {
 		assert nwa != null;
 		
 		mHelperUnifique = 0;
@@ -53,16 +53,16 @@ public final class ProductLocationNameGenerator {
 	}
 
 	/**
-	 * Central method to create the product state's names. 
+	 * Central method to create the product state's names.
 	 * 
 	 * @param rcfgName
 	 *            Name of the state in the RCFG
 	 * @param nwaName
 	 *            Name of the state in the BA / NWA
-	 * @return a String representing the name of this location in the product 
+	 * @return a String representing the name of this location in the product
 	 */
 	protected String generateStateName(final ProgramPoint loc, final String nwaName) {
-		return generateStateName(String.valueOf(loc.hashCode()) + "_" + loc.getPosition(), nwaName);
+		return generateStateName(String.valueOf(loc.hashCode()) + '_' + loc.getPosition(), nwaName);
 	}
 
 	private String generateStateName(final String rcfgName, final String nwaName) {

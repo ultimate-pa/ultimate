@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -255,7 +256,7 @@ public class Statements2TransFormula {
 
 			final SingleTermResult tlres = mExpression2Term.translateToTerm(its, addedEqualities.get(tv));
 			mAuxVars.addAll(tlres.getAuxiliaryVars());
-			mOverapproximations.putAll(tlres.getOverappoximations()); 
+			mOverapproximations.putAll(tlres.getOverappoximations());
 			final Term rhsTerm = tlres.getTerm();
 			final Term eq = mScript.term("=", tv, rhsTerm);
 
@@ -285,7 +286,7 @@ public class Statements2TransFormula {
 
 		final SingleTermResult tlres = mExpression2Term.translateToTerm(its, assume.getFormula());
 		mAuxVars.addAll(tlres.getAuxiliaryVars());
-		mOverapproximations.putAll(tlres.getOverappoximations()); 
+		mOverapproximations.putAll(tlres.getOverappoximations());
 		final Term f = tlres.getTerm();
 		
 		mAssumes = Util.and(mScript, f, mAssumes);
@@ -299,15 +300,20 @@ public class Statements2TransFormula {
 			final IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 			final SingleTermResult tlres = mExpression2Term.translateToTerm(its, assertstmt.getFormula());
 			mAuxVars.addAll(tlres.getAuxiliaryVars());
-			mOverapproximations.putAll(tlres.getOverappoximations()); 
+			mOverapproximations.putAll(tlres.getOverappoximations());
 			final Term f = tlres.getTerm();
 			
 			mAssumes = Util.and(mScript, f, mAssumes);
 			mAsserts = Util.and(mScript, f, mAsserts);
-			assert (mAssumes.toString() instanceof Object);
+			assert assertTermContainsNoNull(mAssumes);
 		} else {
 			throw new AssertionError(s_ComputeAssertsNotAvailable);
 		}
+	}
+	
+	private boolean assertTermContainsNoNull(final Term result) {
+		// toString crashes if the result contains a null element
+		return result.toString() instanceof Object;
 	}
 
 	private void addSummary(final CallStatement call) {
@@ -368,9 +374,9 @@ public class Statements2TransFormula {
 		Term[] argumentTerms;
 		{
 			final IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
-			final MultiTermResult tlres = mExpression2Term.translateToTerms(its, arguments); 
+			final MultiTermResult tlres = mExpression2Term.translateToTerms(its, arguments);
 			mAuxVars.addAll(tlres.getAuxiliaryVars());
-			mOverapproximations.putAll(tlres.getOverappoximations()); 
+			mOverapproximations.putAll(tlres.getOverappoximations());
 			argumentTerms = tlres.getTerms();
 		}
 
@@ -393,7 +399,7 @@ public class Statements2TransFormula {
 				final Expression post = ((EnsuresSpecification) spec).getFormula();
 				final SingleTermResult tlres = mExpression2Term.translateToTerm(ensIts, post);
 				mAuxVars.addAll(tlres.getAuxiliaryVars());
-				mOverapproximations.putAll(tlres.getOverappoximations()); 
+				mOverapproximations.putAll(tlres.getOverappoximations());
 				final Term f = tlres.getTerm();
 				mAssumes = Util.and(mScript, f, mAssumes);
 				if (s_ComputeAsserts) {
@@ -416,7 +422,7 @@ public class Statements2TransFormula {
 				final Expression pre = ((RequiresSpecification) spec).getFormula();
 				final SingleTermResult tlres = mExpression2Term.translateToTerm(reqIts, pre);
 				mAuxVars.addAll(tlres.getAuxiliaryVars());
-				mOverapproximations.putAll(tlres.getOverappoximations()); 
+				mOverapproximations.putAll(tlres.getOverappoximations());
 				final Term f = tlres.getTerm();
 				mAssumes = Util.and(mScript, f, mAssumes);
 				if (s_ComputeAsserts) {
@@ -626,11 +632,11 @@ public class Statements2TransFormula {
 		return result;
 	}
 
-	public TranslationResult statementSequence(final boolean simplify, final SimplicationTechnique simplicationTechnique, 
-			final String procId, final Statement... statements) {
+	public TranslationResult statementSequence(final boolean simplify, final SimplicationTechnique simplicationTechnique,
+			final String procId, final List<Statement> statements) {
 		initialize(procId);
-		for (int i = statements.length - 1; i >= 0; i--) {
-			final Statement st = statements[i];
+		for (int i = statements.size() - 1; i >= 0; i--) {
+			final Statement st = statements.get(i);
 			if (st instanceof AssumeStatement) {
 				addAssume((AssumeStatement) st);
 			} else if (st instanceof AssignmentStatement) {
@@ -661,9 +667,9 @@ public class Statements2TransFormula {
 		final Procedure calleeImpl = mBoogieDeclarations.getProcImplementation().get(callee);
 
 		final IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
-		final MultiTermResult tlres = mExpression2Term.translateToTerms(its, st.getArguments()); 
+		final MultiTermResult tlres = mExpression2Term.translateToTerms(its, st.getArguments());
 		mAuxVars.addAll(tlres.getAuxiliaryVars());
-		mOverapproximations.putAll(tlres.getOverappoximations()); 
+		mOverapproximations.putAll(tlres.getOverappoximations());
 		final Term[] argTerms = tlres.getTerms();
 		
 		mTransFormulaBuilder.clearOutVars();

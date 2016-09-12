@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -455,7 +455,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 							Collections.singletonList(replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1))), mXnfConversionTechnique, mSimplificationTechnique);
 				}
 				if (edge instanceof ShortcutErrEdge) {
-					return new ShortcutCodeBlock(null, null, composeEdges.toArray(new CodeBlock[0]), mLogger);
+					return new ShortcutCodeBlock(null, null, composeEdges.toArray(new CodeBlock[composeEdges.size()]),
+							mLogger);
 				}
 				return mCbf.constructSequentialComposition(null, null, simplify, extPqe,
 						Collections.unmodifiableList(composeEdges), mXnfConversionTechnique, mSimplificationTechnique);
@@ -565,7 +566,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			ModelUtils.copyAnnotations(gotoEdge, replacement);
 			ModelUtils.copyAnnotations(secondGotoEdge, replacement);
 		}
-		final String procId = gotoEdge.getPreceedingProcedure();
+		final String procId = gotoEdge.getPrecedingProcedure();
 		mTransFormBuilder.addTransitionFormulas(replacement, procId, mXnfConversionTechnique, mSimplificationTechnique);
 		return replacement;
 	}

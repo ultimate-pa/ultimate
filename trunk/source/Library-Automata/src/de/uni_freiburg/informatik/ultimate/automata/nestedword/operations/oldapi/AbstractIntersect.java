@@ -76,7 +76,7 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 		mRemoveDeadEnds = minimizeResult;
 		mFstNwa = fstNwa;
 		mSndNwa = sndNwa;
-		if (!NestedWordAutomaton.sameAlphabet(mFstNwa, mSndNwa)) {
+		if (!INestedWordAutomatonSimple.sameAlphabet(mFstNwa, mSndNwa)) {
 			throw new AutomataLibraryException(this.getClass(),
 					"Unable to apply operation to automata with different alphabets.");
 		}

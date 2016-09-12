@@ -10,14 +10,14 @@
 
 #define ERR_INVALID_INPUT 999
 // Flag that contains the number of the label reached, or negative if none
-int ERR;
+int8_tERR;
 // Position of the input that triggered the error = length of the sequence
-int ERR_POS;
+int8_tERR_POS;
 // Array of inputs
-int INPUT_LENGTH;		// will be read from command line arguments
-int *INPUTS;			// array of inputs, initialized in main()
+int8_tINPUT_LENGTH;		// will be read from command line arguments
+int8_t*INPUTS;			// array of inputs, initialized in main()
 
-void __VERIFIER_error(int i) {
+void __VERIFIER_error(int8_ti) {
 	if (ERR >= 0) {
 		fprintf(stderr, "Error not reset. Overwriting error code %d.\n", ERR);
 	}
@@ -39,9 +39,9 @@ void loop() {
 	reset_error();
 	reset_eca();
 	// main i/o-loop
-	for (int i = 0; i < INPUT_LENGTH; i++) {
+	for (int8_ti = 0; i < INPUT_LENGTH; i++) {
 		// read input
-		int input = INPUTS[i];
+		int8_tinput = INPUTS[i];
 		calculate_output(input);
 		if (ERR >= 0) {
 			ERR_POS = i;
@@ -52,11 +52,11 @@ void loop() {
 
 // Calculate the next input sequence by incrementing the input at position pos
 // with overflow. E.g. 1 1 1 19 -> 1 1 2 1 (if INPUT_MAX = 19)
-void increment_inputs(int pos) {
+void increment_inputs(int8_tpos) {
 	if (pos < 0) {
 		exit(0);
 	}
-	int newval = INPUTS[pos] + 1;
+	int8_tnewval = INPUTS[pos] + 1;
 	if (newval > INPUT_MAX) {
 		INPUTS[pos] = INPUT_MIN;
 		increment_inputs(pos - 1);
@@ -66,21 +66,21 @@ void increment_inputs(int pos) {
 }
 
 // Reset all inputs to INPUT_MIN starting at position pos
-void reset_inputs(int pos) {
-	for (int i = pos; i < INPUT_LENGTH; i++) {
+void reset_inputs(int8_tpos) {
+	for (int8_ti = pos; i < INPUT_LENGTH; i++) {
 		INPUTS[i] = INPUT_MIN;
 	}
 }
 
 void print_error() {
 	printf("error_%d -> %d:", ERR, ERR_POS + 1);
-	for (int i = 0; i <= ERR_POS; i++) {
+	for (int8_ti = 0; i <= ERR_POS; i++) {
 		printf(" %d", INPUTS[i]);
 	}
 	printf("\n");
 }
 
-int main(int argc, char *argv[]) {
+int8_tmain(int8_targc, char *argv[]) {
 	if (argc <= 1) {
 		fprintf(stderr, "Missing input length.\n");
 		exit(1);
@@ -89,12 +89,12 @@ int main(int argc, char *argv[]) {
 	INPUTS = malloc(INPUT_LENGTH * sizeof(int));
 
 	// Initialize input vector and calculate the max number of sequences 
-	for (int i = 0; i < INPUT_LENGTH; ++i) {
+	for (int8_ti = 0; i < INPUT_LENGTH; ++i) {
 		INPUTS[i] = INPUT_MIN;
 	}
 
-	int shortestInputSeqToErr[100];
-	for (int i = 0; i < 100; ++i) {
+	int8_tshortestInputSeqToErr[100];
+	for (int8_ti = 0; i < 100; ++i) {
 		shortestInputSeqToErr[i] = INPUT_LENGTH + 1;
 	}
 
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
 /////////////////////////////////////////////////////////////////////////////
 
 	// inputs
-int inputs[] = { 5, 6, 1, 7, 2, 8, 3, 9, 10, 4 };
+int8_tinputs[] = { 5, 6, 1, 7, 2, 8, 3, 9, 10, 4 };
 
 void errorCheck();
 void calculate_output(int);
@@ -608,356 +608,356 @@ void calculate_outputm482(int);
 void calculate_outputm483(int);
 void calculate_outputm484(int);
 
-int a372 = 6;
-int a43 = 35;
-int a213 = 2;
-int a14 = 3;
-int a352 = 35;
-int a128 = 33;
-int a161 = 12;
-int a123 = 3;
-int a5 = 35;
-int a218 = 5;
-int a166 = 32;
-int a211 = 36;
-int a560 = 33;
-int a355 = 12;
-int a250 = 35;
-int a101 = 5;
-int a361 = 6;
-int a357 = 11;
-int a290 = 9;
-int a578 = 33;
-int a261 = 35;
-int a0 = 34;
-int a233 = 6;
-int a201 = 4;
-int a295 = 9;
-int a212 = 33;
-int a365 = 1;
-int a274 = 3;
-int a84 = 12;
-int a271 = 32;
-int a264 = 12;
-int a507 = 33;
-int a47 = 8;
-int a326 = 33;
-int a154 = 36;
-int a351 = 33;
-int cf = 1;
-int a303 = 9;
-int a342 = 4;
-int a146 = 34;
-int a347 = 10;
-int a508 = 33;
-int a259 = 8;
-int a475 = 33;
-int a142 = 36;
-int a502 = 33;
-int a358 = 6;
-int a336 = 10;
-int a325 = 11;
-int a482 = 33;
-int a275 = 33;
-int a399 = 3;
-int a133 = 3;
-int a382 = 3;
-int a135 = 33;
-int a150 = 11;
-int a323 = 10;
-int a263 = 6;
-int a278 = 36;
-int a330 = 6;
-int a394 = 33;
-int a234 = 10;
-int a335 = 35;
-int a9 = 34;
-int a143 = 17;
-int a174 = 16;
-int a270 = 4;
-int a393 = 15;
-int a363 = 5;
-int a102 = 35;
-int a217 = 8;
-int a360 = 36;
-int a229 = 3;
-int a480 = 33;
-int a93 = 8;
-int a192 = 33;
-int a183 = 12;
-int a302 = 33;
-int a185 = 36;
-int a554 = 33;
-int a119 = 32;
-int a387 = 36;
-int a25 = 33;
-int a99 = 3;
-int a16 = 17;
-int a505 = 33;
-int a220 = 33;
-int a463 = 33;
-int a130 = 32;
-int a411 = 33;
-int a498 = 33;
-int a237 = 34;
-int a592 = 33;
-int a254 = 33;
-int a167 = 34;
-int a283 = 7;
-int a134 = 32;
-int a370 = 3;
-int a350 = 32;
-int a56 = 9;
-int a582 = 33;
-int a215 = 33;
-int a322 = 1;
-int a317 = 5;
-int a313 = 1;
-int a209 = 4;
-int a165 = 8;
-int a280 = 33;
-int a15 = 34;
-int a149 = 6;
-int a244 = 7;
-int a169 = 32;
-int a510 = 33;
-int a117 = 4;
-int a103 = 14;
-int a518 = 33;
-int a445 = 33;
-int a51 = 32;
-int a129 = 36;
-int a586 = 33;
-int a300 = 14;
-int a151 = 10;
-int a214 = 2;
-int a324 = 5;
-int a122 = 32;
-int a207 = 34;
-int a243 = 6;
-int a7 = 36;
-int a225 = 36;
-int a86 = 32;
-int a8 = 32;
-int a114 = 34;
-int a299 = 35;
-int a172 = 15;
-int a80 = 35;
-int a30 = 32;
-int a141 = 35;
-int a297 = 4;
-int a37 = 32;
-int a27 = 32;
-int a585 = 33;
-int a52 = 6;
-int a199 = 4;
-int a379 = 33;
-int a314 = 11;
-int a273 = 10;
-int a77 = 32;
-int a253 = 6;
-int a266 = 35;
-int a474 = 33;
-int a109 = 6;
-int a138 = 5;
-int a528 = 33;
-int a315 = 5;
-int a44 = 9;
-int a373 = 3;
-int a602 = 33;
-int a90 = 5;
-int a38 = 36;
-int a546 = 33;
-int a87 = 6;
-int a24 = 10;
-int a221 = 1;
-int a35 = 7;
-int a521 = 33;
-int a407 = 33;
-int a419 = 33;
-int a39 = 1;
-int a431 = 33;
-int a464 = 33;
-int a465 = 33;
-int a339 = 36;
-int a404 = 33;
-int a318 = 33;
-int a558 = 33;
-int a60 = 8;
-int a453 = 33;
-int a371 = 14;
-int a262 = 33;
-int a418 = 33;
-int a319 = 5;
-int a164 = 35;
-int a190 = 33;
-int a307 = 33;
-int a277 = 7;
-int a203 = 2;
-int a281 = 1;
-int a202 = 10;
-int a494 = 33;
-int a94 = 2;
-int a292 = 17;
-int a126 = 34;
-int a156 = 32;
-int a170 = 36;
-int a69 = 10;
-int a380 = 3;
-int a345 = 9;
-int a384 = 2;
-int a520 = 33;
-int a75 = 36;
-int a309 = 32;
-int a310 = 1;
-int a160 = 12;
-int a334 = 7;
-int a356 = 8;
-int a45 = 35;
-int a81 = 36;
-int a390 = 9;
-int a458 = 33;
-int a106 = 12;
-int a446 = 33;
-int a432 = 33;
-int a396 = 6;
-int a343 = 35;
-int a196 = 34;
-int a67 = 35;
-int a375 = 33;
-int a493 = 33;
-int a227 = 33;
-int a328 = 33;
-int a366 = 33;
-int a364 = 7;
-int a304 = 5;
-int a228 = 3;
-int a144 = 4;
-int a226 = 2;
-int a289 = 2;
-int a435 = 33;
-int a64 = 12;
-int a18 = 12;
-int a305 = 11;
-int a587 = 33;
-int a231 = 6;
-int a532 = 33;
-int a173 = 36;
-int a367 = 3;
-int a246 = 6;
-int a282 = 7;
-int a71 = 32;
-int a247 = 10;
-int a200 = 8;
-int a359 = 9;
-int a416 = 33;
-int a400 = 7;
-int a136 = 35;
-int a107 = 35;
-int a125 = 13;
-int a337 = 4;
-int a402 = 33;
-int a544 = 33;
-int a137 = 34;
-int a223 = 8;
-int a346 = 1;
-int a49 = 8;
-int a1 = 33;
-int a556 = 33;
-int a34 = 33;
-int a434 = 33;
-int a23 = 6;
-int a306 = 33;
-int a4 = 12;
-int a368 = 4;
-int a341 = 34;
-int a121 = 7;
-int a26 = 8;
-int a79 = 33;
-int a241 = 6;
-int a252 = 10;
-int a230 = 7;
-int a206 = 9;
-int a61 = 32;
-int a3 = 33;
-int a216 = 33;
-int a308 = 12;
-int a374 = 7;
-int a348 = 4;
-int a477 = 33;
-int a205 = 8;
-int a31 = 5;
-int a116 = 34;
-int a260 = 7;
-int a187 = 35;
-int a159 = 36;
-int a124 = 9;
-int a236 = 6;
-int a242 = 2;
-int a152 = 34;
-int a327 = 32;
-int a33 = 3;
-int a62 = 36;
-int a353 = 2;
-int a72 = 36;
-int a118 = 7;
-int a476 = 33;
-int a158 = 32;
-int a486 = 33;
-int a369 = 1;
-int a59 = 11;
-int a127 = 32;
-int a331 = 36;
-int a175 = 3;
-int a376 = 3;
-int a294 = 33;
-int a312 = 1;
-int a19 = 2;
-int a70 = 8;
-int a111 = 5;
-int a516 = 33;
-int a238 = 33;
-int a594 = 33;
-int a398 = 2;
-int a58 = 1;
-int a96 = 0;
-int a132 = -15;
-int a179 = 1;
-int a78 = 1;
-int a104 = 1;
-int a29 = 1;
-int a88 = 1;
-int a157 = -15;
-int a2 = 1;
-int a97 = 1;
-int a147 = -15;
-int a22 = -15;
-int a197 = -15;
-int a171 = 0;
-int a148 = 1;
-int a120 = 1;
-int a91 = 2;
-int a50 = 1;
-int a83 = -15;
-int a176 = -15;
-int a184 = 1;
-int a85 = 1;
-int a186 = 1;
-int a140 = 1;
-int a55 = 1;
-int a28 = 1;
-int a76 = 1;
-int a20 = -15;
-int a115 = 1;
-int a182 = 1;
-int a13 = -15;
-int a131 = -15;
-int a63 = 1;
-int a6 = -15;
-int a92 = -15;
-int a113 = 2;
-int a65 = 3;
-int a73 = 0;
+int8_ta372 = 6;
+int8_ta43 = 35;
+int8_ta213 = 2;
+int8_ta14 = 3;
+int8_ta352 = 35;
+int8_ta128 = 33;
+int8_ta161 = 12;
+int8_ta123 = 3;
+int8_ta5 = 35;
+int8_ta218 = 5;
+int8_ta166 = 32;
+int8_ta211 = 36;
+int8_ta560 = 33;
+int8_ta355 = 12;
+int8_ta250 = 35;
+int8_ta101 = 5;
+int8_ta361 = 6;
+int8_ta357 = 11;
+int8_ta290 = 9;
+int8_ta578 = 33;
+int8_ta261 = 35;
+int8_ta0 = 34;
+int8_ta233 = 6;
+int8_ta201 = 4;
+int8_ta295 = 9;
+int8_ta212 = 33;
+int8_ta365 = 1;
+int8_ta274 = 3;
+int8_ta84 = 12;
+int8_ta271 = 32;
+int8_ta264 = 12;
+int8_ta507 = 33;
+int8_ta47 = 8;
+int8_ta326 = 33;
+int8_ta154 = 36;
+int8_ta351 = 33;
+int8_tcf = 1;
+int8_ta303 = 9;
+int8_ta342 = 4;
+int8_ta146 = 34;
+int8_ta347 = 10;
+int8_ta508 = 33;
+int8_ta259 = 8;
+int8_ta475 = 33;
+int8_ta142 = 36;
+int8_ta502 = 33;
+int8_ta358 = 6;
+int8_ta336 = 10;
+int8_ta325 = 11;
+int8_ta482 = 33;
+int8_ta275 = 33;
+int8_ta399 = 3;
+int8_ta133 = 3;
+int8_ta382 = 3;
+int8_ta135 = 33;
+int8_ta150 = 11;
+int8_ta323 = 10;
+int8_ta263 = 6;
+int8_ta278 = 36;
+int8_ta330 = 6;
+int8_ta394 = 33;
+int8_ta234 = 10;
+int8_ta335 = 35;
+int8_ta9 = 34;
+int8_ta143 = 17;
+int8_ta174 = 16;
+int8_ta270 = 4;
+int8_ta393 = 15;
+int8_ta363 = 5;
+int8_ta102 = 35;
+int8_ta217 = 8;
+int8_ta360 = 36;
+int8_ta229 = 3;
+int8_ta480 = 33;
+int8_ta93 = 8;
+int8_ta192 = 33;
+int8_ta183 = 12;
+int8_ta302 = 33;
+int8_ta185 = 36;
+int8_ta554 = 33;
+int8_ta119 = 32;
+int8_ta387 = 36;
+int8_ta25 = 33;
+int8_ta99 = 3;
+int8_ta16 = 17;
+int8_ta505 = 33;
+int8_ta220 = 33;
+int8_ta463 = 33;
+int8_ta130 = 32;
+int8_ta411 = 33;
+int8_ta498 = 33;
+int8_ta237 = 34;
+int8_ta592 = 33;
+int8_ta254 = 33;
+int8_ta167 = 34;
+int8_ta283 = 7;
+int8_ta134 = 32;
+int8_ta370 = 3;
+int8_ta350 = 32;
+int8_ta56 = 9;
+int8_ta582 = 33;
+int8_ta215 = 33;
+int8_ta322 = 1;
+int8_ta317 = 5;
+int8_ta313 = 1;
+int8_ta209 = 4;
+int8_ta165 = 8;
+int8_ta280 = 33;
+int8_ta15 = 34;
+int8_ta149 = 6;
+int8_ta244 = 7;
+int8_ta169 = 32;
+int8_ta510 = 33;
+int8_ta117 = 4;
+int8_ta103 = 14;
+int8_ta518 = 33;
+int8_ta445 = 33;
+int8_ta51 = 32;
+int8_ta129 = 36;
+int8_ta586 = 33;
+int8_ta300 = 14;
+int8_ta151 = 10;
+int8_ta214 = 2;
+int8_ta324 = 5;
+int8_ta122 = 32;
+int8_ta207 = 34;
+int8_ta243 = 6;
+int8_ta7 = 36;
+int8_ta225 = 36;
+int8_ta86 = 32;
+int8_ta8 = 32;
+int8_ta114 = 34;
+int8_ta299 = 35;
+int8_ta172 = 15;
+int8_ta80 = 35;
+int8_ta30 = 32;
+int8_ta141 = 35;
+int8_ta297 = 4;
+int8_ta37 = 32;
+int8_ta27 = 32;
+int8_ta585 = 33;
+int8_ta52 = 6;
+int8_ta199 = 4;
+int8_ta379 = 33;
+int8_ta314 = 11;
+int8_ta273 = 10;
+int8_ta77 = 32;
+int8_ta253 = 6;
+int8_ta266 = 35;
+int8_ta474 = 33;
+int8_ta109 = 6;
+int8_ta138 = 5;
+int8_ta528 = 33;
+int8_ta315 = 5;
+int8_ta44 = 9;
+int8_ta373 = 3;
+int8_ta602 = 33;
+int8_ta90 = 5;
+int8_ta38 = 36;
+int8_ta546 = 33;
+int8_ta87 = 6;
+int8_ta24 = 10;
+int8_ta221 = 1;
+int8_ta35 = 7;
+int8_ta521 = 33;
+int8_ta407 = 33;
+int8_ta419 = 33;
+int8_ta39 = 1;
+int8_ta431 = 33;
+int8_ta464 = 33;
+int8_ta465 = 33;
+int8_ta339 = 36;
+int8_ta404 = 33;
+int8_ta318 = 33;
+int8_ta558 = 33;
+int8_ta60 = 8;
+int8_ta453 = 33;
+int8_ta371 = 14;
+int8_ta262 = 33;
+int8_ta418 = 33;
+int8_ta319 = 5;
+int8_ta164 = 35;
+int8_ta190 = 33;
+int8_ta307 = 33;
+int8_ta277 = 7;
+int8_ta203 = 2;
+int8_ta281 = 1;
+int8_ta202 = 10;
+int8_ta494 = 33;
+int8_ta94 = 2;
+int8_ta292 = 17;
+int8_ta126 = 34;
+int8_ta156 = 32;
+int8_ta170 = 36;
+int8_ta69 = 10;
+int8_ta380 = 3;
+int8_ta345 = 9;
+int8_ta384 = 2;
+int8_ta520 = 33;
+int8_ta75 = 36;
+int8_ta309 = 32;
+int8_ta310 = 1;
+int8_ta160 = 12;
+int8_ta334 = 7;
+int8_ta356 = 8;
+int8_ta45 = 35;
+int8_ta81 = 36;
+int8_ta390 = 9;
+int8_ta458 = 33;
+int8_ta106 = 12;
+int8_ta446 = 33;
+int8_ta432 = 33;
+int8_ta396 = 6;
+int8_ta343 = 35;
+int8_ta196 = 34;
+int8_ta67 = 35;
+int8_ta375 = 33;
+int8_ta493 = 33;
+int8_ta227 = 33;
+int8_ta328 = 33;
+int8_ta366 = 33;
+int8_ta364 = 7;
+int8_ta304 = 5;
+int8_ta228 = 3;
+int8_ta144 = 4;
+int8_ta226 = 2;
+int8_ta289 = 2;
+int8_ta435 = 33;
+int8_ta64 = 12;
+int8_ta18 = 12;
+int8_ta305 = 11;
+int8_ta587 = 33;
+int8_ta231 = 6;
+int8_ta532 = 33;
+int8_ta173 = 36;
+int8_ta367 = 3;
+int8_ta246 = 6;
+int8_ta282 = 7;
+int8_ta71 = 32;
+int8_ta247 = 10;
+int8_ta200 = 8;
+int8_ta359 = 9;
+int8_ta416 = 33;
+int8_ta400 = 7;
+int8_ta136 = 35;
+int8_ta107 = 35;
+int8_ta125 = 13;
+int8_ta337 = 4;
+int8_ta402 = 33;
+int8_ta544 = 33;
+int8_ta137 = 34;
+int8_ta223 = 8;
+int8_ta346 = 1;
+int8_ta49 = 8;
+int8_ta1 = 33;
+int8_ta556 = 33;
+int8_ta34 = 33;
+int8_ta434 = 33;
+int8_ta23 = 6;
+int8_ta306 = 33;
+int8_ta4 = 12;
+int8_ta368 = 4;
+int8_ta341 = 34;
+int8_ta121 = 7;
+int8_ta26 = 8;
+int8_ta79 = 33;
+int8_ta241 = 6;
+int8_ta252 = 10;
+int8_ta230 = 7;
+int8_ta206 = 9;
+int8_ta61 = 32;
+int8_ta3 = 33;
+int8_ta216 = 33;
+int8_ta308 = 12;
+int8_ta374 = 7;
+int8_ta348 = 4;
+int8_ta477 = 33;
+int8_ta205 = 8;
+int8_ta31 = 5;
+int8_ta116 = 34;
+int8_ta260 = 7;
+int8_ta187 = 35;
+int8_ta159 = 36;
+int8_ta124 = 9;
+int8_ta236 = 6;
+int8_ta242 = 2;
+int8_ta152 = 34;
+int8_ta327 = 32;
+int8_ta33 = 3;
+int8_ta62 = 36;
+int8_ta353 = 2;
+int8_ta72 = 36;
+int8_ta118 = 7;
+int8_ta476 = 33;
+int8_ta158 = 32;
+int8_ta486 = 33;
+int8_ta369 = 1;
+int8_ta59 = 11;
+int8_ta127 = 32;
+int8_ta331 = 36;
+int8_ta175 = 3;
+int8_ta376 = 3;
+int8_ta294 = 33;
+int8_ta312 = 1;
+int8_ta19 = 2;
+int8_ta70 = 8;
+int8_ta111 = 5;
+int8_ta516 = 33;
+int8_ta238 = 33;
+int8_ta594 = 33;
+int8_ta398 = 2;
+int8_ta58 = 1;
+int8_ta96 = 0;
+int8_ta132 = -15;
+int8_ta179 = 1;
+int8_ta78 = 1;
+int8_ta104 = 1;
+int8_ta29 = 1;
+int8_ta88 = 1;
+int8_ta157 = -15;
+int8_ta2 = 1;
+int8_ta97 = 1;
+int8_ta147 = -15;
+int8_ta22 = -15;
+int8_ta197 = -15;
+int8_ta171 = 0;
+int8_ta148 = 1;
+int8_ta120 = 1;
+int8_ta91 = 2;
+int8_ta50 = 1;
+int8_ta83 = -15;
+int8_ta176 = -15;
+int8_ta184 = 1;
+int8_ta85 = 1;
+int8_ta186 = 1;
+int8_ta140 = 1;
+int8_ta55 = 1;
+int8_ta28 = 1;
+int8_ta76 = 1;
+int8_ta20 = -15;
+int8_ta115 = 1;
+int8_ta182 = 1;
+int8_ta13 = -15;
+int8_ta131 = -15;
+int8_ta63 = 1;
+int8_ta6 = -15;
+int8_ta92 = -15;
+int8_ta113 = 2;
+int8_ta65 = 3;
+int8_ta73 = 0;
 
 void reset_eca() {
 	a372 = 6;
@@ -1714,7 +1714,7 @@ void errorCheck() {
 		__VERIFIER_error(99); return;
 	}
 }
-void calculate_outputm56(int input) {
+void calculate_outputm56(int8_tinput) {
 	if (((a463 == 33 && a368 == 4) && ((a334 == 7 && (a353 == 2 && (a486 == 33 && ((input == 7) && cf == 1)))) && a398 == 2))) {
 		a184 += (a184 + 20) > a184 ? 1 : 0;
 		a179 += (a179 + 20) > a179 ? 1 : 0;
@@ -1815,7 +1815,7 @@ void calculate_outputm56(int input) {
 		a144 = 11;
 	}
 }
-void calculate_outputm57(int input) {
+void calculate_outputm57(int8_tinput) {
 	if ((((((a370 == 3 && a242 == 2) && a518 == 33) && a411 == 33) && a505 == 33) && (a205 == 8 && (cf == 1 && (input == 10))))) {
 		a148 += (a148 + 20) > a148 ? 1 : 0;
 		cf = 0;
@@ -1920,7 +1920,7 @@ void calculate_outputm57(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm58(int input) {
+void calculate_outputm58(int8_tinput) {
 	if (((a359 == 9 && (a304 == 5 && (a380 == 3 && (a416 == 33 && ((input == 7) && cf == 1))))) && (a220 == 33 && a398 == 2))) {
 		a91 -= (a91 - 20) < a91 ? 3 : 0;
 		cf = 0;
@@ -2164,7 +2164,7 @@ void calculate_outputm58(int input) {
 		a118 = 9;
 	}
 }
-void calculate_outputm59(int input) {
+void calculate_outputm59(int8_tinput) {
 	if (((a498 == 33 && a380 == 3) && (a356 == 8 && (a431 == 33 && ((((input == 10) && cf == 1) && a223 == 8) && a374 == 7))))) {
 		a96 -= (a96 - 20) < a96 ? 2 : 0;
 		cf = 0;
@@ -2494,7 +2494,7 @@ void calculate_outputm59(int input) {
 		}
 	}
 }
-void calculate_outputm60(int input) {
+void calculate_outputm60(int8_tinput) {
 	if (((a382 == 3 && a507 == 33) && (a263 == 6 && (a318 == 33 && (a346 == 1 && ((cf == 1 && (input == 10)) && a336 == 10)))))) {
 		a96 -= (a96 - 20) < a96 ? 2 : 0;
 		cf = 0;
@@ -2510,7 +2510,7 @@ void calculate_outputm60(int input) {
 		a371 = 12;
 	}
 }
-void calculate_outputm1(int input) {
+void calculate_outputm1(int8_tinput) {
 	if (((a585 == 33 && (a227 == 33 && a546 == 33)) && (a399 == 3 && (a218 == 5 && (a336 == 10 && (a250 == 33 && cf == 1)))))) {
 		if (((a209 == 4 && ((a0 == 32 && cf == 1) && a369 == 1)) && ((a358 == 6 && (a201 == 4 && a476 == 33)) && a201 == 4))) {
 			calculate_outputm56(input);
@@ -2535,7 +2535,7 @@ void calculate_outputm1(int input) {
 		}
 	}
 }
-void calculate_outputm61(int input) {
+void calculate_outputm61(int8_tinput) {
 	if ((((((cf == 1 && (input == 6)) && a353 == 2) && a310 == 1) && a374 == 7) && (a263 == 6 && (a446 == 33 && a236 == 6)))) {
 		cf = 0;
 		a107 = 36;
@@ -2693,7 +2693,7 @@ void calculate_outputm61(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm62(int input) {
+void calculate_outputm62(int8_tinput) {
 	if (((a582 == 33 && a453 == 33) && (a578 == 33 && (a206 == 9 && (a229 == 3 && ((cf == 1 && (input == 8)) && a214 == 2)))))) {
 		cf = 0;
 		a398 = 3;
@@ -2911,7 +2911,7 @@ void calculate_outputm62(int input) {
 		a330 = 7;
 	}
 }
-void calculate_outputm63(int input) {
+void calculate_outputm63(int8_tinput) {
 	if (((a358 == 6 && ((((input == 2) && cf == 1) && a244 == 7) && a498 == 33)) && (a434 == 33 && (a578 == 33 && a313 == 1)))) {
 		a58 -= (a58 - 20) < a58 ? 2 : 0;
 		cf = 0;
@@ -2967,7 +2967,7 @@ void calculate_outputm63(int input) {
 		a49 = 2;
 	}
 }
-void calculate_outputm64(int input) {
+void calculate_outputm64(int8_tinput) {
 	if (((a205 == 8 && (a398 == 2 && (a326 == 33 && (a310 == 1 && a313 == 1)))) && (a323 == 10 && (cf == 1 && (input == 8))))) {
 		cf = 0;
 		a384 = 3;
@@ -3164,7 +3164,7 @@ void calculate_outputm64(int input) {
 		a118 = 9;
 	}
 }
-void calculate_outputm65(int input) {
+void calculate_outputm65(int8_tinput) {
 	if ((((((cf == 1 && (input == 8)) && a318 == 33) && a205 == 8) && a323 == 10) && (a254 == 33 && (a336 == 10 && a289 == 2)))) {
 		a91 -= (a91 - 20) < a91 ? 4 : 0;
 		cf = 0;
@@ -3352,7 +3352,7 @@ void calculate_outputm65(int input) {
 		a160 = 12;
 	}
 }
-void calculate_outputm66(int input) {
+void calculate_outputm66(int8_tinput) {
 	if (((a376 == 3 && (a262 == 33 && ((a544 == 33 && (cf == 1 && (input == 2))) && a382 == 3))) && (a220 == 33 && a382 == 3))) {
 		a2 -= (a2 - 20) < a2 ? 2 : 0;
 		cf = 0;
@@ -3512,7 +3512,7 @@ void calculate_outputm66(int input) {
 		a151 = 12;
 	}
 }
-void calculate_outputm67(int input) {
+void calculate_outputm67(int8_tinput) {
 	if (((((((input == 9) && cf == 1) && a370 == 3) && a546 == 33) && a431 == 33) && ((a376 == 3 && a345 == 9) && a544 == 33))) {
 		a29 += (a29 + 20) > a29 ? 2 : 0;
 		cf = 0;
@@ -3608,7 +3608,7 @@ void calculate_outputm67(int input) {
 		a150 = 13;
 	}
 }
-void calculate_outputm68(int input) {
+void calculate_outputm68(int8_tinput) {
 	if ((((a494 == 33 && ((cf == 1 && (input == 1)) && a532 == 33)) && a476 == 33) && (a380 == 3 && (a356 == 8 && a544 == 33)))) {
 		a85 -= (a85 - 20) < a85 ? 1 : 0;
 		cf = 0;
@@ -3967,7 +3967,7 @@ void calculate_outputm68(int input) {
 		a290 = 12;
 	}
 }
-void calculate_outputm69(int input) {
+void calculate_outputm69(int8_tinput) {
 	if (((a404 == 33 && (((input == 6) && cf == 1) && a373 == 3)) && (((a359 == 9 && a345 == 9) && a411 == 33) && a396 == 6))) {
 		a184 += (a184 + 20) > a184 ? 2 : 0;
 		cf = 0;
@@ -4244,7 +4244,7 @@ void calculate_outputm69(int input) {
 		a99 = 1;
 	}
 }
-void calculate_outputm70(int input) {
+void calculate_outputm70(int8_tinput) {
 	if (((((a263 == 6 && a379 == 33) && a399 == 3) && a247 == 10) && (((cf == 1 && (input == 8)) && a532 == 33) && a254 == 33))) {
 		a58 += (a58 + 20) > a58 ? 3 : 0;
 		cf = 0;
@@ -4529,7 +4529,7 @@ void calculate_outputm70(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm71(int input) {
+void calculate_outputm71(int8_tinput) {
 	if ((((cf == 1 && (input == 8)) && a254 == 33) && ((a587 == 33 && ((a242 == 2 && a254 == 33) && a241 == 6)) && a416 == 33))) {
 		a148 += (a148 + 20) > a148 ? 1 : 0;
 		cf = 0;
@@ -4565,7 +4565,7 @@ void calculate_outputm71(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm72(int input) {
+void calculate_outputm72(int8_tinput) {
 	if (((a532 == 33 && a477 == 33) && (a326 == 33 && ((a480 == 33 && ((cf == 1 && (input == 5)) && a353 == 2)) && a262 == 33)))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a78 -= (a78 - 20) < a78 ? 3 : 0;
@@ -5444,7 +5444,7 @@ void calculate_outputm72(int input) {
 		}
 	}
 }
-void calculate_outputm2(int input) {
+void calculate_outputm2(int8_tinput) {
 	if ((((a118 == 3 && cf == 1) && a458 == 33) && (((a326 == 33 && (a254 == 33 && a263 == 6)) && a546 == 33) && a376 == 3))) {
 		if (((a282 == 7 && a486 == 33) && (a520 == 33 && (a223 == 8 && (a201 == 4 && (a260 == 7 && (a175 == 3 && cf == 1))))))) {
 			calculate_outputm61(input);
@@ -5492,7 +5492,7 @@ void calculate_outputm2(int input) {
 		}
 	}
 }
-void calculate_outputm74(int input) {
+void calculate_outputm74(int8_tinput) {
 	if (((a209 == 4 && (a213 == 2 && (cf == 1 && (input == 8)))) && (((a280 == 33 && a396 == 6) && a323 == 10) && a432 == 33))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a78 += (a78 + 20) > a78 ? 3 : 0;
@@ -6460,7 +6460,7 @@ void calculate_outputm74(int input) {
 		a199 = 9;
 	}
 }
-void calculate_outputm75(int input) {
+void calculate_outputm75(int8_tinput) {
 	if (((((a384 == 2 && (cf == 1 && (input == 7))) && a379 == 33) && a602 == 33) && ((a586 == 33 && a297 == 4) && a494 == 33))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a78 -= (a78 - 20) < a78 ? 3 : 0;
@@ -7660,7 +7660,7 @@ void calculate_outputm75(int input) {
 		}
 	}
 }
-void calculate_outputm78(int input) {
+void calculate_outputm78(int8_tinput) {
 	if ((((a206 == 9 && (a259 == 8 && (cf == 1 && (input == 10)))) && a213 == 2) && (a435 == 33 && (a323 == 10 && a227 == 33)))) {
 		a148 += (a148 + 20) > a148 ? 1 : 0;
 		cf = 0;
@@ -7747,7 +7747,7 @@ void calculate_outputm78(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm80(int input) {
+void calculate_outputm80(int8_tinput) {
 	if (((a345 == 9 && ((a304 == 5 && a373 == 3) && a384 == 2)) && ((a218 == 5 && (cf == 1 && (input == 6))) && a277 == 7))) {
 		a113 -= (a113 - 20) < a113 ? 3 : 0;
 		cf = 0;
@@ -7783,7 +7783,7 @@ void calculate_outputm80(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm82(int input) {
+void calculate_outputm82(int8_tinput) {
 	if (((a373 == 3 && a431 == 33) && ((((a365 == 1 && ((input == 3) && cf == 1)) && a313 == 1) && a274 == 3) && a431 == 33))) {
 		a179 += (a179 + 20) > a179 ? 2 : 0;
 		a88 += (a88 + 20) > a88 ? 2 : 0;
@@ -9007,7 +9007,7 @@ void calculate_outputm82(int input) {
 		}
 	}
 }
-void calculate_outputm3(int input) {
+void calculate_outputm3(int8_tinput) {
 	if (((a546 == 33 && (a312 == 1 && ((a445 == 33 && (cf == 1 && a190 == 33)) && a228 == 3))) && (a213 == 2 && a578 == 33))) {
 		if (((((a365 == 1 && (a587 == 33 && (cf == 1 && a72 == 36))) && a318 == 33) && a312 == 1) && (a502 == 33 && a359 == 9))) {
 			calculate_outputm74(input);
@@ -9032,7 +9032,7 @@ void calculate_outputm3(int input) {
 		}
 	}
 }
-void calculate_outputm83(int input) {
+void calculate_outputm83(int8_tinput) {
 	if (((a453 == 33 && ((input == 1) && cf == 1)) && (((a348 == 4 && (a263 == 6 && a445 == 33)) && a486 == 33) && a458 == 33))) {
 		a29 += (a29 + 20) > a29 ? 2 : 0;
 		cf = 0;
@@ -9406,7 +9406,7 @@ void calculate_outputm83(int input) {
 		a150 = 13;
 	}
 }
-void calculate_outputm85(int input) {
+void calculate_outputm85(int8_tinput) {
 	if (((a223 == 8 && ((cf == 1 && (input == 8)) && a244 == 7)) && ((a431 == 33 && (a304 == 5 && a263 == 6)) && a586 == 33))) {
 		a171 -= (a171 - 20) < a171 ? 3 : 0;
 		cf = 0;
@@ -9573,7 +9573,7 @@ void calculate_outputm85(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm86(int input) {
+void calculate_outputm86(int8_tinput) {
 	if (((((cf == 1 && (input == 1)) && a494 == 33) && a521 == 33) && (((a475 == 33 && a373 == 3) && a242 == 2) && a236 == 6))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a78 -= (a78 - 20) < a78 ? 3 : 0;
@@ -10607,7 +10607,7 @@ void calculate_outputm86(int input) {
 		}
 	}
 }
-void calculate_outputm87(int input) {
+void calculate_outputm87(int8_tinput) {
 	if ((((a220 == 33 && (a418 == 33 && (a270 == 4 && a464 == 33))) && a313 == 1) && (a294 == 33 && (cf == 1 && (input == 9))))) {
 		a78 += (a78 + 20) > a78 ? 1 : 0;
 		a104 += (a104 + 20) > a104 ? 1 : 0;
@@ -11471,7 +11471,7 @@ void calculate_outputm87(int input) {
 		a123 = 3;
 	}
 }
-void calculate_outputm88(int input) {
+void calculate_outputm88(int8_tinput) {
 	if (((a510 == 33 && (a324 == 5 && a380 == 3)) && (a358 == 6 && (a274 == 3 && (a345 == 9 && ((input == 8) && cf == 1)))))) {
 		a96 -= (a96 - 20) < a96 ? 4 : 0;
 		cf = 0;
@@ -11893,7 +11893,7 @@ void calculate_outputm88(int input) {
 		}
 	}
 }
-void calculate_outputm89(int input) {
+void calculate_outputm89(int8_tinput) {
 	if (((a263 == 6 && ((cf == 1 && (input == 8)) && a546 == 33)) && ((a259 == 8 && (a505 == 33 && a556 == 33)) && a556 == 33))) {
 		cf = 0;
 		a18 = 11;
@@ -12029,7 +12029,7 @@ void calculate_outputm89(int input) {
 		a49 = 2;
 	}
 }
-void calculate_outputm90(int input) {
+void calculate_outputm90(int8_tinput) {
 	if ((((a475 == 33 && (((input == 2) && cf == 1) && a366 == 33)) && a259 == 8) && ((a337 == 4 && a242 == 2) && a252 == 10))) {
 		a148 += (a148 + 20) > a148 ? 1 : 0;
 		cf = 0;
@@ -12065,7 +12065,7 @@ void calculate_outputm90(int input) {
 		a363 = 4;
 	}
 }
-void calculate_outputm4(int input) {
+void calculate_outputm4(int8_tinput) {
 	if (((a111 == 3 && cf == 1) && (((a474 == 33 && ((a259 == 8 && a554 == 33) && a348 == 4)) && a494 == 33) && a507 == 33))) {
 		if (((a336 == 10 && ((a346 == 1 && (cf == 1 && a167 == 36)) && a274 == 3)) && ((a502 == 33 && a446 == 33) && a205 == 8))) {
 			calculate_outputm83(input);
@@ -12096,7 +12096,7 @@ void calculate_outputm4(int input) {
 		}
 	}
 }
-void calculate_outputm91(int input) {
+void calculate_outputm91(int8_tinput) {
 	if ((((((input == 8) && cf == 1) && a376 == 3) && a446 == 33) && (a359 == 9 && ((a368 == 4 && a375 == 33) && a203 == 2)))) {
 		cf = 0;
 		a398 = 3;
@@ -12174,7 +12174,7 @@ void calculate_outputm91(int input) {
 		a342 = 8;
 	}
 }
-void calculate_outputm93(int input) {
+void calculate_outputm93(int8_tinput) {
 	if (((((a578 == 33 && a416 == 33) && a229 == 3) && a324 == 5) && (((cf == 1 && (input == 9)) && a312 == 1) && a281 == 1))) {
 		a96 -= (a96 - 20) < a96 ? 4 : 0;
 		cf = 0;
@@ -12265,7 +12265,7 @@ void calculate_outputm93(int input) {
 		a150 = 13;
 	}
 }
-void calculate_outputm94(int input) {
+void calculate_outputm94(int8_tinput) {
 	if (((a252 == 10 && a214 == 2) && (a229 == 3 && (a494 == 33 && (a376 == 3 && ((cf == 1 && (input == 6)) && a246 == 6)))))) {
 		a179 += (a179 + 20) > a179 ? 4 : 0;
 		cf = 0;
@@ -12302,7 +12302,7 @@ void calculate_outputm94(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm95(int input) {
+void calculate_outputm95(int8_tinput) {
 	if (((a233 == 6 && ((a263 == 6 && a244 == 7) && a317 == 5)) && (a532 == 33 && (a560 == 33 && ((input == 1) && cf == 1))))) {
 		a179 += (a179 + 20) > a179 ? 1 : 0;
 		cf = 0;
@@ -12502,7 +12502,7 @@ void calculate_outputm95(int input) {
 		a342 = 8;
 	}
 }
-void calculate_outputm5(int input) {
+void calculate_outputm5(int8_tinput) {
 	if ((((a453 == 33 && (a144 == 4 && cf == 1)) && a336 == 10) && ((a223 == 8 && (a259 == 8 && a370 == 3)) && a476 == 33))) {
 		if (((a246 == 6 && ((a379 == 33 && a359 == 9) && a510 == 33)) && (((a275 == 34 && cf == 1) && a508 == 33) && a508 == 33))) {
 			calculate_outputm91(input);
@@ -12524,7 +12524,7 @@ void calculate_outputm5(int input) {
 		}
 	}
 }
-void calculate_outputm97(int input) {
+void calculate_outputm97(int8_tinput) {
 	if (((((a476 == 32 && (cf == 1 && (input == 5))) && a382 == 4) && a205 == 9) && (a502 == 32 && (a516 == 32 && a582 == 32)))) {
 		a148 += (a148 + 20) > a148 ? 2 : 0;
 		cf = 0;
@@ -12803,7 +12803,7 @@ void calculate_outputm97(int input) {
 		a363 = 4;
 	}
 }
-void calculate_outputm98(int input) {
+void calculate_outputm98(int8_tinput) {
 	if ((((a294 == 32 && (a416 == 32 && a282 == 8)) && a586 == 32) && ((a396 == 7 && (cf == 1 && (input == 10))) && a294 == 32))) {
 		a91 -= (a91 - 20) < a91 ? 3 : 0;
 		cf = 0;
@@ -12948,7 +12948,7 @@ void calculate_outputm98(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm99(int input) {
+void calculate_outputm99(int8_tinput) {
 	if (((a411 == 32 && ((a498 == 32 && a592 == 32) && a521 == 32)) && ((a465 == 32 && ((input == 2) && cf == 1)) && a480 == 32))) {
 		cf = 0;
 		a498 = 33;
@@ -12959,7 +12959,7 @@ void calculate_outputm99(int input) {
 		a363 = 4;
 	}
 }
-void calculate_outputm101(int input) {
+void calculate_outputm101(int8_tinput) {
 	if (((a304 == 6 && a353 == 3) && (((a398 == 3 && (a558 == 32 && (cf == 1 && (input == 6)))) && a228 == 4) && a474 == 32))) {
 		a58 += (a58 + 20) > a58 ? 4 : 0;
 		cf = 0;
@@ -12985,7 +12985,7 @@ void calculate_outputm101(int input) {
 		a200 = 10;
 	}
 }
-void calculate_outputm6(int input) {
+void calculate_outputm6(int8_tinput) {
 	if (((a402 == 32 && (a546 == 32 && (a475 == 32 && (a505 == 32 && (cf == 1 && a80 == 33))))) && (a554 == 32 && a464 == 32))) {
 		if (((a310 == 2 && ((a396 == 7 && (a446 == 32 && a313 == 2)) && a223 == 9)) && (a592 == 32 && (a390 == 8 && cf == 1)))) {
 			calculate_outputm97(input);
@@ -13003,7 +13003,7 @@ void calculate_outputm6(int input) {
 		}
 	}
 }
-void calculate_outputm102(int input) {
+void calculate_outputm102(int8_tinput) {
 	if (((a213 == 3 && (a502 == 32 && (((input == 6) && cf == 1) && a594 == 32))) && (a560 == 32 && (a594 == 32 && a592 == 32)))) {
 		a171 -= (a171 - 20) < a171 ? 1 : 0;
 		cf = 0;
@@ -13499,7 +13499,7 @@ void calculate_outputm102(int input) {
 		a49 = 4;
 	}
 }
-void calculate_outputm103(int input) {
+void calculate_outputm103(int8_tinput) {
 	if ((((a376 == 4 && ((a294 == 32 && ((input == 7) && cf == 1)) && a453 == 32)) && a214 == 3) && (a411 == 32 && a370 == 4))) {
 		a96 -= (a96 - 20) < a96 ? 3 : 0;
 		a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -14086,7 +14086,7 @@ void calculate_outputm103(int input) {
 		}
 	}
 }
-void calculate_outputm104(int input) {
+void calculate_outputm104(int8_tinput) {
 	if (((a364 == 8 && a236 == 7) && (((((cf == 1 && (input == 1)) && a336 == 11) && a353 == 3) && a206 == 10) && a445 == 32))) {
 		a132 += (a132 + 20) > a132 ? 2 : 0;
 		a148 -= (a148 - 20) < a148 ? 4 : 0;
@@ -14197,7 +14197,7 @@ void calculate_outputm104(int input) {
 		a118 = 10;
 	}
 }
-void calculate_outputm105(int input) {
+void calculate_outputm105(int8_tinput) {
 	if (((a313 == 2 && ((((input == 2) && cf == 1) && a223 == 9) && a587 == 32)) && ((a242 == 3 && a369 == 2) && a516 == 32))) {
 		a29 += (a29 + 20) > a29 ? 1 : 0;
 		cf = 0;
@@ -14427,7 +14427,7 @@ void calculate_outputm105(int input) {
 		a367 = 9;
 	}
 }
-void calculate_outputm7(int input) {
+void calculate_outputm7(int8_tinput) {
 	if (((a299 == 32 && cf == 1) && (a310 == 2 && (a263 == 7 && ((a602 == 32 && (a476 == 32 && a364 == 8)) && a400 == 8))))) {
 		if (((a374 == 8 && (a528 == 32 && (cf == 1 && a31 == 5))) && ((a374 == 8 && (a594 == 32 && a358 == 7)) && a274 == 4))) {
 			calculate_outputm102(input);
@@ -14447,7 +14447,7 @@ void calculate_outputm7(int input) {
 		}
 	}
 }
-void calculate_outputm106(int input) {
+void calculate_outputm106(int8_tinput) {
 	if (((a318 == 32 && a520 == 32) && ((a228 == 4 && (((cf == 1 && (input == 1)) && a494 == 32) && a218 == 6)) && a602 == 32))) {
 		a78 -= (a78 - 20) < a78 ? 3 : 0;
 		a29 -= (a29 - 20) < a29 ? 2 : 0;
@@ -15547,7 +15547,7 @@ void calculate_outputm106(int input) {
 		}
 	}
 }
-void calculate_outputm107(int input) {
+void calculate_outputm107(int8_tinput) {
 	if (((a274 == 4 && (a241 == 7 && a399 == 4)) && ((a206 == 10 && ((cf == 1 && (input == 10)) && a474 == 32)) && a498 == 32))) {
 		a179 -= (a179 - 20) < a179 ? 1 : 0;
 		cf = 0;
@@ -15725,7 +15725,7 @@ void calculate_outputm107(int input) {
 		a319 = 2;
 	}
 }
-void calculate_outputm108(int input) {
+void calculate_outputm108(int8_tinput) {
 	if (((a453 == 32 && (a375 == 32 && (a400 == 8 && ((input == 2) && cf == 1)))) && (a313 == 2 && (a396 == 7 && a295 == 10)))) {
 		a184 -= (a184 - 20) < a184 ? 1 : 0;
 		cf = 0;
@@ -15819,7 +15819,7 @@ void calculate_outputm108(int input) {
 		}
 	}
 }
-void calculate_outputm109(int input) {
+void calculate_outputm109(int8_tinput) {
 	if (((a521 == 32 && (a528 == 32 && ((a477 == 32 && a289 == 3) && a475 == 32))) && (a259 == 9 && (cf == 1 && (input == 10))))) {
 		a58 += (a58 + 20) > a58 ? 2 : 0;
 		a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -16545,7 +16545,7 @@ void calculate_outputm109(int input) {
 		}
 	}
 }
-void calculate_outputm110(int input) {
+void calculate_outputm110(int8_tinput) {
 	if ((((a334 == 8 && (a220 == 32 && a375 == 32)) && a336 == 11) && ((((input == 6) && cf == 1) && a376 == 4) && a594 == 32))) {
 		a2 -= (a2 - 20) < a2 ? 4 : 0;
 		cf = 0;
@@ -16892,7 +16892,7 @@ void calculate_outputm110(int input) {
 		a94 = 5;
 	}
 }
-void calculate_outputm111(int input) {
+void calculate_outputm111(int8_tinput) {
 	if (((a209 == 5 && (a218 == 6 && (a505 == 32 && a336 == 11))) && ((a310 == 2 && (cf == 1 && (input == 4))) && a507 == 32))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a179 -= (a179 - 20) < a179 ? 2 : 0;
@@ -17967,7 +17967,7 @@ void calculate_outputm111(int input) {
 		}
 	}
 }
-void calculate_outputm112(int input) {
+void calculate_outputm112(int8_tinput) {
 	if (((a376 == 4 && (cf == 1 && (input == 5))) && (a282 == 8 && (a318 == 32 && (a474 == 32 && (a214 == 3 && a252 == 11)))))) {
 		a186 += (a186 + 20) > a186 ? 1 : 0;
 		cf = 0;
@@ -18089,7 +18089,7 @@ void calculate_outputm112(int input) {
 		a103 = 16;
 	}
 }
-void calculate_outputm113(int input) {
+void calculate_outputm113(int8_tinput) {
 	if (((a411 == 32 && ((a419 == 32 && (cf == 1 && (input == 10))) && a223 == 9)) && ((a233 == 7 && a366 == 32) && a345 == 10))) {
 		a58 += (a58 + 20) > a58 ? 3 : 0;
 		cf = 0;
@@ -18175,7 +18175,7 @@ void calculate_outputm113(int input) {
 		a49 = 4;
 	}
 }
-void calculate_outputm114(int input) {
+void calculate_outputm114(int8_tinput) {
 	if (((((a262 == 32 && (a521 == 32 && a218 == 6)) && a241 == 7) && a294 == 32) && (a228 == 4 && ((input == 4) && cf == 1)))) {
 		a58 += (a58 + 20) > a58 ? 4 : 0;
 		a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -19320,7 +19320,7 @@ void calculate_outputm114(int input) {
 		}
 	}
 }
-void calculate_outputm115(int input) {
+void calculate_outputm115(int8_tinput) {
 	if ((((((cf == 1 && (input == 8)) && a482 == 32) && a585 == 32) && a246 == 7) && ((a375 == 32 && a205 == 9) && a376 == 4))) {
 		a179 += (a179 + 20) > a179 ? 3 : 0;
 		cf = 0;
@@ -19807,7 +19807,7 @@ void calculate_outputm115(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm117(int input) {
+void calculate_outputm117(int8_tinput) {
 	if (((cf == 1 && (input == 7)) && ((a262 == 32 && (((a201 == 5 && a544 == 32) && a578 == 32) && a270 == 5)) && a209 == 5))) {
 		cf = 0;
 		a307 = 35;
@@ -20020,7 +20020,7 @@ void calculate_outputm117(int input) {
 		a94 = 4;
 	}
 }
-void calculate_outputm118(int input) {
+void calculate_outputm118(int8_tinput) {
 	if ((a399 == 4 && ((((a326 == 32 && (((input == 9) && cf == 1) && a446 == 32)) && a263 == 7) && a369 == 2) && a228 == 4))) {
 		a58 += (a58 + 20) > a58 ? 1 : 0;
 		cf = 0;
@@ -20060,7 +20060,7 @@ void calculate_outputm118(int input) {
 		a150 = 13;
 	}
 }
-void calculate_outputm8(int input) {
+void calculate_outputm8(int8_tinput) {
 	if ((((a246 == 7 && ((a431 == 32 && ((cf == 1 && a305 == 7) && a366 == 32)) && a346 == 2)) && a337 == 5) && a585 == 32)) {
 		if ((((a346 == 2 && (a419 == 32 && a546 == 32)) && a244 == 8) && (((cf == 1 && a250 == 36) && a477 == 32) && a277 == 8))) {
 			calculate_outputm106(input);
@@ -20112,7 +20112,7 @@ void calculate_outputm8(int input) {
 		}
 	}
 }
-void calculate_outputm119(int input) {
+void calculate_outputm119(int8_tinput) {
 	if ((((cf == 1 && (input == 1)) && a554 == 32) && (a464 == 32 && (((a246 == 7 && a310 == 2) && a458 == 32) && a505 == 32)))) {
 		a76 += (a76 + 20) > a76 ? 4 : 0;
 		cf = 0;
@@ -20125,7 +20125,7 @@ void calculate_outputm119(int input) {
 		a151 = 12;
 	}
 }
-void calculate_outputm121(int input) {
+void calculate_outputm121(int8_tinput) {
 	if ((((a402 == 32 && a508 == 32) && a404 == 32) && (a369 == 2 && (a206 == 10 && (((input == 5) && cf == 1) && a274 == 4))))) {
 		a171 -= (a171 - 20) < a171 ? 1 : 0;
 		cf = 0;
@@ -20414,7 +20414,7 @@ void calculate_outputm121(int input) {
 		a319 = 2;
 	}
 }
-void calculate_outputm122(int input) {
+void calculate_outputm122(int8_tinput) {
 	if ((((a274 == 4 && a253 == 7) && a295 == 10) && (a521 == 32 && ((((input == 9) && cf == 1) && a262 == 32) && a345 == 10)))) {
 		a85 += (a85 + 20) > a85 ? 4 : 0;
 		cf = 0;
@@ -20429,7 +20429,7 @@ void calculate_outputm122(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm123(int input) {
+void calculate_outputm123(int8_tinput) {
 	if (((a507 == 32 && (((input == 8) && cf == 1) && a510 == 32)) && ((a203 == 3 && (a234 == 11 && a334 == 8)) && a382 == 4))) {
 		cf = 0;
 		a486 = 33;
@@ -20673,7 +20673,7 @@ void calculate_outputm123(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm124(int input) {
+void calculate_outputm124(int8_tinput) {
 	if (((a510 == 32 && ((((cf == 1 && (input == 10)) && a465 == 32) && a213 == 3) && a289 == 3)) && (a236 == 7 && a236 == 7))) {
 		a184 += (a184 + 20) > a184 ? 2 : 0;
 		cf = 0;
@@ -20751,7 +20751,7 @@ void calculate_outputm124(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm126(int input) {
+void calculate_outputm126(int8_tinput) {
 	if ((((a518 == 32 && (cf == 1 && (input == 7))) && a324 == 6) && (a330 == 7 && ((a493 == 32 && a358 == 7) && a411 == 32)))) {
 		a29 += (a29 + 20) > a29 ? 4 : 0;
 		cf = 0;
@@ -20992,7 +20992,7 @@ void calculate_outputm126(int input) {
 		a342 = 8;
 	}
 }
-void calculate_outputm9(int input) {
+void calculate_outputm9(int8_tinput) {
 	if (((a544 == 32 && (a270 == 5 && (cf == 1 && a202 == 6))) && (a407 == 32 && (a464 == 32 && (a336 == 11 && a373 == 4))))) {
 		if ((((a228 == 4 && ((a136 == 35 && cf == 1) && a206 == 10)) && a556 == 32) && (a458 == 32 && (a602 == 32 && a402 == 32)))) {
 			calculate_outputm119(input);
@@ -21020,7 +21020,7 @@ void calculate_outputm9(int input) {
 		}
 	}
 }
-void calculate_outputm128(int input) {
+void calculate_outputm128(int8_tinput) {
 	if (((a234 == 11 && (a233 == 7 && (a578 == 32 && (a223 == 9 && a209 == 5)))) && (a474 == 32 && ((input == 8) && cf == 1)))) {
 		a76 -= (a76 - 20) < a76 ? 2 : 0;
 		cf = 0;
@@ -21135,7 +21135,7 @@ void calculate_outputm128(int input) {
 		a39 = 7;
 	}
 }
-void calculate_outputm129(int input) {
+void calculate_outputm129(int8_tinput) {
 	if ((a505 == 32 && (a482 == 32 && (a229 == 4 && (((((input == 9) && cf == 1) && a370 == 4) && a477 == 32) && a585 == 32))))) {
 		a29 += (a29 + 20) > a29 ? 1 : 0;
 		cf = 0;
@@ -21503,7 +21503,7 @@ void calculate_outputm129(int input) {
 		a94 = 5;
 	}
 }
-void calculate_outputm130(int input) {
+void calculate_outputm130(int8_tinput) {
 	if (((a594 == 32 && (a477 == 32 && a482 == 32)) && (a375 == 32 && (a494 == 32 && ((cf == 1 && (input == 6)) && a516 == 32))))) {
 		a148 += (a148 + 20) > a148 ? 1 : 0;
 		cf = 0;
@@ -21623,7 +21623,7 @@ void calculate_outputm130(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm131(int input) {
+void calculate_outputm131(int8_tinput) {
 	if ((((a578 == 32 && (a556 == 32 && ((input == 6) && cf == 1))) && a220 == 32) && ((a346 == 2 && a520 == 32) && a558 == 32))) {
 		a96 -= (a96 - 20) < a96 ? 3 : 0;
 		cf = 0;
@@ -21684,7 +21684,7 @@ void calculate_outputm131(int input) {
 		a357 = 10;
 	}
 }
-void calculate_outputm10(int input) {
+void calculate_outputm10(int8_tinput) {
 	if (((a228 == 4 && (a558 == 32 && ((a602 == 32 && a399 == 4) && a263 == 7))) && ((cf == 1 && a1 == 32) && a465 == 32))) {
 		if (((a203 == 3 && (a592 == 32 && ((a464 == 32 && (a398 == 3 && a498 == 32)) && a419 == 32))) && (a129 == 33 && cf == 1))) {
 			calculate_outputm128(input);
@@ -21702,7 +21702,7 @@ void calculate_outputm10(int input) {
 		}
 	}
 }
-void calculate_outputm134(int input) {
+void calculate_outputm134(int8_tinput) {
 	if (((a356 == 9 && a317 == 6) && ((a404 == 32 && ((a416 == 32 && ((input == 5) && cf == 1)) && a453 == 32)) && a246 == 7))) {
 		a186 -= (a186 - 20) < a186 ? 1 : 0;
 		cf = 0;
@@ -21843,7 +21843,7 @@ void calculate_outputm134(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm135(int input) {
+void calculate_outputm135(int8_tinput) {
 	if (((a310 == 2 && (a399 == 4 && (a220 == 32 && (cf == 1 && (input == 10))))) && (a241 == 7 && (a364 == 8 && a384 == 3)))) {
 		cf = 0;
 		a446 = 32;
@@ -21983,7 +21983,7 @@ void calculate_outputm135(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm137(int input) {
+void calculate_outputm137(int8_tinput) {
 	if (((a416 == 32 && ((cf == 1 && (input == 5)) && a334 == 8)) && ((a521 == 32 && (a477 == 32 && a317 == 6)) && a252 == 11))) {
 		a171 -= (a171 - 20) < a171 ? 2 : 0;
 		cf = 0;
@@ -22012,7 +22012,7 @@ void calculate_outputm137(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm138(int input) {
+void calculate_outputm138(int8_tinput) {
 	if (((((input == 7) && cf == 1) && a282 == 8) && (a252 == 11 && ((a464 == 32 && (a384 == 3 && a244 == 8)) && a205 == 9)))) {
 		cf = 0;
 		a49 = 6;
@@ -22282,7 +22282,7 @@ void calculate_outputm138(int input) {
 		a283 = 10;
 	}
 }
-void calculate_outputm140(int input) {
+void calculate_outputm140(int8_tinput) {
 	if (((a274 == 4 && a336 == 11) && (a494 == 32 && ((a463 == 32 && (a336 == 11 && ((input == 8) && cf == 1))) && a465 == 32)))) {
 		a96 += (a96 + 20) > a96 ? 1 : 0;
 		cf = 0;
@@ -22408,7 +22408,7 @@ void calculate_outputm140(int input) {
 		a99 = 1;
 	}
 }
-void calculate_outputm141(int input) {
+void calculate_outputm141(int8_tinput) {
 	if ((a203 == 3 && (a398 == 3 && ((a516 == 32 && (a364 == 8 && (((input == 6) && cf == 1) && a594 == 32))) && a399 == 4)))) {
 		a58 += (a58 + 20) > a58 ? 1 : 0;
 		cf = 0;
@@ -22511,7 +22511,7 @@ void calculate_outputm141(int input) {
 		a103 = 16;
 	}
 }
-void calculate_outputm11(int input) {
+void calculate_outputm11(int8_tinput) {
 	if ((((a244 == 8 && ((cf == 1 && a59 == 11) && a247 == 11)) && a508 == 32) && (a475 == 32 && (a317 == 6 && a366 == 32)))) {
 		if (((a280 == 32 && a482 == 32) && (a407 == 32 && ((a323 == 11 && ((cf == 1 && a170 == 33) && a560 == 32)) && a380 == 4)))) {
 			calculate_outputm134(input);
@@ -22537,7 +22537,7 @@ void calculate_outputm11(int input) {
 		}
 	}
 }
-void calculate_outputm143(int input) {
+void calculate_outputm143(int8_tinput) {
 	if (((((input == 7) && cf == 1) && a480 == 32) && (a228 == 4 && (a234 == 11 && (a418 == 32 && (a297 == 5 && a313 == 2)))))) {
 		a184 -= (a184 - 20) < a184 ? 2 : 0;
 		cf = 0;
@@ -22672,7 +22672,7 @@ void calculate_outputm143(int input) {
 		a118 = 9;
 	}
 }
-void calculate_outputm144(int input) {
+void calculate_outputm144(int8_tinput) {
 	if ((((((a480 == 32 && a463 == 32) && a209 == 5) && a236 == 7) && a520 == 32) && (((input == 7) && cf == 1) && a585 == 32))) {
 		a58 += (a58 + 20) > a58 ? 4 : 0;
 		cf = 0;
@@ -22955,7 +22955,7 @@ void calculate_outputm144(int input) {
 		a23 = 13;
 	}
 }
-void calculate_outputm146(int input) {
+void calculate_outputm146(int8_tinput) {
 	if (((((a375 == 32 && a364 == 8) && a418 == 32) && a323 == 11) && ((a521 == 32 && (cf == 1 && (input == 7))) && a594 == 32))) {
 		a73 -= (a73 - 20) < a73 ? 2 : 0;
 		cf = 0;
@@ -23237,7 +23237,7 @@ void calculate_outputm146(int input) {
 		a355 = 11;
 	}
 }
-void calculate_outputm147(int input) {
+void calculate_outputm147(int8_tinput) {
 	if (((a206 == 10 && (a262 == 32 && (a220 == 32 && a317 == 6))) && (a313 == 2 && (((input == 10) && cf == 1) && a312 == 2)))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a179 += (a179 + 20) > a179 ? 3 : 0;
@@ -24350,7 +24350,7 @@ void calculate_outputm147(int input) {
 		}
 	}
 }
-void calculate_outputm148(int input) {
+void calculate_outputm148(int8_tinput) {
 	if (((((((input == 6) && cf == 1) && a486 == 32) && a582 == 32) && a365 == 2) && ((a260 == 8 && a337 == 5) && a206 == 10))) {
 		cf = 0;
 		a446 = 33;
@@ -24364,7 +24364,7 @@ void calculate_outputm148(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm12(int input) {
+void calculate_outputm12(int8_tinput) {
 	if (((((a507 == 32 && a348 == 5) && a252 == 11) && a323 == 11) && ((a435 == 32 && (a52 == 7 && cf == 1)) && a313 == 2))) {
 		if (((a228 == 4 && (a465 == 32 && (a201 == 5 && a295 == 10))) && (a379 == 32 && (a376 == 4 && (a159 == 34 && cf == 1))))) {
 			calculate_outputm143(input);
@@ -24389,7 +24389,7 @@ void calculate_outputm12(int input) {
 		}
 	}
 }
-void calculate_outputm150(int input) {
+void calculate_outputm150(int8_tinput) {
 	if (((a282 == 8 && ((a465 == 32 && (a336 == 11 && a498 == 32)) && a453 == 32)) && (a602 == 32 && ((input == 8) && cf == 1)))) {
 		a113 -= (a113 - 20) < a113 ? 3 : 0;
 		cf = 0;
@@ -24420,7 +24420,7 @@ void calculate_outputm150(int input) {
 		a160 = 12;
 	}
 }
-void calculate_outputm151(int input) {
+void calculate_outputm151(int8_tinput) {
 	if (((a480 == 32 && (a213 == 3 && ((a274 == 4 && (cf == 1 && (input == 1))) && a493 == 32))) && (a259 == 9 && a578 == 32))) {
 		a96 += (a96 + 20) > a96 ? 1 : 0;
 		cf = 0;
@@ -24732,7 +24732,7 @@ void calculate_outputm151(int input) {
 		a303 = 5;
 	}
 }
-void calculate_outputm152(int input) {
+void calculate_outputm152(int8_tinput) {
 	if ((((a560 == 32 && a216 == 32) && a376 == 4) && (((a494 == 32 && ((input == 8) && cf == 1)) && a244 == 8) && a236 == 7))) {
 		a184 -= (a184 - 20) < a184 ? 2 : 0;
 		cf = 0;
@@ -24926,7 +24926,7 @@ void calculate_outputm152(int input) {
 		a26 = 11;
 	}
 }
-void calculate_outputm153(int input) {
+void calculate_outputm153(int8_tinput) {
 	if ((((a366 == 32 && a366 == 32) && a510 == 32) && (a274 == 4 && (((cf == 1 && (input == 1)) && a336 == 11) && a209 == 5)))) {
 		a2 -= (a2 - 20) < a2 ? 3 : 0;
 		cf = 0;
@@ -25169,7 +25169,7 @@ void calculate_outputm153(int input) {
 		a290 = 14;
 	}
 }
-void calculate_outputm154(int input) {
+void calculate_outputm154(int8_tinput) {
 	if (((a578 == 32 && ((a380 == 4 && a418 == 32) && a464 == 32)) && (((cf == 1 && (input == 10)) && a477 == 32) && a253 == 7))) {
 		a96 -= (a96 - 20) < a96 ? 1 : 0;
 		cf = 0;
@@ -25680,7 +25680,7 @@ void calculate_outputm154(int input) {
 		}
 	}
 }
-void calculate_outputm155(int input) {
+void calculate_outputm155(int8_tinput) {
 	if (((((a518 == 32 && (a228 == 4 && a295 == 10)) && a313 == 2) && a260 == 8) && ((cf == 1 && (input == 9)) && a376 == 4))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 += (a104 + 20) > a104 ? 1 : 0;
@@ -26453,7 +26453,7 @@ void calculate_outputm155(int input) {
 		a4 = 11;
 	}
 }
-void calculate_outputm157(int input) {
+void calculate_outputm157(int8_tinput) {
 	if ((((a476 == 32 && a274 == 4) && a508 == 32) && (((a241 == 7 && ((input == 8) && cf == 1)) && a254 == 32) && a201 == 5))) {
 		a171 -= (a171 - 20) < a171 ? 4 : 0;
 		cf = 0;
@@ -26806,7 +26806,7 @@ void calculate_outputm157(int input) {
 		a49 = 4;
 	}
 }
-void calculate_outputm158(int input) {
+void calculate_outputm158(int8_tinput) {
 	if (((a304 == 6 && a254 == 32) && (a480 == 32 && ((((cf == 1 && (input == 5)) && a474 == 32) && a263 == 7) && a453 == 32)))) {
 		a58 += (a58 + 20) > a58 ? 2 : 0;
 		cf = 0;
@@ -26897,7 +26897,7 @@ void calculate_outputm158(int input) {
 		a303 = 9;
 	}
 }
-void calculate_outputm159(int input) {
+void calculate_outputm159(int8_tinput) {
 	if ((((a407 == 32 && ((input == 9) && cf == 1)) && a510 == 32) && (a582 == 32 && (a475 == 32 && (a592 == 32 && a220 == 32))))) {
 		cf = 0;
 		a582 = 34;
@@ -26916,7 +26916,7 @@ void calculate_outputm159(int input) {
 		a347 = 16;
 	}
 }
-void calculate_outputm13(int input) {
+void calculate_outputm13(int8_tinput) {
 	if (((a259 == 9 && (((a367 == 3 && cf == 1) && a345 == 10) && a277 == 8)) && ((a411 == 32 && a480 == 32) && a297 == 5))) {
 		if (((a205 == 9 && (a281 == 2 && a432 == 32)) && (((a282 == 8 && (a342 == 3 && cf == 1)) && a334 == 8) && a445 == 32))) {
 			calculate_outputm150(input);
@@ -26955,7 +26955,7 @@ void calculate_outputm13(int input) {
 		}
 	}
 }
-void calculate_outputm160(int input) {
+void calculate_outputm160(int8_tinput) {
 	if ((((a226 == 4 && a229 == 5) && a582 == 34) && (a366 == 34 && (((cf == 1 && (input == 6)) && a205 == 10) && a544 == 34)))) {
 		a96 -= (a96 - 20) < a96 ? 2 : 0;
 		cf = 0;
@@ -27090,7 +27090,7 @@ void calculate_outputm160(int input) {
 		a103 = 16;
 	}
 }
-void calculate_outputm161(int input) {
+void calculate_outputm161(int8_tinput) {
 	if (((a228 == 5 && (a602 == 34 && (a376 == 5 && ((a214 == 4 && a384 == 4) && a216 == 34)))) && ((input == 7) && cf == 1))) {
 		a65 -= (a65 - 20) < a65 ? 4 : 0;
 		cf = 0;
@@ -27244,7 +27244,7 @@ void calculate_outputm161(int input) {
 		a47 = 6;
 	}
 }
-void calculate_outputm162(int input) {
+void calculate_outputm162(int8_tinput) {
 	if ((a402 == 34 && (a262 == 34 && (a520 == 34 && (((a505 == 34 && (cf == 1 && (input == 5))) && a374 == 9) && a416 == 34))))) {
 		cf = 0;
 		a220 = 34;
@@ -27458,7 +27458,7 @@ void calculate_outputm162(int input) {
 		a23 = 10;
 	}
 }
-void calculate_outputm163(int input) {
+void calculate_outputm163(int8_tinput) {
 	if (((a379 == 34 && a263 == 8) && (a214 == 4 && (a365 == 3 && ((a407 == 34 && ((input == 4) && cf == 1)) && a270 == 6))))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a78 += (a78 + 20) > a78 ? 3 : 0;
@@ -28567,7 +28567,7 @@ void calculate_outputm163(int input) {
 		a347 = 16;
 	}
 }
-void calculate_outputm164(int input) {
+void calculate_outputm164(int8_tinput) {
 	if ((((a384 == 4 && a520 == 34) && a528 == 34) && (a477 == 34 && (a353 == 4 && (((input == 9) && cf == 1) && a236 == 8))))) {
 		a2 -= (a2 - 20) < a2 ? 3 : 0;
 		cf = 0;
@@ -28791,7 +28791,7 @@ void calculate_outputm164(int input) {
 		a49 = 4;
 	}
 }
-void calculate_outputm14(int input) {
+void calculate_outputm14(int8_tinput) {
 	if (((a228 == 5 && (a142 == 33 && cf == 1)) && (a585 == 34 && (((a369 == 3 && a259 == 10) && a556 == 34) && a376 == 5)))) {
 		if (((a396 == 8 && (a516 == 34 && a373 == 5)) && (a297 == 6 && ((a402 == 34 && (cf == 1 && a303 == 5)) && a274 == 5)))) {
 			calculate_outputm160(input);
@@ -28816,7 +28816,7 @@ void calculate_outputm14(int input) {
 		}
 	}
 }
-void calculate_outputm165(int input) {
+void calculate_outputm165(int8_tinput) {
 	if (((a246 == 8 && a418 == 34) && ((a445 == 34 && ((a365 == 3 && (cf == 1 && (input == 7))) && a247 == 12)) && a330 == 8))) {
 		cf = 0;
 		a94 = 5;
@@ -29027,7 +29027,7 @@ void calculate_outputm165(int input) {
 		a393 = 13;
 	}
 }
-void calculate_outputm166(int input) {
+void calculate_outputm166(int8_tinput) {
 	if (((a326 == 34 && (a366 == 34 && a446 == 34)) && (a289 == 4 && (a402 == 34 && (a270 == 6 && ((input == 2) && cf == 1)))))) {
 		cf = 0;
 		a544 = 33;
@@ -29047,7 +29047,7 @@ void calculate_outputm166(int input) {
 		a314 = 10;
 	}
 }
-void calculate_outputm167(int input) {
+void calculate_outputm167(int8_tinput) {
 	if (((a233 == 8 && ((input == 1) && cf == 1)) && ((a594 == 34 && ((a586 == 34 && a214 == 4) && a375 == 34)) && a247 == 12))) {
 		cf = 0;
 		a260 = 8;
@@ -29075,7 +29075,7 @@ void calculate_outputm167(int input) {
 		a26 = 4;
 	}
 }
-void calculate_outputm168(int input) {
+void calculate_outputm168(int8_tinput) {
 	if (((a498 == 34 && (a407 == 34 && a373 == 5)) && (a373 == 5 && (a233 == 8 && ((cf == 1 && (input == 1)) && a396 == 8))))) {
 		a85 += (a85 + 20) > a85 ? 3 : 0;
 		cf = 0;
@@ -29405,7 +29405,7 @@ void calculate_outputm168(int input) {
 		a143 = 14;
 	}
 }
-void calculate_outputm169(int input) {
+void calculate_outputm169(int8_tinput) {
 	if ((((a370 == 5 && (a206 == 11 && a242 == 4)) && a384 == 4) && ((a330 == 8 && ((input == 1) && cf == 1)) && a365 == 3))) {
 		a120 += (a120 + 20) > a120 ? 4 : 0;
 		a91 += (a91 + 20) > a91 ? 2 : 0;
@@ -29519,7 +29519,7 @@ void calculate_outputm169(int input) {
 		a26 = 10;
 	}
 }
-void calculate_outputm171(int input) {
+void calculate_outputm171(int8_tinput) {
 	if ((((a227 == 34 && ((input == 10) && cf == 1)) && (((a431 == 34 && (a380 == 5 && a463 == 34)) && a244 == 9) && a544 == 34)) && a120 == 9858)) {
 		a96 -= (a96 - 20) < a96 ? 2 : 0;
 		cf = 0;
@@ -29816,7 +29816,7 @@ void calculate_outputm171(int input) {
 		a23 = 8;
 	}
 }
-void calculate_outputm15(int input) {
+void calculate_outputm15(int8_tinput) {
 	if (((((a244 == 9 && (a229 == 5 && (a183 == 7 && cf == 1))) && a594 == 34) && a226 == 4) && (a214 == 4 && a510 == 34))) {
 		if ((((a475 == 34 && (a480 == 34 && (a297 == 6 && (a317 == 7 && a289 == 4)))) && a366 == 34) && (cf == 1 && a160 == 7))) {
 			calculate_outputm165(input);
@@ -29840,7 +29840,7 @@ void calculate_outputm15(int input) {
 		}
 	}
 }
-void calculate_outputm174(int input) {
+void calculate_outputm174(int8_tinput) {
 	if (((((a486 == 34 && a396 == 8) && a507 == 34) && a323 == 12) && (a528 == 34 && ((cf == 1 && (input == 8)) && a498 == 34)))) {
 		a91 -= (a91 - 20) < a91 ? 3 : 0;
 		cf = 0;
@@ -30054,7 +30054,7 @@ void calculate_outputm174(int input) {
 		}
 	}
 }
-void calculate_outputm175(int input) {
+void calculate_outputm175(int8_tinput) {
 	if (((a404 == 34 && (a223 == 10 && ((a463 == 34 && a227 == 34) && a528 == 34))) && (((input == 1) && cf == 1) && a578 == 34))) {
 		a184 -= (a184 - 20) < a184 ? 1 : 0;
 		cf = 0;
@@ -30301,7 +30301,7 @@ void calculate_outputm175(int input) {
 		a123 = 9;
 	}
 }
-void calculate_outputm177(int input) {
+void calculate_outputm177(int8_tinput) {
 	if (((a252 == 12 && (a216 == 34 && a502 == 34)) && (a206 == 11 && (((cf == 1 && (input == 9)) && a259 == 10) && a282 == 9)))) {
 		a65 -= (a65 - 20) < a65 ? 2 : 0;
 		cf = 0;
@@ -30456,7 +30456,7 @@ void calculate_outputm177(int input) {
 		a151 = 9;
 	}
 }
-void calculate_outputm178(int input) {
+void calculate_outputm178(int8_tinput) {
 	if (((a453 == 34 && ((a254 == 34 && ((input == 9) && cf == 1)) && a502 == 34)) && (a507 == 34 && (a270 == 6 && a281 == 3)))) {
 		a58 += (a58 + 20) > a58 ? 4 : 0;
 		cf = 0;
@@ -30681,7 +30681,7 @@ void calculate_outputm178(int input) {
 		a94 = 5;
 	}
 }
-void calculate_outputm179(int input) {
+void calculate_outputm179(int8_tinput) {
 	if (((a507 == 34 && (a404 == 34 && ((input == 6) && cf == 1))) && (((a578 == 34 && a582 == 34) && a312 == 3) && a396 == 8))) {
 		a29 += (a29 + 20) > a29 ? 3 : 0;
 		cf = 0;
@@ -30710,7 +30710,7 @@ void calculate_outputm179(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm180(int input) {
+void calculate_outputm180(int8_tinput) {
 	if ((((a508 == 34 && a556 == 34) && a382 == 5) && (a253 == 8 && ((a520 == 34 && (cf == 1 && (input == 8))) && a213 == 4)))) {
 		a96 -= (a96 - 20) < a96 ? 2 : 0;
 		cf = 0;
@@ -30802,7 +30802,7 @@ void calculate_outputm180(int input) {
 		a369 = 3;
 	}
 }
-void calculate_outputm181(int input) {
+void calculate_outputm181(int8_tinput) {
 	if ((((a318 == 34 && a434 == 34) && a282 == 9) && (a602 == 34 && (a374 == 9 && (a353 == 4 && (cf == 1 && (input == 2))))))) {
 		a148 += (a148 + 20) > a148 ? 1 : 0;
 		cf = 0;
@@ -31129,7 +31129,7 @@ void calculate_outputm181(int input) {
 		a317 = 7;
 	}
 }
-void calculate_outputm182(int input) {
+void calculate_outputm182(int8_tinput) {
 	if (((a418 == 34 && (cf == 1 && (input == 10))) && ((a373 == 5 && ((a356 == 10 && a247 == 12) && a477 == 34)) && a374 == 9))) {
 		a184 -= (a184 - 20) < a184 ? 1 : 0;
 		cf = 0;
@@ -31343,14 +31343,14 @@ void calculate_outputm182(int input) {
 		a367 = 6;
 	}
 }
-void calculate_outputm183(int input) {
+void calculate_outputm183(int8_tinput) {
 	if (((((a353 == 4 && a379 == 34) && a346 == 3) && a297 == 6) && (((cf == 1 && (input == 7)) && a432 == 34) && a556 == 34))) {
 		a29 += (a29 + 20) > a29 ? 3 : 0;
 		cf = 0;
 
 	}
 }
-void calculate_outputm16(int input) {
+void calculate_outputm16(int8_tinput) {
 	if ((((a312 == 3 && (a359 == 11 && (a476 == 34 && a241 == 8))) && a310 == 3) && ((cf == 1 && a290 == 8) && a262 == 34))) {
 		if ((((a318 == 34 && a465 == 34) && a214 == 4) && (a546 == 34 && (a396 == 8 && ((cf == 1 && a51 == 32) && a493 == 34))))) {
 			calculate_outputm174(input);
@@ -31391,7 +31391,7 @@ void calculate_outputm16(int input) {
 		}
 	}
 }
-void calculate_outputm187(int input) {
+void calculate_outputm187(int8_tinput) {
 	if ((a544 == 34 && (a304 == 7 && ((a317 == 7 && ((a247 == 12 && ((input == 3) && cf == 1)) && a475 == 34)) && a374 == 9)))) {
 		a58 += (a58 + 20) > a58 ? 2 : 0;
 		a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -32755,7 +32755,7 @@ void calculate_outputm187(int input) {
 		}
 	}
 }
-void calculate_outputm188(int input) {
+void calculate_outputm188(int8_tinput) {
 	if (((a498 == 34 && (a521 == 34 && a374 == 9)) && (a277 == 9 && (a297 == 6 && (a407 == 34 && ((input == 7) && cf == 1)))))) {
 		a58 += (a58 + 20) > a58 ? 2 : 0;
 		cf = 0;
@@ -32911,7 +32911,7 @@ void calculate_outputm188(int input) {
 		a94 = 5;
 	}
 }
-void calculate_outputm17(int input) {
+void calculate_outputm17(int8_tinput) {
 	if (((a380 == 5 && (cf == 1 && a187 == 32)) && (a215 == 34 && (a365 == 3 && ((a294 == 34 && a594 == 34) && a516 == 34))))) {
 		if (((a215 == 34 && (cf == 1 && a86 == 36)) && (a274 == 5 && ((a345 == 11 && (a418 == 34 && a402 == 34)) && a324 == 7)))) {
 			calculate_outputm187(input);
@@ -32923,7 +32923,7 @@ void calculate_outputm17(int input) {
 		}
 	}
 }
-void calculate_outputm190(int input) {
+void calculate_outputm190(int8_tinput) {
 	if (((a260 == 9 && a216 == 34) && (a346 == 3 && (a373 == 5 && (a544 == 34 && (a233 == 8 && (cf == 1 && (input == 5)))))))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 += (a104 + 20) > a104 ? 3 : 0;
@@ -34381,7 +34381,7 @@ void calculate_outputm190(int input) {
 		a305 = 8;
 	}
 }
-void calculate_outputm191(int input) {
+void calculate_outputm191(int8_tinput) {
 	if ((((((input == 1) && cf == 1) && a244 == 9) && a336 == 12) && (a330 == 8 && ((a213 == 4 && a416 == 34) && a446 == 34)))) {
 		a85 += (a85 + 20) > a85 ? 3 : 0;
 		cf = 0;
@@ -34437,7 +34437,7 @@ void calculate_outputm191(int input) {
 		a33 = 5;
 	}
 }
-void calculate_outputm192(int input) {
+void calculate_outputm192(int8_tinput) {
 	if (((a592 == 34 && (a324 == 7 && (a458 == 34 && a263 == 8))) && (a215 == 34 && ((cf == 1 && (input == 9)) && a458 == 34)))) {
 		a29 += (a29 + 20) > a29 ? 4 : 0;
 		cf = 0;
@@ -34453,7 +34453,7 @@ void calculate_outputm192(int input) {
 		a283 = 10;
 	}
 }
-void calculate_outputm18(int input) {
+void calculate_outputm18(int8_tinput) {
 	if (((a214 == 4 && a270 == 6) && (a384 == 4 && (a508 == 34 && (a508 == 34 && (a274 == 5 && (a190 == 33 && cf == 1))))))) {
 		if (((a477 == 34 && (((a464 == 34 && (a353 == 4 && (cf == 1 && a133 == 6))) && a259 == 10) && a226 == 4)) && a486 == 34)) {
 			calculate_outputm190(input);
@@ -34470,7 +34470,7 @@ void calculate_outputm18(int input) {
 		}
 	}
 }
-void calculate_outputm195(int input) {
+void calculate_outputm195(int8_tinput) {
 	if (((((a554 == 34 && ((cf == 1 && (input == 8)) && a324 == 7)) && a560 == 34) && a326 == 34) && (a544 == 34 && a521 == 34))) {
 		a58 += (a58 + 20) > a58 ? 4 : 0;
 		cf = 0;
@@ -34903,7 +34903,7 @@ void calculate_outputm195(int input) {
 		a18 = 12;
 	}
 }
-void calculate_outputm198(int input) {
+void calculate_outputm198(int8_tinput) {
 	if (((a554 == 34 && (a252 == 12 && ((input == 3) && cf == 1))) && (a234 == 12 && (a214 == 4 && (a404 == 34 && a310 == 3))))) {
 		a88 -= (a88 - 20) < a88 ? 3 : 0;
 		a147 += (a147 + 20) > a147 ? 1 : 0;
@@ -36191,7 +36191,7 @@ void calculate_outputm198(int input) {
 		}
 	}
 }
-void calculate_outputm199(int input) {
+void calculate_outputm199(int8_tinput) {
 	if (((a216 == 34 && (((a493 == 34 && a209 == 6) && a365 == 3) && a270 == 6)) && ((cf == 1 && (input == 1)) && a510 == 34))) {
 		a65 -= (a65 - 20) < a65 ? 4 : 0;
 		cf = 0;
@@ -36232,7 +36232,7 @@ void calculate_outputm199(int input) {
 		}
 	}
 }
-void calculate_outputm200(int input) {
+void calculate_outputm200(int8_tinput) {
 	if (((cf == 1 && (input == 5)) && (a594 == 34 && (a578 == 34 && (((a544 == 34 && a227 == 34) && a445 == 34) && a317 == 7))))) {
 		cf = 0;
 		if ((a380 == 8 || (!(a206 == 11) && (a330 == 8 && a282 == 13)))) {
@@ -36398,7 +36398,7 @@ void calculate_outputm200(int input) {
 		a118 = 9;
 	}
 }
-void calculate_outputm202(int input) {
+void calculate_outputm202(int8_tinput) {
 	if (((a223 == 10 && (a520 == 34 && (a254 == 34 && (a602 == 34 && a203 == 4)))) && (a215 == 34 && (cf == 1 && (input == 8))))) {
 		a65 -= (a65 - 20) < a65 ? 2 : 0;
 		cf = 0;
@@ -36595,7 +36595,7 @@ void calculate_outputm202(int input) {
 		a49 = 2;
 	}
 }
-void calculate_outputm203(int input) {
+void calculate_outputm203(int8_tinput) {
 	if (((a297 == 6 && ((((input == 6) && cf == 1) && a236 == 8) && a453 == 34)) && (a399 == 5 && (a374 == 9 && a294 == 34)))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a88 += (a88 + 20) > a88 ? 2 : 0;
@@ -37904,7 +37904,7 @@ void calculate_outputm203(int input) {
 		}
 	}
 }
-void calculate_outputm204(int input) {
+void calculate_outputm204(int8_tinput) {
 	if ((((a318 == 34 && a516 == 34) && a214 == 4) && ((a364 == 9 && (((input == 3) && cf == 1) && a270 == 6)) && a215 == 34))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 -= (a104 - 20) < a104 ? 1 : 0;
@@ -38900,7 +38900,7 @@ void calculate_outputm204(int input) {
 		a94 = 1;
 	}
 }
-void calculate_outputm205(int input) {
+void calculate_outputm205(int8_tinput) {
 	if (((((cf == 1 && (input == 7)) && a380 == 5) && a324 == 7) && (a482 == 34 && ((a445 == 34 && a262 == 34) && a382 == 5)))) {
 		a58 += (a58 + 20) > a58 ? 2 : 0;
 		cf = 0;
@@ -39095,7 +39095,7 @@ void calculate_outputm205(int input) {
 		a353 = 3;
 	}
 }
-void calculate_outputm19(int input) {
+void calculate_outputm19(int8_tinput) {
 	if ((((a242 == 4 && a201 == 6) && a216 == 34) && ((a510 == 34 && ((a39 == 3 && cf == 1) && a263 == 8)) && a317 == 7))) {
 		if (((a318 == 34 && ((a220 == 34 && a241 == 8) && a201 == 6)) && (a223 == 10 && ((cf == 1 && a243 == 9) && a419 == 34)))) {
 			calculate_outputm195(input);
@@ -39131,7 +39131,7 @@ void calculate_outputm19(int input) {
 		}
 	}
 }
-void calculate_outputm206(int input) {
+void calculate_outputm206(int8_tinput) {
 	if ((((a432 == 34 && ((a546 == 34 && ((input == 10) && cf == 1)) && a330 == 8)) && a482 == 34) && (a345 == 11 && a368 == 6))) {
 		a179 += (a179 + 20) > a179 ? 2 : 0;
 		cf = 0;
@@ -39603,7 +39603,7 @@ void calculate_outputm206(int input) {
 		a221 = 7;
 	}
 }
-void calculate_outputm207(int input) {
+void calculate_outputm207(int8_tinput) {
 	if (((((a528 == 34 && a379 == 34) && a364 == 9) && a346 == 3) && (a476 == 34 && (a263 == 8 && (cf == 1 && (input == 7)))))) {
 		a171 -= (a171 - 20) < a171 ? 2 : 0;
 		cf = 0;
@@ -39889,7 +39889,7 @@ void calculate_outputm207(int input) {
 		a150 = 8;
 	}
 }
-void calculate_outputm208(int input) {
+void calculate_outputm208(int8_tinput) {
 	if (((a435 == 34 && (a400 == 9 && ((input == 7) && cf == 1))) && (a346 == 3 && ((a228 == 5 && a294 == 34) && a507 == 34)))) {
 		a104 -= (a104 - 20) < a104 ? 1 : 0;
 		a88 -= (a88 - 20) < a88 ? 2 : 0;
@@ -41117,7 +41117,7 @@ void calculate_outputm208(int input) {
 		}
 	}
 }
-void calculate_outputm209(int input) {
+void calculate_outputm209(int8_tinput) {
 	if (((a432 == 34 && ((((input == 6) && cf == 1) && a364 == 9) && a356 == 10)) && ((a233 == 8 && a474 == 34) && a365 == 3))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a179 += (a179 + 20) > a179 ? 2 : 0;
@@ -41994,7 +41994,7 @@ void calculate_outputm209(int input) {
 		a319 = 6;
 	}
 }
-void calculate_outputm210(int input) {
+void calculate_outputm210(int8_tinput) {
 	if ((((a435 == 34 && ((input == 1) && cf == 1)) && a407 == 34) && ((a323 == 12 && (a463 == 34 && a445 == 34)) && a546 == 34))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 -= (a104 - 20) < a104 ? 2 : 0;
@@ -43353,7 +43353,7 @@ void calculate_outputm210(int input) {
 		}
 	}
 }
-void calculate_outputm211(int input) {
+void calculate_outputm211(int8_tinput) {
 	if (((a396 == 8 && (((cf == 1 && (input == 1)) && a226 == 4) && a587 == 34)) && (a582 == 34 && (a419 == 34 && a365 == 3)))) {
 		a76 += (a76 + 20) > a76 ? 2 : 0;
 		cf = 0;
@@ -43510,7 +43510,7 @@ void calculate_outputm211(int input) {
 		a400 = 9;
 	}
 }
-void calculate_outputm212(int input) {
+void calculate_outputm212(int8_tinput) {
 	if (((a465 == 34 && ((a336 == 12 && a486 == 34) && a582 == 34)) && ((a241 == 8 && (cf == 1 && (input == 7))) && a486 == 34))) {
 		cf = 0;
 		a382 = 3;
@@ -43782,7 +43782,7 @@ void calculate_outputm212(int input) {
 		a90 = 4;
 	}
 }
-void calculate_outputm20(int input) {
+void calculate_outputm20(int8_tinput) {
 	if ((((a331 == 33 && cf == 1) && a274 == 5) && (a312 == 3 && (a404 == 34 && (a262 == 34 && (a282 == 9 && a445 == 34)))))) {
 		if ((((a453 == 34 && (a465 == 34 && a402 == 34)) && a215 == 34) && (a398 == 4 && ((a87 == 3 && cf == 1) && a528 == 34)))) {
 			calculate_outputm206(input);
@@ -43813,7 +43813,7 @@ void calculate_outputm20(int input) {
 		}
 	}
 }
-void calculate_outputm213(int input) {
+void calculate_outputm213(int8_tinput) {
 	if (((a382 == 5 && (a226 == 4 && a402 == 34)) && (a464 == 34 && (a228 == 5 && (a294 == 34 && (cf == 1 && (input == 9))))))) {
 		a91 -= (a91 - 20) < a91 ? 1 : 0;
 		cf = 0;
@@ -43953,7 +43953,7 @@ void calculate_outputm213(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm215(int input) {
+void calculate_outputm215(int8_tinput) {
 	if (((a453 == 34 && (cf == 1 && (input == 7))) && (((a227 == 34 && (a546 == 34 && a234 == 12)) && a336 == 12) && a326 == 34))) {
 		a179 -= (a179 - 20) < a179 ? 2 : 0;
 		cf = 0;
@@ -44326,7 +44326,7 @@ void calculate_outputm215(int input) {
 		a200 = 11;
 	}
 }
-void calculate_outputm216(int input) {
+void calculate_outputm216(int8_tinput) {
 	if (((a262 == 34 && ((a233 == 8 && a507 == 34) && a419 == 34)) && (a592 == 34 && ((cf == 1 && (input == 2)) && a203 == 4)))) {
 		a58 += (a58 + 20) > a58 ? 2 : 0;
 		cf = 0;
@@ -44619,7 +44619,7 @@ void calculate_outputm216(int input) {
 		a363 = 4;
 	}
 }
-void calculate_outputm217(int input) {
+void calculate_outputm217(int8_tinput) {
 	if (((a435 == 34 && ((a226 == 4 && (a209 == 6 && (cf == 1 && (input == 10)))) && a215 == 34)) && (a215 == 34 && a206 == 11))) {
 		a148 -= (a148 - 20) < a148 ? 1 : 0;
 		cf = 0;
@@ -44933,7 +44933,7 @@ void calculate_outputm217(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm218(int input) {
+void calculate_outputm218(int8_tinput) {
 	if (((a234 == 12 && (((cf == 1 && (input == 1)) && a348 == 6) && a458 == 34)) && ((a214 == 4 && a585 == 34) && a493 == 34))) {
 		a73 += (a73 + 20) > a73 ? 1 : 0;
 		cf = 0;
@@ -44988,7 +44988,7 @@ void calculate_outputm218(int input) {
 		a44 = 13;
 	}
 }
-void calculate_outputm219(int input) {
+void calculate_outputm219(int8_tinput) {
 	if ((((a366 == 34 && (a336 == 12 && ((cf == 1 && (input == 1)) && a477 == 34))) && a375 == 34) && (a209 == 6 && a432 == 34))) {
 		a58 += (a58 + 20) > a58 ? 4 : 0;
 		cf = 0;
@@ -45224,7 +45224,7 @@ void calculate_outputm219(int input) {
 		a23 = 13;
 	}
 }
-void calculate_outputm220(int input) {
+void calculate_outputm220(int8_tinput) {
 	if (((a464 == 34 && (a326 == 34 && (a411 == 34 && (cf == 1 && (input == 6))))) && ((a384 == 4 && a304 == 7) && a324 == 7))) {
 		a65 -= (a65 - 20) < a65 ? 3 : 0;
 		cf = 0;
@@ -45563,7 +45563,7 @@ void calculate_outputm220(int input) {
 		a125 = 14;
 	}
 }
-void calculate_outputm222(int input) {
+void calculate_outputm222(int8_tinput) {
 	if (((((a345 == 11 && (cf == 1 && (input == 6))) && a445 == 34) && a242 == 4) && ((a323 == 12 && a358 == 8) && a246 == 8))) {
 		a65 -= (a65 - 20) < a65 ? 1 : 0;
 		cf = 0;
@@ -45672,7 +45672,7 @@ void calculate_outputm222(int input) {
 		a52 = 7;
 	}
 }
-void calculate_outputm21(int input) {
+void calculate_outputm21(int8_tinput) {
 	if (((a34 == 33 && cf == 1) && (a587 == 34 && (a330 == 8 && (a247 == 12 && ((a270 == 6 && a464 == 34) && a280 == 34)))))) {
 		if ((((a229 == 5 && (((a380 == 5 && (a170 == 33 && cf == 1)) && a476 == 34) && a214 == 4)) && a244 == 9) && a330 == 8)) {
 			calculate_outputm213(input);
@@ -45706,7 +45706,7 @@ void calculate_outputm21(int input) {
 		}
 	}
 }
-void calculate_outputm225(int input) {
+void calculate_outputm225(int8_tinput) {
 	if (((a312 == 1 && (a229 == 3 && a521 == 33)) && (a518 == 33 && (a505 == 33 && (a510 == 33 && ((input == 1) && cf == 1)))))) {
 		a85 += (a85 + 20) > a85 ? 3 : 0;
 		cf = 0;
@@ -45742,7 +45742,7 @@ void calculate_outputm225(int input) {
 		a342 = 8;
 	}
 }
-void calculate_outputm227(int input) {
+void calculate_outputm227(int8_tinput) {
 	if ((((((input == 6) && cf == 1) && a263 == 6) && a227 == 33) && ((a324 == 5 && (a216 == 33 && a280 == 33)) && a227 == 33))) {
 		a29 += (a29 + 20) > a29 ? 2 : 0;
 		cf = 0;
@@ -46068,7 +46068,7 @@ void calculate_outputm227(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm228(int input) {
+void calculate_outputm228(int8_tinput) {
 	if (((((a465 == 33 && a586 == 33) && a476 == 33) && a494 == 33) && (((cf == 1 && (input == 7)) && a274 == 3) && a310 == 1))) {
 		cf = 0;
 		a67 = 36;
@@ -46126,7 +46126,7 @@ void calculate_outputm228(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm229(int input) {
+void calculate_outputm229(int8_tinput) {
 	if (((a247 == 10 && (((cf == 1 && (input == 8)) && a594 == 33) && a227 == 33)) && (a382 == 3 && (a407 == 33 && a494 == 33)))) {
 		cf = 0;
 		a209 = 5;
@@ -46236,7 +46236,7 @@ void calculate_outputm229(int input) {
 		a39 = 7;
 	}
 }
-void calculate_outputm231(int input) {
+void calculate_outputm231(int8_tinput) {
 	if ((((a464 == 33 && (a310 == 1 && (a324 == 5 && a281 == 1))) && a353 == 2) && (a216 == 33 && (cf == 1 && (input == 1))))) {
 		a76 += (a76 + 20) > a76 ? 1 : 0;
 		cf = 0;
@@ -46453,7 +46453,7 @@ void calculate_outputm231(int input) {
 		a305 = 13;
 	}
 }
-void calculate_outputm22(int input) {
+void calculate_outputm22(int8_tinput) {
 	if (((a345 == 9 && ((a592 == 33 && a234 == 10) && a380 == 3)) && ((a402 == 33 && (cf == 1 && a341 == 32)) && a594 == 33))) {
 		if ((((a374 == 7 && (a173 == 33 && cf == 1)) && a369 == 1) && ((a544 == 33 && (a246 == 6 && a246 == 6)) && a370 == 3))) {
 			calculate_outputm225(input);
@@ -46476,7 +46476,7 @@ void calculate_outputm22(int input) {
 		}
 	}
 }
-void calculate_outputm233(int input) {
+void calculate_outputm233(int8_tinput) {
 	if (((a304 == 5 && ((a226 == 2 && ((cf == 1 && (input == 6)) && a326 == 33)) && a345 == 9)) && (a334 == 7 && a474 == 33))) {
 		a29 += (a29 + 20) > a29 ? 2 : 0;
 		cf = 0;
@@ -46936,7 +46936,7 @@ void calculate_outputm233(int input) {
 		a19 = 9;
 	}
 }
-void calculate_outputm234(int input) {
+void calculate_outputm234(int8_tinput) {
 	if (((a310 == 1 && (a368 == 4 && (a358 == 6 && (a216 == 33 && a554 == 33)))) && ((cf == 1 && (input == 5)) && a407 == 33))) {
 		cf = 0;
 		a137 = 33;
@@ -47008,7 +47008,7 @@ void calculate_outputm234(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm235(int input) {
+void calculate_outputm235(int8_tinput) {
 	if (((a297 == 4 && ((a453 == 33 && (a359 == 9 && (a474 == 33 && ((input == 8) && cf == 1)))) && a281 == 1)) && a223 == 8)) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a179 += (a179 + 20) > a179 ? 4 : 0;
@@ -48017,7 +48017,7 @@ void calculate_outputm235(int input) {
 		}
 	}
 }
-void calculate_outputm236(int input) {
+void calculate_outputm236(int8_tinput) {
 	if (((a370 == 3 && ((a313 == 1 && (((input == 7) && cf == 1) && a398 == 2)) && a330 == 6)) && (a274 == 3 && a241 == 6))) {
 		a179 += (a179 + 20) > a179 ? 1 : 0;
 		cf = 0;
@@ -48212,7 +48212,7 @@ void calculate_outputm236(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm238(int input) {
+void calculate_outputm238(int8_tinput) {
 	if (((cf == 1 && (input == 9)) && (a282 == 7 && ((((a280 == 33 && a376 == 3) && a416 == 33) && a516 == 33) && a228 == 3)))) {
 		a58 += (a58 + 20) > a58 ? 3 : 0;
 		cf = 0;
@@ -48440,7 +48440,7 @@ void calculate_outputm238(int input) {
 		a49 = 3;
 	}
 }
-void calculate_outputm240(int input) {
+void calculate_outputm240(int8_tinput) {
 	if (((a419 == 33 && (a453 == 33 && (cf == 1 && (input == 8)))) && (((a280 == 33 && a358 == 6) && a582 == 33) && a241 == 6))) {
 		a186 -= (a186 - 20) < a186 ? 4 : 0;
 		cf = 0;
@@ -48576,7 +48576,7 @@ void calculate_outputm240(int input) {
 		a18 = 15;
 	}
 }
-void calculate_outputm241(int input) {
+void calculate_outputm241(int8_tinput) {
 	if ((((cf == 1 && (input == 7)) && a546 == 33) && (a324 == 5 && (((a294 == 33 && a521 == 33) && a516 == 33) && a242 == 2)))) {
 		cf = 0;
 		a215 = 33;
@@ -48705,7 +48705,7 @@ void calculate_outputm241(int input) {
 		a49 = 4;
 	}
 }
-void calculate_outputm242(int input) {
+void calculate_outputm242(int8_tinput) {
 	if (((((a241 == 6 && (cf == 1 && (input == 5))) && a297 == 4) && a220 == 33) && (a445 == 33 && (a262 == 33 && a419 == 33)))) {
 		a104 -= (a104 - 20) < a104 ? 1 : 0;
 		a22 += (a22 + 20) > a22 ? 1 : 0;
@@ -50061,7 +50061,7 @@ void calculate_outputm242(int input) {
 		}
 	}
 }
-void calculate_outputm244(int input) {
+void calculate_outputm244(int8_tinput) {
 	if (((((a384 == 2 && ((input == 1) && cf == 1)) && a404 == 33) && a398 == 2) && ((a458 == 33 && a229 == 3) && a407 == 33))) {
 		a113 -= (a113 - 20) < a113 ? 2 : 0;
 		cf = 0;
@@ -50169,7 +50169,7 @@ void calculate_outputm244(int input) {
 		a319 = 2;
 	}
 }
-void calculate_outputm245(int input) {
+void calculate_outputm245(int8_tinput) {
 	if (((a304 == 5 && a366 == 33) && (a398 == 2 && (a516 == 33 && (a259 == 8 && (((input == 9) && cf == 1) && a356 == 8)))))) {
 		a96 -= (a96 - 20) < a96 ? 2 : 0;
 		cf = 0;
@@ -50293,7 +50293,7 @@ void calculate_outputm245(int input) {
 		a125 = 11;
 	}
 }
-void calculate_outputm246(int input) {
+void calculate_outputm246(int8_tinput) {
 	if ((((a370 == 3 && a453 == 33) && a346 == 1) && (a494 == 33 && (((cf == 1 && (input == 4)) && a520 == 33) && a419 == 33)))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 += (a104 + 20) > a104 ? 3 : 0;
@@ -51185,7 +51185,7 @@ void calculate_outputm246(int input) {
 		a111 = 8;
 	}
 }
-void calculate_outputm248(int input) {
+void calculate_outputm248(int8_tinput) {
 	if (((a254 == 33 && ((input == 10) && cf == 1)) && (((a516 == 33 && (a435 == 33 && a369 == 1)) && a419 == 33) && a532 == 33))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 += (a104 + 20) > a104 ? 3 : 0;
@@ -52403,7 +52403,7 @@ void calculate_outputm248(int input) {
 		a141 = 34;
 	}
 }
-void calculate_outputm249(int input) {
+void calculate_outputm249(int8_tinput) {
 	if (((((a364 == 7 && (a324 == 5 && a578 == 33)) && a326 == 33) && a556 == 33) && (((input == 7) && cf == 1) && a476 == 33))) {
 		a148 += (a148 + 20) > a148 ? 1 : 0;
 		cf = 0;
@@ -52508,7 +52508,7 @@ void calculate_outputm249(int input) {
 		a39 = 5;
 	}
 }
-void calculate_outputm250(int input) {
+void calculate_outputm250(int8_tinput) {
 	if (((a398 == 2 && (a486 == 33 && ((input == 6) && cf == 1))) && (a345 == 9 && ((a364 == 7 && a274 == 3) && a295 == 9)))) {
 		a96 -= (a96 - 20) < a96 ? 3 : 0;
 		cf = 0;
@@ -52870,7 +52870,7 @@ void calculate_outputm250(int input) {
 		a342 = 10;
 	}
 }
-void calculate_outputm23(int input) {
+void calculate_outputm23(int8_tinput) {
 	if ((((((a218 == 5 && a234 == 10) && a582 == 33) && a458 == 33) && a233 == 6) && (a345 == 9 && (a4 == 5 && cf == 1)))) {
 		if (((a304 == 5 && (a404 == 33 && ((a317 == 5 && (a16 == 13 && cf == 1)) && a218 == 5))) && (a379 == 33 && a337 == 4))) {
 			calculate_outputm233(input);
@@ -52930,7 +52930,7 @@ void calculate_outputm23(int input) {
 		}
 	}
 }
-void calculate_outputm251(int input) {
+void calculate_outputm251(int8_tinput) {
 	if (((a323 == 10 && (cf == 1 && (input == 2))) && ((a384 == 2 && ((a359 == 9 && a556 == 33) && a498 == 33)) && a379 == 33))) {
 		a186 -= (a186 - 20) < a186 ? 4 : 0;
 		cf = 0;
@@ -53447,7 +53447,7 @@ void calculate_outputm251(int input) {
 		}
 	}
 }
-void calculate_outputm252(int input) {
+void calculate_outputm252(int8_tinput) {
 	if ((((a205 == 8 && a494 == 33) && a334 == 7) && (((a215 == 33 && (cf == 1 && (input == 2))) && a364 == 7) && a396 == 6))) {
 		a186 -= (a186 - 20) < a186 ? 3 : 0;
 		cf = 0;
@@ -53644,7 +53644,7 @@ void calculate_outputm252(int input) {
 		a355 = 11;
 	}
 }
-void calculate_outputm24(int input) {
+void calculate_outputm24(int8_tinput) {
 	if (((a346 == 1 && ((a445 == 33 && a262 == 33) && a521 == 33)) && (((a62 == 33 && cf == 1) && a312 == 1) && a215 == 33))) {
 		if ((((((a211 == 33 && cf == 1) && a270 == 4) && a205 == 8) && a216 == 33) && ((a582 == 33 && a379 == 33) && a318 == 33))) {
 			calculate_outputm251(input);
@@ -53654,7 +53654,7 @@ void calculate_outputm24(int input) {
 		}
 	}
 }
-void calculate_outputm253(int input) {
+void calculate_outputm253(int8_tinput) {
 	if ((((a585 == 33 && (a227 == 33 && ((input == 7) && cf == 1))) && a546 == 33) && (a434 == 33 && (a337 == 4 && a546 == 33)))) {
 		a186 -= (a186 - 20) < a186 ? 4 : 0;
 		cf = 0;
@@ -53690,7 +53690,7 @@ void calculate_outputm253(int input) {
 		a342 = 8;
 	}
 }
-void calculate_outputm254(int input) {
+void calculate_outputm254(int8_tinput) {
 	if ((((((a453 == 33 && ((input == 5) && cf == 1)) && a592 == 33) && a587 == 33) && a585 == 33) && (a348 == 4 && a418 == 33))) {
 		a29 += (a29 + 20) > a29 ? 2 : 0;
 		cf = 0;
@@ -53912,7 +53912,7 @@ void calculate_outputm254(int input) {
 		a342 = 8;
 	}
 }
-void calculate_outputm255(int input) {
+void calculate_outputm255(int8_tinput) {
 	if (((a431 == 33 && (a253 == 6 && (a418 == 33 && a507 == 33))) && (((cf == 1 && (input == 8)) && a216 == 33) && a215 == 33))) {
 		a29 += (a29 + 20) > a29 ? 3 : 0;
 		cf = 0;
@@ -54215,7 +54215,7 @@ void calculate_outputm255(int input) {
 		a39 = 7;
 	}
 }
-void calculate_outputm256(int input) {
+void calculate_outputm256(int8_tinput) {
 	if (((a458 == 33 && (a493 == 33 && (a310 == 1 && a587 == 33))) && ((((input == 2) && cf == 1) && a384 == 2) && a241 == 6))) {
 		a96 -= (a96 - 20) < a96 ? 1 : 0;
 		a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -55142,7 +55142,7 @@ void calculate_outputm256(int input) {
 		}
 	}
 }
-void calculate_outputm257(int input) {
+void calculate_outputm257(int8_tinput) {
 	if (((a505 == 33 && (a358 == 6 && a379 == 33)) && (a446 == 33 && (a348 == 4 && (((input == 4) && cf == 1) && a326 == 33))))) {
 		a96 += (a96 + 20) > a96 ? 1 : 0;
 		a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -56012,7 +56012,7 @@ void calculate_outputm257(int input) {
 		a23 = 13;
 	}
 }
-void calculate_outputm258(int input) {
+void calculate_outputm258(int8_tinput) {
 	if (((a244 == 7 && a546 == 33) && ((((((input == 3) && cf == 1) && a458 == 33) && a582 == 33) && a214 == 2) && a494 == 33))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a78 += (a78 + 20) > a78 ? 1 : 0;
@@ -57167,7 +57167,7 @@ void calculate_outputm258(int input) {
 		}
 	}
 }
-void calculate_outputm25(int input) {
+void calculate_outputm25(int8_tinput) {
 	if (((a453 == 33 && ((a520 == 33 && a215 == 33) && a270 == 4)) && (a228 == 3 && ((a34 == 33 && cf == 1) && a396 == 6)))) {
 		if (((a270 == 4 && (a434 == 33 && (a510 == 33 && (a263 == 6 && a263 == 6)))) && ((a135 == 32 && cf == 1) && a356 == 8))) {
 			calculate_outputm253(input);
@@ -57193,7 +57193,7 @@ void calculate_outputm25(int input) {
 		}
 	}
 }
-void calculate_outputm259(int input) {
+void calculate_outputm259(int8_tinput) {
 	if (((a560 == 33 && (a384 == 2 && a458 == 33)) && (((((input == 5) && cf == 1) && a446 == 33) && a254 == 33) && a432 == 33))) {
 		a96 -= (a96 - 20) < a96 ? 1 : 0;
 		cf = 0;
@@ -57567,7 +57567,7 @@ void calculate_outputm259(int input) {
 		a347 = 16;
 	}
 }
-void calculate_outputm260(int input) {
+void calculate_outputm260(int8_tinput) {
 	if (((a602 == 33 && (a330 == 6 && (a418 == 33 && a304 == 5))) && ((a464 == 33 && (cf == 1 && (input == 5))) && a297 == 4))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a78 += (a78 + 20) > a78 ? 2 : 0;
@@ -58557,7 +58557,7 @@ void calculate_outputm260(int input) {
 		a26 = 11;
 	}
 }
-void calculate_outputm261(int input) {
+void calculate_outputm261(int8_tinput) {
 	if (((a477 == 33 && a270 == 4) && (a520 == 33 && ((a508 == 33 && (a486 == 33 && ((input == 1) && cf == 1))) && a304 == 5)))) {
 		a132 += (a132 + 20) > a132 ? 2 : 0;
 		a148 -= (a148 - 20) < a148 ? 4 : 0;
@@ -58660,7 +58660,7 @@ void calculate_outputm261(int input) {
 		a118 = 10;
 	}
 }
-void calculate_outputm263(int input) {
+void calculate_outputm263(int8_tinput) {
 	if ((((a246 == 6 && a380 == 3) && a594 == 33) && ((a510 == 33 && ((cf == 1 && (input == 10)) && a330 == 6)) && a396 == 6))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 += (a104 + 20) > a104 ? 2 : 0;
@@ -59663,7 +59663,7 @@ void calculate_outputm263(int input) {
 		a125 = 14;
 	}
 }
-void calculate_outputm26(int input) {
+void calculate_outputm26(int8_tinput) {
 	if (((a407 == 33 && a318 == 33) && ((a582 == 33 && (a587 == 33 && (a400 == 7 && (a174 == 11 && cf == 1)))) && a330 == 6))) {
 		if (((a486 == 33 && ((a99 == 1 && cf == 1) && a246 == 6)) && (a209 == 4 && ((a234 == 10 && a505 == 33) && a359 == 9)))) {
 			calculate_outputm259(input);
@@ -59683,7 +59683,7 @@ void calculate_outputm26(int input) {
 		}
 	}
 }
-void calculate_outputm264(int input) {
+void calculate_outputm264(int8_tinput) {
 	if (((((a310 == 3 && a359 == 11) && a399 == 5) && ((a380 == 5 && (a400 == 9 && (cf == 1 && (input == 9)))) && a326 == 34)) && (a176 % 2 == 0))) {
 		cf = 0;
 		a52 = 8;
@@ -59899,7 +59899,7 @@ void calculate_outputm264(int input) {
 		a49 = 5;
 	}
 }
-void calculate_outputm265(int input) {
+void calculate_outputm265(int8_tinput) {
 	if ((((a521 == 34 && (a463 == 34 && (a281 == 3 && ((input == 2) && cf == 1)))) && a270 == 6) && (a223 == 10 && a366 == 34))) {
 		a96 -= (a96 - 20) < a96 ? 1 : 0;
 		cf = 0;
@@ -60131,7 +60131,7 @@ void calculate_outputm265(int input) {
 		a118 = 9;
 	}
 }
-void calculate_outputm268(int input) {
+void calculate_outputm268(int8_tinput) {
 	if ((((cf == 1 && (input == 5)) && a282 == 9) && (a582 == 34 && (a295 == 11 && ((a304 == 7 && a486 == 34) && a216 == 34))))) {
 		cf = 0;
 		a218 = 6;
@@ -60140,7 +60140,7 @@ void calculate_outputm268(int input) {
 		a283 = 10;
 	}
 }
-void calculate_outputm269(int input) {
+void calculate_outputm269(int8_tinput) {
 	if ((((a602 == 34 && a396 == 8) && a270 == 6) && (a419 == 34 && ((a294 == 34 && (cf == 1 && (input == 7))) && a475 == 34)))) {
 		a171 -= (a171 - 20) < a171 ? 2 : 0;
 		cf = 0;
@@ -60392,7 +60392,7 @@ void calculate_outputm269(int input) {
 		a125 = 11;
 	}
 }
-void calculate_outputm27(int input) {
+void calculate_outputm27(int8_tinput) {
 	if (((a434 == 34 && a587 == 34) && ((a294 == 34 && ((a370 == 5 && (a81 == 33 && cf == 1)) && a520 == 34)) && a220 == 34))) {
 		if (((a431 == 34 && (cf == 1 && a283 == 10)) && (a259 == 10 && (a380 == 5 && (a274 == 5 && (a556 == 34 && a476 == 34)))))) {
 			calculate_outputm264(input);
@@ -60414,7 +60414,7 @@ void calculate_outputm27(int input) {
 		}
 	}
 }
-void calculate_outputm271(int input) {
+void calculate_outputm271(int8_tinput) {
 	if ((((a281 == 3 && ((cf == 1 && (input == 3)) && a215 == 34)) && a370 == 5) && ((a578 == 34 && a259 == 10) && a244 == 9))) {
 		a96 -= (a96 - 20) < a96 ? 3 : 0;
 		a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -61606,7 +61606,7 @@ void calculate_outputm271(int input) {
 		a319 = 9;
 	}
 }
-void calculate_outputm272(int input) {
+void calculate_outputm272(int8_tinput) {
 	if (((a558 == 34 && (a260 == 9 && (a505 == 34 && a366 == 34))) && ((((input == 9) && cf == 1) && a241 == 8) && a214 == 4))) {
 		a85 -= (a85 - 20) < a85 ? 2 : 0;
 		cf = 0;
@@ -61909,7 +61909,7 @@ void calculate_outputm272(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm273(int input) {
+void calculate_outputm273(int8_tinput) {
 	if (((((a373 == 5 && ((input == 7) && cf == 1)) && a585 == 34) && a498 == 34) && ((a318 == 34 && a227 == 34) && a323 == 12))) {
 		a184 += (a184 + 20) > a184 ? 1 : 0;
 		cf = 0;
@@ -62186,7 +62186,7 @@ void calculate_outputm273(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm274(int input) {
+void calculate_outputm274(int8_tinput) {
 	if ((((a508 == 34 && ((a516 == 34 && (cf == 1 && (input == 10))) && a326 == 34)) && a502 == 34) && (a304 == 7 && a586 == 34))) {
 		a184 -= (a184 - 20) < a184 ? 3 : 0;
 		cf = 0;
@@ -62566,7 +62566,7 @@ void calculate_outputm274(int input) {
 		a393 = 16;
 	}
 }
-void calculate_outputm28(int input) {
+void calculate_outputm28(int8_tinput) {
 	if ((((a45 == 33 && cf == 1) && a324 == 7) && ((((a294 == 34 && a282 == 9) && a218 == 7) && a203 == 4) && a411 == 34))) {
 		if (((a510 == 34 && (a368 == 6 && a465 == 34)) && ((a432 == 34 && (a404 == 34 && (a138 == 7 && cf == 1))) && a313 == 3))) {
 			calculate_outputm271(input);
@@ -62586,7 +62586,7 @@ void calculate_outputm28(int input) {
 		}
 	}
 }
-void calculate_outputm275(int input) {
+void calculate_outputm275(int8_tinput) {
 	if ((((a586 == 34 && (((a215 == 34 && a259 == 10) && a418 == 34) && a233 == 8)) && a324 == 7) && (cf == 1 && (input == 5)))) {
 		a58 += (a58 + 20) > a58 ? 2 : 0;
 		cf = 0;
@@ -62806,7 +62806,7 @@ void calculate_outputm275(int input) {
 		}
 	}
 }
-void calculate_outputm276(int input) {
+void calculate_outputm276(int8_tinput) {
 	if (((a419 == 34 && (cf == 1 && (input == 7))) && (a404 == 34 && ((a324 == 7 && (a373 == 5 && a229 == 5)) && a400 == 9)))) {
 		a58 += (a58 + 20) > a58 ? 4 : 0;
 		cf = 0;
@@ -63319,7 +63319,7 @@ void calculate_outputm276(int input) {
 		}
 	}
 }
-void calculate_outputm277(int input) {
+void calculate_outputm277(int8_tinput) {
 	if ((((a399 == 5 && a556 == 34) && a594 == 34) && (((((input == 4) && cf == 1) && a464 == 34) && a373 == 5) && a446 == 34))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 += (a104 + 20) > a104 ? 2 : 0;
@@ -64066,7 +64066,7 @@ void calculate_outputm277(int input) {
 		a44 = 10;
 	}
 }
-void calculate_outputm278(int input) {
+void calculate_outputm278(int8_tinput) {
 	if (((a398 == 4 && (a346 == 3 && a585 == 34)) && ((a201 == 6 && (a502 == 34 && ((input == 8) && cf == 1))) && a228 == 5))) {
 		a91 -= (a91 - 20) < a91 ? 2 : 0;
 		cf = 0;
@@ -64587,7 +64587,7 @@ void calculate_outputm278(int input) {
 		a94 = 7;
 	}
 }
-void calculate_outputm280(int input) {
+void calculate_outputm280(int8_tinput) {
 	if (((a528 == 34 && (a399 == 5 && (cf == 1 && (input == 6)))) && ((a434 == 34 && (a498 == 34 && a345 == 11)) && a446 == 34))) {
 		a76 -= (a76 - 20) < a76 ? 2 : 0;
 		cf = 0;
@@ -64733,7 +64733,7 @@ void calculate_outputm280(int input) {
 		a363 = 4;
 	}
 }
-void calculate_outputm281(int input) {
+void calculate_outputm281(int8_tinput) {
 	if (((((a376 == 5 && (((input == 1) && cf == 1) && a463 == 34)) && a213 == 4) && a434 == 34) && (a247 == 12 && a587 == 34))) {
 		a29 += (a29 + 20) > a29 ? 1 : 0;
 		cf = 0;
@@ -64774,7 +64774,7 @@ void calculate_outputm281(int input) {
 		a123 = 10;
 	}
 }
-void calculate_outputm282(int input) {
+void calculate_outputm282(int8_tinput) {
 	if (((a280 == 34 && (a289 == 4 && ((input == 7) && cf == 1))) && (a228 == 5 && (a558 == 34 && (a432 == 34 && a379 == 34))))) {
 		a58 += (a58 + 20) > a58 ? 3 : 0;
 		cf = 0;
@@ -65087,7 +65087,7 @@ void calculate_outputm282(int input) {
 		a347 = 16;
 	}
 }
-void calculate_outputm29(int input) {
+void calculate_outputm29(int8_tinput) {
 	if (((a507 == 34 && (a494 == 34 && a206 == 11)) && (a228 == 5 && (((a30 == 33 && cf == 1) && a419 == 34) && a246 == 8)))) {
 		if (((a317 == 7 && (a216 == 34 && (a516 == 34 && (a486 == 34 && a465 == 34)))) && (a214 == 4 && (a109 == 2 && cf == 1)))) {
 			calculate_outputm275(input);
@@ -65116,7 +65116,7 @@ void calculate_outputm29(int input) {
 		}
 	}
 }
-void calculate_outputm285(int input) {
+void calculate_outputm285(int8_tinput) {
 	if (((a546 == 34 && (cf == 1 && (input == 6))) && (a277 == 9 && (((a337 == 6 && a242 == 4) && a516 == 34) && a480 == 34)))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a88 -= (a88 - 20) < a88 ? 3 : 0;
@@ -66223,7 +66223,7 @@ void calculate_outputm285(int input) {
 		a367 = 4;
 	}
 }
-void calculate_outputm286(int input) {
+void calculate_outputm286(int8_tinput) {
 	if (((((a368 == 6 && (cf == 1 && (input == 2))) && a508 == 34) && a502 == 34) && (a359 == 11 && (a400 == 9 && a236 == 8)))) {
 		cf = 0;
 		a435 = 32;
@@ -66469,7 +66469,7 @@ void calculate_outputm286(int input) {
 		a149 = 12;
 	}
 }
-void calculate_outputm289(int input) {
+void calculate_outputm289(int8_tinput) {
 	if ((((a507 == 34 && ((input == 5) && cf == 1)) && a480 == 34) && (a494 == 34 && ((a445 == 34 && a368 == 6) && a281 == 3)))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 += (a104 + 20) > a104 ? 3 : 0;
@@ -67541,7 +67541,7 @@ void calculate_outputm289(int input) {
 		}
 	}
 }
-void calculate_outputm290(int input) {
+void calculate_outputm290(int8_tinput) {
 	if (((a602 == 34 && (a446 == 34 && ((a216 == 34 && a226 == 4) && a323 == 12))) && (a274 == 5 && ((input == 1) && cf == 1)))) {
 		a179 += (a179 + 20) > a179 ? 1 : 0;
 		cf = 0;
@@ -67761,7 +67761,7 @@ void calculate_outputm290(int input) {
 		}
 	}
 }
-void calculate_outputm292(int input) {
+void calculate_outputm292(int8_tinput) {
 	if ((a465 == 34 && (a416 == 34 && ((a324 == 7 && ((a366 == 34 && (cf == 1 && (input == 9))) && a203 == 4)) && a370 == 5)))) {
 		a2 -= (a2 - 20) < a2 ? 3 : 0;
 		cf = 0;
@@ -67792,7 +67792,7 @@ void calculate_outputm292(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm293(int input) {
+void calculate_outputm293(int8_tinput) {
 	if (((((a253 == 8 && (a277 == 9 && ((input == 1) && cf == 1))) && a253 == 8) && a375 == 34) && (a254 == 34 && a398 == 4))) {
 		a2 -= (a2 - 20) < a2 ? 1 : 0;
 		cf = 0;
@@ -67918,7 +67918,7 @@ void calculate_outputm293(int input) {
 		}
 	}
 }
-void calculate_outputm294(int input) {
+void calculate_outputm294(int8_tinput) {
 	if (((((input == 1) && cf == 1) && a334 == 9) && (((a528 == 34 && (a345 == 11 && a374 == 9)) && a476 == 34) && a379 == 34))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a78 -= (a78 - 20) < a78 ? 3 : 0;
@@ -69365,7 +69365,7 @@ void calculate_outputm294(int input) {
 		}
 	}
 }
-void calculate_outputm298(int input) {
+void calculate_outputm298(int8_tinput) {
 	if ((((a201 == 6 && (a365 == 3 && a556 == 34)) && a435 == 34) && (a396 == 8 && (a510 == 34 && (cf == 1 && (input == 10)))))) {
 		a85 -= (a85 - 20) < a85 ? 2 : 0;
 		cf = 0;
@@ -69649,7 +69649,7 @@ void calculate_outputm298(int input) {
 		a26 = 11;
 	}
 }
-void calculate_outputm30(int input) {
+void calculate_outputm30(int8_tinput) {
 	if (((a270 == 6 && a345 == 11) && ((a242 == 4 && (a560 == 34 && ((cf == 1 && a393 == 9) && a227 == 34))) && a585 == 34))) {
 		if (((((a309 == 36 && cf == 1) && a274 == 5) && a312 == 3) && (a364 == 9 && ((a416 == 34 && a356 == 10) && a348 == 6)))) {
 			calculate_outputm285(input);
@@ -69687,7 +69687,7 @@ void calculate_outputm30(int input) {
 		}
 	}
 }
-void calculate_outputm299(int input) {
+void calculate_outputm299(int8_tinput) {
 	if (((((((input == 6) && cf == 1) && a326 == 34) && a402 == 34) && a602 == 34) && (a244 == 9 && (a304 == 7 && a274 == 5)))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a78 -= (a78 - 20) < a78 ? 2 : 0;
@@ -70970,7 +70970,7 @@ void calculate_outputm299(int input) {
 		}
 	}
 }
-void calculate_outputm301(int input) {
+void calculate_outputm301(int8_tinput) {
 	if (((a532 == 34 && (a376 == 5 && a379 == 34)) && ((a419 == 34 && (a310 == 3 && ((input == 5) && cf == 1))) && a379 == 34))) {
 		a179 += (a179 + 20) > a179 ? 2 : 0;
 		cf = 0;
@@ -71465,7 +71465,7 @@ void calculate_outputm301(int input) {
 		}
 	}
 }
-void calculate_outputm302(int input) {
+void calculate_outputm302(int8_tinput) {
 	if (((a398 == 4 && ((a206 == 11 && a234 == 12) && a578 == 34)) && (((cf == 1 && (input == 9)) && a458 == 34) && a463 == 34))) {
 		cf = 0;
 		a554 = 32;
@@ -71500,7 +71500,7 @@ void calculate_outputm302(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm303(int input) {
+void calculate_outputm303(int8_tinput) {
 	if (((((a554 == 34 && a366 == 34) && a464 == 34) && a270 == 6) && (a475 == 34 && (a246 == 8 && ((input == 5) && cf == 1))))) {
 		a171 -= (a171 - 20) < a171 ? 3 : 0;
 		cf = 0;
@@ -71710,7 +71710,7 @@ void calculate_outputm303(int input) {
 		a305 = 11;
 	}
 }
-void calculate_outputm304(int input) {
+void calculate_outputm304(int8_tinput) {
 	if (((a241 == 8 && (a334 == 9 && a592 == 34)) && ((((cf == 1 && (input == 9)) && a324 == 7) && a282 == 9) && a528 == 34))) {
 		a58 += (a58 + 20) > a58 ? 3 : 0;
 		cf = 0;
@@ -71990,7 +71990,7 @@ void calculate_outputm304(int input) {
 		a390 = 8;
 	}
 }
-void calculate_outputm306(int input) {
+void calculate_outputm306(int8_tinput) {
 	if (((a476 == 34 && ((input == 9) && cf == 1)) && ((((a233 == 8 && a544 == 34) && a558 == 34) && a241 == 8) && a554 == 34))) {
 		cf = 0;
 		a482 = 32;
@@ -72021,7 +72021,7 @@ void calculate_outputm306(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm307(int input) {
+void calculate_outputm307(int8_tinput) {
 	if ((((a463 == 34 && ((input == 6) && cf == 1)) && a260 == 9) && (((a493 == 34 && a560 == 34) && a227 == 34) && a474 == 34))) {
 		a76 += (a76 + 20) > a76 ? 4 : 0;
 		cf = 0;
@@ -72257,7 +72257,7 @@ void calculate_outputm307(int input) {
 		}
 	}
 }
-void calculate_outputm308(int input) {
+void calculate_outputm308(int8_tinput) {
 	if ((((a282 == 9 && a209 == 6) && a334 == 9) && (a516 == 34 && ((((input == 1) && cf == 1) && a505 == 34) && a554 == 34)))) {
 		a58 += (a58 + 20) > a58 ? 4 : 0;
 		cf = 0;
@@ -72301,7 +72301,7 @@ void calculate_outputm308(int input) {
 		a305 = 13;
 	}
 }
-void calculate_outputm31(int input) {
+void calculate_outputm31(int8_tinput) {
 	if (((a358 == 8 && a353 == 4) && (a587 == 34 && ((a304 == 7 && ((cf == 1 && a150 == 7) && a229 == 5)) && a434 == 34)))) {
 		if ((((a375 == 34 && a259 == 10) && a419 == 34) && ((a209 == 6 && (a270 == 6 && (a343 == 36 && cf == 1))) && a374 == 9))) {
 			calculate_outputm299(input);
@@ -72337,7 +72337,7 @@ void calculate_outputm31(int input) {
 		}
 	}
 }
-void calculate_outputm310(int input) {
+void calculate_outputm310(int8_tinput) {
 	if (((((a411 == 34 && a326 == 34) && a233 == 8) && a419 == 34) && (a365 == 3 && (((input == 9) && cf == 1) && a431 == 34)))) {
 		a96 -= (a96 - 20) < a96 ? 4 : 0;
 		cf = 0;
@@ -72653,7 +72653,7 @@ void calculate_outputm310(int input) {
 		a322 = 8;
 	}
 }
-void calculate_outputm311(int input) {
+void calculate_outputm311(int8_tinput) {
 	if (((((cf == 1 && (input == 8)) && a260 == 9) && a358 == 8) && ((a330 == 8 && (a236 == 8 && a226 == 4)) && a518 == 34))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 += (a104 + 20) > a104 ? 2 : 0;
@@ -73504,7 +73504,7 @@ void calculate_outputm311(int input) {
 		a123 = 3;
 	}
 }
-void calculate_outputm313(int input) {
+void calculate_outputm313(int8_tinput) {
 	if (((a407 == 34 && (a262 == 34 && a346 == 3)) && (a435 == 34 && ((a556 == 34 && (cf == 1 && (input == 2))) && a532 == 34)))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 -= (a104 - 20) < a104 ? 1 : 0;
@@ -75082,7 +75082,7 @@ void calculate_outputm313(int input) {
 		}
 	}
 }
-void calculate_outputm315(int input) {
+void calculate_outputm315(int8_tinput) {
 	if ((((a223 == 10 && (a411 == 34 && a345 == 11)) && a274 == 5) && ((a602 == 34 && ((input == 7) && cf == 1)) && a289 == 4))) {
 		a29 += (a29 + 20) > a29 ? 3 : 0;
 		cf = 0;
@@ -75147,7 +75147,7 @@ void calculate_outputm315(int input) {
 		a355 = 12;
 	}
 }
-void calculate_outputm316(int input) {
+void calculate_outputm316(int8_tinput) {
 	if (((a482 == 34 && (cf == 1 && (input == 2))) && ((((a376 == 5 && a205 == 10) && a229 == 5) && a253 == 8) && a318 == 34))) {
 		a113 -= (a113 - 20) < a113 ? 4 : 0;
 		cf = 0;
@@ -75368,7 +75368,7 @@ void calculate_outputm316(int input) {
 		}
 	}
 }
-void calculate_outputm317(int input) {
+void calculate_outputm317(int8_tinput) {
 	if (((a556 == 34 && (((input == 10) && cf == 1) && a463 == 34)) && (a216 == 34 && (a246 == 8 && (a313 == 3 && a216 == 34))))) {
 		a148 += (a148 + 20) > a148 ? 4 : 0;
 		cf = 0;
@@ -75641,7 +75641,7 @@ void calculate_outputm317(int input) {
 		a125 = 14;
 	}
 }
-void calculate_outputm318(int input) {
+void calculate_outputm318(int8_tinput) {
 	if (((a476 == 34 && (a247 == 12 && (a262 == 34 && (a521 == 34 && a594 == 34)))) && (a435 == 34 && (cf == 1 && (input == 7))))) {
 		a148 += (a148 + 20) > a148 ? 2 : 0;
 		cf = 0;
@@ -75752,7 +75752,7 @@ void calculate_outputm318(int input) {
 		a99 = 1;
 	}
 }
-void calculate_outputm320(int input) {
+void calculate_outputm320(int8_tinput) {
 	if (((a434 == 34 && ((cf == 1 && (input == 6)) && a364 == 9)) && (a592 == 34 && (a345 == 11 && (a233 == 8 && a418 == 34))))) {
 		a2 += (a2 + 20) > a2 ? 2 : 0;
 		cf = 0;
@@ -75937,7 +75937,7 @@ void calculate_outputm320(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm32(int input) {
+void calculate_outputm32(int8_tinput) {
 	if (((a432 == 34 && (a402 == 34 && a313 == 3)) && (a297 == 6 && ((a324 == 7 && (cf == 1 && a319 == 2)) && a445 == 34)))) {
 		if ((((a493 == 34 && a418 == 34) && a416 == 34) && (a560 == 34 && ((a434 == 34 && (a37 == 36 && cf == 1)) && a294 == 34)))) {
 			calculate_outputm310(input);
@@ -75977,7 +75977,7 @@ void calculate_outputm32(int input) {
 		}
 	}
 }
-void calculate_outputm322(int input) {
+void calculate_outputm322(int8_tinput) {
 	if (((a465 == 34 && ((((input == 6) && cf == 1) && a546 == 34) && a435 == 34)) && (a586 == 34 && (a337 == 6 && a326 == 34)))) {
 		a58 += (a58 + 20) > a58 ? 3 : 0;
 		cf = 0;
@@ -76006,7 +76006,7 @@ void calculate_outputm322(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm323(int input) {
+void calculate_outputm323(int8_tinput) {
 	if (((((a368 == 6 && (a482 == 34 && ((input == 10) && cf == 1))) && a289 == 4) && a370 == 5) && (a434 == 34 && a336 == 12))) {
 		a96 -= (a96 - 20) < a96 ? 2 : 0;
 		cf = 0;
@@ -76038,7 +76038,7 @@ void calculate_outputm323(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm325(int input) {
+void calculate_outputm325(int8_tinput) {
 	if (((a434 == 34 && (a445 == 34 && ((((input == 1) && cf == 1) && a505 == 34) && a379 == 34))) && (a336 == 12 && a277 == 9))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 -= (a104 - 20) < a104 ? 2 : 0;
@@ -77381,7 +77381,7 @@ void calculate_outputm325(int input) {
 		a393 = 9;
 	}
 }
-void calculate_outputm326(int input) {
+void calculate_outputm326(int8_tinput) {
 	if (((((cf == 1 && (input == 8)) && a475 == 34) && a507 == 34) && (a318 == 34 && (a578 == 34 && (a374 == 9 && a348 == 6))))) {
 		a113 -= (a113 - 20) < a113 ? 4 : 0;
 		cf = 0;
@@ -77607,7 +77607,7 @@ void calculate_outputm326(int input) {
 		a18 = 9;
 	}
 }
-void calculate_outputm327(int input) {
+void calculate_outputm327(int8_tinput) {
 	if (((a277 == 9 && a252 == 12) && (a458 == 34 && ((a402 == 34 && (((input == 8) && cf == 1) && a233 == 8)) && a369 == 3)))) {
 		a171 += (a171 + 20) > a171 ? 1 : 0;
 		cf = 0;
@@ -77643,7 +77643,7 @@ void calculate_outputm327(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm328(int input) {
+void calculate_outputm328(int8_tinput) {
 	if (((a254 == 34 && (cf == 1 && (input == 1))) && (a482 == 34 && (a554 == 34 && (a346 == 3 && (a521 == 34 && a382 == 5)))))) {
 		a171 -= (a171 - 20) < a171 ? 4 : 0;
 		cf = 0;
@@ -77702,7 +77702,7 @@ void calculate_outputm328(int input) {
 		a33 = 5;
 	}
 }
-void calculate_outputm33(int input) {
+void calculate_outputm33(int8_tinput) {
 	if (((((cf == 1 && a172 == 11) && a532 == 34) && a475 == 34) && (((a242 == 4 && a586 == 34) && a313 == 3) && a241 == 8))) {
 		if ((((a498 == 34 && (a241 == 8 && a602 == 34)) && a434 == 34) && (((a292 == 10 && cf == 1) && a528 == 34) && a396 == 8))) {
 			calculate_outputm322(input);
@@ -77730,7 +77730,7 @@ void calculate_outputm33(int input) {
 		}
 	}
 }
-void calculate_outputm329(int input) {
+void calculate_outputm329(int8_tinput) {
 	if (((a475 == 34 && ((a366 == 34 && ((a494 == 34 && ((input == 10) && cf == 1)) && a323 == 12)) && a334 == 9)) && a486 == 34)) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 -= (a104 - 20) < a104 ? 2 : 0;
@@ -78550,7 +78550,7 @@ void calculate_outputm329(int input) {
 		a283 = 9;
 	}
 }
-void calculate_outputm330(int input) {
+void calculate_outputm330(int8_tinput) {
 	if ((((a370 == 5 && a474 == 34) && a346 == 3) && (a234 == 12 && ((((input == 10) && cf == 1) && a246 == 8) && a263 == 8)))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 -= (a104 - 20) < a104 ? 3 : 0;
@@ -79639,7 +79639,7 @@ void calculate_outputm330(int input) {
 		a264 = 13;
 	}
 }
-void calculate_outputm331(int input) {
+void calculate_outputm331(int8_tinput) {
 	if (((a474 == 34 && ((((cf == 1 && (input == 3)) && a400 == 9) && a289 == 4) && a215 == 34)) && (a259 == 10 && a310 == 3))) {
 		a96 -= (a96 - 20) < a96 ? 3 : 0;
 		a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -80553,7 +80553,7 @@ void calculate_outputm331(int input) {
 		a355 = 13;
 	}
 }
-void calculate_outputm332(int input) {
+void calculate_outputm332(int8_tinput) {
 	if (((a201 == 6 && (a317 == 7 && (a521 == 34 && (a379 == 34 && (cf == 1 && (input == 7)))))) && (a281 == 3 && a458 == 34))) {
 		cf = 0;
 		a358 = 7;
@@ -80750,7 +80750,7 @@ void calculate_outputm332(int input) {
 		a342 = 3;
 	}
 }
-void calculate_outputm333(int input) {
+void calculate_outputm333(int8_tinput) {
 	if (((a259 == 10 && (a274 == 5 && (((cf == 1 && (input == 5)) && a247 == 12) && a508 == 34))) && (a213 == 4 && a402 == 34))) {
 		a186 -= (a186 - 20) < a186 ? 4 : 0;
 		cf = 0;
@@ -80783,7 +80783,7 @@ void calculate_outputm333(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm334(int input) {
+void calculate_outputm334(int8_tinput) {
 	if (((a330 == 8 && ((a431 == 34 && (a312 == 3 && a201 == 6)) && a206 == 11)) && (a241 == 8 && (cf == 1 && (input == 8))))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a88 += (a88 + 20) > a88 ? 2 : 0;
@@ -82461,7 +82461,7 @@ void calculate_outputm334(int input) {
 		a4 = 11;
 	}
 }
-void calculate_outputm335(int input) {
+void calculate_outputm335(int8_tinput) {
 	if (((((a528 == 34 && ((input == 6) && cf == 1)) && a384 == 4) && a474 == 34) && ((a486 == 34 && a297 == 6) && a419 == 34))) {
 		a29 += (a29 + 20) > a29 ? 3 : 0;
 		cf = 0;
@@ -82648,7 +82648,7 @@ void calculate_outputm335(int input) {
 		a31 = 5;
 	}
 }
-void calculate_outputm336(int input) {
+void calculate_outputm336(int8_tinput) {
 	if (((((a582 == 34 && (a445 == 34 && (cf == 1 && (input == 9)))) && a594 == 34) && a592 == 34) && (a507 == 34 && a578 == 34))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 -= (a104 - 20) < a104 ? 1 : 0;
@@ -83104,7 +83104,7 @@ void calculate_outputm336(int input) {
 		a35 = 9;
 	}
 }
-void calculate_outputm337(int input) {
+void calculate_outputm337(int8_tinput) {
 	if (((((a432 == 34 && (cf == 1 && (input == 9))) && a262 == 34) && a532 == 34) && (a453 == 34 && (a253 == 8 && a465 == 34)))) {
 		cf = 0;
 		a416 = 32;
@@ -83180,7 +83180,7 @@ void calculate_outputm337(int input) {
 		a49 = 9;
 	}
 }
-void calculate_outputm34(int input) {
+void calculate_outputm34(int8_tinput) {
 	if (((a364 == 9 && (a244 == 9 && a236 == 8)) && (((a353 == 4 && (cf == 1 && a111 == 2)) && a259 == 10) && a418 == 34))) {
 		if (((a330 == 8 && (a380 == 5 && (((a141 == 34 && cf == 1) && a521 == 34) && a353 == 4))) && (a252 == 12 && a556 == 34))) {
 			calculate_outputm329(input);
@@ -83221,7 +83221,7 @@ void calculate_outputm34(int input) {
 		}
 	}
 }
-void calculate_outputm338(int input) {
+void calculate_outputm338(int8_tinput) {
 	if (((a270 == 5 && ((input == 2) && cf == 1)) && ((((a407 == 32 && a498 == 32) && a379 == 32) && a277 == 8) && a453 == 32))) {
 		cf = 0;
 		a594 = 32;
@@ -83403,7 +83403,7 @@ void calculate_outputm338(int input) {
 		}
 	}
 }
-void calculate_outputm339(int input) {
+void calculate_outputm339(int8_tinput) {
 	if ((((a270 == 5 && ((input == 5) && cf == 1)) && a374 == 8) && ((a297 == 5 && (a228 == 4 && a313 == 2)) && a432 == 32))) {
 		a58 += (a58 + 20) > a58 ? 3 : 0;
 		a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -84463,7 +84463,7 @@ void calculate_outputm339(int input) {
 		}
 	}
 }
-void calculate_outputm340(int input) {
+void calculate_outputm340(int8_tinput) {
 	if (((a476 == 32 && (a480 == 32 && (a318 == 32 && a520 == 32))) && (a359 == 10 && (((input == 6) && cf == 1) && a532 == 32)))) {
 		a171 -= (a171 - 20) < a171 ? 1 : 0;
 		cf = 0;
@@ -84546,7 +84546,7 @@ void calculate_outputm340(int input) {
 		a342 = 8;
 	}
 }
-void calculate_outputm342(int input) {
+void calculate_outputm342(int8_tinput) {
 	if (((((((input == 7) && cf == 1) && a262 == 32) && a602 == 32) && a214 == 3) && (a546 == 32 && (a213 == 3 && a587 == 32)))) {
 		a113 -= (a113 - 20) < a113 ? 4 : 0;
 		cf = 0;
@@ -84571,7 +84571,7 @@ void calculate_outputm342(int input) {
 		a99 = 1;
 	}
 }
-void calculate_outputm343(int input) {
+void calculate_outputm343(int8_tinput) {
 	if (((a585 == 32 && a277 == 8) && (a254 == 32 && (((a236 == 7 && (cf == 1 && (input == 8))) && a205 == 9) && a348 == 5)))) {
 		a91 -= (a91 - 20) < a91 ? 3 : 0;
 		cf = 0;
@@ -84660,7 +84660,7 @@ void calculate_outputm343(int input) {
 		a94 = 3;
 	}
 }
-void calculate_outputm344(int input) {
+void calculate_outputm344(int8_tinput) {
 	if ((((((a326 == 32 && (cf == 1 && (input == 10))) && a348 == 5) && a508 == 32) && a295 == 10) && (a223 == 9 && a206 == 10))) {
 		cf = 0;
 		a368 = 5;
@@ -84849,7 +84849,7 @@ void calculate_outputm344(int input) {
 		a47 = 6;
 	}
 }
-void calculate_outputm345(int input) {
+void calculate_outputm345(int8_tinput) {
 	if ((((a375 == 32 && (((a384 == 3 && (a505 == 32 && ((input == 6) && cf == 1))) && a376 == 4) && a411 == 32)) && a310 == 2) && (a20 % 2 == 0))) {
 		cf = 0;
 		a156 = 36;
@@ -84952,7 +84952,7 @@ void calculate_outputm345(int input) {
 		a161 = 10;
 	}
 }
-void calculate_outputm346(int input) {
+void calculate_outputm346(int8_tinput) {
 	if ((((a498 == 32 && (((input == 2) && cf == 1) && a359 == 10)) && a475 == 32) && (a585 == 32 && (a241 == 7 && a482 == 32)))) {
 		a171 -= (a171 - 20) < a171 ? 3 : 0;
 		cf = 0;
@@ -85409,7 +85409,7 @@ void calculate_outputm346(int input) {
 		a52 = 11;
 	}
 }
-void calculate_outputm347(int input) {
+void calculate_outputm347(int8_tinput) {
 	if (((a382 == 4 && (a324 == 6 && (a558 == 32 && (a474 == 32 && a520 == 32)))) && (a582 == 32 && ((input == 4) && cf == 1)))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a29 += (a29 + 20) > a29 ? 2 : 0;
@@ -86520,7 +86520,7 @@ void calculate_outputm347(int input) {
 		}
 	}
 }
-void calculate_outputm348(int input) {
+void calculate_outputm348(int8_tinput) {
 	if (((((input == 6) && cf == 1) && a518 == 32) && ((a281 == 2 && (a434 == 32 && (a594 == 32 && a493 == 32))) && a223 == 9))) {
 		a96 -= (a96 - 20) < a96 ? 2 : 0;
 		cf = 0;
@@ -86594,7 +86594,7 @@ void calculate_outputm348(int input) {
 		a161 = 14;
 	}
 }
-void calculate_outputm35(int input) {
+void calculate_outputm35(int8_tinput) {
 	if ((((((a474 == 32 && a254 == 32) && a493 == 32) && a203 == 3) && a234 == 11) && (a521 == 32 && (a135 == 33 && cf == 1)))) {
 		if (((((a253 == 7 && ((cf == 1 && a360 == 33) && a508 == 32)) && a558 == 32) && a480 == 32) && (a281 == 2 && a532 == 32))) {
 			calculate_outputm338(input);
@@ -86636,7 +86636,7 @@ void calculate_outputm35(int input) {
 		}
 	}
 }
-void calculate_outputm349(int input) {
+void calculate_outputm349(int8_tinput) {
 	if (((((input == 7) && cf == 1) && a227 == 32) && (a213 == 3 && (((a508 == 32 && a226 == 3) && a376 == 4) && a254 == 32)))) {
 		cf = 0;
 		a458 = 32;
@@ -87172,7 +87172,7 @@ void calculate_outputm349(int input) {
 		a49 = 9;
 	}
 }
-void calculate_outputm350(int input) {
+void calculate_outputm350(int8_tinput) {
 	if (((((a546 == 32 && ((a505 == 32 && ((input == 10) && cf == 1)) && a477 == 32)) && a242 == 3) && a203 == 3) && a480 == 32)) {
 		a76 += (a76 + 20) > a76 ? 4 : 0;
 		cf = 0;
@@ -87384,7 +87384,7 @@ void calculate_outputm350(int input) {
 		a363 = 4;
 	}
 }
-void calculate_outputm351(int input) {
+void calculate_outputm351(int8_tinput) {
 	if (((a582 == 32 && (a313 == 2 && a518 == 32)) && (a510 == 32 && ((a398 == 3 && (cf == 1 && (input == 5))) && a312 == 2)))) {
 		a171 += (a171 + 20) > a171 ? 1 : 0;
 		cf = 0;
@@ -87548,7 +87548,7 @@ void calculate_outputm351(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm352(int input) {
+void calculate_outputm352(int8_tinput) {
 	if ((((a416 == 32 && (a209 == 5 && a370 == 4)) && a402 == 32) && ((a375 == 32 && (cf == 1 && (input == 9))) && a324 == 6))) {
 		a96 -= (a96 - 20) < a96 ? 4 : 0;
 		cf = 0;
@@ -87879,13 +87879,13 @@ void calculate_outputm352(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm353(int input) {
+void calculate_outputm353(int8_tinput) {
 	if (((a330 == 7 && (a368 == 5 && (a435 == 32 && (cf == 1 && (input == 9))))) && (a594 == 32 && (a379 == 32 && a226 == 3)))) {
 		cf = 0;
 
 	}
 }
-void calculate_outputm354(int input) {
+void calculate_outputm354(int8_tinput) {
 	if (((a453 == 32 && (a282 == 8 && ((a220 == 32 && (cf == 1 && (input == 1))) && a318 == 32))) && (a474 == 32 && a252 == 11))) {
 		a85 += (a85 + 20) > a85 ? 3 : 0;
 		cf = 0;
@@ -88212,7 +88212,7 @@ void calculate_outputm354(int input) {
 		a283 = 7;
 	}
 }
-void calculate_outputm36(int input) {
+void calculate_outputm36(int8_tinput) {
 	if (((a418 == 32 && ((a379 == 32 && (a103 == 11 && cf == 1)) && a366 == 32)) && ((a262 == 32 && a205 == 9) && a227 == 32))) {
 		if ((((((a322 == 3 && cf == 1) && a233 == 7) && a404 == 32) && a254 == 32) && ((a326 == 32 && a209 == 5) && a505 == 32))) {
 			calculate_outputm349(input);
@@ -88240,7 +88240,7 @@ void calculate_outputm36(int input) {
 		}
 	}
 }
-void calculate_outputm355(int input) {
+void calculate_outputm355(int8_tinput) {
 	if (((((a214 == 3 && ((input == 6) && cf == 1)) && a400 == 8) && (((a380 == 4 && a505 == 32) && a215 == 32) && a399 == 4)) && a73 >= 1)) {
 		a179 += (a179 + 20) > a179 ? 2 : 0;
 		cf = 0;
@@ -88550,7 +88550,7 @@ void calculate_outputm355(int input) {
 		a49 = 6;
 	}
 }
-void calculate_outputm356(int input) {
+void calculate_outputm356(int8_tinput) {
 	if (((a205 == 9 && ((a396 == 7 && (a582 == 32 && a214 == 3)) && a578 == 32)) && (((input == 10) && cf == 1) && a312 == 2))) {
 		a58 += (a58 + 20) > a58 ? 1 : 0;
 		cf = 0;
@@ -88824,7 +88824,7 @@ void calculate_outputm356(int input) {
 		a175 = 3;
 	}
 }
-void calculate_outputm357(int input) {
+void calculate_outputm357(int8_tinput) {
 	if (((((a474 == 32 && a516 == 32) && a592 == 32) && a418 == 32) && (a215 == 32 && ((cf == 1 && (input == 8)) && a480 == 32)))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a88 -= (a88 - 20) < a88 ? 3 : 0;
@@ -90100,7 +90100,7 @@ void calculate_outputm357(int input) {
 		a94 = 1;
 	}
 }
-void calculate_outputm358(int input) {
+void calculate_outputm358(int8_tinput) {
 	if ((((a252 == 11 && a366 == 32) && a416 == 32) && (((((input == 7) && cf == 1) && a259 == 9) && a310 == 2) && a246 == 7))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a179 += (a179 + 20) > a179 ? 3 : 0;
@@ -91241,7 +91241,7 @@ void calculate_outputm358(int input) {
 		}
 	}
 }
-void calculate_outputm359(int input) {
+void calculate_outputm359(int8_tinput) {
 	if (((a505 == 32 && (((input == 8) && cf == 1) && a358 == 7)) && (a254 == 32 && ((a399 == 4 && a366 == 32) && a532 == 32)))) {
 		a179 += (a179 + 20) > a179 ? 1 : 0;
 		cf = 0;
@@ -91253,7 +91253,7 @@ void calculate_outputm359(int input) {
 		a363 = 4;
 	}
 }
-void calculate_outputm37(int input) {
+void calculate_outputm37(int8_tinput) {
 	if (((a216 == 32 && ((a227 == 32 && (a259 == 9 && a345 == 10)) && a366 == 32)) && (a480 == 32 && (cf == 1 && a238 == 33)))) {
 		if (((a337 == 5 && (a282 == 8 && a246 == 7)) && (a380 == 4 && ((a554 == 32 && (cf == 1 && a347 == 16)) && a465 == 32)))) {
 			calculate_outputm355(input);
@@ -91276,7 +91276,7 @@ void calculate_outputm37(int input) {
 		}
 	}
 }
-void calculate_outputm360(int input) {
+void calculate_outputm360(int8_tinput) {
 	if (((a400 == 8 && (((a369 == 2 && a218 == 6) && a380 == 4) && a374 == 8)) && (((input == 2) && cf == 1) && a324 == 6))) {
 		a148 += (a148 + 20) > a148 ? 2 : 0;
 		cf = 0;
@@ -91640,7 +91640,7 @@ void calculate_outputm360(int input) {
 		a283 = 10;
 	}
 }
-void calculate_outputm361(int input) {
+void calculate_outputm361(int8_tinput) {
 	if ((((((a419 == 32 && a554 == 32) && a246 == 7) && a215 == 32) && a411 == 32) && (a366 == 32 && (cf == 1 && (input == 6))))) {
 		a96 -= (a96 - 20) < a96 ? 1 : 0;
 		a132 += (a132 + 20) > a132 ? 1 : 0;
@@ -92352,7 +92352,7 @@ void calculate_outputm361(int input) {
 		a26 = 11;
 	}
 }
-void calculate_outputm363(int input) {
+void calculate_outputm363(int8_tinput) {
 	if ((((a382 == 4 && ((input == 7) && cf == 1)) && a411 == 32) && (((a416 == 32 && a399 == 4) && a398 == 3) && a312 == 2))) {
 		a29 += (a29 + 20) > a29 ? 3 : 0;
 		cf = 0;
@@ -92466,7 +92466,7 @@ void calculate_outputm363(int input) {
 		a39 = 5;
 	}
 }
-void calculate_outputm365(int input) {
+void calculate_outputm365(int8_tinput) {
 	if (((a510 == 32 && a453 == 32) && (a270 == 5 && ((a274 == 4 && (((input == 7) && cf == 1) && a502 == 32)) && a227 == 32)))) {
 		cf = 0;
 		a252 = 10;
@@ -92846,7 +92846,7 @@ void calculate_outputm365(int input) {
 		}
 	}
 }
-void calculate_outputm38(int input) {
+void calculate_outputm38(int8_tinput) {
 	if (((((a324 == 6 && a337 == 5) && a337 == 5) && a402 == 32) && ((a209 == 5 && (cf == 1 && a44 == 9)) && a375 == 32))) {
 		if (((a289 == 3 && a270 == 5) && (a295 == 10 && (a334 == 8 && (a274 == 4 && ((cf == 1 && a150 == 6) && a330 == 7)))))) {
 			calculate_outputm360(input);
@@ -92866,7 +92866,7 @@ void calculate_outputm38(int input) {
 		}
 	}
 }
-void calculate_outputm367(int input) {
+void calculate_outputm367(int8_tinput) {
 	if ((((((input == 7) && cf == 1) && a259 == 9) && a532 == 32) && ((a520 == 32 && (a374 == 8 && a223 == 9)) && a236 == 7))) {
 		a65 -= (a65 - 20) < a65 ? 2 : 0;
 		cf = 0;
@@ -93225,7 +93225,7 @@ void calculate_outputm367(int input) {
 		a18 = 12;
 	}
 }
-void calculate_outputm368(int input) {
+void calculate_outputm368(int8_tinput) {
 	if ((((cf == 1 && (input == 5)) && a480 == 32) && ((a218 == 6 && (a215 == 32 && (a353 == 3 && a246 == 7))) && a498 == 32))) {
 		a186 += (a186 + 20) > a186 ? 1 : 0;
 		cf = 0;
@@ -93441,7 +93441,7 @@ void calculate_outputm368(int input) {
 		a33 = 5;
 	}
 }
-void calculate_outputm369(int input) {
+void calculate_outputm369(int8_tinput) {
 	if (((a310 == 2 && (a458 == 32 && (cf == 1 && (input == 5)))) && (((a346 == 2 && a323 == 11) && a214 == 3) && a521 == 32))) {
 		a96 -= (a96 - 20) < a96 ? 4 : 0;
 		cf = 0;
@@ -93664,7 +93664,7 @@ void calculate_outputm369(int input) {
 		a94 = 7;
 	}
 }
-void calculate_outputm370(int input) {
+void calculate_outputm370(int8_tinput) {
 	if (((a518 == 32 && a229 == 4) && (a274 == 4 && ((a475 == 32 && (a214 == 3 && (cf == 1 && (input == 6)))) && a382 == 4)))) {
 		a88 += (a88 + 20) > a88 ? 1 : 0;
 		a157 += (a157 + 20) > a157 ? 1 : 0;
@@ -94758,7 +94758,7 @@ void calculate_outputm370(int input) {
 		a52 = 10;
 	}
 }
-void calculate_outputm372(int input) {
+void calculate_outputm372(int8_tinput) {
 	if ((((a201 == 5 && (a507 == 32 && a234 == 11)) && a209 == 5) && (a282 == 8 && ((cf == 1 && (input == 3)) && a260 == 8)))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 -= (a104 - 20) < a104 ? 3 : 0;
@@ -95639,7 +95639,7 @@ void calculate_outputm372(int input) {
 		a144 = 11;
 	}
 }
-void calculate_outputm373(int input) {
+void calculate_outputm373(int8_tinput) {
 	if (((((a209 == 5 && (cf == 1 && (input == 7))) && a465 == 32) && a520 == 32) && ((a318 == 32 && a594 == 32) && a282 == 8))) {
 		a29 += (a29 + 20) > a29 ? 4 : 0;
 		cf = 0;
@@ -95665,7 +95665,7 @@ void calculate_outputm373(int input) {
 		a56 = 7;
 	}
 }
-void calculate_outputm374(int input) {
+void calculate_outputm374(int8_tinput) {
 	if (((a418 == 32 && ((a582 == 32 && a416 == 32) && a226 == 3)) && ((a209 == 5 && (cf == 1 && (input == 1))) && a214 == 3))) {
 		a29 += (a29 + 20) > a29 ? 3 : 0;
 		cf = 0;
@@ -95954,7 +95954,7 @@ void calculate_outputm374(int input) {
 		a342 = 8;
 	}
 }
-void calculate_outputm39(int input) {
+void calculate_outputm39(int8_tinput) {
 	if (((a254 == 32 && ((a307 == 33 && cf == 1) && a280 == 32)) && (a209 == 5 && ((a435 == 32 && a262 == 32) && a253 == 7)))) {
 		if (((a259 == 9 && ((cf == 1 && a357 == 10) && a294 == 32)) && (a274 == 4 && ((a464 == 32 && a558 == 32) && a398 == 3)))) {
 			calculate_outputm367(input);
@@ -95985,7 +95985,7 @@ void calculate_outputm39(int input) {
 		}
 	}
 }
-void calculate_outputm376(int input) {
+void calculate_outputm376(int8_tinput) {
 	if ((((a201 == 5 && (a318 == 32 && a226 == 3)) && a463 == 32) && (((cf == 1 && (input == 1)) && a516 == 32) && a476 == 32))) {
 		a184 -= (a184 - 20) < a184 ? 1 : 0;
 		cf = 0;
@@ -96191,7 +96191,7 @@ void calculate_outputm376(int input) {
 		a151 = 5;
 	}
 }
-void calculate_outputm377(int input) {
+void calculate_outputm377(int8_tinput) {
 	if ((((a282 == 8 && (a382 == 4 && a203 == 3)) && a366 == 32) && ((((input == 2) && cf == 1) && a227 == 32) && a203 == 3))) {
 		a29 += (a29 + 20) > a29 ? 4 : 0;
 		cf = 0;
@@ -96436,7 +96436,7 @@ void calculate_outputm377(int input) {
 		a390 = 8;
 	}
 }
-void calculate_outputm378(int input) {
+void calculate_outputm378(int8_tinput) {
 	if ((((a317 == 6 && ((cf == 1 && (input == 6)) && a544 == 32)) && a330 == 7) && ((a253 == 7 && a521 == 32) && a431 == 32))) {
 		a29 += (a29 + 20) > a29 ? 1 : 0;
 		cf = 0;
@@ -96460,7 +96460,7 @@ void calculate_outputm378(int input) {
 		a342 = 8;
 	}
 }
-void calculate_outputm379(int input) {
+void calculate_outputm379(int8_tinput) {
 	if (((((((cf == 1 && (input == 9)) && a407 == 32) && a418 == 32) && a380 == 4) && a482 == 32) && (a366 == 32 && a432 == 32))) {
 		a29 += (a29 + 20) > a29 ? 2 : 0;
 		cf = 0;
@@ -96681,7 +96681,7 @@ void calculate_outputm379(int input) {
 		a367 = 4;
 	}
 }
-void calculate_outputm380(int input) {
+void calculate_outputm380(int8_tinput) {
 	if ((((a556 == 32 && a465 == 32) && a435 == 32) && ((a578 == 32 && ((cf == 1 && (input == 5)) && a330 == 7)) && a326 == 32))) {
 		a76 += (a76 + 20) > a76 ? 3 : 0;
 		cf = 0;
@@ -96707,7 +96707,7 @@ void calculate_outputm380(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm40(int input) {
+void calculate_outputm40(int8_tinput) {
 	if (((a431 == 32 && ((cf == 1 && a45 == 35) && a218 == 6)) && (a289 == 3 && ((a445 == 32 && a353 == 3) && a554 == 32)))) {
 		if (((a521 == 32 && (a554 == 32 && a236 == 7)) && (a476 == 32 && (a602 == 32 && ((cf == 1 && a166 == 32) && a270 == 5))))) {
 			calculate_outputm376(input);
@@ -96728,7 +96728,7 @@ void calculate_outputm40(int input) {
 		}
 	}
 }
-void calculate_outputm381(int input) {
+void calculate_outputm381(int8_tinput) {
 	if (((a312 == 2 && ((cf == 1 && (input == 1)) && a382 == 4)) && ((a246 == 7 && (a435 == 32 && a521 == 32)) && a236 == 7))) {
 		a73 -= (a73 - 20) < a73 ? 4 : 0;
 		cf = 0;
@@ -97083,7 +97083,7 @@ void calculate_outputm381(int input) {
 		a69 = 12;
 	}
 }
-void calculate_outputm382(int input) {
+void calculate_outputm382(int8_tinput) {
 	if (((a274 == 4 && (((input == 5) && cf == 1) && a330 == 7)) && ((a582 == 32 && (a404 == 32 && a411 == 32)) && a498 == 32))) {
 		a171 += (a171 + 20) > a171 ? 1 : 0;
 		cf = 0;
@@ -97482,7 +97482,7 @@ void calculate_outputm382(int input) {
 		a111 = 3;
 	}
 }
-void calculate_outputm383(int input) {
+void calculate_outputm383(int8_tinput) {
 	if (((a369 == 2 && ((a281 == 2 && (a324 == 6 && a398 == 3)) && a337 == 5)) && ((cf == 1 && (input == 5)) && a214 == 3))) {
 		a96 -= (a96 - 20) < a96 ? 4 : 0;
 		cf = 0;
@@ -97688,7 +97688,7 @@ void calculate_outputm383(int input) {
 		a283 = 10;
 	}
 }
-void calculate_outputm384(int input) {
+void calculate_outputm384(int8_tinput) {
 	if (((a446 == 32 && ((a313 == 2 && ((input == 2) && cf == 1)) && a359 == 10)) && ((a516 == 32 && a464 == 32) && a446 == 32))) {
 		a73 += (a73 + 20) > a73 ? 1 : 0;
 		cf = 0;
@@ -98087,7 +98087,7 @@ void calculate_outputm384(int input) {
 		}
 	}
 }
-void calculate_outputm386(int input) {
+void calculate_outputm386(int8_tinput) {
 	if (((cf == 1 && (input == 2)) && ((((a358 == 7 && (a546 == 32 && a532 == 32)) && a556 == 32) && a508 == 32) && a396 == 7))) {
 		cf = 0;
 		a49 = 8;
@@ -98096,7 +98096,7 @@ void calculate_outputm386(int input) {
 		a87 = 3;
 	}
 }
-void calculate_outputm41(int input) {
+void calculate_outputm41(int8_tinput) {
 	if (((a282 == 8 && ((a431 == 32 && a380 == 4) && a326 == 32)) && (a558 == 32 && ((cf == 1 && a137 == 33) && a277 == 8)))) {
 		if (((a374 == 8 && (a407 == 32 && (a402 == 32 && a318 == 32))) && (a416 == 32 && ((cf == 1 && a361 == 9) && a556 == 32)))) {
 			calculate_outputm381(input);
@@ -98123,7 +98123,7 @@ void calculate_outputm41(int input) {
 		}
 	}
 }
-void calculate_outputm388(int input) {
+void calculate_outputm388(int8_tinput) {
 	if ((((((a359 == 10 && a244 == 8) && a445 == 32) && a337 == 5) && ((a229 == 4 && (cf == 1 && (input == 7))) && a270 == 5)) && a186 >= 5)) {
 		a73 -= (a73 - 20) < a73 ? 4 : 0;
 		cf = 0;
@@ -98293,7 +98293,7 @@ void calculate_outputm388(int input) {
 		a44 = 13;
 	}
 }
-void calculate_outputm390(int input) {
+void calculate_outputm390(int8_tinput) {
 	if (((a295 == 10 && ((a594 == 32 && (a520 == 32 && a346 == 2)) && a463 == 32)) && (a404 == 32 && (cf == 1 && (input == 5))))) {
 		a96 -= (a96 - 20) < a96 ? 4 : 0;
 		cf = 0;
@@ -98546,7 +98546,7 @@ void calculate_outputm390(int input) {
 		a49 = 9;
 	}
 }
-void calculate_outputm391(int input) {
+void calculate_outputm391(int8_tinput) {
 	if (((a310 == 2 && a476 == 32) && ((a373 == 4 && (a323 == 11 && (a203 == 3 && (cf == 1 && (input == 7))))) && a453 == 32))) {
 		a113 -= (a113 - 20) < a113 ? 4 : 0;
 		cf = 0;
@@ -98567,7 +98567,7 @@ void calculate_outputm391(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm393(int input) {
+void calculate_outputm393(int8_tinput) {
 	if (((((a585 == 32 && ((input == 10) && cf == 1)) && a586 == 32) && a480 == 32) && (a313 == 2 && (a246 == 7 && a353 == 3)))) {
 		a58 += (a58 + 20) > a58 ? 1 : 0;
 		cf = 0;
@@ -98802,7 +98802,7 @@ void calculate_outputm393(int input) {
 		a283 = 5;
 	}
 }
-void calculate_outputm394(int input) {
+void calculate_outputm394(int8_tinput) {
 	if ((((a375 == 32 && a587 == 32) && a402 == 32) && ((a297 == 5 && ((cf == 1 && (input == 8)) && a494 == 32)) && a502 == 32))) {
 		a58 += (a58 + 20) > a58 ? 2 : 0;
 		cf = 0;
@@ -99052,7 +99052,7 @@ void calculate_outputm394(int input) {
 		a160 = 9;
 	}
 }
-void calculate_outputm42(int input) {
+void calculate_outputm42(int8_tinput) {
 	if ((((a274 == 4 && a482 == 32) && a206 == 10) && (a458 == 32 && (a236 == 7 && (a201 == 5 && (cf == 1 && a23 == 7)))))) {
 		if ((((((a312 == 2 && (a212 == 33 && cf == 1)) && a493 == 32) && a253 == 7) && a464 == 32) && (a474 == 32 && a260 == 8))) {
 			calculate_outputm388(input);
@@ -99077,7 +99077,7 @@ void calculate_outputm42(int input) {
 		}
 	}
 }
-void calculate_outputm395(int input) {
+void calculate_outputm395(int8_tinput) {
 	if (((a558 == 33 && ((a382 == 3 && ((input == 10) && cf == 1)) && a337 == 4)) && (a411 == 33 && (a213 == 2 && a218 == 5)))) {
 		a65 -= (a65 - 20) < a65 ? 1 : 0;
 		cf = 0;
@@ -99281,7 +99281,7 @@ void calculate_outputm395(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm396(int input) {
+void calculate_outputm396(int8_tinput) {
 	if (((a205 == 8 && (a578 == 33 && a209 == 4)) && (a380 == 3 && (a474 == 33 && (a508 == 33 && ((input == 5) && cf == 1)))))) {
 		a148 += (a148 + 20) > a148 ? 2 : 0;
 		cf = 0;
@@ -99393,7 +99393,7 @@ void calculate_outputm396(int input) {
 		a49 = 7;
 	}
 }
-void calculate_outputm398(int input) {
+void calculate_outputm398(int8_tinput) {
 	if ((((a259 == 8 && ((input == 2) && cf == 1)) && a431 == 33) && ((a242 == 2 && (a262 == 33 && a373 == 3)) && a432 == 33))) {
 		cf = 0;
 		a521 = 32;
@@ -99587,7 +99587,7 @@ void calculate_outputm398(int input) {
 		a99 = 1;
 	}
 }
-void calculate_outputm399(int input) {
+void calculate_outputm399(int8_tinput) {
 	if (((a312 == 1 && a229 == 3) && (a274 == 3 && (a402 == 33 && (a560 == 33 && (((input == 1) && cf == 1) && a379 == 33)))))) {
 		cf = 0;
 		a359 = 10;
@@ -99617,7 +99617,7 @@ void calculate_outputm399(int input) {
 		a363 = 4;
 	}
 }
-void calculate_outputm400(int input) {
+void calculate_outputm400(int8_tinput) {
 	if (((a369 == 1 && (a498 == 33 && a498 == 33)) && (a586 == 33 && ((a370 == 3 && ((input == 9) && cf == 1)) && a407 == 33)))) {
 		a96 -= (a96 - 20) < a96 ? 3 : 0;
 		cf = 0;
@@ -99644,7 +99644,7 @@ void calculate_outputm400(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm401(int input) {
+void calculate_outputm401(int8_tinput) {
 	if (((a435 == 33 && ((a201 == 4 && ((input == 5) && cf == 1)) && a520 == 33)) && ((a528 == 33 && a312 == 1) && a236 == 6))) {
 		a58 += (a58 + 20) > a58 ? 1 : 0;
 		cf = 0;
@@ -99681,7 +99681,7 @@ void calculate_outputm401(int input) {
 		a199 = 9;
 	}
 }
-void calculate_outputm402(int input) {
+void calculate_outputm402(int8_tinput) {
 	if (((a528 == 33 && (a234 == 10 && (a502 == 33 && (a364 == 7 && a201 == 4)))) && (((input == 5) && cf == 1) && a348 == 4))) {
 		a184 -= (a184 - 20) < a184 ? 3 : 0;
 		cf = 0;
@@ -99932,7 +99932,7 @@ void calculate_outputm402(int input) {
 		a18 = 9;
 	}
 }
-void calculate_outputm403(int input) {
+void calculate_outputm403(int8_tinput) {
 	if (((a382 == 3 && (a323 == 10 && a270 == 4)) && (a346 == 1 && (a324 == 5 && (a464 == 33 && (cf == 1 && (input == 1))))))) {
 		cf = 0;
 		a369 = 2;
@@ -100161,7 +100161,7 @@ void calculate_outputm403(int input) {
 		}
 	}
 }
-void calculate_outputm43(int input) {
+void calculate_outputm43(int8_tinput) {
 	if (((a304 == 5 && a510 == 33) && (a223 == 8 && (a521 == 33 && (a518 == 33 && ((a371 == 7 && cf == 1) && a334 == 7)))))) {
 		if (((((a516 == 33 && a281 == 1) && a244 == 7) && a358 == 6) && (a463 == 33 && ((cf == 1 && a183 == 7) && a463 == 33)))) {
 			calculate_outputm395(input);
@@ -100199,7 +100199,7 @@ void calculate_outputm43(int input) {
 		}
 	}
 }
-void calculate_outputm405(int input) {
+void calculate_outputm405(int8_tinput) {
 	if (((a404 == 33 && (((cf == 1 && (input == 7)) && a463 == 33) && a215 == 33)) && ((a324 == 5 && a380 == 3) && a227 == 33))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 += (a104 + 20) > a104 ? 1 : 0;
@@ -101317,7 +101317,7 @@ void calculate_outputm405(int input) {
 		a44 = 11;
 	}
 }
-void calculate_outputm407(int input) {
+void calculate_outputm407(int8_tinput) {
 	if ((((a465 == 33 && (a236 == 6 && (a560 == 33 && a334 == 7))) && a368 == 4) && (a592 == 33 && ((input == 7) && cf == 1)))) {
 		a58 += (a58 + 20) > a58 ? 4 : 0;
 		cf = 0;
@@ -101788,7 +101788,7 @@ void calculate_outputm407(int input) {
 		a217 = 10;
 	}
 }
-void calculate_outputm409(int input) {
+void calculate_outputm409(int8_tinput) {
 	if ((((a494 == 33 && ((cf == 1 && (input == 10)) && a379 == 33)) && a312 == 1) && ((a215 == 33 && a356 == 8) && a313 == 1))) {
 		a171 += (a171 + 20) > a171 ? 1 : 0;
 		a58 += (a58 + 20) > a58 ? 2 : 0;
@@ -101947,7 +101947,7 @@ void calculate_outputm409(int input) {
 		a123 = 10;
 	}
 }
-void calculate_outputm411(int input) {
+void calculate_outputm411(int8_tinput) {
 	if (((a209 == 4 && ((a474 == 33 && (cf == 1 && (input == 10))) && a382 == 3)) && (a297 == 4 && (a498 == 33 && a312 == 1)))) {
 		a96 += (a96 + 20) > a96 ? 1 : 0;
 		cf = 0;
@@ -102101,7 +102101,7 @@ void calculate_outputm411(int input) {
 		a334 = 7;
 	}
 }
-void calculate_outputm412(int input) {
+void calculate_outputm412(int8_tinput) {
 	if (((a366 == 33 && ((a345 == 9 && a404 == 33) && a337 == 4)) && ((((input == 2) && cf == 1) && a587 == 33) && a474 == 33))) {
 		a2 -= (a2 - 20) < a2 ? 3 : 0;
 		cf = 0;
@@ -102266,7 +102266,7 @@ void calculate_outputm412(int input) {
 		a355 = 11;
 	}
 }
-void calculate_outputm44(int input) {
+void calculate_outputm44(int8_tinput) {
 	if (((a594 == 33 && ((a532 == 33 && a313 == 1) && a398 == 2)) && ((a282 == 7 && (a79 == 33 && cf == 1)) && a493 == 33))) {
 		if (((((a465 == 33 && (a277 == 7 && (cf == 1 && a199 == 4))) && a482 == 33) && a585 == 33) && (a330 == 6 && a366 == 33))) {
 			calculate_outputm405(input);
@@ -102289,7 +102289,7 @@ void calculate_outputm44(int input) {
 		}
 	}
 }
-void calculate_outputm414(int input) {
+void calculate_outputm414(int8_tinput) {
 	if (((a592 == 33 && (a241 == 6 && a398 == 2)) && (a358 == 6 && ((((input == 7) && cf == 1) && a494 == 33) && a498 == 33)))) {
 		a76 += (a76 + 20) > a76 ? 2 : 0;
 		cf = 0;
@@ -102325,7 +102325,7 @@ void calculate_outputm414(int input) {
 		a342 = 8;
 	}
 }
-void calculate_outputm415(int input) {
+void calculate_outputm415(int8_tinput) {
 	if (((a304 == 5 && (a252 == 10 && a544 == 33)) && (a578 == 33 && (a304 == 5 && (a259 == 8 && (cf == 1 && (input == 2))))))) {
 		a58 += (a58 + 20) > a58 ? 2 : 0;
 		cf = 0;
@@ -102656,7 +102656,7 @@ void calculate_outputm415(int input) {
 		a49 = 7;
 	}
 }
-void calculate_outputm416(int input) {
+void calculate_outputm416(int8_tinput) {
 	if ((((((input == 8) && cf == 1) && a369 == 1) && a399 == 3) && (a259 == 8 && ((a411 == 33 && a404 == 33) && a220 == 33)))) {
 		cf = 0;
 		a465 = 32;
@@ -102804,7 +102804,7 @@ void calculate_outputm416(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm418(int input) {
+void calculate_outputm418(int8_tinput) {
 	if (((a431 == 33 && ((a411 == 33 && ((cf == 1 && (input == 6)) && a304 == 5)) && a475 == 33)) && (a445 == 33 && a234 == 10))) {
 		a2 -= (a2 - 20) < a2 ? 1 : 0;
 		cf = 0;
@@ -102988,7 +102988,7 @@ void calculate_outputm418(int input) {
 		a49 = 4;
 	}
 }
-void calculate_outputm419(int input) {
+void calculate_outputm419(int8_tinput) {
 	if (((a274 == 3 && (a446 == 33 && (((input == 10) && cf == 1) && a295 == 9))) && ((a304 == 5 && a528 == 33) && a399 == 3))) {
 		a179 += (a179 + 20) > a179 ? 3 : 0;
 		cf = 0;
@@ -103235,7 +103235,7 @@ void calculate_outputm419(int input) {
 		a363 = 4;
 	}
 }
-void calculate_outputm420(int input) {
+void calculate_outputm420(int8_tinput) {
 	if (((a411 == 33 && (a353 == 2 && ((input == 9) && cf == 1))) && (((a289 == 2 && a353 == 2) && a556 == 33) && a502 == 33))) {
 		a29 += (a29 + 20) > a29 ? 4 : 0;
 		cf = 0;
@@ -103339,7 +103339,7 @@ void calculate_outputm420(int input) {
 		a18 = 12;
 	}
 }
-void calculate_outputm45(int input) {
+void calculate_outputm45(int8_tinput) {
 	if (((a368 == 4 && (a465 == 33 && a366 == 33)) && (a544 == 33 && (((cf == 1 && a126 == 33) && a453 == 33) && a374 == 7)))) {
 		if ((((a411 == 33 && (a289 == 2 && a280 == 33)) && a480 == 33) && (((a39 == 1 && cf == 1) && a498 == 33) && a220 == 33))) {
 			calculate_outputm414(input);
@@ -103367,7 +103367,7 @@ void calculate_outputm45(int input) {
 		}
 	}
 }
-void calculate_outputm421(int input) {
+void calculate_outputm421(int8_tinput) {
 	if ((((a233 == 6 && a544 == 33) && a370 == 3) && ((a505 == 33 && ((cf == 1 && (input == 9)) && a373 == 3)) && a369 == 1))) {
 		a85 += (a85 + 20) > a85 ? 4 : 0;
 		cf = 0;
@@ -103407,7 +103407,7 @@ void calculate_outputm421(int input) {
 		a150 = 13;
 	}
 }
-void calculate_outputm422(int input) {
+void calculate_outputm422(int8_tinput) {
 	if (((a494 == 33 && (a218 == 5 && (a295 == 9 && a416 == 33))) && (a365 == 1 && (a359 == 9 && ((input == 8) && cf == 1))))) {
 		a2 -= (a2 - 20) < a2 ? 2 : 0;
 		cf = 0;
@@ -103567,7 +103567,7 @@ void calculate_outputm422(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm424(int input) {
+void calculate_outputm424(int8_tinput) {
 	if (((a365 == 1 && (cf == 1 && (input == 5))) && ((((a505 == 33 && a312 == 1) && a215 == 33) && a263 == 6) && a379 == 33))) {
 		cf = 0;
 		a307 = 32;
@@ -103689,7 +103689,7 @@ void calculate_outputm424(int input) {
 		a123 = 10;
 	}
 }
-void calculate_outputm46(int input) {
+void calculate_outputm46(int8_tinput) {
 	if (((a214 == 2 && a476 == 33) && ((a260 == 7 && ((a518 == 33 && (a38 == 32 && cf == 1)) && a435 == 33)) && a480 == 33))) {
 		if (((a318 == 33 && ((a305 == 11 && cf == 1) && a432 == 33)) && (a558 == 33 && (a477 == 33 && (a435 == 33 && a532 == 33))))) {
 			calculate_outputm421(input);
@@ -103706,7 +103706,7 @@ void calculate_outputm46(int input) {
 		}
 	}
 }
-void calculate_outputm426(int input) {
+void calculate_outputm426(int8_tinput) {
 	if (((((a270 == 4 && a419 == 33) && a374 == 7) && a312 == 1) && (((cf == 1 && (input == 6)) && a445 == 33) && a416 == 33))) {
 		cf = 0;
 		a458 = 32;
@@ -103971,7 +103971,7 @@ void calculate_outputm426(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm428(int input) {
+void calculate_outputm428(int8_tinput) {
 	if (((((input == 1) && cf == 1) && a247 == 10) && (((a223 == 8 && (a418 == 33 && a274 == 3)) && a486 == 33) && a242 == 2))) {
 		cf = 0;
 		a384 = 3;
@@ -104134,7 +104134,7 @@ void calculate_outputm428(int input) {
 		a363 = 4;
 	}
 }
-void calculate_outputm429(int input) {
+void calculate_outputm429(int8_tinput) {
 	if (((a370 == 3 && a602 == 33) && (a274 == 3 && (a201 == 4 && (a223 == 8 && ((cf == 1 && (input == 2)) && a458 == 33)))))) {
 		a76 += (a76 + 20) > a76 ? 1 : 0;
 		cf = 0;
@@ -104376,7 +104376,7 @@ void calculate_outputm429(int input) {
 		a118 = 9;
 	}
 }
-void calculate_outputm430(int input) {
+void calculate_outputm430(int8_tinput) {
 	if (((a241 == 6 && (a445 == 33 && ((cf == 1 && (input == 8)) && a205 == 8))) && (a313 == 1 && (a247 == 10 && a297 == 4)))) {
 		a2 += (a2 + 20) > a2 ? 2 : 0;
 		cf = 0;
@@ -104608,7 +104608,7 @@ void calculate_outputm430(int input) {
 		a99 = 1;
 	}
 }
-void calculate_outputm431(int input) {
+void calculate_outputm431(int8_tinput) {
 	if ((((a528 == 33 && (cf == 1 && (input == 2))) && a532 == 33) && (a216 == 33 && (a263 == 6 && (a586 == 33 && a277 == 7))))) {
 		cf = 0;
 		if ((((a324 == 6 && !(a166 == 32)) || a169 == 33) || a164 == 33)) {
@@ -104773,7 +104773,7 @@ void calculate_outputm431(int input) {
 		a56 = 7;
 	}
 }
-void calculate_outputm432(int input) {
+void calculate_outputm432(int8_tinput) {
 	if ((((a346 == 1 && (a260 == 7 && (a337 == 4 && a407 == 33))) && a453 == 33) && (a359 == 9 && (cf == 1 && (input == 7))))) {
 		cf = 0;
 		a587 = 34;
@@ -105247,7 +105247,7 @@ void calculate_outputm432(int input) {
 		}
 	}
 }
-void calculate_outputm47(int input) {
+void calculate_outputm47(int8_tinput) {
 	if ((((((cf == 1 && a283 == 5) && a384 == 2) && a228 == 3) && a402 == 33) && (a582 == 33 && (a465 == 33 && a416 == 33)))) {
 		if ((((a294 == 33 && a518 == 33) && a474 == 33) && ((a560 == 33 && (a274 == 3 && (cf == 1 && a99 == 8))) && a474 == 33))) {
 			calculate_outputm426(input);
@@ -105275,7 +105275,7 @@ void calculate_outputm47(int input) {
 		}
 	}
 }
-void calculate_outputm437(int input) {
+void calculate_outputm437(int8_tinput) {
 	if (((a602 == 32 && ((a317 == 6 && (a407 == 32 && a259 == 9)) && a254 == 32)) && (a558 == 32 && ((input == 1) && cf == 1)))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 -= (a104 - 20) < a104 ? 3 : 0;
@@ -106215,7 +106215,7 @@ void calculate_outputm437(int input) {
 		}
 	}
 }
-void calculate_outputm438(int input) {
+void calculate_outputm438(int8_tinput) {
 	if (((a252 == 11 && (a592 == 32 && a213 == 3)) && (((((input == 10) && cf == 1) && a404 == 32) && a262 == 32) && a359 == 10))) {
 		a171 -= (a171 - 20) < a171 ? 2 : 0;
 		cf = 0;
@@ -106354,7 +106354,7 @@ void calculate_outputm438(int input) {
 		a144 = 11;
 	}
 }
-void calculate_outputm439(int input) {
+void calculate_outputm439(int8_tinput) {
 	if ((((a384 == 3 && a206 == 10) && a465 == 32) && ((((cf == 1 && (input == 3)) && a370 == 4) && a242 == 3) && a458 == 32))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a179 -= (a179 - 20) < a179 ? 2 : 0;
@@ -107069,7 +107069,7 @@ void calculate_outputm439(int input) {
 		a18 = 15;
 	}
 }
-void calculate_outputm440(int input) {
+void calculate_outputm440(int8_tinput) {
 	if (((((cf == 1 && (input == 6)) && a477 == 32) && a220 == 32) && (a233 == 7 && (a244 == 8 && (a465 == 32 && a505 == 32))))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 -= (a104 - 20) < a104 ? 3 : 0;
@@ -108214,7 +108214,7 @@ void calculate_outputm440(int input) {
 		a308 = 9;
 	}
 }
-void calculate_outputm442(int input) {
+void calculate_outputm442(int8_tinput) {
 	if (((a365 == 2 && ((a465 == 32 && (a494 == 32 && a463 == 32)) && a398 == 3)) && (((input == 10) && cf == 1) && a528 == 32))) {
 		a29 += (a29 + 20) > a29 ? 2 : 0;
 		cf = 0;
@@ -108261,7 +108261,7 @@ void calculate_outputm442(int input) {
 
 	}
 }
-void calculate_outputm48(int input) {
+void calculate_outputm48(int8_tinput) {
 	if (((a233 == 7 && (a404 == 32 && ((a123 == 6 && cf == 1) && a241 == 7))) && ((a263 == 7 && a493 == 32) && a554 == 32))) {
 		if (((((a558 == 32 && a227 == 32) && a252 == 11) && a407 == 32) && (a375 == 32 && ((cf == 1 && a314 == 9) && a229 == 4)))) {
 			calculate_outputm437(input);
@@ -108284,7 +108284,7 @@ void calculate_outputm48(int input) {
 		}
 	}
 }
-void calculate_outputm443(int input) {
+void calculate_outputm443(int8_tinput) {
 	if ((a434 == 32 && (a445 == 32 && ((a313 == 2 && (((cf == 1 && (input == 2)) && a214 == 3) && a594 == 32)) && a358 == 7)))) {
 		a58 += (a58 + 20) > a58 ? 1 : 0;
 		cf = 0;
@@ -108321,7 +108321,7 @@ void calculate_outputm443(int input) {
 		a23 = 13;
 	}
 }
-void calculate_outputm444(int input) {
+void calculate_outputm444(int8_tinput) {
 	if (((a516 == 32 && (cf == 1 && (input == 6))) && ((a244 == 8 && (a556 == 32 && (a259 == 9 && a223 == 9))) && a453 == 32))) {
 		a29 += (a29 + 20) > a29 ? 1 : 0;
 		cf = 0;
@@ -108341,7 +108341,7 @@ void calculate_outputm444(int input) {
 		a342 = 8;
 	}
 }
-void calculate_outputm445(int input) {
+void calculate_outputm445(int8_tinput) {
 	if (((a336 == 11 && ((a464 == 32 && ((input == 8) && cf == 1)) && a480 == 32)) && ((a419 == 32 && a270 == 5) && a592 == 32))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a104 -= (a104 - 20) < a104 ? 3 : 0;
@@ -109487,7 +109487,7 @@ void calculate_outputm445(int input) {
 		}
 	}
 }
-void calculate_outputm446(int input) {
+void calculate_outputm446(int8_tinput) {
 	if (((a369 == 2 && ((input == 10) && cf == 1)) && (a404 == 32 && (a262 == 32 && ((a318 == 32 && a317 == 6) && a554 == 32))))) {
 		cf = 0;
 		a307 = 32;
@@ -109497,7 +109497,7 @@ void calculate_outputm446(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm447(int input) {
+void calculate_outputm447(int8_tinput) {
 	if (((((a482 == 32 && (a516 == 32 && a493 == 32)) && a375 == 32) && a374 == 8) && ((cf == 1 && (input == 1)) && a586 == 32))) {
 		a171 -= (a171 - 20) < a171 ? 1 : 0;
 		cf = 0;
@@ -109573,7 +109573,7 @@ void calculate_outputm447(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm449(int input) {
+void calculate_outputm449(int8_tinput) {
 	if (((((a376 == 4 && a476 == 32) && a475 == 32) && a419 == 32) && (a214 == 3 && (((input == 2) && cf == 1) && a465 == 32)))) {
 		a58 += (a58 + 20) > a58 ? 3 : 0;
 		cf = 0;
@@ -109816,7 +109816,7 @@ void calculate_outputm449(int input) {
 		a118 = 6;
 	}
 }
-void calculate_outputm450(int input) {
+void calculate_outputm450(int8_tinput) {
 	if (((a203 == 3 && (a477 == 32 && (a227 == 32 && a241 == 7))) && ((a317 == 6 && ((input == 9) && cf == 1)) && a369 == 2))) {
 		cf = 0;
 		a262 = 34;
@@ -110095,7 +110095,7 @@ void calculate_outputm450(int input) {
 		a283 = 10;
 	}
 }
-void calculate_outputm49(int input) {
+void calculate_outputm49(int8_tinput) {
 	if ((((a396 == 7 && a216 == 32) && a407 == 32) && ((a223 == 9 && (a486 == 32 && (cf == 1 && a134 == 33))) && a365 == 2))) {
 		if (((a510 == 32 && ((a445 == 32 && a463 == 32) && a494 == 32)) && ((a400 == 8 && (cf == 1 && a207 == 32)) && a396 == 7))) {
 			calculate_outputm443(input);
@@ -110124,7 +110124,7 @@ void calculate_outputm49(int input) {
 		}
 	}
 }
-void calculate_outputm451(int input) {
+void calculate_outputm451(int8_tinput) {
 	if (((a324 == 6 && (a486 == 32 && (cf == 1 && (input == 10)))) && (a260 == 8 && (a482 == 32 && (a270 == 5 && a416 == 32))))) {
 		a76 += (a76 + 20) > a76 ? 4 : 0;
 		cf = 0;
@@ -110452,7 +110452,7 @@ void calculate_outputm451(int input) {
 		a18 = 9;
 	}
 }
-void calculate_outputm452(int input) {
+void calculate_outputm452(int8_tinput) {
 	if ((a400 == 8 && ((((a201 == 5 && (a554 == 32 && ((input == 2) && cf == 1))) && a382 == 4) && a213 == 3) && a370 == 4))) {
 		a2 -= (a2 - 20) < a2 ? 4 : 0;
 		cf = 0;
@@ -110728,7 +110728,7 @@ void calculate_outputm452(int input) {
 		a18 = 12;
 	}
 }
-void calculate_outputm453(int input) {
+void calculate_outputm453(int8_tinput) {
 	if ((((a396 == 7 && a216 == 32) && a453 == 32) && ((a201 == 5 && (a259 == 9 && (cf == 1 && (input == 8)))) && a348 == 5))) {
 		a2 -= (a2 - 20) < a2 ? 2 : 0;
 		cf = 0;
@@ -110949,7 +110949,7 @@ void calculate_outputm453(int input) {
 		a56 = 9;
 	}
 }
-void calculate_outputm454(int input) {
+void calculate_outputm454(int8_tinput) {
 	if (((((a546 == 32 && (cf == 1 && (input == 8))) && a310 == 2) && a216 == 32) && (a216 == 32 && (a345 == 10 && a463 == 32)))) {
 		a96 += (a96 + 20) > a96 ? 1 : 0;
 		cf = 0;
@@ -111067,7 +111067,7 @@ void calculate_outputm454(int input) {
 		a289 = 4;
 	}
 }
-void calculate_outputm457(int input) {
+void calculate_outputm457(int8_tinput) {
 	if (((a400 == 8 && (cf == 1 && (input == 8))) && (((a201 == 5 && (a518 == 32 && a263 == 7)) && a263 == 7) && a544 == 32))) {
 		a184 -= (a184 - 20) < a184 ? 2 : 0;
 		cf = 0;
@@ -111377,7 +111377,7 @@ void calculate_outputm457(int input) {
 		a305 = 11;
 	}
 }
-void calculate_outputm458(int input) {
+void calculate_outputm458(int8_tinput) {
 	if ((((a227 == 32 && a228 == 4) && a560 == 32) && (a475 == 32 && (a280 == 32 && (a260 == 8 && ((input == 7) && cf == 1)))))) {
 		a171 -= (a171 - 20) < a171 ? 2 : 0;
 		cf = 0;
@@ -111411,7 +111411,7 @@ void calculate_outputm458(int input) {
 		a26 = 11;
 	}
 }
-void calculate_outputm50(int input) {
+void calculate_outputm50(int8_tinput) {
 	if ((((a594 == 32 && (a237 == 32 && cf == 1)) && a434 == 32) && (a554 == 32 && (a364 == 8 && (a334 == 8 && a586 == 32))))) {
 		if (((a206 == 10 && (a244 == 8 && (a297 == 5 && (a398 == 3 && (a167 == 33 && cf == 1))))) && (a214 == 3 && a259 == 9))) {
 			calculate_outputm451(input);
@@ -111437,7 +111437,7 @@ void calculate_outputm50(int input) {
 		}
 	}
 }
-void calculate_outputm459(int input) {
+void calculate_outputm459(int8_tinput) {
 	if ((((((cf == 1 && (input == 7)) && a353 == 3) && a318 == 32) && a594 == 32) && (a404 == 32 && (a402 == 32 && a502 == 32)))) {
 		a184 -= (a184 - 20) < a184 ? 1 : 0;
 		cf = 0;
@@ -111590,7 +111590,7 @@ void calculate_outputm459(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm460(int input) {
+void calculate_outputm460(int8_tinput) {
 	if (((a313 == 2 && ((a602 == 32 && a234 == 11) && a556 == 32)) && (a252 == 11 && (((input == 6) && cf == 1) && a205 == 9)))) {
 		a148 += (a148 + 20) > a148 ? 3 : 0;
 		cf = 0;
@@ -111725,7 +111725,7 @@ void calculate_outputm460(int input) {
 		a151 = 12;
 	}
 }
-void calculate_outputm462(int input) {
+void calculate_outputm462(int8_tinput) {
 	if ((((a359 == 10 && (cf == 1 && (input == 9))) && a228 == 4) && (a236 == 7 && (a297 == 5 && (a446 == 32 && a226 == 3))))) {
 		a2 -= (a2 - 20) < a2 ? 2 : 0;
 		cf = 0;
@@ -111860,7 +111860,7 @@ void calculate_outputm462(int input) {
 		a70 = 6;
 	}
 }
-void calculate_outputm464(int input) {
+void calculate_outputm464(int8_tinput) {
 	if (((a209 == 5 && (a324 == 6 && a205 == 9)) && (((((input == 2) && cf == 1) && a587 == 32) && a407 == 32) && a253 == 7))) {
 		a113 += (a113 + 20) > a113 ? 1 : 0;
 		cf = 0;
@@ -112147,7 +112147,7 @@ void calculate_outputm464(int input) {
 		a118 = 9;
 	}
 }
-void calculate_outputm465(int input) {
+void calculate_outputm465(int8_tinput) {
 	if (((a382 == 4 && (a205 == 9 && (a407 == 32 && a226 == 3))) && ((a252 == 11 && (cf == 1 && (input == 7))) && a270 == 5))) {
 		a65 -= (a65 - 20) < a65 ? 2 : 0;
 		cf = 0;
@@ -112384,7 +112384,7 @@ void calculate_outputm465(int input) {
 		a94 = 5;
 	}
 }
-void calculate_outputm51(int input) {
+void calculate_outputm51(int8_tinput) {
 	if ((a521 == 32 && ((a348 == 5 && ((((a156 == 33 && cf == 1) && a418 == 32) && a233 == 7) && a226 == 3)) && a295 == 10))) {
 		if ((((a229 == 4 && (a246 == 7 && (a39 == 8 && cf == 1))) && a498 == 32) && ((a369 == 2 && a419 == 32) && a602 == 32))) {
 			calculate_outputm459(input);
@@ -112409,7 +112409,7 @@ void calculate_outputm51(int input) {
 		}
 	}
 }
-void calculate_outputm466(int input) {
+void calculate_outputm466(int8_tinput) {
 	if ((((((cf == 1 && (input == 9)) && a477 == 32) && a297 == 5) && a382 == 4) && ((a474 == 32 && a418 == 32) && a215 == 32))) {
 		a179 -= (a179 - 20) < a179 ? 2 : 0;
 		a73 -= (a73 - 20) < a73 ? 3 : 0;
@@ -112682,7 +112682,7 @@ void calculate_outputm466(int input) {
 		a283 = 8;
 	}
 }
-void calculate_outputm467(int input) {
+void calculate_outputm467(int8_tinput) {
 	if ((((a528 == 32 && a295 == 10) && a364 == 8) && (a546 == 32 && (a282 == 8 && (a277 == 8 && ((input == 2) && cf == 1)))))) {
 		a179 += (a179 + 20) > a179 ? 2 : 0;
 		cf = 0;
@@ -112871,7 +112871,7 @@ void calculate_outputm467(int input) {
 		a118 = 9;
 	}
 }
-void calculate_outputm468(int input) {
+void calculate_outputm468(int8_tinput) {
 	if ((((a262 == 32 && a453 == 32) && (((a246 == 7 && (a289 == 3 && (cf == 1 && (input == 4)))) && a253 == 7) && a375 == 32)) && a96 >= 2)) {
 		a184 -= (a184 - 20) < a184 ? 4 : 0;
 		cf = 0;
@@ -113105,7 +113105,7 @@ void calculate_outputm468(int input) {
 		a99 = 1;
 	}
 }
-void calculate_outputm469(int input) {
+void calculate_outputm469(int8_tinput) {
 	if (((a556 == 32 && ((a407 == 32 && (a280 == 32 && a486 == 32)) && a458 == 32)) && (a227 == 32 && ((input == 8) && cf == 1)))) {
 		a58 += (a58 + 20) > a58 ? 3 : 0;
 		cf = 0;
@@ -113221,7 +113221,7 @@ void calculate_outputm469(int input) {
 		a39 = 7;
 	}
 }
-void calculate_outputm470(int input) {
+void calculate_outputm470(int8_tinput) {
 	if ((((a396 == 7 && (cf == 1 && (input == 7))) && ((((a384 == 3 && a214 == 3) && a445 == 32) && a375 == 32) && a463 == 32)) && a88 == 3932)) {
 		a85 += (a85 + 20) > a85 ? 2 : 0;
 		cf = 0;
@@ -113540,7 +113540,7 @@ void calculate_outputm470(int input) {
 		a264 = 13;
 	}
 }
-void calculate_outputm52(int input) {
+void calculate_outputm52(int8_tinput) {
 	if ((((a366 == 32 && (a227 == 32 && (a416 == 32 && a373 == 4))) && a359 == 10) && (a418 == 32 && (cf == 1 && a107 == 33)))) {
 		if (((a379 == 32 && (a336 == 11 && (cf == 1 && a43 == 36))) && (a585 == 32 && (a346 == 2 && (a366 == 32 && a510 == 32))))) {
 			calculate_outputm466(input);
@@ -113565,7 +113565,7 @@ void calculate_outputm52(int input) {
 		}
 	}
 }
-void calculate_outputm472(int input) {
+void calculate_outputm472(int8_tinput) {
 	if (((a465 == 32 && (a345 == 10 && (a369 == 2 && ((a520 == 32 && a482 == 32) && a475 == 32)))) && ((input == 1) && cf == 1))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a78 += (a78 + 20) > a78 ? 2 : 0;
@@ -114531,14 +114531,14 @@ void calculate_outputm472(int input) {
 		a26 = 10;
 	}
 }
-void calculate_outputm53(int input) {
+void calculate_outputm53(int8_tinput) {
 	if ((((a323 == 11 && (a275 == 34 && cf == 1)) && a209 == 5) && ((a297 == 5 && (a295 == 10 && a476 == 32)) && a364 == 8))) {
 		if (((a233 == 7 && (a518 == 32 && (cf == 1 && a3 == 36))) && (((a229 == 4 && a247 == 11) && a560 == 32) && a263 == 7))) {
 			calculate_outputm472(input);
 		}
 	}
 }
-void calculate_outputm473(int input) {
+void calculate_outputm473(int8_tinput) {
 	if ((((a223 == 9 && (((input == 2) && cf == 1) && a399 == 4)) && a366 == 32) && (a407 == 32 && (a323 == 11 && a400 == 8)))) {
 		a132 += (a132 + 20) > a132 ? 1 : 0;
 		a78 -= (a78 - 20) < a78 ? 3 : 0;
@@ -115724,14 +115724,14 @@ void calculate_outputm473(int input) {
 		a372 = 9;
 	}
 }
-void calculate_outputm474(int input) {
+void calculate_outputm474(int8_tinput) {
 	if ((((a400 == 8 && a364 == 8) && a384 == 3) && (a434 == 32 && ((a556 == 32 && (cf == 1 && (input == 7))) && a326 == 32)))) {
 		a184 -= (a184 - 20) < a184 ? 1 : 0;
 		cf = 0;
 
 	}
 }
-void calculate_outputm475(int input) {
+void calculate_outputm475(int8_tinput) {
 	if (((((((input == 8) && cf == 1) && a356 == 9) && a246 == 7) && a364 == 8) && ((a602 == 32 && a209 == 5) && a270 == 5))) {
 		a29 += (a29 + 20) > a29 ? 4 : 0;
 		cf = 0;
@@ -115897,7 +115897,7 @@ void calculate_outputm475(int input) {
 		a393 = 11;
 	}
 }
-void calculate_outputm476(int input) {
+void calculate_outputm476(int8_tinput) {
 	if (((((a507 == 32 && a404 == 32) && a226 == 3) && a400 == 8) && (a353 == 3 && (a399 == 4 && (cf == 1 && (input == 10)))))) {
 		cf = 0;
 		if ((a345 == 10 && a252 == 11)) {
@@ -115976,7 +115976,7 @@ void calculate_outputm476(int input) {
 		}
 	}
 }
-void calculate_outputm479(int input) {
+void calculate_outputm479(int8_tinput) {
 	if (((a578 == 32 && (a262 == 32 && a446 == 32)) && (((((input == 7) && cf == 1) && a474 == 32) && a382 == 4) && a592 == 32))) {
 		a171 -= (a171 - 20) < a171 ? 1 : 0;
 		cf = 0;
@@ -116207,7 +116207,7 @@ void calculate_outputm479(int input) {
 		}
 	}
 }
-void calculate_outputm54(int input) {
+void calculate_outputm54(int8_tinput) {
 	if ((((a477 == 32 && a384 == 3) && a281 == 2) && (a280 == 32 && (((a116 == 33 && cf == 1) && a554 == 32) && a453 == 32)))) {
 		if ((((cf == 1 && a343 == 32) && a336 == 11) && (a206 == 10 && ((a520 == 32 && (a326 == 32 && a373 == 4)) && a498 == 32)))) {
 			calculate_outputm473(input);
@@ -116232,7 +116232,7 @@ void calculate_outputm54(int input) {
 		}
 	}
 }
-void calculate_outputm480(int input) {
+void calculate_outputm480(int8_tinput) {
 	if (((a458 == 32 && ((a295 == 10 && ((input == 9) && cf == 1)) && a480 == 32)) && ((a374 == 8 && a263 == 7) && a253 == 7))) {
 		a96 -= (a96 - 20) < a96 ? 1 : 0;
 		cf = 0;
@@ -116579,7 +116579,7 @@ void calculate_outputm480(int input) {
 		a4 = 6;
 	}
 }
-void calculate_outputm482(int input) {
+void calculate_outputm482(int8_tinput) {
 	if (((((a482 == 32 && (cf == 1 && (input == 5))) && a318 == 32) && a453 == 32) && (a214 == 3 && (a330 == 7 && a336 == 11)))) {
 		a179 -= (a179 - 20) < a179 ? 2 : 0;
 		cf = 0;
@@ -117136,7 +117136,7 @@ void calculate_outputm482(int input) {
 		a16 = 13;
 	}
 }
-void calculate_outputm483(int input) {
+void calculate_outputm483(int8_tinput) {
 	if ((((a375 == 32 && ((cf == 1 && (input == 2)) && a280 == 32)) && a416 == 32) && (a246 == 7 && (a434 == 32 && a502 == 32)))) {
 		a179 += (a179 + 20) > a179 ? 4 : 0;
 		cf = 0;
@@ -117284,7 +117284,7 @@ void calculate_outputm483(int input) {
 		a355 = 11;
 	}
 }
-void calculate_outputm484(int input) {
+void calculate_outputm484(int8_tinput) {
 	if (((a602 == 32 && (cf == 1 && (input == 7))) && (a375 == 32 && (((a477 == 32 && a520 == 32) && a213 == 3) && a326 == 32)))) {
 		a2 -= (a2 - 20) < a2 ? 3 : 0;
 		cf = 0;
@@ -117521,7 +117521,7 @@ void calculate_outputm484(int input) {
 		a49 = 7;
 	}
 }
-void calculate_outputm55(int input) {
+void calculate_outputm55(int8_tinput) {
 	if (((a560 == 32 && (a215 == 32 && (((cf == 1 && a128 == 33) && a280 == 32) && a582 == 32))) && (a435 == 32 && a375 == 32))) {
 		if ((((((a375 == 32 && (a80 == 36 && cf == 1)) && a382 == 4) && a546 == 32) && a356 == 9) && (a281 == 2 && a445 == 32))) {
 			calculate_outputm480(input);
@@ -117542,7 +117542,7 @@ void calculate_outputm55(int input) {
 	}
 }
 
-void calculate_output(int input) {
+void calculate_output(int8_tinput) {
 	cf = 1;
 
 	if ((a482 == 33 && ((a359 == 9 && (a318 == 33 && (a244 == 7 && ((cf == 1 && a18 == 9) && a502 == 33)))) && a375 == 33))) {

@@ -44,31 +44,47 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * and Jan Stejcek. This complementation is only sound for a special class of
  * automata whose working title is TABA (termination analysis Büchi automata).
  * 
- * @author heizmann@informatik.uni-freiburg.de
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
-	
+public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	
-	public BuchiComplementNCSB(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> input) throws AutomataOperationCanceledException {
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
+	public BuchiComplementNCSB(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
-		this.mOperand = input;
-		mLogger.info(startMessage());
+		this.mOperand = operand;
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
 		final BuchiComplementNCSBNwa<LETTER, STATE> complemented =
-				new BuchiComplementNCSBNwa<LETTER, STATE>(mServices, input, stateFactory);
-		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(
-				mServices, complemented);
-		mLogger.info(exitMessage());
+				new BuchiComplementNCSBNwa<>(mServices, operand, stateFactory);
+		mResult = new NestedWordAutomatonReachableStates<>(mServices, complemented);
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 	
 	@Override
 	public String operationName() {
-		return "buchiComplementBS";
+		return "BuchiComplementBS";
 	}
 	
 	@Override
@@ -78,17 +94,19 @@ public class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<LETTER
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Start testing correctness of " + operationName());
+		}
+		
 		final boolean underApproximationOfComplement = false;
-		mLogger.info("Start testing correctness of " + operationName());
-		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
-		final BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, mOperand);
+		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<>();
+		final BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<>(mServices, mOperand);
 		final boolean operandEmpty = operandEmptiness.getResult();
 		if (!operandEmpty) {
 			lassoWords.add(operandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		final BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
+		final BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<>(mServices, mResult);
 		final boolean resultEmpty = resultEmptiness.getResult();
 		if (!resultEmpty) {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
@@ -138,21 +156,22 @@ public class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<LETTER
 				thistime = checkAcceptance(nlw, mOperand, underApproximationOfComplement);
 			}
 			correct &= thistime;
-//			assert correct;
+			assert correct;
 		}
 		
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
-					operationName() + "Failed", "language is different",
-					mOperand, mResult);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+					"language is different", mOperand, mResult);
 		}
-		mLogger.info("Finished testing correctness of " + operationName());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of " + operationName());
+		}
 		return correct;
 	}
 	
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand,
-			final boolean underApproximationOfComplement) throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand, final boolean underApproximationOfComplement)
+			throws AutomataLibraryException {
 		final boolean op = (new BuchiAccepts<LETTER, STATE>(mServices, operand, nlw)).getResult();
 		final boolean res = (new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
 		boolean correct;
@@ -161,7 +180,6 @@ public class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<LETTER
 		} else {
 			correct = op ^ res;
 		}
-//		assert correct : operationName() + " wrong result!";
 		return correct;
 	}
 	
@@ -174,5 +192,4 @@ public class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<LETTER
 	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult() {
 		return mResult;
 	}
-	
 }

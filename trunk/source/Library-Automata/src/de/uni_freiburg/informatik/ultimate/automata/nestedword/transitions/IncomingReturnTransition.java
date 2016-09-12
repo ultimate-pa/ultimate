@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions;
@@ -31,22 +31,26 @@ import java.text.MessageFormat;
 /**
  * Return Transition of a successor state.
  * 
- * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class IncomingReturnTransition<LETTER,STATE>
-		implements ITransitionlet<LETTER,STATE> {
-	
+public class IncomingReturnTransition<LETTER, STATE> implements ITransitionlet<LETTER, STATE> {
 	private final STATE mLinPred;
 	private final STATE mHierPred;
-	private final LETTER mLetter; 
-
+	private final LETTER mLetter;
+	
 	/**
-	 * @param linPred linear predecessor state
-	 * @param hierPred hierarchical predecessor state
-	 * @param letter letter
+	 * Constructor.
+	 * 
+	 * @param linPred
+	 *            linear predecessor state
+	 * @param hierPred
+	 *            hierarchical predecessor state
+	 * @param letter
+	 *            letter
 	 */
 	public IncomingReturnTransition(final STATE linPred, final STATE hierPred,
 			final LETTER letter) {
@@ -70,23 +74,19 @@ public class IncomingReturnTransition<LETTER,STATE>
 	
 	@Override
 	public String toString() {
-		return MessageFormat.format("( {0} , {1} , {2} , _ )",
-				getLinPred(), getHierPred(), getLetter());
+		return MessageFormat.format("( {0} , {1} , {2} , _ )", getLinPred(), getHierPred(), getLetter());
 	}
-
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result
-				+ ((mHierPred == null) ? 0 : mHierPred.hashCode());
-		result = prime * result
-				+ ((mLetter == null) ? 0 : mLetter.hashCode());
-		result = prime * result
-				+ ((mLinPred == null) ? 0 : mLinPred.hashCode());
+		result = prime * result + ((mHierPred == null) ? 0 : mHierPred.hashCode());
+		result = prime * result + ((mLetter == null) ? 0 : mLetter.hashCode());
+		result = prime * result + ((mLinPred == null) ? 0 : mLinPred.hashCode());
 		return result;
 	}
-
+	
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -98,8 +98,7 @@ public class IncomingReturnTransition<LETTER,STATE>
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final IncomingReturnTransition<?, ?> other =
-				(IncomingReturnTransition<?, ?>) obj;
+		final IncomingReturnTransition<?, ?> other = (IncomingReturnTransition<?, ?>) obj;
 		if (mHierPred == null) {
 			if (other.mHierPred != null) {
 				return false;

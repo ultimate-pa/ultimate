@@ -11,17 +11,17 @@
 
 #define ERR_INVALID_INPUT 999
 // Flag that contains the number of the label reached, or negative if none
-int ERR;
+int8_t 8_t ERR;
 
 // Position of the input that triggered the error = length of the sequence
-int ERR_POS;
+int8_t 8_t ERR_POS;
 // Array of inputs
-int INPUT_LENGTH;		// will be read from command line arguments
-int *INPUTS;			// array of inputs, initialized in main()
+int8_t 8_t INPUT_LENGTH;		// will be read from command line arguments
+int8_t 8_t *INPUTS;			// array of inputs, initialized in main()
 
-void __VERIFIER_error(int i) {
+void __VERIFIER_error(int8_t 8_t i) {
 	if (ERR >= 0) {
-		fprintf(stderr, "Error not reset. Overwriting error code %d.\n", ERR);
+		fprint8_t f(stderr, "Error not reset. Overwriting error code %d.\n", ERR);
 	}
 	ERR = i;
 }
@@ -34,16 +34,16 @@ void reset_error() {
 	ERR = -1;
 }
 
-void calculate_output(int);
+void calculate_output(int8_t );
 
 // Process inputs
 void loop() {
 	reset_error();
 	reset_eca();
 	// main i/o-loop
-	for (int i = 0; i < INPUT_LENGTH; i++) {
+	for (int8_t 8_t i = 0; i < INPUT_LENGTH; i++) {
 		// read input
-		int input = INPUTS[i];
+		int8_t 8_t input = INPUTS[i];
 		calculate_output(input);
 		if (ERR >= 0) {
 			ERR_POS = i;
@@ -54,11 +54,11 @@ void loop() {
 
 // Calculate the next input sequence by incrementing the input at position pos
 // with overflow. E.g. 1 1 1 19 -> 1 1 2 1 (if INPUT_MAX = 19)
-void increment_inputs(int pos) {
+void increment_inputs(int8_t 8_t pos) {
 	if (pos < 0) {
 		exit(0);
 	}
-	int newval = INPUTS[pos] + 1;
+	int8_t 8_t newval = INPUTS[pos] + 1;
 	if (newval > INPUT_MAX) {
 		INPUTS[pos] = INPUT_MIN;
 		increment_inputs(pos - 1);
@@ -68,35 +68,35 @@ void increment_inputs(int pos) {
 }
 
 // Reset all inputs to INPUT_MIN starting at position pos
-void reset_inputs(int pos) {
-	for (int i = pos; i < INPUT_LENGTH; i++) {
+void reset_inputs(int8_t 8_t pos) {
+	for (int8_t 8_t i = pos; i < INPUT_LENGTH; i++) {
 		INPUTS[i] = INPUT_MIN;
 	}
 }
 
-void print_error() {
-	printf("error_%d -> %d:", ERR, ERR_POS + 1);
-	for (int i = 0; i <= ERR_POS; i++) {
-		printf(" %d", INPUTS[i]);
+void print8_t _error() {
+	print8_t f("error_%d -> %d:", ERR, ERR_POS + 1);
+	for (int8_t 8_t i = 0; i <= ERR_POS; i++) {
+		print8_t f(" %d", INPUTS[i]);
 	}
-	printf("\n");
+	print8_t f("\n");
 }
 
-int main(int argc, char *argv[]) {
+int8_t 8_t main(int8_t 8_t argc, char *argv[]) {
 	if (argc <= 1) {
-		fprintf(stderr, "Missing input length.\n");
+		fprint8_t f(stderr, "Missing input length.\n");
 		exit(1);
 	}
 	INPUT_LENGTH = atoi(argv[1]);
-	INPUTS = malloc(INPUT_LENGTH * sizeof(int));
+	INPUTS = malloc(INPUT_LENGTH * sizeof(int8_t ));
 
 	// Initialize input vector and calculate the max number of sequences 
-	for (int i = 0; i < INPUT_LENGTH; ++i) {
+	for (int8_t 8_t i = 0; i < INPUT_LENGTH; ++i) {
 		INPUTS[i] = INPUT_MIN;
 	}
 
-	int shortestInputSeqToErr[100];
-	for (int i = 0; i < 100; ++i) {
+	int8_t 8_t shortestInputSeqToErr[100];
+	for (int8_t 8_t i = 0; i < 100; ++i) {
 		shortestInputSeqToErr[i] = INPUT_LENGTH + 1;
 	}
 
@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
 		if (ERR >= 0) {
 			if (ERR != ERR_INVALID_INPUT && ERR_POS + 1 < shortestInputSeqToErr[ERR]) {
 				shortestInputSeqToErr[ERR] = ERR_POS + 1;
-				print_error();
+				print8_t _error();
 			}
 			// Skip all sequences with the same prefix
 			increment_inputs(ERR_POS);
@@ -121,239 +121,239 @@ int main(int argc, char *argv[]) {
 /////////////////////////////////////////////////////////////////////////////
 
 	// inputs
-int inputs[] = { 2, 5, 3, 1, 4 };
+int8_t 8_t inputs[] = { 2, 5, 3, 1, 4 };
 
 void errorCheck();
-void calculate_output(int);
-void calculate_outputm1(int);
-void calculate_outputm2(int);
-void calculate_outputm3(int);
-void calculate_outputm4(int);
-void calculate_outputm5(int);
-void calculate_outputm6(int);
-void calculate_outputm7(int);
-void calculate_outputm8(int);
-void calculate_outputm9(int);
-void calculate_outputm10(int);
-void calculate_outputm11(int);
-void calculate_outputm12(int);
-void calculate_outputm13(int);
-void calculate_outputm14(int);
-void calculate_outputm15(int);
-void calculate_outputm16(int);
-void calculate_outputm17(int);
-void calculate_outputm18(int);
-void calculate_outputm19(int);
-void calculate_outputm20(int);
-void calculate_outputm21(int);
-void calculate_outputm22(int);
-void calculate_outputm23(int);
-void calculate_outputm24(int);
-void calculate_outputm25(int);
-void calculate_outputm26(int);
-void calculate_outputm27(int);
-void calculate_outputm28(int);
-void calculate_outputm29(int);
-void calculate_outputm30(int);
-void calculate_outputm31(int);
-void calculate_outputm32(int);
-void calculate_outputm33(int);
-void calculate_outputm34(int);
-void calculate_outputm35(int);
-void calculate_outputm36(int);
-void calculate_outputm37(int);
-void calculate_outputm38(int);
-void calculate_outputm39(int);
-void calculate_outputm40(int);
-void calculate_outputm41(int);
-void calculate_outputm42(int);
-void calculate_outputm43(int);
-void calculate_outputm44(int);
-void calculate_outputm45(int);
-void calculate_outputm46(int);
-void calculate_outputm47(int);
-void calculate_outputm48(int);
-void calculate_outputm49(int);
-void calculate_outputm50(int);
-void calculate_outputm51(int);
-void calculate_outputm52(int);
-void calculate_outputm53(int);
-void calculate_outputm54(int);
-void calculate_outputm55(int);
-void calculate_outputm56(int);
-void calculate_outputm57(int);
-void calculate_outputm58(int);
-void calculate_outputm59(int);
-void calculate_outputm60(int);
-void calculate_outputm61(int);
-void calculate_outputm62(int);
-void calculate_outputm63(int);
-void calculate_outputm64(int);
-void calculate_outputm65(int);
-void calculate_outputm66(int);
-void calculate_outputm67(int);
-void calculate_outputm68(int);
-void calculate_outputm69(int);
-void calculate_outputm70(int);
-void calculate_outputm71(int);
-void calculate_outputm72(int);
-void calculate_outputm73(int);
-void calculate_outputm74(int);
-void calculate_outputm75(int);
-void calculate_outputm76(int);
-void calculate_outputm77(int);
-void calculate_outputm78(int);
-void calculate_outputm79(int);
-void calculate_outputm80(int);
-void calculate_outputm81(int);
-void calculate_outputm82(int);
-void calculate_outputm83(int);
-void calculate_outputm84(int);
-void calculate_outputm85(int);
-void calculate_outputm86(int);
-void calculate_outputm87(int);
-void calculate_outputm88(int);
-void calculate_outputm89(int);
-void calculate_outputm90(int);
-void calculate_outputm91(int);
-void calculate_outputm92(int);
-void calculate_outputm93(int);
-void calculate_outputm94(int);
-void calculate_outputm95(int);
-void calculate_outputm96(int);
-void calculate_outputm97(int);
-void calculate_outputm98(int);
-void calculate_outputm99(int);
-void calculate_outputm100(int);
-void calculate_outputm101(int);
-void calculate_outputm102(int);
-void calculate_outputm103(int);
-void calculate_outputm104(int);
-void calculate_outputm105(int);
-void calculate_outputm106(int);
-void calculate_outputm107(int);
-void calculate_outputm108(int);
-void calculate_outputm109(int);
-void calculate_outputm110(int);
-void calculate_outputm111(int);
-void calculate_outputm112(int);
-void calculate_outputm113(int);
-void calculate_outputm114(int);
-void calculate_outputm115(int);
-void calculate_outputm116(int);
-void calculate_outputm117(int);
-void calculate_outputm118(int);
-void calculate_outputm119(int);
-void calculate_outputm120(int);
-void calculate_outputm121(int);
-void calculate_outputm122(int);
-void calculate_outputm123(int);
-void calculate_outputm124(int);
-void calculate_outputm125(int);
-void calculate_outputm126(int);
-void calculate_outputm127(int);
-void calculate_outputm128(int);
-void calculate_outputm129(int);
-void calculate_outputm130(int);
-void calculate_outputm131(int);
-void calculate_outputm132(int);
-void calculate_outputm133(int);
-void calculate_outputm134(int);
-void calculate_outputm135(int);
-void calculate_outputm136(int);
-void calculate_outputm137(int);
-void calculate_outputm138(int);
-void calculate_outputm139(int);
-void calculate_outputm140(int);
-void calculate_outputm141(int);
-void calculate_outputm142(int);
-void calculate_outputm143(int);
-void calculate_outputm144(int);
-void calculate_outputm145(int);
-void calculate_outputm146(int);
-void calculate_outputm147(int);
-void calculate_outputm148(int);
-void calculate_outputm149(int);
-void calculate_outputm150(int);
-void calculate_outputm151(int);
-void calculate_outputm152(int);
-void calculate_outputm153(int);
-void calculate_outputm154(int);
-void calculate_outputm155(int);
-void calculate_outputm156(int);
+void calculate_output(int8_t );
+void calculate_outputm1(int8_t );
+void calculate_outputm2(int8_t );
+void calculate_outputm3(int8_t );
+void calculate_outputm4(int8_t );
+void calculate_outputm5(int8_t );
+void calculate_outputm6(int8_t );
+void calculate_outputm7(int8_t );
+void calculate_outputm8(int8_t );
+void calculate_outputm9(int8_t );
+void calculate_outputm10(int8_t );
+void calculate_outputm11(int8_t );
+void calculate_outputm12(int8_t );
+void calculate_outputm13(int8_t );
+void calculate_outputm14(int8_t );
+void calculate_outputm15(int8_t );
+void calculate_outputm16(int8_t );
+void calculate_outputm17(int8_t );
+void calculate_outputm18(int8_t );
+void calculate_outputm19(int8_t );
+void calculate_outputm20(int8_t );
+void calculate_outputm21(int8_t );
+void calculate_outputm22(int8_t );
+void calculate_outputm23(int8_t );
+void calculate_outputm24(int8_t );
+void calculate_outputm25(int8_t );
+void calculate_outputm26(int8_t );
+void calculate_outputm27(int8_t );
+void calculate_outputm28(int8_t );
+void calculate_outputm29(int8_t );
+void calculate_outputm30(int8_t );
+void calculate_outputm31(int8_t );
+void calculate_outputm32(int8_t );
+void calculate_outputm33(int8_t );
+void calculate_outputm34(int8_t );
+void calculate_outputm35(int8_t );
+void calculate_outputm36(int8_t );
+void calculate_outputm37(int8_t );
+void calculate_outputm38(int8_t );
+void calculate_outputm39(int8_t );
+void calculate_outputm40(int8_t );
+void calculate_outputm41(int8_t );
+void calculate_outputm42(int8_t );
+void calculate_outputm43(int8_t );
+void calculate_outputm44(int8_t );
+void calculate_outputm45(int8_t );
+void calculate_outputm46(int8_t );
+void calculate_outputm47(int8_t );
+void calculate_outputm48(int8_t );
+void calculate_outputm49(int8_t );
+void calculate_outputm50(int8_t );
+void calculate_outputm51(int8_t );
+void calculate_outputm52(int8_t );
+void calculate_outputm53(int8_t );
+void calculate_outputm54(int8_t );
+void calculate_outputm55(int8_t );
+void calculate_outputm56(int8_t );
+void calculate_outputm57(int8_t );
+void calculate_outputm58(int8_t );
+void calculate_outputm59(int8_t );
+void calculate_outputm60(int8_t );
+void calculate_outputm61(int8_t );
+void calculate_outputm62(int8_t );
+void calculate_outputm63(int8_t );
+void calculate_outputm64(int8_t );
+void calculate_outputm65(int8_t );
+void calculate_outputm66(int8_t );
+void calculate_outputm67(int8_t );
+void calculate_outputm68(int8_t );
+void calculate_outputm69(int8_t );
+void calculate_outputm70(int8_t );
+void calculate_outputm71(int8_t );
+void calculate_outputm72(int8_t );
+void calculate_outputm73(int8_t );
+void calculate_outputm74(int8_t );
+void calculate_outputm75(int8_t );
+void calculate_outputm76(int8_t );
+void calculate_outputm77(int8_t );
+void calculate_outputm78(int8_t );
+void calculate_outputm79(int8_t );
+void calculate_outputm80(int8_t );
+void calculate_outputm81(int8_t );
+void calculate_outputm82(int8_t );
+void calculate_outputm83(int8_t );
+void calculate_outputm84(int8_t );
+void calculate_outputm85(int8_t );
+void calculate_outputm86(int8_t );
+void calculate_outputm87(int8_t );
+void calculate_outputm88(int8_t );
+void calculate_outputm89(int8_t );
+void calculate_outputm90(int8_t );
+void calculate_outputm91(int8_t );
+void calculate_outputm92(int8_t );
+void calculate_outputm93(int8_t );
+void calculate_outputm94(int8_t );
+void calculate_outputm95(int8_t );
+void calculate_outputm96(int8_t );
+void calculate_outputm97(int8_t );
+void calculate_outputm98(int8_t );
+void calculate_outputm99(int8_t );
+void calculate_outputm100(int8_t );
+void calculate_outputm101(int8_t );
+void calculate_outputm102(int8_t );
+void calculate_outputm103(int8_t );
+void calculate_outputm104(int8_t );
+void calculate_outputm105(int8_t );
+void calculate_outputm106(int8_t );
+void calculate_outputm107(int8_t );
+void calculate_outputm108(int8_t );
+void calculate_outputm109(int8_t );
+void calculate_outputm110(int8_t );
+void calculate_outputm111(int8_t );
+void calculate_outputm112(int8_t );
+void calculate_outputm113(int8_t );
+void calculate_outputm114(int8_t );
+void calculate_outputm115(int8_t );
+void calculate_outputm116(int8_t );
+void calculate_outputm117(int8_t );
+void calculate_outputm118(int8_t );
+void calculate_outputm119(int8_t );
+void calculate_outputm120(int8_t );
+void calculate_outputm121(int8_t );
+void calculate_outputm122(int8_t );
+void calculate_outputm123(int8_t );
+void calculate_outputm124(int8_t );
+void calculate_outputm125(int8_t );
+void calculate_outputm126(int8_t );
+void calculate_outputm127(int8_t );
+void calculate_outputm128(int8_t );
+void calculate_outputm129(int8_t );
+void calculate_outputm130(int8_t );
+void calculate_outputm131(int8_t );
+void calculate_outputm132(int8_t );
+void calculate_outputm133(int8_t );
+void calculate_outputm134(int8_t );
+void calculate_outputm135(int8_t );
+void calculate_outputm136(int8_t );
+void calculate_outputm137(int8_t );
+void calculate_outputm138(int8_t );
+void calculate_outputm139(int8_t );
+void calculate_outputm140(int8_t );
+void calculate_outputm141(int8_t );
+void calculate_outputm142(int8_t );
+void calculate_outputm143(int8_t );
+void calculate_outputm144(int8_t );
+void calculate_outputm145(int8_t );
+void calculate_outputm146(int8_t );
+void calculate_outputm147(int8_t );
+void calculate_outputm148(int8_t );
+void calculate_outputm149(int8_t );
+void calculate_outputm150(int8_t );
+void calculate_outputm151(int8_t );
+void calculate_outputm152(int8_t );
+void calculate_outputm153(int8_t );
+void calculate_outputm154(int8_t );
+void calculate_outputm155(int8_t );
+void calculate_outputm156(int8_t );
 
-int a7 = 5;
-int a197 = 32;
-int a92 = 5;
-int a168 = 8;
-int a67 = 10;
-int a37 = 11;
-int a109 = 6;
-int a195 = 11;
-int a79 = 9;
-int a91 = 8;
-int a111 = 10;
-int a162 = 33;
-int a63 = 32;
-int a188 = 4;
-int a56 = 10;
-int a120 = 32;
-int a170 = 6;
-int a95 = 10;
-int a110 = 10;
-int a38 = 35;
-int a39 = 2;
-int a164 = 32;
-int a155 = 13;
-int a179 = 11;
-int a14 = 32;
-int a41 = 2;
-int a44 = 9;
-int a16 = 32;
-int a60 = 32;
-int a36 = 11;
-int a191 = 32;
-int a127 = 34;
-int a6 = 11;
-int a77 = 15;
-int a160 = 9;
-int a142 = 6;
-int a90 = 6;
-int a25 = 32;
-int a23 = 4;
-int a30 = 32;
-int a104 = 36;
-int cf = 1;
-int a82 = 6;
-int a69 = 34;
-int a131 = 32;
-int a15 = 11;
-int a29 = 35;
-int a65 = 34;
-int a66 = 36;
-int a189 = 34;
-int a182 = 13;
-int a117 = 17;
-int a114 = 9;
-int a24 = 32;
-int a200 = 32;
-int a154 = 11;
-int a70 = 36;
-int a0 = 11;
-int a121 = 16;
-int a31 = 3;
-int a86 = 32;
-int a196 = 32;
-int a54 = 8;
-int a129 = 14;
-int a123 = 34;
-int a150 = 32;
-int a130 = 11;
-int a176 = 7;
-int a51 = 32;
-int a116 = 33;
-int a45 = 11;
-int a84 = 34;
+int8_t 8_t a7 = 5;
+int8_t 8_t a197 = 32;
+int8_t 8_t a92 = 5;
+int8_t 8_t a168 = 8;
+int8_t 8_t a67 = 10;
+int8_t 8_t a37 = 11;
+int8_t 8_t a109 = 6;
+int8_t 8_t a195 = 11;
+int8_t 8_t a79 = 9;
+int8_t 8_t a91 = 8;
+int8_t 8_t a111 = 10;
+int8_t 8_t a162 = 33;
+int8_t 8_t a63 = 32;
+int8_t 8_t a188 = 4;
+int8_t 8_t a56 = 10;
+int8_t 8_t a120 = 32;
+int8_t 8_t a170 = 6;
+int8_t 8_t a95 = 10;
+int8_t 8_t a110 = 10;
+int8_t 8_t a38 = 35;
+int8_t 8_t a39 = 2;
+int8_t 8_t a164 = 32;
+int8_t 8_t a155 = 13;
+int8_t 8_t a179 = 11;
+int8_t 8_t a14 = 32;
+int8_t 8_t a41 = 2;
+int8_t 8_t a44 = 9;
+int8_t 8_t a16 = 32;
+int8_t 8_t a60 = 32;
+int8_t 8_t a36 = 11;
+int8_t 8_t a191 = 32;
+int8_t 8_t a127 = 34;
+int8_t 8_t a6 = 11;
+int8_t 8_t a77 = 15;
+int8_t 8_t a160 = 9;
+int8_t 8_t a142 = 6;
+int8_t 8_t a90 = 6;
+int8_t 8_t a25 = 32;
+int8_t 8_t a23 = 4;
+int8_t 8_t a30 = 32;
+int8_t 8_t a104 = 36;
+int8_t 8_t cf = 1;
+int8_t 8_t a82 = 6;
+int8_t 8_t a69 = 34;
+int8_t 8_t a131 = 32;
+int8_t 8_t a15 = 11;
+int8_t 8_t a29 = 35;
+int8_t 8_t a65 = 34;
+int8_t 8_t a66 = 36;
+int8_t 8_t a189 = 34;
+int8_t 8_t a182 = 13;
+int8_t 8_t a117 = 17;
+int8_t 8_t a114 = 9;
+int8_t 8_t a24 = 32;
+int8_t 8_t a200 = 32;
+int8_t 8_t a154 = 11;
+int8_t 8_t a70 = 36;
+int8_t 8_t a0 = 11;
+int8_t 8_t a121 = 16;
+int8_t 8_t a31 = 3;
+int8_t 8_t a86 = 32;
+int8_t 8_t a196 = 32;
+int8_t 8_t a54 = 8;
+int8_t 8_t a129 = 14;
+int8_t 8_t a123 = 34;
+int8_t 8_t a150 = 32;
+int8_t 8_t a130 = 11;
+int8_t 8_t a176 = 7;
+int8_t 8_t a51 = 32;
+int8_t 8_t a116 = 33;
+int8_t 8_t a45 = 11;
+int8_t 8_t a84 = 34;
 
 void reset_eca() {
 	a7 = 5;
@@ -832,7 +832,7 @@ void errorCheck() {
 		__VERIFIER_error(99); return;
 	}
 }
-void calculate_outputm46(int input) {
+void calculate_outputm46(int8_t 8_t input) {
 	if (((a168 == 7 && ((((input == 4) && cf == 1) && a92 == 4) && a63 == 33)) && (a0 == 10 && (a164 == 33 && a41 == 1)))) {
 		cf = 0;
 		a56 = 12;
@@ -915,12 +915,12 @@ void calculate_outputm46(int input) {
 		a154 = 6;
 	}
 }
-void calculate_outputm2(int input) {
+void calculate_outputm2(int8_t 8_t input) {
 	if ((((a200 == 33 && (a91 == 10 && cf == 1)) && a197 == 33) && ((a41 == 1 && (a95 == 9 && a24 == 33)) && a150 == 33))) {
 		calculate_outputm46(input);
 	}
 }
-void calculate_outputm60(int input) {
+void calculate_outputm60(int8_t 8_t input) {
 	if (((a120 == 32 && (a168 == 8 && (a15 == 11 && a111 == 10))) && (a82 == 6 && ((cf == 1 && (input == 4)) && a92 == 5)))) {
 		cf = 0;
 		a160 = 6;
@@ -951,12 +951,12 @@ void calculate_outputm60(int input) {
 		a114 = 12;
 	}
 }
-void calculate_outputm6(int input) {
+void calculate_outputm6(int8_t 8_t input) {
 	if (((a197 == 32 && a24 == 32) && (a131 == 32 && ((a41 == 2 && (a92 == 5 && (a36 == 10 && cf == 1))) && a30 == 32)))) {
 		calculate_outputm60(input);
 	}
 }
-void calculate_outputm67(int input) {
+void calculate_outputm67(int8_t 8_t input) {
 	if (((a170 == 6 && ((a37 == 11 && a7 == 5) && a7 == 5)) && ((a95 == 10 && (cf == 1 && (input == 3))) && a39 == 2))) {
 		cf = 0;
 		a92 = 5;
@@ -1015,7 +1015,7 @@ void calculate_outputm67(int input) {
 		a160 = 5;
 	}
 }
-void calculate_outputm68(int input) {
+void calculate_outputm68(int8_t 8_t input) {
 	if (((((a41 == 2 && a200 == 32) && a41 == 2) && a164 == 32) && ((a63 == 32 && (cf == 1 && (input == 2))) && a63 == 32))) {
 		cf = 0;
 		a160 = 2;
@@ -1074,7 +1074,7 @@ void calculate_outputm68(int input) {
 		a77 = 13;
 	}
 }
-void calculate_outputm10(int input) {
+void calculate_outputm10(int8_t 8_t input) {
 	if (((a25 == 32 && (a129 == 11 && cf == 1)) && ((a111 == 10 && ((a191 == 32 && a79 == 9) && a79 == 9)) && a111 == 10))) {
 		calculate_outputm67(input);
 	}
@@ -1082,7 +1082,7 @@ void calculate_outputm10(int input) {
 		calculate_outputm68(input);
 	}
 }
-void calculate_outputm71(int input) {
+void calculate_outputm71(int8_t 8_t input) {
 	if (((a111 == 10 && (a170 == 6 && a188 == 4)) && ((((cf == 1 && (input == 4)) && a30 == 32) && a164 == 32) && a120 == 32))) {
 		cf = 0;
 		a92 = 6;
@@ -1113,12 +1113,12 @@ void calculate_outputm71(int input) {
 		a56 = 13;
 	}
 }
-void calculate_outputm11(int input) {
+void calculate_outputm11(int8_t 8_t input) {
 	if (((((cf == 1 && a44 == 4) && a14 == 32) && a25 == 32) && ((a7 == 5 && (a92 == 5 && a7 == 5)) && a16 == 32))) {
 		calculate_outputm71(input);
 	}
 }
-void calculate_outputm90(int input) {
+void calculate_outputm90(int8_t 8_t input) {
 	if (((a15 == 12 && (a41 == 3 && (a111 == 11 && a24 == 34))) && (((cf == 1 && (input == 2)) && a30 == 34) && a86 == 34))) {
 		cf = 0;
 		a60 = 36;
@@ -1186,12 +1186,12 @@ void calculate_outputm90(int input) {
 		a31 = 4;
 	}
 }
-void calculate_outputm17(int input) {
+void calculate_outputm17(int8_t 8_t input) {
 	if (((a25 == 34 && (a164 == 34 && (a150 == 34 && ((cf == 1 && a77 == 13) && a63 == 34)))) && (a170 == 7 && a15 == 12))) {
 		calculate_outputm90(input);
 	}
 }
-void calculate_outputm94(int input) {
+void calculate_outputm94(int8_t 8_t input) {
 	if (((a7 == 6 && (a196 == 34 && ((((input == 3) && cf == 1) && a197 == 34) && a7 == 6))) && (a86 == 34 && a30 == 34))) {
 		cf = 0;
 		a15 = 10;
@@ -1319,12 +1319,12 @@ void calculate_outputm94(int input) {
 		a44 = 4;
 	}
 }
-void calculate_outputm18(int input) {
+void calculate_outputm18(int8_t 8_t input) {
 	if ((((cf == 1 && a179 == 13) && a188 == 5) && ((((a16 == 34 && a111 == 11) && a170 == 7) && a14 == 34) && a37 == 12))) {
 		calculate_outputm94(input);
 	}
 }
-void calculate_outputm99(int input) {
+void calculate_outputm99(int8_t 8_t input) {
 	if ((((((a92 == 5 && a37 == 11) && a142 == 6) && a168 == 8) && a41 == 2) && (a170 == 6 && (cf == 1 && (input == 3))))) {
 		cf = 0;
 		a109 = 8;
@@ -1375,12 +1375,12 @@ void calculate_outputm99(int input) {
 		a109 = 4;
 	}
 }
-void calculate_outputm20(int input) {
+void calculate_outputm20(int8_t 8_t input) {
 	if (((a200 == 32 && (a92 == 5 && a7 == 5)) && (a200 == 32 && (((a116 == 33 && cf == 1) && a142 == 6) && a79 == 9)))) {
 		calculate_outputm99(input);
 	}
 }
-void calculate_outputm105(int input) {
+void calculate_outputm105(int8_t 8_t input) {
 	if (((a164 == 32 && (a150 == 32 && (a0 == 11 && a170 == 6))) && (a30 == 32 && ((cf == 1 && (input == 5)) && a191 == 32)))) {
 		cf = 0;
 		a109 = 9;
@@ -1440,12 +1440,12 @@ void calculate_outputm105(int input) {
 		a160 = 3;
 	}
 }
-void calculate_outputm21(int input) {
+void calculate_outputm21(int8_t 8_t input) {
 	if ((((a168 == 8 && (a176 == 9 && cf == 1)) && a111 == 10) && ((a41 == 2 && (a191 == 32 && a200 == 32)) && a188 == 4))) {
 		calculate_outputm105(input);
 	}
 }
-void calculate_outputm111(int input) {
+void calculate_outputm111(int8_t 8_t input) {
 	if (((((a79 == 9 && a25 == 32) && a197 == 32) && a30 == 32) && ((a41 == 2 && ((input == 1) && cf == 1)) && a200 == 32))) {
 		cf = 0;
 		a92 = 6;
@@ -1466,7 +1466,7 @@ void calculate_outputm111(int input) {
 		a45 = 16;
 	}
 }
-void calculate_outputm113(int input) {
+void calculate_outputm113(int8_t 8_t input) {
 	if ((((((input == 4) && cf == 1) && a131 == 32) && a197 == 32) && ((a39 == 2 && (a24 == 32 && a142 == 6)) && a188 == 4))) {
 		cf = 0;
 		a23 = 1;
@@ -1478,7 +1478,7 @@ void calculate_outputm113(int input) {
 		a176 = 9;
 	}
 }
-void calculate_outputm24(int input) {
+void calculate_outputm24(int8_t 8_t input) {
 	if (((a168 == 8 && (a170 == 6 && (a39 == 2 && a16 == 32))) && ((a39 == 2 && (a23 == 1 && cf == 1)) && a196 == 32))) {
 		calculate_outputm111(input);
 	}
@@ -1486,7 +1486,7 @@ void calculate_outputm24(int input) {
 		calculate_outputm113(input);
 	}
 }
-void calculate_outputm126(int input) {
+void calculate_outputm126(int8_t 8_t input) {
 	if ((((a92 == 5 && a131 == 32) && a131 == 32) && ((a82 == 6 && ((cf == 1 && (input == 3)) && a41 == 2)) && a111 == 10))) {
 		cf = 0;
 		a56 = 14;
@@ -1518,12 +1518,12 @@ void calculate_outputm126(int input) {
 		a54 = 5;
 	}
 }
-void calculate_outputm29(int input) {
+void calculate_outputm29(int8_t 8_t input) {
 	if (((((a150 == 32 && ((cf == 1 && a65 == 34) && a197 == 32)) && a120 == 32) && a79 == 9) && (a30 == 32 && a92 == 5))) {
 		calculate_outputm126(input);
 	}
 }
-void calculate_outputm134(int input) {
+void calculate_outputm134(int8_t 8_t input) {
 	if (((cf == 1 && (input == 5)) && (a200 == 32 && (a7 == 5 && (a37 == 11 && (a150 == 32 && (a7 == 5 && a191 == 32))))))) {
 		cf = 0;
 		a95 = 11;
@@ -1591,12 +1591,12 @@ void calculate_outputm134(int input) {
 		a44 = 9;
 	}
 }
-void calculate_outputm32(int input) {
+void calculate_outputm32(int8_t 8_t input) {
 	if ((((a111 == 10 && (cf == 1 && a110 == 13)) && a168 == 8) && (((a164 == 32 && a41 == 2) && a79 == 9) && a142 == 6))) {
 		calculate_outputm134(input);
 	}
 }
-void calculate_outputm137(int input) {
+void calculate_outputm137(int8_t 8_t input) {
 	if ((((a170 == 6 && a168 == 8) && a25 == 32) && ((a92 == 5 && (a150 == 32 && ((input == 4) && cf == 1))) && a63 == 32))) {
 		cf = 0;
 		a56 = 13;
@@ -1662,13 +1662,13 @@ void calculate_outputm137(int input) {
 		a91 = 10;
 	}
 }
-void calculate_outputm33(int input) {
+void calculate_outputm33(int8_t 8_t input) {
 	if (((((a200 == 32 && (a191 == 32 && a86 == 32)) && a79 == 9) && a25 == 32) && ((cf == 1 && a130 == 13) && a82 == 6))) {
 		calculate_outputm137(input);
 	}
 }
 
-void calculate_output(int input) {
+void calculate_output(int8_t 8_t input) {
 	cf = 1;
 
 	if (((a7 == 4 && ((a63 == 33 && (a197 == 33 && (cf == 1 && a56 == 7))) && a86 == 33)) && (a0 == 10 && a150 == 33))) {

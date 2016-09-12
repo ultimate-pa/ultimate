@@ -121,7 +121,7 @@ public class LineCoverageCalculator {
 		final Set<CodeBlock> edges = getCodeblocks(automaton);
 
 		for (final CodeBlock edge : edges) {
-			if ("ULTIMATE.start".equals(edge.getPreceedingProcedure())) {
+			if ("ULTIMATE.start".equals(edge.getPrecedingProcedure())) {
 				continue;
 			}
 			final List<Statement> statements = getStatements(edge);

@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -110,7 +111,7 @@ public class AbstractInterpretationRunner {
 	 * </ul>
 	 */
 	public void generateFixpoints(final IRun<CodeBlock, IPredicate> currentCex,
-	        final INestedWordAutomaton<CodeBlock, IPredicate> currentAbstraction) {
+	        final INestedWordAutomatonSimple<CodeBlock, IPredicate> currentAbstraction) {
 		assert currentCex != null : "Cannot run AI on empty counterexample";
 		assert currentAbstraction != null : "Cannot run AI on empty abstraction";
 		if (mMode == AbstractInterpretationMode.NONE) {
@@ -142,10 +143,10 @@ public class AbstractInterpretationRunner {
 			mLogger.info("Running AI on error trace of length " + currentCex.getLength()
 			        + " with the following transitions: ");
 			mLogger.info(String.join(", ", pathProgramSet.stream().map(a -> a.hashCode()).sorted()
-			        .map(a -> "[" + String.valueOf(a) + "]").collect(Collectors.toList())));
+			        .map(a -> '[' + String.valueOf(a) + ']').collect(Collectors.toList())));
 			if (mLogger.isDebugEnabled()) {
 				for (final CodeBlock trans : pathProgramSet) {
-					mLogger.debug("[" + trans.hashCode() + "] " + trans);
+					mLogger.debug('[' + trans.hashCode() + "] " + trans);
 				}
 			}
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result = AbstractInterpreter
@@ -283,7 +284,7 @@ public class AbstractInterpretationRunner {
 	}
 
 	private boolean hasAiProgress(final boolean result,
-	        final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
+	        final INestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
 	        final IRun<CodeBlock, IPredicate> cex) {
 		if (result) {
 			return result;

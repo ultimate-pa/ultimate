@@ -242,7 +242,7 @@ public class RewriteArrays2 extends LassoPreprocessor {
 				mSimplificationTechnique, mXnfConversionTechnique);
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(stem.getResult(), loop.getResult());
 		assert !ADDITIONAL_CHECKS_IF_ASSERTIONS_ENABLED || checkStemImplication(mServices, mLogger, lasso, newLasso,
-				mBoogie2Smt) : "result of RewriteArrays too strong";
+				mBoogie2Smt, mScript) : "result of RewriteArrays too strong";
 		return Collections.singleton(newLasso);
 	}
 
@@ -268,10 +268,11 @@ public class RewriteArrays2 extends LassoPreprocessor {
 		return result;
 	}
 
-	private boolean checkStemImplication(final IUltimateServiceProvider services, final ILogger logger,
-			final LassoUnderConstruction oldLasso, final LassoUnderConstruction newLasso, final Boogie2SmtSymbolTable boogie2smt) {
-		final LBool implies = TransFormulaLRUtils.implies(mServices, mLogger, oldLasso.getStem(), newLasso.getStem(),
-				mScript.getScript(), boogie2smt);
+	public static boolean checkStemImplication(final IUltimateServiceProvider services, final ILogger logger,
+			final LassoUnderConstruction oldLasso, final LassoUnderConstruction newLasso, 
+			final Boogie2SmtSymbolTable boogie2smt, final ManagedScript script) {
+		final LBool implies = TransFormulaLRUtils.implies(services, logger, oldLasso.getStem(), newLasso.getStem(),
+				script.getScript(), boogie2smt);
 		if (implies != LBool.SAT && implies != LBool.UNSAT) {
 			logger.warn("result of RewriteArrays check is " + implies);
 		}

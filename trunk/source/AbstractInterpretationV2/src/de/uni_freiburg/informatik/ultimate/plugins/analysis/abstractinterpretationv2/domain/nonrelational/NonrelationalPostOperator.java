@@ -252,7 +252,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 		String paramPrefix = "param_";
 		final Set<String> varNames =
-				state.getVariables().stream().map(a -> a.getIdentifier()).collect(Collectors.toSet());
+				state.getVariables().stream().map(a -> a.getGloballyUniqueId()).collect(Collectors.toSet());
 		boolean uniqueFound = false;
 
 		while (!uniqueFound) {

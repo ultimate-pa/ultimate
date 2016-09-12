@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
@@ -96,7 +97,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 	 * @param xnfConversionTechnique
 	 */
 	public AbsIntTotalInterpolationAutomatonBuilder(final IUltimateServiceProvider services,
-	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
+	        final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
 	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 	        final PredicateUnifier predicateUnifier, final SmtManager smtManager,
 	        final IRun<CodeBlock, IPredicate> currentCounterExample) {
@@ -106,12 +107,11 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 		mCurrentCounterExample = currentCounterExample;
 		mVariableCollector = new VariableCollector();
 		mStatementExtractor = new RcfgStatementExtractor();
-
 		mResult = constructAutomaton(oldAbstraction, aiResult, predicateUnifier);
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> constructAutomaton(
-	        final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
+	        final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
 	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 	        final PredicateUnifier predicateUnifier) {
 
@@ -150,7 +150,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 				target = falsePredicate;
 
 				if (mLogger.isDebugEnabled()) {
-					writeTransitionAddLog(i, symbol, nextStates, target);
+					writeTransitionAddLog(i, symbol, nextStates, previous, target);
 				}
 			} else {
 				target = predicateUnifier.getOrConstructPredicateForDisjunction(
@@ -159,14 +159,14 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 
 				// Add mapping from predicate -> Set<STATE> to be able to determine all STATES the predicate is
 				// originating from.
-				if (predicateToStates.get(target) == null) {
+				if (!predicateToStates.containsKey(target)) {
 					predicateToStates.put(target, nextStates.stream().collect(Collectors.toSet()));
 				} else {
 					predicateToStates.get(target).addAll(nextStates.stream().collect(Collectors.toSet()));
 				}
 
 				if (mLogger.isDebugEnabled()) {
-					writeTransitionAddLog(i, symbol, nextStates, target);
+					writeTransitionAddLog(i, symbol, nextStates, previous, target);
 				}
 			}
 
@@ -222,10 +222,12 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 	 * @param result
 	 * @param predicateToStates
 	 */
-	private void enhanceResult(final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
+	private void enhanceResult(final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
 	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 	        final NestedWordAutomaton<CodeBlock, IPredicate> result,
 	        final Map<IPredicate, Set<IAbstractState<?, CodeBlock, IBoogieVar>>> predicateToStates) {
+
+		mLogger.info("Enhancing interpolant automaton by introducing valid transitions between predicates.");
 
 		// Used for debugging reasons to determine impact of enhancement.
 		int numberOfTransitionsBeforeEnhancement = -1;
@@ -248,8 +250,8 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 			}
 
 			// Collect all occurring variables in the current letter.
-			final Set<String> variableNames = mVariableCollector.collectVariableNames(currentLetter,
-			        mStatementExtractor);
+			final Set<IBoogieVar> variableNames = mVariableCollector.collectVariableNames(currentLetter,
+			        mStatementExtractor, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 
 			// Iterate over all predicates to find matching candidates for a transition.
 			for (final IPredicate currentPredeicate : allPredicates) {
@@ -295,6 +297,10 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 					}
 
 					// Add transition
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("Adding new transition: PRE={" + currentPredeicate + "} -> " + currentLetter
+						        + " POST={" + otherPredicate + "}");
+					}
 					result.addInternalTransition(currentPredeicate, currentLetter, otherPredicate);
 				}
 			}
@@ -313,13 +319,15 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 	}
 
 	private void writeTransitionAddLog(final int i, final CodeBlock symbol,
-	        final Set<IAbstractState<?, CodeBlock, IBoogieVar>> nextStates, final IPredicate target) {
+	        final Set<IAbstractState<?, CodeBlock, IBoogieVar>> nextStates, final IPredicate source,
+	        final IPredicate target) {
 		final String divider = "------------------------------------------------";
 		if (i == 0) {
 			mLogger.debug(divider);
 		}
 		mLogger.debug("Transition: " + symbol);
 		mLogger.debug("Original Target States: " + (nextStates == null ? "NONE" : nextStates));
+		mLogger.debug("Source Term: " + source);
 		mLogger.debug("Target Term: " + target);
 		mLogger.debug(divider);
 	}
@@ -347,7 +355,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 		return subs != SubsetResult.NONE;
 	}
 
-	private static boolean areCompatible(final IAbstractState state, final Set<String> variableNames) {
+	private static boolean areCompatible(final IAbstractState state, final Set<IBoogieVar> variableNames) {
 		assert state != null;
 		assert variableNames != null;
 
@@ -358,10 +366,9 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 			return false;
 		}
 
-		final Set<String> varsInState = (Set<String>) state.getVariables().stream()
-		        .map(var -> ((IBoogieVar) var).getIdentifier()).collect(Collectors.toSet());
+		final Set<IBoogieVar> varsInState = state.getVariables();
 
-		for (final String var : variableNames) {
+		for (final IBoogieVar var : variableNames) {
 			if (!varsInState.contains(var)) {
 				return false;
 			}
@@ -376,25 +383,29 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 	 */
 	private static final class VariableCollector extends BoogieVisitor {
 
-		private Set<String> mVariableNames;
+		private Set<IBoogieVar> mVariables;
+		private Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
 
-		private Set<String> collectVariableNames(final CodeBlock codeBlock,
-		        final RcfgStatementExtractor statementExtractor) {
-			mVariableNames = new HashSet<>();
+		private Set<IBoogieVar> collectVariableNames(final CodeBlock codeBlock,
+		        final RcfgStatementExtractor statementExtractor, final Boogie2SmtSymbolTable boogie2SmtSymbolTable) {
+			mVariables = new HashSet<>();
+			mBoogie2SmtSymbolTable = boogie2SmtSymbolTable;
 			for (final Statement statement : statementExtractor.process(codeBlock)) {
 				processStatement(statement);
 			}
-			return mVariableNames;
+			return mVariables;
 		}
 
 		@Override
 		protected void visit(final IdentifierExpression expr) {
-			mVariableNames.add(expr.getIdentifier());
+			mVariables.add(
+			        mBoogie2SmtSymbolTable.getBoogieVar(expr.getIdentifier(), expr.getDeclarationInformation(), false));
 		}
 
 		@Override
 		protected void visit(final VariableLHS lhs) {
-			mVariableNames.add(lhs.getIdentifier());
+			mVariables.add(
+			        mBoogie2SmtSymbolTable.getBoogieVar(lhs.getIdentifier(), lhs.getDeclarationInformation(), false));
 		}
 
 	}

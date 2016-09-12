@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
@@ -72,7 +72,7 @@ public class ArrayHandler {
 	private final PointerCheckMode mCheckArrayAccessOffHeap;
 
 	public ArrayHandler(final IPreferenceProvider prefs) {
-		mCheckArrayAccessOffHeap = 
+		mCheckArrayAccessOffHeap =
 				prefs.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_ARRAYACCESSOFFHEAP, PointerCheckMode.class);
 	}
 
@@ -82,9 +82,9 @@ public class ArrayHandler {
 	 * instead, we return the address of the object a[i] as a {@link HeapLValue}
 	 * or a {@link LocalLValue}.
 	 */
-	public ExpressionResult handleArraySubscriptExpression(Dispatcher main,
-			MemoryHandler memoryHandler, StructHandler structHandler,
-			IASTArraySubscriptExpression node) {		
+	public ExpressionResult handleArraySubscriptExpression(final Dispatcher main,
+			final MemoryHandler memoryHandler, final StructHandler structHandler,
+			final IASTArraySubscriptExpression node) {
 		final ILocation loc = LocationFactory.createCLocation(node);
 		
 		ExpressionResult subscript = (ExpressionResult) main.dispatch(node.getArgument());
@@ -102,8 +102,8 @@ public class ArrayHandler {
 			assert cTypeLeft.equals(leftExpRes.lrVal.getCType());
 			final Expression oldAddress = leftExpRes.lrVal.getValue();
 			final RValue integer = (RValue) subscript.lrVal;
-			final CType valueType = ((CPointer) cTypeLeft).pointsToType;;
-			final ExpressionResult newAddress_ER = ((CHandler) main.mCHandler).doPointerArithmeticWithConversion(main, 
+			final CType valueType = ((CPointer) cTypeLeft).pointsToType;
+			final ExpressionResult newAddress_ER = ((CHandler) main.mCHandler).doPointerArithmeticWithConversion(main,
 					IASTBinaryExpression.op_plus, loc, oldAddress, integer, valueType);
 			final Expression newAddress = newAddress_ER.lrVal.getValue();
 			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
@@ -133,10 +133,10 @@ public class ArrayHandler {
 				// we use pointer arithmetic to compute the result.
 				// E.g., a[23] becomes addressOf(a) + 23 * sizeof(valueType)
 				// Note that the computation is not trivial if the array is
-				// multidimensional. Let's assume we have an array whose 
+				// multidimensional. Let's assume we have an array whose
 				// declaration is a[3][5][7] and we are processing the innermost
 				// of a nested subscript expression a[2].
-				// Then the resulting address will be 
+				// Then the resulting address will be
 				//     addressOf(a) + 2 * 5 * 7 * sizeof(valueType)
 				// We achieve this by doing pointer arithmetic where we use
 				// the "remaining" array as pointsToType, i.e., we compute
@@ -156,7 +156,7 @@ public class ArrayHandler {
 				// current index.
 				final LeftHandSide oldInnerArrayLHS = ((LocalLValue) leftExpRes.lrVal).getLHS();
 				final RValue currentDimension = cArray.getDimensions()[0];
-				// The following is not in the standard, since there everything 
+				// The following is not in the standard, since there everything
 				// is defined via pointers. However, we have to make the subscript
 				// compatible to the type of the dimension of the array
 				final AExpressionTranslation et = ((CHandler) main.mCHandler).getExpressionTranslation();
@@ -168,11 +168,11 @@ public class ArrayHandler {
 					final Expression[] newIndices = new Expression[oldIndices.length + 1];
 					System.arraycopy(oldIndices, 0, newIndices, 0, oldIndices.length);
 					newIndices[newIndices.length-1] = index.getValue();
-					newInnerArrayLHS = new ArrayLHS(loc, 
+					newInnerArrayLHS = new ArrayLHS(loc,
 							((ArrayLHS) oldInnerArrayLHS).getArray(), newIndices);
 				} else {
 					assert isInnermostSubscriptExpression(node) : "not innermost";
-					newInnerArrayLHS = new ArrayLHS(loc, oldInnerArrayLHS, new Expression[] { index.getValue() });	
+					newInnerArrayLHS = new ArrayLHS(loc, oldInnerArrayLHS, new Expression[] { index.getValue() });
 				}
 				final LocalLValue lValue = new LocalLValue(newInnerArrayLHS, resultCType, false, false);
 				result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
@@ -189,7 +189,7 @@ public class ArrayHandler {
 	/**
 	 * Add to exprResult a check that the index is within the bounds of an array.
 	 * Depending on the preferences of this plugin we
-	 * <ul> 
+	 * <ul>
 	 *  <li> assert that the index is in the range of the bounds,
 	 *  <li> assume that the index is in the range of the bounds, or
 	 *  <li> add nothing.
@@ -203,9 +203,9 @@ public class ArrayHandler {
 	 * @param currentDimension {@link Expression} that represents the dimension
 	 * 		that corresponds to the index
 	 */
-	private void addArrayBoundsCheckForCurrentIndex(Dispatcher main, 
-			ILocation loc, RValue currentIndex,
-			RValue currentDimension, ExpressionResult exprResult) {
+	private void addArrayBoundsCheckForCurrentIndex(final Dispatcher main,
+			final ILocation loc, final RValue currentIndex,
+			final RValue currentDimension, final ExpressionResult exprResult) {
 		if (mCheckArrayAccessOffHeap  == PointerCheckMode.IGNORE) {
 			// do not check anything
 			return;
@@ -213,7 +213,7 @@ public class ArrayHandler {
 		final CHandler cHandler = (CHandler) main.mCHandler;
 		final Expression inRange;
 		// 2015-09-21 Matthias:
-		// This check will fail in the bitvector translation if the typesize 
+		// This check will fail in the bitvector translation if the typesize
 		// of the index is different than the typesize of the dimension.
 		// as a workaround we assume int for both.
 		// 2015-10-24 Matthias:
@@ -224,10 +224,10 @@ public class ArrayHandler {
 			final Expression zero = cHandler.getExpressionTranslation().constructLiteralForIntegerType(
 					loc, indexType, BigInteger.ZERO);
 			final Expression nonNegative = cHandler.getExpressionTranslation().constructBinaryComparisonExpression(
-					loc, IASTBinaryExpression.op_lessEqual, zero, indexType, 
+					loc, IASTBinaryExpression.op_lessEqual, zero, indexType,
 					currentIndex.getValue(), indexType);
 			final Expression notTooBig = cHandler.getExpressionTranslation().constructBinaryComparisonExpression(
-					loc, IASTBinaryExpression.op_lessThan, currentIndex.getValue(), indexType, 
+					loc, IASTBinaryExpression.op_lessThan, currentIndex.getValue(), indexType,
 					currentDimension.getValue(), (CPrimitive) currentDimension.getCType());
 			inRange = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, nonNegative, notTooBig);
 		}
@@ -250,11 +250,11 @@ public class ArrayHandler {
 		
 	}
 
-	private boolean isInnermostSubscriptExpression(IASTArraySubscriptExpression node) {
+	private boolean isInnermostSubscriptExpression(final IASTArraySubscriptExpression node) {
 		return !(node.getArrayExpression() instanceof IASTArraySubscriptExpression);
 	}
 	
-	private boolean isOutermostSubscriptExpression(IASTArraySubscriptExpression node) {
+	private boolean isOutermostSubscriptExpression(final IASTArraySubscriptExpression node) {
 		return !(node.getParent() instanceof IASTArraySubscriptExpression);
 	}
 	

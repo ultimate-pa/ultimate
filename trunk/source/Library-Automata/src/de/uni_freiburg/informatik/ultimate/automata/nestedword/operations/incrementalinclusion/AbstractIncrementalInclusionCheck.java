@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.incrementalinclusion;
@@ -38,58 +38,63 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * TODO: Documentation
+ * TODO: Documentation.
  * 
- * @author Matthias Heizmann
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public abstract class AbstractIncrementalInclusionCheck<LETTER,STATE> {
-	
+public abstract class AbstractIncrementalInclusionCheck<LETTER, STATE> {
 	protected final AutomataLibraryServices mServices;
 	protected final ILogger mLogger;
 	
-	private final INestedWordAutomatonSimple<LETTER, STATE> mA;
-	private final List<INestedWordAutomatonSimple<LETTER, STATE>> mB = new ArrayList<>();
+	private final INestedWordAutomatonSimple<LETTER, STATE> mNwaA;
+	private final List<INestedWordAutomatonSimple<LETTER, STATE>> mNwaB = new ArrayList<>();
 	
 	/**
-	 * @param services Ultimate services
-	 * @param a minuend
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param nwaA
+	 *            minuend
 	 */
 	public AbstractIncrementalInclusionCheck(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> a) {
-		super();
+			final INestedWordAutomatonSimple<LETTER, STATE> nwaA) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		if (a == null) {
+		if (nwaA == null) {
 			throw new IllegalArgumentException("automaton A must not be null");
 		} else {
-			mA = a;
+			mNwaA = nwaA;
 		}
 	}
-
+	
 	/**
-	 * Return an accepting run of automaton A such that the word of the run is
-	 * not accepted by any of the automata B_0,..,B_n.
-	 * Return null if no such run exists, i.e., the language inclusion 
-	 * A ⊆ B_0 ∪ ... ∪ B_n holds. 
-	 * @throws AutomataOperationCanceledException if timeout exceeds
+	 * @return An accepting run of automaton A such that the word of the run is
+	 *         not accepted by any of the automata B_0,..,B_n.
+	 *         Return null if no such run exists, i.e., the language inclusion
+	 *         A ⊆ B_0 ∪ ... ∪ B_n holds.
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
-	public abstract NestedRun<LETTER,STATE> getCounterexample()
-			throws AutomataOperationCanceledException;
+	public abstract NestedRun<LETTER, STATE> getCounterexample() throws AutomataOperationCanceledException;
 	
 	/**
 	 * Add automaton B_{n+1} to our set of subtrahends B_0,...,B_n.
-	 * @param nwa subtrahend
-	 * @throws AutomataLibraryException if construction fails
+	 * 
+	 * @param nwa
+	 *            subtrahend
+	 * @throws AutomataLibraryException
+	 *             if construction fails
 	 */
-	public void addSubtrahend(final INestedWordAutomatonSimple<LETTER, STATE> nwa)
-			throws AutomataLibraryException {
-		mB.add(nwa);
+	public void addSubtrahend(final INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
+		mNwaB.add(nwa);
 	}
-
+	
 	public INestedWordAutomatonSimple<LETTER, STATE> getA() {
-		return mA;
+		return mNwaA;
 	}
 }

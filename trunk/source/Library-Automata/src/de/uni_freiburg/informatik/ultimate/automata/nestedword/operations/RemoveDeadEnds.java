@@ -34,10 +34,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.TransitionConsistencyCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ReachableStatesCopy;
@@ -87,7 +86,7 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		try {
 			mReach = new NestedWordAutomatonReachableStates<>(mServices, mOperand);
 			mReach.computeDeadEnds();
-			mResult = new NestedWordAutomatonFilteredStates<>(mServices, mReach, mReach.getWithOutDeadEnds());
+			mResult = new DoubleDeckerAutomatonFilteredStates<>(mServices, mReach, mReach.getWithOutDeadEnds());
 		} catch (final AutomataOperationCanceledException oce) {
 			throw new AutomataOperationCanceledException(getClass());
 		}
@@ -128,14 +127,8 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 //		correct = correct && (ResultChecker.nwaLanguageInclusion(mInput, mResult) == null);
 //		correct = correct && (ResultChecker.nwaLanguageInclusion(mResult, mInput) == null);
 		assert correct;
-		INestedWordAutomaton<LETTER, STATE> input;
-		if (mOperand instanceof INestedWordAutomaton) {
-			input = (INestedWordAutomaton<LETTER, STATE>) mOperand;
-		} else {
-			input = (new RemoveUnreachable<LETTER, STATE>(mServices, mOperand)).getResult();
-		}
 		final ReachableStatesCopy<LETTER, STATE> rsc =
-				new ReachableStatesCopy<>(mServices, input, false, false, false, false);
+				new ReachableStatesCopy<>(mServices, mOperand, false, false, false, false);
 //		Set<UpDownEntry<STATE>> rsaEntries = new HashSet<UpDownEntry<STATE>>();
 //		for (UpDownEntry<STATE> rde : mReach.getRemovedUpDownEntry()) {
 //			rsaEntries.add(rde);
@@ -149,20 +142,20 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 //		correct = correct && ResultChecker.isSubset(rscEntries,rsaEntries);
 //		assert correct;
 		rsc.removeDeadEnds();
-		final DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy =
+		final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy =
 				(DoubleDeckerAutomaton<LETTER, STATE>) rsc.getResult();
 		correct &= mResult.getStates().isEmpty()
-				|| ResultChecker.isSubset(reachalbeStatesCopy.getStates(), mResult.getStates());
+				|| ResultChecker.isSubset(reachableStatesCopy.getStates(), mResult.getStates());
 		assert correct;
-		correct = correct && ResultChecker.isSubset(mResult.getStates(), reachalbeStatesCopy.getStates());
+		correct = correct && ResultChecker.isSubset(mResult.getStates(), reachableStatesCopy.getStates());
 		assert correct;
 		final Collection<STATE> rsaStates = mResult.getStates();
-		final Collection<STATE> rscStates = reachalbeStatesCopy.getStates();
+		final Collection<STATE> rscStates = reachableStatesCopy.getStates();
 		correct = correct && ResultChecker.isSubset(rsaStates, rscStates);
 		assert correct;
 		correct = correct && ResultChecker.isSubset(rscStates, rsaStates);
 		assert correct;
-		correct = correct && checkEachState(reachalbeStatesCopy);
+		correct = correct && checkEachState(reachableStatesCopy);
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
 					"language is different", mOperand);
@@ -173,41 +166,41 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		return correct;
 	}
 	
-	private boolean checkEachState(final DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy) {
+	private boolean checkEachState(final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy) {
 		boolean correct = true;
-		for (final STATE state : reachalbeStatesCopy.getStates()) {
-			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : reachalbeStatesCopy
+		for (final STATE state : reachableStatesCopy.getStates()) {
+			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : reachableStatesCopy
 					.internalSuccessors(state)) {
 				correct = correct && mReach.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
-			for (final OutgoingCallTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.callSuccessors(state)) {
+			for (final OutgoingCallTransition<LETTER, STATE> outTrans : reachableStatesCopy.callSuccessors(state)) {
 				// TODO: fix or remove
 				correct = correct && mReach.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				// ignore call transitions
 				assert correct;
 			}
-			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.returnSuccessors(state)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : reachableStatesCopy.returnSuccessors(state)) {
 				correct = correct && mReach.containsReturnTransition(state, outTrans.getHierPred(),
 						outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mResult.internalSuccessors(state)) {
 				correct &=
-						reachalbeStatesCopy.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
+						reachableStatesCopy.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingCallTransition<LETTER, STATE> outTrans : mResult.callSuccessors(state)) {
-				correct = correct && reachalbeStatesCopy.containsCallTransition(state,
+				correct = correct && reachableStatesCopy.containsCallTransition(state,
 						outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : mResult.returnSuccessors(state)) {
-				correct = correct && reachalbeStatesCopy.containsReturnTransition(state,
+				correct = correct && reachableStatesCopy.containsReturnTransition(state,
 						outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
-			final Set<STATE> rCSdownStates = reachalbeStatesCopy.getDownStates(state);
+			final Set<STATE> rCSdownStates = reachableStatesCopy.getDownStates(state);
 			final Set<STATE> rCAdownStates = mReach.getWithOutDeadEnds().getDownStates(state);
 			correct = correct && ResultChecker.isSubset(rCAdownStates, rCSdownStates);
 			assert correct;

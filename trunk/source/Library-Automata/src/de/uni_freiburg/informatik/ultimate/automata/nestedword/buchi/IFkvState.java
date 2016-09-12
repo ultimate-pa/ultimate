@@ -46,7 +46,8 @@ public interface IFkvState<LETTER, STATE> {
 	Set<StateWithRankInfo<STATE>> getDownStates();
 	
 	/**
-	 * @param downState A down state.
+	 * @param downState
+	 *            A down state.
 	 * @return The corresponding up states.
 	 */
 	Iterable<StateWithRankInfo<STATE>> getUpStates(StateWithRankInfo<STATE> downState);

@@ -37,8 +37,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.log4j.PropertyConfigurator;
-
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.CounterTrace.DCPhase;
 import pea.modelchecking.MCTrace;
@@ -102,7 +100,7 @@ public class Trace2PEACompiler {
 	 * @see ILogger
 	 * @see PropertyConfigurator
 	 */
-	public Trace2PEACompiler(String loggerName) {
+	public Trace2PEACompiler(final String loggerName) {
 		//logger = ILogger.getLogger(loggerName);
 
 		allPhases = new TreeMap<PhaseBits, Phase>();
@@ -123,7 +121,7 @@ public class Trace2PEACompiler {
 	 * @param phases
 	 *            the array of DCPhases in the countertrace
 	 */
-	public HashMap<Transition, PhaseSet> getTrans2Phases(DCPhase phases[]) {
+	public HashMap<Transition, PhaseSet> getTrans2Phases(final DCPhase phases[]) {
 		final HashMap<Transition, PhaseSet> pea2ph = new HashMap<Transition, PhaseSet>();
 		for (final Transition t : trans2phases.keySet()) {
 			final PhaseBits pb = trans2phases.get(t);
@@ -143,7 +141,7 @@ public class Trace2PEACompiler {
 	 * @see pea.PhaseEventAutomata
 	 * @see pea.CounterTrace
 	 */
-	public PhaseEventAutomata compile(String name, CounterTrace ct) {
+	public PhaseEventAutomata compile(final String name, final CounterTrace ct) {
 		resetAll();
 		this.name = name;
 		countertrace = ct;
@@ -163,7 +161,7 @@ public class Trace2PEACompiler {
 	 * @see pea.PhaseEventAutomata
 	 * @see pea.modelchecking.MCTrace
 	 */
-	public PEATestAutomaton compile(String name, MCTrace mcTrace) {
+	public PEATestAutomaton compile(final String name, final MCTrace mcTrace) {
 		resetAll();
 		this.name = name;
 		countertrace = mcTrace.getTrace();
@@ -209,7 +207,7 @@ public class Trace2PEACompiler {
 	 * @param i
 	 *            the number of the trace element.
 	 */
-	private CDD complete(PhaseBits state, int i) {
+	private CDD complete(final PhaseBits state, final int i) {
 		CDD result;
 
 		/*
@@ -283,11 +281,9 @@ public class Trace2PEACompiler {
 				 * We can only keep the state if event is not in forbid set.
 				 */
 				@SuppressWarnings("unchecked")
-				final
-				Set<String> empty = Collections.EMPTY_SET;
+				final Set<String> empty = Collections.EMPTY_SET;
 				@SuppressWarnings("unchecked")
-				final
-				Set<String> forbid = countertrace.phases[p].forbid;
+				final Set<String> forbid = countertrace.phases[p].forbid;
 				final CDD atom = EventDecision.create(empty, forbid);
 				keep[p] = keep[p].and(atom);
 			}
@@ -325,14 +321,14 @@ public class Trace2PEACompiler {
 	/**
 	 * Compute for each phase whether we can seep through from the predecessor phase.
 	 */
-	private final int canseep(PhaseBits p) {
+	private final int canseep(final PhaseBits p) {
 		return (p.active & ~p.waiting) << 1 & canPossiblySeep;
 	}
 
 	/**
 	 * Precompute the CDDs further using the current state information.
 	 */
-	private void initTrans(PhaseBits srcBits) {
+	private void initTrans(final PhaseBits srcBits) {
 		for (int p = 0, pbit = 1; p < countertrace.phases.length; p++, pbit += pbit) {
 			/*
 			 * Now calculate the condition under which we can keep the current state.
@@ -380,8 +376,8 @@ public class Trace2PEACompiler {
 	 * @see pea.PhaseBits
 	 * @see pea.CDD
 	 */
-	private void buildNewTrans(PhaseBits srcBits, Phase src, CDD guard, CDD stateInv, String[] resets,
-			PhaseBits destBits) {
+	private void buildNewTrans(final PhaseBits srcBits, final Phase src, CDD guard, final CDD stateInv,
+	        final String[] resets, final PhaseBits destBits) {
 		Phase dest;
 		if (allPhases.containsKey(destBits)) {
 			//logger.debug("Destination phase already exists");
@@ -456,13 +452,13 @@ public class Trace2PEACompiler {
 	 * @see pea.PhaseBits
 	 * @see pea.CDD
 	 */
-	private void recursiveBuildTrans(PhaseBits srcBits, Phase src, CDD guard, CDD stateInv, String[] resets, int active,
-			int waiting, int exactbound, int p) {
+	private void recursiveBuildTrans(final PhaseBits srcBits, final Phase src, final CDD guard, CDD stateInv,
+	        final String[] resets, final int active, final int waiting, final int exactbound, final int p) {
 		if (guard.and(stateInv.prime()) == CDD.FALSE) {
 			return;
 		}
-		//logger.debug("recursiveBuildTrans: " + srcBits + "->" + new PhaseBits(active, exactbound, waiting) + " ("
-		//      + p + ") partial guards: " + guard + " inv: " + stateInv);
+		logger.debug("recursiveBuildTrans: " + srcBits + "->" + new PhaseBits(active, exactbound, waiting) + " (" + p
+		        + ") partial guards: " + guard + " inv: " + stateInv);
 		if (p == countertrace.phases.length) {
 			// If countertrace automata are built, the phase satisfying the
 			// formula is omitted. Building test automata
@@ -643,7 +639,7 @@ public class Trace2PEACompiler {
 	 * @see pea.CounterTrace.DCPhase
 	 * @see pea.PhaseBits
 	 */
-	private void findTrans(PhaseBits srcBits, Phase src) {
+	private void findTrans(final PhaseBits srcBits, final Phase src) {
 		initTrans(srcBits);
 		recursiveBuildTrans(srcBits, src, noSyncEvent, CDD.TRUE, new String[0], 0, 0, 0, 0);
 	}
@@ -801,8 +797,7 @@ public class Trace2PEACompiler {
 
 		PhaseEventAutomata pea;
 		if (exitSync != null) {
-			pea = new PEATestAutomaton(name, phases, init, peaClocks, finalPhases)
-					.removeUnreachableLocations();
+			pea = new PEATestAutomaton(name, phases, init, peaClocks, finalPhases).removeUnreachableLocations();
 		} else {
 			pea = new PhaseEventAutomata(name, phases, init, peaClocks, variables, events, null);
 		}
@@ -810,7 +805,7 @@ public class Trace2PEACompiler {
 		return pea;
 	}
 
-	private void addVariables(CDD cdd, HashMap<String, String> variables, HashSet<String> events) {
+	private void addVariables(final CDD cdd, final HashMap<String, String> variables, final HashSet<String> events) {
 		final Decision dec = cdd.getDecision();
 		if (dec instanceof EventDecision) {
 			events.add(((EventDecision) dec).getEvent());

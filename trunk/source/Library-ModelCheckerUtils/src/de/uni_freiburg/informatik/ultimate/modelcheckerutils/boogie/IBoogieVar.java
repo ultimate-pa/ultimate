@@ -10,7 +10,8 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
  *
  */
 public interface IBoogieVar {
-	String getIdentifier();
+	
+	String getGloballyUniqueId();
 
 	IBoogieType getIType();
 

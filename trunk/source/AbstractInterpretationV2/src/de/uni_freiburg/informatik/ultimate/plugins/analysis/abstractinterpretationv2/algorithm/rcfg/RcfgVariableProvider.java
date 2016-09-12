@@ -90,7 +90,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		vars.addAll(mBoogieVarTable.getConsts().values());
 
 		// add locals if applicable, thereby overriding globals
-		final String procedure = current.getPreceedingProcedure();
+		final String procedure = current.getPrecedingProcedure();
 		if (procedure != null) {
 			vars.addAll(getLocalVariables(procedure));
 		}
@@ -127,7 +127,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		// - add old locals from the scope we are returning to
 		// - add globals that were masked by this scope from the scope we are returning to
 
-		final String sourceProc = action.getPreceedingProcedure();
+		final String sourceProc = action.getPrecedingProcedure();
 		final String targetProc = action.getSucceedingProcedure();
 		final Set<IBoogieVar> varsNeededFromOldScope = new HashSet<>();
 
@@ -183,7 +183,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 	private STATE defineVariablesAfterCall(final CodeBlock action, final STATE localPreState) {
 		// if we call we just need to update all local variables, i.e., remove all the ones from the current scope
 		// and add all the ones from the new scope (thus also automatically masking globals)
-		final String remove = action.getPreceedingProcedure();
+		final String remove = action.getPrecedingProcedure();
 		final String add = action.getSucceedingProcedure();
 
 		// remove current locals
@@ -253,7 +253,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		final Map<String, IBoogieVar> rtr = new HashMap<>();
 		for (final Entry<String, IProgramNonOldVar> entry : mBoogieVarTable.getGlobals().entrySet()) {
 			final BoogieOldVar oldVar = (BoogieOldVar) mBoogieVarTable.getBoogieVar(entry.getKey(), sc, true);
-			rtr.put("old(" + oldVar.getIdentifier() + ")", oldVar);
+			rtr.put("old(" + oldVar.getIdentifierOfNonOldVar() + ")", oldVar);
 		}
 		return rtr;
 	}

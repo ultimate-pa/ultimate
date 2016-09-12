@@ -84,15 +84,15 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		mFormula = formula;
 		mBranchEncoders = branchEncoders;
 		mInfeasibility = infeasibility;
-		mClosedFormula = computeClosedFormula(formula, mInVars, mOutVars, mAuxVars, script);
+		mClosedFormula = computeClosedFormula(formula, super.getInVars(), super.getOutVars(), super.getAuxVars(), script);
 		assert SmtUtils.neitherKeyNorValueIsNull(inVars) : "null in inVars";
 		assert SmtUtils.neitherKeyNorValueIsNull(outVars) : "null in outVars";
-		assert (branchEncoders.size() > 0 || mClosedFormula.getFreeVars().length == 0);
+		assert (branchEncoders.size() > 0 || mClosedFormula.getFreeVars().length == 0) : "free variables";
 		// mVars = new
 		// HashSet<TermVariable>(Arrays.asList(mFormula.getFreeVars()));
 		assert allSubsetInOutAuxBranch() : "unexpected vars in TransFormula";
 		assert inAuxSubsetAll(false) : "superfluous vars in TransFormula";
-		// assert mOutVars.keySet().containsAll(mInVars.keySet()) :
+		// assert super.getOutVars().keySet().containsAll(super.getInVars().keySet()) :
 		// " strange inVar";
 
 		mAssignedVars = computeAssignedVars(inVars, outVars);
@@ -249,11 +249,11 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		boolean result = true;
 		final HashSet<TermVariable> allVars = new HashSet<TermVariable>(Arrays.asList(mFormula.getFreeVars()));
 		for (final TermVariable tv : allVars) {
-			result &= (mInVars.values().contains(tv) || mOutVars.values().contains(tv) || mAuxVars.contains(tv) || mBranchEncoders
+			result &= (super.getInVars().values().contains(tv) || super.getOutVars().values().contains(tv) || super.getAuxVars().contains(tv) || mBranchEncoders
 					.contains(tv));
 			assert result : "unexpected variable in formula";
 		}
-		for (final TermVariable tv : mAuxVars) {
+		for (final TermVariable tv : super.getAuxVars()) {
 			result &= allVars.contains(tv);
 			assert result : "unnecessary many vars in TransFormula";
 		}
@@ -267,12 +267,12 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		boolean result = true;
 		final HashSet<TermVariable> allVars = new HashSet<TermVariable>(Arrays.asList(mFormula.getFreeVars()));
 		if (!allowSuperflousInVars) {
-			for (final IProgramVar bv : mInVars.keySet()) {
-				result &= (allVars.contains(mInVars.get(bv)));
+			for (final IProgramVar bv : super.getInVars().keySet()) {
+				result &= (allVars.contains(super.getInVars().get(bv)));
 				assert result : "superfluous inVar";
 			}
 		}
-		for (final TermVariable tv : mAuxVars) {
+		for (final TermVariable tv : super.getAuxVars()) {
 			result &= allVars.contains(tv);
 			assert result : "superfluous auxVar";
 		}
@@ -280,8 +280,8 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	}
 
 	private boolean eachInVarOccursAsOutVar() {
-		for (final IProgramVar bv : mInVars.keySet()) {
-			if (!mOutVars.containsKey(bv)) {
+		for (final IProgramVar bv : super.getInVars().keySet()) {
+			if (!super.getOutVars().containsKey(bv)) {
 				return false;
 			}
 		}
@@ -315,7 +315,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 
 	@Override
 	public String toString() {
-		return "Formula: " + mFormula + "  InVars " + mInVars + "  OutVars" + mOutVars + "  AuxVars" + mAuxVars
+		return "Formula: " + mFormula + "  InVars " + super.getInVars() + "  OutVars" + super.getOutVars() + "  AuxVars" + super.getAuxVars()
 				+ "  AssignedVars" + mAssignedVars;
 	}
 

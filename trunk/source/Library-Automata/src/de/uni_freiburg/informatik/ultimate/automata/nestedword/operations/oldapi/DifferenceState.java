@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi;
@@ -33,57 +33,69 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * State of an NWA that accepts the language difference of two NWAs.
  * A DifferenceState is a pair whose first entry is a state of the minuend, the
  * second entry is a DeterminizedState of the subtrahend. A DifferenceState is
- * final iff the minuend state is final and the subtrahend state is not final. 
+ * final iff the minuend state is final and the subtrahend state is not final.
  * 
- * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <LETTER> Symbol
- * @param <STATE> Content
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            Symbol
+ * @param <STATE>
+ *            Content
  */
-public class DifferenceState<LETTER,STATE> {
+public class DifferenceState<LETTER, STATE> {
 	private final STATE mMinuendState;
-	private final DeterminizedState<LETTER,STATE> mSubtrahendDeterminizedState;
+	private final DeterminizedState<LETTER, STATE> mSubtrahendDeterminizedState;
 	private final boolean mIsFinal;
 	private final int mHashCode;
 	private STATE mState;
 	
-	
-	public DifferenceState(
-			final STATE minuendState, 
-			final DeterminizedState<LETTER,STATE> subtrahendDeterminizedState,
+	/**
+	 * Constructor.
+	 * 
+	 * @param minuendState
+	 *            state from the minuend
+	 * @param subtrahendDeterminizedState
+	 *            determinized state from the subtrahend
+	 * @param isFinal
+	 *            {@code true} iff the state should be final
+	 */
+	public DifferenceState(final STATE minuendState, final DeterminizedState<LETTER, STATE> subtrahendDeterminizedState,
 			final boolean isFinal) {
-		
 		this.mMinuendState = minuendState;
 		this.mSubtrahendDeterminizedState = subtrahendDeterminizedState;
-		this.mIsFinal = isFinal; 
-	//			minuend.isFinal(minuendState) &&
-	//								!subtrahendDeterminizedState.containsFinal();
+		this.mIsFinal = isFinal;
+		//			minuend.isFinal(minuendState) && !subtrahendDeterminizedState.containsFinal();
 		this.mHashCode = computehashCode();
 	}
 	
 	public STATE getMinuendState() {
 		return mMinuendState;
 	}
-
-	public DeterminizedState<LETTER,STATE> getSubtrahendDeterminizedState() {
+	
+	public DeterminizedState<LETTER, STATE> getSubtrahendDeterminizedState() {
 		return mSubtrahendDeterminizedState;
 	}
-
+	
 	public boolean isFinal() {
 		return this.mIsFinal;
 	}
 	
-	public STATE getState(final IStateFactory<STATE> stateFactory, 
+	/**
+	 * @param stateFactory
+	 *            A state factory.
+	 * @param stateDeterminizer
+	 *            state determinized
+	 * @return state in the difference, created on demand
+	 */
+	public STATE getState(final IStateFactory<STATE> stateFactory,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) {
 		if (mState == null) {
 			mState = stateFactory.intersection(
 					this.getMinuendState(),
 					stateDeterminizer.getState(getSubtrahendDeterminizedState()));
-		} 
+		}
 		return mState;
 	}
-
-
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
@@ -98,7 +110,7 @@ public class DifferenceState<LETTER,STATE> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final DifferenceState other = (DifferenceState) obj;
+		final DifferenceState<?, ?> other = (DifferenceState<?, ?>) obj;
 		if (mIsFinal != other.mIsFinal) {
 			return false;
 		}
@@ -119,7 +131,7 @@ public class DifferenceState<LETTER,STATE> {
 		}
 		return true;
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */
@@ -129,15 +141,18 @@ public class DifferenceState<LETTER,STATE> {
 	}
 	
 	private int computehashCode() {
-		final int prime = 31;
+		final int prime1 = 31;
+		final int prime2 = 1231;
+		final int prime3 = 1237;
 		int result = 1;
-		result = prime * result + (mIsFinal ? 1231 : 1237);
-		result = prime
+		result = prime1 * result + (mIsFinal ? prime2 : prime3);
+		result = prime1
 				* result
 				+ ((mMinuendState == null) ? 0 : mMinuendState.hashCode());
-		result = prime
+		result = prime1
 				* result
-				+ ((mSubtrahendDeterminizedState == null) ? 0
+				+ ((mSubtrahendDeterminizedState == null)
+						? 0
 						: mSubtrahendDeterminizedState.hashCode());
 		return result;
 	}

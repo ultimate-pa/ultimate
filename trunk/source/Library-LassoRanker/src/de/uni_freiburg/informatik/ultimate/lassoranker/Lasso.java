@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker;
@@ -168,7 +168,7 @@ public class Lasso implements Serializable {
 	 * @param include_negative whether to include negative guesses
 	 * @return an array of guesses for the loop's eigenvalues
 	 */
-	public Rational[] guessEigenvalues(boolean include_negative) {
+	public Rational[] guessEigenvalues(final boolean include_negative) {
 		final Set<Rational> motzkin_coeffs = new HashSet<Rational>();
 		motzkin_coeffs.add(Rational.ZERO);
 		motzkin_coeffs.add(Rational.ONE);
@@ -241,7 +241,7 @@ public class Lasso implements Serializable {
 				}
 			}
 		}
-		return motzkin_coeffs.toArray(new Rational[0]);
+		return motzkin_coeffs.toArray(new Rational[motzkin_coeffs.size()]);
 	}
 	
 	/**
@@ -252,7 +252,7 @@ public class Lasso implements Serializable {
 	 * where these variables are not explicitly scoped.
 	 */
 	private static LinearTransition balanceVariablesStem(LinearTransition stem,
-			LinearTransition loop) {
+			final LinearTransition loop) {
 		if (stem == null || loop == null) {
 			return stem; // nothing to do
 		}
@@ -286,7 +286,7 @@ public class Lasso implements Serializable {
 	 * generated in the nontermination analysis) stay constant in transitions
 	 * where these variables are not explicitly scoped.
 	 */
-	private static LinearTransition balanceVariablesLoop(LinearTransition stem,
+	private static LinearTransition balanceVariablesLoop(final LinearTransition stem,
 			LinearTransition loop) {
 		if (stem == null || loop == null) {
 			return loop; // nothing to do

@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwa;
@@ -53,11 +52,7 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> extends UnaryNwaO
 	/**
 	 * The inputed nwa automaton.
 	 */
-	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	/**
-	 * The resulting nwa automaton.
-	 */
-	private final INestedWordAutomaton<LETTER, STATE> mResult;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 
 	/**
 	 * Compares the different types of nwa simulation methods for nwa reduction
@@ -74,10 +69,9 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> extends UnaryNwaO
 	 *             framework.
 	 */
 	public CompareWithRandomNwaAutomata(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
-		mResult = operand;
 		mLogger.info(startMessage());
 
 		// Use operation with random automata
@@ -91,7 +85,7 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> extends UnaryNwaO
 		final int totalityReturnInPerc = 1;
 		final int logEvery = 50;
 		final int amount = 1000;
-		INestedWordAutomaton<String, String> nwa;
+		INestedWordAutomatonSimple<String, String> nwa;
 
 		for (int i = 1; i <= amount; i++) {
 			if (i % logEvery == 0) {
@@ -132,8 +126,8 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> extends UnaryNwaO
 	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
 	 */
 	@Override
-	public Object getResult() {
-		return mResult;
+	public String getResult() {
+		return "no result";
 	}
 
 	/*

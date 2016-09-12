@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
+import de.uni_freiburg.informatik.ultimate.ep.UltimateExtensionPoints;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
 
@@ -166,7 +166,7 @@ public abstract class RunToolchainAction extends Action {
 				rtr.add(file);
 			}
 		}
-		return rtr.toArray(new File[0]);
+		return rtr.toArray(new File[rtr.size()]);
 	}
 
 	private Collection<ISource> getAvailableSourcePlugins() {
@@ -174,7 +174,7 @@ public abstract class RunToolchainAction extends Action {
 		final IExtensionRegistry reg = Platform.getExtensionRegistry();
 
 		final IConfigurationElement[] configElements_source =
-				reg.getConfigurationElementsFor(ExtensionPoints.EP_SOURCE);
+				reg.getConfigurationElementsFor(UltimateExtensionPoints.EP_SOURCE);
 		// iterate through every config element
 		for (final IConfigurationElement element : configElements_source) {
 			try {

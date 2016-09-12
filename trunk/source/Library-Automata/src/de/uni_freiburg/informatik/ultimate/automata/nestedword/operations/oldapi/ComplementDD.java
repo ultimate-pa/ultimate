@@ -36,37 +36,36 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDete
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class ComplementDD<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+/**
+ * Complements a nested word automaton.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
+public final class ComplementDD<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private INestedWordAutomatonSimple<LETTER, STATE> mDeterminizedOperand;
+	private final INestedWordAutomaton<LETTER, STATE> mResult;
 	
-	protected INestedWordAutomatonSimple<LETTER, STATE> mOperand;
-	protected INestedWordAutomatonSimple<LETTER, STATE> mDeterminizedOperand;
-	protected INestedWordAutomaton<LETTER, STATE> mResult;
-	
-	@Override
-	public String operationName() {
-		return "complementDD";
-	}
-	
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + " Result "
-				+ mResult.sizeInformation();
-	}
-	
-	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
-		return mOperand;
-	}
-	
-	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() {
-		return mResult;
-	}
-	
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
 	public ComplementDD(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		
@@ -85,15 +84,39 @@ public class ComplementDD<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		mLogger.debug("Testing correctness of complement");
-		boolean correct = true;
-		final INestedWordAutomaton intersectionOperandResult =
-				(new IntersectDD(mServices, false, mOperand, mResult)).getResult();
-		correct &= ((new IsEmpty(mServices, intersectionOperandResult)).getResult() == true);
-		mLogger.debug("Finished testing correctness of complement");
-		return correct;
+	public String operationName() {
+		return "ComplementDD";
 	}
 	
+	@Override
+	public String exitMessage() {
+		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
+	}
+	
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
+	}
+	
+	@Override
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
+		return mResult;
+	}
+	
+	@Override
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Testing correctness of complement");
+		}
+		
+		boolean correct = true;
+		final INestedWordAutomaton<LETTER, STATE> intersectionOperandResult =
+				(new IntersectDD<LETTER, STATE>(mServices, false, mOperand, mResult)).getResult();
+		correct &= (new IsEmpty<LETTER, STATE>(mServices, intersectionOperandResult)).getResult();
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of complement");
+		}
+		return correct;
+	}
 }

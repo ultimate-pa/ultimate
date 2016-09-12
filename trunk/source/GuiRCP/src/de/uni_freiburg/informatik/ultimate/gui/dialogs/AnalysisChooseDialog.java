@@ -44,6 +44,7 @@ import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -75,25 +76,25 @@ import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
  */
 public class AnalysisChooseDialog extends Dialog {
 
-	private Table mRresultTable;
-	private Table mTable;
+	private Table mSelectedToolsTable;
+	private Table mAvailableToolsTable;
 	private List<ITool> mResult;
-	private String mToolchainFile;
+	private String mToolchainFilePath;
 	private Shell mShell;
 
-	private final List<ITool> mTools;
-	private final List<ITool> mPrevious;
+	private final List<ITool> mAvailableTools;
+	private final List<ITool> mPreviouslySelectedTools;
 	private final ILogger mLogger;
 	private final ICore<RunDefinition> mCore;
 
 	public AnalysisChooseDialog(final ILogger logger, final Shell parent, final int style, final List<ITool> tools,
 			final List<ITool> previous, final ICore<RunDefinition> core) {
 		super(parent, style);
-		mTools = tools;
-		mPrevious = previous;
+		mAvailableTools = tools;
+		mPreviouslySelectedTools = previous;
 		mLogger = logger;
 		mCore = core;
-		mToolchainFile = null;
+		mToolchainFilePath = null;
 		mResult = null;
 	}
 
@@ -115,9 +116,9 @@ public class AnalysisChooseDialog extends Dialog {
 		}
 
 		final IToolchainData<RunDefinition> resultChain;
-		if (mToolchainFile != null) {
-			mLogger.info("Reading toolchain file from " + mToolchainFile);
-			resultChain = mCore.createToolchainData(mToolchainFile);
+		if (mToolchainFilePath != null) {
+			mLogger.info("Reading toolchain file from " + mToolchainFilePath);
+			resultChain = mCore.createToolchainData(mToolchainFilePath);
 		} else if (mResult != null) {
 			// convert selection into a toolchain
 			resultChain = mCore.createToolchainData();
@@ -149,51 +150,52 @@ public class AnalysisChooseDialog extends Dialog {
 		gridLayout.numColumns = 4;
 
 		mShell.setLayout(gridLayout);
-		// shell.setSize(400, 400);
-		mShell.setText("ToolChain Dialog");
+		mShell.setText("Toolchain Dialog");
 
-		mTable = new Table(mShell, SWT.FULL_SELECTION | SWT.BORDER | SWT.HIDE_SELECTION);
-		mTable.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseDoubleClick(final MouseEvent e) {
-				moveItem(SWT.RIGHT);
-			}
-		});
-		mTable.setToolTipText("Mark the plugins that should be executed");
-		mTable.setLinesVisible(false);
-		mTable.setHeaderVisible(true);
-		mTable.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		final TableColumn newColumnTableColumn = createContentsAvailableToolsTable();
+		createContentsSelectedToolsTable(newColumnTableColumn.getWidth());
 
-		final TableColumn newColumnTableColumn = new TableColumn(mTable, SWT.NONE);
+		addButton("Add >>", SWT.NONE, new ItemMoveSelectionAdapter(SWT.RIGHT));
+		addButton("<< Remove", SWT.NONE, new ItemMoveSelectionAdapter(SWT.LEFT));
+		addButton("up", SWT.ARROW | SWT.UP, new ItemMoveSelectionAdapter(SWT.UP));
+		addButton("down", SWT.ARROW | SWT.DOWN, new ItemMoveSelectionAdapter(SWT.DOWN));
 
-		Collections.sort(mTools, new Comparator<ITool>() {
+		final GridData gridDataOkButton = new GridData(SWT.RIGHT, SWT.CENTER, false, false);
+		gridDataOkButton.widthHint = 80;
+		addButton("OK", SWT.NONE, new ResultSelectionAdapter(), gridDataOkButton);
 
-			@Override
-			public int compare(final ITool o1, final ITool o2) {
-				return o1.getPluginName().compareTo(o2.getPluginName());
-			}
+		final GridData gridDataXmlButton = new GridData(SWT.CENTER, SWT.CENTER, false, false);
+		gridDataXmlButton.widthHint = 120;
+		addButton("XML Toolchain", SWT.NONE, new LoadFromXMLFileSelectionAdapter(), gridDataXmlButton);
 
-		});
+		final GridData gridDataCancelButton = new GridData(SWT.LEFT, SWT.CENTER, false, false, 2, 1);
+		gridDataCancelButton.widthHint = 80;
+		addButton("Cancel", SWT.NONE, new CloseShellSelectionAdapter(), gridDataCancelButton);
+	}
 
-		for (final IToolchainPlugin analysis : mTools) {
-			final TableItem analysisTableItem = new TableItem(mTable, SWT.BORDER);
-			analysisTableItem.setData(analysis);
-			setCaption(analysisTableItem);
-		}
-		newColumnTableColumn.pack();
-		newColumnTableColumn.setText("Available Plugins");
-		newColumnTableColumn.setResizable(true);
-		mTable.pack();
+	private Button addButton(final String label, final int buttonStyle, final SelectionListener selectionAdapter) {
+		return addButton(label, buttonStyle, selectionAdapter, new GridData());
+	}
 
-		mRresultTable = new Table(mShell, SWT.BORDER);
-		mRresultTable.addMouseListener(new MouseAdapter() {
+	private Button addButton(final String label, final int buttonStyle, final SelectionListener selectionAdapter,
+			final Object layoutData) {
+		final Button addButton = new Button(mShell, buttonStyle);
+		addButton.addSelectionListener(selectionAdapter);
+		addButton.setText(label);
+		addButton.setLayoutData(layoutData);
+		return addButton;
+	}
+
+	private void createContentsSelectedToolsTable(final int width) {
+		mSelectedToolsTable = new Table(mShell, SWT.BORDER);
+		mSelectedToolsTable.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseDoubleClick(final MouseEvent e) {
 				moveItem(SWT.LEFT);
 			}
 		});
 		// a listener that should provide keyboard shortcuts for fast reordering
-		mRresultTable.addKeyListener(new KeyAdapter() {
+		mSelectedToolsTable.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(final KeyEvent e) {
 				if (e.stateMask == SWT.SHIFT) {
@@ -210,119 +212,58 @@ public class AnalysisChooseDialog extends Dialog {
 				}
 			}
 		});
-		mRresultTable.setToolTipText("Current selected toolchain");
-		mRresultTable.setLinesVisible(false);
-		mRresultTable.setHeaderVisible(true);
-		mRresultTable.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 3, 1));
+		mSelectedToolsTable.setToolTipText("Current selected toolchain");
+		mSelectedToolsTable.setLinesVisible(false);
+		mSelectedToolsTable.setHeaderVisible(true);
+		mSelectedToolsTable.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 3, 1));
 
-		final TableColumn newColumnTableColumn_1 = new TableColumn(mRresultTable, SWT.NONE);
-		newColumnTableColumn_1.setWidth(newColumnTableColumn.getWidth());
-		newColumnTableColumn_1.setText("Current Toolchain");
-		newColumnTableColumn_1.setResizable(true);
+		final TableColumn tableColumn = new TableColumn(mSelectedToolsTable, SWT.NONE);
+		tableColumn.setWidth(width);
+		tableColumn.setText("Current Toolchain");
+		tableColumn.setResizable(true);
 
-		for (final IToolchainPlugin analysis : mPrevious) {
-			final TableItem analysisTableItem = new TableItem(mRresultTable, SWT.BORDER);
+		for (final IToolchainPlugin analysis : mPreviouslySelectedTools) {
+			final TableItem analysisTableItem = new TableItem(mSelectedToolsTable, SWT.BORDER);
 			analysisTableItem.setData(analysis);
 			setCaption(analysisTableItem);
 		}
-		mRresultTable.pack();
+		mSelectedToolsTable.pack();
+	}
 
-		final Button addButton = new Button(mShell, SWT.NONE);
-		addButton.addSelectionListener(new SelectionAdapter() {
+	private TableColumn createContentsAvailableToolsTable() {
+		mAvailableToolsTable = new Table(mShell, SWT.FULL_SELECTION | SWT.BORDER | SWT.HIDE_SELECTION);
+		mAvailableToolsTable.addMouseListener(new MouseAdapter() {
 			@Override
-			public void widgetSelected(final SelectionEvent e) {
+			public void mouseDoubleClick(final MouseEvent e) {
 				moveItem(SWT.RIGHT);
 			}
 		});
-		addButton.setText("Add >>");
+		mAvailableToolsTable.setToolTipText("Mark the plugins that should be executed");
+		mAvailableToolsTable.setLinesVisible(false);
+		mAvailableToolsTable.setHeaderVisible(true);
+		mAvailableToolsTable.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-		final Button removeButton = new Button(mShell, SWT.NONE);
-		removeButton.addSelectionListener(new SelectionAdapter() {
+		final TableColumn tableColumn = new TableColumn(mAvailableToolsTable, SWT.NONE);
+
+		Collections.sort(mAvailableTools, new Comparator<ITool>() {
+
 			@Override
-			public void widgetSelected(final SelectionEvent e) {
-				moveItem(SWT.LEFT);
+			public int compare(final ITool o1, final ITool o2) {
+				return o1.getPluginName().compareTo(o2.getPluginName());
 			}
+
 		});
-		removeButton.setText("<< Remove");
 
-		final Button upbutton = new Button(mShell, SWT.ARROW | SWT.UP);
-		upbutton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(final SelectionEvent e) {
-				moveItem(SWT.UP);
-			}
-		});
-		upbutton.setLayoutData(new GridData());
-		upbutton.setText("up");
-
-		final Button downbutton = new Button(mShell, SWT.ARROW | SWT.DOWN);
-		downbutton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(final SelectionEvent e) {
-				moveItem(SWT.DOWN);
-			}
-		});
-		downbutton.setLayoutData(new GridData());
-		downbutton.setText("down");
-
-		final Button okButton = new Button(mShell, SWT.NONE);
-		// gets all items from the resulttable and puts them in the resultset ..
-		okButton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(final SelectionEvent e) {
-				mResult = new ArrayList<ITool>();
-				for (final TableItem item : mRresultTable.getItems()) {
-					mResult.add((ITool) item.getData());
-				}
-				if (mResult.isEmpty()) {
-					mResult = null;
-				} else {
-					mShell.dispose();
-				}
-			}
-		});
-		final GridData gridData = new GridData(SWT.RIGHT, SWT.CENTER, false, false);
-		gridData.widthHint = 80;
-		okButton.setLayoutData(gridData);
-		okButton.setText("OK");
-
-		final Button xmlButton = new Button(mShell, SWT.NONE);
-		xmlButton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(final SelectionEvent e) {
-
-				final IPreferenceProvider prefs = mCore.getPreferenceProvider(GuiController.PLUGIN_ID);
-				final String filterpath = prefs.getString(IPreferencesKeys.LASTTOOLCHAINPATH, null);
-
-				final String[] extensions = new String[1];
-				extensions[0] = "*.xml";
-				final FileDialog fd = new FileDialog(mShell, SWT.OPEN | SWT.MULTI);
-				fd.setText("Choose XML Toolchain");
-				fd.setFilterExtensions(extensions);
-				fd.setFileName(filterpath);
-				mToolchainFile = fd.open();
-				if (mToolchainFile != null) {
-					prefs.put(IPreferencesKeys.LASTTOOLCHAINPATH, mToolchainFile);
-					mShell.dispose();
-				}
-			}
-		});
-		final GridData gridData_2 = new GridData(SWT.CENTER, SWT.CENTER, false, false);
-		gridData_2.widthHint = 120;
-		xmlButton.setLayoutData(gridData_2);
-		xmlButton.setText("XML Toolchain");
-
-		final Button cancelButton = new Button(mShell, SWT.NONE);
-		cancelButton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(final SelectionEvent e) {
-				mShell.dispose();
-			}
-		});
-		final GridData gridData_1 = new GridData(SWT.LEFT, SWT.CENTER, false, false, 2, 1);
-		gridData_1.widthHint = 80;
-		cancelButton.setLayoutData(gridData_1);
-		cancelButton.setText("Cancel");
+		for (final IToolchainPlugin analysis : mAvailableTools) {
+			final TableItem availableToolsTableItem = new TableItem(mAvailableToolsTable, SWT.BORDER);
+			availableToolsTableItem.setData(analysis);
+			setCaption(availableToolsTableItem);
+		}
+		tableColumn.pack();
+		tableColumn.setText("Available Plugins");
+		tableColumn.setResizable(true);
+		mAvailableToolsTable.pack();
+		return tableColumn;
 	}
 
 	/**
@@ -335,52 +276,43 @@ public class AnalysisChooseDialog extends Dialog {
 	 */
 	private void moveItem(final int swtDirection) {
 		// get currently selected items
-		final int ri = mRresultTable.getSelectionIndex();
-		final int li = mTable.getSelectionIndex();
-		TableItem rightside = null;
-		TableItem leftside = null;
-		if (ri != -1) {
-			rightside = mRresultTable.getItem(ri);
-		}
-		if (li != -1) {
-			leftside = mTable.getItem(li);
+		final int rItemIdx = mSelectedToolsTable.getSelectionIndex();
+		final int lItemIdx = mAvailableToolsTable.getSelectionIndex();
+		final TableItem rightItem = rItemIdx == -1 ? null : mSelectedToolsTable.getItem(rItemIdx);
+		final TableItem leftItem = lItemIdx == -1 ? null : mAvailableToolsTable.getItem(lItemIdx);
+
+		if (rightItem == null && leftItem == null) {
+			return;
 		}
 
-		// make an action according to provided direction
-		switch (swtDirection) {
-		case SWT.LEFT:
-			if (ri != -1) {
-				mRresultTable.getItem(ri).dispose();
-			}
-			break;
-		case SWT.RIGHT:
-			if (li != -1) {
-				final TableItem ti = new TableItem(mRresultTable, SWT.NONE);
-				ti.setData(leftside.getData());
-				setCaption(ti);
-			}
-			break;
-		case SWT.UP:
-		case SWT.DOWN:
-			if (rightside != null) {
-				// compute with which item we should switch
-				final int otherindex = ri + (swtDirection == SWT.UP ? -1 : +1);
-				if (ri != -1 && otherindex >= 0 && otherindex < mRresultTable.getItemCount()) {
-					final TableItem oldItem = mRresultTable.getItem(ri);
-					final Object data = oldItem.getData();
-					oldItem.dispose();
-					final TableItem newItem = new TableItem(mRresultTable, SWT.NONE, otherindex);
-					newItem.setData(data);
-					setCaption(newItem);
-					mRresultTable.select(otherindex);
-				}
-
-			}
-
+		if (swtDirection == SWT.LEFT && rightItem != null) {
+			mSelectedToolsTable.getItem(rItemIdx).dispose();
+			return;
 		}
 
-		// table.getColumn(0).pack();
-		// resulttable.getColumn(0).pack();
+		if (swtDirection == SWT.RIGHT && leftItem != null) {
+			final TableItem ti = new TableItem(mSelectedToolsTable, SWT.NONE);
+			ti.setData(leftItem.getData());
+			setCaption(ti);
+			return;
+		}
+
+		if ((swtDirection == SWT.UP || swtDirection == SWT.DOWN) && rightItem != null) {
+			// compute with which item we should switch
+			final int otherindex = rItemIdx + (swtDirection == SWT.UP ? -1 : +1);
+			if (rItemIdx == -1 || otherindex < 0 || otherindex >= mSelectedToolsTable.getItemCount()) {
+				// we are the only item or we cannot move
+				return;
+			}
+			final TableItem oldItem = mSelectedToolsTable.getItem(rItemIdx);
+			final Object data = oldItem.getData();
+			oldItem.dispose();
+			final TableItem newItem = new TableItem(mSelectedToolsTable, SWT.NONE, otherindex);
+			newItem.setData(data);
+			setCaption(newItem);
+			mSelectedToolsTable.select(otherindex);
+			return;
+		}
 	}
 
 	private static void setCaption(final TableItem item) {
@@ -388,4 +320,60 @@ public class AnalysisChooseDialog extends Dialog {
 		item.setText(isp.getPluginName() + "   id: " + isp.getPluginID());
 	}
 
+	private final class CloseShellSelectionAdapter extends SelectionAdapter {
+		@Override
+		public void widgetSelected(final SelectionEvent e) {
+			mShell.dispose();
+		}
+	}
+
+	private final class LoadFromXMLFileSelectionAdapter extends SelectionAdapter {
+		@Override
+		public void widgetSelected(final SelectionEvent e) {
+
+			final IPreferenceProvider prefs = mCore.getPreferenceProvider(GuiController.PLUGIN_ID);
+			final String filterpath = prefs.getString(IPreferencesKeys.LASTTOOLCHAINPATH, null);
+
+			final String[] extensions = new String[1];
+			extensions[0] = "*.xml";
+			final FileDialog fd = new FileDialog(mShell, SWT.OPEN | SWT.MULTI);
+			fd.setText("Choose XML Toolchain");
+			fd.setFilterExtensions(extensions);
+			fd.setFileName(filterpath);
+			mToolchainFilePath = fd.open();
+			if (mToolchainFilePath != null) {
+				prefs.put(IPreferencesKeys.LASTTOOLCHAINPATH, mToolchainFilePath);
+				mShell.dispose();
+			}
+		}
+	}
+
+	private final class ItemMoveSelectionAdapter extends SelectionAdapter {
+
+		private final int mMoveItemDirection;
+
+		private ItemMoveSelectionAdapter(final int moveItemDirection) {
+			mMoveItemDirection = moveItemDirection;
+		}
+
+		@Override
+		public void widgetSelected(final SelectionEvent e) {
+			moveItem(mMoveItemDirection);
+		}
+	}
+
+	private final class ResultSelectionAdapter extends SelectionAdapter {
+		@Override
+		public void widgetSelected(final SelectionEvent e) {
+			mResult = new ArrayList<>();
+			for (final TableItem item : mSelectedToolsTable.getItems()) {
+				mResult.add((ITool) item.getData());
+			}
+			if (mResult.isEmpty()) {
+				mResult = null;
+			} else {
+				mShell.dispose();
+			}
+		}
+	}
 }

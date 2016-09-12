@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstractionConcurrent plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstractionConcurrent plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstractionConcurrent plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -147,13 +147,13 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		}
 
 		// Determinize the interpolant automaton
-		final INestedWordAutomaton<CodeBlock, IPredicate> dia = determinizeInterpolantAutomaton(mInterpolAutomaton);
+		final INestedWordAutomatonSimple<CodeBlock, IPredicate> dia = determinizeInterpolantAutomaton(mInterpolAutomaton);
 
 		// Complement the interpolant automaton
-		final INestedWordAutomaton<CodeBlock, IPredicate> nia = (new ComplementDD<CodeBlock, IPredicate>(
+		final INestedWordAutomatonSimple<CodeBlock, IPredicate> nia = (new ComplementDD<CodeBlock, IPredicate>(
 				new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata, dia)).getResult();
 		assert (!accepts(mServices, nia, mCounterexample.getWord())) : "Complementation broken!";
-		mLogger.info("Complemented interpolant automaton has " + nia.getStates().size() + " states");
+		mLogger.info("Complemented interpolant automaton has " + nia.size() + " states");
 
 		if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 			mArtifactAutomaton = nia;
@@ -196,7 +196,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	private static boolean acceptsPetriViaFA(final IUltimateServiceProvider services, final IAutomaton<CodeBlock, IPredicate> automaton, final Word<CodeBlock> word)
 			throws AutomataOperationCanceledException {
 		final NestedWord<CodeBlock> nw = NestedWord.nestedWord(word);
-		final INestedWordAutomaton<CodeBlock, IPredicate> petriNetAsFA = (new PetriNet2FiniteAutomaton<CodeBlock, IPredicate>(
+		final INestedWordAutomatonSimple<CodeBlock, IPredicate> petriNetAsFA = (new PetriNet2FiniteAutomaton<CodeBlock, IPredicate>(
 				new AutomataLibraryServices(services), (IPetriNet<CodeBlock, IPredicate>) automaton)).getResult();
 		return BasicCegarLoop.accepts(services, petriNetAsFA, nw);
 

@@ -95,6 +95,7 @@ public final class BuchiClosure<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 			mLogger.info("Start testing correctness of " + operationName());
 		}
 		
+		// TODO Christian 2016-09-08: This variable is never read - a bug?
 		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<>();
 		final BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<>(mServices, mOperand);
 		final boolean operandEmpty = operandEmptiness.getResult();

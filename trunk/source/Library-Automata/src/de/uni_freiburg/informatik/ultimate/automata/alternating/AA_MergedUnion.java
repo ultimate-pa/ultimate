@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -40,7 +41,7 @@ public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE> 
 
 	public AA_MergedUnion(final AlternatingAutomaton<LETTER, STATE> automaton1,
 			final AlternatingAutomaton<LETTER, STATE> automaton2) {
-		assert automaton1.getAlphabet().equals(automaton2.getAlphabet());
+		assert IAutomaton.sameAlphabet(automaton1, automaton2);
 		assert (automaton1.isReversed() == automaton2.isReversed());
 		mResultAutomaton = new AlternatingAutomaton<>(automaton1.getAlphabet(), automaton1.getStateFactory());
 		final HashMap<Integer, Integer> shiftMap1 = new HashMap<>();

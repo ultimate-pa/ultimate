@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * Variable in a boogie program. The procedure field of global variables is null.
@@ -61,6 +60,15 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable, ILocalPr
 		mHashCode = computeHashCode();
 	}
 	
+	@Override
+	public String getGloballyUniqueId() {
+		return ILocalProgramVar.super.getGloballyUniqueId();
+	}
+	
+	@Override
+	public String getIdentifier() {
+		return mIdentifier;
+	}
 	
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.boogie.IProgramLocalVar_Backpu#getProcedure()
@@ -69,15 +77,7 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable, ILocalPr
 	public String getProcedure() {
 		return mProcedure;
 	}
-	@Override
-	public boolean isGlobal() {
-		return false;
-	}
-	@Override
-	public boolean isOldvar() {
-		return false;
-	}
-	
+
 	private int computeHashCode() {
 		final int prime = 31;
 		int result = 1;
@@ -105,7 +105,7 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable, ILocalPr
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final IProgramVar other = (IProgramVar) obj;
+		final LocalBoogieVar other = (LocalBoogieVar) obj;
 		if (getIdentifier() == null) {
 			if (other.getIdentifier() != null) {
 				return false;
@@ -125,8 +125,6 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable, ILocalPr
 		}
 		return true;
 	}
-	
 
-	
 
 }

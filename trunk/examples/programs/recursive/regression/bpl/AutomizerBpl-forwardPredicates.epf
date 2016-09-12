@@ -1,0 +1,23 @@
+#Wed Jan 15 21:36:24 CET 2014
+\!/instance/JungVisualization=
+file_export_version=3.0
+/instance/JungVisualization/shapeForNodePreference=RoundRectangle
+@JungVisualization=0.0.1
+#Wed Jan 15 21:36:24 CET 2014
+file_export_version=3.0
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
+#Wed Jan 15 21:36:24 CET 2014
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ separate\ solver\ for\ trace\ checks=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
+
+#Fri Mar 07 12:08:07 CET 2014
+/instance/UltimateCore/Log\ Level\ for\ Controller\ Plugin=INFO
+/instance/UltimateCore/Log\ Level\ for\ Core\ Plugin=INFO
+/instance/UltimateCore/Log\ Level\ for\ External\ Tools=INFO
+/instance/UltimateCore/Root\ Log\ Level=INFO
+/instance/UltimateCore/Log\ Level\ for\ Plugins=INFO

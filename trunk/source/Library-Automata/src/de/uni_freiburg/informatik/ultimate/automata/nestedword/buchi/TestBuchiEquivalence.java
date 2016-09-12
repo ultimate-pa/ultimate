@@ -60,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * <p>
  * The complete test checks language inclusion in both directions, which is a very expensive operation for Buchi
  * automata.
- * <p>
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -68,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
+public final class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
 	private final IStateFactory<STATE> mStateFactory;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
@@ -121,8 +120,8 @@ public class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperation<LETT
 		mSndOperand = sndOperand;
 		mStateFactory = stateFactory;
 		
-		if (alphabetsDiffer()) {
-			throw new IllegalArgumentException("The operands have different alphabets.");
+		if (!INestedWordAutomatonSimple.sameAlphabet(mFstOperand, mSndOperand)) {
+			throw new AutomataLibraryException(this.getClass(), "The operands have different alphabets.");
 		}
 		
 		mLogger.info(startMessage());

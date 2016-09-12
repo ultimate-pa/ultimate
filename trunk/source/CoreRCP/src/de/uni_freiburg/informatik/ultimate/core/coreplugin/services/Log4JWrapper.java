@@ -138,4 +138,9 @@ public final class Log4JWrapper implements ILogger {
 		}
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return "[" + hashCode() + "][" + getBacking().getLevel() + "] " + getBacking().getName();
+	}
 }

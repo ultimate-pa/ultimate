@@ -22,9 +22,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
@@ -314,7 +314,7 @@ public class FunctionHandler {
 			final List<Specification> specFromDec = Arrays.asList(proc.getSpecification());
 			final ArrayList<Specification> newSpecs = new ArrayList<Specification>(Arrays.asList(spec));
 			newSpecs.addAll(specFromDec);
-			spec = newSpecs.toArray(new Specification[0]);
+			spec = newSpecs.toArray(new Specification[newSpecs.size()]);
 
 			proc = new Procedure(proc.getLocation(), proc.getAttributes(), proc.getIdentifier(), proc.getTypeParams(),
 					declIn, proc.getOutParams(), spec, null);
@@ -630,7 +630,7 @@ public class FunctionHandler {
 				}
 				spec[nrSpec] = new ModifiesSpecification(loc, false, modifyList);
 			}
-			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired() && 
+			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired() &&
 					(main.getCheckedMethod() == SFO.EMPTY || main.getCheckedMethod().equals(mId))) {
 				if (mCheckMemoryLeakAtEndOfMain) {
 					// add a specification to check for memory leaks
@@ -682,9 +682,7 @@ public class FunctionHandler {
 				&& mProcedureToCFunctionType.get(methodName).takesVarArgs()) {
 			final int noParameterWOVarArgs = mProcedureToCFunctionType.get(methodName).getParameterTypes().length;
 			inParams = new IASTInitializerClause[noParameterWOVarArgs];
-			for (int i = 0; i < noParameterWOVarArgs; i++) {
-				inParams[i] = arguments[i];
-			}
+			System.arraycopy(arguments, 0, inParams, 0, noParameterWOVarArgs);
 			// .. and if it is really called with more that its normal parameter
 			// number, we throw an exception, because we may be unsound
 			// (the code before this does not make that much sense, but maybe some
@@ -1021,9 +1019,7 @@ public class FunctionHandler {
 		}
 
 		final IASTInitializerClause[] newArgs = new IASTInitializerClause[arguments.length + 1];
-		for (int i = 0; i < newArgs.length - 1; i++) {
-			newArgs[i] = arguments[i];
-		}
+		System.arraycopy(arguments, 0, newArgs, 0, arguments.length);
 		newArgs[newArgs.length - 1] = functionName;
 
 		return handleFunctionCallGivenNameAndArguments(main, memoryHandler, structHandler, loc, procName, newArgs);
@@ -1054,7 +1050,7 @@ public class FunctionHandler {
 				final ContractResult resContr = (ContractResult) retranslateRes;
 				specList.addAll(Arrays.asList(resContr.specs));
 			}
-			spec = specList.toArray(new Specification[0]);
+			spec = specList.toArray(new Specification[specList.size()]);
 			for (int i = 0; i < spec.length; i++) {
 				if (spec[i] instanceof ModifiesSpecification) {
 					mModifiedGlobalsIsUserDefined.add(methodName);
@@ -1282,7 +1278,7 @@ public class FunctionHandler {
 			final List<Specification> specFromDef = Arrays.asList(proc.getSpecification());
 			final ArrayList<Specification> newSpecs = new ArrayList<Specification>(Arrays.asList(spec));
 			newSpecs.addAll(specFromDef);
-			spec = newSpecs.toArray(new Specification[0]);
+			spec = newSpecs.toArray(new Specification[newSpecs.size()]);
 			// TODO something else to take over for a declaration after the
 			// definition?
 		}
@@ -1544,7 +1540,8 @@ public class FunctionHandler {
 			final VarList[] type = mProcedures.get(methodName).getOutParams();
 			if (type.length == 0) { // void
 				// C has only one return statement -> no need for forall
-				call = new CallStatement(loc, false, new VariableLHS[0], methodName, args.toArray(new Expression[0]));
+				call = new CallStatement(loc, false, new VariableLHS[0], methodName,
+						args.toArray(new Expression[args.size()]));
 			} else if (type.length == 1) { // one return value
 				final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
 				expr = new IdentifierExpression(loc, tmpId);
@@ -1553,7 +1550,7 @@ public class FunctionHandler {
 				decl.add(tmpVar);
 				final VariableLHS tmpLhs = new VariableLHS(loc, tmpId);
 				call = new CallStatement(loc, false, new VariableLHS[] { tmpLhs }, methodName,
-						args.toArray(new Expression[0]));
+						args.toArray(new Expression[args.size()]));
 			} else { // unsupported!
 				// String msg = "Cannot handle multiple out params! "
 				// + loc.toString();
@@ -1579,7 +1576,7 @@ public class FunctionHandler {
 			decl.add(tmpVar);
 			final VariableLHS lhs = new VariableLHS(loc, ident);
 			call = new CallStatement(loc, false, new VariableLHS[] { lhs }, methodName,
-					args.toArray(new Expression[0]));
+					args.toArray(new Expression[args.size()]));
 		}
 		stmt.add(call);
 		final CType returnCType = mMethodsCalledBeforeDeclared.contains(methodName) ? new CPrimitive(CPrimitives.INT)

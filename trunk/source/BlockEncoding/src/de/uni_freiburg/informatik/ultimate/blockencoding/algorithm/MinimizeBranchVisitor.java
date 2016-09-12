@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -61,12 +61,12 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 	 * Constructor for the MinimizeBranchVisitor
 	 * 
 	 */
-	public MinimizeBranchVisitor(ILogger logger) {
+	public MinimizeBranchVisitor(final ILogger logger) {
 		super(logger);
 	}
 
 	@Override
-	protected MinimizedNode[] applyMinimizationRules(MinimizedNode node) {
+	protected MinimizedNode[] applyMinimizationRules(final MinimizedNode node) {
 		// if this node is not reachable anymore (since we cut it off, by
 		// merging sequentially) we do not apply our minimization rules
 		// ---> the node is not part of the graph anymore
@@ -86,7 +86,7 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 			final IMinimizedEdge out = node.getMinimalOutgoingEdgeLevel().get(0);
 			final IMinimizedEdge in = node.getMinimalIncomingEdgeLevel().get(0);
 			if (mVisitedEdges.contains(in) && mVisitedEdges.contains(out)) {
-				return reVisitNodes.toArray(new MinimizedNode[0]);
+				return reVisitNodes.toArray(new MinimizedNode[reVisitNodes.size()]);
 			}
 			mLogger.debug("Sequential Merge: " + in + " /\\ " + out);
 			final MinimizedNode[] succNodes = mergeSequential(in, out);
@@ -98,7 +98,7 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 				reVisitNodes.add(succ);
 			}
 		}
-		return reVisitNodes.toArray(new MinimizedNode[0]);
+		return reVisitNodes.toArray(new MinimizedNode[reVisitNodes.size()]);
 	}
 
 	/**
@@ -109,7 +109,7 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 	 *            the node to inspect
 	 * @return an array with exactly two or zero entries
 	 */
-	private IMinimizedEdge[] checkForParallelMerge(MinimizedNode node) {
+	private IMinimizedEdge[] checkForParallelMerge(final MinimizedNode node) {
 		// In this implementation we check for incoming edges of the same source
 		if (node.getIncomingEdges() == null
 				|| node.getIncomingEdges().size() <= 1) {
@@ -149,7 +149,7 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 						return new IMinimizedEdge[0];
 					}
 				}
-				return parallelEdges.toArray(new IMinimizedEdge[0]);
+				return parallelEdges.toArray(new IMinimizedEdge[parallelEdges.size()]);
 			}
 		}
 		return new IMinimizedEdge[0];
@@ -162,7 +162,7 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 	 *            the node to check
 	 * @return true if we can merge sequentially
 	 */
-	private boolean checkForSequentialMerge(MinimizedNode node) {
+	private boolean checkForSequentialMerge(final MinimizedNode node) {
 		// First condition: --->(node)--->
 		if (node.getIncomingEdges().size() == 1
 				&& node.getOutgoingEdges().size() == 1) {
@@ -215,8 +215,8 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 	 * @return the next node to visit, in our algorithm the predecessor of the
 	 *         merged parallel edges
 	 */
-	private MinimizedNode mergeParallel(IMinimizedEdge edge1,
-			IMinimizedEdge edge2) {
+	private MinimizedNode mergeParallel(final IMinimizedEdge edge1,
+			final IMinimizedEdge edge2) {
 		final DisjunctionEdge disjunction = new DisjunctionEdge(edge1, edge2);
 		final ArrayList<IMinimizedEdge> outgoingList = new ArrayList<IMinimizedEdge>();
 		outgoingList.add(disjunction);
@@ -264,8 +264,8 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 	 * @return the next node to visit, in our algorithm this is the target of
 	 *         edge 2
 	 */
-	protected MinimizedNode[] mergeSequential(IMinimizedEdge edge1,
-			IMinimizedEdge edge2) {
+	protected MinimizedNode[] mergeSequential(final IMinimizedEdge edge1,
+			final IMinimizedEdge edge2) {
 		ConjunctionEdge conjunction;
 		if (edge1 instanceof ShortcutErrEdge || edge2 instanceof ShortcutErrEdge) {
 			conjunction = new ShortcutErrEdge(edge1, edge2);
