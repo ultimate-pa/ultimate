@@ -632,8 +632,8 @@ public class TransFormulaUtils {
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final Validity check1 = mic.checkImplication(endPredicate, false, resultCompositionPredicate, false);
 		final Validity check2 = mic.checkImplication(resultCompositionPredicate, false, endPredicate, false);
-		assert check1 == Validity.VALID && check2 == Validity.VALID : "sequentialCompositionWithPendingCall - incorrect result";
-		return check1 == Validity.VALID && check2 == Validity.VALID;
+		assert check1 != Validity.INVALID && check2 != Validity.INVALID : "sequentialCompositionWithPendingCall - incorrect result";
+		return check1 != Validity.INVALID && check2 != Validity.INVALID;
 	}
 	
 
@@ -779,8 +779,8 @@ public class TransFormulaUtils {
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final Validity check1 = mic.checkImplication(afterReturnPredicate, false, resultCompositionPredicate, false);
 		final Validity check2 = mic.checkImplication(resultCompositionPredicate, false, afterReturnPredicate, false);
-		assert check1 == Validity.VALID && check2 == Validity.VALID : "sequentialCompositionWithCallAndReturn - incorrect result";
-		return check1 == Validity.VALID && check2 == Validity.VALID;
+		assert check1 != Validity.INVALID && check2 != Validity.INVALID : "sequentialCompositionWithCallAndReturn - incorrect result";
+		return check1 != Validity.INVALID && check2 != Validity.INVALID;
 	}
 
 
