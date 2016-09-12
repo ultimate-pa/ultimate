@@ -16,7 +16,7 @@ var a : [int] int;
 var i, j, x, y : int;
 
 procedure main() returns ()
-modifies a, b, x;
+modifies a, i, j, x;
 {
   havoc a;
   assume a[i] == 0;
