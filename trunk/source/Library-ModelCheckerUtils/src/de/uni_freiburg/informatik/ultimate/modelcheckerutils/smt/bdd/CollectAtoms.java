@@ -16,11 +16,7 @@ public class CollectAtoms extends NonRecursive{
 		
 	private List<Term> mAtoms;
 	
-	public CollectAtoms(){
-		super();
-	}
-	
-	public List<Term> getTerms(Term in){
+	public List<Term> getTerms(final Term in){
 		mAtoms = new ArrayList<>();
 		run(new CollectAtoms.AtomCollector(in));
 		return mAtoms;
@@ -28,12 +24,12 @@ public class CollectAtoms extends NonRecursive{
 	
 	private static class AtomCollector extends TermWalker {
 		
-		public AtomCollector(Term term) {
+		public AtomCollector(final Term term) {
 			super(term);
 		}
 
 		@Override
-		public void walk(NonRecursive walker, ConstantTerm term) {
+		public void walk(final NonRecursive walker, final ConstantTerm term) {
 			final CollectAtoms cnr = (CollectAtoms)walker;
 			if(!(cnr.mAtoms.contains(term))) {
 				cnr.mAtoms.add(term);
@@ -41,13 +37,13 @@ public class CollectAtoms extends NonRecursive{
 		}
 
 		@Override
-		public void walk(NonRecursive walker, AnnotatedTerm term) {
+		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
 			final CollectAtoms cnr = (CollectAtoms)walker;
 			walker.enqueueWalker(new AtomCollector(term.getSubterm()));
 		}
 
 		@Override
-		public void walk(NonRecursive walker, ApplicationTerm term) {
+		public void walk(final NonRecursive walker, final ApplicationTerm term) {
 			final CollectAtoms cnr = (CollectAtoms)walker;
 			final String fName = term.getFunction().getName();
 			if(fName.equals("and") || fName.equals("or") || fName.equals("xor") || fName.equals("not") || fName.equals("=>")){
@@ -67,7 +63,7 @@ public class CollectAtoms extends NonRecursive{
 		}
 
 		@Override
-		public void walk(NonRecursive walker, LetTerm term) {
+		public void walk(final NonRecursive walker, final LetTerm term) {
 			final CollectAtoms cnr = (CollectAtoms)walker;
 			if(!(cnr.mAtoms.contains(term))) {
 				cnr.mAtoms.add(term);
@@ -75,7 +71,7 @@ public class CollectAtoms extends NonRecursive{
 		}
 
 		@Override
-		public void walk(NonRecursive walker, QuantifiedFormula term) {
+		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
 			final CollectAtoms cnr = (CollectAtoms)walker;
 			if(!(cnr.mAtoms.contains(term))) {
 				cnr.mAtoms.add(term);
@@ -83,7 +79,7 @@ public class CollectAtoms extends NonRecursive{
 		}
 
 		@Override
-		public void walk(NonRecursive walker, TermVariable term) {
+		public void walk(final NonRecursive walker, final TermVariable term) {
 			final CollectAtoms cnr = (CollectAtoms)walker;
 			if(!(cnr.mAtoms.contains(term))) {
 				cnr.mAtoms.add(term);

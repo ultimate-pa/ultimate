@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -53,9 +53,6 @@ public class AbstractInterpretation implements IAnalysis {
 	private IUltimateServiceProvider mServices;
 	private List<IObserver> mObserver;
 
-	public AbstractInterpretation() {
-	}
-
 	@Override
 	public ModelType getOutputDefinition() {
 		return null;
@@ -77,7 +74,7 @@ public class AbstractInterpretation implements IAnalysis {
 	}
 
 	@Override
-	public void setInputDefinition(ModelType graphType) {
+	public void setInputDefinition(final ModelType graphType) {
 		final String creator = graphType.getCreator();
 		switch (creator) {
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
@@ -119,12 +116,12 @@ public class AbstractInterpretation implements IAnalysis {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage services) {
+	public void setToolchainStorage(final IToolchainStorage services) {
 		// not used
 	}
 
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
