@@ -21,7 +21,7 @@ public class AffineExpressionTest {
 	private Map<IBoogieType, Map<String, IBoogieVar>> mVarCache;
 
 	@Before
-	public void setup() {
+	public void setUp() {
 		mVarCache = new HashMap<IBoogieType, Map<String, IBoogieVar>>();
 		mVarCache.put(BoogieType.TYPE_INT, new HashMap<>());
 		mVarCache.put(BoogieType.TYPE_REAL, new HashMap<>());

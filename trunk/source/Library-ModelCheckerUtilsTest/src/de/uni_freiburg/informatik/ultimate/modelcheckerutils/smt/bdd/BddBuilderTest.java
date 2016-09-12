@@ -28,7 +28,7 @@ public class BddBuilderTest {
 	Sort bool;
 	
 	@Before
-	public void setUP(){
+	public void setUp(){
 		services = new UltimateServiceProviderMock();
 		script = new SMTInterpol();
 		final ManagedScript mgdScript = new ManagedScript(services, script);
