@@ -111,7 +111,7 @@ public class LassoRankerStarter {
 	private final ProgramPoint mHonda;
 	private final NestedWord<CodeBlock> mStem;
 	private final NestedWord<CodeBlock> mLoop;
-	private SmtManager mSmtManager;
+	private final SmtManager mSmtManager;
 	private final IUltimateServiceProvider mServices;
 	private final SimplicationTechnique mSimplificationTechnique = SimplicationTechnique.SIMPLIFY_DDA;
 	private final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;

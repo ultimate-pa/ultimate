@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE SpaceExParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -35,10 +35,10 @@ public class RealValuedParameter extends ParameterType {
 		ANY, CONST,
 	}
 
-	private Dynamics mDynamics;
-	private boolean mControlled;
+	private final Dynamics mDynamics;
+	private final boolean mControlled;
 
-	protected RealValuedParameter(ParamType realValuedParam) {
+	protected RealValuedParameter(final ParamType realValuedParam) {
 		super(ParamTypes.REAL, realValuedParam);
 
 		switch (realValuedParam.getDynamics()) {
@@ -53,11 +53,7 @@ public class RealValuedParameter extends ParameterType {
 			        + getName() + " is unknown.");
 		}
 
-		if (realValuedParam.isControlled()) {
-			mControlled = true;
-		} else {
-			mControlled = false;
-		}
+		mControlled = realValuedParam.isControlled();
 	}
 
 	protected Dynamics getDynamics() {
