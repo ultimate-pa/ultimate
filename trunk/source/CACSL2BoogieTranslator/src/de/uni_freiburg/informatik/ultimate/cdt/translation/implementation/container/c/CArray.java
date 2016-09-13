@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -56,7 +56,7 @@ public class CArray extends CType {
      */
     private final CType valueType;
 
-    private final boolean isOnHeap = false;;
+    private final boolean isOnHeap = false;
     
     /**
      * Constructor.
@@ -68,8 +68,8 @@ public class CArray extends CType {
      * @param cDeclSpec
      *            the C declaration used.
      */
-    public CArray(RValue[] dimensions,
-            CType valueType) {
+    public CArray(final RValue[] dimensions,
+            final CType valueType) {
         super(false, false, false, false); //FIXME: integrate those flags
         this.dimensions = dimensions;
         this.valueType = valueType;
@@ -93,7 +93,7 @@ public class CArray extends CType {
 //    /**
 //     * Generates and returns assert statements for an array access, checking the
 //     * indices to be smaller then the size of the declared array.
-//     * 
+//     *
 //     * @param loc
 //     *            the location of the access, annotated with Check.
 //     * @param accessedIndices
@@ -146,7 +146,7 @@ public class CArray extends CType {
         final StringBuilder id = new StringBuilder("ARRAY#");
         final StringBuilder dimString = new StringBuilder("_");
         for (final RValue rvalueDim : getDimensions()) {
-        	final Expression dim = rvalueDim.getValue(); 
+        	final Expression dim = rvalueDim.getValue();
             if (dim instanceof BinaryExpression ||
                     dim instanceof UnaryExpression) {
             	// 2015-11-08 Matthias: Use C representation or introduce a factory
@@ -197,7 +197,7 @@ public class CArray extends CType {
      * @param e arithmetic expression in the integers
      * @return expression of the resulting integer
      */
-    private IntegerLiteral getArithmeticResultAsIntegerLiteral(Expression e) {
+    private IntegerLiteral getArithmeticResultAsIntegerLiteral(final Expression e) {
         assert (e instanceof UnaryExpression || e instanceof BinaryExpression);
         return new IntegerLiteral(e.getLocation(),
                 Integer.toString(getArithmeticResultAsInteger(e)));
@@ -210,7 +210,7 @@ public class CArray extends CType {
      * @param e expression (unary or binary)
      * @return the result as an int
      */
-    private int getArithmeticResultAsInteger(Expression e) {
+    private int getArithmeticResultAsInteger(final Expression e) {
         if (e instanceof IntegerLiteral) {
             return Integer.parseInt(((IntegerLiteral)e).getValue());
         }
@@ -251,7 +251,7 @@ public class CArray extends CType {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (!(o instanceof CType)) {
             return false;
         }
@@ -276,7 +276,7 @@ public class CArray extends CType {
     }
 
 	@Override
-	public boolean isCompatibleWith(CType o) {
+	public boolean isCompatibleWith(final CType o) {
 		if (o instanceof CPrimitive &&
 				((CPrimitive) o).getType() == CPrimitives.VOID) {
 			return true;
