@@ -245,6 +245,7 @@ public class ToolchainManager {
 				final File input = entry.getKey();
 
 				// note that runParser has to happen before parser.getOutputDefinition() !
+				@SuppressWarnings("squid:S1941")
 				final IElement element = runParser(input, parser);
 				final ModelType t = parser.getOutputDefinition();
 				if (t == null) {
