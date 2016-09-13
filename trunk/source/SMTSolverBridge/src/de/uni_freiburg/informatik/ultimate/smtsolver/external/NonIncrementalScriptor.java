@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -66,15 +67,20 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.Se
 public class NonIncrementalScriptor extends NoopScript {
 
 	private static final String PRINT_SUCCESS = ":print-success";
+	
+	private final boolean mNewScriptAfterEachReset = false;
+	private int mNewScriptCounter = 0;
 	protected final LinkedList<ArrayList<ISmtCommand<?>>> mCommandStack;
 	
 	protected Executor mExecutor;
-	private final LBool mStatus = LBool.UNKNOWN;
+	private LBool mStatus = LBool.UNKNOWN;
 	
 	/**
 	 * For wrinting logs 
 	 */
-	private final PrintWriter mPw;
+	private PrintWriter mPw;
+	private final String mPathOfDumpedFakeNonIncrementalScript;
+	private final String mBasenameOfDumpedFakeNonIcrementalScript;
 
 	/**
 	 * Create a script connecting to an external SMT solver.
@@ -95,17 +101,35 @@ public class NonIncrementalScriptor extends NoopScript {
 			final String solverName, final boolean dumpFakeNonIncrementalScript, 
 			final String pathOfDumpedFakeNonIncrementalScript, final String basenameOfDumpedFakeNonIcrementalScript) throws IOException {
 		if (dumpFakeNonIncrementalScript) {
+			mPathOfDumpedFakeNonIncrementalScript = pathOfDumpedFakeNonIncrementalScript;
+			mBasenameOfDumpedFakeNonIcrementalScript = basenameOfDumpedFakeNonIcrementalScript;
 			final String fullFilename = pathOfDumpedFakeNonIncrementalScript + 
 					File.separator + basenameOfDumpedFakeNonIcrementalScript +
 					"_fakeNonIncremental.smt2";
-			mPw = new PrintWriter(
-					new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fullFilename))), true);
+			mPw = constructPrintWriter(fullFilename);
 		} else {
 			mPw = null;
+			mPathOfDumpedFakeNonIncrementalScript = null;
+			mBasenameOfDumpedFakeNonIcrementalScript = null;
 		}
 		mExecutor = new Executor(command, this, logger, services, storage, solverName);
 		mCommandStack = new LinkedList<>();
 		mCommandStack.push(new ArrayList<ISmtCommand<?>>());
+	}
+	
+	private String constructFullFilenameForNewScript() {
+		final String result = mPathOfDumpedFakeNonIncrementalScript + 
+				File.separator + mBasenameOfDumpedFakeNonIcrementalScript +
+				"_fakeNonIncremental_" +
+				mNewScriptCounter +
+				".smt2";
+		mNewScriptCounter++;
+		return result;
+	}
+	
+	private PrintWriter constructPrintWriter(final String filename) throws FileNotFoundException {
+		return new PrintWriter(new BufferedWriter(new OutputStreamWriter(
+				new FileOutputStream(filename))), true);
 	}
 	
 	protected void addToCurrentAssertionStack(final ISmtCommand<?> smtCommand) {
@@ -184,13 +208,25 @@ public class NonIncrementalScriptor extends NoopScript {
 	@Override
 	public LBool checkSat() throws SMTLIBException {
 		(new ResetCommand()).executeWithExecutor(mExecutor, mPw);
+		if (mNewScriptAfterEachReset) {
+			try {
+				mPw = constructPrintWriter(constructFullFilenameForNewScript());
+			} catch (final FileNotFoundException e) {
+				throw new AssertionError(e);
+			}
+		}
 		(new SetOptionCommand(PRINT_SUCCESS, true)).executeWithExecutor(mExecutor, mPw);
 		for (final ArrayList<ISmtCommand<?>> level : mCommandStack) {
 			for (final ISmtCommand<?> command : level) {
 				command.executeWithExecutor(mExecutor, mPw);
 			}
 		}
-		return (new SmtCommandUtils.CheckSatCommand()).executeWithExecutor(mExecutor, mPw);
+		mStatus = (new SmtCommandUtils.CheckSatCommand()).executeWithExecutor(mExecutor, mPw);
+		if (mPw != null) {
+			mPw.println("; response to preceding check-sat was " + mStatus + 
+					" when this script was constructed");
+		}
+		return mStatus;
 	}
 
 	@Override
@@ -260,12 +296,14 @@ public class NonIncrementalScriptor extends NoopScript {
 	@Override
 	public void reset() {
 		super.reset();
-		try {
-			mExecutor.reset();
-		} catch (final IOException e) {
-			// this should only happen if the solver executable is removed
-			// between creating executor and calling reset.
-			e.printStackTrace();
+		(new SmtCommandUtils.ResetCommand()).executeWithExecutor(mExecutor, mPw);
+		resetAssertionStack();
+		if (mNewScriptAfterEachReset) {
+			try {
+				mPw = constructPrintWriter(constructFullFilenameForNewScript());
+			} catch (final FileNotFoundException e) {
+				throw new AssertionError(e);
+			}
 		}
 	}
 
