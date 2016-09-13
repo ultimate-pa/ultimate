@@ -244,6 +244,8 @@ public class ToolchainManager {
 				final ISource parser = entry.getValue();
 				final File input = entry.getKey();
 
+				// note that runParser has to happen before parser.getOutputDefinition() !
+				final IElement element = runParser(input, parser);
 				final ModelType t = parser.getOutputDefinition();
 				if (t == null) {
 					final String errorMsg = parser.getPluginName() + " returned invalid output definition for file "
@@ -251,7 +253,7 @@ public class ToolchainManager {
 					mLogger.fatal(getLogPrefix() + ": " + errorMsg + ", aborting...");
 					throw new IllegalArgumentException(errorMsg);
 				}
-				addAST(runParser(input, parser), t);
+				addAST(element, t);
 			}
 		}
 
