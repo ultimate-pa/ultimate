@@ -322,7 +322,7 @@ final class ToolchainWalker implements IToolchainCancel {
 				// quit toolchain if all subchains
 				// have returned false
 				changes = changes || localchanges;
-				if (localchanges == false) {
+				if (!localchanges) {
 					break;
 				}
 			}

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple;
@@ -90,12 +90,12 @@ public class HoareTripleCheckerStatisticsGenerator implements IStatisticsDataPro
 		return (long) mBenchmark.getElapsedTime(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time), TimeUnit.NANOSECONDS);
 	}
 	public void continueEdgeCheckerTime() {
-		assert mRunning == false : "Timing already running";
+		assert !mRunning : "Timing already running";
 		mRunning = true;
 		mBenchmark.unpause(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time));
 	}
 	public void stopEdgeCheckerTime() {
-		assert mRunning == true : "Timing not running";
+		assert mRunning : "Timing not running";
 		mRunning = false;
 		mBenchmark.pause(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time));
 	}
@@ -104,7 +104,7 @@ public class HoareTripleCheckerStatisticsGenerator implements IStatisticsDataPro
 		return HoareTripleCheckerStatisticsType.getInstance().getKeys();
 	}
 	@Override
-	public Object getValue(String key) {
+	public Object getValue(final String key) {
 		final HoareTripleCheckerStatisticsDefinitions keyEnum = Enum.valueOf(HoareTripleCheckerStatisticsDefinitions.class, key);
 		switch (keyEnum) {
 		case SDtfs:
@@ -115,7 +115,7 @@ public class HoareTripleCheckerStatisticsGenerator implements IStatisticsDataPro
 			return mSDsCounter;
 		case SdLazy:
 			return mSdLazyCounter;
-		case SolverSat: 
+		case SolverSat:
 			return mSolverCounterSat;
 		case SolverUnsat:
 			return mSolverCounterUnsat;

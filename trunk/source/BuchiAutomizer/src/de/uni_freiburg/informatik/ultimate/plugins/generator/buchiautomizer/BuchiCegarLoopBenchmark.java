@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiAutomizer plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
@@ -96,7 +96,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 	}
 	
 	@Override
-	public Object aggregate(String key, Object value1, Object value2) {
+	public Object aggregate(final String key, final Object value1, final Object value2) {
 		switch (key) {
 		case s_Result:
 			final Result result1 = (Result) value1;
@@ -146,7 +146,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 	}
 
 	@Override
-	public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
+	public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
 		final StringBuilder sb = new StringBuilder();
 		
 		sb.append("BüchiAutomizer plugin needed ");
@@ -162,7 +162,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		sb.append(prettyprintNanoseconds(laTime));
 		sb.append(". ");
 		
-		final StatisticsData ecData = 
+		final StatisticsData ecData =
 				(StatisticsData) benchmarkData.getValue(CegarLoopStatisticsDefinitions.HoareTripleCheckerStatistics.toString());
 		Long ecTime;
 		if (ecData.getBenchmarkType() == null) {
@@ -230,7 +230,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		
 		sb.append(s_LassoAnalysisResults);
 		sb.append(": ");
-		final LassoAnalysisResults lar = 
+		final LassoAnalysisResults lar =
 				(LassoAnalysisResults) benchmarkData.getValue(s_LassoAnalysisResults);
 		sb.append(lar.toString());
 		
@@ -269,7 +269,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		return sb.toString();
 	}
 	
-	private String prettyPrintTerminationAnalysisBenchmark(List<TerminationAnalysisBenchmark> benchmarks) {
+	private String prettyPrintTerminationAnalysisBenchmark(final List<TerminationAnalysisBenchmark> benchmarks) {
 		if (benchmarks.size() == 0) {
 			return "not available";
 		}
@@ -308,22 +308,22 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 				allRows, new String[]{
 				TerminationAnalysisBenchmark.s_Label_ConstraintsSatisfiability,
 				TerminationAnalysisBenchmark.s_Label_Degree,
-				TerminationAnalysisBenchmark.s_Label_Time, 
-				TerminationAnalysisBenchmark.s_Label_VariablesStem, 
-				TerminationAnalysisBenchmark.s_Label_VariablesLoop, 
-				TerminationAnalysisBenchmark.s_Label_DisjunctsStem, 
-				TerminationAnalysisBenchmark.s_Label_DisjunctsLoop, 
-				TerminationAnalysisBenchmark.s_Label_SupportingInvariants, 
+				TerminationAnalysisBenchmark.s_Label_Time,
+				TerminationAnalysisBenchmark.s_Label_VariablesStem,
+				TerminationAnalysisBenchmark.s_Label_VariablesLoop,
+				TerminationAnalysisBenchmark.s_Label_DisjunctsStem,
+				TerminationAnalysisBenchmark.s_Label_DisjunctsLoop,
+				TerminationAnalysisBenchmark.s_Label_SupportingInvariants,
 				TerminationAnalysisBenchmark.s_Label_MotzkinApplications });
 		return numericColumns;
 	}
 	
-	private TerminationAnalysisBenchmark mostMotzkinButUnknownFirst(List<TerminationAnalysisBenchmark> benchmarks) {
+	private TerminationAnalysisBenchmark mostMotzkinButUnknownFirst(final List<TerminationAnalysisBenchmark> benchmarks) {
 		boolean foundUnknown = false;
 		int mostMotzkin = 0;
 		TerminationAnalysisBenchmark mostDifficult = null;
 		for (final TerminationAnalysisBenchmark benchmark : benchmarks) {
-			if (foundUnknown == false) {
+			if (!foundUnknown) {
 				if (benchmark.getConstraintsSatisfiability() == LBool.UNKNOWN) {
 					foundUnknown = true;
 					mostDifficult = benchmark;
@@ -355,7 +355,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		 */
 		public static final String s_StemFeasibleLoopInfeasible = "SFLI";
 		/**
-		 * Cases where the stem is feasible, (a single iteration of) the loop 
+		 * Cases where the stem is feasible, (a single iteration of) the loop
 		 * is feasible but the loop is terminating.
 		 */
 		public static final String s_StemFeasibleLoopTerminating = "SFLT";
@@ -422,7 +422,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		}
 		
 
-		public void increment(String key) {
+		public void increment(final String key) {
 			final int value = mMap.get(key);
 			mMap.put(key, value + 1);
 		}
@@ -447,7 +447,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		}
 
 		@Override
-		public Object getValue(String key) {
+		public Object getValue(final String key) {
 			return mMap.get(key);
 		}
 
@@ -457,12 +457,12 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		}
 
 		@Override
-		public Object aggregate(String key, Object value1, Object value2) {
+		public Object aggregate(final String key, final Object value1, final Object value2) {
 			throw new AssertionError("not yet implemented");
 		}
 
 		@Override
-		public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
+		public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
 			final LassoAnalysisResults lar = (LassoAnalysisResults) benchmarkData;
 			final StringBuilder sb = new StringBuilder();
 			for (final String key : lar.getKeys()) {

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Util Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util.statistics;
@@ -56,14 +56,14 @@ public abstract class StatisticsGeneratorWithStopwatches {
 
 	public void start(final String stopwatchName) {
 		assert mRunningStopwatches.containsKey(stopwatchName) : "no such stopwatch " + stopwatchName;
-		assert mRunningStopwatches.get(stopwatchName) == false : "already started " + stopwatchName;
+		assert !mRunningStopwatches.get(stopwatchName).booleanValue() : "already started " + stopwatchName;
 		mRunningStopwatches.put(stopwatchName, true);
 		mBenchmark.unpause(stopwatchName);
 	}
 
 	public void stop(final String stopwatchName) {
 		assert mRunningStopwatches.containsKey(stopwatchName) : "no such stopwatch " + stopwatchName;
-		assert mRunningStopwatches.get(stopwatchName) == true : "not running " + stopwatchName;
+		assert mRunningStopwatches.get(stopwatchName).booleanValue() : "not running " + stopwatchName;
 		mRunningStopwatches.put(stopwatchName, false);
 		mBenchmark.pause(stopwatchName);
 	}
@@ -71,13 +71,13 @@ public abstract class StatisticsGeneratorWithStopwatches {
 	/*
 	 * 2016-05-14 Matthias:
 	 * Marked as deprecated since this method has several problems.
-	 * - Method adds new stopwatch, but stopwatches should only be added at the 
+	 * - Method adds new stopwatch, but stopwatches should only be added at the
 	 * beginning.
 	 * - Method obfuscates the problem that the caller does not know which
 	 * of his clocks are currently running.
 	 */
 	@Deprecated
-	public void stopIfRunning(String name){
+	public void stopIfRunning(final String name){
 		mRunningStopwatches.put(name, false);
 		mBenchmark.pause(name);
 	}
@@ -113,7 +113,7 @@ public abstract class StatisticsGeneratorWithStopwatches {
 		return sb.toString();
 	}
 
-	public static String prettyprintNanoseconds(long time) {
+	public static String prettyprintNanoseconds(final long time) {
 		final long seconds = time / 1000000000;
 		final long tenthDigit = (time / 100000000) % 10;
 		return seconds + "." + tenthDigit + "s";
