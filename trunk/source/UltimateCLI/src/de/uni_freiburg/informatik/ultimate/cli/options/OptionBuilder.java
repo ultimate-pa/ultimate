@@ -268,36 +268,36 @@ public class OptionBuilder {
 		switch (item.getType()) {
 		case Boolean:
 			sb.append("This option can either be true or false. ");
-			addDefaultValue(item, sb);
 			break;
 		case Color:
 			sb.append("<arg> is a string representing a color. ");
 			sb.append("The string has to be of the form \"red,green,blue\", where 0 <= red,green,blue <= 255. ");
-			addDefaultValue(item, sb);
 			break;
 		case Directory:
-			sb.append("<arg> is a string representing an absolute path ");
-			sb.append("to a single directory on the local file system. ");
-			addDefaultValue(item, sb);
+			sb.append(
+					"<arg> is a string representing an absolute path to a single directory on the local file system. ");
 			break;
 		case File:
 			sb.append("<arg> is a string representing an absolute path on the local file system to a single file. ");
-			addDefaultValue(item, sb);
 			break;
 		case Path:
 			sb.append("<arg> is a string representing one or multiple paths to a file or directory on the system. ");
 			sb.append("If multiple paths are specified by the user, they are separated by a semicolon. ");
-			addDefaultValue(item, sb);
 			break;
 		case Integer:
 			sb.append("<arg> is a string representing an integer. ");
-			addDefaultValue(item, sb);
 			break;
 		case MultilineString:
 		case String:
 			sb.append("<arg> is a single line of text. ");
-			addDefaultValue(item, sb);
 			break;
+		case Radio:
+		case Combo:
+			sb.append("<arg> is a pre-defined value. ");
+			break;
+		case Label:
+		case SubItemContainer:
+			return sb.toString();
 		default:
 			break;
 		}
@@ -313,6 +313,9 @@ public class OptionBuilder {
 			sb.delete(sb.length() - 2, sb.length());
 			sb.append(".");
 		}
+		
+		addDefaultValue(item, sb);
+		
 		return sb.toString();
 	}
 
