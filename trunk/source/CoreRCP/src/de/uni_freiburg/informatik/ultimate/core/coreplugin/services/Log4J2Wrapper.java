@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin.services;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.spi.ExtendedLogger;
+import org.apache.logging.log4j.spi.ExtendedLoggerWrapper;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -37,10 +39,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class Log4J2Wrapper implements ILogger {
 
-	private final Logger mLogger;
+	private static final String FQCN = Log4J2Wrapper.class.getName();
+	private final ExtendedLoggerWrapper mLogger;
 
 	public Log4J2Wrapper(final Logger logger) {
-		mLogger = logger;
+		mLogger = new ExtendedLoggerWrapper((ExtendedLogger) logger, logger.getName(), logger.getMessageFactory());
+
 	}
 
 	Logger getBacking() {
@@ -49,17 +53,17 @@ public class Log4J2Wrapper implements ILogger {
 
 	@Override
 	public boolean isFatalEnabled() {
-		return Level.FATAL.isMoreSpecificThan(mLogger.getLevel());
+		return Level.FATAL.isLessSpecificThan(mLogger.getLevel());
 	}
 
 	@Override
 	public boolean isErrorEnabled() {
-		return Level.ERROR.isMoreSpecificThan(mLogger.getLevel());
+		return Level.ERROR.isLessSpecificThan(mLogger.getLevel());
 	}
 
 	@Override
 	public boolean isWarnEnabled() {
-		return Level.WARN.isMoreSpecificThan(mLogger.getLevel());
+		return Level.WARN.isLessSpecificThan(mLogger.getLevel());
 	}
 
 	@Override
@@ -74,37 +78,37 @@ public class Log4J2Wrapper implements ILogger {
 
 	@Override
 	public void fatal(final Object msg, final Throwable t) {
-		mLogger.log(Level.FATAL, msg, t);
+		mLogger.logIfEnabled(FQCN, Level.FATAL, null, msg, t);
 	}
 
 	@Override
 	public void fatal(final Object msg) {
-		mLogger.log(Level.FATAL, msg);
+		mLogger.logIfEnabled(FQCN, Level.FATAL, null, msg, null);
 	}
 
 	@Override
 	public void error(final Object msg, final Throwable t) {
-		mLogger.log(Level.ERROR, msg, t);
+		mLogger.logIfEnabled(FQCN, Level.ERROR, null, msg, t);
 	}
 
 	@Override
 	public void error(final Object msg) {
-		mLogger.log(Level.ERROR, msg);
+		mLogger.logIfEnabled(FQCN, Level.ERROR, null, msg, null);
 	}
 
 	@Override
 	public void warn(final Object msg) {
-		mLogger.log(Level.WARN, msg);
+		mLogger.logIfEnabled(FQCN, Level.WARN, null, msg, null);
 	}
 
 	@Override
 	public void info(final Object msg) {
-		mLogger.log(Level.INFO, msg);
+		mLogger.logIfEnabled(FQCN, Level.INFO, null, msg, null);
 	}
 
 	@Override
 	public void debug(final Object msg) {
-		mLogger.log(Level.DEBUG, msg);
+		mLogger.logIfEnabled(FQCN, Level.DEBUG, null, msg, null);
 	}
 
 	@Override
