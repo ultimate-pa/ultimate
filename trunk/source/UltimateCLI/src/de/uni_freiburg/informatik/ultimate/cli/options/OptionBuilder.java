@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class OptionBuilder {
-	
+
 	private static final int MAX_NAME_LENGTH = 160;
 	private static final int MIN_WIDTH = 80;
 
@@ -102,6 +102,14 @@ public class OptionBuilder {
 		return rtr;
 	}
 
+	/**
+	 * Return a {@link Options} instance containing only Ultimate options (no RCP options that should never be seen by
+	 * the user).
+	 *
+	 * @param pluginNameFilter
+	 *            A filter which can be used to remove Ultimate options from the set.
+	 * @return A {@link Options} instance.
+	 */
 	public Options getHelpOptions(final Predicate<String> pluginNameFilter) {
 		final Options rtr = new Options();
 
@@ -313,9 +321,9 @@ public class OptionBuilder {
 			sb.delete(sb.length() - 2, sb.length());
 			sb.append(".");
 		}
-		
+
 		addDefaultValue(item, sb);
-		
+
 		return sb.toString();
 	}
 

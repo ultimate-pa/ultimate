@@ -82,6 +82,10 @@ public final class CommandLineParser {
 		return new CommandLineParser(core, a -> false, false, false);
 	}
 
+	public static CommandLineParser createCompleteNoReqsParser(final ICore<RunDefinition> core) {
+		return new CommandLineParser(core, a -> true, false, false);
+	}
+
 	public static CommandLineParser createCompleteParser(final ICore<RunDefinition> core,
 			final Predicate<String> pluginNameFilter) {
 		return new CommandLineParser(core, pluginNameFilter, true, false);

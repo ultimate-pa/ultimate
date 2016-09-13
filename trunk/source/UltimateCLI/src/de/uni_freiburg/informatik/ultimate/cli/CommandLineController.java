@@ -90,14 +90,16 @@ public class CommandLineController implements IController<RunDefinition> {
 		final String[] args = Platform.getCommandLineArgs();
 
 		// first, parse to see if toolchain is specified.
-		final CommandLineParser toolchainStageParser = CommandLineParser.createCliOnlyParser(core);
+		// the preparser has to accept all options, but may not require any
+		final CommandLineParser onlyCliHelpParser = CommandLineParser.createCliOnlyParser(core);
+		final CommandLineParser toolchainStageParser = CommandLineParser.createCompleteNoReqsParser(core);
 		ParsedParameter toolchainStageParams;
 		try {
 			toolchainStageParams = toolchainStageParser.parse(args);
 
 		} catch (final ParseException pex) {
 			printParseException(args, pex);
-			toolchainStageParser.printHelp();
+			onlyCliHelpParser.printHelp();
 			return -1;
 		}
 
@@ -110,11 +112,11 @@ public class CommandLineController implements IController<RunDefinition> {
 
 		if (!toolchainStageParams.hasToolchain()) {
 			if (toolchainStageParams.isHelpRequested()) {
-				printHelp(toolchainStageParser, toolchainStageParams);
+				printHelp(onlyCliHelpParser, toolchainStageParams);
 				return IApplication.EXIT_OK;
 			}
 			mLogger.info("Missing required option: " + CommandLineOptions.OPTION_NAME_TOOLCHAIN);
-			printHelp(toolchainStageParser, toolchainStageParams);
+			printHelp(onlyCliHelpParser, toolchainStageParams);
 			printAvailableToolchains(core);
 			return IApplication.EXIT_OK;
 		}
