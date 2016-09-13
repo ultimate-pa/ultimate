@@ -29,6 +29,8 @@
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -43,19 +45,25 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.AssertCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.DeclareFunCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.DeclareSortCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.DefineFunCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.DefineSortCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.ISmtCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.ResetCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.SetInfoCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.SetLogicCommand;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.SetOptionCommand;
 
 /**
- * Create a script that connects to an external SMT solver. The solver must be SMTLIB-2 compliant and expect commands on
- * standard input. It must return its output on standard output.
- * 
- * Some commands are only partially supported. For example getProof does not return a useful proof object. Also
- * commands, for which the output format is not fully specified, e.g. (get-model), may not return useful return values.
- * 
- * @author Oday Jubran
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class Scriptor extends NoopScript {
+public class NonIncrementalScriptor extends NoopScript {
 
+	private static final String PRINT_SUCCESS = ":print-success";
+	protected final LinkedList<ArrayList<ISmtCommand>> mCommandStack;
+	
 	protected Executor mExecutor;
 	private LBool mStatus = LBool.UNKNOWN;
 
@@ -70,88 +78,104 @@ public class Scriptor extends NoopScript {
 	 * @throws IOExceptionO
 	 *             If the solver is not installed
 	 */
-	public Scriptor(final String command, final ILogger logger, final IUltimateServiceProvider services, final IToolchainStorage storage,
+	public NonIncrementalScriptor(final String command, final ILogger logger, final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final String solverName) throws IOException {
 		mExecutor = new Executor(command, this, logger, services, storage, solverName);
-		super.setOption(":print-success", true);
+		mCommandStack = new LinkedList<>();
+		mCommandStack.push(new ArrayList<ISmtCommand>());
+	}
+	
+	protected void addToCurrentAssertionStack(final ISmtCommand smtCommand) {
+		mCommandStack.getLast().add(smtCommand);
+	}
+	
+	private void resetAssertionStack() {
+		mCommandStack.clear();
+		mCommandStack.add(new ArrayList<>());
 	}
 
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
 		super.setLogic(logic);
-		mExecutor.input(SmtCommandUtils.SetLogicCommand.buildString(logic.name()));
-		mExecutor.parseSuccess();
+		addToCurrentAssertionStack(new SetLogicCommand(logic.name()));
 	}
 
 	@Override
 	public void setOption(final String opt, final Object value) throws UnsupportedOperationException, SMTLIBException {
-		if (!opt.equals(":print-success")) {
-			mExecutor.input(SmtCommandUtils.SetOptionCommand.buildString(opt, value));
-			mExecutor.parseSuccess();
+		if (!opt.equals(PRINT_SUCCESS)) {
+			addToCurrentAssertionStack(new SetOptionCommand(opt, value));
 		}
 	}
 
 	@Override
 	public void setInfo(final String info, final Object value) {
-		mExecutor.input(SmtCommandUtils.SetInfoCommand.buildString(info, value));
-		mExecutor.parseSuccess();
+		addToCurrentAssertionStack(new SetInfoCommand(info, value));
 	}
 
 	@Override
 	public void declareSort(final String sort, final int arity) throws SMTLIBException {
 		super.declareSort(sort, arity);
-		mExecutor.input(SmtCommandUtils.DeclareSortCommand.buildString(sort, arity));
-		mExecutor.parseSuccess();
+		addToCurrentAssertionStack(new DeclareSortCommand(sort, arity));
 	}
 
 	@Override
 	public void defineSort(final String sort, final Sort[] sortParams, final Sort definition) throws SMTLIBException {
 		super.defineSort(sort, sortParams, definition);
-		mExecutor.input(SmtCommandUtils.DefineSortCommand.buildString(sort, sortParams, definition));
-		mExecutor.parseSuccess();
+		addToCurrentAssertionStack(new DefineSortCommand(sort, sortParams, definition));
 	}
 
 	@Override
 	public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort) throws SMTLIBException {
 		super.declareFun(fun, paramSorts, resultSort);
-
-		mExecutor.input(SmtCommandUtils.DeclareFunCommand.buildString(fun, paramSorts, resultSort));
-		mExecutor.parseSuccess();
+		addToCurrentAssertionStack(new DeclareFunCommand(fun, paramSorts, resultSort));
 	}
 
 	@Override
 	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition) throws SMTLIBException {
 		super.defineFun(fun, params, resultSort, definition);
-		mExecutor.input(SmtCommandUtils.DefineFunCommand.buildString(fun, params, resultSort, definition));
-		mExecutor.parseSuccess();
+		addToCurrentAssertionStack(new DefineFunCommand(fun, params, resultSort, definition));
 	}
 
 	@Override
 	public void push(final int levels) throws SMTLIBException {
 		super.push(levels);
-		mExecutor.input("(push " + levels + ")");
-		mExecutor.parseSuccess();
+		for (int i = 0; i < levels; i++) {
+			mCommandStack.add(new ArrayList<ISmtCommand>());
+		}
 	}
 
 	@Override
 	public void pop(final int levels) throws SMTLIBException {
 		super.pop(levels);
-		mExecutor.input("(pop " + levels + ")");
-		mExecutor.parseSuccess();
+		for (int i = 0; i < levels; i++) {
+			mCommandStack.removeLast();
+		}
 	}
 
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
-		mExecutor.input(SmtCommandUtils.AssertCommand.buildString(term));
-		mExecutor.parseSuccess();
+		addToCurrentAssertionStack(new AssertCommand(term)); 
 		return LBool.UNKNOWN;
 	}
 
 	@Override
 	public LBool checkSat() throws SMTLIBException {
+		executeCommandWithoutReturnValue(new ResetCommand());
+		executeCommandWithoutReturnValue(new SetOptionCommand(PRINT_SUCCESS, true));
+		for (final ArrayList<ISmtCommand> level : mCommandStack) {
+			for (final ISmtCommand command : level) {
+				executeCommandWithoutReturnValue(command);
+				
+			}
+		}
 		mExecutor.input("(check-sat)");
 		mStatus = mExecutor.parseCheckSatResult();
 		return mStatus;
+	}
+
+	private void executeCommandWithoutReturnValue(final ISmtCommand command) {
+		mExecutor.input(command.toString());
+		mExecutor.parseSuccess();
 	}
 
 	@Override
