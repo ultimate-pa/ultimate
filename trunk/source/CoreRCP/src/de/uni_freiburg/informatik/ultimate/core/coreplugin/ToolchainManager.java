@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverit
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
@@ -258,6 +260,7 @@ public class ToolchainManager {
 			mLogger.info("####################### " + getLogPrefix() + " #######################");
 			final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 			final boolean useBenchmark = ups.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
+			final IUltimateServiceProvider currentToolchainServices = mToolchainData.getServices();
 			Benchmark bench = null;
 			if (useBenchmark) {
 				bench = new Benchmark();
@@ -270,13 +273,14 @@ public class ToolchainManager {
 					throw new IllegalStateException("There is no model present.");
 				}
 
+				final Collection<ISource> parsers = mParsers.values();
 				final CompleteToolchainData data = mToolchainWalker.new CompleteToolchainData(mToolchainData,
-						mParsers.values().toArray(new ISource[0]), mCurrentController);
+						parsers.toArray(new ISource[parsers.size()]), mCurrentController);
 
-				mToolchainWalker.walk(data, mToolchainData.getServices().getProgressMonitorService(), monitor);
+				mToolchainWalker.walk(data, currentToolchainServices.getProgressMonitorService(), monitor);
 
 			} finally {
-				final IResultService resultService = mToolchainData.getServices().getResultService();
+				final IResultService resultService = currentToolchainServices.getResultService();
 				if (VMUtils.areAssertionsEnabled()) {
 					resultService.reportResult(Activator.PLUGIN_ID, new GenericResult(Activator.PLUGIN_ID,
 							"Assertions are enabled", "Assertions are enabled", Severity.INFO));
@@ -296,9 +300,9 @@ public class ToolchainManager {
 				mLogger.info("#######################  End " + getLogPrefix() + " #######################");
 				// TODO: Move all result logging to the different controllers
 				final boolean appendCompleteLongDescription =
-						CorePreferenceInitializer.getPreferenceProvider(mToolchainData.getServices())
+						CorePreferenceInitializer.getPreferenceProvider(currentToolchainServices)
 								.getBoolean(CorePreferenceInitializer.LABEL_LONG_RESULT);
-				final ILogger controllerLogger = mToolchainData.getServices().getLoggingService().getControllerLogger();
+				final ILogger controllerLogger = currentToolchainServices.getLoggingService().getControllerLogger();
 				ResultUtil.logResults(controllerLogger, resultService, appendCompleteLongDescription);
 				mCurrentController.displayToolchainResults(mToolchainData, resultService.getResults());
 				mModelManager.removeAll();
