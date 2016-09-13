@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
-import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -168,7 +167,7 @@ public class Scriptor extends NoopScript {
 
 	@Override
 	public Term[] getUnsatCore() throws SMTLIBException, UnsupportedOperationException {
-		mExecutor.input("(get-unsat-core)");
+		mExecutor.input(SmtCommandUtils.GetUnsatCoreCommand.buildString());
 		return mExecutor.parseGetUnsatCoreResult();
 	}
 
@@ -181,17 +180,7 @@ public class Scriptor extends NoopScript {
 				throw new UnsupportedOperationException();
 			}
 		}
-		final StringBuilder command = new StringBuilder();
-		final PrintTerm pt = new PrintTerm();
-		command.append("(get-value (");
-		String sep = "";
-		for (final Term t : terms) {
-			command.append(sep);
-			pt.append(command, t);
-			sep = " ";
-		}
-		command.append("))");
-		mExecutor.input(command.toString());
+		mExecutor.input(SmtCommandUtils.GetValueCommand.buildString(terms));
 		return mExecutor.parseGetValueResult();
 	}
 

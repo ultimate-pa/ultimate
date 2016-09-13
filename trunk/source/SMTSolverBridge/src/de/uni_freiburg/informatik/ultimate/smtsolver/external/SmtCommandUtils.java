@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -35,9 +37,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class SmtCommandUtils {
 	
-	public interface ISmtCommand {
+	public interface ISmtCommand<RT> {
 		
-		public abstract void execute(Script script);
+		public abstract RT execute(Script script);
 		/**
 		 * 
 		 * @return the representation of the command that can be passed to
@@ -48,7 +50,7 @@ public class SmtCommandUtils {
 	}
 	
 	
-	public static class SetLogicCommand implements ISmtCommand {
+	public static class SetLogicCommand implements ISmtCommand<Void> {
 		private final String mLogic;
 		public SetLogicCommand(final String logic) {
 			mLogic = logic;
@@ -58,8 +60,9 @@ public class SmtCommandUtils {
 			return "(set-logic " + logic + ")";
 		}
 		@Override
-		public void execute(final Script script) {
+		public Void execute(final Script script) {
 			script.setLogic(mLogic);
+			return null;
 		}
 		@Override
 		public String toString() {
@@ -67,7 +70,7 @@ public class SmtCommandUtils {
 		}
 	}
 	
-	public static class SetOptionCommand implements ISmtCommand {
+	public static class SetOptionCommand implements ISmtCommand<Void> {
 		private final String mOpt;
 		private final Object mValue;
 		
@@ -97,8 +100,9 @@ public class SmtCommandUtils {
 		}
 
 		@Override
-		public void execute(final Script script) {
+		public Void execute(final Script script) {
 			script.setOption(mOpt, mValue);
+			return null;
 		}
 		
 		@Override
@@ -107,7 +111,7 @@ public class SmtCommandUtils {
 		}
 	}
 
-	public static class SetInfoCommand implements ISmtCommand {
+	public static class SetInfoCommand implements ISmtCommand<Void> {
 		private final String mInfo;
 		private final Object mValue;
 		
@@ -129,8 +133,9 @@ public class SmtCommandUtils {
 		}
 
 		@Override
-		public void execute(final Script script) {
+		public Void execute(final Script script) {
 			script.setInfo(mInfo, mValue);
+			return null;
 		}
 		
 		@Override
@@ -139,7 +144,7 @@ public class SmtCommandUtils {
 		}
 	}
 
-	public static class DeclareSortCommand implements ISmtCommand {
+	public static class DeclareSortCommand implements ISmtCommand<Void> {
 		private final String mSort;
 		private final int mArity;
 		
@@ -157,8 +162,9 @@ public class SmtCommandUtils {
 		}
 
 		@Override
-		public void execute(final Script script) {
+		public Void execute(final Script script) {
 			script.declareSort(mSort, mArity);
+			return null;
 		}
 		
 		@Override
@@ -167,7 +173,7 @@ public class SmtCommandUtils {
 		}
 	}
 
-	public static class DefineSortCommand implements ISmtCommand {
+	public static class DefineSortCommand implements ISmtCommand<Void> {
 		private final String mSort;
 		private final Sort[] mSortParams; 
 		private final Sort mDefinition;
@@ -198,8 +204,9 @@ public class SmtCommandUtils {
 		}
 		
 		@Override
-		public void execute(final Script script) {
+		public Void execute(final Script script) {
 			script.defineSort(mSort, mSortParams, mDefinition);
+			return null;
 		}
 		@Override
 		public String toString() {
@@ -208,7 +215,7 @@ public class SmtCommandUtils {
 		
 	}
 
-	public static class DeclareFunCommand implements ISmtCommand {
+	public static class DeclareFunCommand implements ISmtCommand<Void> {
 		final String mFun;
 		final Sort[] mParamSorts; 
 		final Sort mResultSort;
@@ -238,8 +245,9 @@ public class SmtCommandUtils {
 		}
 
 		@Override
-		public void execute(final Script script) {
+		public Void execute(final Script script) {
 			script.declareFun(mFun, mParamSorts, mResultSort);
+			return null;
 		}
 
 		@Override
@@ -250,7 +258,7 @@ public class SmtCommandUtils {
 
 	}
 
-	public static class DefineFunCommand implements ISmtCommand {
+	public static class DefineFunCommand implements ISmtCommand<Void> {
 		final String mFun; 
 		final TermVariable[] mParams; 
 		final Sort mResultSort; 
@@ -284,8 +292,9 @@ public class SmtCommandUtils {
 			return sb.toString();
 		}
 		@Override
-		public void execute(final Script script) {
+		public Void execute(final Script script) {
 			script.defineFun(mFun, mParams, mResultSort, mDefinition);
+			return null;
 		}
 
 		@Override
@@ -295,7 +304,7 @@ public class SmtCommandUtils {
 
 	}
 
-	public static class AssertCommand implements ISmtCommand {
+	public static class AssertCommand implements ISmtCommand<Void> {
 		private final Term mTerm;
 
 		public AssertCommand(final Term term) {
@@ -308,8 +317,9 @@ public class SmtCommandUtils {
 		}
 
 		@Override
-		public void execute(final Script script) {
+		public Void execute(final Script script) {
 			script.assertTerm(mTerm);
+			return null;
 		}
 
 		@Override
@@ -318,7 +328,7 @@ public class SmtCommandUtils {
 		}
 	}
 
-	public static class ResetCommand implements ISmtCommand {
+	public static class ResetCommand implements ISmtCommand<Void> {
 
 		public ResetCommand() {
 			super();
@@ -329,8 +339,9 @@ public class SmtCommandUtils {
 		}
 
 		@Override
-		public void execute(final Script script) {
-			script.reset();;
+		public Void execute(final Script script) {
+			script.reset();
+			return null;
 		}
 		@Override
 		public String toString() {
@@ -338,15 +349,16 @@ public class SmtCommandUtils {
 		}
 	}
 
-	public static class EchoCommand implements ISmtCommand {
+	public static class EchoCommand implements ISmtCommand<Void> {
 		final QuotedObject mMsg;
 		public EchoCommand(final QuotedObject msg) {
 			super();
 			mMsg = msg;
 		}
 		@Override
-		public void execute(final Script script) {
+		public Void execute(final Script script) {
 			script.echo(mMsg);
+			return null;
 		}
 		public static String buildString(final QuotedObject msg) {
 			return "(echo " + msg + ")";
@@ -356,7 +368,60 @@ public class SmtCommandUtils {
 		public String toString() {
 			return buildString(mMsg);
 		}
-
 	}
+	
+	public static class GetUnsatCoreCommand implements ISmtCommand<Term[]> {
+
+		public GetUnsatCoreCommand() {
+			super();
+		}
+
+		public static String buildString() {
+			return "(get-unsat-core)";
+		}
+
+		@Override
+		public Term[] execute(final Script script) {
+			return script.getUnsatCore();
+		}
+		@Override
+		public String toString() {
+			return buildString();
+		}
+	}
+	
+	public static class GetValueCommand implements ISmtCommand<Map<Term, Term>> {
+		final Term[] mTerms;
+
+		public GetValueCommand(final Term[] terms) {
+			super();
+			mTerms = terms;
+		}
+
+		public static String buildString(final Term[] terms) {
+			final StringBuilder command = new StringBuilder();
+			final PrintTerm pt = new PrintTerm();
+			command.append("(get-value (");
+			String sep = "";
+			for (final Term t : terms) {
+				command.append(sep);
+				pt.append(command, t);
+				sep = " ";
+			}
+			command.append("))");
+			return command.toString();
+		}
+
+		@Override
+		public Map<Term, Term> execute(final Script script) {
+			return script.getValue(mTerms);
+		}
+		@Override
+		public String toString() {
+			return buildString(mTerms);
+		}
+	}
+	
+	
 	
 }
