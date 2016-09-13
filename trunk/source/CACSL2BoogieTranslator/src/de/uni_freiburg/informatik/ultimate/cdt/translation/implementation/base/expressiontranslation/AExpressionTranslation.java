@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
@@ -85,8 +85,8 @@ public abstract class AExpressionTranslation {
 	protected final boolean mOverapproximateFloatingPointOperations;
 
 
-	public AExpressionTranslation(final TypeSizes typeSizes, final ITypeHandler typeHandler, 
-			final PointerIntegerConversion pointerIntegerConversion, 
+	public AExpressionTranslation(final TypeSizes typeSizes, final ITypeHandler typeHandler,
+			final PointerIntegerConversion pointerIntegerConversion,
 			final boolean overapproximateFloatingPointOperations) {
 		super();
 		mOverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
@@ -201,7 +201,7 @@ public abstract class AExpressionTranslation {
 		return constructBinaryEqualityExpressionInteger(loc, nodeOperator, exp1, type1, exp2, type2);
 	}
 	
-	public abstract Expression constructBinaryEqualityExpressionFloating(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2);	
+	public abstract Expression constructBinaryEqualityExpressionFloating(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2);
 	public abstract Expression constructBinaryEqualityExpressionInteger(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2);
 	
 	public abstract RValue translateIntegerLiteral(ILocation loc, String val);
@@ -233,7 +233,7 @@ public abstract class AExpressionTranslation {
 				return typeLeft;
 			} else {
 				return typeRight;
-			}			
+			}
 		} else {
 			CPrimitive unsignedType;
 			CPrimitive signedType;
@@ -255,7 +255,7 @@ public abstract class AExpressionTranslation {
 	}
 	
 	/**
-	 * Apply usual arithmetic conversion according to 6.3.1.8 of the C11 
+	 * Apply usual arithmetic conversion according to 6.3.1.8 of the C11
 	 * standard.
 	 * Therefore we determine the determine the CType of the result.
 	 * Afterwards we convert both operands to the result CType.
@@ -265,12 +265,12 @@ public abstract class AExpressionTranslation {
 	 * complex double not to a (real double).
 	 * Fixing this will be postponed until we want to support complex types.
 	 */
-	public void usualArithmeticConversions(final ILocation loc, 
+	public void usualArithmeticConversions(final ILocation loc,
 			final ExpressionResult leftRex, final ExpressionResult rightRex) {
-		final CPrimitive leftPrimitive = (CPrimitive) 
-				CEnum.replaceEnumWithInt(leftRex.lrVal.getCType()); 
-		final CPrimitive rightPrimitive = (CPrimitive) 
-				CEnum.replaceEnumWithInt(leftRex.lrVal.getCType()); 
+		final CPrimitive leftPrimitive = (CPrimitive)
+				CEnum.replaceEnumWithInt(leftRex.lrVal.getCType());
+		final CPrimitive rightPrimitive = (CPrimitive)
+				CEnum.replaceEnumWithInt(leftRex.lrVal.getCType());
 		if (leftPrimitive.isIntegerType()) {
 			doIntegerPromotion(loc, leftRex);
 		}
@@ -279,17 +279,17 @@ public abstract class AExpressionTranslation {
 		}
 
 		final CPrimitive resultType = determineResultOfUsualArithmeticConversions(
-				(CPrimitive) leftRex.lrVal.getCType(), 
+				(CPrimitive) leftRex.lrVal.getCType(),
 				(CPrimitive) rightRex.lrVal.getCType());
 
 		convertIfNecessary(loc, leftRex, resultType);
 		convertIfNecessary(loc, rightRex, resultType);
 		
 		if (!leftRex.lrVal.getCType().equals(resultType)) {
-			throw new AssertionError("conversion failed"); 
+			throw new AssertionError("conversion failed");
 		}
 		if (!rightRex.lrVal.getCType().equals(resultType)) {
-			throw new AssertionError("conversion failed"); 
+			throw new AssertionError("conversion failed");
 		}
 	}
 
@@ -329,22 +329,22 @@ public abstract class AExpressionTranslation {
 			final CPrimitive leftPrimitive, final CPrimitive rightPrimitive) {
 		if (leftPrimitive.getGeneralType() == CPrimitiveCategory.FLOATTYPE
 				|| rightPrimitive.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
-			if (leftPrimitive.getType() == CPrimitives.COMPLEX_LONGDOUBLE 
+			if (leftPrimitive.getType() == CPrimitives.COMPLEX_LONGDOUBLE
 					|| rightPrimitive.getType() == CPrimitives.COMPLEX_LONGDOUBLE) {
 				throw new UnsupportedOperationException("complex types not yet supported");
-			} else if (leftPrimitive.getType() == CPrimitives.COMPLEX_DOUBLE 
+			} else if (leftPrimitive.getType() == CPrimitives.COMPLEX_DOUBLE
 					|| rightPrimitive.getType() == CPrimitives.COMPLEX_DOUBLE) {
 				throw new UnsupportedOperationException("complex types not yet supported");
-			} else if (leftPrimitive.getType() == CPrimitives.COMPLEX_FLOAT 
+			} else if (leftPrimitive.getType() == CPrimitives.COMPLEX_FLOAT
 					|| rightPrimitive.getType() == CPrimitives.COMPLEX_FLOAT) {
 				throw new UnsupportedOperationException("complex types not yet supported");
-			} else if (leftPrimitive.getType() == CPrimitives.LONGDOUBLE 
+			} else if (leftPrimitive.getType() == CPrimitives.LONGDOUBLE
 					|| rightPrimitive.getType() == CPrimitives.LONGDOUBLE) {
 				return new CPrimitive(CPrimitives.LONGDOUBLE);
-			} else if (leftPrimitive.getType() == CPrimitives.DOUBLE 
+			} else if (leftPrimitive.getType() == CPrimitives.DOUBLE
 					|| rightPrimitive.getType() == CPrimitives.DOUBLE) {
 				return new CPrimitive(CPrimitives.DOUBLE);
-			} else if (leftPrimitive.getType() == CPrimitives.FLOAT 
+			} else if (leftPrimitive.getType() == CPrimitives.FLOAT
 					|| rightPrimitive.getType() == CPrimitives.FLOAT) {
 				return new CPrimitive(CPrimitives.FLOAT);
 			} else {
@@ -354,9 +354,9 @@ public abstract class AExpressionTranslation {
 				&& rightPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE) {
 			return determineResultOfUsualArithmeticConversions_Integer(leftPrimitive, rightPrimitive);
 		} else {
-			throw new AssertionError("unsupported combination of CPrimitives: " 
+			throw new AssertionError("unsupported combination of CPrimitives: "
 					+ leftPrimitive + " and " + rightPrimitive);
-		} 
+		}
 	}
 
 	/**
@@ -389,18 +389,14 @@ public abstract class AExpressionTranslation {
 	}
 	
 	private boolean integerPromotionNeeded(final CPrimitive cPrimitive) {
-		if (cPrimitive.getType().equals(CPrimitive.CPrimitives.CHAR) || 
+		return (cPrimitive.getType().equals(CPrimitive.CPrimitives.CHAR) ||
 //			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR16) ||
-//			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR32) || 
+//			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR32) ||
 			cPrimitive.getType().equals(CPrimitive.CPrimitives.SCHAR) ||
-			cPrimitive.getType().equals(CPrimitive.CPrimitives.SHORT) || 
+			cPrimitive.getType().equals(CPrimitive.CPrimitives.SHORT) ||
 			cPrimitive.getType().equals(CPrimitive.CPrimitives.UCHAR) ||
-//			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.WCHAR) || 
-			cPrimitive.getType().equals(CPrimitive.CPrimitives.USHORT)) {
-			return true;
-		} else {
-			return false;
-		}
+//			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.WCHAR) ||
+			cPrimitive.getType().equals(CPrimitive.CPrimitives.USHORT));
 	}
 	
 	/**
@@ -540,7 +536,7 @@ public abstract class AExpressionTranslation {
 	
 	/**
 	 * Convert any scalar type to _Bool. Section 6.3.1.2 of C11 says:
- 	 * When any scalar value is converted to _Bool, the result is 0 if the value 
+ 	 * When any scalar value is converted to _Bool, the result is 0 if the value
      * compares equal to 0; otherwise, the result is 1.
 	 */
 	void convertToBool(final ILocation loc, final ExpressionResult rexp) {
@@ -549,11 +545,11 @@ public abstract class AExpressionTranslation {
 		final Expression zeroInputType = constructZero(loc, underlyingType);
 		final Expression isZero;
 		if (underlyingType instanceof CPointer) {
-			isZero = ExpressionFactory.newBinaryExpression(loc, 
+			isZero = ExpressionFactory.newBinaryExpression(loc,
 					BinaryExpression.Operator.COMPEQ, rexp.lrVal.getValue(), zeroInputType);
 		} else if (underlyingType instanceof CPrimitive) {
-			isZero = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_equals, 
-					rexp.lrVal.getValue(), (CPrimitive) underlyingType, 
+			isZero = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_equals,
+					rexp.lrVal.getValue(), (CPrimitive) underlyingType,
 					zeroInputType, (CPrimitive) underlyingType);
 		} else {
 			throw new UnsupportedOperationException("unsupported: conversion from " + underlyingType + " to _Bool");
@@ -575,11 +571,11 @@ public abstract class AExpressionTranslation {
 	}
 	
 	public Expression constructPointerForIntegerValues(final ILocation loc, final BigInteger baseValue, final BigInteger offsetValue) {
-		final Expression base = constructLiteralForIntegerType(loc, 
+		final Expression base = constructLiteralForIntegerType(loc,
 				getCTypeOfPointerComponents(), baseValue);
-		final Expression offset = constructLiteralForIntegerType(loc, 
+		final Expression offset = constructLiteralForIntegerType(loc,
 				getCTypeOfPointerComponents(), offsetValue);
-		return MemoryHandler.constructPointerFromBaseAndOffset(base, offset, loc); 
+		return MemoryHandler.constructPointerFromBaseAndOffset(base, offset, loc);
 	}
 	
 	public Expression constructZero(final ILocation loc, final CType cType) {
@@ -591,7 +587,7 @@ public abstract class AExpressionTranslation {
 						(CPrimitive) cType, BigDecimal.ZERO);
 				break;
 			case INTTYPE:
-				result = constructLiteralForIntegerType(loc, 
+				result = constructLiteralForIntegerType(loc,
 						(CPrimitive) cType, BigInteger.ZERO);
 				break;
 			case VOID:
@@ -608,9 +604,9 @@ public abstract class AExpressionTranslation {
 	}
 
 	/**
-	 * Returns an {@link Expression} that represents the following bits of 
-	 * operand high-1, high-2, ..., low+1, low (i.e., the bit at the higher 
-	 * index is not included, the bit at the lower index is included).  
+	 * Returns an {@link Expression} that represents the following bits of
+	 * operand high-1, high-2, ..., low+1, low (i.e., the bit at the higher
+	 * index is not included, the bit at the lower index is included).
 	 */
 	public abstract Expression extractBits(ILocation loc, Expression operand, int high, int low);
 
@@ -640,7 +636,7 @@ public abstract class AExpressionTranslation {
 	}
 
 	/**
-	 * Translate string representation of a C literal to a string 
+	 * Translate string representation of a C literal to a string
 	 * representation that is allowed in Boogie identifiers.
 	 * @param val string representation of C literal
 	 * @return
@@ -654,8 +650,8 @@ public abstract class AExpressionTranslation {
 	 * 7.12.6 of C11.
 	 */
 	public boolean isNumberClassificationMacro(final String cId) {
-		return cId.equals("FP_NAN") || cId.equals("FP_INFINITE") || 
-				cId.equals("FP_ZERO") || cId.equals("FP_SUBNORMAL") || 
+		return cId.equals("FP_NAN") || cId.equals("FP_INFINITE") ||
+				cId.equals("FP_ZERO") || cId.equals("FP_SUBNORMAL") ||
 				cId.equals("FP_NORMAL");
 	}
 
@@ -668,19 +664,19 @@ public abstract class AExpressionTranslation {
 	public RValue handleNumberClassificationMacro(final ILocation loc, final String cId) {
 		final int number;
 		switch (cId) {
-		case "FP_NAN": 
-			number = 0; 
+		case "FP_NAN":
+			number = 0;
 			break;
 		case "FP_INFINITE":
 			number = 1;
 			break;
-		case "FP_ZERO": 
+		case "FP_ZERO":
 			number = 2;
 			break;
-		case "FP_SUBNORMAL": 
+		case "FP_SUBNORMAL":
 			number = 3;
 			break;
-		case "FP_NORMAL": 
+		case "FP_NORMAL":
 			number = 4;
 			break;
 		default:
@@ -694,9 +690,9 @@ public abstract class AExpressionTranslation {
 	
 	/**
 	 * Generate the attributes for the Boogie code that make sure that we
-	 * either 
-	 * - translate to the desired SMT functions, or 
-	 * - let Ultimate overapproximate 
+	 * either
+	 * - translate to the desired SMT functions, or
+	 * - let Ultimate overapproximate
 	 */
 	protected Attribute[] generateAttributes(final ILocation loc, final boolean overapproximate, final String smtlibFunctionName, final int[] indices) {
 		Attribute[] attributes;

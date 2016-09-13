@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -39,7 +39,7 @@ public class HeapDataArray {
 	private final String mName;
 	private final ASTType mASTType;
 	private final int mSize;
-	public HeapDataArray(String name, ASTType aSTType, int size) {
+	public HeapDataArray(final String name, final ASTType aSTType, final int size) {
 		super();
 		mName = name;
 		mASTType = aSTType;
@@ -67,7 +67,7 @@ public class HeapDataArray {
 		return result;
 	}
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -92,10 +92,7 @@ public class HeapDataArray {
 		} else if (!mName.equals(other.mName)) {
 			return false;
 		}
-		if (mSize != other.mSize) {
-			return false;
-		}
-		return true;
+		return mSize == other.mSize;
 	}
 	@Override
 	public String toString() {

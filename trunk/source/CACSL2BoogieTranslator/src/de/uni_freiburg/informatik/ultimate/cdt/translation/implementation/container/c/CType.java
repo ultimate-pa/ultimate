@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -68,7 +68,7 @@ public abstract class CType {
 	/**
 	 * Constructor.
 	 */
-	public CType(boolean isConst, boolean isInline, boolean isRestrict, boolean isVolatile) {
+	public CType(final boolean isConst, final boolean isInline, final boolean isRestrict, final boolean isVolatile) {
 		this.isConst = isConst;
 		this.isInline = isInline;
 		this.isRestrict = isRestrict;
@@ -114,11 +114,8 @@ public abstract class CType {
 	public boolean isIntegerType() {
 		if (this instanceof CPrimitive) {
 			return (((CPrimitive) this).getGeneralType() == CPrimitiveCategory.INTTYPE);
-		} else if (this instanceof CEnum) {
-			return true;
-		} else {
-			return false;
 		}
+		return this instanceof CEnum;
 	}
 	
 	/**
@@ -128,8 +125,8 @@ public abstract class CType {
 	public boolean isRealFloatingType() {
 		if (this instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) this;
-			return cPrimitive.getType() == CPrimitives.FLOAT || 
-					cPrimitive.getType() == CPrimitives.DOUBLE || 
+			return cPrimitive.getType() == CPrimitives.FLOAT ||
+					cPrimitive.getType() == CPrimitives.DOUBLE ||
 					cPrimitive.getType() == CPrimitives.LONGDOUBLE;
 		} else {
 			return false;
@@ -143,8 +140,8 @@ public abstract class CType {
 	public boolean isComplexType() {
 		if (this instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) this;
-			return cPrimitive.getType() == CPrimitives.COMPLEX_FLOAT|| 
-					cPrimitive.getType() == CPrimitives.COMPLEX_DOUBLE || 
+			return cPrimitive.getType() == CPrimitives.COMPLEX_FLOAT||
+					cPrimitive.getType() == CPrimitives.COMPLEX_DOUBLE ||
 					cPrimitive.getType() == CPrimitives.COMPLEX_LONGDOUBLE;
 		} else {
 			return false;

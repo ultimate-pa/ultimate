@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -119,7 +119,7 @@ public class SmtManager {
 	
 	/**
 	 * Switch to produce-interpolants mode before each trace check and leave the
-	 * produce-interpolants mode afterwards 
+	 * produce-interpolants mode afterwards
 	 * (needed for princess it can only deal with quantifiers if not in
 	 * produce-interpolants mode)
 	 * 
@@ -131,7 +131,7 @@ public class SmtManager {
 	private final PredicateFactory mPredicateFactory;
 
 	public SmtManager(final Script script, final Boogie2SMT boogie2smt, final ModifiableGlobalVariableManager modifiableGlobals,
-			final IUltimateServiceProvider services, final boolean interpolationModeSwitchNeeded, final ManagedScript managedScript, 
+			final IUltimateServiceProvider services, final boolean interpolationModeSwitchNeeded, final ManagedScript managedScript,
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -338,11 +338,7 @@ public class SmtManager {
 	private boolean interpolationModeSwitchNeeded() {
 		final SolverMode solver = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
-		if (solver == SolverMode.External_PrincessInterpolationMode) {
-			return true;
-		} else {
-			return false;
-		}
+		return solver == SolverMode.External_PrincessInterpolationMode;
 	}
 
 	// public void push() {

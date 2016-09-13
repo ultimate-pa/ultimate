@@ -798,11 +798,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		// call symbols
 		letters1 = mOperand.lettersCall(predState1);
 		letters2 = mOperand.lettersCall(predState2);
-		if (!letters1.equals(letters2)) {
-			return false;
-		}
-		
-		return true;
+		return letters1.equals(letters2);
 	}
 	
 	/**

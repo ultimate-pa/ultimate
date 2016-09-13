@@ -95,10 +95,7 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 	protected boolean isAcceptingConfiguration(final Deque<STATE> configuration,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		final STATE state = configuration.peek();
-		if (nwa.isFinal(state)) {
-			return true;
-		}
-		return false;
+		return nwa.isFinal(state);
 	}
 	
 	/**

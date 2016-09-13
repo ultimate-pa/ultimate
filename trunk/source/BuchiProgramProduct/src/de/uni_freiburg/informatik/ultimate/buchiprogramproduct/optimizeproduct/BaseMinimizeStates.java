@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiProgramProduct plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct;
@@ -52,21 +52,21 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 
 	private boolean mIgnoreBlowup;
 
-	public BaseMinimizeStates(RootNode product, IUltimateServiceProvider services, IToolchainStorage storage) {
+	public BaseMinimizeStates(final RootNode product, final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		super(product, services, storage);
 		mLogger.info("Removed " + mRemovedEdges + " edges and " + mRemovedLocations
 				+ " locations by large block encoding");
 	}
 
 	@Override
-	protected void init(RootNode root, IUltimateServiceProvider services) {
+	protected void init(final RootNode root, final IUltimateServiceProvider services) {
 		super.init(root, services);
 		mIgnoreBlowup = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.OPTIMIZE_MINIMIZE_STATES_IGNORE_BLOWUP);
 	}
 
 	@Override
-	protected RootNode process(RootNode root) {
+	protected RootNode process(final RootNode root) {
 		final Deque<RCFGNode> nodes = new ArrayDeque<>();
 		final Set<RCFGNode> closed = new HashSet<>();
 
@@ -115,7 +115,7 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 	protected abstract Collection<? extends RCFGNode> processCandidate(RootNode root, ProgramPoint target,
 			Set<RCFGNode> closed);
 
-	protected boolean checkEdgePairs(List<RCFGEdge> predEdges, List<RCFGEdge> succEdges) {
+	protected boolean checkEdgePairs(final List<RCFGEdge> predEdges, final List<RCFGEdge> succEdges) {
 		if (!mIgnoreBlowup) {
 			if (predEdges.size() + succEdges.size() < predEdges.size() * succEdges.size()) {
 				// we would introduce more edges than we remove, we do not want
@@ -134,7 +134,7 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 		return true;
 	}
 
-	protected boolean checkEdgePair(RCFGEdge predEdge, RCFGEdge succEdge) {
+	protected boolean checkEdgePair(final RCFGEdge predEdge, final RCFGEdge succEdge) {
 		if (!(predEdge instanceof CodeBlock) || !(succEdge instanceof CodeBlock)) {
 			// if one of the edges is no codeblock, it is a root edge,
 			// and we cannot apply the rule
@@ -152,14 +152,10 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 		}
 
 		// if one of the edges is a self loop, we cannot use it
-		if (predEdge.getTarget() == predEdge.getSource() || succEdge.getTarget() == succEdge.getSource()) {
-			return false;
-		}
-
-		return true;
+		return (predEdge.getTarget() != predEdge.getSource()) && (succEdge.getTarget() != succEdge.getSource());
 	}
 
-	protected boolean checkAllNodes(List<RCFGNode> predNodes, List<RCFGNode> succNodes) {
+	protected boolean checkAllNodes(final List<RCFGNode> predNodes, final List<RCFGNode> succNodes) {
 		for (final RCFGNode predNode : predNodes) {
 			if (BuchiProgramAcceptingStateAnnotation.getAnnotation(predNode) == null) {
 				return false;
@@ -174,11 +170,11 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 		return true;
 	}
 
-	protected boolean checkTargetNode(RCFGNode target) {
+	protected boolean checkTargetNode(final RCFGNode target) {
 		return BuchiProgramAcceptingStateAnnotation.getAnnotation(target) == null;
 	}
 
-	protected boolean checkNodePair(RCFGNode pred, RCFGNode succ) {
+	protected boolean checkNodePair(final RCFGNode pred, final RCFGNode succ) {
 		return BuchiProgramAcceptingStateAnnotation.getAnnotation(pred) != null
 				|| BuchiProgramAcceptingStateAnnotation.getAnnotation(succ) != null;
 	}

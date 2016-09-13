@@ -99,9 +99,6 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 		if (element instanceof GroupEntry) {
 			return ((GroupEntry) element).getEntries().length != 0;
 		}
-		if (element instanceof Entry) {
-			return false;
-		}
 		return false;
 	}
 

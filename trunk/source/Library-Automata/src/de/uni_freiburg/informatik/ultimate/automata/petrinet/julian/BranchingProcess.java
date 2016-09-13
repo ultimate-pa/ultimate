@@ -265,10 +265,7 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 			return true;
 		}
 		final Set<Object> c2Ancestors = ancestorNodes(c2);
-		if (c2Ancestors.contains(c1)) {
-			return true;
-		}
-		return false;
+		return c2Ancestors.contains(c1);
 	}
 
 	/**
@@ -285,10 +282,7 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 			return true;
 		}
 		final Set<Object> eAncestors = ancestorNodes(e);
-		if (eAncestors.contains(c)) {
-			return true;
-		}
-		return false;
+		return eAncestors.contains(c);
 	}
 
 	/**

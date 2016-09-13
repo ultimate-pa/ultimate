@@ -21,14 +21,14 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
  * Container object to store inferred types.
- * TODO : add a reference to the corresponding CType. That would make type 
+ * TODO : add a reference to the corresponding CType. That would make type
  * checking during translation easier!
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container;
@@ -99,7 +99,7 @@ public class InferredType implements IBoogieType {
      * @param type
      *            the type.
      */
-    public InferredType(Type type) {
+    public InferredType(final Type type) {
         this.type = type;
     }
 
@@ -109,7 +109,7 @@ public class InferredType implements IBoogieType {
      * @param at
      *            the primitive type to convert.
      */
-    public InferredType(ASTType at) {
+    public InferredType(final ASTType at) {
         if (isPointerType(at)) {
             type = Type.Pointer;
         } else if (at instanceof ArrayType) {
@@ -138,7 +138,7 @@ public class InferredType implements IBoogieType {
         }
     }
     
-    public static boolean isPointerType(ASTType at) {
+    public static boolean isPointerType(final ASTType at) {
     	if (at instanceof NamedType) {
     		return ((NamedType) at).getName().equals(SFO.POINTER);
     	} else {
@@ -150,7 +150,7 @@ public class InferredType implements IBoogieType {
 //    	CType underlyingType = cType;
 //    	if (underlyingType instanceof CNamed)
 //    		underlyingType = ((CNamed) cType).getUnderlyingType();
-//		
+//
 //		if (underlyingType instanceof CPrimitive) {
 //			CPrimitive cp = (CPrimitive) underlyingType;
 //			switch (cp.getType()) {
@@ -179,7 +179,7 @@ public class InferredType implements IBoogieType {
 //			assert false : "This should not be the case as we took the underlying type.";
 //		} else {
 //			throw new UnsupportedSyntaxException(null, "..");
-//		}	
+//		}
 //    }
 
     /**
@@ -222,7 +222,7 @@ public class InferredType implements IBoogieType {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -233,10 +233,7 @@ public class InferredType implements IBoogieType {
 			return false;
 		}
 		final InferredType other = (InferredType) obj;
-		if (type != other.type) {
-			return false;
-		}
-		return true;
+		return type == other.type;
 	}
     
     

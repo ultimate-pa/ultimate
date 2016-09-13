@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -60,7 +60,7 @@ public class BooleanValue {
 	 * @param value
 	 *            The value to set.
 	 */
-	public BooleanValue(boolean value) {
+	public BooleanValue(final boolean value) {
 		if (value) {
 			mValue = Value.TRUE;
 		} else {
@@ -74,7 +74,7 @@ public class BooleanValue {
 	 * @param value
 	 *            The value to set.
 	 */
-	public BooleanValue(String value) {
+	public BooleanValue(final String value) {
 		this(Boolean.parseBoolean(value));
 	}
 
@@ -84,7 +84,7 @@ public class BooleanValue {
 	 * @param value
 	 *            The value to set.
 	 */
-	public BooleanValue(Value value) {
+	public BooleanValue(final Value value) {
 		mValue = value;
 	}
 
@@ -94,7 +94,7 @@ public class BooleanValue {
 	 * @param value
 	 *            The value to set.
 	 */
-	public BooleanValue(BooleanValue value) {
+	public BooleanValue(final BooleanValue value) {
 		mValue = value.getValue();
 	}
 
@@ -113,7 +113,7 @@ public class BooleanValue {
 	 * @return <code>true</code> if and only if the value of the other Boolean is equal to the value of
 	 *         <code>this</code>.
 	 */
-	public boolean isEqualTo(BooleanValue other) {
+	public boolean isEqualTo(final BooleanValue other) {
 		if (other == null) {
 			return false;
 		}
@@ -129,7 +129,7 @@ public class BooleanValue {
 	 * @return <code>true</code> if and only if the value of this is contained in the value of other, <code>false</code>
 	 *         otherwise.
 	 */
-	public boolean isContainedIn(BooleanValue other) {
+	public boolean isContainedIn(final BooleanValue other) {
 		if (other == null) {
 			return false;
 		}
@@ -139,21 +139,14 @@ public class BooleanValue {
 		if (mValue == other.mValue) {
 			return true;
 		}
-		if (mValue == Value.BOTTOM) {
-			return true;
-		}
-		return false;
+		return mValue == Value.BOTTOM;
 	}
 
 	/**
 	 * @return <code>true</code> if and only if the value of <code>this</code> is &bot;, <code>false</code> otherwise.
 	 */
 	public boolean isBottom() {
-		if (mValue.equals(Value.BOTTOM)) {
-			return true;
-		}
-
-		return false;
+		return mValue.equals(Value.BOTTOM);
 	}
 
 	/**
@@ -163,7 +156,7 @@ public class BooleanValue {
 	 *            The value to intersect with.
 	 * @return A new boolean value corresponding to the result of the intersection.
 	 */
-	public BooleanValue intersect(BooleanValue other) {
+	public BooleanValue intersect(final BooleanValue other) {
 		assert other != null;
 
 		if (mValue == other.mValue) {
@@ -188,7 +181,7 @@ public class BooleanValue {
 	 *            The other boolean value to merge with.
 	 * @return A new boolean value corresponding to the result of the merging.
 	 */
-	public BooleanValue merge(BooleanValue other) {
+	public BooleanValue merge(final BooleanValue other) {
 		assert other != null;
 
 		if (mValue == Value.BOTTOM && other.mValue == Value.BOTTOM) {
@@ -215,7 +208,7 @@ public class BooleanValue {
 	 *            The other value.
 	 * @return A new {@link BooleanValue} corresponding to the result of the application of the logical and operator.
 	 */
-	public BooleanValue and(BooleanValue other) {
+	public BooleanValue and(final BooleanValue other) {
 		assert other != null;
 
 		if (mValue == Value.BOTTOM || other.mValue == Value.BOTTOM) {
@@ -240,7 +233,7 @@ public class BooleanValue {
 	 *            The other value.
 	 * @return A new {@link BooleanValue} corresponding to the result of the application of the logical or operator.
 	 */
-	public BooleanValue or(BooleanValue other) {
+	public BooleanValue or(final BooleanValue other) {
 		assert other != null;
 
 		if (mValue == Value.BOTTOM || other.mValue == Value.BOTTOM) {

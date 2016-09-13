@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Util Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
@@ -38,7 +38,7 @@ public class Doubleton<E> {
 	private final E mOneElement;
 	private final E mOtherElement;
 	
-	public Doubleton(E oneElement, E otherElement) {
+	public Doubleton(final E oneElement, final E otherElement) {
 		super();
 		if (oneElement == null || otherElement == null) {
 			throw new NullPointerException();
@@ -68,7 +68,7 @@ public class Doubleton<E> {
 	}
 	
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -79,17 +79,14 @@ public class Doubleton<E> {
 			return false;
 		}
 		final Doubleton<E> other = (Doubleton<E>) obj;
-		final boolean equalSameOrder = this.getOneElement().equals(other.getOneElement()) 
+		final boolean equalSameOrder = this.getOneElement().equals(other.getOneElement())
 				&& this.getOtherElement().equals(other.getOtherElement());
 		if (equalSameOrder) {
 			return true;
 		}
-		final boolean equalSwapedOrder = this.getOneElement().equals(other.getOtherElement()) 
+		final boolean equalSwappedOrder = this.getOneElement().equals(other.getOtherElement())
 				&& this.getOtherElement().equals(other.getOneElement());
-		if (equalSwapedOrder) {
-			return true;
-		}
-		return false;
+		return equalSwappedOrder;
 	}
 	
 	@Override

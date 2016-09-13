@@ -309,10 +309,7 @@ class LassoExtractor<LETTER, STATE> {
 			} else if (!mSuccessor.equals(other.mSuccessor)) {
 				return false;
 			}
-			if (mType != other.mType) {
-				return false;
-			}
-			return true;
+			return mType == other.mType;
 		}
 		
 		private LassoExtractor<LETTER, STATE> getOuterType() {
@@ -437,11 +434,8 @@ class LassoExtractor<LETTER, STATE> {
 			if (mFoundWithoutSummary) {
 				return false;
 			}
-			if (mSuccessorsWithSummary.get(mIteration).isEmpty()
-					&& mSuccessorsWithoutSummary.get(mIteration).isEmpty()) {
-				return false;
-			}
-			return true;
+			return !mSuccessorsWithSummary.get(mIteration).isEmpty()
+					|| !mSuccessorsWithoutSummary.get(mIteration).isEmpty();
 		}
 		
 		private void find(final StateContainer<LETTER, STATE> start) {

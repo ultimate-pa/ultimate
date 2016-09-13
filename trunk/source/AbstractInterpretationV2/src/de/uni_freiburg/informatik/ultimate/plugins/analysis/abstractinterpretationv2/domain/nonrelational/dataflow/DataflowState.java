@@ -180,10 +180,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		if (!other.mReachDef.equals(mReachDef)) {
 			return false;
 		}
-		if (!other.mNoWrite.equals(mNoWrite)) {
-			return false;
-		}
-		return true;
+		return other.mNoWrite.equals(mNoWrite);
 	}
 
 	@Override

@@ -301,11 +301,8 @@ public class IndexAnalyzer {
 	private boolean containsTermVariable(final Doubleton<Term> Doubleton) {
 		if (Doubleton.getOneElement().getFreeVars().length > 0) {
 			return true;
-		} else if (Doubleton.getOtherElement().getFreeVars().length > 0) {
-			return true;
-		} else {
-			return false;
 		}
+		return Doubleton.getOtherElement().getFreeVars().length > 0;
 	}
 
 	public IndexAnalysisResult getResult() {

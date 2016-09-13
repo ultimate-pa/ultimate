@@ -138,11 +138,7 @@ public class XJunction {
 	public boolean containsNegation(final Term term, final Polarity polarity) {
 		final Polarity existing = mPolarityMap.get(term);
 		if (existing != null) {
-			if (existing == polarity) {
-				return false;
-			} else {
-				return true;
-			}
+			return existing != polarity;
 		} else {
 			return false;
 		}
