@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -62,18 +63,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 final class PluginFactory implements IServiceFactoryFactory {
 
-	// private static final Class<?>[] sIToolClasses = { IAnalysis.class,
-	// IGenerator.class, IOutput.class };
-	private static final Class<?>[] sIToolchainPluginClasses =
+	private static final Class<?>[] ITOOLCHAIN_PLUGIN_CLASSES =
 			{ IAnalysis.class, IGenerator.class, IOutput.class, ISource.class };
 
 	private final IExtensionRegistry mRegistry;
 	private final ILogger mLogger;
 	private final SettingsManager mSettingsManager;
-	private final HashMap<Class<?>, List<IConfigurationElement>> mAvailableToolsByClass;
-	private final HashMap<String, IConfigurationElement> mAvailableToolsByClassName;
-	private final HashMap<String, String> mPluginIDToClassName;
-	private final HashMap<Class<?>, IServiceFactory<?>> mAvailableServicesByClassName;
+	private final Map<Class<?>, List<IConfigurationElement>> mAvailableToolsByClass;
+	private final Map<String, IConfigurationElement> mAvailableToolsByClassName;
+	private final Map<String, String> mPluginIDToClassName;
+	private final Map<Class<?>, IServiceFactory<?>> mAvailableServicesByClassName;
 
 	private boolean mGuiMode;
 	private final IController<RunDefinition> mController;
@@ -103,12 +102,6 @@ final class PluginFactory implements IServiceFactoryFactory {
 		mLogger.info("Finished loading services!");
 		mLogger.info("--------------------------------------------------------------------------------");
 	}
-
-	// TODO: Do it somewhere else
-	// mLogger.debug("--------------------------------------------------------------------------------");
-	// mLogger.debug("Loaded default settings");
-	// checkPreferencesForActivePlugins();
-	// mLogger.debug("--------------------------------------------------------------------------------");
 
 	IController<RunDefinition> getController() {
 		return mController;
@@ -203,7 +196,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 		mLogger.info("--------------------------------------------------------------------------------");
 		mLogger.info("Loading all admissible plugins (creating one instance, loading preferences)");
 		int notAdmissible = 0;
-		for (final Class<?> type : sIToolchainPluginClasses) {
+		for (final Class<?> type : ITOOLCHAIN_PLUGIN_CLASSES) {
 			final List<IConfigurationElement> elements = mAvailableToolsByClass.get(type);
 			if (elements == null) {
 				continue;
