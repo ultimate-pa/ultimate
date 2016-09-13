@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  */
 public class ClosureBenchmark {
 
-	public static void main(String[] args) {
+	public static void main(final String[] args) {
 		final ClosureBenchmark cb = new ClosureBenchmark("/tmp/empty");
 		cb.addCandidate("naiv", OctMatrix::shortestPathClosureNaiv);
 		cb.addCandidate("apron", OctMatrix::shortestPathClosureApron);
@@ -66,22 +66,22 @@ public class ClosureBenchmark {
 	private final Path mBenchmarkDirectory;
 	private final List<Candidate> mCandidates;
 	private final List<MatrixStatistic> mMatrixStatistics;
-	private final long mProgressInfoIntervalInNanoSeconds = 30_000_000_000L; // 30 seconds
+	private static final long PROGRESS_INFO_INTERVAL_IN_NANO_SECONDS = 30_000_000_000L; // 30 seconds
 	
-	public ClosureBenchmark(String benchmarkDirectory) {
+	public ClosureBenchmark(final String benchmarkDirectory) {
 		mBenchmarkDirectory = Paths.get(benchmarkDirectory);
 		mCandidates = new ArrayList<>();
 		mMatrixStatistics = new ArrayList<>();
 	}
 	
-	public void addCandidate(String name, Consumer<OctMatrix> closureAlgorithm) {
+	public void addCandidate(final String name, final Consumer<OctMatrix> closureAlgorithm) {
 		final Candidate c = new Candidate();
 		c.name = name;
 		c.closureAlgorithm = closureAlgorithm;
 		mCandidates.add(c);
 	}
 	
-	public void run(int cyclesPerFile) {
+	public void run(final int cyclesPerFile) {
 
 		logInfo("Resetting ...");
 		mCandidates.forEach(c -> c.measuredNanoSeconds = 0);
@@ -128,7 +128,7 @@ public class ClosureBenchmark {
 			addStatistic(mOrig);
 			++filesRun;
 
-			if (System.nanoTime() > tLastProgressInfo + mProgressInfoIntervalInNanoSeconds) {
+			if (System.nanoTime() > tLastProgressInfo + PROGRESS_INFO_INTERVAL_IN_NANO_SECONDS) {
 				tLastProgressInfo = System.nanoTime();
 				final double timeInSeconds = (System.nanoTime() - tStart) * 1e-9;
 				logInfo(String.format("Running since %.1f seconds. Files run so far: %d", timeInSeconds, filesRun));
@@ -138,7 +138,7 @@ public class ClosureBenchmark {
 		logInfo(String.format("Finished benchmark after %.2f seconds.", timeInSeconds));
 	}
 	
-	private void addStatistic(OctMatrix m) {
+	private void addStatistic(final OctMatrix m) {
 		final MatrixStatistic ms = new MatrixStatistic();
 		ms.variables = m.variables();
 		ms.infinityPercentageInBlockLowerHalf = m.infinityPercentageInBlockLowerHalf();
@@ -168,7 +168,7 @@ public class ClosureBenchmark {
 		}
 	}
 	
-	private String readFile(Path file) {
+	private String readFile(final Path file) {
 		BufferedReader br;
 		final StringBuilder sb = new StringBuilder();
 		try {
@@ -190,7 +190,7 @@ public class ClosureBenchmark {
 		return sb.toString();
 	}
 
-	private OctMatrix[] copyNTimes(OctMatrix orig, int n) {
+	private OctMatrix[] copyNTimes(final OctMatrix orig, final int n) {
 		final OctMatrix[] copies = new OctMatrix[n];
 		for (int i = 0; i < n; ++i) {
 			copies[i] = orig.copy();
@@ -209,7 +209,7 @@ public class ClosureBenchmark {
 		sortedResults = new ArrayList<>(mCandidates);
 		Collections.sort(sortedResults, new Comparator<Candidate>() {
 			@Override
-			public int compare(Candidate ca, Candidate cb) {
+			public int compare(final Candidate ca, final Candidate cb) {
 				return Long.compare(ca.measuredNanoSeconds, cb.measuredNanoSeconds);
 			}
 		});
@@ -232,7 +232,7 @@ public class ClosureBenchmark {
 		System.out.println();
 	}
 
-	public void printShortStatistics(int bins) {
+	public void printShortStatistics(final int bins) {
 		System.out.println();
 		System.out.println("Short Statistics");
 		System.out.println("----------------");
@@ -278,7 +278,7 @@ public class ClosureBenchmark {
 	}
 
 	// map (infPercentage --> #matrices)
-	public int[] histInfPercentagePerMatrix(int bins) {
+	public int[] histInfPercentagePerMatrix(final int bins) {
 		if (mMatrixStatistics.size() == 0) {
 			return new int[0];
 		}
@@ -301,11 +301,11 @@ public class ClosureBenchmark {
 		return max;
 	}
 	
-	private void logInfo(String msg) {
+	private void logInfo(final String msg) {
 		System.out.println(msg);
 	}
 
-	private void logWarning(String msg) {
+	private void logWarning(final String msg) {
 		System.err.println(msg);
 	}
 }
