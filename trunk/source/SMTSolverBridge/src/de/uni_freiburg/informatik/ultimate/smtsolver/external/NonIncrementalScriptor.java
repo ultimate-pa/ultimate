@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Map;
@@ -61,10 +62,15 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.Se
 public class NonIncrementalScriptor extends NoopScript {
 
 	private static final String PRINT_SUCCESS = ":print-success";
-	protected final LinkedList<ArrayList<ISmtCommand>> mCommandStack;
+	protected final LinkedList<ArrayList<ISmtCommand<?>>> mCommandStack;
 	
 	protected Executor mExecutor;
-	private LBool mStatus = LBool.UNKNOWN;
+	private final LBool mStatus = LBool.UNKNOWN;
+	
+	/**
+	 * For wrinting logs 
+	 */
+	private final PrintWriter mPw = null;
 
 	/**
 	 * Create a script connecting to an external SMT solver.
@@ -81,10 +87,10 @@ public class NonIncrementalScriptor extends NoopScript {
 			final String solverName) throws IOException {
 		mExecutor = new Executor(command, this, logger, services, storage, solverName);
 		mCommandStack = new LinkedList<>();
-		mCommandStack.push(new ArrayList<ISmtCommand>());
+		mCommandStack.push(new ArrayList<ISmtCommand<?>>());
 	}
 	
-	protected void addToCurrentAssertionStack(final ISmtCommand smtCommand) {
+	protected void addToCurrentAssertionStack(final ISmtCommand<?> smtCommand) {
 		mCommandStack.getLast().add(smtCommand);
 	}
 	
@@ -139,7 +145,7 @@ public class NonIncrementalScriptor extends NoopScript {
 	public void push(final int levels) throws SMTLIBException {
 		super.push(levels);
 		for (int i = 0; i < levels; i++) {
-			mCommandStack.add(new ArrayList<ISmtCommand>());
+			mCommandStack.add(new ArrayList<ISmtCommand<?>>());
 		}
 	}
 
@@ -159,22 +165,14 @@ public class NonIncrementalScriptor extends NoopScript {
 
 	@Override
 	public LBool checkSat() throws SMTLIBException {
-		executeCommandWithoutReturnValue(new ResetCommand());
-		executeCommandWithoutReturnValue(new SetOptionCommand(PRINT_SUCCESS, true));
-		for (final ArrayList<ISmtCommand> level : mCommandStack) {
-			for (final ISmtCommand command : level) {
-				executeCommandWithoutReturnValue(command);
-				
+		(new ResetCommand()).executeWithExecutor(mExecutor, mPw);
+		(new SetOptionCommand(PRINT_SUCCESS, true)).executeWithExecutor(mExecutor, mPw);
+		for (final ArrayList<ISmtCommand<?>> level : mCommandStack) {
+			for (final ISmtCommand<?> command : level) {
+				command.executeWithExecutor(mExecutor, mPw);
 			}
 		}
-		mExecutor.input("(check-sat)");
-		mStatus = mExecutor.parseCheckSatResult();
-		return mStatus;
-	}
-
-	private void executeCommandWithoutReturnValue(final ISmtCommand command) {
-		mExecutor.input(command.toString());
-		mExecutor.parseSuccess();
+		return (new SmtCommandUtils.CheckSatCommand()).executeWithExecutor(mExecutor, mPw);
 	}
 
 	@Override
@@ -267,13 +265,13 @@ public class NonIncrementalScriptor extends NoopScript {
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		boolean isFirst = true;
-		for (final ArrayList<ISmtCommand> level : mCommandStack) {
+		for (final ArrayList<ISmtCommand<?>> level : mCommandStack) {
 			if (isFirst) {
 				isFirst = false;
 			} else {
-				sb.append("; next level of assertion stack");
+				sb.append("; next level of assertion stack").append(System.lineSeparator());
 			}
-			for (final ISmtCommand command : level) {
+			for (final ISmtCommand<?> command : level) {
 				sb.append(command.toString()).append(System.lineSeparator());
 			}
 		}

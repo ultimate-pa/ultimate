@@ -148,7 +148,7 @@ public class Scriptor extends NoopScript {
 
 	@Override
 	public LBool checkSat() throws SMTLIBException {
-		mExecutor.input("(check-sat)");
+		mExecutor.input(SmtCommandUtils.CheckSatCommand.buildString());
 		mStatus = mExecutor.parseCheckSatResult();
 		return mStatus;
 	}

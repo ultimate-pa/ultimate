@@ -26,11 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
+import java.io.PrintWriter;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -39,7 +41,9 @@ public class SmtCommandUtils {
 	
 	public interface ISmtCommand<RT> {
 		
-		public abstract RT execute(Script script);
+		public abstract RT executeWithScript(Script script);
+		public abstract RT executeWithExecutor(Executor executor, PrintWriter pw);
+		
 		/**
 		 * 
 		 * @return the representation of the command that can be passed to
@@ -60,13 +64,24 @@ public class SmtCommandUtils {
 			return "(set-logic " + logic + ")";
 		}
 		@Override
-		public Void execute(final Script script) {
+		public Void executeWithScript(final Script script) {
 			script.setLogic(mLogic);
 			return null;
 		}
 		@Override
 		public String toString() {
 			return buildString(mLogic);
+		}
+
+		@Override
+		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
+			final String command = this.toString();
+			if (pw != null) {
+				pw.println(command);
+			}
+			executor.input(command);
+			executor.parseSuccess();
+			return null;
 		}
 	}
 	
@@ -100,7 +115,7 @@ public class SmtCommandUtils {
 		}
 
 		@Override
-		public Void execute(final Script script) {
+		public Void executeWithScript(final Script script) {
 			script.setOption(mOpt, mValue);
 			return null;
 		}
@@ -108,6 +123,17 @@ public class SmtCommandUtils {
 		@Override
 		public String toString() {
 			return buildString(mOpt, mValue);
+		}
+
+		@Override
+		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
+			final String command = this.toString();
+			if (pw != null) {
+				pw.println(command);
+			}
+			executor.input(command);
+			executor.parseSuccess();
+			return null;
 		}
 	}
 
@@ -133,7 +159,7 @@ public class SmtCommandUtils {
 		}
 
 		@Override
-		public Void execute(final Script script) {
+		public Void executeWithScript(final Script script) {
 			script.setInfo(mInfo, mValue);
 			return null;
 		}
@@ -141,6 +167,17 @@ public class SmtCommandUtils {
 		@Override
 		public String toString() {
 			return buildString(mInfo, mValue);
+		}
+
+		@Override
+		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
+			final String command = this.toString();
+			if (pw != null) {
+				pw.println(command);
+			}
+			executor.input(command);
+			executor.parseSuccess();
+			return null;
 		}
 	}
 
@@ -162,7 +199,7 @@ public class SmtCommandUtils {
 		}
 
 		@Override
-		public Void execute(final Script script) {
+		public Void executeWithScript(final Script script) {
 			script.declareSort(mSort, mArity);
 			return null;
 		}
@@ -170,6 +207,17 @@ public class SmtCommandUtils {
 		@Override
 		public String toString() {
 			return buildString(mSort, mArity);
+		}
+
+		@Override
+		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
+			final String command = this.toString();
+			if (pw != null) {
+				pw.println(command);
+			}
+			executor.input(command);
+			executor.parseSuccess();
+			return null;
 		}
 	}
 
@@ -204,13 +252,24 @@ public class SmtCommandUtils {
 		}
 		
 		@Override
-		public Void execute(final Script script) {
+		public Void executeWithScript(final Script script) {
 			script.defineSort(mSort, mSortParams, mDefinition);
 			return null;
 		}
 		@Override
 		public String toString() {
 			return buildString(mSort, mSortParams, mDefinition);
+		}
+
+		@Override
+		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
+			final String command = this.toString();
+			if (pw != null) {
+				pw.println(command);
+			}
+			executor.input(command);
+			executor.parseSuccess();
+			return null;
 		}
 		
 	}
@@ -245,7 +304,7 @@ public class SmtCommandUtils {
 		}
 
 		@Override
-		public Void execute(final Script script) {
+		public Void executeWithScript(final Script script) {
 			script.declareFun(mFun, mParamSorts, mResultSort);
 			return null;
 		}
@@ -253,6 +312,17 @@ public class SmtCommandUtils {
 		@Override
 		public String toString() {
 			return buildString(mFun, mParamSorts, mResultSort);
+		}
+
+		@Override
+		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
+			final String command = this.toString();
+			if (pw != null) {
+				pw.println(command);
+			}
+			executor.input(command);
+			executor.parseSuccess();
+			return null;
 		}
 
 
@@ -292,7 +362,7 @@ public class SmtCommandUtils {
 			return sb.toString();
 		}
 		@Override
-		public Void execute(final Script script) {
+		public Void executeWithScript(final Script script) {
 			script.defineFun(mFun, mParams, mResultSort, mDefinition);
 			return null;
 		}
@@ -300,6 +370,17 @@ public class SmtCommandUtils {
 		@Override
 		public String toString() {
 			return buildString(mFun, mParams, mResultSort, mDefinition);
+		}
+
+		@Override
+		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
+			final String command = this.toString();
+			if (pw != null) {
+				pw.println(command);
+			}
+			executor.input(command);
+			executor.parseSuccess();
+			return null;
 		}
 
 	}
@@ -317,7 +398,7 @@ public class SmtCommandUtils {
 		}
 
 		@Override
-		public Void execute(final Script script) {
+		public Void executeWithScript(final Script script) {
 			script.assertTerm(mTerm);
 			return null;
 		}
@@ -325,6 +406,17 @@ public class SmtCommandUtils {
 		@Override
 		public String toString() {
 			return buildString(mTerm);
+		}
+
+		@Override
+		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
+			final String command = this.toString();
+			if (pw != null) {
+				pw.println(command);
+			}
+			executor.input(command);
+			executor.parseSuccess();
+			return null;
 		}
 	}
 
@@ -339,13 +431,54 @@ public class SmtCommandUtils {
 		}
 
 		@Override
-		public Void execute(final Script script) {
+		public Void executeWithScript(final Script script) {
 			script.reset();
 			return null;
 		}
 		@Override
 		public String toString() {
 			return buildString();
+		}
+
+		@Override
+		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
+			final String command = this.toString();
+			if (pw != null) {
+				pw.println(command);
+			}
+			executor.input(command);
+			executor.parseSuccess();
+			return null;
+		}
+	}
+	
+	public static class CheckSatCommand implements ISmtCommand<LBool> {
+
+		public CheckSatCommand() {
+			super();
+		}
+
+		public static String buildString() {
+			return "(check-sat)";
+		}
+
+		@Override
+		public LBool executeWithScript(final Script script) {
+			return script.checkSat();
+		}
+		@Override
+		public String toString() {
+			return buildString();
+		}
+
+		@Override
+		public LBool executeWithExecutor(final Executor executor, final PrintWriter pw) {
+			final String command = this.toString();
+			if (pw != null) {
+				pw.println(command);
+			}
+			executor.input(command);
+			return executor.parseCheckSatResult();
 		}
 	}
 
@@ -356,7 +489,7 @@ public class SmtCommandUtils {
 			mMsg = msg;
 		}
 		@Override
-		public Void execute(final Script script) {
+		public Void executeWithScript(final Script script) {
 			script.echo(mMsg);
 			return null;
 		}
@@ -367,6 +500,16 @@ public class SmtCommandUtils {
 		@Override
 		public String toString() {
 			return buildString(mMsg);
+		}
+		@Override
+		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
+			final String command = this.toString();
+			if (pw != null) {
+				pw.println(command);
+			}
+			executor.input(command);
+			executor.parseSuccess();
+			return null;
 		}
 	}
 	
@@ -381,12 +524,22 @@ public class SmtCommandUtils {
 		}
 
 		@Override
-		public Term[] execute(final Script script) {
+		public Term[] executeWithScript(final Script script) {
 			return script.getUnsatCore();
 		}
 		@Override
 		public String toString() {
 			return buildString();
+		}
+
+		@Override
+		public Term[] executeWithExecutor(final Executor executor, final PrintWriter pw) {
+			final String command = this.toString();
+			if (pw != null) {
+				pw.println(command);
+			}
+			executor.input(command);
+			return executor.parseGetUnsatCoreResult();
 		}
 	}
 	
@@ -413,12 +566,17 @@ public class SmtCommandUtils {
 		}
 
 		@Override
-		public Map<Term, Term> execute(final Script script) {
+		public Map<Term, Term> executeWithScript(final Script script) {
 			return script.getValue(mTerms);
 		}
 		@Override
 		public String toString() {
 			return buildString(mTerms);
+		}
+
+		@Override
+		public Map<Term, Term> executeWithExecutor(final Executor executor, final PrintWriter pw) {
+			return executor.parseGetValueResult();
 		}
 	}
 	
