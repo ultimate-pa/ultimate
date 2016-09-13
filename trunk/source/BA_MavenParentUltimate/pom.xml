@@ -262,12 +262,8 @@
 		<module>../JavaCup</module>
 		<module>../RCFGBuilder</module>
 		<module>../CodeCheck</module>
-		<module>../Library-log4j</module>
-		<module>../Library-Log4j2</module>
 		<module>../ACSLParser</module>
 		<module>../SMTSolverBridge</module>
-		<module>../Library-Batik</module>
-		<module>../Library-Jung</module>
 		<module>../CDTParser</module>
 		<module>../CDTPlugin</module>
 		<module>../CACSL2BoogieTranslator</module>
@@ -284,6 +280,11 @@
 		<module>../BlockEncoding</module>
 		<module>../BuchiAutomizer</module>
 		<module>../PEAtoBoogie</module>
+		<module>../Library-log4j</module>
+		<module>../Library-Log4j2</module>
+		<module>../Library-Disruptor</module>
+		<module>../Library-Batik</module>
+		<module>../Library-Jung</module>
 		<module>../Library-xerces</module>
 		<module>../Library-srParse</module>
 		<module>../Library-PEA</module>
@@ -293,6 +294,11 @@
 		<module>../Library-SMTLIB</module>
 		<module>../Library-LassoRanker</module>
 		<module>../Library-Automata</module>
+		<module>../Library-BoogieAST</module>
+		<module>../Library-JavaBDD</module>
+		<module>../Library-UltimateCore</module>
+		<module>../Library-UltimateModel</module>
+		<module>../Library-ApacheCommonsCLI</module>
 		<module>../BuchiProgramProduct</module>
 		<module>../LTL2aut</module>
 		<module>../ReachingDefinitions</module>
@@ -305,15 +311,10 @@
 		<module>../AbstractInterpretationV2</module>
 		<module>../AutomatonDeltaDebugger</module>
 		<module>../WitnessPrinter</module>
-		<module>../Library-BoogieAST</module>
-		<module>../Library-JavaBDD</module>
-		<module>../Library-UltimateCore</module>
-		<module>../Library-UltimateModel</module>
 		<module>../SmtParser</module>
 		<module>../SyntaxChecker</module>
 		<module>../HeapSeparator</module>
 		<module>../TreeAutomizer</module>
-		<module>../Library-ApacheCommonsCLI</module>
 		<module>../UltimateDeltaDebugger</module>
 	</modules>
 
