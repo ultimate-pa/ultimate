@@ -58,10 +58,10 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 	private static final String DESCRIPTION = "Removes arrays by introducing new variables for each relevant array cell";
 
 	// Parameters for the MapEliminator
-	private static boolean ADD_INEQUALITIES = false;
-	private static boolean ONLY_TRIVIAL_IMPLICATIONS_INDEX_ASSIGNMENT = true;
-	private static boolean ONLY_TRIVIAL_IMPLICATIONS_ARRRAY_WRITE = false;
-	private static boolean ONLY_INDICES_IN_FORMULA = true;
+	private static final boolean ADD_INEQUALITIES = false;
+	private static final boolean ONLY_TRIVIAL_IMPLICATIONS_INDEX_ASSIGNMENT = true;
+	private static final boolean ONLY_TRIVIAL_IMPLICATIONS_ARRRAY_WRITE = false;
+	private static final boolean ONLY_INDICES_IN_FORMULA = true;
 
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
@@ -121,7 +121,7 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 		final TransFormulaLR newLoop = elim.getRewrittenTransFormula(lasso.getLoop(), equalityAnalysisLoop,
 				equalityAnalysisLoop);
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
-		assert RewriteArrays2.checkStemImplication(mServices, 
+		assert RewriteArrays2.checkStemImplication(mServices,
 				mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID), lasso, newLasso,
 				mSymbolTable, mManagedScript) : "result of RewriteArrays too strong";
 		return Collections.singleton(newLasso);

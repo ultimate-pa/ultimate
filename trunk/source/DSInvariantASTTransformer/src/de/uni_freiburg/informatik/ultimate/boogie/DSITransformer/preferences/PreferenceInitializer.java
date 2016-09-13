@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE DSInvariantASTTransformer plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE DSInvariantASTTransformer plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE DSInvariantASTTransformer plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.preferences;
@@ -43,6 +43,23 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
  * 
  */
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
+	/*
+	 * labels for the different preferences
+	 */
+
+	public static final String LABEL_STRUCTURETYPE = "Structure Type";
+	public static final String LABEL_PROCEDUREID = "New Procedure Identifier";
+	public static final String LABEL_TRIMWRAP = "Trim after \"$wrap\"?";
+	public static final String LABEL_ALLFUNCTIONS = "All methods (ignores all other options)";
+	public static final String LABEL_LEAVEPROCEDURES = "Don't remove original procedure declarations?";
+
+	/*
+	 * default values for the different preferences
+	 */
+
+	public static final Boolean VALUE_TRIMWRAP_DEFAULT = Boolean.TRUE;
+	public static final Boolean VALUE_ALLFUNCTIONS_DEFAULT = Boolean.FALSE;
+	public static final Boolean VALUE_LEAVEPROCEDURES = Boolean.FALSE;
 
 	public PreferenceInitializer() {
 		super(Activator.PLUGIN_ID, "DS Invariant AST Transformer");
@@ -62,23 +79,4 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Boolean>(LABEL_LEAVEPROCEDURES,
 						VALUE_LEAVEPROCEDURES, PreferenceType.Boolean), };
 	}
-
-	/*
-	 * labels for the different preferences
-	 */
-
-	public static String LABEL_STRUCTURETYPE = "Structure Type";
-	public static String LABEL_PROCEDUREID = "New Procedure Identifier";
-	public static String LABEL_TRIMWRAP = "Trim after \"$wrap\"?";
-	public static String LABEL_ALLFUNCTIONS = "All methods (ignores all other options)";
-	public static String LABEL_LEAVEPROCEDURES = "Don't remove original procedure declarations?";
-
-	/*
-	 * default values for the different preferences
-	 */
-
-	public static boolean VALUE_TRIMWRAP_DEFAULT = true;
-	public static boolean VALUE_ALLFUNCTIONS_DEFAULT = false;
-	public static boolean VALUE_LEAVEPROCEDURES = false;
-
 }

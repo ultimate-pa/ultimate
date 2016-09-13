@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
@@ -38,20 +38,20 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLType;
  */
 public class AcslTypeUtils {
 	
-	private static String[] CHAR_STRINGS = new String[]{ "char" };
-	private static String[] SIGNED_CHAR_STRINGS = new String[]{ "signed char" };
-	private static String[] UNSIGNED_CHAR_STRINGS = new String[]{ "unsigned char" };
-	private static String[] SIGNED_SHORT_STRINGS = new String[]{ "short", "short int", "signed short", "signed short int" };
-	private static String[] UNSIGNED_SHORT_STRINGS = new String[]{ "unsigned short", "unsigned short int" };
-	private static String[] SIGNED_INT_STRINGS = new String[]{ "int", "signed int"};
-	private static String[] UNSIGNED_INT_STRINGS = new String[]{ "unsigned int" };
-	private static String[] SIGNED_LONG_STRINGS = new String[]{ "long", "long int", "signed long", "signed long int" };
-	private static String[] UNSIGNED_LONG_STRINGS = new String[]{ "unsigned long", "unsigned long int" };
-	private static String[] SIGNED_LONGLONG_STRINGS = new String[]{ "long long", "long long int", "signed long long", "signed long long int" };
-	private static String[] UNSIGNED_LONGLONG_STRINGS = new String[]{ "unsigned long long", "unsigned long long int" };
-	private static String[] FLOAT_STRINGS = new String[]{ "char" };
-	private static String[] DOUBLE_CHAR_STRINGS = new String[]{ "signed char" };
-	private static String[] LONGDOUBLE_STRINGS = new String[]{ "unsigned char" };
+	private static final String[] CHAR_STRINGS = new String[]{ "char" };
+	private static final String[] SIGNED_CHAR_STRINGS = new String[]{ "signed char" };
+	private static final String[] UNSIGNED_CHAR_STRINGS = new String[]{ "unsigned char" };
+	private static final String[] SIGNED_SHORT_STRINGS = new String[]{ "short", "short int", "signed short", "signed short int" };
+	private static final String[] UNSIGNED_SHORT_STRINGS = new String[]{ "unsigned short", "unsigned short int" };
+	private static final String[] SIGNED_INT_STRINGS = new String[]{ "int", "signed int"};
+	private static final String[] UNSIGNED_INT_STRINGS = new String[]{ "unsigned int" };
+	private static final String[] SIGNED_LONG_STRINGS = new String[]{ "long", "long int", "signed long", "signed long int" };
+	private static final String[] UNSIGNED_LONG_STRINGS = new String[]{ "unsigned long", "unsigned long int" };
+	private static final String[] SIGNED_LONGLONG_STRINGS = new String[]{ "long long", "long long int", "signed long long", "signed long long int" };
+	private static final String[] UNSIGNED_LONGLONG_STRINGS = new String[]{ "unsigned long long", "unsigned long long int" };
+	private static final String[] FLOAT_STRINGS = new String[]{ "char" };
+	private static final String[] DOUBLE_CHAR_STRINGS = new String[]{ "signed char" };
+	private static final String[] LONGDOUBLE_STRINGS = new String[]{ "unsigned char" };
 	
 	
 	

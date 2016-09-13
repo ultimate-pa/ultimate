@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE GUIGeneratedPreferencePages plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE GUIGeneratedPreferencePages plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE GUIGeneratedPreferencePages plug-in grant you additional permission
  * to convey the resulting work.
  */
 /*******************************************************************************
@@ -78,7 +78,7 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	 * Text limit constant (value <code>-1</code>) indicating unlimited text
 	 * limit and width.
 	 */
-	public static int UNLIMITED = -1;
+	public static final int UNLIMITED = -1;
 
 	/**
 	 * Cached valid state.
@@ -144,12 +144,12 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	 *            the parent of the field editor's control
 	 * @since 2.0
 	 */
-	public MultiLineTextFieldEditor(String name, String labelText, int width,
-			int strategy, Composite parent) {
+	public MultiLineTextFieldEditor(final String name, final String labelText, final int width,
+			final int strategy, final Composite parent) {
 		init(name, labelText);
 		setValidateStrategy(strategy);
 		isValid = false;
-		//TODO: errorMessage maybe wrong 
+		//TODO: errorMessage maybe wrong
 		errorMessage = null;
 		createControl(parent);
 	}
@@ -168,8 +168,8 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	 * @param parent
 	 *            the parent of the field editor's control
 	 */
-	public MultiLineTextFieldEditor(String name, String labelText, int width,
-			Composite parent) {
+	public MultiLineTextFieldEditor(final String name, final String labelText, final int width,
+			final Composite parent) {
 		this(name, labelText, width, VALIDATE_ON_KEY_STROKE, parent);
 		compTitle = labelText;
 	}
@@ -185,8 +185,8 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	 * @param parent
 	 *            the parent of the field editor's control
 	 */
-	public MultiLineTextFieldEditor(String name, String labelText,
-			Composite parent) {
+	public MultiLineTextFieldEditor(final String name, final String labelText,
+			final Composite parent) {
 		this(name, labelText, UNLIMITED, parent);
 	}
 
@@ -204,7 +204,7 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	 *            the number of columns
 	 */
 	@Override
-	protected void adjustForNumColumns(int numColumns) {
+	protected void adjustForNumColumns(final int numColumns) {
 		final GridData gd = (GridData) textField.getLayoutData();
 		gd.horizontalSpan = numColumns - 1;
 		// We only grab excess space if we have to
@@ -273,7 +273,7 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	 * </p>
 	 */
 	@Override
-	protected void doFillIntoGrid(Composite parent, int numColumns) {
+	protected void doFillIntoGrid(final Composite parent, final int numColumns) {
 
 		title = new Label(parent, SWT.UP);
 		title.setFont(parent.getFont());
@@ -386,7 +386,7 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	 *            the parent
 	 * @return the text control
 	 */
-	public Text getTextControl(Composite parent) {
+	public Text getTextControl(final Composite parent) {
 		if (textField == null) {
 			textField = new Text(parent, SWT.MULTI | SWT.V_SCROLL | SWT.BORDER
 					| SWT.WRAP);
@@ -395,19 +395,19 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 			case VALIDATE_ON_KEY_STROKE:
 				textField.addKeyListener(new KeyAdapter() {
 					@Override
-					public void keyPressed(KeyEvent e) {
+					public void keyPressed(final KeyEvent e) {
 						valueChanged();
 					}
 				});
 
 				textField.addFocusListener(new FocusAdapter() {
 					@Override
-					public void focusGained(FocusEvent e) {
+					public void focusGained(final FocusEvent e) {
 						refreshValidState();
 					}
 
 					@Override
-					public void focusLost(FocusEvent e) {
+					public void focusLost(final FocusEvent e) {
 						clearErrorMessage();
 					}
 				});
@@ -415,18 +415,18 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 			case VALIDATE_ON_FOCUS_LOST:
 				textField.addKeyListener(new KeyAdapter() {
 					@Override
-					public void keyPressed(KeyEvent e) {
+					public void keyPressed(final KeyEvent e) {
 						clearErrorMessage();
 					}
 				});
 				textField.addFocusListener(new FocusAdapter() {
 					@Override
-					public void focusGained(FocusEvent e) {
+					public void focusGained(final FocusEvent e) {
 						refreshValidState();
 					}
 
 					@Override
-					public void focusLost(FocusEvent e) {
+					public void focusLost(final FocusEvent e) {
 						valueChanged();
 						clearErrorMessage();
 					}
@@ -436,7 +436,7 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 			}
 			textField.addDisposeListener(new DisposeListener() {
 				@Override
-				public void widgetDisposed(DisposeEvent event) {
+				public void widgetDisposed(final DisposeEvent event) {
 					textField = null;
 				}
 			});
@@ -498,7 +498,7 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	 *            <code>true</code> if the empty string is allowed, and
 	 *            <code>false</code> if it is considered invalid
 	 */
-	public void setEmptyStringAllowed(boolean b) {
+	public void setEmptyStringAllowed(final boolean b) {
 		emptyStringAllowed = b;
 	}
 
@@ -509,7 +509,7 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	 * @param message
 	 *            the error message
 	 */
-	public void setErrorMessage(String message) {
+	public void setErrorMessage(final String message) {
 		errorMessage = message;
 	}
 
@@ -554,7 +554,7 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	 *            the limit on the number of character in the text input field,
 	 *            or <code>UNLIMITED</code> for no limit
 	 */
-	public void setTextLimit(int limit) {
+	public void setTextLimit(final int limit) {
 		textLimit = limit;
 		if (textField != null) {
 			textField.setTextLimit(limit);
@@ -576,7 +576,7 @@ public class MultiLineTextFieldEditor extends FieldEditor {
 	 *            <code>VALIDATE_ON_FOCUS_LOST</code> to perform validation only
 	 *            after the text has been typed in
 	 */
-	public void setValidateStrategy(int value) {
+	public void setValidateStrategy(final int value) {
 		Assert.isTrue(value == VALIDATE_ON_FOCUS_LOST
 				|| value == VALIDATE_ON_KEY_STROKE);
 		validateStrategy = value;

@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CDTPlugin plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CDTPlugin plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CDTPlugin plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocatio
  */
 public class ResultDetails extends ViewPart {
 
-	public static String ID = "de.uni_freiburg.informatik.ultimate.cdt.ResultDetails";
+	public static final String ID = "de.uni_freiburg.informatik.ultimate.cdt.ResultDetails";
 
 	/**
 	 * The underlying JFace Component
@@ -76,14 +76,14 @@ public class ResultDetails extends ViewPart {
 	 * .Composite)
 	 */
 	@Override
-	public void createPartControl(Composite parent) {
+	public void createPartControl(final Composite parent) {
 		final String problemsViewId = "org.eclipse.ui.views.ProblemView";
 		viewer = new TextViewer(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		viewer.setEditable(false);
 		final ISelectionService ser = getSite().getService(ISelectionService.class);
 		ser.addSelectionListener(new ISelectionListener() {
 			@Override
-			public void selectionChanged(IWorkbenchPart part, ISelection selection) {
+			public void selectionChanged(final IWorkbenchPart part, final ISelection selection) {
 				if (part.getSite().getId().equals(problemsViewId)) {
 					processSelection(selection);
 				}
@@ -93,7 +93,7 @@ public class ResultDetails extends ViewPart {
 		processSelection(selection);
 	}
 
-	protected void processSelection(ISelection selection) {
+	protected void processSelection(final ISelection selection) {
 		if (selection == null || selection.isEmpty()) {
 			return;
 		}
@@ -111,7 +111,7 @@ public class ResultDetails extends ViewPart {
 		}
 	}
 
-	private StringBuilder makeResultViewString(IResult result, int maxLength) {
+	private StringBuilder makeResultViewString(final IResult result, final int maxLength) {
 		final StringBuilder sb = new StringBuilder();
 		final String lineSeparator = System.getProperty("line.separator");
 		sb.append("Short Description:");
@@ -125,7 +125,7 @@ public class ResultDetails extends ViewPart {
 		return sb;
 	}
 
-	private String breakLines(String s, String breaker, int maxLength) {
+	private String breakLines(final String s, final String breaker, final int maxLength) {
 //		String[] parts = s.split(" ");
 //		StringBuilder sb = new StringBuilder();
 //
@@ -144,7 +144,7 @@ public class ResultDetails extends ViewPart {
 		return s;
 	}
 
-	private void queryProviders(IMarker marker) {
+	private void queryProviders(final IMarker marker) {
 		final IResult result = extractResultFromMarker(marker);
 		if (result != null) {
 			final int length = viewer.getControl().getBounds().width;
@@ -197,7 +197,7 @@ public class ResultDetails extends ViewPart {
 		viewer.setDocument(doc);
 	}
 
-	private IResult extractResultFromMarker(IMarker marker) {
+	private IResult extractResultFromMarker(final IMarker marker) {
 
 		// The args attribute has the following form:
 		//

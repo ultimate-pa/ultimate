@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.type;
@@ -46,6 +46,9 @@ public abstract class BoogieType implements IBoogieType {
      * long serialVersionUID
      */
     private static final long serialVersionUID = -1366978000551630241L;
+    
+    private static final BoogieType[] EMPTY = new BoogieType[0];
+    
     private final static ArrayList<PlaceholderType> PLACEHOLDER_TYPES = new ArrayList<PlaceholderType>();
     private final static ArrayList<PrimitiveType> BITVECTOR_TYPES = new ArrayList<PrimitiveType>();
     private final static UnifyHash<BoogieType> GLOBAL_TYPES = new UnifyHash<BoogieType>();
@@ -66,7 +69,7 @@ public abstract class BoogieType implements IBoogieType {
      *            the number of bits in this type
      * @return the bit vector type.
      */
-    public static BoogieType createBitvectorType(int len) {
+    public static BoogieType createBitvectorType(final int len) {
         for (int j = BITVECTOR_TYPES.size(); j <= len; j++) {
             BITVECTOR_TYPES.add(new PrimitiveType(j));
         }
@@ -89,7 +92,7 @@ public abstract class BoogieType implements IBoogieType {
      *            the index of the typevar argument.
      * @return the placeholder type.
      */
-    public static BoogieType createPlaceholderType(int i) {
+    public static BoogieType createPlaceholderType(final int i) {
         for (int j = PLACEHOLDER_TYPES.size(); j <= i; j++) {
             PLACEHOLDER_TYPES.add(new PlaceholderType(j));
         }
@@ -113,8 +116,8 @@ public abstract class BoogieType implements IBoogieType {
      * 
      * @
      */
-    public static ConstructedType createConstructedType(TypeConstructor constr,
-            BoogieType... params) {
+    public static ConstructedType createConstructedType(final TypeConstructor constr,
+            final BoogieType... params) {
         assert (constr.getParamCount() == params.length);
         int hashcode = constr.hashCode();
         for (int i = 0; i < params.length; i++) {
@@ -142,8 +145,6 @@ public abstract class BoogieType implements IBoogieType {
         return newType;
     }
 
-    private static BoogieType[] EMPTY = new BoogieType[0];
-
     /**
      * Creates a new constructed type without parameters; reuses an old instance
      * if it already exists. A constructed type is build from a TypeConstructor
@@ -153,7 +154,7 @@ public abstract class BoogieType implements IBoogieType {
      *            the type constructor, constr.getParamCount() must be 0.
      * @return The constructed type.
      */
-    public static ConstructedType createConstructedType(TypeConstructor constr) {
+    public static ConstructedType createConstructedType(final TypeConstructor constr) {
         return createConstructedType(constr, EMPTY);
     }
 
@@ -171,8 +172,8 @@ public abstract class BoogieType implements IBoogieType {
      *            the type of the values stored in the array.
      * @return The array type.
      */
-    public static ArrayType createArrayType(int numPlaceholders,
-            BoogieType[] indexTypes, BoogieType valueType) {
+    public static ArrayType createArrayType(final int numPlaceholders,
+            final BoogieType[] indexTypes, final BoogieType valueType) {
         int hashcode = numPlaceholders;
         for (int i = 0; i < indexTypes.length; i++) {
             hashcode = hashcode * 31 + indexTypes[i].hashCode();
@@ -212,8 +213,8 @@ public abstract class BoogieType implements IBoogieType {
      *            Field types.
      * @return The struct type.
      */
-    public static StructType createStructType(String[] fNames,
-            BoogieType[] fTypes) {
+    public static StructType createStructType(final String[] fNames,
+            final BoogieType[] fTypes) {
         assert fNames.length == fTypes.length;
         int hashCode = 1031;
         for (int i = 0; i < fNames.length; i++) {
@@ -277,7 +278,7 @@ public abstract class BoogieType implements IBoogieType {
      *            The types to substitute.
      * @return The substituted type
      */
-    public BoogieType substitutePlaceholders(BoogieType[] substType) {
+    public BoogieType substitutePlaceholders(final BoogieType[] substType) {
         return substitutePlaceholders(0, substType);
     }
 
@@ -293,7 +294,7 @@ public abstract class BoogieType implements IBoogieType {
      * only be the case if o is a BoogieType.
      */
     @Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
         return (o instanceof BoogieType)
                 && getUnderlyingType() == ((BoogieType) o).getUnderlyingType();
     }
@@ -325,7 +326,7 @@ public abstract class BoogieType implements IBoogieType {
      *            contains a suitable substitution.
      * @returns true if unification was successful, false on type mismatch.
      */
-    public boolean unify(BoogieType other, BoogieType[] substitution) {
+    public boolean unify(final BoogieType other, final BoogieType[] substitution) {
         return getUnderlyingType().unify(0, other.getUnderlyingType(),
                 substitution);
     }
@@ -368,7 +369,7 @@ public abstract class BoogieType implements IBoogieType {
      *            the other type
      * @returns true if unification was successful, false on type mismatch.
      */
-    public boolean isUnifiableTo(BoogieType other) {
+    public boolean isUnifiableTo(final BoogieType other) {
         final BoogieType realThis = getUnderlyingType();
         final BoogieType realOther = other.getUnderlyingType();
         return (realThis.isUnifiableTo(0, realOther,
@@ -414,7 +415,7 @@ public abstract class BoogieType implements IBoogieType {
      * 
      * @return the AST type representation of this type.
      */
-    public ASTType toASTType(ILocation loc) {
+    public ASTType toASTType(final ILocation loc) {
         return toASTType(loc, 0);
     }
 
