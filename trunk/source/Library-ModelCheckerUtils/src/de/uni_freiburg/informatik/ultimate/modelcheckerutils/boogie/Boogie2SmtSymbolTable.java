@@ -268,9 +268,10 @@ public class Boogie2SmtSymbolTable {
 							"if builtin identifier is " + "used we support only one constant per const declaration");
 				}
 				final String constId = varlist.getIdentifiers()[0];
+				final TermVariable termVariable = mScript.variable(constId, sort);
 				final ApplicationTerm constant =
 						(ApplicationTerm) mScript.term(this, attributeDefinedIdentifier, indices, null);
-				final BoogieConst boogieConst = new BoogieConst(constId, iType, constant);
+				final BoogieConst boogieConst = new BoogieConst(constId, iType, termVariable, constant);
 				final BoogieConst previousValue = mConstants.put(constId, boogieConst);
 				assert previousValue == null : "constant already contained";
 				mSmtConst2BoogieConst.put(constant, boogieConst);
@@ -279,8 +280,9 @@ public class Boogie2SmtSymbolTable {
 		}
 		for (final String constId : varlist.getIdentifiers()) {
 			mScript.declareFun(this, constId, paramTypes, sort);
+			final TermVariable termVariable = mScript.variable(constId, sort);
 			final ApplicationTerm constant = (ApplicationTerm) mScript.term(this, constId);
-			final BoogieConst boogieConst = new BoogieConst(constId, iType, constant);
+			final BoogieConst boogieConst = new BoogieConst(constId, iType, termVariable, constant);
 			final BoogieConst previousValue = mConstants.put(constId, boogieConst);
 			assert previousValue == null : "constant already contained";
 			mSmtConst2BoogieConst.put(constant, boogieConst);

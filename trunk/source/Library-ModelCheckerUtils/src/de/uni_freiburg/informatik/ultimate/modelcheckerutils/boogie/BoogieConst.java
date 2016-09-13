@@ -28,6 +28,9 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 
 
 /**
@@ -35,9 +38,15 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class BoogieConst implements IBoogieVar {
+public class BoogieConst implements IBoogieVar, IProgramConst {
 	private final String mIdentifier;
 	private final IBoogieType mIType;
+	
+	/**
+	 * TermVariable that represents this constant in {@link TransFormula}s
+	 * and {@link IPredicate}s.
+	 */
+	private final TermVariable mTermVariable;
 	
 	/**
 	 * Constant (0-ary ApplicationTerm) which represents this BoogieVar in
@@ -46,12 +55,14 @@ public class BoogieConst implements IBoogieVar {
 	private final ApplicationTerm mSmtConstant;
 
 	public BoogieConst(final String identifier, final IBoogieType iType,
-			final ApplicationTerm smtConstant) {
+			final TermVariable termVariable, final ApplicationTerm smtConstant) {
 		mIdentifier = identifier;
 		mIType = iType;
+		mTermVariable = termVariable;
 		mSmtConstant = smtConstant;
 	}
 	
+	@Override
 	public String getIdentifier() {
 		return mIdentifier;
 	}
@@ -64,6 +75,11 @@ public class BoogieConst implements IBoogieVar {
 	@Override
 	public IBoogieType getIType() {
 		return mIType;
+	}
+	
+	@Override
+	public TermVariable getTermVariable() {
+		return mTermVariable;
 	}
 
 	@Override
