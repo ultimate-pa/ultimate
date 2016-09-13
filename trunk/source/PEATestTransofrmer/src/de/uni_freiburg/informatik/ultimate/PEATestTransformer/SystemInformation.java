@@ -55,7 +55,7 @@ public class SystemInformation {
 	
 	/**
 	 * Returns for a variable name a predicate of the variables initial value. 
-	 * @TODO: this currently reutns mockup values dependig on the type of the vairable e.g. false for boools, 0 for integers, 0.0 for floats. ... 
+	 * @TODO: this currently returns mockup values dependig on the type of the vairable e.g. false for boools, 0 for integers, 0.0 for floats. ... 
 	 * @param Name
 	 * @return
 	 */

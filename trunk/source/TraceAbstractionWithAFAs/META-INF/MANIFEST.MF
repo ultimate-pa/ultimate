@@ -5,10 +5,6 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.trace
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas.Activator
 Require-Bundle: UltimateCore,
-<<<<<<< HEAD
- Library-log4j,
-=======
->>>>>>> 4af3edfd4d21df11927860fe8d9678a52b7a026e
  Library-UltimateUtil,
  Library-UltimateCore,
  Library-ModelCheckerUtils,
@@ -19,13 +15,8 @@ Require-Bundle: UltimateCore,
  SMTInterpol,
  de.uni_freiburg.informatik.ultimate.automata,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
- de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions, 
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
-<<<<<<< HEAD
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-=======
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
->>>>>>> 4af3edfd4d21df11927860fe8d9678a52b7a026e
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas
