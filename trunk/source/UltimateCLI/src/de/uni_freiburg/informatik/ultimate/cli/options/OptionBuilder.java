@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class OptionBuilder {
-
+	
 	private static final int MAX_NAME_LENGTH = 160;
 	private static final int MIN_WIDTH = 80;
 
