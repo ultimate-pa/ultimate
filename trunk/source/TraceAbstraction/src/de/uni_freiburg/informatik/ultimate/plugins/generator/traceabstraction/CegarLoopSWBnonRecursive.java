@@ -674,6 +674,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 			// add the respective edge into the abstraction automaton
 			if (edges.isInternalPosition(i)) {
 				boolean exists = false;
+				// TODO Christian 2016-09-13: Does this loop contain a bug? Only the very first iteration is executed.
 				for (final OutgoingInternalTransition<CodeBlock, IPredicate> t : mInterpolAutomaton
 						.internalSuccessors(sourceI, e)) {
 					if (t.getSucc().equals(targetI)) {
