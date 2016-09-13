@@ -154,7 +154,7 @@ public class CommandLineController implements IController<RunDefinition> {
 			final IToolchainData<RunDefinition> currentToolchain = prepareToolchain(core, fullParams);
 			assert currentToolchain == mToolchain;
 			// from now on, use the shutdown hook that disables the toolchain if the user presses CTRL+C (hopefully)
-			Runtime.getRuntime().addShutdownHook(new Thread(new SigIntTrap(currentToolchain), "SigIntTrap"));
+			Runtime.getRuntime().addShutdownHook(new Thread(new SigIntTrap(currentToolchain, mLogger), "SigIntTrap"));
 			startExecutingToolchain(core, fullParams, mLogger, currentToolchain);
 
 		} catch (final ParseException pex) {
@@ -331,13 +331,16 @@ public class CommandLineController implements IController<RunDefinition> {
 	private static final class SigIntTrap implements Runnable {
 
 		private final IToolchainData<RunDefinition> mCurrentToolchain;
+		private final ILogger mLogger;
 
-		public SigIntTrap(final IToolchainData<RunDefinition> currentToolchain) {
+		public SigIntTrap(final IToolchainData<RunDefinition> currentToolchain, final ILogger logger) {
 			mCurrentToolchain = currentToolchain;
+			mLogger = logger;
 		}
 
 		@Override
 		public void run() {
+			mLogger.warn("Received shutdown request...");
 			final IUltimateServiceProvider services = mCurrentToolchain.getServices();
 			if (services == null) {
 				return;
