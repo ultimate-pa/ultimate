@@ -76,11 +76,14 @@ public class SolverBuilder {
 	}
 
 	private static Script createExternalSolver(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final String command, final boolean fakeNonIncrementalScript) throws IOException {
+			final String command, final boolean fakeNonIncrementalScript, final boolean dumpFakeNonIncrementalScript, 
+			final String pathOfDumpedFakeNonIncrementalScript, final String basenameOfDumpedFakeNonIcrementalScript) throws IOException {
 		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
 		final Script script;
 		if (fakeNonIncrementalScript) {
-			script = new NonIncrementalScriptor(command, solverLogger, services, storage, "External_FakeNonIncremental");
+			script = new NonIncrementalScriptor(command, solverLogger, services, storage, "External_FakeNonIncremental",
+					dumpFakeNonIncrementalScript,
+					pathOfDumpedFakeNonIncrementalScript, basenameOfDumpedFakeNonIcrementalScript);
 		} else {
 			script = new Scriptor(command, solverLogger, services, storage, "External");
 		}
@@ -124,7 +127,8 @@ public class SolverBuilder {
 			try {
 				if (settings.getExternalInterpolator() == null) {
 					result = createExternalSolver(services, storage, settings.getCommandExternalSolver(), 
-							settings.fakeNonIncrementalScript());
+							settings.fakeNonIncrementalScript(), settings.dumpSmtScriptToFile(),
+							settings.getPathOfDumpedScript(), settings.getBaseNameOfDumpedScript());
 				} else {
 					solverLogger.info(
 							"external solver will use " + settings.getExternalInterpolator() + " interpolation mode");

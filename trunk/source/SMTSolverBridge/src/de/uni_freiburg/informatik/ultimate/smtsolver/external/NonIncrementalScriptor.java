@@ -28,7 +28,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -70,7 +74,7 @@ public class NonIncrementalScriptor extends NoopScript {
 	/**
 	 * For wrinting logs 
 	 */
-	private final PrintWriter mPw = null;
+	private final PrintWriter mPw;
 
 	/**
 	 * Create a script connecting to an external SMT solver.
@@ -80,11 +84,25 @@ public class NonIncrementalScriptor extends NoopScript {
 	 *            stdin.
 	 * @param services
 	 * @param storage
+	 * @param dumpFakeNonIncrementalScript 
+	 * @param basenameOfDumpedFakeNonIcrementalScript 
+	 * @param pathOfDumpedFakeNonIncrementalScript 
 	 * @throws IOExceptionO
 	 *             If the solver is not installed
 	 */
-	public NonIncrementalScriptor(final String command, final ILogger logger, final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final String solverName) throws IOException {
+	public NonIncrementalScriptor(final String command, final ILogger logger, 
+			final IUltimateServiceProvider services, final IToolchainStorage storage,
+			final String solverName, final boolean dumpFakeNonIncrementalScript, 
+			final String pathOfDumpedFakeNonIncrementalScript, final String basenameOfDumpedFakeNonIcrementalScript) throws IOException {
+		if (dumpFakeNonIncrementalScript) {
+			final String fullFilename = pathOfDumpedFakeNonIncrementalScript + 
+					File.separator + basenameOfDumpedFakeNonIcrementalScript +
+					"_fakeNonIncremental.smt2";
+			mPw = new PrintWriter(
+					new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fullFilename))), true);
+		} else {
+			mPw = null;
+		}
 		mExecutor = new Executor(command, this, logger, services, storage, solverName);
 		mCommandStack = new LinkedList<>();
 		mCommandStack.push(new ArrayList<ISmtCommand<?>>());
