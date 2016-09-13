@@ -2,22 +2,22 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * Copyright (C) 2013-2015 Vincent Langenfeld (langenfv@informatik.uni-freiburg.de)
- * 
+ *
  * This file is part of the ULTIMATE BuchiProgramProduct plug-in.
- * 
+ *
  * The ULTIMATE BuchiProgramProduct plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BuchiProgramProduct plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BuchiProgramProduct plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiProgramProduct plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -49,14 +49,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 /**
  * This plugin implements the product algorithm described in the Masterthesis
  * "Automatische Generierungvon Buchi-Programmen".
- * 
- * 
+ *
  * @author Langenfeld
- * 
- * 
  */
 public class BuchiProgramProduct implements IGenerator {
-
+	
 	private ILogger mLogger;
 	private BuchiProductObserver mBuchiProductObserver;
 	private boolean mUseBuchiProductObserver;
@@ -64,26 +61,26 @@ public class BuchiProgramProduct implements IGenerator {
 	private IUltimateServiceProvider mServices;
 	private int mUseful;
 	private boolean mModelIsRCFG;
-
+	
 	private ProductBacktranslator mBacktranslator;
 	private IToolchainStorage mStorage;
-
+	
 	@Override
 	public ModelType getOutputDefinition() {
 		if (mPreviousToolFoundErrors) {
 			return null;
 		}
-
+		
 		final List<String> filenames = new ArrayList<String>();
 		filenames.add("LTL+Program Product");
 		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.OTHER, filenames);
 	}
-
+	
 	@Override
 	public boolean isGuiRequired() {
 		return false;
 	}
-
+	
 	@Override
 	public ModelQuery getModelQuery() {
 		if (mPreviousToolFoundErrors) {
@@ -91,16 +88,15 @@ public class BuchiProgramProduct implements IGenerator {
 		}
 		return ModelQuery.ALL;
 	}
-
+	
 	@Override
 	public void setInputDefinition(final ModelType graphType) {
 		switch (graphType.getCreator()) {
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
 			mModelIsRCFG = true;
-			/*
-			 * TODO Christian 2016-09-12: This fall-through should be documented. If it was not intended, it should be
-			 *      fixed.
-			 */
+			mUseBuchiProductObserver = true;
+			mUseful++;
+			break;
 		case "de.uni_freiburg.informatik.ultimate.ltl2aut":
 			mUseBuchiProductObserver = true;
 			mUseful++;
@@ -111,19 +107,18 @@ public class BuchiProgramProduct implements IGenerator {
 			break;
 		}
 	}
-
+	
 	@Override
 	public List<IObserver> getObservers() {
 		final List<IObserver> observers = new ArrayList<IObserver>();
 		if (!mPreviousToolFoundErrors) {
-			if (mModelIsRCFG
-					&& mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-							.getBoolean(PreferenceInitializer.OPTIMIZE_SBE)) {
+			if (mModelIsRCFG && mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getBoolean(PreferenceInitializer.OPTIMIZE_SBE)) {
 				final boolean rewriteAssumes = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 						.getBoolean(PreferenceInitializer.OPTIMIZE_SBE_REWRITENOTEQUALS);
 				observers.add(new SmallBlockEncoder(mLogger, mBacktranslator, mStorage, rewriteAssumes));
 			}
-
+			
 			if (mUseBuchiProductObserver) {
 				if (mBuchiProductObserver == null) {
 					mBuchiProductObserver = new BuchiProductObserver(mLogger, mServices, mBacktranslator, mStorage);
@@ -133,24 +128,24 @@ public class BuchiProgramProduct implements IGenerator {
 		}
 		return observers;
 	}
-
+	
 	@Override
 	public void init() {
 		mUseBuchiProductObserver = false;
 		mModelIsRCFG = false;
 		mUseful = 0;
 	}
-
+	
 	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
-
+	
 	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
-
+	
 	@Override
 	public IElement getModel() {
 		if (mBuchiProductObserver.getModel() != null) {
@@ -159,36 +154,36 @@ public class BuchiProgramProduct implements IGenerator {
 			return null;
 		}
 	}
-
+	
 	@Override
 	public List<String> getDesiredToolID() {
 		return null;
 	}
-
+	
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
-
+	
 	@Override
 	public void setToolchainStorage(final IToolchainStorage storage) {
 		mStorage = storage;
 	}
-
+	
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		final Collection<CounterExampleResult> cex = ResultUtil.filterResults(services.getResultService().getResults(),
-				CounterExampleResult.class);
+		final Collection<CounterExampleResult> cex =
+				ResultUtil.filterResults(services.getResultService().getResults(), CounterExampleResult.class);
 		mPreviousToolFoundErrors = !cex.isEmpty();
 		mBacktranslator = new ProductBacktranslator(RCFGEdge.class, Term.class);
 		if (!mPreviousToolFoundErrors) {
 			mServices.getBacktranslationService().addTranslator(mBacktranslator);
 		}
 	}
-
+	
 	@Override
 	public void finish() {
 		if (!mPreviousToolFoundErrors && mUseful == 0) {
@@ -198,5 +193,5 @@ public class BuchiProgramProduct implements IGenerator {
 			mLogger.info("Another plugin discovered errors, skipping...");
 		}
 	}
-
+	
 }
