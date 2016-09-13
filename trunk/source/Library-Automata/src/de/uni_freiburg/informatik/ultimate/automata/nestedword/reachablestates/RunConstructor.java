@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 
 /**
  * Construction of initial runs and runs for summaries. Runs are constructed
- * backwards, therefore mStart is the last state in the run and mGoal is
+ * backwards, therefore mStart is the last state of the run and mGoal is
  * the first state of the run.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -72,16 +72,14 @@ class RunConstructor<LETTER, STATE> {
 	private final boolean mFindSummary;
 	private final Summary<LETTER, STATE> mSummary;
 	private final boolean mSummaryMustContainAccepting;
-	private boolean mGoalFound = false;
-	private final Set<StateContainerWithObligation> mVisited =
-			new HashSet<StateContainerWithObligation>();
-			
+	private boolean mGoalFound;
+	private final Set<StateContainerWithObligation> mVisited = new HashSet<>();
+	
 	/**
 	 * Construction of an initial run whose last state is start.
 	 */
 	public RunConstructor(final AutomataLibraryServices services,
-			final NestedWordAutomatonReachableStates<LETTER, STATE> nwars,
-			final StateContainer<LETTER, STATE> start) {
+			final NestedWordAutomatonReachableStates<LETTER, STATE> nwars, final StateContainer<LETTER, STATE> start) {
 		mServices = services;
 		mNwars = nwars;
 		mStart = start;
@@ -100,8 +98,7 @@ class RunConstructor<LETTER, STATE> {
 	 * an initial run whose last state is start.
 	 */
 	public RunConstructor(final AutomataLibraryServices services,
-			final NestedWordAutomatonReachableStates<LETTER, STATE> nwars,
-			final Summary<LETTER, STATE> summary,
+			final NestedWordAutomatonReachableStates<LETTER, STATE> nwars, final Summary<LETTER, STATE> summary,
 			final boolean summaryMustContainAccepting) {
 		mServices = services;
 		mNwars = nwars;
@@ -122,10 +119,8 @@ class RunConstructor<LETTER, STATE> {
 	 * summary once).
 	 */
 	private RunConstructor(final AutomataLibraryServices services,
-			final NestedWordAutomatonReachableStates<LETTER, STATE> nwars,
-			final Summary<LETTER, STATE> summary,
-			final boolean summaryMustContainAccepting,
-			final Set<SummaryWithObligation> forbiddenSummaries) {
+			final NestedWordAutomatonReachableStates<LETTER, STATE> nwars, final Summary<LETTER, STATE> summary,
+			final boolean summaryMustContainAccepting, final Set<SummaryWithObligation> forbiddenSummaries) {
 		mServices = services;
 		mNwars = nwars;
 		mStart = summary.getLinPred();
@@ -135,7 +130,7 @@ class RunConstructor<LETTER, STATE> {
 		mSummaryMustContainAccepting = summaryMustContainAccepting;
 		final SummaryWithObligation summaryWithObligation =
 				new SummaryWithObligation(mSummary, mSummaryMustContainAccepting);
-		mForbiddenSummaries = new HashSet<SummaryWithObligation>(forbiddenSummaries);
+		mForbiddenSummaries = new HashSet<>(forbiddenSummaries);
 		mForbiddenSummaries.add(summaryWithObligation);
 	}
 	
@@ -144,8 +139,45 @@ class RunConstructor<LETTER, STATE> {
 	 * transition from the state with the lowest serial number (that has
 	 * not been visited before).
 	 */
+	@SuppressWarnings("unchecked")
 	private Collection<TransitionWithObligation> findSuitablePredecessors(final StateContainerWithObligation current) {
-		final SortedMap<Integer, Object> number2transition = new TreeMap<Integer, Object>();
+		final SortedMap<Integer, Object> number2transition = new TreeMap<>();
+		Set<RunConstructor<LETTER, STATE>.TransitionWithObligation> resultSingleton =
+				findSuitablePredecessorsInternal(current, number2transition);
+		if (resultSingleton != null) {
+			return resultSingleton;
+		}
+		resultSingleton = findSuitablePredecessorsCall(current, number2transition);
+		if (resultSingleton != null) {
+			return resultSingleton;
+		}
+		resultSingleton = findSuitablePredecessorsReturn(current, number2transition);
+		if (resultSingleton != null) {
+			return resultSingleton;
+		}
+		
+		final ArrayList<TransitionWithObligation> result = new ArrayList<>();
+		for (final Object value : number2transition.values()) {
+			if (value instanceof RunConstructor.TransitionWithObligation) {
+				final TransitionWithObligation two = (TransitionWithObligation) value;
+				assert two.getObject() instanceof IncomingInternalTransition
+						|| two.getObject() instanceof IncomingCallTransition;
+				result.add(two);
+			} else {
+				assert value instanceof SortedMap;
+				final SortedMap<Integer, TransitionWithObligation> linPredSerial2inTrans =
+						(SortedMap<Integer, TransitionWithObligation>) value;
+				for (final TransitionWithObligation ret : linPredSerial2inTrans.values()) {
+					result.add(ret);
+				}
+			}
+		}
+		return result;
+	}
+	
+	@SuppressWarnings("squid:S1168")
+	private Set<RunConstructor<LETTER, STATE>.TransitionWithObligation> findSuitablePredecessorsInternal(
+			final StateContainerWithObligation current, final SortedMap<Integer, Object> number2transition) {
 		for (final IncomingInternalTransition<LETTER, STATE> inTrans : mNwars
 				.internalPredecessors(current.getObject().getState())) {
 			if (!mFindSummary && mNwars.isInitial(inTrans.getPred())) {
@@ -169,9 +201,14 @@ class RunConstructor<LETTER, STATE> {
 				continue;
 			}
 			final int predSerialNumber = predSc.getSerialNumber();
-			number2transition.put(predSerialNumber,
-					new TransitionWithObligation(inTrans, predObligation));
+			number2transition.put(predSerialNumber, new TransitionWithObligation(inTrans, predObligation));
 		}
+		return null;
+	}
+	
+	@SuppressWarnings("squid:S1168")
+	private Set<RunConstructor<LETTER, STATE>.TransitionWithObligation> findSuitablePredecessorsCall(
+			final StateContainerWithObligation current, final SortedMap<Integer, Object> number2transition) {
 		for (final IncomingCallTransition<LETTER, STATE> inTrans : mNwars
 				.callPredecessors(current.getObject().getState())) {
 			final StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getPred());
@@ -179,27 +216,30 @@ class RunConstructor<LETTER, STATE> {
 				if (mGoal.equals(predSc) && !current.hasObligation()) {
 					mGoalFound = true;
 					return Collections.singleton(new TransitionWithObligation(inTrans, false));
-				} else {
-					continue;
 				}
-			} else {
-				assert !current.hasObligation();
-				if (mNwars.isInitial(inTrans.getPred())) {
-					mGoalFound = true;
-					return Collections.singleton(new TransitionWithObligation(inTrans, false));
-				}
-				final StateContainerWithObligation predWithObligation = new StateContainerWithObligation(predSc, false);
-				if (mVisited.contains(predWithObligation)) {
-					continue;
-				}
-				final int predSerialNumber = predSc.getSerialNumber();
-				if (!number2transition.containsKey(predSerialNumber)) {
-					number2transition.put(predSerialNumber,
-							new TransitionWithObligation(inTrans, false));
-				}
+				continue;
+			}
+			assert !current.hasObligation();
+			if (mNwars.isInitial(inTrans.getPred())) {
+				mGoalFound = true;
+				return Collections.singleton(new TransitionWithObligation(inTrans, false));
+			}
+			final StateContainerWithObligation predWithObligation = new StateContainerWithObligation(predSc, false);
+			if (mVisited.contains(predWithObligation)) {
+				continue;
+			}
+			final Integer predSerialNumber = predSc.getSerialNumber();
+			if (!number2transition.containsKey(predSerialNumber)) {
+				number2transition.put(predSerialNumber,
+						new TransitionWithObligation(inTrans, false));
 			}
 		}
-		
+		return null;
+	}
+	
+	@SuppressWarnings({ "squid:S1168", "unchecked" })
+	private Set<RunConstructor<LETTER, STATE>.TransitionWithObligation> findSuitablePredecessorsReturn(
+			final StateContainerWithObligation current, final SortedMap<Integer, Object> number2transition) {
 		for (final IncomingReturnTransition<LETTER, STATE> inTrans : mNwars
 				.returnPredecessors(current.getObject().getState())) {
 			if (!mFindSummary && mNwars.isInitial(inTrans.getHierPred())) {
@@ -210,35 +250,14 @@ class RunConstructor<LETTER, STATE> {
 			if (mFindSummary && !predSc.getDownStates().containsKey(mGoal.getState())) {
 				continue;
 			}
-			final Summary<LETTER, STATE> summary = new Summary<LETTER, STATE>(
-					mNwars.obtainSC(inTrans.getHierPred()),
-					mNwars.obtainSC(inTrans.getLinPred()),
-					inTrans.getLetter(), current.getObject());
-			final boolean summaryWillSatisfyObligation;
-			{
-				final boolean doWeWantToTakeAcceptingSummary = current.hasObligation()
-						&& !mNwars.isFinal(predSc.getState())
-						&& mNwars.isAccepting(summary);
-				if (doWeWantToTakeAcceptingSummary) {
-					final SummaryWithObligation swo = new SummaryWithObligation(summary, true);
-					final boolean areWeAllowedToTakeAcceptingSummary = !mForbiddenSummaries.contains(swo);
-					if (areWeAllowedToTakeAcceptingSummary) {
-						summaryWillSatisfyObligation = true;
-					} else {
-						summaryWillSatisfyObligation = false;
-					}
-				} else {
-					summaryWillSatisfyObligation = false;
-				}
-			}
-			final SummaryWithObligation summaryWithSatifiedObligation =
-					new SummaryWithObligation(summary, false);
+			final Summary<LETTER, STATE> summary = new Summary<>(mNwars.obtainSC(inTrans.getHierPred()),
+					mNwars.obtainSC(inTrans.getLinPred()), inTrans.getLetter(), current.getObject());
+			final boolean summaryWillSatisfyObligation = willSummarySatisfyObligation(current, predSc, summary);
+			final SummaryWithObligation summaryWithSatifiedObligation = new SummaryWithObligation(summary, false);
 			if (summaryWillSatisfyObligation) {
 				assert !mForbiddenSummaries.contains(summaryWithSatifiedObligation);
-			} else {
-				if (mForbiddenSummaries.contains(summaryWithSatifiedObligation)) {
-					continue;
-				}
+			} else if (mForbiddenSummaries.contains(summaryWithSatifiedObligation)) {
+				continue;
 			}
 			final boolean predObligation =
 					current.hasObligation() && !mNwars.isFinal(predSc.getState()) && !summaryWillSatisfyObligation;
@@ -253,42 +272,44 @@ class RunConstructor<LETTER, STATE> {
 			if (mVisited.contains(predWithObligation)) {
 				continue;
 			}
-			final int predSerialNumber = predSc.getSerialNumber();
+			final Integer predSerialNumber = Integer.valueOf(predSc.getSerialNumber());
 			final Object previousEntry = number2transition.get(predSerialNumber);
 			if (previousEntry instanceof RunConstructor.TransitionWithObligation) {
 				// do nothing
-			} else {
-				assert previousEntry == null || (previousEntry instanceof SortedMap);
-				SortedMap<Integer, TransitionWithObligation> linPredSerial2inTrans;
-				if (previousEntry == null) {
-					linPredSerial2inTrans = new TreeMap<Integer, TransitionWithObligation>();
-					number2transition.put(predSerialNumber, linPredSerial2inTrans);
-				} else {
-					linPredSerial2inTrans = (SortedMap<Integer, TransitionWithObligation>) previousEntry;
-				}
-				final StateContainer<LETTER, STATE> linPredSc = mNwars.obtainSC(inTrans.getLinPred());
-				final int linPredSerial = linPredSc.getSerialNumber();
-				linPredSerial2inTrans.put(linPredSerial,
-						new TransitionWithObligation(inTrans, predObligation));
+				continue;
 			}
-		}
-		final ArrayList<TransitionWithObligation> result = new ArrayList<TransitionWithObligation>();
-		for (final Object value : number2transition.values()) {
-			if (value instanceof RunConstructor.TransitionWithObligation) {
-				final TransitionWithObligation two = (TransitionWithObligation) value;
-				assert two.getObject() instanceof IncomingInternalTransition
-						|| two.getObject() instanceof IncomingCallTransition;
-				result.add(two);
+			assert previousEntry == null || (previousEntry instanceof SortedMap);
+			SortedMap<Integer, TransitionWithObligation> linPredSerial2inTrans;
+			if (previousEntry == null) {
+				linPredSerial2inTrans = new TreeMap<>();
+				number2transition.put(predSerialNumber, linPredSerial2inTrans);
 			} else {
-				assert value instanceof SortedMap;
-				final SortedMap<Integer, TransitionWithObligation> linPredSerial2inTrans =
-						(SortedMap<Integer, TransitionWithObligation>) value;
-				for (final TransitionWithObligation ret : linPredSerial2inTrans.values()) {
-					result.add(ret);
-				}
+				linPredSerial2inTrans = (SortedMap<Integer, TransitionWithObligation>) previousEntry;
 			}
+			final StateContainer<LETTER, STATE> linPredSc = mNwars.obtainSC(inTrans.getLinPred());
+			final int linPredSerial = linPredSc.getSerialNumber();
+			linPredSerial2inTrans.put(linPredSerial, new TransitionWithObligation(inTrans, predObligation));
 		}
-		return result;
+		return null;
+	}
+	
+	private boolean willSummarySatisfyObligation(final StateContainerWithObligation current,
+			final StateContainer<LETTER, STATE> predSc, final Summary<LETTER, STATE> summary) {
+		final boolean summaryWillSatisfyObligation;
+		final boolean doWeWantToTakeAcceptingSummary =
+				current.hasObligation() && !mNwars.isFinal(predSc.getState()) && mNwars.isAccepting(summary);
+		if (doWeWantToTakeAcceptingSummary) {
+			final SummaryWithObligation swo = new SummaryWithObligation(summary, true);
+			final boolean areWeAllowedToTakeAcceptingSummary = !mForbiddenSummaries.contains(swo);
+			if (areWeAllowedToTakeAcceptingSummary) {
+				summaryWillSatisfyObligation = true;
+			} else {
+				summaryWillSatisfyObligation = false;
+			}
+		} else {
+			summaryWillSatisfyObligation = false;
+		}
+		return summaryWillSatisfyObligation;
 	}
 	
 	/**
@@ -306,15 +327,21 @@ class RunConstructor<LETTER, STATE> {
 		}
 		assert !mSummaryMustContainAccepting || mGoal != null;
 		if (!mFindSummary && mNwars.isInitial(mStart.getState())) {
-			return new NestedRun<LETTER, STATE>(mStart.getState());
+			return new NestedRun<>(mStart.getState());
 		}
 		final boolean startStateHasObligation = mSummaryMustContainAccepting && !mNwars.isFinal(mStart.getState());
 		final StateContainerWithObligation startStateWithStartObligation =
 				new StateContainerWithObligation(mStart, startStateHasObligation);
-		StateContainerWithObligation current = startStateWithStartObligation;
+		final StateContainerWithObligation current = startStateWithStartObligation;
 		final Deque<Iterator<TransitionWithObligation>> predStack = new ArrayDeque<>();
-		final Deque<RunWithObligation> takenStack = new ArrayDeque<RunWithObligation>();
-		
+		final Deque<RunWithObligation> takenStack = new ArrayDeque<>();
+		return constructRunLoop(startStateWithStartObligation, current, predStack, takenStack);
+	}
+	
+	private NestedRun<LETTER, STATE> constructRunLoop(final StateContainerWithObligation startStateWithStartObligation,
+			final StateContainerWithObligation currentIn, final Deque<Iterator<TransitionWithObligation>> predStack,
+			final Deque<RunWithObligation> takenStack) throws AutomataOperationCanceledException, AssertionError {
+		StateContainerWithObligation current = currentIn;
 		// if this is set the last round
 		boolean backtrack = false;
 		while (true) {
@@ -330,8 +357,7 @@ class RunConstructor<LETTER, STATE> {
 			while (!predStack.peek().hasNext()) {
 				predStack.pop();
 				if (takenStack.isEmpty()) {
-					// I am not able to find a run.
-					// Maybe taking this summary was a bad decision.
+					// I am not able to find a run. Maybe taking this summary was a bad decision.
 					assert mGoal != null;
 					return null;
 				}
@@ -347,44 +373,34 @@ class RunConstructor<LETTER, STATE> {
 				}
 			}
 			
-			final TransitionWithObligation transitionWOToLowest = predStack.peek().next();
-			assert transitionWOToLowest != null;
-			final ITransitionlet<LETTER, STATE> transitionToLowest = transitionWOToLowest.getObject();
+			final TransitionWithObligation transitionWoToLowest = predStack.peek().next();
+			assert transitionWoToLowest != null;
+			final ITransitionlet<LETTER, STATE> transitionToLowest = transitionWoToLowest.getObject();
 			StateContainer<LETTER, STATE> predSc;
 			NestedRun<LETTER, STATE> newPrefix;
 			if (transitionToLowest instanceof IncomingInternalTransition) {
 				final IncomingInternalTransition<LETTER, STATE> inTrans =
 						(IncomingInternalTransition<LETTER, STATE>) transitionToLowest;
 				predSc = mNwars.obtainSC(inTrans.getPred());
-				newPrefix = new NestedRun<LETTER, STATE>(inTrans.getPred(),
-						inTrans.getLetter(), NestedWord.INTERNAL_POSITION,
+				newPrefix = new NestedRun<>(inTrans.getPred(), inTrans.getLetter(), NestedWord.INTERNAL_POSITION,
 						current.getObject().getState());
 			} else if (transitionToLowest instanceof IncomingCallTransition) {
 				final IncomingCallTransition<LETTER, STATE> inTrans =
 						(IncomingCallTransition<LETTER, STATE>) transitionToLowest;
 				predSc = mNwars.obtainSC(inTrans.getPred());
-				newPrefix = new NestedRun<LETTER, STATE>(inTrans.getPred(),
-						inTrans.getLetter(), NestedWord.PLUS_INFINITY,
+				newPrefix = new NestedRun<>(inTrans.getPred(), inTrans.getLetter(), NestedWord.PLUS_INFINITY,
 						current.getObject().getState());
 			} else if (transitionToLowest instanceof IncomingReturnTransition) {
 				final IncomingReturnTransition<LETTER, STATE> inTrans =
 						(IncomingReturnTransition<LETTER, STATE>) transitionToLowest;
 				predSc = mNwars.obtainSC(inTrans.getHierPred());
-				final Summary<LETTER, STATE> summary = new Summary<LETTER, STATE>(
-						predSc,
-						mNwars.obtainSC(inTrans.getLinPred()),
+				final Summary<LETTER, STATE> summary = new Summary<>(predSc, mNwars.obtainSC(inTrans.getLinPred()),
 						inTrans.getLetter(), current.getObject());
-				final boolean isAcceptingSummaryRequired =
-						current.hasObligation()
-								&& !transitionWOToLowest.hasObligation()
-								&& !mNwars.isFinal(predSc.getState());
+				final boolean isAcceptingSummaryRequired = current.hasObligation()
+						&& !transitionWoToLowest.hasObligation() && !mNwars.isFinal(predSc.getState());
 				assert !isAcceptingSummaryRequired || mNwars.isAccepting(summary);
-				final RunConstructor<LETTER, STATE> runConstuctor = new RunConstructor<LETTER, STATE>(
-						mServices,
-						mNwars,
-						summary,
-						isAcceptingSummaryRequired,
-						mForbiddenSummaries);
+				final RunConstructor<LETTER, STATE> runConstuctor = new RunConstructor<>(mServices, mNwars, summary,
+						isAcceptingSummaryRequired, mForbiddenSummaries);
 				newPrefix = runConstuctor.constructRun();
 				if (newPrefix == null) {
 					// no summary found (because of forbidden summaries?)
@@ -395,12 +411,12 @@ class RunConstructor<LETTER, STATE> {
 			} else {
 				throw new AssertionError();
 			}
-			assert current.getObject().getState() == newPrefix.getStateAtPosition(newPrefix.getLength() - 1);
-			final StateContainerWithObligation predWo = new StateContainerWithObligation(
-					predSc, transitionWOToLowest.hasObligation());
-			final RunWithObligation newPrefixWO = new RunWithObligation(
-					predWo.getObject(), predWo.hasObligation(), newPrefix);
-			takenStack.push(newPrefixWO);
+			assert isLastStateInRun(current.getObject(), newPrefix);
+			final StateContainerWithObligation predWo =
+					new StateContainerWithObligation(predSc, transitionWoToLowest.hasObligation());
+			final RunWithObligation newPrefixWo =
+					new RunWithObligation(predWo.getObject(), predWo.hasObligation(), newPrefix);
+			takenStack.push(newPrefixWo);
 			if (mGoalFound) {
 				return constructResult(takenStack);
 			}
@@ -414,24 +430,34 @@ class RunConstructor<LETTER, STATE> {
 		while (it.hasNext()) {
 			result = it.next().getNestedRun().concatenate(result);
 		}
-		assert mStart.getState() == result.getStateAtPosition(result.getLength() - 1);
+		assert isLastStateInRun(mStart, result);
 		if (mFindSummary) {
-			final NestedRun<LETTER, STATE> returnSuffix = new NestedRun<LETTER, STATE>(
-					mSummary.getLinPred().getState(),
-					mSummary.getLetter(), NestedWord.MINUS_INFINITY,
-					mSummary.getSucc().getState());
+			final NestedRun<LETTER, STATE> returnSuffix = new NestedRun<>(mSummary.getLinPred().getState(),
+					mSummary.getLetter(), NestedWord.MINUS_INFINITY, mSummary.getSucc().getState());
 			result = result.concatenate(returnSuffix);
 		}
 		return result;
 	}
 	
-	private class ObjectWithObligation<E> {
+	@SuppressWarnings("squid:S1698")
+	private boolean isLastStateInRun(final StateContainer<LETTER, STATE> stateContainer,
+			final NestedRun<LETTER, STATE> run) {
+		// equality intended here
+		return stateContainer.getState() == run.getStateAtPosition(run.getLength() - 1);
+	}
+	
+	/**
+	 * Wrapper for object together with a flag.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 * @param <E>
+	 *            object type
+	 */
+	private static class ObjectWithObligation<E> {
 		private final E mObject;
 		private final boolean mFlag;
 		
-		public ObjectWithObligation(
-				final E object, final boolean flag) {
-			super();
+		public ObjectWithObligation(final E object, final boolean flag) {
 			mObject = object;
 			mFlag = flag;
 		}
@@ -440,6 +466,9 @@ class RunConstructor<LETTER, STATE> {
 			return mObject;
 		}
 		
+		/**
+		 * @return The value of the flag.
+		 */
 		public boolean hasObligation() {
 			return mFlag;
 		}
@@ -449,8 +478,7 @@ class RunConstructor<LETTER, STATE> {
 			final int prime = 31;
 			int result = 1;
 			result = prime * result + (mFlag ? 1231 : 1237);
-			result = prime * result
-					+ ((mObject == null) ? 0 : mObject.hashCode());
+			result = prime * result + ((mObject == null) ? 0 : mObject.hashCode());
 			return result;
 		}
 		
@@ -462,10 +490,11 @@ class RunConstructor<LETTER, STATE> {
 			if (obj == null) {
 				return false;
 			}
-			if (!(obj instanceof ObjectWithObligation)) {
+			if (this.getClass() != obj.getClass()) {
 				return false;
 			}
-			final ObjectWithObligation<E> other = (ObjectWithObligation) obj;
+			@SuppressWarnings("unchecked")
+			final ObjectWithObligation<E> other = (ObjectWithObligation<E>) obj;
 			if (mFlag != other.mFlag) {
 				return false;
 			}
@@ -481,28 +510,44 @@ class RunConstructor<LETTER, STATE> {
 		
 		@Override
 		public String toString() {
-			return "ObjectWithObligation [mObject=" + mObject + ", mFlag="
-					+ mFlag + "]";
+			return "ObjectWithObligation [mObject=" + mObject + ", mFlag=" + mFlag + "]";
 		}
 	}
 	
+	/**
+	 * Wrapper for {@link ITransitionlet} together with a flag.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 */
 	private class TransitionWithObligation extends ObjectWithObligation<ITransitionlet<LETTER, STATE>> {
 		public TransitionWithObligation(final ITransitionlet<LETTER, STATE> object, final boolean flag) {
 			super(object, flag);
 		}
 	}
 	
+	/**
+	 * Wrapper for {@link StateContainer} together with a flag.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 */
 	private class StateContainerWithObligation extends ObjectWithObligation<StateContainer<LETTER, STATE>> {
 		public StateContainerWithObligation(final StateContainer<LETTER, STATE> object, final boolean flag) {
 			super(object, flag);
 		}
 	}
 	
+	/**
+	 * Wrapper for an object together with a flag and a {@link NestedRun}.
+	 * <p>
+	 * TODO Christian 2016-09-13: The {@link #equals(Object)} method should probably be overwritten.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 */
 	private class RunWithObligation extends StateContainerWithObligation {
 		private final NestedRun<LETTER, STATE> mNestedRun;
 		
-		public RunWithObligation(final StateContainer<LETTER, STATE> object,
-				final boolean flag, final NestedRun<LETTER, STATE> nestedRun) {
+		public RunWithObligation(final StateContainer<LETTER, STATE> object, final boolean flag,
+				final NestedRun<LETTER, STATE> nestedRun) {
 			super(object, flag);
 			mNestedRun = nestedRun;
 		}
@@ -516,6 +561,11 @@ class RunConstructor<LETTER, STATE> {
 		}
 	}
 	
+	/**
+	 * Wrapper for {@link Summary} together with a flag.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 */
 	private class SummaryWithObligation extends ObjectWithObligation<Summary<LETTER, STATE>> {
 		public SummaryWithObligation(final Summary<LETTER, STATE> object, final boolean flag) {
 			super(object, flag);
