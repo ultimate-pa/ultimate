@@ -231,8 +231,11 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 			final String fileName = new StringBuilder().append(logDir).append(File.separator).append(logName)
 			        .append(".log").toString();
 
-			mFileAppender = FileAppender.createAppender(fileName, append.toString(), "false", "FileAppender", "true",
-			        "false", "false", "8192", layout, null, "false", null, mConfig);
+			final String falsePredicate = "false";
+			final String truePredicate = "true";
+
+			mFileAppender = FileAppender.createAppender(fileName, append.toString(), falsePredicate, "FileAppender",
+			        truePredicate, falsePredicate, falsePredicate, "8192", layout, null, falsePredicate, null, mConfig);
 			mFileAppender.start();
 
 			mContext.getRootLogger().addAppender(mFileAppender);
