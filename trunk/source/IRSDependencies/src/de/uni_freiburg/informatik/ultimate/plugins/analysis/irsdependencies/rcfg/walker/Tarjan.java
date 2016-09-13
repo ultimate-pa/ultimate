@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IRSDependencies plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker;
@@ -48,7 +48,7 @@ public class Tarjan {
 		init();
 	}
 
-	public Tarjan(List<RCFGEdge> forbiddenEdges) {
+	public Tarjan(final List<RCFGEdge> forbiddenEdges) {
 		init();
 		mForbiddenEdges.addAll(forbiddenEdges);
 	}
@@ -62,7 +62,7 @@ public class Tarjan {
 		mForbiddenEdges = new HashSet<>();
 	}
 
-	public LinkedList<SCC> computeStronglyConnectedComponents(RCFGNode node) {
+	public LinkedList<SCC> computeStronglyConnectedComponents(final RCFGNode node) {
 		if (!mComponents.isEmpty()) {
 			init();
 		}
@@ -88,7 +88,7 @@ public class Tarjan {
 	 * 
 	 * @param node
 	 */
-	private void computeVertices(RCFGNode node) {
+	private void computeVertices(final RCFGNode node) {
 		if (mUnfinishedVertices.contains(node)) {
 			return;
 		}
@@ -103,8 +103,8 @@ public class Tarjan {
 		}
 	}
 
-	private void computeComponents(RCFGNode currentVertice,
-			VerticeDecorator currentVerticeDecorator) {
+	private void computeComponents(final RCFGNode currentVertice,
+			final VerticeDecorator currentVerticeDecorator) {
 		// Set the depth index for currentVertice to the smallest unused index
 		currentVerticeDecorator.index = mCurrentIndex;
 		currentVerticeDecorator.lowlink = mCurrentIndex;
@@ -148,7 +148,7 @@ public class Tarjan {
 		}
 	}
 
-	private boolean isAdmissible(RCFGEdge possibleSuccessorEdge) {
+	private boolean isAdmissible(final RCFGEdge possibleSuccessorEdge) {
 		if (possibleSuccessorEdge instanceof Summary) {
 			return false;
 		}
@@ -158,9 +158,9 @@ public class Tarjan {
 		return true;
 	}
 
-	private class VerticeDecorator {
+	private static final class VerticeDecorator {
 
-		private VerticeDecorator() {
+		VerticeDecorator() {
 			index = -1;
 			lowlink = -1;
 		}

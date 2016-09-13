@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
@@ -79,7 +79,7 @@ public class LTLExpressionExtractor {
 		return false;
 	}
 
-	public ACSLNode removeWeakUntil(ACSLNode node) {
+	public ACSLNode removeWeakUntil(final ACSLNode node) {
 		return node.accept(new LTLReplaceWeakUntil());
 	}
 
@@ -91,7 +91,7 @@ public class LTLExpressionExtractor {
 		return mLTLFormatString;
 	}
 
-	public static String getAPSymbol(int i) {
+	public static String getAPSymbol(final int i) {
 		if (i < sAlpha.length()) {
 			return String.valueOf(sAlpha.charAt(i));
 		}
@@ -108,7 +108,7 @@ public class LTLExpressionExtractor {
 	private class LTLReplaceWeakUntil extends ACSLTransformer {
 
 		@Override
-		public BinaryExpression transform(BinaryExpression node) {
+		public BinaryExpression transform(final BinaryExpression node) {
 
 			if (node.getOperator().equals(Operator.LTLWEAKUNTIL)) {
 				// a WU b == (a U b) || (G a)
@@ -129,7 +129,7 @@ public class LTLExpressionExtractor {
 			return super.transform(node);
 		}
 
-		private void addAdditionalInfo(BinaryExpression node, Expression expr) {
+		private void addAdditionalInfo(final BinaryExpression node, final Expression expr) {
 			expr.setEndingLineNumber(node.getEndingLineNumber());
 			expr.setStartingLineNumber(node.getStartingLineNumber());
 			expr.setFileName(node.getFileName());
@@ -153,7 +153,7 @@ public class LTLExpressionExtractor {
 		 *            Map that will be filled with a mapping from atomic
 		 *            proposition symbols to actual expressions
 		 */
-		public LTLFormatStringPrinter(Set<Expression> subExpressions, Map<String, Expression> apString2Expr) {
+		public LTLFormatStringPrinter(final Set<Expression> subExpressions, final Map<String, Expression> apString2Expr) {
 			super();
 			mApString2Expr = apString2Expr;
 			mSubExpressions = subExpressions;
@@ -162,7 +162,7 @@ public class LTLExpressionExtractor {
 		}
 
 		@Override
-		public boolean visit(Expression node) {
+		public boolean visit(final Expression node) {
 			if (mSubExpressions.contains(node)) {
 				String symbol;
 				final String nodeString = new LTLPrettyPrinter().print(node);
@@ -182,12 +182,12 @@ public class LTLExpressionExtractor {
 		}
 	}
 
-	private class LTLExtractSubexpressions extends ACSLVisitor {
+	private static final class LTLExtractSubexpressions extends ACSLVisitor {
 
 		private Expression mCurrentSubExpression;
 		private final HashSet<Expression> mExpressions;
 
-		private LTLExtractSubexpressions() {
+		LTLExtractSubexpressions() {
 			mCurrentSubExpression = null;
 			mExpressions = new HashSet<>();
 		}
@@ -197,7 +197,7 @@ public class LTLExpressionExtractor {
 		}
 
 		@Override
-		public boolean visit(BinaryExpression node) {
+		public boolean visit(final BinaryExpression node) {
 			switch (node.getOperator()) {
 			case LTLUNTIL:
 			case LTLWEAKUNTIL:
@@ -242,7 +242,7 @@ public class LTLExpressionExtractor {
 		}
 
 		@Override
-		public boolean visit(UnaryExpression node) {
+		public boolean visit(final UnaryExpression node) {
 			switch (node.getOperator()) {
 			case LTLFINALLY:
 			case LTLGLOBALLY:
@@ -273,25 +273,25 @@ public class LTLExpressionExtractor {
 		}
 
 		@Override
-		public boolean visit(BooleanLiteral node) {
+		public boolean visit(final BooleanLiteral node) {
 			literalReached();
 			return super.visit(node);
 		}
 
 		@Override
-		public boolean visit(IdentifierExpression node) {
+		public boolean visit(final IdentifierExpression node) {
 			literalReached();
 			return super.visit(node);
 		}
 
 		@Override
-		public boolean visit(IntegerLiteral node) {
+		public boolean visit(final IntegerLiteral node) {
 			literalReached();
 			return super.visit(node);
 		}
 
 		@Override
-		public boolean visit(RealLiteral node) {
+		public boolean visit(final RealLiteral node) {
 			literalReached();
 			return super.visit(node);
 		}

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Util Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util.statistics;
@@ -72,7 +72,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	 *            The title of the watch to register. Titles have to be unique
 	 *            and non-null.
 	 */
-	public void register(String title) {
+	public void register(final String title) {
 		if (!mWatches.containsKey(title)) {
 			mWatches.put(title, new Watch(title, mCurrentIndex++));
 		}
@@ -85,7 +85,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	 *            The title of the watch to unregister. If the watch does not
 	 *            exist, this method will do nothing.
 	 */
-	public void unregister(String title) {
+	public void unregister(final String title) {
 		mWatches.remove(title);
 	}
 
@@ -99,7 +99,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	 *            and non-null. If the watch did not exists previously, it will
 	 *            be registered automatically.
 	 */
-	public void start(String title) {
+	public void start(final String title) {
 		Watch watch = mWatches.get(title);
 		if (watch == null) {
 			watch = new Watch(title, mCurrentIndex++);
@@ -114,7 +114,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		mGlobalWatch.start();
 	}
 
-	public void stop(String title) {
+	public void stop(final String title) {
 		stopInternal(title, System.nanoTime());
 	}
 
@@ -126,7 +126,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		}
 	}
 
-	private void stopInternal(String title, long stopTime) {
+	private void stopInternal(final String title, final long stopTime) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return;
@@ -146,11 +146,11 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		watch.stop(stopTime);
 	}
 
-	public void pause(String title) {
+	public void pause(final String title) {
 		stop(title);
 	}
 
-	public void unpause(String title) {
+	public void unpause(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return;
@@ -168,7 +168,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		mWatches = new HashMap<String, Watch>();
 	}
 
-	public void printResult(ILogger logger) {
+	public void printResult(final ILogger logger) {
 		for (final Watch s : getSortedWatches()) {
 			logger.info(s);
 		}
@@ -190,14 +190,14 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		final ArrayList<Watch> sortedWatches = new ArrayList<Watch>(mWatches.values());
 		Collections.sort(sortedWatches, new Comparator<Watch>() {
 			@Override
-			public int compare(Watch o1, Watch o2) {
+			public int compare(final Watch o1, final Watch o2) {
 				return Integer.compare(o1.mIndex, o2.mIndex);
 			}
 		});
 		return sortedWatches;
 	}
 
-	public String getReportString(String title) {
+	public String getReportString(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return "";
@@ -205,7 +205,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		return watch.toString();
 	}
 
-	public double getElapsedTime(String title, TimeUnit unit) {
+	public double getElapsedTime(final String title, final TimeUnit unit) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
@@ -214,7 +214,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		}
 	}
 
-	public long getStartHeapSize(String title) {
+	public long getStartHeapSize(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
@@ -223,7 +223,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		}
 	}
 
-	public long getStopHeapSize(String title) {
+	public long getStopHeapSize(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
@@ -232,7 +232,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		}
 	}
 
-	public long getStartMemoryFreeSize(String title) {
+	public long getStartMemoryFreeSize(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
@@ -241,7 +241,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		}
 	}
 
-	public long getStopMemoryFreeSize(String title) {
+	public long getStopMemoryFreeSize(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
@@ -250,7 +250,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		}
 	}
 
-	public long getPeakMemoryConsumed(String title) {
+	public long getPeakMemoryConsumed(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
@@ -259,7 +259,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		}
 	}
 
-	public long getMaxHeapSize(String title) {
+	public long getMaxHeapSize(final String title) {
 		return mMaxMemorySizeBytes;
 	}
 
@@ -271,7 +271,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		return rtr;
 	}
 
-	private String getUnitString(TimeUnit unit) {
+	private String getUnitString(final TimeUnit unit) {
 		switch (unit) {
 		case NANOSECONDS:
 			return "ns";
@@ -292,7 +292,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		}
 	}
 
-	private double getNanosecondsToUnit(long nanoseconds, TimeUnit unit) {
+	private double getNanosecondsToUnit(final long nanoseconds, final TimeUnit unit) {
 		switch (unit) {
 		case NANOSECONDS:
 			return nanoseconds;
@@ -313,7 +313,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		}
 	}
 
-	private boolean isHeap(String memoryPoolName) {
+	private boolean isHeap(final String memoryPoolName) {
 		switch (memoryPoolName) {
 		case "Code Cache":
 		case "Perm Gen":
@@ -334,7 +334,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		throw new IllegalArgumentException("Unknown memory pool name " + memoryPoolName);
 	}
 
-	private class Watch {
+	private final class Watch {
 
 		private final String mTitle;
 		private final int mIndex;
@@ -353,7 +353,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 
 		private final List<MemoryPoolMXBean> mMemoryPoolBeans;
 
-		private Watch(String title, int index) {
+		Watch(final String title, final int index) {
 			mTitle = title;
 			mIndex = index;
 			mMemoryPoolBeans = ManagementFactory.getMemoryPoolMXBeans();
@@ -374,7 +374,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 			mStartTime = System.nanoTime();
 		}
 
-		private void stop(long stopTime) {
+		private void stop(final long stopTime) {
 			mElapsedTimeNs = stopTime - mStartTime + mElapsedTimeNs;
 			mStopMemorySizeBytes = Runtime.getRuntime().totalMemory();
 			mStopMemoryFreeSizeBytes = Runtime.getRuntime().freeMemory();
@@ -408,7 +408,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 			return toString(TimeUnit.MILLISECONDS, 2);
 		}
 
-		public String toString(TimeUnit timeUnit, int decimals) {
+		public String toString(final TimeUnit timeUnit, final int decimals) {
 			if (mStartTime == -1) {
 				return String.format("%s was not measured", mTitle);
 			}

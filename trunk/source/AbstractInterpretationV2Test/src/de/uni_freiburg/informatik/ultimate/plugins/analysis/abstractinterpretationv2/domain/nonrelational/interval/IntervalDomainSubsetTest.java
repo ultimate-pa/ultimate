@@ -83,12 +83,12 @@ public class IntervalDomainSubsetTest {
 		assertTrue(subsetResult != SubsetResult.NONE);
 	}
 
-	private class BoogieVarMockup implements IBoogieVar {
+	private static final class BoogieVarMockup implements IBoogieVar {
 
 		private final String mName;
 		private final IBoogieType mBoogieType;
 
-		private BoogieVarMockup(final String name) {
+		BoogieVarMockup(final String name) {
 			mName = name;
 			mBoogieType = PrimitiveType.TYPE_INT;
 		}

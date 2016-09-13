@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IRSDependencies plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors;
@@ -51,7 +51,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 	private final HashSet<String> mOutputs;
 	private final HashMap<List<RCFGEdge>, List<Tuple<Tuple<Integer>>>> mDebugZoneMap;
 
-	public SequencingVisitor(RCFGWalkerUnroller w, ILogger logger) {
+	public SequencingVisitor(final RCFGWalkerUnroller w, final ILogger logger) {
 		super(logger);
 		mWalker = w;
 		mInputs = new HashSet<>();
@@ -161,7 +161,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		}
 	}
 
-	private List<Statement> extractStatements(RCFGEdge e) {
+	private List<Statement> extractStatements(final RCFGEdge e) {
 		if (e instanceof StatementSequence) {
 			return ((StatementSequence) e).getStatements();
 		} else if (e instanceof Call) {
@@ -295,12 +295,12 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		}
 
 		@Override
-		protected Object getFieldValue(String field) {
+		protected Object getFieldValue(final String field) {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
-		private void addOrMergeAnnotation(IElement e) {
+		private void addOrMergeAnnotation(final IElement e) {
 			final ZoneAnnotation za = getAnnotation(e, this.getClass());
 			if (za != null) {
 				if (!za.equals(this)) {
@@ -332,26 +332,26 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 
 	}
 
-	private class Tuple<T extends Comparable<T>> implements
+	private final class Tuple<T extends Comparable<T>> implements
 			Comparable<Tuple<T>> {
 		T First;
 		T Last;
 
-		private Tuple(T first, T last) {
+		Tuple(final T first, final T last) {
 			set(first, last);
 		}
 
-		private Tuple(Tuple<T> tuple) {
+		Tuple(final Tuple<T> tuple) {
 			set(tuple.First, tuple.Last);
 		}
 
-		private void set(T first, T last) {
+		private void set(final T first, final T last) {
 			First = first;
 			Last = last;
 		}
 
 		@Override
-		public boolean equals(Object arg0) {
+		public boolean equals(final Object arg0) {
 			if (arg0 instanceof Tuple<?>) {
 				return First.equals(((Tuple<?>) arg0).First)
 						&& Last.equals(((Tuple<?>) arg0).Last);
@@ -360,7 +360,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		}
 
 		@Override
-		public int compareTo(Tuple<T> t) {
+		public int compareTo(final Tuple<T> t) {
 			if (First.compareTo(t.First) == 0) {
 				return Last.compareTo(t.Last);
 			} else {

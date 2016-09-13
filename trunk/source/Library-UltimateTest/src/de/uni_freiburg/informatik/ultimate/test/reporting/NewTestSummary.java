@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.test.reporting;
@@ -49,7 +49,7 @@ public abstract class NewTestSummary implements ITestSummary {
 	protected LinkedHashMap<UltimateRunDefinition, ExtendedResult> mResults;
 	private final Class<? extends UltimateTestSuite> mUltimateTestSuite;
 
-	public NewTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
+	public NewTestSummary(final Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		mResults = new LinkedHashMap<>();
 		mUltimateTestSuite = ultimateTestSuite;
 	}
@@ -70,8 +70,8 @@ public abstract class NewTestSummary implements ITestSummary {
 	}
 
 	@Override
-	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult, String category,
-			String message, String testname, IResultService resultService) {
+	public void addResult(final UltimateRunDefinition ultimateRunDefinition, final TestResult threeValuedResult, final String category,
+			final String message, final String testname, final IResultService resultService) {
 		mResults.put(ultimateRunDefinition, new ExtendedResult(threeValuedResult, message, category, testname));
 	}
 
@@ -79,7 +79,7 @@ public abstract class NewTestSummary implements ITestSummary {
 		public File Toolchain;
 		public File Setting;
 
-		public TCS(File toolchain, File setting) {
+		public TCS(final File toolchain, final File setting) {
 			Toolchain = toolchain;
 			Setting = setting;
 		}
@@ -95,7 +95,7 @@ public abstract class NewTestSummary implements ITestSummary {
 		}
 
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(final Object obj) {
 			if (this == obj) {
 				return true;
 			}
@@ -141,7 +141,7 @@ public abstract class NewTestSummary implements ITestSummary {
 		return partitionResults(mResults.entrySet());
 	}
 
-	protected PartitionedResults partitionResults(Collection<Entry<UltimateRunDefinition, ExtendedResult>> all) {
+	protected PartitionedResults partitionResults(final Collection<Entry<UltimateRunDefinition, ExtendedResult>> all) {
 
 		final Set<Entry<UltimateRunDefinition, ExtendedResult>> goodResults = all.stream().sequential()
 				.filter(a -> a.getValue().getResult() == TestResult.SUCCESS)
@@ -201,7 +201,7 @@ public abstract class NewTestSummary implements ITestSummary {
 		return rtr;
 	}
 
-	protected class PartitionedResults {
+	protected static final class PartitionedResults {
 		/**
 		 * All results (unpartitioned)
 		 */
@@ -244,7 +244,7 @@ public abstract class NewTestSummary implements ITestSummary {
 		public int ExpectedSafe;
 		public int ExpectedUnsafe;
 
-		private PartitionedResults() {
+		PartitionedResults() {
 
 		}
 

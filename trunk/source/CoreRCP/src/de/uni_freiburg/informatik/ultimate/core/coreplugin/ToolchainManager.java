@@ -130,7 +130,7 @@ public class ToolchainManager {
 	}
 
 	/*************************** ToolchainContainer Implementation ****************************/
-	private class Toolchain implements IToolchain<RunDefinition> {
+	private final class Toolchain implements IToolchain<RunDefinition> {
 
 		private final long mId;
 		private final IModelManager mModelManager;
@@ -141,7 +141,7 @@ public class ToolchainManager {
 		private File[] mInputFiles;
 		private ToolchainWalker mToolchainWalker;
 
-		private Toolchain(final long id, final IModelManager modelManager) {
+		Toolchain(final long id, final IModelManager modelManager) {
 			mId = id;
 			mModelManager = modelManager;
 			mBenchmark = new Benchmark();

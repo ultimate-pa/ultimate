@@ -90,10 +90,10 @@ public class SolverBuilder {
 		return script;
 	}
 
-	private static class SMTInterpolTerminationRequest implements TerminationRequest {
+	private static final class SMTInterpolTerminationRequest implements TerminationRequest {
 		private final IProgressMonitorService mMonitor;
 
-		private SMTInterpolTerminationRequest(final IProgressMonitorService monitor) {
+		SMTInterpolTerminationRequest(final IProgressMonitorService monitor) {
 			mMonitor = monitor;
 		}
 

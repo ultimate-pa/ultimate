@@ -185,13 +185,13 @@ public class CDTController implements IController<RunDefinition> {
 		// TODO Auto-generated method stub
 	}
 
-	private class UltimateThread {
+	private static final class UltimateThread {
 
 		private final IController<RunDefinition> mController;
 		private Exception mUltimateException;
 		private boolean mIsRunning;
 
-		private UltimateThread(final IController<RunDefinition> controller) {
+		UltimateThread(final IController<RunDefinition> controller) {
 			mController = controller;
 		}
 

@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
-public class Log4J2LoggingService implements IStorable, ILoggingService {
+public final class Log4J2LoggingService implements IStorable, ILoggingService {
 
 	private static final String[] RELEVANT_SETTINGS = new String[] { CorePreferenceInitializer.LABEL_LOG4J_PATTERN,
 	        CorePreferenceInitializer.LABEL_LOGFILE, CorePreferenceInitializer.LABEL_LOGFILE_NAME,
@@ -354,11 +354,11 @@ public class Log4J2LoggingService implements IStorable, ILoggingService {
 
 	@Plugin(name = "Log4J2ConfigurationFactory", category = ConfigurationFactory.CATEGORY)
 	@Order(50)
-	private static class Log4J2ConfigurationFactory extends ConfigurationFactory {
+	private static final class Log4J2ConfigurationFactory extends ConfigurationFactory {
 
 		private final RcpPreferenceProvider mPreferenceStore;
 
-		private Log4J2ConfigurationFactory(final RcpPreferenceProvider preferenceStore) {
+		Log4J2ConfigurationFactory(final RcpPreferenceProvider preferenceStore) {
 			mPreferenceStore = preferenceStore;
 		}
 
