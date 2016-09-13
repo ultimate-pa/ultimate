@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker;
@@ -96,7 +96,7 @@ public class LinearInequality implements Serializable {
 	private boolean mstrict = false;
 	
 	/**
-	 * What kind of Motzkin coefficients this inequality needs 
+	 * What kind of Motzkin coefficients this inequality needs
 	 */
 	public PossibleMotzkinCoefficients motzkin_coefficient
 		= PossibleMotzkinCoefficients.ANYTHING;
@@ -128,7 +128,7 @@ public class LinearInequality implements Serializable {
 	/**
 	 * Copy constructor
 	 */
-	public LinearInequality(LinearInequality other) {
+	public LinearInequality(final LinearInequality other) {
 		mconstant = new AffineTerm(other.mconstant);
 		mstrict = other.mstrict;
 		motzkin_coefficient = other.motzkin_coefficient;
@@ -141,9 +141,9 @@ public class LinearInequality implements Serializable {
 	/**
 	 * Construct an linear inequality from a Term instance.
 	 * @param term an affine-linear sum of values with termvariables
-	 * @throws TermIsNotAffineException if the term was not an affine-linear sum 
+	 * @throws TermIsNotAffineException if the term was not an affine-linear sum
 	 */
-	public static LinearInequality fromTerm(Term term)
+	public static LinearInequality fromTerm(final Term term)
 			throws TermException {
 		LinearInequality li;
 		if (term instanceof ConstantTerm) {
@@ -250,7 +250,7 @@ public class LinearInequality implements Serializable {
 	/**
 	 * Set whether this is a strict inequality
 	 */
-	public void setStrict(boolean strict) {
+	public void setStrict(final boolean strict) {
 		mstrict = strict;
 	}
 	
@@ -273,7 +273,7 @@ public class LinearInequality implements Serializable {
 	 * @param var a variable
 	 * @return zero if the variable does not occur
 	 */
-	public AffineTerm getCoefficient(Term var) {
+	public AffineTerm getCoefficient(final Term var) {
 		final AffineTerm p = mcoefficients.get(var);
 		if (p == null) {
 			return new AffineTerm();
@@ -292,7 +292,7 @@ public class LinearInequality implements Serializable {
 	 * Add another linear inequality
 	 * @param li other linear inequality
 	 */
-	public void add(LinearInequality li) {
+	public void add(final LinearInequality li) {
 		this.add(li.mconstant);
 		for (final Map.Entry<Term, AffineTerm> entry
 				: li.mcoefficients.entrySet()) {
@@ -305,7 +305,7 @@ public class LinearInequality implements Serializable {
 	 * @param var variable
 	 * @param t   the variable's coefficient to be added
 	 */
-	public void add(Term var, AffineTerm a) {
+	public void add(final Term var, final AffineTerm a) {
 		final AffineTerm a2 = mcoefficients.get(var);
 		if (a2 != null) {
 			a2.add(a);
@@ -326,7 +326,7 @@ public class LinearInequality implements Serializable {
 	 * @param var variable
 	 * @param t   the variable's coefficient to be added
 	 */
-	public void add(Term var, Rational r) {
+	public void add(final Term var, final Rational r) {
 		this.add(var, new AffineTerm(r));
 	}
 	
@@ -334,7 +334,7 @@ public class LinearInequality implements Serializable {
 	 * Add a constant to the linear inequality
 	 * @param t a constant
 	 */
-	public void add(AffineTerm p) {
+	public void add(final AffineTerm p) {
 		mconstant.add(p);
 	}
 	
@@ -342,7 +342,7 @@ public class LinearInequality implements Serializable {
 	 * Multiply with a constant
 	 * @param t factor
 	 */
-	public void mult(Rational r) {
+	public void mult(final Rational r) {
 		mconstant.mult(r);
 		for (final Map.Entry<Term, AffineTerm> entry
 				: mcoefficients.entrySet()) {
@@ -366,7 +366,7 @@ public class LinearInequality implements Serializable {
 	 * @return the name of the Sort of the summands ("Real" or "Int")
 	 */
 	public String getSortName() {
-		if (mcoefficients.size() == 0) {
+		if (mcoefficients.isEmpty()) {
 			return "Real"; // default to Real
 		}
 		final Term firstVar = mcoefficients.keySet().iterator().next();
@@ -381,7 +381,7 @@ public class LinearInequality implements Serializable {
 	 * @param script current SMT script
 	 * @return this as a term
 	 */
-	public Term asTerm(Script script) {
+	public Term asTerm(final Script script) {
 		final String sortName = getSortName();
 		final boolean real = sortName.equals("Real");
 		final Term[] summands = new Term[mcoefficients.size() + 1];

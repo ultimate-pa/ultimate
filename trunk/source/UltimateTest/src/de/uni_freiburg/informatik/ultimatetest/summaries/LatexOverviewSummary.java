@@ -324,7 +324,7 @@ public class LatexOverviewSummary extends LatexSummary {
 		final int length = mLatexTableHeaderCount + 1;
 		int i = 0;
 		final List<String> row = csv.getRow(0);
-		if (row == null || row.size() == 0) {
+		if (row == null || row.isEmpty()) {
 			// no results in this category, just fill with empty fields
 			for (; i < length; ++i) {
 				sb.append(sep);

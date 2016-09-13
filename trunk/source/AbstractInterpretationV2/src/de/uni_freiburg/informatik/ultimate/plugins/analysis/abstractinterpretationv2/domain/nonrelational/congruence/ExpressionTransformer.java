@@ -283,7 +283,7 @@ public final class ExpressionTransformer {
 					mCoefficients.put(entry.getKey(), entry.getValue().negate());
 				}
 				if (sub.mHasNormalForm) {
-					if (sub.mCoefficients.size() == 0 && sub.mConstant.signum() > 0
+					if (sub.mCoefficients.isEmpty() && sub.mConstant.signum() > 0
 							|| sub.mCoefficients.size() == 1 && sub.mConstant.signum() == 0) {
 						mHasNormalForm = true;
 					}

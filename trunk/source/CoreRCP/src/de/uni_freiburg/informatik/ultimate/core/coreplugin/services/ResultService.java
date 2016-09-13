@@ -94,7 +94,7 @@ public final class ResultService implements IStorable, IResultService {
 	
 	@Override
 	public String toString() {
-		if(mResults.size() == 0){
+		if (mResults.isEmpty()){
 			return "No Results";
 		}
 		return mResults.toString();

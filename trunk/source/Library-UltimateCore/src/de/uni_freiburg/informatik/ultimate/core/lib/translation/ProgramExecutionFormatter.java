@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.translation;
@@ -49,7 +49,7 @@ public class ProgramExecutionFormatter<TE, E> {
 
 	private final IBacktranslationValueProvider<TE, E> mStringProvider;
 
-	public ProgramExecutionFormatter(IBacktranslationValueProvider<TE, E> stringProvider) {
+	public ProgramExecutionFormatter(final IBacktranslationValueProvider<TE, E> stringProvider) {
 		mStringProvider = stringProvider;
 	}
 
@@ -108,7 +108,7 @@ public class ProgramExecutionFormatter<TE, E> {
 		return sb.toString();
 	}
 
-	private void appendStepAsString(StringBuilder sb, AtomicTraceElement<TE> currentATE, boolean witness) {
+	private void appendStepAsString(final StringBuilder sb, final AtomicTraceElement<TE> currentATE, final boolean witness) {
 		final TE currentStep = currentATE.getStep();
 		final String str = mStringProvider.getStringFromStep(currentStep);
 
@@ -133,19 +133,19 @@ public class ProgramExecutionFormatter<TE, E> {
 		}
 	}
 
-	private String getValuesAsString(ProgramState<E> programState) {
+	private String getValuesAsString(final ProgramState<E> programState) {
 		if (programState == null) {
 			return null;
 		}
 
 		final List<E> keys = new ArrayList<>(programState.getVariables());
-		if (keys.size() == 0) {
+		if (keys.isEmpty()) {
 			return null;
 		}
 
 		Collections.sort(keys, new Comparator<E>() {
 			@Override
-			public int compare(E arg0, E arg1) {
+			public int compare(final E arg0, final E arg1) {
 				return mStringProvider.getStringFromExpression(arg0).compareToIgnoreCase(
 						mStringProvider.getStringFromExpression(arg1));
 			}
@@ -171,12 +171,12 @@ public class ProgramExecutionFormatter<TE, E> {
 		return sb.toString();
 	}
 
-	private void addFixedLength(StringBuilder sb, String actualString, int fillLength, String fillChar) {
+	private void addFixedLength(final StringBuilder sb, final String actualString, final int fillLength, final String fillChar) {
 		sb.append(actualString);
 		sb.append(fillWithChar(fillChar, fillLength - actualString.length()));
 	}
 
-	private String fillWithChar(String string, int length) {
+	private String fillWithChar(final String string, final int length) {
 		if (length <= 0) {
 			return "";
 		}
@@ -187,7 +187,7 @@ public class ProgramExecutionFormatter<TE, E> {
 		return outputBuffer.toString();
 	}
 
-	private int getMaxLength(List<String> lineNumerColumn) {
+	private int getMaxLength(final List<String> lineNumerColumn) {
 		int max = 0;
 		for (final String s : lineNumerColumn) {
 			final int length = s.length();
@@ -198,7 +198,7 @@ public class ProgramExecutionFormatter<TE, E> {
 		return max;
 	}
 
-	private List<String> getStepInfoColum(IProgramExecution<TE, E> execution) {
+	private List<String> getStepInfoColum(final IProgramExecution<TE, E> execution) {
 		final List<String> rtr = new ArrayList<>();
 		for (int i = 0; i < execution.getLength(); ++i) {
 			final AtomicTraceElement<TE> elem = execution.getTraceElement(i);
@@ -212,7 +212,7 @@ public class ProgramExecutionFormatter<TE, E> {
 		return rtr;
 	}
 
-	private List<String> getLineNumberColumn(IProgramExecution<TE, E> execution) {
+	private List<String> getLineNumberColumn(final IProgramExecution<TE, E> execution) {
 		final List<String> rtr = new ArrayList<>();
 		for (int i = 0; i < execution.getLength(); ++i) {
 			final AtomicTraceElement<TE> elem = execution.getTraceElement(i);
@@ -239,7 +239,7 @@ public class ProgramExecutionFormatter<TE, E> {
 		return rtr;
 	}
 	
-	private List<String> getRelevanceInformationColumn(IProgramExecution<TE, E> execution) {
+	private List<String> getRelevanceInformationColumn(final IProgramExecution<TE, E> execution) {
 		final List<String> rtr = new ArrayList<>();
 		int numberOfRelevanceInformations = 0;
 		for (int i = 0; i < execution.getLength(); ++i) {

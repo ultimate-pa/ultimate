@@ -577,13 +577,13 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			final List<Map<IProgramVar, Rational>> gevs =
 					new ArrayList<Map<IProgramVar, Rational>>(msettings.number_of_gevs);
 			final Map<Term, Term> lambda_val;
-			if (var_lambdas.size() > 0) {
+			if (!var_lambdas.isEmpty()) {
 				lambda_val = mscript.getValue(var_lambdas.toArray(new Term[var_lambdas.size()]));
 			} else {
 				lambda_val = Collections.emptyMap();
 			}
 			final Map<Term, Term> nu_val;
-			if (var_nus.size() > 0) {
+			if (!var_nus.isEmpty()) {
 				nu_val = mscript.getValue(var_nus.toArray(new Term[var_nus.size()]));
 			} else {
 				nu_val = Collections.emptyMap();

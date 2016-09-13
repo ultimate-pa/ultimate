@@ -241,7 +241,7 @@ public class PluginConnector {
 			break;
 		case TOOL:
 			final List<String> desiredToolIDs = mTool.getDesiredToolID();
-			if (desiredToolIDs == null || desiredToolIDs.size() == 0) {
+			if (desiredToolIDs == null || desiredToolIDs.isEmpty()) {
 				break;
 			} else {
 				models.addAll(mModelManager.getItemKeys());

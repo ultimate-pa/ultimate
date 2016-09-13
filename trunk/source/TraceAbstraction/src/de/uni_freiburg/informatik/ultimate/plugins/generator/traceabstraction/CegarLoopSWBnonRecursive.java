@@ -692,7 +692,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 				} else // isReturnPosition(i)
 				{
 					IPredicate hier;
-					if (callPredecessors.size() <= 0) {
+					if (callPredecessors.isEmpty()) {
 						hier = pendingContexts.get(i);
 					} else {
 						final int lastIndex = callPredecessors.size() - 1;

@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 /*
@@ -71,7 +71,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 *            the directory in the local file system used by the repository
 	 *            to store the files containing the persisted objects
 	 */
-	public SerializationRepository(File fileSystemDirectory, ILogger logger) {
+	public SerializationRepository(final File fileSystemDirectory, final ILogger logger) {
 		assert logger != null;
 		mFileSystemDirectory = fileSystemDirectory;
 		mLogger = logger;
@@ -96,7 +96,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 * java.lang.Object)
 	 */
 	@Override
-	public ModelContainer get(String key) throws PersistentObjectNotFoundException,
+	public ModelContainer get(final String key) throws PersistentObjectNotFoundException,
 			PersistentObjectTypeMismatchException {
 		if (listKeys().contains(key)) {
 			try {
@@ -128,7 +128,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 * @throws IOException
 	 * @throws FileNotFoundException
 	 */
-	private Object deserialize(String key) throws FileNotFoundException, IOException, ClassNotFoundException {
+	private Object deserialize(final String key) throws FileNotFoundException, IOException, ClassNotFoundException {
 
 		final ObjectInputStream stream = new ObjectInputStream(new FileInputStream(keyToFile(key)));
 		final Object rtr = stream.readObject();
@@ -165,7 +165,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 * (java.lang.Object)
 	 */
 	@Override
-	public boolean remove(String key) {
+	public boolean remove(final String key) {
 		final File toBeDeleted = new File(mFileSystemDirectory + "/" + key + ".ser");
 		final boolean success = toBeDeleted.delete();
 		if (!success && listKeys().contains(key)) {
@@ -186,7 +186,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 * (java.util.List)
 	 */
 	@Override
-	public void removeAll(List<String> keys) {
+	public void removeAll(final List<String> keys) {
 		for (final String string : keys) {
 			remove(string);
 		}
@@ -200,7 +200,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 * java.lang.Object, java.lang.Object)
 	 */
 	@Override
-	public void add(String key, ModelContainer transientInstance) throws DuplicateKeyException, StoreObjectException {
+	public void add(final String key, final ModelContainer transientInstance) throws DuplicateKeyException, StoreObjectException {
 		if (listKeys().contains(key)) {
 			throw new DuplicateKeyException("The key: " + key + " is already in use. If you want to "
 					+ "replace the stored object, use method addOrReplace instead!");
@@ -217,7 +217,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 * (java.lang.Object, java.lang.Object)
 	 */
 	@Override
-	public void addOrReplace(String key, ModelContainer transientInstance) throws StoreObjectException {
+	public void addOrReplace(final String key, final ModelContainer transientInstance) throws StoreObjectException {
 		try {
 			serializie(key, transientInstance);
 		} catch (final FileNotFoundException e) {
@@ -236,7 +236,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 * @throws IOException
 	 * @throws FileNotFoundException
 	 */
-	private void serializie(String key, ModelContainer transientInstance) throws FileNotFoundException, IOException {
+	private void serializie(final String key, final ModelContainer transientInstance) throws FileNotFoundException, IOException {
 		final ObjectOutputStream stream = new ObjectOutputStream(new FileOutputStream(keyToFile(key)));
 		stream.writeObject(transientInstance);
 		stream.close();
@@ -250,7 +250,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 *            Key to convert.
 	 * @return File to store model represented by key.
 	 */
-	private File keyToFile(String key) {
+	private File keyToFile(final String key) {
 		return new File(mFileSystemDirectory + File.separator + sanitize(key) + ".ser");
 	}
 
@@ -264,7 +264,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 * @return A string having converted all illegal characters in filename to
 	 *         '_'
 	 */
-	private String sanitize(String filename) {
+	private String sanitize(final String filename) {
 		return filename.replaceAll("[\\/:\"*?<>|]+", "_");
 	}
 
@@ -277,7 +277,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 */
 	@Override
 	public boolean isEmpty() {
-		return listKeys().size() == 0;
+		return listKeys().isEmpty();
 	}
 
 }

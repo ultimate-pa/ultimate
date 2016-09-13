@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IRSDependencies plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.observers;
@@ -52,7 +52,7 @@ public class DebugFileWriterNutz {
 	private final int mUnrollingDepth;
 	private final static String sFolderPath = "F:\\repos\\ultimate fresher co\\trunk\\examples\\unrolling-tests\\";
 
-	public DebugFileWriterNutz(List<List<RCFGEdge>> paths, ILogger logger, int unrollingDepth) {
+	public DebugFileWriterNutz(final List<List<RCFGEdge>> paths, final ILogger logger, final int unrollingDepth) {
 		mLogger = logger;
 		if (paths == null) {
 			throw new IllegalArgumentException("Parameter may not be null");
@@ -65,7 +65,7 @@ public class DebugFileWriterNutz {
 		final HashMap<RootEdge, ArrayList<ArrayList<CodeBlock>>> tmp = new HashMap<>();
 
 		for (final List<RCFGEdge> path : mPaths) {
-			if (path.size() > 0) {
+			if (!path.isEmpty()) {
 				final IWalkable first = path.get(0);
 				if (first instanceof RootEdge) {
 					final RootEdge r = (RootEdge) first;
@@ -84,7 +84,7 @@ public class DebugFileWriterNutz {
 		prepareTraces(mUnrollingDepth, tmp);
 	}
 
-	private void prepareTraces(int unrollingDepth, HashMap<RootEdge, ArrayList<ArrayList<CodeBlock>>> procToTraces) {
+	private void prepareTraces(final int unrollingDepth, final HashMap<RootEdge, ArrayList<ArrayList<CodeBlock>>> procToTraces) {
 		mLogger.debug("Sorting all traces of each procedure...");
 		final HashMap<RootEdge, TreeSet<String>> procToTraceStrings = new HashMap<RootEdge, TreeSet<String>>();
 		for (final Entry<RootEdge, ArrayList<ArrayList<CodeBlock>>> en : procToTraces.entrySet()) {
@@ -112,7 +112,7 @@ public class DebugFileWriterNutz {
 		}
 	}
 
-	private String traceToString(ArrayList<CodeBlock> trace) {
+	private String traceToString(final ArrayList<CodeBlock> trace) {
 		final StringBuilder sb = new StringBuilder();
 		for (final CodeBlock cb : trace) {
 			sb.append(cb.getPrettyPrintedStatements());
@@ -121,7 +121,7 @@ public class DebugFileWriterNutz {
 		return sb.toString();
 	}
 
-	private void writeLargerTextFile(String aFileName, TreeSet<String> traces) throws IOException {
+	private void writeLargerTextFile(final String aFileName, final TreeSet<String> traces) throws IOException {
 		final Path path = Paths.get(aFileName);
 		mLogger.debug("Writing " + path.toString());
 		try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {

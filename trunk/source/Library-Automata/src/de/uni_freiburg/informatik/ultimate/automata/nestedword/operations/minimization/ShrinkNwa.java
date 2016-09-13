@@ -1211,7 +1211,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 				final ArrayList<MatrixRow> relevantRows = new ArrayList<MatrixRow>(hierEc.mStates.size());
 				for (final STATE hier : hierEc.mStates) {
 					final HashMap<STATE, HashMap<LETTER, HashSet<STATE>>> map = hier2lin2letter2succ.get(hier);
-					if ((map != null) && (map.size() > 0)) {
+					if ((map != null) && (!map.isEmpty())) {
 						relevantRows.add(new MatrixRow(hier, map));
 					} else {
 						if (DEBUG2) {

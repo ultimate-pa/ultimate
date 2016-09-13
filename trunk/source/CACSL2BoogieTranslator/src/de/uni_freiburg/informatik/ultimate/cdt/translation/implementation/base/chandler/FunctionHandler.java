@@ -1429,7 +1429,7 @@ public class FunctionHandler {
 
 		// generate the actual body
 		IdentifierExpression funcCallResult = null;
-		if (fittingFunctions.size() == 0) {
+		if (fittingFunctions.isEmpty()) {
 			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]),
 					stmt.toArray(new Statement[stmt.size()]));
 		} else if (fittingFunctions.size() == 1) {

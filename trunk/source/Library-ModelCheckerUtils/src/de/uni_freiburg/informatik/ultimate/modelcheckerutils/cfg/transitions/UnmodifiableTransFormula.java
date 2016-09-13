@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions;
@@ -74,11 +74,11 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 
 	/**
 	 * This constructor is package-private use {@link TransFormulaBuilder}
-	 * to construct TransFormulas. 
+	 * to construct TransFormulas.
 	 */
-	UnmodifiableTransFormula(final Term formula, 
+	UnmodifiableTransFormula(final Term formula,
 			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars,
-			final Set<TermVariable> auxVars, final Set<TermVariable> branchEncoders, 
+			final Set<TermVariable> auxVars, final Set<TermVariable> branchEncoders,
 			final Infeasibility infeasibility, final ManagedScript script) {
 		super(inVars, outVars, auxVars);
 		mFormula = formula;
@@ -87,7 +87,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		mClosedFormula = computeClosedFormula(formula, super.getInVars(), super.getOutVars(), super.getAuxVars(), script);
 		assert SmtUtils.neitherKeyNorValueIsNull(inVars) : "null in inVars";
 		assert SmtUtils.neitherKeyNorValueIsNull(outVars) : "null in outVars";
-		assert (branchEncoders.size() > 0 || mClosedFormula.getFreeVars().length == 0) : "free variables";
+		assert (!branchEncoders.isEmpty() || mClosedFormula.getFreeVars().length == 0) : "free variables";
 		// mVars = new
 		// HashSet<TermVariable>(Arrays.asList(mFormula.getFreeVars()));
 		assert allSubsetInOutAuxBranch() : "unexpected vars in TransFormula";

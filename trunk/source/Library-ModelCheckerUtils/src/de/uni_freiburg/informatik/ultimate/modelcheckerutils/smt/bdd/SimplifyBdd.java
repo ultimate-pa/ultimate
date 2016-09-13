@@ -18,9 +18,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.bdd;
@@ -64,7 +64,7 @@ public class SimplifyBdd {
 	}
 	
 	/**
-	 * Transform input into simplified term. 
+	 * Transform input into simplified term.
 	 * @return Term which is logically equivalent to input.
 	 */
 	public Term transform(final Term input) {
@@ -111,8 +111,8 @@ public class SimplifyBdd {
 				return mScript.term("and", atoms.get(d.var()), high);
 			}
 		}
-		return mScript.term("or", 
-			mScript.term("and", atoms.get(d.var()), high), 
+		return mScript.term("or",
+			mScript.term("and", atoms.get(d.var()), high),
 			mScript.term("and", atoms.get(d.var()), mScript.term("not", low)));
 	}
 	
@@ -120,7 +120,7 @@ public class SimplifyBdd {
 	public Term transformToDNF(final Term input) {
 		final CollectAtoms ca = new CollectAtoms();
 		final List<Term> atoms = ca.getTerms(input);
-		assert atoms.size()!=0 : "How did I not find any atoms? " + input;
+		assert !atoms.isEmpty() : "How did I not find any atoms? " + input;
 		
 		final BddBuilder bb = new BddBuilder();
 		final BDD d = bb.buildBDD(input, atoms);
@@ -138,7 +138,7 @@ public class SimplifyBdd {
 			con.add(SmtUtils.and(mScript, lit));
 		}
 		final Term result = SmtUtils.or(mScript, con);
-		assert (Util.checkSat(mScript, mScript.term("distinct", input, result)) != LBool.SAT) : 
+		assert (Util.checkSat(mScript, mScript.term("distinct", input, result)) != LBool.SAT) :
 			"DNF transformation unsound. Input: " + input;
 		return result;
 	}

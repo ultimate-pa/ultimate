@@ -166,7 +166,7 @@ public class RewriteDivision extends TransformerPreprocessor {
 	private boolean isIncorrectWithQuantifiers(final Script script, final Term input,
 			final Term result) {
 		Term quantified;
-		if (mAuxVars.size() > 0) {
+		if (!mAuxVars.isEmpty()) {
 			quantified = script.quantifier(Script.EXISTS,
 					mAuxVars.keySet().toArray(new TermVariable[mAuxVars.size()]), result);
 		} else {

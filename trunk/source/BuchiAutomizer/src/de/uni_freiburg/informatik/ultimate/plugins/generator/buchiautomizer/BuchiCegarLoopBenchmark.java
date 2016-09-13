@@ -270,7 +270,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 	}
 	
 	private String prettyPrintTerminationAnalysisBenchmark(final List<TerminationAnalysisBenchmark> benchmarks) {
-		if (benchmarks.size() == 0) {
+		if (benchmarks.isEmpty()) {
 			return "not available";
 		}
 		final StringBuilder sb = new StringBuilder();
