@@ -197,11 +197,13 @@ public class NonIncrementalScriptor extends NoopScript {
 		for (int i = 0; i < levels; i++) {
 			mCommandStack.removeLast();
 		}
+		mStatus = LBool.UNKNOWN;
 	}
 
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
-		addToCurrentAssertionStack(new AssertCommand(term)); 
+		addToCurrentAssertionStack(new AssertCommand(term));
+		mStatus = LBool.UNKNOWN;
 		return LBool.UNKNOWN;
 	}
 
@@ -305,6 +307,7 @@ public class NonIncrementalScriptor extends NoopScript {
 				throw new AssertionError(e);
 			}
 		}
+		mStatus = LBool.UNKNOWN;
 	}
 
 	@Override

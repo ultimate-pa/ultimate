@@ -137,12 +137,14 @@ public class Scriptor extends NoopScript {
 		super.pop(levels);
 		mExecutor.input("(pop " + levels + ")");
 		mExecutor.parseSuccess();
+		mStatus = LBool.UNKNOWN;
 	}
 
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
 		mExecutor.input(SmtCommandUtils.AssertCommand.buildString(term));
 		mExecutor.parseSuccess();
+		mStatus = LBool.UNKNOWN;
 		return LBool.UNKNOWN;
 	}
 
@@ -227,6 +229,7 @@ public class Scriptor extends NoopScript {
 			// between creating executor and calling reset.
 			e.printStackTrace();
 		}
+		mStatus = LBool.UNKNOWN;
 	}
 
 	@Override
