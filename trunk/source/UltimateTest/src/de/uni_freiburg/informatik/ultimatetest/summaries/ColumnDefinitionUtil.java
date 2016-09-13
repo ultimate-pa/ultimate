@@ -172,7 +172,7 @@ public class ColumnDefinitionUtil {
 										finalValue = numberValue.divide(new BigDecimal(size), 5, RoundingMode.HALF_UP)
 												.toString();
 									} catch (final Exception ex) {
-										finalValue = cell.toString();
+										finalValue = cell;
 									}
 								}
 							} else {
