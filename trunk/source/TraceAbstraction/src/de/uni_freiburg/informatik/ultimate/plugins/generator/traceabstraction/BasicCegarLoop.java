@@ -317,10 +317,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		if (mPref.useSeparateSolverForTracechecks()) {
 			final String filename = mRootNode.getFilename() + "_TraceCheck_Iteration" + mIteration;
 			final SolverMode solverMode = mPref.solverMode();
+			final boolean fakeNonIncrementalSolver = mPref.fakeNonIncrementalSolver();
 			final String commandExternalSolver = mPref.commandExternalSolver();
 			final boolean dumpSmtScriptToFile = mPref.dumpSmtScriptToFile();
 			final String pathOfDumpedScript = mPref.pathOfDumpedScript();
-			final Settings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
+			final Settings solverSettings = SolverBuilder.constructSolverSettings(
+					filename, solverMode, fakeNonIncrementalSolver,
 					commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, mToolchainStorage,
 					mPref.solverMode(), solverSettings, false, false, mPref.logicForExternalSolver(),
@@ -371,7 +373,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			} else {
 				solverCommand = "yices-smt2 --incremental";
 			}
-			final Settings settings = new Settings(true, solverCommand, -1, null, dumpSmtScriptToFile,
+			final boolean fakeNonIncrementalSolver = false;
+			final Settings settings = new Settings(fakeNonIncrementalSolver , true, solverCommand, -1, null, dumpSmtScriptToFile,
 					pathOfDumpedScript, baseNameOfDumpedScript);
 			interpolatingTraceChecker = new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate,
 					falsePredicate, new TreeMap<Integer, IPredicate>(),

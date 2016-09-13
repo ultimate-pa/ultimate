@@ -18,16 +18,16 @@ public class HCGBuilderHelper {
 		private String mLogicForExternalSolver;
 		private Script mScript;
 
-		public ConstructAndInitializeBackendSmtSolver(IUltimateServiceProvider services,
-				IToolchainStorage storage,
-				String filename) {
+		public ConstructAndInitializeBackendSmtSolver(final IUltimateServiceProvider services,
+				final IToolchainStorage storage,
+				final String filename) {
 			constructAndInitializeBackendSmtSolver(services, storage, filename);
 		}
 
 		void constructAndInitializeBackendSmtSolver(
-				IUltimateServiceProvider services,
-				IToolchainStorage storage,
-				String filename) {
+				final IUltimateServiceProvider services,
+				final IToolchainStorage storage,
+				final String filename) {
 			final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 			final SolverMode solverMode = prefs
 					.getEnum(TreeAutomizerPreferenceInitializer.LABEL_Solver, SolverMode.class);
@@ -38,8 +38,10 @@ public class HCGBuilderHelper {
 			mLogicForExternalSolver = prefs
 					.getString(TreeAutomizerPreferenceInitializer.LABEL_ExtSolverLogic);
 
+			final boolean fakeNonIncrementalSolver = false;
 			mSolverSettings = SolverBuilder.constructSolverSettings(
-					filename, solverMode, commandExternalSolver, false, null);
+					filename, solverMode, fakeNonIncrementalSolver , 
+					commandExternalSolver, false, null);
 
 			mScript = SolverBuilder.buildAndInitializeSolver(services,
 					storage,

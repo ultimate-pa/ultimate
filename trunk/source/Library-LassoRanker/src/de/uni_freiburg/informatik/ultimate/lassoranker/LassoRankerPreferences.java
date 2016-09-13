@@ -102,6 +102,11 @@ public class LassoRankerPreferences implements Serializable {
 	public boolean useOldMapElimination = false;
 
 	/**
+	 * Emulate push/pop using reset and re-asserting and re-declaring.
+	 */
+	private final boolean mFakeNonIncrementalScript = false;
+
+	/**
 	 * Default construction intializes default values
 	 */
 	public LassoRankerPreferences() {
@@ -175,7 +180,7 @@ public class LassoRankerPreferences implements Serializable {
 	 */
 	public Settings getSolverConstructionSettings(final String filenameDumpedScript) {
 		final long timeoutSmtInterpol = 365 * 24 * 60 * 60 * 1000;
-		return new Settings(externalSolver, smt_solver_command, timeoutSmtInterpol, null, dumpSmtSolverScript,
+		return new Settings(mFakeNonIncrementalScript , externalSolver, smt_solver_command, timeoutSmtInterpol, null, dumpSmtSolverScript,
 				path_of_dumped_script, filenameDumpedScript);
 	}
 }

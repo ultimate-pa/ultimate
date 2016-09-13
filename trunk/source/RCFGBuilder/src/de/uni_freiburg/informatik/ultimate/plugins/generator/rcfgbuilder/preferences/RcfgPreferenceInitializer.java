@@ -57,6 +57,10 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_Solver = "SMT solver";
 	public static final SolverMode DEF_Solver = SolverMode.External_ModelsAndUnsatCoreMode;
 	// public static final Solver DEF_Solver = Solver.Internal_SMTInterpol;
+	
+	public static final String LABEL_FakeNonIncrementalScript = "Fake non-incremental script";
+	public static final boolean DEF_FakeNonIncrementalScript = false;
+	
 	public static final String LABEL_ExtSolverCommand = "Command for external solver";
 	public static final String DEF_ExtSolverCommand = Z3_DEFAULT;
 
@@ -87,6 +91,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<SolverMode>(LABEL_Solver, DEF_Solver, PreferenceType.Combo,
 						SolverMode.values()),
+				new UltimatePreferenceItem<Boolean>(LABEL_FakeNonIncrementalScript, DEF_FakeNonIncrementalScript, PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand, DEF_ExtSolverCommand, PreferenceType.String),
 				new UltimatePreferenceItem<String>(LABEL_ExtSolverLogic, DEF_ExtSolverLogic, PreferenceType.String),
 				new UltimatePreferenceItem<Boolean>(LABEL_BitvectorWorkaround, false, PreferenceType.Boolean),

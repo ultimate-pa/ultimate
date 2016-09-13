@@ -277,4 +277,8 @@ public class TAPreferences {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_XNF_CONVERSION_TECHNIQUE,
 				XnfConversionTechnique.class);
 	}
+
+	public boolean fakeNonIncrementalSolver() {
+		return mPrefs.getBoolean(RcfgPreferenceInitializer.LABEL_FakeNonIncrementalScript);
+	}
 }
