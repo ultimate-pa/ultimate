@@ -28,7 +28,7 @@ public class Audio {
 
     private final boolean ABSTRACT = false;
 
-    int Q = 555;
+    static final int Q = 555;
     double t = 1.0/17;
     int Ql = (int) (Q * (1-t)) + 1; /* round up */
     int Qh = (int) (Q * (1+t));     /* round down */
@@ -85,7 +85,7 @@ public class Audio {
 	phases[4].addTransition(phases[3], clockIval.and(onlyOne), reset);
 	phases[5].addTransition(phases[0], clockIval4.and(noev), noreset);
 
-	return new PhaseEventAutomata("Sender", phases, 
+	return new PhaseEventAutomata("Sender", phases,
 				      new Phase[] {phases[0]});
     }
 
@@ -134,7 +134,7 @@ public class Audio {
 	phases[5].addTransition(phases[4], clkHigh7.and(onlyZero), reset);
 	phases[5].addTransition(phases[0], clkLow9.and(onlyStop), reset);
 
-	return new PhaseEventAutomata("Receiver", phases, 
+	return new PhaseEventAutomata("Receiver", phases,
 				      new Phase[] {phases[0]});
     }
 
@@ -177,11 +177,11 @@ public class Audio {
 				.and(recvStop.and(nosend).negate()), noreset);
 	phases[4].addTransition(phases[4], CDD.TRUE, noreset);
 
-	return new PhaseEventAutomata("Tester", phases, 
+	return new PhaseEventAutomata("Tester", phases,
 				      new Phase[] {phases[0]});
     }
 
-    PhaseEventAutomata create4DC(CounterTrace ct, String name) {
+    PhaseEventAutomata create4DC(final CounterTrace ct, final String name) {
 	final Trace2PEACompiler compiler = new Trace2PEACompiler();
 	final PhaseEventAutomata pea = compiler.compile
 	    (name, new MCTrace(ct, null, null, null, false));
@@ -192,102 +192,102 @@ public class Audio {
 	CounterTrace ct;
 	PhaseEventAutomata pea;
 	ct = new CounterTrace(new CounterTrace.DCPhase[] {
-	    new CounterTrace.DCPhase(), 
+	    new CounterTrace.DCPhase(),
 	    new CounterTrace.DCPhase(sendZero.and(recvZero.negate()), CDD.TRUE,
-			CounterTrace.BOUND_GREATER, 4*Q, 
+			CounterTrace.BOUND_GREATER, 4*Q,
 			Collections.singleton("r.0"), false),
 	    new CounterTrace.DCPhase(CDD.TRUE, CDD.TRUE,
-			CounterTrace.BOUND_NONE, 0, 
+			CounterTrace.BOUND_NONE, 0,
 			Collections.EMPTY_SET, true)
 	});
 	pea = create4DC(ct, "dca");
 	ct = new CounterTrace(new CounterTrace.DCPhase[] {
-	    new CounterTrace.DCPhase(), 
+	    new CounterTrace.DCPhase(),
 	    new CounterTrace.DCPhase(sendOne.and(recvOne.negate()), CDD.TRUE,
-			CounterTrace.BOUND_GREATER, 4*Q, 
+			CounterTrace.BOUND_GREATER, 4*Q,
 			Collections.singleton("r.1"), false),
 	    new CounterTrace.DCPhase(CDD.TRUE, CDD.TRUE,
-			CounterTrace.BOUND_NONE, 0, 
+			CounterTrace.BOUND_NONE, 0,
 			Collections.EMPTY_SET, true)
 	});
 	pea = abstractAutomaton(pea.parallel(create4DC(ct, "dcb")),
 				".*FINAL.*");
 	ct = new CounterTrace(new CounterTrace.DCPhase[] {
-	    new CounterTrace.DCPhase(), 
+	    new CounterTrace.DCPhase(),
 	    new CounterTrace.DCPhase(sendStop.and(recvStop.negate()), CDD.TRUE,
-			CounterTrace.BOUND_GREATER, 4*Q, 
+			CounterTrace.BOUND_GREATER, 4*Q,
 			Collections.singleton("r.stop"), false),
 	    new CounterTrace.DCPhase(CDD.TRUE, CDD.TRUE,
-			CounterTrace.BOUND_NONE, 0, 
+			CounterTrace.BOUND_NONE, 0,
 			Collections.EMPTY_SET, true)
 	});
 	pea = abstractAutomaton(pea.parallel(create4DC(ct, "dcc")),
 				".*FINAL.*");
 	ct = new CounterTrace(new CounterTrace.DCPhase[] {
-	    new CounterTrace.DCPhase(), 
+	    new CounterTrace.DCPhase(),
 	    new CounterTrace.DCPhase(sendZero.and(recvZero.negate()), CDD.TRUE,
-			CounterTrace.BOUND_NONE, 0, 
+			CounterTrace.BOUND_NONE, 0,
 			Collections.singleton("r.0"), true),
 	    new CounterTrace.DCPhase(recvOne.or(recvStop), CDD.TRUE,
-			CounterTrace.BOUND_NONE, 0, 
+			CounterTrace.BOUND_NONE, 0,
 			Collections.EMPTY_SET, true)
 	});
 	pea = abstractAutomaton(pea.parallel(create4DC(ct, "dc1")),
 				".*FINAL.*");
 	ct = new CounterTrace(new CounterTrace.DCPhase[] {
-	    new CounterTrace.DCPhase(), 
+	    new CounterTrace.DCPhase(),
 	    new CounterTrace.DCPhase(sendOne.and(recvOne.negate()), CDD.TRUE,
-			CounterTrace.BOUND_NONE, 0, 
+			CounterTrace.BOUND_NONE, 0,
 			Collections.singleton("r.1"), true),
 	    new CounterTrace.DCPhase(recvZero.or(recvStop), CDD.TRUE,
-			CounterTrace.BOUND_NONE, 0, 
+			CounterTrace.BOUND_NONE, 0,
 			Collections.EMPTY_SET, true)
 	});
 	pea = abstractAutomaton(pea.parallel(create4DC(ct, "dc2")),
 				".*FINAL.*");
 	ct = new CounterTrace(new CounterTrace.DCPhase[] {
-	    new CounterTrace.DCPhase(), 
+	    new CounterTrace.DCPhase(),
 	    new CounterTrace.DCPhase(sendStop.and(recvStop.negate()), CDD.TRUE,
-			CounterTrace.BOUND_NONE, 0, 
+			CounterTrace.BOUND_NONE, 0,
 			Collections.singleton("r.stop"), true),
 	    new CounterTrace.DCPhase(recvZero.or(recvOne), CDD.TRUE,
-			CounterTrace.BOUND_NONE, 0, 
+			CounterTrace.BOUND_NONE, 0,
 			Collections.EMPTY_SET, true)
 	});
 	pea = abstractAutomaton(pea.parallel(create4DC(ct, "dc3")),
 				".*FINAL.*");
 	ct = new CounterTrace(new CounterTrace.DCPhase[] {
-	    new CounterTrace.DCPhase(), 
+	    new CounterTrace.DCPhase(),
 	    new CounterTrace.DCPhase(sendZero.and(recvZero.negate()), CDD.TRUE,
-			CounterTrace.BOUND_NONE, 0, 
+			CounterTrace.BOUND_NONE, 0,
 			Collections.singleton("r.0"), false),
-	    new CounterTrace.DCPhase(sendZero.or(sendOne).or(sendStop), 
+	    new CounterTrace.DCPhase(sendZero.or(sendOne).or(sendStop),
 				     CDD.TRUE,
-			CounterTrace.BOUND_NONE, 0, 
+			CounterTrace.BOUND_NONE, 0,
 			Collections.EMPTY_SET, true)
 	});
 	pea = abstractAutomaton(pea.parallel(create4DC(ct, "dc4")),
 				".*FINAL.*");
 	ct = new CounterTrace(new CounterTrace.DCPhase[] {
-	    new CounterTrace.DCPhase(), 
+	    new CounterTrace.DCPhase(),
 	    new CounterTrace.DCPhase(sendOne.and(recvOne.negate()), CDD.TRUE,
-			CounterTrace.BOUND_NONE, 0, 
+			CounterTrace.BOUND_NONE, 0,
 			Collections.singleton("r.1"), false),
-	    new CounterTrace.DCPhase(sendZero.or(sendOne).or(sendStop), 
+	    new CounterTrace.DCPhase(sendZero.or(sendOne).or(sendStop),
 				     CDD.TRUE,
-				     CounterTrace.BOUND_NONE, 0, 
+				     CounterTrace.BOUND_NONE, 0,
 				     Collections.EMPTY_SET, true)
 	});
 	pea = abstractAutomaton(pea.parallel(create4DC(ct, "dc5")),
 				".*FINAL.*");
 	ct = new CounterTrace(new CounterTrace.DCPhase[] {
-	    new CounterTrace.DCPhase(), 
+	    new CounterTrace.DCPhase(),
 	    new CounterTrace.DCPhase(sendStop.and(recvStop.negate()), CDD.TRUE,
-			CounterTrace.BOUND_NONE, 0, 
+			CounterTrace.BOUND_NONE, 0,
 			Collections.singleton("r.stop"), false),
-	    new CounterTrace.DCPhase(sendZero.or(sendOne).or(sendStop), 
+	    new CounterTrace.DCPhase(sendZero.or(sendOne).or(sendStop),
 				     CDD.TRUE,
-			CounterTrace.BOUND_NONE, 0, 
+			CounterTrace.BOUND_NONE, 0,
 			Collections.EMPTY_SET, true)
 	});
 	pea = abstractAutomaton(pea.parallel(create4DC(ct, "dc6")),
@@ -295,8 +295,8 @@ public class Audio {
 	return pea;
     }
 
-    PhaseEventAutomata abstractAutomaton(PhaseEventAutomata pea,
-					 String finalRegex) {
+    PhaseEventAutomata abstractAutomaton(final PhaseEventAutomata pea,
+					 final String finalRegex) {
 	final Phase[] init = pea.getInit();
 	final Phase[] newInit = new Phase[init.length];
 	int ctr = 0;
@@ -309,7 +309,7 @@ public class Audio {
 	}
 	newPhases.put(error, error);
 	for (int i = 0; i < init.length; i++) {
-	    newInit[i] = new Phase(init[i].getName(), 
+	    newInit[i] = new Phase(init[i].getName(),
 				   init[i].getStateInvariant(),
 				   init[i].getClockInvariant());
 	    if (init[i].getName().matches(finalRegex)) {
@@ -339,7 +339,7 @@ public class Audio {
 			    newPhases.put(dest, newDest);
 			    todo.add(dest);
 			}
-			newPhase.addTransition(newDest, 
+			newPhase.addTransition(newDest,
 					       t.getGuard(),
 					       t.getResets());
 		    }
@@ -352,7 +352,7 @@ public class Audio {
 			newPhases.put(dest, newDest);
 			todo.add(dest);
 		    }
-		    newPhase.addTransition(newDest, 
+		    newPhase.addTransition(newDest,
 					   t.getGuard(),
 					   t.getResets());
 		}
@@ -368,7 +368,7 @@ public class Audio {
 
     void run() {
 	final long time0 = System.currentTimeMillis();
-	final PhaseEventAutomata sendrecv = 
+	final PhaseEventAutomata sendrecv =
 	    createSender().parallel(createReceiver());
 	final long time1 = System.currentTimeMillis();
 	System.err.println("Sender/Receiver build: "+(time1-time0)+" ms");
@@ -398,8 +398,8 @@ public class Audio {
     }
 
 
-    public static void main(String[] param) {
-	final Audio audio = new Audio(); 
+    public static void main(final String[] param) {
+	final Audio audio = new Audio();
 	audio.run();
     }
 }

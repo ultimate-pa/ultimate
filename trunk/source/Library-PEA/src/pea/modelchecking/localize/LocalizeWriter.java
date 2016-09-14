@@ -135,7 +135,7 @@ public class LocalizeWriter extends TCSWriter {
      * TODO Make this decision dependent on a user decision, e.g., via checkbox
      * or preferences.
      */
-    private static boolean CHECK_QUERY_AS_INVARIANT = true;
+    private static final boolean CHECK_QUERY_AS_INVARIANT = true;
 
     /**
      * A set of constant symbols that do not need to be primed.

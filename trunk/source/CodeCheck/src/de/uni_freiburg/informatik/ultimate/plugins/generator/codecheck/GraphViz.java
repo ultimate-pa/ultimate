@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CodeCheck plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission
  * to convey the resulting work.
  */
 // GraphViz.java - a simple API to call dot from Java programs
@@ -85,7 +85,7 @@ import java.io.InputStreamReader;
  *
  * @version v0.4, 2011/02/05 (February) -- Patch of Keheliya Gallaba is added. Now you
  * can specify the type of the output file: gif, dot, fig, pdf, ps, svg, png, etc.
- * @version v0.3, 2010/11/29 (November) -- Windows support + ability 
+ * @version v0.3, 2010/11/29 (November) -- Windows support + ability
  * to read the graph from a text file
  * @version v0.2, 2010/07/22 (July) -- bug fix
  * @version v0.1, 2003/12/04 (December) -- first release
@@ -97,13 +97,13 @@ public class GraphViz
     * The dir. where temporary files will be created.
     */
 //   private static String TEMP_DIR = "/tmp";	// Linux
-   private static String TEMP_DIR = "c:/temp";	// Windows
+   private static final String TEMP_DIR = "c:/temp";	// Windows
 
    /**
     * Where is your dot program located? It will be called externally.
     */
 //   private static String DOT = "/usr/bin/dot";	// Linux
-   private static String DOT = "c:/Program Files/GraphViz/bin/dot.exe";	// Windows
+   private static final String DOT = "c:/Program Files/GraphViz/bin/dot.exe";	// Windows
 
    /**
     * The source of the graph written in dot language.
@@ -128,14 +128,14 @@ public class GraphViz
    /**
     * Adds a string to the graph's source (without newline).
     */
-   public void add(String line) {
+   public void add(final String line) {
       graph.append(line);
    }
 
    /**
     * Adds a string to the graph's source (with newline).
     */
-   public void addln(String line) {
+   public void addln(final String line) {
       graph.append(line + "\n");
    }
 
@@ -152,7 +152,7 @@ public class GraphViz
     * @param type Type of the output image to be produced, e.g.: gif, dot, fig, pdf, ps, svg, png.
     * @return A byte array containing the image of the graph.
     */
-   public byte[] getGraph(String dot_source, String type)
+   public byte[] getGraph(final String dot_source, final String type)
    {
       File dot;
       byte[] img_stream = null;
@@ -177,7 +177,7 @@ public class GraphViz
     * @param file  Name of the file to where we want to write.
     * @return Success: 1, Failure: -1
     */
-   public int writeGraphToFile(byte[] img, String file)
+   public int writeGraphToFile(final byte[] img, final String file)
    {
       final File to = new File(file);
       return writeGraphToFile(img, to);
@@ -189,7 +189,7 @@ public class GraphViz
     * @param to    A File object to where we want to write.
     * @return Success: 1, Failure: -1
     */
-   public int writeGraphToFile(byte[] img, File to)
+   public int writeGraphToFile(final byte[] img, final File to)
    {
       try {
          final FileOutputStream fos = new FileOutputStream(to);
@@ -206,7 +206,7 @@ public class GraphViz
     * @param type Type of the output image to be produced, e.g.: gif, dot, fig, pdf, ps, svg, png.
     * @return The image of the graph in .gif format.
     */
-   private byte[] get_img_stream(File dot, String type)
+   private byte[] get_img_stream(final File dot, final String type)
    {
       File img;
       byte[] img_stream = null;
@@ -252,7 +252,7 @@ public class GraphViz
     * @param str Source of the graph (in dot language).
     * @return The file (as a File object) that contains the source of the graph.
     */
-   private File writeDotSourceToFile(String str) throws java.io.IOException
+   private File writeDotSourceToFile(final String str) throws java.io.IOException
    {
       File temp;
       try {
@@ -290,7 +290,7 @@ public class GraphViz
     * @param input Input text file containing the DOT graph
     * source.
     */
-   public void readSource(String input)
+   public void readSource(final String input)
    {
 	   final StringBuilder sb = new StringBuilder();
 	   
@@ -304,7 +304,7 @@ public class GraphViz
 			   sb.append(line);
 		   }
 		   dis.close();
-	   } 
+	   }
 	   catch (final Exception e) {
 		   System.err.println("Error: " + e.getMessage());
 	   }
