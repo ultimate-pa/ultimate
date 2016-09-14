@@ -1,4 +1,9 @@
-//
+//#rTermination
+/*
+ * Date: 2016-09-14
+ * Author: heizmann@informatik.uni-freiburg.de, schuessf@informatik.uni-freiburg.de
+ * 
+ */
 
 implementation main() returns (){
     var value : int;
