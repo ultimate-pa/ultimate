@@ -56,7 +56,7 @@ import java.util.Vector;
  *
  * @see pea.Decision
  */
-public class CDD {
+public final class CDD {
     /**
      * The formula TRUE.
      */
@@ -80,7 +80,7 @@ public class CDD {
     /**
      * Hash to keep all equal CDDs identical.
      */
-    private static UnifyHash<CDD> unifyHash = new UnifyHash<CDD>();
+    private static UnifyHash<CDD> unifyHash = new UnifyHash<>();
     public Decision decision;
     int depth;
     CDD[] childs;
@@ -89,7 +89,7 @@ public class CDD {
     /**
      * Create a new CDD with the given decision and sub diagrams.
      */
-    private CDD(Decision decision, CDD[] childs) {
+    private CDD(final Decision decision, final CDD[] childs) {
         this.decision = decision;
         this.childs = childs;
         timed = decision instanceof RangeDecision;
@@ -105,11 +105,11 @@ public class CDD {
         }
     }
 
-    private int min(int a, int b) {
+    private int min(final int a, final int b) {
         return ((a < b) ? a : b);
     }
 
-    private int max(int a, int b) {
+    private int max(final int a, final int b) {
         return ((a > b) ? a : b);
     }
 
@@ -126,7 +126,7 @@ public class CDD {
      * @param decision the decision.
      * @param childs the child formulae for the sub-decisions.
      */
-    public static CDD create(Decision decision, CDD[] childs) {
+    public static CDD create(final Decision decision, final CDD[] childs) {
         int hashcode = decision.hashCode();
 
         for (int i = 0; i < childs.length; i++) {
@@ -136,7 +136,7 @@ public class CDD {
         final Iterator<CDD> it = unifyHash.iterateHashCode(hashcode);
         CDD cdd;
 
-try_next: 
+try_next:
         while (it.hasNext()) {
             cdd = it.next();
 
@@ -164,7 +164,7 @@ try_next:
      * @param other the other CDD.
      * @return true iff other CDD is implied by this one.
      */
-    public boolean implies(CDD other) {
+    public boolean implies(final CDD other) {
         if ((this == FALSE) || (other == TRUE)) {
             return true;
         }
@@ -224,7 +224,7 @@ try_next:
      * @param other the other CDD.
      * @return the conjunction of the CDDs.
      */
-    public CDD and(CDD other) {
+    public CDD and(final CDD other) {
         if ((other == CDD.FALSE) || (this == CDD.TRUE)) {
             return other;
         }
@@ -233,7 +233,7 @@ try_next:
             return this;
         }
         
-        final HashMap<CDD, HashMap<CDD, CDD>> cache = new HashMap<CDD, HashMap<CDD,CDD>>();
+        final HashMap<CDD, HashMap<CDD, CDD>> cache = new HashMap<>();
         return and(other, cache);
     }
 
@@ -242,7 +242,7 @@ try_next:
      * @param other the other CDD.
      * @return the conjunction of the CDDs.
      */
-    public CDD and(CDD other, HashMap<CDD, HashMap<CDD,CDD>> cache) {
+    public CDD and(final CDD other, final HashMap<CDD, HashMap<CDD,CDD>> cache) {
         if ((other == CDD.FALSE) || (this == CDD.TRUE)) {
             return other;
         }
@@ -253,7 +253,7 @@ try_next:
         
         HashMap<CDD, CDD> cache2 = cache.get(this);
         if (cache2 == null) {
-        	cache2 = new HashMap<CDD,CDD>();
+        	cache2 = new HashMap<>();
         	cache.put(this,cache2);
         }
         CDD result = cache2.get(other);
@@ -291,7 +291,7 @@ try_next:
      * @param other the other CDD.
      * @return the disjunction of the CDDs.
      */
-    public CDD or(CDD other) {
+    public CDD or(final CDD other) {
         if ((other == CDD.FALSE) || (this == CDD.TRUE)) {
             return this;
         }
@@ -394,7 +394,7 @@ try_next:
             return new CDD[] {  };
         }
 
-        final ArrayList<CDD> dnf = new ArrayList<CDD>();
+        final ArrayList<CDD> dnf = new ArrayList<>();
 
         for (int i = 0; i < childs.length; i++) {
             final CDD[] cdnf = childs[i].toDNF();
@@ -463,7 +463,7 @@ try_next:
             return new CDD[] { this };
         }
 
-        final ArrayList<CDD> cnf = new ArrayList<CDD>();
+        final ArrayList<CDD> cnf = new ArrayList<>();
 
         for (int i = 0; i < childs.length; i++) {
             final CDD[] ccnf = childs[i].toCNF();
@@ -528,7 +528,7 @@ try_next:
      * @param i the index of the child to check.
      * @return true, if childs[i] implies childs[j] for all j.
      */
-    public boolean childDominates(int i) {
+    public boolean childDominates(final int i) {
         return cddDominates(i, childs[i]);
     }
 
@@ -540,7 +540,7 @@ try_next:
      * @param i the index of the child to check.
      * @return true, if childs[j] implies childs[i] for all j.
      */
-    public boolean childIsDominated(int i) {
+    public boolean childIsDominated(final int i) {
         return cddIsDominated(i, childs[i]);
     }
 
@@ -553,7 +553,7 @@ try_next:
      * @param cdd the constraint to check the dominates relation
      * @return true, if cdd implies childs[j] for all j != i.
      */
-    private boolean cddDominates(int i, CDD cdd) {
+    private boolean cddDominates(final int i, final CDD cdd) {
         for (int j = 0; j < childs.length; j++) {
             if ((j != i) && !cdd.implies(childs[j])) {
                 return false;
@@ -572,7 +572,7 @@ try_next:
      * @param cdd the constraint to check the dominates relation
      * @return true, if cdd implies childs[j] for all j != i.
      */
-    private boolean cddIsDominated(int i, CDD cdd) {
+    private boolean cddIsDominated(final int i, final CDD cdd) {
         for (int j = 0; j < childs.length; j++) {
             if ((j != i) && !childs[j].implies(cdd)) {
                 return false;
@@ -598,7 +598,7 @@ try_next:
      * Creates a string representation of the CDD.
      * @param needsParens true, if disjunctions need to be parenthesised.
      */
-    public String toString(boolean needsParens) {
+    public String toString(final boolean needsParens) {
         final StringBuffer sb = new StringBuffer();
         String ordelim = "";
         int clauses = 0;
@@ -639,7 +639,7 @@ try_next:
         }
     }
 
-    public String toSmtString(boolean needsParens, int index) {
+    public String toSmtString(final boolean needsParens, final int index) {
         final StringBuffer sb = new StringBuffer();
         final String ordelim = "(or ";
         int clauses = 0;
@@ -742,7 +742,7 @@ try_next:
      * Creates a string representation of the CDD in tex-format.
      * @param needsParens true, if disjunctions need to be parenthesised.
      */
-    public String toTexString(boolean needsParens) {
+    public String toTexString(final boolean needsParens) {
         final StringBuffer sb = new StringBuffer();
         String ordelim = "";
         int clauses = 0;
@@ -788,7 +788,7 @@ try_next:
      * @param format in {tex, uppaal, general}
      * @param needsParens true, if disjunctions need to be parenthesised.
      */
-    public String toString(String format, boolean needsParens) {
+    public String toString(final String format, final boolean needsParens) {
         final StringBuffer sb = new StringBuffer();
         String ordelim = "";
         int clauses = 0;
@@ -872,7 +872,7 @@ try_next:
         }
     }
 
-    public void printCDD(int i) {
+    public void printCDD(final int i) {
         if (this == CDD.TRUE) {
             System.out.println("CDD=TRUE");
 
@@ -930,7 +930,7 @@ try_next:
     }
 
     //Change by Ami
-    //the function returns whether a CDD is an atomic proposition (like A, !A) or a 
+    //the function returns whether a CDD is an atomic proposition (like A, !A) or a
     // proposition composed of several variables (e.g., A&B, A||B)
     public boolean isAtomic() {
         if (((getChilds()[0] == CDD.TRUE) ||
@@ -943,7 +943,7 @@ try_next:
         }
     }
 
-    private static void testIsAtomic(CDD cdd) {
+    private static void testIsAtomic(final CDD cdd) {
         System.out.println("The formula " + cdd.toString() + " is atomic: " +
             cdd.isAtomic());
     }
@@ -969,7 +969,7 @@ try_next:
     }
 
     // XXX: Testing
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         final CDD a = BooleanDecision.create("a");
         final CDD b = BooleanDecision.create("b");
         final CDD c = BooleanDecision.create("c");
@@ -1055,7 +1055,7 @@ try_next:
 
     public Vector<Integer> getElemHashes() {
         int i;
-        final Vector<Integer> res = new Vector<Integer>();
+        final Vector<Integer> res = new Vector<>();
 
         if (decision != null) {
             res.add(getDecHash());

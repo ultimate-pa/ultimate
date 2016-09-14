@@ -38,14 +38,14 @@ import pea.util.z.ZWrapper;
  * @author jdq, ulli, jfaber
  *
  */
-public class ZDecision extends Decision {
+public final class ZDecision extends Decision {
     //private Term term;
     private String predicate;
 
     /**
      *
      */
-    private ZDecision(String predicate) {
+    private ZDecision(final String predicate) {
         super();
         this.predicate = predicate;
     }
@@ -60,18 +60,18 @@ public class ZDecision extends Decision {
      * @return a CDD for the given predicate
      */
     @Deprecated
-    public static CDD createSimplified(String predicate) {
+    public static CDD createSimplified(final String predicate) {
         return getSimplifiedCDD(predicate);
     }
 
     /**
      *  Creates a CDD without simplifying the predicate any further
      */
-    public static CDD create(String predicate) {
+    public static CDD create(final String predicate) {
         return ZDecision.createWithChildren(predicate, CDD.trueChilds);
     }
 
-    public static CDD createWithChildren(String predicate, CDD[] children) {
+    public static CDD createWithChildren(final String predicate, final CDD[] children) {
         if (predicate.trim().equals(ZString.TRUE)) {
             return CDD.TRUE;
         }
@@ -87,7 +87,7 @@ public class ZDecision extends Decision {
      * @see pea.Decision#compareTo(java.lang.Object)
      */
     @Override
-    public int compareTo(Object o) {
+    public int compareTo(final Object o) {
         /* we're 'bigger' than Ranges and Events */
         if (o instanceof RangeDecision || o instanceof EventDecision) {
             return 1;
@@ -104,7 +104,7 @@ public class ZDecision extends Decision {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (!(o instanceof ZDecision)) {
             return false;
         }
@@ -125,7 +125,7 @@ public class ZDecision extends Decision {
     @SuppressWarnings("unchecked")
     @Override
     public Decision prime() {
-        //String decision = predicate.replaceAll("([a-zA-Z_])(\\w*)", "$1$2'"); 
+        //String decision = predicate.replaceAll("([a-zA-Z_])(\\w*)", "$1$2'");
         String decision = predicate;
 
         try {
@@ -154,12 +154,12 @@ public class ZDecision extends Decision {
      * @see pea.Decision#toString(int)
      */
     @Override
-    public String toString(int child) {
+    public String toString(final int child) {
         return (child == 0) ? predicate : (ZString.NOT + predicate);
     }
 
     @Override
-	public String toSmtString(int child) {
+	public String toSmtString(final int child) {
         return toString(child);
     }
 
@@ -167,13 +167,13 @@ public class ZDecision extends Decision {
      * @see pea.Decision#toUppaalString(int)
      */
     @Override
-    public String toUppaalString(int child) {
+    public String toUppaalString(final int child) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-	public String toUppaalStringDOM(int child) {
+	public String toUppaalStringDOM(final int child) {
         // TODO Auto-generated method stub
         return null;
     }
@@ -206,7 +206,7 @@ public class ZDecision extends Decision {
     /* (non-Javadoc)
      * @see java.lang.Object#equals(java.lang.Object)
      */
-    public boolean equals(ZDecision z) {
+    public boolean equals(final ZDecision z) {
         //TODO: compare term objects
         return predicate.equals(z.predicate);
     }
@@ -222,7 +222,7 @@ public class ZDecision extends Decision {
 
     /** @return if a CDD contains a ZDecision containing the given text.
      * Since this method isn't for general CDDs, it resides in this class */
-    public static boolean cddContainsZDecisionWith(CDD cdd, String text) {
+    public static boolean cddContainsZDecisionWith(final CDD cdd, final String text) {
         if ((cdd == CDD.TRUE) || (cdd == CDD.FALSE)) {
             return false;
         }
@@ -242,7 +242,7 @@ public class ZDecision extends Decision {
     }
 
     /** rename a variable inside ZDecisions in a CDD */
-    public static void renameVariableInCDD(CDD cdd, String oldVar, String newVar) {
+    public static void renameVariableInCDD(final CDD cdd, final String oldVar, final String newVar) {
         if ((cdd == CDD.TRUE) || (cdd == CDD.FALSE)) {
             return;
         }
@@ -296,7 +296,7 @@ public class ZDecision extends Decision {
     }
 
     @Deprecated
-    static CDD parseAND(String term) {
+    static CDD parseAND(final String term) {
         final String[] tt = term.split(ZString.AND);
         CDD cdd = simplifyDecision(tt[0]);
 
@@ -308,7 +308,7 @@ public class ZDecision extends Decision {
     }
 
     @Deprecated
-    static CDD parseOR(String term) {
+    static CDD parseOR(final String term) {
         final String[] tt = term.split(ZString.OR);
         CDD cdd = parseAND(tt[0]);
 
@@ -320,7 +320,7 @@ public class ZDecision extends Decision {
     }
 
     @Deprecated
-    static CDD resolveImpls(String term) {
+    static CDD resolveImpls(final String term) {
         final String[] tt = term.split(ZString.IMP);
 
         if (tt.length == 1) {
@@ -340,7 +340,7 @@ public class ZDecision extends Decision {
 
     /* return the simplified CDD for the given term */
     @Deprecated
-    static CDD getSimplifiedCDD(String term) {
+    static CDD getSimplifiedCDD(final String term) {
         /* split into conjugated subterms;
          * for some reason we can't split using ZString.NL, but "\n" works */
         final String[] tt = term.split("\n");
@@ -354,13 +354,13 @@ public class ZDecision extends Decision {
     }
 
     @Override
-    public String toTexString(int child) {
+    public String toTexString(final int child) {
         return (child == 0) ? predicate : (ZString.NOT + predicate);
     }
 
     @Override
     public Decision unprime() {
-        //String decision = predicate.replaceAll("([a-zA-Z_])(\\w*)", "$1$2'"); 
+        //String decision = predicate.replaceAll("([a-zA-Z_])(\\w*)", "$1$2'");
         String decision = predicate;
 
         try {

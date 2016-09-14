@@ -28,7 +28,7 @@ import de.uni_freiburg.informatik.ultimate.website.Tasks.TaskNames;
  * @author Stefan Wissert
  * @date 14.02.2012
  */
-public class Example {
+public final class Example {
 	/**
 	 * The files content.
 	 */
@@ -57,23 +57,23 @@ public class Example {
 	 * representations of the examples, sorted by the corresponding task(s).
 	 * This implies, that examples with multiple tasks are contained multiply!
 	 */
-	private static final Map<Tasks.TaskNames, ArrayList<Example>> sExamplesByTask = new HashMap<Tasks.TaskNames, ArrayList<Example>>();
+	private static final Map<Tasks.TaskNames, ArrayList<Example>> sExamplesByTask = new HashMap<>();
 	/**
 	 * Set of IDs - used to verify, that the ids are really unique!
 	 */
-	private static final Set<String> sIds = new HashSet<String>();
+	private static final Set<String> sIds = new HashSet<>();
 	/**
 	 * List of examples, sorted by their ids - each example is therefore
 	 * contained only once!
 	 */
-	private static final Map<String, Example> sExamplesById = new HashMap<String, Example>();
+	private static final Map<String, Example> sExamplesById = new HashMap<>();
 
 	/**
 	 * Initialize the Example lists.
 	 */
 	private static void init() {
 		SimpleLogger.log("Initializing Examples.");
-		final ArrayList<Example> list = new ArrayList<Example>();
+		final ArrayList<Example> list = new ArrayList<>();
 
 		final Tasks.TaskNames[] verifyC = { Tasks.TaskNames.AUTOMIZER_C, TaskNames.KOJAK_C };
 		addAllFilesInExamplesSubfolder(list, "verifyC/", verifyC);
@@ -143,7 +143,7 @@ public class Example {
 	 * @param id
 	 *            the id
 	 */
-	private Example(String name, String id, Tasks.TaskNames[] taskNames, String content) {
+	private Example(final String name, final String id, final Tasks.TaskNames[] taskNames, final String content) {
 		if (name == null || name.equals("") || name.length() > 30) {
 			throw new IllegalArgumentException("Not a valid file name!");
 		}
@@ -190,7 +190,7 @@ public class Example {
 	 * @param id
 	 *            the id
 	 */
-	private Example(String name, String id, String path, Tasks.TaskNames[] taskNames) {
+	private Example(final String name, final String id, final String path, final Tasks.TaskNames[] taskNames) {
 		mFileName = name;
 		mFilePath = path;
 		mTaskNames = taskNames;
@@ -206,7 +206,7 @@ public class Example {
 	 * @throws IOException
 	 *             care for it ...
 	 */
-	private static final String readFile(String name) throws IOException {
+	private static final String readFile(final String name) throws IOException {
 		final String example = "/resources/examples/" + name;
 		final InputStream inStream = Example.class.getResourceAsStream(example);
 		if (inStream == null) {
@@ -235,7 +235,7 @@ public class Example {
 	 * URLs with protocol <i>file</i> and <i>bundleresource</i>. At the moment
 	 * these are the only ones that occur in Website and WebsiteEclipseBridge.
 	 */
-	static private String[] filenamesOfFilesInSubdirectory(String dirSuffix) {
+	static private String[] filenamesOfFilesInSubdirectory(final String dirSuffix) {
 		final String dir = "/resources/examples/" + dirSuffix;
 		SimpleLogger.log("Trying to get all files in directory " + dir);
 		final URL dirURL = Example.class.getClassLoader().getResource(dir);
@@ -281,7 +281,7 @@ public class Example {
 	 * Add all files in subfolder of /resource/example as Example to list for
 	 * taskNames. The id of the examples is defined by hash codes.
 	 */
-	static private void addAllFilesInExamplesSubfolder(List<Example> list, String subfolder, TaskNames[] taskNames) {
+	static private void addAllFilesInExamplesSubfolder(final List<Example> list, final String subfolder, final TaskNames[] taskNames) {
 		final String[] filesInSubfolder = filenamesOfFilesInSubdirectory(subfolder);
 		for (final String filename : filesInSubfolder) {
 			final String exPath = subfolder + filename;
@@ -357,7 +357,7 @@ public class Example {
 	 *            the identifier
 	 * @return the corresponding example or null, if ID not found!
 	 */
-	public static final Example get(String id) {
+	public static final Example get(final String id) {
 		if (sExamplesById.isEmpty()) {
 			SimpleLogger.log("Example list is empty, initializing...");
 			init();

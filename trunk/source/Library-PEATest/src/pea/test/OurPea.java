@@ -1,4 +1,4 @@
-/* $Id$ 
+/* $Id$
  *
  * This file is part of the PEA tool set
  * 
@@ -40,14 +40,14 @@ import pea.modelchecking.PEAJ2XMLConverter;
  * @author jdq
  * 
  */
-public class OurPea {
+public final class OurPea {
 
     private OurPea() {
         super();
     }
 
     @SuppressWarnings("deprecation")
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         PhaseEventAutomata pea;
         final Phase[] phases = new Phase[2];
 
@@ -63,14 +63,14 @@ public class OurPea {
         phases[1].addTransition(phases[0], CDD.TRUE, new String[0]);
         phases[0].addTransition(phases[0], CDD.TRUE, new String[0]);
         phases[1].addTransition(phases[1], CDD.TRUE, new String[0]);
-        final LinkedList<String> l = new LinkedList<String>();
+        final LinkedList<String> l = new LinkedList<>();
         l.add(resets[0]);
         pea = new PhaseEventAutomata("ourPEA", phases, phases.clone(), l);
         pea.dump();
         try {
             final PEAJ2XMLConverter conv = new PEAJ2XMLConverter();
 
-            final ArrayList<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>();
+            final ArrayList<PhaseEventAutomata> peaList = new ArrayList<>();
             peaList.add(pea);
             final PEANet peanet = new PEANet();
             peanet.setPeas(peaList);
