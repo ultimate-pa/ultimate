@@ -58,12 +58,12 @@ public class Phase implements Comparable<Phase> {
      */
     PhaseBits phaseBits;
 
-    public Phase(String name, CDD stateInv, CDD clockInv,
-        Set<String> stoppedClocks) {
+    public Phase(final String name, final CDD stateInv, final CDD clockInv,
+        final Set<String> stoppedClocks) {
         this.name = name;
         this.stateInv = stateInv;
         this.clockInv = clockInv;
-        transitions = new ArrayList<Transition>();
+        transitions = new ArrayList<>();
         this.stoppedClocks = stoppedClocks;
         dlCheck = clockInv;
 
@@ -74,18 +74,18 @@ public class Phase implements Comparable<Phase> {
         isVisited = false;
         isDlSuspect = false;
         flags = 0;
-        incomming = new Vector<Transition>();
+        incomming = new Vector<>();
     }
 
-    public Phase(String name, CDD stateInv, CDD clockInv) {
+    public Phase(final String name, final CDD stateInv, final CDD clockInv) {
         this(name, stateInv, clockInv, new SimpleSet<String>(0));
     }
 
-    public Phase(String name, CDD stateInv) {
+    public Phase(final String name, final CDD stateInv) {
         this(name, stateInv, CDD.TRUE);
     }
 
-    public Phase(String name) {
+    public Phase(final String name) {
         this(name, CDD.TRUE, CDD.TRUE);
     }
 
@@ -93,7 +93,7 @@ public class Phase implements Comparable<Phase> {
         return isInit;
     }
 
-    public void setInit(boolean isInit) {
+    public void setInit(final boolean isInit) {
         this.isInit = isInit;
     }
 
@@ -105,7 +105,7 @@ public class Phase implements Comparable<Phase> {
         return stateInv;
     }
 
-    public void setStateInvariant(CDD inv) {
+    public void setStateInvariant(final CDD inv) {
         stateInv = inv;
     }
 
@@ -117,7 +117,7 @@ public class Phase implements Comparable<Phase> {
         return stoppedClocks;
     }
 
-    public boolean isStopped(String clock) {
+    public boolean isStopped(final String clock) {
         return stoppedClocks.contains(clock);
     }
 
@@ -126,7 +126,7 @@ public class Phase implements Comparable<Phase> {
     }
 
     /** @return the transition added or modified */
-    public Transition addTransition(Phase dest, CDD guard, String[] resets) {
+    public Transition addTransition(final Phase dest, final CDD guard, final String[] resets) {
         final Iterator<Transition> it = transitions.iterator();
 
         while (it.hasNext()) {
@@ -198,7 +198,7 @@ public class Phase implements Comparable<Phase> {
     }
 
     public String getFlags() {
-        String flags = new String();
+        String flags = "";
 
         if (isInit) {
             flags += " Init ";
@@ -220,7 +220,7 @@ public class Phase implements Comparable<Phase> {
     }
 
     // jf
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 
@@ -228,18 +228,18 @@ public class Phase implements Comparable<Phase> {
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
     @Override
-	public int compareTo(Phase p) {
+	public int compareTo(final Phase p) {
         return name.compareTo(p.name);
     }
 
-    public void addIncomming(Transition trans) {
+    public void addIncomming(final Transition trans) {
         incomming.add(trans);
     }
 
-    public void removeIncomming(Transition trans) {
+    public void removeIncomming(final Transition trans) {
         incomming.remove(trans);
     }
-    public void setID(int ID) {
+    public void setID(final int ID) {
     	this.ID = ID;
     }
     public int getID() {
