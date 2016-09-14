@@ -422,7 +422,7 @@ public class MCTraceXML2JConverter {
 		if (!spec.equals(XMLTags.TRUE_CONST) && !spec.equals(XMLTags.FALSE_CONST)) {
 			throw new RuntimeException("Spec value != \"true\" and != \"false\" not allowed");
 		}
-		return Boolean.valueOf(spec).booleanValue();
+		return Boolean.parseBoolean(spec);
 	}
 
 	/**
