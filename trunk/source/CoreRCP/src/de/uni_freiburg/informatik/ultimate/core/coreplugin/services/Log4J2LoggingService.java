@@ -42,6 +42,7 @@ import java.util.StringTokenizer;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Filter.Result;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.ConsoleAppender;
 import org.apache.logging.log4j.core.appender.ConsoleAppender.Target;
@@ -54,6 +55,7 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilder;
 import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilderFactory;
 import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
+import org.apache.logging.log4j.core.filter.ThresholdFilter;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
@@ -158,7 +160,8 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 
 		final Level rootLevel = getLogLevelPreference(CorePreferenceInitializer.LABEL_ROOT_PREF);
 		final LoggerConfig rootLoggerConfig = mConfig.getRootLogger();
-		rootLoggerConfig.setLevel(rootLevel);
+		rootLoggerConfig.setLevel(Level.ALL);
+		rootLoggerConfig.addFilter(ThresholdFilter.createFilter(rootLevel, Result.ACCEPT, Result.NEUTRAL));
 		rootLoggerConfig.addAppender(mConsoleAppender, rootLoggerConfig.getLevel(), rootLoggerConfig.getFilter());
 
 		// create the children of the rootLogger
@@ -166,7 +169,8 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 		// controller
 		final Level controllerLevel = getLogLevelPreference(CorePreferenceInitializer.LABEL_CONTROLLER_PREF);
 		final LoggerConfig controllerLoggerConfig = LoggerConfig.createLogger(true, controllerLevel,
-		        LOGGER_NAME_CONTROLLER, "true", refs, null, mConfig, null);
+		        LOGGER_NAME_CONTROLLER, "true", refs, null, mConfig,
+		        ThresholdFilter.createFilter(controllerLevel, Result.ACCEPT, Result.NEUTRAL));
 		mConfig.addLogger(LOGGER_NAME_CONTROLLER, controllerLoggerConfig);
 
 		// all non-controller loggers share a common parent
@@ -302,8 +306,9 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 			final String falsePredicate = "false";
 			final String truePredicate = "true";
 
-			mFileAppender = FileAppender.createAppender(fileName, append.toString(), falsePredicate, "FileAppender",
-			        truePredicate, falsePredicate, falsePredicate, "8192", layout, null, falsePredicate, null, mConfig);
+			mFileAppender = FileAppender.createAppender(fileName, append.toString(), falsePredicate,
+			        APPENDER_NAME_LOGFILE, truePredicate, truePredicate, falsePredicate, "8192", layout, null,
+			        falsePredicate, null, mConfig);
 			mFileAppender.start();
 			mConfig.addAppender(mFileAppender);
 			mRootAppenders.add(mFileAppender);
