@@ -20,8 +20,8 @@ implementation main() returns (){
 
 var a : [int]int;
 
-procedure read(#ptr : int) returns (#value : int);
-ensures #value == a[#ptr];
+procedure read(#index : int) returns (#value : int);
+ensures #value == a[#index];
 
 
 
