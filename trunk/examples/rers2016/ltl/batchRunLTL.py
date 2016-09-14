@@ -6,9 +6,9 @@ logdir = ".\\logdir"
 tempFiles = []
 utlimatePath = ["Ultimate.exe"]
 ultimateParams = ["-tc",
-                  "LTLAutomizerC.xml"] 
-                  #"--ltl2aut.path.to.ltl*ba.executable.ltl2ba,.ltl3ba.",
-                  #"\".\\ltl2ba.exe\""]
+                  "LTLAutomizerC.xml",
+                  "--ltl2aut.command.line.string.$1.will.be.replaced.with.the.property=\"!($1)\"",
+                  "--rcfgbuilder.size.of.a.code.block=SingleStatement"]                  
 
 def batchRunLTL():
     for problem in problems:
@@ -21,7 +21,7 @@ def batchRunLTL():
         except:
             os.mkdir(probLogDir)    
         
-        for i in range(0,3):
+        for i in range(0,99):
             #splice  c prgram and ltl formula
             tempFile = getTemporaryCFile(i, prefix, ltlFormulas[i])
         
@@ -31,7 +31,7 @@ def batchRunLTL():
                 print("checking:" + tempFile)
                 startParams = utlimatePath + ultimateParams + ["-i",tempFile]
                 print(startParams)
-                log = open(os.path.join(probLogDir,"log"+str(problem)+"_"+str(i)),'w+')
+                log = open(os.path.join(probLogDir,"log"+str(problem)+"_"+"%02d"%(i)),'w+')
                 #log.write(ltlFormulas[i])
                 process = subprocess.Popen(startParams ,shell=True, stdout=log)
                 log.close()
@@ -57,7 +57,7 @@ def getTemporaryCFile(i, prefix, ltlFormula):
     
     cFile = open(prefix + "_bat.c").readlines()
     cFile.insert(5,annotation + ltlFormula + ";\n")
-    tempFilename = os.path.join(ltlProblemsDir , "temp" + str(i) + ".c")
+    tempFilename = os.path.join(ltlProblemsDir , "temp" + "%02d"%(i) + ".c")
     tempFiles.append(tempFilename)
     tempFile = open(tempFilename, "w+")
     tempFile.writelines(cFile)
@@ -82,4 +82,4 @@ def extractProperties(propertyFile):
 
 if __name__ == '__main__':
     batchRunLTL()
-    #input("Press play on tape")
+    input("Press play on tape")
