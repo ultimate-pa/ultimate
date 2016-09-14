@@ -109,7 +109,7 @@ public class Minimization_Termination extends AbstractBuchiAutomizerTestSuite {
 	 */
 	@Override
 	public long getTimeout() {
-		return 60 * 1000;
+		return 30 * 1000;
 	}
 
 	/**
@@ -129,13 +129,18 @@ public class Minimization_Termination extends AbstractBuchiAutomizerTestSuite {
 		"buchiAutomizer/minimization/ShrinkNwa.epf",
 		"buchiAutomizer/minimization/MinimizeNwaMaxSat2.epf",
 //		"buchiAutomizer/minimization/MinimizeNwaMaxSat.epf",
+		"buchiAutomizer/minimization/RaqDirectSimulation.epf",
+		"buchiAutomizer/minimization/RaqDelayedSimulation.epf",
 	};
 	
 	
 	
 	private static final String[] mCToolchains = {
-		"BuchiAutomizerCInlineWithBlockEncoding.xml",
+		"BuchiAutomizerC.xml",
 //		"BuchiAutomizerCWithBlockEncoding.xml",
+//		"BuchiAutomizerCInline.xml",
+//		"BuchiAutomizerCInlineWithBlockEncoding.xml",
+		
 	};
 
 	
