@@ -49,8 +49,8 @@ final class Solver {
 	
 	private final AutomataLibraryServices mServices;
 	
-	/** Tthe number of boolean variables. */
-	private int mNumVars;
+	/** The number of boolean variables. */
+	private final int mNumVars;
 	
 	/** The problem in CNF. */
 	private final Horn3Array mClauses;
@@ -73,16 +73,17 @@ final class Solver {
 		mClause = new Horn3Clause(-1, -1, -1);
 		
 		// const true and const false
-		mNumVars = 2;
+		int numVars = 2;
 		for (final Horn3Clause c : clauses) {
 			assert 0 <= c.mX;
 			assert 0 <= c.mY;
 			assert 0 <= c.mZ;
 			
-			mNumVars = Math.max(mNumVars, c.mX + 1);
-			mNumVars = Math.max(mNumVars, c.mY + 1);
-			mNumVars = Math.max(mNumVars, c.mZ + 1);
+			numVars = Math.max(numVars, c.mX + 1);
+			numVars = Math.max(numVars, c.mY + 1);
+			numVars = Math.max(numVars, c.mZ + 1);
 		}
+		mNumVars = numVars;
 		
 		mAssign = new char[mNumVars];
 		mOp = new IntArray();
