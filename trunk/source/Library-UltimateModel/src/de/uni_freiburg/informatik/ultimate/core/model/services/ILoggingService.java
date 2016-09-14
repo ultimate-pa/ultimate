@@ -100,4 +100,10 @@ public interface ILoggingService {
 	void addWriter(Writer writer, String logPattern);
 
 	void removeWriter(Writer writer);
+
+	void reloadLoggers();
+
+	void setCurrentControllerID(String name);
+
+	void store(IToolchainStorage storage);
 }

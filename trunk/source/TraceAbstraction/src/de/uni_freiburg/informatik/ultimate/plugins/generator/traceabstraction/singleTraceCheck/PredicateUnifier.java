@@ -443,7 +443,7 @@ public class PredicateUnifier {
 	 * ImpliedPredicates will be filled with all IPredicates that imply term.
 	 * @return
 	 */
-	private class PredicateComparison {
+	private final class PredicateComparison {
 		private final Term mTerm;
 		private final Term mClosedTerm;
 		private final boolean mTermContainsQuantifiers;
@@ -511,7 +511,7 @@ public class PredicateUnifier {
 		 * be provided as an input by the Maps impliedPredicates/expliedPredicates
 		 * both maps will be modified by (new predicates added) by this method.
 		 */
-		private PredicateComparison(final Term term, final Set<IProgramVar> vars,
+		PredicateComparison(final Term term, final Set<IProgramVar> vars,
 				final HashMap<IPredicate, Validity> impliedPredicates,
 				final HashMap<IPredicate, Validity> expliedPredicates) {
 			if (impliedPredicates == null) {

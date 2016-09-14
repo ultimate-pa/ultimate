@@ -59,7 +59,7 @@ public class AbstractInterpretationMk2LaTeXTestSummary extends OldTestSummary {
 		 * @param runtime Runtime. Negative to ignore.
 		 * @param peakMemory Peak memory usage. Negative to ignore.
 		 */
-		protected void addData(ExpectedResultType resultType, long runtime, long peakMemory) {
+		protected void addData(final ExpectedResultType resultType, final long runtime, final long peakMemory) {
 			final Long[] typeStats = getData(resultType);
 			if (typeStats != null) {
 				if (runtime >= 0) {
@@ -73,11 +73,11 @@ public class AbstractInterpretationMk2LaTeXTestSummary extends OldTestSummary {
 			}
 		}
 		
-		protected Long[] getData(ExpectedResultType resultType) {
+		protected Long[] getData(final ExpectedResultType resultType) {
 			return mstatistics.get(resultType);
 		}
 		
-		protected void addStats(ResultStatistics stats, boolean addTime, boolean addMem) {
+		protected void addStats(final ResultStatistics stats, final boolean addTime, final boolean addMem) {
 			if (stats == null) {
 				return;
 			}
@@ -98,9 +98,9 @@ public class AbstractInterpretationMk2LaTeXTestSummary extends OldTestSummary {
 	}
 
 	// used for determining the table prefix
-	protected final String msvcompFolder = "\\examples\\svcomp\\";
+	protected static final String SVCOMP_FOLDER = "\\examples\\svcomp\\";
 
-	public AbstractInterpretationMk2LaTeXTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
+	public AbstractInterpretationMk2LaTeXTestSummary(final Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);
 		
 		mpathOfTrunk = TestUtil.getPathFromTrunk("");
@@ -181,7 +181,7 @@ public class AbstractInterpretationMk2LaTeXTestSummary extends OldTestSummary {
 						String fileName = fileMsgPair.getKey();
 						String tablePrefix = "---";
 						final String fileLines = calculateNumberOfLines(fileName);
-						if (fileName.startsWith(mpathOfTrunk + msvcompFolder)) {
+						if (fileName.startsWith(mpathOfTrunk + SVCOMP_FOLDER)) {
 							tablePrefix = "S"; // file from SV-COMP
 						} else {
 							tablePrefix = "U"; // file from ULTIMATE
@@ -275,7 +275,7 @@ public class AbstractInterpretationMk2LaTeXTestSummary extends OldTestSummary {
 				.append(String.format("\t Average peak memory usage for %s & %s~MiB \\\\ %% RAW: %s / %s MiB",
 					e, calculateAverage(memorySum, memoryCount), memorySum, memoryCount)).append(lineSeparator);
 		}
-		sb.append("\t\\dhline \\\\").append(lineSeparator).append("\\end{longtabu}").append(lineSeparator);	
+		sb.append("\t\\dhline \\\\").append(lineSeparator).append("\\end{longtabu}").append(lineSeparator);
 		
 		return sb.toString();
 	}
@@ -284,7 +284,7 @@ public class AbstractInterpretationMk2LaTeXTestSummary extends OldTestSummary {
 	 * @param fileName
 	 * @return Number of lines in the file associated to fileName
 	 */
-	protected String calculateNumberOfLines(String fileName) {
+	protected String calculateNumberOfLines(final String fileName) {
 		String result = "---";
 		try {
 			final LineNumberReader reader = new LineNumberReader(new FileReader(new File(fileName)));
@@ -297,7 +297,7 @@ public class AbstractInterpretationMk2LaTeXTestSummary extends OldTestSummary {
 		return result;
 	}
 
-	protected String calculateAverage(long sum, long count) {
+	protected String calculateAverage(final long sum, final long count) {
 		if (count == 0)
 		 {
 			return "---"; // No count, no average.
@@ -305,7 +305,7 @@ public class AbstractInterpretationMk2LaTeXTestSummary extends OldTestSummary {
 		return String.format("%d", Math.round(((double) sum) / ((double) count)));
 	}
 	
-	protected String testResultTag(TestResult result) {
+	protected String testResultTag(final TestResult result) {
 		switch (result) {
 		case SUCCESS :
 			return "Successfully verified";
@@ -318,7 +318,7 @@ public class AbstractInterpretationMk2LaTeXTestSummary extends OldTestSummary {
 		}
 	}
 
-	protected String actualResultTag(ActualResultType result) {
+	protected String actualResultTag(final ActualResultType result) {
 		if (result == null) {
 			return "---";
 		}
@@ -340,7 +340,7 @@ public class AbstractInterpretationMk2LaTeXTestSummary extends OldTestSummary {
 		}
 	}
 	
-	protected String expectedResultTag(ExpectedResultType result) {
+	protected String expectedResultTag(final ExpectedResultType result) {
 		if (result == null) {
 			return "---";
 		}
@@ -358,7 +358,7 @@ public class AbstractInterpretationMk2LaTeXTestSummary extends OldTestSummary {
 		}
 	}
 
-	protected ActualResultType actualResultFromTag(String resultTag) {
+	protected ActualResultType actualResultFromTag(final String resultTag) {
 		if (resultTag == null) {
 			return ActualResultType.NO_RESULT;
 		}
@@ -385,7 +385,7 @@ public class AbstractInterpretationMk2LaTeXTestSummary extends OldTestSummary {
 		}
 	}
 	
-	protected ExpectedResultType expectedResultFromTag(String resultTag) {
+	protected ExpectedResultType expectedResultFromTag(final String resultTag) {
 		if (resultTag == null) {
 			return ExpectedResultType.NOANNOTATION;
 		}

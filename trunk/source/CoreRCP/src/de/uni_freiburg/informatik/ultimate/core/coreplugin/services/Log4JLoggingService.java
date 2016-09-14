@@ -72,17 +72,17 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvide
 public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 	private static final String[] RELEVANT_SETTINGS = new String[] { CorePreferenceInitializer.LABEL_LOG4J_PATTERN,
-			CorePreferenceInitializer.LABEL_LOGFILE, CorePreferenceInitializer.LABEL_LOGFILE_NAME,
-			CorePreferenceInitializer.LABEL_LOGFILE_DIR, CorePreferenceInitializer.LABEL_APPEXLOGFILE,
-			CorePreferenceInitializer.LABEL_LOGLEVEL_ROOT, CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGINS,
-			CorePreferenceInitializer.LABEL_LOGLEVEL_TOOLS, CorePreferenceInitializer.LABEL_LOGLEVEL_CONTROLLER,
-			CorePreferenceInitializer.LABEL_LOGLEVEL_CORE, CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGIN_SPECIFIC,
-			CorePreferenceInitializer.LABEL_ROOT_PREF, CorePreferenceInitializer.LABEL_TOOLS_PREF,
-			CorePreferenceInitializer.LABEL_CORE_PREF, CorePreferenceInitializer.LABEL_CONTROLLER_PREF,
-			CorePreferenceInitializer.LABEL_PLUGINS_PREF, CorePreferenceInitializer.LABEL_PLUGIN_DETAIL_PREF,
-			CorePreferenceInitializer.LABEL_COLOR_DEBUG, CorePreferenceInitializer.LABEL_COLOR_INFO,
-			CorePreferenceInitializer.LABEL_COLOR_WARNING, CorePreferenceInitializer.LABEL_COLOR_ERROR,
-			CorePreferenceInitializer.LABEL_COLOR_FATAL, CorePreferenceInitializer.LABEL_LOG4J_CONTROLLER_PATTERN };
+	        CorePreferenceInitializer.LABEL_LOGFILE, CorePreferenceInitializer.LABEL_LOGFILE_NAME,
+	        CorePreferenceInitializer.LABEL_LOGFILE_DIR, CorePreferenceInitializer.LABEL_APPEXLOGFILE,
+	        CorePreferenceInitializer.LABEL_LOGLEVEL_ROOT, CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGINS,
+	        CorePreferenceInitializer.LABEL_LOGLEVEL_TOOLS, CorePreferenceInitializer.LABEL_LOGLEVEL_CONTROLLER,
+	        CorePreferenceInitializer.LABEL_LOGLEVEL_CORE, CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGIN_SPECIFIC,
+	        CorePreferenceInitializer.LABEL_ROOT_PREF, CorePreferenceInitializer.LABEL_TOOLS_PREF,
+	        CorePreferenceInitializer.LABEL_CORE_PREF, CorePreferenceInitializer.LABEL_CONTROLLER_PREF,
+	        CorePreferenceInitializer.LABEL_PLUGINS_PREF, CorePreferenceInitializer.LABEL_PLUGIN_DETAIL_PREF,
+	        CorePreferenceInitializer.LABEL_COLOR_DEBUG, CorePreferenceInitializer.LABEL_COLOR_INFO,
+	        CorePreferenceInitializer.LABEL_COLOR_WARNING, CorePreferenceInitializer.LABEL_COLOR_ERROR,
+	        CorePreferenceInitializer.LABEL_COLOR_FATAL, CorePreferenceInitializer.LABEL_LOG4J_CONTROLLER_PATTERN };
 
 	private static final String APPENDER_NAME_CONSOLE = "ConsoleAppender";
 	private static final String APPENDER_NAME_LOGFILE = "LogfileAppender";
@@ -125,6 +125,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		sId++;
 	}
 
+	@Override
 	public void reloadLoggers() {
 		recreateLoggerHierarchie();
 		reinitializeDefaultAppenders();
@@ -136,14 +137,14 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		mRootAppenders.clear();
 		mControllerAppenders.clear();
 
-		final PatternLayout mainLayout =
-				new PatternLayout(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN));
+		final PatternLayout mainLayout = new PatternLayout(
+		        mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN));
 		final Appender consoleAppender = new ConsoleAppender(mainLayout);
 		consoleAppender.setName(APPENDER_NAME_CONSOLE);
 		mRootAppenders.add(consoleAppender);
 
-		final PatternLayout controllerLayout =
-				new PatternLayout(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_CONTROLLER_PATTERN));
+		final PatternLayout controllerLayout = new PatternLayout(
+		        mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_CONTROLLER_PATTERN));
 		final Appender controllerAppender = new ConsoleAppender(controllerLayout);
 		controllerAppender.setName(APPENDER_NAME_CONTROLLER);
 		mControllerAppenders.add(controllerAppender);
@@ -225,8 +226,8 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 		// actual tool loggers
 		final LoggerRepository toolRepos = toolslog.getLoggerRepository();
-		final String[] tools =
-				getIdsWithDefinedLogLevels(CorePreferenceInitializer.LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC);
+		final String[] tools = getIdsWithDefinedLogLevels(
+		        CorePreferenceInitializer.LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC);
 		for (final String tool : tools) {
 			final Logger logger = toolRepos.getLogger(getToolLoggerName(tool));
 			logger.setLevel(Level.toLevel(getLogLevel(tool)));
@@ -361,6 +362,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		return retVal;
 	}
 
+	@Override
 	public void setCurrentControllerID(final String name) {
 		mCurrentControllerName = name;
 	}
@@ -421,8 +423,8 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	}
 
 	private static String[] convert(final String preferenceValue) {
-		final StringTokenizer tokenizer =
-				new StringTokenizer(preferenceValue, CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
+		final StringTokenizer tokenizer = new StringTokenizer(preferenceValue,
+		        CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
 		final int tokenCount = tokenizer.countTokens();
 		final String[] elements = new String[tokenCount];
 		for (int i = 0; i < tokenCount; i++) {
@@ -458,6 +460,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		return (Log4JLoggingService) rtr;
 	}
 
+	@Override
 	public void store(final IToolchainStorage storage) {
 		storage.putStorable(STORE_KEY, this);
 	}

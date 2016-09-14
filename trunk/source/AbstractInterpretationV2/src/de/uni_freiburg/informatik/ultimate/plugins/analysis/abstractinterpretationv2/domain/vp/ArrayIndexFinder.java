@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
@@ -46,10 +46,10 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class ArrayIndexFinder extends NonRecursive {
 	private class  ArrayIndexFindWalker extends TermWalker {
-		ArrayIndexFindWalker(Term term) { super(term); }
+		ArrayIndexFindWalker(final Term term) { super(term); }
 		
 		@Override
-		public void walk(NonRecursive walker) {
+		public void walk(final NonRecursive walker) {
 			if (mVisited.contains(getTerm())) {
 				// do nothing
 			} else {
@@ -59,16 +59,16 @@ public class ArrayIndexFinder extends NonRecursive {
 		}
 		
 		@Override
-		public void walk(NonRecursive walker, ConstantTerm term) {
+		public void walk(final NonRecursive walker, final ConstantTerm term) {
 			// do nothing
 		}
 		@Override
-		public void walk(NonRecursive walker, AnnotatedTerm term) {
+		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
 			walker.enqueueWalker(new ArrayIndexFindWalker(term.getSubterm()));
 		}
 		@Override
-		public void walk(NonRecursive walker, ApplicationTerm term) {
-			if (term.getFunction().getName() == "select" 
+		public void walk(final NonRecursive walker, final ApplicationTerm term) {
+			if (term.getFunction().getName() == "select"
 					|| term.getFunction().getName() == "store") {
 				mResult.add(term);
 			}
@@ -77,29 +77,25 @@ public class ArrayIndexFinder extends NonRecursive {
 			}
 		}
 		@Override
-		public void walk(NonRecursive walker, LetTerm term) {
+		public void walk(final NonRecursive walker, final LetTerm term) {
 			throw new UnsupportedOperationException();
 		}
 		@Override
-		public void walk(NonRecursive walker, QuantifiedFormula term) {
+		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
 			walker.enqueueWalker(new ArrayIndexFindWalker(term.getSubformula()));
 		}
 		@Override
-		public void walk(NonRecursive walker, TermVariable term) {
+		public void walk(final NonRecursive walker, final TermVariable term) {
 			// do nothing
 		}
 	}
 	
 	
 	
-	public ArrayIndexFinder() {
-		super();
-	}
-
 	private Set<ApplicationTerm> mResult;
 	private Set<Term> mVisited;
 	
-	public Set<ApplicationTerm> findArrayIndex(Term term) {
+	public Set<ApplicationTerm> findArrayIndex(final Term term) {
 		if (term == null) {
 			throw new NullPointerException();
 		}

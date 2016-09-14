@@ -254,6 +254,7 @@ public class TypeChecker extends BaseObserver {
 			default:
 				internalError("Unknown Binary operator " + binexp.getOperator());
 				resultType = BoogieType.TYPE_ERROR;
+				break;
 			}
 		} else if (expr instanceof UnaryExpression) {
 			final UnaryExpression unexp = (UnaryExpression) expr;
@@ -278,6 +279,7 @@ public class TypeChecker extends BaseObserver {
 			default:
 				internalError("Unknown Unary operator " + unexp.getOperator());
 				resultType = BoogieType.TYPE_ERROR;
+				break;
 			}
 		} else if (expr instanceof BitVectorAccessExpression) {
 			final BitVectorAccessExpression bvaexpr = (BitVectorAccessExpression) expr;

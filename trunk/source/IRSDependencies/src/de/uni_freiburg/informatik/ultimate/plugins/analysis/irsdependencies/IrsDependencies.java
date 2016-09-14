@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IRSDependencies plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies;
@@ -71,7 +71,7 @@ public class IrsDependencies implements IAnalysis {
 	}
 
 	@Override
-	public void setInputDefinition(ModelType graphType) {
+	public void setInputDefinition(final ModelType graphType) {
 		mLogger.info("Receiving input definition " + graphType.toString());
 		mObservers.clear();
 
@@ -89,7 +89,7 @@ public class IrsDependencies implements IAnalysis {
 		}
 	}
 
-	private void setInputDefinitionModeDefault(ModelType graphType) {
+	private void setInputDefinitionModeDefault(final ModelType graphType) {
 		final String creator = graphType.getCreator();
 		switch (creator) {
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
@@ -105,6 +105,7 @@ public class IrsDependencies implements IAnalysis {
 		// break;
 		default:
 			mLogger.warn("Ignoring input definition " + creator);
+			break;
 		}
 	}
 
@@ -134,12 +135,12 @@ public class IrsDependencies implements IAnalysis {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage services) {
+	public void setToolchainStorage(final IToolchainStorage services) {
 		// no storage needed
 	}
 
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}

@@ -50,10 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
  * This plugin implements the product algorithm described in the Masterthesis
  * "Automatische Generierungvon Buchi-Programmen".
  * 
- * 
  * @author Langenfeld
- * 
- * 
  */
 public class BuchiProgramProduct implements IGenerator {
 
@@ -97,6 +94,9 @@ public class BuchiProgramProduct implements IGenerator {
 		switch (graphType.getCreator()) {
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
 			mModelIsRCFG = true;
+			mUseBuchiProductObserver = true;
+			mUseful++;
+			break;
 		case "de.uni_freiburg.informatik.ultimate.ltl2aut":
 			mUseBuchiProductObserver = true;
 			mUseful++;
@@ -112,8 +112,7 @@ public class BuchiProgramProduct implements IGenerator {
 	public List<IObserver> getObservers() {
 		final List<IObserver> observers = new ArrayList<IObserver>();
 		if (!mPreviousToolFoundErrors) {
-			if (mModelIsRCFG
-					&& mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+			if (mModelIsRCFG && mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 							.getBoolean(PreferenceInitializer.OPTIMIZE_SBE)) {
 				final boolean rewriteAssumes = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 						.getBoolean(PreferenceInitializer.OPTIMIZE_SBE_REWRITENOTEQUALS);
@@ -175,8 +174,8 @@ public class BuchiProgramProduct implements IGenerator {
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		final Collection<CounterExampleResult> cex = ResultUtil.filterResults(services.getResultService().getResults(),
-				CounterExampleResult.class);
+		final Collection<CounterExampleResult> cex =
+				ResultUtil.filterResults(services.getResultService().getResults(), CounterExampleResult.class);
 		mPreviousToolFoundErrors = !cex.isEmpty();
 		mBacktranslator = new ProductBacktranslator(RCFGEdge.class, Term.class);
 		if (!mPreviousToolFoundErrors) {

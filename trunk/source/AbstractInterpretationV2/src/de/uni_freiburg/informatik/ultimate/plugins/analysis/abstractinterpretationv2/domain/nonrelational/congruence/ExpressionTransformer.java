@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
-public class ExpressionTransformer {
+public final class ExpressionTransformer {
 	private BigInteger mConstant;
 	private HashMap<String, BigInteger> mCoefficients;
 	private final HashMap<String, IdentifierExpression> mIdentifiers;

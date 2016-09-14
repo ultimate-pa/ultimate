@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
 
@@ -188,8 +188,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		} else {
 
 			// compare linewise
-			final String platformLineSeparator =
-					de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator();
+			final String platformLineSeparator = CoreUtil.getPlatformLineSeparator();
 			final String[] desiredLines = desiredCounterExample.split(platformLineSeparator);
 			final String[] actualLines = actualCounterExample.split(platformLineSeparator);
 
@@ -238,7 +237,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		return fail ? TestResult.FAIL : TestResult.SUCCESS;
 	}
 
-	private String getDesiredCounterExample(File inputFile, File settingsFile) throws IOException {
+	private String getDesiredCounterExample(final File inputFile, final File settingsFile) throws IOException {
 		final String inputFileNameWithoutEnding = removeFileEnding(inputFile);
 		final String settingsFileNameWithoutEnding = removeFileEnding(settingsFile);
 
@@ -258,7 +257,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		return null;
 	}
 
-	private String removeFileEnding(File file) {
+	private String removeFileEnding(final File file) {
 		return file.getName().replaceAll("\\..*", "");
 	}
 
@@ -271,7 +270,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 	 * @return true iff it is a value line and the values do not differ too much (i.e. there is the same number of the
 	 *         same variables, but the values do not match)
 	 */
-	private boolean isValueLineOk(String curDes, String curAct) {
+	private boolean isValueLineOk(final String curDes, final String curAct) {
 
 		if ((curDes.startsWith("VAL") && curAct.startsWith("VAL"))
 				|| (curDes.startsWith("IVAL") && curAct.startsWith("IVAL")))
@@ -301,7 +300,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(final IUltimateServiceProvider services, Throwable e) {
+	public TestResult getTestResult(final IUltimateServiceProvider services, final Throwable e) {
 		setResultCategory("Unexpected exception");
 		setResultMessage("Unexpected exception: " + e.getMessage());
 		TestUtil.logResults(BacktranslationTestResultDecider.class, mInputFile, true, new ArrayList<String>(),
@@ -315,7 +314,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		customMessages.add(msg);
 	}
 
-	private boolean tryWritingActualResultToFile(String actualCounterExample) {
+	private boolean tryWritingActualResultToFile(final String actualCounterExample) {
 		final String[] actualLines = actualCounterExample.split(CoreUtil.getPlatformLineSeparator());
 		try {
 			final File input = new File(mInputFile);

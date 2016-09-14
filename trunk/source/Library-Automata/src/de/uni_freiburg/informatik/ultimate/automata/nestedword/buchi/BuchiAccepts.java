@@ -53,12 +53,12 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 	/**
 	 * Stem of the nested lasso word whose acceptance is checked.
 	 */
-	private NestedWord<LETTER> mStem;
+	private final NestedWord<LETTER> mStem;
 	
 	/**
 	 * Loop of the nested lasso word whose acceptance is checked.
 	 */
-	private NestedWord<LETTER> mLoop;
+	private final NestedWord<LETTER> mLoop;
 	
 	/**
 	 * Check if a Buchi nested word automaton accepts a nested lasso word.

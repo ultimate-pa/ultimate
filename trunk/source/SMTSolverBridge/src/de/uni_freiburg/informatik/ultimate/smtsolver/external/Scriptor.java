@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
-import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -79,118 +78,50 @@ public class Scriptor extends NoopScript {
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
 		super.setLogic(logic);
-		mExecutor.input("(set-logic " + logic + ")");
+		mExecutor.input(SmtCommandUtils.SetLogicCommand.buildString(logic.name()));
 		mExecutor.parseSuccess();
 	}
 
 	@Override
 	public void setOption(final String opt, final Object value) throws UnsupportedOperationException, SMTLIBException {
 		if (!opt.equals(":print-success")) {
-			final StringBuilder sb = new StringBuilder();
-			sb.append("(set-option ").append(opt);
-			if (value != null) {
-				sb.append(" ");
-				if (value instanceof String) {
-					// symbol
-					sb.append(PrintTerm.quoteIdentifier((String) value));
-				} else if (value instanceof Object[]) {
-					// s-expr
-					new PrintTerm().append(sb, (Object[]) value);
-				} else {
-					sb.append(value.toString());
-				}
-			}
-			sb.append(")");
-			mExecutor.input(sb.toString());
+			mExecutor.input(SmtCommandUtils.SetOptionCommand.buildString(opt, value));
 			mExecutor.parseSuccess();
 		}
 	}
 
 	@Override
 	public void setInfo(final String info, final Object value) {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("(set-info ");
-		sb.append(info);
-		sb.append(' ');
-		sb.append(PrintTerm.quoteObjectIfString(value));
-		sb.append(")");
-		sb.append(System.lineSeparator());
-		mExecutor.input(sb.toString());
+		mExecutor.input(SmtCommandUtils.SetInfoCommand.buildString(info, value));
 		mExecutor.parseSuccess();
 	}
 
 	@Override
 	public void declareSort(final String sort, final int arity) throws SMTLIBException {
 		super.declareSort(sort, arity);
-		final StringBuilder sb = new StringBuilder("(declare-sort ").append(PrintTerm.quoteIdentifier(sort));
-		sb.append(" ").append(arity).append(")");
-		mExecutor.input(sb.toString());
+		mExecutor.input(SmtCommandUtils.DeclareSortCommand.buildString(sort, arity));
 		mExecutor.parseSuccess();
 	}
 
 	@Override
 	public void defineSort(final String sort, final Sort[] sortParams, final Sort definition) throws SMTLIBException {
 		super.defineSort(sort, sortParams, definition);
-		final PrintTerm pt = new PrintTerm();
-		final StringBuilder sb = new StringBuilder();
-		sb.append("(define-sort ");
-		sb.append(PrintTerm.quoteIdentifier(sort));
-		sb.append(" (");
-		String delim = "";
-		for (final Sort s : sortParams) {
-			sb.append(delim);
-			pt.append(sb, s);
-			delim = " ";
-		}
-		sb.append(") ");
-		pt.append(sb, definition);
-		sb.append(")");
-		mExecutor.input(sb.toString());
+		mExecutor.input(SmtCommandUtils.DefineSortCommand.buildString(sort, sortParams, definition));
 		mExecutor.parseSuccess();
 	}
 
 	@Override
 	public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort) throws SMTLIBException {
 		super.declareFun(fun, paramSorts, resultSort);
-		final PrintTerm pt = new PrintTerm();
-		final StringBuilder sb = new StringBuilder();
-		sb.append("(declare-fun ");
-		sb.append(PrintTerm.quoteIdentifier(fun));
-		sb.append(" (");
-		String delim = "";
-		for (final Sort s : paramSorts) {
-			sb.append(delim);
-			pt.append(sb, s);
-			delim = " ";
-		}
-		sb.append(") ");
-		pt.append(sb, resultSort);
-		sb.append(")");
-		mExecutor.input(sb.toString());
+
+		mExecutor.input(SmtCommandUtils.DeclareFunCommand.buildString(fun, paramSorts, resultSort));
 		mExecutor.parseSuccess();
 	}
 
 	@Override
 	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition) throws SMTLIBException {
 		super.defineFun(fun, params, resultSort, definition);
-		final PrintTerm pt = new PrintTerm();
-		final StringBuilder sb = new StringBuilder();
-		sb.append("(define-fun ");
-		sb.append(PrintTerm.quoteIdentifier(fun));
-		sb.append(" (");
-		String delim = "";
-		for (final TermVariable t : params) {
-			sb.append(delim);
-			sb.append("(").append(t).append(" ");
-			pt.append(sb, t.getSort());
-			sb.append(")");
-			delim = " ";
-		}
-		sb.append(") ");
-		pt.append(sb, resultSort);
-		pt.append(sb, definition);
-		sb.append(")");
-		mExecutor.input(sb.toString());
+		mExecutor.input(SmtCommandUtils.DefineFunCommand.buildString(fun, params, resultSort, definition));
 		mExecutor.parseSuccess();
 	}
 
@@ -210,7 +141,7 @@ public class Scriptor extends NoopScript {
 
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
-		mExecutor.input("(assert " + term.toStringDirect() + ")");
+		mExecutor.input(SmtCommandUtils.AssertCommand.buildString(term));
 		mExecutor.parseSuccess();
 		return LBool.UNKNOWN;
 	}
@@ -236,7 +167,7 @@ public class Scriptor extends NoopScript {
 
 	@Override
 	public Term[] getUnsatCore() throws SMTLIBException, UnsupportedOperationException {
-		mExecutor.input("(get-unsat-core)");
+		mExecutor.input(SmtCommandUtils.GetUnsatCoreCommand.buildString());
 		return mExecutor.parseGetUnsatCoreResult();
 	}
 
@@ -249,17 +180,7 @@ public class Scriptor extends NoopScript {
 				throw new UnsupportedOperationException();
 			}
 		}
-		final StringBuilder command = new StringBuilder();
-		final PrintTerm pt = new PrintTerm();
-		command.append("(get-value (");
-		String sep = "";
-		for (final Term t : terms) {
-			command.append(sep);
-			pt.append(command, t);
-			sep = " ";
-		}
-		command.append("))");
-		mExecutor.input(command.toString());
+		mExecutor.input(SmtCommandUtils.GetValueCommand.buildString(terms));
 		return mExecutor.parseGetValueResult();
 	}
 

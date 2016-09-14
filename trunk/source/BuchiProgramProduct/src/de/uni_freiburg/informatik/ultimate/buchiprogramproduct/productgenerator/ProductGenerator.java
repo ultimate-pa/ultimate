@@ -319,6 +319,7 @@ public class ProductGenerator {
 		assert correspondingCalls.size() == 1;
 
 		for (final String nwaLoc : mNWA.getStates()) {
+			//TODO: if stepwise than only enter initial states here
 			final ProgramPoint productTargetLoc = mProductLocations
 					.get(mNameGenerator.generateStateName(origRcfgTargetLoc, nwaLoc));
 			createNewReturnEdge(productSourceLoc, returnEdge, productTargetLoc,
@@ -757,6 +758,8 @@ public class ProductGenerator {
 		for (final OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaSourceState)) {
 			final ProgramPoint targetpp = mProductLocations
 					.get(mNameGenerator.generateStateName(origRcfgTargetLoc, autTrans.getSucc()));
+			//if the transition would lead into another BA state and is no program step continue
+			if(!isProgramStep && autTrans.getSucc() != nwaSourceState) continue;
 			createNewStatementSequence(helper, null, targetpp, autTrans.getLetter(), isProgramStep);
 		}
 	}

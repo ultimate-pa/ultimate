@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
-public class SmtUtils {
+public final class SmtUtils {
 	
 	public enum XnfConversionTechnique {BDD_BASED, BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION };
 	
@@ -338,7 +338,7 @@ public class SmtUtils {
 	}
 	
 	/**
-	 * Construct nested binary "bvadd" terms.  
+	 * Construct nested binary "bvadd" terms.
 	 * @param sort bitvector sort of the arguments (required if summands is empty)
 	 * @param summands bitvector terms that each have the same sort
 	 */
@@ -422,9 +422,9 @@ public class SmtUtils {
 	public static Term not(final Script script, final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (appTerm.getFunction().getName().equals("distinct") && 
+			if (appTerm.getFunction().getName().equals("distinct") &&
 					appTerm.getParameters().length == 2) {
-				return SmtUtils.binaryEquality(script, 
+				return SmtUtils.binaryEquality(script,
 						appTerm.getParameters()[0], appTerm.getParameters()[1]);
 			} else {
 				return Util.not(script, term);
@@ -506,7 +506,7 @@ public class SmtUtils {
 		}
 		if (fstValue.getClass() != sndValue.getClass()) {
 			throw new UnsupportedOperationException(
-					"First value is " + fstValue.getClass().getSimpleName() + 
+					"First value is " + fstValue.getClass().getSimpleName() +
 					" second value is " + sndValue.getClass().getSimpleName());
 		}
 		return !fstValue.equals(sndValue);
@@ -1027,12 +1027,12 @@ public class SmtUtils {
 	}
 
 	/**
-	 * Returns quantified formula. 
+	 * Returns quantified formula.
 	 * Drops quantifiers for variables that do not occur in formula.
 	 * If subformula is quantified formula with same quantifier both are
 	 * merged.
 	 */
-	public static Term quantifier(final Script script, final int quantifier, 
+	public static Term quantifier(final Script script, final int quantifier,
 			final Collection<TermVariable> vars, final Term body) {
 		if (vars.size() == 0) {
 			return body;
@@ -1041,13 +1041,13 @@ public class SmtUtils {
 		if (resultVars.isEmpty()) {
 			return body;
 		} else {
-			final QuantifiedFormula innerQuantifiedFormula = 
+			final QuantifiedFormula innerQuantifiedFormula =
 					isQuantifiedFormulaWithSameQuantifier(quantifier, body);
 			if (innerQuantifiedFormula == null) {
 				return script.quantifier(quantifier, resultVars.toArray(
 						new TermVariable[resultVars.size()]), body);
 			} else {
-				final Set<TermVariable> resultQuantifiedVars = 
+				final Set<TermVariable> resultQuantifiedVars =
 						new HashSet<>(Arrays.asList(innerQuantifiedFormula.getVariables()));
 				resultQuantifiedVars.addAll(vars);
 				return script.quantifier(quantifier, resultQuantifiedVars.toArray(
@@ -1094,8 +1094,8 @@ public class SmtUtils {
 	 * the quantifier and occur in the set toRename to fresh variables.
 	 * @param freshVarPrefix prefix of the fresh variables
 	 */
-	public static Term renameQuantifiedVariables(final ManagedScript mgdScript, 
-			final QuantifiedFormula qFormula, 
+	public static Term renameQuantifiedVariables(final ManagedScript mgdScript,
+			final QuantifiedFormula qFormula,
 			final Set<TermVariable> toRename, final String freshVarPrefix) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final TermVariable var : toRename) {
@@ -1103,7 +1103,7 @@ public class SmtUtils {
 					constructFreshTermVariable(freshVarPrefix, var.getSort());
 			substitutionMapping.put(var, freshVariable);
 		}
-		final Term newBody = (new Substitution(mgdScript, 
+		final Term newBody = (new Substitution(mgdScript,
 					substitutionMapping)).transform(qFormula.getSubformula());
 		
 		final TermVariable[] vars = new TermVariable[qFormula.getVariables().length];
@@ -1168,7 +1168,7 @@ public class SmtUtils {
 	/**
 	 * @return logically equivalent term in conjunctive normal form (CNF)
 	 */
-	public static Term toCnf(final IUltimateServiceProvider services, 
+	public static Term toCnf(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final Term term,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		final Term result;
@@ -1187,9 +1187,9 @@ public class SmtUtils {
 	
 	/**
 	 * Returns true for {@link Sorts} for which we can obtain values.
-	 * E.g. for arrays we cannot get values that our analysis can process, 
+	 * E.g. for arrays we cannot get values that our analysis can process,
 	 * since arrays are infinite in general. However, if the range Sort of an
-	 * array is bitvector sort we can get values for array cells 
+	 * array is bitvector sort we can get values for array cells
 	 * (resp. the corresponding select term).
 	 */
 	public static boolean isSortForWhichWeCanGetValues(final Sort sort) {
@@ -1202,9 +1202,9 @@ public class SmtUtils {
 	
 	/**
 	 * Get values from script and transform them try to simplify them.
-	 * @param script Script that is in a state where it can provide values, 
-	 * e.g., after a check-sat where the response was sat. 
-	 * @param terms Collection of term for which we want to have possible 
+	 * @param script Script that is in a state where it can provide values,
+	 * e.g., after a check-sat where the response was sat.
+	 * @param terms Collection of term for which we want to have possible
 	 * values in the current satisfying model
 	 * @return Mapping that maps to each term for which we want a value
 	 * a possible value in the current satisfying model.

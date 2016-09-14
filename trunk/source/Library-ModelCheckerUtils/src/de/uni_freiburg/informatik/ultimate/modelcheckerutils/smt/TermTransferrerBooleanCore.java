@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
@@ -38,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruc
 
 /**
  * Variant of TermTransferrer that transfers only the boolean structure of
- * a term. Each relation of non-boolean arguments (i.e., literals in the 
+ * a term. Each relation of non-boolean arguments (i.e., literals in the
  * boolean structure) is transferred to a fresh TermVariable.
- * QuantifiedFormulas are always considered as a literal even if they only 
+ * QuantifiedFormulas are always considered as a literal even if they only
  * quantify boolean Variables (we might change this in the future).
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -54,19 +54,19 @@ public class TermTransferrerBooleanCore extends TermTransferrer {
 	 * was replaced by the auxiliary term.
 	 */
 	private final Term mAuxiliaryTerm;
-	private final String mFreshTermPrefix = "FBV_";
+	private static final String FRESH_TERM_PREFIX = "FBV_";
 	private int mFreshTermCounter;
 	private final ConstructionCache<Term, Term> mConstructionCache;
 
-	public TermTransferrerBooleanCore(Script script) {
+	public TermTransferrerBooleanCore(final Script script) {
 		super(script);
 		mAuxiliaryTerm = constructAuxiliaryTerm();
 		mFreshTermCounter = 0;
 		final IValueConstruction<Term, Term> valueComputation = new IValueConstruction<Term, Term>() {
 			
 			@Override
-			public Term constructValue(Term key) {
-				final String name = mFreshTermPrefix + mFreshTermCounter;
+			public Term constructValue(final Term key) {
+				final String name = FRESH_TERM_PREFIX + mFreshTermCounter;
 				mFreshTermCounter++;
 				mScript.declareFun(name, new Sort[0], mScript.sort("Bool"));
 				final Term value = mScript.term(name);
@@ -84,7 +84,7 @@ public class TermTransferrerBooleanCore extends TermTransferrer {
 	}
 
 	@Override
-	protected void convert(Term term) {
+	protected void convert(final Term term) {
 		if (!term.getSort().getName().equals("Bool")) {
 			setResult(mAuxiliaryTerm);
 		} else if (term instanceof QuantifiedFormula) {
@@ -96,7 +96,7 @@ public class TermTransferrerBooleanCore extends TermTransferrer {
 	}
 
 	@Override
-	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
+	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		if (Arrays.asList(newArgs).contains(mAuxiliaryTerm)) {
 			final Term result = mConstructionCache.getOrConstruct(appTerm);
 			setResult(result);

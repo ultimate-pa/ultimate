@@ -29,6 +29,7 @@
 
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.services;
 
+import java.io.File;
 import java.io.Writer;
 import java.net.URI;
 import java.util.Arrays;
@@ -63,9 +64,10 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePrefe
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
-public class Log4J2LoggingService implements IStorable, ILoggingService {
+public final class Log4J2LoggingService implements IStorable, ILoggingService {
 
 	private static final String[] RELEVANT_SETTINGS = new String[] { CorePreferenceInitializer.LABEL_LOG4J_PATTERN,
 	        CorePreferenceInitializer.LABEL_LOGFILE, CorePreferenceInitializer.LABEL_LOGFILE_NAME,
@@ -121,6 +123,7 @@ public class Log4J2LoggingService implements IStorable, ILoggingService {
 		sId++;
 	}
 
+	@Override
 	public void reloadLoggers() {
 		recreateLoggerHierarchy();
 		reinitializeDefaultAppenders();
@@ -129,7 +132,7 @@ public class Log4J2LoggingService implements IStorable, ILoggingService {
 	}
 
 	private void reinitializeDefaultAppenders() {
-		ConfigurationFactory.setConfigurationFactory(new Log4J2ConfigurationFactory());
+		ConfigurationFactory.setConfigurationFactory(new Log4J2ConfigurationFactory(mPreferenceStore));
 		mRootAppenders.clear();
 		mControllerAppenders.clear();
 
@@ -147,6 +150,16 @@ public class Log4J2LoggingService implements IStorable, ILoggingService {
 		for (final Appender appender : appenders) {
 			// TODO Do something!
 		}
+	}
+
+	static Log4J2LoggingService getService(final IToolchainStorage storage) {
+		assert storage != null;
+		IStorable rtr = storage.getStorable(STORE_KEY);
+		if (rtr == null) {
+			rtr = new Log4J2LoggingService();
+			storage.putStorable(STORE_KEY, rtr);
+		}
+		return (Log4J2LoggingService) rtr;
 	}
 
 	private void recreateLoggerHierarchy() {
@@ -341,25 +354,58 @@ public class Log4J2LoggingService implements IStorable, ILoggingService {
 
 	@Plugin(name = "Log4J2ConfigurationFactory", category = ConfigurationFactory.CATEGORY)
 	@Order(50)
-	private static class Log4J2ConfigurationFactory extends ConfigurationFactory {
+	private static final class Log4J2ConfigurationFactory extends ConfigurationFactory {
+
+		private final RcpPreferenceProvider mPreferenceStore;
+
+		Log4J2ConfigurationFactory(final RcpPreferenceProvider preferenceStore) {
+			mPreferenceStore = preferenceStore;
+		}
 
 		static Configuration createConfiguration(final String name,
-		        final ConfigurationBuilder<BuiltConfiguration> builder) {
+		        final ConfigurationBuilder<BuiltConfiguration> builder, final RcpPreferenceProvider preferenceStore) {
 			builder.setConfigurationName(name);
 			builder.setStatusLevel(Level.ERROR);
 			builder.add(builder.newFilter("ThresholdFilter", Filter.Result.ACCEPT, Filter.Result.NEUTRAL)
 			        .addAttribute("level", Level.DEBUG));
 
-			final AppenderComponentBuilder appenderBuilder = builder.newAppender("Stdout", "CONSOLE")
+			// TODO: Check whether "Stdout" must be used here instead of APPENDER_NAME_CONSOLE.
+			final AppenderComponentBuilder appenderBuilder = builder.newAppender(APPENDER_NAME_CONSOLE, "CONSOLE")
 			        .addAttribute("target", ConsoleAppender.Target.SYSTEM_OUT);
-			appenderBuilder.add(
-			        builder.newLayout("PatternLayout").addAttribute("pattern", "%d [%t] %-5level: %msg%n%throwable"));
+			appenderBuilder.add(builder.newLayout("PatternLayout").addAttribute("pattern",
+			        CorePreferenceInitializer.LABEL_LOG4J_PATTERN));
 			appenderBuilder.add(builder.newFilter("MarkerFilter", Filter.Result.DENY, Filter.Result.NEUTRAL)
 			        .addAttribute("marker", "FLOW"));
 			builder.add(appenderBuilder);
-			builder.add(builder.newLogger("org.apache.logging.log4j", Level.DEBUG).add(builder.newAppenderRef("Stdout"))
-			        .addAttribute("additivitiy", false));
-			builder.add(builder.newRootLogger(Level.ERROR).add(builder.newAppenderRef("Stdout")));
+
+			final boolean useLogFile = preferenceStore.getBoolean(CorePreferenceInitializer.LABEL_LOGFILE);
+
+			if (useLogFile) {
+
+				final String logName = preferenceStore.getString(CorePreferenceInitializer.LABEL_LOGFILE_NAME);
+				final String logDir = preferenceStore.getString(CorePreferenceInitializer.LABEL_LOGFILE_DIR);
+				final String append = (preferenceStore.getBoolean(CorePreferenceInitializer.LABEL_APPEXLOGFILE) ? "true"
+				        : "false");
+				final String absolutePath = logDir + File.separator + logName + ".log";
+
+				final AppenderComponentBuilder logFileBuilder = builder.newAppender(APPENDER_NAME_LOGFILE, "FILE")
+				        .addAttribute("fileName", absolutePath).addAttribute("append", append);
+				logFileBuilder.add(builder.newLayout("PatternLayout").addAttribute("pattern",
+				        CorePreferenceInitializer.LABEL_LOG4J_PATTERN));
+				logFileBuilder.add(builder.newFilter("MarkerFilter", Filter.Result.DENY, Filter.Result.NEUTRAL)
+				        .addAttribute("marker", "FLOW"));
+				builder.add(logFileBuilder);
+			}
+
+			// TODO: Maybe change the name of the logger here.
+			builder.add(builder.newLogger("org.apache.logging.log4j", Level.DEBUG)
+			        .add(builder.newAppenderRef(APPENDER_NAME_CONSOLE)).addAttribute("additivity", false));
+			builder.add(builder.newRootLogger(Level.ERROR).add(builder.newAppenderRef(APPENDER_NAME_CONSOLE)));
+
+			if (useLogFile) {
+				builder.add(builder.newLogger(APPENDER_NAME_LOGFILE, Level.DEBUG)
+				        .add(builder.newAppenderRef(APPENDER_NAME_LOGFILE)).addAttribute("additivity", false));
+			}
 
 			return builder.build();
 		}
@@ -377,8 +423,18 @@ public class Log4J2LoggingService implements IStorable, ILoggingService {
 		@Override
 		public Configuration getConfiguration(final String name, final URI configLocation) {
 			final ConfigurationBuilder<BuiltConfiguration> builder = newConfigurationBuilder();
-			return createConfiguration(name, builder);
+			return createConfiguration(name, builder, mPreferenceStore);
 		}
 
+	}
+
+	@Override
+	public void setCurrentControllerID(final String name) {
+		mCurrentControllerName = name;
+	}
+
+	@Override
+	public void store(final IToolchainStorage storage) {
+		storage.putStorable(STORE_KEY, this);
 	}
 }

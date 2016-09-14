@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ReachingDefinitions plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations;
@@ -46,30 +46,30 @@ public class ReachDefMapAnnotationProvider<T extends ReachDefBaseAnnotation> imp
 	}
 
 	@Override
-	public T getAnnotation(IElement element) {
+	public T getAnnotation(final IElement element) {
 		return getAnnotation(element, sDefaultKey);
 	}
 
 	@Override
-	public void annotate(IElement node, T annotation) {
+	public void annotate(final IElement node, final T annotation) {
 		annotate(node, annotation, sDefaultKey);
 	}
 
 	@Override
-	public T getAnnotation(IElement element, String uniqueId) {
+	public T getAnnotation(final IElement element, final String uniqueId) {
 		assert uniqueId != null && !uniqueId.isEmpty();
 		return mMap.get(new HashKey(element, uniqueId));
 	}
 
 	@Override
-	public void annotate(IElement node, T annotation, String uniqueId) {
+	public void annotate(final IElement node, final T annotation, final String uniqueId) {
 		assert uniqueId != null && !uniqueId.isEmpty();
 		mKeys.add(uniqueId);
 		mMap.put(new HashKey(node, uniqueId), annotation);
 	}
 
 	@Override
-	public List<T> getAllAnnotations(IElement element) {
+	public List<T> getAllAnnotations(final IElement element) {
 		final List<T> rtr = new ArrayList<>();
 		for (final String key : mKeys) {
 			final T annot = getAnnotation(element, key);
@@ -80,11 +80,11 @@ public class ReachDefMapAnnotationProvider<T extends ReachDefBaseAnnotation> imp
 		return rtr;
 	}
 
-	private class HashKey {
+	private static final class HashKey {
 		private final IElement element;
 		private final String uniqueId;
 
-		private HashKey(IElement elem, String key) {
+		HashKey(final IElement elem, final String key) {
 			element = elem;
 			uniqueId = key;
 		}
@@ -98,9 +98,8 @@ public class ReachDefMapAnnotationProvider<T extends ReachDefBaseAnnotation> imp
 			return result;
 		}
 
-		@SuppressWarnings("unchecked")
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(final Object obj) {
 			if (this == obj) {
 				return true;
 			}

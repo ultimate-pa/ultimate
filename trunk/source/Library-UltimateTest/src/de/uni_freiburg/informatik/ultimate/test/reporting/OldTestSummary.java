@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.test.reporting;
@@ -48,7 +48,7 @@ public abstract class OldTestSummary implements ITestSummary {
 	private final HashMap<String, Summary> mFailure;
 	private final Class<? extends UltimateTestSuite> mUltimateTestSuite;
 
-	public OldTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
+	public OldTestSummary(final Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		mSuccess = new HashMap<String, Summary>();
 		mFailure = new HashMap<String, Summary>();
 		mUnknown = new HashMap<String, Summary>();
@@ -56,8 +56,8 @@ public abstract class OldTestSummary implements ITestSummary {
 	}
 
 	@Override
-	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult, String category,
-			String message, String testname, IResultService resultService) {
+	public void addResult(final UltimateRunDefinition ultimateRunDefinition, final TestResult threeValuedResult, final String category,
+			final String message, final String testname, final IResultService resultService) {
 		switch (threeValuedResult) {
 		case FAIL:
 			add(getSummary(mFailure, category), ultimateRunDefinition, message);
@@ -122,7 +122,7 @@ public abstract class OldTestSummary implements ITestSummary {
 		return sb;
 	}
 
-	protected Map<String, Summary> getSummaryMap(TestResult result) {
+	protected Map<String, Summary> getSummaryMap(final TestResult result) {
 		switch (result) {
 		case FAIL:
 			return mFailure;
@@ -135,7 +135,7 @@ public abstract class OldTestSummary implements ITestSummary {
 		}
 	}
 
-	private Summary getSummary(HashMap<String, Summary> map, String result) {
+	private Summary getSummary(final HashMap<String, Summary> map, final String result) {
 		String typename = "NULL";
 		if (result != null) {
 			typename = result;
@@ -150,17 +150,17 @@ public abstract class OldTestSummary implements ITestSummary {
 		return s;
 	}
 
-	private void add(Summary s, UltimateRunDefinition ultimateRunDefinition, String message) {
+	private void add(final Summary s, final UltimateRunDefinition ultimateRunDefinition, final String message) {
 		s.setCount(s.getCount() + 1);
 		s.getFileToMessage().put(ultimateRunDefinition.getInputFileNames(), message);
 	}
 
-	public class Summary {
+	public static final class Summary {
 
 		private int mCount;
 		private final HashMap<String, String> mFileToMessage;
 
-		private Summary() {
+		Summary() {
 			mFileToMessage = new HashMap<String, String>();
 		}
 
@@ -168,7 +168,7 @@ public abstract class OldTestSummary implements ITestSummary {
 			return mCount;
 		}
 
-		public void setCount(int count) {
+		public void setCount(final int count) {
 			mCount = count;
 		}
 

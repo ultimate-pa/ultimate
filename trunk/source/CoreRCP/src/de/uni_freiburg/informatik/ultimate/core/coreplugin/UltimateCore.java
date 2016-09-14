@@ -44,7 +44,6 @@ import org.eclipse.equinox.app.IApplicationContext;
 import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.Log4JLoggingService;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainData;
@@ -85,7 +84,7 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 
 	private ToolchainManager mToolchainManager;
 
-	private Log4JLoggingService mLoggingService;
+	private ILoggingService mLoggingService;
 
 	private JobChangeAdapter mJobChangeAdapter;
 
@@ -225,10 +224,10 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 		if (mCurrentController != null) {
 			if (controller == null) {
 				mLogger.warn("Controller already set! Using " + mCurrentController.getPluginName()
-						+ " and ignoring request to set controller to NULL (this may indicate test mode!)");
+				        + " and ignoring request to set controller to NULL (this may indicate test mode!)");
 			} else {
 				mLogger.warn("Controller already set! Using " + mCurrentController.getPluginName()
-						+ " and ignoring request to set " + controller.getPluginName());
+				        + " and ignoring request to set " + controller.getPluginName());
 			}
 			return;
 		}
@@ -252,9 +251,9 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 			final List<String> lil = new ArrayList<>();
 			for (final String ep : UltimateExtensionPoints.PLUGIN_EPS) {
 				for (final IConfigurationElement elem : Platform.getExtensionRegistry()
-						.getConfigurationElementsFor(ep)) {
+				        .getConfigurationElementsFor(ep)) {
 					final String classname = elem.getAttribute("class");
-					lil.add(classname.substring(0, classname.lastIndexOf(".")));
+					lil.add(classname.substring(0, classname.lastIndexOf('.')));
 				}
 			}
 			sPluginNames = lil.toArray(new String[lil.size()]);
@@ -264,7 +263,7 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 
 	@Override
 	public IToolchainData<RunDefinition> createToolchainData(final String filename)
-			throws FileNotFoundException, JAXBException, SAXException {
+	        throws FileNotFoundException, JAXBException, SAXException {
 		if (!new File(filename).exists()) {
 			throw new FileNotFoundException("The specified toolchain file " + filename + " was not found");
 		}

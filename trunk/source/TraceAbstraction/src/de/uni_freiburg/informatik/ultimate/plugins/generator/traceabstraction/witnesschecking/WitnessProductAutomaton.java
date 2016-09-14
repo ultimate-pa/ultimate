@@ -72,7 +72,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	private final IPredicate mEmptyStackState;
 	private final Set<IPredicate> mInitialStates;
 	private final Set<IPredicate> mFinalStates;
-	private final Integer mStutteringStepsLimit = 10;
+	private static final Integer STUTTERING_STEPS_LIMIT = Integer.valueOf(10);
 	private final WitnessLocationMatcher mWitnessLocationMatcher;
 	private final LinkedHashSet<WitnessEdge> mBadWitnessEdges = new LinkedHashSet<WitnessEdge>();
 	private final Set<WitnessEdge> mGoodWitnessEdges = new HashSet<WitnessEdge>();
@@ -356,7 +356,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 				}
 			}
 		}
-		if (ps.getStutteringSteps() < mStutteringStepsLimit) {
+		if (ps.getStutteringSteps() < STUTTERING_STEPS_LIMIT) {
 			final int stutteringStepsCounter;
 			if (isStateOfInitFunction(ps.mCfgAutomatonState)) {
 				stutteringStepsCounter = ps.getStutteringSteps();

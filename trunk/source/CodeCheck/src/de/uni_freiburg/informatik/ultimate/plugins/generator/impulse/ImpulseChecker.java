@@ -149,10 +149,9 @@ public class ImpulseChecker extends CodeChecker {
 						|| _edgeChecker.checkReturn(edge.getSource().getPredicate(),
 								((AppHyperEdge) edge).getHier().getPredicate(), (IReturnAction) edge.getStatement(),
 								edge.getTarget().getPredicate()) != Validity.VALID) {
-					;
+					edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(), (Return) edge.getStatement(),
+							target);
 				}
-				edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(), (Return) edge.getStatement(),
-						target);
 			} else {
 				
 				boolean result = !GlobalSettings._instance.checkSatisfiability;

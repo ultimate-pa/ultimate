@@ -2,27 +2,27 @@
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 
 /**
  * Abstract implementation of an abstract state for non-relational domains.
- * 
+ *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -82,7 +82,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Default constructor of an {@link NonrelationalState}.
-	 * 
+	 *
 	 * @param logger
 	 *            The current logger object in the current context.
 	 */
@@ -93,7 +93,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	/**
 	 * Creates a new instance of {@link NonrelationalState} with given logger, variables map, values map and boolean
 	 * values map.
-	 * 
+	 *
 	 * @param logger
 	 *            The current logger object in the current context.
 	 * @param variables
@@ -121,7 +121,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	/**
 	 * Returns the {@link IntervalDomainValue} of the given variable. If the variable does not have a value, an
 	 * {@link UnsupportedOperationException} is thrown.
-	 * 
+	 *
 	 * @param variableName
 	 *            The name of the variable to get the {@link IntervalDomainValue} for.
 	 * @return A new {@link IntervalDomainValue} containing the {@link IntervalDomainValue} of the given variable.
@@ -137,7 +137,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	/**
 	 * Returns the {@link BooleanValue} of the given variable. If the variable is not a boolean variable, an
 	 * {@link UnsupportedOperationException} is thrown.
-	 * 
+	 *
 	 * @param booleanVariableName
 	 *            The name of the boolean variable to get the {@link BooleanValue} for.
 	 * @return A new {@link BooleanValue} containing the {@link BooleanValue} of the given variable.
@@ -153,7 +153,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Sets the value of a variable with given name to the given value.
-	 * 
+	 *
 	 * @param name
 	 *            The name of the variable.
 	 * @param value
@@ -169,11 +169,11 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Sets the values of multiple given variables at once.
-	 * 
+	 *
 	 * <p>
 	 * <b>Note:</b> that the values and variables arrays must have the same size.
 	 * </p>
-	 * 
+	 *
 	 * @param vars
 	 *            The variables to set the values for.
 	 * @param values
@@ -192,7 +192,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Sets the value of a boolean variable.
-	 * 
+	 *
 	 * @param name
 	 *            The boolean variable to set the value for.
 	 * @param value
@@ -211,7 +211,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Sets the value of a boolean variable.
-	 * 
+	 *
 	 * @param name
 	 *            The boolean variable to set the value for.
 	 * @param value
@@ -225,7 +225,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Sets the value of a boolean variable.
-	 * 
+	 *
 	 * @param name
 	 *            The boolean variable to set the value for.
 	 * @param value
@@ -242,11 +242,11 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Sets the values of multiple given boolean variables at once.
-	 * 
+	 *
 	 * <p>
 	 * <b>Note:</b> that the values and variables arrays must have the same size.
 	 * </p>
-	 * 
+	 *
 	 * @param vars
 	 *            The variables to set the values for.
 	 * @param values
@@ -265,9 +265,9 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Sets the value of an array variable to a given value.
-	 * 
+	 *
 	 * TODO: Implement proper handling of arrays.
-	 * 
+	 *
 	 * @param array
 	 *            The array name.
 	 * @param value
@@ -294,9 +294,9 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Sets multiple values of multiple variable types at the same time.
-	 * 
+	 *
 	 * TODO: Arrays are currently handled as normal variables.
-	 * 
+	 *
 	 * @param vars
 	 *            A list of variable identifiers whose values are to be changed.
 	 * @param values
@@ -334,7 +334,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Internally sets the value of a variable of a given {@link NonrelationalState}.
-	 * 
+	 *
 	 * @param state
 	 *            The state to set the variable value for.
 	 * @param name
@@ -353,7 +353,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Internally sets the value of a boolean variable of a given {@link NonrelationalState}.
-	 * 
+	 *
 	 * @param state
 	 *            The state to set the variable value for.
 	 * @param name
@@ -372,7 +372,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Returns the type of a given variable.
-	 * 
+	 *
 	 * @param var
 	 *            The variable name to obtain the type for.
 	 * @return The {@link VariableType} of the variable.
@@ -397,7 +397,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Adds the given variable with given name and type to the appropriate data structures of <code>this</code>.
-	 * 
+	 *
 	 * @param name
 	 *            The variable to add.
 	 * @param variable
@@ -504,7 +504,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		addVariableInternally(returnState, variable);
 		return returnState;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public STATE addVariables(final Collection<IBoogieVar> variables) {
@@ -617,7 +617,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * Build a string of the form "var1 : type1 = [lb1 ; ub1]; var2 : type2 = [lb2 ; ub2]; ...", where lb is a lower
 	 * bound and ub is an upper bound. lb can also be -\infty or \infty. Note that a value may also be "{}" if the
 	 * corresponding interval is &bot;.
-	 * 
+	 *
 	 * @return A string of all variables with their values.
 	 */
 	@Override
@@ -674,7 +674,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Returns <code>true</code> if and only if {@link this} has the same variables as other.
-	 * 
+	 *
 	 * @param other
 	 *            The other state to check for same variables.
 	 * @return <code>true</code> iff the variables are the same, <code>false</code> otherwise.
@@ -704,7 +704,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	/**
 	 * Intersects <code>this</code> with another {@link NonrelationalState} by piecewise intersecting all occurring
 	 * variable intervals.
-	 * 
+	 *
 	 * @param other
 	 *            The other state to intersect with.
 	 * @return A new {@link IAbstractState} that corresponds to the intersection of
@@ -762,7 +762,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Generates an SMT {@link Term} for a given variable.
-	 * 
+	 *
 	 * @param var
 	 *            The variable to generate the SMT Term for.
 	 * @return The SMT Term.
@@ -799,7 +799,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Sets all variables, booleans, or arrays to &top;, that are specified in the corresponding parameters.
-	 * 
+	 *
 	 * @param vars
 	 *            The names of the variables to set to &top;.
 	 * @param bools
@@ -829,7 +829,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Sets all given variables, booleans, or arrays to &bot;.
-	 * 
+	 *
 	 * @param vars
 	 *            The names of the variables to set to &bot;.
 	 * @param bools
@@ -860,7 +860,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	/**
 	 * Merges <code>this</code> with another {@link NonrelationalState}. All variables that occur in <code>this</code>
 	 * must also occur in the other state.
-	 * 
+	 *
 	 * @param other
 	 *            The other state to merge with.
 	 * @return A new {@link NonrelationalState} which is the result of the merger of <code>this</code> and

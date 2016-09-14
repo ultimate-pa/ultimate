@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ReachingDefinitions plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations;
@@ -43,7 +43,7 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 	}
 
 	@Override
-	protected Object getFieldValue(String field) {
+	protected Object getFieldValue(final String field) {
 		switch (field) {
 		case "Def":
 			return prettyPrintDefUse(getDefs());
@@ -58,11 +58,7 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 
 	protected abstract HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> getUse();
 
-	public ReachDefBaseAnnotation() {
-		super();
-	}
-
-	private String prettyPrintDefUse(HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> map) {
+	private String prettyPrintDefUse(final HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> map) {
 		if (map.isEmpty()) {
 			return "Empty";
 		}
@@ -96,7 +92,7 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 	}
 
 	@Override
-	public boolean equals(Object arg) {
+	public boolean equals(final Object arg) {
 		if (arg == null) {
 			return false;
 		}
@@ -109,8 +105,8 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 		return compareMap(getDefs(), arg0.getDefs()) && compareMap(getUse(), arg0.getUse());
 	}
 
-	private boolean compareMap(HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> mine,
-			HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> theirs) {
+	private boolean compareMap(final HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> mine,
+			final HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> theirs) {
 		if (mine != null && theirs != null) {
 			for (final ScopedBoogieVar key : mine.keySet()) {
 				final HashSet<IndexedStatement> myStmts = mine.get(key);
@@ -145,7 +141,7 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 		return prettyPrintDefUse(getUse());
 	}
 
-	protected HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> copy(HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> other) {
+	protected HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> copy(final HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> other) {
 		if (other == null) {
 			return null;
 		}

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
@@ -50,9 +50,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 
 /**
  * Factory for construction of {@link IPredicate}s with unique serial numbers.
- * Sometimes we need different {@link IPredicate} objects with the same 
- * formulas. The serial number ensures that {@link IPredicate}s can be 
- * different, can be used as a hash code and ease debugging. 
+ * Sometimes we need different {@link IPredicate} objects with the same
+ * formulas. The serial number ensures that {@link IPredicate}s can be
+ * different, can be used as a hash code and ease debugging.
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -74,8 +74,8 @@ public class BasicPredicateFactory {
 	public BasicPredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Boogie2SmtSymbolTable symbolTable, final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 			mServices = services;
 			mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
-			mDontCareTerm = new AuxilliaryTerm("don't care");
-			mEmptyStackTerm = new AuxilliaryTerm("emptyStack");
+			mDontCareTerm = new AuxiliaryTerm("don't care");
+			mEmptyStackTerm = new AuxiliaryTerm("emptyStack");
 			mSymbolTable = symbolTable;
 			mMgdScript = mgdScript;
 			mScript = mgdScript.getScript();
@@ -193,11 +193,11 @@ public class BasicPredicateFactory {
 	}
 	
 	
-	private class AuxilliaryTerm extends Term {
+	private static final class AuxiliaryTerm extends Term {
 
 		String mName;
 
-		private AuxilliaryTerm(final String name) {
+		AuxiliaryTerm(final String name) {
 			super(0);
 			mName = name;
 		}

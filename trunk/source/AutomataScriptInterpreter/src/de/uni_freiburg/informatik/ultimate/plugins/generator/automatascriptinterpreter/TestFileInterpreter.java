@@ -1494,6 +1494,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				break;
 			default:
 				mLogger.info(toPrint);
+				break;
 		}
 	}
 	

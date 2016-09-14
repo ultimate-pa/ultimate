@@ -65,18 +65,18 @@ import de.uni_freiburg.informatik.ultimate.util.Utils;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class CommandLineController implements IController<RunDefinition> {
-
+	
 	private ILogger mLogger;
 	private IToolchainData<RunDefinition> mToolchain;
-
+	
 	@Override
 	public int init(final ICore<RunDefinition> core) {
 		if (core == null) {
 			return -1;
 		}
-
+		
 		mLogger = core.getCoreLoggingService().getControllerLogger();
-
+		
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Initializing CommandlineController...");
 			mLogger.debug("Data directory is " + Platform.getLocation());
@@ -84,28 +84,28 @@ public class CommandLineController implements IController<RunDefinition> {
 			mLogger.debug("user.dir is " + System.getProperty("user.dir"));
 			mLogger.debug("CLI Controller version is " + RcpUtils.getVersion(Activator.PLUGIN_ID));
 		}
-
+		
 		final String[] args = Platform.getCommandLineArgs();
-
+		
 		// first, parse to see if toolchain is specified.
 		final CommandLineParser toolchainStageParser = CommandLineParser.createCliOnlyParser(core);
 		ParsedParameter toolchainStageParams;
 		try {
 			toolchainStageParams = toolchainStageParser.parse(args);
-
+			
 		} catch (final ParseException pex) {
 			printParseException(args, pex);
 			toolchainStageParser.printHelp();
 			return -1;
 		}
-
+		
 		if (toolchainStageParams.isVersionRequested()) {
 			mLogger.info("Version is " + RcpUtils.getVersion(Activator.PLUGIN_ID));
 			mLogger.info(
 					"Maximal heap size is " + Utils.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true));
 			return IApplication.EXIT_OK;
 		}
-
+		
 		if (!toolchainStageParams.hasToolchain()) {
 			if (toolchainStageParams.isHelpRequested()) {
 				printHelp(toolchainStageParser, toolchainStageParams);
@@ -116,7 +116,7 @@ public class CommandLineController implements IController<RunDefinition> {
 			printAvailableToolchains(core);
 			return IApplication.EXIT_OK;
 		}
-
+		
 		final Predicate<String> pluginNameFilter;
 		try {
 			pluginNameFilter = getPluginFilter(core, toolchainStageParams.getToolchainFile());
@@ -128,28 +128,28 @@ public class CommandLineController implements IController<RunDefinition> {
 			printArgs(args);
 			return -1;
 		}
-
+		
 		// second, perform real parsing
 		final CommandLineParser fullParser = CommandLineParser.createCompleteParser(core, pluginNameFilter);
 		final ParsedParameter fullParams;
-
+		
 		try {
 			fullParams = fullParser.parse(args);
 			if (fullParams.isHelpRequested()) {
 				printHelp(fullParser, fullParams);
 				return IApplication.EXIT_OK;
 			}
-
+			
 			if (!fullParams.hasInputFiles()) {
 				printParseException(args,
 						new ParseException("Missing required option: " + CommandLineOptions.OPTION_NAME_INPUTFILES));
 				printHelp(fullParser, fullParams);
 				return -1;
 			}
-
+			
 			prepareToolchain(core, fullParams);
 			startExecutingToolchain(core, fullParams, mLogger, mToolchain);
-
+			
 		} catch (final ParseException pex) {
 			printParseException(args, pex);
 			fullParser.printHelp();
@@ -164,12 +164,11 @@ public class CommandLineController implements IController<RunDefinition> {
 		}
 		return IApplication.EXIT_OK;
 	}
-
+	
 	/**
 	 * Creates one or many {@link BasicToolchainJob}s, schedules them and waits for their termination. Upon normal
-	 * termination of this method, the controller will terminate with success return code.
-	 *
-	 * During the execution of a toolchain, {@link ICore} may perform asynchronous callbacks to
+	 * termination of this method, the controller will terminate with success return code. During the execution of a
+	 * toolchain, {@link ICore} may perform asynchronous callbacks to
 	 * {@link #displayToolchainResults(IToolchainData, Map)} and/or
 	 * {@link #displayException(IToolchainData, String, Throwable)} to signal results right before ending.
 	 *
@@ -181,7 +180,6 @@ public class CommandLineController implements IController<RunDefinition> {
 	 *            The {@link ILogger} instance that should be used to communicate with the user.
 	 * @param toolchain
 	 *            The user-selected toolchain.
-	 *
 	 * @throws ParseException
 	 *             If lazy parsing of command line options fails (i.e., when accessing the input files stored in
 	 *             <code>cliParams</code>, this exception might be thrown.
@@ -196,23 +194,24 @@ public class CommandLineController implements IController<RunDefinition> {
 		final File[] inputFiles = cliParams.getInputFiles();
 		executeToolchain(core, inputFiles, logger, toolchain);
 	}
-
+	
 	protected void executeToolchain(final ICore<RunDefinition> core, final File[] inputFiles, final ILogger logger,
 			final IToolchainData<RunDefinition> toolchain) throws InterruptedException {
 		final BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, logger, inputFiles);
 		tcj.schedule();
 		tcj.join();
 	}
-
+	
 	private void prepareToolchain(final ICore<RunDefinition> core, final ParsedParameter fullParams)
 			throws ParseException, InvalidFileArgumentException {
+		core.resetPreferences();
 		if (fullParams.hasSettings()) {
 			core.loadPreferences(fullParams.getSettingsFile());
 		}
 		mToolchain = fullParams.createToolchainData();
 		fullParams.applyCliSettings(mToolchain.getServices());
 	}
-
+	
 	private static void printHelp(final CommandLineParser parser, final ParsedParameter params) {
 		if (params.showExperimentals()) {
 			parser.printHelpWithExperimentals();
@@ -220,42 +219,42 @@ public class CommandLineController implements IController<RunDefinition> {
 			parser.printHelp();
 		}
 	}
-
+	
 	private void printParseException(final String[] args, final ParseException pex) {
 		mLogger.error(pex.getMessage());
 		printArgs(args);
 		mLogger.error("--");
 	}
-
+	
 	private void printArgs(final String[] args) {
 		mLogger.error("Arguments were \"" + String.join(" ", args) + "\"");
 	}
-
+	
 	@Override
 	public ISource selectParser(final Collection<ISource> parser) {
 		throw new UnsupportedOperationException("Interactively selecting parsers is not supported in CLI mode");
 	}
-
+	
 	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
-
+	
 	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
-
+	
 	@Override
 	public IToolchainData<RunDefinition> selectTools(final List<ITool> tools) {
 		return mToolchain;
 	}
-
+	
 	@Override
 	public List<String> selectModel(final List<String> modelNames) {
 		throw new UnsupportedOperationException("Interactively selecting models is not supported in CLI mode");
 	}
-
+	
 	@Override
 	public void displayToolchainResults(final IToolchainData<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
@@ -272,21 +271,21 @@ public class CommandLineController implements IController<RunDefinition> {
 			break;
 		}
 	}
-
+	
 	@Override
 	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
 			final Throwable ex) {
 		mLogger.fatal("RESULT: An exception occured during the execution of Ultimate: " + description, ex);
 	}
-
+	
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return null;
 	}
-
+	
 	private Predicate<String> getPluginFilter(final ICore<RunDefinition> core, final File toolchainFileOrDir) {
 		final ToolchainLocator locator = new ToolchainLocator(toolchainFileOrDir, core, mLogger);
-
+		
 		final Set<String> allowedIds = new HashSet<>();
 		// all plugins in the toolchain are allowed
 		allowedIds.addAll(locator.createFilterForAvailableTools());
@@ -297,29 +296,29 @@ public class CommandLineController implements IController<RunDefinition> {
 		// parser are allowed
 		Arrays.stream(core.getRegisteredUltimatePlugins()).filter(a -> a instanceof ISource).map(a -> a.getPluginID())
 				.forEach(allowedIds::add);
-
+		
 		// convert to lower case and build matching predicate
 		final Set<String> lowerCaseIds = allowedIds.stream().map(a -> a.toLowerCase()).collect(Collectors.toSet());
 		return a -> lowerCaseIds.contains(a.toLowerCase());
 	}
-
+	
 	private void printAvailableToolchains(final ICore<RunDefinition> core) {
 		final File workingDir = RcpUtils.getWorkingDirectory();
 		final ToolchainLocator locator = new ToolchainLocator(workingDir, core, mLogger);
-
+		
 		final Map<File, IToolchainData<RunDefinition>> availableToolchains = locator.locateToolchains();
 		if (availableToolchains.isEmpty()) {
 			mLogger.warn("There are no toolchains in Ultimates working directory " + workingDir);
 			return;
 		}
 		final String indent = "    ";
-
+		
 		mLogger.info("The following toolchains are available:");
 		for (final Entry<File, IToolchainData<RunDefinition>> entry : availableToolchains.entrySet()) {
 			mLogger.info(entry.getKey());
 			mLogger.info(indent + entry.getValue().getToolchain().getName());
 		}
-
+		
 	}
-
+	
 }
