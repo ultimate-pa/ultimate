@@ -46,12 +46,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 
 public class DebugFileWriterDietsch {
-
+	
 	private final ILogger mLogger;
 	private final List<List<RCFGEdge>> mPaths;
 	private final int mUnrollingDepth;
 	private static final String FOLDER_PATH = "F:\\repos\\ultimate fresher co\\trunk\\examples\\unrolling-tests\\";
-
+	
 	public DebugFileWriterDietsch(final List<List<RCFGEdge>> list, final ILogger logger, final int unrollingDepth) {
 		mLogger = logger;
 		if (list == null) {
@@ -60,15 +60,15 @@ public class DebugFileWriterDietsch {
 		mUnrollingDepth = unrollingDepth;
 		mPaths = list;
 	}
-
+	
 	public void run() {
 		if (mPaths.isEmpty()) {
 			mLogger.debug("No traces found; this may be due to infinite recursion");
 			return;
 		}
-
+		
 		final Map<RootEdge, List<List<CodeBlock>>> tmp = new HashMap<>();
-
+		
 		for (final List<RCFGEdge> path : mPaths) {
 			if (path.isEmpty()) {
 				continue;
@@ -86,9 +86,9 @@ public class DebugFileWriterDietsch {
 				tmp.get(r).add(cb);
 			}
 		}
-
+		
 		StringBuilder sb;
-
+		
 		if (mPaths.size() > 1) {
 			sb = createDebugOutput(tmp);
 		} else {
@@ -102,26 +102,26 @@ public class DebugFileWriterDietsch {
 				}
 			}
 		}
-
+		
 		sb.append("\nNumber of traces in mPaths: ").append(mPaths.size());
-
+		
 		final ProgramPoint r = (ProgramPoint) tmp.keySet().iterator().next().getTarget();
 		final String currentFileName = Paths.get(r.getPayload().getLocation().getFileName()).getFileName().toString();
 		final String currentMethodName = (r).getProcedure();
 		final String filename =
 				"dd_trace_" + currentFileName + "_" + currentMethodName + "_dfs_n_" + mUnrollingDepth + ".txt";
-
+		
 		try {
 			writeLargerTextFile(FOLDER_PATH + filename, sb);
 		} catch (final IOException e) {
 			mLogger.fatal(e.getStackTrace());
 		}
 	}
-
+	
 	private StringBuilder createDebugOutput(final Map<RootEdge, List<List<CodeBlock>>> procToTraces) {
-
+		
 		mLogger.debug("Creating debug output...");
-
+		
 		// find prefix & max trace length
 		int prefixPos = -1;
 		int maxTraceLength = -1;
@@ -129,7 +129,7 @@ public class DebugFileWriterDietsch {
 			outerLoopPrefix: {
 				for (int i = 0;; ++i) {
 					final CodeBlock acc = en.getValue().get(0).get(i);
-
+					
 					for (final List<CodeBlock> trace : en.getValue()) {
 						if (trace.size() > maxTraceLength) {
 							maxTraceLength = trace.size();
@@ -147,7 +147,7 @@ public class DebugFileWriterDietsch {
 				}
 			}
 		}
-
+		
 		// find suffix
 		int suffixOffset = -1;
 		for (final Entry<RootEdge, List<List<CodeBlock>>> en : procToTraces.entrySet()) {
@@ -170,17 +170,17 @@ public class DebugFileWriterDietsch {
 				}
 			}
 		}
-
+		
 		// if suffix is only 1, dont use suffixes
 		if (suffixOffset <= 1) {
 			suffixOffset = 0;
 		}
-
+		
 		// if prefix is only 1, dont use prefixes
 		if (prefixPos <= 1) {
 			prefixPos = 0;
 		}
-
+		
 		// build renaming table for middle part
 		final HashMap<RCFGEdge, Integer> renaming = new HashMap<>();
 		int maxSymbols = 0;
@@ -197,11 +197,11 @@ public class DebugFileWriterDietsch {
 				}
 			}
 		}
-
+		
 		final TreeSet<String> set = new TreeSet<>();
 		StringBuilder sb = new StringBuilder();
 		final StringBuilder rtr = new StringBuilder();
-
+		
 		// build and sort mapping table
 		if (prefixPos > 1) {
 			sb.append(getLetter(0));
@@ -218,6 +218,7 @@ public class DebugFileWriterDietsch {
 					sb.append(c.getPrettyPrintedStatements());
 					sb.append(" ");
 				}
+				break;
 			}
 			set.add(sb.toString());
 			sb = new StringBuilder();
@@ -234,15 +235,17 @@ public class DebugFileWriterDietsch {
 			sb.append(" := Suffix of length ");
 			sb.append(suffixOffset - 1);
 			sb.append(" is ");
-			outerloop: for (final Entry<RootEdge, List<List<CodeBlock>>> en : procToTraces.entrySet()) {
-				for (final List<CodeBlock> trace : en.getValue()) {
-					for (int i = trace.size() - suffixOffset + 1; i < trace.size(); ++i) {
-						final CodeBlock c = trace.get(i);
-						sb.append(c.getPrettyPrintedStatements());
-						sb.append(" ");
-					}
-					break outerloop;
+			for (final Entry<RootEdge, List<List<CodeBlock>>> en : procToTraces.entrySet()) {
+				if (en.getValue().isEmpty()) {
+					continue;
 				}
+				final List<CodeBlock> trace = en.getValue().get(0);
+				for (int i = trace.size() - suffixOffset + 1; i < trace.size(); ++i) {
+					final CodeBlock c = trace.get(i);
+					sb.append(c.getPrettyPrintedStatements());
+					sb.append(" ");
+				}
+				break;
 			}
 			set.add(sb.toString());
 			sb = new StringBuilder();
@@ -252,7 +255,7 @@ public class DebugFileWriterDietsch {
 		}
 		rtr.append("\n");
 		set.clear();
-
+		
 		// build and sort encoded traces for final output
 		for (final Entry<RootEdge, List<List<CodeBlock>>> en : procToTraces.entrySet()) {
 			for (final List<CodeBlock> trace : en.getValue()) {
@@ -273,25 +276,25 @@ public class DebugFileWriterDietsch {
 				sb = new StringBuilder();
 			}
 		}
-
+		
 		for (final String s : set) {
 			rtr.append(s).append("\n");
 		}
-
+		
 		return rtr;
 	}
-
+	
 	private String getLetter(int i) {
 		String rtr = "";
-
+		
 		while (i > 26) {
 			rtr = rtr + "A";
 			i = i - 26;
 		}
-
+		
 		return rtr + "ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt(i);
 	}
-
+	
 	private void writeLargerTextFile(final String aFileName, final StringBuilder sb) throws IOException {
 		final Path path = Paths.get(aFileName);
 		mLogger.debug("Writing " + path.toString());
