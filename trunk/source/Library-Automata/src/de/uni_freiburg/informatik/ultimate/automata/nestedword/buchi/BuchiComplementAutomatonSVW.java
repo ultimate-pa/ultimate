@@ -555,14 +555,12 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
 	
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
 	
 	@Override
