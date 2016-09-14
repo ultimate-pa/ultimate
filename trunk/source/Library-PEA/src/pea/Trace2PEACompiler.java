@@ -103,10 +103,10 @@ public class Trace2PEACompiler {
 	public Trace2PEACompiler(final String loggerName) {
 		logger = ILogger.getLogger(loggerName);
 
-		allPhases = new TreeMap<PhaseBits, Phase>();
-		todo = new LinkedList<PhaseBits>();
+		allPhases = new TreeMap<>();
+		todo = new LinkedList<>();
 
-		trans2phases = new HashMap<Transition, PhaseBits>();
+		trans2phases = new HashMap<>();
 	}
 
 	/**
@@ -122,7 +122,7 @@ public class Trace2PEACompiler {
 	 *            the array of DCPhases in the countertrace
 	 */
 	public HashMap<Transition, PhaseSet> getTrans2Phases(final DCPhase phases[]) {
-		final HashMap<Transition, PhaseSet> pea2ph = new HashMap<Transition, PhaseSet>();
+		final HashMap<Transition, PhaseSet> pea2ph = new HashMap<>();
 		for (final Transition t : trans2phases.keySet()) {
 			final PhaseBits pb = trans2phases.get(t);
 			pea2ph.put(t, pb.getPhaseSet(phases));
@@ -196,7 +196,7 @@ public class Trace2PEACompiler {
 		missingEvents = null;
 		name = null;
 		spec = false;
-		trans2phases = new HashMap<Transition, PhaseBits>();
+		trans2phases = new HashMap<>();
 	}
 
 	/**
@@ -779,7 +779,7 @@ public class Trace2PEACompiler {
 			phases[phaseNr++] = buildExitSyncTransitions();
 			finalPhases[0] = phases[phaseNr - 1];
 		}
-		final ArrayList<String> peaClocks = new ArrayList<String>();
+		final ArrayList<String> peaClocks = new ArrayList<>();
 		for (int i = 0; i < clock.length; i++) {
 			if (clock[i] != null) {
 				if (!clock[i].equals("")) {
@@ -787,8 +787,8 @@ public class Trace2PEACompiler {
 				}
 			}
 		}
-		final HashMap<String, String> variables = new HashMap<String, String>();
-		final HashSet<String> events = new HashSet<String>();
+		final HashMap<String, String> variables = new HashMap<>();
+		final HashSet<String> events = new HashSet<>();
 		for (int i = 0; i < countertrace.phases.length; i++) {
 			addVariables(countertrace.phases[i].entryEvents, variables, events);
 			addVariables(countertrace.phases[i].invariant, variables, events);
@@ -817,7 +817,6 @@ public class Trace2PEACompiler {
 				addVariables(child, variables, events);
 			}
 		}
-		return;
 	}
 
 	/**
