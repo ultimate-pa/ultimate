@@ -188,7 +188,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		/**
 		 * Points to next field with {@link OutgoingInternalTransition}.
 		 */
-		private short mPosition;
+		private int mPosition;
 		
 		public FieldIterator() {
 			updatePosition();

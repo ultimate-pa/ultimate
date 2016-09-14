@@ -1565,7 +1565,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 					/**
 					 * Points to next field that has OutgoingInternalTransition.
 					 */
-					private short mPosition;
+					private int mPosition;
 					
 					{
 						mPosition = 0;
