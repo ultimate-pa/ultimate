@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE GUIGeneratedPreferencePages plug-in.
@@ -54,6 +55,7 @@ import org.eclipse.swt.widgets.Text;
  * 
  * @noextend This class is not intended to be subclassed by clients.
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public final class MultiLineTextFieldEditor extends FieldEditor {
 	/**

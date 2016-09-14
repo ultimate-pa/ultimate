@@ -32,7 +32,10 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin.services;
 import java.io.File;
 import java.io.Writer;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
@@ -41,8 +44,10 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.ConsoleAppender;
+import org.apache.logging.log4j.core.appender.ConsoleAppender.Target;
 import org.apache.logging.log4j.core.appender.FileAppender;
 import org.apache.logging.log4j.core.appender.WriterAppender;
+import org.apache.logging.log4j.core.config.AppenderRef;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.LoggerConfig;
@@ -81,6 +86,10 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 	private static final String LOGGER_NAME_TOOLS = "tools";
 	private static final String LOGGER_NAME_NONCONTROLLER = "noncontroller";
 
+	private static final String APPENDER_NAME_CONSOLE = "ConsoleAppender";
+	private static final String APPENDER_NAME_LOGFILE = "LogfileAppender";
+	private static final String APPENDER_NAME_CONTROLLER = "ControllerAppender";
+
 	/**
 	 * Used to distinguish between loggers that were created using {@link #getLogger(String)} and using
 	 * {@link #getLoggerForExternalTool(String)}.
@@ -100,19 +109,28 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 	private final LoggerContext mContext;
 	private final Configuration mConfig;
 
+	private final Set<Appender> mRootAppenders;
+	private final Set<Appender> mControllerAppenders;
+
 	private Appender mConsoleAppender;
+	private Appender mControllerAppender;
 	private Appender mFileAppender;
+
+	private final Map<String, AppenderRef> mAppenderReferences;
 
 	private Log4J2LoggingService() {
 		mPreferenceStore = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		mLiveLoggerIds = new HashSet<>();
 
+		mRootAppenders = new HashSet<>();
+		mControllerAppenders = new HashSet<>();
+
+		mAppenderReferences = new HashMap<>();
+
 		mContext = initializeConfiguration();
 		mConfig = mContext.getConfiguration();
 
 		recreateLoggerHierarchy();
-		refreshPropertiesConsoleAppender();
-		refreshPropertiesFileAppender();
 		mContext.updateLoggers();
 
 		mRefreshingListener = new RefreshingPreferenceChangeListener();
@@ -123,60 +141,67 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 	@Override
 	public void reloadLoggers() {
 		recreateLoggerHierarchy();
-		refreshPropertiesConsoleAppender();
-		refreshPropertiesFileAppender();
 		mContext.updateLoggers();
 		getLoggerById(Activator.PLUGIN_ID).debug("Logger refreshed");
 	}
 
 	private void recreateLoggerHierarchy() {
 		mLiveLoggerIds = new HashSet<>();
+
+		mConfig.getAppenders().clear();
+
+		reinitializeDefaultConsoleAppenders();
+		reinitializeFileAppender();
+
+		final AppenderRef[] refs = mAppenderReferences.values()
+		        .toArray(new AppenderRef[mAppenderReferences.values().size()]);
+
 		final Level rootLevel = getLogLevelPreference(CorePreferenceInitializer.LABEL_ROOT_PREF);
-		final LoggerConfig rootLogger = mConfig.getRootLogger();
-		rootLogger.setAdditive(false);
-		rootLogger.setLevel(rootLevel);
+		final LoggerConfig rootLoggerConfig = mConfig.getRootLogger();
+		rootLoggerConfig.setLevel(rootLevel);
+		rootLoggerConfig.addAppender(mConsoleAppender, rootLoggerConfig.getLevel(), rootLoggerConfig.getFilter());
 
 		// create the children of the rootLogger
 
 		// controller
-		final org.apache.logging.log4j.core.Logger controllerLogger = mContext.getLogger(LOGGER_NAME_CONTROLLER);
-		controllerLogger.setAdditive(false);
 		final Level controllerLevel = getLogLevelPreference(CorePreferenceInitializer.LABEL_CONTROLLER_PREF);
-		mConfig.getLoggerConfig(LOGGER_NAME_CONTROLLER).setLevel(controllerLevel);
+		final LoggerConfig controllerLoggerConfig = LoggerConfig.createLogger(true, controllerLevel,
+		        LOGGER_NAME_CONTROLLER, "true", refs, null, mConfig, null);
+		mConfig.addLogger(LOGGER_NAME_CONTROLLER, controllerLoggerConfig);
 
 		// all non-controller loggers share a common parent
-		final org.apache.logging.log4j.core.Logger nonControllerLogger = mContext.getLogger(LOGGER_NAME_NONCONTROLLER);
-		nonControllerLogger.setAdditive(false);
-		mConfig.getLoggerConfig(LOGGER_NAME_NONCONTROLLER).setLevel(rootLevel);
+		final LoggerConfig nonControllerLoggerConfig = LoggerConfig.createLogger(true, rootLevel,
+		        LOGGER_NAME_NONCONTROLLER, "true", refs, null, mConfig, null);
+		mConfig.addLogger(LOGGER_NAME_NONCONTROLLER, nonControllerLoggerConfig);
 
 		// plug-ins parent
-		final org.apache.logging.log4j.core.Logger pluginParentLogger = mContext.getLogger(getPluginLoggerName());
-		pluginParentLogger.setAdditive(false);
 		final Level pluginsLevel = getLogLevelPreference(CorePreferenceInitializer.LABEL_PLUGINS_PREF);
-		mConfig.getLoggerConfig(getPluginLoggerName()).setLevel(pluginsLevel);
+		final LoggerConfig pluginsParentLoggerConfig = LoggerConfig.createLogger(true, pluginsLevel,
+		        getPluginLoggerName(), "true", refs, null, mConfig, null);
+		mConfig.addLogger(getPluginLoggerName(), pluginsParentLoggerConfig);
 
 		// external tools parent
-		final org.apache.logging.log4j.core.Logger externalToolsLogger = mContext.getLogger(getToolLoggerName());
-		externalToolsLogger.setAdditive(false);
 		final Level toolsLevel = getLogLevelPreference(CorePreferenceInitializer.LABEL_TOOLS_PREF);
-		mConfig.getLoggerConfig(getToolLoggerName()).setLevel(toolsLevel);
+		final LoggerConfig externalToolsLoggerConfig = LoggerConfig.createLogger(true, toolsLevel, getToolLoggerName(),
+		        "true", refs, null, mConfig, null);
+		mConfig.addLogger(getToolLoggerName(), externalToolsLoggerConfig);
 
 		// actual core logger
-		final org.apache.logging.log4j.core.Logger coreLogger = mContext.getLogger(getCoreLoggerName());
-		coreLogger.setAdditive(false);
 		final Level coreLevel = getLogLevelPreference(CorePreferenceInitializer.LABEL_CORE_PREF);
-		mConfig.getLoggerConfig(getCoreLoggerName()).setLevel(coreLevel);
+		final LoggerConfig coreLoggerConfig = LoggerConfig.createLogger(true, coreLevel, getCoreLoggerName(), "true",
+		        refs, null, mConfig, null);
+		mConfig.addLogger(getCoreLoggerName(), coreLoggerConfig);
 
 		// actual plugin loggers
 		final String[] plugins = getIdsWithDefinedLogLevels(CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGIN_SPECIFIC);
 
 		for (final String plugin : plugins) {
 			final String loggerName = getPluginLoggerName(plugin);
-			final org.apache.logging.log4j.core.Logger pluginLogger = mContext.getLogger(loggerName);
-			pluginLogger.setAdditive(false);
 			final Level pluginLevel = getLogLevel(plugin);
-			mConfig.getLoggerConfig(loggerName).setLevel(pluginLevel);
-			mLiveLoggerIds.add(pluginLogger.getName());
+			final LoggerConfig pluginLoggerConfig = LoggerConfig.createLogger(true, pluginLevel, loggerName, "true",
+			        refs, null, mConfig, null);
+			mConfig.addLogger(loggerName, pluginLoggerConfig);
+			mLiveLoggerIds.add(loggerName);
 		}
 
 		// actual tool loggers
@@ -185,41 +210,84 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 
 		for (final String tool : tools) {
 			final String loggerName = getToolLoggerName(tool);
-			final org.apache.logging.log4j.core.Logger toolLogger = mContext.getLogger(loggerName);
-			toolLogger.setAdditive(false);
 			final Level toolLevel = getLogLevel(tool);
-			mConfig.getLoggerConfig(loggerName).setLevel(toolLevel);
-			mLiveLoggerIds.add(toolLogger.getName());
+			final LoggerConfig toolLoggerConfig = LoggerConfig.createLogger(true, toolLevel, loggerName, "true", refs,
+			        null, mConfig, null);
+			mConfig.addLogger(loggerName, toolLoggerConfig);
+			mLiveLoggerIds.add(loggerName);
 		}
+
+		reattachAppenders();
 	}
 
-	private void refreshPropertiesConsoleAppender() {
+	private void reinitializeDefaultConsoleAppenders() {
 		if (mConsoleAppender != null) {
 			mConsoleAppender.stop();
-			mContext.getRootLogger().removeAppender(mConsoleAppender);
+			mConfig.getRootLogger().removeAppender(mConsoleAppender.getName());
+			mAppenderReferences.remove(mConsoleAppender.getName());
+			mConfig.getAppenders().remove(mConsoleAppender);
+			mRootAppenders.remove(mConsoleAppender);
 			mConsoleAppender = null;
 		}
 
 		final PatternLayout layout = PatternLayout.newBuilder()
 		        .withPattern(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)).build();
 
-		mConsoleAppender = ConsoleAppender.createDefaultAppenderForLayout(layout);
+		mConsoleAppender = ConsoleAppender.createAppender(layout, null, Target.SYSTEM_OUT, APPENDER_NAME_CONSOLE, true,
+		        false, false);
 		mConsoleAppender.start();
 		mConfig.addAppender(mConsoleAppender);
-		updateLoggers(mConsoleAppender);
+		mAppenderReferences.put(mConsoleAppender.getName(),
+		        AppenderRef.createAppenderRef(mConsoleAppender.getName(), null, null));
+		mRootAppenders.add(mConsoleAppender);
+
+		if (mControllerAppender != null) {
+			mControllerAppender.stop();
+			mConfig.getLoggerConfig(LOGGER_NAME_CONTROLLER).removeAppender(mControllerAppender.getName());
+			mAppenderReferences.remove(mControllerAppender.getName());
+			mConfig.getAppenders().remove(mControllerAppender);
+			mControllerAppenders.remove(mControllerAppender);
+			mControllerAppender = null;
+		}
+
+		final PatternLayout controllerLayout = PatternLayout.newBuilder()
+		        .withPattern(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_CONTROLLER_PATTERN))
+		        .build();
+
+		mControllerAppender = ConsoleAppender.createAppender(controllerLayout, null, Target.SYSTEM_OUT,
+		        APPENDER_NAME_CONTROLLER, true, false, false);
+		mControllerAppender.start();
+		mConfig.addAppender(mControllerAppender);
+		mAppenderReferences.put(mControllerAppender.getName(),
+		        AppenderRef.createAppenderRef(mControllerAppender.getName(), null, null));
+		mControllerAppenders.add(mControllerAppender);
 	}
 
-	private void refreshPropertiesFileAppender() {
+	private void reattachAppenders() {
+		reattachAppenders(getNonControllerRootLogger(), mRootAppenders);
+		reattachAppenders(getControllerRootLogger(), mControllerAppenders);
+	}
+
+	private void reattachAppenders(final Logger logger, final Collection<Appender> appenders) {
+		final LoggerConfig loggerConfig = mConfig.getLoggerConfig(logger.getName());
+		for (final Appender appender : appenders) {
+			loggerConfig.removeAppender(appender.getName());
+			loggerConfig.addAppender(appender, loggerConfig.getLevel(), loggerConfig.getFilter());
+		}
+	}
+
+	private void reinitializeFileAppender() {
 		// if log-file should be used, it will be appended here
 		if (mPreferenceStore.getBoolean(CorePreferenceInitializer.LABEL_LOGFILE)) {
 			// if there is already a log file appender, we remove it.
 			if (mFileAppender != null) {
 				mFileAppender.stop();
-				mContext.getRootLogger().removeAppender(mFileAppender);
-				final Appender toRemove = mConfig.getAppender(mFileAppender.getName());
-				for (final org.apache.logging.log4j.core.Logger logger : mContext.getLoggers()) {
-					logger.removeAppender(toRemove);
-				}
+				mConfig.getRootLogger().removeAppender(mFileAppender.getName());
+				mConfig.getLoggerConfig(LOGGER_NAME_CONTROLLER).removeAppender(mFileAppender.getName());
+				mAppenderReferences.remove(mFileAppender.getName());
+				mConfig.getAppenders().remove(mFileAppender);
+				mRootAppenders.remove(mFileAppender);
+				mControllerAppenders.remove(mFileAppender);
 				mFileAppender = null;
 			}
 
@@ -237,17 +305,18 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 			mFileAppender = FileAppender.createAppender(fileName, append.toString(), falsePredicate, "FileAppender",
 			        truePredicate, falsePredicate, falsePredicate, "8192", layout, null, falsePredicate, null, mConfig);
 			mFileAppender.start();
-
-			mContext.getRootLogger().addAppender(mFileAppender);
-			updateLoggers(mFileAppender);
+			mConfig.addAppender(mFileAppender);
+			mRootAppenders.add(mFileAppender);
+			mControllerAppenders.add(mFileAppender);
 		} else {
 			if (mFileAppender != null) {
 				mFileAppender.stop();
-				mContext.getRootLogger().removeAppender(mFileAppender);
-				final Appender toRemove = mConfig.getAppender(mFileAppender.getName());
-				for (final org.apache.logging.log4j.core.Logger logger : mContext.getLoggers()) {
-					logger.removeAppender(toRemove);
-				}
+				mConfig.getRootLogger().removeAppender(mFileAppender.getName());
+				mConfig.getLoggerConfig(LOGGER_NAME_CONTROLLER).removeAppender(mFileAppender.getName());
+				mAppenderReferences.remove(mFileAppender.getName());
+				mConfig.getAppenders().remove(mFileAppender);
+				mRootAppenders.remove(mFileAppender);
+				mControllerAppenders.remove(mFileAppender);
 				mFileAppender = null;
 			}
 		}
@@ -344,20 +413,19 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 	public void addWriter(final Writer writer, final String logPattern) {
 		final String writerName = getWriterName(writer);
 
+		mRootAppenders.removeIf(app -> app.getName().equals(writerName));
+
 		final PatternLayout layout = PatternLayout.newBuilder().withPattern(logPattern).build();
 
 		final Appender appender = WriterAppender.createAppender(layout, null, writer, writerName, false, true);
 		appender.start();
 		mConfig.addAppender(appender);
-		updateLoggers(appender);
-	}
+		mRootAppenders.add(appender);
 
-	private void updateLoggers(final Appender appender) {
-		for (final LoggerConfig loggerConfig : mConfig.getLoggers().values()) {
-			loggerConfig.addAppender(appender, loggerConfig.getLevel(), loggerConfig.getFilter());
-		}
 		mConfig.getRootLogger().addAppender(appender, mConfig.getRootLogger().getLevel(),
 		        mConfig.getRootLogger().getFilter());
+
+		mContext.updateLoggers();
 	}
 
 	@Override
@@ -366,13 +434,12 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 
 		final Appender toRemove = mConfig.getAppenders().get(writerName);
 		assert toRemove != null;
+		assert mRootAppenders.contains(toRemove);
+
 		toRemove.stop();
 
-		for (final org.apache.logging.log4j.core.Logger logger : mContext.getLoggers()) {
-			logger.removeAppender(toRemove);
-		}
-
-		mConfig.getRootLogger().removeAppender(writerName);
+		mRootAppenders.remove(toRemove);
+		mConfig.getRootLogger().removeAppender(toRemove.getName());
 	}
 
 	private static String getWriterName(final Writer writer) {
@@ -421,6 +488,10 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 		}
 
 		return mContext.getLogger(getPluginLoggerName());
+	}
+
+	private Logger getNonControllerRootLogger() {
+		return mContext.getLogger(LOGGER_NAME_NONCONTROLLER);
 	}
 
 	private Logger getControllerRootLogger() {

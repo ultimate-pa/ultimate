@@ -35,6 +35,8 @@ import org.apache.logging.log4j.spi.ExtendedLoggerWrapper;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
+ * Wrapper class for Log4J2Loggers.
+ *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
 public class Log4J2Wrapper implements ILogger {
@@ -53,17 +55,20 @@ public class Log4J2Wrapper implements ILogger {
 
 	@Override
 	public boolean isFatalEnabled() {
-		return Level.FATAL.isLessSpecificThan(mLogger.getLevel());
+		return mLogger.isFatalEnabled();
+		// return Level.FATAL.isLessSpecificThan(mLogger.getLevel());
 	}
 
 	@Override
 	public boolean isErrorEnabled() {
-		return Level.ERROR.isLessSpecificThan(mLogger.getLevel());
+		return mLogger.isErrorEnabled();
+		// return Level.ERROR.isLessSpecificThan(mLogger.getLevel());
 	}
 
 	@Override
 	public boolean isWarnEnabled() {
-		return Level.WARN.isLessSpecificThan(mLogger.getLevel());
+		return mLogger.isWarnEnabled();
+		// return Level.WARN.isLessSpecificThan(mLogger.getLevel());
 	}
 
 	@Override
