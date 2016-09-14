@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstractionConcurrent plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstractionConcurrent plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstractionConcurrent plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
@@ -37,27 +37,24 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
-public class Cfg2Nwa extends CFG2Automaton {
+public final class Cfg2Nwa extends CFG2Automaton {
+	private final INestedWordAutomaton<CodeBlock, IPredicate> mResult;
 	
-	private INestedWordAutomaton<CodeBlock,IPredicate> mResult;
-
-	public Cfg2Nwa(final RootNode rootNode,
-			final IStateFactory<IPredicate> contentFactory, final SmtManager smtManager, final IUltimateServiceProvider services,final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
+	public Cfg2Nwa(final RootNode rootNode, final IStateFactory<IPredicate> contentFactory, final SmtManager smtManager,
+			final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique,
+			final SimplicationTechnique simplificationTechnique) {
 		super(rootNode, contentFactory, smtManager, services, simplificationTechnique, xnfConversionTechnique);
 		
 		constructProcedureAutomata();
-		mResult = mAutomata.get(0);
-		for (int i=1; i<mAutomata.size(); i++) {
-			mResult = ((NestedWordAutomaton<CodeBlock,IPredicate>)
-					mResult).concurrentPrefixProduct(mAutomata.get(i));
+		INestedWordAutomaton<CodeBlock, IPredicate> result = mAutomata.get(0);
+		for (int i = 1; i < mAutomata.size(); i++) {
+			result = ((NestedWordAutomaton<CodeBlock, IPredicate>) result).concurrentPrefixProduct(mAutomata.get(i));
 		}
-		
+		mResult = result;
 	}
 	
 	@Override
-	public INestedWordAutomaton<CodeBlock,IPredicate> getResult() {
+	public INestedWordAutomaton<CodeBlock, IPredicate> getResult() {
 		return mResult;
 	}
-	
-
 }
