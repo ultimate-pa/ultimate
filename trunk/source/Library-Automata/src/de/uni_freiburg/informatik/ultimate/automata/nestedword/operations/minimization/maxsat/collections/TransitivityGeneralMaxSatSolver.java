@@ -55,7 +55,7 @@ public class TransitivityGeneralMaxSatSolver<V> extends GeneralMaxSatSolver<Doub
 			switch (status) {
 				case TRUE:
 					// ignore already true variables (can legally happen!)
-					continue;
+					break;
 				
 				case FALSE:
 					mConjunctionEquivalentToFalse = true;
