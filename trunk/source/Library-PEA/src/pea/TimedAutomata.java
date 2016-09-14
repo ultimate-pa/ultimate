@@ -1,8 +1,8 @@
-/* $Id: TimedAutomata.java 227 2006-10-19 07:29:43Z jfaber $ 
+/* $Id: TimedAutomata.java 227 2006-10-19 07:29:43Z jfaber $
  *
  * This file is part of the PEA tool set
  * 
- * The PEA tool set is a collection of tools for 
+ * The PEA tool set is a collection of tools for
  * Phase Event Automata (PEA). See
  * http://csd.informatik.uni-oldenburg.de/projects/peatools.html
  * for more information.
@@ -87,9 +87,9 @@ public class TimedAutomata {
     Collection<String> clocks;
     State[]  states;
 
-    public TimedAutomata(PhaseEventAutomata pea, CDD[] preds, String[] predNames) {
+    public TimedAutomata(final PhaseEventAutomata pea, final CDD[] preds, final String[] predNames) {
 	states = new State[pea.phases.length];
-	clocks = new TreeSet<String>();
+	clocks = new TreeSet<>();
 	for (int i = 0; i < pea.phases.length; i++) {
 	    pea.phases[i].nr = i;
 	    states[i] = new State();
@@ -109,7 +109,7 @@ public class TimedAutomata {
 	}
 	for (int i = 0; i < pea.phases.length; i++) {
 	    final Iterator it = pea.phases[i].transitions.iterator();
-	    final Collection<Edge> edges = new ArrayList<Edge>();
+	    final Collection<Edge> edges = new ArrayList<>();
 	    while (it.hasNext()) {
 		final Transition t = (Transition) it.next();
 		final Guard[][] allGuards = filterCDD(t.guard);
@@ -127,10 +127,10 @@ public class TimedAutomata {
 	}
     }
 
-    private Guard[][] filterCDD(Guard[] gs, CDD cdd) {
+    private Guard[][] filterCDD(final Guard[] gs, final CDD cdd) {
 	if ((cdd.decision instanceof RangeDecision)
 	    && ((RangeDecision) cdd.decision).var.indexOf("_X") >= 0) {
-	    final ArrayList<Guard[]> myGuards = new ArrayList<Guard[]>();
+	    final ArrayList<Guard[]> myGuards = new ArrayList<>();
 	    final String clk = ((RangeDecision) cdd.decision).var;
 	    final int[] limits = ((RangeDecision) cdd.decision).limits;
 	    for (int i = 0; i < cdd.childs.length; i++) {
@@ -142,7 +142,7 @@ public class TimedAutomata {
 				   && limits[i-1]/2 == limits[i]/2);
 
 		final Guard[] ngs = new Guard[gs.length
-					+ (i == 0 || 
+					+ (i == 0 ||
 					   i == cdd.childs.length - 1 ||
 					   isEqual ? 1 : 2)];
 		System.arraycopy(gs, 0, ngs, 0, gs.length);
@@ -167,7 +167,7 @@ public class TimedAutomata {
 			myGuards.add(childGuards[j]);
 		}
 	    }
-	    return myGuards.toArray(new Guard[0][]);
+	    return myGuards.toArray(new Guard[myGuards.size()][]);
 	} else {
 	    if (cdd == CDD.FALSE) {
 			return new Guard[0][0];
@@ -185,22 +185,22 @@ public class TimedAutomata {
 	}
     }
 
-    private Guard[][] filterCDD(CDD cdd) {
+    private Guard[][] filterCDD(final CDD cdd) {
 	return filterCDD(new Guard[0], cdd);
     }
 
-    private void addClocks(String[] carr) {
+    private void addClocks(final String[] carr) {
 	for (int i = 0; i < carr.length; i++) {
 		clocks.add(carr[i]);
 	}
     }
-    private void addClocks(Guard[] guard) {
+    private void addClocks(final Guard[] guard) {
 	for (int i = 0; i< guard.length; i++) {
 		clocks.add(guard[i].clock);
 	}
     }
 
-    private String dumpGuard(Guard[] guard) {
+    private String dumpGuard(final Guard[] guard) {
 	if (guard.length == 0) {
 		return "TRUE";
 	}
@@ -214,7 +214,7 @@ public class TimedAutomata {
 	return sb.toString();
     }
 
-    private String dumpResets(String[] resets) {
+    private String dumpResets(final String[] resets) {
 	if (resets.length == 0) {
 		return "";
 	}

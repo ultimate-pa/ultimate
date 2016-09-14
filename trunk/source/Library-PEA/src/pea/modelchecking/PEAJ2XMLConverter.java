@@ -105,10 +105,10 @@ public class PEAJ2XMLConverter {
 
 		formulaConverter = new FormulaJ2XMLConverter();
 
-		clocks = new ArrayList<String>();
-		events = new ArrayList<String>();
-		rangeVariables = new ArrayList<String>();
-		variables = new HashMap<String, String>();
+		clocks = new ArrayList<>();
+		events = new ArrayList<>();
+		rangeVariables = new ArrayList<>();
+		variables = new HashMap<>();
 	}
 
 	/**
@@ -119,7 +119,7 @@ public class PEAJ2XMLConverter {
 	}
 
 	public void convert(final PEANet peanet, final String file) {
-		PhaseEventAutomata[] peas = new PhaseEventAutomata[0];
+		PhaseEventAutomata[] peas = new PhaseEventAutomata[peanet.getPeas().size()];
 		peas = peanet.getPeas().toArray(peas);
 		final ArrayList<String> declarations = peanet.getDeclarations();
 		try {
@@ -260,9 +260,9 @@ public class PEAJ2XMLConverter {
 		writer.write("<phases>\n");
 		final Phase[] phases = pea.getPhases();
 		final Phase[] init = pea.getInit();
-		final List<Phase> temp = new LinkedList<Phase>(Arrays.asList(phases));
+		final List<Phase> temp = new LinkedList<>(Arrays.asList(phases));
 		temp.removeAll(Arrays.asList(init));
-		final Phase[] notInitPhases = temp.toArray(new Phase[0]);
+		final Phase[] notInitPhases = temp.toArray(new Phase[temp.size()]);
 
 		for (int i = 0; i < init.length; i++) {
 			createPhaseNode(init[i], true);
@@ -301,17 +301,17 @@ public class PEAJ2XMLConverter {
 				}
 			}
 			if (!variables.isEmpty()) {
-				final Iterator variablesIterator = variables.keySet().iterator();
+				final Iterator<String> variablesIterator = variables.keySet().iterator();
 				while (variablesIterator.hasNext()) {
-					final String actVariable = (String) variablesIterator.next();
+					final String actVariable = variablesIterator.next();
 					writer.write(
 					        "<variable name=\"" + actVariable + "\" type=\"" + variables.get(actVariable) + "\"/>");
 				}
 			}
 			if (!rangeVariables.isEmpty()) {
-				final Iterator rvariablesIterator = rangeVariables.iterator();
+				final Iterator<String> rvariablesIterator = rangeVariables.iterator();
 				while (rvariablesIterator.hasNext()) {
-					final String actRVariable = (String) rvariablesIterator.next();
+					final String actRVariable = rvariablesIterator.next();
 					if (!variables.containsKey(actRVariable)) {
 						writer.write("<variable name=\"" + actRVariable + "\" type=\"default\"/>");
 					}
@@ -330,9 +330,9 @@ public class PEAJ2XMLConverter {
 
 		if (!clocks.isEmpty()) {
 			writer.write("<clocks>\n");
-			final Iterator clocksIterator = clocks.iterator();
+			final Iterator<String> clocksIterator = clocks.iterator();
 			while (clocksIterator.hasNext()) {
-				final String actClock = (String) clocksIterator.next();
+				final String actClock = clocksIterator.next();
 				writer.write("<clock name=\"" + actClock + "\"/>\n");
 			}
 			writer.write("</clocks>\n");
@@ -340,9 +340,9 @@ public class PEAJ2XMLConverter {
 
 		if (!events.isEmpty()) {
 			writer.write("<events>\n");
-			final Iterator eventsIterator = events.iterator();
+			final Iterator<String> eventsIterator = events.iterator();
 			while (eventsIterator.hasNext()) {
-				final String actEvent = (String) eventsIterator.next();
+				final String actEvent = eventsIterator.next();
 				writer.write("<event name=\"" + actEvent + "\"/>\n");
 			}
 			writer.write("</events>\n");
@@ -436,7 +436,7 @@ public class PEAJ2XMLConverter {
 			PhaseEventAutomata[] peas = xml2j.convert("./pea/modelchecking/CaseStudy/ComNW.xml");
 			final PEANet peanet = new PEANet();
 			final List<PhaseEventAutomata> peaL = Arrays.asList(peas);
-			final ArrayList<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>(peaL);
+			final ArrayList<PhaseEventAutomata> peaList = new ArrayList<>(peaL);
 
 			peanet.setPeas(peaList);
 			final PEAJ2XMLConverter j2XMLFast = new PEAJ2XMLConverter();

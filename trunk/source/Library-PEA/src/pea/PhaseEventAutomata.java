@@ -1,8 +1,8 @@
-/* $Id: PhaseEventAutomata.java 409 2009-07-20 14:54:16Z jfaber $ 
+/* $Id: PhaseEventAutomata.java 409 2009-07-20 14:54:16Z jfaber $
  *
  * This file is part of the PEA tool set
  * 
- * The PEA tool set is a collection of tools for 
+ * The PEA tool set is a collection of tools for
  * Phase Event Automata (PEA). See
  * http://csd.informatik.uni-oldenburg.de/projects/peatools.html
  * for more information.
@@ -50,29 +50,29 @@ public class PhaseEventAutomata implements Comparable {
     Phase[]  init;
     List<String> clocks;
     
-    // A map of variables and its types to be used in this PEA. 
+    // A map of variables and its types to be used in this PEA.
     Map<String,String> variables;
 
-    // The set of events used in the PEA. 
+    // The set of events used in the PEA.
     Set<String> events;
     
-    // Additional declarations needed when processing this PEA. 
+    // Additional declarations needed when processing this PEA.
     List<String> declarations;
     
 
-    public PhaseEventAutomata(PhaseEventAutomata pea)
+    public PhaseEventAutomata(final PhaseEventAutomata pea)
     {
         this(pea.name, pea.phases, pea.init, pea.clocks,
         	pea.variables, pea.events, pea.declarations);
     }
     
-    public PhaseEventAutomata(String name, 
-            Phase[] phases, Phase[] init) {
+    public PhaseEventAutomata(final String name,
+            final Phase[] phases, final Phase[] init) {
         this(name, phases, init, new ArrayList<String>());
     }
     
-    public PhaseEventAutomata(String name, 
-			      Phase[] phases, Phase[] init, List<String> clocks) { 
+    public PhaseEventAutomata(final String name,
+			      final Phase[] phases, final Phase[] init, final List<String> clocks) {
 	this(name,phases,init,clocks,null,null);
     }
     
@@ -85,11 +85,11 @@ public class PhaseEventAutomata implements Comparable {
      * @param phases
      * @param variables
      */
-    public PhaseEventAutomata(String name, 
-            Phase[] phases, Phase[] init, List<String> clocks,
-            Map<String, String> variables,
-            Set<String> events,
-            List<String> declarations) {
+    public PhaseEventAutomata(final String name,
+            final Phase[] phases, final Phase[] init, final List<String> clocks,
+            final Map<String, String> variables,
+            final Set<String> events,
+            final List<String> declarations) {
         if(clocks == null) {
 			this.clocks = new ArrayList<String>();
 		} else {
@@ -111,10 +111,10 @@ public class PhaseEventAutomata implements Comparable {
      * @param phases
      * @param variables
      */
-    public PhaseEventAutomata(String name, 
-            Phase[] phases, Phase[] init, List<String> clocks,
-            Map<String, String> variables,
-            List<String> declarations) {
+    public PhaseEventAutomata(final String name,
+            final Phase[] phases, final Phase[] init, final List<String> clocks,
+            final Map<String, String> variables,
+            final List<String> declarations) {
         if(clocks == null) {
 			this.clocks = new ArrayList<String>();
 		} else {
@@ -127,7 +127,7 @@ public class PhaseEventAutomata implements Comparable {
         this.variables = variables;
     }
 
-    public PhaseEventAutomata parallel(PhaseEventAutomata b) {
+    public PhaseEventAutomata parallel(final PhaseEventAutomata b) {
 	if (b instanceof PEATestAutomaton) {
 		return b.parallel(this);
 	}
@@ -136,7 +136,7 @@ public class PhaseEventAutomata implements Comparable {
 	
 	class TodoEntry {
 	    Phase p1,p2,p;
-	    TodoEntry(Phase p1, Phase p2, Phase p) {
+	    TodoEntry(final Phase p1, final Phase p2, final Phase p) {
 		this.p1 = p1;
 		this.p2 = p2;
 		this.p = p;
@@ -155,7 +155,7 @@ public class PhaseEventAutomata implements Comparable {
 		    
 		    newInit.add(p);
 		    newPhases.put(p.getName(), p);
-		    todo.add(new TodoEntry(init[i],b.init[j],p));	    
+		    todo.add(new TodoEntry(init[i],b.init[j],p));
 		}
 	    }
 	}
@@ -174,7 +174,7 @@ public class PhaseEventAutomata implements Comparable {
 				continue;
 			}
 		    final CDD sinv = t1.dest.stateInv.and(t2.dest.stateInv);
-//          This leads to a serious bug - 
+//          This leads to a serious bug -
 //          if (sinv.and(guard) == CDD.FALSE)
 		    if (sinv == CDD.FALSE) {
 				continue;
@@ -185,11 +185,11 @@ public class PhaseEventAutomata implements Comparable {
 		    final CDD cinv = t1.dest.clockInv.and(t2.dest.clockInv);
 		    final String[] resets
 			= new String[t1.resets.length + t2.resets.length];
-		    System.arraycopy(t1.resets, 0, resets, 0, 
+		    System.arraycopy(t1.resets, 0, resets, 0,
 				     t1.resets.length);
-		    System.arraycopy(t2.resets, 0, resets, t1.resets.length, 
+		    System.arraycopy(t2.resets, 0, resets, t1.resets.length,
 				     t2.resets.length);
-		    final Set<String> stoppedClocks = 
+		    final Set<String> stoppedClocks =
 			new SimpleSet<String>(t1.dest.stoppedClocks.size()+
 					      t2.dest.stoppedClocks.size());
 		    stoppedClocks.addAll(t1.dest.stoppedClocks);
@@ -208,8 +208,8 @@ public class PhaseEventAutomata implements Comparable {
 	    }
 	}
 
-	final Phase[] allPhases = newPhases.values().toArray(new Phase[0]);
-	final Phase[] initPhases = newInit.toArray(new Phase[0]);
+	final Phase[] allPhases = newPhases.values().toArray(new Phase[newPhases.size()]);
+	final Phase[] initPhases = newInit.toArray(new Phase[newInit.size()]);
 	
 	final List<String> newClocks = mergeClockLists(b);
 	
@@ -217,7 +217,7 @@ public class PhaseEventAutomata implements Comparable {
 	
 	final List<String> newDeclarations = mergeDeclarationLists(b);
         
-	return new PhaseEventAutomata(name + TIMES + b.name, 
+	return new PhaseEventAutomata(name + TIMES + b.name,
 				      allPhases, initPhases, newClocks, newVariables, newDeclarations);
     }
 
@@ -230,7 +230,7 @@ public class PhaseEventAutomata implements Comparable {
      * @return
      *          merged list
      */
-    protected List<String> mergeDeclarationLists(PhaseEventAutomata b) {
+    protected List<String> mergeDeclarationLists(final PhaseEventAutomata b) {
         // Merge declarations
         List<String> newDeclarations;
         if(declarations == null) {
@@ -254,7 +254,7 @@ public class PhaseEventAutomata implements Comparable {
      * @return
      *          merged list
      */
-    protected Map<String, String> mergeVariableLists(PhaseEventAutomata b) {
+    protected Map<String, String> mergeVariableLists(final PhaseEventAutomata b) {
         // Merge variable lists
         Map<String,String> newVariables;
         if(variables == null) {
@@ -284,7 +284,7 @@ public class PhaseEventAutomata implements Comparable {
      * @return
      *          merged list
      */
-    protected List<String> mergeClockLists(PhaseEventAutomata b) {
+    protected List<String> mergeClockLists(final PhaseEventAutomata b) {
         // Merge clock lists
         final List<String> newClocks = new ArrayList<String>();
         newClocks.addAll(clocks);
@@ -338,7 +338,7 @@ public class PhaseEventAutomata implements Comparable {
     }
     
     //Ami gefrickel
-    public void setInit(Phase[]init2) {
+    public void setInit(final Phase[]init2) {
         init=init2;
     }
     /**
@@ -358,7 +358,7 @@ public class PhaseEventAutomata implements Comparable {
         return clocks;
     }
 
-    public void setClocks(List<String> clocks) {
+    public void setClocks(final List<String> clocks) {
         this.clocks = clocks;
     }
 
@@ -383,7 +383,7 @@ public class PhaseEventAutomata implements Comparable {
         return declarations;
     }
 
-    public void addToClocks(String clock) {
+    public void addToClocks(final String clock) {
         clocks.add(clock);
     }
 
@@ -391,7 +391,7 @@ public class PhaseEventAutomata implements Comparable {
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
     @Override
-	public int compareTo(Object o) {
+	public int compareTo(final Object o) {
         return name.compareTo(((PhaseEventAutomata)o).name);
     }
     
@@ -408,7 +408,7 @@ public class PhaseEventAutomata implements Comparable {
     	return getPhases().length;
     }
     
-    public Phase getLocation(int i){
+    public Phase getLocation(final int i){
     	return getPhases()[i];
     }
     
@@ -419,7 +419,7 @@ public class PhaseEventAutomata implements Comparable {
     	for (int i=0; i<locCounter; i++){
     		final Phase location = getLocation(i);
     		final String[] result = splitForComponents(location.getName());
-    		int maxIndex =0;    		
+    		int maxIndex =0;
     		for (int j=0; j< result.length; j++){
     			final String compName = result[j];
     			final PEAPhaseIndexMap map = new PEAPhaseIndexMap(compName);
@@ -433,19 +433,19 @@ public class PhaseEventAutomata implements Comparable {
     	}
     }
     
- // Splitted einen String location auf, so dass alle Teile, die durch X abgetrennt sind, 
-	// in einen neuen ArrayString gepackt werden		
-	private String[] splitForComponents(String location){
+ // Splitted einen String location auf, so dass alle Teile, die durch X abgetrennt sind,
+	// in einen neuen ArrayString gepackt werden
+	private String[] splitForComponents(final String location){
 		// Create a pattern to match breaks
 		final Pattern p = Pattern.compile("_X_");
         // Split input with the pattern
-        final String[] result = 
+        final String[] result =
                  p.split(location);
         return result;
     }
 	
 	//diese Methode vereinfacht die Guards eines PEAS
-	//Bsp Guard (A or B) und Stateinvariante des Folgezustands ist (neg B) dann 
+	//Bsp Guard (A or B) und Stateinvariante des Folgezustands ist (neg B) dann
 	//wird der Guard vereinfacht zu (A)
 	public void simplifyGuards(){
 		
@@ -455,7 +455,7 @@ public class PhaseEventAutomata implements Comparable {
 			final List<Transition> transitions = phase.getTransitions();
 			for(int j=0; j< transitions.size();j++){
 				final Transition trans = transitions.get(j);
-				trans.simplifyGuard();		
+				trans.simplifyGuard();
 			}
 		}
 	}

@@ -80,9 +80,9 @@ public class PEA2TCSJ2XMLConverter {
 
 		formulaConverter = new TCSFormulaJ2XMLConverter();
 
-		clocks = new ArrayList<String>();
-		events = new ArrayList<String>();
-		variables = new ArrayList<String>();
+		clocks = new ArrayList<>();
+		events = new ArrayList<>();
+		variables = new ArrayList<>();
 	}
 
 	/**
@@ -172,7 +172,7 @@ public class PEA2TCSJ2XMLConverter {
 		final Phase[] init = pea.getInit();
 		final List<Phase> temp = Arrays.asList(phases);
 		temp.removeAll(Arrays.asList(init));
-		final Phase[] notInitPhases = temp.toArray(new Phase[0]);
+		final Phase[] notInitPhases = temp.toArray(new Phase[temp.size()]);
 
 		for (int i = 0; i < init.length; i++) {
 			createPhaseNode(init[i], true);
@@ -331,7 +331,7 @@ public class PEA2TCSJ2XMLConverter {
 		final String[] guardDis = formulaConverter.getDisjuncts(false, trans.getGuard(), clocks, events);
 		final StringBuffer discConst = new StringBuffer("disc /\\ ! disc'");
 		final String[] resets = trans.getResets();
-		final List<String> notReset = new ArrayList<String>(clocks);
+		final List<String> notReset = new ArrayList<>(clocks);
 		notReset.removeAll(Arrays.asList(resets));
 
 		for (int i = 0; i < resets.length; i++) {

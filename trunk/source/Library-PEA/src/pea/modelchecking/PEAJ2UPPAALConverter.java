@@ -228,7 +228,7 @@ public class PEAJ2UPPAALConverter {
 				}
 			}
 		}
-		return dnf.toArray(new String[0]);
+		return dnf.toArray(new String[dnf.size()]);
 	}
 	
 	protected Element[] createTransitionNodes(final Transition transition) {

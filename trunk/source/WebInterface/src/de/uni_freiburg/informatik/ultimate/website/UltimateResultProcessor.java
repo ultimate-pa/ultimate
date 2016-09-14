@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 
 public class UltimateResultProcessor {
 
-	public static void processUltimateResults(IUltimateServiceProvider services, JSONObject json) throws JSONException {
+	public static void processUltimateResults(final IUltimateServiceProvider services, final JSONObject json) throws JSONException {
 		// get Result from Ultimate
 		final Map<String, List<IResult>> results = services.getResultService().getResults();
 		// add result to the json object
@@ -128,7 +128,7 @@ public class UltimateResultProcessor {
 				resultList.add(new JSONObject(packagedResult));
 				SimpleLogger.log("added result: " + packagedResult.toString());
 			}
-			json.put("results", new JSONArray(resultList.toArray(new JSONObject[0])));
+			json.put("results", new JSONArray(resultList.toArray(new JSONObject[resultList.size()])));
 		}
 	}
 
