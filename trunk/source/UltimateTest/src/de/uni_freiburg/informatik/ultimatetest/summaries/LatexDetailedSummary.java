@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimatetest.summaries;
@@ -54,15 +54,15 @@ public class LatexDetailedSummary extends LatexSummary {
 
 	private final int mLatexTableHeaderCount;
 
-	public LatexDetailedSummary(Class<? extends UltimateTestSuite> ultimateTestSuite,
-			Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks,
-			ColumnDefinition[] columnDefinitions) {
+	public LatexDetailedSummary(final Class<? extends UltimateTestSuite> ultimateTestSuite,
+			final Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks,
+			final ColumnDefinition[] columnDefinitions) {
 		super(ultimateTestSuite, benchmarks, columnDefinitions);
 
 		mLatexTableHeaderCount = CoreUtil.reduce(mColumnDefinitions,
 				new CoreUtil.IMapReduce<Integer, ColumnDefinition>() {
 					@Override
-					public Integer reduce(Integer lastValue, ColumnDefinition entry) {
+					public Integer reduce(Integer lastValue, final ColumnDefinition entry) {
 						if (lastValue == null) {
 							lastValue = 0;
 						}
@@ -90,13 +90,13 @@ public class LatexDetailedSummary extends LatexSummary {
 		return ".tex";
 	}
 
-	private void makeTables(StringBuilder sb, PartitionedResults results) {
+	private void makeTables(final StringBuilder sb, final PartitionedResults results) {
 
 		final int additionalHeaders = 4;
 
 		final Set<String> tools = CoreUtil.selectDistinct(results.All, new IMyReduce<String>() {
 			@Override
-			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+			public String reduce(final Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getKey().getToolchain().getName();
 			}
 		});
@@ -142,7 +142,7 @@ public class LatexDetailedSummary extends LatexSummary {
 			final PartitionedResults resultsPerTool = partitionResults(
 					CoreUtil.where(results.All, new ITestSummaryResultPredicate() {
 						@Override
-						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+						public boolean check(final Entry<UltimateRunDefinition, ExtendedResult> entry) {
 							return entry.getKey().getToolchain().getName().equals(tool);
 						}
 					}));
@@ -156,11 +156,11 @@ public class LatexDetailedSummary extends LatexSummary {
 		appendEnd(sb, br);
 	}
 
-	private void appendEnd(StringBuilder sb, String br) {
+	private void appendEnd(final StringBuilder sb, final String br) {
 		sb.append("\\end{document}").append(br);
 	}
 
-	private void appendPreamble(StringBuilder sb, String br) {
+	private void appendPreamble(final StringBuilder sb, final String br) {
 		// append preamble
 		sb.append("\\documentclass[a3paper,landscape]{article}").append(br);
 		sb.append("\\usepackage[a3paper, margin=1.5cm, top=1.1cm]{geometry}").append(br);
@@ -183,8 +183,8 @@ public class LatexDetailedSummary extends LatexSummary {
 		sb.append("\\newcommand{\\folder}[1]{\\parbox{5em}{#1}}").append(br);
 	}
 
-	private void makeTableBody(StringBuilder sb, PartitionedResults results, String toolname,
-			int additionalTableHeaders) {
+	private void makeTableBody(final StringBuilder sb, final PartitionedResults results, final String toolname,
+			final int additionalTableHeaders) {
 		final Set<String> distinctSuffixes = getDistinctFolderSuffixes(results);
 
 		int i = 0;
@@ -197,14 +197,14 @@ public class LatexDetailedSummary extends LatexSummary {
 		}
 	}
 
-	private void makeFolderRow(StringBuilder sb, PartitionedResults results, String folder, boolean last,
-			int additionalTableHeaders) {
+	private void makeFolderRow(final StringBuilder sb, final PartitionedResults results, final String folder, final boolean last,
+			final int additionalTableHeaders) {
 		final String br = CoreUtil.getPlatformLineSeparator();
 		final int additionalHeaders = additionalTableHeaders;
 
 		final List<String> files = new ArrayList<>(CoreUtil.selectDistinct(results.All, new IMyReduce<String>() {
 			@Override
-			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+			public String reduce(final Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getKey().getInputFileNames();
 			}
 		}));
@@ -280,7 +280,7 @@ public class LatexDetailedSummary extends LatexSummary {
 		}
 	}
 
-	private void makeFileEntry(StringBuilder sb, Collection<Entry<UltimateRunDefinition, ExtendedResult>> current,
+	private void makeFileEntry(final StringBuilder sb, final Collection<Entry<UltimateRunDefinition, ExtendedResult>> current,
 			final List<String> files) {
 
 		final List<Entry<UltimateRunDefinition, ExtendedResult>> results = current.stream()
@@ -288,8 +288,8 @@ public class LatexDetailedSummary extends LatexSummary {
 
 		Collections.sort(results, new Comparator<Entry<UltimateRunDefinition, ExtendedResult>>() {
 			@Override
-			public int compare(Entry<UltimateRunDefinition, ExtendedResult> o1,
-					Entry<UltimateRunDefinition, ExtendedResult> o2) {
+			public int compare(final Entry<UltimateRunDefinition, ExtendedResult> o1,
+					final Entry<UltimateRunDefinition, ExtendedResult> o2) {
 				return o1.getKey().compareTo(o2.getKey());
 			}
 		});
@@ -297,7 +297,7 @@ public class LatexDetailedSummary extends LatexSummary {
 		final String br = CoreUtil.getPlatformLineSeparator();
 		final String sep = " & ";
 
-		if (results.size() == 0) {
+		if (results.isEmpty()) {
 			// insert an empty row for this category
 			final int length = mLatexTableHeaderCount + 2;
 			for (int i = 0; i < length; ++i) {
@@ -328,7 +328,7 @@ public class LatexDetailedSummary extends LatexSummary {
 			csv = CsvUtils.projectColumn(csv,
 					CoreUtil.select(mColumnDefinitions, new CoreUtil.IReduce<String, ColumnDefinition>() {
 						@Override
-						public String reduce(ColumnDefinition entry) {
+						public String reduce(final ColumnDefinition entry) {
 							return entry.getColumnToKeep();
 						}
 					}));
@@ -336,7 +336,7 @@ public class LatexDetailedSummary extends LatexSummary {
 			csv = ColumnDefinitionUtil.reduceProvider(csv,
 					CoreUtil.select(mColumnDefinitions, new CoreUtil.IReduce<Aggregate, ColumnDefinition>() {
 						@Override
-						public Aggregate reduce(ColumnDefinition entry) {
+						public Aggregate reduce(final ColumnDefinition entry) {
 							return entry.getManyRunsToOneRow();
 						}
 					}), mColumnDefinitions);
@@ -360,7 +360,7 @@ public class LatexDetailedSummary extends LatexSummary {
 			final int length = mLatexTableHeaderCount;
 			int i = 0;
 			final List<String> row = csv.getRow(0);
-			if (row == null || row.size() == 0) {
+			if (row == null || row.isEmpty()) {
 				// no results in this category, just fill with empty fields
 				for (; i < length; ++i) {
 					sb.append(sep);

@@ -58,7 +58,7 @@ public class ConnectionPartition {
 
 	private void addTerm(final Term term) {
 		final Set<NonTheorySymbol<?>> symbols = NonTheorySymbol.extractNonTheorySymbols(term);
-		if (symbols.size() == 0) {
+		if (symbols.isEmpty()) {
 			mTermWithoutTvs.add(term);
 			return;
 		}

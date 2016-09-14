@@ -85,7 +85,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	@Override
-	public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
+	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
 		mHoareTripleCheckerStatistics.continueEdgeCheckerTime();
 		final Validity result = IHoareTripleChecker.lbool2validity(isInductive(pre, act, succ));
 		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
@@ -106,7 +106,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	@Override
-	public Validity checkCall(IPredicate pre, ICallAction act, IPredicate succ) {
+	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
 		mHoareTripleCheckerStatistics.continueEdgeCheckerTime();
 		final Validity result =  IHoareTripleChecker.lbool2validity(isInductiveCall(pre, act, succ));
 		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
@@ -127,8 +127,8 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	@Override
-	public Validity checkReturn(IPredicate preLin, IPredicate preHier,
-			IReturnAction act, IPredicate succ) {
+	public Validity checkReturn(final IPredicate preLin, final IPredicate preHier,
+			final IReturnAction act, final IPredicate succ) {
 		mHoareTripleCheckerStatistics.continueEdgeCheckerTime();
 		final Validity result =  IHoareTripleChecker.lbool2validity(isInductiveReturn(preLin, preHier, act, succ));
 		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
@@ -163,7 +163,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	
 	
 	
-	public LBool isInductive(IPredicate ps1, IInternalAction ta, IPredicate ps2) {
+	public LBool isInductive(final IPredicate ps1, final IInternalAction ta, final IPredicate ps2) {
 		return isInductive(ps1, ta, ps2, false);
 	}
 
@@ -182,7 +182,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	 *         means that the theorem prover was not able give an answer to our
 	 *         question.
 	 */
-	public LBool isInductive(IPredicate ps1, IInternalAction ta, IPredicate ps2, boolean expectUnsat) {
+	public LBool isInductive(final IPredicate ps1, final IInternalAction ta, final IPredicate ps2, final boolean expectUnsat) {
 		mManagedScript.lock(this);
 		final long startTime = System.nanoTime();
 
@@ -228,11 +228,11 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		return result;
 	}
 
-	public LBool isInductiveCall(IPredicate ps1, ICallAction ta, IPredicate ps2) {
+	public LBool isInductiveCall(final IPredicate ps1, final ICallAction ta, final IPredicate ps2) {
 		return isInductiveCall(ps1, ta, ps2, false);
 	}
 
-	public LBool isInductiveCall(IPredicate ps1, ICallAction ta, IPredicate ps2, boolean expectUnsat) {
+	public LBool isInductiveCall(final IPredicate ps1, final ICallAction ta, final IPredicate ps2, final boolean expectUnsat) {
 		mManagedScript.lock(this);
 		final long startTime = System.nanoTime();
 
@@ -289,11 +289,11 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		return result;
 	}
 
-	public LBool isInductiveReturn(IPredicate ps1, IPredicate psk, IReturnAction ta, IPredicate ps2) {
+	public LBool isInductiveReturn(final IPredicate ps1, final IPredicate psk, final IReturnAction ta, final IPredicate ps2) {
 		return isInductiveReturn(ps1, psk, ta, ps2, false);
 	}
 
-	public LBool isInductiveReturn(IPredicate ps1, IPredicate psk, IReturnAction ta, IPredicate ps2, boolean expectUnsat) {
+	public LBool isInductiveReturn(final IPredicate ps1, final IPredicate psk, final IReturnAction ta, final IPredicate ps2, final boolean expectUnsat) {
 		mManagedScript.lock(this);
 		final long startTime = System.nanoTime();
 
@@ -379,7 +379,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		return result;
 	}
 	
-	public LBool assertTerm(Term term) {
+	public LBool assertTerm(final Term term) {
 		final long startTime = System.nanoTime();
 		LBool result = null;
 		result = mManagedScript.getScript().assertTerm(term);
@@ -388,7 +388,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 	
 	
-	LBool checkSatisfiable(Term f) {
+	LBool checkSatisfiable(final Term f) {
 		final long startTime = System.nanoTime();
 		LBool result = null;
 		try {
@@ -409,7 +409,6 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 				mManagedScript.getScript().getInfo(":reason-unknown");
 			}
 			final ReasonUnknown reason = (ReasonUnknown) info;
-			final Object test = mManagedScript.getScript().getInfo(":reason-unknown");
 			switch (reason) {
 			case CRASHED:
 				throw new AssertionError("Solver crashed");
@@ -422,14 +421,14 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		return result;
 	}
 	
-	private boolean isDontCare(IPredicate ps2) {
+	private boolean isDontCare(final IPredicate ps2) {
 		// yet I don't know how to check for don't care
 		// avoid proper implementation if not needed
 		return false;
 	}
 
 	// FIXME: remove once enough tested
-	private void testMyReturnDataflowCheck(IPredicate ps1, IPredicate psk, IReturnAction ta, IPredicate ps2, LBool result) {
+	private void testMyReturnDataflowCheck(final IPredicate ps1, final IPredicate psk, final IReturnAction ta, final IPredicate ps2, final LBool result) {
 		if (ps2.getFormula() == mManagedScript.getScript().term("false")) {
 			return;
 		}
@@ -444,7 +443,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	// FIXME: remove once enough tested
-	private void testMyCallDataflowCheck(IPredicate ps1, ICallAction ta, IPredicate ps2, LBool result) {
+	private void testMyCallDataflowCheck(final IPredicate ps1, final ICallAction ta, final IPredicate ps2, final LBool result) {
 		if (ps2.getFormula() == mManagedScript.getScript().term("false")) {
 			return;
 		}
@@ -459,7 +458,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	// FIXME: remove once enough tested
-	private void testMyInternalDataflowCheck(IPredicate ps1, IInternalAction ta, IPredicate ps2, LBool result) {
+	private void testMyInternalDataflowCheck(final IPredicate ps1, final IInternalAction ta, final IPredicate ps2, final LBool result) {
 		if (ps2.getFormula() == mManagedScript.getScript().term("false")) {
 			final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mModifiableGlobals, null);
 			final Validity testRes = sdhtch.sdecInternalToFalse(ps1, ta);

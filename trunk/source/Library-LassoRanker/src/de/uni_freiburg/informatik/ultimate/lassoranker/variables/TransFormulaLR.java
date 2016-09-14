@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 
 /**
  * This class stores
- * <ul> 
+ * <ul>
  * <li> a mapping between inVars and RankVars,
  * <li> a mapping between outVars and RankVars, and
  * <li> a set of auxiliary variables.
@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * 
  * This object is *not* immutable.
  * 
- * @author Jan Leike 
+ * @author Jan Leike
  * @author Matthias Heizmann
  * 
  * @see VarFactory
@@ -133,8 +133,8 @@ public class TransFormulaLR implements Serializable {
 		
 		// Add constant variables as in- and outVars
 		for (final ApplicationTerm constVar : oldTf.getConstants()) {
-			final ReplacementVar repVar = 
-					replacementVarFactory.getOrConstuctReplacementVar(constVar); 
+			final ReplacementVar repVar =
+					replacementVarFactory.getOrConstuctReplacementVar(constVar);
 			newTf.addInVar(repVar, constVar);
 			newTf.addOutVar(repVar, constVar);
 		}
@@ -292,7 +292,7 @@ public class TransFormulaLR implements Serializable {
 	 * Returns some TermVariable from tvs that occurs neither as inVar nor
 	 * as outVar nor as auxVar. Returns null if no such TermVariable in tvs
 	 * exists.
-	 * For the variables that occur in the transition that uses this 
+	 * For the variables that occur in the transition that uses this
 	 * VarCollector the result should always be null.
 	 */
 	public TermVariable allAreInOutAux(final TermVariable[] tvs) {
@@ -322,7 +322,7 @@ public class TransFormulaLR implements Serializable {
 	}
 	
 	/**
-	 * @return the set of assigned/updated variables. A variable is updated by 
+	 * @return the set of assigned/updated variables. A variable is updated by
 	 * this transition if it occurs as outVar and
      * - it does not occur as inVar
 	 * - or the inVar is represented by a different TermVariable
@@ -335,15 +335,10 @@ public class TransFormulaLR implements Serializable {
 	 * @return whether the TermVariable tv occurs as inVar, outVar, or auxVar.
 	 */
 	private boolean isInOurAux(final TermVariable tv) {
-		if (minVarsReverseMapping.containsKey(tv)) {
+		if (minVarsReverseMapping.containsKey(tv) || moutVarsReverseMapping.containsKey(tv)) {
 			return true;
-		} else if (moutVarsReverseMapping.containsKey(tv)) {
-			return true;
-		} else if (mAuxVars.contains(tv)) {
-			return true;
-		} else {
-			return false;
 		}
+		return mAuxVars.contains(tv);
 	}
 	
 	@Override

@@ -113,7 +113,7 @@ public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE e
 		final StringBuilder sb = new StringBuilder();
 
 		sb.append(mName).append('(');
-		for (int i = 0; 0 < mInputParamEvaluators.size(); i++) {
+		for (int i = 0; i < mInputParamEvaluators.size(); i++) {
 			if (i > 0) {
 				sb.append(", ");
 			}

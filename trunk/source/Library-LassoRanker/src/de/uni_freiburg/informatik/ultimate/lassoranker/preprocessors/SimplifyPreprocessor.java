@@ -79,7 +79,7 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 	public TransFormulaLR process(final Script script, final TransFormulaLR tf) throws TermException {
 		final Term simplified;
 		if (mUseSMTInterpolForSimplification) {
-			final Settings settings = new SolverBuilder.Settings(false, "", 10 * 1000, null, false, null, null);
+			final Settings settings = new SolverBuilder.Settings(false, false, "", 10 * 1000, null, false, null, null);
 			final Script simplificationScript = SolverBuilder.buildScript(mServices, mStorage, settings);
 			simplificationScript.setLogic(Logics.QF_UFLIRA);
 			final TermTransferrer towards = new TermTransferrer(simplificationScript);

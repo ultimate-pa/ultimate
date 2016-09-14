@@ -1123,15 +1123,9 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 		 */
 		private boolean isSimilarHelper(final Partition partition, final LETTER letter,
 				final STATE lin, final STATE hier, final EquivalenceClass equivalenceClass) {
-			if (mDoubleDecker.isDoubleDecker(lin, hier)
-					&& (!checkExistenceOfSimilarTransition(
-							partition,
-							partition.succReturn(lin, hier, letter),
-							equivalenceClass))) {
-				return false;
-			}
-			
-			return true;
+			return !mDoubleDecker.isDoubleDecker(lin, hier)
+					|| (checkExistenceOfSimilarTransition(partition, partition.succReturn(lin, hier, letter),
+							equivalenceClass));
 		}
 		
 		/**

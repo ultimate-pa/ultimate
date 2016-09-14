@@ -111,7 +111,7 @@ public class IncrementalLogWithBenchmarkResults extends DefaultIncrementalLogfil
 					.append(mUltimateRunDefinition.getToolchain()).append(lineSeparator);
 			sb.append(indent).append("Test result: ").append(mThreeValuedResult).append(lineSeparator);
 			sb.append(indent).append("Message:     ").append(CoreUtil.flatten(mMessage, " # ")).append(lineSeparator);
-			if (mFlattenedBenchmarkResults.size() > 0) {
+			if (!mFlattenedBenchmarkResults.isEmpty()) {
 				sb.append(indent).append("Benchmarks:").append(lineSeparator);
 				for (final String s : mFlattenedBenchmarkResults) {
 					sb.append(indent).append(indent).append(s).append(lineSeparator);

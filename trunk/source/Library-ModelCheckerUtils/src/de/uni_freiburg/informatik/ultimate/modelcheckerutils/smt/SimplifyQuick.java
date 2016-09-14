@@ -58,7 +58,7 @@ public class SimplifyQuick {
 	public Term getSimplifiedTerm(final Term inputTerm) throws SMTLIBException {
 		
 		final Settings settings =
-				new SolverBuilder.Settings(false, "", TIMOUT_IN_SECONDS * 1000, null, false, null, null);
+				new SolverBuilder.Settings(false, false, "", TIMOUT_IN_SECONDS * 1000, null, false, null, null);
 		final Script simplificationScript = SolverBuilder.buildScript(mServices, mStorage, settings);
 		simplificationScript.setLogic(Logics.CORE);
 		final TermTransferrer towards = new TermTransferrerBooleanCore(simplificationScript);

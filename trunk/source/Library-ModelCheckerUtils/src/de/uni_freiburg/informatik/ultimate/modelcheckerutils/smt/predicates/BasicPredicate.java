@@ -127,10 +127,7 @@ public class BasicPredicate extends AbstractAnnotations implements IPredicate {
 			return false;
 		}
 		final BasicPredicate other = (BasicPredicate) obj;
-		if (mSerialNumber != other.mSerialNumber) {
-			return false;
-		}
-		return true;
+		return mSerialNumber == other.mSerialNumber;
 	}
 
 }

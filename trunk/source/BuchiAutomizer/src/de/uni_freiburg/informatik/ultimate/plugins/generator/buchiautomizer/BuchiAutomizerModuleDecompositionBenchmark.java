@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiAutomizer plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
@@ -150,7 +150,7 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 				maxNumberOfStatesOfModuleWithTrivialRankingFunction = entry.getValue();
 			}
 		}
-		if (mModuleSizeTrivial.size() > 0) {
+		if (!mModuleSizeTrivial.isEmpty()) {
 			sb.append(mModuleSizeTrivial.size());
 			sb.append(" modules have a trivial ranking function, the largest among these consists of ");
 			sb.append(maxNumberOfStatesOfModuleWithTrivialRankingFunction);

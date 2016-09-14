@@ -23,9 +23,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CDTPlugin plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CDTPlugin plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CDTPlugin plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -94,7 +94,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	/**
 	 * The identifier.
 	 */
-	public static String ID = "de.uni_freiburg.informatik.ultimate.cdt." + "codan.UltimateCChecker";
+	public static final String ID = "de.uni_freiburg.informatik.ultimate.cdt." + "codan.UltimateCChecker";
 
 	/**
 	 * In this map we store the listed files out of the directory.
@@ -125,7 +125,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	}
 
 	@Override
-	public void processAst(IASTTranslationUnit ast) {
+	public void processAst(final IASTTranslationUnit ast) {
 		// first, clear all old results
 		CDTResultStore.clearHackyResults();
 		CDTResultStore.clearResults();
@@ -199,7 +199,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	 * @param fileName
 	 *            the FileName
 	 */
-	private void reportProblems(String fileName) {
+	private void reportProblems(final String fileName) {
 		final ILogger log = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		// we obtain the results by UltimateServices
 		final Set<String> tools = mServices.getResultService().getResults().keySet();
@@ -223,7 +223,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		}
 	}
 
-	private void reportProblemWithoutLocation(IResult result, ILogger log) {
+	private void reportProblemWithoutLocation(final IResult result, final ILogger log) {
 		if (result instanceof ExceptionOrErrorResult) {
 			reportProblem(CCheckerDescriptor.GENERIC_ERROR_RESULT_ID, getFile(), 0, result.getShortDescription(),
 					CDTResultStore.addHackyResult(result));
@@ -233,7 +233,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		}
 	}
 
-	private void reportProblemWithLocation(IResultWithLocation result, ILogger log) {
+	private void reportProblemWithLocation(final IResultWithLocation result, final ILogger log) {
 		if (result.getLocation() == null) {
 			log.warn("Result type should have location, but has none: " + result.getShortDescription() + " ("
 					+ result.getClass() + ")");
@@ -282,7 +282,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		}
 	}
 
-	private void reportProblem(String descriptorId, IResult result, CACSLLocation loc) {
+	private void reportProblem(final String descriptorId, final IResult result, final CACSLLocation loc) {
 		if (loc instanceof CLocation) {
 			final IASTNode node = ((CLocation) loc).getNode();
 			if (node != null) {
@@ -294,7 +294,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 				CDTResultStore.addHackyResult(result));
 	}
 
-	private String severityToCheckerDescriptor(Severity severity) {
+	private String severityToCheckerDescriptor(final Severity severity) {
 		if (severity.equals(Severity.INFO)) {
 			return CCheckerDescriptor.GENERIC_INFO_RESULT_ID;
 		} else if (severity.equals(Severity.WARNING)) {
@@ -307,7 +307,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	}
 
 	@Override
-	public void initPreferences(IProblemWorkingCopy problem) {
+	public void initPreferences(final IProblemWorkingCopy problem) {
 		super.initPreferences(problem);
 		// per default we set the Launch Mode to "on demand"
 		getLaunchModePreference(problem).setRunningMode(CheckerLaunchMode.RUN_AS_YOU_TYPE, false);
@@ -340,12 +340,12 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		}
 	}
 
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		assert services != null;
 		mServices = services;
 	}
 
-	public void setStorage(IToolchainStorage storage) {
+	public void setStorage(final IToolchainStorage storage) {
 		sStorage = storage;
 	}
 

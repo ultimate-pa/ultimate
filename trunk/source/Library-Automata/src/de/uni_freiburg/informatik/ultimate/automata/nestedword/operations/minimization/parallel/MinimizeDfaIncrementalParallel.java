@@ -918,7 +918,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 							+ t.toString();
 					mMap.remove(t);
 				}
-				assert (mMap.size() == 0) : "There are elements left in the map after cleaning.";
+				assert (mMap.isEmpty()) : "There are elements left in the map after cleaning.";
 			} else {
 				mIsInitialized = true;
 				mMap = new HashMap<Tuple, ListNode>(mHashCapNoTuples);

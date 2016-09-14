@@ -145,7 +145,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		} else {
 			solverCommand = "yices-smt2 --incremental";
 		}
-		return new Settings(true,
+		final boolean fakeNonIncrementalSolver = false;
+		return new Settings(fakeNonIncrementalSolver , true,
 				solverCommand, -1, null,
 				dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
 	}

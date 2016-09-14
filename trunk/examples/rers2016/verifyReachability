@@ -23,7 +23,7 @@ fi
 CFILEMOD="$(basename "$CFILE" .c)mod.c"
 PROGRAM="./$(basename "$CFILEMOD" .c)"
 FIND='extern void __VERIFIER_error(int);'
-REPLACE='void __VERIFIER_error(int e) { printf("ERROR %d\\n", e); fflush(stdout); exit(0); }'
+REPLACE='void __VERIFIER_error(int e) { printf("ERROR %d\n", e); fflush(stdout); exit(0); }'
 sed "s/$FIND/$REPLACE/" -- "$CFILE" > "$CFILEMOD"
 gcc -o "$PROGRAM" "$CFILEMOD" || exit 1
 

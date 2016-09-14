@@ -517,7 +517,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		private void checkType(final VariableDeclarationAST vd) throws InterpreterException {
 			final List<AtsASTNode> children = vd.getOutgoingNodes();
 			final ILocation errorLocation = vd.getLocation();
-			if ((children.size() != 0) && (children.size() != 1)) {
+			if (children.size() > 1) {
 				final String message = "Variabledeclaration can have at most one operand. (the value to assign)";
 				final String longDescription = message;
 				throw new InterpreterException(errorLocation, longDescription);
@@ -526,7 +526,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				mLocalVariables.put(id, vd.getExpectingType());
 			}
 			// if the variable doesn't get assigned a value, then return.
-			if (children.size() == 0) {
+			if (children.isEmpty()) {
 				return;
 			}
 			

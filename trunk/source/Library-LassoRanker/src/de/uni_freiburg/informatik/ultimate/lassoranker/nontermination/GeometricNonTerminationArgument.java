@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.nontermination;
@@ -105,7 +105,7 @@ public class GeometricNonTerminationArgument extends NonTerminationArgument impl
 		assert(nus != null);
 		mNus = nus;
 		assert mGEVs.size() == lambdas.size();
-		assert mGEVs.size() == nus.size() + 1 || mGEVs.size() == 0;
+		assert mGEVs.size() == nus.size() + 1 || mGEVs.isEmpty();
 	}
 	
 	/**

@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class LTL2autObserver implements IUnmanagedObserver {
-	
+
 	private static final String LTL_MARKER = "#LTLProperty:";
 	private static final String IRS_MARKER = "#IRS:";
 
@@ -133,7 +133,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		rtr = rtr.replaceAll("\\bg\\b", " [] ");
 		rtr = rtr.replaceAll("\\bx\\b", " X ");
 		rtr = rtr.replaceAll("\\bu\\b", " U ");
-		rtr = rtr.replaceAll("\\br\\b", " R ");
+		rtr = rtr.replaceAll("\\br\\b", " V ");
 		rtr = rtr.replaceAll("<==>", "<->");
 		rtr = rtr.replaceAll("==>", "->");
 		rtr = rtr.replaceAll("\\s+", " ");

@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
@@ -76,7 +76,7 @@ public class DeclarationInformation {
 	private final StorageClass mStorageClass;
 	private final String mProcedure;
 
-	public DeclarationInformation(StorageClass storageClass, String procedure) {
+	public DeclarationInformation(final StorageClass storageClass, final String procedure) {
 		assert (isValid(storageClass, procedure));
 		mStorageClass = storageClass;
 		mProcedure = procedure;
@@ -94,7 +94,7 @@ public class DeclarationInformation {
 	 * A DeclarationInformation is valid, if the procedure is non-null exactly
 	 * if the StorageClass corresponds to a procedure.
 	 */
-	private boolean isValid(StorageClass storageClass, String procedure) {
+	private boolean isValid(final StorageClass storageClass, final String procedure) {
 		final boolean result;
 		switch (storageClass) {
 		case IMPLEMENTATION:
@@ -135,7 +135,7 @@ public class DeclarationInformation {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -153,9 +153,6 @@ public class DeclarationInformation {
 		} else if (!mProcedure.equals(other.mProcedure)) {
 			return false;
 		}
-		if (mStorageClass != other.mStorageClass) {
-			return false;
-		}
-		return true;
+		return mStorageClass == other.mStorageClass;
 	}
 }

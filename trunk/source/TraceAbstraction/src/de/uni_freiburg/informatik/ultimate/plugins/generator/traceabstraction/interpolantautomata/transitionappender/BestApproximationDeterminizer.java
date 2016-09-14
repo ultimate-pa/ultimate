@@ -349,10 +349,7 @@ public class BestApproximationDeterminizer implements IStateDeterminizer<CodeBlo
 		final IPredicate succPs = succ;
 		final Validity sat = mHoareTriplechecker.checkCall(presentPs, symbol, succPs);
 		mAnswerCallSolver++;
-		if (sat == Validity.VALID) {
-			return true;
-		}
-		return false;
+		return sat == Validity.VALID;
 	}
 	
 	/**

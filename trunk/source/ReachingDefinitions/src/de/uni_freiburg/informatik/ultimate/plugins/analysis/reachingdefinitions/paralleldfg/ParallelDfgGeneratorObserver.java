@@ -36,7 +36,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	private final Map<String, Integer> mStmtsPerThread;
 	private final Map<String, Integer> mLocsPerThread;
 
-	public ParallelDfgGeneratorObserver(ILogger logger, IUltimateServiceProvider services) {
+	public ParallelDfgGeneratorObserver(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
 		mServices = services;
 		mDataflowAnalysisResult = null;
@@ -51,7 +51,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 
 
 	@Override
-	public boolean process(IElement root) throws Throwable {
+	public boolean process(final IElement root) throws Throwable {
 		
 		// rootNode is the dummy note with edges leading to every procedure entry point
 		final RootNode rootNode = (RootNode) root;
@@ -118,7 +118,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	}
 
 
-	private IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, ProgramPoint> obtainDataflowAnalysisResult(RootNode r) {
+	private IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, ProgramPoint> obtainDataflowAnalysisResult(final RootNode r) {
 		final List<CodeBlock> edges = new ArrayList<>();
 		r.getRootAnnot().getEntryNodes();
 		for (final Entry<String, ProgramPoint> en : r.getRootAnnot().getEntryNodes().entrySet()) {
@@ -131,7 +131,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	
 	
 	// Algorithm
-	private void collectDFGEdges(List<ParallelDataflowgraph<RCFGEdge>> starts){
+	private void collectDFGEdges(final List<ParallelDataflowgraph<RCFGEdge>> starts){
 		// compute the edges
 		final List<ParallelDataflowgraph<RCFGEdge>> Q = starts;
 		final Set<ParallelDataflowgraph<RCFGEdge>> visited = new HashSet<ParallelDataflowgraph<RCFGEdge>>();
@@ -142,7 +142,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 			// get the use of the Reaching Definition
 			final CodeBlock cb = (CodeBlock) node.getNodeLabel();
 			// better would be .entrySet();
-			final Set<IProgramVar> use = cb.getTransitionFormula().getInVars().keySet(); 
+			final Set<IProgramVar> use = cb.getTransitionFormula().getInVars().keySet();
 			mLogger.debug("Explain " + use.size() + " variable(s) for the statement " + cb.toString());
 			for (final IProgramVar x: use){
 				mLogger.debug("   explain the variable " + x.toString());
@@ -166,7 +166,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 							}
 						}
 					}
-					if (sourceInGraph == false){
+					if (!sourceInGraph){
 						Q.add(s);
 						visited.add(s);
 						visitedStmts.add(s.getNodeLabel());
@@ -179,16 +179,16 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 					mLogger.debug("       Added an edge " + node.toString() + "->" + x +" "+ s.toString());
 					mEdgeCount++;
 				}
-			}	
+			}
 		}
 	}
 
-	private List<ParallelDataflowgraph<RCFGEdge>> explain(IProgramVar var, ParallelDataflowgraph<RCFGEdge> node){
+	private List<ParallelDataflowgraph<RCFGEdge>> explain(final IProgramVar var, final ParallelDataflowgraph<RCFGEdge> node){
 		// TODO handle the special case init in the Reaching Definition
 		// init is only inserted as an edge, if init is in all the Reaching Definitions of threads
 		// otherwise there is a thread which overwrites the variable and init does not reach this point.
 		// idea: init is not in the RD, but can be determined by nowrites
-		// make a special init node a member var of this class and check in 
+		// make a special init node a member var of this class and check in
 		final List<ParallelDataflowgraph<RCFGEdge>> sources = new ArrayList<ParallelDataflowgraph<RCFGEdge>>();
 		final Map< String, Set<ProgramPoint>> nowriteLocs = computeLocationSets(var, node.getLocations());
 		Boolean initInRD = true;
@@ -249,14 +249,14 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	}
 	
 	
-	private Map< String, Set<ProgramPoint>> computeLocationSets(IProgramVar var, Map< String, Set<ProgramPoint>> locations){
+	private Map< String, Set<ProgramPoint>> computeLocationSets(final IProgramVar var, final Map< String, Set<ProgramPoint>> locations){
 		final Map< String, Set<ProgramPoint>> nowriteLocs = new HashMap< String, Set<ProgramPoint>>();
 		for (final Entry<String, Set<ProgramPoint>> entry : locations.entrySet()){
 			final Set<ProgramPoint> L = new HashSet<ProgramPoint>();
 			// L always includes the old L set.
 			L.addAll(entry.getValue());
 			// compute with nowrites
-			if (var.isGlobal()== false && var.getProcedure() != entry.getKey()){
+			if (!var.isGlobal() && var.getProcedure() != entry.getKey()){
 				// if var is local and not in the procedure, continue to the next procedure
 				continue;
 			}
@@ -282,7 +282,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	
 	
 	
-	private Set<RCFGNode> nodesInGraph(RCFGNode root){
+	private Set<RCFGNode> nodesInGraph(final RCFGNode root){
 		// Called for every Thread, where root is the entry point of the thread.
 		// Returns a list of all the nodes in the graph
 		// memorize, which elements have been visited
@@ -316,7 +316,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	}
 	
 	
-	private List<List<RCFGNode>> getEndErrorLocations(List<RCFGNode> nodes){
+	private List<List<RCFGNode>> getEndErrorLocations(final List<RCFGNode> nodes){
 		// getAsserts and getEndLocations in one function
 		// first return: asserts, second return: end locations
 		// given a list of nodes, all asserts and errors are returned
@@ -341,7 +341,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	
 	
 	
-	private List<ParallelDataflowgraph<RCFGEdge>> computeStartLocs(List<RCFGNode> assertLocs, List<RCFGNode> endLocs){
+	private List<ParallelDataflowgraph<RCFGEdge>> computeStartLocs(final List<RCFGNode> assertLocs, final List<RCFGNode> endLocs){
 		final List<ParallelDataflowgraph<RCFGEdge>> starts = new ArrayList<ParallelDataflowgraph<RCFGEdge>>();
 		final Map< String, Set<ProgramPoint>> locations = new HashMap< String, Set<ProgramPoint>>();
 		// compute all mappings procedure -> set of all end locations
@@ -378,7 +378,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	}
 	
 	
-	private void computeInitNode(RootNode r){
+	private void computeInitNode(final RootNode r){
 		final Map< String, Set<ProgramPoint>> locations = new HashMap< String, Set<ProgramPoint>>();
 		RCFGEdge stmt = null;
 		for (final RCFGEdge n :r.getOutgoingEdges()){

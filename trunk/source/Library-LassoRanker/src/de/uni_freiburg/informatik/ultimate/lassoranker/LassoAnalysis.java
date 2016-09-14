@@ -417,7 +417,7 @@ public class LassoAnalysis {
 		mLogger.info("Checking for nontermination...");
 
 		final List<GeometricNonTerminationArgument> ntas = new ArrayList<GeometricNonTerminationArgument>(mlassos.size());
-		if (mlassos.size() == 0) {
+		if (mlassos.isEmpty()) {
 			mlassos.add(new Lasso(LinearTransition.getTranstionTrue(), LinearTransition.getTranstionTrue()));
 		}
 		for (final Lasso lasso : mlassos) {
@@ -454,7 +454,7 @@ public class LassoAnalysis {
 		}
 
 		// Join nontermination arguments
-		assert ntas.size() > 0;
+		assert !ntas.isEmpty();
 		GeometricNonTerminationArgument nta = ntas.get(0);
 		for (int i = 1; i < ntas.size(); ++i) {
 			nta = nta.join(ntas.get(i));
@@ -553,7 +553,7 @@ public class LassoAnalysis {
 		public float computeQuotiontOfLastTwoEntries(final List<Integer> list, final int initialValue) {
 			int lastEntry;
 			int secondLastEntry;
-			if (list.size() == 0) {
+			if (list.isEmpty()) {
 				throw new IllegalArgumentException();
 			} else {
 				lastEntry = list.get(list.size() - 1);

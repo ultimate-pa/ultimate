@@ -810,10 +810,7 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		}
 		
 		boolean containsPair(final STATE source, final STATE target) {
-			if (mBridgeInOrder.containsKey(source) && mBridgeInOrder.get(source).containsKey(target)) {
-				return true;
-			}
-			return false;
+			return mBridgeInOrder.containsKey(source) && mBridgeInOrder.get(source).containsKey(target);
 		}
 		
 		@Override

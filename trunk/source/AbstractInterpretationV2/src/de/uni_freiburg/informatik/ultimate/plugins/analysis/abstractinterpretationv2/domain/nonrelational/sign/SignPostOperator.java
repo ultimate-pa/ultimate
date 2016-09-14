@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -57,7 +57,7 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 	/**
 	 * Default constructor.
 	 */
-	protected SignPostOperator(ILogger logger, SignDomainStatementProcessor stmtProcessor) {
+	protected SignPostOperator(final ILogger logger, final SignDomainStatementProcessor stmtProcessor) {
 		mStatementExtractor = new RcfgStatementExtractor();
 		mStatementProcessor = stmtProcessor;
 		mLogger = logger;
@@ -86,7 +86,7 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 			final List<SignDomainState> afterProcessStates = new ArrayList<>();
 			for (final SignDomainState currentState : currentStates) {
 				final List<SignDomainState> processed = mStatementProcessor.process(currentState, stmt);
-				assert processed.size() > 0;
+				assert !processed.isEmpty();
 				afterProcessStates.addAll(processed);
 			}
 

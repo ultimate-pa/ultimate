@@ -2262,23 +2262,23 @@ public class NestedWordAutomaton<LETTER, STATE>
 	 */
 	@Override
 	public boolean isTotal() {
-		if (getInitialStates().size() < 1) {
+		if (getInitialStates().isEmpty()) {
 			return false;
 		}
 		for (final STATE state : this.getStates()) {
 			for (final LETTER symbol : getInternalAlphabet()) {
-				if (succInternal(state, symbol).size() < 1) {
+				if (succInternal(state, symbol).isEmpty()) {
 					return false;
 				}
 			}
 			for (final LETTER symbol : getCallAlphabet()) {
-				if (succCall(state, symbol).size() < 1) {
+				if (succCall(state, symbol).isEmpty()) {
 					return false;
 				}
 			}
 			for (final LETTER symbol : getReturnAlphabet()) {
 				for (final STATE hier : getStates()) {
-					if (succReturn(state, hier, symbol).size() < 1) {
+					if (succReturn(state, hier, symbol).isEmpty()) {
 						return false;
 					}
 				}

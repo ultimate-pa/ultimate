@@ -1034,7 +1034,7 @@ public final class SmtUtils {
 	 */
 	public static Term quantifier(final Script script, final int quantifier,
 			final Collection<TermVariable> vars, final Term body) {
-		if (vars.size() == 0) {
+		if (vars.isEmpty()) {
 			return body;
 		}
 		final Collection<TermVariable> resultVars = filterToVarsThatOccurFreelyInTerm(vars, body);

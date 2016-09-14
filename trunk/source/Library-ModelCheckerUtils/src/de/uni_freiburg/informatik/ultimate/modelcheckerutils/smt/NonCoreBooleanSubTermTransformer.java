@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
 /**
- * Transform non-CoreBoolean subterms of a term. Here, we call a term 
+ * Transform non-CoreBoolean subterms of a term. Here, we call a term
  * non-CoreBoolean if it is not an ApplicationTerm whose connective is defined
  * by the core theory and whose parameters dot not all have sort Bool.
  * 
@@ -42,7 +42,7 @@ public abstract class NonCoreBooleanSubTermTransformer {
 	
 	private NonCoreBooleanSubtermTransformerHelper mTransformerHelper;
 	
-	public Term transform(Term term) {
+	public Term transform(final Term term) {
 		if (!term.getSort().getName().equals("Bool")) {
 			throw new IllegalArgumentException("Input term of sort Bool");
 		}
@@ -51,7 +51,7 @@ public abstract class NonCoreBooleanSubTermTransformer {
 		return result;
 	}
 
-	private static boolean hasBooleanParams(Term[] parameters) {
+	private static boolean hasBooleanParams(final Term[] parameters) {
 		for (final Term term : parameters) {
 			if (!term.getSort().getName().equals("Bool")) {
 				return false;
@@ -60,7 +60,7 @@ public abstract class NonCoreBooleanSubTermTransformer {
 		return true;
 	}
 
-	private static boolean isCoreBooleanConnective(String fun) {
+	private static boolean isCoreBooleanConnective(final String fun) {
 		if (fun.equals("=")) {
 			return true;
 		} else if (fun.equals("not")) {
@@ -75,16 +75,13 @@ public abstract class NonCoreBooleanSubTermTransformer {
 			return true;
 		} else if (fun.equals("distinct")) {
 			return true;
-		} else if (fun.equals("ite")) {
-			return true;
-		} else {
-			return false;
 		}
+		return fun.equals("ite");
 	}
 	
-	public static boolean isCoreBoolean(ApplicationTerm appTerm) {
+	public static boolean isCoreBoolean(final ApplicationTerm appTerm) {
 		final String funName = appTerm.getFunction().getName();
-		return isCoreBooleanConnective(funName) && 
+		return isCoreBooleanConnective(funName) &&
 				hasBooleanParams(appTerm.getParameters());
 
 	}
@@ -93,7 +90,7 @@ public abstract class NonCoreBooleanSubTermTransformer {
 	private class NonCoreBooleanSubtermTransformerHelper extends TermTransformer {
 
 		@Override
-		protected void convert(Term term) {
+		protected void convert(final Term term) {
 			assert term.getSort().getName().equals("Bool") : "not Bool";
 			if (term instanceof ApplicationTerm) {
 				final ApplicationTerm appTerm = (ApplicationTerm) term;

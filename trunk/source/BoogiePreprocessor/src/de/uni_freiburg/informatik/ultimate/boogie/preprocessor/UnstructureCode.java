@@ -22,9 +22,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
@@ -102,11 +102,11 @@ public class UnstructureCode extends BaseObserver {
 	Stack<BreakInfo> mBreakStack;
 	private final BoogiePreprocessorBacktranslator mTranslator;
 
-	protected UnstructureCode(BoogiePreprocessorBacktranslator translator) {
+	protected UnstructureCode(final BoogiePreprocessorBacktranslator translator) {
 		mTranslator = translator;
 	}
 
-	public BreakInfo findLabel(String label) {
+	public BreakInfo findLabel(final String label) {
 		final ListIterator<BreakInfo> it = mBreakStack.listIterator(mBreakStack.size());
 		while (it.hasPrevious()) {
 			final BreakInfo bi = it.previous();
@@ -122,7 +122,7 @@ public class UnstructureCode extends BaseObserver {
 	 * to the unit node and then searches for all procedures and runs unstructureBody on it.
 	 */
 	@Override
-	public boolean process(IElement root) {
+	public boolean process(final IElement root) {
 		if (root instanceof Unit) {
 			final Unit unit = (Unit) root;
 			for (final Declaration decl : unit.getDeclarations()) {
@@ -141,7 +141,7 @@ public class UnstructureCode extends BaseObserver {
 	/**
 	 * The main function that converts a body of a procedure into unstructured code.
 	 */
-	private void unstructureBody(Procedure proc) {
+	private void unstructureBody(final Procedure proc) {
 		final Body body = proc.getBody();
 		/* Initialize member variables */
 		mFlatStatements = new LinkedList<Statement>();
@@ -164,12 +164,12 @@ public class UnstructureCode extends BaseObserver {
 		body.setBlock(mFlatStatements.toArray(new Statement[mFlatStatements.size()]));
 	}
 
-	private void addLabel(Label lab) {
+	private void addLabel(final Label lab) {
 		/*
 		 * Check if we are inside a block and thus need to add a goto to this block
 		 */
 		// TODO Christian: add annotations? how?
-		if (mReachable && mFlatStatements.size() > 0 && !(mFlatStatements.getLast() instanceof Label)) {
+		if (mReachable && !mFlatStatements.isEmpty() && !(mFlatStatements.getLast() instanceof Label)) {
 			mFlatStatements.add(new GotoStatement(lab.getLocation(), new String[] { lab.getName() }));
 		}
 		mFlatStatements.add(lab);
@@ -182,7 +182,7 @@ public class UnstructureCode extends BaseObserver {
 	 * @param block
 	 *            The sequence of statements in this block.
 	 */
-	private void unstructureBlock(Statement[] block) {
+	private void unstructureBlock(final Statement[] block) {
 		/*
 		 * The currentBI contains all labels of the current statement, and is used to generate appropriate break
 		 * destination labels.
@@ -222,7 +222,7 @@ public class UnstructureCode extends BaseObserver {
 		}
 	}
 
-	private Expression getLHSExpression(LeftHandSide lhs) {
+	private Expression getLHSExpression(final LeftHandSide lhs) {
 		Expression expr;
 		if (lhs instanceof ArrayLHS) {
 			final ArrayLHS arrlhs = (ArrayLHS) lhs;

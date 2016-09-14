@@ -75,38 +75,40 @@ import java.util.Date;
 public class PatternOptionBuilder {
 	/** String class */
 	public static final Class<String> STRING_VALUE = String.class;
-
+	
 	/** Object class */
 	public static final Class<Object> OBJECT_VALUE = Object.class;
-
+	
 	/** Number class */
 	public static final Class<Number> NUMBER_VALUE = Number.class;
-
+	
 	/** Date class */
 	public static final Class<Date> DATE_VALUE = Date.class;
-
+	
 	/** Class class */
 	public static final Class<?> CLASS_VALUE = Class.class;
-
+	
 	/// can we do this one??
 	// is meant to check that the file exists, else it errors.
 	// ie) it's for reading not writing.
-
+	
 	/** FileInputStream class */
 	public static final Class<FileInputStream> EXISTING_FILE_VALUE = FileInputStream.class;
-
+	
 	/** File class */
 	public static final Class<File> FILE_VALUE = File.class;
-
+	
 	/** File array class */
 	public static final Class<File[]> FILES_VALUE = File[].class;
-
+	
 	/** URL class */
 	public static final Class<URL> URL_VALUE = URL.class;
-
+	
 	/** Boolean class */
 	public static final Class<Boolean> BOOLEAN_VALUE = Boolean.class;
-
+	
+	public static final Class<?> INTEGER_VALUE = Integer.class;
+	
 	/**
 	 * Retrieve the class that <code>ch</code> represents.
 	 *
@@ -135,10 +137,10 @@ public class PatternOptionBuilder {
 		case '/':
 			return PatternOptionBuilder.URL_VALUE;
 		}
-
+		
 		return null;
 	}
-
+	
 	/**
 	 * Returns whether <code>ch</code> is a value code, i.e. whether it represents a class in a pattern.
 	 *
@@ -150,7 +152,7 @@ public class PatternOptionBuilder {
 		return ch == '@' || ch == ':' || ch == '%' || ch == '+' || ch == '#' || ch == '<' || ch == '>' || ch == '*'
 				|| ch == '/' || ch == '!';
 	}
-
+	
 	/**
 	 * Returns the {@link Options} instance represented by <code>pattern</code>.
 	 *
@@ -162,26 +164,26 @@ public class PatternOptionBuilder {
 		char opt = ' ';
 		boolean required = false;
 		Class<?> type = null;
-
+		
 		final Options options = new Options();
-
+		
 		for (int i = 0; i < pattern.length(); i++) {
 			final char ch = pattern.charAt(i);
-
+			
 			// a value code comes after an option and specifies
 			// details about it
 			if (!isValueCode(ch)) {
 				if (opt != ' ') {
 					final Option option = Option.builder(String.valueOf(opt)).hasArg(type != null).required(required)
 							.type(type).build();
-
+					
 					// we have a previous one to deal with
 					options.addOption(option);
 					required = false;
 					type = null;
 					opt = ' ';
 				}
-
+				
 				opt = ch;
 			} else if (ch == '!') {
 				required = true;
@@ -189,15 +191,15 @@ public class PatternOptionBuilder {
 				type = (Class<?>) getValueClass(ch);
 			}
 		}
-
+		
 		if (opt != ' ') {
 			final Option option =
 					Option.builder(String.valueOf(opt)).hasArg(type != null).required(required).type(type).build();
-
+			
 			// we have a final one to deal with
 			options.addOption(option);
 		}
-
+		
 		return options;
 	}
 }

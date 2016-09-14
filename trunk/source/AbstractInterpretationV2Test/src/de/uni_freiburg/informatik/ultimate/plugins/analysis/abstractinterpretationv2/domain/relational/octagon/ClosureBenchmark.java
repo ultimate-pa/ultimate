@@ -264,7 +264,7 @@ public class ClosureBenchmark {
 
 	// map (size in #variables --> #matrices)
 	public int[] histVariablesPerMatrix() {
-		if (mMatrixStatistics.size() == 0) {
+		if (mMatrixStatistics.isEmpty()) {
 			return new int[0];
 		}
 		final int[] sizes = mMatrixStatistics.stream().mapToInt(ms -> ms.variables).toArray();

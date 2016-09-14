@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult
  */
 public class VariableAssignment extends ViewPart implements ISelectionListener {
 
-	public static String ID = "de.uni_freiburg.informatik.ultimate.cdt.VariableAssignment";
+	public static final String ID = "de.uni_freiburg.informatik.ultimate.cdt.VariableAssignment";
 
 	/**
 	 * The underlying JFace component

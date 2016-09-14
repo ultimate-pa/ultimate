@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE DSInvariantASTTransformer plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE DSInvariantASTTransformer plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE DSInvariantASTTransformer plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.DSITransformer;
@@ -214,7 +214,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
 		mLogger.info("Initializing DSITransformer...");
 		mProcedures = new HashMap<String, ProcedureContainer>();
 
@@ -268,7 +268,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	 * Called by the Ultimate Framework. Receives the AST
 	 */
 	@Override
-	public boolean process(IElement root) {
+	public boolean process(final IElement root) {
 		mLogger.info("Scanning AST...");
 		if (root instanceof Unit) {
 
@@ -348,7 +348,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	}
 
 	@Override
-	protected Expression processExpression(Expression expr) {
+	protected Expression processExpression(final Expression expr) {
 		if (mProcessingProcedure) {
 			if (expr instanceof IdentifierExpression) {
 				final IdentifierExpression e = (IdentifierExpression) expr;
@@ -373,7 +373,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	}
 
 	@Override
-	protected LeftHandSide processLeftHandSide(LeftHandSide lhs) {
+	protected LeftHandSide processLeftHandSide(final LeftHandSide lhs) {
 		if (!mProcessingProcedure || lhs instanceof ArrayLHS
 				|| !procLocals.containsKey(((VariableLHS) lhs).getIdentifier())) {
 			return super.processLeftHandSide(lhs);
@@ -398,9 +398,9 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	 *            A collection of Statements containing the processed procedure body
 	 * @return an integer representing the type of procedure identified
 	 */
-	private int processProcedure(ProcedureContainer p,
-			Collection<VariableDeclaration> vardecls,
-			Set<VariableLHS> modifies, Collection<Statement> statements) {
+	private int processProcedure(final ProcedureContainer p,
+			final Collection<VariableDeclaration> vardecls,
+			final Set<VariableLHS> modifies, final Collection<Statement> statements) {
 
 		procedureIDPrefix = p.getIdentifier() + "_";
 		mProcExitLabel = mStructureProcID + "$" + procedureIDPrefix + "exit";
@@ -497,7 +497,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 					ids.add(v);
 				}
 			}
-			if (ids.size() > 0) {
+			if (!ids.isEmpty()) {
 				newList = new VarList(null,
 						ids.toArray(new String[ids.size()]), l.getType());
 				newLists.add(newList);
@@ -506,7 +506,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 
 		final ILocation loccationOfP = new BoogieLocation(p.getFilename(),
 				p.getLineNr(), -1, -1, -1, null);
-		if (newLists.size() > 0) {
+		if (!newLists.isEmpty()) {
 			vardecls.add(new VariableDeclaration(loccationOfP,
 					new NamedAttribute[0], newLists
 							.toArray(new VarList[newLists.size()])));
@@ -518,7 +518,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		final List<Statement> postConditions = new ArrayList<Statement>();
 
 		// Havoc the parameters (except for the structure)
-		if (parms.size() > 0) {
+		if (!parms.isEmpty()) {
 			final VariableLHS[] parmsArray = new VariableLHS[parms.size()];
 			int i = 0;
 			for (final String id : parms) {
@@ -770,7 +770,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 				BinaryExpression.Operator.LOGICAND, closedExp, ownedExp);
 
 		if (!mAllFunctions) {
-			if (initLabels.size() > 0) { // Add the initializer procedures
+			if (!initLabels.isEmpty()) { // Add the initializer procedures
 				final GotoStatement initGoto = new GotoStatement(new BoogieLocation(
 						"", -3, -3, -3, -3, null),
 						initLabels.toArray(new String[initLabels.size()]));
@@ -814,7 +814,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 				procVars.toArray(new VariableDeclaration[procVars.size()]),
 				procStatements.toArray(new Statement[statements.size()]));
 		// Create the Modifies clause
-		if (procModifies.size() > 0) {
+		if (!procModifies.isEmpty()) {
 			procSpecs.add(new ModifiesSpecification(null, false, procModifies
 					.toArray(new VariableLHS[procModifies.size()])));
 		}
@@ -827,7 +827,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	}
 
 	@Override
-	protected Statement processStatement(Statement statement) {
+	protected Statement processStatement(final Statement statement) {
 		if (mProcessingProcedure) {
 			Statement newStatement = null;
 			if (statement instanceof ReturnStatement) {
@@ -869,7 +869,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	}
 
 	@Override
-	protected VarList processVarList(VarList vl) {
+	protected VarList processVarList(final VarList vl) {
 		if (mProcessingProcedure) {
 			boolean changed = false;
 			final ASTType type = vl.getType();
@@ -960,7 +960,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		private final Set<String> parms;
 		private String theParm;
 
-		public PtrExpressionFinder(String type, Set<String> parms) {
+		public PtrExpressionFinder(final String type, final Set<String> parms) {
 			this.type = type;
 			this.parms = parms;
 		}
@@ -973,7 +973,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		}
 
 		@Override
-		protected Expression processExpression(Expression expr) {
+		protected Expression processExpression(final Expression expr) {
 			if (!found) {
 				// We are looking for $ptr(type, some param)
 				if (expr instanceof FunctionApplication) {
@@ -1006,7 +1006,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		 *            The expression in which to search
 		 * @return <code>true</code> if the pattern was found, <code>false</code> otherwise
 		 */
-		public boolean search(Expression expr) {
+		public boolean search(final Expression expr) {
 			found = false;
 			processExpression(expr);
 			return found;

@@ -339,9 +339,6 @@ class Clause<V> {
 		if (!Arrays.equals(mNegativeAtoms, other.mNegativeAtoms)) {
 			return false;
 		}
-		if (!Arrays.equals(mPositiveAtoms, other.mPositiveAtoms)) {
-			return false;
-		}
-		return true;
+		return Arrays.equals(mPositiveAtoms, other.mPositiveAtoms);
 	}
 }

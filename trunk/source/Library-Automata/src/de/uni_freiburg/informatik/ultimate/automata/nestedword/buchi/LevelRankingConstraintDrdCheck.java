@@ -110,6 +110,7 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 			return false;
 		}
 		for (final Entry<StateWithRankInfo<STATE>, HashMap<STATE, Integer>> entry : mLevelRanking.entrySet()) {
+			// TODO Christian 2016-09-13: For clarity, this should not be a loop because it is executed at most once.
 			for (final STATE upState : entry.getValue().keySet()) {
 				final Set<Integer> predRanksOfNonAccepting =
 						mRanksOfPredecessorsNonAcceptingPredecessors.projectToTrd(entry.getKey(), upState);

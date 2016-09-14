@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ASTBuilder plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ASTBuilder plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ASTBuilder plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.astbuilder;
@@ -44,7 +44,7 @@ public class ACSLEmit extends Emit {
 	private static final String sTransformerName = "ACSLTransformer";
 	private static final String[] sOthers = new String[] { sVisitorName, sTransformerName };
 
-	private boolean isOther(Node node) {
+	private boolean isOther(final Node node) {
 		for (final String s : sOthers) {
 			if (node.getName().equals(s)) {
 				return true;
@@ -54,7 +54,7 @@ public class ACSLEmit extends Emit {
 	}
 
 	@Override
-	public void emitClassDeclaration(Node node) throws IOException {
+	public void emitClassDeclaration(final Node node) throws IOException {
 		final StringBuilder classDecl = new StringBuilder();
 		classDecl.append("public ");
 		if (node.isAbstract()) {
@@ -79,7 +79,7 @@ public class ACSLEmit extends Emit {
 	}
 
 	@Override
-	public void emitPreamble(Node node) throws IOException {
+	public void emitPreamble(final Node node) throws IOException {
 		super.emitPreamble(node);
 		if (!isOther(node)) {
 			mWriter.println("import java.util.List;");
@@ -97,7 +97,7 @@ public class ACSLEmit extends Emit {
 	}
 
 	@Override
-	public void emitNodeHook(Node node) throws IOException {
+	public void emitNodeHook(final Node node) throws IOException {
 		if (node.name.equals(sVisitorName)) {
 			for (final Node n : mGrammar.getNodeTable().values()) {
 				mWriter.println();
@@ -141,7 +141,7 @@ public class ACSLEmit extends Emit {
 		}
 	}
 
-	private void writeTransformerAcceptMethod(Node node, List<Parameter> allACSLParameters) {
+	private void writeTransformerAcceptMethod(final Node node, final List<Parameter> allACSLParameters) {
 		// accept method for transformer
 		mWriter.println();
 		mWriter.println("    public " + node.name + " accept(" + sTransformerName + " visitor) {");
@@ -209,19 +209,16 @@ public class ACSLEmit extends Emit {
 		mWriter.println("    }");
 	}
 
-	private boolean isArrayType(Parameter p) {
-		if (p.getType().contains("[]")) {
-			return true;
-		}
-		return false;
+	private boolean isArrayType(final Parameter p) {
+		return p.getType().contains("[]");
 	}
 
-	private String getBaseType(Parameter p) {
+	private String getBaseType(final Parameter p) {
 		final String typeStr = p.getType().replaceAll("\\[\\]", "");
 		return typeStr;
 	}
 
-	private String getNewCallParams(Node node) {
+	private String getNewCallParams(final Node node) {
 		if (node == null) {
 			return "";
 		}
@@ -251,7 +248,7 @@ public class ACSLEmit extends Emit {
 
 	}
 
-	private void writeVisitorAcceptMethod(Node node, List<Parameter> allACSLParameters) {
+	private void writeVisitorAcceptMethod(final Node node, final List<Parameter> allACSLParameters) {
 		// accept method for visitor
 		mWriter.println();
 		mWriter.println("    public void accept(" + sVisitorName + " visitor) {");
@@ -314,7 +311,7 @@ public class ACSLEmit extends Emit {
 		mWriter.println("    }");
 	}
 
-	private List<Parameter> getAllACSLParameters(Node node) {
+	private List<Parameter> getAllACSLParameters(final Node node) {
 		final List<Parameter> allParameters = new ArrayList<>();
 		Node current = node;
 		while (current != null) {
@@ -329,7 +326,7 @@ public class ACSLEmit extends Emit {
 	}
 
 	@Override
-	public void setGrammar(Grammar grammar) {
+	public void setGrammar(final Grammar grammar) {
 		final HashSet<String> types = new HashSet<>();
 		for (final Node n : grammar.getNodeTable().values()) {
 			types.add(n.name);

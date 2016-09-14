@@ -168,6 +168,9 @@ public class CfgBuilder {
 			final IToolchainStorage storage, final String filename) {
 		final SolverMode solverMode = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
+		
+		final boolean fakeNonIncrementalScript = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+				.getBoolean(RcfgPreferenceInitializer.LABEL_FakeNonIncrementalScript);
 
 		final boolean dumpSmtScriptToFile = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
@@ -185,7 +188,8 @@ public class CfgBuilder {
 
 		final String logicForExternalSolver = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
-		final Settings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
+		final Settings solverSettings = SolverBuilder.constructSolverSettings(
+				filename, solverMode, fakeNonIncrementalScript,
 				commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 
 		return SolverBuilder.buildAndInitializeSolver(services, storage, solverMode, solverSettings,

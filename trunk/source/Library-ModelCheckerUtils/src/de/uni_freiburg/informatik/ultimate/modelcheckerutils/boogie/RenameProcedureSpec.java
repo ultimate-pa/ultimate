@@ -89,7 +89,7 @@ public class RenameProcedureSpec extends BoogieTransformer {
 		/* Put the input variables into renaming */
 		renaming = new HashMap<String,String>();
 		buildRenaming(proc.getInParams(), impl.getInParams());
-		if (renaming.size() > 0) {
+		if (!renaming.isEmpty()) {
 			/* Process the requires specifications only on in variables */
 			for (int i = 0; i < specs.length; i++) {
 				if (specs[i] instanceof RequiresSpecification) {
@@ -103,7 +103,7 @@ public class RenameProcedureSpec extends BoogieTransformer {
 
 		/* Now add the output variables to renaming */
 		buildRenaming(proc.getOutParams(), impl.getOutParams());
-		if (renaming.size() > 0) {
+		if (!renaming.isEmpty()) {
 			/* Process the ensures specifications only on in and out variables */
 			for (int i = 0; i < specs.length; i++) {
 				if (specs[i] instanceof EnsuresSpecification) {

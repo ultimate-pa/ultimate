@@ -152,10 +152,7 @@ public class Tarjan {
 		if (possibleSuccessorEdge instanceof Summary) {
 			return false;
 		}
-		if(mForbiddenEdges.contains(possibleSuccessorEdge)){
-			return false;
-		}
-		return true;
+		return (!(mForbiddenEdges.contains(possibleSuccessorEdge)));
 	}
 
 	private static final class VerticeDecorator {

@@ -1085,12 +1085,12 @@ public class PredicateUnifier {
 			return (long) mBenchmark.getElapsedTime(String.valueOf(PredicateUniferStatisticsDefinitions.Time), TimeUnit.NANOSECONDS);
 		}
 		public void continueTime() {
-			assert mRunning == false : "Timing already running";
+			assert !mRunning : "Timing already running";
 			mRunning = true;
 			mBenchmark.unpause(String.valueOf(PredicateUniferStatisticsDefinitions.Time));
 		}
 		public void stopTime() {
-			assert mRunning == true : "Timing not running";
+			assert mRunning : "Timing not running";
 			mRunning = false;
 			mBenchmark.pause(String.valueOf(PredicateUniferStatisticsDefinitions.Time));
 		}

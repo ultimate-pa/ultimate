@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays;
@@ -47,14 +47,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 /**
  * Computes supporting invariants that have the form of equalities and
  * not equal relations (negated equalities).
- * A supporting invariant of a lasso program is a formula φ over program 
+ * A supporting invariant of a lasso program is a formula φ over program
  * variables such that the following two implications hold.
  * <ul>
  * <li>    post(true, stem) ==> φ </li>
  * <li>       post(φ, loop) ==> φ </li>
  * </ul>
  * 
- * The name supporting invariant which is commonly used in the literature 
+ * The name supporting invariant which is commonly used in the literature
  * refers to the fact that these invariants are used to support the synthesis
  * of ranking functions.
  * 
@@ -65,16 +65,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
  * 
  * Note that the free variables that occur in the terms must be the default
  * TermVariables of {@link IProgramVar}s. This means that you cannot directly
- * (without an additional substitution) use terms of {@link TransFormulas} 
+ * (without an additional substitution) use terms of {@link TransFormulas}
  * (where we have primed and unprimed versions of these TermVariables).
  * 
  * We currently use this analysis to infer equality information about
  * array indices. Our Doubletons entries from pairs of array indices.
  * We use the equality (resp. not equals) information to detect which array
  * cells are similar/different. E.g., a[x,y] and a[v,w] refer to the same
- * array cell if x==y and y==w holds, and both expressions refer to a different 
- * array cell if x!=y or y!=w holds.    
- *  
+ * array cell if x==y and y==w holds, and both expressions refer to a different
+ * array cell if x!=y or y!=w holds.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class EqualitySupportingInvariantAnalysis {
@@ -103,8 +103,8 @@ public class EqualitySupportingInvariantAnalysis {
 	 * that are modifiable at the program point between stem and loop.
 	 */
 	public EqualitySupportingInvariantAnalysis(final Set<Doubleton<Term>> doubletons,
-			final Boogie2SmtSymbolTable symbolTable, 
-			final Script script, 
+			final Boogie2SmtSymbolTable symbolTable,
+			final Script script,
 			final UnmodifiableTransFormula originalStem,
 			final UnmodifiableTransFormula originalLoop, final Set<IProgramVar> modifiableGlobalsAtHonda) {
 		super();
@@ -128,7 +128,7 @@ public class EqualitySupportingInvariantAnalysis {
 				} else {
 					addUnknownDoubleton(doubleton);
 				}
-			} 
+			}
 		}
 		mScript.echo(new QuotedObject("finished equality analysis for array indices of a lasso"));
 	}
@@ -162,16 +162,12 @@ public class EqualitySupportingInvariantAnalysis {
 		final IPredicate invariantCandidate = new BasicPredicate(0, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(), tvp.getClosedFormula());
 		final Set<IProgramVar> emptyVarSet = Collections.emptySet();
 		final IPredicate truePredicate = new BasicPredicate(0, new String[0], mScript.term("true"), emptyVarSet, mScript.term("true"));
-		final LBool impliedByStem = PredicateUtils.isInductiveHelper(mScript, 
+		final LBool impliedByStem = PredicateUtils.isInductiveHelper(mScript,
 				truePredicate, invariantCandidate, mOriginalStem, mModifiableGlobalsAtStart, mModifiableGlobalsAtHonda);
 		if (impliedByStem == LBool.UNSAT) {
-			final LBool invariantOfLoop = PredicateUtils.isInductiveHelper(mScript, 
+			final LBool invariantOfLoop = PredicateUtils.isInductiveHelper(mScript,
 					invariantCandidate, invariantCandidate, mOriginalLoop, mModifiableGlobalsAtHonda, mModifiableGlobalsAtHonda);
-			if (invariantOfLoop == LBool.UNSAT) {
-				return true;
-			} else {
-				return false;
-			}
+			return invariantOfLoop == LBool.UNSAT;
 		} else {
 			return false;
 		}

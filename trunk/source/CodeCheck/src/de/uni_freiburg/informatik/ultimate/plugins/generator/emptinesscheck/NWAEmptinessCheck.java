@@ -473,11 +473,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 
 		@Override
 		public boolean equals(final Object o) {
-			if (o instanceof EmptyStackSymbol) {
-				return true;
-			} else {
-				return false;
-			}
+			return o instanceof EmptyStackSymbol;
 		}
 
 		@Override

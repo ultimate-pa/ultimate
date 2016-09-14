@@ -31,30 +31,24 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin.services;
 
 import java.io.File;
 import java.io.Writer;
-import java.net.URI;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Appender;
-import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.ConsoleAppender;
+import org.apache.logging.log4j.core.appender.FileAppender;
 import org.apache.logging.log4j.core.appender.WriterAppender;
 import org.apache.logging.log4j.core.config.Configuration;
-import org.apache.logging.log4j.core.config.ConfigurationFactory;
-import org.apache.logging.log4j.core.config.ConfigurationSource;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.LoggerConfig;
-import org.apache.logging.log4j.core.config.Order;
-import org.apache.logging.log4j.core.config.builder.api.AppenderComponentBuilder;
 import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilder;
+import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilderFactory;
 import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
-import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
@@ -82,9 +76,6 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 	        CorePreferenceInitializer.LABEL_COLOR_WARNING, CorePreferenceInitializer.LABEL_COLOR_ERROR,
 	        CorePreferenceInitializer.LABEL_COLOR_FATAL, CorePreferenceInitializer.LABEL_LOG4J_CONTROLLER_PATTERN };
 
-	private static final String APPENDER_NAME_CONSOLE = "ConsoleAppender";
-	private static final String APPENDER_NAME_LOGFILE = "LogfileAppender";
-	private static final String APPENDER_NAME_CONTROLLER = "ControllerAppender";
 	private static final String LOGGER_NAME_CONTROLLER = "controller";
 	private static final String LOGGER_NAME_PLUGINS = "plugins";
 	private static final String LOGGER_NAME_TOOLS = "tools";
@@ -102,21 +93,27 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 
 	private final RcpPreferenceProvider mPreferenceStore;
 	private final IPreferenceChangeListener mRefreshingListener;
-	private final Set<Appender> mRootAppenders;
-	private final Set<Appender> mControllerAppenders;
 
-	private final Set<String> mLiveLoggerIds;
+	private Set<String> mLiveLoggerIds;
 	private String mCurrentControllerName;
+
+	private final LoggerContext mContext;
+	private final Configuration mConfig;
+
+	private Appender mConsoleAppender;
+	private Appender mFileAppender;
 
 	private Log4J2LoggingService() {
 		mPreferenceStore = new RcpPreferenceProvider(Activator.PLUGIN_ID);
-		mRootAppenders = new HashSet<>();
-		mControllerAppenders = new HashSet<>();
 		mLiveLoggerIds = new HashSet<>();
 
+		mContext = initializeConfiguration();
+		mConfig = mContext.getConfiguration();
+
 		recreateLoggerHierarchy();
-		reinitializeDefaultAppenders();
-		reattachAppenders();
+		refreshPropertiesConsoleAppender();
+		refreshPropertiesFileAppender();
+		mContext.updateLoggers();
 
 		mRefreshingListener = new RefreshingPreferenceChangeListener();
 		mPreferenceStore.addPreferenceChangeListener(mRefreshingListener);
@@ -126,30 +123,179 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 	@Override
 	public void reloadLoggers() {
 		recreateLoggerHierarchy();
-		reinitializeDefaultAppenders();
-		reattachAppenders();
+		refreshPropertiesConsoleAppender();
+		refreshPropertiesFileAppender();
+		mContext.updateLoggers();
 		getLoggerById(Activator.PLUGIN_ID).debug("Logger refreshed");
 	}
 
-	private void reinitializeDefaultAppenders() {
-		ConfigurationFactory.setConfigurationFactory(new Log4J2ConfigurationFactory(mPreferenceStore));
-		mRootAppenders.clear();
-		mControllerAppenders.clear();
+	private void recreateLoggerHierarchy() {
+		mLiveLoggerIds = new HashSet<>();
+		final Level rootLevel = getLogLevelPreference(CorePreferenceInitializer.LABEL_ROOT_PREF);
+		final LoggerConfig rootLogger = mConfig.getRootLogger();
+		rootLogger.setAdditive(false);
+		rootLogger.setLevel(rootLevel);
 
-		// TODO Layout
+		// create the children of the rootLogger
 
-		// TODO Logfile
-	}
+		// controller
+		final org.apache.logging.log4j.core.Logger controllerLogger = mContext.getLogger(LOGGER_NAME_CONTROLLER);
+		controllerLogger.setAdditive(false);
+		final Level controllerLevel = getLogLevelPreference(CorePreferenceInitializer.LABEL_CONTROLLER_PREF);
+		mConfig.getLoggerConfig(LOGGER_NAME_CONTROLLER).setLevel(controllerLevel);
 
-	private void reattachAppenders() {
-		reattachAppenders(getNonControllerRootLogger(), mRootAppenders);
-		reattachAppenders(getControllerRootLogger(), mControllerAppenders);
-	}
+		// all non-controller loggers share a common parent
+		final org.apache.logging.log4j.core.Logger nonControllerLogger = mContext.getLogger(LOGGER_NAME_NONCONTROLLER);
+		nonControllerLogger.setAdditive(false);
+		mConfig.getLoggerConfig(LOGGER_NAME_NONCONTROLLER).setLevel(rootLevel);
 
-	private static void reattachAppenders(final Logger logger, final Collection<Appender> appenders) {
-		for (final Appender appender : appenders) {
-			// TODO Do something!
+		// plug-ins parent
+		final org.apache.logging.log4j.core.Logger pluginParentLogger = mContext.getLogger(getPluginLoggerName());
+		pluginParentLogger.setAdditive(false);
+		final Level pluginsLevel = getLogLevelPreference(CorePreferenceInitializer.LABEL_PLUGINS_PREF);
+		mConfig.getLoggerConfig(getPluginLoggerName()).setLevel(pluginsLevel);
+
+		// external tools parent
+		final org.apache.logging.log4j.core.Logger externalToolsLogger = mContext.getLogger(getToolLoggerName());
+		externalToolsLogger.setAdditive(false);
+		final Level toolsLevel = getLogLevelPreference(CorePreferenceInitializer.LABEL_TOOLS_PREF);
+		mConfig.getLoggerConfig(getToolLoggerName()).setLevel(toolsLevel);
+
+		// actual core logger
+		final org.apache.logging.log4j.core.Logger coreLogger = mContext.getLogger(getCoreLoggerName());
+		coreLogger.setAdditive(false);
+		final Level coreLevel = getLogLevelPreference(CorePreferenceInitializer.LABEL_CORE_PREF);
+		mConfig.getLoggerConfig(getCoreLoggerName()).setLevel(coreLevel);
+
+		// actual plugin loggers
+		final String[] plugins = getIdsWithDefinedLogLevels(CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGIN_SPECIFIC);
+
+		for (final String plugin : plugins) {
+			final String loggerName = getPluginLoggerName(plugin);
+			final org.apache.logging.log4j.core.Logger pluginLogger = mContext.getLogger(loggerName);
+			pluginLogger.setAdditive(false);
+			final Level pluginLevel = getLogLevel(plugin);
+			mConfig.getLoggerConfig(loggerName).setLevel(pluginLevel);
+			mLiveLoggerIds.add(pluginLogger.getName());
 		}
+
+		// actual tool loggers
+		final String[] tools = getIdsWithDefinedLogLevels(
+		        CorePreferenceInitializer.LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC);
+
+		for (final String tool : tools) {
+			final String loggerName = getToolLoggerName(tool);
+			final org.apache.logging.log4j.core.Logger toolLogger = mContext.getLogger(loggerName);
+			toolLogger.setAdditive(false);
+			final Level toolLevel = getLogLevel(tool);
+			mConfig.getLoggerConfig(loggerName).setLevel(toolLevel);
+			mLiveLoggerIds.add(toolLogger.getName());
+		}
+	}
+
+	private void refreshPropertiesConsoleAppender() {
+		if (mConsoleAppender != null) {
+			mConsoleAppender.stop();
+			mContext.getRootLogger().removeAppender(mConsoleAppender);
+			mConsoleAppender = null;
+		}
+
+		final PatternLayout layout = PatternLayout.newBuilder()
+		        .withPattern(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)).build();
+
+		mConsoleAppender = ConsoleAppender.createDefaultAppenderForLayout(layout);
+		mConsoleAppender.start();
+		mConfig.addAppender(mConsoleAppender);
+		updateLoggers(mConsoleAppender);
+	}
+
+	private void refreshPropertiesFileAppender() {
+		// if log-file should be used, it will be appended here
+		if (mPreferenceStore.getBoolean(CorePreferenceInitializer.LABEL_LOGFILE)) {
+			// if there is already a log file appender, we remove it.
+			if (mFileAppender != null) {
+				mFileAppender.stop();
+				mContext.getRootLogger().removeAppender(mFileAppender);
+				final Appender toRemove = mConfig.getAppender(mFileAppender.getName());
+				for (final org.apache.logging.log4j.core.Logger logger : mContext.getLoggers()) {
+					logger.removeAppender(toRemove);
+				}
+				mFileAppender = null;
+			}
+
+			final PatternLayout layout = PatternLayout.newBuilder()
+			        .withPattern(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)).build();
+			final String logName = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOGFILE_NAME);
+			final String logDir = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOGFILE_DIR);
+			final Boolean append = mPreferenceStore.getBoolean(CorePreferenceInitializer.LABEL_APPEXLOGFILE);
+			final String fileName = new StringBuilder().append(logDir).append(File.separator).append(logName)
+			        .append(".log").toString();
+
+			final String falsePredicate = "false";
+			final String truePredicate = "true";
+
+			mFileAppender = FileAppender.createAppender(fileName, append.toString(), falsePredicate, "FileAppender",
+			        truePredicate, falsePredicate, falsePredicate, "8192", layout, null, falsePredicate, null, mConfig);
+			mFileAppender.start();
+
+			mContext.getRootLogger().addAppender(mFileAppender);
+			updateLoggers(mFileAppender);
+		} else {
+			if (mFileAppender != null) {
+				mFileAppender.stop();
+				mContext.getRootLogger().removeAppender(mFileAppender);
+				final Appender toRemove = mConfig.getAppender(mFileAppender.getName());
+				for (final org.apache.logging.log4j.core.Logger logger : mContext.getLoggers()) {
+					logger.removeAppender(toRemove);
+				}
+				mFileAppender = null;
+			}
+		}
+	}
+
+	private Level getLogLevel(final String id) {
+		final String[] pref = getLoggingDetailsPreference();
+		for (final String string : pref) {
+			if (string.startsWith(id + '=')) {
+				return Level.toLevel(string.substring(string.lastIndexOf('=') + 1));
+			}
+		}
+
+		return null;
+	}
+
+	private String[] getLoggingDetailsPreference() {
+		return convert(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGIN_SPECIFIC));
+	}
+
+	private String[] getIdsWithDefinedLogLevels(final String preferenceLabel) {
+		final String[] pref = convert(mPreferenceStore.getString(preferenceLabel));
+		final String[] retVal = new String[pref.length];
+		for (int i = 0; i < pref.length; i++) {
+			retVal[i] = pref[i].substring(0, pref[i].lastIndexOf('='));
+		}
+		return retVal;
+	}
+
+	private Level getLogLevelPreference(final String label) {
+		final String level = mPreferenceStore.getString(label);
+		assert level != null && !level.isEmpty();
+
+		return Level.toLevel(level);
+	}
+
+	private LoggerContext initializeConfiguration() {
+		final ConfigurationBuilder<BuiltConfiguration> builder = ConfigurationBuilderFactory.newConfigurationBuilder();
+		builder.setStatusLevel(Level.ERROR);
+		builder.setConfigurationName("DefaultConfiguration");
+
+		final LoggerContext returnContext = Configurator.initialize(builder.build());
+		final org.apache.logging.log4j.core.Logger rootLogger = returnContext.getRootLogger();
+		for (final Appender appender : rootLogger.getAppenders().values()) {
+			rootLogger.removeAppender(appender);
+		}
+
+		return returnContext;
 	}
 
 	static Log4J2LoggingService getService(final IToolchainStorage storage) {
@@ -160,15 +306,6 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 			storage.putStorable(STORE_KEY, rtr);
 		}
 		return (Log4J2LoggingService) rtr;
-	}
-
-	private void recreateLoggerHierarchy() {
-		mLiveLoggerIds.clear();
-		final Logger rootLogger = getLog4J2RootLogger();
-	}
-
-	private Logger getLog4J2RootLogger() {
-		return LogManager.getRootLogger();
 	}
 
 	@Override
@@ -205,39 +342,37 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 
 	@Override
 	public void addWriter(final Writer writer, final String logPattern) {
-		// TODO
-
 		final String writerName = getWriterName(writer);
 
-		final LoggerContext context = LoggerContext.getContext(false);
-		final Configuration config = context.getConfiguration();
-		final PatternLayout layout = PatternLayout.createDefaultLayout(config);
+		final PatternLayout layout = PatternLayout.newBuilder().withPattern(logPattern).build();
+
 		final Appender appender = WriterAppender.createAppender(layout, null, writer, writerName, false, true);
 		appender.start();
-		config.addAppender(appender);
-		updateLoggers(appender, config);
+		mConfig.addAppender(appender);
+		updateLoggers(appender);
 	}
 
-	private void updateLoggers(final Appender appender, final Configuration config) {
-		final Level level = null;
-		final Filter filter = null;
-		for (final LoggerConfig loggerConfig : config.getLoggers().values()) {
-			loggerConfig.addAppender(appender, level, filter);
+	private void updateLoggers(final Appender appender) {
+		for (final LoggerConfig loggerConfig : mConfig.getLoggers().values()) {
+			loggerConfig.addAppender(appender, loggerConfig.getLevel(), loggerConfig.getFilter());
 		}
-		config.getRootLogger().addAppender(appender, level, filter);
+		mConfig.getRootLogger().addAppender(appender, mConfig.getRootLogger().getLevel(),
+		        mConfig.getRootLogger().getFilter());
 	}
 
 	@Override
 	public void removeWriter(final Writer writer) {
 		final String writerName = getWriterName(writer);
 
-		final LoggerContext context = LoggerContext.getContext(false);
-		final Configuration config = context.getConfiguration();
-		final Appender toRemove = config.getAppenders().get(writerName);
+		final Appender toRemove = mConfig.getAppenders().get(writerName);
 		assert toRemove != null;
-		for (final org.apache.logging.log4j.core.Logger logger : context.getLoggers()) {
+		toRemove.stop();
+
+		for (final org.apache.logging.log4j.core.Logger logger : mContext.getLoggers()) {
 			logger.removeAppender(toRemove);
 		}
+
+		mConfig.getRootLogger().removeAppender(writerName);
 	}
 
 	private static String getWriterName(final Writer writer) {
@@ -249,43 +384,47 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 		assert sId == 1 : "There should be only one instance of Log4J2LoggingService";
 	}
 
+	/**
+	 * Returns the logger corresponding to the given ID.
+	 *
+	 * @param id
+	 *            The ID of the logger.
+	 * @return The corresponding logger.
+	 */
 	private Logger getLoggerById(final String id) {
 		return lookupLoggerInHierarchy(id);
 	}
 
 	private Logger lookupLoggerInHierarchy(final String id) {
 		if (id.equals(Activator.PLUGIN_ID)) {
-			return LogManager.getLogger(getCoreLoggerName());
+			return mContext.getLogger(getCoreLoggerName());
 		}
 
+		// it is a controller or something that wants the controller logger
 		assert mCurrentControllerName != null;
 		if (id.equals(mCurrentControllerName) || id.equals(LOGGER_NAME_CONTROLLER)) {
-			return LogManager.getLogger(LOGGER_NAME_CONTROLLER);
+			return mContext.getLogger(LOGGER_NAME_CONTROLLER);
 		}
 
 		final String pluginLoggerName = getPluginLoggerName(id);
 		if (mLiveLoggerIds.contains(pluginLoggerName) && !isExternalTool(id)) {
-			return LogManager.getLogger(pluginLoggerName);
+			return mContext.getLogger(pluginLoggerName);
 		}
 
 		final String toolLoggerName = getToolLoggerName(id);
 		if (mLiveLoggerIds.contains(toolLoggerName) && isExternalTool(id)) {
-			return LogManager.getLogger(toolLoggerName);
+			return mContext.getLogger(toolLoggerName);
 		}
 
 		if (isExternalTool(id)) {
-			return LogManager.getLogger(getToolLoggerName());
+			return mContext.getLogger(getToolLoggerName());
 		}
 
-		return LogManager.getLogger(getPluginLoggerName());
-	}
-
-	private Logger getNonControllerRootLogger() {
-		return LogManager.getLogger(LOGGER_NAME_NONCONTROLLER);
+		return mContext.getLogger(getPluginLoggerName());
 	}
 
 	private Logger getControllerRootLogger() {
-		return LogManager.getLogger(LOGGER_NAME_CONTROLLER);
+		return mContext.getLogger(LOGGER_NAME_CONTROLLER);
 	}
 
 	private static String getCoreLoggerName() {
@@ -350,82 +489,6 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 
 			reloadLoggers();
 		}
-	}
-
-	@Plugin(name = "Log4J2ConfigurationFactory", category = ConfigurationFactory.CATEGORY)
-	@Order(50)
-	private static final class Log4J2ConfigurationFactory extends ConfigurationFactory {
-
-		private final RcpPreferenceProvider mPreferenceStore;
-
-		Log4J2ConfigurationFactory(final RcpPreferenceProvider preferenceStore) {
-			mPreferenceStore = preferenceStore;
-		}
-
-		static Configuration createConfiguration(final String name,
-		        final ConfigurationBuilder<BuiltConfiguration> builder, final RcpPreferenceProvider preferenceStore) {
-			builder.setConfigurationName(name);
-			builder.setStatusLevel(Level.ERROR);
-			builder.add(builder.newFilter("ThresholdFilter", Filter.Result.ACCEPT, Filter.Result.NEUTRAL)
-			        .addAttribute("level", Level.DEBUG));
-
-			// TODO: Check whether "Stdout" must be used here instead of APPENDER_NAME_CONSOLE.
-			final AppenderComponentBuilder appenderBuilder = builder.newAppender(APPENDER_NAME_CONSOLE, "CONSOLE")
-			        .addAttribute("target", ConsoleAppender.Target.SYSTEM_OUT);
-			appenderBuilder.add(builder.newLayout("PatternLayout").addAttribute("pattern",
-			        CorePreferenceInitializer.LABEL_LOG4J_PATTERN));
-			appenderBuilder.add(builder.newFilter("MarkerFilter", Filter.Result.DENY, Filter.Result.NEUTRAL)
-			        .addAttribute("marker", "FLOW"));
-			builder.add(appenderBuilder);
-
-			final boolean useLogFile = preferenceStore.getBoolean(CorePreferenceInitializer.LABEL_LOGFILE);
-
-			if (useLogFile) {
-
-				final String logName = preferenceStore.getString(CorePreferenceInitializer.LABEL_LOGFILE_NAME);
-				final String logDir = preferenceStore.getString(CorePreferenceInitializer.LABEL_LOGFILE_DIR);
-				final String append = (preferenceStore.getBoolean(CorePreferenceInitializer.LABEL_APPEXLOGFILE) ? "true"
-				        : "false");
-				final String absolutePath = logDir + File.separator + logName + ".log";
-
-				final AppenderComponentBuilder logFileBuilder = builder.newAppender(APPENDER_NAME_LOGFILE, "FILE")
-				        .addAttribute("fileName", absolutePath).addAttribute("append", append);
-				logFileBuilder.add(builder.newLayout("PatternLayout").addAttribute("pattern",
-				        CorePreferenceInitializer.LABEL_LOG4J_PATTERN));
-				logFileBuilder.add(builder.newFilter("MarkerFilter", Filter.Result.DENY, Filter.Result.NEUTRAL)
-				        .addAttribute("marker", "FLOW"));
-				builder.add(logFileBuilder);
-			}
-
-			// TODO: Maybe change the name of the logger here.
-			builder.add(builder.newLogger("org.apache.logging.log4j", Level.DEBUG)
-			        .add(builder.newAppenderRef(APPENDER_NAME_CONSOLE)).addAttribute("additivity", false));
-			builder.add(builder.newRootLogger(Level.ERROR).add(builder.newAppenderRef(APPENDER_NAME_CONSOLE)));
-
-			if (useLogFile) {
-				builder.add(builder.newLogger(APPENDER_NAME_LOGFILE, Level.DEBUG)
-				        .add(builder.newAppenderRef(APPENDER_NAME_LOGFILE)).addAttribute("additivity", false));
-			}
-
-			return builder.build();
-		}
-
-		@Override
-		protected String[] getSupportedTypes() {
-			return new String[] { "*" };
-		}
-
-		@Override
-		public Configuration getConfiguration(final ConfigurationSource source) {
-			return getConfiguration(source.toString(), null);
-		}
-
-		@Override
-		public Configuration getConfiguration(final String name, final URI configLocation) {
-			final ConfigurationBuilder<BuiltConfiguration> builder = newConfigurationBuilder();
-			return createConfiguration(name, builder, mPreferenceStore);
-		}
-
 	}
 
 	@Override

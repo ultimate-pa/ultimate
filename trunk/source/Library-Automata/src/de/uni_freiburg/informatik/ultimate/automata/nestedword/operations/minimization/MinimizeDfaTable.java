@@ -330,14 +330,21 @@ public class MinimizeDfaTable<LETTER,STATE> extends AbstractMinimizeNwa<LETTER, 
 			final int i, final int j, final ArrayList<STATE> st) {
 		// if for one symbol k and for one I' it holds, that
 		// all pairs (I', j') are marked, mark (i, j)
-		nextSucc1: for (int g = 0; g < f.size(); g++) {
-			for (int h = 0; h < s.size(); h++) {
-				if (!t[st.indexOf(f.get(g))][st.indexOf(s.get(h))]) {
-					// one successor pair is not marked for k and I'!
-					continue nextSucc1; // Take next I'!
-				}
+		for (int g = 0; g < f.size(); g++) {
+			if (!containsUnmarkedPair(s, t, st, f, g)) {
+				return true;
 			}
-			return true;
+		}
+		return false;
+	}
+	
+	private boolean containsUnmarkedPair(final ArrayList<STATE> s, final boolean[][] t, final ArrayList<STATE> st,
+			final ArrayList<STATE> f, final int g) {
+		for (int h = 0; h < s.size(); h++) {
+			if (!t[st.indexOf(f.get(g))][st.indexOf(s.get(h))]) {
+				// one successor pair is not marked for k and I'!
+				return true; // Take next I'!
+			}
 		}
 		return false;
 	}

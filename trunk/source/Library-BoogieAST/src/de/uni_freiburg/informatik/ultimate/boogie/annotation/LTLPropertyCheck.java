@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.annotation;
@@ -56,12 +56,13 @@ public class LTLPropertyCheck extends Check {
 	private final Map<String, CheckableExpression> mCheckableAtomicPropositions;
 	private List<VariableDeclaration> mGlobalDeclarations;
 
-	public LTLPropertyCheck(String ltlPropertyAsString, Map<String, CheckableExpression> checkableAtomicPropositions,
-			List<VariableDeclaration> globalDeclarations) {
+	public LTLPropertyCheck(final String ltlPropertyAsString,
+			final Map<String, CheckableExpression> checkableAtomicPropositions,
+			final List<VariableDeclaration> globalDeclarations) {
 		super(Spec.LTL);
 		assert ltlPropertyAsString != null;
 		assert checkableAtomicPropositions != null;
-		assert checkableAtomicPropositions.size() > 0;
+		assert !checkableAtomicPropositions.isEmpty();
 		mLTLProptery = ltlPropertyAsString;
 		mCheckableAtomicPropositions = checkableAtomicPropositions;
 		mGlobalDeclarations = globalDeclarations;
@@ -98,7 +99,7 @@ public class LTLPropertyCheck extends Check {
 	}
 
 	@Override
-	protected Object getFieldValue(String field) {
+	protected Object getFieldValue(final String field) {
 		if (field.equals(sFieldNames[0])) {
 			return getSpec().toString();
 		} else if (field.equals(sFieldNames[1])) {
@@ -110,11 +111,11 @@ public class LTLPropertyCheck extends Check {
 		}
 	}
 
-	public void annotate(IElement elem) {
+	public void annotate(final IElement elem) {
 		elem.getPayload().getAnnotations().put(sKey, this);
 	}
 
-	public static LTLPropertyCheck getAnnotation(IElement elem) {
+	public static LTLPropertyCheck getAnnotation(final IElement elem) {
 		if (!elem.hasPayload()) {
 			return null;
 		}
@@ -133,7 +134,7 @@ public class LTLPropertyCheck extends Check {
 		private final Expression mExpression;
 		private List<Statement> mStatements;
 
-		public CheckableExpression(Expression expr, List<Statement> statements) {
+		public CheckableExpression(final Expression expr, final List<Statement> statements) {
 			assert expr != null;
 			mExpression = expr;
 			mStatements = statements;

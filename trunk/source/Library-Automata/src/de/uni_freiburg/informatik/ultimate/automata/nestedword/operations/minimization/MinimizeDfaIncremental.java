@@ -816,7 +816,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 					assert (mMap.containsKey(t)) : "The element was not in the map: " + t.toString();
 					mMap.remove(t);
 				}
-				assert (mMap.size() == 0) : "There are elements left in the map after cleaning.";
+				assert (mMap.isEmpty()) : "There are elements left in the map after cleaning.";
 			} else {
 				mIsInitialized = true;
 				mMap = new HashMap<Tuple, ListNode>(mHashCapNoTuples);

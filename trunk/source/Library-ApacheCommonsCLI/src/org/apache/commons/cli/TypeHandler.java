@@ -43,7 +43,7 @@ public class TypeHandler {
 	public static Object createValue(final String str, final Object obj) throws ParseException {
 		return createValue(str, (Class<?>) obj);
 	}
-	
+
 	/**
 	 * Returns the <code>Object</code> of type <code>clazz</code> with the value of <code>str</code>.
 	 *
@@ -60,6 +60,8 @@ public class TypeHandler {
 			return str;
 		} else if (PatternOptionBuilder.OBJECT_VALUE == clazz) {
 			return createObject(str);
+		} else if (PatternOptionBuilder.INTEGER_VALUE == clazz) {
+			return createInteger(str);
 		} else if (PatternOptionBuilder.NUMBER_VALUE == clazz) {
 			return createNumber(str);
 		} else if (PatternOptionBuilder.DATE_VALUE == clazz) {
@@ -77,12 +79,15 @@ public class TypeHandler {
 		} else if (PatternOptionBuilder.BOOLEAN_VALUE == clazz) {
 			return createBoolean(str);
 		} else {
-			return null;
+			throw new UnsupportedOperationException("Conversion of " + clazz + " is not supported");
 		}
 	}
-	
-	private static Object createBoolean(final String str) {
-		return Boolean.valueOf(str);
+
+	private static Object createBoolean(final String str) throws ParseException {
+		if (str != null && (str.equalsIgnoreCase("true") || str.equalsIgnoreCase("false"))) {
+			return Boolean.valueOf(str);
+		}
+		throw new ParseException(str + " is not a boolean value");
 	}
 
 	/**
@@ -96,20 +101,20 @@ public class TypeHandler {
 	 */
 	public static Object createObject(final String classname) throws ParseException {
 		Class<?> cl;
-		
+
 		try {
 			cl = Class.forName(classname);
 		} catch (final ClassNotFoundException cnfe) {
 			throw new ParseException("Unable to find the class: " + classname);
 		}
-		
+
 		try {
 			return cl.newInstance();
 		} catch (final Exception e) {
 			throw new ParseException(e.getClass().getName() + "; Unable to create an instance of: " + classname);
 		}
 	}
-	
+
 	/**
 	 * Create a number from a String. If a . is present, it creates a Double, otherwise a Long.
 	 *
@@ -129,7 +134,15 @@ public class TypeHandler {
 			throw new ParseException(e.getMessage());
 		}
 	}
-	
+
+	private static Object createInteger(final String str) throws ParseException {
+		try {
+			return Integer.valueOf(str);
+		} catch (final NumberFormatException e) {
+			throw new ParseException(e.getMessage());
+		}
+	}
+
 	/**
 	 * Returns the class whose name is <code>classname</code>.
 	 *
@@ -146,7 +159,7 @@ public class TypeHandler {
 			throw new ParseException("Unable to find the class: " + classname);
 		}
 	}
-	
+
 	/**
 	 * Returns the date represented by <code>str</code>.
 	 * <p>
@@ -161,7 +174,7 @@ public class TypeHandler {
 	public static Date createDate(final String str) {
 		throw new UnsupportedOperationException("Not yet implemented");
 	}
-	
+
 	/**
 	 * Returns the URL represented by <code>str</code>.
 	 *
@@ -178,7 +191,7 @@ public class TypeHandler {
 			throw new ParseException("Unable to parse the URL: " + str);
 		}
 	}
-	
+
 	/**
 	 * Returns the File represented by <code>str</code>.
 	 *
@@ -189,7 +202,7 @@ public class TypeHandler {
 	public static File createFile(final String str) {
 		return new File(str);
 	}
-	
+
 	/**
 	 * Returns the File[] represented by <code>str</code>.
 	 * <p>

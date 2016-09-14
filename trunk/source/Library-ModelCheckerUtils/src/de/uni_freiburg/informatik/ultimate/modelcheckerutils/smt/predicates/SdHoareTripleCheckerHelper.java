@@ -351,48 +351,52 @@ public class SdHoareTripleCheckerHelper {
 		final boolean assignedVarsRestrictedByPre =
 				!varSetDisjoint(ret.getAssignmentOfReturn().getInVars().keySet(), pre.getVars());
 		for (final IProgramVar bv : post.getVars()) {
-			if (bv.isGlobal()) {
-				if (bv.isOldvar()) {
-					if (hier.getVars().contains(bv)) {
-						continue;
-					}
-				} else {
-					if (modifiableGlobals.contains(bv)) {
-						if (pre.getVars().contains(bv)) {
-							continue;
-						}
-					} else {
-						if (hier.getVars().contains(bv)) {
-							continue;
-						}
-						if (pre.getVars().contains(bv)) {
-							continue;
-						}
-
-						
-					}
-					if (assignedVars.contains(bv)) {
-						if (assignedVarsRestrictedByPre) {
-							continue;
-						}
-					}
-				}
-				
-			} else {
-				if (assignedVars.contains(bv)) {
-					if (assignedVarsRestrictedByPre) {
-						continue;
-					}
-				} else {
-					if (hier.getVars().contains(bv)) {
-						continue;
-					}
-				}
+			if (!continueSdLazyEcReturnLoop(bv, modifiableGlobals, hier, pre, assignedVars,
+					assignedVarsRestrictedByPre)) {
+				mHoareTripleCheckerStatistics.getSdLazyCounter().incRe();
+				return Validity.INVALID;
 			}
-			mHoareTripleCheckerStatistics.getSdLazyCounter().incRe();
-			return Validity.INVALID;
 		}
 		return null;
+	}
+	
+	
+	private static boolean continueSdLazyEcReturnLoop(final IProgramVar bv, final Set<IProgramVar> modifiableGlobals,
+			final IPredicate hier, final IPredicate pre, final Set<IProgramVar> assignedVars,
+			final boolean assignedVarsRestrictedByPre) {
+		if (bv.isGlobal()) {
+			if (bv.isOldvar()) {
+				if (hier.getVars().contains(bv)) {
+					return true;
+				}
+			} else {
+				if (modifiableGlobals.contains(bv)) {
+					if (pre.getVars().contains(bv)) {
+						return true;
+					}
+				} else {
+					if (hier.getVars().contains(bv)) {
+						return true;
+					}
+					if (pre.getVars().contains(bv)) {
+						return true;
+					}
+				}
+				if (assignedVars.contains(bv) && assignedVarsRestrictedByPre) {
+					return true;
+				}
+			}
+			
+		} else {
+			if (assignedVars.contains(bv)) {
+				if (assignedVarsRestrictedByPre) {
+					return true;
+				}
+			} else if (hier.getVars().contains(bv)) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IRSDependencies plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector;
@@ -43,33 +43,27 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 public final class RcfgWrapper implements IGraph<RCFGNode, RCFGEdge> {
 
 	@Override
-	public RCFGNode getTarget(RCFGEdge edge) {
+	public RCFGNode getTarget(final RCFGEdge edge) {
 		return edge.getTarget();
 	}
 
 	@Override
-	public RCFGNode getSource(RCFGEdge edge) {
+	public RCFGNode getSource(final RCFGEdge edge) {
 		return edge.getSource();
 	}
 
 	@Override
-	public Collection<RCFGEdge> getOutgoingEdges(RCFGNode vertice) {
+	public Collection<RCFGEdge> getOutgoingEdges(final RCFGNode vertice) {
 		return vertice.getOutgoingEdges();
 	}
 
 	@Override
-	public boolean beginScope(RCFGEdge edge) {
-		if(edge instanceof Call){
-			return true;
-		}
-		return false;
+	public boolean beginScope(final RCFGEdge edge) {
+		return edge instanceof Call;
 	}
 
 	@Override
-	public boolean endScope(RCFGEdge edge) {
-		if(edge instanceof Return){
-			return true;
-		}
-		return false;
+	public boolean endScope(final RCFGEdge edge) {
+		return edge instanceof Return;
 	}
 }

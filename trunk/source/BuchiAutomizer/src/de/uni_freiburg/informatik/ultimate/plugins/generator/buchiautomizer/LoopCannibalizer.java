@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiAutomizer plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
@@ -77,7 +77,7 @@ public class LoopCannibalizer {
 	public LoopCannibalizer(final NestedLassoRun<CodeBlock, IPredicate> counterexample, final Set<IPredicate> loopInterpolants,
 			final BinaryStatePredicateManager bspm, final PredicateUnifier predicateUnifier, final SmtManager smtManager,
 			final BuchiModGlobalVarManager buchiModGlobalVarManager, final InterpolationTechnique interpolation,
-			final IUltimateServiceProvider services, 
+			final IUltimateServiceProvider services,
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
@@ -207,10 +207,7 @@ public class LoopCannibalizer {
 			return true;
 		}
 		final Set<IProgramVar> outVars = cb.getTransitionFormula().getOutVars().keySet();
-		if (!Collections.disjoint(hondaVars, outVars)) {
-			return true;
-		}
-		return false;
+		return !Collections.disjoint(hondaVars, outVars);
 	}
 
 	public Set<IPredicate> getResult() {
