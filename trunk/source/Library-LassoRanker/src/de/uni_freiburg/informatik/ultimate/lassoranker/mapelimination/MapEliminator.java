@@ -86,8 +86,6 @@ public class MapEliminator {
 	private final SimplicationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
-	private final Collection<TransFormulaLR> mTransFormulas;
-
 	// Stores for each variable, which indices contain it
 	private final HashRelation<Term, ArrayIndex> mVariablesToIndices;
 
@@ -107,8 +105,11 @@ public class MapEliminator {
 	// Stores all doubletons of terms, which might be compared
 	private final Set<Doubleton<Term>> mDoubletons;
 
-	// Stores all function-names of the uninterpreted functions (to know, what function-calls have to be replaced)
+	// Stores all function-names of the uninterpreted functions (to know, what function-calls have to be replaced)^
 	private final Set<String> mUninterpretedFunctions;
+
+	// Stores for each transformula, which arrays/uf-calls are accssed in it
+	private final Map<TransFormulaLR, HashRelation<ApplicationTermTemplate, ArrayIndex>> mTransFormulasToLocalIndices;
 
 	// Settings
 	private final boolean mAddInequalities;
@@ -165,7 +166,7 @@ public class MapEliminator {
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 
-		mTransFormulas = transformulas;
+		mTransFormulasToLocalIndices = new HashMap<>();
 
 		mVariablesToIndices = new HashRelation<>();
 		mFunctionsToIndices = new HashRelation<>();
@@ -182,16 +183,19 @@ public class MapEliminator {
 		mOnlyTrivialImplicationsArrayWrite = onlyTrivialImplicationsArrayWrite;
 		mOnlyIndicesInFormula = onlyIndicesInFormula;
 
-		findAllIndices();
+		findAllIndices(transformulas);
 		mDoubletons = computeDoubletons(mFunctionsToIndices);
 	}
 
 	/**
 	 * Finds the array accesses in the transformulas and merges the indices if necessary
+	 *
+	 * @param transformulas
 	 */
-	private void findAllIndices() {
+	private void findAllIndices(final Collection<TransFormulaLR> transformulas) {
 		// Get all array indices from each transformula (only necessary, if it contains arrays)
-		for (final TransFormulaLR tf : mTransFormulas) {
+		for (final TransFormulaLR tf : transformulas) {
+			mTransFormulasToLocalIndices.put(tf, new HashRelation<>());
 			findIndices(tf);
 		}
 		// Merge the indices of the related arrays using union-find
@@ -284,6 +288,10 @@ public class MapEliminator {
 			final SelectTemplate template = new SelectTemplate(globalArray, mScript);
 			mFunctionsToIndices.addPair(template, globalIndex);
 			mIndicesToFunctions.addPair(globalIndex, template);
+			final Term inVarArray = getLocalTerm(globalArray, transformula, true);
+			final Term outVarArray = getLocalTerm(globalArray, transformula, false);
+			mTransFormulasToLocalIndices.get(transformula).addPair(new SelectTemplate(inVarArray, mScript), index);
+			mTransFormulasToLocalIndices.get(transformula).addPair(new SelectTemplate(outVarArray, mScript), index);
 		}
 	}
 
@@ -304,6 +312,7 @@ public class MapEliminator {
 			final FunctionTemplate template = new FunctionTemplate(functionName, mScript);
 			mFunctionsToIndices.addPair(template, globalIndex);
 			mIndicesToFunctions.addPair(globalIndex, template);
+			mTransFormulasToLocalIndices.get(transformula).addPair(template, index);
 		}
 	}
 
@@ -356,32 +365,32 @@ public class MapEliminator {
 	 */
 	public TransFormulaLR getRewrittenTransFormula(final TransFormulaLR transformula,
 			final EqualityAnalysisResult equalityAnalysisBefore, final EqualityAnalysisResult equalityAnalysisAfter) {
-		assert mTransFormulas.contains(transformula);
+		assert mTransFormulasToLocalIndices.containsKey(transformula) : "This transformula wasn't preprocessed";
 		final TransFormulaLR newTF = new TransFormulaLR(transformula);
 		final Term originalTerm = newTF.getFormula();
 		final Set<Term> assignedVars = new HashSet<>();
 		for (final IProgramVar var : transformula.getAssignedVars()) {
 			assignedVars.add(ReplacementVarUtils.getDefinition(var));
 		}
-		final HashRelation<ApplicationTermTemplate, ArrayIndex> localIndices = new HashRelation<>();
-		for (final ApplicationTermTemplate template : mFunctionsToIndices.getDomain()) {
-			for (final ArrayIndex globalIndex : mFunctionsToIndices.getImage(template)) {
-				for (final ArrayIndex index : getInOutVarIndices(globalIndex, newTF)) {
+		final HashRelation<ApplicationTermTemplate, ArrayIndex> localIndices = mTransFormulasToLocalIndices
+				.get(transformula);
+		for (final ApplicationTermTemplate globalTemplate : mFunctionsToIndices.getDomain()) {
+			for (final ApplicationTermTemplate template : getLocalTemplates(globalTemplate, newTF)) {
+				for (final ArrayIndex index : getInAndOutVarIndices(mFunctionsToIndices.getImage(globalTemplate),
+						newTF)) {
 					localIndices.addPair(template, index);
 				}
 			}
 		}
-		final Set<Doubleton<Term>> doubletons = computeDoubletons(localIndices);
-		final IndexAnalyzer indexAnalyzer = new IndexAnalyzer(originalTerm, doubletons, mSymbolTable, newTF,
-				equalityAnalysisBefore, equalityAnalysisAfter, mLogger, mReplacementVarFactory);
+		final IndexAnalyzer indexAnalyzer = new IndexAnalyzer(originalTerm, computeDoubletons(localIndices),
+				mSymbolTable, newTF, equalityAnalysisBefore, equalityAnalysisAfter, mLogger, mReplacementVarFactory);
 		final EqualityAnalysisResult invariants = indexAnalyzer.getResult();
 		// Replace store-expressions
 		final Term storeFreeTerm = replaceStoreExpressions(originalTerm, newTF, invariants);
 		final List<Term> conjuncts = new ArrayList<Term>();
 		conjuncts.addAll(Arrays.asList(SmtUtils.getConjuncts(storeFreeTerm)));
-		conjuncts.addAll(getInVarEqualities(newTF, invariants));
-		conjuncts.addAll(getOutVarEqualities(newTF, assignedVars, invariants));
 		conjuncts.addAll(mAdditionalConjuncts);
+		conjuncts.addAll(getReplacementVarEqualities(newTF, localIndices, invariants));
 		if (!mOnlyTrivialImplicationsIndexAssignment) {
 			conjuncts.addAll(getAllImplicationsForIndexAssignment(assignedVars, newTF, invariants));
 		}
@@ -397,47 +406,42 @@ public class MapEliminator {
 		return newTF;
 	}
 
-	private List<Term> getInVarEqualities(final TransFormulaLR transformula, final EqualityAnalysisResult invariants) {
+	/**
+	 * Returns all equalites of replacement-variables based on the index analysis. To reduce the number of conjuncts,
+	 * UnionFind is used.
+	 *
+	 * @param transformula
+	 *            A TransFormulaLR
+	 * @param localIndices
+	 *            A HashRelation, which maps all ApplicationTermTemplates, which are considered to the needed local
+	 *            indices.
+	 * @param invariants
+	 *            The valid invariants at this transformula
+	 * @return A list of terms (= conjuncts) with equalities that are valid at this transformula
+	 */
+	private List<Term> getReplacementVarEqualities(final TransFormulaLR transformula,
+			final HashRelation<ApplicationTermTemplate, ArrayIndex> localIndices,
+			final EqualityAnalysisResult invariants) {
 		final List<Term> result = new ArrayList<>();
-		for (final ApplicationTermTemplate template : mFunctionsToIndices.getDomain()) {
-			final Set<ArrayIndex> indicesSet = mFunctionsToIndices.getImage(template);
+		for (final ApplicationTermTemplate template : localIndices.getDomain()) {
+			final UnionFind<ArrayIndex> unionFind = new UnionFind<>();
+			final Set<ArrayIndex> indicesSet = localIndices.getImage(template);
 			final ArrayIndex[] indices = indicesSet.toArray(new ArrayIndex[indicesSet.size()]);
 			for (int i = 0; i < indices.length; i++) {
-				final ArrayIndex index1 = getLocalIndex(indices[i], transformula, true);
 				for (int j = i + 1; j < indices.length; j++) {
-					final ArrayIndex index2 = getLocalIndex(indices[j], transformula, true);
-					if (areIndicesEqual(index1, index2, invariants)) {
-						final Term term1 = getLocalTerm(template.getTerm(indices[i]), transformula, true);
-						final Term term2 = getLocalTerm(template.getTerm(indices[j]), transformula, true);
-						result.add(SmtUtils.binaryEquality(mScript, term1, term2));
+					if (areIndicesEqual(indices[i], indices[j], invariants)) {
+						unionFind.findAndConstructEquivalenceClassIfNeeded(indices[i]);
+						unionFind.findAndConstructEquivalenceClassIfNeeded(indices[j]);
+						unionFind.union(indices[i], indices[j]);
 					}
 				}
 			}
-		}
-		return result;
-	}
-
-	private List<Term> getOutVarEqualities(final TransFormulaLR transformula, final Set<Term> assignedVars,
-			final EqualityAnalysisResult invariants) {
-		final List<Term> result = new ArrayList<>();
-		for (final ApplicationTermTemplate template : mFunctionsToIndices.getDomain()) {
-			final Set<ArrayIndex> indicesSet = mFunctionsToIndices.getImage(template);
-			final ArrayIndex[] indices = indicesSet.toArray(new ArrayIndex[indicesSet.size()]);
-			for (int i = 0; i < indices.length; i++) {
-				final ArrayIndex index1In = getLocalIndex(indices[i], transformula, true);
-				final ArrayIndex index1 = getLocalIndex(indices[i], transformula, false);
-				if (!assignedVars.contains(template.getIdentifier()) && areIndicesEqual(index1In, index1, invariants)) {
-					final Term term1 = getLocalTerm(template.getTerm(indices[i]), transformula, true);
-					final Term term2 = getLocalTerm(template.getTerm(indices[i]), transformula, false);
-					result.add(SmtUtils.binaryEquality(mScript, term1, term2));
-				}
-				for (int j = i + 1; j < indices.length; j++) {
-					final ArrayIndex index2 = getLocalIndex(indices[j], transformula, false);
-					if (areIndicesEqual(index1, index2, invariants)) {
-						final Term term1 = getLocalTerm(template.getTerm(indices[i]), transformula, false);
-						final Term term2 = getLocalTerm(template.getTerm(indices[j]), transformula, false);
-						result.add(SmtUtils.binaryEquality(mScript, term1, term2));
+			for (final ArrayIndex index1 : unionFind.getAllRepresentatives()) {
+				for (final ArrayIndex index2 : unionFind.getEquivalenceClassMembers(index1)) {
+					if (index1 == index2) {
+						continue;
 					}
+					result.add(SmtUtils.binaryEquality(mScript, template.getTerm(index1), template.getTerm(index2)));
 				}
 			}
 		}
@@ -648,7 +652,7 @@ public class MapEliminator {
 		final TermVariable auxVar = getAndAddAuxVar(term);
 		for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
 			final ArrayIndex assignedIndex = store.getIndex();
-			if (processedIndices.contains(assignedIndex)) {
+			if (processedIndices.contains(assignedIndex) || !allVariablesAreVisible(assignedIndex, transformula)) {
 				continue;
 			}
 			final Term value = store.getValue();
@@ -699,7 +703,7 @@ public class MapEliminator {
 		final Set<ArrayIndex> processedIndices = new HashSet<>();
 		for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
 			final ArrayIndex assignedIndex = store.getIndex();
-			if (processedIndices.contains(assignedIndex)) {
+			if (processedIndices.contains(assignedIndex) || !allVariablesAreVisible(assignedIndex, transformula)) {
 				continue;
 			}
 			final Term value = store.getValue();
@@ -850,6 +854,29 @@ public class MapEliminator {
 		return new ArrayIndex(list);
 	}
 
+	private Set<ApplicationTermTemplate> getLocalTemplates(final ApplicationTermTemplate template,
+			final TransFormulaLR transformula) {
+		if (template instanceof SelectTemplate) {
+			final Term array = (Term) template.getIdentifier();
+			final SelectTemplate inVarTemplate = new SelectTemplate(getLocalTerm(array, transformula, true), mScript);
+			final SelectTemplate outVarTemplate = new SelectTemplate(getLocalTerm(array, transformula, false), mScript);
+			return new HashSet<>(Arrays.asList(inVarTemplate, outVarTemplate));
+		}
+		return Collections.singleton(template);
+	}
+
+	/**
+	 * Return for a given set of global indices, all in- and out-var-versions of this index for the given transformula
+	 */
+	private Set<ArrayIndex> getInAndOutVarIndices(final Set<ArrayIndex> indices, final TransFormulaLR transformula) {
+		final Set<ArrayIndex> result = new HashSet<>();
+		for (final ArrayIndex index : indices) {
+			result.add(getLocalIndex(index, transformula, true));
+			result.add(getLocalIndex(index, transformula, false));
+		}
+		return result;
+	}
+
 	/**
 	 * Get a fresh TermVariable with the given term as name (in a nicer representation, especially for select-terms)
 	 *
@@ -906,7 +933,7 @@ public class MapEliminator {
 		return SmtUtils.removeSmtQuoteCharacters(result);
 	}
 
-	private Set<Doubleton<Term>> computeDoubletons(
+	private static Set<Doubleton<Term>> computeDoubletons(
 			final HashRelation<ApplicationTermTemplate, ArrayIndex> hashRelation) {
 		final Set<Doubleton<Term>> result = new HashSet<>();
 		for (final ApplicationTermTemplate template : hashRelation.getDomain()) {
@@ -933,7 +960,7 @@ public class MapEliminator {
 		return mDoubletons;
 	}
 
-	private boolean areIndicesEqual(final ArrayIndex index1, final ArrayIndex index2,
+	private static boolean areIndicesEqual(final ArrayIndex index1, final ArrayIndex index2,
 			final EqualityAnalysisResult invariants) {
 		for (int i = 0; i < index1.size(); i++) {
 			final Term term1 = index1.get(i);
@@ -945,7 +972,7 @@ public class MapEliminator {
 		return true;
 	}
 
-	private boolean areIndicesUnequal(final ArrayIndex index1, final ArrayIndex index2,
+	private static boolean areIndicesUnequal(final ArrayIndex index1, final ArrayIndex index2,
 			final EqualityAnalysisResult invariants) {
 		for (int i = 0; i < index1.size(); i++) {
 			final Term term1 = index1.get(i);
@@ -957,7 +984,7 @@ public class MapEliminator {
 		return false;
 	}
 
-	private boolean areAllIndicesUnequal(final ArrayIndex index, final Collection<ArrayIndex> indices,
+	private static boolean areAllIndicesUnequal(final ArrayIndex index, final Collection<ArrayIndex> indices,
 			final EqualityAnalysisResult invariants) {
 		for (final ArrayIndex index2 : indices) {
 			if (!areIndicesUnequal(index, index2, invariants)) {
@@ -1017,37 +1044,5 @@ public class MapEliminator {
 		final List<ArrayIndex> emptyList = Collections.emptyList();
 		return indexEqualityInequalityImpliesValueEquality(index, equal, emptyList, value1, value2, invariants,
 				transformula);
-	}
-
-	/**
-	 * Returns for a global {@code index}, all combinations of in- and out-var indices
-	 *
-	 * @param index
-	 *            An array-index with global terms
-	 * @param transformula
-	 * @return A set, that contains all in- and out-var indices of the given index
-	 */
-	private Set<ArrayIndex> getInOutVarIndices(final ArrayIndex index, final TransFormulaLR transformula) {
-		Set<List<Term>> lists = new HashSet<>();
-		lists.add(new ArrayList<Term>());
-		for (final Term t : index) {
-			final Set<List<Term>> newLists = new HashSet<>();
-			final Term termIn = getLocalTerm(t, transformula, true);
-			final Term termOut = getLocalTerm(t, transformula, false);
-			for (final List<Term> list : lists) {
-				final List<Term> listIn = new ArrayList<>(list);
-				listIn.add(termIn);
-				newLists.add(listIn);
-				final List<Term> listOut = new ArrayList<>(list);
-				listOut.add(termOut);
-				newLists.add(listOut);
-			}
-			lists = newLists;
-		}
-		final Set<ArrayIndex> result = new HashSet<>();
-		for (final List<Term> list : lists) {
-			result.add(new ArrayIndex(list));
-		}
-		return result;
 	}
 }
