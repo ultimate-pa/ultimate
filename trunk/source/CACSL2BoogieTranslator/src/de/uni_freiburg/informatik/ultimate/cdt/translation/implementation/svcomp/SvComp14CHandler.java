@@ -84,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IN
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -114,6 +115,8 @@ public class SvComp14CHandler extends CHandler {
 	 * The string representing SV-Comp's assert method.
 	 */
 	private static final String FUNC_NAME_ASSUME = "__VERIFIER_assume";
+
+	private static final String FUNC_NAME_LTL_STEP = "__VERIFIER_ltl_step";
 
 	private static final Set<String> NAME_UNSUPPORTED_FLOAT_OPERATIONS =
 			new HashSet<>(Arrays.asList(new String[] { "sin" }));
@@ -156,6 +159,15 @@ public class SvComp14CHandler extends CHandler {
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 		final List<Overapprox> overappr = new ArrayList<>();
 		LRValue returnValue = null;
+
+		if (methodName.equals(FUNC_NAME_LTL_STEP)) {
+			final LTLStepAnnotation ltlStep = new LTLStepAnnotation();
+			final AssumeStatement assumeStmt =
+					new AssumeStatement(loc, new BooleanLiteral(loc, new InferredType(Type.Boolean), true));
+			ltlStep.annotate(assumeStmt);
+			stmt.add(assumeStmt);
+			return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
+		}
 
 		if (methodName.equals(FUNC_NAME_ERROR)) {
 			final boolean checkSvcompErrorfunction =
