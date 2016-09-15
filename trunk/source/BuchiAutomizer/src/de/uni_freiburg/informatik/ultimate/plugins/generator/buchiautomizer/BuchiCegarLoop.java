@@ -57,6 +57,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMulti;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMulti.Strategy;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.arrays.MinimizeNwaMaxSAT;
@@ -683,6 +685,24 @@ public class BuchiCegarLoop {
 					new ReduceNwaDelayedSimulation<>(new AutomataLibraryServices(mServices),
 							mStateFactoryForRefinement, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) mAbstraction,
 							false, partition);
+			assert minimizeOp.checkResult(mPredicateFactoryResultChecking);
+			result = minimizeOp.getResult();
+			break;
+		}
+
+		case MultiDefault: {
+			final MinimizeNwaMulti<CodeBlock, IPredicate> minimizeOp = new MinimizeNwaMulti<>(
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) mAbstraction, partition, false);
+			assert minimizeOp.checkResult(mPredicateFactoryResultChecking);
+			result = minimizeOp.getResult();
+			break;
+		}
+		case MultiSimulation: {
+			final MinimizeNwaMulti<CodeBlock, IPredicate> minimizeOp = new MinimizeNwaMulti<>(
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) mAbstraction, partition, false,
+					Strategy.SIMULATION_BASED);
 			assert minimizeOp.checkResult(mPredicateFactoryResultChecking);
 			result = minimizeOp.getResult();
 			break;

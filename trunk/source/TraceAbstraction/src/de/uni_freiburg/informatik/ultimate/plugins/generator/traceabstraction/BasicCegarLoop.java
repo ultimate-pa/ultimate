@@ -58,6 +58,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeDfaHopcroftArrays;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeDfaHopcroftLists;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMulti;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMulti.Strategy;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaOverapproximation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPattern;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
@@ -868,11 +870,23 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				break;
 			}
 			case RAQ_DIRECT_SIMULATION: {
-				/**
-				 * TODO Christian 2016-08-05: add initial partition
-				 */
 				newAbstractionRaw = new ReduceNwaDirectSimulation<>(services,
-						predicateFactoryRefinement, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction);
+						predicateFactoryRefinement, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction,
+						false, partition);
+				wasMinimized = true;
+				break;
+			}
+			case NWA_COMBINATOR_MULTI_DEFAULT: {
+				newAbstractionRaw = new MinimizeNwaMulti<>(services, predicateFactoryRefinement,
+						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction, partition,
+						mComputeHoareAnnotation);
+				wasMinimized = true;
+				break;
+			}
+			case NWA_COMBINATOR_MULTI_SIMULATION: {
+				newAbstractionRaw = new MinimizeNwaMulti<>(services, predicateFactoryRefinement,
+						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction, partition,
+						mComputeHoareAnnotation, Strategy.SIMULATION_BASED);
 				wasMinimized = true;
 				break;
 			}

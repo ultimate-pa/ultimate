@@ -130,7 +130,9 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	};
 
 	public enum AutomataMinimization {
-		None, MinimizeSevpa, ShrinkNwa, DelayedSimulation, FairSimulation_WithSCC, FairSimulation_WithoutSCC, FairDirectSimulation, MinimizeNwaMaxSat2, MinimizeNwaMaxSat, RaqDirectSimulation, RaqDelayedSimulation
+		None, MinimizeSevpa, ShrinkNwa, DelayedSimulation, FairSimulation_WithSCC, FairSimulation_WithoutSCC,
+		FairDirectSimulation, MinimizeNwaMaxSat2, MinimizeNwaMaxSat, RaqDirectSimulation, RaqDelayedSimulation,
+		MultiDefault, MultiSimulation
 	};
 
 }

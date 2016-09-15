@@ -66,7 +66,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<Boolean>(LABEL_SEPARATE_SOLVER, DEF_SEPARATE_SOLVER, PreferenceType.Boolean),
 				new UltimatePreferenceItem<SolverMode>(RcfgPreferenceInitializer.LABEL_Solver, DEF_Solver,
 						PreferenceType.Combo, SolverMode.values()),
-				new UltimatePreferenceItem<Boolean>(RcfgPreferenceInitializer.LABEL_FakeNonIncrementalScript, 
+				new UltimatePreferenceItem<Boolean>(RcfgPreferenceInitializer.LABEL_FakeNonIncrementalScript,
 						RcfgPreferenceInitializer.DEF_FakeNonIncrementalScript, PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(RcfgPreferenceInitializer.LABEL_ExtSolverCommand,
 						DEF_ExtSolverCommand, PreferenceType.String),
@@ -231,6 +231,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public enum Minimization {
 		NONE, MINIMIZE_SEVPA, SHRINK_NWA, DFA_HOPCROFT_ARRAYS, DFA_HOPCROFT_LISTS, NWA_MAX_SAT, NWA_MAX_SAT2,
 		NWA_COMBINATOR_PATTERN, NWA_COMBINATOR_EVERY_KTH, RAQ_DIRECT_SIMULATION, NWA_OVERAPPROXIMATION,
+		NWA_COMBINATOR_MULTI_DEFAULT, NWA_COMBINATOR_MULTI_SIMULATION
 	}
 
 	public enum AssertCodeBlockOrder {
