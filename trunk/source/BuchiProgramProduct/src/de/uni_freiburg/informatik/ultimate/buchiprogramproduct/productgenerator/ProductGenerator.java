@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeIterator;
 
 /**
  * This class is implementing the Buchi program product, i.e. interleaving a BuchiAutomaton with the CFG.
@@ -101,6 +102,7 @@ public final class ProductGenerator {
 	private final Map<ProgramPoint, List<Call>> mOrigRcfgCallLocs2CallEdges;
 	private final SimplicationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
+	private final boolean mEverythingIsAStep;
 
 	public ProductGenerator(final INestedWordAutomaton<CodeBlock, String> nwa, final RootNode rcfg,
 			final LTLPropertyCheck ltlAnnot, final IUltimateServiceProvider services,
@@ -127,6 +129,12 @@ public final class ProductGenerator {
 		mRcfgSinks = new HashSet<>();
 		mHelperProductStates = new HashSet<>();
 		mNameGenerator = new ProductLocationNameGenerator(nwa);
+
+		mEverythingIsAStep =
+				new RCFGEdgeIterator(mRcfgRoot).asStream().allMatch(a -> LTLStepAnnotation.getAnnotation(a) == null);
+		if (mEverythingIsAStep) {
+			mLogger.info("The program has no step specification, so we assume maximum atomicity");
+		}
 
 		// create the new root node
 		mProductRoot = new RootNode(mRcfgRoot.getPayload().getLocation(), mRcfgRoot.getRootAnnot());
@@ -347,7 +355,7 @@ public final class ProductGenerator {
 	}
 
 	private void createEdgesProduct(final ProgramPoint origRcfgSourceLoc, final RCFGEdge rcfgEdge) {
-		final boolean isProgramStep = LTLStepAnnotation.getAnnotation(rcfgEdge) != null;
+		final boolean isProgramStep = mEverythingIsAStep || LTLStepAnnotation.getAnnotation(rcfgEdge) != null;
 		// if the source is a product state, we know that the
 		// target is also a product state
 		// this is the normal case
