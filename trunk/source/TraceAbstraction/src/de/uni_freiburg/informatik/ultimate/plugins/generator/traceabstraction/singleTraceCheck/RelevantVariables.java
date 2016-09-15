@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.GlobalBoogie
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -357,15 +358,21 @@ public class RelevantVariables {
 			final int startPos, final int endPos, final Set<IProgramVar> modifiedSet) {
 		for (final IProgramVar bv : bvSet) {
 			if (bv.isGlobal()) {
-				IProgramNonOldVar bnov;
-				if (bv instanceof IProgramOldVar) {
-					bnov = ((IProgramOldVar) bv).getNonOldVar();
+				if (bv instanceof IProgramConst) {
+					if (occursBetween(bv, startPos, endPos)) {
+						modifiedSet.add(bv);
+					}
 				} else {
-					bnov = (IProgramNonOldVar) bv;
-				}
-				if (!mModifiableGlobals.isModifiable(bnov, proc)) {
-					if (occursBetween(bnov, startPos, endPos)) {
-						modifiedSet.add(bnov);
+					IProgramNonOldVar bnov;
+					if (bv instanceof IProgramOldVar) {
+						bnov = ((IProgramOldVar) bv).getNonOldVar();
+					} else {
+						bnov = (IProgramNonOldVar) bv;
+					}
+					if (!mModifiableGlobals.isModifiable(bnov, proc)) {
+						if (occursBetween(bnov, startPos, endPos)) {
+							modifiedSet.add(bnov);
+						}
 					}
 				}
 			}
