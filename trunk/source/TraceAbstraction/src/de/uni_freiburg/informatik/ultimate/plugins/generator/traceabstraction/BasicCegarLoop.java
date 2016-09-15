@@ -391,10 +391,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mCegarLoopBenchmark.addTraceCheckerData(interpolatingTraceChecker.getTraceCheckerBenchmark());
 		if (interpolatingTraceChecker.getToolchainCancelledExpection() != null) {
 			throw interpolatingTraceChecker.getToolchainCancelledExpection();
-		} else {
-			if (mPref.useSeparateSolverForTracechecks()) {
-				smtMangerTracechecks.getScript().exit();
-			}
+		} else if (mPref.useSeparateSolverForTracechecks()) {
+			smtMangerTracechecks.getScript().exit();
 		}
 
 		feasibility = interpolatingTraceChecker.isCorrect();
@@ -751,11 +749,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		final boolean stillAccepted = (new Accepts<>(new AutomataLibraryServices(mServices),
 				(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction,
 				(NestedWord<CodeBlock>) mCounterexample.getWord())).getResult();
-		if (stillAccepted) {
-			return false;
-		} else {
-			return true;
-		}
+		return !stillAccepted;
 	}
 
 	public static IHoareTripleChecker getEfficientHoareTripleChecker(final IUltimateServiceProvider services,
@@ -1077,13 +1071,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			if (mArtifactAutomaton == null) {
 				mLogger.warn("Preferred Artifact not available," + " visualizing the RCFG instead");
 				return mRootNode;
-			} else {
-				try {
-					return Automaton2UltimateModel.ultimateModel(new AutomataLibraryServices(mServices),
-							mArtifactAutomaton);
-				} catch (final AutomataOperationCanceledException e) {
-					return null;
-				}
+			}
+			try {
+				return Automaton2UltimateModel.ultimateModel(new AutomataLibraryServices(mServices),
+						mArtifactAutomaton);
+			} catch (final AutomataOperationCanceledException e) {
+				return null;
 			}
 		} else if (mPref.artifact() == Artifact.RCFG) {
 			return mRootNode;
@@ -1141,7 +1134,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	}
 
-	private final boolean checkStoreCounterExamples(final TAPreferences pref) {
+	private final static boolean checkStoreCounterExamples(final TAPreferences pref) {
 		return pref.minimize() == Minimization.NWA_OVERAPPROXIMATION;
 	}
 }

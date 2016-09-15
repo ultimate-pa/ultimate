@@ -87,9 +87,9 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
 
 		initialiseParser();
 
-		trueNodeList = new ArrayList<Element>();
-		mcFormsList = new ArrayList<Element>();
-		handledIntervalsList = new ArrayList<String>();
+		trueNodeList = new ArrayList<>();
+		mcFormsList = new ArrayList<>();
+		handledIntervalsList = new ArrayList<>();
 	}
 
 	/**
@@ -226,9 +226,9 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
 			mcFormsNode.setAttribute(XMLTags.XMLNS_TAG, XMLTags.SCHEMAINST_TAG);
 			mcFormsNode.setAttribute(XMLTags.NONAMESPACELOC_TAG, XMLTags.MODELCHECKFORMSCHEMA_PATH);
 
-			final Iterator mcFormIterator = mcFormsList.iterator();
+			final Iterator<Element> mcFormIterator = mcFormsList.iterator();
 			while (mcFormIterator.hasNext()) {
-				final Element actMCFormNode = (Element) mcFormIterator.next();
+				final Element actMCFormNode = mcFormIterator.next();
 				mcFormsNode.appendChild(actMCFormNode);
 			}
 
@@ -385,7 +385,7 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
 	 * @see <code>ModelCheckForm.xsd</code>
 	 */
 	protected void createMCForm(final Element node) {
-		final ArrayList<Element> mcTraceNodeList = new ArrayList<Element>();
+		final ArrayList<Element> mcTraceNodeList = new ArrayList<>();
 		final String commonExitSync = getFreshSyncEvent();
 
 		if (node.getNodeName().equals(XMLTags.TRACE_TAG)) {
@@ -401,7 +401,7 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
 
 			// True traces are treated afterwards to omit superfluous
 			// mcTrace nodes
-			final ArrayList<Element> trueTraces = new ArrayList<Element>();
+			final ArrayList<Element> trueTraces = new ArrayList<>();
 
 			final NodeList traces = node.getElementsByTagName(XMLTags.TRACE_TAG);
 			final int traceCount = traces.getLength();
@@ -417,9 +417,9 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
 				}
 			}
 
-			final Iterator trueTracesIterator = trueTraces.iterator();
+			final Iterator<Element> trueTracesIterator = trueTraces.iterator();
 			while (trueTracesIterator.hasNext()) {
-				final Element actTrace = (Element) trueTracesIterator.next();
+				final Element actTrace = trueTracesIterator.next();
 				final Element mcTraceNode = createMCTrace(actTrace, commonExitSync);
 				if (mcTraceNode != null) {
 					mcTraceNodeList.add(mcTraceNode);
@@ -431,9 +431,9 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
 
 		if (!mcTraceNodeList.isEmpty()) {
 			final Element mcFormNode = document.createElement(XMLTags.MCFORmTAG);
-			final Iterator mcTraceNodeIterator = mcTraceNodeList.iterator();
+			final Iterator<Element> mcTraceNodeIterator = mcTraceNodeList.iterator();
 			while (mcTraceNodeIterator.hasNext()) {
-				final Element actMCTraceNode = (Element) mcTraceNodeIterator.next();
+				final Element actMCTraceNode = mcTraceNodeIterator.next();
 				mcFormNode.appendChild(actMCTraceNode);
 			}
 
@@ -494,28 +494,25 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
 					return null;
 				}
 				return getMCTraceNode((Element) trace.cloneNode(true), null, syncEvent1);
-			} else {
-				logger.debug("traceIsFirstChild && " + "(syncEvent2!=NULL && !parentNode1IsFirstChild");
-				if (isAlreadyHandled(syncEvent2, syncEvent1) && isTrueNode(trace)) {
-					return null;
-				}
-				return getMCTraceNode((Element) trace.cloneNode(true), syncEvent2, syncEvent1);
 			}
-		} else {
-			if (syncEvent2 == null || !parentNode1IsFirstChild) {
-				logger.debug("!traceIsFirstChild && " + "(syncEvent2==NULL || parentNode1IsFirstChild");
-				if (isTrueNode(trace)) {
-					return null;
-				}
-				return getMCTraceNode((Element) trace.cloneNode(true), syncEvent1, commonExitSync);
-			} else {
-				logger.debug("!traceIsFirstChild && " + "(syncEvent2!=NULL && parentNode1IsFirstChild");
-				if (isAlreadyHandled(syncEvent1, syncEvent2) && isTrueNode(trace)) {
-					return null;
-				}
-				return getMCTraceNode((Element) trace.cloneNode(true), syncEvent1, syncEvent2);
+			logger.debug("traceIsFirstChild && " + "(syncEvent2!=NULL && !parentNode1IsFirstChild");
+			if (isAlreadyHandled(syncEvent2, syncEvent1) && isTrueNode(trace)) {
+				return null;
 			}
+			return getMCTraceNode((Element) trace.cloneNode(true), syncEvent2, syncEvent1);
 		}
+		if (syncEvent2 == null || !parentNode1IsFirstChild) {
+			logger.debug("!traceIsFirstChild && " + "(syncEvent2==NULL || parentNode1IsFirstChild");
+			if (isTrueNode(trace)) {
+				return null;
+			}
+			return getMCTraceNode((Element) trace.cloneNode(true), syncEvent1, commonExitSync);
+		}
+		logger.debug("!traceIsFirstChild && " + "(syncEvent2!=NULL && parentNode1IsFirstChild");
+		if (isAlreadyHandled(syncEvent1, syncEvent2) && isTrueNode(trace)) {
+			return null;
+		}
+		return getMCTraceNode((Element) trace.cloneNode(true), syncEvent1, syncEvent2);
 	}
 
 	/**
@@ -572,10 +569,7 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
 	private boolean isFirstChild(final Node node) {
 		final Element parent = (Element) node.getParentNode();
 		final Element[] operands = getFormulaOperands(parent);
-		if (node == operands[0]) {
-			return true;
-		}
-		return false;
+		return node == operands[0];
 	}
 
 	/**

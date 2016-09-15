@@ -129,10 +129,7 @@ public class RelationDecision extends BooleanDecision {
 		if (!(o instanceof BooleanDecision)) {
 			return false;
 		}
-		if (!var.equals(((BooleanDecision) o).var)) {
-			return false;
-		}
-		return true;
+		return var.equals(((BooleanDecision) o).var);
 	}
 	
 	@Override

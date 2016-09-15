@@ -382,11 +382,7 @@ public class RangeDecision extends Decision {
             }
         }
 
-        if (!childs[tptr].implies(ochilds[optr])) {
-            return false;
-        }
-
-        return true;
+        return childs[tptr].implies(ochilds[optr]);
     }
 
     @Override

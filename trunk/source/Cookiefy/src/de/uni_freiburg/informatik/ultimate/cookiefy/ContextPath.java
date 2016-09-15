@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Cookiefy plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Cookiefy plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Cookiefy plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cookiefy;
@@ -57,7 +57,7 @@ public class ContextPath {
 			return mPath;
 		}
 
-		public ContextPathNode(FormulaType type, String path) {
+		public ContextPathNode(final FormulaType type, final String path) {
 			mFormulaType = type;
 			mPath = path;
 		}
@@ -74,17 +74,11 @@ public class ContextPath {
 			if (mFormulaType == FormulaType.AG) {
 				return true;
 			}
-			if (mFormulaType == FormulaType.AW) {
-				return true;
-			}
-			return false;
+			return mFormulaType == FormulaType.AW;
 		}
 
 		public boolean isAtom() {
-			if (mFormulaType == FormulaType.Alpha) {
-				return true;
-			}
-			return false;
+			return mFormulaType == FormulaType.Alpha;
 		}
 		
 		@Override
@@ -100,7 +94,7 @@ public class ContextPath {
 			return mExpression;
 		}
 
-		public ContextPathAlphaNode(String path, Expression content) {
+		public ContextPathAlphaNode(final String path, final Expression content) {
 			super(FormulaType.Alpha, path);
 			mExpression = content;
 		}

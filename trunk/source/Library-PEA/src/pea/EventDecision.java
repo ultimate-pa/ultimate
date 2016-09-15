@@ -32,7 +32,7 @@ import java.util.Set;
 public class EventDecision extends Decision {
     String event;
 
-    public EventDecision(String ev) {
+    public EventDecision(final String ev) {
         event = ev;
     }
 
@@ -40,7 +40,7 @@ public class EventDecision extends Decision {
      * Create a new constraint specifying that all must events are in the set
      * and all forbid events aren't.
      */
-    public static CDD create(Set<String> must, Set<String> forbid) {
+    public static CDD create(final Set<String> must, final Set<String> forbid) {
         CDD result = CDD.TRUE;
 
         for (final String evt : must) {
@@ -62,7 +62,7 @@ public class EventDecision extends Decision {
      * @param event
      *            the event that is forbidden.
      */
-    public static CDD create(char forbidden, String event) {
+    public static CDD create(final char forbidden, final String event) {
         return CDD.create(new EventDecision(event), CDD.falseChilds);
     }
 
@@ -72,21 +72,17 @@ public class EventDecision extends Decision {
      * @param event
      *            the event that must occur.
      */
-    public static CDD create(String event) {
+    public static CDD create(final String event) {
         return CDD.create(new EventDecision(event), CDD.trueChilds);
     }
 
     @Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
         if (!(o instanceof EventDecision)) {
             return false;
         }
 
-        if (!event.equals(((EventDecision) o).event)) {
-            return false;
-        }
-
-        return true;
+        return event.equals(((EventDecision) o).event);
     }
 
     @Override
@@ -95,7 +91,7 @@ public class EventDecision extends Decision {
     }
 
     @Override
-	public int compareTo(Object o) {
+	public int compareTo(final Object o) {
         if (!(o instanceof EventDecision)) {
             return -1;
         }
@@ -104,22 +100,22 @@ public class EventDecision extends Decision {
     }
 
     @Override
-	public String toString(int child) {
+	public String toString(final int child) {
         return (child == 0) ? event : ("/" + event);
     }
 
     @Override
-	public String toSmtString(int child) {
+	public String toSmtString(final int child) {
         return toString(child);
     }
 
     @Override
-	public String toUppaalString(int child) {
+	public String toUppaalString(final int child) {
         return "true";
     }
 
     @Override
-	public String toUppaalStringDOM(int child) {
+	public String toUppaalStringDOM(final int child) {
         return "true";
     }
 
@@ -141,7 +137,7 @@ public class EventDecision extends Decision {
     }
 
     @Override
-    public String toTexString(int child) {
+    public String toTexString(final int child) {
         return (child == 0) ? event : ("\\neg" + event);
     }
 
