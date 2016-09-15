@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BuchiProgramProduct plug-in.
- * 
+ *
  * The ULTIMATE BuchiProgramProduct plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BuchiProgramProduct plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BuchiProgramProduct plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiProgramProduct plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
 /**
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
@@ -40,21 +40,21 @@ public final class ProductLocationNameGenerator {
 	private static final String HELPER_STATE_PREFIX = "crhelper";
 	private int mHelperUnifique;
 	private final INestedWordAutomatonSimple<CodeBlock, String> mNWA;
-	
+
 	protected ProductLocationNameGenerator(final INestedWordAutomatonSimple<CodeBlock, String> nwa) {
 		assert nwa != null;
-		
+
 		mHelperUnifique = 0;
 		mNWA = nwa;
 	}
-	
+
 	protected String generateStateName(final ProgramPoint loc) {
 		return generateStateName(loc, null);
 	}
 
 	/**
 	 * Central method to create the product state's names.
-	 * 
+	 *
 	 * @param rcfgName
 	 *            Name of the state in the RCFG
 	 * @param nwaName
@@ -80,12 +80,12 @@ public final class ProductLocationNameGenerator {
 		mHelperUnifique++;
 		return HELPER_STATE_PREFIX + Integer.toString(mHelperUnifique) + "__" + location;
 	}
-	
-	protected boolean isHelperState(final ProgramPoint loc){
-		if(loc == null){
+
+	protected static boolean isHelperState(final ProgramPoint loc) {
+		if (loc == null) {
 			return false;
 		}
 		return loc.getPosition().startsWith(HELPER_STATE_PREFIX);
 	}
-	
+
 }

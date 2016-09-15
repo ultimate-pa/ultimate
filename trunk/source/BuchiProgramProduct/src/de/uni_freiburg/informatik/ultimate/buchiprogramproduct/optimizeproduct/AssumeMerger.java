@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BuchiProgramProduct plug-in.
- * 
+ *
  * The ULTIMATE BuchiProgramProduct plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BuchiProgramProduct plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BuchiProgramProduct plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiProgramProduct plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct;
@@ -42,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -49,28 +51,34 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 
-public class AssumeMerger extends BaseProductOptimizer {
+/**
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+public final class AssumeMerger extends BaseProductOptimizer {
 
 	private int mAssumesMerged;
-	private boolean mRewriteNotEquals;
-	private boolean mUseSBE;
+	private final boolean mRewriteNotEquals;
+	private final boolean mUseSBE;
 
-	public AssumeMerger(RootNode product, IUltimateServiceProvider services, IToolchainStorage storage) {
+	private final TransFormulaBuilder mTransFormulaBuilder;
+
+	public AssumeMerger(final RootNode product, final IUltimateServiceProvider services,
+			final IToolchainStorage storage, final SimplicationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique) {
 		super(product, services, storage);
-		mLogger.info("Merged " + mAssumesMerged + " AssumeStatements");
-	}
-
-	@Override
-	protected void init(RootNode root, IUltimateServiceProvider services) {
 		mAssumesMerged = 0;
 		mRewriteNotEquals = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES_REWRITENOTEQUALS);
 		mUseSBE = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES_SBE);
+		mTransFormulaBuilder =
+				new TransFormulaBuilder(product, services, simplificationTechnique, xnfConversionTechnique);
 	}
 
 	@Override
-	protected RootNode process(RootNode root) {
+	protected RootNode createResult(final RootNode root) {
 		final ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
 		final HashSet<RCFGEdge> closed = new HashSet<>();
 
@@ -88,10 +96,11 @@ public class AssumeMerger extends BaseProductOptimizer {
 				mergeEdge(root, (CodeBlock) current);
 			}
 		}
+		mLogger.info("Merged " + mAssumesMerged + " AssumeStatements");
 		return root;
 	}
 
-	private void mergeEdge(RootNode root, CodeBlock current) {
+	private void mergeEdge(final RootNode root, final CodeBlock current) {
 		final List<Statement> stmts = new StatementExtractor(mLogger).process(current);
 		if (stmts.size() < 2) {
 			// there is nothing to merge here
@@ -132,7 +141,7 @@ public class AssumeMerger extends BaseProductOptimizer {
 
 	}
 
-	private void createNewEdges(RootNode root, CodeBlock current, List<Statement> newStmts) {
+	private void createNewEdges(final RootNode root, final CodeBlock current, final List<Statement> newStmts) {
 		boolean allAssumes = true;
 		for (final Statement stmt : newStmts) {
 			if (!(stmt instanceof AssumeStatement)) {
@@ -158,7 +167,9 @@ public class AssumeMerger extends BaseProductOptimizer {
 					final StatementSequence ss = mCbf.constructStatementSequence((ProgramPoint) current.getSource(),
 							(ProgramPoint) current.getTarget(), new AssumeStatement(stmt.getLocation(), disjunct),
 							Origin.IMPLEMENTATION);
-					generateTransFormula(root, ss);
+
+					mTransFormulaBuilder.addTransFormula(ss);
+					assert ss.getTransitionFormula() != null;
 				}
 				return;
 			}
@@ -166,7 +177,7 @@ public class AssumeMerger extends BaseProductOptimizer {
 		}
 		final StatementSequence ss = mCbf.constructStatementSequence((ProgramPoint) current.getSource(),
 				(ProgramPoint) current.getTarget(), newStmts, Origin.IMPLEMENTATION);
-		generateTransFormula(root, ss);
+		mTransFormulaBuilder.addTransFormula(ss);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Replacing first with second:");
 			mLogger.debug(current);
@@ -174,7 +185,7 @@ public class AssumeMerger extends BaseProductOptimizer {
 		}
 	}
 
-	private AssumeStatement mergeAssumes(List<AssumeStatement> successiveAssumes) {
+	private AssumeStatement mergeAssumes(final List<AssumeStatement> successiveAssumes) {
 		final List<Expression> assumeExpressions = new ArrayList<>();
 		mLogger.debug("Trying to merge the following assume statements:");
 		for (final AssumeStatement stmt : successiveAssumes) {
@@ -187,8 +198,8 @@ public class AssumeMerger extends BaseProductOptimizer {
 		final BoogieExpressionTransformer bcw = new BoogieExpressionTransformer();
 		final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(bcw);
 		final int assumeExprSize = assumeExpressions.size();
-		final Collection<Expression> disjuncts = new ArrayList<>(
-				ct.toDnfDisjuncts(bcw.makeAnd(assumeExpressions.iterator())));
+		final Collection<Expression> disjuncts =
+				new ArrayList<>(ct.toDnfDisjuncts(bcw.makeAnd(assumeExpressions.iterator())));
 		final int disjunctsSize = disjuncts.size();
 
 		if (successiveAssumes.size() > 1) {
@@ -205,22 +216,21 @@ public class AssumeMerger extends BaseProductOptimizer {
 		return rtr;
 	}
 
-	private boolean collectionsEqual(List<Statement> stmts, List<Statement> newStmts) {
+	private static boolean collectionsEqual(final List<Statement> stmts, final List<Statement> newStmts) {
 		if (stmts == null && newStmts == null) {
 			return true;
 		} else if (stmts != null && newStmts != null) {
 			if (stmts.size() != newStmts.size()) {
 				return false;
-			} else {
-				for (int i = 0; i < stmts.size(); ++i) {
-					final Statement stmt = stmts.get(i);
-					final Statement newStmt = newStmts.get(i);
-					if (!stmt.equals(newStmt)) {
-						return false;
-					}
-				}
-				return true;
 			}
+			for (int i = 0; i < stmts.size(); ++i) {
+				final Statement stmt = stmts.get(i);
+				final Statement newStmt = newStmts.get(i);
+				if (!stmt.equals(newStmt)) {
+					return false;
+				}
+			}
+			return true;
 		} else {
 			return false;
 		}

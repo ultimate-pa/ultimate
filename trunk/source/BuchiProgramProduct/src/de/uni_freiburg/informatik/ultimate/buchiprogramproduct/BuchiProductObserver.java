@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * Copyright (C) 2013-2015 Vincent Langenfeld (langenfv@informatik.uni-freiburg.de)
- * 
+ *
  * This file is part of the ULTIMATE BuchiProgramProduct plug-in.
- * 
+ *
  * The ULTIMATE BuchiProgramProduct plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BuchiProgramProduct plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BuchiProgramProduct plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiProgramProduct plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -51,10 +51,21 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
+/**
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class BuchiProductObserver implements IUnmanagedObserver {
+
+	private static final SimplicationTechnique SIMPLIFICATION_TECHNIQUE = SimplicationTechnique.SIMPLIFY_DDA;
+	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
+			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private final ILogger mLogger;
 	private RootNode mRcfg;
@@ -63,8 +74,11 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 	private final IUltimateServiceProvider mServices;
 	private final ProductBacktranslator mBacktranslator;
 	private final IToolchainStorage mStorage;
+	private final XnfConversionTechnique mXnfConversionTechnique;
+	private final SimplicationTechnique mSimplificationTechnique;
 
-	public BuchiProductObserver(final ILogger logger, final IUltimateServiceProvider services, final ProductBacktranslator backtranslator, final IToolchainStorage storage) {
+	public BuchiProductObserver(final ILogger logger, final IUltimateServiceProvider services,
+			final ProductBacktranslator backtranslator, final IToolchainStorage storage) {
 		mLogger = logger;
 		mServices = services;
 		mStorage = storage;
@@ -72,11 +86,13 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		mProduct = null;
 		mNeverClaimNWAContainer = null;
 		mBacktranslator = backtranslator;
+		mSimplificationTechnique = SIMPLIFICATION_TECHNIQUE;
+		mXnfConversionTechnique = XNF_CONVERSION_TECHNIQUE;
 	}
 
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
-
+		// no initialisation needed
 	}
 
 	@Override
@@ -94,7 +110,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		try {
 			final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mNeverClaimNWAContainer);
 			mProduct = new ProductGenerator(mNeverClaimNWAContainer.getNWA(), mRcfg, ltlAnnot, mServices,
-					mBacktranslator).getProductRcfg();
+					mBacktranslator, mSimplificationTechnique, mXnfConversionTechnique).getProductRcfg();
 			mLogger.info("Finished generation of product automaton successfully");
 			reportSizeBenchmark("Initial product", mProduct);
 
@@ -131,70 +147,73 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 			reportSizeBenchmark("Optimized Product", mProduct);
 
 		} catch (final Exception e) {
-			mLogger.error(String.format(
-					"BuchiProgramProduct encountered an error during product automaton generation:\n %s", e));
+			mLogger.error("BuchiProgramProduct encountered an error during product automaton generation:", e);
 			throw e;
 		}
 	}
 
-	private boolean optimizeRemoveSinkStates(final IPreferenceProvider ups, boolean continueOptimization) {
+	private boolean optimizeRemoveSinkStates(final IPreferenceProvider ups, final boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_SINK_STATES)) {
 			final RemoveSinkStates rss = new RemoveSinkStates(mProduct, mServices, mStorage);
-			mProduct = rss.getResult();
-			continueOptimization = continueOptimization || rss.isGraphChanged();
+			mProduct = rss.getResult(mProduct);
+			return continueOptimization || rss.isGraphChanged();
 		}
 		return continueOptimization;
 	}
 
-	private boolean optimizeRemoveInfeasibleEdges(final IPreferenceProvider ups, boolean continueOptimization) {
+	private boolean optimizeRemoveInfeasibleEdges(final IPreferenceProvider ups, final boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_INFEASIBLE_EDGES)) {
 			final RemoveInfeasibleEdges opt1 = new RemoveInfeasibleEdges(mProduct, mServices, mStorage);
-			mProduct = opt1.getResult();
-			continueOptimization = continueOptimization || opt1.isGraphChanged();
+			mProduct = opt1.getResult(mProduct);
+			return continueOptimization || opt1.isGraphChanged();
 		}
 		return continueOptimization;
 	}
 
-	private boolean optimizeMaximizeFinalStates(final IPreferenceProvider ups, boolean continueOptimization) {
+	private boolean optimizeMaximizeFinalStates(final IPreferenceProvider ups, final boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_MAXIMIZE_FINAL_STATES)) {
 			final MaximizeFinalStates opt2 = new MaximizeFinalStates(mProduct, mServices, mStorage);
-			mProduct = opt2.getResult();
-			continueOptimization = continueOptimization || opt2.isGraphChanged();
+			mProduct = opt2.getResult(mProduct);
+			return continueOptimization || opt2.isGraphChanged();
 		}
 		return continueOptimization;
 	}
 
-	private boolean optimizeMinimizeStates(final IPreferenceProvider ups, boolean continueOptimization) {
-		final MinimizeStates minimizeStates = ups.getEnum(PreferenceInitializer.OPTIMIZE_MINIMIZE_STATES,
-				MinimizeStates.class);
+	private boolean optimizeMinimizeStates(final IPreferenceProvider ups, final boolean continueOptimization) {
+		final MinimizeStates minimizeStates =
+				ups.getEnum(PreferenceInitializer.OPTIMIZE_MINIMIZE_STATES, MinimizeStates.class);
 
 		if (minimizeStates != MinimizeStates.NONE) {
 			BaseProductOptimizer opt3;
 			switch (minimizeStates) {
 			case SINGLE:
-				opt3 = new MinimizeStatesSingleEdgeSingleNode(mProduct, mServices, mStorage);
+				opt3 = new MinimizeStatesSingleEdgeSingleNode(mProduct, mServices, mStorage, mSimplificationTechnique,
+						mXnfConversionTechnique);
 				break;
 			case SINGLE_NODE_MULTI_EDGE:
-				opt3 = new MinimizeStatesMultiEdgeSingleNode(mProduct, mServices, mStorage);
+				opt3 = new MinimizeStatesMultiEdgeSingleNode(mProduct, mServices, mStorage, mSimplificationTechnique,
+						mXnfConversionTechnique);
 				break;
 			case MULTI:
-				opt3 = new MinimizeStatesMultiEdgeMultiNode(mProduct, mServices, mStorage);
+				opt3 = new MinimizeStatesMultiEdgeMultiNode(mProduct, mServices, mStorage, mSimplificationTechnique,
+						mXnfConversionTechnique);
 				break;
 			default:
 				throw new IllegalArgumentException(minimizeStates + " is an unknown enum value!");
 
 			}
-			mProduct = opt3.getResult();
-			continueOptimization = continueOptimization || opt3.isGraphChanged();
+			mProduct = opt3.getResult(mProduct);
+			return continueOptimization || opt3.isGraphChanged();
 		}
 		return continueOptimization;
 	}
 
-	private boolean optimizeSimplifyAssumes(final IPreferenceProvider ups, boolean continueOptimization) {
+	private boolean optimizeSimplifyAssumes(final IPreferenceProvider ups, final boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES)) {
-			final BaseProductOptimizer opt4 = new AssumeMerger(mProduct, mServices, mStorage);
-			mProduct = opt4.getResult();
-			continueOptimization = continueOptimization || opt4.isGraphChanged();
+			final BaseProductOptimizer opt4 =
+					new AssumeMerger(mProduct, mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
+			mProduct = opt4.getResult(mProduct);
+			return continueOptimization || opt4.isGraphChanged();
 		}
 		return continueOptimization;
 	}
@@ -222,23 +241,23 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		return mProduct;
 	}
 
-	@Override
 	/**
 	 * Collect one RCFG and one LTL2Aut.AST
 	 */
+	@Override
 	public boolean process(final IElement root) throws Exception {
 
 		// collect root nodes of Buechi automaton
 		if (root instanceof NWAContainer) {
 			mLogger.debug("Collecting NWA representing NeverClaim");
-			mNeverClaimNWAContainer = ((NWAContainer) root);
+			mNeverClaimNWAContainer = (NWAContainer) root;
 			return false;
 		}
 
 		// collect root node of program's RCFG
 		if (root instanceof RootNode) {
 			mLogger.debug("Collecting RCFG RootNode");
-			mRcfg = ((RootNode) root);
+			mRcfg = (RootNode) root;
 			return false;
 		}
 
