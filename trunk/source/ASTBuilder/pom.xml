@@ -34,7 +34,7 @@
   
 	<parent>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<artifactId>de.uni_freiburg.informatik.ultimate.pom</artifactId>
+		<artifactId>mavenparent</artifactId>
 		<version>0.0.1</version>
 		<relativePath>../BA_MavenParentUltimate</relativePath>
 	</parent>
