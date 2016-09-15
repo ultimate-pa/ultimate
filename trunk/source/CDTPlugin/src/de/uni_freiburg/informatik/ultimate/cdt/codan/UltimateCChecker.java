@@ -5,22 +5,22 @@
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CDTPlugin plug-in.
- * 
+ *
  * The ULTIMATE CDTPlugin plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CDTPlugin plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CDTPlugin plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CDTPlugin plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -109,7 +109,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 
 	/**
 	 * The Constructor of this Checker
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	public UltimateCChecker() throws Throwable {
@@ -120,8 +120,8 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 
 	@Override
 	protected void finalize() throws Throwable {
-		super.finalize();
 		mController.close();
+		super.finalize();
 	}
 
 	@Override
@@ -153,8 +153,8 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 
 	private String getToolchainPath() {
 		// obtain selected toolchain from preferences
-		final String selectedToolchain = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getString(PreferencePage.TOOLCHAIN_SELECTION_TEXT);
+		final String selectedToolchain =
+				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferencePage.TOOLCHAIN_SELECTION_TEXT);
 
 		final File tc = mToolchainFiles.get(selectedToolchain);
 		String path = null;
@@ -172,8 +172,8 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 			@Override
 			public void run() {
 				// Present results of the actual run!
-				final IViewPart vpart = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
-						.findView(ResultList.ID);
+				final IViewPart vpart =
+						PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findView(ResultList.ID);
 				if (vpart instanceof ResultList) {
 					((ResultList) vpart).setViewerInput(completePath);
 				}
@@ -195,7 +195,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 
 	/**
 	 * Method for reporting Problems to Eclipse
-	 * 
+	 *
 	 * @param fileName
 	 *            the FileName
 	 */
