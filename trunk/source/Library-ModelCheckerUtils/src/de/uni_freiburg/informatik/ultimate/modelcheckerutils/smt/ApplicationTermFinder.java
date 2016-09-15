@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
@@ -40,77 +40,81 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Find all subterms that are application terms with FunctionSymbol mName.
- * The boolean flag mOnlyOutermost defines if only the outermost occurrence is 
- * returned (mOnlyOutermost == true) of if each occurrence is returned 
- * (mOnlyOutermost == false) and hence the result may also contain terms that 
+ * The boolean flag mOnlyOutermost defines if only the outermost occurrence is
+ * returned (mOnlyOutermost == true) of if each occurrence is returned
+ * (mOnlyOutermost == false) and hence the result may also contain terms that
  * are subterms of other result .
+ * 
  * @author Matthias Heizmann
- *
  */
 public class ApplicationTermFinder extends NonRecursive {
-	class FindWalker extends TermWalker {
-		FindWalker(Term term) { super(term); }
-		
-		@Override
-		public void walk(NonRecursive walker, ConstantTerm term) {
-			// do nothing
-		}
-		@Override
-		public void walk(NonRecursive walker, AnnotatedTerm term) {
-			walker.enqueueWalker(new FindWalker(term.getSubterm()));
-		}
-		@Override
-		public void walk(NonRecursive walker, ApplicationTerm term) {
-			if (mVisitedSubterms.contains(term)) {
-				// subterm already visited, we will not find anything new
-				return;
-			} else {
-				mVisitedSubterms.add(term);
-				if (term.getFunction().getName().equals(mFunctionSymbolName)) {
-					mResult.add(term);
-					if (mOnlyOutermost) {
-						return;
-					}
-				}
-				for (final Term t : term.getParameters()) {
-					walker.enqueueWalker(new FindWalker(t));
-				}
-			}
-		}
-		@Override
-		public void walk(NonRecursive walker, LetTerm term) {
-			throw new UnsupportedOperationException();
-		}
-		@Override
-		public void walk(NonRecursive walker, QuantifiedFormula term) {
-			walker.enqueueWalker(new FindWalker(term.getSubformula()));
-		}
-		@Override
-		public void walk(NonRecursive walker, TermVariable term) {
-			// do nothing
-		}
-	}
+	protected final String mFunctionSymbolName;
+	protected Set<ApplicationTerm> mResult;
+	protected final boolean mOnlyOutermost;
+	protected Set<Term> mVisitedSubterms;
 	
-	
-	
-	public ApplicationTermFinder(String functionSymbolName, boolean onlyOutermost) {
+	public ApplicationTermFinder(final String functionSymbolName, final boolean onlyOutermost) {
 		super();
 		mFunctionSymbolName = functionSymbolName;
 		mOnlyOutermost = onlyOutermost;
 	}
-
-	private final String mFunctionSymbolName;
-	private Set<ApplicationTerm> mResult;
-	private final boolean mOnlyOutermost;
-	private Set<Term> mVisitedSubterms;
 	
-	public Set<ApplicationTerm> findMatchingSubterms(Term term) {
+	public Set<ApplicationTerm> findMatchingSubterms(final Term term) {
 		if (term == null) {
-			throw new NullPointerException();
+			throw new IllegalArgumentException();
 		}
-		mResult = new HashSet<ApplicationTerm>();
-		mVisitedSubterms = new HashSet<Term>();
+		mResult = new HashSet<>();
+		mVisitedSubterms = new HashSet<>();
 		run(new FindWalker(term));
 		return mResult;
+	}
+	
+	class FindWalker extends TermWalker {
+		FindWalker(final Term term) {
+			super(term);
+		}
+		
+		@Override
+		public void walk(final NonRecursive walker, final ConstantTerm term) {
+			// do nothing
+		}
+		
+		@Override
+		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
+			walker.enqueueWalker(new FindWalker(term.getSubterm()));
+		}
+		
+		@Override
+		public void walk(final NonRecursive walker, final ApplicationTerm term) {
+			if (mVisitedSubterms.contains(term)) {
+				// subterm already visited, we will not find anything new
+				return;
+			}
+			mVisitedSubterms.add(term);
+			if (term.getFunction().getName().equals(mFunctionSymbolName)) {
+				mResult.add(term);
+				if (mOnlyOutermost) {
+					return;
+				}
+			}
+			for (final Term t : term.getParameters()) {
+				walker.enqueueWalker(new FindWalker(t));
+			}
+		}
+		
+		@Override
+		public void walk(final NonRecursive walker, final LetTerm term) {
+			throw new UnsupportedOperationException();
+		}
+		
+		@Override
+		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
+			walker.enqueueWalker(new FindWalker(term.getSubformula()));
+		}
+		
+		@Override
+		public void walk(final NonRecursive walker, final TermVariable term) {
+			// do nothing
+		}
 	}
 }

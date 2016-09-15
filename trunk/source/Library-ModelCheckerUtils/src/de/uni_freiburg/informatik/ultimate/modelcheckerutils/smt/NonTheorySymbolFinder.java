@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
@@ -41,69 +41,22 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Find all NonTheorySymbols that occur freely (not quantified) in a Term.
+ * 
  * @author Matthias Heizmann
- *
  */
 public class NonTheorySymbolFinder extends NonRecursive {
-	private class ConstantFindWalker extends TermWalker {
-		ConstantFindWalker(Term term) { super(term); }
-		
-		@Override
-		public void walk(NonRecursive walker, ConstantTerm term) {
-			// do nothing
-		}
-		@Override
-		public void walk(NonRecursive walker, AnnotatedTerm term) {
-			walker.enqueueWalker(new ConstantFindWalker(term.getSubterm()));
-		}
-		@Override
-		public void walk(NonRecursive walker, ApplicationTerm term) {
-			if (mVisitedSubterms.contains(term)) {
-				// subterm already visited, we will not find anything new
-				return;
-			} else {
-				mVisitedSubterms.add(term);
-				if (SmtUtils.isConstant(term)) {
-					mResult.add(new NonTheorySymbol.Constant(term));
-				} else {
-					final FunctionSymbol functionSymbol = term.getFunction();
-					if (!functionSymbol.isIntern()) {
-						mResult.add(new NonTheorySymbol.Function(functionSymbol));
-					}
-				}
-				for (final Term t : term.getParameters()) {
-					walker.enqueueWalker(new ConstantFindWalker(t));
-				}
-			}
-		}
-		@Override
-		public void walk(NonRecursive walker, LetTerm term) {
-			throw new UnsupportedOperationException();
-		}
-		@Override
-		public void walk(NonRecursive walker, QuantifiedFormula term) {
-			walker.enqueueWalker(new ConstantFindWalker(term.getSubformula()));
-		}
-		@Override
-		public void walk(NonRecursive walker, TermVariable term) {
-			// do nothing
-		}
-	}
-	
-	
+	protected Set<NonTheorySymbol<?>> mResult;
+	protected Set<Term> mVisitedSubterms;
 	
 	public NonTheorySymbolFinder() {
 		super();
 	}
-
-	private Set<NonTheorySymbol<?>> mResult;
-	private Set<Term> mVisitedSubterms;
 	
-	public Set<NonTheorySymbol<?>> findNonTheorySymbols(Term term) {
+	public Set<NonTheorySymbol<?>> findNonTheorySymbols(final Term term) {
 		if (term == null) {
-			throw new NullPointerException();
+			throw new IllegalArgumentException();
 		}
-		mResult = new HashSet<NonTheorySymbol<?>>();
+		mResult = new HashSet<>();
 		mVisitedSubterms = new HashSet<>();
 		run(new ConstantFindWalker(term));
 		for (final TermVariable tv : term.getFreeVars()) {
@@ -112,6 +65,55 @@ public class NonTheorySymbolFinder extends NonRecursive {
 		return mResult;
 	}
 	
+	private class ConstantFindWalker extends TermWalker {
+		ConstantFindWalker(final Term term) {
+			super(term);
+		}
+		
+		@Override
+		public void walk(final NonRecursive walker, final ConstantTerm term) {
+			// do nothing
+		}
+		
+		@Override
+		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
+			walker.enqueueWalker(new ConstantFindWalker(term.getSubterm()));
+		}
+		
+		@Override
+		public void walk(final NonRecursive walker, final ApplicationTerm term) {
+			if (mVisitedSubterms.contains(term)) {
+				// subterm already visited, we will not find anything new
+				return;
+			}
+			mVisitedSubterms.add(term);
+			if (SmtUtils.isConstant(term)) {
+				mResult.add(new NonTheorySymbol.Constant(term));
+			} else {
+				final FunctionSymbol functionSymbol = term.getFunction();
+				if (!functionSymbol.isIntern()) {
+					mResult.add(new NonTheorySymbol.Function(functionSymbol));
+				}
+			}
+			for (final Term t : term.getParameters()) {
+				walker.enqueueWalker(new ConstantFindWalker(t));
+			}
+		}
+		
+		@Override
+		public void walk(final NonRecursive walker, final LetTerm term) {
+			throw new UnsupportedOperationException();
+		}
+		
+		@Override
+		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
+			walker.enqueueWalker(new ConstantFindWalker(term.getSubformula()));
+		}
+		
+		@Override
+		public void walk(final NonRecursive walker, final TermVariable term) {
+			// do nothing
+		}
+	}
 	
-
 }

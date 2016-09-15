@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
@@ -41,16 +41,36 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 /**
  * Find all application terms with zero parameters (this is our representation
  * of a constant).
- * In the future  we  may extend this class to all uninterpreted functions.
+ * In the future we may extend this class to all uninterpreted functions.
+ * 
  * @author Matthias Heizmann
- *
  */
 public class ConstantFinder extends NonRecursive {
+	protected Set<ApplicationTerm> mResult;
+	protected Set<Term> mVisited;
+	
+	public ConstantFinder() {
+		super();
+	}
+	
+	public Set<ApplicationTerm> findConstants(final Term term) {
+		if (term == null) {
+			throw new IllegalArgumentException();
+		}
+		mVisited = new HashSet<>();
+		mResult = new HashSet<>();
+		run(new ConstantFindWalker(term));
+		mVisited = null;
+		return mResult;
+	}
+	
 	private class ConstantFindWalker extends TermWalker {
-		ConstantFindWalker(Term term) { super(term); }
+		ConstantFindWalker(final Term term) {
+			super(term);
+		}
 		
 		@Override
-		public void walk(NonRecursive walker) {
+		public void walk(final NonRecursive walker) {
 			if (mVisited.contains(getTerm())) {
 				// do nothing
 			} else {
@@ -60,15 +80,17 @@ public class ConstantFinder extends NonRecursive {
 		}
 		
 		@Override
-		public void walk(NonRecursive walker, ConstantTerm term) {
+		public void walk(final NonRecursive walker, final ConstantTerm term) {
 			// do nothing
 		}
+		
 		@Override
-		public void walk(NonRecursive walker, AnnotatedTerm term) {
+		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
 			walker.enqueueWalker(new ConstantFindWalker(term.getSubterm()));
 		}
+		
 		@Override
-		public void walk(NonRecursive walker, ApplicationTerm term) {
+		public void walk(final NonRecursive walker, final ApplicationTerm term) {
 			if (SmtUtils.isConstant(term)) {
 				mResult.add(term);
 			}
@@ -76,40 +98,20 @@ public class ConstantFinder extends NonRecursive {
 				walker.enqueueWalker(new ConstantFindWalker(t));
 			}
 		}
+		
 		@Override
-		public void walk(NonRecursive walker, LetTerm term) {
+		public void walk(final NonRecursive walker, final LetTerm term) {
 			throw new UnsupportedOperationException();
 		}
+		
 		@Override
-		public void walk(NonRecursive walker, QuantifiedFormula term) {
+		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
 			walker.enqueueWalker(new ConstantFindWalker(term.getSubformula()));
 		}
+		
 		@Override
-		public void walk(NonRecursive walker, TermVariable term) {
+		public void walk(final NonRecursive walker, final TermVariable term) {
 			// do nothing
 		}
 	}
-	
-	
-	
-	public ConstantFinder() {
-		super();
-	}
-
-	private Set<ApplicationTerm> mResult;
-	private Set<Term> mVisited;
-	
-	public Set<ApplicationTerm> findConstants(Term term) {
-		if (term == null) {
-			throw new NullPointerException();
-		}
-		mVisited = new HashSet<>();
-		mResult = new HashSet<ApplicationTerm>();
-		run(new ConstantFindWalker(term));
-		mVisited = null;
-		return mResult;
-	}
-	
-	
-
 }
