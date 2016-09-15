@@ -548,7 +548,7 @@ public class Setting {
 			}
 			switch (getType()) {
 			case BOOLEAN:
-				return "" + valueBoolean;
+				return Boolean.toString(valueBoolean);
 			case DROPDOWN:
 				if (isMultiSelectable()) {
 					final StringBuffer sb = new StringBuffer();
@@ -560,7 +560,7 @@ public class Setting {
 				}
 				return valueDropdown[0];
 			case INTEGER:
-				return "" + valueInt;
+				return Integer.toString(valueInt);
 			case STRING:
 				return valueString;
 			default:

@@ -83,7 +83,7 @@ public class ElevatorInf {
 
 		pea2armcFast.convert(all, "./elevator.armc", addVars, addTypes, false);
 
-		System.err.println("" + all.getPhases().length + " total states.");
+		System.err.println(all.getPhases().length + " total states.");
 
 		// System.out.println("/* Complete System */");
 		// System.out.println("#locs "+all.phases.length);

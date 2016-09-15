@@ -402,7 +402,7 @@ public class RangeDecision extends Decision {
             return var + " == " + (limits[childs] / 2);
         }
 
-        return "" + (limits[childs - 1] / 2) +
+        return (limits[childs - 1] / 2) +
         (((limits[childs - 1] & 1) == 1) ? " < " : " \u2264 ") + var +
         (((limits[childs] & 1) == 0) ? " < " : " \u2264 ") +
         (limits[childs] / 2);
@@ -486,7 +486,7 @@ public class RangeDecision extends Decision {
             return var + " == " + (limits[childs] / 2);
         }
 
-        return "" + var +
+        return var +
         (((limits[childs - 1] & 1) == 1) ? " &gt; " : " &gt;= ") +
         (limits[childs - 1] / 2) + " &amp;&amp; " + var +
         (((limits[childs] & 1) == 0) ? " &lt; " : " &lt;= ") +
@@ -516,7 +516,7 @@ public class RangeDecision extends Decision {
             return var + " == " + (limits[childs] / 2);
         }
 
-        return "" + var + (((limits[childs - 1] & 1) == 1) ? " > " : " >= ") +
+        return var + (((limits[childs - 1] & 1) == 1) ? " > " : " >= ") +
         (limits[childs - 1] / 2) + " && " + var +
         (((limits[childs] & 1) == 0) ? " < " : " <= ") + (limits[childs] / 2);
     }
@@ -598,7 +598,7 @@ public class RangeDecision extends Decision {
             return var + " == " + (limits[childs] / 2);
         }
 
-        return "" + (limits[childs - 1] / 2) +
+        return (limits[childs - 1] / 2) +
         (((limits[childs - 1] & 1) == 1) ? " < " : " \\leq ") + var +
         (((limits[childs] & 1) == 0) ? " < " : " \\leq ") +
         (limits[childs] / 2);
