@@ -90,6 +90,8 @@ public class RemoveInfeasibleEdges extends BaseProductOptimizer {
 			break;
 		case UNPROVEABLE:
 			break;
+		default:
+			throw new IllegalArgumentException();
 		}
 	}
 

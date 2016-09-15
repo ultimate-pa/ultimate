@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CDTPlugin plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CDTPlugin plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CDTPlugin plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -51,7 +51,7 @@ public class ResultListLabelProvider implements ITableLabelProvider {
 	 * jface.viewers.ILabelProviderListener)
 	 */
 	@Override
-	public void addListener(ILabelProviderListener listener) {
+	public void addListener(final ILabelProviderListener listener) {
 	}
 
 	/*
@@ -71,7 +71,7 @@ public class ResultListLabelProvider implements ITableLabelProvider {
 	 * .Object, java.lang.String)
 	 */
 	@Override
-	public boolean isLabelProperty(Object element, String property) {
+	public boolean isLabelProperty(final Object element, final String property) {
 		return false;
 	}
 
@@ -83,7 +83,7 @@ public class ResultListLabelProvider implements ITableLabelProvider {
 	 * .jface.viewers.ILabelProviderListener)
 	 */
 	@Override
-	public void removeListener(ILabelProviderListener listener) {
+	public void removeListener(final ILabelProviderListener listener) {
 	}
 
 	/*
@@ -94,7 +94,7 @@ public class ResultListLabelProvider implements ITableLabelProvider {
 	 * .Object, int)
 	 */
 	@Override
-	public Image getColumnImage(Object element, int columnIndex) {
+	public Image getColumnImage(final Object element, final int columnIndex) {
 		return null;
 	}
 
@@ -106,7 +106,7 @@ public class ResultListLabelProvider implements ITableLabelProvider {
 	 * .Object, int)
 	 */
 	@Override
-	public String getColumnText(Object element, int columnIndex) {
+	public String getColumnText(final Object element, final int columnIndex) {
 		if (element instanceof IResult) {
 			final IResult res = (IResult)element;
 			switch(columnIndex) {
@@ -126,6 +126,8 @@ public class ResultListLabelProvider implements ITableLabelProvider {
 					// FIXME: check appropriate String
 					return "-";
 				}
+			default:
+				break;
 			}
 		}
 		return "";

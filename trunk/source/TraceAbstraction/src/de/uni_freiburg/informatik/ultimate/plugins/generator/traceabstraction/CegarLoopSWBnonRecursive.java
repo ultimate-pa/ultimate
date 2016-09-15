@@ -175,8 +175,8 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) {
 		super(name, rootNode, smtManager, taPrefs, errorLocs, interpolation, computeHoareAnnotation, services, storage);
-		mErrorPathHistory = new ArrayList<String>();
-		mnofStates = new ArrayList<Integer>();
+		mErrorPathHistory = new ArrayList<>();
+		mnofStates = new ArrayList<>();
 	}
 
 	/**
@@ -195,7 +195,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		// automaton
 		mNestedAbstraction = (INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
 
-		mDoubleDeckerAbstraction = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+		mDoubleDeckerAbstraction = (new RemoveUnreachable<>(new AutomataLibraryServices(mServices),
 				(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction)).getResult();
 		// (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) mAbstraction.get;
 
@@ -203,7 +203,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		mCounterExamplePath = (NestedRun<CodeBlock, IPredicate>) mCounterexample;
 
 		// create an new interpolant automaton
-		mInterpolAutomaton = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+		mInterpolAutomaton = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices),
 				mNestedAbstraction.getAlphabet(), mNestedAbstraction.getCallAlphabet(),
 				mNestedAbstraction.getReturnAlphabet(), mNestedAbstraction.getStateFactory());
 
@@ -229,7 +229,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		// }
 
 		// hold an iterable list of all states we added to the new automaton
-		mAnnotatedStates = new ArrayList<IPredicate>();
+		mAnnotatedStates = new ArrayList<>();
 
 		// counter example components
 		final ArrayList<IPredicate> ce_states = mCounterExamplePath.getStateSequence();
@@ -293,7 +293,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 						// the next state is the target state of the edge
 						final IPredicate target = e.getSucc();
 						exploreInitialEdge(e, target,
-								new NestedWord<CodeBlock>(e.getLetter(), NestedWord.MINUS_INFINITY));
+								new NestedWord<>(e.getLetter(), NestedWord.MINUS_INFINITY));
 					}
 				}
 			}
@@ -303,7 +303,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 					.callSuccessors(mActualStartingState)) {
 				// the next state is the target state of the edge
 				final IPredicate target = e.getSucc();
-				exploreInitialEdge(e, target, new NestedWord<CodeBlock>(e.getLetter(), NestedWord.PLUS_INFINITY));
+				exploreInitialEdge(e, target, new NestedWord<>(e.getLetter(), NestedWord.PLUS_INFINITY));
 			}
 
 			// start the depth first search procedure for every state edge going
@@ -317,7 +317,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 				// the next state is the target state of the edge
 				final IPredicate target = e.getSucc();
 
-				exploreInitialEdge(e, target, new NestedWord<CodeBlock>(e.getLetter(), NestedWord.INTERNAL_POSITION));
+				exploreInitialEdge(e, target, new NestedWord<>(e.getLetter(), NestedWord.INTERNAL_POSITION));
 			}
 		}
 
@@ -352,7 +352,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 */
 	private void exploreInitialEdge(final ITransitionlet<CodeBlock, IPredicate> e, final IPredicate target,
 			final NestedWord<CodeBlock> initialWord) {
-		mActualPath = new ArrayList<IPredicate>(16);
+		mActualPath = new ArrayList<>(16);
 		// remember the path, we follow
 		mActualPath.add(mActualStartingState);
 		mActualPath.add(target);
@@ -398,11 +398,11 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	private void exploreState(final IPredicate state, final NestedWord<CodeBlock> word) {
 		mLogger.debug(
 				"Explore path: " + state.toString() + " wordLen: " + word.length() + " pathLen: " + mActualPath.size());
-		mStackState = new ArrayList<IPredicate>();
-		mStackIterator = new ArrayList<Iterator<ITransitionlet<CodeBlock, IPredicate>>>();
-		mStackEdgeType = new ArrayList<Integer>();
-		mStackHier = new ArrayList<Iterator<IPredicate>>();
-		mStackWord = new ArrayList<NestedWord<CodeBlock>>();
+		mStackState = new ArrayList<>();
+		mStackIterator = new ArrayList<>();
+		mStackEdgeType = new ArrayList<>();
+		mStackHier = new ArrayList<>();
+		mStackWord = new ArrayList<>();
 
 		// determins if we found a path, then we back off
 		IPredicate s = state;
@@ -410,7 +410,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		Iterator<IPredicate> hierPreds = null;
 		@SuppressWarnings("rawtypes")
 		Iterator iter = mNestedAbstraction.internalSuccessors(s).iterator();
-		Integer edgeType = 0;
+		int edgeType = 0;
 		NestedWord<CodeBlock> actualWord = word;
 
 		while (true) {
@@ -470,6 +470,8 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 					// remove the last element, since it did not "work"
 					mActualPath.remove(mActualPath.size() - 1);
 					continue;
+				default:
+					throw new Error();
 				}
 			}
 
@@ -483,21 +485,21 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 						(OutgoingInternalTransition<CodeBlock, IPredicate>) iter.next();
 				target = e_int.getSucc();
 				newWord = actualWord
-						.concatenate(new NestedWord<CodeBlock>(e_int.getLetter(), NestedWord.INTERNAL_POSITION));
+						.concatenate(new NestedWord<>(e_int.getLetter(), NestedWord.INTERNAL_POSITION));
 				break;
 			case 1:
 				final OutgoingReturnTransition<CodeBlock, IPredicate> e_out =
 						(OutgoingReturnTransition<CodeBlock, IPredicate>) iter.next();
 				target = e_out.getSucc();
 				newWord =
-						actualWord.concatenate(new NestedWord<CodeBlock>(e_out.getLetter(), NestedWord.MINUS_INFINITY));
+						actualWord.concatenate(new NestedWord<>(e_out.getLetter(), NestedWord.MINUS_INFINITY));
 				break;
 			case 2:
 				final OutgoingCallTransition<CodeBlock, IPredicate> e_ret =
 						(OutgoingCallTransition<CodeBlock, IPredicate>) iter.next();
 				target = e_ret.getSucc();
 				newWord =
-						actualWord.concatenate(new NestedWord<CodeBlock>(e_ret.getLetter(), NestedWord.PLUS_INFINITY));
+						actualWord.concatenate(new NestedWord<>(e_ret.getLetter(), NestedWord.PLUS_INFINITY));
 				break;
 			default:
 				throw new Error();
@@ -567,7 +569,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	private boolean checkAndAddPath(final NestedWord<CodeBlock> word, final IPredicate pre, final IPredicate post) {
 		mLogger.debug("Try to add trace: " + pre.toString() + " -- " + word + " --> " + post);
 
-		final SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<Integer, IPredicate>();
+		final SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
 		for (final int pos : word.getPendingReturns().keySet()) {
 			final IPredicate target = mActualPath.get(pos + 1);
 			final IPredicate source = mActualPath.get(pos);
@@ -603,11 +605,9 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		// else if (mTraceChecker.isCorrect() == LBool.SAT)
 		// {
 		// }
-		else {
-			mLogger.debug("Declined");
-			mnofDeclinedPaths++;
-			return false;
-		}
+		mLogger.debug("Declined");
+		mnofDeclinedPaths++;
+		return false;
 	}
 
 	/**
@@ -649,7 +649,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 			mLogger.debug("<" + interpolants[i].toString() + ">");
 		}
 
-		final ArrayList<IPredicate> callPredecessors = new ArrayList<IPredicate>();
+		final ArrayList<IPredicate> callPredecessors = new ArrayList<>();
 
 		// Add all edges
 		for (int i = 0; i < edges.length(); i++) {
@@ -716,7 +716,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 */
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		final SuperDifference<CodeBlock, IPredicate> diff = new SuperDifference<CodeBlock, IPredicate>(
+		final SuperDifference<CodeBlock, IPredicate> diff = new SuperDifference<>(
 				new AutomataLibraryServices(mServices), mNestedAbstraction, mInterpolAutomaton, mEpimorphism, false);
 
 		mAbstraction = diff.getResult();

@@ -120,7 +120,7 @@ public class TraceAbstractionStarter {
 		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
 
 		final Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
-		final Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<ProgramPoint>();
+		final Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<>();
 		for (final Collection<ProgramPoint> errNodeOfProc : proc2errNodes.values()) {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
@@ -135,7 +135,7 @@ public class TraceAbstractionStarter {
 		} else {
 			for (final ProgramPoint errorLoc : errNodesOfAllProc) {
 				final String name = errorLoc.getPosition();
-				final ArrayList<ProgramPoint> errorLocs = new ArrayList<ProgramPoint>(1);
+				final ArrayList<ProgramPoint> errorLocs = new ArrayList<>(1);
 				errorLocs.add(errorLoc);
 				mServices.getProgressMonitorService().setSubtask(errorLoc.toString());
 				iterate(name, rcfgRootNode, taPrefs, smtManager, traceAbstractionBenchmark, errorLocs,
@@ -175,7 +175,7 @@ public class TraceAbstractionStarter {
 				final HoareAnnotation hoare = getHoareAnnotation(locNode);
 				if (hoare != null) {
 					final Term formula = hoare.getFormula();
-					final InvariantResult<RcfgElement, Term> invResult = new InvariantResult<RcfgElement, Term>(
+					final InvariantResult<RcfgElement, Term> invResult = new InvariantResult<>(
 							Activator.PLUGIN_NAME, locNode, backTranslatorService, formula);
 					reportResult(invResult);
 
@@ -196,7 +196,7 @@ public class TraceAbstractionStarter {
 				if (hoare != null) {
 					final Term formula = hoare.getFormula();
 					final ProcedureContractResult<RcfgElement, Term> result =
-							new ProcedureContractResult<RcfgElement, Term>(Activator.PLUGIN_NAME, finalNode,
+							new ProcedureContractResult<>(Activator.PLUGIN_NAME, finalNode,
 									backTranslatorService, proc, formula);
 
 					reportResult(result);
@@ -229,6 +229,8 @@ public class TraceAbstractionStarter {
 			// ResultNotifier.programUnknown("Program might be incorrect, check"
 			// + " conterexample.");
 			break;
+		default:
+			throw new IllegalArgumentException();
 		}
 
 		mRootOfNewModel = mArtifact;
@@ -306,6 +308,8 @@ public class TraceAbstractionStarter {
 			}
 			break;
 		}
+		default:
+			throw new IllegalArgumentException();
 		}
 		if (taPrefs.computeHoareAnnotation() && mOverallResult == Result.SAFE) {
 			mLogger.debug("Computing Hoare annotation of CFG");
@@ -349,7 +353,7 @@ public class TraceAbstractionStarter {
 
 	private void reportPositiveResults(final Collection<ProgramPoint> errorLocs) {
 		for (final ProgramPoint errorLoc : errorLocs) {
-			final PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.PLUGIN_NAME, errorLoc,
+			final PositiveResult<RcfgElement> pResult = new PositiveResult<>(Activator.PLUGIN_NAME, errorLoc,
 					mServices.getBacktranslationService());
 			reportResult(pResult);
 		}
@@ -375,7 +379,7 @@ public class TraceAbstractionStarter {
 			if (toolchainCanceledException != null) {
 				timeOutMessage += " " + toolchainCanceledException.prettyPrint();
 			}
-			final TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
+			final TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
 					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 			// s_Logger.warn(timeOutMessage);
@@ -385,14 +389,14 @@ public class TraceAbstractionStarter {
 	private void reportUnproveableResult(final RcfgProgramExecution pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
 		final ProgramPoint errorPP = getErrorPP(pe);
-		final UnprovableResult<RcfgElement, RCFGEdge, Term> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Term>(
+		final UnprovableResult<RcfgElement, RCFGEdge, Term> uknRes = new UnprovableResult<>(
 				Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 
 	private <T> void reportBenchmark(final ICsvProviderProvider<T> benchmark) {
 		final String shortDescription = "Ultimate Automizer benchmark data";
-		final BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.PLUGIN_NAME, shortDescription, benchmark);
+		final BenchmarkResult<T> res = new BenchmarkResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark);
 		// s_Logger.warn(res.getLongDescription());
 
 		reportResult(res);
@@ -417,7 +421,7 @@ public class TraceAbstractionStarter {
 		return HoareAnnotation.getAnnotation(programPoint);
 	}
 
-	public ProgramPoint getErrorPP(final RcfgProgramExecution rcfgProgramExecution) {
+	public static ProgramPoint getErrorPP(final RcfgProgramExecution rcfgProgramExecution) {
 		final int lastPosition = rcfgProgramExecution.getLength() - 1;
 		final RCFGEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
 		final ProgramPoint errorPP = (ProgramPoint) last.getTarget();
@@ -427,11 +431,6 @@ public class TraceAbstractionStarter {
 	private boolean interpolationModeSwitchNeeded() {
 		final SolverMode solver = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
-		if (solver == SolverMode.External_PrincessInterpolationMode) {
-			return true;
-		} else {
-			return false;
-		}
+		return solver == SolverMode.External_PrincessInterpolationMode;
 	}
-
 }

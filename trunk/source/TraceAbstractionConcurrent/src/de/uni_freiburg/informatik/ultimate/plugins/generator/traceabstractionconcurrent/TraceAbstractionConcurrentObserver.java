@@ -102,7 +102,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(rootNode.getRootAnnot());
 
 		final Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
-		final Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<ProgramPoint>();
+		final Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<>();
 		for (final Collection<ProgramPoint> errNodeOfProc : proc2errNodes.values()) {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
@@ -193,14 +193,16 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			mLogger.warn("Insufficient iterations to proof correctness");
 			// FIXME This is not the right way to tell the core about results
 			// ResultNotifier
-			// .programUnknown("Insufficient iterations to proof correctness");
+			// .programUnknown("Insufficient iterations to prove correctness");
 			break;
 		case UNKNOWN:
 			mLogger.warn("Program might be incorrect, check conterexample.");
 			// FIXME This is not the right way to tell the core about results
 			// ResultNotifier.programUnknown("Program might be incorrect, check"
-			// + " conterexample.");
+			// + " counterexample.");
 			break;
+		default:
+			throw new IllegalArgumentException();
 		}
 
 		mGraphroot = abstractCegarLoop.getArtifact();
@@ -216,7 +218,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		} else {
 			longDescription = errorLocs.size() + " specifications checked. All of them hold";
 			for (final ProgramPoint errorLoc : errorLocs) {
-				final PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.PLUGIN_NAME, errorLoc,
+				final PositiveResult<RcfgElement> pResult = new PositiveResult<>(Activator.PLUGIN_NAME, errorLoc,
 						mServices.getBacktranslationService());
 				reportResult(pResult);
 			}
@@ -242,7 +244,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			final Check check = ResultUtil.getCheckedSpecification(errorLoc.getBoogieASTNode());
 			String timeOutMessage = "Timeout! Unable to prove that " + check.getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
-			final TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
+			final TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
 					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 			mLogger.warn(timeOutMessage);
@@ -251,14 +253,14 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 	private void reportUnproveableResult(final RcfgProgramExecution pe, final List<UnprovabilityReason> unproabilityReasons) {
 		final ProgramPoint errorPP = getErrorPP(pe);
-		final UnprovableResult<RcfgElement, RCFGEdge, Term> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Term>(
+		final UnprovableResult<RcfgElement, RCFGEdge, Term> uknRes = new UnprovableResult<>(
 				Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 
 	private <T> void reportBenchmark(final ICsvProviderProvider<T> benchmark) {
 		final String shortDescription = "Ultimate Automizer benchmark data";
-		final BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.PLUGIN_NAME, shortDescription, benchmark);
+		final BenchmarkResult<T> res = new BenchmarkResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark);
 		// s_Logger.warn(res.getLongDescription());
 
 		reportResult(res);
@@ -293,7 +295,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	public ProgramPoint getErrorPP(final RcfgProgramExecution rcfgProgramExecution) {
+	public static ProgramPoint getErrorPP(final RcfgProgramExecution rcfgProgramExecution) {
 		final int lastPosition = rcfgProgramExecution.getLength() - 1;
 		final RCFGEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
 		final ProgramPoint errorPP = (ProgramPoint) last.getTarget();

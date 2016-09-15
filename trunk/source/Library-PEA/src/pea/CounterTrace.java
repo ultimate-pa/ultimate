@@ -2,7 +2,7 @@
  *
  * This file is part of the PEA tool set
  * 
- * The PEA tool set is a collection of tools for 
+ * The PEA tool set is a collection of tools for
  * Phase Event Automata (PEA). See
  * http://csd.informatik.uni-oldenburg.de/projects/peatools.html
  * for more information.
@@ -60,7 +60,7 @@ public class CounterTrace {
 	Set        forbid;
 	boolean    allowEmpty;
 	
-	public DCPhase(CDD ee, CDD i, int bt, int b, Set f, boolean empty) {
+	public DCPhase(final CDD ee, final CDD i, final int bt, final int b, final Set<?> f, final boolean empty) {
 	    entryEvents = ee;
 	    invariant   = i;
 	    bound       = b;
@@ -77,42 +77,42 @@ public class CounterTrace {
 //	    this(CDD.TRUE, i, bt, b, f, empty);
 //	}
 
-	public DCPhase(CDD ee, CDD i, int bt, int b, Set f) {
+	public DCPhase(final CDD ee, final CDD i, final int bt, final int b, final Set<?> f) {
 	    this(ee, i, bt, b, f, false);
 	}
 
-	public DCPhase(CDD i, int bt, int b, Set f) {
+	public DCPhase(final CDD i, final int bt, final int b, final Set<?> f) {
 	    this(CDD.TRUE, i, bt, b, f, false);
 	}
 
-	public DCPhase(CDD ee, CDD i, Set f) {
+	public DCPhase(final CDD ee, final CDD i, final Set<?> f) {
 	    this(ee, i, BOUND_NONE, 0, f, false);
 	}
 
-	public DCPhase(CDD i, Set f) {
+	public DCPhase(final CDD i, final Set<?> f) {
 	    this(CDD.TRUE, i, BOUND_NONE, 0, f, false);
 	}
 
-	public DCPhase(CDD ee, CDD i, int bt, int b) {
+	public DCPhase(final CDD ee, final CDD i, final int bt, final int b) {
 	    this(ee, i, bt, b, Collections.EMPTY_SET, false);
 	}
 
-	public DCPhase(CDD i, int bt, int b) {
+	public DCPhase(final CDD i, final int bt, final int b) {
 	    this(CDD.TRUE, i, bt, b, Collections.EMPTY_SET, false);
 	}
 
-	public DCPhase(CDD ee, CDD i) {
+	public DCPhase(final CDD ee, final CDD i) {
 	    this(ee, i, BOUND_NONE, 0, Collections.EMPTY_SET, false);
 	}
 
-	public DCPhase(CDD i) {
+	public DCPhase(final CDD i) {
 	    this(CDD.TRUE, i, BOUND_NONE, 0, Collections.EMPTY_SET, false);
 	}
 
 	/**
 	 * Create a ell ~ bound phase (with allowEmpty set if no lower bound).
 	 */
-	public DCPhase(int bt, int b) {
+	public DCPhase(final int bt, final int b) {
 	    this(CDD.TRUE, CDD.TRUE, bt, b, Collections.EMPTY_SET, bt <= 0);
 	}
 
@@ -120,36 +120,36 @@ public class CounterTrace {
 	 * Create a true phase (with allowEmpty set).
 	 */
 	public DCPhase() {
-	    this(CDD.TRUE, CDD.TRUE, BOUND_NONE, 0, 
+	    this(CDD.TRUE, CDD.TRUE, BOUND_NONE, 0,
 		 Collections.EMPTY_SET, true);
 	}
 	
 	/**
 	 * @param bound The bound to set.
 	 */
-	public void setBound(int bound) {
+	public void setBound(final int bound) {
 		this.bound = bound;
 	}
 	/**
 	 * @param boundType The boundType to set.
 	 */
-	public void setBoundType(int boundType) {
+	public void setBoundType(final int boundType) {
 		this.boundType = boundType;
 	}
 	/**
 	 * @param forbid The forbid to set.
 	 */
-	public void setForbid(Set forbid) {
+	public void setForbid(final Set<?> forbid) {
 		this.forbid = forbid;
 	}
 	/**
 	 * @param predicate The predicate to set.
 	 */
-	public void setInvariant(CDD predicate) {
+	public void setInvariant(final CDD predicate) {
 		invariant = predicate;
 	}
 
-        public String toString(boolean useUnicode) {
+        public String toString(final boolean useUnicode) {
             final String AND = useUnicode ? ZString.AND : "/\\";
             final String NOEVENT = useUnicode ? "\u229F" : "[-]";
             final String GEQ = useUnicode ? ZString.GEQ : ">=";
@@ -169,7 +169,7 @@ public class CounterTrace {
                 sb.append(LCEIL).append(invariant).append(RCEIL);
             }
             
-            for (final Iterator it = forbid.iterator(); it.hasNext(); ) {
+            for (final Iterator<?> it = forbid.iterator(); it.hasNext(); ) {
 				sb.append(' ').append(AND).append(' ').append(NOEVENT)
                     .append(' ').append(it.next());
 			}
@@ -189,6 +189,8 @@ public class CounterTrace {
                 case BOUND_GREATEREQUAL:
                     sb.append(' ').append(GEQ).append(' ');
                     break;
+                default:
+                	throw new IllegalArgumentException();
                 }
                 sb.append(bound);
             }
@@ -203,7 +205,7 @@ public class CounterTrace {
         }
         
         /**
-         * Prints a dump of this DCPhase to stderr. 
+         * Prints a dump of this DCPhase to stderr.
          */
         public void dump() {
             System.err.print(toString(true));
@@ -219,7 +221,7 @@ public class CounterTrace {
         /**
          * @return Returns the forbid.
          */
-        public Set getForbid() {
+        public Set<?> getForbid() {
             return forbid;
         }
 
@@ -234,7 +236,7 @@ public class CounterTrace {
 
     DCPhase[] phases;
 
-    public CounterTrace(DCPhase[] phases) {
+    public CounterTrace(final DCPhase[] phases) {
 	this.phases = phases;
     }
 
@@ -244,7 +246,7 @@ public class CounterTrace {
     }
 
     /**
-     * Prints a dump of this DCPhase to stderr. 
+     * Prints a dump of this DCPhase to stderr.
      */
     public void dump() {
         System.err.print(phases.length + ":  ! ( ");
