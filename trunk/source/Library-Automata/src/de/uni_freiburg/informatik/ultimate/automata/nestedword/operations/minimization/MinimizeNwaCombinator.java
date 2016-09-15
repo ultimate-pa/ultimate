@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -36,12 +35,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * NWA minimization which can be used in a loop which just calls the next
- * minimization method according to a fixed pattern. The pattern is finite and
- * repeated.
+ * Minimization of nested word automata which wraps several minimization operations and uses one of them.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -49,226 +47,82 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
-	private static final String UNDEFINED_ENUM_STATE_MESSAGE = "Undefined enum state.";
-	
+public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
+	private static final String MAP_NOT_SUPPORTED_MESSAGE = "Map from old to new automaton is not supported with ";
+
 	/**
 	 * Possible minimization methods.
 	 */
-	private enum MinimizationMethods {
-		MINIMIZE_SEVPA,
+	protected enum MinimizationMethods {
+		/**
+		 * Use {@link MinimizeSevpa}.
+		 */
+		SEVPA,
+		/**
+		 * Use {@link ShrinkNwa}.
+		 */
 		SHRINK_NWA,
-		NONE
+		/**
+		 * Use {@link MinimizeNwaMaxSat2}.
+		 */
+		NWA_MAX_SAT2,
+		/**
+		 * Use {@link ReduceNwaDirectSimulation}.
+		 */
+		NWA_RAQ_DIRECT,
+		/**
+		 * Use no minimization.
+		 */
+		NONE,
+		/**
+		 * Undefined mode.
+		 */
+		UNDEFINED;
 	}
 	
-	// minimization algorithms executed from left to right
-	private final MinimizationMethods[] mPattern;
-	// current state in the pattern
-	private final int mCounter;
+	public static final String UNDEFINED_ENUM_STATE_MESSAGE = "Undefined enum state.";
+	
+	// current minimization object (input automaton in case of no minimization)
+	protected Object mBackingMinimization;
 	// current minimization method
-	private final Object mCurrent;
+	protected MinimizationMethods mMode;
 	
-	/**
-	 * AutomataScript constructor with default settings.
-	 * <ul>
-	 * <li>no initial partition</li>
-	 * <li>no mapping 'old state -> new state'</li>
-	 * <li>default pattern</li>
-	 * </ul>
-	 * <p>
-	 * NOTE: It makes little sense to use this operation from the AutomataScript interface as only the first operation
-	 * is executed.
-	 * 
-	 * @param services
-	 *            services
-	 * @param stateFactory
-	 *            state factory
-	 * @param operand
-	 *            input automaton
-	 * @throws AutomataOperationCanceledException
-	 *             if operation was canceled
-	 */
-	public MinimizeNwaCombinator(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand)
-			throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, null, false, 0);
+	protected MinimizeNwaCombinator(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final String name, final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
+		super(services, stateFactory, name, operand);
+		mMode = MinimizationMethods.UNDEFINED;
 	}
 	
 	/**
-	 * Constructor with default pattern.
-	 * 
-	 * @param services
-	 *            services
-	 * @param stateFactory
-	 *            state factory
-	 * @param operand
-	 *            input automaton
-	 * @param partition
-	 *            pre-defined partition of states
-	 * @param addMapOldState2newState
-	 *            add map old state 2 new state?
-	 * @param iteration
-	 *            index in the pattern
-	 * @throws AutomataOperationCanceledException
-	 *             if operation was canceled
+	 * This method must be called by all implementing subclasses at the end of the constructor.
 	 */
-	public MinimizeNwaCombinator(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final Collection<Set<STATE>> partition,
-			final boolean addMapOldState2newState,
-			final int iteration)
-			throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, partition, addMapOldState2newState, getDefaultPattern(), iteration);
-	}
-	
-	/**
-	 * Constructor using only one minimization operation every {@code k}th iteration.
-	 * 
-	 * @param services
-	 *            services
-	 * @param stateFactory
-	 *            state factory
-	 * @param operand
-	 *            input automaton
-	 * @param partition
-	 *            pre-defined partition of states
-	 * @param addMapOldState2newState
-	 *            add map old state 2 new state?
-	 * @param indexForMinimization
-	 *            iteration index at which minimization should be used
-	 * @param iteration
-	 *            index in the pattern
-	 * @throws AutomataOperationCanceledException
-	 *             if operation was canceled
-	 */
-	public MinimizeNwaCombinator(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final Collection<Set<STATE>> partition,
-			final boolean addMapOldState2newState,
-			final int indexForMinimization,
-			final int iteration)
-			throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, partition, addMapOldState2newState,
-				getEveryNthPattern(indexForMinimization), iteration);
-	}
-	
-	/**
-	 * Constructor with user-defined pattern.
-	 * 
-	 * @param services
-	 *            services
-	 * @param stateFactory
-	 *            state factory
-	 * @param operand
-	 *            input automaton
-	 * @param partition
-	 *            pre-defined partition of states
-	 * @param addMapOldState2newState
-	 *            add map old state 2 new state?
-	 * @param pattern
-	 *            minimization methods pattern
-	 * @param iteration
-	 *            index in the pattern
-	 * @throws AutomataOperationCanceledException
-	 *             if operation was canceled
-	 */
-	public MinimizeNwaCombinator(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final Collection<Set<STATE>> partition,
-			final boolean addMapOldState2newState,
-			final MinimizationMethods[] pattern, final int iteration)
-			throws AutomataOperationCanceledException {
-		super(services, stateFactory, "MinimizeNwaCombinator", operand);
-		mPattern = Arrays.copyOf(pattern, pattern.length);
-		mCounter = iteration % mPattern.length;
-		switch (mPattern[mCounter]) {
-			case MINIMIZE_SEVPA:
-				mCurrent = new MinimizeSevpa<LETTER, STATE>(services, operand,
-						partition, stateFactory, addMapOldState2newState);
+	protected final void run(final Collection<Set<STATE>> partition,
+			final boolean addMapOldState2newState) throws AutomataOperationCanceledException {
+		switch (mMode) {
+			case SEVPA:
+				mBackingMinimization = new MinimizeSevpa<>(mServices, mOperand,
+						partition, mStateFactory, addMapOldState2newState);
 				break;
-			
 			case SHRINK_NWA:
-				mCurrent = new ShrinkNwa<LETTER, STATE>(services, stateFactory,
-						operand, partition, addMapOldState2newState, false,
+				mBackingMinimization = new ShrinkNwa<>(mServices, mStateFactory,
+						mOperand, partition, addMapOldState2newState, false,
 						false, ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0, false, false, true);
 				break;
-			
-			case NONE:
-				mLogger.info("No minimization is used.");
-				mCurrent = operand;
+			case NWA_MAX_SAT2:
+				mBackingMinimization = new MinimizeNwaMaxSat2<>(mServices, mStateFactory,
+						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand, addMapOldState2newState, partition);
 				break;
-			
-			default:
-				throw new IllegalArgumentException(UNDEFINED_ENUM_STATE_MESSAGE);
-		}
-	}
-	
-	/**
-	 * Creates a pattern where minimization is only used in each {@code k}th iteration.
-	 * 
-	 * @param indexForMinimization
-	 *            index at which the minimization should actually be used
-	 * @return pattern
-	 */
-	private static MinimizationMethods[] getEveryNthPattern(final int indexForMinimization) {
-		if (indexForMinimization <= 0) {
-			throw new IllegalArgumentException("The minimization index must be strictly positive.");
-		}
-		
-		final MinimizationMethods[] pattern = new MinimizationMethods[indexForMinimization];
-		pattern[indexForMinimization - 1] = MinimizationMethods.MINIMIZE_SEVPA;
-		for (int i = indexForMinimization - 2; i >= 0; --i) {
-			pattern[i] = MinimizationMethods.NONE;
-		}
-		return pattern;
-	}
-	
-	/**
-	 * @return The default pattern.
-	 */
-	private static MinimizationMethods[] getDefaultPattern() {
-		return new MinimizationMethods[] {
-				MinimizationMethods.NONE, MinimizationMethods.MINIMIZE_SEVPA,
-				MinimizationMethods.NONE, MinimizationMethods.MINIMIZE_SEVPA,
-				MinimizationMethods.NONE, MinimizationMethods.SHRINK_NWA };
-	}
-	
-	@SuppressWarnings("unchecked")
-	@Override
-	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
-		switch (mPattern[mCounter]) {
-			case MINIMIZE_SEVPA:
-				return (IDoubleDeckerAutomaton<LETTER, STATE>) ((MinimizeSevpa<LETTER, STATE>) mCurrent).getResult();
-			
-			case SHRINK_NWA:
-				return (IDoubleDeckerAutomaton<LETTER, STATE>) ((ShrinkNwa<LETTER, STATE>) mCurrent).getResult();
-			
+			case NWA_RAQ_DIRECT:
+				checkForNoMapping(addMapOldState2newState);
+				mBackingMinimization = new ReduceNwaDirectSimulation<>(mServices, mStateFactory,
+						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand, false, partition);
+				break;
 			case NONE:
-				return (IDoubleDeckerAutomaton<LETTER, STATE>) mCurrent;
-			
-			default:
-				throw new IllegalArgumentException(UNDEFINED_ENUM_STATE_MESSAGE);
-		}
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public Map<STATE, STATE> getOldState2newState() {
-		switch (mPattern[mCounter]) {
-			case MINIMIZE_SEVPA:
-				return ((MinimizeSevpa<LETTER, STATE>) mCurrent).getOldState2newState();
-			
-			case SHRINK_NWA:
-				return ((ShrinkNwa<LETTER, STATE>) mCurrent).getOldState2newState();
-			
-			case NONE:
-				throw new IllegalArgumentException(
-						"Do not ask for Hoare annotation if no minimization was used.");
-				
+				if (mLogger.isInfoEnabled()) {
+					mLogger.info("No minimization is used.");
+				}
+				mBackingMinimization = mOperand;
+				break;
 			default:
 				throw new IllegalArgumentException(UNDEFINED_ENUM_STATE_MESSAGE);
 		}
@@ -276,19 +130,67 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinimizeNwaDd<
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		switch (mPattern[mCounter]) {
-			case MINIMIZE_SEVPA:
-				return ((MinimizeSevpa<LETTER, STATE>) mCurrent).checkResult(stateFactory);
-			
+	public final IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
+		switch (mMode) {
+			case SEVPA:
+				return (IDoubleDeckerAutomaton<LETTER, STATE>) ((MinimizeSevpa<LETTER, STATE>) mBackingMinimization)
+						.getResult();
 			case SHRINK_NWA:
-				return ((ShrinkNwa<LETTER, STATE>) mCurrent).checkResult(stateFactory);
-			
+				return (IDoubleDeckerAutomaton<LETTER, STATE>) ((ShrinkNwa<LETTER, STATE>) mBackingMinimization)
+						.getResult();
+			case NWA_MAX_SAT2:
+				return ((MinimizeNwaMaxSat2<LETTER, STATE>) mBackingMinimization).getResult();
+			case NWA_RAQ_DIRECT:
+				return (IDoubleDeckerAutomaton<LETTER, STATE>) ((ReduceNwaDirectSimulation<LETTER, STATE>) mBackingMinimization)
+						.getResult();
+			case NONE:
+				return (IDoubleDeckerAutomaton<LETTER, STATE>) mBackingMinimization;
+			default:
+				throw new IllegalArgumentException(UNDEFINED_ENUM_STATE_MESSAGE);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public final Map<STATE, STATE> getOldState2newState() {
+		switch (mMode) {
+			case SEVPA:
+				return ((MinimizeSevpa<LETTER, STATE>) mBackingMinimization).getOldState2newState();
+			case SHRINK_NWA:
+				return ((ShrinkNwa<LETTER, STATE>) mBackingMinimization).getOldState2newState();
+			case NWA_MAX_SAT2:
+				return ((MinimizeNwaMaxSat2<LETTER, STATE>) mBackingMinimization).getOldState2newState();
+			case NWA_RAQ_DIRECT:
+				throw new UnsupportedOperationException(MAP_NOT_SUPPORTED_MESSAGE + mMode);
+			case NONE:
+				throw new IllegalArgumentException("Do not ask for Hoare annotation if no minimization was used.");
+			default:
+				throw new IllegalArgumentException(UNDEFINED_ENUM_STATE_MESSAGE);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public final boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		switch (mMode) {
+			case SEVPA:
+				return ((MinimizeSevpa<LETTER, STATE>) mBackingMinimization).checkResult(stateFactory);
+			case SHRINK_NWA:
+				return ((ShrinkNwa<LETTER, STATE>) mBackingMinimization).checkResult(stateFactory);
+			case NWA_MAX_SAT2:
+				return ((MinimizeNwaMaxSat2<LETTER, STATE>) mBackingMinimization).checkResult(stateFactory);
+			case NWA_RAQ_DIRECT:
+				return ((ReduceNwaDirectSimulation<LETTER, STATE>) mBackingMinimization).checkResult(stateFactory);
 			case NONE:
 				return true;
-			
 			default:
 				throw new IllegalArgumentException(UNDEFINED_ENUM_STATE_MESSAGE);
+		}
+	}
+	
+	private void checkForNoMapping(final boolean addMapOldState2newState) {
+		if (addMapOldState2newState) {
+			throw new IllegalArgumentException(MAP_NOT_SUPPORTED_MESSAGE + mMode);
 		}
 	}
 }
