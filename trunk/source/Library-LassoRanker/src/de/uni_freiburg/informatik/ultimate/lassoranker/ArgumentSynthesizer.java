@@ -179,7 +179,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	}
 
 	@Override
-	protected void finalize() {
+	protected void finalize() throws Throwable {
 		// Finalize methods are discouraged in Java.
 		// Always call close() as exported by the Closable interface!
 		// This is just a fallback to make sure close() has been called.
