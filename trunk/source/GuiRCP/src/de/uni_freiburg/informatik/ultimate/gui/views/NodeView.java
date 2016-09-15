@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE DebugGUI plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -50,54 +50,49 @@ import de.uni_freiburg.informatik.ultimate.gui.provider.AnnotationsLabelProvider
  * 
  */
 public class NodeView extends ViewPart implements ISelectionListener {
-
-
 	public static final String ID = "de.uni_freiburg.informatik.ultimate.plugins.output.graphview2d.views.NodeView";
 
-	private TreeViewer treeViewer;
+	private TreeViewer mTreeViewer;
 
-	public NodeView(){
-		super();
-	}
-	
 	@Override
 	public void dispose() {
 		getSite().getWorkbenchWindow().getSelectionService()
 				.removeSelectionListener(this);
 		super.dispose();
 	}
+	
+	protected TreeViewer getTreeViewer() {
+		return mTreeViewer;
+	}
 
-	//@Override
 	@Override
-	public void createPartControl(Composite parent) {
-		treeViewer = new TreeViewer(parent, SWT.BORDER | SWT.MULTI
-				| SWT.V_SCROLL);
-		treeViewer.setLabelProvider(new AnnotationsLabelProvider());
-		treeViewer.setContentProvider(new AnnotationTreeProvider());
+	public void createPartControl(final Composite parent) {
+		mTreeViewer = new TreeViewer(parent, SWT.BORDER | SWT.MULTI | SWT.V_SCROLL);
+		mTreeViewer.setLabelProvider(new AnnotationsLabelProvider());
+		mTreeViewer.setContentProvider(new AnnotationTreeProvider());
 		getSite().getPage().addSelectionListener(this);
 	}
 
-	//@Override
 	@Override
 	public void setFocus() {
-		treeViewer.getControl().setFocus();
+		mTreeViewer.getControl().setFocus();
 	}
 
 	@Override
-	public void selectionChanged(IWorkbenchPart part, final ISelection selection) {
+	public void selectionChanged(final IWorkbenchPart part, final ISelection selection) {
 		if (selection instanceof IElementSelection) {
 			final UIJob job = new UIJob("Selection changed...") {
 				@Override
-				public IStatus runInUIThread(IProgressMonitor mon) {
-					treeViewer.setSelection(null);
-					treeViewer.setInput(((IElementSelection) selection).getElement());
-					treeViewer.expandAll();
-					treeViewer.refresh();
+				public IStatus runInUIThread(final IProgressMonitor mon) {
+					getTreeViewer().setSelection(null);
+					getTreeViewer().setInput(((IElementSelection) selection).getElement());
+					getTreeViewer().expandAll();
+					getTreeViewer().refresh();
 					return Status.OK_STATUS;
 				}
 			};
-			job.setPriority(UIJob.INTERACTIVE); 
-			job.schedule(); 
+			job.setPriority(UIJob.INTERACTIVE);
+			job.schedule();
 		}
 	}
 }

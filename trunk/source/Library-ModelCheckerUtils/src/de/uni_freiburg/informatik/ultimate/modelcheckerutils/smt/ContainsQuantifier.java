@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
@@ -46,47 +46,43 @@ public class ContainsQuantifier extends NonRecursive {
 	private int mFirstQuantifierFound = -1;
 	
 	class QuantifierFinder extends TermWalker {
-		QuantifierFinder(Term term) { super(term); }
+		QuantifierFinder(final Term term) { super(term); }
 		
 		@Override
-		public void walk(NonRecursive walker, ConstantTerm term) {
+		public void walk(final NonRecursive walker, final ConstantTerm term) {
 			// cannot descend
 		}
 		@Override
-		public void walk(NonRecursive walker, AnnotatedTerm term) {
+		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
 			walker.enqueueWalker(new QuantifierFinder(term.getSubterm()));
 		}
 		@Override
-		public void walk(NonRecursive walker, ApplicationTerm term) {
+		public void walk(final NonRecursive walker, final ApplicationTerm term) {
 			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new QuantifierFinder(t));
 			}
 		}
 		@Override
-		public void walk(NonRecursive walker, LetTerm term) {
+		public void walk(final NonRecursive walker, final LetTerm term) {
 			walker.enqueueWalker(new QuantifierFinder(term.getSubTerm()));
 		}
 		@Override
-		public void walk(NonRecursive walker, QuantifiedFormula term) {
+		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
 			mQuantifierFound = true;
 			mFirstQuantifierFound = term.getQuantifier();
 			reset();
 		}
 		@Override
-		public void walk(NonRecursive walker, TermVariable term) {
+		public void walk(final NonRecursive walker, final TermVariable term) {
 			// cannot descend
 		}
 	}
 	
-	public ContainsQuantifier() {
-		super();
-	}
-
 	/**
-	 * Returns true iff this term contains the subterm of this ContainsSubterm 
+	 * Returns true iff this term contains the subterm of this ContainsSubterm
 	 * object.
 	 */
-	public boolean containsQuantifier(Term term) {
+	public boolean containsQuantifier(final Term term) {
 		mFirstQuantifierFound = -1;
 		mQuantifierFound = false;
 		run(new QuantifierFinder(term));
@@ -96,8 +92,7 @@ public class ContainsQuantifier extends NonRecursive {
 	public int getFirstQuantifierFound() {
 		if (mFirstQuantifierFound == -1) {
 			throw new IllegalStateException("no quantifier found");
-		} else {
-			return mFirstQuantifierFound;
 		}
+		return mFirstQuantifierFound;
 	}
 }

@@ -51,10 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
  * {@code procedure foo(x:int) returns (y:bool);}
  */
 public class RenameProcedureSpec extends BoogieTransformer {
-	HashMap<String, String> renaming;
-	
-	public RenameProcedureSpec() {
-	}
+	HashMap<String, String> mRenaming;
 	
 	public void buildRenaming(final VarList[] specVars, final VarList[] implVars) {
 		int j1 = 0, j2 = 0;
@@ -74,7 +71,7 @@ public class RenameProcedureSpec extends BoogieTransformer {
 				assert specVars[i1].getType().getBoogieType()
 					.equals(implVars[j1-1].getType().getBoogieType());
 				if (!specIds[i2].equals(implIds[j2])) {
-					renaming.put(specIds[i2], implIds[j2]);
+					mRenaming.put(specIds[i2], implIds[j2]);
 				}
 				j2++;
 			}
@@ -87,9 +84,9 @@ public class RenameProcedureSpec extends BoogieTransformer {
 		boolean changed = false;
 
 		/* Put the input variables into renaming */
-		renaming = new HashMap<String,String>();
+		mRenaming = new HashMap<>();
 		buildRenaming(proc.getInParams(), impl.getInParams());
-		if (!renaming.isEmpty()) {
+		if (!mRenaming.isEmpty()) {
 			/* Process the requires specifications only on in variables */
 			for (int i = 0; i < specs.length; i++) {
 				if (specs[i] instanceof RequiresSpecification) {
@@ -103,7 +100,7 @@ public class RenameProcedureSpec extends BoogieTransformer {
 
 		/* Now add the output variables to renaming */
 		buildRenaming(proc.getOutParams(), impl.getOutParams());
-		if (!renaming.isEmpty()) {
+		if (!mRenaming.isEmpty()) {
 			/* Process the ensures specifications only on in and out variables */
 			for (int i = 0; i < specs.length; i++) {
 				if (specs[i] instanceof EnsuresSpecification) {
@@ -114,7 +111,7 @@ public class RenameProcedureSpec extends BoogieTransformer {
 				}
 			}
 		}
-		renaming = null;
+		mRenaming = null;
 		return changed ? specs : oldSpecs;
 	}
 	
@@ -123,7 +120,7 @@ public class RenameProcedureSpec extends BoogieTransformer {
 		/* TODO: handle name conflicts in quantifiers */
 		if (expr instanceof IdentifierExpression) {
 			final IdentifierExpression id = (IdentifierExpression) expr;
-			final String newName = renaming.get(id.getIdentifier());
+			final String newName = mRenaming.get(id.getIdentifier());
 			if (newName != null) {
 			    final IdentifierExpression newExpr = new IdentifierExpression(
 			    		expr.getLocation(), expr.getType(), newName,
@@ -132,8 +129,7 @@ public class RenameProcedureSpec extends BoogieTransformer {
 			    return newExpr;
 			}
 			return expr;
-		} else {
-			return super.processExpression(expr);
 		}
+		return super.processExpression(expr);
 	}
 }

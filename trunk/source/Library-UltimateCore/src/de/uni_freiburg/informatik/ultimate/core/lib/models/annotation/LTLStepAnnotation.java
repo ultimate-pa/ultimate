@@ -40,9 +40,6 @@ public class LTLStepAnnotation extends ModernAnnotations {
 	private static final long serialVersionUID = 1L;
 	private static final String KEY = LTLStepAnnotation.class.getName();
 
-	public LTLStepAnnotation() {
-	}
-
 	public void annotate(final IElement node) {
 		node.getPayload().getAnnotations().put(KEY, this);
 	}

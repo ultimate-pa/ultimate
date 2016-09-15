@@ -23,9 +23,6 @@ public class ElevatorInf {
 
 	PhaseEventAutomata csppart, zpart, dcpart;
 
-	public ElevatorInf() {
-	}
-
 	public static void main(final String[] param) {
 		final CDD cgless = BooleanDecision.create("current <= goal - 1");
 		final CDD cgleq = BooleanDecision.create("current <= goal");
@@ -71,8 +68,8 @@ public class ElevatorInf {
 		all.dump();
 
 		final PEA2ARMCConverter pea2armcFast = new PEA2ARMCConverter();
-		final ArrayList<String> addVars = new ArrayList<String>();
-		final ArrayList<String> addTypes = new ArrayList<String>();
+		final ArrayList<String> addVars = new ArrayList<>();
+		final ArrayList<String> addTypes = new ArrayList<>();
 		addVars.add("current");
 		addVars.add("goal");
 		addVars.add("dir");

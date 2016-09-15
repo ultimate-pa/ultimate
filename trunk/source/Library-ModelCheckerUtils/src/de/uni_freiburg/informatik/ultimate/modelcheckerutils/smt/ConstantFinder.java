@@ -49,10 +49,6 @@ public class ConstantFinder extends NonRecursive {
 	protected Set<ApplicationTerm> mResult;
 	protected Set<Term> mVisited;
 	
-	public ConstantFinder() {
-		super();
-	}
-	
 	public Set<ApplicationTerm> findConstants(final Term term) {
 		if (term == null) {
 			throw new IllegalArgumentException();

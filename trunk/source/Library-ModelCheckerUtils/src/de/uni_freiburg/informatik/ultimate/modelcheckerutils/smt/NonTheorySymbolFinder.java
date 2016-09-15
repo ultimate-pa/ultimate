@@ -48,10 +48,6 @@ public class NonTheorySymbolFinder extends NonRecursive {
 	protected Set<NonTheorySymbol<?>> mResult;
 	protected Set<Term> mVisitedSubterms;
 	
-	public NonTheorySymbolFinder() {
-		super();
-	}
-	
 	public Set<NonTheorySymbol<?>> findNonTheorySymbols(final Term term) {
 		if (term == null) {
 			throw new IllegalArgumentException();

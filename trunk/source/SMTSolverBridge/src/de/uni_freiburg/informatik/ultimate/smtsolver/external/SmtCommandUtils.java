@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE SMTSolverBridge, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE SMTSolverBridge grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE SMTSolverBridge grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
@@ -47,7 +47,7 @@ public class SmtCommandUtils {
 		/**
 		 * 
 		 * @return the representation of the command that can be passed to
-		 * an SMT solver 
+		 * an SMT solver
 		 */
 		@Override
 		public abstract String toString();
@@ -75,7 +75,7 @@ public class SmtCommandUtils {
 
 		@Override
 		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
-			final String command = this.toString();
+			final String command = toString();
 			if (pw != null) {
 				pw.println(command);
 			}
@@ -127,7 +127,7 @@ public class SmtCommandUtils {
 
 		@Override
 		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
-			final String command = this.toString();
+			final String command = toString();
 			if (pw != null) {
 				pw.println(command);
 			}
@@ -171,7 +171,7 @@ public class SmtCommandUtils {
 
 		@Override
 		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
-			final String command = this.toString();
+			final String command = toString();
 			if (pw != null) {
 				pw.println(command);
 			}
@@ -211,7 +211,7 @@ public class SmtCommandUtils {
 
 		@Override
 		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
-			final String command = this.toString();
+			final String command = toString();
 			if (pw != null) {
 				pw.println(command);
 			}
@@ -223,7 +223,7 @@ public class SmtCommandUtils {
 
 	public static class DefineSortCommand implements ISmtCommand<Void> {
 		private final String mSort;
-		private final Sort[] mSortParams; 
+		private final Sort[] mSortParams;
 		private final Sort mDefinition;
 		
 		public DefineSortCommand(final String sort, final Sort[] sortParams, final Sort definition) {
@@ -263,7 +263,7 @@ public class SmtCommandUtils {
 
 		@Override
 		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
-			final String command = this.toString();
+			final String command = toString();
 			if (pw != null) {
 				pw.println(command);
 			}
@@ -276,7 +276,7 @@ public class SmtCommandUtils {
 
 	public static class DeclareFunCommand implements ISmtCommand<Void> {
 		final String mFun;
-		final Sort[] mParamSorts; 
+		final Sort[] mParamSorts;
 		final Sort mResultSort;
 		public DeclareFunCommand(final String fun, final Sort[] paramSorts, final Sort resultSort) {
 			super();
@@ -316,7 +316,7 @@ public class SmtCommandUtils {
 
 		@Override
 		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
-			final String command = this.toString();
+			final String command = toString();
 			if (pw != null) {
 				pw.println(command);
 			}
@@ -329,9 +329,9 @@ public class SmtCommandUtils {
 	}
 
 	public static class DefineFunCommand implements ISmtCommand<Void> {
-		final String mFun; 
-		final TermVariable[] mParams; 
-		final Sort mResultSort; 
+		final String mFun;
+		final TermVariable[] mParams;
+		final Sort mResultSort;
 		final Term mDefinition;
 		public DefineFunCommand(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition) {
 			super();
@@ -374,7 +374,7 @@ public class SmtCommandUtils {
 
 		@Override
 		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
-			final String command = this.toString();
+			final String command = toString();
 			if (pw != null) {
 				pw.println(command);
 			}
@@ -410,7 +410,7 @@ public class SmtCommandUtils {
 
 		@Override
 		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
-			final String command = this.toString();
+			final String command = toString();
 			if (pw != null) {
 				pw.println(command);
 			}
@@ -421,11 +421,6 @@ public class SmtCommandUtils {
 	}
 
 	public static class ResetCommand implements ISmtCommand<Void> {
-
-		public ResetCommand() {
-			super();
-		}
-
 		public static String buildString() {
 			return "(reset)";
 		}
@@ -442,7 +437,7 @@ public class SmtCommandUtils {
 
 		@Override
 		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
-			final String command = this.toString();
+			final String command = toString();
 			if (pw != null) {
 				pw.println(command);
 			}
@@ -453,11 +448,6 @@ public class SmtCommandUtils {
 	}
 	
 	public static class CheckSatCommand implements ISmtCommand<LBool> {
-
-		public CheckSatCommand() {
-			super();
-		}
-
 		public static String buildString() {
 			return "(check-sat)";
 		}
@@ -473,7 +463,7 @@ public class SmtCommandUtils {
 
 		@Override
 		public LBool executeWithExecutor(final Executor executor, final PrintWriter pw) {
-			final String command = this.toString();
+			final String command = toString();
 			if (pw != null) {
 				pw.println(command);
 			}
@@ -503,7 +493,7 @@ public class SmtCommandUtils {
 		}
 		@Override
 		public Void executeWithExecutor(final Executor executor, final PrintWriter pw) {
-			final String command = this.toString();
+			final String command = toString();
 			if (pw != null) {
 				pw.println(command);
 			}
@@ -514,11 +504,6 @@ public class SmtCommandUtils {
 	}
 	
 	public static class GetUnsatCoreCommand implements ISmtCommand<Term[]> {
-
-		public GetUnsatCoreCommand() {
-			super();
-		}
-
 		public static String buildString() {
 			return "(get-unsat-core)";
 		}
@@ -534,7 +519,7 @@ public class SmtCommandUtils {
 
 		@Override
 		public Term[] executeWithExecutor(final Executor executor, final PrintWriter pw) {
-			final String command = this.toString();
+			final String command = toString();
 			if (pw != null) {
 				pw.println(command);
 			}

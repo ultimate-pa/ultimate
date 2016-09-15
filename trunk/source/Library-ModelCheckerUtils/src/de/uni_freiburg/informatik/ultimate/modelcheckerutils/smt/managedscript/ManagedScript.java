@@ -254,10 +254,6 @@ public class ManagedScript {
 		
 		private final Set<String> mVariableNames = new HashSet<>();
 		
-		public VariableManager() {
-			// empty constructor
-		}
-		
 		/**
 		 * Construct "fresh" TermVariables.
 		 * In mathematical logics a variable is called "fresh" if the variable has not
