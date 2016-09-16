@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IRSDependencies plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector;
@@ -42,8 +42,8 @@ public class ScopedHashMap<K, V> implements Map<K, V> {
 		assert !mScopes.isEmpty();
 	}
 
-	public ScopedHashMap(ScopedHashMap<K, V> otherMap) {
-		mScopes = new ArrayDeque<Map<K, V>>();
+	public ScopedHashMap(final ScopedHashMap<K, V> otherMap) {
+		mScopes = new ArrayDeque<>();
 		for (final Map<K, V> map : otherMap.mScopes) {
 			mScopes.addLast(new HashMap<>(map));
 		}
@@ -66,7 +66,7 @@ public class ScopedHashMap<K, V> implements Map<K, V> {
 	}
 
 	@Override
-	public boolean containsKey(Object key) {
+	public boolean containsKey(final Object key) {
 		for (final Map<K, V> map : mScopes) {
 			if (map.containsKey(key)) {
 				return true;
@@ -76,7 +76,7 @@ public class ScopedHashMap<K, V> implements Map<K, V> {
 	}
 
 	@Override
-	public boolean containsValue(Object value) {
+	public boolean containsValue(final Object value) {
 		for (final Map<K, V> map : mScopes) {
 			if (map.containsValue(value)) {
 				return true;
@@ -86,7 +86,7 @@ public class ScopedHashMap<K, V> implements Map<K, V> {
 	}
 
 	@Override
-	public V get(Object key) {
+	public V get(final Object key) {
 		for (final Map<K, V> map : mScopes) {
 			final V val = map.get(key);
 			if (val != null) {
@@ -97,23 +97,23 @@ public class ScopedHashMap<K, V> implements Map<K, V> {
 	}
 
 	@Override
-	public V put(K key, V value) {
+	public V put(final K key, final V value) {
 		return mScopes.peekFirst().put(key, value);
 	}
 
 	@Override
-	public V remove(Object key) {
+	public V remove(final Object key) {
 		return mScopes.peekFirst().remove(key);
 	}
 
 	@Override
-	public void putAll(Map<? extends K, ? extends V> m) {
+	public void putAll(final Map<? extends K, ? extends V> m) {
 		mScopes.peekFirst().putAll(m);
 	}
 
 	@Override
 	public void clear() {
-		mScopes = new ArrayDeque<Map<K, V>>();
+		mScopes = new ArrayDeque<>();
 		mScopes.addFirst(new HashMap<K, V>());
 	}
 
@@ -149,5 +149,4 @@ public class ScopedHashMap<K, V> implements Map<K, V> {
 	public String toString() {
 		return mScopes.toString();
 	}
-
 }
