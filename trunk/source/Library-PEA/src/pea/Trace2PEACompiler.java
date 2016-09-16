@@ -229,26 +229,22 @@ public class Trace2PEACompiler {
 				 */
 				if ((state.exactbound & ibit) != 0) {
 					return result.or(cless[i].negate());
-				} else {
-					return result;
 				}
-			} else {
-				if (countertrace.phases[i].boundType < 0 && (canseep(state) & ibit) == 0
-				        && (state.exactbound & ibit) == 0) {
-					/*
-					 * The phase has a strict upper bound. It is only complete if that bound has not yet been reached.
-					 */
-					return result.or(cless[i]);
-				} else {
-					/*
-					 * Normal case: phase is active, non-waiting, no strict upper bound.
-					 */
-					return CDD.TRUE;
-				}
+				return result;
 			}
-		} else {
-			return result;
+			if (countertrace.phases[i].boundType < 0 && (canseep(state) & ibit) == 0
+			        && (state.exactbound & ibit) == 0) {
+				/*
+				 * The phase has a strict upper bound. It is only complete if that bound has not yet been reached.
+				 */
+				return result.or(cless[i]);
+			}
+			/*
+			 * Normal case: phase is active, non-waiting, no strict upper bound.
+			 */
+			return CDD.TRUE;
 		}
+		return result;
 	}
 
 	/**
@@ -729,11 +725,11 @@ public class Trace2PEACompiler {
 			}
 			recursiveBuildTrans(initHash, dummyinit, noSyncEvent, CDD.TRUE, new String[0], 0, 0, 0, 0);
 
-			final List initTrans = dummyinit.getTransitions();
+			final List<Transition> initTrans = dummyinit.getTransitions();
 			final int initSize = initTrans.size();
 			init = new Phase[initSize];
 			for (int i = 0; i < initSize; i++) {
-				final Transition trans = ((Transition) initTrans.get(i));
+				final Transition trans = (initTrans.get(i));
 				if (trans.dest.getName().equals("st")) {
 					/*
 					 * If the first phase is not a true phase we need a special state to enter the garbage state "st"
@@ -755,7 +751,7 @@ public class Trace2PEACompiler {
 		}
 
 		logger.debug("Building automaton");
-		while (todo.size() > 0) {
+		while (!todo.isEmpty()) {
 			final PhaseBits srcBits = todo.remove(0);
 			final Phase src = allPhases.get(srcBits);
 			findTrans(srcBits, src);
@@ -844,9 +840,9 @@ public class Trace2PEACompiler {
 			exitGuard = exitGuard.and(entrySync.negate());
 		}
 
-		final Iterator iter = allPhases.keySet().iterator();
+		final Iterator<PhaseBits> iter = allPhases.keySet().iterator();
 		while (iter.hasNext()) {
-			final PhaseBits pBits = (PhaseBits) iter.next();
+			final PhaseBits pBits = iter.next();
 			final Phase ph = allPhases.get(pBits);
 
 			CDD guard = complete(pBits, countertrace.phases.length - 1).and(missingEvents);

@@ -159,7 +159,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 		}
 	    }
 	}
-	while (todo.size() > 0) {
+	while (!todo.isEmpty()) {
 	    final TodoEntry entry = todo.remove(0);
 	    final CDD srcsinv = entry.p1.stateInv.and(entry.p2.stateInv);
 	    final Iterator<?> i = entry.p1.transitions.iterator();

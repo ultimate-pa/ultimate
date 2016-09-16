@@ -196,15 +196,15 @@ public class FormulaJ2XMLConverter {
 			}
 		}
 
-		if ((simpleChildNodes.size() == 0) && (complexChildNodes.size() == 0)) {
+		if ((simpleChildNodes.isEmpty()) && (complexChildNodes.isEmpty())) {
 			throw new RuntimeException("The cdd " + formulaCDD + " has no children");
 		}
 
-		if ((simpleChildNodes.size() == 1) && (complexChildNodes.size() == 0)) {
+		if ((simpleChildNodes.size() == 1) && (complexChildNodes.isEmpty())) {
 			return (Element) simpleChildNodes.get(0);
 		}
 
-		if ((complexChildNodes.size() == 1) && (simpleChildNodes.size() == 0)) {
+		if ((complexChildNodes.size() == 1) && (simpleChildNodes.isEmpty())) {
 			return (Element) complexChildNodes.get(0);
 		}
 

@@ -155,10 +155,9 @@ public class ClosureBenchmark {
 				.filter(path -> {
 					if (Files.isReadable(path)) {
 						return true;
-					} else {
-						logWarning("Ignore unreadable file: " + path);
-						return false;
 					}
+					logWarning("Ignore unreadable file: " + path);
+					return false;
 				})
 				.collect(Collectors.toList());
 		} catch (final IOException e) {
@@ -279,7 +278,7 @@ public class ClosureBenchmark {
 
 	// map (infPercentage --> #matrices)
 	public int[] histInfPercentagePerMatrix(final int bins) {
-		if (mMatrixStatistics.size() == 0) {
+		if (mMatrixStatistics.isEmpty()) {
 			return new int[0];
 		}
 		final double[] infPercentages = mMatrixStatistics.stream()
@@ -301,11 +300,11 @@ public class ClosureBenchmark {
 		return max;
 	}
 	
-	private void logInfo(final String msg) {
+	private static void logInfo(final String msg) {
 		System.out.println(msg);
 	}
 
-	private void logWarning(final String msg) {
+	private static void logWarning(final String msg) {
 		System.err.println(msg);
 	}
 }
