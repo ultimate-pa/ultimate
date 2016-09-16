@@ -30,9 +30,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -128,13 +128,13 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 * processing a internal transition, a return transition or a computed
 	 * summary.
 	 */
-	private final LinkedList<DoubleDecker<STATE>> mQueue = new LinkedList<>();
+	private final Deque<DoubleDecker<STATE>> mQueue = new ArrayDeque<>();
 	
 	/**
 	 * Queue of states that have to be processed and have been visited while
 	 * processing a call transition.
 	 */
-	private final LinkedList<DoubleDecker<STATE>> mQueueCall = new LinkedList<>();
+	private final Deque<DoubleDecker<STATE>> mQueueCall = new ArrayDeque<>();
 	
 	/**
 	 * Assigns to a pair of states (state,stateK) the run of length 2 that is
@@ -377,8 +377,8 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	/**
 	 * Dequeue a state pair.
 	 */
-	private DoubleDecker<STATE> dequeueGivenQueues(final LinkedList<DoubleDecker<STATE>> firstQueue,
-			final LinkedList<DoubleDecker<STATE>> secondQueue) {
+	private DoubleDecker<STATE> dequeueGivenQueues(final Deque<DoubleDecker<STATE>> firstQueue,
+			final Deque<DoubleDecker<STATE>> secondQueue) {
 		if (!firstQueue.isEmpty()) {
 			return firstQueue.removeFirst();
 		}
