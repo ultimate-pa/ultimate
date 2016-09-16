@@ -26,7 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -39,6 +40,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public class SummaryComputationGraphNode<LETTER, STATE> {
 	
-	private final NestedMap2<IGameState, SpoilerNwaVertex<LETTER, STATE>, Integer> mCurrent2Goal2Priority = null;
+	private final IGameState mSummarySource = null;
+	private final NestedMap2<IGameState, IGameState, Integer> mCurrent2Goal2Priority = null;
+	
+	public final Set<IGameState> getCurrent() {
+		return mCurrent2Goal2Priority.keySet();
+	}
 
 }

@@ -27,13 +27,18 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -50,4 +55,38 @@ public class SummaryComputation<LETTER, STATE> {
 	private final Map<NestedMap2<IGameState, SpoilerNwaVertex<LETTER, STATE>, Integer>, SummaryComputationGraphNode<LETTER, STATE>> mSummaryComputationGraphNodes = 
 			new HashMap<NestedMap2<IGameState, SpoilerNwaVertex<LETTER, STATE>, Integer>, SummaryComputationGraphNode<LETTER, STATE>>();
 	private final ArrayDeque<SummaryComputationGraphNode<LETTER, STATE>> mWorklist = new ArrayDeque<>();
+	
+	
+	
+	private void initialThings() {
+		for (final IGameState gs : mGameAutomaton.getStates()) {
+			mGameAutomaton.summarySuccessors(gs);
+			
+		}
+	}
+	
+	
+	private void computePredecessors(final SummaryComputationGraphNode<LETTER, STATE> succNode) {
+		// collect all relevant letters first
+		final Set<LETTER> letters = new HashSet<>();
+		for (final IGameState gs : succNode.getCurrent()) {
+			for ( final IncomingInternalTransition<GameLetter<LETTER, STATE>, IGameState> trans : mGameAutomaton.internalPredecessors(gs)) {
+				final GameLetter<LETTER, STATE> gl = trans.getLetter();
+				letters.add(gl.getLetter());
+			}
+		}
+		final List<SummaryComputationGraphNode<LETTER, STATE>> predecessors = new ArrayList();
+		for (final LETTER letter : letters) {
+			for (final IGameState gs : succNode.getCurrent()) {
+				for (final IncomingInternalTransition<GameLetter<LETTER, STATE>, IGameState> trans : mGameAutomaton.internalPredecessors(gs)) {
+					final GameLetter<LETTER, STATE> gl = trans.getLetter();
+					if (!gl.equals(letter)) {
+						continue;
+					}
+					
+
+				}
+			}
+		}
+	}
 }
