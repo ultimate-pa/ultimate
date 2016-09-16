@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -77,16 +78,21 @@ public class SummaryComputation<LETTER, STATE> {
 		}
 		final List<SummaryComputationGraphNode<LETTER, STATE>> predecessors = new ArrayList();
 		for (final LETTER letter : letters) {
+			final HashRelation<GameLetter<LETTER, STATE>, IGameState> dupl2spoi = new HashRelation<GameLetter<LETTER, STATE>, IGameState>();
+			final HashRelation<IGameState, GameLetter<LETTER, STATE>> spoi2dupl = new HashRelation<IGameState, GameLetter<LETTER, STATE>>();
+					
 			for (final IGameState gs : succNode.getCurrent()) {
 				for (final IncomingInternalTransition<GameLetter<LETTER, STATE>, IGameState> trans : mGameAutomaton.internalPredecessors(gs)) {
 					final GameLetter<LETTER, STATE> gl = trans.getLetter();
 					if (!gl.equals(letter)) {
 						continue;
 					}
-					
-
+					dupl2spoi.addPair(trans.getLetter(), gs);
+					spoi2dupl.addPair(trans.getPred(), trans.getLetter());
 				}
 			}
+			
+			
 		}
 	}
 }
