@@ -27,9 +27,9 @@ public class Elevator {
 	CDD reqset = RangeDecision.create("reqset", RangeDecision.OP_NEQ, 0);
 	CDD dsev = EventDecision.create("doorSensor");
 	CDD passedev = EventDecision.create("passed");
-	Set ds = Collections.singleton("doorSensor");
-	Set passed = Collections.singleton("passed");
-	Set stop = Collections.singleton("stop");
+	Set<String> ds = Collections.singleton("doorSensor");
+	Set<String> passed = Collections.singleton("passed");
+	Set<String> stop = Collections.singleton("stop");
 	CDD floorInReqset;
 
 	static int minFloor = 0;
@@ -69,7 +69,7 @@ public class Elevator {
 		        .or(RangeDecision.create("floor", RangeDecision.OP_GT, maxFloor));
 
 		new TimedAutomata(all, new CDD[] { outOfRange }, new String[] { "OutOfRange" });
-		System.err.println("" + all.getPhases().length + " total states.");
+		System.err.println(all.getPhases().length + " total states.");
 
 		// System.out.println("/* Complete System */");
 		// System.out.println("#locs "+all.phases.length);
@@ -83,7 +83,7 @@ public class Elevator {
 		// dumpKronos(all.phases[i]);
 	}
 
-	private final int getPhaseNr(final int rs, final int floor, final int dir, final int doors) {
+	private static final int getPhaseNr(final int rs, final int floor, final int dir, final int doors) {
 		return ((rs * (maxFloor - minFloor + 3) + floor - minFloor + 1) * 2 + dir) * 2 + doors;
 	}
 
@@ -200,18 +200,18 @@ public class Elevator {
 							phases[phasenr].addTransition(phases[phasenr], event, noresets);
 						}
 
-						event = (EventDecision.create('/', "openDoor").and(EventDecision.create('/', "closeDoor"))
+						event = EventDecision.create('/', "openDoor").and(EventDecision.create('/', "closeDoor"))
 						        .and(EventDecision.create('/', "request")).and(EventDecision.create('/', "passed"))
 						        .and(EventDecision.create('/', "showFloor")).and(EventDecision.create('/', "up"))
-						        .and(EventDecision.create("down")).and(EventDecision.create('/', "stop")));
+						        .and(EventDecision.create("down")).and(EventDecision.create('/', "stop"));
 						if (dir == 0) {
 							phases[phasenr].addTransition(phases[phasenr], event, noresets);
 						}
 
-						event = (EventDecision.create('/', "openDoor").and(EventDecision.create('/', "closeDoor"))
+						event = EventDecision.create('/', "openDoor").and(EventDecision.create('/', "closeDoor"))
 						        .and(EventDecision.create('/', "request")).and(EventDecision.create('/', "passed"))
 						        .and(EventDecision.create('/', "showFloor")).and(EventDecision.create('/', "up"))
-						        .and(EventDecision.create('/', "down")).and(EventDecision.create("stop")));
+						        .and(EventDecision.create('/', "down")).and(EventDecision.create("stop"));
 						if ((rs & (1 << (floor - minFloor))) != 0) {
 							phases[phasenr].addTransition(phases[phasenr], event, noresets);
 						}
