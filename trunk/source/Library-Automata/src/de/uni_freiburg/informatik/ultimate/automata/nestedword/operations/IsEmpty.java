@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2009-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -52,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 /**
  * Check emptiness and obtain an accepting run of a nested word automaton.
+ * <p>
  * The algorithm computes a reachability graph. The nodes of the graph describe
  * a configuration of the automaton. They are represented by state pairs
  * (state,stateK) where state is the "current state" in the reachability
@@ -60,16 +62,34 @@ import de.uni_freiburg.informatik.ultimate.util.Utils;
  * is the topmost element of the stack.
  * The edges of the reachability graph are labeled with runs of length two or
  * summary.
- * The reachability graph is obtained by traversing the automaton in a BFS
+ * <p>
+ * By default, the reachability graph is obtained by traversing the automaton in a BFS
  * manner.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
  * @param <STATE>
  *            state type
  */
 public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+	/**
+	 * Search strategy.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	public enum SearchStrategy {
+		/**
+		 * Breadth-first search (finds the shortest word).
+		 */
+		BFS,
+		/**
+		 * Depth-first search.
+		 */
+		DFS
+	}
+	
 	/**
 	 * Operand.
 	 */
@@ -85,8 +105,8 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	private final Collection<STATE> mGoalStates;
 	
 	/**
-	 * If set, the goal states are exactly the accepting states of automaton
-	 * mnwa, the set mGoalStates is null, and we use mnwa to check if a
+	 * If set, the goal states are exactly the accepting states of the automaton,
+	 * the set mGoalStates is null, and we use the automaton to check if a
 	 * state is a goal state.
 	 */
 	private final boolean mGoalStateIsAcceptingState;
@@ -187,8 +207,12 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 */
 	private final ArrayDeque<STATE> mReconstructionStack = new ArrayDeque<>();
 	
-	private NestedRun<LETTER, STATE> mReconstructionOneStepRun;
+	/**
+	 * Search strategy.
+	 */
+	private final SearchStrategy mStrategy;
 	
+	private NestedRun<LETTER, STATE> mReconstructionOneStepRun;
 	private STATE mReconstructionPredK;
 	
 	/**
@@ -201,7 +225,22 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 *            input NWA
 	 */
 	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand) {
-		this(services, operand, Utils.constructHashSet(operand.getInitialStates()), Collections.emptySet(), null, true);
+		this(services, operand, SearchStrategy.BFS);
+	}
+	
+	/**
+	 * Default constructor with option to set search strategy.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            input NWA
+	 * @see #IsEmpty(AutomataLibraryServices, INestedWordAutomatonSimple)
+	 */
+	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand,
+			final SearchStrategy strategy) {
+		this(services, operand, Utils.constructHashSet(operand.getInitialStates()), Collections.emptySet(), null, true,
+				strategy);
 	}
 	
 	/**
@@ -223,21 +262,27 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 */
 	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
 			final Set<STATE> startStates, final Set<STATE> forbiddenStates, final Set<STATE> goalStates) {
-		this(services, operand, startStates, forbiddenStates, goalStates, false);
+		this(services, operand, startStates, forbiddenStates, goalStates, false, SearchStrategy.BFS);
 		assert operand.getStates().containsAll(startStates) : "unknown states";
 		assert operand.getStates().containsAll(goalStates) : "unknown states";
 	}
 	
 	private IsEmpty(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final Set<STATE> startStates, final Set<STATE> forbiddenStates, final Set<STATE> goalStates,
-			final boolean goalStateIsAcceptingState) {
+			final boolean goalStateIsAcceptingState, final SearchStrategy strategy) {
 		super(services);
 		mOperand = operand;
 		mDummyEmptyStackState = mOperand.getEmptyStackState();
 		mStartStates = startStates;
 		mGoalStateIsAcceptingState = goalStateIsAcceptingState;
 		mGoalStates = goalStates;
+		if (mGoalStateIsAcceptingState) {
+			assert mGoalStates == null : "if we search accepting states, mGoalStates is null";
+		} else {
+			assert mGoalStates != null : "mGoalStates must not be null";
+		}
 		mForbiddenStates = forbiddenStates;
+		mStrategy = strategy;
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
@@ -258,11 +303,9 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 */
 	private boolean isGoalState(final STATE state) {
 		if (mGoalStateIsAcceptingState) {
-			assert mGoalStates == null : "if we search accepting states, mGoalStates is null";
 			return mOperand.isFinal(state);
-		} else {
-			return mGoalStates.contains(state);
 		}
+		return mGoalStates.contains(state);
 	}
 	
 	/**
@@ -313,11 +356,33 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 * summary.
 	 */
 	private DoubleDecker<STATE> dequeue() {
-		if (!mQueueCall.isEmpty()) {
-			return mQueueCall.removeFirst();
-		} else {
-			return mQueue.removeFirst();
+		switch (mStrategy) {
+			case BFS:
+				/*
+				 * If available take a state pair that has been discovered by taking a call transition. If not take a
+				 * state pair that has been discovered by taking an internal or a return transition or a summary.
+				 */
+				return dequeueGivenQueues(mQueueCall, mQueue);
+			case DFS:
+				/*
+				 * If available take a state pair that has been discovered by taking an internal or a return transition
+				 * or a summary. If not take a state pair that has been discovered by taking a call transition.
+				 */
+				return dequeueGivenQueues(mQueue, mQueueCall);
+			default:
+				throw new IllegalArgumentException("Unknown search strategy.");
 		}
+	}
+	
+	/**
+	 * Dequeue a state pair.
+	 */
+	private DoubleDecker<STATE> dequeueGivenQueues(final LinkedList<DoubleDecker<STATE>> firstQueue,
+			final LinkedList<DoubleDecker<STATE>> secondQueue) {
+		if (!firstQueue.isEmpty()) {
+			return firstQueue.removeFirst();
+		}
+		return secondQueue.removeFirst();
 	}
 	
 	/**
@@ -346,9 +411,8 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		final Set<STATE> callPreds = mVisitedPairs.get(state);
 		if (callPreds == null) {
 			return false;
-		} else {
-			return callPreds.contains(stateK);
 		}
+		return callPreds.contains(stateK);
 	}
 	
 	/**
@@ -460,7 +524,9 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 * about the predecessor (state,stateK) under an internal transition and a
 	 * run of length two from state to succ.
 	 * <p>
-	 * @param stateK TODO Christian 2016-09-04: The parameter 'stateK' is not used. Is this intended?
+	 * 
+	 * @param stateK
+	 *            TODO Christian 2016-09-04: The parameter 'stateK' is not used. Is this intended?
 	 */
 	private void addRunInformationInternal(final STATE succ, final STATE succK, final LETTER symbol, final STATE state,
 			final STATE stateK) {
@@ -544,9 +610,8 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		final Set<STATE> callStatesOfCallStates = mVisitedPairs.get(callState);
 		if (callStatesOfCallStates == null) {
 			return Collections.emptySet();
-		} else {
-			return callStatesOfCallStates;
 		}
+		return callStatesOfCallStates;
 	}
 	
 //	private void addCallStatesOfCallState(IState<LETTER,STATE> callState,
@@ -693,8 +758,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
 		if (mAcceptingRun == null) {
 			if (mLogger.isWarnEnabled()) {
@@ -721,8 +785,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	public String exitMessage() {
 		if (mAcceptingRun == null) {
 			return "Finished " + operationName() + ". No accepting run.";
-		} else {
-			return "Finished " + operationName() + ". Found accepting run of length " + mAcceptingRun.getLength();
 		}
+		return "Finished " + operationName() + ". Found accepting run of length " + mAcceptingRun.getLength();
 	}
 }

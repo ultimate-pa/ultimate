@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty.SearchStrategy;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
@@ -109,6 +110,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.CounterexampleSearchStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
@@ -169,6 +171,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	private HashSet<ProgramPoint> mHoareAnnotationPositions;
 
 	private final Collection<INestedWordAutomatonSimple<CodeBlock, IPredicate>> mStoredRawInterpolantAutomata;
+	
+	private final SearchStrategy mSearchStrategy;
 
 	public BasicCegarLoop(final String name, final RootNode rootNode, final SmtManager smtManager,
 			final TAPreferences taPrefs, final Collection<ProgramPoint> errorLocs,
@@ -219,12 +223,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mCegarLoopBenchmark = new CegarLoopStatisticsGenerator();
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
-		final IPreferenceProvider mPrefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		mUnsatCores = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class);
-		mUseLiveVariables = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LIVE_VARIABLES);
-		mDoFaultLocalizationNonFlowSensitive = mPrefs.getBoolean(
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		mUnsatCores = prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class);
+		mUseLiveVariables = prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LIVE_VARIABLES);
+		mDoFaultLocalizationNonFlowSensitive = prefs.getBoolean(
 				TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive);
-		mDoFaultLocalizationFlowSensitive = mPrefs
+		mDoFaultLocalizationFlowSensitive = prefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive);
 
 		mAbsIntRunner = new AbstractInterpretationRunner(services, mCegarLoopBenchmark, rootNode,
@@ -232,6 +236,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mInterpolantAutomatonBuilderFactory = new InterpolantAutomatonBuilderFactory(mServices, mSmtManager,
 				mPredicateFactoryInterpolantAutomata, mRootNode, mAbsIntRunner, taPrefs, mInterpolation,
 				mInterpolantAutomatonConstructionProcedure, mCegarLoopBenchmark);
+		
+		mSearchStrategy = getSearchStrategy(prefs);
 
 		mStoredRawInterpolantAutomata = checkStoreCounterExamples(mPref) ? new ArrayList<>() : null;
 	}
@@ -272,7 +278,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
 		final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction =
 				(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction;
-		mCounterexample = (new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction))
+		mCounterexample = (new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy))
 					.getNestedRun();
 
 		if (mCounterexample == null) {
@@ -1136,5 +1142,17 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	private final static boolean checkStoreCounterExamples(final TAPreferences pref) {
 		return pref.minimize() == Minimization.NWA_OVERAPPROXIMATION;
+	}
+
+	private static SearchStrategy getSearchStrategy(final IPreferenceProvider mPrefs) {
+		switch (mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY,
+				CounterexampleSearchStrategy.class)) {
+			case BFS:
+				return SearchStrategy.BFS;
+			case DFS:
+				return SearchStrategy.DFS;
+			default:
+				throw new IllegalArgumentException();
+		}
 	}
 }
