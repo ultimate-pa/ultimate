@@ -66,7 +66,7 @@ public class DoubleDeckerAutomatonFilteredStates<LETTER, STATE> extends NestedWo
 			throws AutomataOperationCanceledException {
 		super(services, automaton, remainingStates, newInitials, newFinals);
 //		assert (successorOfRemovedStatesAreRemoved());
-		assert (new DownStateConsistencyCheck<LETTER, STATE>(services, this)).getResult() : "down states inconsistent";
+		assert (new DownStateConsistencyCheck<>(services, this)).getResult() : "down states inconsistent";
 	}
 	
 	/**
@@ -87,7 +87,7 @@ public class DoubleDeckerAutomatonFilteredStates<LETTER, STATE> extends NestedWo
 			throws AutomataOperationCanceledException {
 		super(services, automaton, ancestorComputation);
 //		assert (successorOfRemovedStatesAreRemoved());
-		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices, this)).getResult() : "down states inconsistent";
+		assert (new DownStateConsistencyCheck<>(mServices, this)).getResult() : "down states inconsistent";
 	}
 	
 	private boolean successorOfRemovedStatesAreRemoved() {
@@ -125,7 +125,14 @@ public class DoubleDeckerAutomatonFilteredStates<LETTER, STATE> extends NestedWo
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class WasStateRemovedChecker implements Consumer<STATE> {
-		private boolean mPropertyHolds = true;
+		private boolean mPropertyHolds;
+		
+		/**
+		 * Constructor.
+		 */
+		public WasStateRemovedChecker() {
+			this.mPropertyHolds = true;
+		}
 		
 		@Override
 		public void accept(final STATE state) {

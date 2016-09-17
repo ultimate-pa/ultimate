@@ -49,20 +49,24 @@ public final class NestedWordAutomataUtils {
 	 *            The operand.
 	 * @param state
 	 *            state
-	 * @param f
+	 * @param consumer
 	 *            consumer
+	 * @param <LETTER>
+	 *            letter type
+	 * @param <STATE>
+	 *            state type
 	 */
 	public static <LETTER, STATE> void applyToReachableSuccessors(
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final STATE state, final Consumer<STATE> f) {
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final STATE state, final Consumer<STATE> consumer) {
 		for (final OutgoingInternalTransition<LETTER, STATE> t : operand.internalSuccessors(state)) {
-			f.accept(t.getSucc());
+			consumer.accept(t.getSucc());
 		}
 		for (final OutgoingCallTransition<LETTER, STATE> t : operand.callSuccessors(state)) {
-			f.accept(t.getSucc());
+			consumer.accept(t.getSucc());
 		}
 		for (final OutgoingReturnTransition<LETTER, STATE> t : operand.returnSuccessors(state)) {
 			if (operand.isDoubleDecker(state, t.getHierPred())) {
-				f.accept(t.getSucc());
+				consumer.accept(t.getSucc());
 			}
 		}
 	}
