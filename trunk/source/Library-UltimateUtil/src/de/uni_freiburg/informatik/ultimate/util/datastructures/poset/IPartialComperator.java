@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.poset;
 
-
 /**
  * Comperator for partially ordered sets.
  * @author Matthias Heizmann
@@ -35,8 +34,61 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.poset;
  */
 public interface IPartialComperator<T> {
 	
-	public enum ComparisonResult { STRICTLY_SMALLER, EQUAL, STRICTLY_GREATER, INCOMPARABLE }
+	public enum ComparisonResult { 
+		STRICTLY_SMALLER, EQUAL, STRICTLY_GREATER, INCOMPARABLE; 
 	
+		public ComparisonResult invert() {
+			switch (this) {
+			case STRICTLY_SMALLER:
+				return STRICTLY_GREATER;
+			case EQUAL:
+				return EQUAL;
+			case STRICTLY_GREATER:
+				return STRICTLY_SMALLER;
+			case INCOMPARABLE:
+				return INCOMPARABLE;
+			default:
+				throw new AssertionError("unknown value");
+			}
+		}
+		
+		public static ComparisonResult fromNonPartialComparison(final int nonPartialComparisonResult) {
+			if (nonPartialComparisonResult == 0) {
+				return ComparisonResult.EQUAL;
+			} else if (nonPartialComparisonResult > 0) {
+				return ComparisonResult.STRICTLY_GREATER; 
+			} else {
+				return ComparisonResult.STRICTLY_SMALLER;
+			}
+		}
+		
+		public static ComparisonResult aggregate(final ComparisonResult cr1, final ComparisonResult cr2) {
+			switch (cr1) {
+			case EQUAL:
+				return cr2;
+			case INCOMPARABLE:
+				return INCOMPARABLE;
+			case STRICTLY_GREATER:
+				if (cr2 == INCOMPARABLE || cr2 == STRICTLY_SMALLER) {
+					return INCOMPARABLE;
+				} else {
+					return cr2;
+				}
+			case STRICTLY_SMALLER:
+				if (cr2 == INCOMPARABLE || cr2 == STRICTLY_GREATER) {
+					return INCOMPARABLE;
+				} else {
+					return cr2;
+				}
+			default:
+				throw new AssertionError("unknown value");
+			}
+		}
+	}
+	
+	/**
+	 * Returns e.g., STRICTLY_SMALLER if o1 is strictly smaller than o2.
+	 */
 	public ComparisonResult compare(T o1, T o2);
 
 }
