@@ -82,6 +82,7 @@ public class TimedAutomata {
 					break;
 				default:
 					op = "??";
+					break;
 			}
 			return clock + op + value;
 		}
