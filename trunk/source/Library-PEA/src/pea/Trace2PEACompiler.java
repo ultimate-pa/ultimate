@@ -307,7 +307,7 @@ public class Trace2PEACompiler {
 		// that is not satisfied by an empty interval. Furthermore no events
 		// may be demanded to be able to neglect the phase.
 		lastphase = countertrace.phases.length - 1;
-		while (!buildTotal && lastphase > 0 && countertrace.phases[lastphase].allowEmpty == true
+		while (!buildTotal && lastphase > 0 && countertrace.phases[lastphase].allowEmpty
 		        && (canPossiblySeep & (1 << lastphase)) != 0) {
 			lastphase = lastphase - 1;
 		}
@@ -846,7 +846,7 @@ public class Trace2PEACompiler {
 			final Phase ph = allPhases.get(pBits);
 
 			CDD guard = complete(pBits, countertrace.phases.length - 1).and(missingEvents);
-			if (spec == false) {
+			if (!spec) {
 				guard = guard.negate();
 			}
 			if (guard != CDD.FALSE) {

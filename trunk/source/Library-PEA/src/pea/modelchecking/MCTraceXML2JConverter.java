@@ -290,7 +290,7 @@ public class MCTraceXML2JConverter {
 				continue;
 			}
 			actNode = (Element) children.item(k);
-			if (getSpecAttribute(actNode) == true) {
+			if (getSpecAttribute(actNode)) {
 				missingEvents = missingEvents.and(EventDecision.create(getNameAttribute(actNode)));
 			} else {
 				missingEvents = missingEvents.and(EventDecision.create('/', getNameAttribute(actNode)));
@@ -308,7 +308,7 @@ public class MCTraceXML2JConverter {
 	/**
 	 * Gives the name of an element. Raises an exception if the name is empty.
 	 */
-	private String getNameAttribute(final Element element) {
+	private static String getNameAttribute(final Element element) {
 		final String name = element.getAttribute(XMLTags.NAME_Tag);
 		if (name.equals("")) {
 			throw new RuntimeException("Name is not allowed to be empty");
@@ -344,7 +344,7 @@ public class MCTraceXML2JConverter {
 		final Element invNode = (Element) stateInvariantNodes.item(0);
 		final CDD inv = formulaConverter.convert(invNode);
 
-		final Set<String> forbidden = new TreeSet<String>();
+		final Set<String> forbidden = new TreeSet<>();
 		final NodeList forbiddenEventNodes = phaseNode.getElementsByTagName(XMLTags.FORBIDDENEVENT_TAG);
 		if (forbiddenEventNodes.getLength() > 0) {
 			final int forbiddenEventCount = forbiddenEventNodes.getLength();
@@ -382,7 +382,7 @@ public class MCTraceXML2JConverter {
 	 *            The XML element
 	 * @return double The double value
 	 */
-	private double getTimeBound(final Element timeBound) {
+	private static double getTimeBound(final Element timeBound) {
 		final String bound = timeBound.getAttribute(XMLTags.BOUND_TAG);
 		return (new Double(bound)).doubleValue();
 	}
@@ -394,7 +394,7 @@ public class MCTraceXML2JConverter {
 	 *            The XML element with the operator to be returned
 	 * @return int The number for the operator in the <code>CounterTrace</code> class.
 	 */
-	private int getOperator(final Element timeBound) {
+	private static int getOperator(final Element timeBound) {
 		final String op = timeBound.getAttribute(XMLTags.OPERATOR_TAG);
 		if (op.equals(XMLTags.GREATEREQUAL_CONST)) {
 			return CounterTrace.BOUND_GREATEREQUAL;
@@ -417,7 +417,7 @@ public class MCTraceXML2JConverter {
 	 *            The XML element with spec attribute
 	 * @return boolean The boolean representation of the spec attribute
 	 */
-	private boolean getSpecAttribute(final Element element) {
+	private static boolean getSpecAttribute(final Element element) {
 		final String spec = element.getAttribute(XMLTags.SPEC_TAG);
 		if (!spec.equals(XMLTags.TRUE_CONST) && !spec.equals(XMLTags.FALSE_CONST)) {
 			throw new RuntimeException("Spec value != \"true\" and != \"false\" not allowed");

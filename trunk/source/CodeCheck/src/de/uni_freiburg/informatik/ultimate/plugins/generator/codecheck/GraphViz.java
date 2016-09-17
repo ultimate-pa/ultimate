@@ -152,19 +152,15 @@ public class GraphViz {
 		File dot;
 		byte[] img_stream = null;
 		
-		try {
-			dot = writeDotSourceToFile(dot_source);
-			if (dot != null) {
-				img_stream = get_img_stream(dot, type);
-				if (dot.delete() == false) {
-					System.err.println("Warning: " + dot.getAbsolutePath() + " could not be deleted!");
-				}
-				return img_stream;
+		dot = writeDotSourceToFile(dot_source);
+		if (dot != null) {
+			img_stream = get_img_stream(dot, type);
+			if (!dot.delete()) {
+				System.err.println("Warning: " + dot.getAbsolutePath() + " could not be deleted!");
 			}
-			return null;
-		} catch (final java.io.IOException ioe) {
-			return null;
+			return img_stream;
 		}
+		return null;
 	}
 	
 	/**
@@ -176,7 +172,7 @@ public class GraphViz {
 	 *            Name of the file to where we want to write.
 	 * @return Success: 1, Failure: -1
 	 */
-	public int writeGraphToFile(final byte[] img, final String file) {
+	public static int writeGraphToFile(final byte[] img, final String file) {
 		final File to = new File(file);
 		return writeGraphToFile(img, to);
 	}
@@ -229,11 +225,9 @@ public class GraphViz {
 			img_stream = new byte[in.available()];
 			in.read(img_stream);
 			// Close it if we need to
-			if (in != null) {
-				in.close();
-			}
+			in.close();
 			
-			if (img.delete() == false) {
+			if (!img.delete()) {
 				System.err.println("Warning: " + img.getAbsolutePath() + " could not be deleted!");
 			}
 		} catch (final java.io.IOException ioe) {
@@ -256,7 +250,7 @@ public class GraphViz {
 	 *            Source of the graph (in dot language).
 	 * @return The file (as a File object) that contains the source of the graph.
 	 */
-	private static File writeDotSourceToFile(final String str) throws java.io.IOException {
+	private static File writeDotSourceToFile(final String str) {
 		File temp;
 		try {
 			temp = File.createTempFile("graph_", ".dot.tmp", new File(GraphViz.TEMP_DIR));
