@@ -73,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComperator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PosetUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -882,8 +882,8 @@ public class PredicateUnifier {
 		}
 
 		@Override
-		public IPartialComperator<IPredicate> getPartialComperator() {
-			return new IPartialComperator<IPredicate>() {
+		public IPartialComparator<IPredicate> getPartialComperator() {
+			return new IPartialComparator<IPredicate>() {
 
 				@Override
 				public ComparisonResult compare(final IPredicate o1, final IPredicate o2) {

@@ -27,12 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures.poset;
 
 /**
- * Comperator for partially ordered sets.
+ * Comparator for partially ordered sets.
  * @author Matthias Heizmann
  *
  * @param <T>
  */
-public interface IPartialComperator<T> {
+public interface IPartialComparator<T> {
 	
 	public enum ComparisonResult { 
 		STRICTLY_SMALLER, EQUAL, STRICTLY_GREATER, INCOMPARABLE; 
