@@ -62,7 +62,7 @@ public class PEAPhaseIndexMap {
 			try {
 				int value = Integer.parseInt(String.valueOf(c));
 				value = (value + 1) * 2;
-				if (wait = true) {
+				if (wait) {
 					value = value + 1;
 				}
 				setIndex(value);
