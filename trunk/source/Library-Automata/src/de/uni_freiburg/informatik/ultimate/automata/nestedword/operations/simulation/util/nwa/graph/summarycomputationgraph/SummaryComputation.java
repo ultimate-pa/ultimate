@@ -28,17 +28,23 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.util.LexicographicCounter;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.CanonicalParitalComparatorForMaps;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PosetUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -56,6 +62,13 @@ public class SummaryComputation<LETTER, STATE> {
 	private final Map<NestedMap2<IGameState, SpoilerNwaVertex<LETTER, STATE>, Integer>, SummaryComputationGraphNode<LETTER, STATE>> mSummaryComputationGraphNodes = 
 			new HashMap<NestedMap2<IGameState, SpoilerNwaVertex<LETTER, STATE>, Integer>, SummaryComputationGraphNode<LETTER, STATE>>();
 	private final ArrayDeque<SummaryComputationGraphNode<LETTER, STATE>> mWorklist = new ArrayDeque<>();
+	
+	
+	private final CanonicalParitalComparatorForMaps<IGameState, Integer> mDuplicatorGoal2PriorityComperator = 
+			new CanonicalParitalComparatorForMaps<>(new DuplicatorComparator());
+	private final CanonicalParitalComparatorForMaps<IGameState, Integer> mSpoilerGoal2PriorityComperator = 
+			new CanonicalParitalComparatorForMaps<>(new SpoilerComparator());
+	
 	
 	
 	
@@ -92,7 +105,103 @@ public class SummaryComputation<LETTER, STATE> {
 				}
 			}
 			
+			final List<GameLetter<LETTER, STATE>> predGameLetters = new ArrayList<>();
+			final List<List<Map<IGameState, Integer>>> predWeightedSummaryGoals = new ArrayList<>();
+			for (final GameLetter<LETTER, STATE> dupl : dupl2spoi.getDomain()) {
+				final Set<Map<IGameState,Integer>> goal2priorities = new HashSet<>();
+				final Set<IGameState> succs = dupl2spoi.getImage(dupl);
+				for (final IGameState succ : succs) {
+					final Map<IGameState, Integer> goal2priority = succNode.getGoal2Priority(succ);
+					goal2priorities.add(goal2priority);
+				}
+				final List<Map<IGameState, Integer>> filtered = 
+						PosetUtils.filterMaximalElements(goal2priorities, mDuplicatorGoal2PriorityComperator).collect(Collectors.toList());
+				predGameLetters.add(dupl);
+				predWeightedSummaryGoals.add(filtered);
+			}
+			final int[] numberOfElements = new int[predWeightedSummaryGoals.size()];
+			for (int i=0; i<predWeightedSummaryGoals.size(); i++) {
+				numberOfElements[i] = predWeightedSummaryGoals.get(i).size();
+			}
+			final LexicographicCounter c = new LexicographicCounter(numberOfElements);
+			do {
+				final NestedMap2<GameLetter<LETTER, STATE>, IGameState, Integer> pred = new NestedMap2<>();
+				final int[] currentCounterValue = c.getCurrentValue();
+				for (int i=0; i<currentCounterValue.length; i++) {
+					// problem
+					pred.put(predGameLetters.get(i), null, null);
+				}
+				
+				c.increment();
+			} while (c.isZero());
 			
+		}
+		
+		
+	}
+	
+	private static class sd implements IPartialComparator<Map<IGameState,Integer>> {
+
+		@Override
+		public ComparisonResult compare(final Map<IGameState, Integer> o1, final Map<IGameState, Integer> o2) {
+			
+			
+			// TODO Auto-generated method stub
+			return null;
+		}
+		
+	}
+	
+	public static class SpoilerComparator implements Comparator<Integer> {
+
+		@Override
+		public int compare(final Integer o1, final Integer o2) {
+			if (o1 < 0 || o1 > 2) {
+				throw new IllegalArgumentException("value not in range");
+			}
+			if (o2 < 0 || o2 > 2) {
+				throw new IllegalArgumentException("value not in range");
+			}
+
+			final boolean o1IsEven = (o1 % 2 == 0);
+			final boolean o2IsEven = (o1 % 2 == 0);
+			if (o1IsEven == o2IsEven) {
+				// of not equal, bigger (2) is better
+				return o1.compareTo(o2);
+			} else {
+				if (o1IsEven) {
+					return 1;
+				} else {
+					return -1;
+				}
+			}
+		}
+	}
+	
+	
+	public static class DuplicatorComparator implements Comparator<Integer> {
+
+		@Override
+		public int compare(final Integer o1, final Integer o2) {
+			if (o1 < 0 || o1 > 2) {
+				throw new IllegalArgumentException("value not in range");
+			}
+			if (o2 < 0 || o2 > 2) {
+				throw new IllegalArgumentException("value not in range");
+			}
+
+			final boolean o1IsEven = (o1 % 2 == 0);
+			final boolean o2IsEven = (o1 % 2 == 0);
+			if (o1IsEven == o2IsEven) {
+				// of not equal, smaller (0) is better
+				return o2.compareTo(o1);
+			} else {
+				if (o1IsEven) {
+					return -1;
+				} else {
+					return 1;
+				}
+			}
 		}
 	}
 }

@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph;
 
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
@@ -45,6 +46,10 @@ public class SummaryComputationGraphNode<LETTER, STATE> {
 	
 	public final Set<IGameState> getCurrent() {
 		return mCurrent2Goal2Priority.keySet();
+	}
+	
+	public final Map<IGameState, Integer> getGoal2Priority(final IGameState current) {
+		return mCurrent2Goal2Priority.get(current);
 	}
 
 }
