@@ -160,7 +160,7 @@ public class RelevantVariables {
 			final TreeSet<Integer> inSet = (TreeSet<Integer>) inRelation.getImage(bv);
 			if (inSet != null) {
 				result = result || inSet.floor(end) != null;
-				if (result == true) {
+				if (result) {
 					return result;
 				}
 			}

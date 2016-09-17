@@ -274,7 +274,7 @@ public class MCTraceXML2JConverter {
 			// Add an Event
 			if (actName.equals(XMLTags.EVENT_TAG)) {
 				final CDD event = EventDecision.create(getNameAttribute(actNode));
-				if (getSpecAttribute(actNode) == true) {
+				if (getSpecAttribute(actNode)) {
 					entryEvents = entryEvents.and(event);
 				} else {
 					entryEvents = entryEvents.and(event.negate());

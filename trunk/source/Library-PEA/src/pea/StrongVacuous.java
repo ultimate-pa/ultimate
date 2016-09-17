@@ -89,7 +89,7 @@ public class StrongVacuous {
 					testGlobal = false;
 				}
 			}
-			if (testGlobal == true) {
+			if (testGlobal) {
 				this.addToVacuous(vacuousPerReq);
 			}
 		}
