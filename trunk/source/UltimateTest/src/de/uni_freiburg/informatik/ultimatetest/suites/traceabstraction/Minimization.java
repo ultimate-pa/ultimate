@@ -140,6 +140,8 @@ public class Minimization extends AbstractTraceAbstractionTestSuite {
 		"automizer/minimization/TreeInterpolants-RAQ_DIRECT_SIMULATION.epf",
 		"automizer/minimization/TreeInterpolants-NWA_COMBINATOR_MULTI_DEFAULT.epf",
 		"automizer/minimization/TreeInterpolants-NWA_COMBINATOR_MULTI_SIMULATION.epf",
+		"automizer/minimization/TreeInterpolants-NONE-DFS.epf",
+		"automizer/minimization/TreeInterpolants-SHRINK_NWA-DFS.epf",
 	};
 	
 	/**
