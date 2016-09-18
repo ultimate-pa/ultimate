@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public final class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
-	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final String mResult;
 	
 	/**
@@ -71,6 +71,7 @@ public final class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNw
 			final IStateFactory<STATE> stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> nwa)
 			throws AutomataOperationCanceledException {
 		super(services);
+		// TODO Christian 2016-09-18: This conversion is not necessary for receiving the required type. Use operand?
 		mOperand = new NestedWordAutomatonReachableStates<>(mServices, nwa);
 		
 		if (mLogger.isInfoEnabled()) {
@@ -122,51 +123,50 @@ public final class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNw
 		return prettyPrint(results);
 	}
 	
-	private void evaluateBs(final IStateFactory<STATE> stateFactory,
-			final LinkedHashMap<String, Integer> results) throws AutomataOperationCanceledException {
+	private void evaluateBs(final IStateFactory<STATE> stateFactory, final LinkedHashMap<String, Integer> results)
+			throws AutomataOperationCanceledException {
 		final String name = "BuchiComplementBS";
 		final NestedWordAutomatonReachableStates<LETTER, STATE> result =
-				(new BuchiComplementNCSB<LETTER, STATE>(mServices, stateFactory, mOperand)).getResult();
+				(new BuchiComplementNCSB<>(mServices, stateFactory, mOperand)).getResult();
 		addToResultsWithSizeReduction(results, name, result);
 	}
 	
 	private void evaluateFkv(final IStateFactory<STATE> stateFactory, final LinkedHashMap<String, Integer> results,
 			final FkvOptimization fkvOptimization) throws AutomataOperationCanceledException {
 		final String name = "FKV_" + fkvOptimization;
-		final NestedWordAutomatonReachableStates<LETTER, STATE> result =
-				(new BuchiComplementFKV<LETTER, STATE>(mServices, stateFactory, mOperand,
-						fkvOptimization.toString(), Integer.MAX_VALUE)).getResult();
+		final NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementFKV<>(mServices,
+				stateFactory, mOperand, fkvOptimization.toString(), Integer.MAX_VALUE)).getResult();
 		addToResultsWithSizeReduction(results, name, result);
 	}
 	
 	private static String prettyPrint(final LinkedHashMap<String, Integer> results) {
-		final StringBuilder sb = new StringBuilder();
+		final StringBuilder builder = new StringBuilder();
 		for (final Entry<String, Integer> entry : results.entrySet()) {
-			sb.append(entry.getKey());
-			sb.append(" ");
-			sb.append(entry.getValue());
-			sb.append(System.lineSeparator());
+			// @formatter:off
+			builder.append(entry.getKey())
+					.append(" ")
+					.append(entry.getValue())
+					.append(System.lineSeparator());
+			// @formatter:on
 		}
-		return sb.toString();
+		return builder.toString();
 	}
 	
-	private void addToResultsWithSizeReduction(final LinkedHashMap<String, Integer> results,
-			final String name,
+	private void addToResultsWithSizeReduction(final LinkedHashMap<String, Integer> results, final String name,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> result) throws AutomataOperationCanceledException {
 		addToResults(results, name, result);
 		final INestedWordAutomaton<LETTER, STATE> nl =
-				(new RemoveNonLiveStates<LETTER, STATE>(mServices, result)).getResult();
+				(new RemoveNonLiveStates<>(mServices, result)).getResult();
 		addToResults(results, name + "_nonLiveRemoved", nl);
-		final INestedWordAutomaton<LETTER, STATE> bc = (new BuchiClosure<LETTER, STATE>(mServices, nl)).getResult();
+		final INestedWordAutomaton<LETTER, STATE> bc = (new BuchiClosure<>(mServices, nl)).getResult();
 		final NestedWordAutomatonReachableStates<LETTER, STATE> bcru =
-				(new RemoveUnreachable<LETTER, STATE>(mServices, bc)).getResult();
+				(new RemoveUnreachable<>(mServices, bc)).getResult();
 		final INestedWordAutomaton<LETTER, STATE> minmized =
-				new MinimizeSevpa<LETTER, STATE>(mServices, bcru).getResult();
+				new MinimizeSevpa<>(mServices, bcru).getResult();
 		addToResults(results, name + "_MsSizeReduction", minmized);
 	}
 	
-	private void addToResults(final LinkedHashMap<String, Integer> results,
-			final String name,
+	private void addToResults(final LinkedHashMap<String, Integer> results, final String name,
 			final INestedWordAutomaton<LETTER, STATE> result) {
 		final int size = result.getStates().size();
 		results.put(name, size);

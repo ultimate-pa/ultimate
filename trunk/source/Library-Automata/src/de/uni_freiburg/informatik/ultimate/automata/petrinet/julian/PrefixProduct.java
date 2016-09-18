@@ -36,6 +36,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.ConcurrentProduct;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -101,14 +102,14 @@ public final class PrefixProduct<S, C> extends UnaryNetOperation<S, C> {
 	@Override
 	public String startMessage() {
 		return "Start " + operationName()
-				+ "First Operand " + mOperand.sizeInformation()
-				+ "Second Operand " + mNwa.sizeInformation();
+		+ "First Operand " + mOperand.sizeInformation()
+		+ "Second Operand " + mNwa.sizeInformation();
 	}
 	
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName()
-				+ " Result " + mResult.sizeInformation();
+		+ " Result " + mResult.sizeInformation();
 	}
 	
 	@Override
@@ -271,12 +272,12 @@ public final class PrefixProduct<S, C> extends UnaryNetOperation<S, C> {
 			throws AutomataLibraryException {
 		mLogger.info("Testing correctness of prefixProduct");
 		
-		final INestedWordAutomaton<S, C> op1AsNwa =
-				(new PetriNet2FiniteAutomaton<S, C>(mServices, mOperand)).getResult();
-		final INestedWordAutomaton<S, C> resultAsNwa =
-				(new PetriNet2FiniteAutomaton<S, C>(mServices, mResult)).getResult();
-		final INestedWordAutomaton<S, C> nwaResult =
-				(new ConcurrentProduct<S, C>(mServices, op1AsNwa, mNwa, true)).getResult();
+		final INestedWordAutomatonSimple<S, C> op1AsNwa =
+				(new PetriNet2FiniteAutomaton<>(mServices, mOperand)).getResult();
+		final INestedWordAutomatonSimple<S, C> resultAsNwa =
+				(new PetriNet2FiniteAutomaton<>(mServices, mResult)).getResult();
+		final INestedWordAutomatonSimple<S, C> nwaResult =
+				(new ConcurrentProduct<>(mServices, op1AsNwa, mNwa, true)).getResult();
 		boolean correct = true;
 		correct &= (new IsIncluded<>(mServices, stateFactory, resultAsNwa, nwaResult)).getResult();
 		correct &= (new IsIncluded<>(mServices, stateFactory, nwaResult, resultAsNwa)).getResult();

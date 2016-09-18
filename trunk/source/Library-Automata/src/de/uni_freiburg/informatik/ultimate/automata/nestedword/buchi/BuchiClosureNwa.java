@@ -54,8 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            state type
  */
-public final class BuchiClosureNwa<LETTER, STATE>
-		implements INestedWordAutomaton<LETTER, STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
+public final class BuchiClosureNwa<LETTER, STATE> implements IDoubleDeckerAutomaton<LETTER, STATE> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	
@@ -359,6 +358,7 @@ public final class BuchiClosureNwa<LETTER, STATE>
 	
 	/**
 	 * {@inheritDoc}
+	 * 
 	 * @deprecated Use the {@link #isDoubleDecker(Object, Object)} check instead.
 	 */
 	@Override

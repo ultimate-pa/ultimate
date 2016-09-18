@@ -81,12 +81,9 @@ public final class GetRandomNwa extends GeneralOperation<String, String> {
 	 *            acceptance density (per mille)
 	 * @see {@link #generateAutomaton(int, int, double, double, double, double)}.
 	 */
-	public GetRandomNwa(final AutomataLibraryServices services,
-			final int alphabetSize, final int size,
-			final int internalTransitionDensity,
-			final int callTransitionProbability,
-			final int returnTransitionProbability,
-			final int acceptanceDensity) {
+	public GetRandomNwa(final AutomataLibraryServices services, final int alphabetSize, final int size,
+			final int internalTransitionDensity, final int callTransitionProbability,
+			final int returnTransitionProbability, final int acceptanceDensity) {
 		this(services, alphabetSize, size, internalTransitionDensity / 1_000D, callTransitionProbability / 1_000D,
 				returnTransitionProbability / 1_000D, acceptanceDensity / 1_000D);
 	}
@@ -145,7 +142,7 @@ public final class GetRandomNwa extends GeneralOperation<String, String> {
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + mResult.sizeInformation() + '.';
+		return "Finished " + operationName() + ". Result " + mResult.sizeInformation() + '.';
 	}
 	
 	@Override
@@ -181,11 +178,9 @@ public final class GetRandomNwa extends GeneralOperation<String, String> {
 		
 		final int maxNumOfTransitions = mSize * mAlphabetSize * mSize;
 		final int numOfTransitions = (int) Math.round(mInternalTransitionDensity * maxNumOfTransitions);
-		if (numOfTransitions < mSize - 1) {
-			if (mLogger.isWarnEnabled()) {
-				mLogger.warn("You specified density " + mInternalTransitionDensity + " for internal transition. "
-						+ "This is not sufficient to connect all states with internal transitions.");
-			}
+		if ((numOfTransitions < mSize - 1) && (mLogger.isWarnEnabled())) {
+			mLogger.warn("You specified density " + mInternalTransitionDensity + " for internal transition. "
+					+ "This is not sufficient to connect all states with internal transitions.");
 		}
 		
 		final int numOfAccStates = (int) Math.round(mAcceptanceDensity * mSize);
@@ -214,10 +209,10 @@ public final class GetRandomNwa extends GeneralOperation<String, String> {
 		@SuppressWarnings("squid:S1244")
 		final boolean isFiniteAutomaton = mCallTransitionDensity == 0D && mReturnTransitionDensity == 0D;
 		if (isFiniteAutomaton) {
-			result = new NestedWordAutomaton<>(mServices, new HashSet<String>(num2Letter), null, null, stateFactory);
+			result = new NestedWordAutomaton<>(mServices, new HashSet<>(num2Letter), null, null, stateFactory);
 		} else {
-			result = new NestedWordAutomaton<>(mServices, new HashSet<String>(num2Letter),
-					new HashSet<String>(num2Letter), new HashSet<String>(num2Letter), stateFactory);
+			result = new NestedWordAutomaton<>(mServices, new HashSet<>(num2Letter), new HashSet<>(num2Letter),
+					new HashSet<>(num2Letter), stateFactory);
 		}
 		
 		// --------------------------------------------------------------------
@@ -241,20 +236,16 @@ public final class GetRandomNwa extends GeneralOperation<String, String> {
 	
 	private void checkUserInput() {
 		if (mSize <= 0) {
-			throw new IllegalArgumentException(
-					"Automaton size must be strictly positive.");
+			throw new IllegalArgumentException("Automaton size must be strictly positive.");
 		}
 		if (mAlphabetSize <= 0) {
-			throw new IllegalArgumentException(
-					"Alphabet size must be strictly positive.");
+			throw new IllegalArgumentException("Alphabet size must be strictly positive.");
 		}
 		if (mInternalTransitionDensity < 0 || mInternalTransitionDensity > 1) {
-			throw new IllegalArgumentException(
-					"Transition density must be between 0 and 1.");
+			throw new IllegalArgumentException("Transition density must be between 0 and 1.");
 		}
 		if (mAcceptanceDensity < 0 || mAcceptanceDensity > 1) {
-			throw new IllegalArgumentException(
-					"Acceptance density must be between 0 and 1.");
+			throw new IllegalArgumentException("Acceptance density must be between 0 and 1.");
 		}
 	}
 	
@@ -330,15 +321,13 @@ public final class GetRandomNwa extends GeneralOperation<String, String> {
 		
 		for (int i = 0; i < shuffledStateNbList.size(); ++i) {
 			// random reached state
-			final int predStateNb =
-					reachedStateNbs.get(mRandom.nextInt(reachedStateNbs.size()));
+			final int predStateNb = reachedStateNbs.get(mRandom.nextInt(reachedStateNbs.size()));
 			// random letter
 			final int letterNb = mRandom.nextInt(mAlphabetSize);
 			// rd. isolated state
 			final int succStateNb = shuffledStateNbList.get(i);
 			reachedStateNbs.add(succStateNb);
-			final int transitionNb = predStateNb * mAlphabetSize * mSize
-					+ letterNb * mSize + succStateNb;
+			final int transitionNb = predStateNb * mAlphabetSize * mSize + letterNb * mSize + succStateNb;
 			usedTransitionNbs.add(transitionNb);
 			final String predState = num2State.get(predStateNb);
 			final String letter = num2Letter.get(letterNb);

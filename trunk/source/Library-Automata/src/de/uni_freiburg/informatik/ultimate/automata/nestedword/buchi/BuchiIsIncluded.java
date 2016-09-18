@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -65,11 +64,9 @@ public final class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LET
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public BuchiIsIncluded(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
+	public BuchiIsIncluded(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand)
-			throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
@@ -78,10 +75,10 @@ public final class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LET
 			mLogger.info(startMessage());
 		}
 		
-		final INestedWordAutomaton<LETTER, STATE> sndComplement = (new BuchiComplementFKV<LETTER, STATE>(
-				mServices, stateFactory, mSndOperand)).getResult();
-		final INestedWordAutomaton<LETTER, STATE> difference =
-				(new BuchiIntersectDD<LETTER, STATE>(mServices, mFstOperand, sndComplement, true)).getResult();
+		final INestedWordAutomatonSimple<LETTER, STATE> sndComplement =
+				(new BuchiComplementFKV<>(mServices, stateFactory, mSndOperand)).getResult();
+		final INestedWordAutomatonSimple<LETTER, STATE> difference =
+				(new BuchiIntersectDD<>(mServices, mFstOperand, sndComplement, true)).getResult();
 		final BuchiIsEmpty<LETTER, STATE> emptinessCheck = new BuchiIsEmpty<>(mServices, difference);
 		
 		mResult = emptinessCheck.getResult();
