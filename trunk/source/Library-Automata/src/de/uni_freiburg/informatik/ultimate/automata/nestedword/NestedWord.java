@@ -88,7 +88,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * Constant to represent pending returns in our array model of a nesting relation.
 	 */
 	public static final int MINUS_INFINITY = Integer.MIN_VALUE;
-
+	
 	private static final String QUOTE_SPACE = "\" ";
 	private static final char QUOTE = '\"';
 	private static final String ACCESS_TO_POSITION = "Access to position ";
@@ -180,9 +180,8 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	public static <LETTER> NestedWord<LETTER> nestedWord(final Word<LETTER> word) {
 		if (word instanceof NestedWord) {
 			return (NestedWord<LETTER>) word;
-		} else {
-			return new NestedWord<>(word);
 		}
+		return new NestedWord<>(word);
 	}
 	
 	/**
@@ -311,16 +310,6 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	}
 	
 	/**
-	 * @return The length of the nested word is the length of the word.
-	 *         {@inheritDoc}
-	 */
-	@SuppressWarnings("squid:S1185")
-	@Override
-	public int length() {
-		return super.length();
-	}
-	
-	/**
 	 * @param position
 	 *            The position.
 	 * @return true iff the position is a call position
@@ -368,9 +357,8 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	public int getReturnPosition(final int position) {
 		if (isCallPosition(position)) {
 			return mNestingRelation[position];
-		} else {
-			throw new IllegalArgumentException("Argument must be a call position.");
 		}
+		throw new IllegalArgumentException("Argument must be a call position.");
 	}
 	
 	/**
@@ -381,9 +369,8 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	public int getCallPosition(final int position) {
 		if (isReturnPosition(position)) {
 			return mNestingRelation[position];
-		} else {
-			throw new IllegalArgumentException("Argument must be a return position.");
 		}
+		throw new IllegalArgumentException("Argument must be a return position.");
 	}
 	
 	/**
@@ -599,15 +586,13 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		return builder.toString();
 	}
 	
-	private boolean assertValidNestedWord(final LETTER[] word, final int[] nestingRelation) {
+	private static boolean assertValidNestedWord(final Object[] word, final int[] nestingRelation) {
 		assert word.length == nestingRelation.length : "The nesting relation must contain one entry for each letter "
 				+ "in the word.";
-		assert nestingRelationValuesInRange(
-				nestingRelation) : "The nesting relation may only contain -2, plus infinity, minus infinity, or "
-						+ "natural numbers.";
-		assert nestingRelationSymmetricNestingEdges(
-				nestingRelation) : "If nestingRelation[i]=k, then nestingRelation[k]=i or nestingRelation[i] is either"
-						+ "-2, plus infinity, or minus infinity.";
+		assert nestingRelationValuesInRange(nestingRelation) : "The nesting relation may only contain -2, plus "
+				+ "infinity, minus infinity, or natural numbers.";
+		assert nestingRelationSymmetricNestingEdges(nestingRelation) : "If nestingRelation[i]=k, then "
+				+ "nestingRelation[k]=i or nestingRelation[i] is either -2, plus infinity, or minus infinity.";
 		assert nestingEdgesDoNotCross(nestingRelation) : "Nesting edges must not cross.";
 		return true;
 	}

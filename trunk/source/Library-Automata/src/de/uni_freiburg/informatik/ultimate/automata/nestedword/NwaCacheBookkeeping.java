@@ -49,7 +49,6 @@ import java.util.Set;
  *            state type
  */
 public class NwaCacheBookkeeping<LETTER, STATE> {
-	
 	private static final String ADDED_TO_CACHE_TWICE = "The letter was added to the cache twice.";
 	
 	private final Map<STATE, Set<LETTER>> mCachedInternal = new HashMap<>();
@@ -69,9 +68,8 @@ public class NwaCacheBookkeeping<LETTER, STATE> {
 		final Set<LETTER> cbs = mCachedInternal.get(state);
 		if (cbs == null) {
 			return false;
-		} else {
-			return cbs.contains(letter);
 		}
+		return cbs.contains(letter);
 	}
 	
 	/**
@@ -87,9 +85,8 @@ public class NwaCacheBookkeeping<LETTER, STATE> {
 		final Set<LETTER> cbs = mCachedCall.get(state);
 		if (cbs == null) {
 			return false;
-		} else {
-			return cbs.contains(letter);
 		}
+		return cbs.contains(letter);
 	}
 	
 	/**
@@ -107,14 +104,12 @@ public class NwaCacheBookkeeping<LETTER, STATE> {
 		final Map<STATE, Set<LETTER>> hier2cbs = mCachedReturn.get(state);
 		if (hier2cbs == null) {
 			return false;
-		} else {
-			final Set<LETTER> cbs = hier2cbs.get(hier);
-			if (cbs == null) {
-				return false;
-			} else {
-				return cbs.contains(letter);
-			}
 		}
+		final Set<LETTER> cbs = hier2cbs.get(hier);
+		if (cbs == null) {
+			return false;
+		}
+		return cbs.contains(letter);
 	}
 	
 	/**
