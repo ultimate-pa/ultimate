@@ -94,6 +94,7 @@ public class NwaToUltimateModel<LETTER, STATE> {
 			queue.add(state);
 			final AutomatonState vsn = new AutomatonState(state, nwa.isFinal(state));
 			constructed.put(state, vsn);
+			// TODO Christian 2016-09-18: Should it be 'INITIAL'?
 			new AutomatonTransition(graphroot, Transition.INTERNAL, "", null, vsn);
 		}
 		

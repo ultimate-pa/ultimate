@@ -51,7 +51,7 @@ public final class AutomatonState extends
 	 * @param isAccepting
 	 *            {@code true} iff the state is accepting
 	 */
-	public AutomatonState(final Object content, final boolean isAccepting) {
+	public AutomatonState(final Object content, final Boolean isAccepting) {
 		final DefaultAnnotations acceptance = new DefaultAnnotations();
 		acceptance.put("isAccepting", isAccepting);
 		final Map<String, IAnnotations> annotations = getPayload().getAnnotations();
