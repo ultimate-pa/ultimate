@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.alternating;
@@ -33,15 +33,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class BooleanExpression {
-
+	private final BitSet mAlpha;
+	private final BitSet mBeta;
+	private BooleanExpression mNextConjunctExpression;
+	
 	public BooleanExpression(final BitSet alpha, final BitSet beta) {
 		mAlpha = alpha;
 		mBeta = beta;
 	}
-	
-	private final BitSet mAlpha;
-	private final BitSet mBeta;
-	private BooleanExpression mNextConjunctExpression;
 	
 	public void addConjunction(final BooleanExpression booleanExpression) {
 		if (!containsConjunction(booleanExpression)) {
@@ -74,7 +73,7 @@ public class BooleanExpression {
 		return false;
 	}
 	
-	public BooleanExpression cloneShifted(final Map<Integer,Integer> shiftMap, final int newSize) {
+	public BooleanExpression cloneShifted(final Map<Integer, Integer> shiftMap, final int newSize) {
 		final BitSet shiftedAlpha = new BitSet(newSize);
 		final BitSet shiftedBeta = new BitSet(newSize);
 		for (final Entry<Integer, Integer> entry : shiftMap.entrySet()) {
@@ -84,21 +83,20 @@ public class BooleanExpression {
 			if (mBeta.get(entry.getKey())) {
 				shiftedBeta.set(entry.getValue());
 			}
-		}	
+		}
 		final BooleanExpression result = new BooleanExpression(shiftedAlpha, shiftedBeta);
 		if (mNextConjunctExpression != null) {
 			result.mNextConjunctExpression = mNextConjunctExpression.cloneShifted(shiftMap, newSize);
-		}	
+		}
 		return result;
 	}
 	
 	/**
 	 * TODO Christian 2016-08-16: This does not override the Object.equals()
-	 *      method. It may be confusing when using in Collections.
+	 * method. It may be confusing when using in Collections. Also it does not check for 'null'.
 	 */
 	public boolean equals(final BooleanExpression booleanExpression) {
-		return (mAlpha.equals(booleanExpression.mAlpha)
-				&& mBeta.equals(booleanExpression.mBeta));
+		return mAlpha.equals(booleanExpression.mAlpha) && mBeta.equals(booleanExpression.mBeta);
 	}
 	
 	public <T> String toString(final List<T> variables) {

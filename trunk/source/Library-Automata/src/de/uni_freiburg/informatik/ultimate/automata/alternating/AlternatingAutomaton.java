@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.alternating;
@@ -37,27 +37,25 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class AlternatingAutomaton<LETTER, STATE>
-		implements IAutomaton<LETTER, STATE> {
-
+public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 	private final Set<LETTER> mAlphabet;
 	private final IStateFactory<STATE> mStateFactory;
-	private final ArrayList<STATE> mStates = new ArrayList<STATE>();
-	private final HashMap<STATE, Integer> mStatesIndices = new HashMap<STATE, Integer>();
-	private final HashMap<LETTER, BooleanExpression[]> mTransitionFunction =
-			new HashMap<LETTER, BooleanExpression[]>();
+	private final ArrayList<STATE> mStates = new ArrayList<>();
+	private final HashMap<STATE, Integer> mStatesIndices = new HashMap<>();
+	private final HashMap<LETTER, BooleanExpression[]> mTransitionFunction = new HashMap<>();
 	private BooleanExpression mAcceptingFunction;
 	private final BitSet mFinalStatesBitVector = new BitSet();
 	private boolean mIsReversed;
-
+	
 	/**
-	 * @param alphabet alphabet
-	 * @param stateFactory state factory
+	 * @param alphabet
+	 *            alphabet
+	 * @param stateFactory
+	 *            state factory
 	 */
-	public AlternatingAutomaton(final Set<LETTER> alphabet,
-			final IStateFactory<STATE> stateFactory) {
-		this.mAlphabet = alphabet;
-		this.mStateFactory = stateFactory;
+	public AlternatingAutomaton(final Set<LETTER> alphabet, final IStateFactory<STATE> stateFactory) {
+		mAlphabet = alphabet;
+		mStateFactory = stateFactory;
 	}
 	
 	public void addState(final STATE state) {
@@ -119,7 +117,7 @@ public class AlternatingAutomaton<LETTER, STATE>
 	public boolean accepts(final Word<LETTER> word) {
 		final BitSet resultingStates = (BitSet) mFinalStatesBitVector.clone();
 		if (mIsReversed) {
-			for (int i = 0; i < word.length();i++) {
+			for (int i = 0; i < word.length(); i++) {
 				resolveLetter(word.getSymbol(i), resultingStates);
 			}
 		} else {
@@ -134,7 +132,7 @@ public class AlternatingAutomaton<LETTER, STATE>
 		final BooleanExpression[] letterTransitions = mTransitionFunction.get(letter);
 		if (letterTransitions != null) {
 			final BitSet tmpCurrentStates = (BitSet) currentStates.clone();
-			for (int i = 0; i < mStates.size();i++) {
+			for (int i = 0; i < mStates.size(); i++) {
 				final boolean result = ((letterTransitions[i] != null)
 						? letterTransitions[i].getResult(tmpCurrentStates)
 						: false);
@@ -166,28 +164,28 @@ public class AlternatingAutomaton<LETTER, STATE>
 	}
 	
 	public void setReversed(final boolean isReversed) {
-		this.mIsReversed = isReversed;
+		mIsReversed = isReversed;
 	}
 	
 	public boolean isReversed() {
 		return mIsReversed;
 	}
-
+	
 	@Override
 	public Set<LETTER> getAlphabet() {
 		return mAlphabet;
 	}
-
+	
 	@Override
 	public IStateFactory<STATE> getStateFactory() {
 		return mStateFactory;
 	}
-
+	
 	@Override
 	public int size() {
 		return mStates.size();
 	}
-
+	
 	@Override
 	public String sizeInformation() {
 		return "Number of states";
@@ -206,7 +204,7 @@ public class AlternatingAutomaton<LETTER, STATE>
 			r++;
 		}
 		text += "}\n\tStates = {";
-		for (int i = 0; i < mStates.size();i++) {
+		for (int i = 0; i < mStates.size(); i++) {
 			if (i != 0) {
 				text += ", ";
 			}
@@ -214,7 +212,7 @@ public class AlternatingAutomaton<LETTER, STATE>
 		}
 		text += "}\n\tFinalStates = {";
 		r = 0;
-		for (int i = 0; i < mStates.size();i++) {
+		for (int i = 0; i < mStates.size(); i++) {
 			if (mFinalStatesBitVector.get(i)) {
 				if (r != 0) {
 					text += ", ";
@@ -228,7 +226,7 @@ public class AlternatingAutomaton<LETTER, STATE>
 		for (final Entry<LETTER, BooleanExpression[]> entry : mTransitionFunction.entrySet()) {
 			text += "\t\t" + entry.getKey() + " => {\n";
 			int z = 0;
-			for (int i = 0; i < mStates.size();i++) {
+			for (int i = 0; i < mStates.size(); i++) {
 				if (entry.getValue()[i] != null) {
 					if (z != 0) {
 						text += ",\n";

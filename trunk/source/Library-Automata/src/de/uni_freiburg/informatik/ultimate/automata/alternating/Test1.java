@@ -19,19 +19,18 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.alternating;
 
 public class Test1 {
-
 	public static void main(final String[] args) {
 		final TestAutomaton_1 automaton = new TestAutomaton_1();
 		final long startNanoTime = System.nanoTime();
 		TestCase.test(automaton, TestAutomaton_1.TEST_CASES);
-		System.out.println(((System.nanoTime() - startNanoTime) / 1000000f) + " ms");
+		System.out.println(((System.nanoTime() - startNanoTime) / 1000000F) + " ms");
 	}
 }

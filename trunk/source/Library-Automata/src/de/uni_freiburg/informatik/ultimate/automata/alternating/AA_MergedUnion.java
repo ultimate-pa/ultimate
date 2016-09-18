@@ -36,13 +36,12 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	
 	private final AlternatingAutomaton<LETTER, STATE> mResultAutomaton;
-
+	
 	public AA_MergedUnion(final AlternatingAutomaton<LETTER, STATE> automaton1,
 			final AlternatingAutomaton<LETTER, STATE> automaton2) {
 		assert IAutomaton.sameAlphabet(automaton1, automaton2);
-		assert (automaton1.isReversed() == automaton2.isReversed());
+		assert automaton1.isReversed() == automaton2.isReversed();
 		mResultAutomaton = new AlternatingAutomaton<>(automaton1.getAlphabet(), automaton1.getStateFactory());
 		final HashMap<Integer, Integer> shiftMap1 = new HashMap<>();
 		final HashMap<Integer, Integer> shiftMap2 = new HashMap<>();
@@ -64,9 +63,7 @@ public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		for (final Entry<LETTER, BooleanExpression[]> entry : automaton1.getTransitionFunction().entrySet()) {
 			for (int i = 0; i < automaton1.getStates().size(); i++) {
 				if (entry.getValue()[i] != null) {
-					mResultAutomaton.addTransition(
-							entry.getKey(),
-							automaton1.getStates().get(i),
+					mResultAutomaton.addTransition(entry.getKey(), automaton1.getStates().get(i),
 							entry.getValue()[i].cloneShifted(shiftMap1, newSize));
 				}
 			}
@@ -74,9 +71,7 @@ public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		for (final Entry<LETTER, BooleanExpression[]> entry : automaton2.getTransitionFunction().entrySet()) {
 			for (int i = 0; i < automaton2.getStates().size(); i++) {
 				if (entry.getValue()[i] != null) {
-					mResultAutomaton.addTransition(
-							entry.getKey(),
-							automaton2.getStates().get(i),
+					mResultAutomaton.addTransition(entry.getKey(), automaton2.getStates().get(i),
 							entry.getValue()[i].cloneShifted(shiftMap2, newSize));
 				}
 			}
@@ -85,27 +80,27 @@ public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		mResultAutomaton.addAcceptingConjunction(automaton2.getAcceptingFunction().cloneShifted(shiftMap2, newSize));
 		mResultAutomaton.setReversed(automaton1.isReversed());
 	}
-
+	
 	@Override
 	public String operationName() {
 		return "AA_MergedUnion";
 	}
-
+	
 	@Override
 	public String startMessage() {
 		return "Start: " + operationName();
 	}
-
+	
 	@Override
 	public String exitMessage() {
 		return "Exit: " + operationName();
 	}
-
+	
 	@Override
 	public AlternatingAutomaton<LETTER, STATE> getResult() {
 		return mResultAutomaton;
 	}
-
+	
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
