@@ -237,7 +237,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		private final LETTER mLetter;
 		private Iterator<STATE> mIterator;
 		
-		private MapLetterIterator(final Map<LETTER, Set<STATE>> letter2succ, final LETTER letter) {
+		protected MapLetterIterator(final Map<LETTER, Set<STATE>> letter2succ, final LETTER letter) {
 			this.mLetter = letter;
 			if (letter2succ != null) {
 				if (letter2succ.get(letter) != null) {
@@ -282,7 +282,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		private LETTER mCurrentLetter;
 		private Iterator<OutgoingInternalTransition<LETTER, STATE>> mCurrentIterator;
 		
-		private MapNoLetterIterator(final Map<LETTER, Set<STATE>> letter2succ) {
+		protected MapNoLetterIterator(final Map<LETTER, Set<STATE>> letter2succ) {
 			mLetter2succ = letter2succ;
 			mLetterIterator = letter2succ.keySet().iterator();
 			nextLetter();
