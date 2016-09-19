@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 		extends LevelRankingGenerator<LETTER, STATE, LevelRankingConstraintDrdCheck<LETTER, STATE>> {
-	
 	private static final boolean OMIT_NON_ACCEPTING_SINK = true;
 	private final boolean mAllowEmptyLevelRanking;
 	private final boolean mAllowRankZero;
@@ -102,9 +101,8 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 		if (constraint.isNonAcceptingSink()) {
 			if (OMIT_NON_ACCEPTING_SINK) {
 				return Collections.emptyList();
-			} else {
-				return Collections.singletonList(new LevelRankingState<LETTER, STATE>());
 			}
+			return Collections.singletonList(new LevelRankingState<LETTER, STATE>());
 		}
 		final List<LevelRankingState<LETTER, STATE>> succLvls = new ArrayList<>();
 		final Set<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersEligibleForVoluntaryDecrease = new HashSet<>();
@@ -209,11 +207,10 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 			if (mOperand.isFinal(upState.getState())) {
 				if (!mAllowRankZero && rankConstraint == 1) {
 					return null;
-				} else {
-					rank = rankConstraint - 1;
-					inO = oCandidate;
-					rankInOPair = new Pair<>(rank, inO);
 				}
+				rank = rankConstraint - 1;
+				inO = oCandidate;
+				rankInOPair = new Pair<>(rank, inO);
 			} else {
 				rank = rankConstraint;
 				inO = false;
@@ -222,8 +219,7 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 		} else {
 			assert LevelRankingState.isEven(rankConstraint);
 			if (rankConstraint > 0
-					&& doubleDeckersWithVoluntaryDecrease.contains(
-							new DoubleDecker<StateWithRankInfo<STATE>>(downState, upState))) {
+					&& doubleDeckersWithVoluntaryDecrease.contains(new DoubleDecker<>(downState, upState))) {
 				rank = rankConstraint - 1;
 				inO = false;
 				rankInOPair = new Pair<>(rank, inO);
@@ -235,5 +231,4 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 		}
 		return rankInOPair;
 	}
-	
 }

@@ -113,12 +113,14 @@ public final class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNw
 		evaluateBs(stateFactory, results);
 		for (final FkvOptimization fkvOptimization : FkvOptimization.values()) {
 			evaluateFkv(stateFactory, results, fkvOptimization);
-//			{
-//				String name = "FKV_" + fkvOptimization + "_MaxRank3";
-//			NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementFKV<LETTER, STATE>(mServices,
-//					stateFactory, mOperand, fkvOptimization.toString(), 3)).getResult();
-//				addToResultsWithSizeReduction(results, name, result);
-//			}
+			/*
+			{
+				String name = "FKV_" + fkvOptimization + "_MaxRank3";
+			NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementFKV<LETTER, STATE>(mServices,
+					stateFactory, mOperand, fkvOptimization.toString(), 3)).getResult();
+				addToResultsWithSizeReduction(results, name, result);
+			}
+			*/
 		}
 		return prettyPrint(results);
 	}
@@ -155,14 +157,12 @@ public final class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNw
 	private void addToResultsWithSizeReduction(final LinkedHashMap<String, Integer> results, final String name,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> result) throws AutomataOperationCanceledException {
 		addToResults(results, name, result);
-		final INestedWordAutomaton<LETTER, STATE> nl =
-				(new RemoveNonLiveStates<>(mServices, result)).getResult();
+		final INestedWordAutomaton<LETTER, STATE> nl = (new RemoveNonLiveStates<>(mServices, result)).getResult();
 		addToResults(results, name + "_nonLiveRemoved", nl);
 		final INestedWordAutomaton<LETTER, STATE> bc = (new BuchiClosure<>(mServices, nl)).getResult();
 		final NestedWordAutomatonReachableStates<LETTER, STATE> bcru =
 				(new RemoveUnreachable<>(mServices, bc)).getResult();
-		final INestedWordAutomaton<LETTER, STATE> minmized =
-				new MinimizeSevpa<>(mServices, bcru).getResult();
+		final INestedWordAutomaton<LETTER, STATE> minmized = new MinimizeSevpa<>(mServices, bcru).getResult();
 		addToResults(results, name + "_MsSizeReduction", minmized);
 	}
 	
