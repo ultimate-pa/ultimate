@@ -70,6 +70,8 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 	public static final String s_LassoNonterminationAnalysisUNSAT = "LassoNonterminationAnalysisUnsat";
 	public static final String s_LassoNonterminationAnalysisUNKNOWN = "LassoNonterminationAnalysisUnknown";
 	public static final String s_LassoNonterminationAnalysisTIME = "LassoNonterminationAnalysisTime";
+	public static final String s_MinimizationsOfDetermnisticAutomatomata = "MinimizationsOfDetermnisticAutomatomata";
+	public static final String s_MinimizationsOfNondetermnisticAutomatomata = "MinimizationsOfNondetermnisticAutomatomata";
 	
 	public static BuchiCegarLoopBenchmark getInstance() {
 		return s_Instance;
@@ -92,6 +94,8 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		keyList.add(s_LassoNonterminationAnalysisUNSAT);
 		keyList.add(s_LassoNonterminationAnalysisUNKNOWN);
 		keyList.add(s_LassoNonterminationAnalysisTIME);
+		keyList.add(s_MinimizationsOfDetermnisticAutomatomata);
+		keyList.add(s_MinimizationsOfNondetermnisticAutomatomata);
 		return keyList;
 	}
 	
@@ -182,6 +186,14 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		sb.append("Highest rank in rank-based complementation ");
 		final Integer highestRank = (Integer) benchmarkData.getValue(s_HighestRank);
 		sb.append(highestRank);
+		sb.append(". ");
+		
+		sb.append("Minimization of det autom ");
+		sb.append(benchmarkData.getValue(s_MinimizationsOfDetermnisticAutomatomata.toString()));
+		sb.append(". ");
+		
+		sb.append("Minimization of nondet autom ");
+		sb.append(benchmarkData.getValue(s_MinimizationsOfNondetermnisticAutomatomata.toString()));
 		sb.append(". ");
 		
 		sb.append("Minimization removed ");

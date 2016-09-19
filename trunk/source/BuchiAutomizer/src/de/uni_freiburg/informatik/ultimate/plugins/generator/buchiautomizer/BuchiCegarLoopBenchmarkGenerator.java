@@ -60,6 +60,8 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 	private int mLassoNonterminationAnalysisUNSAT = 0;
 	private int mLassoNonterminationAnalysisUNKOWN = 0;
 	private long mLassoNonterminationAnalysisTime = 0;
+	private int mMinimizationOfDetAutom = 0;
+	private int mMinimizationOfNondetAutom = 0;
 
 	
 	@Override
@@ -123,6 +125,10 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 			return mLassoNonterminationAnalysisUNKOWN;
 		case BuchiCegarLoopBenchmark.s_LassoNonterminationAnalysisTIME:
 			return mLassoNonterminationAnalysisTime;
+		case BuchiCegarLoopBenchmark.s_MinimizationsOfDetermnisticAutomatomata:
+			return mMinimizationOfDetAutom;
+		case BuchiCegarLoopBenchmark.s_MinimizationsOfNondetermnisticAutomatomata:
+			return mMinimizationOfNondetAutom;
 		default:
 			return super.getValue(key);
 		}
@@ -220,4 +226,11 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 		mHighestRank = Math.max(mHighestRank, highestRank);
 	}
 	
+	public void reportMinimizationOfDetAutom() {
+		mMinimizationOfDetAutom++;
+	}
+	
+	public void reportMinimizationOfNondetAutom() {
+		mMinimizationOfNondetAutom++;
+	}
 }

@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
@@ -587,6 +588,12 @@ public class BuchiCegarLoop {
 		}
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
 		final int statesBeforeMinimization = mAbstraction.size();
+		final boolean isDeterministic = new IsDeterministic<>(new AutomataLibraryServices(mServices), mAbstraction).getResult();
+		if (isDeterministic){
+			mBenchmarkGenerator.reportMinimizationOfDetAutom();
+		} else {
+			mBenchmarkGenerator.reportMinimizationOfNondetAutom();
+		}
 		mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 		final Collection<Set<IPredicate>> partition = computePartition(mAbstraction);
 		try {
