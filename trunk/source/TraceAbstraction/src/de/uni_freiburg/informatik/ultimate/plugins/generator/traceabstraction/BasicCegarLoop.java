@@ -736,6 +736,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case NWA_COMBINATOR_PATTERN:
 		case NWA_COMBINATOR_EVERY_KTH:
 		case NWA_OVERAPPROXIMATION:
+		case NWA_COMBINATOR_MULTI_DEFAULT:
+		case NWA_COMBINATOR_MULTI_SIMULATION:
 			minimizeAbstraction(mStateFactoryForRefinement, mPredicateFactoryResultChecking, minimization);
 			break;
 		default:
