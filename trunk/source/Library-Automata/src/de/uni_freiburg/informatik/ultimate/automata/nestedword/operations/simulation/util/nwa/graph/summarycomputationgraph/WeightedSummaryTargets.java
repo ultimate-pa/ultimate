@@ -32,7 +32,7 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.PriorityComparator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.CanonicalParitalComparatorForMaps;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.CanonicalPartialComparatorForMaps;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 
 /**
@@ -76,7 +76,7 @@ public class WeightedSummaryTargets {
 
 		@Override
 		public ComparisonResult compare(final WeightedSummaryTargets o1, final WeightedSummaryTargets o2) {
-			return new CanonicalParitalComparatorForMaps<IGameState, Integer>(
+			return new CanonicalPartialComparatorForMaps<IGameState, Integer>(
 					new PriorityComparator()).compare(o1.mTarget2Priority, o2.mTarget2Priority);
 		}
 		

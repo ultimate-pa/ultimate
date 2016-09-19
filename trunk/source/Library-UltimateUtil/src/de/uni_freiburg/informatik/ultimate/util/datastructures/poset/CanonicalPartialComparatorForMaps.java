@@ -36,11 +36,11 @@ import java.util.Map.Entry;
  *
  * @param <T>
  */
-public class CanonicalParitalComparatorForMaps<K,V> implements IPartialComparator<Map<K,V>> {
+public class CanonicalPartialComparatorForMaps<K,V> implements IPartialComparator<Map<K,V>> {
 	
 	private final Comparator<V> mComperator;
 	
-	public CanonicalParitalComparatorForMaps(final Comparator<V> comperator) {
+	public CanonicalPartialComparatorForMaps(final Comparator<V> comperator) {
 		super();
 		mComperator = comperator;
 	}
