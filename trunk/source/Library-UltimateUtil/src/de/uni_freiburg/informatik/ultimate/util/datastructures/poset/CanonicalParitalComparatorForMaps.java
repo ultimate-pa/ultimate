@@ -63,6 +63,10 @@ public class CanonicalParitalComparatorForMaps<K,V> implements IPartialComparato
 				return result;
 			}
 		}
+		if (result == ComparisonResult.EQUAL && o1.size() < o2.size()) {
+			//not equal but strictly smaller since o2 has elements that o1 does not have.
+			result = ComparisonResult.STRICTLY_SMALLER;
+		}
 		return result;
 	}
 
