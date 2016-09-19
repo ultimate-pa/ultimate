@@ -28,22 +28,23 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameLetter;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameSpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.WeightedSummaryTargets.WeightedSummaryTargetsComparator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.util.LexicographicCounter;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.CanonicalParitalComparatorForMaps;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PosetUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -64,12 +65,7 @@ public class SummaryComputation<LETTER, STATE> {
 	private final ArrayDeque<SummaryComputationGraphNode<LETTER, STATE>> mWorklist = new ArrayDeque<>();
 	
 	
-	private final CanonicalParitalComparatorForMaps<IGameState, Integer> mDuplicatorGoal2PriorityComperator = 
-			new CanonicalParitalComparatorForMaps<>(new DuplicatorComparator());
-	private final CanonicalParitalComparatorForMaps<IGameState, Integer> mSpoilerGoal2PriorityComperator = 
-			new CanonicalParitalComparatorForMaps<>(new SpoilerComparator());
-	
-	
+	private final WeightedSummaryTargetsComparator mWeightedSummaryTargetsComparator = new WeightedSummaryTargetsComparator();
 	
 	
 	private void initialThings() {
@@ -91,8 +87,8 @@ public class SummaryComputation<LETTER, STATE> {
 		}
 		final List<SummaryComputationGraphNode<LETTER, STATE>> predecessors = new ArrayList();
 		for (final LETTER letter : letters) {
-			final HashRelation<GameLetter<LETTER, STATE>, IGameState> dupl2spoi = new HashRelation<GameLetter<LETTER, STATE>, IGameState>();
-			final HashRelation<IGameState, GameLetter<LETTER, STATE>> spoi2dupl = new HashRelation<IGameState, GameLetter<LETTER, STATE>>();
+			final HashRelation<GameLetter<LETTER, STATE>, IGameState> dupl2spoi = new HashRelation<>();
+			final HashRelation<IGameState, GameLetter<LETTER, STATE>> spoi2dupl = new HashRelation<>();
 					
 			for (final IGameState gs : succNode.getCurrent()) {
 				for (final IncomingInternalTransition<GameLetter<LETTER, STATE>, IGameState> trans : mGameAutomaton.internalPredecessors(gs)) {
@@ -105,103 +101,58 @@ public class SummaryComputation<LETTER, STATE> {
 				}
 			}
 			
-			final List<GameLetter<LETTER, STATE>> predGameLetters = new ArrayList<>();
-			final List<List<Map<IGameState, Integer>>> predWeightedSummaryGoals = new ArrayList<>();
-			for (final GameLetter<LETTER, STATE> dupl : dupl2spoi.getDomain()) {
-				final Set<Map<IGameState,Integer>> goal2priorities = new HashSet<>();
-				final Set<IGameState> succs = dupl2spoi.getImage(dupl);
-				for (final IGameState succ : succs) {
-					final Map<IGameState, Integer> goal2priority = succNode.getGoal2Priority(succ);
-					goal2priorities.add(goal2priority);
+			final Function<GameLetter<LETTER, STATE>, Integer> priorityProvider = (x -> 2);
+			final Set<Map<GameLetter<LETTER, STATE>, WeightedSummaryTargets>> dupl2Wst = 
+					computePredecessorsUnderPly(Collections.singleton(succNode.getCurrent2Targets()), dupl2spoi, priorityProvider);
+			final Function<IGameState, Integer> priorityProvider2 = (x -> ((GameSpoilerNwaVertex<LETTER, STATE>) x).getSpoilerNwaVertex().getPriority());
+			final Set<Map<IGameState, WeightedSummaryTargets>> spoi2Wst =
+					computePredecessorsUnderPly(dupl2Wst, spoi2dupl, priorityProvider2);
+			
+		}
+		
+		
+	}
+
+	
+	
+	private <PRED,SUCC> Set<Map<PRED, WeightedSummaryTargets>> computePredecessorsUnderPly(final Set<Map<SUCC, WeightedSummaryTargets>> succNodes,
+			final HashRelation<PRED, SUCC> pred2succ, final Function<PRED, Integer> priorityProvider) {
+		final Set<Map<PRED, WeightedSummaryTargets>> preds = new HashSet<>();
+		for (final Map<SUCC, WeightedSummaryTargets> succNode : succNodes) {
+			final List<PRED> predGameLetters = new ArrayList<>();
+			final List<List<WeightedSummaryTargets>> predWeightedSummaryTargets = new ArrayList<>();
+			for (final PRED pred : pred2succ.getDomain()) {
+				final Set<WeightedSummaryTargets> weightedSummaryTargetsSet = new HashSet<>();
+				final Set<SUCC> succs = pred2succ.getImage(pred);
+				for (final SUCC succ : succs) {
+					final int predPriority = priorityProvider.apply(pred);
+					final WeightedSummaryTargets wst = succNode.get(succ);
+					weightedSummaryTargetsSet.add(wst.computeUpdate(predPriority));
 				}
-				final List<Map<IGameState, Integer>> filtered = 
-						PosetUtils.filterMaximalElements(goal2priorities, mDuplicatorGoal2PriorityComperator).collect(Collectors.toList());
-				predGameLetters.add(dupl);
-				predWeightedSummaryGoals.add(filtered);
+				final List<WeightedSummaryTargets> filtered = 
+						PosetUtils.filterMaximalElements(weightedSummaryTargetsSet, mWeightedSummaryTargetsComparator).collect(Collectors.toList());
+				predGameLetters.add(pred);
+				predWeightedSummaryTargets.add(filtered);
 			}
-			final int[] numberOfElements = new int[predWeightedSummaryGoals.size()];
-			for (int i=0; i<predWeightedSummaryGoals.size(); i++) {
-				numberOfElements[i] = predWeightedSummaryGoals.get(i).size();
+			final int[] numberOfElements = new int[predWeightedSummaryTargets.size()];
+			for (int i=0; i<predWeightedSummaryTargets.size(); i++) {
+				numberOfElements[i] = predWeightedSummaryTargets.get(i).size();
 			}
+
 			final LexicographicCounter c = new LexicographicCounter(numberOfElements);
 			do {
-				final NestedMap2<GameLetter<LETTER, STATE>, IGameState, Integer> pred = new NestedMap2<>();
+				final Map<PRED, WeightedSummaryTargets> pred = 
+						new HashMap<>();
 				final int[] currentCounterValue = c.getCurrentValue();
 				for (int i=0; i<currentCounterValue.length; i++) {
-					// problem
-					pred.put(predGameLetters.get(i), null, null);
+					pred.put(predGameLetters.get(i), predWeightedSummaryTargets.get(i).get(currentCounterValue[i]));
 				}
-				
+				preds.add(pred);
 				c.increment();
 			} while (c.isZero());
-			
+			assert c.getNumberOfValuesProduct() == preds.size() : "inconsistent";
 		}
-		
-		
+		return preds;
 	}
 	
-	private static class sd implements IPartialComparator<Map<IGameState,Integer>> {
-
-		@Override
-		public ComparisonResult compare(final Map<IGameState, Integer> o1, final Map<IGameState, Integer> o2) {
-			
-			
-			// TODO Auto-generated method stub
-			return null;
-		}
-		
-	}
-	
-	public static class SpoilerComparator implements Comparator<Integer> {
-
-		@Override
-		public int compare(final Integer o1, final Integer o2) {
-			if (o1 < 0 || o1 > 2) {
-				throw new IllegalArgumentException("value not in range");
-			}
-			if (o2 < 0 || o2 > 2) {
-				throw new IllegalArgumentException("value not in range");
-			}
-
-			final boolean o1IsEven = (o1 % 2 == 0);
-			final boolean o2IsEven = (o1 % 2 == 0);
-			if (o1IsEven == o2IsEven) {
-				// of not equal, bigger (2) is better
-				return o1.compareTo(o2);
-			} else {
-				if (o1IsEven) {
-					return 1;
-				} else {
-					return -1;
-				}
-			}
-		}
-	}
-	
-	
-	public static class DuplicatorComparator implements Comparator<Integer> {
-
-		@Override
-		public int compare(final Integer o1, final Integer o2) {
-			if (o1 < 0 || o1 > 2) {
-				throw new IllegalArgumentException("value not in range");
-			}
-			if (o2 < 0 || o2 > 2) {
-				throw new IllegalArgumentException("value not in range");
-			}
-
-			final boolean o1IsEven = (o1 % 2 == 0);
-			final boolean o2IsEven = (o1 % 2 == 0);
-			if (o1IsEven == o2IsEven) {
-				// of not equal, smaller (0) is better
-				return o2.compareTo(o1);
-			} else {
-				if (o1IsEven) {
-					return -1;
-				} else {
-					return 1;
-				}
-			}
-		}
-	}
 }

@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  * Node in the graph that we build for computation of summaries.
@@ -42,14 +41,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class SummaryComputationGraphNode<LETTER, STATE> {
 	
 	private final IGameState mSummarySource = null;
-	private final NestedMap2<IGameState, IGameState, Integer> mCurrent2Goal2Priority = null;
+	private final Map<IGameState, WeightedSummaryTargets> mCurrent2Targets = null;
 	
 	public final Set<IGameState> getCurrent() {
-		return mCurrent2Goal2Priority.keySet();
+		return mCurrent2Targets.keySet();
 	}
 	
-	public final Map<IGameState, Integer> getGoal2Priority(final IGameState current) {
-		return mCurrent2Goal2Priority.get(current);
+	public final WeightedSummaryTargets getWeightedSummaryTargets(final IGameState current) {
+		return mCurrent2Targets.get(current);
 	}
+
+	/**
+	 * @return the current2Targets
+	 */
+	public Map<IGameState, WeightedSummaryTargets> getCurrent2Targets() {
+		return mCurrent2Targets;
+	}
+	
+	
 
 }
