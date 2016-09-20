@@ -6,9 +6,9 @@ logdir = ".\\logdir"
 tempFiles = []
 utlimatePath = ["Ultimate.exe"]
 ultimateParams = ["-tc",
-                  "LTLAutomizerC.xml"] 
-                  #"--ltl2aut.path.to.ltl*ba.executable.ltl2ba,.ltl3ba.",
-                  #"\".\\ltl2ba.exe\""]
+                  "LTLAutomizerC.xml",
+                  "--ltl2aut.command.line.string.$1.will.be.replaced.with.the.property=\"!($1)\"",
+                  "--rcfgbuilder.size.of.a.code.block=SingleStatement"]                  
 
 def batchRunLTL():
     for problem in problems:
@@ -21,7 +21,7 @@ def batchRunLTL():
         except:
             os.mkdir(probLogDir)    
         
-        for i in range(0,3):
+        for i in range(0,100):
             #splice  c prgram and ltl formula
             tempFile = getTemporaryCFile(i, prefix, ltlFormulas[i])
         
@@ -82,4 +82,4 @@ def extractProperties(propertyFile):
 
 if __name__ == '__main__':
     batchRunLTL()
-    #input("Press play on tape")
+    input("Press play on tape")

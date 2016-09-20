@@ -348,7 +348,7 @@ public class ProductGenerator {
 	}
 
 	private void createEdgesProduct(final ProgramPoint origRcfgSourceLoc, final RCFGEdge rcfgEdge) {
-		final boolean isProgramStep = LTLStepAnnotation.getAnnotation(rcfgEdge) != null;
+		 boolean isProgramStep = LTLStepAnnotation.getAnnotation(rcfgEdge) != null;
 		// if the source is a product state, we know that the
 		// target is also a product state
 		// this is the normal case
