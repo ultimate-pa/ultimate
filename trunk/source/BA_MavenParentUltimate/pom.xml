@@ -112,8 +112,8 @@
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/SerializeType.java,
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/SubchainType.java,
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainListType.java,
-			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainModelType.java
-			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/OptionType.java
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainModelType.java,
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/OptionType.java,
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/RunDefinition.java
 		</sonar.exclusions>
 
