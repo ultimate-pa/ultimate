@@ -45,36 +45,28 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
-	
-	private final Map<Macrostate, STATE> mMacrostate2detState =
-			new HashMap<Macrostate, STATE>();
-	private final Map<STATE, Macrostate> mDetState2macrostate =
-			new HashMap<STATE, Macrostate>();
-	private final Map<STATE, Set<STATE>> mSummary =
-			new HashMap<STATE, Set<STATE>>();
+public final class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+	private final Map<Macrostate, STATE> mMacrostate2detState = new HashMap<>();
+	private final Map<STATE, Macrostate> mDetState2macrostate = new HashMap<>();
+	private final Map<STATE, Set<STATE>> mSummary = new HashMap<>();
 	private final STATE mAuxiliaryEmptyStackState;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomaton<LETTER, STATE> mResult;
 	
-	private final List<StatePair> mQueue = new LinkedList<StatePair>();
+	private final List<StatePair> mQueue = new LinkedList<>();
 	
 	// set of pairs that has been visited. The first state of the pair can be any automaton
 	// state, the second state is a state that has an outgoing call transition.
 	private final Map<STATE, Set<STATE>> mVisited =
-			new HashMap<STATE, Set<STATE>>();
-			
+			new HashMap<>();
+	
 	public DeterminizeSadd(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		super(services);
 		mOperand = nwa;
 		mLogger.info(startMessage());
-		mResult = new NestedWordAutomaton<LETTER, STATE>(
-				mServices,
-				mOperand.getInternalAlphabet(),
-				mOperand.getCallAlphabet(),
-				mOperand.getReturnAlphabet(),
-				mOperand.getStateFactory());
+		mResult = new NestedWordAutomaton<>(mServices, mOperand.getInternalAlphabet(), mOperand.getCallAlphabet(),
+				mOperand.getReturnAlphabet(), mOperand.getStateFactory());
 		mAuxiliaryEmptyStackState = mOperand.getEmptyStackState();
 		determinize();
 		mLogger.info(exitMessage());
@@ -105,15 +97,14 @@ public class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 		final Set<STATE> callerStates = mVisited.get(state);
 		if (callerStates == null) {
 			return false;
-		} else {
-			return callerStates.contains(callerState);
 		}
+		return callerStates.contains(callerState);
 	}
 	
 	public void markVisited(final STATE state, final STATE callerState) {
 		Set<STATE> callerStates = mVisited.get(state);
 		if (callerStates == null) {
-			callerStates = new HashSet<STATE>();
+			callerStates = new HashSet<>();
 			mVisited.put(state, callerStates);
 		}
 		callerStates.add(callerState);
@@ -122,7 +113,7 @@ public class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 	public void addSummary(final STATE summaryPred, final STATE summarySucc) {
 		Set<STATE> summarySuccessors = mSummary.get(summaryPred);
 		if (summarySuccessors == null) {
-			summarySuccessors = new HashSet<STATE>();
+			summarySuccessors = new HashSet<>();
 			mSummary.put(summaryPred, summarySuccessors);
 		}
 		summarySuccessors.add(summarySucc);
@@ -139,10 +130,9 @@ public class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 	private Set<STATE> getKnownCallerStates(final STATE state) {
 		final Set<STATE> callerStates = mVisited.get(state);
 		if (callerStates == null) {
-			return new HashSet<STATE>(0);
-		} else {
-			return callerStates;
+			return new HashSet<>(0);
 		}
+		return callerStates;
 	}
 	
 	private void determinize() {
@@ -178,7 +168,7 @@ public class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 		final STATE detState = statePair.mState;
 		final Macrostate macrostate = mDetState2macrostate.get(detState);
 		
-		final Set<LETTER> symbolsInternal = new HashSet<LETTER>();
+		final Set<LETTER> symbolsInternal = new HashSet<>();
 		for (final STATE state : macrostate.getStates()) {
 			symbolsInternal.addAll(mOperand.lettersInternal(state));
 		}
@@ -195,7 +185,7 @@ public class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 			enqueueAndMark(succDetState, statePair.mCallerState);
 		}
 		
-		final Set<LETTER> symbolsCall = new HashSet<LETTER>();
+		final Set<LETTER> symbolsCall = new HashSet<>();
 		for (final STATE state : macrostate.getStates()) {
 			symbolsCall.addAll(mOperand.lettersCall(state));
 		}
@@ -215,7 +205,7 @@ public class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 		final STATE detLinPred = statePair.mCallerState;
 		if (detLinPred != mAuxiliaryEmptyStackState) {
 			
-			final Set<LETTER> symbolsReturn = new HashSet<LETTER>();
+			final Set<LETTER> symbolsReturn = new HashSet<>();
 			for (final STATE state : macrostate.getStates()) {
 				symbolsReturn.addAll(mOperand.lettersReturn(state));
 			}
@@ -361,7 +351,7 @@ public class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 			return "CallerState: " + mCallerState + "  State: " + mState;
 		}
 		
-		private DeterminizeSadd getOuterType() {
+		private DeterminizeSadd<LETTER, STATE> getOuterType() {
 			return DeterminizeSadd.this;
 		}
 	}
@@ -370,9 +360,13 @@ public class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 	 * List of pairs of States.
 	 */
 	private class Macrostate {
-		private final Map<STATE, Set<STATE>> mPairList =
-				new HashMap<STATE, Set<STATE>>();
-		private boolean mIsFinal = false;
+		private final Map<STATE, Set<STATE>> mPairList;
+		private boolean mIsFinal;
+		
+		public Macrostate() {
+			mPairList = new HashMap<>();
+			mIsFinal = false;
+		}
 		
 		Set<STATE> getStates() {
 			return mPairList.keySet();
@@ -396,7 +390,7 @@ public class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 			}
 			Set<STATE> callerStates = mPairList.get(state);
 			if (callerStates == null) {
-				callerStates = new HashSet<STATE>();
+				callerStates = new HashSet<>();
 				mPairList.put(state, callerStates);
 			}
 			callerStates.add(callerState);
@@ -409,7 +403,7 @@ public class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 			}
 			Set<STATE> callerStates = mPairList.get(state);
 			if (callerStates == null) {
-				callerStates = new HashSet<STATE>();
+				callerStates = new HashSet<>();
 				mPairList.put(state, callerStates);
 			}
 			callerStates.addAll(newCallerStates);
@@ -418,12 +412,14 @@ public class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 		@SuppressWarnings("unchecked")
 		@Override
 		public boolean equals(final Object obj) {
-			if (obj instanceof DeterminizeSadd.Macrostate) {
-				final Macrostate macrostate = (Macrostate) obj;
-				return mPairList.equals(macrostate.mPairList);
-			} else {
+			if (obj == null) {
 				return false;
 			}
+			if (this.getClass() != obj.getClass()) {
+				return false;
+			}
+			final Macrostate macrostate = (Macrostate) obj;
+			return mPairList.equals(macrostate.mPairList);
 		}
 		
 		@Override
@@ -438,16 +434,20 @@ public class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		mLogger.info("Testing correctness of determinization");
-		boolean correct = true;
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Testing correctness of determinization");
+		}
 		
-		final INestedWordAutomaton<LETTER, STATE> resultDD =
-				(new DeterminizeDD<LETTER, STATE>(mServices, stateFactory, mOperand)).getResult();
-		correct &= new IsIncluded<>(mServices, stateFactory, resultDD, mResult).getResult();
-		correct &= new IsIncluded<>(mServices, stateFactory, mResult, resultDD).getResult();
-		mLogger.info("Finished testing correctness of determinization");
+		boolean correct;
+		final INestedWordAutomatonSimple<LETTER, STATE> resultDD =
+				(new DeterminizeDD<>(mServices, stateFactory, mOperand)).getResult();
+		correct = (new IsIncluded<>(mServices, stateFactory, resultDD, mResult)).getResult();
+		correct = correct && (new IsIncluded<>(mServices, stateFactory, mResult, resultDD)).getResult();
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of determinization");
+		}
 		return correct;
 	}
 }

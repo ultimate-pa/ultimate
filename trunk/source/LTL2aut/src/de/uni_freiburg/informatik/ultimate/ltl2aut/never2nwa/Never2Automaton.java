@@ -79,18 +79,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
  * @note the transformation from Ast to Automaton also brings a transformation from Promela Ast to Boogie Ast nodes.
  */
 public class Never2Automaton {
-
 	private final IUltimateServiceProvider mServices;
 	private final AstNode mNeverClaim;
 	private final ILogger mLogger;
 	private final Map<String, CheckableExpression> mIRS;
 	private final CodeBlockFactory mCodeblockFactory;
-
+	
 	private final NestedWordAutomaton<CodeBlock, String> mAutomaton;
-
+	
 	private final boolean mUseSBE;
 	private final boolean mRewriteAssumeDuringSBE;
-
+	
 	/**
 	 * The Never2Automaton instance will build a Büchi automaton from the input.
 	 *
@@ -108,22 +107,22 @@ public class Never2Automaton {
 		mNeverClaim = ast;
 		mIRS = irs;
 		mCodeblockFactory = cbf;
-
+		
 		final IPreferenceProvider ups =
 				mServices.getPreferenceProvider(de.uni_freiburg.informatik.ultimate.ltl2aut.Activator.PLUGIN_ID);
 		mUseSBE = ups.getBoolean(PreferenceInitializer.LABEL_OPTIMIZE_SBE);
 		mRewriteAssumeDuringSBE = ups.getBoolean(PreferenceInitializer.LABEL_OPTIMIZE_REWRITEASSUME);
-
-		mAutomaton = new NestedWordAutomaton<CodeBlock, String>(new AutomataLibraryServices(mServices),
+		
+		mAutomaton = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices),
 				collectAlphabet(), null, // call
 				null, // return
 				new DummyStateFactory<String>());
-
+		
 		collectStates(mNeverClaim, null);
-
+		
 		mLogger.debug(String.format("Resulting automaton is:\n%s", mAutomaton));
 	}
-
+	
 	/**
 	 * get the constructed automaton
 	 *
@@ -132,7 +131,7 @@ public class Never2Automaton {
 	public INestedWordAutomaton<CodeBlock, String> getAutomaton() {
 		return mAutomaton;
 	}
-
+	
 	/**
 	 * Walks the AST for labeled blocks and extracts the names as Nodes in the automaton. Nodes starting with "accept"
 	 * are accepting nodes, the one called init is the initial one.
@@ -159,12 +158,12 @@ public class Never2Automaton {
 		} else if (branch instanceof Name) {
 			return;
 		} else if (branch instanceof OptionStatement) {
-
+			
 			// option.body .goto .name
 			final String succ = ((Name) branch.getOutgoingNodes().get(0).getOutgoingNodes().get(0)).getIdent();
-
+			
 			addState(succ);
-
+			
 			// add transitions
 			for (final CodeBlock cond : getAssume(((OptionStatement) branch).getCondition())) {
 				addTransition(preState, cond, succ);
@@ -175,7 +174,7 @@ public class Never2Automaton {
 			}
 		}
 	}
-
+	
 	/**
 	 * Collect all symbols that the automaton will have from the AST which will be all conditions found in the AST.
 	 *
@@ -185,11 +184,11 @@ public class Never2Automaton {
 	 * @throws Exception
 	 */
 	public Set<CodeBlock> collectAlphabet() throws Exception {
-		final Set<CodeBlock> symbols = new HashSet<CodeBlock>();
+		final Set<CodeBlock> symbols = new HashSet<>();
 		visitAstForSymbols(mNeverClaim, symbols);
 		return symbols;
 	}
-
+	
 	private void visitAstForSymbols(final AstNode branch, final Set<CodeBlock> symbols) throws Exception {
 		if (branch instanceof BoolLiteral) {
 			return;
@@ -205,14 +204,14 @@ public class Never2Automaton {
 			}
 		}
 	}
-
+	
 	private CodeBlock getAssumeTrue() {
 		final ILocation loc = null;
 		final StatementSequence ss = mCodeblockFactory.constructStatementSequence(null, null,
 				new AssumeStatement(loc, new BooleanLiteral(loc, true)));
 		return ss;
 	}
-
+	
 	private List<CodeBlock> getAssume(final AstNode condition) throws Exception {
 		if (condition instanceof Name) {
 			// this may be already translated by the IRS
@@ -224,20 +223,20 @@ public class Never2Automaton {
 				mLogger.warn("Root condition is a name, but no mapping in IRS found: " + name.getIdent());
 			}
 		}
-
+		
 		// this could be an actual neverclaim and we have to translate it
 		// manually
 		final CheckableExpression checkExpr = toBoogieAst(condition);
 		return getAssumeFromCheckableExpression(checkExpr);
 	}
-
+	
 	private List<CodeBlock> getAssumeFromCheckableExpression(final CheckableExpression checkExpr) {
 		final ArrayList<CodeBlock> rtr = new ArrayList<>();
 		final List<Statement> preStmts = new ArrayList<>();
 		if (checkExpr.getStatements() != null) {
 			preStmts.addAll(checkExpr.getStatements());
 		}
-
+		
 		final ILocation loc = checkExpr.getExpression().getLocation();
 		for (final Expression expr : simplify(checkExpr.getExpression())) {
 			final List<Statement> stmts = new ArrayList<>(preStmts);
@@ -246,7 +245,7 @@ public class Never2Automaton {
 		}
 		return rtr;
 	}
-
+	
 	private Collection<Expression> simplify(Expression expr) {
 		if (mUseSBE) {
 			final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
@@ -258,7 +257,7 @@ public class Never2Automaton {
 			return Collections.singleton(expr);
 		}
 	}
-
+	
 	/**
 	 * Translates the atomic propositions from LTL2Aut.AstNode into Boogie ASTNode for further processing.
 	 *
@@ -270,34 +269,34 @@ public class Never2Automaton {
 			final BinaryOperator ncBinOp = (BinaryOperator) branch;
 			BinaryExpression.Operator op;
 			switch (ncBinOp.getType()) {
-			case and:
-				op = BinaryExpression.Operator.LOGICAND;
-				break;
-			case minus:
-				op = BinaryExpression.Operator.ARITHMINUS;
-				break;
-			case or:
-				op = BinaryExpression.Operator.LOGICOR;
-				break;
-			case plus:
-				op = BinaryExpression.Operator.ARITHPLUS;
-				break;
-			case times:
-				op = BinaryExpression.Operator.ARITHMUL;
-				break;
-			case divide:
-				op = BinaryExpression.Operator.ARITHDIV;
-				break;
-			default:
-				throw new Exception("Binary Operator unknown");
+				case and:
+					op = BinaryExpression.Operator.LOGICAND;
+					break;
+				case minus:
+					op = BinaryExpression.Operator.ARITHMINUS;
+					break;
+				case or:
+					op = BinaryExpression.Operator.LOGICOR;
+					break;
+				case plus:
+					op = BinaryExpression.Operator.ARITHPLUS;
+					break;
+				case times:
+					op = BinaryExpression.Operator.ARITHMUL;
+					break;
+				case divide:
+					op = BinaryExpression.Operator.ARITHDIV;
+					break;
+				default:
+					throw new Exception("Binary Operator unknown");
 			}
-
+			
 			final CheckableExpression left = toBoogieAst(branch.getOutgoingNodes().get(0));
 			CheckableExpression right = toBoogieAst(branch.getOutgoingNodes().get(1));
 			CheckableExpression expr =
 					new CheckableExpression(new BinaryExpression(null, op, left.getExpression(), right.getExpression()),
 							mergeStatements(left, right));
-
+			
 			if (branch.getOutgoingNodes().size() > 2) {
 				for (int i = 2; i < branch.getOutgoingNodes().size(); i++) {
 					right = toBoogieAst(branch.getOutgoingNodes().get(i));
@@ -307,24 +306,24 @@ public class Never2Automaton {
 				}
 			}
 			return expr;
-
+			
 		} else if (branch instanceof BoolLiteral) {
 			return new CheckableExpression(
 					new BooleanLiteral(null, BoogieType.TYPE_BOOL, ((BoolLiteral) branch).getValue()), null);
 		} else if (branch instanceof ComperativeOperator) {
 			BinaryExpression.Operator op;
 			switch (((ComperativeOperator) branch).getType()) {
-			case equals:
-				op = BinaryExpression.Operator.COMPEQ;
-				break;
-			case geq:
-				op = BinaryExpression.Operator.COMPGEQ;
-				break;
-			case greater:
-				op = BinaryExpression.Operator.COMPGT;
-				break;
-			default:
-				throw new Exception("Binary Operator unknown");
+				case equals:
+					op = BinaryExpression.Operator.COMPEQ;
+					break;
+				case geq:
+					op = BinaryExpression.Operator.COMPGEQ;
+					break;
+				case greater:
+					op = BinaryExpression.Operator.COMPGT;
+					break;
+				default:
+					throw new Exception("Binary Operator unknown");
 			}
 			final CheckableExpression left = toBoogieAst(branch.getOutgoingNodes().get(0));
 			final CheckableExpression right = toBoogieAst(branch.getOutgoingNodes().get(1));
@@ -354,11 +353,11 @@ public class Never2Automaton {
 				return new CheckableExpression(new BooleanLiteral(null, false), null);
 			}
 		}
-
+		
 		throw new Exception(String.format("Type %s should not occur as part of a atomic Proposition in LTL",
 				branch.getClass().toString()));
 	}
-
+	
 	private List<Statement> mergeStatements(final CheckableExpression... exprs) {
 		final List<Statement> rtr = new ArrayList<>();
 		for (final CheckableExpression expr : exprs) {
@@ -368,12 +367,12 @@ public class Never2Automaton {
 		}
 		return rtr;
 	}
-
+	
 	private void addTransition(final String predecessor, final CodeBlock letter, final String successor) {
-		mAutomaton.getAlphabet().add(letter);
+		mAutomaton.getInternalAlphabet().add(letter);
 		mAutomaton.addInternalTransition(predecessor, letter, successor);
 	}
-
+	
 	private void addState(final String state) {
 		if (!mAutomaton.getStates().contains(state)) {
 			mAutomaton.addState(state.endsWith("init"), state.startsWith("accept"), state);

@@ -54,8 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            state type
  */
-public final class BuchiClosureNwa<LETTER, STATE>
-		implements INestedWordAutomaton<LETTER, STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
+public final class BuchiClosureNwa<LETTER, STATE> implements IDoubleDeckerAutomaton<LETTER, STATE> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	
@@ -70,8 +69,7 @@ public final class BuchiClosureNwa<LETTER, STATE>
 	 * @param operand
 	 *            operand
 	 */
-	public BuchiClosureNwa(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand) {
+	public BuchiClosureNwa(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
@@ -113,8 +111,8 @@ public final class BuchiClosureNwa<LETTER, STATE>
 	 * Add all predecessors of state that are not in the set newFinalStates
 	 * to worklist.
 	 */
-	private void addAllNonFinalPredecessors(final STATE state,
-			final Set<STATE> worklist, final Set<STATE> newFinalStates) {
+	private void addAllNonFinalPredecessors(final STATE state, final Set<STATE> worklist,
+			final Set<STATE> newFinalStates) {
 		for (final IncomingInternalTransition<LETTER, STATE> inTrans : mOperand.internalPredecessors(state)) {
 			if (!newFinalStates.contains(inTrans.getPred())) {
 				worklist.add(inTrans.getPred());
@@ -359,6 +357,7 @@ public final class BuchiClosureNwa<LETTER, STATE>
 	
 	/**
 	 * {@inheritDoc}
+	 * 
 	 * @deprecated Use the {@link #isDoubleDecker(Object, Object)} check instead.
 	 */
 	@Override

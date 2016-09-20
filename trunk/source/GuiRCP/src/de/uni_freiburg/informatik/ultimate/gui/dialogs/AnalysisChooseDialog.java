@@ -208,6 +208,8 @@ public class AnalysisChooseDialog extends Dialog {
 						moveItem(SWT.DOWN);
 						e.doit = false; /* prevent moving selection */
 						break;
+					default:
+						break;
 					}
 				}
 			}

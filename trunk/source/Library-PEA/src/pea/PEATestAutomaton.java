@@ -172,14 +172,14 @@ public class PEATestAutomaton extends PhaseEventAutomata {
             }
         }
 
-        while (todo.size() > 0) {
+        while (!todo.isEmpty()) {
             final TodoEntry entry = todo.remove(0);
-            final Iterator i = entry.p1.transitions.iterator();
+            final Iterator<Transition> i = entry.p1.transitions.iterator();
             while (i.hasNext()) {
-            final Transition t1 = (Transition) i.next();
-            final Iterator j = entry.p2.transitions.iterator();
+            final Transition t1 = i.next();
+            final Iterator<Transition> j = entry.p2.transitions.iterator();
             while (j.hasNext()) {
-                final Transition t2 = (Transition) j.next();
+                final Transition t2 = j.next();
 
                 final CDD guard = t1.guard.and(t2.guard);
                 if (guard == CDD.FALSE) {
@@ -342,9 +342,9 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 	public void dump() {
         System.err.println("automata "+name+ " { ");
         System.err.print("clocks: ");
-        final Iterator clockIter = clocks.iterator();
+        final Iterator<String> clockIter = clocks.iterator();
         while (clockIter.hasNext()) {
-            final String actClock = (String) clockIter.next();
+            final String actClock = clockIter.next();
             System.err.print(actClock);
             if(clockIter.hasNext()) {
                 System.err.print(", ");

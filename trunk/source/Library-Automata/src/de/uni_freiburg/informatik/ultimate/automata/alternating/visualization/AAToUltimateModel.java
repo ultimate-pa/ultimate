@@ -34,6 +34,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
  * Converts an {@link AlternatingAutomaton} to an Ultimate model.
+ * <p>
+ * TODO Christian 2016-09-18: This class is completely broken/useless.
  * 
  * @author Markus Pomrehn
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -44,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  */
 public class AAToUltimateModel<LETTER, STATE> {
 	/**
-	 * 
 	 * @param operand
 	 *            An alternating automaton.
 	 * @return Ultimate model
@@ -53,78 +54,77 @@ public class AAToUltimateModel<LETTER, STATE> {
 	 */
 	public IElement getUltimateModelOfAA(final AlternatingAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
-//		final AlternatingAutomaton<LETTER,STATE> aa;
-//		aa = (AlternatingAutomaton<LETTER, STATE>) aaSimple;
-//		Map<STATE,AutomatonState> constructed =	new HashMap<STATE,AutomatonState>();
-//		LinkedList<STATE> queue = new LinkedList<STATE>();
-//
-//		// add all initial states to model - all are successors of the graphroot
-//		for (STATE state : aa.getInitialStates()) {
-//			queue.add(state);
-//			AutomatonState vsn = new AutomatonState(state,
-//									nwa.isFinal(state));
-//			constructed.put(state,vsn);
-//			new AutomatonTransition((AutomatonState) graphroot,
-//											Transition.INTERNAL,"", null, vsn);
-//		}
-//
-//		while (!queue.isEmpty()) {
-//			STATE state = queue.removeFirst();
-//			AutomatonState vsn = constructed.get(state);
-//
-//			for (OutgoingInternalTransition<LETTER, STATE> trans :
-//												nwa.internalSuccessors(state)) {
-//				LETTER symbol = trans.getLetter();
-//				STATE succState = trans.getSucc();
-//				AutomatonState succVSN;
-//				if (constructed.containsKey(succState)) {
-//					succVSN = constructed.get(succState);
-//				}
-//				else {
-//					succVSN = new AutomatonState(succState,
-//							nwa.isFinal(succState));
-//					mLogger.debug("Creating Node: " + succVSN.toString());
-//					constructed.put(succState,succVSN);
-//					queue.add(succState);
-//				}
-//				new AutomatonTransition(vsn,Transition.INTERNAL,symbol,null,succVSN);
-//			}
-//
-//			for (OutgoingCallTransition<LETTER, STATE> trans :
-//													nwa.callSuccessors(state)) {
-//				LETTER symbol = trans.getLetter();
-//				STATE succState = trans.getSucc();
-//				AutomatonState succVSN;
-//				if (constructed.containsKey(succState)) {
-//					succVSN = constructed.get(succState);
-//				} else {
-//					succVSN = new AutomatonState(succState,
-//							nwa.isFinal(succState));
-//					mLogger.debug("Creating Node: " + succVSN.toString());
-//					constructed.put(succState, succVSN);
-//					queue.add(succState);
-//				}
-//				new AutomatonTransition(vsn, Transition.CALL, symbol, null,	succVSN);
-//			}
-//			for(STATE hierPredState : nwa.getStates()) {
-//				for (OutgoingReturnTransition<LETTER, STATE> trans :
-//							nwa.returnSuccessorsGivenHier(state, hierPredState)) {
-//					LETTER symbol = trans.getLetter();
-//					STATE succState = trans.getSucc();
-//					AutomatonState succVSN;
-//					if (constructed.containsKey(succState)) {
-//						succVSN = constructed.get(succState);
-//					} else {
-//						succVSN = new AutomatonState(succState,nwa.isFinal(succState));
-//						mLogger.debug("Creating Node: " + succVSN.toString());
-//						constructed.put(succState, succVSN);
-//						queue.add(succState);
-//					}
-//					new AutomatonTransition(vsn, Transition.RETURN, symbol,
-//							hierPredState.toString(), succVSN);
-//				}
-//			}
-//		}
+		/*
+		final AlternatingAutomaton<LETTER, STATE> aa;
+		aa = (AlternatingAutomaton<LETTER, STATE>) aaSimple;
+		final Map<STATE, AutomatonState> constructed = new HashMap<>();
+		final LinkedList<STATE> queue = new LinkedList<>();
+		
+		// add all initial states to model - all are successors of the graphroot
+		for (final STATE state : aa.getInitialStates()) {
+			queue.add(state);
+			final AutomatonState vsn = new AutomatonState(state,
+					nwa.isFinal(state));
+			constructed.put(state, vsn);
+			new AutomatonTransition((AutomatonState) graphroot,
+					Transition.INTERNAL, "", null, vsn);
+		}
+		
+		while (!queue.isEmpty()) {
+			final STATE state = queue.removeFirst();
+			final AutomatonState vsn = constructed.get(state);
+			
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : nwa.internalSuccessors(state)) {
+				final LETTER symbol = trans.getLetter();
+				final STATE succState = trans.getSucc();
+				AutomatonState succVSN;
+				if (constructed.containsKey(succState)) {
+					succVSN = constructed.get(succState);
+				} else {
+					succVSN = new AutomatonState(succState,
+							nwa.isFinal(succState));
+					mLogger.debug("Creating Node: " + succVSN.toString());
+					constructed.put(succState, succVSN);
+					queue.add(succState);
+				}
+				new AutomatonTransition(vsn, Transition.INTERNAL, symbol, null, succVSN);
+			}
+			
+			for (final OutgoingCallTransition<LETTER, STATE> trans : nwa.callSuccessors(state)) {
+				final LETTER symbol = trans.getLetter();
+				final STATE succState = trans.getSucc();
+				AutomatonState succVSN;
+				if (constructed.containsKey(succState)) {
+					succVSN = constructed.get(succState);
+				} else {
+					succVSN = new AutomatonState(succState,
+							nwa.isFinal(succState));
+					mLogger.debug("Creating Node: " + succVSN.toString());
+					constructed.put(succState, succVSN);
+					queue.add(succState);
+				}
+				new AutomatonTransition(vsn, Transition.CALL, symbol, null, succVSN);
+			}
+			for (final STATE hierPredState : nwa.getStates()) {
+				for (final OutgoingReturnTransition<LETTER, STATE> trans : nwa.returnSuccessorsGivenHier(state,
+						hierPredState)) {
+					final LETTER symbol = trans.getLetter();
+					final STATE succState = trans.getSucc();
+					AutomatonState succVSN;
+					if (constructed.containsKey(succState)) {
+						succVSN = constructed.get(succState);
+					} else {
+						succVSN = new AutomatonState(succState, nwa.isFinal(succState));
+						mLogger.debug("Creating Node: " + succVSN.toString());
+						constructed.put(succState, succVSN);
+						queue.add(succState);
+					}
+					new AutomatonTransition(vsn, Transition.RETURN, symbol,
+							hierPredState.toString(), succVSN);
+				}
+			}
+		}
+		*/
 		System.out.println("Foo");
 		return new AutomatonState("Sucessors of this node are the initial states", false);
 	}

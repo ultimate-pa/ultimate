@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
 
@@ -101,18 +101,18 @@ public abstract class UltimateTestSuite {
 	 * @return A collection containing ITestSummary instances. They will be accessed at the end of this test suite and
 	 *         their content written in a file.
 	 */
-	protected List<ITestSummary> getSummaries() {
+	protected static List<ITestSummary> getSummaries() {
 		return Collections.unmodifiableList(sSummaries);
 	}
 
-	protected List<IIncrementalLog> getIncrementalLogs() {
+	protected static List<IIncrementalLog> getIncrementalLogs() {
 		return Collections.unmodifiableList(sLogFiles);
 	}
 
 	@AfterClass
 	public final static void writeSummaries() {
 		final ILogger log = new ConsoleLogger();
-		if (sSummaries == null || sSummaries.size() == 0) {
+		if (sSummaries == null || sSummaries.isEmpty()) {
 			log.info("No test summaries available");
 			return;
 		}

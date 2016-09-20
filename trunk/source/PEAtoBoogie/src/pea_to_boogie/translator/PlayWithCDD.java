@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE PEAtoBoogie plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE PEAtoBoogie plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE PEAtoBoogie plug-in grant you additional permission
  * to convey the resulting work.
  */
 package pea_to_boogie.translator;
@@ -52,7 +52,7 @@ public class PlayWithCDD {
 
 
 	}
-    public String toString(CDD cdd, boolean needsParens) {
+    public String toString(final CDD cdd, final boolean needsParens) {
         final StringBuffer sb = new StringBuffer();
         String ordelim = "";
         int clauses = 0;
@@ -65,7 +65,7 @@ public class PlayWithCDD {
             return "false";
         }
     	final CDD[] childs = cdd.getChilds();
-    	final Decision decision = cdd.getDecision(); 
+    	final Decision decision = cdd.getDecision();
     	for (int i = 0; i < childs.length; i++) {
     		System.out.println(childs[i]);
     	}
@@ -106,7 +106,7 @@ public class PlayWithCDD {
       //  }
         
     }
-    public String toStringForRange(int childs, String var, int[] limits) {
+    public String toStringForRange(final int childs, final String var, final int[] limits) {
         if (childs == 0) {
             return var + (((limits[0] & 1) == 0) ? " < " : " <= ") +
             (limits[0] / 2);
@@ -122,7 +122,7 @@ public class PlayWithCDD {
             return var + " == " + (limits[childs] / 2);
         }
 
-        return "" + (limits[childs - 1] / 2) +
+        return (limits[childs - 1] / 2) +
         (((limits[childs - 1] & 1) == 1) ? " < " : " <= ") + var +
         (((limits[childs] & 1) == 0) ? " < " : " <= ") +
         (limits[childs] / 2);

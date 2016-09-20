@@ -155,8 +155,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 *            letter
 	 * @return outgoing internal transitions
 	 */
-	Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
-			final STATE state, final LETTER letter);
+	Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state, final LETTER letter);
 	
 	/**
 	 * All internal successor transitions for a given state.
@@ -165,8 +164,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 *            state
 	 * @return outgoing internal transitions
 	 */
-	Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
-			final STATE state);
+	Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state);
 	
 	/**
 	 * All call successor transitions for a given state and letter.
@@ -177,8 +175,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 *            letter
 	 * @return outgoing call transitions
 	 */
-	Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-			final STATE state, final LETTER letter);
+	Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter);
 	
 	/**
 	 * All call successor transitions for a given state.
@@ -187,8 +184,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 *            state
 	 * @return outgoing call transitions
 	 */
-	Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-			final STATE state);
+	Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state);
 	
 	/**
 	 * All return successor transitions for a given state, hierarchical predecessor, and letter.
@@ -201,8 +197,8 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 *            letter
 	 * @return outgoing return transitions
 	 */
-	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-			final STATE state, final STATE hier, final LETTER letter);
+	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
+			final LETTER letter);
 	
 	/**
 	 * All return successor transitions for a given state and hierarchical predecessor.
@@ -213,8 +209,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 *            hierarchical predecessor
 	 * @return outgoing return transitions
 	 */
-	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
-			final STATE state, final STATE hier);
+	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state, final STATE hier);
 	
 	/**
 	 * Checks whether two nested word automata have the same internal, call, and return alphabets.

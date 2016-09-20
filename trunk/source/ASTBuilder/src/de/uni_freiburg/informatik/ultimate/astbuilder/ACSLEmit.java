@@ -44,7 +44,7 @@ public class ACSLEmit extends Emit {
 	private static final String sTransformerName = "ACSLTransformer";
 	private static final String[] sOthers = new String[] { sVisitorName, sTransformerName };
 
-	private boolean isOther(final Node node) {
+	private static boolean isOther(final Node node) {
 		for (final String s : sOthers) {
 			if (node.getName().equals(s)) {
 				return true;
@@ -180,7 +180,7 @@ public class ACSLEmit extends Emit {
 			mWriter.println("        }");
 		}
 
-		if (allACSLParameters.size() > 0) {
+		if (!allACSLParameters.isEmpty()) {
 
 			final StringBuilder sb = new StringBuilder();
 			sb.append("        if(");
@@ -209,11 +209,11 @@ public class ACSLEmit extends Emit {
 		mWriter.println("    }");
 	}
 
-	private boolean isArrayType(final Parameter p) {
+	private static boolean isArrayType(final Parameter p) {
 		return p.getType().contains("[]");
 	}
 
-	private String getBaseType(final Parameter p) {
+	private static String getBaseType(final Parameter p) {
 		final String typeStr = p.getType().replaceAll("\\[\\]", "");
 		return typeStr;
 	}

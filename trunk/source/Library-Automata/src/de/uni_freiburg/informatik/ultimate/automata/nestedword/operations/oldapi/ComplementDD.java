@@ -62,24 +62,20 @@ public final class ComplementDD<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public ComplementDD(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand)
-			throws AutomataOperationCanceledException {
+	public ComplementDD(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		
 		mLogger.info(startMessage());
 		final boolean isDeterministic = new IsDeterministic<>(mServices, mOperand).getResult();
 		if (!isDeterministic) {
-			mDeterminizedOperand =
-					(new DeterminizeDD<LETTER, STATE>(mServices, stateFactory, mOperand)).getResult();
+			mDeterminizedOperand = (new DeterminizeDD<>(mServices, stateFactory, mOperand)).getResult();
 		} else {
 			mDeterminizedOperand = mOperand;
 			mLogger.debug("Operand is already deterministic");
 		}
-		mResult = new ReachableStatesCopy<LETTER, STATE>(
-				mServices, mDeterminizedOperand, true, true, false, false).getResult();
+		mResult = new ReachableStatesCopy<>(mServices, mDeterminizedOperand, true, true, false, false).getResult();
 		mLogger.info(exitMessage());
 	}
 	
@@ -90,7 +86,7 @@ public final class ComplementDD<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
+		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
 	}
 	
 	@Override
@@ -109,10 +105,10 @@ public final class ComplementDD<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 			mLogger.info("Testing correctness of complement");
 		}
 		
-		boolean correct = true;
-		final INestedWordAutomaton<LETTER, STATE> intersectionOperandResult =
-				(new IntersectDD<LETTER, STATE>(mServices, false, mOperand, mResult)).getResult();
-		correct &= (new IsEmpty<LETTER, STATE>(mServices, intersectionOperandResult)).getResult();
+		boolean correct;
+		final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
+				(new IntersectDD<>(mServices, false, mOperand, mResult)).getResult();
+		correct = (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of complement");

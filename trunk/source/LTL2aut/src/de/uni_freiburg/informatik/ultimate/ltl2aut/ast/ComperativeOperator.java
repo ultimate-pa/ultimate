@@ -19,41 +19,44 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LTL2Aut plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LTL2Aut plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LTL2Aut plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.ltl2aut.ast;
-
-
 
 public class ComperativeOperator extends AstNode {
 	
 	ComperativeType type;
 	
-	public ComperativeOperator(ComperativeType type, AstNode left, AstNode right)
-	{
+	public ComperativeOperator(final ComperativeType type, final AstNode left, final AstNode right) {
 		this.addOutgoing(left);
 		this.addOutgoing(right);
 		this.type = type;
 	}
 	
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		String op = "??";
-		switch(type){
-			case equals: op = "="; break;
-			case greater: op = ">"; break;
-			case geq: op = ">="; break;
+		switch (type) {
+			case equals:
+				op = "=";
+				break;
+			case greater:
+				op = ">";
+				break;
+			case geq:
+				op = ">=";
+				break;
+			default:
+				throw new IllegalArgumentException();
 		}
 		
 		return getOutgoingNodes().get(0).toString() + op + getOutgoingNodes().get(1).toString();
 	}
-
-	public ComperativeType getType()
-	{
+	
+	public ComperativeType getType() {
 		return type;
 	}
 }

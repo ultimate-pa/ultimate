@@ -64,8 +64,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> implements
 		ISuccessorVisitor<LETTER, STATE>, IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
+	// TODO Christian 2016-09-18: Can be made INestedWordAutomatonSimple when guarding assertions.
 	private final INestedWordAutomaton<LETTER, STATE> mMinuend;
-	private final INestedWordAutomaton<LETTER, STATE> mSubtrahend;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mSubtrahend;
 	
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 	
@@ -101,9 +102,9 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 	 *             if timeout exceeds
 	 */
 	public DifferenceSenwa(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> minuend,
-			final INestedWordAutomaton<LETTER, STATE> subtrahend) throws AutomataOperationCanceledException {
+			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend) throws AutomataOperationCanceledException {
 		this(services, minuend, subtrahend,
-				new PowersetDeterminizer<LETTER, STATE>(subtrahend, true, minuend.getStateFactory()), true);
+				new PowersetDeterminizer<>(subtrahend, true, minuend.getStateFactory()), true);
 	}
 	
 	/**
@@ -124,7 +125,7 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 	 *             if timeout exceeds
 	 */
 	public DifferenceSenwa(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> minuend,
-			final INestedWordAutomaton<LETTER, STATE> subtrahend,
+			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final boolean removeDeadEndsImmediately)
 			throws AutomataOperationCanceledException {
 		super(services);
@@ -173,7 +174,7 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 	
 	@Override
 	public Iterable<STATE> getInitialStates() {
-		final ArrayList<STATE> resInitials = new ArrayList<>(mSubtrahend.getInitialStates().size());
+		final ArrayList<STATE> resInitials = new ArrayList<>();
 		final DeterminizedState<LETTER, STATE> detState = mStateDeterminizer.initialState();
 		for (final STATE minuState : mMinuend.getInitialStates()) {
 			final boolean isFinal = mMinuend.isFinal(minuState)
@@ -326,8 +327,8 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
 			
-			final INestedWordAutomaton<LETTER, STATE> resultSadd =
-					(new DifferenceSadd<LETTER, STATE>(mServices, stateFactory, mMinuend, mSubtrahend)).getResult();
+			final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
+					(new DifferenceSadd<>(mServices, stateFactory, mMinuend, mSubtrahend)).getResult();
 			correct &= new IsIncluded<>(mServices, stateFactory, resultSadd, mSenwa).getResult();
 			correct = correct && new IsIncluded<>(mServices, stateFactory, mSenwa, resultSadd).getResult();
 			if (!correct) {

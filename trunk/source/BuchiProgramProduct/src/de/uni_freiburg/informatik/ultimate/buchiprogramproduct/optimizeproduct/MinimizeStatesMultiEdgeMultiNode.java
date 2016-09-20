@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BuchiProgramProduct plug-in.
- * 
+ *
  * The ULTIMATE BuchiProgramProduct plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BuchiProgramProduct plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BuchiProgramProduct plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiProgramProduct plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct;
@@ -38,6 +38,8 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.BaseMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -48,19 +50,25 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 
 /**
  * Most aggressive minimization. Tries to remove states no matter what.
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  */
 public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 
-	public MinimizeStatesMultiEdgeMultiNode(RootNode product, IUltimateServiceProvider services,
-			IToolchainStorage storage) {
+	private final TransFormulaBuilder mTransFormulaBuilder;
+
+	public MinimizeStatesMultiEdgeMultiNode(final RootNode product, final IUltimateServiceProvider services,
+			final IToolchainStorage storage, final SimplicationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique) {
 		super(product, services, storage);
+		mTransFormulaBuilder =
+				new TransFormulaBuilder(product, services, simplificationTechnique, xnfConversionTechnique);
 	}
 
 	@Override
-	protected Collection<? extends RCFGNode> processCandidate(RootNode root, ProgramPoint target, Set<RCFGNode> closed) {
+	protected Collection<? extends RCFGNode> processCandidate(final RootNode root, final ProgramPoint target,
+			final Set<RCFGNode> closed) {
 		// we have the incoming edges
 		// ei = (qi,sti,q) in EI
 		// and the outgoing edges
@@ -90,8 +98,8 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			mLogger.debug("    will try to remove " + target.getPosition());
 		}
 
-		final List<RCFGEdge> predEdges = new ArrayList<RCFGEdge>(target.getIncomingEdges());
-		final List<RCFGEdge> succEdges = new ArrayList<RCFGEdge>(target.getOutgoingEdges());
+		final List<RCFGEdge> predEdges = new ArrayList<>(target.getIncomingEdges());
+		final List<RCFGEdge> succEdges = new ArrayList<>(target.getOutgoingEdges());
 
 		// collect information for new edges beforehand (because
 		// SequentialComposition disconnects the edges and we wont get their
@@ -141,12 +149,12 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		}
 
 		final Set<RCFGNode> rtr = new HashSet<>();
-		
-		//add new edges 
+
+		// add new edges
 		for (final EdgeConstructionInfo info : infos) {
 			final StatementSequence ss = mCbf.constructStatementSequence(info.getSource(), info.getTarget(),
 					info.getStatements(), Origin.IMPLEMENTATION);
-			generateTransFormula(root, ss);
+			mTransFormulaBuilder.addTransFormula(ss);
 			// we changed the edges of the predecessor, we have to re-check
 			// them. We therefore need to remove them from the closed set.
 			rtr.add(ss.getSource());
@@ -158,8 +166,8 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			// successors of the node we wanted to remove
 			rtr.addAll(target.getOutgoingNodes());
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("    could not remove " + target.getPosition()
-						+ ", because some incoming edges are left");
+				mLogger.debug(
+						"    could not remove " + target.getPosition() + ", because some incoming edges are left");
 			}
 		}
 
@@ -171,9 +179,9 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		return rtr;
 	}
 
-	private boolean processSuccessorEdges(Collection<RCFGEdge> succEdges, StatementExtractor extractor,
-			Collection<EdgeConstructionInfo> infos, BaseMultigraphEdge<RCFGNode, RCFGEdge,RCFGNode, RCFGEdge> predEdge,
-			List<Statement> first) {
+	private boolean processSuccessorEdges(final Collection<RCFGEdge> succEdges, final StatementExtractor extractor,
+			final Collection<EdgeConstructionInfo> infos,
+			final BaseMultigraphEdge<RCFGNode, RCFGEdge, RCFGNode, RCFGEdge> predEdge, final List<Statement> first) {
 		final Iterator<RCFGEdge> succIter = succEdges.iterator();
 		boolean canRemovePredEdges = true;
 		while (succIter.hasNext()) {
@@ -204,14 +212,14 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			// predecessor edge to the target of the successor edge and being
 			// labeled with the statements of the first edge followed by the
 			// statements of the second edge.
-			infos.add(new EdgeConstructionInfo((ProgramPoint) predEdge.getSource(),
-					(ProgramPoint) succEdge.getTarget(), first, second));
+			infos.add(new EdgeConstructionInfo((ProgramPoint) predEdge.getSource(), (ProgramPoint) succEdge.getTarget(),
+					first, second));
 
 		}
 		return canRemovePredEdges;
 	}
 
-	private int disconnectEdges(Collection<RCFGEdge> edges) {
+	private static int disconnectEdges(final Collection<RCFGEdge> edges) {
 		int removedEdges = 0;
 		for (final RCFGEdge succEdge : edges) {
 			succEdge.disconnectSource();
@@ -227,8 +235,8 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		private final List<Statement> mFirst;
 		private final List<Statement> mSecond;
 
-		private EdgeConstructionInfo(ProgramPoint source, ProgramPoint target, List<Statement> first,
-				List<Statement> second) {
+		private EdgeConstructionInfo(final ProgramPoint source, final ProgramPoint target, final List<Statement> first,
+				final List<Statement> second) {
 			mSource = source;
 			mTarget = target;
 			mFirst = first;

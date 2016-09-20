@@ -53,45 +53,39 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
- * 
  * @author dietsch@informatik.uni-freiburg.de
- * 
  */
 public class BacktranslationTestResultDecider extends TestResultDecider {
-
 	private final String mInputFile;
 	private final String mSettingsFile;
-
+	
 	/**
-	 * 
 	 * @param inputFile
 	 * @param settingsFile
 	 * @param fileending
 	 *            use .c or .bpl or something like that. The . is important
-	 * 
 	 */
 	public BacktranslationTestResultDecider(final File inputFile, final String settingsFile, final String fileending) {
 		mInputFile = inputFile.getAbsolutePath();
 		mSettingsFile = settingsFile;
 	}
-
+	
 	@Override
 	public TestResult getTestResult(final IUltimateServiceProvider services) {
-
 		setResultCategory("");
 		setResultMessage("");
-
+		
 		final ILogger log = services.getLoggingService().getLogger(BacktranslationTestResultDecider.class);
-		final Collection<String> customMessages = new LinkedList<String>();
+		final Collection<String> customMessages = new LinkedList<>();
 		customMessages.add("Expecting results to not contain GenericResult \"Unhandled Backtranslation\" "
 				+ ", ExceptionOrErrorResult or TypeErrorResult, "
 				+ "and that there is a counter example result, and that the contained error trace "
 				+ "matches the given one.");
-
+		
 		final List<CounterExampleResult<?, ?, ?>> cex = new ArrayList<>();
 		final List<WitnessResult> witnesses = new ArrayList<>();
 		final IResultService resultService = services.getResultService();
-
+		
 		final List<IResult> results = resultService.getResults().entrySet().stream().flatMap(a -> a.getValue().stream())
 				.collect(Collectors.toList());
 		for (final IResult result : results) {
@@ -115,8 +109,8 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 				witnesses.add((WitnessResult) result);
 			}
 		}
-
-		if (cex.size() == 0) {
+		
+		if (cex.isEmpty()) {
 			setCategoryAndMessageAndCustomMessage("No counter example found", customMessages);
 			TestUtil.logResults(log, mInputFile, true, customMessages, resultService);
 			return TestResult.FAIL;
@@ -129,7 +123,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			TestUtil.logResults(log, mInputFile, true, customMessages, resultService);
 			return TestResult.FAIL;
 		}
-
+		
 		final List<WitnessResult> witnessesWithCex = new ArrayList<>();
 		for (final IResult result : cex) {
 			final Optional<WitnessResult> witness =
@@ -138,7 +132,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 				witnessesWithCex.add(witness.get());
 			}
 		}
-
+		
 		if (!witnessesWithCex.isEmpty()) {
 			// we expect witness verification for .c files to succeed
 			for (final WitnessResult witness : witnessesWithCex) {
@@ -160,7 +154,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 				}
 			}
 		}
-
+		
 		// so far so good, now we compare the error path with the expected
 		// error path
 		boolean fail = false;
@@ -176,7 +170,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			TestUtil.logResults(log, mInputFile, true, customMessages, resultService);
 			return TestResult.FAIL;
 		}
-
+		
 		final String actualCounterExample = cex.get(0).getProgramExecutionAsString();
 		if (desiredCounterExample == null) {
 			setResultCategory("No .errorpath file for comparison");
@@ -186,12 +180,11 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			customMessages.add(errorMsg);
 			fail = true;
 		} else {
-
 			// compare linewise
 			final String platformLineSeparator = CoreUtil.getPlatformLineSeparator();
 			final String[] desiredLines = desiredCounterExample.split(platformLineSeparator);
 			final String[] actualLines = actualCounterExample.split(platformLineSeparator);
-
+			
 			if (desiredLines.length != actualLines.length) {
 				fail = true;
 			} else {
@@ -210,7 +203,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 					}
 				}
 			}
-
+			
 			if (fail) {
 				tryWritingActualResultToFile(actualCounterExample);
 				setCategoryAndMessageAndCustomMessage("Desired error trace does not match actual error trace.",
@@ -236,11 +229,11 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		TestUtil.logResults(log, mInputFile, fail, customMessages, resultService);
 		return fail ? TestResult.FAIL : TestResult.SUCCESS;
 	}
-
+	
 	private String getDesiredCounterExample(final File inputFile, final File settingsFile) throws IOException {
 		final String inputFileNameWithoutEnding = removeFileEnding(inputFile);
 		final String settingsFileNameWithoutEnding = removeFileEnding(settingsFile);
-
+		
 		// order some candidates which we would like, we take the first that
 		// matches
 		final List<File> candidates = new ArrayList<>();
@@ -248,7 +241,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 				inputFileNameWithoutEnding + "_" + settingsFileNameWithoutEnding, ".errorpath")));
 		candidates.add(new File(String.format("%s%s%s%s", inputFile.getParentFile().getAbsolutePath(), Path.SEPARATOR,
 				inputFileNameWithoutEnding, ".errorpath")));
-
+		
 		for (final File candidate : candidates) {
 			if (candidate.canRead()) {
 				return CoreUtil.readFile(candidate);
@@ -256,13 +249,12 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		}
 		return null;
 	}
-
-	private String removeFileEnding(final File file) {
+	
+	private static String removeFileEnding(final File file) {
 		return file.getName().replaceAll("\\..*", "");
 	}
-
+	
 	/**
-	 * 
 	 * @param curDes
 	 *            A line from the desired error trace, already trimmed
 	 * @param curAct
@@ -270,18 +262,15 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 	 * @return true iff it is a value line and the values do not differ too much (i.e. there is the same number of the
 	 *         same variables, but the values do not match)
 	 */
-	private boolean isValueLineOk(final String curDes, final String curAct) {
-
+	private static boolean isValueLineOk(final String curDes, final String curAct) {
 		if ((curDes.startsWith("VAL") && curAct.startsWith("VAL"))
-				|| (curDes.startsWith("IVAL") && curAct.startsWith("IVAL")))
-
-		{
+				|| (curDes.startsWith("IVAL") && curAct.startsWith("IVAL"))) {
 			final String[] curDesVals = curDes.split(",");
 			final String[] curActVals = curAct.split(",");
 			if (curDesVals.length != curActVals.length) {
 				return false;
 			}
-
+			
 			for (int i = 0; i < curDesVals.length; ++i) {
 				final String[] singleDesVal = curDesVals[i].split("=");
 				final String[] singleActVal = curActVals[i].split("=");
@@ -295,10 +284,10 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			}
 			return true;
 		}
-
+		
 		return false;
 	}
-
+	
 	@Override
 	public TestResult getTestResult(final IUltimateServiceProvider services, final Throwable e) {
 		setResultCategory("Unexpected exception");
@@ -307,13 +296,13 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 				services);
 		return TestResult.FAIL;
 	}
-
+	
 	private void setCategoryAndMessageAndCustomMessage(final String msg, final Collection<String> customMessages) {
 		setResultCategory(msg);
 		setResultMessage(msg);
 		customMessages.add(msg);
 	}
-
+	
 	private boolean tryWritingActualResultToFile(final String actualCounterExample) {
 		final String[] actualLines = actualCounterExample.split(CoreUtil.getPlatformLineSeparator());
 		try {

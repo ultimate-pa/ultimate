@@ -80,10 +80,8 @@ public class AutomatonEpimorphism<STATE> {
 	 *            automaton where the epimorphism maps to
 	 * @return an epimorphism structure from nwa1 to nwa2
 	 */
-	public static AutomatonEpimorphism<String> createFromAutomatonLabels(
-			final AutomataLibraryServices services,
-			final INestedWordAutomaton<String, String> nwa1,
-			final INestedWordAutomaton<String, String> nwa2) {
+	public static AutomatonEpimorphism<String> createFromAutomatonLabels(final AutomataLibraryServices services,
+			final INestedWordAutomaton<String, String> nwa1, final INestedWordAutomaton<String, String> nwa2) {
 		final AutomatonEpimorphism<String> epimorphism = new AutomatonEpimorphism<>(services);
 		
 		// traversing the states

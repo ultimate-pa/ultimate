@@ -105,11 +105,11 @@ public final class CDD {
         }
     }
 
-    private int min(final int a, final int b) {
+    private static int min(final int a, final int b) {
         return ((a < b) ? a : b);
     }
 
-    private int max(final int a, final int b) {
+    private static int max(final int a, final int b) {
         return ((a > b) ? a : b);
     }
 
@@ -205,9 +205,8 @@ try_next:
         if (childs == null) {
             if (this == TRUE) {
                 return FALSE;
-            } else {
-                return TRUE;
             }
+			return TRUE;
         }
 
         final CDD[] newchilds = new CDD[childs.length];
@@ -634,9 +633,8 @@ try_next:
 
         if (needsParens && (clauses > 1)) {
             return "(" + sb + ")";
-        } else {
-            return sb.toString();
         }
+		return sb.toString();
     }
 
     public String toSmtString(final boolean needsParens, final int index) {
@@ -778,9 +776,8 @@ try_next:
 
         if (needsParens && (clauses > 1)) {
             return "(" + sb + ")";
-        } else {
-            return sb.toString();
         }
+		return sb.toString();
     }
 
     /**
@@ -867,9 +864,8 @@ try_next:
 
         if (needsParens && (clauses > 1)) {
             return "(" + sb + ")";
-        } else {
-            return sb.toString();
         }
+		return sb.toString();
     }
 
     public void printCDD(final int i) {
@@ -933,14 +929,10 @@ try_next:
     //the function returns whether a CDD is an atomic proposition (like A, !A) or a
     // proposition composed of several variables (e.g., A&B, A||B)
     public boolean isAtomic() {
-        if (((getChilds()[0] == CDD.TRUE) ||
+        return ((getChilds()[0] == CDD.TRUE) ||
                 (getChilds()[0] == CDD.FALSE)) &&
                 ((getChilds()[1] == CDD.TRUE) ||
-                (getChilds()[1] == CDD.FALSE))) {
-            return true;
-        } else {
-            return false;
-        }
+                (getChilds()[1] == CDD.FALSE));
     }
 
     private static void testIsAtomic(final CDD cdd) {

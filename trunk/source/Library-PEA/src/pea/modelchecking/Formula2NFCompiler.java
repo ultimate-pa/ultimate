@@ -313,7 +313,7 @@ public abstract class Formula2NFCompiler {
 				result.add((Element) actChild);
 			}
 		}
-		if (result.size() == 0 && isTreeElement(formula)) {
+		if (result.isEmpty() && isTreeElement(formula)) {
 			throw new RuntimeException("A formula tree with operand count = 0 is not allowed.");
 		}
 		if (formula.getAttribute(XMLTags.OPERATOR_TAG).equals(XMLTags.NOT_CONST) && result.size() != 1) {

@@ -180,22 +180,21 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 		final STATE firstStateOfRun = run.mStateSequence.get(0);
 		
 		if (lastStateOfThis.equals(firstStateOfRun)) {
-			
 			final NestedWord<LETTER> concatNestedWord = mNestedWord.concatenate(run.getWord());
 			final ArrayList<STATE> concatStateSeq = new ArrayList<>(mStateSequence);
 			for (int i = 1; i < run.getStateSequence().size(); i++) {
 				concatStateSeq.add(run.getStateSequence().get(i));
 			}
 			return new NestedRun<>(concatNestedWord, concatStateSeq);
-		} else {
-			throw new IllegalArgumentException("Can only concatenate two runs"
-					+ " where the last element of the first runs statement"
-					+ " sequence is the same state as the last element of the" + " second runs statement sequence.");
 		}
+		throw new IllegalArgumentException("Can only concatenate two runs"
+				+ " where the last element of the first runs statement"
+				+ " sequence is the same state as the last element of the" + " second runs statement sequence.");
 	}
 	
 	/**
-	 * @param position Position.
+	 * @param position
+	 *            Position.
 	 * @return the state at the given position in the run
 	 */
 	public STATE getStateAtPosition(final int position) {

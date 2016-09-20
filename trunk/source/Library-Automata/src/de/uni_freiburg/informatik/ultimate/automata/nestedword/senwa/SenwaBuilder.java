@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public final class SenwaBuilder<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
 		implements ISuccessorVisitor<LETTER, STATE> {
 	private final Senwa<LETTER, STATE> mSenwa;
+	// TODO Christian 2016-09-18: Can be made INestedWordAutomatonSimple when guarding assertions.
 	private final INestedWordAutomaton<LETTER, STATE> mNwa;
 //	private final Set<STATE> mAdded = new HashSet<>();
 	
@@ -80,7 +81,7 @@ public final class SenwaBuilder<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 		mLogger.info(startMessage());
 		mSenwa = new Senwa<>(mServices, mNwa.getInternalAlphabet(), mNwa.getCallAlphabet(), mNwa.getReturnAlphabet(),
 				mNwa.getStateFactory());
-		new SenwaWalker<LETTER, STATE>(mServices, mSenwa, this, true);
+		new SenwaWalker<>(mServices, mSenwa, this, true);
 		mLogger.info(exitMessage());
 	}
 	
@@ -193,14 +194,20 @@ public final class SenwaBuilder<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 	
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		mLogger.info("Start testing correctness of " + operationName());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Start testing correctness of " + operationName());
+		}
+		
 		boolean correct;
 		correct = new IsIncluded<>(mServices, stateFactory, mNwa, mSenwa).getResult();
 		correct = correct && new IsIncluded<>(mServices, stateFactory, mSenwa, mNwa).getResult();
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mNwa);
 		}
-		mLogger.info("Finished testing correctness of " + operationName());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of " + operationName());
+		}
 		return correct;
 	}
 }

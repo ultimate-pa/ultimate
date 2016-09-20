@@ -62,11 +62,8 @@ public class DoubleDeckerAutomaton<LETTER, STATE> extends NestedWordAutomaton<LE
 	 * @param stateFactory
 	 *            state factory
 	 */
-	public DoubleDeckerAutomaton(final AutomataLibraryServices services,
-			final Set<LETTER> internalAlphabet,
-			final Set<LETTER> callAlphabet,
-			final Set<LETTER> returnAlphabet,
-			final IStateFactory<STATE> stateFactory) {
+	public DoubleDeckerAutomaton(final AutomataLibraryServices services, final Set<LETTER> internalAlphabet,
+			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet, final IStateFactory<STATE> stateFactory) {
 		super(services, internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
 		mUp2Down = null;
 	}
@@ -88,9 +85,8 @@ public class DoubleDeckerAutomaton<LETTER, STATE> extends NestedWordAutomaton<LE
 	public Set<STATE> getDownStates(final STATE upState) {
 		if (up2DownIsSet()) {
 			return mUp2Down.get(upState).keySet();
-		} else {
-			throw new AssertionError(UP2DOWN_NOT_SET);
 		}
+		throw new AssertionError(UP2DOWN_NOT_SET);
 	}
 	
 	/**
@@ -100,28 +96,26 @@ public class DoubleDeckerAutomaton<LETTER, STATE> extends NestedWordAutomaton<LE
 	public void setUp2Down(final Map<STATE, Map<STATE, ReachFinal>> up2Down) {
 		if (up2DownIsSet()) {
 			throw new AssertionError("up2down already set");
-		} else {
-			mUp2Down = up2Down;
 		}
+		mUp2Down = up2Down;
 	}
 	
 	@Override
 	public boolean isDoubleDecker(final STATE upState, final STATE downState) {
-		if (up2DownIsSet()) {
-			/**
-			 * TODO Christian 2016-08-21: Should the "getStates().contains()" tests be made assertions for efficiency
-			 * reasons? In particular, this can be expensive for on-the-fly constructions.
-			 */
-			if (getStates().contains(upState)) {
-				final Map<STATE, ReachFinal> downStates = mUp2Down.get(upState);
-				if (getStates().contains(downState)) {
-					return downStates.get(downState) != null;
-				}
-				return false;
-			}
-			return false;
-		} else {
+		if (!up2DownIsSet()) {
 			throw new AssertionError(UP2DOWN_NOT_SET);
 		}
+		/**
+		 * TODO Christian 2016-08-21: Should the "getStates().contains()" tests be made assertions for efficiency
+		 * reasons? In particular, this can be expensive for on-the-fly constructions.
+		 */
+		if (getStates().contains(upState)) {
+			final Map<STATE, ReachFinal> downStates = mUp2Down.get(upState);
+			if (getStates().contains(downState)) {
+				return downStates.get(downState) != null;
+			}
+			return false;
+		}
+		return false;
 	}
 }

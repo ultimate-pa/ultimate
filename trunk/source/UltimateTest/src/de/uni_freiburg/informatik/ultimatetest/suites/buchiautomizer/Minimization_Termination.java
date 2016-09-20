@@ -109,7 +109,7 @@ public class Minimization_Termination extends AbstractBuchiAutomizerTestSuite {
 	 */
 	@Override
 	public long getTimeout() {
-		return 30 * 1000;
+		return 60 * 1000;
 	}
 
 	/**
@@ -131,6 +131,8 @@ public class Minimization_Termination extends AbstractBuchiAutomizerTestSuite {
 //		"buchiAutomizer/minimization/MinimizeNwaMaxSat.epf",
 		"buchiAutomizer/minimization/RaqDirectSimulation.epf",
 		"buchiAutomizer/minimization/RaqDelayedSimulation.epf",
+		"buchiAutomizer/minimization/MultiSimulation.epf",
+		"buchiAutomizer/minimization/MultiDefault.epf",
 	};
 	
 	

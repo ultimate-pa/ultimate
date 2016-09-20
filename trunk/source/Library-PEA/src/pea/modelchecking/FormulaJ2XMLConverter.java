@@ -67,7 +67,7 @@ public class FormulaJ2XMLConverter {
 
 	protected List<String> events = null;
 
-	private final Vector<String> disjuncts = new Vector<String>();
+	private final Vector<String> disjuncts = new Vector<>();
 
 	private int dnfCount = 1;
 
@@ -156,8 +156,8 @@ public class FormulaJ2XMLConverter {
 		}
 
 		final CDD[] children = formulaCDD.getChilds();
-		final List<Node> simpleChildNodes = new ArrayList<Node>();
-		final List<Node> complexChildNodes = new ArrayList<Node>();
+		final List<Node> simpleChildNodes = new ArrayList<>();
+		final List<Node> complexChildNodes = new ArrayList<>();
 		for (int i = 0; i < children.length; i++) {
 			if (children[i] == CDD.FALSE) {
 				continue;
@@ -196,27 +196,27 @@ public class FormulaJ2XMLConverter {
 			}
 		}
 
-		if ((simpleChildNodes.size() == 0) && (complexChildNodes.size() == 0)) {
+		if ((simpleChildNodes.isEmpty()) && (complexChildNodes.isEmpty())) {
 			throw new RuntimeException("The cdd " + formulaCDD + " has no children");
 		}
 
-		if ((simpleChildNodes.size() == 1) && (complexChildNodes.size() == 0)) {
+		if ((simpleChildNodes.size() == 1) && (complexChildNodes.isEmpty())) {
 			return (Element) simpleChildNodes.get(0);
 		}
 
-		if ((complexChildNodes.size() == 1) && (simpleChildNodes.size() == 0)) {
+		if ((complexChildNodes.size() == 1) && (simpleChildNodes.isEmpty())) {
 			return (Element) complexChildNodes.get(0);
 		}
 
 		final Element actFormulaTree = document.createElement(XMLTags.FORMULATREE_TAG);
 		actFormulaTree.setAttribute(XMLTags.OPERATOR_TAG, XMLTags.OR_CONST);
 
-		final Iterator simpleChildNodeIterator = simpleChildNodes.iterator();
+		final Iterator<Node> simpleChildNodeIterator = simpleChildNodes.iterator();
 		while (simpleChildNodeIterator.hasNext()) {
 			final Element actChildNode = (Element) simpleChildNodeIterator.next();
 			actFormulaTree.appendChild(actChildNode);
 		}
-		final Iterator complexChildNodeIterator = complexChildNodes.iterator();
+		final Iterator<Node> complexChildNodeIterator = complexChildNodes.iterator();
 		while (complexChildNodeIterator.hasNext()) {
 			final Element actChildNode = (Element) complexChildNodeIterator.next();
 			actFormulaTree.appendChild(actChildNode);
@@ -248,7 +248,7 @@ public class FormulaJ2XMLConverter {
 		// Simplify nested conjunctions
 		if (childNode.getAttribute(XMLTags.OPERATOR_TAG).equals(XMLTags.AND_CONST)) {
 			final NodeList grandChildren = childNode.getChildNodes();
-			final List<Element> left = new ArrayList<Element>();
+			final List<Element> left = new ArrayList<>();
 			for (int i = grandChildren.getLength() - 1; i >= 0; i--) {
 				final Element actGrandChild = (Element) grandChildren.item(i);
 				if (actGrandChild.getNodeName().equals(XMLTags.FORMULATREE_TAG)) {
@@ -325,12 +325,11 @@ public class FormulaJ2XMLConverter {
 
 		if (i == 0) {
 			return expressionNode;
-		} else {
-			final Element notFormulaNode = document.createElement(XMLTags.FORMULATREE_TAG);
-			notFormulaNode.setAttribute(XMLTags.OPERATOR_TAG, XMLTags.NOT_CONST);
-			notFormulaNode.appendChild(expressionNode);
-			return notFormulaNode;
 		}
+		final Element notFormulaNode = document.createElement(XMLTags.FORMULATREE_TAG);
+		notFormulaNode.setAttribute(XMLTags.OPERATOR_TAG, XMLTags.NOT_CONST);
+		notFormulaNode.appendChild(expressionNode);
+		return notFormulaNode;
 	}
 
 	/**
@@ -394,7 +393,7 @@ public class FormulaJ2XMLConverter {
 				rangeExpressionNode.setAttribute(XMLTags.OPERATOR_TAG, XMLTags.LESSEQUAL_CONST);
 			}
 
-			rangeExpressionNode.setAttribute(XMLTags.BOUND_TAG, "" + (limits[0] / 2));
+			rangeExpressionNode.setAttribute(XMLTags.BOUND_TAG, Integer.toString(limits[0] / 2));
 			return rangeExpressionNode;
 		}
 		if (i == limits.length) {
@@ -403,12 +402,12 @@ public class FormulaJ2XMLConverter {
 			} else {
 				rangeExpressionNode.setAttribute(XMLTags.OPERATOR_TAG, XMLTags.GREATEREQUAL_CONST);
 			}
-			rangeExpressionNode.setAttribute(XMLTags.BOUND_TAG, "" + (limits[limits.length - 1] / 2));
+			rangeExpressionNode.setAttribute(XMLTags.BOUND_TAG, Integer.toString(limits[limits.length - 1] / 2));
 			return rangeExpressionNode;
 		}
 		if (limits[i - 1] / 2 == limits[i] / 2) {
 			rangeExpressionNode.setAttribute(XMLTags.OPERATOR_TAG, XMLTags.EQUAL_CONST);
-			rangeExpressionNode.setAttribute(XMLTags.BOUND_TAG, "" + (limits[i] / 2));
+			rangeExpressionNode.setAttribute(XMLTags.BOUND_TAG, Integer.toString(limits[i] / 2));
 			return rangeExpressionNode;
 		}
 
@@ -419,7 +418,7 @@ public class FormulaJ2XMLConverter {
 		} else {
 			rangeExpressionNode.setAttribute(XMLTags.OPERATOR_TAG, XMLTags.GREATEREQUAL_CONST);
 		}
-		rangeExpressionNode.setAttribute(XMLTags.BOUND_TAG, "" + (limits[i - 1] / 2));
+		rangeExpressionNode.setAttribute(XMLTags.BOUND_TAG, Integer.toString(limits[i - 1] / 2));
 
 		final Element rangeExpressionNode2 = document.createElement(XMLTags.RANGEEXPRESSION_TAG);
 		rangeExpressionNode2.setAttribute(XMLTags.VARIABLE_TAG, variable);
@@ -429,7 +428,7 @@ public class FormulaJ2XMLConverter {
 		} else {
 			rangeExpressionNode2.setAttribute(XMLTags.OPERATOR_TAG, XMLTags.LESSEQUAL_CONST);
 		}
-		rangeExpressionNode2.setAttribute(XMLTags.BOUND_TAG, "" + (limits[i] / 2));
+		rangeExpressionNode2.setAttribute(XMLTags.BOUND_TAG, Integer.toString(limits[i] / 2));
 
 		formulaTreeNode.appendChild(rangeExpressionNode);
 		formulaTreeNode.appendChild(rangeExpressionNode2);
@@ -471,7 +470,7 @@ public class FormulaJ2XMLConverter {
 		this.events = events;
 
 		/*
-		 * System.out.println("Computing DNF " + dnfCount + ((numberOfDNFs == 0) ? "" : "" + numberOfDNFs));
+		 * System.out.println("Computing DNF " + dnfCount + ((numberOfDNFs == 0) ? "" : Integer.toStringnumberOfDNFs));
 		 */
 		dnfCount++;
 		cddToDNF(new StringBuilder(), cdd);

@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ReachingDefinitions plug-in.
- * 
+ *
  * The ULTIMATE ReachingDefinitions plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ReachingDefinitions plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ReachingDefinitions plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ReachingDefinitions plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag;
@@ -46,22 +46,22 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
 /**
- * 
+ *
  * @author dietsch
- * 
+ *
  */
 public class AssumeFinder extends BaseObserver {
 
 	private final ILogger mLogger;
 	private final LinkedHashMap<RCFGEdge, List<AssumeStatement>> mEdgesWithAssumes;
 
-	public AssumeFinder(ILogger logger) {
+	public AssumeFinder(final ILogger logger) {
 		mLogger = logger;
 		mEdgesWithAssumes = new LinkedHashMap<>();
 	}
 
 	@Override
-	public boolean process(IElement root) throws Throwable {
+	public boolean process(final IElement root) throws Throwable {
 		if (root instanceof RootNode) {
 			final RootNode rootNode = (RootNode) root;
 
@@ -82,7 +82,7 @@ public class AssumeFinder extends BaseObserver {
 		return mEdgesWithAssumes;
 	}
 
-	private void process(RCFGNode node) {
+	private void process(final RCFGNode node) {
 		final Queue<RCFGEdge> openEdges = new LinkedList<>();
 		final HashSet<RCFGEdge> completed = new HashSet<>();
 		final AssumeFinderVisitor visitor = new AssumeFinderVisitor();
@@ -109,10 +109,10 @@ public class AssumeFinder extends BaseObserver {
 		}
 	}
 
-	private List<AssumeStatement> getAssumeList(RCFGEdge edge) {
+	private List<AssumeStatement> getAssumeList(final RCFGEdge edge) {
 		List<AssumeStatement> rtr = mEdgesWithAssumes.get(edge);
 		if (rtr == null) {
-			rtr = new ArrayList<AssumeStatement>();
+			rtr = new ArrayList<>();
 			mEdgesWithAssumes.put(edge, rtr);
 		}
 		return rtr;
@@ -122,13 +122,13 @@ public class AssumeFinder extends BaseObserver {
 
 		private RCFGEdge mMotherEdge;
 
-		public void start(RCFGEdge edge) {
+		public void start(final RCFGEdge edge) {
 			mMotherEdge = edge;
 			visit(edge);
 		}
 
 		@Override
-		protected void visit(StatementSequence sequence) {
+		protected void visit(final StatementSequence sequence) {
 			super.visit(sequence);
 			for (final Statement s : sequence.getStatements()) {
 				if (s instanceof AssumeStatement) {

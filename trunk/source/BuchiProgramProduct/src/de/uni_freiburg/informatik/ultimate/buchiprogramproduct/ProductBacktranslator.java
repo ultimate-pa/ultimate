@@ -89,7 +89,7 @@ public class ProductBacktranslator extends DefaultTranslator<RCFGEdge, RCFGEdge,
 				newBranchEncoders.toArray(new Map[newBranchEncoders.size()]));
 	}
 
-	private void addProgramState(final int i, final Map<Integer, ProgramState<Term>> newValues,
+	private static void addProgramState(final Integer i, final Map<Integer, ProgramState<Term>> newValues,
 			final ProgramState<Term> programState) {
 		newValues.put(i, programState);
 	}

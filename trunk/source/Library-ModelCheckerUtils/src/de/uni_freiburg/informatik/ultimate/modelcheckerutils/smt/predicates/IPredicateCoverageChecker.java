@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComperator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 
 public interface IPredicateCoverageChecker {
 	
@@ -53,13 +53,13 @@ public interface IPredicateCoverageChecker {
 	
 	
 	/**
-	 * Get a {@link IPartialComperator} that can compare {@link IPredicate}s
+	 * Get a {@link IPartialComparator} that can compare {@link IPredicate}s
 	 * that are known to this object.
 	 * An {@link IPredicate} p1 is strictly greater (resp. smaller) than an 
 	 * {@link IPredicate} p2 iff p1 represents a set of states that is
 	 * strictly greater (resp. smaller) than the set of states that is 
 	 * represented by p2. (E.g, "true" is strictly greater than "false"). 
 	 */
-	public IPartialComperator<IPredicate> getPartialComperator();
+	public IPartialComparator<IPredicate> getPartialComperator();
 
 }

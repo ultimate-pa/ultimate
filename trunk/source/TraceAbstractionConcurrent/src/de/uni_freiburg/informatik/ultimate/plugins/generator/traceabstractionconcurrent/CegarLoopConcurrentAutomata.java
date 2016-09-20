@@ -87,7 +87,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
 		final StraightLineInterpolantAutomatonBuilder iab = new StraightLineInterpolantAutomatonBuilder(
-				mServices, new InCaReAlphabet<CodeBlock>(mAbstraction), mInterpolantGenerator, mPredicateFactoryInterpolantAutomata);
+				mServices, new InCaReAlphabet<>(mAbstraction), mInterpolantGenerator, mPredicateFactoryInterpolantAutomata);
 		mInterpolAutomaton = iab.getResult();
 		mLogger.info("Interpolatants " + mInterpolAutomaton.getStates());
 
@@ -113,12 +113,12 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	protected Collection<Set<IPredicate>> computePartition(final INestedWordAutomaton<CodeBlock, IPredicate> automaton) {
 		mLogger.info("Start computation of initial partition.");
 		final Collection<IPredicate> states = automaton.getStates();
-		final Map<Set<ProgramPoint>, Set<IPredicate>> pp2p = new HashMap<Set<ProgramPoint>, Set<IPredicate>>();
+		final Map<Set<ProgramPoint>, Set<IPredicate>> pp2p = new HashMap<>();
 		for (final IPredicate p : states) {
 			final IMLPredicate mp = (IMLPredicate) p;
 			pigeonHole(pp2p, mp);
 		}
-		final Collection<Set<IPredicate>> partition = new ArrayList<Set<IPredicate>>();
+		final Collection<Set<IPredicate>> partition = new ArrayList<>();
 		for (final Set<ProgramPoint> pps : pp2p.keySet()) {
 			final Set<IPredicate> statesWithSamePP = pp2p.get(pps);
 			partition.add(statesWithSamePP);
@@ -131,17 +131,17 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	 * Pigeon-hole (german: einsortieren) predicates according to their
 	 * ProgramPoint
 	 */
-	protected void pigeonHole(final Map<Set<ProgramPoint>, Set<IPredicate>> pp2p, final IMLPredicate mp) {
+	protected static void pigeonHole(final Map<Set<ProgramPoint>, Set<IPredicate>> pp2p, final IMLPredicate mp) {
 		Set<IPredicate> statesWithSamePPs = pp2p.get(asHashSet(mp.getProgramPoints()));
 		if (statesWithSamePPs == null) {
-			statesWithSamePPs = new HashSet<IPredicate>();
+			statesWithSamePPs = new HashSet<>();
 			pp2p.put(asHashSet(mp.getProgramPoints()), statesWithSamePPs);
 		}
 		statesWithSamePPs.add(mp);
 	}
 
 	private static <E> Set<E> asHashSet(final E[] array) {
-		return new HashSet<E>(Arrays.asList(array));
+		return new HashSet<>(Arrays.asList(array));
 	}
 
 	@Override
@@ -169,13 +169,13 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 				mInterpolantGenerator.getPredicateUnifier(), mLogger, false, false);
 		// ComplementDeterministicNwa<CodeBlock, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);
-		final PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
+		final PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<>(
 				determinized, false, mPredicateFactoryInterpolantAutomata);
 
 		if (mPref.differenceSenwa()) {
-			diff = new DifferenceSenwa<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), oldAbstraction, (INestedWordAutomaton<CodeBlock, IPredicate>) determinized, psd2, false);
+			diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), oldAbstraction, (INestedWordAutomaton<CodeBlock, IPredicate>) determinized, psd2, false);
 		} else {
-			diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), oldAbstraction, determinized, psd2,
+			diff = new Difference<>(new AutomataLibraryServices(mServices), oldAbstraction, determinized, psd2,
 					mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
 		}
 		determinized.switchToReadonlyMode();
@@ -218,13 +218,9 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 			throw new AssertionError();
 		}
 
-		final boolean stillAccepted = (new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+		final boolean stillAccepted = (new Accepts<>(new AutomataLibraryServices(mServices),
 				(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction,
 				(NestedWord<CodeBlock>) mCounterexample.getWord())).getResult();
-		if (stillAccepted) {
-			return false;
-		} else {
-			return true;
-		}
+		return !stillAccepted;
 	}
 }

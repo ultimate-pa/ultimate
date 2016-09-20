@@ -67,10 +67,8 @@ public final class Automaton2UltimateModel {
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public static <LETTER, STATE> IElement ultimateModel(
-			final AutomataLibraryServices services,
-			final IAutomaton<LETTER, STATE> automaton)
-					throws AutomataOperationCanceledException {
+	public static <LETTER, STATE> IElement ultimateModel(final AutomataLibraryServices services,
+			final IAutomaton<LETTER, STATE> automaton) throws AutomataOperationCanceledException {
 		if (automaton instanceof INestedWordAutomatonSimple) {
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa = (INestedWordAutomatonSimple<LETTER, STATE>) automaton;
 			final NwaToUltimateModel<LETTER, STATE> transformer = new NwaToUltimateModel<>(services);
@@ -95,14 +93,13 @@ public final class Automaton2UltimateModel {
 			
 		} else if (automaton instanceof ITreeAutomaton) {
 			final ITreeAutomaton<LETTER, STATE> treeAutomaton = (ITreeAutomaton<LETTER, STATE>) automaton;
-			final TreeAutomatonToUltimateModel<LETTER, STATE> transformer =
-					new TreeAutomatonToUltimateModel<>();
+			final TreeAutomatonToUltimateModel<LETTER, STATE> transformer = new TreeAutomatonToUltimateModel<>();
 			return transformer.getUltimateModelOfAA(treeAutomaton);
 			
 		} else {
 			throw new IllegalArgumentException(
-					"Only INestedWordAutomatonSimple, IPetriNet, BranchingProcess, "
-							+ "AlternatingAutomaton, and ITreeAutomaton are supported");
+					"Only INestedWordAutomatonSimple, IPetriNet, BranchingProcess, AlternatingAutomaton, and "
+							+ "ITreeAutomaton are supported");
 		}
 	}
 }

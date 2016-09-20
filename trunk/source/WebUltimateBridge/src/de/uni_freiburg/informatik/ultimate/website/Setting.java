@@ -109,9 +109,9 @@ public class Setting {
 	 * @param isUserModifiable
 	 *            Whether this setting is modifiable by a user.
 	 */
-	private Setting(SettingType type, String ultimateString,
-			String settingDescription, String[] defaultValue,
-			boolean isMultiSelectable, String[] values, boolean isUserModifiable) {
+	private Setting(final SettingType type, final String ultimateString,
+			final String settingDescription, final String[] defaultValue,
+			final boolean isMultiSelectable, final String[] values, final boolean isUserModifiable) {
 		checkIdentifier(settingDescription);
 		for (final String str : defaultValue) {
 			checkIdentifier(str);
@@ -152,8 +152,8 @@ public class Setting {
 	 * @param isUserModifiable
 	 *            Whether this setting is modifiable by a user.
 	 */
-	public Setting(String ultimateString, SettingType type, String settingDescription, String defaultValue,
-			boolean isUserModifiable) {
+	public Setting(final String ultimateString, final SettingType type, final String settingDescription, final String defaultValue,
+			final boolean isUserModifiable) {
 		this(type, ultimateString, settingDescription,
 				new String[] { defaultValue }, false, null, isUserModifiable);
 		if (type.equals(SettingType.DROPDOWN)) {
@@ -186,9 +186,9 @@ public class Setting {
 	 * @param isUserModifiable
 	 *            Whether this setting is modifiable by a user.
 	 */
-	public Setting(String ultimateString, String settingDescription,
-			String[] defaultValues, boolean isMultiSelectable, String[] values,
-			boolean isUserModifiable) {
+	public Setting(final String ultimateString, final String settingDescription,
+			final String[] defaultValues, final boolean isMultiSelectable, final String[] values,
+			final boolean isUserModifiable) {
 		this(SettingType.DROPDOWN, ultimateString, settingDescription,
 				defaultValues, isMultiSelectable, values, isUserModifiable);
 		if (!isMultiSelectable && defaultValues.length > 1) {
@@ -203,13 +203,13 @@ public class Setting {
 	 * @param id
 	 *            the identifier to check
 	 */
-	private static final void checkIdentifier(String id) {
+	private static final void checkIdentifier(final String id) {
 		//TODO: Repair checking
 		
 //		if (id.equals("")) {
 //			throw new IllegalArgumentException("identifier: empty name given!");
 //		}
-		//TODO: why was this here? 
+		//TODO: why was this here?
 //		if (id.length() > 135) {
 //			throw new IllegalArgumentException("identifier name too long: "
 //					+ id);
@@ -298,7 +298,7 @@ public class Setting {
 	 * @param value
 	 *            the String value holding an int.
 	 */
-	public void setIntValue(String value) {
+	public void setIntValue(final String value) {
 		if (!isUserModifiable) {
 			throw new RuntimeException("Setting this value is not allowed!");
 		}
@@ -317,7 +317,7 @@ public class Setting {
 	 * @param value
 	 *            the String value holding a String.
 	 */
-	public void setStringValue(String value) {
+	public void setStringValue(final String value) {
 		if (!isUserModifiable) {
 			throw new RuntimeException("Setting this value is not allowed!");
 		}
@@ -348,7 +348,7 @@ public class Setting {
 	 * @param values
 	 *            the String value holding the enum values.
 	 */
-	public void setDropDownValue(String[] values) {
+	public void setDropDownValue(final String[] values) {
 		if (!isUserModifiable) {
 			throw new RuntimeException("Setting this value is not allowed!");
 		}
@@ -383,7 +383,7 @@ public class Setting {
 	 * @param value
 	 *            the String value holding a Boolean.
 	 */
-	public void setBooleanValue(String value) {
+	public void setBooleanValue(final String value) {
 		if (!isUserModifiable) {
 			throw new RuntimeException("Setting this value is not allowed!");
 		}
@@ -417,7 +417,7 @@ public class Setting {
 	 * Change whether the value of this setting was changed.
 	 * @param isDefaultValue set whether the value of this setting was changed.
 	 */
-	void setDefaultValue(boolean isDefaultValue) {
+	void setDefaultValue(final boolean isDefaultValue) {
 		mIsDefaultValue = isDefaultValue;
 	}
 
@@ -458,7 +458,7 @@ public class Setting {
 		 * @param valBool
 		 *            boolean
 		 */
-		protected Value(String[] valStr, int valInt, boolean valBool) {
+		protected Value(final String[] valStr, final int valInt, final boolean valBool) {
 			switch (getType()) {
 			case BOOLEAN:
 				if (valStr != null || valInt != 0) {
@@ -548,7 +548,7 @@ public class Setting {
 			}
 			switch (getType()) {
 			case BOOLEAN:
-				return "" + valueBoolean;
+				return Boolean.toString(valueBoolean);
 			case DROPDOWN:
 				if (isMultiSelectable()) {
 					final StringBuffer sb = new StringBuffer();
@@ -560,12 +560,12 @@ public class Setting {
 				}
 				return valueDropdown[0];
 			case INTEGER:
-				return "" + valueInt;
+				return Integer.toString(valueInt);
 			case STRING:
 				return valueString;
+			default:
+				throw new UnsupportedOperationException("The given type is unknown!");
 			}
-			throw new UnsupportedOperationException(
-					"The given type is unknown!");
 		}
 	}
 }

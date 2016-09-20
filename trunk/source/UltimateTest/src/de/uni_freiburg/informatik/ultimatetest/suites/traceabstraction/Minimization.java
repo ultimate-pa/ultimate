@@ -138,6 +138,10 @@ public class Minimization extends AbstractTraceAbstractionTestSuite {
 //		"automizer/minimization/TreeInterpolants-NWA_MAX_SAT.epf", // use with caution, does not respect timeout
 		"automizer/minimization/TreeInterpolants-NWA_MAX_SAT2.epf",
 		"automizer/minimization/TreeInterpolants-RAQ_DIRECT_SIMULATION.epf",
+		"automizer/minimization/TreeInterpolants-NWA_COMBINATOR_MULTI_DEFAULT.epf",
+		"automizer/minimization/TreeInterpolants-NWA_COMBINATOR_MULTI_SIMULATION.epf",
+		"automizer/minimization/TreeInterpolants-NONE-DFS.epf",
+		"automizer/minimization/TreeInterpolants-SHRINK_NWA-DFS.epf",
 	};
 	
 	/**

@@ -148,7 +148,8 @@ public class Expression2Term {
 		return result;
 	}
 
-	Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, final boolean isOldContext, final BoogieASTNode boogieASTNode) {
+	private Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, 
+			final boolean isOldContext, final BoogieASTNode boogieASTNode) {
 		if (mQuantifiedVariables.containsKey(id)) {
 			return mQuantifiedVariables.get(id);
 		} else {
@@ -409,7 +410,7 @@ public class Expression2Term {
 		}
 	}
 
-	private boolean resultContainsNoNull(Term result) {
+	private boolean resultContainsNoNull(final Term result) {
 		// toString crashes if the result contains a null element 
 		return result.toString() instanceof Object;
 	}

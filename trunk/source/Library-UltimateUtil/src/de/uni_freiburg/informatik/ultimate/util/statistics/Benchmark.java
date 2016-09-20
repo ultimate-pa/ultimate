@@ -52,7 +52,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 
 	// Get maximum size of heap in bytes. The heap cannot grow beyond this
 	// size. Any attempt will result in an OutOfMemoryException.
-	private long mMaxMemorySizeBytes;
+	protected long mMaxMemorySizeBytes;
 
 	private int mCurrentIndex;
 	private HashMap<String, Watch> mWatches;
@@ -165,7 +165,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		mCurrentIndex = 1;
 		mGlobalWatch = new Watch("Global", 0);
 		mMaxMemorySizeBytes = Runtime.getRuntime().maxMemory();
-		mWatches = new HashMap<String, Watch>();
+		mWatches = new HashMap<>();
 	}
 
 	public void printResult(final ILogger logger) {
@@ -187,7 +187,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	}
 
 	private Collection<Watch> getSortedWatches() {
-		final ArrayList<Watch> sortedWatches = new ArrayList<Watch>(mWatches.values());
+		final ArrayList<Watch> sortedWatches = new ArrayList<>(mWatches.values());
 		Collections.sort(sortedWatches, new Comparator<Watch>() {
 			@Override
 			public int compare(final Watch o1, final Watch o2) {
@@ -209,54 +209,48 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
-		} else {
-			return getNanosecondsToUnit(watch.mElapsedTimeNs, unit);
 		}
+		return getNanosecondsToUnit(watch.mElapsedTimeNs, unit);
 	}
 
 	public long getStartHeapSize(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
-		} else {
-			return watch.mStartMemorySizeBytes;
 		}
+		return watch.mStartMemorySizeBytes;
 	}
 
 	public long getStopHeapSize(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
-		} else {
-			return watch.mStopMemorySizeBytes;
 		}
+		return watch.mStopMemorySizeBytes;
 	}
 
 	public long getStartMemoryFreeSize(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
-		} else {
-			return watch.mStartMemoryFreeSizeBytes;
 		}
+		return watch.mStartMemoryFreeSizeBytes;
 	}
 
 	public long getStopMemoryFreeSize(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
-		} else {
-			return watch.mStopMemoryFreeSizeBytes;
 		}
+		return watch.mStopMemoryFreeSizeBytes;
 	}
 
 	public long getPeakMemoryConsumed(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
-		} else {
-			return watch.mPeakMemorySizeBytes - watch.mStartPeakMemorySizeBytes;
 		}
+		return watch.mPeakMemorySizeBytes - watch.mStartPeakMemorySizeBytes;
 	}
 
 	public long getMaxHeapSize(final String title) {
@@ -264,14 +258,14 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	}
 
 	public List<String> getTitles() {
-		final ArrayList<String> rtr = new ArrayList<String>();
+		final ArrayList<String> rtr = new ArrayList<>();
 		for (final Watch w : mWatches.values()) {
 			rtr.add(w.mTitle);
 		}
 		return rtr;
 	}
 
-	private String getUnitString(final TimeUnit unit) {
+	static String getUnitString(final TimeUnit unit) {
 		switch (unit) {
 		case NANOSECONDS:
 			return "ns";
@@ -292,7 +286,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		}
 	}
 
-	private double getNanosecondsToUnit(final long nanoseconds, final TimeUnit unit) {
+	static double getNanosecondsToUnit(final long nanoseconds, final TimeUnit unit) {
 		switch (unit) {
 		case NANOSECONDS:
 			return nanoseconds;
@@ -313,7 +307,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		}
 	}
 
-	private boolean isHeap(final String memoryPoolName) {
+	static boolean isHeap(final String memoryPoolName) {
 		switch (memoryPoolName) {
 		case "Code Cache":
 		case "Perm Gen":
@@ -330,26 +324,27 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		case "PS Old Gen":
 		case "Tenured Gen":
 			return true;
+		default:
+			throw new IllegalArgumentException("Unknown memory pool name " + memoryPoolName);
 		}
-		throw new IllegalArgumentException("Unknown memory pool name " + memoryPoolName);
 	}
 
 	private final class Watch {
 
-		private final String mTitle;
-		private final int mIndex;
+		final String mTitle;
+		final int mIndex;
 
-		private long mStartTime;
-		private long mElapsedTimeNs;
+		long mStartTime;
+		long mElapsedTimeNs;
 
-		private long mStartMemorySizeBytes;
-		private long mStopMemorySizeBytes;
+		long mStartMemorySizeBytes;
+		long mStopMemorySizeBytes;
 
-		private long mStartMemoryFreeSizeBytes;
-		private long mStopMemoryFreeSizeBytes;
+		long mStartMemoryFreeSizeBytes;
+		long mStopMemoryFreeSizeBytes;
 
-		private long mStartPeakMemorySizeBytes;
-		private long mPeakMemorySizeBytes;
+		long mStartPeakMemorySizeBytes;
+		long mPeakMemorySizeBytes;
 
 		private final List<MemoryPoolMXBean> mMemoryPoolBeans;
 
@@ -360,7 +355,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 			reset();
 		}
 
-		private void start() {
+		void start() {
 			mStartMemorySizeBytes = Runtime.getRuntime().totalMemory();
 			mStartMemoryFreeSizeBytes = Runtime.getRuntime().freeMemory();
 			long startMemoryUsageBytes = 0;
@@ -374,7 +369,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 			mStartTime = System.nanoTime();
 		}
 
-		private void stop(final long stopTime) {
+		void stop(final long stopTime) {
 			mElapsedTimeNs = stopTime - mStartTime + mElapsedTimeNs;
 			mStopMemorySizeBytes = Runtime.getRuntime().totalMemory();
 			mStopMemoryFreeSizeBytes = Runtime.getRuntime().freeMemory();
@@ -389,7 +384,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 //			Runtime.getRuntime().gc();
 		}
 
-		private void reset() {
+		void reset() {
 			mStartTime = -1;
 			mElapsedTimeNs = 0;
 

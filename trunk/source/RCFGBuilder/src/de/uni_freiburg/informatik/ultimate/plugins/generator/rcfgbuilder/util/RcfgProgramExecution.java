@@ -95,11 +95,11 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Term> {
 				ri = relevanceInformation.get(i);
 			}
 			if (te instanceof Call) {
-				atomictrace.add(new AtomicTraceElement<RCFGEdge>(te, te, StepInfo.PROC_CALL, ri));
+				atomictrace.add(new AtomicTraceElement<>(te, te, StepInfo.PROC_CALL, ri));
 			} else if (te instanceof Return) {
-				atomictrace.add(new AtomicTraceElement<RCFGEdge>(te, te, StepInfo.PROC_RETURN, ri));
+				atomictrace.add(new AtomicTraceElement<>(te, te, StepInfo.PROC_RETURN, ri));
 			} else {
-				atomictrace.add(new AtomicTraceElement<RCFGEdge>(te, ri));
+				atomictrace.add(new AtomicTraceElement<>(te, ri));
 			}
 		}
 
@@ -220,7 +220,7 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Term> {
 	 */
 	@Deprecated
 	public List<ILocation> getLocationList() {
-		final List<ILocation> result = new ArrayList<ILocation>();
+		final List<ILocation> result = new ArrayList<>();
 		for (final AtomicTraceElement<RCFGEdge> cb : mTrace) {
 			result.add(cb.getTraceElement().getPayload().getLocation());
 		}
@@ -243,7 +243,7 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Term> {
 	}
 
 	public List<UnprovabilityReason> getUnprovabilityReasons() {
-		final List<UnprovabilityReason> unproabilityReasons = new ArrayList<UnprovabilityReason>();
+		final List<UnprovabilityReason> unproabilityReasons = new ArrayList<>();
 		for (final Entry<String, ILocation> entry : mOverapproximations.entrySet()) {
 			unproabilityReasons.add(new UnprovabilityReason(entry.getKey(), entry.getValue()));
 		}

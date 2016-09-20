@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
  * @author Langenfeld
  */
 public class BuchiProgramProduct implements IGenerator {
-	
+
 	private ILogger mLogger;
 	private BuchiProductObserver mBuchiProductObserver;
 	private boolean mUseBuchiProductObserver;
@@ -61,26 +61,26 @@ public class BuchiProgramProduct implements IGenerator {
 	private IUltimateServiceProvider mServices;
 	private int mUseful;
 	private boolean mModelIsRCFG;
-	
+
 	private ProductBacktranslator mBacktranslator;
 	private IToolchainStorage mStorage;
-	
+
 	@Override
 	public ModelType getOutputDefinition() {
 		if (mPreviousToolFoundErrors) {
 			return null;
 		}
-		
-		final List<String> filenames = new ArrayList<String>();
+
+		final List<String> filenames = new ArrayList<>();
 		filenames.add("LTL+Program Product");
 		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.OTHER, filenames);
 	}
-	
+
 	@Override
 	public boolean isGuiRequired() {
 		return false;
 	}
-	
+
 	@Override
 	public ModelQuery getModelQuery() {
 		if (mPreviousToolFoundErrors) {
@@ -88,7 +88,7 @@ public class BuchiProgramProduct implements IGenerator {
 		}
 		return ModelQuery.ALL;
 	}
-	
+
 	@Override
 	public void setInputDefinition(final ModelType graphType) {
 		switch (graphType.getCreator()) {
@@ -107,10 +107,10 @@ public class BuchiProgramProduct implements IGenerator {
 			break;
 		}
 	}
-	
+
 	@Override
 	public List<IObserver> getObservers() {
-		final List<IObserver> observers = new ArrayList<IObserver>();
+		final List<IObserver> observers = new ArrayList<>();
 		if (!mPreviousToolFoundErrors) {
 			if (mModelIsRCFG && mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 					.getBoolean(PreferenceInitializer.OPTIMIZE_SBE)) {
@@ -118,7 +118,7 @@ public class BuchiProgramProduct implements IGenerator {
 						.getBoolean(PreferenceInitializer.OPTIMIZE_SBE_REWRITENOTEQUALS);
 				observers.add(new SmallBlockEncoder(mLogger, mBacktranslator, mStorage, rewriteAssumes));
 			}
-			
+
 			if (mUseBuchiProductObserver) {
 				if (mBuchiProductObserver == null) {
 					mBuchiProductObserver = new BuchiProductObserver(mLogger, mServices, mBacktranslator, mStorage);
@@ -128,48 +128,47 @@ public class BuchiProgramProduct implements IGenerator {
 		}
 		return observers;
 	}
-	
+
 	@Override
 	public void init() {
 		mUseBuchiProductObserver = false;
 		mModelIsRCFG = false;
 		mUseful = 0;
 	}
-	
+
 	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
-	
+
 	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
-	
+
 	@Override
 	public IElement getModel() {
 		if (mBuchiProductObserver.getModel() != null) {
 			return mBuchiProductObserver.getModel();
-		} else {
-			return null;
 		}
+		return null;
 	}
-	
+
 	@Override
 	public List<String> getDesiredToolID() {
 		return null;
 	}
-	
+
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
-	
+
 	@Override
 	public void setToolchainStorage(final IToolchainStorage storage) {
 		mStorage = storage;
 	}
-	
+
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void setServices(final IUltimateServiceProvider services) {
@@ -183,7 +182,7 @@ public class BuchiProgramProduct implements IGenerator {
 			mServices.getBacktranslationService().addTranslator(mBacktranslator);
 		}
 	}
-	
+
 	@Override
 	public void finish() {
 		if (!mPreviousToolFoundErrors && mUseful == 0) {
@@ -193,5 +192,5 @@ public class BuchiProgramProduct implements IGenerator {
 			mLogger.info("Another plugin discovered errors, skipping...");
 		}
 	}
-	
+
 }

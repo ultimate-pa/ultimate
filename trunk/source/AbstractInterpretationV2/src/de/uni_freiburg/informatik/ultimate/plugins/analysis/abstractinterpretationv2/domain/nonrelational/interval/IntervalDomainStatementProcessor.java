@@ -272,6 +272,25 @@ public class IntervalDomainStatementProcessor
 					newRight = new UnaryExpression(binexp.getLocation(), rightType, UnaryExpression.Operator.LOGICNEG,
 					        newRight);
 					break;
+				case LOGICIMPLIES:
+					// !(a ==> b) becomes (a && !b)
+					newOp = Operator.LOGICAND;
+					newLeft = binexp.getLeft();
+					newRight = new UnaryExpression(binexp.getLocation(), rightType, UnaryExpression.Operator.LOGICNEG,
+					        newRight);
+					break;
+				case LOGICIFF:
+					// !(a <==> b) becomes (!(a && b)) && (a || b)
+					newOp = Operator.LOGICAND;
+					final Expression nonNegated = new BinaryExpression(binexp.getLocation(), leftType,
+					        Operator.LOGICAND, binexp.getLeft(), binexp.getRight());
+					final Expression negated = new BinaryExpression(binexp.getLocation(), leftType, Operator.LOGICOR,
+					        binexp.getLeft(), binexp.getRight());
+
+					newLeft = new UnaryExpression(binexp.getLocation(), leftType, UnaryExpression.Operator.LOGICNEG,
+					        nonNegated);
+					newRight = negated;
+					break;
 				case COMPPO:
 					getLogger().warn("The comparison operator " + binexp.getOperator() + " is not yet supported.");
 				default:

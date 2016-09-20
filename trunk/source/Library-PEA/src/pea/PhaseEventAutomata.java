@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
 import pea.reqCheck.PEAPhaseIndexMap;
 import pea.util.SimpleSet;
 
-public class PhaseEventAutomata implements Comparable {
+public class PhaseEventAutomata implements Comparable<Object> {
 
     public static final String TIMES = "_X_";
 
@@ -91,7 +91,7 @@ public class PhaseEventAutomata implements Comparable {
             final Set<String> events,
             final List<String> declarations) {
         if(clocks == null) {
-			this.clocks = new ArrayList<String>();
+			this.clocks = new ArrayList<>();
 		} else {
 			this.clocks = clocks;
 		}
@@ -116,7 +116,7 @@ public class PhaseEventAutomata implements Comparable {
             final Map<String, String> variables,
             final List<String> declarations) {
         if(clocks == null) {
-			this.clocks = new ArrayList<String>();
+			this.clocks = new ArrayList<>();
 		} else {
 			this.clocks = clocks;
 		}
@@ -131,8 +131,8 @@ public class PhaseEventAutomata implements Comparable {
 	if (b instanceof PEATestAutomaton) {
 		return b.parallel(this);
 	}
-	final List<Phase> newInit = new ArrayList<Phase>();
-	final TreeMap<String,Phase> newPhases = new TreeMap<String,Phase>();
+	final List<Phase> newInit = new ArrayList<>();
+	final TreeMap<String,Phase> newPhases = new TreeMap<>();
 	
 	class TodoEntry {
 	    Phase p1,p2,p;
@@ -143,7 +143,7 @@ public class PhaseEventAutomata implements Comparable {
 	    }
 	}
 	
-	final List<TodoEntry> todo = new LinkedList<TodoEntry>();
+	final List<TodoEntry> todo = new LinkedList<>();
 
 	for (int i = 0; i < init.length; i++) {
 	    for (int j = 0; j < b.init.length; j++) {
@@ -159,13 +159,13 @@ public class PhaseEventAutomata implements Comparable {
 		}
 	    }
 	}
-	while (todo.size() > 0) {
+	while (!todo.isEmpty()) {
 	    final TodoEntry entry = todo.remove(0);
 	    final CDD srcsinv = entry.p1.stateInv.and(entry.p2.stateInv);
-	    final Iterator i = entry.p1.transitions.iterator();
+	    final Iterator<?> i = entry.p1.transitions.iterator();
 	    while (i.hasNext()) {
 		final Transition t1 = (Transition) i.next();
-		final Iterator j = entry.p2.transitions.iterator();
+		final Iterator<?> j = entry.p2.transitions.iterator();
 		while (j.hasNext()) {
 		    final Transition t2 = (Transition) j.next();
 
@@ -190,7 +190,7 @@ public class PhaseEventAutomata implements Comparable {
 		    System.arraycopy(t2.resets, 0, resets, t1.resets.length,
 				     t2.resets.length);
 		    final Set<String> stoppedClocks =
-			new SimpleSet<String>(t1.dest.stoppedClocks.size()+
+			new SimpleSet<>(t1.dest.stoppedClocks.size()+
 					      t2.dest.stoppedClocks.size());
 		    stoppedClocks.addAll(t1.dest.stoppedClocks);
 		    stoppedClocks.addAll(t2.dest.stoppedClocks);
@@ -238,7 +238,7 @@ public class PhaseEventAutomata implements Comparable {
 		} else if(b.getDeclarations() == null) {
 			newDeclarations = declarations;
 		} else {
-            newDeclarations = new ArrayList<String>();
+            newDeclarations = new ArrayList<>();
             newDeclarations.addAll(declarations);
             newDeclarations.addAll(b.getDeclarations());
         }
@@ -262,7 +262,7 @@ public class PhaseEventAutomata implements Comparable {
 		} else if(b.getVariables() == null) {
 			newVariables = variables;
 		} else {
-            newVariables = new HashMap<String,String>();
+            newVariables = new HashMap<>();
             for (final String var : variables.keySet()) {
                 if(b.getVariables().containsKey(var) &&
                         !b.getVariables().get(var).equals(variables.get(var))) {
@@ -286,7 +286,7 @@ public class PhaseEventAutomata implements Comparable {
      */
     protected List<String> mergeClockLists(final PhaseEventAutomata b) {
         // Merge clock lists
-        final List<String> newClocks = new ArrayList<String>();
+        final List<String> newClocks = new ArrayList<>();
         newClocks.addAll(clocks);
         newClocks.addAll(b.getClocks());
         return newClocks;
@@ -300,9 +300,9 @@ public class PhaseEventAutomata implements Comparable {
     public void dump() {
 	System.err.println("automata "+name+ " { ");
 	System.err.print("clocks: ");
-	final Iterator clockIter = clocks.iterator();
+	final Iterator<String> clockIter = clocks.iterator();
 	while (clockIter.hasNext()) {
-		final String actClock = (String) clockIter.next();
+		final String actClock = clockIter.next();
 		System.err.print(actClock);
 		if(clockIter.hasNext()) {
 			System.err.print(", ");
@@ -396,11 +396,7 @@ public class PhaseEventAutomata implements Comparable {
     }
     
     public boolean isEmpty(){
-    	if (getPhases().length <=0){
-    		return true;
-    	} else {
-			return false;
-		}
+    	return getPhases().length <= 0;
     }
     
     //Change by Ami
@@ -435,7 +431,7 @@ public class PhaseEventAutomata implements Comparable {
     
  // Splitted einen String location auf, so dass alle Teile, die durch X abgetrennt sind,
 	// in einen neuen ArrayString gepackt werden
-	private String[] splitForComponents(final String location){
+	private static String[] splitForComponents(final String location){
 		// Create a pattern to match breaks
 		final Pattern p = Pattern.compile("_X_");
         // Split input with the pattern

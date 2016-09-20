@@ -95,12 +95,9 @@ public abstract class AbstractBuchiDifference<LETTER, STATE> extends BinaryNwaOp
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". First operand "
-				+ mFstOperand.sizeInformation() + ". Second operand "
-				+ mSndOperand.sizeInformation() + " Result "
-				+ mResult.sizeInformation()
-				+ " Complement of second has " + getSndComplemented().size()
-				+ " states.";
+		return "Finished " + operationName() + ". First operand " + mFstOperand.sizeInformation() + ". Second operand "
+				+ mSndOperand.sizeInformation() + " Result " + mResult.sizeInformation() + " Complement of second has "
+				+ getSndComplemented().size() + " states.";
 	}
 	
 	@Override
@@ -142,9 +139,9 @@ public abstract class AbstractBuchiDifference<LETTER, STATE> extends BinaryNwaOp
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mFstOperand.size()));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mSndOperand.size()));
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mFstOperand)).getResult());
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mSndOperand)).getResult());
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mResult)).getResult());
+		lassoWords.addAll((new LassoExtractor<>(mServices, mFstOperand)).getResult());
+		lassoWords.addAll((new LassoExtractor<>(mServices, mSndOperand)).getResult());
+		lassoWords.addAll((new LassoExtractor<>(mServices, mResult)).getResult());
 		
 		for (final NestedLassoWord<LETTER> nlw : lassoWords) {
 			correct &= checkAcceptance(nlw, mFstOperand, mSndOperand, underApproximationOfComplement);
@@ -165,9 +162,9 @@ public abstract class AbstractBuchiDifference<LETTER, STATE> extends BinaryNwaOp
 			final INestedWordAutomatonSimple<LETTER, STATE> operand2, final boolean underApproximationOfComplement)
 			throws AutomataLibraryException {
 		boolean correct;
-		final boolean op1 = (new BuchiAccepts<LETTER, STATE>(mServices, operand1, nlw)).getResult();
-		final boolean op2 = (new BuchiAccepts<LETTER, STATE>(mServices, operand2, nlw)).getResult();
-		final boolean res = (new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
+		final boolean op1 = (new BuchiAccepts<>(mServices, operand1, nlw)).getResult();
+		final boolean op2 = (new BuchiAccepts<>(mServices, operand2, nlw)).getResult();
+		final boolean res = (new BuchiAccepts<>(mServices, mResult, nlw)).getResult();
 		if (res) {
 			correct = op1 && !op2;
 		} else {
