@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.PriorityComparator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
@@ -49,6 +50,16 @@ public class WeightedSummaryTargets {
 		super();
 		mTarget2Priority = target2Priority;
 	}
+	
+	
+
+
+
+	public Set<Entry<IGameState, Integer>> entrySet() {
+		return mTarget2Priority.entrySet();
+	}
+
+
 
 
 
